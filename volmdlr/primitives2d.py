@@ -124,9 +124,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             point.translation_inplace(offset)
 
     def offset(self, offset):
-        nb = len(self.points)
+        number_points = len(self.points)
         vectors = []
-        for i in range(nb - 1):
+        for i in range(number_points - 1):
             v1 = self.points[i + 1] - self.points[i]
             v2 = self.points[i] - self.points[i + 1]
             v1.normalize()
@@ -146,20 +146,20 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         new_radii = {}
         offset_points = []
 
-        for i in range((not self.closed), nb - (not self.closed)):
+        for i in range((not self.closed), number_points - (not self.closed)):
 
             check = False
-            ni = vectors[2 * i - 1] + vectors[2 * i]
-            if ni.is_close(volmdlr.Vector2D(0, 0)):
-                ni = vectors[2 * i]
-                ni = ni.normalVector()
-                offset_vectors.append(ni)
+            vector_i = vectors[2 * i - 1] + vectors[2 * i]
+            if vector_i.is_close(volmdlr.Vector2D(0, 0)):
+                vector_i = vectors[2 * i]
+                vector_i = vector_i.normalVector()
+                offset_vectors.append(vector_i)
             else:
-                ni.normalize()
-                if ni.dot(vectors[2 * i - 1].normal_vector()) > 0:
-                    ni = - ni
+                vector_i.normalize()
+                if vector_i.dot(vectors[2 * i - 1].normal_vector()) > 0:
+                    vector_i = - vector_i
                     check = True
-                offset_vectors.append(ni)
+                offset_vectors.append(vector_i)
 
             if i in self.radius:
                 if (check and offset > 0) or (not check and offset < 0):
@@ -378,19 +378,19 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         new_points[line_indexes[0]] = self.points[line_indexes[
             0]] + distance_dir1 * dir_vec_1
 
-        for nb, index in enumerate(line_indexes[1:]):
+        for i, index in enumerate(line_indexes[1:]):
             coeff_vec_2 = volmdlr.Point2D.point_distance(
                 self.points[line_indexes[0]],
                 self.points[index]) / volmdlr.Point2D.point_distance(
                 self.points[line_indexes[0]],
                 self.points[line_indexes[-1] + 1])
             coeff_vec_1 = 1 - coeff_vec_2
-            if dir_vec_1.dot(normal_vectors[nb + 1]) < 0:
+            if dir_vec_1.dot(normal_vectors[i + 1]) < 0:
                 coeff_vec_1 = - coeff_vec_1
-            if dir_vec_2.dot(normal_vectors[nb + 1]) < 0:
+            if dir_vec_2.dot(normal_vectors[i + 1]) < 0:
                 coeff_vec_2 = - coeff_vec_2
             index_dir_vector = coeff_vec_1 * vec1 + coeff_vec_2 * vec2
-            index_dot = index_dir_vector.dot(normal_vectors[nb + 1])
+            index_dot = index_dir_vector.dot(normal_vectors[i + 1])
             index_distance_dir = offset / index_dot
             new_points[index] = self.points[
                                     index] + index_distance_dir * index_dir_vector
