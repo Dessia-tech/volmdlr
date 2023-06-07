@@ -1909,8 +1909,8 @@ class PeriodicalSurface(Surface3D):
         """
         Converts a BREP line segment 2D onto a 3D primitive on the surface.
         """
-        theta1, z1 = linesegment2d.start
-        theta2, z2 = linesegment2d.end
+        theta1, param_z1 = linesegment2d.start
+        theta2, param_z2 = linesegment2d.end
         start3d = self.point2d_to_3d(linesegment2d.start)
         end3d = self.point2d_to_3d(linesegment2d.end)
         if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametic.linesegment":
@@ -1918,16 +1918,16 @@ class PeriodicalSurface(Surface3D):
                 return None
             return [edges.LineSegment3D(start3d, end3d)]
 
-        if math.isclose(z1, z2, abs_tol=1e-4) or linesegment2d.name == "parametric.arc" or \
+        if math.isclose(param_z1, param_z2, abs_tol=1e-4) or linesegment2d.name == "parametric.arc" or \
                 linesegment2d.name == "parametric.fullarc":
             if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
-                return [edges.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
+                return [edges.FullArc3D(center=self.frame.origin + param_z1 * self.frame.w,
                                         start_end=self.point2d_to_3d(linesegment2d.start),
                                         normal=self.frame.w)]
 
             return [edges.Arc3D(
                 self.point2d_to_3d(linesegment2d.start),
-                self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
+                self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), param_z1)),
                 self.point2d_to_3d(linesegment2d.end)
             )]
         if start3d.is_close(end3d):
@@ -2085,7 +2085,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.frame = new_frame
 
     def rectangular_cut(self, theta1: float, theta2: float,
-                        z1: float, z2: float, name: str = ''):
+                        param_z1: float, param_z2: float, name: str = ''):
         """Deprecated method, Use CylindricalFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use CylindricalFace3D from_surface_rectangular_cut method')
 
@@ -2860,7 +2860,7 @@ class ConicalSurface3D(PeriodicalSurface):
         return volmdlr.Point2D(theta, z)
 
     def rectangular_cut(self, theta1: float, theta2: float,
-                        z1: float, z2: float, name: str = ''):
+                        param_z1: float, param_z2: float, name: str = ''):
         """Deprecated method, Use ConicalFace3D from_surface_rectangular_cut method."""
         raise AttributeError("ConicalSurface3D.rectangular_cut is deprecated."
                              "Use the class_method from_surface_rectangular_cut in ConicalFace3D instead")
@@ -2889,27 +2889,24 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         if linesegment2d.name == "construction":
             return None
-        theta1, z1 = linesegment2d.start
-        theta2, z2 = linesegment2d.end
+        theta1, param_z1 = linesegment2d.start
+        theta2, param_z2 = linesegment2d.end
 
         if math.isclose(theta1, theta2, abs_tol=1e-4):
-            return [edges.LineSegment3D(
-                self.point2d_to_3d(linesegment2d.start),
-                self.point2d_to_3d(linesegment2d.end),
-            )]
-        if math.isclose(z1, z2, abs_tol=1e-4) and math.isclose(z1, 0.,
-                                                               abs_tol=1e-6):
+            return [edges.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
+                                        self.point2d_to_3d(linesegment2d.end))]
+        if math.isclose(param_z1, param_z2, abs_tol=1e-4) and math.isclose(param_z1, 0., abs_tol=1e-6):
             return []
-        if math.isclose(z1, z2, abs_tol=1e-4):
+        if math.isclose(param_z1, param_z2, abs_tol=1e-4):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
-                return [edges.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
+                return [edges.FullArc3D(center=self.frame.origin + param_z1 * self.frame.w,
                                         start_end=self.point2d_to_3d(linesegment2d.start),
                                         normal=self.frame.w)]
 
             return [edges.Arc3D(
                 self.point2d_to_3d(linesegment2d.start),
                 self.point2d_to_3d(
-                    volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
+                    volmdlr.Point2D(0.5 * (theta1 + theta2), param_z1)),
                 self.point2d_to_3d(linesegment2d.end))
             ]
         raise NotImplementedError('Ellipse?')
@@ -4061,12 +4058,12 @@ class ExtrusionSurface3D(Surface3D):
         """
         start3d = self.point2d_to_3d(linesegment2d.start)
         end3d = self.point2d_to_3d(linesegment2d.end)
-        u1, z1 = linesegment2d.start
-        u2, z2 = linesegment2d.end
+        u1, param_z1 = linesegment2d.start
+        u2, param_z2 = linesegment2d.end
         if math.isclose(u1, u2, abs_tol=1e-4):
             return [edges.LineSegment3D(start3d, end3d)]
-        if math.isclose(z1, z2, abs_tol=1e-6):
-            primitive = self.edge.translation(self.direction * (z1 + z2) * 0.5)
+        if math.isclose(param_z1, param_z2, abs_tol=1e-6):
+            primitive = self.edge.translation(self.direction * (param_z1 + param_z2) * 0.5)
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
                 if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-4):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):

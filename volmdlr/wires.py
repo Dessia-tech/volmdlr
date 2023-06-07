@@ -2300,11 +2300,11 @@ class Contour2D(ContourMixin, Wire2D):
         dx = bounding_rectangle[1] - bounding_rectangle[0]  # xmax - xmin
         dy = bounding_rectangle[3] - bounding_rectangle[2]  # ymax - ymin
         if number_points_x is None:
-            n = max(math.ceil(x_density * dx), min_points_x)
+            number_points_x = max(math.ceil(x_density * dx), min_points_x)
         if number_points_y is None:
-            m = max(math.ceil(y_density * dy), min_points_y)
-        x = [bounding_rectangle[0] + i * dx / n for i in range(n + 1)]
-        y = [bounding_rectangle[2] + i * dy / m for i in range(m + 1)]
+            number_points_y = max(math.ceil(y_density * dy), min_points_y)
+        x = [bounding_rectangle[0] + i * dx / number_points_x for i in range(number_points_x + 1)]
+        y = [bounding_rectangle[2] + i * dy / number_points_y for i in range(number_points_y + 1)]
 
         point_index = {}
         number_points = 0
@@ -2318,8 +2318,8 @@ class Contour2D(ContourMixin, Wire2D):
                     points.append(point)
                     number_points += 1
 
-        for i in range(n):
-            for j in range(m):
+        for i in range(number_points_x):
+            for j in range(number_points_y):
                 point1 = volmdlr.Point2D(x[i], y[j])
                 point2 = volmdlr.Point2D(x[i + 1], y[j])
                 point3 = volmdlr.Point2D(x[i + 1], y[j + 1])
@@ -2783,9 +2783,9 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         signed_area = 0.5 * npy.sum(xi_yi1 - xi1_yi)  # signed area!
         if not math.isclose(signed_area, 0, abs_tol=1e-09):
-            cx = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
-            cy = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
-            return volmdlr.Point2D(cx, cy)
+            center_x = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
+            center_y = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
+            return volmdlr.Point2D(center_x, center_y)
 
         self.plot()
         raise NotImplementedError
@@ -3398,10 +3398,10 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                }
         if len(tri['vertices']) < 3:
             return None
-        t = triangulate(tri, tri_opt)
-        triangles = t['triangles'].tolist()
-        np = t['vertices'].shape[0]
-        points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
+        triangulate_result = triangulate(tri, tri_opt)
+        triangles = triangulate_result['triangles'].tolist()
+        np = triangulate_result['vertices'].shape[0]
+        points = [vmd.Node2D(*triangulate_result['vertices'][i, :]) for i in range(np)]
         return vmd.DisplayMesh2D(points, triangles=triangles)
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
@@ -4679,10 +4679,10 @@ class Contour3D(ContourMixin, Wire3D):
         return content, current_id
 
     def average_center_point(self):
-        nb = len(self.edge_polygon.points)
-        x = sum(point[0] for point in self.edge_polygon.points) / nb
-        y = sum(point[1] for point in self.edge_polygon.points) / nb
-        z = sum(point[2] for point in self.edge_polygon.points) / nb
+        number_points = len(self.edge_polygon.points)
+        x = sum(point[0] for point in self.edge_polygon.points) / number_points
+        y = sum(point[1] for point in self.edge_polygon.points) / number_points
+        z = sum(point[2] for point in self.edge_polygon.points) / number_points
 
         return volmdlr.Point3D(x, y, z)
 
