@@ -2985,7 +2985,6 @@ class ConicalSurface3D(PeriodicalSurface):
                     volmdlr.Point2D(0.5 * (theta1 + theta2), param_z1)),
                 self.point2d_to_3d(linesegment2d.end))
             ]
-        print(True)
         raise NotImplementedError('Ellipse?')
 
     def contour3d_to_2d(self, contour3d):

@@ -1498,8 +1498,6 @@ class ContourMixin(WireMixin):
         points = [edges[0].start, edges[0].end]
         contour_primitives = [edges.pop(0)]
         while True:
-            if not contour_primitives:
-                print(True)
             for i, edge in enumerate(edges):
                 if edge.is_point_edge_extremity(contour_primitives[-1].end, tol):
                     if contour_primitives[-1].end.is_close(edge.start, tol):

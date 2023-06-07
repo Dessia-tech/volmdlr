@@ -5979,10 +5979,9 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-        try:
-            curves = operations.split_curve(self.curve, round(parameter, 6))
-        except Exception:
-            print(True)
+
+        curves = operations.split_curve(self.curve, round(parameter, 6))
+
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
