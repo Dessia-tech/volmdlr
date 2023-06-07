@@ -1159,11 +1159,33 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
 
     @property
     def bounding_rectangle(self):
+        """
+        Returns the bounding rectangle of the wire.
+
+        This property returns the bounding rectangle of the wire. If the bounding rectangle has not been calculated
+        yet, it is computed using the `get_bouding_rectangle` method and stored in the `_bounding_rectangle` attribute.
+        Subsequent calls to this property will return the pre-calculated bounding rectangle.
+
+        :return: The bounding rectangle of the wire.
+        :rtype: volmdlr.core.BoundingRectangle.
+        """
         if not self._bounding_rectangle:
             self._bounding_rectangle = self.get_bouding_rectangle()
         return self._bounding_rectangle
 
     def get_bouding_rectangle(self):
+        """
+        Calculates the bounding rectangle of the wire.
+
+        This method calculates the bounding rectangle of the wire. It initializes the minimum and maximum values
+        for the x and y coordinates using the bounds of the first primitive. Then, it iterates over the remaining
+        primitives and updates the minimum and maximum values based on their bounds. The resulting bounding rectangle
+        is returned as a `volmdlr.core.BoundingRectangle` object.
+
+        :return: The bounding rectangle of the wire.
+        :rtype: volmdlr.core.BoundingRectangle.
+        """
+
         x_min, x_max, y_min, y_max = self.primitives[0].bounding_rectangle.bounds()
         for edge in self.primitives[1:]:
             xmin_edge, xmax_edge, ymin_edge, ymax_edge = \
