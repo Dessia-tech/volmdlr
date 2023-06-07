@@ -29,12 +29,13 @@ def binomial_coefficient(int k, int i):
     """
     # Special case
     if i > k:
-        return float(0)
+        return 0.0
     # Compute binomial coefficient
-    cdef double k_fact = factorial(k)
-    cdef double i_fact = factorial(i)
-    cdef double k_i_fact = factorial(k - i)
-    return k_fact / (k_i_fact * i_fact)
+    cdef int j
+    cdef double result = 1.0
+    for j in range(i):
+        result *= (k - j) / (i - j)
+    return result
 
 
 @cython.boundscheck(False)
