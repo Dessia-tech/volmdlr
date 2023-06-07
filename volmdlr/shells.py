@@ -104,6 +104,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             self._bbox = bounding_box
 
         self._faces_graph = None
+        self._vertices_graph = None
         self._vertices_points = None
 
         volmdlr.core.CompositePrimitive3D.__init__(self,
@@ -138,20 +139,57 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return self._vertices_points
 
     @property
-    def faces_graph(self):
+    def vertices_graph(self):
         """
         Gets the shells faces graph using networkx.
 
         :return: return a networkx graph for a shell faces' vertices.
         """
         if not self._faces_graph:
-            faces_graph = nx.Graph()
+            vertices_graph = nx.Graph()
             for face in self.faces:
                 for edge in face.outer_contour3d.primitives:
                     edge_start_index = volmdlr.core.get_point_index_in_list(edge.start, self.vertices_points)
                     edge_end_index = volmdlr.core.get_point_index_in_list(edge.end, self.vertices_points)
-                    faces_graph.add_edge(edge_start_index, edge_end_index, edge=edge)
-            self._faces_graph = faces_graph
+                    vertices_graph.add_edge(edge_start_index, edge_end_index, edge=edge)
+            self._vertices_graph = vertices_graph
+        return self._vertices_graph
+
+    def faces_graph(self):
+        """
+        Gets the shells faces graph using networkx.
+
+        :return: return a networkx graph for a shell faces.
+        """
+        if not self._faces_graph:
+            graph = nx.Graph()
+            vertice_faces = {}
+            face_vertices = {}
+            vertice_edges = {}
+            face_edges = {}
+            for face_index, face in enumerate(self.faces):
+                outer_contour = face.outer_contour3d
+                for edge in outer_contour.primitives:
+                    start_index = volmdlr.core.get_point_index_in_list(edge.start, self.vertices_points)
+                    vertice_faces.setdefault(start_index, set()).add(face_index)
+                    vertice_edges.setdefault(start_index, set()).add(edge)
+                    face_edges.setdefault(face_index, set()).add(edge)
+                    face_vertices.setdefault(face_index, set()).add(start_index)
+            for i, face_i in enumerate(self.faces):
+                face_i_edges = face_edges[i]
+                face_i_vertices = face_vertices[i]
+                for vertice in face_i_vertices:
+                    connected_faces = vertice_faces[vertice]
+                    connected_faces.discard(i)
+                    for j in connected_faces:
+                        face_j_edges = face_edges[j]
+                        edges_j_set = face_j_edges.intersection(vertice_edges[vertice])
+                        for edge_i in face_i_edges:
+                            for edge_j in edges_j_set:
+                                if edge_i.get_shared_section(edge_j):
+                                    graph.add_edge(i, j)
+
+            self._faces_graph = graph
         return self._faces_graph
 
     def to_dict(self, *args, **kwargs):
@@ -1526,12 +1564,12 @@ class ClosedShell3D(OpenShell3D):
         return [new_shell]
 
     def eliminate_not_valid_closedshell_faces(self):
-        nodes_with_2degrees = [node for node, degree in list(self.faces_graph.degree()) if degree <= 2]
+        nodes_with_2degrees = [node for node, degree in list(self.vertices_graph.degree()) if degree <= 2]
         for node in nodes_with_2degrees:
-            neighbors = nx.neighbors(self.faces_graph, node)
+            neighbors = nx.neighbors(self.vertices_graph, node)
             for neighbor_node in neighbors:
                 for face in self.faces:
-                    if self.faces_graph.edges[(node, neighbor_node)]['edge'] in face.outer_contour3d.primitives:
+                    if self.vertices_graph.edges[(node, neighbor_node)]['edge'] in face.outer_contour3d.primitives:
                         self.faces.remove(face)
                         break
         self._faces_graph = None

@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: split_inner_contour_intersecting_cutting_contours
 - Shell3D: get_ray_casting_line_segment
 - WireMixin: get_connected_wire, is_sharing_primitives_with
+- OpenShell3D: faces_graph
+- Plane3D: arc_intersections, bsplinecurve_intersections
+- common_operations: split_wire_by_plane
+- SphericalSurface3D: line_intersections, linesegment_intersections.
+- Sweep with muitiform profile contour.
+
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
 - ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
@@ -25,13 +31,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
 - BoundingBox: bbox_intersection
 - face3D: get_face_cutting_contours
+- intersections: get_bsplinecurve_intersections generalization, so it can also be used
+to calculate intersections between a plane 3d and bsplinecurve3d.
+- Improve step translator.
+
 ### Changed
+- OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
 
 ### Unittests
 - FullArc2D: split_between_two_points
 - Face3D: set_operations_new_faces
 - ClosedShell3D: point_belongs
-
+- Plane3D: arc_intersections, bsplinecurve_intersections
+- common_operations: split_wire_by_plane
+- SphericalSurface3D: line_intersections, linesegment_intersections.
 
 ## v0.11.0 [unreleased]
 
@@ -145,7 +158,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CompositePrimitive3D: babylon_points
 - WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
 - ContourMixin: contours_from_edges
-- Improve step translator.
+- ExtrusionSurface3D: simplify bsplinecurve3d_to_2d method
 
 ### Changed
 - better surface3d plots
