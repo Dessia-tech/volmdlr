@@ -218,12 +218,10 @@ class Block(shells.ClosedShell3D):
         Transform a bounding box into a block.
         """
         origin = bounding_box.center
-        sx = bounding_box.xmax - bounding_box.xmin
-        sy = bounding_box.ymax - bounding_box.ymin
-        sz = bounding_box.zmax - bounding_box.zmin
-        frame = volmdlr.Frame3D(origin, sx * volmdlr.Vector3D(1, 0, 0),
-                                sy * volmdlr.Vector3D(0, 1, 0),
-                                sz * volmdlr.Vector3D(0, 0, 1))
+        bbox_size = bounding_box.size
+        frame = volmdlr.Frame3D(origin, bbox_size[0] * volmdlr.Vector3D(1, 0, 0),
+                                bbox_size[1] * volmdlr.Vector3D(0, 1, 0),
+                                bbox_size[2] * volmdlr.Vector3D(0, 0, 1))
         return cls(frame=frame)
 
     def vertices(self):
@@ -597,12 +595,12 @@ class ExtrudedProfile(shells.ClosedShell3D):
 
         upper_face = lower_face.translation(self.extrusion_vector)
         lateral_faces = []
-        for p in self.outer_contour3d.primitives:
-            lateral_faces.extend(p.extrusion(self.extrusion_vector))
+        for primitive in self.outer_contour3d.primitives:
+            lateral_faces.extend(primitive.extrusion(self.extrusion_vector))
 
         for inner_contour in self.inner_contours3d:
-            for p in inner_contour.primitives:
-                lateral_faces.extend(p.extrusion(self.extrusion_vector))
+            for primitive in inner_contour.primitives:
+                lateral_faces.extend(primitive.extrusion(self.extrusion_vector))
 
         return [lower_face, upper_face] + lateral_faces
 
@@ -1755,11 +1753,12 @@ class Sweep(shells.ClosedShell3D):
             normal = wire_primitive.unit_normal_vector(0.)
             if normal is None:
                 normal = tangent.deterministic_unit_normal_vector()
-            n2 = tangent.cross(normal)
+            tangent_normal_orthonormal = tangent.cross(normal)
             if i == 0:
-                contour3d = self.contour2d.to_3d(wire_primitive.start, normal, n2)
+                contour3d = self.contour2d.to_3d(wire_primitive.start, normal, tangent_normal_orthonormal)
             else:
-                plane = surfaces.Plane3D(volmdlr.Frame3D(wire_primitive.start, normal, n2, tangent))
+                plane = surfaces.Plane3D(volmdlr.Frame3D(wire_primitive.start, normal,
+                                                         tangent_normal_orthonormal, tangent))
                 cutting_face = volmdlr.faces.PlaneFace3D(plane, surfaces.Surface2D(cutting_face_contour, []))
                 contour3d = get_sweep_profile_section(cutting_face, new_faces)
             new_faces = []

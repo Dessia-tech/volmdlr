@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shell3D: get_ray_casting_line_segment
 - WireMixin: get_connected_wire, is_sharing_primitives_with
 - OpenShell3D: faces_graph
+- Plane3D: arc_intersections, bsplinecurve_intersections
+- common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 - Sweep with muitiform profile contour.
 
@@ -30,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BoundingBox: bbox_intersection
 - Face3D: get_face_cutting_contours
 - parametric.py: fix numerical instability in some functions used in Arc3D to parametric surface domain transformation.
+- intersections: get_bsplinecurve_intersections generalization, so it can also be used
+to calculate intersections between a plane 3d and bsplinecurve3d.
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
@@ -38,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FullArc2D: split_between_two_points
 - Face3D: set_operations_new_faces
 - ClosedShell3D: point_belongs
+- Plane3D: arc_intersections, bsplinecurve_intersections
+- common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 
 ## v0.11.0 [unreleased]

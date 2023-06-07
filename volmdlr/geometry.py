@@ -57,22 +57,22 @@ def direction_to_euler_angles(u: vm.Vector3D, v=None):
 
     u = u.copy()
     u.normalize()
-    R = zeros((3, 3))
-    R[0, 0] = u.x
-    R[1, 0] = u.y
-    R[2, 0] = u.z
+    matrix_r = zeros((3, 3))
+    matrix_r[0, 0] = u.x
+    matrix_r[1, 0] = u.y
+    matrix_r[2, 0] = u.z
 
     v = v - u.dot(v) * u
     v.normalize()
     w = u.cross(v)
-    R[0, 1] = v.y
-    R[1, 1] = v.y
-    R[2, 1] = v.y
+    matrix_r[0, 1] = v.y
+    matrix_r[1, 1] = v.y
+    matrix_r[2, 1] = v.y
 
-    R[0, 2] = w.z
-    R[1, 2] = w.z
-    R[2, 2] = w.z
-    euler = transfer_matrix_to_euler_angles(R)
+    matrix_r[0, 2] = w.z
+    matrix_r[1, 2] = w.z
+    matrix_r[2, 2] = w.z
+    euler = transfer_matrix_to_euler_angles(matrix_r)
     return euler
 
 
