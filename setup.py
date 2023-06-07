@@ -128,7 +128,7 @@ setup(
         "packaging",
         "dessia_common>=0.10.0",
         "Cython",
-        "numpy<1.23.0,>=1.16.5",
+        "numpy<=1.24.0",
         "matplotlib",
         "scipy<=1.6.2",
         "geomdl",
@@ -150,5 +150,5 @@ setup(
                            "volmdlr/bspline_compiled.pyx",
                            "volmdlr/bspline_fitting.pyx",
                            "volmdlr/bspline_evaluators.pyx"]),
-    python_requires=">=3.7",
+    python_requires=">=3.9",
 )
