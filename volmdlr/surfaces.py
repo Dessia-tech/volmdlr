@@ -5105,7 +5105,7 @@ class BSplineSurface3D(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        number_points = max(self.nb_u, self.nb_v)
+        number_points = min(self.nb_u, self.nb_v)
         degree = min(self.degree_u, self.degree_v)
         points = []
         for point3d in arc3d.discretization_points(number_points=number_points):
@@ -6791,6 +6791,15 @@ class BSplineSurface3D(Surface3D):
                                           points[2])
         return surface3d
 
+    def is_singularity_point(self, point):
+        if not self.x_periodicity and not self.y_periodicity:
+            return False
+        u_min, u_max = self.surface.domain[0]
+        v_min, v_max = self.surface.domain[1]
+        test_points = [self.point2d_to_3d(volmdlr.Point2D(u_min, v_min)),
+                       self.point2d_to_3d(volmdlr.Point2D(u_max, v_max))]
+        if self.x_periodicity or self.y_periodicity:
+            return any(point.is_close(test_point) for test_point in test_points)
 
 class BezierSurface3D(BSplineSurface3D):
     """
