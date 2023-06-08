@@ -30,6 +30,8 @@ def binomial_coefficient(int k, int i):
     # Special case
     if i > k:
         return 0.0
+    if i == 0 or i == k:
+        return 1.0
     # Compute binomial coefficient
     cdef int j
     cdef double result = 1.0
