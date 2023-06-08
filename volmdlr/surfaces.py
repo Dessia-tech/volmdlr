@@ -4844,24 +4844,33 @@ class BSplineSurface3D(Surface3D):
         min_bound_x, max_bound_x = self.surface.domain[0]
         min_bound_y, max_bound_y = self.surface.domain[1]
 
-        delta_bound_x = max_bound_x - min_bound_x
-        delta_bound_y = max_bound_y - min_bound_y
-        x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
-               ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
-               ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
-               ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 4, min_bound_y + delta_bound_y / 10),
-               ((min_bound_x + max_bound_x) / 4, max_bound_y - delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 4, max_bound_y - delta_bound_y / 10),
-               (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-               (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
+        # delta_bound_x = max_bound_x - min_bound_x
+        # delta_bound_y = max_bound_y - min_bound_y
+        # x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
+        #        ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
+        #        ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
+        #        ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 4, min_bound_y + delta_bound_y / 10),
+        #        ((min_bound_x + max_bound_x) / 4, max_bound_y - delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 4, max_bound_y - delta_bound_y / 10),
+        #        (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
+        #        (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
+        #
+        # # Sort the initial conditions
+        # x0s.sort(key=f)
+        matrix = npy.array(self.surface.evalpts)
+        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]])
 
-        # Sort the initial conditions
-        x0s.sort(key=f)
+        # Calculate distances
+        distances = npy.linalg.norm(matrix - point3d_array, axis=1)
 
+        # Find the minimal index
+        index = npy.argmin(distances)
         # Find the parametric coordinates of the point
+        # indexes = int(npy.argmin(distances))
+        x0s = [self.surface.vertices[index].uv]
         results = []
         for x0 in x0s:
             res = minimize(fun, x0=npy.array(x0), jac=True,
