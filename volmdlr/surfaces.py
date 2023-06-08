@@ -836,51 +836,52 @@ class Surface3D(DessiaObject):
                                                                                         [x_periodicity, y_periodicity])
             if pos != 0:
                 primitives2d = primitives2d[pos:] + primitives2d[:pos]
-
-        i = 1
         if x_periodicity is None:
             x_periodicity = -1
         if y_periodicity is None:
             y_periodicity = -1
-        while i < len(primitives2d):
+        for i in range(1, len(primitives2d)):
             previous_primitive = primitives2d[i - 1]
-            delta = previous_primitive.end - primitives2d[i].start
+            current_primitive = primitives2d[i]
+            delta = previous_primitive.end - current_primitive.start
             distance = delta.norm()
             is_connected = math.isclose(distance, 0, abs_tol=1e-2)
-            if not is_connected and \
-                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
-                        math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
-                delta_end = previous_primitive.end - primitives2d[i].end
-                delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
-                if primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
-                    primitives2d[i] = primitives2d[i].reverse()
-                elif delta_min_index == 0:
-                    primitives2d[i] = primitives2d[i].translation(delta)
-                else:
-                    new_primitive = primitives2d[i].reverse()
-                    primitives2d[i] = new_primitive.translation(delta_end)
 
-            elif not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
-                primitives2d[i] = primitives2d[i].reverse()
-            elif not is_connected and hasattr(self, "is_singularity_point") and \
-                    self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
-                    self.is_singularity_point(self.point2d_to_3d(primitives2d[i].start)):
-                primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
-                                                           name="construction"))
-                i += 1
-            elif not is_connected:
-                primitives2d[i] = primitives2d[i].translation(delta)
-            i += 1
+            if not is_connected:
+                if math.isclose(current_primitive.length(), x_periodicity, abs_tol=1e-2) or \
+                        math.isclose(current_primitive.length(), y_periodicity, abs_tol=1e-2):
+                    delta_end = previous_primitive.end - current_primitive.end
+                    delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
+
+                    if current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
+                        primitives2d[i] = current_primitive.reverse()
+                    elif hasattr(self, "is_singularity_point") and \
+                            self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
+                            self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
+                        primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, current_primitive.start,
+                                                                   name="construction"))
+                        i += 1
+                    elif delta_min_index == 0:
+                        primitives2d[i] = current_primitive.translation(delta)
+                    else:
+                        new_primitive = current_primitive.reverse()
+                        primitives2d[i] = new_primitive.translation(delta_end)
+
+                elif current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
+                    primitives2d[i] = current_primitive.reverse()
+                else:
+                    primitives2d[i] = current_primitive.translation(delta)
+
         previous_primitive = primitives2d[-1]
         delta = previous_primitive.end - primitives2d[0].start
         distance = delta.norm()
         is_connected = math.isclose(distance, 0, abs_tol=1e-2)
+
         if not is_connected and hasattr(self, "is_singularity_point") and \
                 self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                 self.is_singularity_point(self.point2d_to_3d(primitives2d[0].start)):
             primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start,
-                                                       name="construction"))
+                                                    name="construction"))
 
         return primitives2d
 
@@ -1803,6 +1804,10 @@ class PeriodicalSurface(Surface3D):
         """
         start = self.point3d_to_2d(linesegment3d.start)
         end = self.point3d_to_2d(linesegment3d.end)
+        _, _, z1 = self.frame.global_to_local_coordinates(linesegment3d.start)
+        _, _, z2 = self.frame.global_to_local_coordinates(linesegment3d.end)
+        if math.isclose(z1, z2, rel_tol=0.005):
+            return [edges.LineSegment2D(start, end)]
         if start.x != end.x:
             end = volmdlr.Point2D(start.x, end.y)
         if not start.is_close(end):
