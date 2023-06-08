@@ -99,7 +99,7 @@ def conversion_based_unit_length_unit_named_unit(arguments, object_dict):
 
 def length_measure_with_unit(arguments, object_dict):
     """
-    Calculates the step file's si unit conversion factor.
+    Calculates the step file's SI unit conversion factor.
 
     :param arguments: step primitive arguments
     :param object_dict: dictionary containing already instantiated objects.
@@ -135,6 +135,16 @@ def named_unit_plane_angle_unit_si_unit(arguments, *args, **kwargs):
 
 
 def named_unit_si_unit_solid_angle_unit(arguments, *args, **kwargs):
+    """
+    Returns the dimension of solid angle measure.
+
+    :param arguments: step primitive arguments
+    :return: SI unit dimension.
+    """
+    return SI_PREFIX[arguments[1]]
+
+
+def named_unit_length_unit_si_unit(arguments, *args, **kwargs):
     """
     Returns the dimension of solid angle measure.
 
@@ -554,6 +564,23 @@ def representation_relationship_representation_relationship_with_transformation_
 
 
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
+        arguments, object_dict):
+    """
+    Bounded b spline with knots curve geometric representation item. To clarify.
+    """
+    modified_arguments = [''] + arguments
+    if modified_arguments[-1] == "''":
+        modified_arguments.pop()
+    return STEP_TO_VOLMDLR['BOUNDED_CURVE, '
+                           'B_SPLINE_CURVE, '
+                           'B_SPLINE_CURVE_WITH_KNOTS, '
+                           'CURVE, GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_CURVE, '
+                           'REPRESENTATION_ITEM'].from_step(
+        modified_arguments, object_dict)
+
+
+def b_spline_curve_b_spline_curve_with_knots_rational_b_spline_curve_bounded_curve_representation_item_geometric_representation_item_curve(
         arguments, object_dict):
     """
     Bounded b spline with knots curve geometric representation item. To clarify.
@@ -1122,7 +1149,7 @@ class Step(dc.DessiaObject):
         return self.product_definition_to_product(id_product_definition)
 
     def get_root_nodes(self):
-        """Returns a dictionnary containing the nodes of the step file function that are used as start points."""
+        """Returns a dictionary containing the nodes of the step file function that are used as start points."""
         next_assembly_usage_occurrence = []
         product_definitions = []
         shape_representation_relationship = []
@@ -1236,10 +1263,7 @@ class Step(dc.DessiaObject):
                     ids_frames = self.functions[id_shape_representation].arg[1]
                     self.parse_arguments(ids_frames)
                     frames = [object_dict[id_frame] for id_frame in ids_frames]
-                    try:
-                        volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
-                    except Exception:
-                        print(True)
+                    volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
                     object_dict[instanciate_id] = volmdlr_object
                     if instanciate_id in assembly_data:
                         list_instatiated_assemblies.append(instanciate_id)

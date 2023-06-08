@@ -25,6 +25,7 @@ import volmdlr.utils.parametric as vm_parametric
 from volmdlr.core import EdgeStyle
 from volmdlr.core import point_in_list
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
+import volmdlr.utils.intersections as vm_utils_intersections
 
 
 def knots_vector_inv(knots_vector):
@@ -103,7 +104,7 @@ class Surface2D(volmdlr.core.Primitive2D):
             center -= contour.area() * contour.center_of_mass()
         return center / self.area()
 
-    def point_belongs(self, point2d: volmdlr.Point2D):
+    def point_belongs(self, point2d: volmdlr.Point2D, include_edge_points: bool = True):
         """
         Check whether a point belongs to the 2D surface.
 
@@ -112,13 +113,11 @@ class Surface2D(volmdlr.core.Primitive2D):
         :return: True if the point belongs to the surface, False otherwise.
         :rtype: bool
         """
-        if not self.outer_contour.point_belongs(point2d):
-            if self.outer_contour.point_over_contour(point2d):
-                return True
+        if not self.outer_contour.point_belongs(point2d, include_edge_points=include_edge_points):
             return False
 
         for inner_contour in self.inner_contours:
-            if inner_contour.point_belongs(point2d) and not inner_contour.point_over_contour(point2d):
+            if inner_contour.point_belongs(point2d, include_edge_points=False):
                 return False
         return True
 
@@ -131,17 +130,21 @@ class Surface2D(volmdlr.core.Primitive2D):
         :return: A random point inside the surface.
         :rtype: :class:`volmdlr.Point2D`
         """
-        valid_point = False
         point_inside_outer_contour = None
-        while not valid_point:
+        center_of_mass = self.center_of_mass()
+        if self.point_belongs(center_of_mass, False):
+            point_inside_outer_contour = center_of_mass
+        if not point_inside_outer_contour:
             point_inside_outer_contour = self.outer_contour.random_point_inside()
+        while True:
             inside_inner_contour = False
             for inner_contour in self.inner_contours:
                 if inner_contour.point_belongs(point_inside_outer_contour):
                     inside_inner_contour = True
             if not inside_inner_contour and \
                     point_inside_outer_contour is not None:
-                valid_point = True
+                break
+            point_inside_outer_contour = self.outer_contour.random_point_inside()
 
         return point_inside_outer_contour
 
@@ -963,7 +966,8 @@ class Surface3D(DessiaObject):
             else:
                 raise AttributeError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
-
+        if not primitives3d:
+            raise ValueError("no primitives to create contour")
         return wires.Contour3D(primitives3d)
 
     def linesegment3d_to_2d(self, linesegment3d):
@@ -1050,6 +1054,19 @@ class Surface3D(DessiaObject):
         """
         proj_point = self.point_projection(point3d)
         return proj_point.point_distance(point3d)
+
+    def edge_intersections(self, edge):
+        """
+        Gets intersections between a Surface 3D, and an edge 3D.
+
+        :param edge: any 3D edge.
+        :return: list of points.
+        """
+        intersections = []
+        method_name = f'{edge.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(self, method_name):
+            intersections = getattr(self, method_name)(edge)
+        return intersections
 
 
 class Plane3D(Surface3D):
@@ -1225,21 +1242,27 @@ class Plane3D(Surface3D):
         intersection_abscissea = - self.frame.w.dot(w_vector) / self.frame.w.dot(u_vector)
         return [line.point1 + intersection_abscissea * u_vector]
 
-    def linesegment_intersections(self, linesegment: edges.LineSegment3D) \
+    def linesegment_intersections(self, linesegment: edges.LineSegment3D, abs_tol: float = 1e-6) \
             -> List[volmdlr.Point3D]:
         """
         Gets the intersections of a plane a line segment 3d.
 
         :param linesegment: other line segment.
+        :param abs_tol: tolerance allowed.
         :return: a list with the intersecting point.
         """
         u_vector = linesegment.end - linesegment.start
         w_vector = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u_vector)
-        if math.isclose(normaldotu, 0, abs_tol=1e-08):
+        if normaldotu == 0.0 or math.isclose(self.frame.w.unit_vector().dot(u_vector.unit_vector()),
+                                           0.0, abs_tol=abs_tol):
             return []
         intersection_abscissea = - self.frame.w.dot(w_vector) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
+            if math.isclose(abs(intersection_abscissea), 0, abs_tol=abs_tol):
+                return [linesegment.start]
+            if math.isclose(intersection_abscissea, 1, abs_tol=abs_tol):
+                return [linesegment.end]
             return []
         return [linesegment.start + intersection_abscissea * u_vector]
 
@@ -1261,6 +1284,24 @@ class Plane3D(Surface3D):
         for inter in fullarc2d_inters_line2d:
             intersections.append(inter.to_3d(fullarc.center, fullarc_plane.frame.u, fullarc_plane.frame.v))
         return intersections
+
+    def arc_intersections(self, arc):
+        """
+        Calculates the intersections between a Plane 3D and an Arc 3D.
+
+        :param arc: arc to verify intersections.
+        :return: list of intersections: List[volmdlr.Point3D].
+        """
+        return self.fullarc_intersections(arc)
+
+    def bsplinecurve_intersections(self, bspline_curve):
+        """
+        Calculates the intersections between a Plane 3D and a Bspline Curve 3D.
+
+        :param bspline_curve: bspline_curve to verify intersections.
+        :return: list of intersections: List[volmdlr.Point3D].
+        """
+        return vm_utils_intersections.get_bsplinecurve_intersections(self, bspline_curve)
 
     def equation_coefficients(self):
         """
@@ -1469,7 +1510,7 @@ class Plane3D(Surface3D):
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
-        Converts a 3D B-Spline in spatial domain intoa 2D B-Spline in parametric domain.
+        Converts a 3D B-Spline in spatial domain into a 2D B-Spline in parametric domain.
 
         :param bspline_curve3d: The B-Spline curve to perform the transformation.
         :type bspline_curve3d: edges.BSplineCurve3D
@@ -1620,7 +1661,29 @@ class PeriodicalSurface(Surface3D):
                     old_innner_contour_positioned = old_innner_contour_positioned.invert()
                     point3 = old_innner_contour_positioned.primitives[0].start
                     point4 = old_innner_contour_positioned.primitives[-1].end
-
+                if not math.isclose(point2.x, point3.x, abs_tol=1e-4) or \
+                    not math.isclose(point4.x, point1.x, abs_tol=1e-4):
+                    ideal_x = []
+                    delta = math.inf
+                    found = False
+                    for x1 in [point2.x, point3.x]:
+                        for x2 in [point4.x, point1.x]:
+                            delta_x = abs(abs(x1 - x2) - volmdlr.TWO_PI)
+                            if delta_x == 0.0:
+                                ideal_x = [x1, x2]
+                                found =True
+                                break
+                            else:
+                                if delta_x < delta:
+                                    delta = delta_x
+                                    ideal_x = [x1, x2]
+                        if found:
+                            break
+                    x1, x2 = ideal_x
+                    point2.x = x1
+                    point3.x = x1
+                    point4.x = x2
+                    point1.x = x2
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = old_outer_contour_positioned.primitives + [closing_linesegment1] + \
@@ -1723,6 +1786,18 @@ class PeriodicalSurface(Surface3D):
                 points = temp_points + points[next_angle_discontinuity_index:]
         return points
 
+    def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start):
+        """"
+        Verifies if arc 3D contains discontinuity and undefined start/end points on parametric domain.
+        """
+        point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
+        discontinuity = arc3d.point_belongs(point_theta_discontinuity) and not \
+            arc3d.is_point_edge_extremity(point_theta_discontinuity)
+
+        undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
+        undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
+        return discontinuity, undefined_start_theta, undefined_end_theta
+
     def linesegment3d_to_2d(self, linesegment3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
@@ -1741,17 +1816,13 @@ class PeriodicalSurface(Surface3D):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        angle3d = arc3d.angle
         point_after_start, point_before_end = self._reference_points(arc3d)
-
-        point_on_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
-        has_angle_discontinuity = arc3d.point_belongs(point_on_discontinuity) and \
-                                  not arc3d.is_point_edge_extremity(point_on_discontinuity)
-        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, angle3d,
-                                                                                 point_after_start.x,
-                                                                                 point_before_end.x,
-                                                                                 has_angle_discontinuity)
-        return [edges.LineSegment2D(start, end, name="arc")]
+        discontinuity, undefined_start_theta, undefined_end_theta = self._helper_arc3d_to_2d_periodicity_verifications(
+            arc3d, start)
+        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(
+            [start, end], [undefined_start_theta, undefined_end_theta],
+            [point_after_start.x, point_before_end.x], discontinuity)
+        return [edges.LineSegment2D(start, end, name="parametric.arc")]
 
     def fullarc3d_to_2d(self, fullarc3d):
         """
@@ -1762,11 +1833,12 @@ class PeriodicalSurface(Surface3D):
 
         point_after_start, point_before_end = self._reference_points(fullarc3d)
 
-        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, volmdlr.TWO_PI,
-                                                                                 point_after_start.x,
-                                                                                 point_before_end.x)
+        discontinuity, undefined_start_theta, undefined_end_theta = self._helper_arc3d_to_2d_periodicity_verifications(
+            fullarc3d, start)
+        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(
+            [start, end], [undefined_start_theta, undefined_end_theta],
+            [point_after_start.x, point_before_end.x], discontinuity)
         theta1, z1 = start
-        # _, z2 = end
         theta3, z3 = point_after_start
 
         if self.frame.w.is_colinear_to(fullarc3d.normal):
@@ -1895,8 +1967,8 @@ class PeriodicalSurface(Surface3D):
         """
         Converts a BREP line segment 2D onto a 3D primitive on the surface.
         """
-        theta1, z1 = linesegment2d.start
-        theta2, z2 = linesegment2d.end
+        theta1, param_z1 = linesegment2d.start
+        theta2, param_z2 = linesegment2d.end
         start3d = self.point2d_to_3d(linesegment2d.start)
         end3d = self.point2d_to_3d(linesegment2d.end)
         if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametic.linesegment":
@@ -1904,16 +1976,16 @@ class PeriodicalSurface(Surface3D):
                 return None
             return [edges.LineSegment3D(start3d, end3d)]
 
-        if math.isclose(z1, z2, abs_tol=1e-4) or linesegment2d.name == "parametric.arc" or \
+        if math.isclose(param_z1, param_z2, abs_tol=1e-4) or linesegment2d.name == "parametric.arc" or \
                 linesegment2d.name == "parametric.fullarc":
             if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
-                return [edges.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
+                return [edges.FullArc3D(center=self.frame.origin + param_z1 * self.frame.w,
                                         start_end=self.point2d_to_3d(linesegment2d.start),
                                         normal=self.frame.w)]
 
             return [edges.Arc3D(
                 self.point2d_to_3d(linesegment2d.start),
-                self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
+                self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), param_z1)),
                 self.point2d_to_3d(linesegment2d.end)
             )]
         if start3d.is_close(end3d):
@@ -2068,7 +2140,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.frame = new_frame
 
     def rectangular_cut(self, theta1: float, theta2: float,
-                        z1: float, z2: float, name: str = ''):
+                        param_z1: float, param_z2: float, name: str = ''):
         """Deprecated method, Use CylindricalFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use CylindricalFace3D from_surface_rectangular_cut method')
 
@@ -2403,6 +2475,22 @@ class ToroidalSurface3D(PeriodicalSurface):
         return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
 
     def to_step(self, current_id):
+        """
+        Converts the object to a STEP representation.
+
+        This method converts the object to a STEP (Standard for the Exchange of Product model data) representation.
+        It first creates a copy of the object's frame using the `volmdlr.Frame3D` constructor. Then, it converts
+        the frame to a STEP representation using the `to_step` method of the `Frame3D` class. The resulting content
+        and updated ID are stored in the `content` variable and the `current_id` variable, respectively. Next,
+        the method constructs a STEP string representing the toroidal surface using the object's attributes and
+        the generated frame ID. The content is updated with the toroidal surface representation. Finally, the
+        updated content and a list containing the updated current ID are returned as a tuple.
+
+        :param current_id: The current ID counter for generating unique STEP entity IDs.
+
+        :return: A tuple containing the STEP representation of the object and the updated current ID.
+        """
+
         frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
                                 self.frame.v)
         content, frame_id = frame.to_step(current_id)
@@ -2490,20 +2578,41 @@ class ToroidalSurface3D(PeriodicalSurface):
         return [edges.BSplineCurve3D.from_points_interpolation(
             points, bspline_curve2d.degree, bspline_curve2d.periodic)]
 
+    def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start):
+        """"
+        Verifies if arc 3D contains discontinuity and undefined start/end points on parametric domain.
+        """
+
+        point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
+        theta_discontinuity = arc3d.point_belongs(point_theta_discontinuity) and \
+                                  not arc3d.is_point_edge_extremity(point_theta_discontinuity)
+        point_phi_discontinuity = self.point2d_to_3d(volmdlr.Point2D(start.x, math.pi))
+        phi_discontinuity = arc3d.point_belongs(point_phi_discontinuity) and \
+                                  not arc3d.is_point_edge_extremity(point_phi_discontinuity)
+        undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
+        undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
+        undefined_start_phi = arc3d.start.is_close(point_phi_discontinuity)
+        undefined_end_phi = arc3d.end.is_close(point_phi_discontinuity)
+
+        return theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta,\
+            undefined_start_phi, undefined_end_phi
+
     def fullarc3d_to_2d(self, fullarc3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         start = self.point3d_to_2d(fullarc3d.start)
         end = self.point3d_to_2d(fullarc3d.end)
-
-        angle3d = fullarc3d.angle
         point_after_start, point_before_end = self._reference_points(fullarc3d)
 
-        start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(start, end, angle3d,
-                                                                               [point_after_start, point_before_end],
-                                                                               [self.x_periodicity,
-                                                                                self.y_periodicity])
+        theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
+            undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(
+            fullarc3d, start)
+        start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(
+            [start, end],
+            [undefined_start_theta, undefined_end_theta, undefined_start_phi, undefined_end_phi],
+            [point_after_start, point_before_end],
+            [theta_discontinuity, phi_discontinuity])
         theta1, phi1 = start
         # theta2, phi2 = end
         theta3, phi3 = point_after_start
@@ -2529,19 +2638,14 @@ class ToroidalSurface3D(PeriodicalSurface):
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
 
-        angle3d = arc3d.angle
         point_after_start, point_before_end = self._reference_points(arc3d)
-        point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
-        has_theta_discontinuity = arc3d.point_belongs(point_theta_discontinuity) and \
-                                  not arc3d.is_point_edge_extremity(point_theta_discontinuity)
-        point_phi_discontinuity = self.point2d_to_3d(volmdlr.Point2D(start.x, math.pi))
-        has_phi_discontinuity = arc3d.point_belongs(point_phi_discontinuity) and \
-                                  not arc3d.is_point_edge_extremity(point_phi_discontinuity)
-        start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(start, end, angle3d,
-                                                                               [point_after_start, point_before_end],
-                                                                               [self.x_periodicity,
-                                                                                self.y_periodicity],
-                                                                              [has_theta_discontinuity, has_phi_discontinuity])
+        theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
+            undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(arc3d, start)
+        start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(
+            [start, end],
+            [undefined_start_theta, undefined_end_theta, undefined_start_phi, undefined_end_phi],
+            [point_after_start, point_before_end],
+            [theta_discontinuity, phi_discontinuity])
 
         return [edges.LineSegment2D(start, end)]
 
@@ -2833,7 +2937,7 @@ class ConicalSurface3D(PeriodicalSurface):
         return volmdlr.Point2D(theta, z)
 
     def rectangular_cut(self, theta1: float, theta2: float,
-                        z1: float, z2: float, name: str = ''):
+                        param_z1: float, param_z2: float, name: str = ''):
         """Deprecated method, Use ConicalFace3D from_surface_rectangular_cut method."""
         raise AttributeError("ConicalSurface3D.rectangular_cut is deprecated."
                              "Use the class_method from_surface_rectangular_cut in ConicalFace3D instead")
@@ -2862,27 +2966,24 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         if linesegment2d.name == "construction":
             return None
-        theta1, z1 = linesegment2d.start
-        theta2, z2 = linesegment2d.end
+        theta1, param_z1 = linesegment2d.start
+        theta2, param_z2 = linesegment2d.end
 
         if math.isclose(theta1, theta2, abs_tol=1e-4):
-            return [edges.LineSegment3D(
-                self.point2d_to_3d(linesegment2d.start),
-                self.point2d_to_3d(linesegment2d.end),
-            )]
-        if math.isclose(z1, z2, abs_tol=1e-4) and math.isclose(z1, 0.,
-                                                               abs_tol=1e-6):
+            return [edges.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
+                                        self.point2d_to_3d(linesegment2d.end))]
+        if math.isclose(param_z1, param_z2, abs_tol=1e-4) and math.isclose(param_z1, 0., abs_tol=1e-6):
             return []
-        if math.isclose(z1, z2, abs_tol=1e-4):
+        if math.isclose(param_z1, param_z2, abs_tol=1e-4):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
-                return [edges.FullArc3D(center=self.frame.origin + z1 * self.frame.w,
+                return [edges.FullArc3D(center=self.frame.origin + param_z1 * self.frame.w,
                                         start_end=self.point2d_to_3d(linesegment2d.start),
                                         normal=self.frame.w)]
 
             return [edges.Arc3D(
                 self.point2d_to_3d(linesegment2d.start),
                 self.point2d_to_3d(
-                    volmdlr.Point2D(0.5 * (theta1 + theta2), z1)),
+                    volmdlr.Point2D(0.5 * (theta1 + theta2), param_z1)),
                 self.point2d_to_3d(linesegment2d.end))
             ]
         raise NotImplementedError('Ellipse?')
@@ -3234,11 +3335,10 @@ class SphericalSurface3D(PeriodicalSurface):
                 and math.isclose(theta3, theta_i, abs_tol=1e-2) and math.isclose(theta4, theta_i, abs_tol=1e-2):
             theta2 = theta_i
             end = volmdlr.Point2D(theta2, phi2)
+        discontinuity, _,_ = self._helper_arc3d_to_2d_periodicity_verifications(arc3d, start)
 
-        start, end = vm_parametric.arc3d_to_spherical_coordinates_verification(start, end, arc3d.angle,
-                                                                               [point_after_start, point_before_end],
-                                                                               [self.x_periodicity,
-                                                                                self.y_periodicity])
+        start, end = vm_parametric.arc3d_to_spherical_coordinates_verification(
+            [start, end], [point_after_start, point_before_end], discontinuity)
         return start, end
 
     def edge_passes_on_singularity_point(self, edge):
@@ -3276,7 +3376,8 @@ class SphericalSurface3D(PeriodicalSurface):
         theta2, phi2 = end
         if arc3d.is_point_edge_extremity(point_singularity):
             return [edges.LineSegment2D(start, end)]
-        if math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
+        primitives = []
+        if math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-2):
             if theta1 == math.pi and theta2 != math.pi:
                 theta1 = -math.pi
             if theta2 == math.pi and theta1 != math.pi:
@@ -3288,6 +3389,8 @@ class SphericalSurface3D(PeriodicalSurface):
                 edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
                 ]
             return primitives
+        warnings.warn("Could not find BREP of the Arc3D on the sphere domain")
+        return None
 
     def arc3d_to_2d_with_singularity(self, arc3d, start, end, singularity_points):
         """
@@ -3744,6 +3847,78 @@ class SphericalSurface3D(PeriodicalSurface):
         start_end = circle_center + plane3d.frame.u * circle_radius
         return [edges.FullArc3D(circle_center, start_end, circle_normal)]
 
+    def line_intersections(self, line3d: edges.Line3D):
+        """
+        Calculates the intersection points between a 3D line and a spherical surface.
+
+        The method calculates the intersection points between a 3D line and a sphere using
+        the equation of the line and the equation of the sphere. It returns a list of intersection
+        points, which can be empty if there are no intersections. The intersection points are
+        represented as 3D points using the `volmdlr.Point3D` class.
+
+        :param line3d: The 3D line object to intersect with the sphere.
+        :type line3d:edges.Line3D
+        :return: A list of intersection points between the line and the sphere. The list may be empty if there
+        are no intersections.
+        :rtype: List[volmdlr.Point3D]
+
+        :Example:
+        >>> from volmdlr import Point3D, edges, surfaces, OXYZ
+        >>> spherical_surface3d = SphericalSurface3D(OXYZ, 1)
+        >>> line2 = edges.Line3D(Point3D(0, 1, -0.5), Point3D(0, 1, 0.5))
+        >>> line_intersections2 = spherical_surface3d.line_intersections(line2) #returns [Point3D(0.0, 1.0, 0.0)]
+        """
+        line_direction_vector = line3d.direction_vector()
+        vector_linept1_center = self.frame.origin - line3d.point1
+        vector_linept1_center = vector_linept1_center.to_vector()
+        a_param = line_direction_vector[0]**2 + line_direction_vector[1]**2 + line_direction_vector[2]**2
+        b_param = -2 * (line_direction_vector[0]*vector_linept1_center[0] +
+                        line_direction_vector[1]*vector_linept1_center[1] +
+                        line_direction_vector[2]*vector_linept1_center[2])
+        c_param = (vector_linept1_center[0]**2 + vector_linept1_center[1]**2 +
+                   vector_linept1_center[2]**2 - self.radius**2)
+        b2_minus4ac = b_param**2 - 4*a_param*c_param
+        if math.isclose(b2_minus4ac, 0, abs_tol=1e-8):
+            t_param = -b_param / (2 * a_param)
+            return [line3d.point1 + line_direction_vector * t_param]
+        if b2_minus4ac < 0:
+            return []
+        t_param1 = (-b_param + math.sqrt(b2_minus4ac)) / (2*a_param)
+        t_param2 = (-b_param - math.sqrt(b2_minus4ac)) / (2*a_param)
+        return line3d.point1 + line_direction_vector * t_param1, line3d.point1 + line_direction_vector * t_param2
+
+    def linesegment_intersections(self, linesegment3d: edges.LineSegment3D):
+        """
+        Calculates the intersection points between a 3D line segment and a spherical surface.
+
+        The method calculates the intersection points between a 3D line segment and a sphere by first
+        finding the intersection points between the infinite line containing the line segment and the sphere,
+        and then filtering out the points that are not within the line segment. It returns a list of intersection
+        points, which can be empty if there are no intersections. The intersection points are represented as
+        3D points using the `volmdlr.Point3D` class.
+        Note: The method assumes that the line segment and the sphere are in the same coordinate system.
+
+        :param linesegment3d: The 3D line segment object to intersect with the sphere.
+        :type linesegment3d: edges.LineSegment3D.
+        :return: A list of intersection points between the line segment and the sphere.
+        The list may be empty if there are no intersections.
+        :rtype: List[volmdlr.Point3D]:
+
+        :Example:
+        >>> from volmdlr import Point3D, edges, surfaces, OXYZ
+        >>> spherical_surface3d = SphericalSurface3D(OXYZ, 1)
+        >>> linesegment2 = edges.LineSegment3D(Point3D(-0.8, -0.8, -0.8), Point3D(0.8, 0.8, 0.8))
+        >>> linesegment2_intersections = spherical_surface3d.linesegment_intersections(linesegment2)
+            '[Point3D: [0.5773502691896257, 0.5773502691896257, 0.5773502691896257],
+              Point3D: [-0.5773502691896257, -0.5773502691896257, -0.5773502691896257]]'
+        """
+        line_intersections = self.line_intersections(linesegment3d.to_line())
+        intersections = []
+        for intersection in line_intersections:
+            if linesegment3d.point_belongs(intersection):
+                intersections.append(intersection)
+        return intersections
+
 
 class RuledSurface3D(Surface3D):
     """
@@ -3926,6 +4101,25 @@ class ExtrusionSurface3D(Surface3D):
         return [bsplinecurve2d]
 
     def fullarcellipse3d_to_2d(self, fullarcellipse3d):
+        """
+        Converts a 3D full elliptical arc to a 2D line segment in the current plane.
+
+        This method converts a 3D full elliptical arc to a 2D line segment in the current plane.
+        It first calculates the length of the arc using the `length` method of the `fullarcellipse3d`
+        object. Then, it converts the start and end points of the arc to 2D points using the `point3d_to_2d`
+        method. Additionally, it calculates a point on the arc at a small abscissa value (0.01 * length)
+        and converts it to a 2D point. Based on the relative position of this point, the method determines
+        the start and end points of the line segment in 2D. If the abscissa point is closer to the start
+        point, the line segment starts from (0, start.y) and ends at (1, end.y). If the abscissa point is
+        closer to the end point, the line segment starts from (1, start.y) and ends at (0, end.y). If the
+        abscissa point lies exactly at the midpoint of the arc, a NotImplementedError is raised. The resulting
+        line segment is returned as a list.
+
+        :param fullarcellipse3d: The 3D full elliptical arc object to convert.
+        :return: A list containing a 2D line segment representing the converted arc.
+        :raises: NotImplementedError: If the abscissa point lies exactly at the midpoint of the arc.
+        """
+
         length = fullarcellipse3d.length()
         start = self.point3d_to_2d(fullarcellipse3d.start)
         end = self.point3d_to_2d(fullarcellipse3d.end)
@@ -3947,12 +4141,12 @@ class ExtrusionSurface3D(Surface3D):
         """
         start3d = self.point2d_to_3d(linesegment2d.start)
         end3d = self.point2d_to_3d(linesegment2d.end)
-        u1, z1 = linesegment2d.start
-        u2, z2 = linesegment2d.end
+        u1, param_z1 = linesegment2d.start
+        u2, param_z2 = linesegment2d.end
         if math.isclose(u1, u2, abs_tol=1e-4):
             return [edges.LineSegment3D(start3d, end3d)]
-        if math.isclose(z1, z2, abs_tol=1e-6):
-            primitive = self.edge.translation(self.direction * (z1 + z2) * 0.5)
+        if math.isclose(param_z1, param_z2, abs_tol=1e-6):
+            primitive = self.edge.translation(self.direction * (param_z1 + param_z2) * 0.5)
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
                 if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-4):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
@@ -4119,21 +4313,21 @@ class RevolutionSurface3D(PeriodicalSurface):
                 interior = self.point3d_to_2d(arc3d.interior)
                 end = volmdlr.Point2D(interior.x, end.y)
         if math.isclose(start.y, end.y, rel_tol=0.01):
-            angle3d = arc3d.angle
             point_after_start, point_before_end = self._reference_points(arc3d)
-            point_on_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
-            has_angle_discontinuity = arc3d.point_belongs(point_on_discontinuity) and \
-                                      not arc3d.is_point_edge_extremity(point_on_discontinuity)
-            start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, angle3d,
-                                                                                     point_after_start.x,
-                                                                                     point_before_end.x, has_angle_discontinuity)
+            point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
+            discontinuity = arc3d.point_belongs(point_theta_discontinuity) and not \
+                arc3d.is_point_edge_extremity(point_theta_discontinuity)
+
+            undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
+            undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
+            start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(
+                [start, end], [undefined_start_theta, undefined_end_theta],
+                [point_after_start.x, point_before_end.x], discontinuity)
         if math.isclose(start.y, end.y, rel_tol=0.01) or math.isclose(start.x, end.x, rel_tol=0.01):
             return [edges.LineSegment2D(start, end, name="arc")]
         n = 10
         degree = 3
         points = [self.point3d_to_2d(point3d) for point3d in arc3d.discretization_points(number_points=n)]
-        # points[0] = start
-        # points[-1] = end
         periodic = points[0].is_close(points[-1])
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree, periodic)]
 
@@ -4146,7 +4340,7 @@ class RevolutionSurface3D(PeriodicalSurface):
 
         point_after_start, point_before_end = self._reference_points(fullarc3d)
 
-        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end, volmdlr.TWO_PI,
+        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end,
                                                                                  point_after_start.x,
                                                                                  point_before_end.x)
         theta1, z1 = start
@@ -4411,39 +4605,31 @@ class BSplineSurface3D(Surface3D):
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @property
-    def surface_curves(self, extract_u: bool = True, extract_v: bool = True):
+    def surface_curves(self):
         """
         Extracts curves from a surface.
-
-        :param extract_u: If True, extract the curves in u direction
-        :param extract_v: If True, extract the curves in v direction
         """
         if not self._surface_curves:
-            self._surface_curves = self.get_surface_curves(extract_u, extract_v)
+            self._surface_curves = self.get_surface_curves()
         return self._surface_curves
 
-    def get_surface_curves(self, extract_u, extract_v):
+    def get_surface_curves(self):
         """
         Converts the surface curves from geomdl curve to volmdlr.
-
-        :param extract_u: If True, extract the curves in u direction.
-        :param extract_v: If True, extract the curves in v direction.
         """
         # v-direction
         crvlist_v = []
-        if extract_v:
-            v_curves = self.curves["v"]
-            for curve in v_curves:
-                crvlist_v.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+        v_curves = self.curves["v"]
+        for curve in v_curves:
+            crvlist_v.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
         # u-direction
         crvlist_u = []
-        if extract_u:
-            u_curves = self.curves["u"]
-            for curve in u_curves:
-                crvlist_u.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+        u_curves = self.curves["u"]
+        for curve in u_curves:
+            crvlist_u.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
 
         # Return shapes as a dict object
-        return dict(u=crvlist_u, v=crvlist_v)
+        return {"u": crvlist_u, "v": crvlist_v}
 
     def control_points_matrix(self, coordinates):
         """
@@ -4916,8 +5102,12 @@ class BSplineSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         number_points = max(self.nb_u, self.nb_v)
-        degree = max(self.degree_u, self.degree_v)
-        points = [self.point3d_to_2d(point3d) for point3d in arc3d.discretization_points(number_points=number_points)]
+        degree = min(self.degree_u, self.degree_v)
+        points = []
+        for point3d in arc3d.discretization_points(number_points=number_points):
+            point2d = self.point3d_to_2d(point3d)
+            if not volmdlr.core.point_in_list(point2d, points):
+                points.append(point2d)
         start = points[0]
         end = points[-1]
         min_bound_x, max_bound_x = self.surface.domain[0]
@@ -4950,6 +5140,8 @@ class BSplineSurface3D(Surface3D):
                 break
         if flag:
             return [linesegment]
+        if degree > len(points) - 1:
+            degree = len(points) - 1
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree, name="parametric.arc")]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
@@ -5129,102 +5321,6 @@ class BSplineSurface3D(Surface3D):
 
         :return: A planar surface if possible, otherwise, returns self.
         """
-        if self.x_periodicity and self.y_periodicity:
-            raise NotImplementedError
-        elif self.x_periodicity:
-            curves = self.surface_curves
-            u_curves = curves["u"]
-            u0_simplified_curve = u_curves[0].simplify
-            if isinstance(u0_simplified_curve, (edges.FullArc3D)):
-                cylindrical_check = all(isinstance(curve.simplify, edges.FullArc3D) and
-                                        math.isclose(u0_simplified_curve.radius, curve.simplify.radius, abs_tol=1e-6)
-                                        for curve in u_curves[1:])
-                if cylindrical_check:
-                    return CylindricalSurface3D(u0_simplified_curve.frame, u0_simplified_curve.radius, self.name)
-                v_curves = curves["v"]
-                are_all_v_curves_line_segments = all(isinstance(curve.simplify, edges.LineSegment3D)
-                                                     for curve in v_curves[1:])
-                if are_all_v_curves_line_segments:
-                    normal_line = edges.Line3D(u0_simplified_curve.frame.origin,
-                                             u0_simplified_curve.frame.origin + u0_simplified_curve.normal)
-                    v0_simplified_curve = v_curves[0].simplify
-                    line = v0_simplified_curve.to_line()
-                    intersection = normal_line.intersection(line)
-                    conical_check = False
-                    if intersection:
-                        conical_check = all(normal_line.intersection(curve.simplify.to_line()).is_close(intersection)
-                                        for curve in v_curves[1:])
-                    if conical_check:
-                        # make sure that the normal is in the right sense
-                        new_normal = u0_simplified_curve.center - intersection
-                        new_normal.normalize()
-                        frame = volmdlr.Frame3D(intersection, u0_simplified_curve.frame.u,
-                                                new_normal.cross(u0_simplified_curve.frame.u),
-                                                new_normal)
-                        _, _, z = frame.global_to_local_coordinates(u0_simplified_curve.center)
-                        semi_angle = math.atan(u0_simplified_curve.radius / z)
-                        return ConicalSurface3D(frame, semi_angle, self.name)
-                return self
-        elif self.y_periodicity:
-            curves = self.surface_curves
-            v_curves = curves["v"]
-            v0_simplified_curve = v_curves[0].simplify
-            if isinstance(v0_simplified_curve, edges.FullArc3D):
-                all_fullarc = all(isinstance(curve.simplify, edges.FullArc3D)
-                                  for curve in v_curves[1:])
-                if all_fullarc:
-                    cylindrical_check = all(math.isclose(v0_simplified_curve.radius, curve.simplify.radius)
-                                            for curve in v_curves[1:]) and all_fullarc
-                    if cylindrical_check:
-                        return CylindricalSurface3D(v0_simplified_curve.frame, v0_simplified_curve.radius, self.name)
-                u_curves = curves["u"]
-                are_all_u_curves_line_segments = all(isinstance(curve.simplify, edges.LineSegment3D)
-                                                     for curve in u_curves[1:])
-                if are_all_u_curves_line_segments:
-                    normal_line = edges.Line3D(v0_simplified_curve.frame.origin,
-                                             v0_simplified_curve.frame.origin + v0_simplified_curve.normal)
-                    u0_simplified_curve = u_curves[0].simplify
-                    line = u0_simplified_curve.to_line()
-                    intersection = normal_line.intersection(line)
-                    conical_check = False
-                    if intersection:
-                        conical_check = all(normal_line.intersection(curve.simplify.to_line()).is_close(intersection)
-                                        for curve in u_curves[1:])
-                    if conical_check:
-                        # make sure that the normal is in the right sense
-                        new_normal = v0_simplified_curve.center - intersection
-                        new_normal.normalize()
-                        frame = volmdlr.Frame3D(intersection, v0_simplified_curve.frame.u,
-                                                new_normal.cross(v0_simplified_curve.frame.u),
-                                                new_normal)
-                        _, _, z = frame.global_to_local_coordinates(v0_simplified_curve.center)
-                        semi_angle = math.atan(v0_simplified_curve.radius / z)
-                        return ConicalSurface3D(frame, semi_angle, self.name)
-                return self
-        curves = self.surface_curves
-        u_curves = curves["u"]
-        v_curves = curves["v"]
-        u0_simplified_curve = u_curves[0].simplify
-        v0_simplified_curve = v_curves[0].simplify
-        cylindrical_check = False
-        if isinstance(u0_simplified_curve, edges.Arc3D):
-            cylindrical_check = all(isinstance(curve.simplify, edges.Arc3D) and
-                                    math.isclose(u0_simplified_curve.radius, curve.simplify.radius, abs_tol=1e-4)
-                                    for curve in u_curves[1:]) and \
-                                all(isinstance(curve.simplify, edges.LineSegment3D)
-                                    for curve in v_curves)
-            frame = u0_simplified_curve.frame
-            radius = u0_simplified_curve.radius
-        elif isinstance(v0_simplified_curve, edges.Arc3D):
-            cylindrical_check = all(isinstance(curve.simplify, edges.Arc3D) and
-                                    math.isclose(v0_simplified_curve.radius, curve.simplify.radius, abs_tol=1e-4)
-                                    for curve in v_curves[1:]) and \
-                                all(isinstance(curve.simplify, edges.LineSegment3D)
-                                    for curve in u_curves)
-            frame = v0_simplified_curve.frame
-            radius = v0_simplified_curve.radius
-        if cylindrical_check:
-            return CylindricalSurface3D(frame, radius, self.name)
         points = [self.control_points[0]]
         vector_list = []
         for point in self.control_points[1:]:
@@ -5297,13 +5393,13 @@ class BSplineSurface3D(Surface3D):
         bsplinesurface = cls(degree_u, degree_v, control_points, nb_u, nb_v,
                              u_multiplicities, v_multiplicities, u_knots,
                              v_knots, weight_data, name)
-        # if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
-        #     bsplinesurface = bsplinesurface.simplify_surface()
+        if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
+            bsplinesurface = bsplinesurface.simplify_surface()
         # if u_closed:
         #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
         # if v_closed:
         #     bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
-        return bsplinesurface.simplify_surface()
+        return bsplinesurface
 
     def to_step(self, current_id):
         content = ''
@@ -6574,10 +6670,10 @@ class BSplineSurface3D(Surface3D):
         """
         if self.surface.rational:
             # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
-            derivatives = volmdlr.bspline_compiled.rational_derivatives(self.surface.data, (u, v), order)
+            derivatives = volmdlr.rational_derivatives(self.surface.data, (u, v), order)
         else:
             # derivatives = self._derivatives(self.surface.data, (u, v), order)
-            derivatives = volmdlr.bspline_compiled.derivatives(self.surface.data, (u, v), order)
+            derivatives = volmdlr.derivatives(self.surface.data, (u, v), order)
         for i in range(order + 1):
             for j in range(order + 1):
                 derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])

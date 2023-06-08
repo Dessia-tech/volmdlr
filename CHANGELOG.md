@@ -6,7 +6,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## v0.11.0 [future]
+## v0.12.0 [future]
+
+### New Features
+- New module: cad_simplification - OctreeBlockSimplify, TrippleExtrusionSimplify
+- shells.py : function to performe union operations for a given list of shells.
+- ClosedShell3D: is_face_intersecting, is_intersecting_with
+- BoundingBox: get_points_inside_bbox, size
+- Vector3D: unit_vector
+- Face3D: split_inner_contour_intersecting_cutting_contours
+- Shell3D: get_ray_casting_line_segment
+- WireMixin: get_connected_wire, is_sharing_primitives_with
+- OpenShell3D: faces_graph
+- Plane3D: arc_intersections, bsplinecurve_intersections
+- common_operations: split_wire_by_plane
+- SphericalSurface3D: line_intersections, linesegment_intersections.
+- Sweep with muitiform profile contour.
+
+### Fixed
+- ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
+- ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
+- BSplineFace3D: neutral_fiber
+- surfaces.Plane3D: linesegment_intersections
+
+### Refactor
+- ClosedShell3D: point_belongs, get_non_intersecting_faces
+- BoundingBox: bbox_intersection
+- Face3D: get_face_cutting_contours
+- parametric.py: fix numerical instability in some functions used in Arc3D to parametric surface domain transformation.
+- intersections: get_bsplinecurve_intersections generalization, so it can also be used
+to calculate intersections between a plane 3d and bsplinecurve3d.
+
+### Changed
+- OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
+
+### Unittests
+- FullArc2D: split_between_two_points
+- Face3D: set_operations_new_faces
+- ClosedShell3D: point_belongs
+- Plane3D: arc_intersections, bsplinecurve_intersections
+- common_operations: split_wire_by_plane
+- SphericalSurface3D: line_intersections, linesegment_intersections.
+
+## v0.11.0 [unreleased]
 
 
 ### New Features
@@ -40,8 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Edge: direction_independent_is_close
 - Arcellipse2D, 3D: complementary, translation
 - Arcellipse2D, 3D: complementary
-- Face3D: is_linesegment_crossing
-- BSplineFace3D: linesegment_intersections
+- Face3D: is_linesegment_crossing, linesegment_intersections_approximation.
 - Assembly: define a volmdlr Assembly object.
 - Contour2D: copy
 - LineSegment2D: copy
@@ -49,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D: split, point_at_abscissa
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
+- CylindricalFace3D, ConicalFace3D, ToroidalFace3D, BSplineFace3D: neutral_fiber
 - VolumeModel: get_shells
 - WireMixin: wires_from_edges
 - DisplayMesh3D: triangulation_faces
@@ -79,17 +121,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenShell3D: get_geo_lines (use primitive.is_close)
 - Basis3D: normalize
 - Contour3D: from_step removes repeated edges from primitives list
-- Face3D: add fixes to divide_face
+- Face3D: add fixes to divide_face.
 - ExtrusionSurface3D: linesegment2d_to_3d.
 - BSplineSurface3D: ban useless attr in serialization
 - Surface3D: repair_primitive_periodicity
 - utils.parametric: fix contour2d_healing
 - BSplineSurface3D: ban useless attr in serialization
 - BSplineCurve: simplify
+- SphericalSurface3D: contour3d_to_2d
 - WireMixin: to_wire_with_linesegments (use new methods, for 2D and 3D)
 - ArcEllipse2d: point_belongs, abscissa, init.
+- Face3D: face_inside - now considers inners_contours
 - BoundingBox: point_belongs now considers bounds.
 - ContourMixin: delete_shared_contour_section
+- PlaneFace3D: merge_faces
+- Contour2D: divide
+
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -112,6 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc: point_distance
 - BSplineCurve: is_close
 - CompositePrimitive3D: babylon_points
+- WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
 - ContourMixin: contours_from_edges
 - ExtrusionSurface3D: simplify bsplinecurve3d_to_2d method
 
@@ -136,10 +184,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: point_projection
 - ClosedShel3D: cut_by_plane
 - Arc3D.minimum_distance_points_line
-- New unittests for plane3d
+- New unittests for plane3d.
 - ClosedShel3D: intersection
 - Arcellipse2D: complementary
 - Contour2D: contours_from_edges.
+- PlaneFace3D: merge_faces
+- Contour2D: divide.
+- BSplineFace3D: test_linesegment_intersections_approximation.
 
 v0.10.0 [Released 20/04/2023]
 
@@ -156,6 +207,8 @@ v0.10.0 [Released 20/04/2023]
 * Contour3D: hash
 * LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
 * Contour2D: closest_point_to_point2, get_furthest_point_to_point2
+* Block: octree, quadtree, subdivide_block
+
 ### Fixed
 * Bspline in sweep
 * Plane3D: plane_intersections

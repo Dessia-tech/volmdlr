@@ -222,6 +222,34 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False):
                 inside = not inside
     return inside
 
+
+# =============================================================================
+def bbox_is_intersecting(bbox1, bbox2, tol):
+    """Verifies if the two bouding boxes are intersecting, or touching."""
+    cdef float x1_min, x1_max, y1_min, y1_max, z1_min, z1_max, x2_min, x2_max, y2_min, y2_max, z2_min, z2_max
+    x1_min = bbox1.xmin - tol
+    x1_max = bbox1.xmax + tol
+    y1_min = bbox1.ymin - tol
+    y1_max = bbox1.ymax + tol
+    z1_min = bbox1.zmin - tol
+    z1_max = bbox1.zmax + tol
+
+    x2_min = bbox2.xmin - tol
+    x2_max = bbox2.xmax + tol
+    y2_min = bbox2.ymin - tol
+    y2_max = bbox2.ymax + tol
+    z2_min = bbox2.zmin - tol
+    z2_max = bbox2.zmax + tol
+
+    # Check for non-intersection cases
+    if (x1_max < x2_min or x1_min > x2_max or
+            y1_max < y2_min or y1_min > y2_max or
+            z1_max < z2_min or z1_min > z2_max):
+        return False
+
+    return True
+
+
 # =============================================================================
 
 
@@ -315,7 +343,7 @@ class Vector(DessiaObject):
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
+    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-6):
         """
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.
@@ -1457,6 +1485,13 @@ class Vector3D(Vector):
         self.x /= n
         self.y /= n
         self.z /= n
+
+    def unit_vector(self):
+        """Calculates the unit vector."""
+        n = self.norm()
+        if n == 0:
+            raise ZeroDivisionError
+        return Vector3D(self.x / n, self.y / n, self.z / n)
 
     def point_distance(self, point2: "Vector3D") -> float:
         """
@@ -3659,19 +3694,21 @@ class Frame3D(Basis3D):
         :rtype: :class:`volmdlr.Frame3D`
         """
         origin = object_dict[arguments[1]]
-        if arguments[2] == "$":
-            u = None
+        if arguments[2] == "$" and arguments[3] == "$":
+            u = Z3D
+            v = X3D
+        elif arguments[2] == "$":
+            frame = cls.from_point_and_vector(origin, object_dict[arguments[3]], main_axis=X3D)
+            u = frame.u
+            v = frame.v
+        elif arguments[3] == "$":
+            frame = cls.from_point_and_vector(origin, object_dict[arguments[2]], main_axis=X3D)
+            u = frame.u
+            v = frame.v
         else:
             u = object_dict[arguments[2]]
-        if arguments[3] == "$":
-            v = None
-        else:
             v = object_dict[arguments[3]]
-        if u is None or v is None:
-            w = None
-        else:
-            w = u.cross(v)
-
+        w = u.cross(v)
         return cls(origin, u, v, w, arguments[0][1:-1])
 
     @classmethod

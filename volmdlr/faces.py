@@ -61,6 +61,8 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         Tells you if a point is on the 3D face and inside its contour.
         """
+        if not self.bounding_box.point_belongs(point3d):
+            return False
         point2d = self.surface3d.point3d_to_2d(point3d)
         check_point3d = self.surface3d.point2d_to_3d(point2d)
         if check_point3d.point_distance(point3d) > tol:
@@ -401,7 +403,14 @@ class Face3D(volmdlr.core.Primitive3D):
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
             face2_contour2d = face2.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
-            if self_contour2d.is_inside(face2_contour2d, ):
+            if self_contour2d.is_inside(face2_contour2d):
+                if self_contour2d.is_inside(face2_contour2d):
+                    for inner_contour in self.inner_contours3d:
+                        inner_contour2d = inner_contour.to_2d(
+                            self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
+                        if inner_contour2d.is_inside(face2_contour2d) or inner_contour2d.is_superposing(
+                                face2_contour2d):
+                            return False
                 return True
             if self_contour2d.is_superposing(face2_contour2d):
                 return True
@@ -437,19 +446,13 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
         linesegment_intersections = []
-        if not self.bounding_box.bbox_intersection(linesegment.bounding_box):
+        if not self.bounding_box.is_intersecting(linesegment.bounding_box):
             return []
         if not hasattr(self.surface3d, 'linesegment_intersections'):
             return self.linesegment_intersections_approximation(linesegment)
         for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 linesegment_intersections.append(intersection)
-        if not linesegment_intersections:
-            for prim in self.outer_contour3d.primitives:
-                intersections = prim.linesegment_intersections(linesegment)
-                for intersection in intersections:
-                    if intersection not in linesegment_intersections:
-                        linesegment_intersections.append(intersection)
         return linesegment_intersections
 
     def fullarc_intersections(self, fullarc: vme.FullArc3D) -> List[volmdlr.Point3D]:
@@ -560,11 +563,11 @@ class Face3D(volmdlr.core.Primitive3D):
 
         lines = self.geo_lines()
 
-        with open(file_name + '.geo', 'w', encoding="utf-8") as f:
+        with open(file_name + '.geo', 'w', encoding="utf-8") as file:
             for line in lines:
-                f.write(line)
-                f.write('\n')
-        f.close()
+                file.write(line)
+                file.write('\n')
+        file.close()
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
         """
@@ -598,8 +601,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         if list_coincident_faces is None:
             list_coincident_faces = []
-        if (self.bounding_box.bbox_intersection(face2.bounding_box) or
-            self.bounding_box.distance_to_bbox(face2.bounding_box) <= tol) and \
+        if self.bounding_box.is_intersecting(face2.bounding_box, tol) and \
                 (self, face2) not in list_coincident_faces:
 
             edge_intersections = []
@@ -639,8 +641,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
         bbox1 = self.bounding_box
         bbox2 = face2.bounding_box
-        if not bbox1.bbox_intersection(bbox2) and \
-                bbox1.distance_to_bbox(bbox2) >= tol:
+        if not bbox1.is_intersecting(bbox2, tol):
             return []
         if self.face_inside(face2) or face2.face_inside(self):
             return []
@@ -665,6 +666,33 @@ class Face3D(volmdlr.core.Primitive3D):
             return [self_copy]
         return self_copy.divide_face(list_cutting_contours)
 
+    def split_inner_contour_intersecting_cutting_contours(self, list_cutting_contours):
+        """
+        Given a list contours cutting the face, it calculates inner contours intersections with these contours.
+
+        Then, these inner contours were split at the found intrsecting points.
+        :param list_cutting_contours: list of contours cutting face.
+        :return:
+        """
+        list_split_inner_contours = []
+        for inner_contour in self.surface2d.inner_contours:
+            list_intersecting_points_with_inner_contour = []
+            for cutting_contour in list_cutting_contours:
+                contour_intersection_points = inner_contour.intersection_points(cutting_contour)
+                if not contour_intersection_points:
+                    continue
+                list_intersecting_points_with_inner_contour.extend(contour_intersection_points)
+            inner_contour_intersections_with_outer_contour = inner_contour.intersection_points(
+                self.surface2d.outer_contour)
+            if list_intersecting_points_with_inner_contour and inner_contour_intersections_with_outer_contour:
+                list_intersecting_points_with_inner_contour.extend(inner_contour_intersections_with_outer_contour)
+            sorted_intersections_points_along_inner_contour = inner_contour.sort_points_along_wire(
+                list_intersecting_points_with_inner_contour)
+            if sorted_intersections_points_along_inner_contour:
+                list_split_inner_contours.extend(inner_contour.split_with_sorted_points(
+                    sorted_intersections_points_along_inner_contour))
+        return list_split_inner_contours
+
     def get_face_cutting_contours(self, dict_intersecting_combinations):
         """
         Get all contours cutting the face, resulting from multiple faces intersections.
@@ -677,24 +705,64 @@ class Face3D(volmdlr.core.Primitive3D):
         if not face_intersecting_primitives2d:
             return []
         list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
-        if self.surface2d.inner_contours:
-            valid_cutting_contours = []
-            connectig_to_outer_contour = []
-            for cutting_contour in list_cutting_contours:
+
+        if not self.surface2d.inner_contours:
+            return list_cutting_contours
+        list_split_inner_contours = self.split_inner_contour_intersecting_cutting_contours(list_cutting_contours)
+
+        valid_cutting_contours = []
+
+        # remove split_inner_contour connected to a cutting_contour at two points.
+        connected_at_two_ends = []
+        for cutting_contour in list_cutting_contours:
+            for split_contour in list_split_inner_contours:
+                if split_contour.point_over_wire(cutting_contour.primitives[0].start) and \
+                        split_contour.point_over_wire(cutting_contour.primitives[-1].end):
+                    connected_at_two_ends.append(split_contour)
+                    break
+        list_split_inner_contours = [split_contour for split_contour in list_split_inner_contours
+                                     if split_contour not in connected_at_two_ends]
+        while list_cutting_contours:
+            for i, cutting_contour in enumerate(list_cutting_contours[:]):
                 if (self.surface2d.outer_contour.point_over_contour(cutting_contour.primitives[0].start) and
                     self.surface2d.outer_contour.point_over_contour(cutting_contour.primitives[-1].end)) or \
                         cutting_contour.primitives[0].start.is_close(cutting_contour.primitives[-1].end):
                     valid_cutting_contours.append(cutting_contour)
-                if self.surface2d.outer_contour.intersection_points(cutting_contour):
-                    connectig_to_outer_contour.append(cutting_contour)
-            if len(valid_cutting_contours) == len(list_cutting_contours):
-                return valid_cutting_contours
-            for cutting_contour in valid_cutting_contours:
-                list_cutting_contours.remove(cutting_contour)
-            new_cutting_contours, cutting_contours = self.get_inner_contours_cutting_primitives(
-                list_cutting_contours, connectig_to_outer_contour)
-            return valid_cutting_contours + new_cutting_contours + cutting_contours
-        return list_cutting_contours
+                    list_cutting_contours.pop(i)
+                    break
+                list_cutting_contours.pop(i)
+                while True:
+                    connecting_split_contour = cutting_contour.get_connected_wire(list_split_inner_contours)
+                    list_split_inner_contours.remove(connecting_split_contour)
+                    new_contour = volmdlr.wires.Contour2D.contours_from_edges(
+                        cutting_contour.primitives + connecting_split_contour.primitives)[0]
+
+                    if self.surface2d.outer_contour.are_extremity_points_touching(new_contour) or\
+                            new_contour.is_contour_closed():
+                        valid_cutting_contours.append(new_contour)
+                        break
+
+                    connecting_cutting_contour = new_contour.get_connected_wire(list_cutting_contours)
+                    if not connecting_cutting_contour:
+                        if any(self.surface2d.outer_contour.point_over_contour(point)
+                               for point in [new_contour.primitives[0].start, new_contour.primitives[-1].end]) and \
+                                any(valid_contour.point_over_contour(point) for valid_contour in
+                                    valid_cutting_contours for
+                                    point in [new_contour.primitives[0].start, new_contour.primitives[-1].end]):
+                            valid_cutting_contours.append(new_contour)
+                        break
+
+                    new_contour = volmdlr.wires.Contour2D.contours_from_edges(
+                        new_contour.primitives + connecting_cutting_contour.primitives)[0]
+                    list_cutting_contours.remove(connecting_cutting_contour)
+
+                    if self.surface2d.outer_contour.are_extremity_points_touching(new_contour):
+                        valid_cutting_contours.append(new_contour)
+                        break
+
+                    cutting_contour = new_contour
+                break
+        return valid_cutting_contours + list_split_inner_contours
 
     def divide_face(self, list_cutting_contours: List[volmdlr.wires.Contour2D]):
         """
@@ -705,6 +773,44 @@ class Face3D(volmdlr.core.Primitive3D):
         list_faces = []
         list_open_cutting_contours = []
         list_closed_cutting_contours = []
+        face_inner_contours = self.surface2d.inner_contours[:]
+        list_cutting_contours_ = []
+        while list_cutting_contours:
+            cutting_contour = list_cutting_contours[0]
+            if not cutting_contour.primitives[0].start.is_close(cutting_contour.primitives[-1].end):
+                list_cutting_contours_.append(cutting_contour)
+                list_cutting_contours.remove(cutting_contour)
+                continue
+            for inner_contour in face_inner_contours:
+                if cutting_contour.is_inside(inner_contour):
+                    if cutting_contour.is_sharing_primitives_with(inner_contour):
+                        merged_contours = cutting_contour.merge_with(inner_contour)
+                        list_cutting_contours.remove(cutting_contour)
+                        cutting_contour = merged_contours[0]
+                    # list_cutting_contours = merged_contours + list_cutting_contours
+                    # break
+                    continue
+                if cutting_contour.is_sharing_primitives_with(inner_contour):
+                    merged_contours = cutting_contour.merge_with(inner_contour)
+                    list_cutting_contours.remove(cutting_contour)
+                    face_inner_contours.remove(inner_contour)
+                    list_cutting_contours = merged_contours + list_cutting_contours
+                    break
+            else:
+                list_cutting_contours_.append(cutting_contour)
+                if cutting_contour in list_cutting_contours:
+                    list_cutting_contours.remove(cutting_contour)
+
+        list_cutting_contours = list_cutting_contours_
+        list_cutting_contours_ = []
+        for cutting_contour in list_cutting_contours:
+            contour_intersections = self.surface2d.outer_contour.wire_intersections(cutting_contour)
+            if len(contour_intersections) >= 2:
+                contour_intersections = sorted(contour_intersections, key=cutting_contour.abscissa)
+                list_cutting_contours_.extend(cutting_contour.split_with_sorted_points(contour_intersections))
+                continue
+            list_cutting_contours_.append(cutting_contour)
+        list_cutting_contours = list_cutting_contours_
         for cutting_contour in list_cutting_contours:
             if not cutting_contour.primitives[0].start.is_close(cutting_contour.primitives[-1].end):
                 list_open_cutting_contours.append(cutting_contour)
@@ -713,7 +819,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if list_open_cutting_contours:
             list_faces = self.divide_face_with_open_cutting_contours(list_open_cutting_contours)
         list_faces = self.divide_face_with_closed_cutting_contours(list_closed_cutting_contours, list_faces)
-        list_faces = [face for face in list_faces if not math.isclose(face.area(), 0.0, abs_tol=1e-8)]
+        list_faces = [face for face in list_faces if not math.isclose(face.area(), 0.0, abs_tol=1e-08)]
         return list_faces
 
     def divide_face_with_open_cutting_contours(self, list_open_cutting_contours):
@@ -726,15 +832,6 @@ class Face3D(volmdlr.core.Primitive3D):
         list_faces = []
         if not self.surface2d.outer_contour.edge_polygon.is_trigo:
             self.surface2d.outer_contour = self.surface2d.outer_contour.invert()
-        list_open_cutting_contours_ = []
-        for contour in list_open_cutting_contours:
-            contour_intersections = self.surface2d.outer_contour.wire_intersections(contour)
-            if len(contour_intersections) > 2:
-                contour_intersections = sorted(contour_intersections, key=contour.abscissa)
-                list_open_cutting_contours_.extend(contour.split_with_sorted_points(contour_intersections))
-                continue
-            list_open_cutting_contours_.append(contour)
-        list_open_cutting_contours = list_open_cutting_contours_
         new_faces_contours = self.surface2d.outer_contour.divide(list_open_cutting_contours)
         new_inner_contours = len(new_faces_contours) * [[]]
         if self.surface2d.inner_contours:
@@ -759,27 +856,27 @@ class Face3D(volmdlr.core.Primitive3D):
         :param list_faces: list of already divided faces
         :return: list divided faces
         """
-        for new_contour in list_closed_cutting_contours:
-            if len(new_contour.primitives) >= 3 and \
-                    new_contour.primitives[0].start.is_close(new_contour.primitives[-1].end):
+        for closed_cutting_contour in list_closed_cutting_contours:
+            if closed_cutting_contour.primitives[0].start.is_close(closed_cutting_contour.primitives[-1].end):
                 inner_contours1 = []
                 inner_contours2 = []
                 if list_faces:
-                    new_list_faces = self.get_closed_contour_divided_faces_inner_contours(list_faces, new_contour)
+                    new_list_faces = self.get_closed_contour_divided_faces_inner_contours(
+                        list_faces, closed_cutting_contour)
                     list_faces = list_faces + new_list_faces
                     continue
                 new_contour_adjacent_to_inner_contour = False
                 for inner_contour in self.surface2d.inner_contours:
-                    if new_contour.is_inside(inner_contour):
+                    if closed_cutting_contour.is_inside(inner_contour):
                         inner_contours2.append(inner_contour)
                         continue
-                    if new_contour.is_sharing_primitives_with(inner_contour):
+                    if closed_cutting_contour.is_sharing_primitives_with(inner_contour):
                         new_contour_adjacent_to_inner_contour = True
-                        inner_contours1.extend(new_contour.merge_with(inner_contour))
+                        inner_contours1.extend(closed_cutting_contour.merge_with(inner_contour))
                     else:
                         inner_contours1.append(inner_contour)
                 if not new_contour_adjacent_to_inner_contour:
-                    inner_contours1.append(new_contour)
+                    inner_contours1.append(closed_cutting_contour)
                 if isinstance(self, Triangle3D):
                     class_to_instanciate = PlaneFace3D
                 else:
@@ -788,7 +885,8 @@ class Face3D(volmdlr.core.Primitive3D):
                 surf2d = surfaces.Surface2D(self.surface2d.outer_contour, inner_contours1)
                 new_plane = class_to_instanciate(surf3d, surf2d)
                 list_faces.append(new_plane)
-                list_faces.append(class_to_instanciate(surf3d, surfaces.Surface2D(new_contour, inner_contours2)))
+                list_faces.append(class_to_instanciate(surf3d, surfaces.Surface2D(
+                    closed_cutting_contour, inner_contours2)))
                 continue
             surf3d = self.surface3d
             surf2d = surfaces.Surface2D(self.surface2d.outer_contour, [])
@@ -875,6 +973,7 @@ class Face3D(volmdlr.core.Primitive3D):
                         if new_contour_not_sharing_primitives:
                             inner_contours1.append(new_contour)
                             new_face.surface2d.inner_contours = inner_contours1
+                            new_list_faces.append(self.__class__(surf3d, surfaces.Surface2D(new_contour, [])))
                             break
                         surf2d = surfaces.Surface2D(new_face.surface2d.outer_contour, inner_contours1)
                         new_plane = self.__class__(surf3d, surf2d)
@@ -892,9 +991,9 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: list of intersecting primitives for current face
         """
         face_intersecting_primitives2d = []
-        for intersecting_combination in dict_intersecting_combinations.keys():
-            if self in (intersecting_combination[0], intersecting_combination[1]):
-                for intersection_wire in dict_intersecting_combinations[intersecting_combination]:
+        for intersecting_combination, intersections in dict_intersecting_combinations.items():
+            if self in intersecting_combination:
+                for intersection_wire in intersections:
                     if len(intersection_wire.primitives) != 1:
                         raise NotImplementedError
                     primitive2_2d = self.surface3d.contour3d_to_2d(intersection_wire).primitives[0]
@@ -905,289 +1004,54 @@ class Face3D(volmdlr.core.Primitive3D):
                         face_intersecting_primitives2d.append(primitive2_2d)
         return face_intersecting_primitives2d
 
-    def get_inner_contours_cutting_primitives(self, list_cutting_contours, connectig_to_outer_contour):
+    def _is_linesegment_intersection_possible(self, linesegment: vme.LineSegment3D):
         """
-        Gets cutting primitives connected to face inner_contours.
+        Verifies if intersection of face with line segment is possible or not.
 
-        :param list_cutting_contours: list of contours for resulting from intersection with other faces.
-        :param connectig_to_outer_contour: list of contours from list_cutting_contours connected to the outer contour
-        and not to any outer contour.
-        :return: lists for final face cutting primitives.
+        :param linesegment: other line segment.
+        :return: returns True if possible, False otherwise.
         """
-        (inner_contours_connected_cutting_contour, dict_inner_contour_intersections,
-         dict_cutting_contour_intersections, list_cutting_contours) = self.dictionnaries_cutting_contours(
-            list_cutting_contours, connectig_to_outer_contour)
-        valid_cutting_contours = []
-        list_primitives1 = []
-        list_primitives2 = []
-        used_cutting_contours = []
-        used_inner_contour = []
-        for cutting_contour, inner_contours in inner_contours_connected_cutting_contour.items():
-            primitives1 = []
-            primitives2 = []
-            if len(inner_contours) == 1:
-                if all(dict_cutting_contour_intersections[inters] in connectig_to_outer_contour for inters in
-                       dict_inner_contour_intersections[inner_contours[0]]) and cutting_contour not in \
-                        used_cutting_contours and inner_contours[0] not in used_inner_contour:
-                    inner_contour_splitting_points = dict_inner_contour_intersections[inner_contours[0]]
-                    inner_contour_splitting_points = list(sorted(
-                        inner_contour_splitting_points, key=lambda point, ic=inner_contours[0]: ic.abscissa(point)))
-
-                    point1, point2 = self.inner_contour_cutting_points(inner_contour_splitting_points, cutting_contour)
-                    primitives1.extend(inner_contours[0].extract_with_points(point1, point2, True))
-                    primitives2.extend(inner_contours[0].extract_with_points(point1, point2, False))
-                    if sum(prim.length() for prim in primitives2) > sum(prim.length() for prim in primitives1):
-                        primitives1, primitives2 = primitives2, primitives1
-                    primitives1.extend(dict_cutting_contour_intersections[point2].primitives +
-                                       cutting_contour.primitives[:])
-                    used_cutting_contours.extend([cutting_contour,
-                                                  dict_cutting_contour_intersections[point2]])
-                    used_inner_contour.append(inner_contours[0])
-                    list_primitives1.append(primitives1)
-                    list_primitives2.append(primitives2)
-                elif cutting_contour not in valid_cutting_contours:
-                    valid_cutting_contours.append(cutting_contour)
-            elif len(inner_contours) == 2:
-                inner_contour_splitting_points1 = dict_inner_contour_intersections[inner_contours[0]]
-                inner_contour_splitting_points2 = dict_inner_contour_intersections[inner_contours[1]]
-                inner_contour_splitting_points1 = list(sorted(
-                    inner_contour_splitting_points1, key=lambda point, ic=inner_contours[0]: ic.abscissa(point)))
-                inner_contour_splitting_points2 = list(sorted(
-                    inner_contour_splitting_points2, key=lambda point, ic=inner_contours[1]: ic.abscissa(point)))
-                inside1, inside2 = self.is_inside_portion(cutting_contour, inner_contour_splitting_points1,
-                                                          inner_contour_splitting_points2)
-                primitives1.extend(cutting_contour.primitives[:])
-                contour_used = False
-                for inner_contour, inner_contour_splitting_points, inside in zip(
-                        inner_contours, [inner_contour_splitting_points1, inner_contour_splitting_points2],
-                        [inside1, inside2]):
-                    if inner_contour in used_inner_contour:
-                        contour_used = True
-                        continue
-                    point1, point2 = self.inner_contour_cutting_points(inner_contour_splitting_points, cutting_contour)
-                    primitives1.extend(inner_contour.extract_with_points(point1, point2, inside))
-                    primitives1.extend(dict_cutting_contour_intersections[point2].primitives)
-                    primitives2.extend(inner_contour.extract_with_points(point1, point2, not inside))
-                    used_cutting_contours.extend([cutting_contour, dict_cutting_contour_intersections[point2]])
-                if contour_used:
-                    list_primitives1 = self.get_connecting_contour(list_primitives1, primitives1)
-                else:
-                    list_primitives1.append(primitives1)
-                list_primitives2.append(primitives2)
-                used_inner_contour.extend(inner_contours)
-            else:
-                raise NotImplementedError
-        valid_cutting_contours = [contour for contour in valid_cutting_contours
-                                  if contour not in used_cutting_contours]
-        new_cutting_contours = [volmdlr.wires.Contour2D(list_prim).order_contour()
-                                for list_prim in list_primitives1]
-        for list_prim in list_primitives2:
-            new_cutting_contours.extend(volmdlr.wires.Contour2D.contours_from_edges(list_prim))
-        return new_cutting_contours, valid_cutting_contours
-
-    def dictionnaries_cutting_contours(self, list_cutting_contours, connectig_to_outer_contour):
-        inner_contours_connected_cutting_contour = {}
-        dict_inner_contour_intersections = {}
-        dict_cutting_contour_intersections = {}
-        for inner_contour in self.surface2d.inner_contours:
-            if not inner_contour.edge_polygon.is_trigo:
-                inner_contour.invert_inplace()
-            dict_inner_contour_intersections[inner_contour] = []
-            for cutting_contour in list_cutting_contours:
-                inner_contour_intersections = inner_contour.intersection_points(cutting_contour)
-                if inner_contour_intersections:
-                    dict_inner_contour_intersections[inner_contour].extend(inner_contour_intersections)
-                    if cutting_contour not in inner_contours_connected_cutting_contour:
-                        inner_contours_connected_cutting_contour[cutting_contour] = [inner_contour]
-                    else:
-                        inner_contours_connected_cutting_contour[cutting_contour].append(inner_contour)
-                for intersection in inner_contour_intersections:
-                    dict_cutting_contour_intersections[intersection] = cutting_contour
-            splitting_points = dict_inner_contour_intersections[inner_contour]
-            splitting_points = list(sorted(
-                splitting_points, key=lambda point, ic=inner_contour: ic.abscissa(point)))
-            remove_splitting_points, new_inner_contour, remove_cutting_contour = self.inner_contours_recalculation(
-                inner_contour, splitting_points, dict_cutting_contour_intersections, connectig_to_outer_contour)
-            (dict_cutting_contour_intersections, dict_inner_contour_intersections,
-             inner_contours_connected_cutting_contour, list_cutting_contours) = \
-                self.updated_dictionnaries_cutting_contours(remove_splitting_points, remove_cutting_contour,
-                                                            splitting_points, dict_cutting_contour_intersections,
-                                                            inner_contour, new_inner_contour, list_cutting_contours,
-                                                            dict_inner_contour_intersections,
-                                                            inner_contours_connected_cutting_contour)
-            inner_contour = new_inner_contour
-        return (inner_contours_connected_cutting_contour, dict_inner_contour_intersections,
-                dict_cutting_contour_intersections, list_cutting_contours)
-
-    @staticmethod
-    def inner_contour_cutting_points(inner_contour_splitting_points, cutting_contour):
-        """
-        Searches the inner contour points where it must be cut.
-
-        :param inner_contour_splitting_points: all points os intersection with this inner contour.
-        :param cutting_contour: first cutting contour being used to cut inner contour.
-        :return: point1, point2
-        """
-        if volmdlr.core.point_in_list(cutting_contour.primitives[0].start, inner_contour_splitting_points):
-            index_point1 = volmdlr.core.get_point_index_in_list(cutting_contour.primitives[0].start,
-                                                                inner_contour_splitting_points)
-        else:
-            index_point1 = volmdlr.core.get_point_index_in_list(cutting_contour.primitives[-1].end,
-                                                                inner_contour_splitting_points)
-        if index_point1 != len(inner_contour_splitting_points) - 1:
-            index_point2 = index_point1 + 1
-        else:
-            index_point2 = 0
-        point1 = inner_contour_splitting_points[index_point1]
-        point2 = inner_contour_splitting_points[index_point2]
-        return point1, point2
-
-    @staticmethod
-    def is_inside_portion(cutting_contour, inner_contour_splitting_points1, inner_contour_splitting_points2):
-        """
-        For multiple inner contour intersections with cutting contours, defines if we get the inside or outside portion.
-
-        :param cutting_contour: cutting_contour cutting the two inner contours.
-        :param inner_contour_splitting_points1: splitting points for contour1.
-        :param inner_contour_splitting_points2: splitting points for contour1.
-        :return:
-        """
-        if (not cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
-            not cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])) or \
-                (not cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points2[-1]) and
-                 not cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])):
-            is_inside1 = True
-            is_inside2 = False
-        elif (cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
-              cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])):
-            is_inside1 = True
-            is_inside2 = False
-        elif (not cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
-              cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])) or \
-                (cutting_contour.primitives[0].start.is_close(inner_contour_splitting_points1[-1]) and
-                 not cutting_contour.primitives[-1].end.is_close(inner_contour_splitting_points2[-1])):
-            is_inside1 = True
-            is_inside2 = True
-        else:
-            raise NotImplementedError
-        return is_inside1, is_inside2
-
-    @staticmethod
-    def get_connecting_contour(lists_primitives, inner_primitives):
-        """
-        Find which contour from resulting inner contour splitting is connected to saved cutting_contours.
-
-        :param lists_primitives: saved cutting contours.
-        :param inner_primitives: splited inner contour.
-        :return: updated saved cutting contours.
-        """
-        if not lists_primitives:
-            lists_primitives.extend(inner_primitives)
-            return lists_primitives
-        new_list_primitives = lists_primitives[:]
-        for i, list_prim in enumerate(lists_primitives):
-            if any(prim in list_prim for prim in inner_primitives):
-                new_primitives = list_prim + [prim for prim in inner_primitives if prim not in list_prim]
-                new_list_primitives[i] = new_primitives
-                break
-        lists_primitives = new_list_primitives[:]
-        return lists_primitives
-
-    def inner_contours_recalculation(self, inner_contour, splitting_points, splitting_points_and_cutting_contour,
-                                     connectig_to_outer_contour):
-        """
-        Recalculates inner contours if a cutting contour is connected to an inner contour at two ends.
-
-        Verifies if there is a cutting contours from face intersections connected to an inner contour at the two ends,
-        if true this inner contour is updated with this cutting contour.
-
-        :param inner_contour: inner contour.
-        :param splitting_points: current inner contour splitting points.
-        :param splitting_points_and_cutting_contour: dictionary containing all splitting points and
-        the corresponding cutting contour.
-        :param connectig_to_outer_contour: list of the cutting contours connected to the outer contour.
-        :return: splitting points to be removed from list of splitting points and current inner contour updated.
-        """
-        j = self.surface2d.inner_contours.index(inner_contour)
-        remove_splitting_points = []
-        remove_cutting_contour = []
-        for point1, point2 in zip(splitting_points[:-1], splitting_points[1:]):
-            if splitting_points_and_cutting_contour[point1] not in connectig_to_outer_contour and \
-                    splitting_points_and_cutting_contour[point2] not in connectig_to_outer_contour and \
-                    splitting_points_and_cutting_contour[point1] == splitting_points_and_cutting_contour[point2]:
-                remove_cutting_contour.append(splitting_points_and_cutting_contour[point1])
-                remove_splitting_points.extend([point1, point2])
-                primitives1 = inner_contour.extract_with_points(point1, point2, True) + \
-                              splitting_points_and_cutting_contour[point1].primitives
-                primitives2 = inner_contour.extract_with_points(point1, point2, False) + \
-                              splitting_points_and_cutting_contour[point1].primitives
-                contour1 = volmdlr.wires.Contour2D(primitives1).order_contour()
-                contour2 = volmdlr.wires.Contour2D(primitives2).order_contour()
-                if contour1.is_inside(inner_contour):
-                    self.surface2d.inner_contours[j] = contour1
-                    inner_contour = self.surface2d.inner_contours[j]
-                    remove_splitting_points.extend([point1, point2])
-                elif contour2.is_inside(inner_contour):
-                    self.surface2d.inner_contours[j] = contour2
-                    inner_contour = self.surface2d.inner_contours[j]
-                    remove_splitting_points.extend([point1, point2])
-        return remove_splitting_points, inner_contour, remove_cutting_contour
-
-    @staticmethod
-    def updated_dictionnaries_cutting_contours(remove_splitting_points, remove_cutting_contour, splitting_points,
-                                               dict_cutting_contour_intersections, old_inner_contour,
-                                               new_inner_contour, list_cutting_contours,
-                                               dict_inner_contour_intersections,
-                                               inner_contours_connected_cutting_contour):
-        for remove_point in remove_splitting_points:
-            if remove_point in splitting_points:
-                splitting_points.remove(remove_point)
-            if remove_point in dict_cutting_contour_intersections:
-                del dict_cutting_contour_intersections[remove_point]
-        del dict_inner_contour_intersections[old_inner_contour]
-        dict_inner_contour_intersections[new_inner_contour] = splitting_points
-        for contour in remove_cutting_contour:
-            if contour in list_cutting_contours:
-                list_cutting_contours.remove(contour)
-            if contour in inner_contours_connected_cutting_contour:
-                del inner_contours_connected_cutting_contour[contour]
-        for cutting_contour, innr_cntrs in inner_contours_connected_cutting_contour.items():
-            if old_inner_contour in innr_cntrs:
-                inner_contours_connected_cutting_contour[cutting_contour].remove(old_inner_contour)
-                inner_contours_connected_cutting_contour[cutting_contour].append(new_inner_contour)
-        return (dict_cutting_contour_intersections, dict_inner_contour_intersections,
-                inner_contours_connected_cutting_contour, list_cutting_contours)
-
-    def is_linesegment_crossing(self, linesegment):
-        """Verify if a face 3d is being crossed by a linesegment 3d. """
+        if not self.bounding_box.is_intersecting(linesegment.bounding_box):
+            return False
         if math.isclose(self.area(), 0.0, abs_tol=1e-10):
             return False
         bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
         if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
             return False
-        triangulation = self.triangulation()
-        faces_triangulation = triangulation.triangular_faces()
+        return True
+
+    def _get_linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D):
+        """Generator line segment intersections approximation."""
+        if self.__class__ == PlaneFace3D:
+            faces_triangulation = [self]
+        else:
+            triangulation = self.triangulation()
+            faces_triangulation = triangulation.triangular_faces()
         for face in faces_triangulation:
             inters = face.linesegment_intersections(linesegment)
-            if inters:
+            yield inters
+
+    def is_linesegment_crossing(self, linesegment):
+        """
+        Verify if a face 3d is being crossed by a line segment 3d.
+        """
+        if not self._is_linesegment_intersection_possible(linesegment):
+            return False
+        for inter in self._get_linesegment_intersections_approximation(linesegment):
+            if inter:
                 return True
         return False
 
     def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
-        """Approximation of intersections between a b-spline face 3D and a line segment 3D."""
-        if math.isclose(self.area(), 0.0, abs_tol=1e-10):
-            return False
-        bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
-        if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
+        """Approximation of intersections face 3D and a line segment 3D."""
+        if not self._is_linesegment_intersection_possible(linesegment):
             return []
-        triangulation = self.triangulation()
-        faces_triangulation = triangulation.triangular_faces()
         linesegment_intersections = []
-        for face in faces_triangulation:
-            inters = face.linesegment_intersections(linesegment)
+        for inters in self._get_linesegment_intersections_approximation(linesegment):
             for point in inters:
                 if not volmdlr.core.point_in_list(point, linesegment_intersections):
                     linesegment_intersections.append(point)
+
         return linesegment_intersections
 
 
@@ -1328,6 +1192,14 @@ class PlaneFace3D(Face3D):
             linesegment3d = vme.LineSegment3D(point1, point2)
             over_self_outer_contour = self.outer_contour3d.primitive_over_contour(linesegment3d)
             over_planeface_outer_contour = planeface.outer_contour3d.primitive_over_contour(linesegment3d)
+            over_self_inner_contour = any(inner_contour.primitive_over_contour(linesegment3d)
+                                          for inner_contour in self.inner_contours3d)
+            over_planeface_inner_contour = any(inner_contour.primitive_over_contour(linesegment3d)
+                                               for inner_contour in planeface.inner_contours3d)
+            if over_self_inner_contour and over_planeface_outer_contour:
+                continue
+            if over_planeface_inner_contour and over_self_outer_contour:
+                continue
             if over_self_outer_contour and over_planeface_outer_contour:
                 continue
             if self.edge3d_inside(linesegment3d) or over_self_outer_contour:
@@ -1423,58 +1295,58 @@ class PlaneFace3D(Face3D):
 
     @staticmethod
     def merge_faces(list_coincident_faces: List[Face3D]):
-        valid_coicident_faces = list_coincident_faces[:]
-        list_new_faces = []
-        list_inner_contours = []
-        merge_finished = False
-        face0 = valid_coicident_faces[0]
-        merged_contour = face0.outer_contour3d.to_2d(face0.surface3d.frame.origin,
-                                                     face0.surface3d.frame.u,
-                                                     face0.surface3d.frame.v)
-        valid_coicident_faces.remove(face0)
-        while not merge_finished:
-            adjacent_faces = False
-            list_inner_contours = []
-            for face in valid_coicident_faces:
-                adjacent_faces = False
-                face_inside = False
-                contour = face.outer_contour3d.to_2d(face0.surface3d.frame.origin,
-                                                     face0.surface3d.frame.u,
-                                                     face0.surface3d.frame.v)
-                if contour.is_sharing_primitives_with(merged_contour):
-                    merged_contour_results = merged_contour.union(contour)
-                    merged_contour = merged_contour_results[0]
-                    merged_inner_contours = merged_contour_results[1:]
-                    list_inner_contours.extend(merged_inner_contours)
-                    list_inner_contours.extend(face.surface2d.inner_contours)
-                    valid_coicident_faces.remove(face)
-                    adjacent_faces = True
+        """Merges faces from a list of faces in the same plane, if any are adjacent to one another."""
+        list_coincident_faces = sorted(list_coincident_faces, key=lambda face_: face_.area())
+        current_face = list_coincident_faces[0]
+        list_coincident_faces.remove(current_face)
+        list_merged_faces = []
+        while True:
+            for face in list_coincident_faces:
+                if current_face.outer_contour3d.is_sharing_primitives_with(face.outer_contour3d):
+                    merged_contours = current_face.outer_contour3d.merge_with(face.outer_contour3d)
+                    merged_contours2d = [contour.to_2d(face.surface3d.frame.origin, face.surface3d.frame.u,
+                                                       face.surface3d.frame.v) for contour in merged_contours]
+                    merged_contours2d = sorted(merged_contours2d, key=lambda contour: contour.area(), reverse=True)
+                    if not merged_contours2d and current_face.outer_contour3d.is_superposing(face.outer_contour3d):
+                        merged_contours2d = [current_face.surface2d.outer_contour]
+                    new_outer_contour = merged_contours2d[0]
+                    inner_contours = [contour.to_2d(face.surface3d.frame.origin, face.surface3d.frame.u,
+                                                    face.surface3d.frame.v)
+                                      for contour in current_face.inner_contours3d]
+                    inner_contours += merged_contours2d[1:] + face.surface2d.inner_contours
+                    new_face = PlaneFace3D(face.surface3d, surfaces.Surface2D(
+                        new_outer_contour, inner_contours))
+                    current_face = new_face
+                    list_coincident_faces.remove(face)
                     break
-                if merged_contour.is_inside(contour):
-                    valid_coicident_faces.remove(face)
-                    face_inside = True
+                if current_face.face_inside(face):
+                    list_coincident_faces.remove(face)
                     break
-            if not adjacent_faces and not face_inside and valid_coicident_faces:
-                list_new_faces.append(
-                    PlaneFace3D(face0.surface3d,
-                                surfaces.Surface2D(merged_contour.copy(),
-                                                   face0.surface2d.inner_contours +
-                                                   list_inner_contours)))
-                merged_contour = \
-                    valid_coicident_faces[0].outer_contour3d.to_2d(
-                        face0.surface3d.frame.origin,
-                        face0.surface3d.frame.u,
-                        face0.surface3d.frame.v)
-                valid_coicident_faces.remove(valid_coicident_faces[0])
-
-            if not valid_coicident_faces:
-                merge_finished = True
-        list_new_faces.append(
-            PlaneFace3D(face0.surface3d,
-                        surfaces.Surface2D(merged_contour,
-                                           face0.surface2d.inner_contours +
-                                           list_inner_contours)))
-        return list_new_faces
+                new_inner_contours = []
+                inner_contour_merged = False
+                for inner_contour3d in face.inner_contours3d:
+                    if current_face.outer_contour3d.is_sharing_primitives_with(inner_contour3d):
+                        merged_inner_contours = current_face.outer_contour3d.merge_with(inner_contour3d)
+                        if len(merged_inner_contours) >= 2:
+                            raise NotImplementedError
+                        new_inner_contours.extend(merged_inner_contours)
+                        inner_contour_merged = True
+                if inner_contour_merged:
+                    list_coincident_faces.remove(face)
+                    inner_contours2d = [inner_contour.to_2d(face.surface3d.frame.origin,
+                                                            face.surface3d.frame.u,
+                                                            face.surface3d.frame.v) for inner_contour in
+                                        new_inner_contours]
+                    current_face = PlaneFace3D(face.surface3d, surfaces.Surface2D(
+                        face.surface2d.outer_contour, inner_contours2d))
+                    break
+            else:
+                list_merged_faces.append(current_face)
+                if not list_coincident_faces:
+                    break
+                current_face = list_coincident_faces[0]
+                list_coincident_faces.remove(current_face)
+        return list_merged_faces
 
     def cut_by_coincident_face(self, face):
         """
@@ -1628,7 +1500,7 @@ class PlaneFace3D(Face3D):
         point2 = volmdlr.Point2D(x2, y1)
         point3 = volmdlr.Point2D(x2, y2)
         point4 = volmdlr.Point2D(x1, y2)
-        outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
+        outer_contour = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
         surface = surfaces.Surface2D(outer_contour, [])
         return cls(plane3d, surface, name)
 
@@ -1663,7 +1535,7 @@ class Triangle3D(PlaneFace3D):
         self._inner_contours3d = None
         # self.bounding_box = self._bounding_box()
 
-        # DessiaObject.__init__(self, name=name)
+        PlaneFace3D.__init__(self, self.surface3d, self.surface2d)
 
     def _data_hash(self):
         """
@@ -1705,6 +1577,10 @@ class Triangle3D(PlaneFace3D):
             self._surface3d = surfaces.Plane3D.from_3_points(self.point1, self.point2, self.point3)
         return self._surface3d
 
+    @surface3d.setter
+    def surface3d(self, new_surface3d):
+        self._surface3d = new_surface3d
+
     @property
     def surface2d(self):
         if self._surface2d is None:
@@ -1718,6 +1594,10 @@ class Triangle3D(PlaneFace3D):
             self._surface2d = surfaces.Surface2D(outer_contour=contour2d, inner_contours=[])
 
         return self._surface2d
+
+    @surface2d.setter
+    def surface2d(self, new_surface2d):
+        self._surface2d = new_surface2d
 
     def to_dict(self, *args, **kwargs):
         dict_ = {'object_class': 'volmdlr.faces.Triangle3D',
@@ -2121,7 +2001,7 @@ class CylindricalFace3D(Face3D):
 
     @classmethod
     def from_surface_rectangular_cut(cls, cylindrical_surface, theta1: float, theta2: float,
-                                     z1: float, z2: float, name: str = ''):
+                                     param_z1: float, param_z2: float, name: str = ''):
         """
         Cut a rectangular piece of the CylindricalSurface3D object and return a CylindricalFace3D object.
 
@@ -2130,20 +2010,24 @@ class CylindricalFace3D(Face3D):
         if theta1 == theta2:
             theta2 += volmdlr.TWO_PI
 
-        point1 = volmdlr.Point2D(theta1, z1)
-        point2 = volmdlr.Point2D(theta2, z1)
-        point3 = volmdlr.Point2D(theta2, z2)
-        point4 = volmdlr.Point2D(theta1, z2)
+        point1 = volmdlr.Point2D(theta1, param_z1)
+        point2 = volmdlr.Point2D(theta2, param_z1)
+        point3 = volmdlr.Point2D(theta2, param_z2)
+        point4 = volmdlr.Point2D(theta1, param_z2)
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(cylindrical_surface, surface2d, name)
 
     def neutral_fiber(self):
+        """
+        Returns the faces' neutral fiber.
+        """
         _, _, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
 
         point1 = self.surface3d.frame.origin + self.surface3d.frame.w * zmin
         point2 = self.surface3d.frame.origin + self.surface3d.frame.w * zmax
         return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
+
 
 class ToroidalFace3D(Face3D):
     """
@@ -2290,14 +2174,16 @@ class ToroidalFace3D(Face3D):
         return cls(toroidal_surface3d, surfaces.Surface2D(outer_contour, []), name)
 
     def neutral_fiber(self):
+        """
+        Returns the faces' neutral fiber.
+        """
         theta_min, theta_max, _, _ = self.surface2d.outer_contour.bounding_rectangle.bounds()
         circle = volmdlr.wires.Circle3D(self.surface3d.frame, self.surface3d.tore_radius)
-        # point1 = self.surface3d.point2d_to_3d(volmdlr.Point2D(theta_min, 0))
-        # point2 = self.surface3d.point2d_to_3d(volmdlr.Point2D(theta_max, 0))
         point1, point2 = [circle.center + circle.radius * math.cos(theta) * circle.frame.u +
-                                    circle.radius * math.sin(theta) * circle.frame.v for theta in
-                                    [theta_max, theta_min]]
+                          circle.radius * math.sin(theta) * circle.frame.v for theta in
+                          [theta_max, theta_min]]
         return volmdlr.wires.Wire3D([circle.trim(point1, point2).reverse()])
+
 
 class ConicalFace3D(Face3D):
     """
@@ -2388,7 +2274,7 @@ class ConicalFace3D(Face3D):
 
     @classmethod
     def from_base_and_vertex(cls, conical_surface3d, contour: volmdlr.wires.Contour3D,
-                                  vertex: volmdlr.Point3D, name: str = ''):
+                             vertex: volmdlr.Point3D, name: str = ''):
         """
         Returns the conical face defined by the contour of the base and the cone vertex.
 
@@ -2414,6 +2300,9 @@ class ConicalFace3D(Face3D):
         return cls(conical_surface3d, surface2d=surface2d, name=name)
 
     def neutral_fiber(self):
+        """
+        Returns the faces' neutral fiber.
+        """
         _, _, zmin, zmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
 
         point1 = self.surface3d.frame.origin + self.surface3d.frame.w * zmin
@@ -3153,37 +3042,23 @@ class BSplineFace3D(Face3D):
 
         return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
 
-    def find_neutral_fiber_direction(self):
-        curves = self.surface3d.surface_curves
-        u_curves = curves['u']
-        v_curves = curves['v']
-        u_curves = [primitive.simplify for primitive in u_curves
-                      if not isinstance(primitive, vme.LineSegment3D)]
-        v_curves = [primitive.simplify for primitive in v_curves
-                      if not isinstance(primitive, vme.LineSegment3D)]
-        u_radius = []
-        for curve in u_curves:
-            arc = self.arc_approximation(curve)
-            if arc:
-                u_radius.append(arc.radius)
-        v_radius = []
-        for curve in v_curves:
-            arc = self.arc_approximation(curve)
-            if arc:
-                v_radius.append(arc.radius)
-        if not u_radius and not v_radius:
-            return None
-        u_var = npy.var(u_radius)
-        v_var = npy.var(v_radius)
-        if v_radius or u_var > v_var:
-            return "u"
-        elif u_radius or u_var < v_var:
-            return "v"
-        else:
-            return None
-
     @staticmethod
-    def arc_approximation(edge):
+    def approximate_with_arc(edge):
+        """
+        Returns an arc that approximates the given edge.
+
+        :param edge: curve to be approximated by an arc.
+        :return: An arc if possible, otherwise None.
+        """
+        if edge.start.is_close(edge.end):
+            start = edge.point_at_abscissa(0.25 * edge.length())
+            interior = edge.point_at_abscissa(0.5 * edge.length())
+            end = edge.point_at_abscissa(0.75 * edge.length())
+            vector1 = interior - start
+            vector2 = interior - end
+            if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
+                return None
+            return vme.Arc3D(start, interior, end)
         interior = edge.point_at_abscissa(0.5 * edge.length())
         vector1 = interior - edge.start
         vector2 = interior - edge.end
@@ -3191,37 +3066,67 @@ class BSplineFace3D(Face3D):
             return None
         return vme.Arc3D(edge.start, interior, edge.end)
 
-    def neutral_fiber(self):
+    def get_approximating_arc_parameters(self, curve_list):
+        """
+        Approximates the given curves with arcs and returns the arcs, radii, and centers.
+
+        :param curve_list: A list of curves to approximate.
+        :type curve_list: list
+        :returns: A tuple containing the radius and centers of the approximating arcs.
+        :rtype: tuple
+        """
+        radius = []
+        centers = []
+        for curve in curve_list:
+            if curve.simplify.__class__.__name__ in ("Arc3D", "FullArc3D"):
+                arc = curve.simplify
+            else:
+                arc = self.approximate_with_arc(curve)
+            if arc:
+                radius.append(arc.radius)
+                centers.append(arc.center)
+        return radius, centers
+
+    def neutral_fiber_points(self):
+        """
+        Calculates the neutral fiber points of the face.
+
+        :returns: The neutral fiber points if they exist, otherwise None.
+        :rtype: Union[list, None]
+        """
         curves = self.surface3d.surface_curves
         u_curves = curves['u']
         v_curves = curves['v']
-        neutral_fiber_direction = self.find_neutral_fiber_direction()
-        if not neutral_fiber_direction:
-            return None
-        if neutral_fiber_direction == "v":
-            center_approximation = []
-            for curve in u_curves:
-                if isinstance(curve.simplify, vme.Arc3D):
-                    center_approximation.append(curve.simplify.center)
-                else:
-                    arc = self.arc_approximation(curve)
-                    if not arc:
-                        return None
-                    center_approximation.append(arc.center)
-        else:
-            center_approximation = []
-            for curve in v_curves:
-                if isinstance(curve.simplify, vme.Arc3D):
-                    center_approximation.append(curve.simplify.center)
-                else:
-                    arc = self.arc_approximation(curve)
-                    if not arc:
-                        return None
-                    center_approximation.append(arc.center)
-            # fiber_curve = u0
-            # linesegment = vme.LineSegment3D(v0.start, v0.end)
-            # neutral_fiber_location = linesegment.point_at_abscissa(0.5 * linesegment.length())
+        u_curves = [primitive.simplify
+                    for primitive in u_curves if not isinstance(primitive.simplify, vme.LineSegment3D)]
+        v_curves = [primitive.simplify
+                    for primitive in v_curves if not isinstance(primitive.simplify, vme.LineSegment3D)]
+        u_radius, u_centers = self.get_approximating_arc_parameters(u_curves)
+        v_radius, v_centers = self.get_approximating_arc_parameters(v_curves)
 
-        # neutral_fiber = fiber_curve.translation(neutral_fiber_location - fiber_curve.start)
-        neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(center_approximation, min(self.surface3d.degree_u, self.surface3d.degree_v))
+        if not u_radius and not v_radius:
+            return None
+        if v_radius and not u_radius:
+            return v_centers
+        if u_radius and not v_radius:
+            return u_centers
+        u_var = npy.var(u_radius)
+        v_var = npy.var(v_radius)
+        if u_var > v_var:
+            return v_centers
+        if u_var < v_var:
+            return u_centers
+        return None
+
+    def neutral_fiber(self):
+        """
+        Returns the faces' neutral fiber.
+        """
+        neutral_fiber_points = self.neutral_fiber_points()
+        if len(neutral_fiber_points) == 2:
+            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[1])
+        else:
+            neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
+                                                                     min(self.surface3d.degree_u,
+                                                                         self.surface3d.degree_v))
         return volmdlr.wires.Wire3D([neutral_fiber])
