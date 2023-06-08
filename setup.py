@@ -150,5 +150,5 @@ setup(
                            "volmdlr/bspline_compiled.pyx",
                            "volmdlr/bspline_fitting.pyx",
                            "volmdlr/bspline_evaluators.pyx"]),
-    python_requires=">=3.7",
+    python_requires=">=3.9",
 )
