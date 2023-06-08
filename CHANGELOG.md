@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
 - BSplineFace3D: neutral_fiber
 - surfaces.Plane3D: linesegment_intersections
+- Step export
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
