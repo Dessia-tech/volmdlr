@@ -1772,7 +1772,7 @@ class PeriodicalSurface(Surface3D):
         return points
 
     def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start):
-        """"
+        """
         Verifies if arc 3D contains discontinuity and undefined start/end points on parametric domain.
         """
         point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
@@ -2564,7 +2564,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             points, bspline_curve2d.degree, bspline_curve2d.periodic)]
 
     def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start):
-        """"
+        """
         Verifies if arc 3D contains discontinuity and undefined start/end points on parametric domain.
         """
 
