@@ -1313,6 +1313,7 @@ class Compound(dc.PhysicalObject):
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
+        """Bounding box setter."""
         self._bbox = new_bounding_box
 
     def _bounding_box(self) -> BoundingBox:
@@ -1364,6 +1365,7 @@ class Compound(dc.PhysicalObject):
         return babylon_data
 
     def volmdlr_primitives(self):
+        """Return primitives."""
         return [self]
 
 
