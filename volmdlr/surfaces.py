@@ -5102,8 +5102,12 @@ class BSplineSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         number_points = max(self.nb_u, self.nb_v)
-        degree = max(self.degree_u, self.degree_v)
-        points = [self.point3d_to_2d(point3d) for point3d in arc3d.discretization_points(number_points=number_points)]
+        degree = min(self.degree_u, self.degree_v)
+        points = []
+        for point3d in arc3d.discretization_points(number_points=number_points):
+            point2d = self.point3d_to_2d(point3d)
+            if not volmdlr.core.point_in_list(point2d, points):
+                points.append(point2d)
         start = points[0]
         end = points[-1]
         min_bound_x, max_bound_x = self.surface.domain[0]
@@ -5136,6 +5140,8 @@ class BSplineSurface3D(Surface3D):
                 break
         if flag:
             return [linesegment]
+        if degree > len(points) - 1:
+            degree = len(points) - 1
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree, name="parametric.arc")]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
