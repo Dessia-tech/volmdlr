@@ -1673,10 +1673,9 @@ class PeriodicalSurface(Surface3D):
                                 ideal_x = [x1, x2]
                                 found =True
                                 break
-                            else:
-                                if delta_x < delta:
-                                    delta = delta_x
-                                    ideal_x = [x1, x2]
+                            if delta_x < delta:
+                                delta = delta_x
+                                ideal_x = [x1, x2]
                         if found:
                             break
                     x1, x2 = ideal_x
