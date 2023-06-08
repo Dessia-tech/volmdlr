@@ -1660,7 +1660,7 @@ class OpenTriangleShell3D(OpenShell3D):
         return display.DisplayMesh3D(points, triangles)
 
 
-class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
+class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     """
         A 3D closed shell composed of multiple triangle faces.
 

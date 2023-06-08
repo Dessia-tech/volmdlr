@@ -3,7 +3,7 @@
 """
 Edges related classes.
 """
-
+import copy
 import math
 import sys
 import warnings
@@ -5989,7 +5989,7 @@ class BSplineCurve3D(BSplineCurve):
         Returns a new BSplineCurve3D.
 
         """
-        curve_copy = self.curve.__deepcopy__({})
+        curve_copy = copy.deepcopy(self.curve)
         modified_curve = operations.insert_knot(curve_copy, [knot], num=[num])
         return self.from_geomdl_curve(modified_curve)
 

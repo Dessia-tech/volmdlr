@@ -1254,7 +1254,8 @@ class Plane3D(Surface3D):
         u_vector = linesegment.end - linesegment.start
         w_vector = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u_vector)
-        if math.isclose(self.frame.w.unit_vector().dot(u_vector.unit_vector()), 0.0, abs_tol=abs_tol):
+        if normaldotu == 0.0 or math.isclose(self.frame.w.unit_vector().dot(u_vector.unit_vector()),
+                                           0.0, abs_tol=abs_tol):
             return []
         intersection_abscissea = - self.frame.w.dot(w_vector) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
@@ -3376,7 +3377,7 @@ class SphericalSurface3D(PeriodicalSurface):
         if arc3d.is_point_edge_extremity(point_singularity):
             return [edges.LineSegment2D(start, end)]
         primitives = []
-        if math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-4):
+        if math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-2):
             if theta1 == math.pi and theta2 != math.pi:
                 theta1 = -math.pi
             if theta2 == math.pi and theta1 != math.pi:
@@ -3388,7 +3389,8 @@ class SphericalSurface3D(PeriodicalSurface):
                 edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
                 ]
             return primitives
-        return primitives
+        warnings.warn("Could not find BREP of the Arc3D on the sphere domain")
+        return None
 
     def arc3d_to_2d_with_singularity(self, arc3d, start, end, singularity_points):
         """
