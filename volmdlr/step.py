@@ -1355,7 +1355,6 @@ class Step(dc.DessiaObject):
         self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
         self.angle_conversion_factor = object_dict[int(arguments[2][1][1:])]
         # ------------------------------------------------------
-        shell_nodes = root_nodes["SHELLS"]
         shape_representations = root_nodes["SHAPE_REPRESENTATION"]
         nodes = self.create_node_list(shape_representations)
         errors = set()
