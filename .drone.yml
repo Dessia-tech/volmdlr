@@ -77,14 +77,14 @@ steps:
       path: /root/.cache/pip
 
 - name: check changelog update
-  image: python:3.8
+  image: python:3.9
   when:
     event: pull_request
   commands:
     - bash code_changelog.sh
 
 - name: install, build doc run scripts and tutorials
-  image: python:3.8
+  image: python:3.9
   commands:
   - git fetch --tags
   - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
