@@ -55,11 +55,21 @@ def step_split_arguments(function_arg):
     if len(function_arg) > 0 and function_arg[0] == "(":
         function_arg += ")"
     parenthesis = 1
+    is_str = False
     for char in function_arg:
         if char == "(":
             parenthesis += 1
 
-        if char != "," or parenthesis > 1:
+        if char == "'" and not is_str:
+            is_str = True
+        elif char == "'" and is_str:
+            is_str = False
+        # if char != "," or parenthesis > 1 or is_str:
+        #     argument += char
+
+        if parenthesis > 1 or is_str:
+            argument += char
+        elif char != ",":
             argument += char
         else:
             arguments.append(argument)
@@ -69,7 +79,6 @@ def step_split_arguments(function_arg):
             parenthesis -= 1
             if parenthesis == 0:
                 arguments.append(argument[:-1])
-                argument = ""
                 break
     return arguments
 
@@ -1301,19 +1310,23 @@ class Step(dc.DessiaObject):
                     if instanciate_id in object_dict:
                         instanciate_ids.pop()
                         continue
-                    list_primitives = []
-                    for node in assembly_data[instanciate_id]:
-                        primitives = object_dict[node]
-                        if isinstance(primitives, list):
-                            list_primitives.extend(primitives)
-                        else:
-                            list_primitives.append(primitives)
                     product_id = self.shape_definition_representation_to_product_node(instanciate_id)
                     name = self.functions[product_id].arg[0]
                     id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
                     ids_frames = self.functions[id_shape_representation].arg[1]
                     self.parse_arguments(ids_frames)
-                    frames = [object_dict[id_frame] for id_frame in ids_frames]
+                    frames = [object_dict[ids_frames[0]]]
+                    list_primitives = []
+                    for i, node in enumerate(assembly_data[instanciate_id]):
+                        primitives = object_dict[node]
+                        frame = object_dict[ids_frames[i + 1]]
+                        if isinstance(primitives, list):
+                            list_primitives.extend(primitives)
+                            frames.extend([frame] * len(primitives))
+                        else:
+                            list_primitives.append(primitives)
+                            frames.append(frame)
+
                     volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
                     object_dict[instanciate_id] = volmdlr_object
 
