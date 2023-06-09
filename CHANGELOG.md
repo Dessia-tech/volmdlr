@@ -169,6 +169,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
 - Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
+- Change python suport version from >=3.7 to >= 3.9.
 
 ### Unittests
 - Arc2D: test_arc_intersections
