@@ -85,3 +85,20 @@ def split_wire_by_plane(wire, plane3d):
         raise NotImplementedError
     wire1, wire2 = wire.split_with_sorted_points([wire_plane_intersections[0], wire.primitives[-1].end])
     return wire1, wire2
+
+
+# def cut_closed_curve_by_line(curve, line):
+#     intersection_points = curve.line_intersections(line)
+#     if not intersection_points:
+#         return [curve]
+#     if len(intersection_points) == 1:
+#         raise NotImplementedError
+#     if len(intersection_points) == 2:
+#         linesegment = volmdlr.edges.LineSegment2D(intersection_points[0],
+#                                                   intersection_points[1])
+#         arc1, arc2 = curve.split(intersection_points[0],
+#                                 intersection_points[1])
+#         contour1 = volmdlr.wires.Contour2D([arc1, linesegment.copy()])
+#         contour2 = volmdlr.wires.Contour2D([arc2, linesegment.copy()])
+#         return [contour1, contour2]
+#     raise ValueError

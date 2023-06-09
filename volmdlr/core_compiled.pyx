@@ -1463,7 +1463,7 @@ class Vector3D(Vector):
 
     def norm(self) -> float:
         """
-        Computes the euclidiean norm of a 3 dimensional vector.
+        Computes the euclidiean norm of a 3-dimensional vector.
 
         :return: Norm of the Vector3D-like object
         :rtype: float
@@ -2531,7 +2531,7 @@ class Basis2D(Basis):
 
     def inverse_transfer_matrix(self):
         """
-        Computes the inverse transfer matrix of the 2 dimensional basis.
+        Computes the inverse transfer matrix of the 2-dimensional basis.
 
         :return: The 2x2 inverse transfer matrix
         :rtype: :class:`volmdlr.Matrix22`
@@ -3273,7 +3273,7 @@ class Frame2D(Basis2D):
 
     def rotation(self, angle):
         """
-        Returns a rotated 2 dimensional frame.
+        Returns a rotated 2-dimensional frame.
 
         :param angle: The rotation angle
         :type angle: float
