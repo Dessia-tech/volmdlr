@@ -4438,7 +4438,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         if math.isclose(theta1, theta2, abs_tol=1e-3):
             primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if math.isclose(abs(abscissa1 - abscissa2), self.wire.length(), abs_tol=1e-4):
+                if self.wire.is_point_edge_extremity(start3d) and self.wire.is_point_edge_extremity(end3d):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
                         return [primitive]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
@@ -4819,7 +4819,7 @@ class BSplineSurface3D(Surface3D):
         # return volmdlr.Point3D(*self.derivatives(u, v, 0)[0][0])
         # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
-    def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-5):
+    def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-6):
         """
         Evaluates the parametric coordinates (u, v) of a 3D point (x, y, z).
 
@@ -4844,22 +4844,24 @@ class BSplineSurface3D(Surface3D):
         min_bound_x, max_bound_x = self.surface.domain[0]
         min_bound_y, max_bound_y = self.surface.domain[1]
 
-        # delta_bound_x = max_bound_x - min_bound_x
-        # delta_bound_y = max_bound_y - min_bound_y
-        # x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
-        #        ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
-        #        ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
-        #        ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
-        #        (max_bound_x - delta_bound_x / 4, min_bound_y + delta_bound_y / 10),
-        #        ((min_bound_x + max_bound_x) / 4, max_bound_y - delta_bound_y / 10),
-        #        (max_bound_x - delta_bound_x / 4, max_bound_y - delta_bound_y / 10),
-        #        (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-        #        (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
-        #        (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-        #        (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
-        #
-        # # Sort the initial conditions
-        # x0s.sort(key=f)
+        delta_bound_x = max_bound_x - min_bound_x
+        delta_bound_y = max_bound_y - min_bound_y
+        x0s = []
+        if self.x_periodicity or self.y_periodicity:
+            x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
+                   ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
+                   ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
+                   ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
+                   (max_bound_x - delta_bound_x / 4, min_bound_y + delta_bound_y / 10),
+                   ((min_bound_x + max_bound_x) / 4, max_bound_y - delta_bound_y / 10),
+                   (max_bound_x - delta_bound_x / 4, max_bound_y - delta_bound_y / 10),
+                   (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
+                   (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
+                   (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
+                   (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
+
+            # Sort the initial conditions
+            x0s.sort(key=f)
         matrix = npy.array(self.surface.evalpts)
         point3d_array = npy.array([point3d[0], point3d[1], point3d[2]])
 
@@ -4870,7 +4872,7 @@ class BSplineSurface3D(Surface3D):
         index = npy.argmin(distances)
         # Find the parametric coordinates of the point
         # indexes = int(npy.argmin(distances))
-        x0s = [self.surface.vertices[index].uv]
+        x0s.insert(0, self.surface.vertices[index].uv)
         results = []
         for x0 in x0s:
             res = minimize(fun, x0=npy.array(x0), jac=True,
@@ -5113,9 +5115,13 @@ class BSplineSurface3D(Surface3D):
 
                 if self.y_periodicity:
                     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
-
-                return [edges.BSplineCurve2D.from_points_interpolation(
-                    points=points, degree=bspline_curve3d.degree, periodic=bspline_curve3d.periodic)]
+                try:
+                    bspline = [edges.BSplineCurve2D.from_points_interpolation(
+                        points=points, degree=bspline_curve3d.degree, periodic=bspline_curve3d.periodic)]
+                except:
+                    bspline = []
+                    print("surfaces.py line 5121")
+                return bspline
 
             if 1e-6 < lth <= 1e-5:
                 linesegments = [edges.LineSegment2D(

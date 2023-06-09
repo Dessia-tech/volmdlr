@@ -551,6 +551,40 @@ def geometrically_bounded_surface_shape_representation(arguments, object_dict):
     return primitives
 
 
+def map_primitive(primitive, global_frame, transformed_frame):
+    """
+    Frame maps a primitive in an assembly to its good position.
+
+    :param primitive: primitive to map
+    :type primitive: Primitive3D
+    :param global_frame: Assembly frame
+    :type global_frame: volmdlr.Frame3D
+    :param transformed_frame: position of the primitive on the assembly
+    :type transformed_frame: volmdlr.Frame3D
+    :return: A new positioned primitive
+    :rtype: Primitive3D
+
+    """
+    if global_frame == transformed_frame:
+        return primitive
+    basis_a = global_frame.basis()
+    basis_b = transformed_frame.basis()
+    matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+                          [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                          [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+    matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+                          [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                          [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+    transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
+    u_vector = volmdlr.Vector3D(*transfer_matrix[0])
+    v_vector = volmdlr.Vector3D(*transfer_matrix[1])
+    w_vector = volmdlr.Vector3D(*transfer_matrix[2])
+    new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
+
+    new_primitive = primitive.frame_mapping(new_frame, 'old')
+    return new_primitive
+
+
 def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, shape_representation_frames):
     """
     Frame maps a closed shell in an assembly to its good position.

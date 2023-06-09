@@ -6969,9 +6969,9 @@ class FullArc3D(FullArc, Arc3D):
         self._bbox = None
 
     def translation(self, offset: volmdlr.Vector3D):
-        new_start_end = self.start.translation(offset, True)
-        new_center = self._center.translation(offset, True)
-        new_normal = self._normal.translation(offset, True)
+        new_start_end = self.start.translation(offset)
+        new_center = self.center.translation(offset)
+        new_normal = self.normal.translation(offset)
         return FullArc3D(new_center, new_start_end,
                          new_normal, name=self.name)
 

@@ -8,6 +8,7 @@ import os
 import tempfile
 import warnings
 import webbrowser
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
@@ -1169,6 +1170,8 @@ class Assembly(dc.PhysicalObject):
         :rtype: Primitive3D
 
         """
+        if global_frame == transformed_frame:
+            return primitive
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
         matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
@@ -2336,19 +2339,21 @@ class VolumeModel(dc.PhysicalObject):
         """
 
         list_shells = []
-        def unpack_assembly(assembly):
-            for prim in assembly.primitives:
-                if primitive.__class__.__name__ in ('Assembly', "Compound"):
-                    unpack_assembly(prim)
-                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-
-                    list_shells.append(prim)
+        list_assembly = deque()
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ in ('Assembly', "Compound"):
-                unpack_assembly(primitive)
+            if primitive.__class__.__name__ in ('Assembly', 'Compound'):
+                list_assembly.append(primitive)
             elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
                 list_shells.append(primitive)
+
+        while list_assembly:
+            assembly = list_assembly.popleft()
+            for primitive in assembly.primitives:
+                if primitive.__class__.__name__ in ('Assembly', 'Compound'):
+                    list_assembly.append(primitive)
+                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                    list_shells.append(primitive)
 
         return list_shells
 
