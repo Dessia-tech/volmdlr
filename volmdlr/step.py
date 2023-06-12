@@ -1252,11 +1252,17 @@ class Step(dc.DessiaObject):
         return assemblies_shapes  #, assemblies_positions
 
     def context_dependent_shape_representation_to_next_assembly_usage_occurrence(self, node):
+        """
+        Returns id of the next_assembly_usage_occurrence related to the given context_dependent_shape_representation.
+        """
         arg = self.functions[node].arg
         id_product_definition_shape = int(arg[1][1:])
         return int(self.functions[id_product_definition_shape].arg[2][1:])
 
     def create_connections(self):
+        """
+        Create connections between step entities.
+        """
         for node in self.root_nodes['SHAPE_REPRESENTATION_RELATIONSHIP']:
             # Associate each step representation entity to its SHAPE_REPRESENTATION
             function = self.functions[node]
