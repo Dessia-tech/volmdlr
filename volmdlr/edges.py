@@ -3952,6 +3952,7 @@ class ArcEllipse2D(Edge):
         self.ellipse2d = ellipse2d
         # self.is_trigo = True
         self.angle_start, self.angle_end = self.get_start_end_angles()
+        self.angle = self.angle_end - self.angle_start
         # self.minor_dir = self.major_dir.deterministic_unit_normal_vector()
         # frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
         # self.frame = frame
@@ -4015,7 +4016,7 @@ class ArcEllipse2D(Edge):
         # else:
         #     self.offset_angle = angle2
 
-    def get_start_end_angles(self):
+    def  get_start_end_angles(self):
         print('.....................*******************...................calculating start end angles.....................*******************...................')
         local_start_point = self.ellipse2d.frame.global_to_local_coordinates(self.start)
         u1, u2 = local_start_point.x / self.ellipse2d.major_axis, local_start_point.y / self.ellipse2d.minor_axis
@@ -4079,16 +4080,20 @@ class ArcEllipse2D(Edge):
         """
         if self.start.is_close(point, abs_tol) or self.end.is_close(point, abs_tol):
             return True
-        if not math.isclose((point.x - self.ellipse2d.center.x) ** 2 / self.ellipse2d.major_axis ** 2 +
-                            (point.y - self.ellipse2d.center.y) ** 2 / self.ellipse2d.minor_axis ** 2, 1,
-                            abs_tol=abs_tol) and not math.isclose(
-            (point.x - self.ellipse2d.center.x) ** 2 / self.ellipse2d.minor_axis ** 2 +
-            (point.y - self.ellipse2d.center.y) ** 2 / self.ellipse2d.major_axis ** 2, 1, abs_tol=abs_tol):
+        point_in_local_coords = self.ellipse2d.frame.global_to_local_coordinates(point)
+        if not math.isclose(
+                (point_in_local_coords.x - self.ellipse2d.center.x) ** 2 / self.ellipse2d.major_axis ** 2 +
+                (point_in_local_coords.y - self.ellipse2d.center.y) ** 2 / self.ellipse2d.minor_axis ** 2,
+                1, abs_tol=abs_tol) and\
+                not math.isclose(
+                    (point_in_local_coords.x - self.ellipse2d.center.x) ** 2 / self.ellipse2d.minor_axis ** 2 +
+                    (point_in_local_coords.y - self.ellipse2d.center.y) ** 2 / self.ellipse2d.major_axis ** 2,
+                    1, abs_tol=abs_tol):
             return False
         clockwise_arcellipse = self.reverse() if self.ellipse2d.is_trigo else self
-        vector_start = clockwise_arcellipse.start - clockwise_arcellipse.center
-        vector_end = clockwise_arcellipse.end - clockwise_arcellipse.center
-        vector_point = point - clockwise_arcellipse.center
+        vector_start = clockwise_arcellipse.start - clockwise_arcellipse.ellipse2d.center
+        vector_end = clockwise_arcellipse.end - clockwise_arcellipse.ellipse2d.center
+        vector_point = point - clockwise_arcellipse.ellipse2d.center
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
         point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
@@ -4153,9 +4158,9 @@ class ArcEllipse2D(Edge):
                     raise NotImplementedError
             initial_angle += increment_factor
             iter_counter += 1
-        x = self.major_axis * math.cos(abscissa_angle)
-        y = self.minor_axis * math.sin(abscissa_angle)
-        return self.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
+        x = self.ellipse2d.major_axis * math.cos(abscissa_angle)
+        y = self.ellipse2d.minor_axis * math.sin(abscissa_angle)
+        return self.ellipse2d.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
 
     def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-6):
         """
@@ -4182,6 +4187,8 @@ class ArcEllipse2D(Edge):
             new_point = self.ellipse2d.frame.global_to_local_coordinates(point)
             u1, u2 = new_point.x / self.ellipse2d.major_axis, new_point.y / self.ellipse2d.minor_axis
             angle_abscissa = volmdlr.geometry.sin_cos_angle(u1, u2)
+            if angle_abscissa == 0.0 and point.is_close(self.end):
+                angle_abscissa = 2 * math.pi
             angle_start, angle_end = self.valid_abscissa_start_end_angle(angle_abscissa)
 
             def ellipse_arc_length(theta):
@@ -4217,13 +4224,13 @@ class ArcEllipse2D(Edge):
         """
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
-            area = math.pi * self.major_axis * self.minor_axis - 0.5 * self.major_axis * self.minor_axis * (
-                    angle - math.sin(angle))
+            area = math.pi * self.ellipse2d.major_axis * self.ellipse2d.minor_axis -\
+                   0.5 * self.ellipse2d.major_axis * self.ellipse2d.minor_axis * (angle - math.sin(angle))
         else:
             angle = self.angle
-            area = 0.5 * self.major_axis * self.minor_axis * (angle - math.sin(angle))
+            area = 0.5 * self.ellipse2d.major_axis * self.ellipse2d.minor_axis * (angle - math.sin(angle))
 
-        if self.is_trigo:
+        if self.ellipse2d.is_trigo:
             return area
         return -area
 
@@ -4257,39 +4264,37 @@ class ArcEllipse2D(Edge):
             for angle in npy.linspace(angle_start, angle_end, number_points)]
         return discretization_points
 
-    def polygon_points(self, discretization_resolution: int):
-        warnings.warn('polygon_points is deprecated,\
-                please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(angle_resolution=discretization_resolution)
+    def to_3d(self, plane_origin, x, y):
+        """
+        Transforms the arc of ellipse 2D into a 3D arc of ellipse.
 
-    # def to_3d(self, plane_origin, x, y):
-    #     """
-    #     Transforms the arc of ellipse 2D into a 3D arc of ellipse.
-    #
-    #     :param plane_origin: The origin of plane to draw the arc of ellipse 3D.
-    #     :type plane_origin: volmdlr.Point3D
-    #     :param x: First direction of the plane
-    #     :type x: volmdlr.Vector3D
-    #     :param y: Second direction of the plane.
-    #     :type y: volmdlr.Vector3D
-    #     :return: A 3D arc of ellipse.
-    #     :type: ArcEllipse3D.
-    #     """
-    #     point_start3d = self.start.to_3d(plane_origin, x, y)
-    #     point_interior3d = self.interior.to_3d(plane_origin, x, y)
-    #     point_end3d = self.end.to_3d(plane_origin, x, y)
-    #     point_center3d = self.ellipse2d.center.to_3d(plane_origin, x, y)
-    #
-    #     a_max2d = self.ellipse2d.center + self.ellipse2d.major_dir * self.ellipse2d.major_axis
-    #     a_max3d = a_max2d.to_3d(plane_origin, x, y)
-    #     new_major_dir = a_max3d - point_center3d
-    #     new_major_dir.normalize()
-    #     extra3d = self.extra
-    #     if extra3d:
-    #         extra3d = self.extra.to_3d(plane_origin, x, y)
-    #     return ArcEllipse3D(point_start3d, point_interior3d, point_end3d,
-    #                         point_center3d, new_major_dir, extra3d, name=self.name)
+        :param plane_origin: The origin of plane to draw the arc of ellipse 3D.
+        :type plane_origin: volmdlr.Point3D
+        :param x: First direction of the plane
+        :type x: volmdlr.Vector3D
+        :param y: Second direction of the plane.
+        :type y: volmdlr.Vector3D
+        :return: A 3D arc of ellipse.
+        :type: ArcEllipse3D.
+        """
+        # point_start3d = self.start.to_3d(plane_origin, x, y)
+        # point_interior3d = self.interior.to_3d(plane_origin, x, y)
+        # point_end3d = self.end.to_3d(plane_origin, x, y)
+        # point_center3d = self.ellipse2d.center.to_3d(plane_origin, x, y)
+        #
+        # a_max2d = self.ellipse2d.center + self.ellipse2d.major_dir * self.ellipse2d.major_axis
+        # a_max3d = a_max2d.to_3d(plane_origin, x, y)
+        # new_major_dir = a_max3d - point_center3d
+        # new_major_dir.normalize()
+        # extra3d = self.extra
+        # if extra3d:
+        #     extra3d = self.extra.to_3d(plane_origin, x, y)
+        # return ArcEllipse3D(point_start3d, point_interior3d, point_end3d,
+        #                     point_center3d, new_major_dir, extra3d, name=self.name)
+        ellipse3d = self.ellipse2d.to_3d(plane_origin, x, y)
+        start3d = self.start.to_3d(plane_origin, x, y)
+        end3d = self.end.to_3d(plane_origin, x, y)
+        return ArcEllipse3D(ellipse3d, start3d, end3d)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
@@ -4317,15 +4322,54 @@ class ArcEllipse2D(Edge):
         return ax
 
     def normal_vector(self, abscissa):
-        raise NotImplementedError
+        """
+        Calculates the normal vector to an ellipse at a given abscissa.
+
+        :param abscissa: The abscissa value at which the normal vector is to be calculated.
+        :type abscissa: float.
+        :return: The normal vector to the ellipse at the given abscissa.
+        :rtype: volmdlr.Vector2D.
+
+        :raises: ValueError If the abscissa is out of range.
+        """
+        tangent_vector = self.direction_vector(abscissa)
+        return tangent_vector.normal_vector()
 
     def direction_vector(self, abscissa):
-        raise NotImplementedError
+        """
+        Calculates the tangent vector to an ellipse at a given abscissa.
+
+        :param abscissa: The abscissa value at which the tangent vector is to be calculated.
+        :type abscissa: float.
+        :return: The tangent vector to the ellipse at the given abscissa.
+        :rtype: volmdlr.Vector2D.
+
+        :raises: ValueError If the abscissa is out of range.
+        """
+        point_at_abscissa = self.point_at_abscissa(abscissa)
+
+        # Convert the point to local coordinates within the ellipse's frame
+        point_at_abscissa_at_local_coord = self.ellipse2d.frame.global_to_local_coordinates(point_at_abscissa)
+
+        # Calculate the slope of the tangent line at the given abscissa
+        dy_dx = -(self.ellipse2d.minor_axis ** 2 * point_at_abscissa_at_local_coord.x) / (
+                self.ellipse2d.major_axis ** 2 * point_at_abscissa_at_local_coord.y)
+
+        # Construct the second point on the tangent line still on ellipse's frame.
+        tangent_second_point = point_at_abscissa_at_local_coord + 1 * volmdlr.Point2D(1, dy_dx)
+
+        # Convert the second point back to global coordinates
+        global_coord_second_point = self.ellipse2d.frame.local_to_global_coordinates(tangent_second_point)
+
+        tangent_vector = global_coord_second_point - point_at_abscissa
+        tangent_vector = tangent_vector.to_vector()
+
+        return tangent_vector
 
     def get_reverse(self):
-        ellipse = self.ellipse2d.__class__(self.ellipse2d.major_axis, self.ellipse2d.major_axis,
-                                           volmdlr.Frame3D(self.ellipse2d.frame.origin, self.ellipse2d.u,
-                                                           -self.ellipse2d.v))
+        ellipse = self.ellipse2d.__class__(self.ellipse2d.major_axis, self.ellipse2d.minor_axis,
+                                           volmdlr.Frame2D(self.ellipse2d.center, self.ellipse2d.frame.u,
+                                                           -self.ellipse2d.frame.v))
         return self.__class__(ellipse, self.end.copy(), self.start.copy(), self.name+'_reverse')
 
     def line_intersections(self, line2d: Line2D):
@@ -4335,7 +4379,8 @@ class ArcEllipse2D(Edge):
         :param line2d: Line 2D to verify intersections
         :return: List with all intersections
         """
-        ellipse2d_linesegment_intersections = vm_utils_intersections.ellipse2d_line_intersections(self, line2d)
+        ellipse2d_linesegment_intersections = vm_utils_intersections.ellipse2d_line_intersections(
+            self.ellipse2d, line2d)
         linesegment_intersections = []
         for inter in ellipse2d_linesegment_intersections:
             if self.point_belongs(inter):
@@ -4352,7 +4397,7 @@ class ArcEllipse2D(Edge):
         """
         if self.bounding_rectangle.distance_to_b_rectangle(linesegment2d.bounding_rectangle) > abs_tol:
             return []
-        intersections = self.line_intersections(linesegment2d.to_line())
+        intersections = self.line_intersections(linesegment2d.line)
         linesegment_intersections = []
         for inter in intersections:
             if linesegment2d.point_belongs(inter, abs_tol):
@@ -4372,6 +4417,17 @@ class ArcEllipse2D(Edge):
         intersections = vm_utils_intersections.get_bsplinecurve_intersections(self, bspline, abs_tol)
         return intersections
 
+    def rotation(self, center, angle: float):
+        """
+        Rotation of ellipse around a center and an angle.
+
+        :param center: center of the rotation.
+        :param angle: angle to rotated of.
+        :return: a rotated new ellipse.
+        """
+        return ArcEllipse2D(self.ellipse2d.rotation(center, angle), self.start.rotation(center, angle),
+                            self.end.rotation(center, angle))
+
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new Arc Ellipse 2D.
@@ -4381,20 +4437,6 @@ class ArcEllipse2D(Edge):
         return ArcEllipse2D(self.ellipse2d.frame_mapping(frame, side),
                             self.start.frame_mapping(frame, side),
                             self.end.frame_mapping(frame, side))
-        # if side == 'old':
-        #     return ArcEllipse2D(self.ellipse2d.frame_mapping(frame, side),
-        #                         self.start.frame_mapping(frame, side),
-        #                         self.start.frame_mapping(frame, side))
-        # if side == 'new':
-        #     # new_center = frame.global_to_local_coordinates(self.ellipse2d.center)
-        #     # point_major_dir = self.center + self.major_dir * self.major_axis
-        #     # major_dir = frame.global_to_local_coordinates(point_major_dir).to_vector()
-        #     # major_dir.normalize()
-        #
-        #     return ArcEllipse2D(self.ellipse2d.frame_mapping(frame, side),
-        #                         frame.global_to_local_coordinates(self.start),
-        #                         frame.global_to_local_coordinates(self.end))
-        # raise ValueError('Side should be \'new\' \'old\'')
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -4406,12 +4448,6 @@ class ArcEllipse2D(Edge):
         return ArcEllipse2D(self.ellipse2d.translation(offset),
                             self.start.translation(offset),
                             self.end.translation(offset))
-        # new_start = self.start.translation(offset)
-        # new_end = self.end.translation(offset)
-        # new_interior = self.interior.translation(offset)
-        # new_center = self.center.translation(offset)
-        # new_extra = self.extra if self.extra is None else self.extra.translation(offset)
-        # return ArcEllipse2D(new_start, new_interior, new_end, new_center, self.major_dir, new_extra)
 
     def point_distance(self, point):
         """
@@ -4445,11 +4481,8 @@ class ArcEllipse2D(Edge):
         if split_point.is_close(self.end, 1e-6):
             return [self.copy(), None]
         abscissa = self.abscissa(split_point)
-        return [self.__class__(self.start, self.point_at_abscissa(0.5 * abscissa), split_point,
-                               self.center.copy(), self.major_dir.copy()),
-                self.__class__(split_point, self.point_at_abscissa(
-                    (self.abscissa(self.end) - abscissa) * 0.5 + abscissa),
-                               self.end, self.center.copy(), self.major_dir.copy())]
+        return [self.__class__(self.ellipse2d, self.start, split_point),
+                self.__class__(self.ellipse2d, split_point, self.end)]
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
@@ -4462,17 +4495,13 @@ class ArcEllipse2D(Edge):
 
         if isinstance(other_edge, self.__class__):
             if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
-                    and self.center.is_close(other_edge.center, tol) and self.point_belongs(other_edge.interior, tol)):
+                    and self.ellipse2d.center.is_close(other_edge.ellipse2d.center, tol) and\
+                    self.point_belongs(other_edge.point_at_abscissa(other_edge.length()*0.5), tol)):
                 return True
         return False
 
     def complementary(self):
         """Gets the complementary arc of ellipse."""
-        # vector = self.interior - self.center
-        # vector.normalize()
-        # new_interior = self.center - vector * self.center.point_distance(self.interior)
-        # if self.point_belongs(new_interior):
-        #     raise ValueError('interior point found not valid')
         return self.__class__(self.ellipse2d, self.end, self.start, name=self.name+'_complementary')
 
 
@@ -7103,128 +7132,148 @@ class ArcEllipse3D(Edge):
 
     """
 
-    def __init__(self, start: volmdlr.Point3D, interior: volmdlr.Point3D, end: volmdlr.Point3D,
-                 center: volmdlr.Point3D, major_dir: volmdlr.Vector3D, normal: volmdlr.Vector3D = None,
-                 extra: volmdlr.Point3D = None, name=''):
+    def __init__(self, ellipse3d: volmdlr_curves.Ellipse3D, start: volmdlr.Point3D, end: volmdlr.Point3D, name=''):
         Edge.__init__(self, start=start, end=end, name=name)
-        self.interior = interior
-        self.center = center
-        major_dir.normalize()
-        self.major_dir = major_dir  # Vector for Gradius
-        self.normal = normal
-        self.extra = extra
-        if not normal:
-            u1 = self.interior - self.start
-            u2 = self.interior - self.end
-            u1.normalize()
-            u2.normalize()
-
-            if u1.is_close(u2):
-                u2 = self.interior - self.extra
-                u2.normalize()
-
-            n = u2.cross(u1)
-            n.normalize()
-            self.normal = n
-
-        self.minor_dir = self.normal.cross(self.major_dir)
-
-        frame = volmdlr.Frame3D(self.center, self.major_dir, self.minor_dir, self.normal)
-        self.frame = frame
-        start_new, end_new = frame.global_to_local_coordinates(
-            self.start), frame.global_to_local_coordinates(self.end)
-        interior_new, center_new = frame.global_to_local_coordinates(
-            self.interior), frame.global_to_local_coordinates(self.center)
-        self._bbox = None
+        self.ellipse3d = ellipse3d
+        self.angle_start, self.angle_end = self.get_start_end_angles()
+        self.angle = self.angle_end - self.angle_start
+        self._self_2d = None
+        # self.interior = interior
+        # self.center = center
+        # major_dir.normalize()
+        # self.major_dir = major_dir  # Vector for Gradius
+        # self.normal = normal
+        # self.extra = extra
+        # if not normal:
+        #     u1 = self.interior - self.start
+        #     u2 = self.interior - self.end
+        #     u1.normalize()
+        #     u2.normalize()
+        #
+        #     if u1.is_close(u2):
+        #         u2 = self.interior - self.extra
+        #         u2.normalize()
+        #
+        #     n = u2.cross(u1)
+        #     n.normalize()
+        #     self.normal = n
+        #
+        # self.minor_dir = self.normal.cross(self.major_dir)
+        #
+        # frame = volmdlr.Frame3D(self.center, self.major_dir, self.minor_dir, self.normal)
+        # self.frame = frame
+        # start_new, end_new = frame.global_to_local_coordinates(
+        #     self.start), frame.global_to_local_coordinates(self.end)
+        # interior_new, center_new = frame.global_to_local_coordinates(
+        #     self.interior), frame.global_to_local_coordinates(self.center)
+        # self._bbox = None
 
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
 
-        def theta_a_b(start_, iterior_, end_, center_):
-            """
-            center-and-3-arbitrary-points-on-it-are-given.
+        # def theta_a_b(start_, iterior_, end_, center_):
+        #     """
+        #     center-and-3-arbitrary-points-on-it-are-given.
+        #
+        #     theta= ellipse's inclination angle related to the horizontal
+        #     (clockwise),a=semi major axis, B=semi minor axis.
+        #
+        #     """
+        #     x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1], \
+        #         iterior_[0] - center_[0], iterior_[1] - center_[
+        #                                                                  1], end_[0] - center_[0], end_[1] - center_[1]
+        #     matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
+        #                           [x_interior ** 2, y_interior ** 2, 2 * x_interior * y_interior],
+        #                           [x_end ** 2, y_end ** 2, 2 * x_end * y_end]))
+        #     inv_matrix_a = npy.linalg.inv(matrix_a)
+        #     identity = npy.array(([1], [1], [1]))
+        #     r1, r2, r3 = npy.dot(inv_matrix_a, identity)  # 3 item column matrix
+        #     theta = 0.5 * math.atan(2 * r3 / (r2 - r1))
+        #     c1 = r1 + r2
+        #     c2 = (r2 - r1) / math.cos(2 * theta)
+        #     major_axis = math.sqrt((2 / (c1 - c2)))
+        #     minor_axis = math.sqrt((2 / (c1 + c2)))
+        #     return theta, major_axis, minor_axis
 
-            theta= ellipse's inclination angle related to the horizontal
-            (clockwise),a=semi major axis, B=semi minor axis.
-
-            """
-            x_start, y_start, x_interior, y_interior, x_end, y_end = start_[0] - center_[0], start_[1] - center_[1], \
-                iterior_[0] - center_[0], iterior_[1] - center_[
-                                                                         1], end_[0] - center_[0], end_[1] - center_[1]
-            matrix_a = npy.array(([x_start ** 2, y_start ** 2, 2 * x_start * y_start],
-                                  [x_interior ** 2, y_interior ** 2, 2 * x_interior * y_interior],
-                                  [x_end ** 2, y_end ** 2, 2 * x_end * y_end]))
-            inv_matrix_a = npy.linalg.inv(matrix_a)
-            identity = npy.array(([1], [1], [1]))
-            r1, r2, r3 = npy.dot(inv_matrix_a, identity)  # 3 item column matrix
-            theta = 0.5 * math.atan(2 * r3 / (r2 - r1))
-            c1 = r1 + r2
-            c2 = (r2 - r1) / math.cos(2 * theta)
-            major_axis = math.sqrt((2 / (c1 - c2)))
-            minor_axis = math.sqrt((2 / (c1 + c2)))
-            return theta, major_axis, minor_axis
-
-        if start.is_close(end):
-            extra_new = frame.global_to_local_coordinates(self.extra)
-            theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, extra_new, center_new)
-
-        else:
-            if not self.extra:
-                theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, end_new, center_new)
-            else:
-                extra_new = frame.global_to_local_coordinates(self.extra)
-                theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, extra_new, center_new)
-
-        self.Gradius = major_axis
-        self.Sradius = minor_axis
-        self.theta = theta
+        # if start.is_close(end):
+        #     extra_new = frame.global_to_local_coordinates(self.extra)
+        #     theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, extra_new, center_new)
+        #
+        # else:
+        #     if not self.extra:
+        #         theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, end_new, center_new)
+        #     else:
+        #         extra_new = frame.global_to_local_coordinates(self.extra)
+        #         theta, major_axis, minor_axis = theta_a_b(start_new, interior_new, extra_new, center_new)
+        #
+        # self.Gradius = major_axis
+        # self.Sradius = minor_axis
+        # self.theta = theta
 
         # Angle start
-        start_u1, start_u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
-        # angle1 = volmdlr.geometry.sin_cos_angle(start_u1, start_u2)
-        angle1 = math.atan2(start_u2, start_u1)
-        self.angle_start = angle1
-        # Angle end
-        end_u3, end_u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
-        # angle2 = volmdlr.geometry.sin_cos_angle(end_u3, end_u4)
-        angle2 = math.atan2(end_u4, end_u3)
-        self.angle_end = angle2
-        # Angle interior
-        interior_u5, interior_u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
-        # anglei = volmdlr.geometry.sin_cos_angle(interior_u5, interior_u6)
-        anglei = math.atan2(interior_u6, interior_u5)
-        self.angle_interior = anglei
-        # Going trigo/clock wise from start to interior
-        if anglei < angle1:
-            trigowise_path = (anglei + volmdlr.TWO_PI) - angle1
-            clockwise_path = angle1 - anglei
-        else:
-            trigowise_path = anglei - angle1
-            clockwise_path = angle1 - anglei + volmdlr.TWO_PI
+        # start_u1, start_u2 = start_new.x / self.Gradius, start_new.y / self.Sradius
+        # # angle1 = volmdlr.geometry.sin_cos_angle(start_u1, start_u2)
+        # angle1 = math.atan2(start_u2, start_u1)
+        # self.angle_start = angle1
+        # # Angle end
+        # end_u3, end_u4 = end_new.x / self.Gradius, end_new.y / self.Sradius
+        # # angle2 = volmdlr.geometry.sin_cos_angle(end_u3, end_u4)
+        # angle2 = math.atan2(end_u4, end_u3)
+        # self.angle_end = angle2
+        # # Angle interior
+        # interior_u5, interior_u6 = interior_new.x / self.Gradius, interior_new.y / self.Sradius
+        # # anglei = volmdlr.geometry.sin_cos_angle(interior_u5, interior_u6)
+        # anglei = math.atan2(interior_u6, interior_u5)
+        # self.angle_interior = anglei
+        # # Going trigo/clock wise from start to interior
+        # if anglei < angle1:
+        #     trigowise_path = (anglei + volmdlr.TWO_PI) - angle1
+        #     clockwise_path = angle1 - anglei
+        # else:
+        #     trigowise_path = anglei - angle1
+        #     clockwise_path = angle1 - anglei + volmdlr.TWO_PI
+        #
+        # # Going trigo wise from interior to interior
+        # if angle2 < anglei:
+        #     trigowise_path += (angle2 + volmdlr.TWO_PI) - anglei
+        #     clockwise_path += anglei - angle2
+        # else:
+        #     trigowise_path += angle2 - anglei
+        #     clockwise_path += anglei - angle2 + volmdlr.TWO_PI
+        #
+        # if clockwise_path > trigowise_path:
+        #     self.is_trigo = True
+        #     self.angle = trigowise_path
+        # else:
+        #     # Clock wise
+        #     self.is_trigo = False
+        #     self.angle = clockwise_path
+        #
+        # if self.start.is_close(self.end):
+        #     self.angle = volmdlr.TWO_PI
+        #
+        # if self.is_trigo:
+        #     self.offset_angle = angle1
+        # else:
+        #     self.offset_angle = angle2
 
-        # Going trigo wise from interior to interior
-        if angle2 < anglei:
-            trigowise_path += (angle2 + volmdlr.TWO_PI) - anglei
-            clockwise_path += anglei - angle2
-        else:
-            trigowise_path += angle2 - anglei
-            clockwise_path += anglei - angle2 + volmdlr.TWO_PI
+    def  get_start_end_angles(self):
+        print('.....................*******************...................calculating start end angles.....................*******************...................')
+        local_start_point = self.ellipse3d.frame.global_to_local_coordinates(self.start)
+        u1, u2 = local_start_point.x / self.ellipse3d.major_axis, local_start_point.y / self.ellipse3d.minor_axis
+        start_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        local_end_point = self.ellipse3d.frame.global_to_local_coordinates(self.end)
+        u1, u2 = local_end_point.x / self.ellipse3d.major_axis, local_end_point.y / self.ellipse3d.minor_axis
+        end_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        if math.isclose(end_angle, 0.0, abs_tol=1e-6):
+            end_angle = volmdlr.TWO_PI
+        return start_angle, end_angle
 
-        if clockwise_path > trigowise_path:
-            self.is_trigo = True
-            self.angle = trigowise_path
-        else:
-            # Clock wise
-            self.is_trigo = False
-            self.angle = clockwise_path
-
-        if self.start.is_close(self.end):
-            self.angle = volmdlr.TWO_PI
-
-        if self.is_trigo:
-            self.offset_angle = angle1
-        else:
-            self.offset_angle = angle2
+    @property
+    def self_2d(self):
+        if not self._self_2d:
+            self._self_2d = self.to_2d(self.ellipse3d.center, self.ellipse3d.frame.u, self.ellipse3d.frame.v)
+        return self._self_2d
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
@@ -7243,33 +7292,34 @@ class ArcEllipse3D(Edge):
                 number_points = math.ceil(angle_resolution * abs(0.5 * self.angle / math.pi)) + 1
         angle_end = self.angle_end
         angle_start = self.angle_start
-        if angle_start > self.angle_interior > angle_end or angle_start < self.angle_interior < angle_end:
-            angle_end = self.angle_end
-            angle_start = self.angle_start
-        elif self.angle_start == self.angle_end:
-            angle_start = 0
-            angle_end = 2 * math.pi
-        else:
-            if angle_end < angle_start:
-                angle_end = self.angle_end + volmdlr.TWO_PI
-            elif angle_start < angle_end:
-                angle_end = self.angle_end - volmdlr.TWO_PI
+        # if angle_start > self.angle_interior > angle_end or angle_start < self.angle_interior < angle_end:
+        #     angle_end = self.angle_end
+        #     angle_start = self.angle_start
+        # elif self.angle_start == self.angle_end:
+        #     angle_start = 0
+        #     angle_end = 2 * math.pi
+        # else:
+        #     if angle_end < angle_start:
+        #         angle_end = self.angle_end + volmdlr.TWO_PI
+        #     elif angle_start < angle_end:
+        #         angle_end = self.angle_end - volmdlr.TWO_PI
 
-        discretization_points = [self.frame.local_to_global_coordinates(
-            volmdlr.Point3D(self.Gradius * math.cos(angle), self.Sradius * math.sin(angle), 0))
+        discretization_points = [self.ellipse3d.frame.local_to_global_coordinates(
+            volmdlr.Point3D(self.ellipse3d.major_axis * math.cos(angle),
+                            self.ellipse3d.minor_axis * math.sin(angle), 0))
             for angle in npy.linspace(angle_start, angle_end, number_points)]
         return discretization_points
 
-    def polygon_points(self, discretization_resolution: int):
-        warnings.warn('polygon_points is deprecated,\
-        please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(angle_resolution=discretization_resolution)
-
-    def _get_points(self):
-        return self.discretization_points(number_points=20)
-
-    points = property(_get_points)
+    # def polygon_points(self, discretization_resolution: int):
+    #     warnings.warn('polygon_points is deprecated,\
+    #     please use discretization_points instead',
+    #                   DeprecationWarning)
+    #     return self.discretization_points(angle_resolution=discretization_resolution)
+    #
+    # def _get_points(self):
+    #     return self.discretization_points(number_points=20)
+    #
+    # points = property(_get_points)
 
     def to_2d(self, plane_origin, x, y):
         """
@@ -7281,23 +7331,25 @@ class ArcEllipse3D(Edge):
         :return: ArcEllipse2D.
         """
         point_start2d = self.start.to_2d(plane_origin, x, y)
-        point_interior2d = self.interior.to_2d(plane_origin, x, y)
+        # point_interior2d = self.interior.to_2d(plane_origin, x, y)
         point_end2d = self.end.to_2d(plane_origin, x, y)
-        center = self.center.to_2d(plane_origin, x, y)
-        point_major_dir = self.center + self.Gradius * self.major_dir
-        point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
-        vector_major_dir_2d = point_major_dir_2d - center
-        vector_major_dir_2d.normalize()
-        extra = self.extra
-        if extra:
-            extra = self.extra.to_2d(plane_origin, x, y)
-        return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, extra,
-                            name=self.name)
+        ellipse2d = self.ellipse3d.to_2d(plane_origin, x, y)
+        # center = self.center.to_2d(plane_origin, x, y)
+        # point_major_dir = self.center + self.Gradius * self.major_dir
+        # point_major_dir_2d = point_major_dir.to_2d(plane_origin, x, y)
+        # vector_major_dir_2d = point_major_dir_2d - center
+        # vector_major_dir_2d.normalize()
+        # extra = self.extra
+        # if extra:
+        #     extra = self.extra.to_2d(plane_origin, x, y)
+        # return ArcEllipse2D(point_start2d, point_interior2d, point_end2d, center, vector_major_dir_2d, extra,
+        #                     name=self.name)
+        return ArcEllipse2D(ellipse2d, point_start2d, point_end2d)
 
     def length(self):
         """Computes the length."""
         return self.angle * math.sqrt(
-            (self.Gradius ** 2 + self.Sradius ** 2) / 2)
+            (self.ellipse3d.major_axis ** 2 + self.ellipse3d.minor_axis ** 2) / 2)
 
     def normal_vector(self, abscissa):
         raise NotImplementedError
@@ -7315,9 +7367,9 @@ class ArcEllipse3D(Edge):
         """
         if point.point_distance(self.start) < tol:
             return 0
-        ellipse_2d = self.to_2d(self.center, self.major_dir, self.minor_dir)
-        point2d = point.to_2d(self.center, self.major_dir, self.minor_dir)
-        return ellipse_2d.abscissa(point2d)
+        # ellipse_2d = self.to_2d(self.center, self.major_dir, self.minor_dir)
+        point2d = point.to_2d(self.ellipse3d.center, self.ellipse3d.major_dir, self.ellipse3d.minor_dir)
+        return self._self_2d.abscissa(point2d)
 
     def get_reverse(self):
         """
@@ -7346,12 +7398,12 @@ class ArcEllipse3D(Edge):
             fig = plt.figure()
             ax = Axes3D(fig)
 
-        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
-                color='b')
+        # ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
+        #         color='b')
         ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
-        ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='r')
-        ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
-                c='g')
+        ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='b')
+        # ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
+        #         c='g')
         x = []
         y = []
         z = []
@@ -7362,8 +7414,8 @@ class ArcEllipse3D(Edge):
 
         ax.plot(x, y, z, edge_style.color, alpha=edge_style.alpha)
         if edge_style.edge_ends:
-            self.start.plot(ax)
-            self.end.plot(ax)
+            self.start.plot(ax, 'r')
+            self.end.plot(ax, 'b')
         return ax
 
     def plot2d(self, x3d: volmdlr.Vector3D = volmdlr.X3D, y3d: volmdlr.Vector3D = volmdlr.Y3D,
@@ -7492,10 +7544,10 @@ class ArcEllipse3D(Edge):
 
     def complementary(self):
         """Gets the complementary arc of ellipse."""
-        vector = self.interior - self.center
-        vector.normalize()
-        new_interior = self.center - vector * self.center.point_distance(self.interior)
-        return self.__class__(self.start, new_interior, self.end, self.center, self.major_dir, self.normal)
+        # vector = self.interior - self.center
+        # vector.normalize()
+        # new_interior = self.center - vector * self.center.point_distance(self.interior)
+        return self.__class__(self.ellipse3d, self.end, self.start)
 
     def point_at_abscissa(self, abscissa):
         """

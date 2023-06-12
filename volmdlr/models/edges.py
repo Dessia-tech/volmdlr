@@ -1,7 +1,7 @@
 """some volmdlr edges models."""
 from geomdl import utilities
 import volmdlr
-from volmdlr import edges
+from volmdlr import edges, curves
 
 degree = 3
 points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
@@ -12,11 +12,11 @@ bspline1 = edges.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, N
 lineseg = edges.LineSegment2D(volmdlr.Point2D(0, 0.2), volmdlr.Point2D(3, -0.2))
 
 arc = edges.Arc2D(volmdlr.Point2D(0, 0.3), volmdlr.Point2D(1, -0.3), volmdlr.Point2D(2, 2))
-
-arc_ellipse2d = edges.ArcEllipse2D(start=10 * volmdlr.Point2D(-0.125, -0.08416500663326211),
-                                   interior=10 * volmdlr.Point2D(-0.03543560762586048, -0.011930639375832372),
-                                   end=10 * volmdlr.Point2D(0.0, 0.125), center=10 * volmdlr.Point2D(-0.15, 0.125),
-                                   major_dir=volmdlr.Vector2D(0, 1))
+u_vector = volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475)
+v_vector = volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)
+frame = volmdlr.Frame2D(volmdlr.O2D, u_vector, v_vector)
+ellipse2d = curves.Ellipse2D(2, 1, frame)
+arc_ellipse2d = edges.ArcEllipse2D(ellipse2d, start=volmdlr.Point2D(0.5, 1.5), end=volmdlr.Point2D(1.5, 0.5))
 
 degree = 5
 control_points = [volmdlr.Point3D(0, 3, 0),
