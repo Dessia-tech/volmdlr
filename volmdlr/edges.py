@@ -464,7 +464,7 @@ class Line(dc.DessiaObject):
         :return: The unit direction vector of the line
         :rtype:  Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
         """
-        vector = self.direction_vector()
+        vector = self.direction_vector().copy()
         vector.normalize()
         return vector
 
@@ -541,7 +541,7 @@ class Line(dc.DessiaObject):
         :return: The point that corresponds to the given abscissa.
         :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
         """
-        return self.point1 + (self.point2 - self.point1) * abscissa
+        return self.point1 + self.unit_direction_vector() * abscissa
 
     def sort_points_along_line(self, points):
         """
