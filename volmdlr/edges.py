@@ -6992,9 +6992,9 @@ class FullArc3D(FullArc, Arc3D):
         self._bbox = None
 
     def translation(self, offset: volmdlr.Vector3D):
-        new_start_end = self.start.translation(offset, True)
-        new_center = self._center.translation(offset, True)
-        new_normal = self._normal.translation(offset, True)
+        new_start_end = self.start.translation(offset)
+        new_center = self.center.translation(offset)
+        new_normal = self.normal.translation(offset)
         return FullArc3D(new_center, new_start_end,
                          new_normal, name=self.name)
 
@@ -7104,6 +7104,21 @@ class FullArc3D(FullArc, Arc3D):
         abscissa = self.abscissa(split_point)
         return [Arc3D(self.start, self.point_at_abscissa(0.5 * abscissa), split_point),
                 Arc3D(split_point, self.point_at_abscissa((self.length() - abscissa) * 0.5 + abscissa), self.end)]
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str = "new"):
+        if side == 'old':
+            new_center = frame.local_to_global_coordinates(self.center.copy())
+            new_start_end = frame.local_to_global_coordinates(self.start_end.copy())
+            new_normal = frame.local_to_global_coordinates(self.normal.copy())
+        elif side == 'new':
+            new_center = frame.global_to_local_coordinates(self.center.copy())
+            new_start_end = frame.global_to_local_coordinates(self.start_end.copy())
+            new_normal = frame.global_to_local_coordinates(self.normal.copy())
+        else:
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
+        return FullArc3D(new_center, new_start_end, new_normal, name=self.name)
+
 
 class ArcEllipse3D(Edge):
     """
