@@ -7138,6 +7138,7 @@ class ArcEllipse3D(Edge):
         self.angle_start, self.angle_end = self.get_start_end_angles()
         self.angle = self.angle_end - self.angle_start
         self._self_2d = None
+        self._length = None
         # self.interior = interior
         # self.center = center
         # major_dir.normalize()
@@ -7295,14 +7296,14 @@ class ArcEllipse3D(Edge):
         # if angle_start > self.angle_interior > angle_end or angle_start < self.angle_interior < angle_end:
         #     angle_end = self.angle_end
         #     angle_start = self.angle_start
-        # elif self.angle_start == self.angle_end:
-        #     angle_start = 0
-        #     angle_end = 2 * math.pi
-        # else:
-        #     if angle_end < angle_start:
-        #         angle_end = self.angle_end + volmdlr.TWO_PI
-        #     elif angle_start < angle_end:
-        #         angle_end = self.angle_end - volmdlr.TWO_PI
+        if self.angle_start == self.angle_end:
+            angle_start = 0
+            angle_end = 2 * math.pi
+        else:
+            if angle_end < angle_start:
+                angle_end = self.angle_end + volmdlr.TWO_PI
+            # elif angle_start < angle_end:
+            #     angle_end = self.angle_end - volmdlr.TWO_PI
 
         discretization_points = [self.ellipse3d.frame.local_to_global_coordinates(
             volmdlr.Point3D(self.ellipse3d.major_axis * math.cos(angle),
@@ -7348,14 +7349,20 @@ class ArcEllipse3D(Edge):
 
     def length(self):
         """Computes the length."""
-        return self.angle * math.sqrt(
-            (self.ellipse3d.major_axis ** 2 + self.ellipse3d.minor_axis ** 2) / 2)
+        if not self._length:
+            self._length = self.self_2d.length()
+        # return self.angle * math.sqrt(
+        #     (self.ellipse3d.major_axis ** 2 + self.ellipse3d.minor_axis ** 2) / 2)
+        return self._length
 
     def normal_vector(self, abscissa):
-        raise NotImplementedError
+        return self.direction_vector(abscissa).deterministic_normal_vector()
 
     def direction_vector(self, abscissa):
-        raise NotImplementedError
+        direction_vector_2d = self.self_2d.direction_vector(abscissa)
+        direction_vector_3d = direction_vector_2d.to_3d(
+            self.ellipse3d.center, self.ellipse3d.frame.u, self.ellipse3d.frame.v)
+        return direction_vector_3d
 
     def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
         """
@@ -7369,7 +7376,7 @@ class ArcEllipse3D(Edge):
             return 0
         # ellipse_2d = self.to_2d(self.center, self.major_dir, self.minor_dir)
         point2d = point.to_2d(self.ellipse3d.center, self.ellipse3d.major_dir, self.ellipse3d.minor_dir)
-        return self._self_2d.abscissa(point2d)
+        return self.self_2d.abscissa(point2d)
 
     def get_reverse(self):
         """
@@ -7395,8 +7402,7 @@ class ArcEllipse3D(Edge):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plot the arc ellipse."""
         if ax is None:
-            fig = plt.figure()
-            ax = Axes3D(fig)
+            ax = plt.figure().add_subplot(111, projection='3d')
 
         # ax.plot([self.interior[0]], [self.interior[1]], [self.interior[2]],
         #         color='b')
@@ -7485,6 +7491,32 @@ class ArcEllipse3D(Edge):
         zmax = max(point.z for point in points)
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
+        """
+        Arc-Ellipse3D rotation.
+
+        :param center: rotation center.
+        :param axis: rotation axis.
+        :param angle: angle rotation.
+        :return: a new rotated Arc-Ellipse3D.
+        """
+        new_start = self.start.rotation(center, axis, angle)
+        new_end = self.end.rotation(center, axis, angle)
+        new_ellipse3d = self.ellipse3d.rotation(center, axis, angle)
+        return ArcEllipse3D(new_ellipse3d, new_start, new_end)
+
+    def translation(self, offset: volmdlr.Vector3D):
+        """
+        ArcEllipse3D translation.
+
+        :param offset: translation vector.
+        :return: A new translated ArcEllipse3D.
+        """
+        new_start = self.start.translation(offset)
+        new_end = self.end.translation(offset)
+        new_ellipse3d = self.ellipse3d.translation(offset)
+        return ArcEllipse3D(new_ellipse3d, new_start, new_end)
+
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new ArcEllipse3D.
@@ -7497,22 +7529,24 @@ class ArcEllipse3D(Edge):
         :return: A new transformed ArcEllipse3D.
         :rtype: ArcEllipse3D
         """
-        if side == 'old':
-            return ArcEllipse3D(frame.local_to_global_coordinates(self.start),
-                                frame.local_to_global_coordinates(self.interior),
-                                frame.local_to_global_coordinates(self.end),
-                                frame.local_to_global_coordinates(self.center),
-                                self.major_dir)
-        if side == 'new':
-            point_major_dir = self.center + self.major_dir * self.major_axis
-            major_dir = frame.global_to_local_coordinates(point_major_dir).to_vector()
-            major_dir.normalize()
-            return ArcEllipse3D(frame.global_to_local_coordinates(self.start),
-                                frame.global_to_local_coordinates(self.interior),
-                                frame.global_to_local_coordinates(self.end),
-                                frame.global_to_local_coordinates(self.center),
-                                major_dir)
-        raise ValueError('Side should be \'new\' \'old\'')
+        return ArcEllipse3D(self.ellipse3d.frame_mapping(frame, side), self.start.frame_mapping(frame, side),
+                            self.end.frame_mapping(frame, side))
+        # if side == 'old':
+        #     return ArcEllipse3D(frame.local_to_global_coordinates(self.start),
+        #                         frame.local_to_global_coordinates(self.interior),
+        #                         frame.local_to_global_coordinates(self.end),
+        #                         frame.local_to_global_coordinates(self.center),
+        #                         self.major_dir)
+        # if side == 'new':
+        #     point_major_dir = self.center + self.major_dir * self.major_axis
+        #     major_dir = frame.global_to_local_coordinates(point_major_dir).to_vector()
+        #     major_dir.normalize()
+        #     return ArcEllipse3D(frame.global_to_local_coordinates(self.start),
+        #                         frame.global_to_local_coordinates(self.interior),
+        #                         frame.global_to_local_coordinates(self.end),
+        #                         frame.global_to_local_coordinates(self.center),
+        #                         major_dir)
+        # raise ValueError('Side should be \'new\' \'old\'')
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
         """
@@ -7522,10 +7556,10 @@ class ArcEllipse3D(Edge):
         :param abs_tol: Absolute tolerance to consider the point on the curve.
         :return: True is point lies on the arc of ellipse, False otherwise
         """
-        vector_2 = self.normal.cross(self.major_dir)
-        ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
-        point2d = point.to_2d(self.center, self.major_dir, vector_2)
-        return ellipse_2d.point_belongs(point2d, abs_tol=abs_tol)
+        # vector_2 = self.normal.cross(self.major_dir)
+        # ellipse_2d = self.to_2d(self.center, self.major_dir, vector_2)
+        point2d = point.to_2d(self.ellipse3d.center, self.ellipse3d.major_dir, self.ellipse3d.minor_dir)
+        return self.self_2d.point_belongs(point2d, abs_tol=abs_tol)
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
@@ -7538,15 +7572,13 @@ class ArcEllipse3D(Edge):
 
         if isinstance(other_edge, self.__class__):
             if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
-                    and self.center.is_close(other_edge.center, tol) and self.point_belongs(other_edge.interior, tol)):
+                    and self.ellipse3d.center.is_close(other_edge.ellipse3d.center, tol)
+                    and self.point_belongs(other_edge.point_at_abscissa(other_edge.length()*0.5), tol)):
                 return True
         return False
 
     def complementary(self):
         """Gets the complementary arc of ellipse."""
-        # vector = self.interior - self.center
-        # vector.normalize()
-        # new_interior = self.center - vector * self.center.point_distance(self.interior)
         return self.__class__(self.ellipse3d, self.end, self.start)
 
     def point_at_abscissa(self, abscissa):
@@ -7556,9 +7588,9 @@ class ArcEllipse3D(Edge):
         :param abscissa: abscissa to calculate point.
         :return: volmdlr.Point3D
         """
-        ellipse_2d = self.to_2d(self.center, self.major_dir, self.minor_dir)
-        point2d = ellipse_2d.point_at_abscissa(abscissa)
-        return point2d.to_3d(self.center, self.major_dir, self.minor_dir)
+        # ellipse_2d = self.to_2d(self.center, self.major_dir, self.minor_dir)
+        point2d = self.self_2d.point_at_abscissa(abscissa)
+        return point2d.to_3d(self.ellipse3d.center, self.ellipse3d.major_dir, self.ellipse3d.minor_dir)
 
     def split(self, split_point):
         """
@@ -7572,25 +7604,14 @@ class ArcEllipse3D(Edge):
         if split_point.is_close(self.end, 1e-6):
             return [self.copy(), None]
         abscissa = self.abscissa(split_point)
-        return [self.__class__(self.start, self.point_at_abscissa(0.5 * abscissa), split_point,
-                               self.center.copy(), self.major_dir.copy(), self.normal.copy()),
-                self.__class__(split_point, self.point_at_abscissa(
-                    (self.abscissa(self.end) - abscissa) * 0.5 + abscissa),
-                               self.end, self.center.copy(), self.major_dir.copy(), self.normal.copy())]
+        return [self.__class__(self.ellipse3d, self.start, split_point),
+                self.__class__(self.ellipse3d, split_point, self.end)]
 
-    def translation(self, offset: volmdlr.Vector3D):
-        """
-        ArcEllipse3D translation.
-
-        :param offset: translation vector.
-        :return: A new translated ArcEllipse3D.
-        """
-        new_start = self.start.translation(offset)
-        new_interior = self.interior.translation(offset)
-        new_end = self.end.translation(offset)
-        new_center = self.center.translation(offset)
-        new_extra = self.extra if self.extra is None else self.extra.translation(offset)
-        return ArcEllipse3D(new_start, new_interior, new_end, new_center, self.major_dir, self.normal, new_extra)
+    def get_reverse(self):
+        new_frame = volmdlr.Frame3D(self.ellipse3d.frame.origin, self.ellipse3d.frame.u, -self.ellipse3d.frame.v,
+                                    self.ellipse3d.frame.u.cross(-self.ellipse3d.frame.v))
+        ellipse3d = volmdlr_curves.Ellipse3D(self.ellipse3d.major_axis, self.ellipse3d.minor_axis, new_frame)
+        return self.__class__(ellipse3d, self.end, self.start, self.name+'_reverse')
 
 
 class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):

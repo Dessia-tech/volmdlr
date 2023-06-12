@@ -1802,7 +1802,7 @@ class Vector3D(Vector):
         v.normalize()
         return v
 
-    def deterministic_unit_normal_vector(self):
+    def deterministic_normal_vector(self):
         """
         Returns a deterministic normal 3-dimensional vector.
 
@@ -1815,8 +1815,17 @@ class Vector3D(Vector):
         else:
             v = Y3D
         v = v - v.dot(self) * self / (self.norm()**2)
-        v.normalize()
         return v
+
+    def deterministic_unit_normal_vector(self):
+        """
+        Returns a deterministic unit normal 3-dimensional vector.
+
+        :return: A normal Vector3D
+        :rtype: :class:`volmdlr.Vector3D`
+        """
+        normal_vector = self.deterministic_normal_vector()
+        return normal_vector.unit_vector()
 
     def copy(self, deep=True, memo=None):
         """
