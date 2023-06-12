@@ -541,7 +541,7 @@ class Line(dc.DessiaObject):
         :return: The point that corresponds to the given abscissa.
         :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
         """
-        return self.point1 + (self.point2 - self.point1) * abscissa
+        return self.point1 + self.unit_direction_vector() * abscissa
 
     def sort_points_along_line(self, points):
         """
@@ -6197,6 +6197,8 @@ class Arc3D(Arc):
     def bounding_box(self):
         if not self._bbox:
             self._bbox = self.get_bounding_box()
+        if isinstance(self._bbox, str):
+            raise ValueError
         return self._bbox
 
     @bounding_box.setter
