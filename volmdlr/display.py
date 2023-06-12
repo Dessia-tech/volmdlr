@@ -5,6 +5,7 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 """
 
 import math
+import warnings
 from typing import List, Tuple
 
 import dessia_common.core as dc
@@ -95,6 +96,8 @@ class DisplayMesh(dc.DessiaObject):
         if len(meshes) == 1:
             return cls(meshes[0].points, meshes[0].triangles)
         for mesh in meshes:
+            if not mesh:
+                continue
             for point in mesh.points:
                 if point not in point_index:
                     point_index[point] = i_points
@@ -103,6 +106,8 @@ class DisplayMesh(dc.DessiaObject):
 
         triangles = []
         for mesh in meshes:
+            if not mesh:
+                continue
             for vertex1, vertex2, vertex3 in mesh.triangles:
                 point1 = mesh.points[vertex1]
                 point2 = mesh.points[vertex2]
@@ -231,12 +236,21 @@ class DisplayMesh3D(DisplayMesh):
             flatten_indices.extend(vertex)
         return positions, flatten_indices
 
+    def triangular_faces(self):
+        triangular_faces = []
+        for (vertex1, vertex2, vertex3) in self.triangles:
+            point1 = self.points[vertex1]
+            point2 = self.points[vertex2]
+            point3 = self.points[vertex3]
+            face = volmdlr.faces.Triangle3D(point1, point2, point3)
+            if (not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3))\
+                    and face.area() >= 1e-08:
+                triangular_faces.append(face)
+        return triangular_faces
+
     def to_stl(self):
         """
         Exports to STL.
 
         """
-        # TODO: remove this in the future
-        import volmdlr.stl as vmstl
-        stl = vmstl.Stl.from_display_mesh(self)
-        return stl
+        warnings.warn('Please use the Stl.from_display_mesh methos instead')

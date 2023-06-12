@@ -1,0 +1,366 @@
+{
+  "name": "",
+  "object_class": "volmdlr.surfaces.BSplineSurface3D",
+  "package_version": "0.9.2.dev882+ga6065f64",
+  "degree_u": 5,
+  "degree_v": 5,
+  "nb_u": 6,
+  "nb_v": 6,
+  "weights": null,
+  "control_points": [
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21051315299,
+      "y": -0.8981178718239999,
+      "z": 0.9493104138239999
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21051408735,
+      "y": -0.898117855027,
+      "z": 0.949385063733
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2105150202800001,
+      "y": -0.898103987707,
+      "z": 0.9494597120439999
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2105158977100001,
+      "y": -0.89807625342,
+      "z": 0.949530905912
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21051666607,
+      "y": -0.898035986644,
+      "z": 0.949595214099
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21051728912,
+      "y": -0.897985530456,
+      "z": 0.949650105626
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21057928725,
+      "y": -0.8981178651389999,
+      "z": 0.949309771363
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21058574624,
+      "y": -0.898117847539,
+      "z": 0.949382591253
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21059220405,
+      "y": -0.8981045266580001,
+      "z": 0.949455409388
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21059837601,
+      "y": -0.8980778877560001,
+      "z": 0.949525002658
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21060397846,
+      "y": -0.8980391657850001,
+      "z": 0.949588166885
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2106087928,
+      "y": -0.897990536184,
+      "z": 0.949642506892
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21064536344,
+      "y": -0.898117859848,
+      "z": 0.9493030269480001
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21065713984,
+      "y": -0.8981178413170001,
+      "z": 0.94937359854
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2106689153299999,
+      "y": -0.898104950839,
+      "z": 0.949444168235
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21068021997,
+      "y": -0.898079174684,
+      "z": 0.9495117252830001
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21069058473,
+      "y": -0.8980416797520001,
+      "z": 0.949573276291
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21069963194,
+      "y": -0.8979945230759999,
+      "z": 0.94962656522
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2107100671600002,
+      "y": -0.898117856142,
+      "z": 0.949289938614
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21072712147,
+      "y": -0.898117836785,
+      "z": 0.949357981923
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2107441750999999,
+      "y": -0.8981052603220001,
+      "z": 0.949426023218
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21076058827,
+      "y": -0.8980801136390001,
+      "z": 0.949491235551
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2107757221,
+      "y": -0.8980435188479999,
+      "z": 0.9495508084700001
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21078905184,
+      "y": -0.897997453824,
+      "z": 0.9496026162660001
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2107715347799999,
+      "y": -0.89811785428,
+      "z": 0.949270214982
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21079423357,
+      "y": -0.8981178348350001,
+      "z": 0.949335692697
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2108169318,
+      "y": -0.898105475125,
+      "z": 0.9494011683610001
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21083877843,
+      "y": -0.8980807627230001,
+      "z": 0.949463961791
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2108589246199999,
+      "y": -0.898044782112,
+      "z": 0.949521408294
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21087668367,
+      "y": -0.897999449167,
+      "z": 0.949571487069
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21082721953,
+      "y": -0.8981178546190001,
+      "z": 0.949243441793
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2108567134100001,
+      "y": -0.898117837185,
+      "z": 0.9493066911229999
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.2108862064400001,
+      "y": -0.8981056458309999,
+      "z": 0.949369938568
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21091449992,
+      "y": -0.8980812694610001,
+      "z": 0.949430613504
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21094040105,
+      "y": -0.898045735727,
+      "z": 0.9494861580130001
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 1.21096299477,
+      "y": -0.898000876856,
+      "z": 0.949534609765
+    }
+  ],
+  "u_knots": [
+    0.0,
+    0.9999999999999999
+  ],
+  "v_knots": [
+    0.0,
+    1.0
+  ],
+  "u_multiplicities": [
+    6,
+    6
+  ],
+  "v_multiplicities": [
+    6,
+    6
+  ],
+  "control_points_table": [
+    [
+      {
+        "$ref": "#/control_points/0"
+      },
+      {
+        "$ref": "#/control_points/1"
+      },
+      {
+        "$ref": "#/control_points/2"
+      },
+      {
+        "$ref": "#/control_points/3"
+      },
+      {
+        "$ref": "#/control_points/4"
+      },
+      {
+        "$ref": "#/control_points/5"
+      }
+    ],
+    [
+      {
+        "$ref": "#/control_points/6"
+      },
+      {
+        "$ref": "#/control_points/7"
+      },
+      {
+        "$ref": "#/control_points/8"
+      },
+      {
+        "$ref": "#/control_points/9"
+      },
+      {
+        "$ref": "#/control_points/10"
+      },
+      {
+        "$ref": "#/control_points/11"
+      }
+    ],
+    [
+      {
+        "$ref": "#/control_points/12"
+      },
+      {
+        "$ref": "#/control_points/13"
+      },
+      {
+        "$ref": "#/control_points/14"
+      },
+      {
+        "$ref": "#/control_points/15"
+      },
+      {
+        "$ref": "#/control_points/16"
+      },
+      {
+        "$ref": "#/control_points/17"
+      }
+    ],
+    [
+      {
+        "$ref": "#/control_points/18"
+      },
+      {
+        "$ref": "#/control_points/19"
+      },
+      {
+        "$ref": "#/control_points/20"
+      },
+      {
+        "$ref": "#/control_points/21"
+      },
+      {
+        "$ref": "#/control_points/22"
+      },
+      {
+        "$ref": "#/control_points/23"
+      }
+    ],
+    [
+      {
+        "$ref": "#/control_points/24"
+      },
+      {
+        "$ref": "#/control_points/25"
+      },
+      {
+        "$ref": "#/control_points/26"
+      },
+      {
+        "$ref": "#/control_points/27"
+      },
+      {
+        "$ref": "#/control_points/28"
+      },
+      {
+        "$ref": "#/control_points/29"
+      }
+    ],
+    [
+      {
+        "$ref": "#/control_points/30"
+      },
+      {
+        "$ref": "#/control_points/31"
+      },
+      {
+        "$ref": "#/control_points/32"
+      },
+      {
+        "$ref": "#/control_points/33"
+      },
+      {
+        "$ref": "#/control_points/34"
+      },
+      {
+        "$ref": "#/control_points/35"
+      }
+    ]
+  ]
+}
