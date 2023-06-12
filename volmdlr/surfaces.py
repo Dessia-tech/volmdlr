@@ -1241,7 +1241,8 @@ class Plane3D(Surface3D):
         u_vector = linesegment.end - linesegment.start
         w_vector = linesegment.start - self.frame.origin
         normaldotu = self.frame.w.dot(u_vector)
-        if math.isclose(self.frame.w.unit_vector().dot(u_vector.unit_vector()), 0.0, abs_tol=abs_tol):
+        if normaldotu == 0.0 or math.isclose(self.frame.w.unit_vector().dot(u_vector.unit_vector()),
+                                           0.0, abs_tol=abs_tol):
             return []
         intersection_abscissea = - self.frame.w.dot(w_vector) / normaldotu
         if intersection_abscissea < 0 or intersection_abscissea > 1:
