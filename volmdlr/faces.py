@@ -215,8 +215,8 @@ class Face3D(volmdlr.core.Primitive3D):
                                        inner_contours=inner_contours2d)
         face = cls(surface, surface2d=surface2d, name=name)
         # To improve performance while reading from step file
-        face.outer_contour3d = outer_contour3d
-        face.inner_contours3d = inner_contours3d
+        # face.outer_contour3d = outer_contour3d
+        # face.inner_contours3d = inner_contours3d
 
         return face
 
