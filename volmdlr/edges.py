@@ -43,7 +43,7 @@ def standardize_knot_vector(knot_vector):
         x = 1 / (last_knot - first_knot)
         y = first_knot / (first_knot - last_knot)
         for u in knot_vector:
-            standard_u_knots.append(u * x + y)
+            standard_u_knots.append(round(u * x + y, 7))
         return standard_u_knots
     return knot_vector
 
@@ -6005,7 +6005,10 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-        curves = operations.split_curve(self.curve, round(parameter, 7))
+        try:
+            curves = operations.split_curve(self.curve, round(parameter, 6))
+        except Exception:
+            self.save_to_file("bsplinecurve_split_test.json")
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
