@@ -146,6 +146,28 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return point_inside_outer_contour
 
+    @staticmethod
+    def triangulation_without_holes(vertices, segments, points_grid, tri_opt):
+        """
+        Triangulates a surface without holes.
+
+        :param vertices: vertices of the surface.
+        :param segments: segments defined as tuples of vertices.
+        :param points_grid: to do.
+        :param tri_opt: triangulation option: "p"
+        :return:
+        """
+        vertices_grid = [(p.x, p.y) for p in points_grid]
+        vertices.extend(vertices_grid)
+        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+               'segments': npy.array(segments).reshape((-1, 2)),
+               }
+        triagulation = triangle_lib.triangulate(tri, tri_opt)
+        triangles = triagulation['triangles'].tolist()
+        number_points = triagulation['vertices'].shape[0]
+        points = [vmd.Node2D(*triagulation['vertices'][i, :]) for i in range(number_points)]
+        return vmd.DisplayMesh2D(points, triangles=triangles)
+
     def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
         Triangulates the Surface2D using the Triangle library.
@@ -159,40 +181,39 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
-        if area == 0.:
+        if math.isclose(area, 0., abs_tol=1e-8):
             return vmd.DisplayMesh2D([], triangles=[])
 
-        triangulates_with_grid = number_points_x > 0 or number_points_y > 0
+        triangulates_with_grid = number_points_x > 0 and number_points_y > 0
+        discretize_line = number_points_x > 0 or number_points_y > 0
+        if not triangulates_with_grid:
+            tri_opt = "pq"
 
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=10, discretize_line=triangulates_with_grid)
+        discretize_line_direction = "xy"
+        if number_points_y == 0:
+            discretize_line_direction = "x"
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
+                                                      discretize_line_direction=discretize_line_direction)
 
         if not self.inner_contours and not triangulates_with_grid:
             return outer_polygon.triangulation()
 
         points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
                                                                                       number_points_y=number_points_y)
-        points = [vmd.Node2D(*p) for p in outer_polygon.points]
-        vertices = [(p.x, p.y) for p in points]
+        points = [vmd.Node2D(*point) for point in outer_polygon.points]
+        vertices = [(point.x, point.y) for point in points]
         n = len(points)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
 
         if not self.inner_contours:  # No holes
-            vertices_grid = [(p.x, p.y) for p in points_grid]
-            vertices.extend(vertices_grid)
-            tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-                   'segments': npy.array(segments).reshape((-1, 2)),
-                   }
-            t = triangle_lib.triangulate(tri, tri_opt)
-            triangles = t['triangles'].tolist()
-            np = t['vertices'].shape[0]
-            points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-            return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+            return self.triangulation_without_holes(vertices, segments, points_grid, tri_opt)
 
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=triangulates_with_grid)
+            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
+                                                     discretize_line_direction=discretize_line_direction)
             inner_polygon_nodes = [vmd.Node2D.from_point(p) for p in inner_polygon.points]
             for point in inner_polygon_nodes:
                 if point not in point_index:
@@ -232,11 +253,11 @@ class Surface2D(volmdlr.core.Primitive2D):
                'segments': npy.array(segments).reshape((-1, 2)),
                'holes': npy.array(holes).reshape((-1, 2))
                }
-        t = triangle_lib.triangulate(tri, tri_opt)
-        triangles = t['triangles'].tolist()
-        np = t['vertices'].shape[0]
-        points = [vmd.Node2D(*t['vertices'][i, :]) for i in range(np)]
-        return vmd.DisplayMesh2D(points, triangles=triangles, edges=None)
+        triangulation = triangle_lib.triangulate(tri, tri_opt)
+        triangles = triangulation['triangles'].tolist()
+        number_points = triangulation['vertices'].shape[0]
+        points = [vmd.Node2D(*triangulation['vertices'][i, :]) for i in range(number_points)]
+        return vmd.DisplayMesh2D(points, triangles=triangles)
 
     def split_by_lines(self, lines):
         """
@@ -7944,15 +7965,15 @@ class ToroidalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        theta_angle_resolution = 11
-        phi_angle_resolution = 7
+        theta_angle_resolution = 5
+        phi_angle_resolution = 2.3
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
-        number_points_x = int(delta_theta * theta_angle_resolution)
+        number_points_x = max(theta_angle_resolution, int(delta_theta * theta_angle_resolution))
 
         delta_phi = phi_max - phi_min
-        number_points_y = int(delta_phi * phi_angle_resolution)
+        number_points_y = max(math.ceil(phi_angle_resolution), int(delta_phi * phi_angle_resolution))
 
         return number_points_x, number_points_y
 
