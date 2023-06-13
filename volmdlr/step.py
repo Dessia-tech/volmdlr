@@ -1240,7 +1240,7 @@ class Step(dc.DessiaObject):
                 # Sometimes the bfs search don't instanciate the nodes of a
                 # depth in the right order, leading to error
                 if last_error == key.args[0]:
-                    raise NotImplementedError("Error while instaciating assembly")
+                    raise NotImplementedError('Error while instaciating assembly') from key
                 print(key.args[0])
                 if key.args[0] in assembly_data:
                     instanciate_ids.append(key.args[0])
