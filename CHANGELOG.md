@@ -5,7 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.11.0 [future]
+
+## v0.12.0 [future]
+
+### New Features
+- New module: cad_simplification - OctreeBlockSimplify, TrippleExtrusionSimplify
+- shells.py : function to performe union operations for a given list of shells.
+- ClosedShell3D: is_face_intersecting, is_intersecting_with
+- BoundingBox: get_points_inside_bbox, size
+- Vector3D: unit_vector
+- Face3D: split_inner_contour_intersecting_cutting_contours
+- Shell3D: get_ray_casting_line_segment
+- WireMixin: get_connected_wire, is_sharing_primitives_with
+- OpenShell3D: faces_graph
+- Plane3D: arc_intersections, bsplinecurve_intersections
+- common_operations: split_wire_by_plane
+- SphericalSurface3D: line_intersections, linesegment_intersections.
+- Sweep with muitiform profile contour.
+
+### Fixed
+- ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
+- ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
+- BSplineFace3D: neutral_fiber
+- surfaces.Plane3D: linesegment_intersections
+- Step export
+- Face3D: is_linesegment_crossing.
+
+### Refactor
+- ClosedShell3D: point_belongs, get_non_intersecting_faces
+- BoundingBox: bbox_intersection
+- face3D: get_face_cutting_contours
+- intersections: get_bsplinecurve_intersections generalization, so it can also be used
+to calculate intersections between a plane 3d and bsplinecurve3d.
+
+### Changed
+- OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
+
+### Unittests
+- FullArc2D: split_between_two_points
+- Face3D: set_operations_new_faces
+- ClosedShell3D: point_belongs
+- Plane3D: arc_intersections, bsplinecurve_intersections
+- common_operations: split_wire_by_plane
+- SphericalSurface3D: line_intersections, linesegment_intersections.
+
+## v0.11.0 [unreleased]
+
 
 ### New Features
 - BSplineCurve, Edge: simplify
@@ -38,8 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Edge: direction_independent_is_close
 - Arcellipse2D, 3D: complementary, translation
 - Arcellipse2D, 3D: complementary
-- Face3D: is_linesegment_crossing
-- BSplineFace3D: linesegment_intersections
+- Face3D: is_linesegment_crossing, linesegment_intersections_approximation.
 - Assembly: define a volmdlr Assembly object.
 - Contour2D: copy
 - LineSegment2D: copy
@@ -47,7 +91,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D: split, point_at_abscissa
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
-
+- CylindricalFace3D, ConicalFace3D, ToroidalFace3D, BSplineFace3D: neutral_fiber
+- VolumeModel: get_shells
+- WireMixin: wires_from_edges
+- DisplayMesh3D: triangulation_faces
+- Woodpecker CI setup
+- ContourMixin: primitive_section_over_contour.
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -73,9 +122,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenShell3D: get_geo_lines (use primitive.is_close)
 - Basis3D: normalize
 - Contour3D: from_step removes repeated edges from primitives list
-- Face3D: add fixes to divide_face
+- Face3D: add fixes to divide_face.
 - ExtrusionSurface3D: linesegment2d_to_3d.
+- Surface3D: repair_primitive_periodicity
 - BSplineSurface3D: ban useless attr in serialization 
+- utils.parametric: fix contour2d_healing
+- BSplineSurface3D: ban useless attr in serialization
+- BSplineCurve: simplify
+- SphericalSurface3D: contour3d_to_2d
+- WireMixin: to_wire_with_linesegments (use new methods, for 2D and 3D)
+- ArcEllipse2d: point_belongs, abscissa, init.
+- Face3D: face_inside - now considers inners_contours
+- BoundingBox: point_belongs now considers bounds.
+- ContourMixin: delete_shared_contour_section
+- PlaneFace3D: merge_faces
+- Contour2D: divide
 
 
 ### Refactor
@@ -94,11 +155,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 - Cylinder: inheritance directly from ClosedShell3D
 - Edges: cache middle_points and unit_direction_vector 
+- Arc: add optional parameter center
+- unittests: find dynamicly the folder for the json
+- Arc: point_distance
+- BSplineCurve: is_close
+- CompositePrimitive3D: babylon_points
+- WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
+- ContourMixin: contours_from_edges
+- ExtrusionSurface3D: simplify bsplinecurve3d_to_2d method
 
 ### Changed
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
+- Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
+- Change python suport version from >=3.7 to >= 3.9.
 
 ### Unittests
 - Arc2D: test_arc_intersections
@@ -112,11 +183,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: point_projection
 - ClosedShel3D: cut_by_plane
 - Arc3D.minimum_distance_points_line
-- New unittests for plane3d
+- New unittests for plane3d.
 - ClosedShel3D: intersection
 - Arcellipse2D: complementary
+- Contour2D: contours_from_edges.
+- PlaneFace3D: merge_faces
+- Contour2D: divide.
+- BSplineFace3D: test_linesegment_intersections_approximation.
 
-## v0.10.0 [Unreleased yet]
+v0.10.0 [Released 20/04/2023]
 
 ### New Features
 * Write .msh file (with stream)
@@ -131,6 +206,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Contour3D: hash
 * LineSegment3D, LineSegment2D, Arc3D, Arc2D, BSpline3D, BSpline2D: get_shared_section(), delete_shared_section()
 * Contour2D: closest_point_to_point2, get_furthest_point_to_point2
+* Block: octree, quadtree, subdivide_block
+
 ### Fixed
 * Bspline in sweep
 * Plane3D: plane_intersections
@@ -176,6 +253,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve2D.point_distance 
 - new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
+
 ### Unittests
 * BSplineCurve2D: offset, point_distance, point_belongs
 * Circle2D: bspline_intersections, point_distance
@@ -202,6 +280,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix contour2d: divide
 
 ### Documentation
+ - typo in CONTRIBUTING.md
  - typo in README.md
 
 ## v0.9.0 [released 03/26/2023]
@@ -216,8 +295,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Create .geo and .msh files (Mesh geometries with GMSH)
 * RevolutionSurface3D: point3d_to_2d, point2d_to_3d, plot, rectangular_cut, from_step
 * RevolutionFace3D
-* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D. 
-* Added package.xml metadata in order to be listed in the FreeCAD Addon Manager 
+* WiriMixin: from points: general method for Wire3D and 2D and for Contour2D and 3D.
+* Added package.xml metadata in order to be listed in the FreeCAD Addon Manager
 * Edge: local_discretization
 * ArcEllipse2d: point_at_abscissa, translation, split, point_distance.
 
@@ -225,9 +304,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * WireMixin: abscissa (add tolerance as parameter)
 * OpenRoundedLineSegment2D: deleted discretization_points() so it uses the one from WireMixin.
-* Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D. 
+* Contour2D: moved bounding_rectangle and get_bounding_rectangle to Wire2D.
 * BSplineCurve: from_points_interpolation, uses centripedal method for better fitting.
-* Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard. 
+* Conical, Cylindrical and Toroidal Surfaces 3D: fix face_from_contours - bug when step file doesnot follow a standard.
 * BSplineSurface3D: debug linesegment2d_to_3d method.
 * Parametric operations with BSpline curves.
 * OpenTriangleShell3D: fix from_mesh_data method.
@@ -243,7 +322,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Add some typings
 * Step: Step translator now handles some EDGE_LOOP inconsistencies coming from step files
 * Arc2d: point_belongs, abscissa.
-* ArcEllipse2d: point_belongs, abscissa, init.
 
 
 ### Removed
@@ -410,7 +488,7 @@ local_to_global_coordinates and global_to_local_coordinates are the new more exp
 - Mandatory CHANGELOG.md update for PR
 - pre-commit checks with cython-lint
 
-## v0.7.0 
+## v0.7.0
 
 ### New Features
 

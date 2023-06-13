@@ -1,0 +1,596 @@
+{
+  "object_class": "volmdlr.core.VolumeModel",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.faces.PlaneFace3D",
+      "name": "",
+      "surface3d": {
+        "object_class": "volmdlr.surfaces.Plane3D",
+        "name": "",
+        "frame": {
+          "object_class": "volmdlr.Frame3D",
+          "name": "",
+          "origin": {
+            "object_class": "volmdlr.Point3D",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "u": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "v": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          },
+          "w": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          }
+        }
+      },
+      "surface2d": {
+        "object_class": "volmdlr.surfaces.Surface2D",
+        "name": "name",
+        "outer_contour": {
+          "object_class": "volmdlr.wires.Contour2D",
+          "name": "",
+          "primitives": [
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -2.0,
+                "y": 0.0
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": 2.0,
+                "y": 0.0
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": 2.0,
+                "y": 0.0
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": 2.0,
+                "y": 1.25
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": 2.0,
+                "y": 1.25
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": 1.0,
+                "y": 1.25
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": 1.0,
+                "y": 1.25
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": 1.0,
+                "y": 2.0
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": 1.0,
+                "y": 2.0
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -2.0,
+                "y": 2.0
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -2.0,
+                "y": 2.0
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -2.0,
+                "y": 0.0
+              }
+            }
+          ]
+        },
+        "inner_contours": [
+          {
+            "object_class": "volmdlr.wires.Contour2D",
+            "name": "",
+            "primitives": [
+              {
+                "object_class": "volmdlr.edges.LineSegment2D",
+                "name": "",
+                "start": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -1.25,
+                  "y": 1.75
+                },
+                "end": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -0.25,
+                  "y": 1.75
+                }
+              },
+              {
+                "object_class": "volmdlr.edges.LineSegment2D",
+                "name": "",
+                "start": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -0.25,
+                  "y": 1.75
+                },
+                "end": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -0.25,
+                  "y": 1.5
+                }
+              },
+              {
+                "object_class": "volmdlr.edges.LineSegment2D",
+                "name": "",
+                "start": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -0.25,
+                  "y": 1.5
+                },
+                "end": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -1.25,
+                  "y": 1.5
+                }
+              },
+              {
+                "object_class": "volmdlr.edges.LineSegment2D",
+                "name": "",
+                "start": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -1.25,
+                  "y": 1.5
+                },
+                "end": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -1.25,
+                  "y": 1.75
+                }
+              }
+            ]
+          },
+          {
+            "object_class": "volmdlr.wires.Contour2D",
+            "name": "",
+            "primitives": [
+              {
+                "object_class": "volmdlr.edges.LineSegment2D",
+                "name": "",
+                "start": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": 1.0,
+                  "y": 0.75
+                },
+                "end": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -0.5,
+                  "y": 0.75
+                }
+              },
+              {
+                "object_class": "volmdlr.edges.LineSegment2D",
+                "name": "",
+                "start": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -0.5,
+                  "y": 0.75
+                },
+                "end": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -0.5,
+                  "y": 1.25
+                }
+              },
+              {
+                "object_class": "volmdlr.edges.LineSegment2D",
+                "name": "",
+                "start": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": -0.5,
+                  "y": 1.25
+                },
+                "end": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": 1.0,
+                  "y": 1.25
+                }
+              },
+              {
+                "object_class": "volmdlr.edges.LineSegment2D",
+                "name": "",
+                "start": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": 1.0,
+                  "y": 1.25
+                },
+                "end": {
+                  "object_class": "volmdlr.Point2D",
+                  "x": 1.0,
+                  "y": 0.75
+                }
+              }
+            ]
+          },
+          {
+            "object_class": "volmdlr.wires.Circle2D",
+            "name": "",
+            "center": {
+              "object_class": "volmdlr.Point2D",
+              "x": 0.5,
+              "y": 0.35
+            },
+            "radius": 0.2,
+            "angle": 6.283185307179586
+          }
+        ]
+      },
+      "color": null,
+      "alpha": 1
+    },
+    {
+      "$ref": "#/_references/6f8ebb56-ff06-11ed-b1d6-d2c33e3011fd"
+    },
+    {
+      "$ref": "#/_references/6f8ebcaa-ff06-11ed-b1d6-d2c33e3011fd"
+    },
+    {
+      "$ref": "#/_references/6f8ebdd6-ff06-11ed-b1d6-d2c33e3011fd"
+    },
+    {
+      "$ref": "#/_references/6f8ebeee-ff06-11ed-b1d6-d2c33e3011fd"
+    },
+    {
+      "$ref": "#/_references/6f8ec006-ff06-11ed-b1d6-d2c33e3011fd"
+    },
+    {
+      "$ref": "#/_references/6f8ec11e-ff06-11ed-b1d6-d2c33e3011fd"
+    },
+    {
+      "$ref": "#/_references/6f8ec236-ff06-11ed-b1d6-d2c33e3011fd"
+    },
+    {
+      "$ref": "#/_references/6f8ec34e-ff06-11ed-b1d6-d2c33e3011fd"
+    },
+    {
+      "$ref": "#/_references/6f8ec45c-ff06-11ed-b1d6-d2c33e3011fd"
+    },
+    {
+      "$ref": "#/_references/6f8ec77c-ff06-11ed-b1d6-d2c33e3011fd"
+    }
+  ],
+  "_references": {
+    "6f8ebb56-ff06-11ed-b1d6-d2c33e3011fd": {
+      "object_class": "volmdlr.wires.Contour3D",
+      "name": "",
+      "primitives": [
+        {
+          "object_class": "volmdlr.edges.LineSegment3D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point3D",
+            "x": 2.0,
+            "y": 0.75,
+            "z": 0.0
+          },
+          "end": {
+            "object_class": "volmdlr.Point3D",
+            "x": 1.0,
+            "y": 0.75,
+            "z": 0.0
+          }
+        }
+      ],
+      "basis_primitives": [],
+      "color": null,
+      "alpha": 1
+    },
+    "6f8ebcaa-ff06-11ed-b1d6-d2c33e3011fd": {
+      "object_class": "volmdlr.wires.Contour3D",
+      "name": "",
+      "primitives": [
+        {
+          "object_class": "volmdlr.edges.LineSegment3D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point3D",
+            "x": -2.0,
+            "y": 0.5,
+            "z": 0.0
+          },
+          "end": {
+            "object_class": "volmdlr.Point3D",
+            "x": -1.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        }
+      ],
+      "basis_primitives": [],
+      "color": null,
+      "alpha": 1
+    },
+    "6f8ebdd6-ff06-11ed-b1d6-d2c33e3011fd": {
+      "object_class": "volmdlr.wires.Contour3D",
+      "name": "",
+      "primitives": [
+        {
+          "object_class": "volmdlr.edges.LineSegment3D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point3D",
+            "x": 0.5,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "end": {
+            "object_class": "volmdlr.Point3D",
+            "x": 0.5,
+            "y": 0.15,
+            "z": 0.0
+          }
+        }
+      ],
+      "basis_primitives": [],
+      "color": null,
+      "alpha": 1
+    },
+    "6f8ebeee-ff06-11ed-b1d6-d2c33e3011fd": {
+      "object_class": "volmdlr.wires.Contour3D",
+      "name": "",
+      "primitives": [
+        {
+          "object_class": "volmdlr.edges.LineSegment3D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point3D",
+            "x": 0.5,
+            "y": 0.55,
+            "z": 0.0
+          },
+          "end": {
+            "object_class": "volmdlr.Point3D",
+            "x": 0.5,
+            "y": 0.75,
+            "z": 0.0
+          }
+        }
+      ],
+      "basis_primitives": [],
+      "color": null,
+      "alpha": 1
+    },
+    "6f8ec006-ff06-11ed-b1d6-d2c33e3011fd": {
+      "object_class": "volmdlr.wires.Contour3D",
+      "name": "",
+      "primitives": [
+        {
+          "object_class": "volmdlr.edges.LineSegment3D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point3D",
+            "x": -0.25,
+            "y": 1.25,
+            "z": 0.0
+          },
+          "end": {
+            "object_class": "volmdlr.Point3D",
+            "x": -0.5,
+            "y": 1.5,
+            "z": 0.0
+          }
+        }
+      ],
+      "basis_primitives": [],
+      "color": null,
+      "alpha": 1
+    },
+    "6f8ec11e-ff06-11ed-b1d6-d2c33e3011fd": {
+      "object_class": "volmdlr.wires.Contour3D",
+      "name": "",
+      "primitives": [
+        {
+          "object_class": "volmdlr.edges.LineSegment3D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point3D",
+            "x": -2.0,
+            "y": 1.0,
+            "z": 0.0
+          },
+          "end": {
+            "object_class": "volmdlr.Point3D",
+            "x": -1.25,
+            "y": 1.62,
+            "z": 0.0
+          }
+        }
+      ],
+      "basis_primitives": [],
+      "color": null,
+      "alpha": 1
+    },
+    "6f8ec236-ff06-11ed-b1d6-d2c33e3011fd": {
+      "object_class": "volmdlr.wires.Contour3D",
+      "name": "",
+      "primitives": [
+        {
+          "object_class": "volmdlr.edges.LineSegment3D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point3D",
+            "x": -0.25,
+            "y": 1.65,
+            "z": 0.0
+          },
+          "end": {
+            "object_class": "volmdlr.Point3D",
+            "x": 1.0,
+            "y": 1.5,
+            "z": 0.0
+          }
+        }
+      ],
+      "basis_primitives": [],
+      "color": null,
+      "alpha": 1
+    },
+    "6f8ec34e-ff06-11ed-b1d6-d2c33e3011fd": {
+      "object_class": "volmdlr.wires.Contour3D",
+      "name": "",
+      "primitives": [
+        {
+          "object_class": "volmdlr.edges.LineSegment3D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point3D",
+            "x": 0.0,
+            "y": 0.75,
+            "z": 0.0
+          },
+          "end": {
+            "object_class": "volmdlr.Point3D",
+            "x": -0.25,
+            "y": 0.5,
+            "z": 0.0
+          }
+        }
+      ],
+      "basis_primitives": [],
+      "color": null,
+      "alpha": 1
+    },
+    "6f8ec45c-ff06-11ed-b1d6-d2c33e3011fd": {
+      "object_class": "volmdlr.wires.Contour3D",
+      "name": "",
+      "primitives": [
+        {
+          "object_class": "volmdlr.edges.LineSegment3D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point3D",
+            "x": -0.25,
+            "y": 0.5,
+            "z": 0.0
+          },
+          "end": {
+            "object_class": "volmdlr.Point3D",
+            "x": -0.4,
+            "y": 0.75,
+            "z": 0.0
+          }
+        }
+      ],
+      "basis_primitives": [],
+      "color": null,
+      "alpha": 1
+    },
+    "6f8ec77c-ff06-11ed-b1d6-d2c33e3011fd": {
+      "object_class": "volmdlr.wires.Circle3D",
+      "name": "",
+      "radius": 0.2,
+      "frame": {
+        "object_class": "volmdlr.Frame3D",
+        "name": "",
+        "origin": {
+          "object_class": "volmdlr.Point3D",
+          "x": -1.25,
+          "y": 0.65,
+          "z": 0.0
+        },
+        "u": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 1.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "v": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.0,
+          "y": 1.0,
+          "z": 0.0
+        },
+        "w": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 1.0
+        }
+      },
+      "angle": 6.283185307179586,
+      "primitives": [
+        {
+          "object_class": "volmdlr.edges.FullArc3D",
+          "name": "",
+          "center": {
+            "object_class": "volmdlr.Point3D",
+            "x": -1.25,
+            "y": 0.65,
+            "z": 0.0
+          },
+          "radius": 0.19999999999999996,
+          "angle": 6.283185307179586,
+          "is_trigo": true,
+          "start_end": {
+            "object_class": "volmdlr.Point3D",
+            "x": -1.05,
+            "y": 0.65,
+            "z": 0.0
+          },
+          "normal": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          }
+        }
+      ],
+      "basis_primitives": [],
+      "color": null,
+      "alpha": 1
+    }
+  }
+}

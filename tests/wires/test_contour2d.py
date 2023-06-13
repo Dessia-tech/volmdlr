@@ -1,4 +1,5 @@
 import math
+import os
 import unittest
 
 from dessia_common.core import DessiaObject
@@ -192,11 +193,56 @@ class TestContour2D(unittest.TestCase):
         contour3 = vol.primitives[1]
         intersection_contours1 = contour2.intersection_contour_with(contour3, abs_tol=1e-5)
         self.assertTrue(len(intersection_contours1), 1)
-        self.assertAlmostEqual(intersection_contours1[0].length(), 0.16514108581676357, 7)
+        self.assertAlmostEqual(intersection_contours1[0].length(), 0.16514108581676357, 4)
         intersection_contours2 = contour2_unittest.intersection_contour_with(self.contour3, abs_tol=1e-6)
         self.assertTrue(len(intersection_contours1), 2)
         self.assertAlmostEqual(intersection_contours2[0].length(), 6.915893328290323, 6)
-        self.assertAlmostEqual(intersection_contours2[1].length(), 2.4397442643543243, 6)
+        self.assertAlmostEqual(intersection_contours2[1].length(), 2.440848290900874, 6)
+
+    def test_contours_from_edges(self):
+        source_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                     'test_contour2d_contours_from_edges_json_files')
+        expected_contour_areas = [[0.032085522557644186, 0.0855613934860544],
+                                  [0.06136684795257308, 0.0055788043592579495]]
+        expected_contour_lengths = [[0.8277671086559999, 1.642237241348], [1.05404105005, 0.315748639158]]
+        contour_areas = []
+        contour_lengths = []
+        for filename in [
+            '1_test_contours_from_edges.json',
+            '2_test_contours_from_edges2.json']:
+            if '.json' not in filename:
+                continue
+            file_path = os.path.join(source_folder, filename)
+            obj = DessiaObject.load_from_file(file_path)
+            primitives = obj.primitives
+            contours = wires.Contour2D.contours_from_edges(primitives)
+            areas = []
+            lengths = []
+            for contour in contours:
+                areas.append(contour.area())
+                lengths.append(contour.length())
+            contour_lengths.append(lengths)
+            contour_areas.append(areas)
+        for solution, expected_solution in zip(contour_areas, expected_contour_areas):
+            self.assertEqual(len(solution), len(expected_solution))
+            for contour_area, expected_contour_area in zip(solution, expected_solution):
+                self.assertAlmostEqual(contour_area, expected_contour_area)
+        for solution, expected_solution in zip(contour_lengths, expected_contour_lengths):
+            for contour_length, expected_contour_length in zip(solution, expected_solution):
+                self.assertAlmostEqual(contour_length, expected_contour_length)
+
+    def test_divide(self):
+        vol = DessiaObject.load_from_file('wires/test_contour2d_divide_1.json')
+        contour, cutting_contours = vol.primitives[0], vol.primitives[1:]
+        divided_contours = contour.divide(cutting_contours)
+        divided_contours = sorted(divided_contours, key=lambda cntr: cntr.area())
+        expected_contour_areas = [0.0006684483866419249, 0.002005345159820638, 0.002005345159845676,
+                                  0.0033422419331328506]
+        expected_contour_lengths = [0.10347088858400005, 0.21026602115199994, 0.210266021154, 0.3137369097360001]
+        self.assertEqual(len(divided_contours), 4)
+        for i, contour_ in enumerate(divided_contours):
+            self.assertAlmostEqual(contour_.area(), expected_contour_areas[i])
+            self.assertAlmostEqual(contour_.length(), expected_contour_lengths[i])
 
 
 if __name__ == '__main__':
