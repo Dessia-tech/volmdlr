@@ -250,26 +250,27 @@ BABYLON_UNPACKER_BODY_TEMPLATE = Template(
 
                 }
 
-        var list_lines = [];
-        for (let line_data of babylon_data['lines']){
-                var path = [];
-                for (let point of line_data['points']){
-
-                        var x = point[0];
-                        var y = point[1];
-                        var z = point[2];
-                        path.push(new BABYLON.Vector3(x, y, z));
+        if ('lines' in babylon_data){
+            var list_lines = [];
+            for (let line_data of babylon_data['lines']){
+                    var path = [];
+                    for (let point of line_data['points']){
+                            var x = point[0];
+                            var y = point[1];
+                            var z = point[2];
+                            path.push(new BABYLON.Vector3(x, y, z));
+                            }
+                    var options = {
+                        points: path, //vec3 array,
+                        updatable: true
                         }
-                var options = {
-                    points: path, //vec3 array,
-                    updatable: true
+                    let lines = BABYLON.MeshBuilder.CreateLines("lines", options, scene);
+                    lines.color = new BABYLON.Color3(line_data['color'][0],
+                                                            line_data['color'][1],
+                                                            line_data['color'][2])
+                    list_lines.push(lines)
                     }
-                let lines = BABYLON.MeshBuilder.CreateLines("lines", options, scene);
-                lines.color = new BABYLON.Color3(line_data['color'][0],
-                                                        line_data['color'][1],
-                                                        line_data['color'][2])
-                list_lines.push(lines)
-                }
+        }
 
 
         if (babylon_data['steps']){

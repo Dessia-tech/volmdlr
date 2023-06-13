@@ -483,8 +483,10 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_curves(self):
         points = self.babylon_points()
-        babylon_curves = self.babylon_lines(points)[0]
-        return babylon_curves
+        if points:
+            babylon_curves = self.babylon_lines(points)[0]
+            return babylon_curves
+        return None
 
 
 class BoundingRectangle(dc.DessiaObject):
@@ -1119,17 +1121,19 @@ class Assembly(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        meshes = []
-        lines = []
+        babylon_data = {'meshes': [],
+                        'lines': []}
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+                    curves = primitive.babylon_curves()
+                    if curves:
+                        babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1137,13 +1141,10 @@ class Assembly(dc.PhysicalObject):
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
 
-        babylon_data = {'meshes': meshes,
-                        'lines': lines,
-                        'max_length': max_length,
-                        'center': list(center)}
+        babylon_data['max_length'] = max_length
+        babylon_data['center'] = list(center)
 
         return babylon_data
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Assembly.
@@ -1479,17 +1480,19 @@ class VolumeModel(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        meshes = []
-        lines = []
+        babylon_data = {'meshes': [],
+                        'lines': []}
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+                    curves = primitive.babylon_curves()
+                    if curves:
+                        babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1497,10 +1500,8 @@ class VolumeModel(dc.PhysicalObject):
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
 
-        babylon_data = {'meshes': meshes,
-                        'lines': lines,
-                        'max_length': max_length,
-                        'center': list(center)}
+        babylon_data['max_length'] = max_length
+        babylon_data['center'] = list(center)
 
         return babylon_data
 
