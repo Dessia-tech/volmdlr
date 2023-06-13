@@ -200,12 +200,14 @@ class Edge(dc.DessiaObject):
                 return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
-            if obj.__class__.__name__ == 'Circle3D' and orientation == '.T.':
+            if obj.__class__.__name__ == 'Circle3D':
                 point1, point2 = point2, point1
-                return obj.trim(point1, point2)
+                trimmed_edge = obj.trim(point1, point2)
+                if orientation == '.T.':
+                    return trimmed_edge.reverse()
+                return trimmed_edge
             trimmed_edge = obj.trim(point1, point2)
             if orientation == '.F.':
-                print("Found test case")
                 return trimmed_edge.reverse()
             return trimmed_edge
 
