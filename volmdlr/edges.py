@@ -191,18 +191,23 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         orientation = arguments[4]
-        if orientation == '.F.':
-            point1, point2 = point2, point1
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
+            if orientation == '.F.':
+                point1, point2 = point2, point1
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
-            if obj.__class__.__name__ == 'Circle3D':
+            if obj.__class__.__name__ == 'Circle3D' and orientation == '.T.':
                 point1, point2 = point2, point1
-            return obj.trim(point1, point2)
+                return obj.trim(point1, point2)
+            trimmed_edge = obj.trim(point1, point2)
+            if orientation == '.F.':
+                print("Found test case")
+                return trimmed_edge.reverse()
+            return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
 
