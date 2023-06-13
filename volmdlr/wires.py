@@ -4652,8 +4652,6 @@ class Contour3D(ContourMixin, Wire3D):
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
-        if step_id == 278898:
-            print(True)
         for edge_id in arguments[1]:
             edge = object_dict[int(edge_id[1:])]
             if edge:
@@ -4667,11 +4665,8 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
         contour = cls(raw_edges, name=name)
-        if contour.is_ordered(1e-5):
+        if contour.is_ordered():
             return contour
-        # TODO: If during runtime we get here, it's probably because the orientation of a step entity was not
-        #  considered. But it can be also some step inconsistency.
-        print("Contour not ordered")
         edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         if edges:
             return cls(edges, name=name)
