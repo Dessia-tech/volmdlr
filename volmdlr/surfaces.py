@@ -4317,8 +4317,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         # elif wire.__class__ is edges.Line3D:
         #     wire = edges.LineSegment3D(wire.point1, wire.point2)
 
-        # if hasattr(wire, "simplify"):
-        #     wire = wire.simplify
+        if hasattr(wire, "simplify"):
+            wire = wire.simplify
         axis_point, axis = object_dict[arguments[2]]
         surface = cls(wire=wire, axis_point=axis_point, axis=axis, name=name)
         surface.y_periodicity = y_periodicity
