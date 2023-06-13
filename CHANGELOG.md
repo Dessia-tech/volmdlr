@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineFace3D: neutral_fiber
 - surfaces.Plane3D: linesegment_intersections
 - Step export
+- Face3D: is_linesegment_crossing.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
