@@ -43,7 +43,7 @@ def standardize_knot_vector(knot_vector):
         x = 1 / (last_knot - first_knot)
         y = first_knot / (first_knot - last_knot)
         for u in knot_vector:
-            standard_u_knots.append(u * x + y)
+            standard_u_knots.append(round(u * x + y, 7))
         return standard_u_knots
     return knot_vector
 
@@ -541,7 +541,7 @@ class Line(dc.DessiaObject):
         :return: The point that corresponds to the given abscissa.
         :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
         """
-        return self.point1 + (self.point2 - self.point1) * abscissa
+        return self.point1 + self.unit_direction_vector() * abscissa
 
     def sort_points_along_line(self, points):
         """
@@ -1378,7 +1378,8 @@ class BSplineCurve(Edge):
             number_points = int(math.pi * angle_resolution)
 
         if len(self.points) == number_points or (not number_points and not angle_resolution):
-            return self.points
+            number_points = 20
+            # return self.points
         curve = self.curve
         curve.delta = 1 / number_points
         curve_points = curve.evalpts
@@ -1652,7 +1653,7 @@ class BSplineCurve(Edge):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         # special case periodical bsplinecurve
-        if self.periodic and abscissa2 == 0.0:
+        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=1e-6):
             abscissa2 = self.length()
         discretized_points_between_1_2 = []
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
@@ -5782,17 +5783,9 @@ class BSplineCurve3D(BSplineCurve):
             dir_vector = lines[0].unit_direction_vector()
             if all(line.unit_direction_vector() == dir_vector for line in lines):
                 return LineSegment3D(points[0], points[-1])
-        # curve_form = arguments[3]
-        if arguments[4] == '.F.':
-            closed_curve = False
-        elif arguments[4] == '.T.':
-            closed_curve = True
-        else:
-            raise ValueError
-        # self_intersect = arguments[5]
+
         knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
         knots = [float(i) for i in arguments[7][1:-1].split(",")]
-        # knot_spec = arguments[8]
         knot_vector = []
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
@@ -5802,10 +5795,8 @@ class BSplineCurve3D(BSplineCurve):
         else:
             weight_data = None
 
-        # FORCING CLOSED_CURVE = FALSE:
-        # closed_curve = False
-        return cls(degree, points, knot_multiplicities, knots, weight_data,
-                   closed_curve, name)
+        closed_curve = points[0].is_close(points[-1])
+        return cls(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
 
     def to_step(self, current_id, surface_id=None, curve2d=None):
         """Exports to STEP format."""
@@ -5987,7 +5978,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
-        curves = operations.split_curve(self.curve, round(parameter, 7))
+        curves = operations.split_curve(self.curve, round(parameter, 6))
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
@@ -6005,7 +5996,9 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-        curves = operations.split_curve(self.curve, round(parameter, 7))
+
+        curves = operations.split_curve(self.curve, round(parameter, 6))
+
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
@@ -6220,6 +6213,8 @@ class Arc3D(Arc):
     def bounding_box(self):
         if not self._bbox:
             self._bbox = self.get_bounding_box()
+        if isinstance(self._bbox, str):
+            raise ValueError
         return self._bbox
 
     @bounding_box.setter
@@ -6992,9 +6987,9 @@ class FullArc3D(FullArc, Arc3D):
         self._bbox = None
 
     def translation(self, offset: volmdlr.Vector3D):
-        new_start_end = self.start.translation(offset, True)
-        new_center = self._center.translation(offset, True)
-        new_normal = self._normal.translation(offset, True)
+        new_start_end = self.start.translation(offset)
+        new_center = self.center.translation(offset)
+        new_normal = self.normal.translation(offset)
         return FullArc3D(new_center, new_start_end,
                          new_normal, name=self.name)
 
@@ -7104,6 +7099,21 @@ class FullArc3D(FullArc, Arc3D):
         abscissa = self.abscissa(split_point)
         return [Arc3D(self.start, self.point_at_abscissa(0.5 * abscissa), split_point),
                 Arc3D(split_point, self.point_at_abscissa((self.length() - abscissa) * 0.5 + abscissa), self.end)]
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str = "new"):
+        if side == 'old':
+            new_center = frame.local_to_global_coordinates(self.center.copy())
+            new_start_end = frame.local_to_global_coordinates(self.start_end.copy())
+            new_normal = frame.local_to_global_coordinates(self.normal.copy())
+        elif side == 'new':
+            new_center = frame.global_to_local_coordinates(self.center.copy())
+            new_start_end = frame.global_to_local_coordinates(self.start_end.copy())
+            new_normal = frame.global_to_local_coordinates(self.normal.copy())
+        else:
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
+        return FullArc3D(new_center, new_start_end, new_normal, name=self.name)
+
 
 class ArcEllipse3D(Edge):
     """

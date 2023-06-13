@@ -102,7 +102,7 @@ def reorder_contour3d_edges_from_step(raw_edges, step_data):
         # # Green color : well-placed and well-read
         # ax = raw_edges[0].plot(edge_style=EdgeStyle(color='g'))
         # ax.set_title(f"Step ID: #{step_id}")
-        #
+
         # # Red color : can't be connected to green edge
         # raw_edges[1].plot(ax=ax, edge_style=EdgeStyle(color='r'))
         # # Black color : to be placed
@@ -288,9 +288,9 @@ class WireMixin:
 
         raise ValueError('Point is not on wire')
 
-    def sort_points_along_wire(self, points):
+    def sort_points_along_wire(self, points, tol=1e-6):
         """ Sort given points along the wire with respect to the abscissa. """
-        return sorted(points, key=self.abscissa)
+        return sorted(points, key=lambda point: self.abscissa(point, tol))
 
     def is_ordered(self, tol=1e-6):
         """ Check if the wire's primitives are ordered or not. """
@@ -1498,8 +1498,6 @@ class ContourMixin(WireMixin):
         points = [edges[0].start, edges[0].end]
         contour_primitives = [edges.pop(0)]
         while True:
-            if not contour_primitives:
-                print(True)
             for i, edge in enumerate(edges):
                 if edge.is_point_edge_extremity(contour_primitives[-1].end, tol):
                     if contour_primitives[-1].end.is_close(edge.start, tol):
@@ -1864,7 +1862,8 @@ class ContourMixin(WireMixin):
                                         (discretize_line_direction == "x" and is_horizontal) or \
                                         (discretize_line_direction == "y" and is_vertical)
                     if should_discretize:
-                        polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
+                        polygon_points.extend(primitive.discretization_points(
+                            angle_resolution=angle_resolution)[:-1])
                     else:
                         polygon_points.append(primitive.start)
 
@@ -3396,7 +3395,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         return ax
 
-    def triangulation(self, tri_opt: str = 'pd'):
+    def triangulation(self, tri_opt: str = 'p'):
         """
         Perform triangulation on the polygon.
 

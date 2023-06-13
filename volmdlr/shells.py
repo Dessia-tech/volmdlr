@@ -658,10 +658,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         """
         meshes = []
+        face_mesh = None
         for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
-
             except Exception:
                 face_mesh = None
                 warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "

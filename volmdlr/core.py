@@ -8,6 +8,7 @@ import os
 import tempfile
 import warnings
 import webbrowser
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
@@ -1128,8 +1129,8 @@ class Assembly(dc.PhysicalObject):
                     lines.append(primitive.babylon_curves())
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                meshes.extend(data["meshes"])
+                lines.extend(data["lines"])
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1169,6 +1170,8 @@ class Assembly(dc.PhysicalObject):
         :rtype: Primitive3D
 
         """
+        if global_frame == transformed_frame:
+            return primitive
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
         matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
@@ -1196,7 +1199,7 @@ class Assembly(dc.PhysicalObject):
         """
         step_content = []
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'OpenShell3D':
+            if primitive.__class__.__name__ in ('OpenShell3D', "ClosedShell3D"):
                 primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
             else:
                 primitive_content, primitive_id = primitive.to_step(current_id)
@@ -1290,6 +1293,81 @@ class Assembly(dc.PhysicalObject):
             ax.set_aspect('auto')
         ax.margins(0.1)
         return ax
+
+
+class Compound(dc.PhysicalObject):
+    """
+    A class that can be a collection of any volmdlr primitives.
+    """
+    def __init__(self, primitives, name: str = ""):
+        self.primitives = primitives
+        self._bbox = None
+        dc.PhysicalObject.__init__(self, name=name)
+
+    @property
+    def bounding_box(self):
+        """
+        Returns the bounding box.
+
+        """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model.
+        """
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Compound.
+
+        side = 'old' or 'new'
+        """
+        new_primitives = [primitive.frame_mapping(frame, side)
+                          for primitive in self.primitives]
+        return Compound(new_primitives, self.name)
+
+    def babylon_data(self, merge_meshes=True):
+        """
+        Get babylonjs data.
+
+        :return: Dictionary with babylon data.
+        """
+
+        meshes = []
+        lines = []
+        for primitive in self.primitives:
+            if hasattr(primitive, 'babylon_meshes'):
+                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                if hasattr(primitive, 'babylon_curves'):
+                    lines.append(primitive.babylon_curves())
+            elif hasattr(primitive, 'babylon_data'):
+                data = primitive.babylon_data(merge_meshes=merge_meshes)
+                meshes.extend(mesh for mesh in data["meshes"])
+                lines.extend(line for line in data["lines"])
+
+        bbox = self.bounding_box
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
+
+        babylon_data = {'meshes': meshes,
+                        'lines': lines,
+                        'max_length': max_length,
+                        'center': list(center)}
+
+        return babylon_data
+
+    def volmdlr_primitives(self):
+        return [self]
 
 
 class VolumeModel(dc.PhysicalObject):
@@ -1488,8 +1566,8 @@ class VolumeModel(dc.PhysicalObject):
                     lines.append(primitive.babylon_curves())
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                meshes.extend(data["meshes"])
+                lines.extend(data["lines"])
 
         bbox = self.bounding_box
         center = bbox.center
@@ -2261,19 +2339,21 @@ class VolumeModel(dc.PhysicalObject):
         """
 
         list_shells = []
-
-        def unpack_assembly(assembly):
-            for primitive in assembly.primitives:
-                if primitive.__class__.__name__ == 'Assembly':
-                    unpack_assembly(primitive)
-                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-                    list_shells.append(primitive)
+        list_assembly = deque()
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'Assembly':
-                unpack_assembly(primitive)
+            if primitive.__class__.__name__ in ('Assembly', 'Compound'):
+                list_assembly.append(primitive)
             elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
                 list_shells.append(primitive)
+
+        while list_assembly:
+            assembly = list_assembly.popleft()
+            for primitive in assembly.primitives:
+                if primitive.__class__.__name__ in ('Assembly', 'Compound'):
+                    list_assembly.append(primitive)
+                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                    list_shells.append(primitive)
 
         return list_shells
 

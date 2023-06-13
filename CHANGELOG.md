@@ -34,9 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
 - BoundingBox: bbox_intersection
-- face3D: get_face_cutting_contours
+- Face3D: get_face_cutting_contours
+- parametric.py: fix numerical instability in some functions used in Arc3D to parametric surface domain transformation.
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
+- Improve step translator.
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
@@ -125,7 +127,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - Face3D: add fixes to divide_face.
 - ExtrusionSurface3D: linesegment2d_to_3d.
 - Surface3D: repair_primitive_periodicity
-- BSplineSurface3D: ban useless attr in serialization 
+- BSplineSurface3D: ban useless attr in serialization
 - utils.parametric: fix contour2d_healing
 - BSplineSurface3D: ban useless attr in serialization
 - BSplineCurve: simplify
@@ -167,6 +169,9 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 ### Changed
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
+- remove useless attribute in Bspline serialization
+- Improve CylincricalFace3D rendering mesh.
+- Improve CylincricalFace3D rendering mesh.
 - Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
 - Change python suport version from >=3.7 to >= 3.9.
