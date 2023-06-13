@@ -2932,10 +2932,8 @@ class Arc(Edge):
             return [None, self.copy()]
         if split_point.is_close(self.end, 1e-6):
             return [self.copy(), None]
-        abscissa = self.abscissa(split_point)
-        return [self.__class__(self.start, self.point_at_abscissa(0.5 * abscissa), split_point),
-                self.__class__(split_point, self.point_at_abscissa((self.abscissa(self.end) -
-                                                                    abscissa) * 0.5 + abscissa), self.end)]
+        return [self.__class__(self.circle, self.start, split_point, self.is_trigo),
+                self.__class__(self.circle, split_point, self.end, self.is_trigo)]
 
     def get_shared_section(self, other_arc2, abs_tol: float = 1e-6):
         """
@@ -2949,13 +2947,14 @@ class Arc(Edge):
             if self.__class__ == other_arc2.simplify.__class__:
                 return self.get_shared_section(other_arc2.simplify, abs_tol)
             return []
-        if not self.center.is_close(other_arc2.center) or self.radius != self.radius or \
+        if not self.circle.center.is_close(other_arc2.center) or self.circle.radius != self.circle.radius or \
                 not any(self.point_belongs(point) for point in [other_arc2.start,
                                                                 other_arc2.interior, other_arc2.end]):
             return []
         if all(self.point_belongs(point, abs_tol) for point in [other_arc2.start, other_arc2.interior, other_arc2.end]):
             return [other_arc2]
-        if all(other_arc2.point_belongs(point, abs_tol) for point in [self.start, self.interior, self.end]):
+        if all(other_arc2.point_belongs(point, abs_tol) for point in
+               [self.start, self.point_at_abscissa(self.length()*.5), self.end]):
             return [self]
         if self.point_belongs(other_arc2.start, abs_tol):
             arc1_, arc2_ = self.split(other_arc2.start)
@@ -3002,7 +3001,8 @@ class Arc(Edge):
 
         if isinstance(other_edge, self.__class__):
             if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
-                    and self.center.is_close(other_edge.center, tol) and self.point_belongs(other_edge.interior, tol)):
+                    and self.circle.center.is_close(other_edge.circle.center, tol)
+                    and self.point_belongs(other_edge.middle_point(), tol)):
                 return True
         return False
 
@@ -3073,9 +3073,15 @@ class Arc2D(Arc):
         end_to_center = end - self.circle.center
         angle1 = math.atan2(start_to_center.y, start_to_center.x)
         angle2 = math.atan2(end_to_center.y, end_to_center.x)
+        # u1, u2 = start.x / self.circle.radius, start.y / self.circle.radius
+        # start_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        # u1, u2 = end.x / self.circle.radius, end.y / self.circle.radius
+        # end_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         if self.is_trigo:
             self.angle1 = angle1
             self.angle2 = angle2
+            if self.angle2 == 0.0:
+                self.angle2 = volmdlr.TWO_PI
         else:
             self.angle1 = angle2
             self.angle2 = angle1
@@ -3171,10 +3177,16 @@ class Arc2D(Arc):
         Gets arc angle.
 
         """
-        clockwise_path, trigowise_path = self.clockwise_and_trigowise_paths
-        if self.is_trigo:
-            return trigowise_path
-        return clockwise_path
+        u1, u2 = self.start.x / self.circle.radius, self.start.y / self.circle.radius
+        start_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        u1, u2 = self.end.x / self.circle.radius, self.end.y / self.circle.radius
+        end_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        if self.is_trigo and end_angle <= start_angle:
+            end_angle += volmdlr.TWO_PI
+        # clockwise_path, trigowise_path = self.clockwise_and_trigowise_paths
+        # if self.is_trigo:
+        #     return trigowise_path
+        return end_angle - start_angle
 
     def _get_points(self):
         return [self.start, self.interior, self.end]
@@ -3192,9 +3204,9 @@ class Arc2D(Arc):
         if point.is_close(self.start) or point.is_close(self.end):
             return True
         clockwise_arc = self.reverse() if self.is_trigo else self
-        vector_start = clockwise_arc.start - clockwise_arc.center
-        vector_end = clockwise_arc.end - clockwise_arc.center
-        vector_point = point - clockwise_arc.center
+        vector_start = clockwise_arc.start - clockwise_arc.circle.center
+        vector_end = clockwise_arc.end - clockwise_arc.circle.center
+        vector_point = point - clockwise_arc.circle.center
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
         point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
@@ -3258,7 +3270,7 @@ class Arc2D(Arc):
 
     def arc_intersections(self, arc, abs_tol: float = 1e-6):
         """Intersections between two arc 2d."""
-        circle_intersections = vm_utils_intersections.get_circle_intersections(self, arc)
+        circle_intersections = vm_utils_intersections.get_circle_intersections(self.circle, arc.circle)
         arc_intersections = [inter for inter in circle_intersections if self.point_belongs(inter, abs_tol)]
         return arc_intersections
 
@@ -3280,16 +3292,16 @@ class Arc2D(Arc):
         Returns the abscissa of a given point 2d.
 
         """
-        if not math.isclose(point.point_distance(self.center), self.radius, abs_tol=tol):
+        if not math.isclose(point.point_distance(self.circle.center), self.circle.radius, abs_tol=tol):
             raise ValueError('Point not in arc')
         if point.point_distance(self.start) < tol:
             return 0
         if point.point_distance(self.end) < tol:
             return self.length()
         clockwise_arc = self.reverse() if self.is_trigo else self
-        vector_start = clockwise_arc.start - clockwise_arc.center
-        vector_end = clockwise_arc.end - clockwise_arc.center
-        vector_point = point - clockwise_arc.center
+        vector_start = clockwise_arc.start - clockwise_arc.circle.center
+        vector_end = clockwise_arc.end - clockwise_arc.circle.center
+        vector_point = point - clockwise_arc.circle.center
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
         point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)

@@ -7,21 +7,20 @@ from volmdlr import curves
 
 class TestArc2D(unittest.TestCase):
     circle2d = curves.Circle2D(volmdlr.O2D, 1)
-    arc2d = Arc2D(volmdlr.Point2D(-1, 0), volmdlr.Point2D(0, -1), volmdlr.Point2D(1, 0))
-    arc1 = Arc2D(volmdlr.Point2D(0, -1), volmdlr.Point2D(1, 0), volmdlr.Point2D(0, 1))
-    arc2 = Arc2D(volmdlr.Point2D(1, 0), volmdlr.Point2D(0, 1), volmdlr.Point2D(-1, 0))
-    arc3 = Arc2D(1.5 * volmdlr.Point2D(0, -1), 1.5 * volmdlr.Point2D(1, 0), 1.5 * volmdlr.Point2D(0, 1))
-    arc4 = Arc2D(volmdlr.Point2D(0.7071067811865475, -0.7071067811865475), volmdlr.Point2D(1, 0),
+    arc2d = Arc2D(circle2d, volmdlr.Point2D(-1, 0), volmdlr.Point2D(1, 0), True)
+    arc1 = Arc2D(circle2d, volmdlr.Point2D(0, -1), volmdlr.Point2D(0, 1), True)
+    arc2 = Arc2D(circle2d, volmdlr.Point2D(1, 0), volmdlr.Point2D(-1, 0), True)
+    arc3 = Arc2D(curves.Circle2D(volmdlr.O2D, 1.5), 1.5 * volmdlr.Point2D(0, -1), 1.5 * volmdlr.Point2D(0, 1), True)
+    arc4 = Arc2D(circle2d, volmdlr.Point2D(0.7071067811865475, -0.7071067811865475),
                  volmdlr.Point2D(0.7071067811865475, 0.7071067811865475))
-
-    arc5 = Arc2D(volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475), volmdlr.Point2D(-1, 0),
+    arc5 = Arc2D(circle2d, volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475),
                  volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475))
     arc6 = arc4.complementary()
-    arc7 = Arc2D(volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475), volmdlr.Point2D(0, 1),
-                 volmdlr.Point2D(0.7071067811865475, 0.7071067811865475))
+    arc7 = Arc2D(circle2d, volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475),
+                 volmdlr.Point2D(0.7071067811865475, 0.7071067811865475), False)
     arc8 = arc7.complementary()
-    arc9 = Arc2D(volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475), volmdlr.Point2D(0, 1),
-                 volmdlr.Point2D(0.7071067811865475, -0.7071067811865475))
+    arc9 = Arc2D(circle2d, volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475),
+                 volmdlr.Point2D(0.7071067811865475, -0.7071067811865475), False)
     arc10 = arc9.complementary()
     list_points = [volmdlr.Point2D(1, 0),
                    volmdlr.Point2D(0.7071067811865475, -0.7071067811865475),
@@ -39,14 +38,15 @@ class TestArc2D(unittest.TestCase):
         arc_split2 = self.arc2d.split(self.arc2d.end)
         self.assertEqual(arc_split2[0], self.arc2d)
         self.assertIsNone(arc_split2[1])
-        arc_split3 = self.arc2d.split(self.arc2d.interior)
+        arc_split3 = self.arc2d.split(volmdlr.Point2D(0, -1))
         self.assertTrue(arc_split3[0].start.is_close(self.arc2d.start))
-        self.assertTrue(arc_split3[0].end.is_close(self.arc2d.interior))
-        self.assertTrue(arc_split3[1].start.is_close(self.arc2d.interior))
+        self.assertTrue(arc_split3[0].end.is_close(volmdlr.Point2D(0, -1)))
+        self.assertTrue(arc_split3[1].start.is_close(volmdlr.Point2D(0, -1)))
         self.assertTrue(arc_split3[1].end.is_close(self.arc2d.end))
 
     def test_arc_intersections(self):
-        arc2 = Arc2D(volmdlr.Point2D(-1, 1.5), volmdlr.Point2D(0, 0.5), volmdlr.Point2D(1, 1.5))
+        arc2 = Arc2D(curves.Circle2D(volmdlr.Point2D(0, 1.5), 1), volmdlr.Point2D(-1, 1.5),
+                     volmdlr.Point2D(1, 1.5), True)
         arc_intersections = self.arc1.arc_intersections(arc2)
         self.assertEqual(len(arc_intersections), 1)
         self.assertTrue(arc_intersections[0].is_close(volmdlr.Point2D(0.6614378277661477, 0.75)))
