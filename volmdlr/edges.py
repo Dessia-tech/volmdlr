@@ -2699,6 +2699,8 @@ class Arc(Edge):
     """
     Abstract class representing an arc.
 
+    :param circle: arc related circle curve.
+    :type circle: Union['volmdlr.curves.Circle2D', 'volmdlr.curves.Circle2D'].
     :param start: The starting point
     :type start: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
     :param end: The finish point
@@ -2709,53 +2711,55 @@ class Arc(Edge):
     :type name: str, optional
     """
 
-    def __init__(self, start, end, interior, name: str = ''):
+    def __init__(self, circle, start, end, is_trigo: bool = True, name: str = ''):
         Edge.__init__(self, start=start, end=end, name=name)
-        self.interior = interior
+        # self.interior = interior
+        self.circle = circle
+        self.is_trigo = is_trigo
         self._utd_clockwise_and_trigowise_paths = False
         self._clockwise_and_trigowise_paths = None
         self._radius = None
         self._length = None
 
-    @property
-    def center(self):
-        """
-        Gets the arc's center.
+    # @property
+    # def center(self):
+    #     """
+    #     Gets the arc's center.
+    #
+    #     :return: The center of the arc.
+    #     """
+    #     raise NotImplementedError(
+    #         'the property method center must be overloaded by subclassing'
+    #         'class if not a given parameter')
 
-        :return: The center of the arc.
-        """
-        raise NotImplementedError(
-            'the property method center must be overloaded by subclassing'
-            'class if not a given parameter')
+    # @property
+    # def angle(self):
+    #     """
+    #     Gets the angle of the arc.
+    #
+    #     :return: The angle of the arc.
+    #     """
+    #     return NotImplementedError(
+    #         'the property method angle must be overloaded by subclassing'
+    #         'class if not a given parameter')
 
-    @property
-    def angle(self):
-        """
-        Gets the angle of the arc.
+    # @property
+    # def is_trigo(self):
+    #     """
+    #     Verifies if arc is trigonometric wise or clockwise.
+    #
+    #     :return: True if trigonometric wise or False otherwise.
+    #     """
+    #     return NotImplementedError(
+    #         'the property method is_trigo must be overloaded by subclassing'
+    #         'class if not a given parameter')
 
-        :return: The angle of the arc.
-        """
-        return NotImplementedError(
-            'the property method angle must be overloaded by subclassing'
-            'class if not a given parameter')
-
-    @property
-    def is_trigo(self):
-        """
-        Verifies if arc is trigonometric wise or clockwise.
-
-        :return: True if trigonometric wise or False otherwise.
-        """
-        return NotImplementedError(
-            'the property method is_trigo must be overloaded by subclassing'
-            'class if not a given parameter')
-
-    @property
-    def radius(self):
-        """Gets the radius of the arc."""
-        if not self._radius:
-            self._radius = (self.start - self.center).norm()
-        return self._radius
+    # @property
+    # def radius(self):
+    #     """Gets the radius of the arc."""
+    #     if not self._radius:
+    #         self._radius = (self.start - self.center).norm()
+    #     return self._radius
 
     def length(self):
         """
@@ -2764,7 +2768,7 @@ class Arc(Edge):
         :return: the length of the Arc.
         """
         if not self._length:
-            self._length = self.radius * abs(self.angle)
+            self._length = self.circle.radius * abs(self.angle)
         return self._length
 
     def point_at_abscissa(self, abscissa):
@@ -2775,8 +2779,8 @@ class Arc(Edge):
         :return: Corresponding point.
         """
         if self.is_trigo:
-            return self.start.rotation(self.center, abscissa / self.radius)
-        return self.start.rotation(self.center, -abscissa / self.radius)
+            return self.start.rotation(self.circle.center, abscissa / self.circle.radius)
+        return self.start.rotation(self.circle.center, -abscissa / self.circle.radius)
 
     def normal_vector(self, abscissa: float):
         """
@@ -2787,7 +2791,7 @@ class Arc(Edge):
         :return: The normal vector of the Arc2D
         """
         point = self.point_at_abscissa(abscissa)
-        normal_vector = self.center - point
+        normal_vector = self.circle.center - point
         return normal_vector
 
     def direction_vector(self, abscissa: float):
@@ -2835,20 +2839,20 @@ class Arc(Edge):
         """Returns the minimal distance to a point."""
         if self.point_belongs(point):
             return 0
-        if self.center.is_close(point):
-            return self.radius
+        if self.circle.center.is_close(point):
+            return self.circle.radius
         class_sufix = self.__class__.__name__[-2:]
         linesegment_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
-        linesegment = linesegment_class(self.center, point)
-        if linesegment.length() > self.radius:
+        linesegment = linesegment_class(self.circle.center, point)
+        if linesegment.length() > self.circle.radius:
             if self.linesegment_intersections(linesegment):
                 return linesegment.length() - self.radius
             return min(self.start.point_distance(point), self.end.point_distance(point))
-        vector_to_point = point - self.center
+        vector_to_point = point - self.circle.center
         vector_to_point.normalize()
-        projected_point = self.center + self.radius * vector_to_point
+        projected_point = self.circle.center + self.circle.radius * vector_to_point
         if self.point_belongs(projected_point):
-            return self.radius - linesegment.length()
+            return self.circle.radius - linesegment.length()
         return min(self.start.point_distance(point), self.end.point_distance(point))
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
@@ -2871,12 +2875,12 @@ class Arc(Edge):
         return [self.point_at_abscissa(i * step)
                 for i in range(number_points)]
 
-    def polygon_points(self, discretization_resolution: int):
-        #todo: delete this method.
-        warnings.warn('polygon_points is deprecated,\
-        please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(number_points=discretization_resolution)
+    # def polygon_points(self, discretization_resolution: int):
+    #     #todo: delete this method.
+    #     warnings.warn('polygon_points is deprecated,\
+    #     please use discretization_points instead',
+    #                   DeprecationWarning)
+    #     return self.discretization_points(number_points=discretization_resolution)
 
     def get_geo_lines(self, tag: int, start_point_tag: int, center_point_tag: int, end_point_tag: int):
         """
@@ -2906,7 +2910,7 @@ class Arc(Edge):
         :rtype: List
 
         """
-        return [self.start, self.center, self.end]
+        return [self.start, self.circle.center, self.end]
 
     def get_reverse(self):
         """
@@ -2915,7 +2919,7 @@ class Arc(Edge):
         :return: An arc
         """
 
-        return self.__class__(start=self.end, interior=self.interior, end=self.start)
+        return self.__class__(self.circle, start=self.end, end=self.start, is_trigo=not self.is_trigo)
 
     def split(self, split_point):
         """
@@ -3053,19 +3057,20 @@ class Arc2D(Arc):
     angle: the angle measure always >= 0
     """
 
-    def __init__(self,
+    def __init__(self, circle: 'volmdlr.curves.Circle2D',
                  start: volmdlr.Point2D,
-                 interior: volmdlr.Point2D,
                  end: volmdlr.Point2D,
-                 center=None,
+                 is_trigo: bool = True,
                  name: str = ''):
-        self._center = center
-        self._is_trigo = None
+        # self._center = center
+        self.circle = circle
+        self.is_trigo = is_trigo
         self._angle = None
         self._bounding_rectangle = None
-        Arc.__init__(self, start=start, end=end, interior=interior, name=name)
-        start_to_center = start - self.center
-        end_to_center = end - self.center
+        Arc.__init__(self, circle, start=start, end=end, is_trigo=is_trigo,  name=name)
+        # Edge.__init__(self, start=start, end=end, name=name)
+        start_to_center = start - self.circle.center
+        end_to_center = end - self.circle.center
         angle1 = math.atan2(start_to_center.y, start_to_center.x)
         angle2 = math.atan2(end_to_center.y, end_to_center.x)
         if self.is_trigo:
@@ -3076,86 +3081,81 @@ class Arc2D(Arc):
             self.angle2 = angle1
 
     def __hash__(self):
-        return hash(('arc2d', self.start, self.interior, self.end))
+        return hash(('arc2d', self.circle, self.start, self.end, self.is_trigo))
 
     def __eq__(self, other_arc):
         if self.__class__.__name__ != other_arc.__class__.__name__:
             return False
-        return (self.center == other_arc.center
+        return (self.circle == other_arc.circle
                 and self.start == other_arc.start
-                and self.end == other_arc.end
-                and self.interior == other_arc.interior)
+                and self.end == other_arc.end)
 
-    @property
-    def center(self):
-        """
-        Gets the center of the arc.
+    # @property
+    # def center(self):
+    #     """
+    #     Gets the center of the arc.
+    #
+    #     :return: the center of the arc.
+    #     """
+    #     if not self._center:
+    #         self._center = self.get_center()
+    #     return self._center
 
-        :return: the center of the arc.
-        """
-        if not self._center:
-            self._center = self.get_center()
-        return self._center
+    # def get_center(self):
+    #     """
+    #     Calculates the center of the Arc.
+    #
+    #     :return: arc's center.
+    #     """
+    #     x_interior, y_interior = self.interior.x, self.interior.y
+    #     x_end, y_end = self.end.x, self.end.y
+    #     x_start, y_start = self.start.x, self.start.y
+    #     try:
+    #         matrix_a = volmdlr.Matrix22(2 * (x_start - x_interior), 2 * (y_start - y_interior),
+    #                                     2 * (x_start - x_end), 2 * (y_start - y_end))
+    #         b_vector = - volmdlr.Vector2D(x_interior ** 2 + y_interior ** 2 - x_start ** 2 - y_start ** 2,
+    #                                       x_end ** 2 + y_end ** 2 - x_start ** 2 - y_start ** 2)
+    #         inv_matrix_a = matrix_a.inverse()
+    #         x = inv_matrix_a.vector_multiplication(b_vector)
+    #         center = volmdlr.Point2D(x.x, x.y)
+    #     except ValueError:
+    #         matrix_a = npy.array([[2 * (x_start - x_interior), 2 * (y_start - y_interior)],
+    #                               [2 * (x_start - x_end), 2 * (y_start - y_end)]])
+    #         b_vector = - npy.array([x_interior ** 2 + y_interior ** 2 - x_start ** 2 - y_start ** 2,
+    #                                 x_end ** 2 + y_end ** 2 - x_start ** 2 - y_start ** 2])
+    #         center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
+    #     return center
 
-    def get_center(self):
-        """
-        Calculates the center of the Arc.
-
-        :return: arc's center.
-        """
-        x_interior, y_interior = self.interior.x, self.interior.y
-        x_end, y_end = self.end.x, self.end.y
-        x_start, y_start = self.start.x, self.start.y
-        try:
-            matrix_a = volmdlr.Matrix22(2 * (x_start - x_interior), 2 * (y_start - y_interior),
-                                        2 * (x_start - x_end), 2 * (y_start - y_end))
-            b_vector = - volmdlr.Vector2D(x_interior ** 2 + y_interior ** 2 - x_start ** 2 - y_start ** 2,
-                                          x_end ** 2 + y_end ** 2 - x_start ** 2 - y_start ** 2)
-            inv_matrix_a = matrix_a.inverse()
-            x = inv_matrix_a.vector_multiplication(b_vector)
-            center = volmdlr.Point2D(x.x, x.y)
-        except ValueError:
-            matrix_a = npy.array([[2 * (x_start - x_interior), 2 * (y_start - y_interior)],
-                                  [2 * (x_start - x_end), 2 * (y_start - y_end)]])
-            b_vector = - npy.array([x_interior ** 2 + y_interior ** 2 - x_start ** 2 - y_start ** 2,
-                                    x_end ** 2 + y_end ** 2 - x_start ** 2 - y_start ** 2])
-            center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
-        return center
-
-    @property
-    def is_trigo(self):
-        """
-        Gives if the edge goes in the trigo direction.
-        """
-        if not self._is_trigo:
-            self._is_trigo = self.get_arc_direction()
-        return self._is_trigo
+    # @property
+    # def is_trigo(self):
+    #     """
+    #     Gives if the edge goes in the trigo direction.
+    #     """
+    #     if not self._is_trigo:
+    #         self._is_trigo = self.get_arc_direction()
+    #     return self._is_trigo
 
     @property
     def clockwise_and_trigowise_paths(self):
         """Gets clock-wise and trigo-wise paths."""
         if not self._clockwise_and_trigowise_paths:
-            radius_1 = self.start - self.center
-            radius_2 = self.end - self.center
-            radius_i = self.interior - self.center
-            self._clockwise_and_trigowise_paths = \
-                self.get_clockwise_and_trigowise_paths(radius_1,
-                                                       radius_2,
-                                                       radius_i)
-            self._utd_clockwise_and_trigowise_paths = True
+            radius_1 = self.start - self.circle.center
+            radius_2 = self.end - self.circle.center
+            radius_i = self.interior - self.circle.center
+            self._clockwise_and_trigowise_paths = self.get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i)
         return self._clockwise_and_trigowise_paths
 
-    def get_arc_direction(self):
-        """
-        Gets arc direction: clockwise or trigonometric.
-
-        :return: True if clockwise. False if counterclockwise.
-        """
-        clockwise_path, trigowise_path = \
-            self.clockwise_and_trigowise_paths
-        if clockwise_path > trigowise_path:
-            return True
-        return False
+    # def get_arc_direction(self):
+    #     """
+    #     Gets arc direction: clockwise or trigonometric.
+    #
+    #     :return: True if clockwise. False if counterclockwise.
+    #     """
+    #     clockwise_path, trigowise_path = \
+    #         self.clockwise_and_trigowise_paths
+    #     if clockwise_path > trigowise_path:
+    #         return True
+    #     return False
 
     @property
     def angle(self):
@@ -3186,8 +3186,8 @@ class Arc2D(Arc):
         Check if a Point2D belongs to the Arc2D.
 
         """
-        distance_point_to_center = point.point_distance(self.center)
-        if not math.isclose(distance_point_to_center, self.radius, abs_tol=abs_tol):
+        distance_point_to_center = point.point_distance(self.circle.center)
+        if not math.isclose(distance_point_to_center, self.circle.radius, abs_tol=abs_tol):
             return False
         if point.is_close(self.start) or point.is_close(self.end):
             return True
@@ -3295,8 +3295,8 @@ class Arc2D(Arc):
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
         if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=tol):
             if self.is_trigo:
-                return self.length() - self.radius * point_start_angle
-            return self.radius * point_start_angle
+                return self.length() - self.circle.radius * point_start_angle
+            return self.circle.radius * point_start_angle
         raise ValueError('Point not in arc')
 
     def area(self):
@@ -3305,7 +3305,7 @@ class Arc2D(Arc):
 
         :return: the area of the Arc2D.
         """
-        return self.radius ** 2 * self.angle / 2
+        return self.circle.radius ** 2 * self.angle / 2
 
     def center_of_mass(self):
         """
@@ -3314,10 +3314,10 @@ class Arc2D(Arc):
         :return: center of mass point.
         """
         #        u=self.middle.vector-self.center.vector
-        u = self.middle_point() - self.center
+        u = self.middle_point() - self.circle.center
         u.normalize()
         # alpha = abs(self.angle)
-        return self.center + 4 / (3 * self.angle) * self.radius * math.sin(
+        return self.circle.center + 4 / (3 * self.angle) * self.circle.radius * math.sin(
             self.angle * 0.5) * u
 
     @property
@@ -3341,11 +3341,11 @@ class Arc2D(Arc):
         """
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
-            area = math.pi * self.radius ** 2 - 0.5 * self.radius ** 2 * (
+            area = math.pi * self.circle.radius ** 2 - 0.5 * self.circle.radius ** 2 * (
                     angle - math.sin(angle))
         else:
             angle = self.angle
-            area = 0.5 * self.radius ** 2 * (angle - math.sin(angle))
+            area = 0.5 * self.circle.radius ** 2 * (angle - math.sin(angle))
 
         if self.is_trigo:
             return area
@@ -3361,11 +3361,11 @@ class Arc2D(Arc):
         angle1 = self.angle1
 
         # Full arc section
-        moment_area_x1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        moment_area_x1 = self.circle.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle1) - math.sin(2 * angle2)))
-        moment_area_y1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        moment_area_y1 = self.circle.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle2) - math.sin(2 * angle1)))
-        moment_area_xy1 = self.radius ** 4 / 8 * (
+        moment_area_xy1 = self.circle.radius ** 4 / 8 * (
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
 
         # Triangle
@@ -3393,21 +3393,21 @@ class Arc2D(Arc):
 
         return volmdlr.geometry.huygens2d(moment_area_x, moment_area_y, moment_area_xy,
                                           self.straight_line_area(),
-                                          self.center,
+                                          self.circle.center,
                                           point)
 
     def _full_arc_moment_inertia(self, angle1, angle2):
-        moment_inertia_x1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        moment_inertia_x1 = self.circle.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle1) - math.sin(2 * angle2)))
-        moment_inertia_y1 = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        moment_inertia_y1 = self.circle.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle2) - math.sin(2 * angle1)))
-        moment_inertia_xy1 = self.radius ** 4 / 8 * (
+        moment_inertia_xy1 = self.circle.radius ** 4 / 8 * (
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
         return moment_inertia_x1, moment_inertia_y1, moment_inertia_xy1
 
     def _triangle_moment_inertia(self):
-        xi, yi = self.start - self.center
-        xj, yj = self.end - self.center
+        xi, yi = self.start - self.circle.center
+        xj, yj = self.end - self.circle.center
         moment_inertia_x2 = (yi ** 2 + yi * yj + yj ** 2) * (xi * yj - xj * yi) / 12.
         moment_inertia_y2 = (xi ** 2 + xi * xj + xj ** 2) * (xi * yj - xj * yi) / 12.
         moment_inertia_xy2 = (xi * yj + 2 * xi * yi + 2 * xj * yj + xj * yi) * (
@@ -3419,18 +3419,18 @@ class Arc2D(Arc):
         if self.angle == math.pi:
             return self.center_of_mass()
 
-        u = self.middle_point() - self.center
+        u = self.middle_point() - self.circle.center
         u.normalize()
         if self.angle >= math.pi:
             u = -u
-        bissec = Line2D(self.center, self.center + u)
+        bissec = Line2D(self.circle.center, self.circle.center + u)
         string = Line2D(self.start, self.end)
         point = volmdlr.Point2D.line_intersection(bissec, string)
         a = point.point_distance(self.start)
-        height = point.point_distance(self.center)
+        height = point.point_distance(self.circle.center)
         triangle_area = height * a
         # alpha = abs(self.angle)
-        triangle_cog = self.center + 2 / 3. * height * u
+        triangle_cog = self.circle.center + 2 / 3. * height * u
         if self.angle < math.pi:
             cog = (
                           self.center_of_mass() * self.area() - triangle_area * triangle_cog) / abs(
@@ -3452,15 +3452,15 @@ class Arc2D(Arc):
         if self.point_belongs(point):
             return True
         if self.start == self.end:
-            if point.point_distance(self.center) <= self.radius:
+            if point.point_distance(self.circle.center) <= self.circle.radius:
                 return True
-        center_distance_point = self.center.point_distance(point)
+        center_distance_point = self.circle.center.point_distance(point)
         straight_line = LineSegment2D(self.start, self.end)
         for edge in [self, straight_line]:
-            line_passing_trough_point = Line2D(self.center, point)
+            line_passing_trough_point = Line2D(self.circle.center, point)
             straight_line_intersections = edge.line_intersections(line_passing_trough_point)
             if straight_line_intersections:
-                if self.center.point_distance(straight_line_intersections[0]) > center_distance_point:
+                if self.circle.center.point_distance(straight_line_intersections[0]) > center_distance_point:
                     return True
         return False
 
@@ -3470,11 +3470,11 @@ class Arc2D(Arc):
             _, ax = plt.subplots()
 
         if edge_style.plot_points:
-            for point in [self.center, self.start, self.interior, self.end]:
+            for point in [self.circle.center, self.circle.start, self.circle.end]:
                 point.plot(ax=ax, color=edge_style.color, alpha=edge_style.alpha)
 
-        ax.add_patch(matplotlib.patches.Arc((self.center.x, self.center.y), 2 * self.radius,
-                                            2 * self.radius, angle=0,
+        ax.add_patch(matplotlib.patches.Arc((self.circle.center.x, self.circle.center.y), 2 * self.circle.radius,
+                                            2 * self.circle.radius, angle=0,
                                             theta1=self.angle1 * 0.5 / math.pi * 360,
                                             theta2=self.angle2 * 0.5 / math.pi * 360,
                                             color=edge_style.color,
@@ -3494,12 +3494,13 @@ class Arc2D(Arc):
         :return: A 3D arc.
         :type: Arc3D.
         """
+        circle3d = self.circle.to_3d(plane_origin, x, y)
         point_start = self.start.to_3d(plane_origin, x, y)
-        point_interior = self.interior.to_3d(plane_origin, x, y)
+        # point_interior = self.interior.to_3d(plane_origin, x, y)
         point_end = self.end.to_3d(plane_origin, x, y)
-        center = self.center.to_3d(plane_origin, x, y) if self.center else None
+        # center = self.circle.center.to_3d(plane_origin, x, y) if self.circle.center else None
 
-        return Arc3D(point_start, point_interior, point_end, center, name=self.name)
+        return Arc3D(circle3d, point_start, point_end, name=self.name)
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -3509,25 +3510,25 @@ class Arc2D(Arc):
         :param angle: angle rotation.
         :return: a new rotated Arc2D.
         """
-        return Arc2D(*[point.rotation(center, angle, ) if point else point for point in
-                       [self.start, self.interior, self.end, self.center]])
+        return Arc2D(*[point.rotation(center, angle) if point else point for point in
+                       [self.circle, self.start, self.end]])
 
-    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
-        """
-        Arc2D rotation. Object is updated inplace.
-
-        :param center: rotation center.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.start.rotation_inplace(center, angle)
-        self.interior.rotation_inplace(center, angle)
-        self.end.rotation_inplace(center, angle)
-        self._angle = None
-        self._is_trigo = None
-        self._center = None
-        self._clockwise_and_trigowise_paths = None
+    # def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
+    #     """
+    #     Arc2D rotation. Object is updated inplace.
+    #
+    #     :param center: rotation center.
+    #     :param angle: rotation angle.
+    #     """
+    #     warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+    #
+    #     self.start.rotation_inplace(center, angle)
+    #     self.interior.rotation_inplace(center, angle)
+    #     self.end.rotation_inplace(center, angle)
+    #     self._angle = None
+    #     self._is_trigo = None
+    #     self._center = None
+    #     self._clockwise_and_trigowise_paths = None
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -3537,23 +3538,23 @@ class Arc2D(Arc):
         :return: A new translated Arc2D.
         """
         return Arc2D(*[point.translation(offset) if point else point for point in
-                       [self.start, self.interior, self.end, self.center]])
+                       [self.circle, self.start, self.end]])
 
-    def translation_inplace(self, offset: volmdlr.Vector2D):
-        """
-        Arc2D translation. Object is updated inplace.
-
-        :param offset: translation vector.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.start.translation_inplace(offset)
-        self.interior.translation_inplace(offset)
-        self.end.translation_inplace(offset)
-        self._angle = None
-        self._is_trigo = None
-        self._center = None
-        self._clockwise_and_trigowise_paths = None
+    # def translation_inplace(self, offset: volmdlr.Vector2D):
+    #     """
+    #     Arc2D translation. Object is updated inplace.
+    #
+    #     :param offset: translation vector.
+    #     """
+    #     warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+    #
+    #     self.start.translation_inplace(offset)
+    #     self.interior.translation_inplace(offset)
+    #     self.end.translation_inplace(offset)
+    #     self._angle = None
+    #     self._is_trigo = None
+    #     self._center = None
+    #     self._clockwise_and_trigowise_paths = None
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -3586,16 +3587,16 @@ class Arc2D(Arc):
         else:
             angle2 = self.angle2
         angle1 = self.angle1
-        moment_area_x = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        moment_area_x = self.circle.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle1) - math.sin(2 * angle2)))
-        moment_area_y = self.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
+        moment_area_y = self.circle.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle2) - math.sin(2 * angle1)))
-        moment_area_xy = self.radius ** 4 / 8 * (
+        moment_area_xy = self.circle.radius ** 4 / 8 * (
                 math.cos(angle1) ** 2 - math.cos(angle2) ** 2)
 
         # Must be computed at center, so huygens related to center
         return volmdlr.geometry.huygens2d(moment_area_x, moment_area_y, moment_area_xy, self.area(),
-                                          self.center, point)
+                                          self.circle.center, point)
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   anticlockwise: bool = None):
@@ -3609,9 +3610,9 @@ class Arc2D(Arc):
         data = []
         for node in list_node:
             data.append({'x': node.x, 'y': node.y})
-        return plot_data.Arc2D(cx=self.center.x,
-                               cy=self.center.y,
-                               r=self.radius,
+        return plot_data.Arc2D(cx=self.circle.center.x,
+                               cy=self.circle.center.y,
+                               r=self.circle.radius,
                                start_angle=self.angle1,
                                end_angle=self.angle2,
                                edge_style=edge_style,
@@ -3620,10 +3621,8 @@ class Arc2D(Arc):
                                name=self.name)
 
     def copy(self, *args, **kwargs):
-        center = self.center.copy() if self.center else None
-        return Arc2D(self.start.copy(),
-                     self.interior.copy(),
-                     self.end.copy(), center)
+        return Arc2D(self.circle.copy(), self.start.copy(),
+                     self.end.copy())
 
     def cut_between_two_points(self, point1, point2):
         """
@@ -3635,43 +3634,43 @@ class Arc2D(Arc):
         raise NotImplementedError
 
     def infinite_primitive(self, offset):
-        vector_start_center = self.start - self.center
+        vector_start_center = self.start - self.circle.center
         vector_start_center.normalize()
-        vector_end_center = self.end - self.center
+        vector_end_center = self.end - self.circle.center
         vector_end_center.normalize()
-        vector_interior_center = self.interior - self.center
-        vector_interior_center.normalize()
+        # vector_interior_center = self.interior - self.circle.center
+        # vector_interior_center.normalize()
         if self.is_trigo:
-            radius = self.radius + offset
-            center = self.center
+            radius = self.circle.radius + offset
+            center = self.circle.center
 
         else:
-            radius = self.radius - offset
+            radius = self.circle.radius - offset
             if radius < 0:
                 return None
-            center = self.center
+            center = self.circle.center
             # mid_point = self.middle_point()
             # vec1 = self.center - mid_point
             # vec1.normalize()
             # vec1 = 2 * offset * math.sqrt(2) * vec1
             # center = self.center.translation(vec1)
+        new_circle = volmdlr_curves.Circle2D(center, radius)
         start = center + radius * vector_start_center
         end = center + radius * vector_end_center
-        interior = center + radius * vector_interior_center
-        return Arc2D(start, interior, end)
+        # interior = center + radius * vector_interior_center
+        return Arc2D(new_circle, start, end, self.is_trigo)
 
     def complementary(self):
         """Gets the complementary Arc 2D. """
-        interior = self.middle_point().rotation(self.center, math.pi)
-        return Arc2D(self.start, interior, self.end)
+        # interior = self.middle_point().rotation(self.center, math.pi)
+        return Arc2D(self.circle, self.end, self.start, self.is_trigo)
 
     def axial_symmetry(self, line):
         """ Finds out the symmetric arc 2D according to a line. """
-        points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.interior, self.end]]
+        points_symmetry = [point.axial_symmetry(line) for point in [self.start, self.end]]
 
-        return self.__class__(start=points_symmetry[0],
-                              interior=points_symmetry[1],
-                              end=points_symmetry[2])
+        return self.__class__(self.circle, start=points_symmetry[0],
+                              end=points_symmetry[1], is_trigo=self.is_trigo)
 
 
 class FullArc2D(FullArc, Arc2D):

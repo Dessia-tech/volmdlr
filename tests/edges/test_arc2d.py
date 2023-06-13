@@ -3,9 +3,10 @@ import unittest
 
 import volmdlr
 from volmdlr.edges import Arc2D
-
+from volmdlr import curves
 
 class TestArc2D(unittest.TestCase):
+    circle2d = curves.Circle2D(volmdlr.O2D, 1)
     arc2d = Arc2D(volmdlr.Point2D(-1, 0), volmdlr.Point2D(0, -1), volmdlr.Point2D(1, 0))
     arc1 = Arc2D(volmdlr.Point2D(0, -1), volmdlr.Point2D(1, 0), volmdlr.Point2D(0, 1))
     arc2 = Arc2D(volmdlr.Point2D(1, 0), volmdlr.Point2D(0, 1), volmdlr.Point2D(-1, 0))
