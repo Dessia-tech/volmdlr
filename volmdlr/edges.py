@@ -1840,6 +1840,15 @@ class Line2D(Line):
         return []
 
     def linesegment_intersections(self, linesegment):
+        """
+        Calculate the intersection between a line and a line segment.
+
+        :param linesegment: The line segment to calculate intersections with.
+        :type linesegment: :class:`volmdlr.LineSegment2D`
+        :return: A list of at most one intersection point between
+            a line and a line segment.
+        :rtype: List[:class:`volmdlr.Point2D`]
+        """
         return linesegment.line_intersections(self)
 
     @staticmethod
@@ -3628,6 +3637,13 @@ class Arc2D(Arc):
                                name=self.name)
 
     def copy(self, *args, **kwargs):
+        """
+        Creates and returns a deep copy of the Arc2D object.
+
+        :param *args: Variable-length argument list.
+        :param **kwargs: Arbitrary keyword arguments.
+        :return: A new Arc2D object that is a deep copy of the original.
+        """
         center = self.center.copy() if self.center else None
         return Arc2D(self.start.copy(),
                      self.interior.copy(),
