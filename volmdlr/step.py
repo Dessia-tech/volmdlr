@@ -1478,6 +1478,7 @@ class StepReaderReport:
     sucess_rate: float = 0.0
     errors: list = field(default_factory=list)
 
+
 STEP_TO_VOLMDLR = {
     # GEOMETRICAL ENTITIES
     'CARTESIAN_POINT': volmdlr.Point3D,
