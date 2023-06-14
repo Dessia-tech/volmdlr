@@ -155,9 +155,50 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             self._vertices_graph = vertices_graph
         return self._vertices_graph
 
+    def _faces_graph_search_bridges(self, graph, components, face_vertices):
+        """
+        If the graph contains more than one set of connected components we fix it.
+
+        The fix is done by searching the first bridge that connects the sets.
+
+        :param graph:
+        :param components:
+        :param face_vertices:
+        :return: new graph with nos disconnected components.
+        """
+        stack = components.copy()
+        found = False
+
+        def check_faces(face, other_face_id):
+            for point_id in face_vertices[other_face_id]:
+                point = self.vertices_points[point_id]
+                if face.outer_contour3d.point_over_contour(point):
+                    return True
+                if face.inner_contours3d:
+                    for inner_contour in face.inner_contours3d:
+                        if inner_contour.point_over_contour(point):
+                            return True
+            return False
+
+        while stack:
+            group = stack.pop(0)
+            for face_id_i in group:
+                face_i = self.faces[face_id_i]
+                for other_group in stack:
+                    for face_id_j in other_group:
+                        if check_faces(face_i, face_id_j):
+                            found = True
+                            graph.add_edge(face_id_i, face_id_j)
+                            for face_id_k in graph.neighbors(face_id_j):
+                                if check_faces(face_i, face_id_k):
+                                    graph.add_edge(face_id_i, face_id_k)
+                        if found:
+                            break
+        return graph
+
     def faces_graph(self):
         """
-        Gets the shells faces graph using networkx.
+        Gets the shells faces topology graph using networkx.
 
         :return: return a networkx graph for a shell faces.
         """
@@ -165,30 +206,24 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             graph = nx.Graph()
             vertice_faces = {}
             face_vertices = {}
-            vertice_edges = {}
-            face_edges = {}
             for face_index, face in enumerate(self.faces):
-                outer_contour = face.outer_contour3d
-                for edge in outer_contour.primitives:
+                face_contour_primitives = face.outer_contour3d.primitives
+                for inner_contour in face.inner_contours3d:
+                    face_contour_primitives.extend(inner_contour.primitives)
+                for edge in face_contour_primitives:
                     start_index = volmdlr.core.get_point_index_in_list(edge.start, self.vertices_points)
                     vertice_faces.setdefault(start_index, set()).add(face_index)
-                    vertice_edges.setdefault(start_index, set()).add(edge)
-                    face_edges.setdefault(face_index, set()).add(edge)
                     face_vertices.setdefault(face_index, set()).add(start_index)
-            for i, face_i in enumerate(self.faces):
-                face_i_edges = face_edges[i]
+            for i, _ in enumerate(self.faces):
                 face_i_vertices = face_vertices[i]
                 for vertice in face_i_vertices:
                     connected_faces = vertice_faces[vertice]
                     connected_faces.discard(i)
                     for j in connected_faces:
-                        face_j_edges = face_edges[j]
-                        edges_j_set = face_j_edges.intersection(vertice_edges[vertice])
-                        for edge_i in face_i_edges:
-                            for edge_j in edges_j_set:
-                                if edge_i.get_shared_section(edge_j):
-                                    graph.add_edge(i, j)
-
+                        graph.add_edge(i, j)
+            components = list(nx.connected_components(graph))
+            if len(components) > 1:
+                graph = self._faces_graph_search_bridges(graph, components, face_vertices)
             self._faces_graph = graph
         return self._faces_graph
 
