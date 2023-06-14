@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
 - ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
 - RevolutionSurface3D: fix some special cases whiling transforming from 3D space to parametric domain.
+- BSplineFace3D: neutral_fiber
+- surfaces.Plane3D: linesegment_intersections
+- Step export
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
@@ -126,6 +129,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - utils.parametric: fix contour2d_healing
 - BSplineSurface3D: ban useless attr in serialization
 - BSplineCurve: simplify
+- SphericalSurface3D: contour3d_to_2d
 - WireMixin: to_wire_with_linesegments (use new methods, for 2D and 3D)
 - ArcEllipse2d: point_belongs, abscissa, init.
 - Face3D: face_inside - now considers inners_contours
@@ -133,6 +137,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - ContourMixin: delete_shared_contour_section
 - PlaneFace3D: merge_faces
 - Contour2D: divide
+- Step: raise NotimplementedError when it's not possible to instatiate assembly object.
 
 
 ### Refactor
@@ -165,6 +170,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
 - Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
+- Change python suport version from >=3.7 to >= 3.9.
 
 ### Unittests
 - Arc2D: test_arc_intersections

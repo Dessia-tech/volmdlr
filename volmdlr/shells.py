@@ -663,15 +663,13 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 face_mesh = face.triangulation()
 
             except Exception:
+                face_mesh = None
                 warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
                               f"{self.name} faces. Probabaly because topology error in contour2d.")
                 print(traceback.format_exc())
                 continue
             if face_mesh:
                 meshes.append(face_mesh)
-            else:
-                warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
-                              f"{self.name} faces. Probabaly because topology error in contour2d.")
         return display.DisplayMesh3D.merge_meshes(meshes)
 
     def babylon_meshes(self, merge_meshes=True):
@@ -1660,7 +1658,7 @@ class OpenTriangleShell3D(OpenShell3D):
         return display.DisplayMesh3D(points, triangles)
 
 
-class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
+class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     """
         A 3D closed shell composed of multiple triangle faces.
 

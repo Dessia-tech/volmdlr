@@ -3210,8 +3210,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                                     point.x == line.end.x and point.y == line.end.y)):
                         point_x_rel_pos = int(point.x / scale_factor)
                         point_y_rel_pos = int(point.y / scale_factor)
-                        if boundary[0] <= point_x_rel_pos <= boundary[1] \
-                                and boundary[2] <= point_y_rel_pos <= boundary[3]:
+                        if boundary[1] >= point_x_rel_pos >= boundary[0] <= point_y_rel_pos <= boundary[3]:
                             nearby_points.append(point)
 
                 scale_factor *= 4 / 3
@@ -4679,23 +4678,15 @@ class Contour3D(ContourMixin, Wire3D):
         content = ''
         edge_ids = []
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'BSplineCurve3D':
-                method_name = f'{primitive.__class__.__name__.lower()}_to_2d'
-                curve2d = getattr(surface3d, method_name)(primitive)[0]
-                if curve2d.__class__.__name__ == 'LineSegment3D':
-                    curve2d = curve2d.to_bspline_curve()
-                primitive_content, primitive_ids = primitive.to_step(
-                    current_id, surface_id=surface_id, curve2d=curve2d)
-            else:
-                primitive_content, primitive_ids = primitive.to_step(current_id, surface_id=surface_id)
+            primitive_content, primitive_id = primitive.to_step(current_id, surface_id=surface_id)
 
             content += primitive_content
-            current_id = primitive_ids[-1] + 1
-            for primitive_id in primitive_ids:
-                content += f"#{current_id} = ORIENTED_EDGE('{primitive.name}',*,*,#{primitive_id},.T.);\n"
-                edge_ids.append(current_id)
+            current_id = primitive_id + 1
 
-                current_id += 1
+            content += f"#{current_id} = ORIENTED_EDGE('{primitive.name}',*,*,#{primitive_id},.T.);\n"
+            edge_ids.append(current_id)
+
+            current_id += 1
 
         content += f"#{current_id} = EDGE_LOOP('{self.name}',({volmdlr.core.step_ids_to_str(edge_ids)}));\n"
         return content, current_id
