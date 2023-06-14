@@ -185,6 +185,7 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
+        step_id = kwargs.get("step_id")
         # obj can be an instance of wires or edges.
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
@@ -203,7 +204,7 @@ class Edge(dc.DessiaObject):
                 point1, point2 = point2, point1
             return obj.trim(point1, point2)
 
-        raise NotImplementedError(f'Unsupported: {object_dict[arguments[3]]}')
+        raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
 
     def normal_vector(self, abscissa):
         """
@@ -593,7 +594,7 @@ class Line(dc.DessiaObject):
         current_id = u_id + 1
         content = p1_content + u_content
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
-        return content, [current_id]
+        return content, current_id
 
 
 class LineSegment(Edge):
@@ -820,7 +821,7 @@ class LineSegment(Edge):
     def to_step(self, current_id, *args, **kwargs):
         """Exports to STEP format."""
         line = self.to_line()
-        content, (line_id,) = line.to_step(current_id)
+        content, line_id = line.to_step(current_id)
         current_id = line_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         current_id = start_id + 1
@@ -828,7 +829,7 @@ class LineSegment(Edge):
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
-        return content, [current_id]
+        return content, current_id
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
@@ -1839,6 +1840,15 @@ class Line2D(Line):
         return []
 
     def linesegment_intersections(self, linesegment):
+        """
+        Calculate the intersection between a line and a line segment.
+
+        :param linesegment: The line segment to calculate intersections with.
+        :type linesegment: :class:`volmdlr.LineSegment2D`
+        :return: A list of at most one intersection point between
+            a line and a line segment.
+        :rtype: List[:class:`volmdlr.Point2D`]
+        """
         return linesegment.line_intersections(self)
 
     @staticmethod
@@ -2166,7 +2176,7 @@ class BSplineCurve2D(BSplineCurve):
         content += f"#{point_id} = B_SPLINE_CURVE_WITH_KNOTS('{self.name}',{self.degree}," \
                    f"({volmdlr.core.step_ids_to_str(points_ids)})," \
                    f".UNSPECIFIED.,.F.,.F.,{tuple(self.knot_multiplicities)},{tuple(self.knots)},.UNSPECIFIED.);\n"
-        return content, [point_id + 1]
+        return content, point_id + 1
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -3627,6 +3637,13 @@ class Arc2D(Arc):
                                name=self.name)
 
     def copy(self, *args, **kwargs):
+        """
+        Creates and returns a deep copy of the Arc2D object.
+
+        :param *args: Variable-length argument list.
+        :param **kwargs: Arbitrary keyword arguments.
+        :return: A new Arc2D object that is a deep copy of the original.
+        """
         center = self.center.copy() if self.center else None
         return Arc2D(self.start.copy(),
                      self.interior.copy(),
@@ -5808,12 +5825,12 @@ class BSplineCurve3D(BSplineCurve):
                    f".UNSPECIFIED.,.F.,.F.,{tuple(self.knot_multiplicities)},{tuple(self.knots)}," \
                    f".UNSPECIFIED.);\n"
 
-        if surface_id:
+        if surface_id and curve2d:
             content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{curve_id + 2}),.PCURVE_S1.);\n"
             content += f"#{curve_id + 2} = PCURVE('',#{surface_id},#{curve_id + 3});\n"
 
             # 2D parametric curve
-            curve2d_content, (curve2d_id,) = curve2d.to_step(curve_id + 3)  # 5
+            curve2d_content, curve2d_id = curve2d.to_step(curve_id + 3)  # 5
 
             # content += f"#{curve_id + 3} = DEFINITIONAL_REPRESENTATION('',(#{curve2d_id - 1}),#{curve_id + 4});\n"
             # content += f"#{curve_id + 4} = ( GEOMETRIC_REPRESENTATION_CONTEXT(2)" \
@@ -5830,10 +5847,10 @@ class BSplineCurve3D(BSplineCurve):
         content += start_content + end_content
         current_id = end_id + 1
         if surface_id:
-            content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id + 1},.T.);\n"
+            content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
         else:
             content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
-        return content, [current_id]
+        return content, current_id
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -6768,21 +6785,6 @@ class Arc3D(Arc):
                                                                           arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
-        """Exports to STEP format."""
-        if self.angle >= math.pi:
-            length = self.length()
-            arc1, arc2 = self.split(self.point_at_abscissa(0.33 * length))
-            arc2, arc3 = arc2.split(self.point_at_abscissa(0.66 * length))
-            content, arcs1_id = arc1.to_step_without_splitting(current_id)
-            arc2_content, arcs2_id = arc2.to_step_without_splitting(
-                arcs1_id[0] + 1)
-            arc3_content, arcs3_id = arc3.to_step_without_splitting(
-                arcs2_id[0] + 1)
-            content += arc2_content + arc3_content
-            return content, [arcs1_id[0], arcs2_id[0], arcs3_id[0]]
-        return self.to_step_without_splitting(current_id)
-
-    def to_step_without_splitting(self, current_id, surface_id=None):
         u = self.start - self.center
         u.normalize()
         v = self.normal.cross(u)
@@ -6802,7 +6804,7 @@ class Arc3D(Arc):
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
-        return content, [current_id]
+        return content, current_id
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
         """
@@ -6814,8 +6816,6 @@ class Arc3D(Arc):
         """
         if not math.isclose(point.point_distance(self.center), self.radius, abs_tol=abs_tol):
             return False
-        # vector1 = self.start - self.center
-        # vector2 = self.interior - self.center
         vector = point - self.center
         if not math.isclose(vector.dot(self.frame.w), 0.0, abs_tol=abs_tol):
             return False
@@ -6945,7 +6945,7 @@ class FullArc3D(FullArc, Arc3D):
         content += f"#{edge_curve} = EDGE_CURVE('{self.name}',#{p1_id},#{p1_id},#{curve_id},.T.);\n"
         curve_id += 1
 
-        return content, [edge_curve]
+        return content, edge_curve
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
@@ -6977,8 +6977,8 @@ class FullArc3D(FullArc, Arc3D):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         new_start_end = self.start.rotation(center, axis, angle)
-        new_center = self._center.rotation(center, axis, angle)
-        new_normal = self._normal.rotation(center, axis, angle)
+        new_center = self.center.rotation(center, axis, angle)
+        new_normal = self.normal.rotation(center, axis, angle)
         return FullArc3D(new_center, new_start_end,
                          new_normal, name=self.name)
 
