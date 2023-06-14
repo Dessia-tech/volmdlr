@@ -103,6 +103,14 @@ class TestRevolutionSurface3D(unittest.TestCase):
         self.assertAlmostEqual(arc.radius, 0.022500000035448893)
         self.assertAlmostEqual(arc.angle, 0.15581712793343738)
 
+    def test_contour3d_to_2d(self):
+        surface = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/revolutionface_surface_2.json")
+        contour = vmw.Contour3D.load_from_file("surfaces/objects_revolution_tests/revolutionface_contour_2.json")
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 0.00031415327300491437 * math.pi, 2)
+
 
 if __name__ == '__main__':
     unittest.main()
