@@ -4348,12 +4348,16 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(fullarc3d.start)
         end = self.point3d_to_2d(fullarc3d.end)
-
         point_after_start, point_before_end = self._reference_points(fullarc3d)
+        point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
+        discontinuity = fullarc3d.point_belongs(point_theta_discontinuity) and not \
+            fullarc3d.is_point_edge_extremity(point_theta_discontinuity)
 
-        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(start, end,
-                                                                                 point_after_start.x,
-                                                                                 point_before_end.x)
+        undefined_start_theta = fullarc3d.start.is_close(point_theta_discontinuity)
+        undefined_end_theta = fullarc3d.end.is_close(point_theta_discontinuity)
+        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(
+            [start, end], [undefined_start_theta, undefined_end_theta],
+            [point_after_start.x, point_before_end.x], discontinuity)
         theta1, z1 = start
         theta2, _ = end
         theta3, z3 = point_after_start
