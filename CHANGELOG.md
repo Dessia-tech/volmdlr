@@ -29,11 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineFace3D: neutral_fiber
 - surfaces.Plane3D: linesegment_intersections
 - Step export
+- Edge: fix orientation of edges commig from step.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
 - BoundingBox: bbox_intersection
-- face3D: get_face_cutting_contours
+- Face3D: get_face_cutting_contours
+- parametric.py: fix numerical instability in some functions used in Arc3D to parametric surface domain transformation.
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
 
@@ -74,7 +76,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - BSplineFace3D: to_planeface3d
 - BSplineCurve, Arc, LineSegment: is_close
 - Core: get_edge_index_in_list, edge_in_list
-- mesh: TetrahedralElementQuadratic 
+- mesh: TetrahedralElementQuadratic
 - GmshParser: define_quadratic_tetrahedron_element_mesh
 - GmshParser: to_vtk (consider quadratic tetrahedron element)
 - VolumeModel: to_msh (consider both order 1 and 2)
@@ -124,7 +126,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - Face3D: add fixes to divide_face.
 - ExtrusionSurface3D: linesegment2d_to_3d.
 - Surface3D: repair_primitive_periodicity
-- BSplineSurface3D: ban useless attr in serialization 
+- BSplineSurface3D: ban useless attr in serialization
 - utils.parametric: fix contour2d_healing
 - BSplineSurface3D: ban useless attr in serialization
 - BSplineCurve: simplify
@@ -149,12 +151,12 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - Contour2D: ordering_contour
 - WireMixin: order_wire
 - Contour2D: delete cut_by_linesegments
-- split faces.py into surfaces.py, faces.py and shells.py 
+- split faces.py into surfaces.py, faces.py and shells.py
 - ContourMixin: from_points
 - ClosedShell3D: improve performance for boolean operations
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 - Cylinder: inheritance directly from ClosedShell3D
-- Edges: cache middle_points and unit_direction_vector 
+- Edges: cache middle_points and unit_direction_vector
 - Arc: add optional parameter center
 - unittests: find dynamicly the folder for the json
 - Arc: point_distance
@@ -162,6 +164,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - CompositePrimitive3D: babylon_points
 - WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
 - ContourMixin: contours_from_edges
+- Improve step translator.
 - ExtrusionSurface3D: simplify bsplinecurve3d_to_2d method
 
 ### Changed
@@ -250,7 +253,7 @@ v0.10.0 [Released 20/04/2023]
 
 ### Refactorings
 - ContourMixin: to_polygon (for both 2D and 3D)
-- BSplineCurve2D.point_distance 
+- BSplineCurve2D.point_distance
 - new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
 
@@ -339,7 +342,7 @@ v0.10.0 [Released 20/04/2023]
 - Contour2D.__eq__(): verify contour length first, when verify if two contours are the same.
 - Contour2D.is_inside(): verify first if the area of the contour2 is not smaller that contour 1.
 - Disabling pointer in to_dict for most primitives
-- Better hash for shells, contours & wires 
+- Better hash for shells, contours & wires
 
 
 ### Refactorings

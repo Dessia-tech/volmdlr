@@ -191,18 +191,25 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         orientation = arguments[4]
-        if orientation == '.F.':
-            point1, point2 = point2, point1
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
+            if orientation == '.F.':
+                point1, point2 = point2, point1
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D':
                 point1, point2 = point2, point1
-            return obj.trim(point1, point2)
+                trimmed_edge = obj.trim(point1, point2)
+                if orientation == '.T.':
+                    return trimmed_edge.reverse()
+                return trimmed_edge
+            trimmed_edge = obj.trim(point1, point2)
+            if orientation == '.F.':
+                return trimmed_edge.reverse()
+            return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
 
@@ -4132,6 +4139,8 @@ class ArcEllipse2D(Edge):
 
     def point_at_abscissa(self, abscissa):
         """Get a point at given abscissa."""
+        if abscissa < 0:
+            return self.start
         if math.isclose(abscissa, 0.0, abs_tol=1e-6):
             return self.start
         if math.isclose(abscissa, self.length(), abs_tol=1e-6):
@@ -4169,6 +4178,9 @@ class ArcEllipse2D(Edge):
                 if iter_counter == 0:
                     increment_factor = -1e-5
                 else:
+                    # self.save_to_file('/home/axel/Bureau/arcellipse2d')
+                    # print(abscissa)
+                    # ax = self.plot()
                     raise NotImplementedError
             initial_angle += increment_factor
             iter_counter += 1
@@ -6278,7 +6290,11 @@ class Arc3D(Arc):
                 'Start, end and interior points of an arc must be distincts') from ZeroDivisionError
 
         normal = u2.cross(u1)
-        normal.normalize()
+        try:
+            normal.normalize()
+        except ZeroDivisionError:
+            print(self.__dict__)
+            raise ZeroDivisionError
         return normal
 
     @property

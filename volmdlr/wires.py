@@ -1243,6 +1243,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         """
         new_wire = []
         for primitive in self.primitives:
+            print('Wire3D', primitive)
             new_wire.append(primitive.frame_mapping(frame, side))
         return Wire3D(new_wire)
 
@@ -4664,7 +4665,9 @@ class Contour3D(ContourMixin, Wire3D):
                 # Case of a circle, ellipse...
                 return raw_edges[0]
             return cls(raw_edges, name=name)
-
+        contour = cls(raw_edges, name=name)
+        if contour.is_ordered():
+            return contour
         edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         if edges:
             return cls(edges, name=name)
@@ -4759,6 +4762,7 @@ class Contour3D(ContourMixin, Wire3D):
 
         side = 'old' or 'new'.
         """
+        print('Contour3D', self.primitives)
         new_edges = [edge.frame_mapping(frame, side) for edge in
                      self.primitives]
         return Contour3D(new_edges, self.name)

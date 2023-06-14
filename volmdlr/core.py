@@ -827,6 +827,9 @@ class BoundingBox(dc.DessiaObject):
         :return: A new bounding box that contains all the input bounding boxes.
         :rtype: BoundingBox
         """
+        print('=', bounding_boxes)
+        for bb in bounding_boxes:
+            print(bb.__dict__)
         xmin = min(bb.xmin for bb in bounding_boxes)
         xmax = max(bb.xmax for bb in bounding_boxes)
         ymin = min(bb.ymin for bb in bounding_boxes)
@@ -1084,6 +1087,8 @@ class Assembly(dc.PhysicalObject):
 
     def __init__(self, components: List[Primitive3D], positions: List[volmdlr.Frame3D],
                  frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
+        if components is None or not components or None in components:
+            raise NotImplementedError
         self.components = components
         self.frame = frame
         self.positions = positions
@@ -1110,6 +1115,7 @@ class Assembly(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
+        print('==', self.primitives)
         return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
 
     def babylon_data(self, merge_meshes=True):
@@ -1290,6 +1296,82 @@ class Assembly(dc.PhysicalObject):
             ax.set_aspect('auto')
         ax.margins(0.1)
         return ax
+
+
+class Compound(dc.PhysicalObject):
+    """
+    A class that can be a collection of any volmdlr primitives.
+    """
+    def __init__(self, primitives, name: str = ""):
+        self.primitives = primitives
+        self._bbox = None
+        dc.PhysicalObject.__init__(self, name=name)
+
+    @property
+    def bounding_box(self):
+        """
+        Returns the bounding box.
+
+        """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model.
+        """
+        print('compound primitives', self.primitives)
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Compound.
+
+        side = 'old' or 'new'
+        """
+        new_primitives = [primitive.frame_mapping(frame, side)
+                          for primitive in self.primitives]
+        return Compound(new_primitives, self.name)
+
+    def babylon_data(self, merge_meshes=True):
+        """
+        Get babylonjs data.
+
+        :return: Dictionary with babylon data.
+        """
+
+        meshes = []
+        lines = []
+        for primitive in self.primitives:
+            if hasattr(primitive, 'babylon_meshes'):
+                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                if hasattr(primitive, 'babylon_curves'):
+                    lines.append(primitive.babylon_curves())
+            elif hasattr(primitive, 'babylon_data'):
+                data = primitive.babylon_data(merge_meshes=merge_meshes)
+                meshes.extend(mesh for mesh in data["meshes"])
+                lines.extend(line for line in data["lines"])
+
+        bbox = self.bounding_box
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
+
+        babylon_data = {'meshes': meshes,
+                        'lines': lines,
+                        'max_length': max_length,
+                        'center': list(center)}
+
+        return babylon_data
+
+    def volmdlr_primitives(self):
+        return [self]
 
 
 class VolumeModel(dc.PhysicalObject):
@@ -2263,14 +2345,14 @@ class VolumeModel(dc.PhysicalObject):
         list_shells = []
 
         def unpack_assembly(assembly):
-            for primitive in assembly.primitives:
-                if primitive.__class__.__name__ == 'Assembly':
-                    unpack_assembly(primitive)
+            for prim in assembly.primitives:
+                if primitive.__class__.__name__ in ('Assembly', "Compound"):
+                    unpack_assembly(prim)
                 elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-                    list_shells.append(primitive)
+                    list_shells.append(prim)
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'Assembly':
+            if primitive.__class__.__name__ in ('Assembly', "Compound"):
                 unpack_assembly(primitive)
             elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
                 list_shells.append(primitive)
