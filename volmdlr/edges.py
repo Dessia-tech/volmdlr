@@ -185,7 +185,7 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
-        step_id = kwargs.get("step_id")
+        # step_id = kwargs.get("step_id")
         # obj can be an instance of wires or edges.
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
@@ -204,11 +204,11 @@ class Edge(dc.DessiaObject):
                 point1, point2 = point2, point1
                 trimmed_edge = obj.trim(point1, point2)
                 if orientation == '.T.':
-                    return trimmed_edge.reverse()
+                    trimmed_edge = trimmed_edge.reverse()
                 return trimmed_edge
             trimmed_edge = obj.trim(point1, point2)
             if orientation == '.F.':
-                return trimmed_edge.reverse()
+                trimmed_edge = trimmed_edge.reverse()
             return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
