@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
 - fix drone python version
 - BSplineFace3D: neutral_fiber
+- surfaces.Plane3D: linesegment_intersections
+- Step export
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
@@ -35,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - face3D: get_face_cutting_contours
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
+- Improve step translator.
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
@@ -135,6 +138,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - ContourMixin: delete_shared_contour_section
 - PlaneFace3D: merge_faces
 - Contour2D: divide
+- Step: raise NotimplementedError when it's not possible to instatiate assembly object.
 
 
 ### Refactor
@@ -167,6 +171,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
 - Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
+- Change python suport version from >=3.7 to >= 3.9.
 
 ### Unittests
 - Arc2D: test_arc_intersections
