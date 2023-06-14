@@ -324,9 +324,9 @@ def composite_curve(arguments, object_dict):
     Returns the data in case of a COMPOSITE_CURVE.
     """
     name = arguments[0]
-    list_primitives = arguments[1]
-    first_primitive = object_dict[int(list_primitives[0][1:])]
-    last_primitive = object_dict[int(list_primitives[-1][1:])]
+    list_primitives = [object_dict[int(lp[1:])] for lp in arguments[1]]
+    first_primitive = list_primitives[0]
+    last_primitive = list_primitives[-1]
     if first_primitive.start.is_close(last_primitive.end):
         return volmdlr.wires.Contour3D(list_primitives, name)
     return volmdlr.wires.Wire3D(list_primitives, name)
@@ -411,23 +411,23 @@ def item_defined_transformation(arguments, object_dict):
     return [volmdlr_object1, volmdlr_object2]
 
 
-def geometrically_bounded_surface_shape_representation(arguments, object_dict):
-    """
-    Returns xx.
-
-    :param arguments: DESCRIPTION
-    :type arguments: TYPE
-    :param object_dict: DESCRIPTION
-    :type object_dict: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
-
-    """
-    sub_objects = []
-    for argument in arguments[1]:
-        sub_obj = object_dict[int(argument[1:])]
-        sub_objects.append(sub_obj)
-    return sub_objects
+# def geometrically_bounded_surface_shape_representation(arguments, object_dict):
+#     """
+#     Returns xx.
+#
+#     :param arguments: DESCRIPTION
+#     :type arguments: TYPE
+#     :param object_dict: DESCRIPTION
+#     :type object_dict: TYPE
+#     :return: DESCRIPTION
+#     :rtype: TYPE
+#
+#     """
+#     sub_objects = []
+#     for argument in arguments[1]:
+#         sub_obj = object_dict[int(argument[1:])]
+#         sub_objects.append(sub_obj)
+#     return sub_objects
 
 
 def manifold_surface_shape_representation(arguments, object_dict):
@@ -497,6 +497,7 @@ def shape_representation(arguments, object_dict):
         return shells
     shells = []
     frames = []
+    print('shape_representation', arguments)
     for arg in arguments[1]:
         if int(arg[1:]) in object_dict and \
                 isinstance(object_dict[int(arg[1:])], list) and \
@@ -563,6 +564,8 @@ def geometrically_bounded_surface_shape_representation(arguments, object_dict):
     primitives = []
     for arg in arguments[1]:
         primitives.extend(object_dict[int(arg[1:])])
+    primitives = [primi for primi in primitives
+                  if not isinstance(primi, volmdlr.Point3D)]
     if len(primitives) > 1:
         return volmdlr.core.Compound(primitives, name=arguments[0])
     return primitives
@@ -1043,7 +1046,9 @@ class Step(dc.DessiaObject):
         """
         Gives the volmdlr object related to the step function.
         """
+        print('avant', arguments)
         self.parse_arguments(arguments)
+        print('apres', arguments)
 
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
@@ -1347,7 +1352,16 @@ class Step(dc.DessiaObject):
                     ids_frames = self.functions[id_shape_representation].arg[1]
                     self.parse_arguments(ids_frames)
                     frames = [object_dict[id_frame] for id_frame in ids_frames]
-                    volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
+                    print('list primitives', list_primitives)
+                    list_primitives = [primi for primi in list_primitives
+                                       if primi is not None]
+                    if list_primitives:
+                        volmdlr_object = volmdlr.core.Assembly(list_primitives,
+                                                               frames[1:],
+                                                               frames[0],
+                                                               name=name)
+                    else:
+                        volmdlr_object = None
                     object_dict[instanciate_id] = volmdlr_object
 
                 error = False
@@ -1568,7 +1582,6 @@ STEP_TO_VOLMDLR = {
 
     'EDGE_CURVE': volmdlr.edges.Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
     'ORIENTED_EDGE': None,  # TOPOLOGICAL EDGE
-    "GEOMETRIC_SET": None,
     # The one above can influence the direction with their last argument
     # TODO : maybe take them into consideration
 
@@ -1609,7 +1622,6 @@ STEP_TO_VOLMDLR = {
     'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
     "FACETED_BREP_SHAPE_REPRESENTATION": None,
     "GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION": None,
-    "GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION": None,
     "EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION": None,
     'ITEM_DEFINED_TRANSFORMATION': None,
     'SHAPE_REPRESENTATION_RELATIONSHIP': None,

@@ -1221,6 +1221,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         """
         new_wire = []
         for primitive in self.primitives:
+            print('Wire3D', primitive)
             new_wire.append(primitive.frame_mapping(frame, side))
         return Wire3D(new_wire)
 
@@ -4746,6 +4747,7 @@ class Contour3D(ContourMixin, Wire3D):
 
         side = 'old' or 'new'.
         """
+        print('Contour3D', self.primitives)
         new_edges = [edge.frame_mapping(frame, side) for edge in
                      self.primitives]
         return Contour3D(new_edges, self.name)

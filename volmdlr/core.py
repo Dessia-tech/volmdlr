@@ -827,6 +827,9 @@ class BoundingBox(dc.DessiaObject):
         :return: A new bounding box that contains all the input bounding boxes.
         :rtype: BoundingBox
         """
+        print('=', bounding_boxes)
+        for bb in bounding_boxes:
+            print(bb.__dict__)
         xmin = min(bb.xmin for bb in bounding_boxes)
         xmax = max(bb.xmax for bb in bounding_boxes)
         ymin = min(bb.ymin for bb in bounding_boxes)
@@ -1084,6 +1087,8 @@ class Assembly(dc.PhysicalObject):
 
     def __init__(self, components: List[Primitive3D], positions: List[volmdlr.Frame3D],
                  frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
+        if components is None or not components or None in components:
+            raise NotImplementedError
         self.components = components
         self.frame = frame
         self.positions = positions
@@ -1110,6 +1115,7 @@ class Assembly(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
+        print('==', self.primitives)
         return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
 
     def babylon_data(self, merge_meshes=True):
@@ -1319,6 +1325,7 @@ class Compound(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
+        print('compound primitives', self.primitives)
         return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):

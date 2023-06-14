@@ -4111,6 +4111,8 @@ class ArcEllipse2D(Edge):
 
     def point_at_abscissa(self, abscissa):
         """Get a point at given abscissa."""
+        if abscissa < 0:
+            return self.start
         if math.isclose(abscissa, 0.0, abs_tol=1e-6):
             return self.start
         if math.isclose(abscissa, self.length(), abs_tol=1e-6):
@@ -4148,6 +4150,9 @@ class ArcEllipse2D(Edge):
                 if iter_counter == 0:
                     increment_factor = -1e-5
                 else:
+                    # self.save_to_file('/home/axel/Bureau/arcellipse2d')
+                    # print(abscissa)
+                    # ax = self.plot()
                     raise NotImplementedError
             initial_angle += increment_factor
             iter_counter += 1
@@ -6250,7 +6255,11 @@ class Arc3D(Arc):
                 'Start, end and interior points of an arc must be distincts') from ZeroDivisionError
 
         normal = u2.cross(u1)
-        normal.normalize()
+        try:
+            normal.normalize()
+        except ZeroDivisionError:
+            print(self.__dict__)
+            raise ZeroDivisionError
         return normal
 
     @property
