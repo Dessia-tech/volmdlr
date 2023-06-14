@@ -853,11 +853,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         shells_list = []
         for _,graph_i in enumerate(components,start=1):
-            faces = []
+            faces_list = []
             for n_index in graph_i.nodes:
-                faces.append(faces[n_index])
+                faces_list.append(faces[n_index])
 
-            shells_list.append(cls(faces))
+            shells_list.append(cls(faces_list))
 
         return shells_list
 
