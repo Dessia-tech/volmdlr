@@ -1668,8 +1668,8 @@ class PeriodicalSurface(Surface3D):
 
         theta1, z1 = point1
         theta2, _ = point2
-        old_outer_contour_positioned = outer_contour
-        new_outer_contour = old_outer_contour_positioned
+
+        new_outer_contour = outer_contour
         for inner_contour in inner_contours:
             theta3, z3 = inner_contour.primitives[0].start
             theta4, _ = inner_contour.primitives[-1].end
@@ -1683,13 +1683,12 @@ class PeriodicalSurface(Surface3D):
                 else:
                     old_innner_contour_positioned = self._align_contours(inner_contour, [[theta1, theta2],
                                                                                          [theta3, theta4]], z1, z3)
-                point1, point2, point3, point4 = self._get_closing_points(old_outer_contour_positioned,
+                point1, point2, point3, point4 = self._get_closing_points(outer_contour,
                                                                           old_innner_contour_positioned)
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
-                new_outer_contour_primitives = old_outer_contour_positioned.primitives + [closing_linesegment1] + \
-                                               old_innner_contour_positioned.primitives + \
-                                               [closing_linesegment2]
+                new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
+                                               old_innner_contour_positioned.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:
