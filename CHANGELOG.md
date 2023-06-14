@@ -137,6 +137,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - ContourMixin: delete_shared_contour_section
 - PlaneFace3D: merge_faces
 - Contour2D: divide
+- Step: raise NotimplementedError when it's not possible to instatiate assembly object.
 
 
 ### Refactor
