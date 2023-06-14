@@ -1214,6 +1214,7 @@ class Step(dc.DessiaObject):
         list_instatiated_assemblies = []
         instanciate_ids = list(assembly_data.keys())
         error = True
+        last_error = None
         while error:
             try:
                 # here we invert instantiate_ids because if the code enter inside the except
@@ -1238,12 +1239,15 @@ class Step(dc.DessiaObject):
             except KeyError as key:
                 # Sometimes the bfs search don't instanciate the nodes of a
                 # depth in the right order, leading to error
+                if last_error == key.args[0]:
+                    raise NotImplementedError('Error instantiating assembly') from key
                 print(key.args[0])
                 if key.args[0] in assembly_data:
                     instanciate_ids.append(key.args[0])
                     instanciate_ids.extend(assembly_data[key.args[0]])
                 else:
                     instanciate_ids.append(key.args[0])
+                last_error = key.args[0]
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
