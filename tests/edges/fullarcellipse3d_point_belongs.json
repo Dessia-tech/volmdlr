@@ -1,0 +1,77 @@
+{
+  "object_class": "volmdlr.edges.FullArcEllipse3D",
+  "package_version": "0.9.2.dev1050+g45192f1d",
+  "name": "",
+  "normal": {
+    "object_class": "volmdlr.Vector3D",
+    "x": -0.00152790113491038,
+    "y": -0.9993882633772487,
+    "z": -0.0349394410649187
+  },
+  "minor_dir": {
+    "object_class": "volmdlr.Vector3D",
+    "x": -0.5141198069940289,
+    "y": 0.030753268830964377,
+    "z": -0.8571668802004851
+  },
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.46362762553200004,
+      "y": -0.509606021605,
+      "z": 0.509000000114
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.8577170218519301,
+      "y": -0.016653392447698645,
+      "z": 0.5138522890339582
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.5141198069940289,
+      "y": 0.030753268830964377,
+      "z": -0.8571668802004851
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.00152790113491038,
+      "y": -0.9993882633772487,
+      "z": -0.0349394410649187
+    }
+  },
+  "theta": 0,
+  "start_end": {
+    "$ref": "#/_references/401964b7-e5a9-11ed-9e98-68545aefcc97"
+  },
+  "major_axis": 0.0100500150616,
+  "minor_axis": 0.009916145846950001,
+  "center": {
+    "object_class": "volmdlr.Point3D",
+    "x": -0.46362762553200004,
+    "y": -0.509606021605,
+    "z": 0.509000000114
+  },
+  "major_dir": {
+    "object_class": "volmdlr.Vector3D",
+    "x": -0.8577170218519301,
+    "y": -0.016653392447698645,
+    "z": 0.5138522890339582
+  },
+  "start": {
+    "$ref": "#/_references/401964b7-e5a9-11ed-9e98-68545aefcc97"
+  },
+  "end": {
+    "$ref": "#/_references/401964b7-e5a9-11ed-9e98-68545aefcc97"
+  },
+  "_references": {
+    "401964b7-e5a9-11ed-9e98-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.47224769452020265,
+      "y": -0.5097733884499261,
+      "z": 0.514164223358229
+    }
+  }
+}

@@ -9,6 +9,7 @@
 
 import volmdlr as vm
 import volmdlr.faces as vmf
+from volmdlr import surfaces
 
 # %% Bspline-surface points
 
@@ -67,7 +68,7 @@ points3d = [vm.Point3D(24.68212350000003, 0.9944705872233237, 1.6626218065549074
 
 size_u, size_v, degree_u, degree_v = 10, 5, 3, 3
 
-bspline_surface = vmf.BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v)
+bspline_surface = surfaces.BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v)
 
 # %% Display 
 
