@@ -1517,7 +1517,7 @@ class ClosedShell3D(OpenShell3D):
                                            list_coincident_faces
                                            )
         faces += new_valid_faces
-        return [OpenShell3D(faces)]
+        return OpenShell3D.from_faces(faces)
 
     def subtract_to_closed_shell(self, shell2: OpenShell3D, tol: float = 1e-8):
         """
