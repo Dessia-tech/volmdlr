@@ -3,7 +3,7 @@
 """
 Edges related classes.
 """
-
+import copy
 import math
 import sys
 import warnings
@@ -77,8 +77,8 @@ class Edge(dc.DessiaObject):
         self.start = start
         self.end = end
         self._length = None
-        self._direction_vector = None
-        self._unit_direction_vector = None
+        self._direction_vector_memo = None
+        self._unit_direction_vector_memo = None
         self._reverse = None
         self._middle_point = None
         # Disabling super init call for performance
@@ -185,25 +185,33 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
+        step_id = kwargs.get("step_id")
         # obj can be an instance of wires or edges.
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         orientation = arguments[4]
-        if orientation == '.F.':
-            point1, point2 = point2, point1
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
+            if orientation == '.F.':
+                point1, point2 = point2, point1
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D':
                 point1, point2 = point2, point1
-            return obj.trim(point1, point2)
+                trimmed_edge = obj.trim(point1, point2)
+                if orientation == '.T.':
+                    return trimmed_edge.reverse()
+                return trimmed_edge
+            trimmed_edge = obj.trim(point1, point2)
+            if orientation == '.F.':
+                return trimmed_edge.reverse()
+            return trimmed_edge
 
-        raise NotImplementedError(f'Unsupported: {object_dict[arguments[3]]}')
+        raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
 
     def normal_vector(self, abscissa):
         """
@@ -242,11 +250,13 @@ class Edge(dc.DessiaObject):
         :param abscissa: edge abscissa
         :return: unit direction vector
         """
-        if not self._unit_direction_vector:
+        if not self._unit_direction_vector_memo:
+            self._unit_direction_vector_memo = {}
+        if abscissa not in self._unit_direction_vector_memo:
             vector = self.direction_vector(abscissa).copy(deep=True)
             vector.normalize()
-            self._unit_direction_vector = vector
-        return self._unit_direction_vector
+            self._unit_direction_vector_memo[abscissa] = vector
+        return self._unit_direction_vector_memo[abscissa]
 
     def straight_line_point_belongs(self, point):
         """
@@ -591,7 +601,7 @@ class Line(dc.DessiaObject):
         current_id = u_id + 1
         content = p1_content + u_content
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
-        return content, [current_id]
+        return content, current_id
 
 
 class LineSegment(Edge):
@@ -633,9 +643,11 @@ class LineSegment(Edge):
             direction vector is to be calculated.
         :return: The direction vector of the LineSegment.
         """
-        if not self._direction_vector:
-            self._direction_vector = self.end - self.start
-        return self._direction_vector
+        if not self._direction_vector_memo:
+            self._direction_vector_memo = {}
+        if abscissa not in self._direction_vector_memo:
+            self._direction_vector_memo[abscissa] = self.end - self.start
+        return self._direction_vector_memo[abscissa]
 
     def normal_vector(self, abscissa=0.):
         """
@@ -816,7 +828,7 @@ class LineSegment(Edge):
     def to_step(self, current_id, *args, **kwargs):
         """Exports to STEP format."""
         line = self.to_line()
-        content, (line_id,) = line.to_step(current_id)
+        content, line_id = line.to_step(current_id)
         current_id = line_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         current_id = start_id + 1
@@ -824,7 +836,7 @@ class LineSegment(Edge):
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
-        return content, [current_id]
+        return content, current_id
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
@@ -1063,7 +1075,7 @@ class BSplineCurve(Edge):
         if point.is_close(self.end):
             return self.length()
         length = self.length()
-        initial_condition_list = [0, 0.25, 0.5, 0.75, 1]
+        initial_condition_list = [0, 0.15, 0.25, 0.35, 0.5, 0.65, 0.75, 0.9, 1]
 
         def evaluate_point_distance(u):
             return (point - self.evaluate_single(u)).norm()
@@ -1835,6 +1847,15 @@ class Line2D(Line):
         return []
 
     def linesegment_intersections(self, linesegment):
+        """
+        Calculate the intersection between a line and a line segment.
+
+        :param linesegment: The line segment to calculate intersections with.
+        :type linesegment: :class:`volmdlr.LineSegment2D`
+        :return: A list of at most one intersection point between
+            a line and a line segment.
+        :rtype: List[:class:`volmdlr.Point2D`]
+        """
         return linesegment.line_intersections(self)
 
     @staticmethod
@@ -2162,7 +2183,7 @@ class BSplineCurve2D(BSplineCurve):
         content += f"#{point_id} = B_SPLINE_CURVE_WITH_KNOTS('{self.name}',{self.degree}," \
                    f"({volmdlr.core.step_ids_to_str(points_ids)})," \
                    f".UNSPECIFIED.,.F.,.F.,{tuple(self.knot_multiplicities)},{tuple(self.knots)},.UNSPECIFIED.);\n"
-        return content, [point_id + 1]
+        return content, point_id + 1
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -3623,6 +3644,13 @@ class Arc2D(Arc):
                                name=self.name)
 
     def copy(self, *args, **kwargs):
+        """
+        Creates and returns a deep copy of the Arc2D object.
+
+        :param *args: Variable-length argument list.
+        :param **kwargs: Arbitrary keyword arguments.
+        :return: A new Arc2D object that is a deep copy of the original.
+        """
         center = self.center.copy() if self.center else None
         return Arc2D(self.start.copy(),
                      self.interior.copy(),
@@ -4845,9 +4873,9 @@ class Line3D(Line):
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
-        v1 = self.point1 - 3 * u
+        v1 = self.point1 - u*3
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = self.point2 - 3 * u
+        v2 = self.point2 - u*3
         x2, y2, z2 = v2.x, v2.y, v2.z
         if dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
@@ -5706,10 +5734,10 @@ class BSplineCurve3D(BSplineCurve):
 
     def normal(self, position: float = 0.0):
         _, normal = operations.normal(self.curve, position, normalize=True)
-        normal = volmdlr.Point3D(normal[0], normal[1], normal[2])
+        normal = volmdlr.Vector3D(normal[0], normal[1], normal[2])
         return normal
 
-    def direction_vector(self, abscissa=0.):
+    def get_direction_vector(self, abscissa=0.0):
         length = self.length()
         if abscissa >= length:
             abscissa2 = length
@@ -5721,6 +5749,13 @@ class BSplineCurve3D(BSplineCurve):
         tangent = self.point_at_abscissa(abscissa2) - self.point_at_abscissa(
             abscissa)
         return tangent
+
+    def direction_vector(self, abscissa=0.):
+        if not self._direction_vector_memo:
+            self._direction_vector_memo = {}
+        if abscissa not in self._direction_vector_memo:
+            self._direction_vector_memo[abscissa] = self.get_direction_vector(abscissa)
+        return self._direction_vector_memo[abscissa]
 
     def point3d_to_parameter(self, point: volmdlr.Point3D):
         """
@@ -5802,12 +5837,12 @@ class BSplineCurve3D(BSplineCurve):
                    f".UNSPECIFIED.,.F.,.F.,{tuple(self.knot_multiplicities)},{tuple(self.knots)}," \
                    f".UNSPECIFIED.);\n"
 
-        if surface_id:
+        if surface_id and curve2d:
             content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{curve_id + 2}),.PCURVE_S1.);\n"
             content += f"#{curve_id + 2} = PCURVE('',#{surface_id},#{curve_id + 3});\n"
 
             # 2D parametric curve
-            curve2d_content, (curve2d_id,) = curve2d.to_step(curve_id + 3)  # 5
+            curve2d_content, curve2d_id = curve2d.to_step(curve_id + 3)  # 5
 
             # content += f"#{curve_id + 3} = DEFINITIONAL_REPRESENTATION('',(#{curve2d_id - 1}),#{curve_id + 4});\n"
             # content += f"#{curve_id + 4} = ( GEOMETRIC_REPRESENTATION_CONTEXT(2)" \
@@ -5824,10 +5859,10 @@ class BSplineCurve3D(BSplineCurve):
         content += start_content + end_content
         current_id = end_id + 1
         if surface_id:
-            content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id + 1},.T.);\n"
+            content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
         else:
             content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
-        return content, [current_id]
+        return content, current_id
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -5990,7 +6025,7 @@ class BSplineCurve3D(BSplineCurve):
         Returns a new BSplineCurve3D.
 
         """
-        curve_copy = self.curve.__deepcopy__({})
+        curve_copy = copy.deepcopy(self.curve)
         modified_curve = operations.insert_knot(curve_copy, [knot], num=[num])
         return self.from_geomdl_curve(modified_curve)
 
@@ -6766,21 +6801,6 @@ class Arc3D(Arc):
                                                                           arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
-        """Exports to STEP format."""
-        if self.angle >= math.pi:
-            length = self.length()
-            arc1, arc2 = self.split(self.point_at_abscissa(0.33 * length))
-            arc2, arc3 = arc2.split(self.point_at_abscissa(0.66 * length))
-            content, arcs1_id = arc1.to_step_without_splitting(current_id)
-            arc2_content, arcs2_id = arc2.to_step_without_splitting(
-                arcs1_id[0] + 1)
-            arc3_content, arcs3_id = arc3.to_step_without_splitting(
-                arcs2_id[0] + 1)
-            content += arc2_content + arc3_content
-            return content, [arcs1_id[0], arcs2_id[0], arcs3_id[0]]
-        return self.to_step_without_splitting(current_id)
-
-    def to_step_without_splitting(self, current_id, surface_id=None):
         u = self.start - self.center
         u.normalize()
         v = self.normal.cross(u)
@@ -6800,7 +6820,7 @@ class Arc3D(Arc):
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
-        return content, [current_id]
+        return content, current_id
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
         """
@@ -6812,8 +6832,6 @@ class Arc3D(Arc):
         """
         if not math.isclose(point.point_distance(self.center), self.radius, abs_tol=abs_tol):
             return False
-        # vector1 = self.start - self.center
-        # vector2 = self.interior - self.center
         vector = point - self.center
         if not math.isclose(vector.dot(self.frame.w), 0.0, abs_tol=abs_tol):
             return False
@@ -6838,6 +6856,10 @@ class Arc3D(Arc):
         :param line3d: line to verify intersections.
         :return: list with intersections points between line and Arc3D.
         """
+        if line3d.point_belongs(self.start):
+            return [self.start]
+        if line3d.point_belongs(self.end):
+            return [self.end]
         circle3d_lineseg_inters = vm_utils_intersections.circle_3d_line_intersections(self, line3d)
         linesegment_intersections = []
         for intersection in circle3d_lineseg_inters:
@@ -6939,7 +6961,7 @@ class FullArc3D(FullArc, Arc3D):
         content += f"#{edge_curve} = EDGE_CURVE('{self.name}',#{p1_id},#{p1_id},#{curve_id},.T.);\n"
         curve_id += 1
 
-        return content, [edge_curve]
+        return content, edge_curve
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
@@ -6971,8 +6993,8 @@ class FullArc3D(FullArc, Arc3D):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         new_start_end = self.start.rotation(center, axis, angle)
-        new_center = self._center.rotation(center, axis, angle)
-        new_normal = self._normal.rotation(center, axis, angle)
+        new_center = self.center.rotation(center, axis, angle)
+        new_normal = self.normal.rotation(center, axis, angle)
         return FullArc3D(new_center, new_start_end,
                          new_normal, name=self.name)
 

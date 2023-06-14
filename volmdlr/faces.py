@@ -216,46 +216,6 @@ class Face3D(volmdlr.core.Primitive3D):
         return face
 
     def to_step(self, current_id):
-        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
-        subsurfaces2d = [self.surface2d]
-        line_x = None
-        if self.surface3d.x_periodicity and (xmax - xmin) >= 0.45 * self.surface3d.x_periodicity:
-            line_x = vme.Line2D(volmdlr.Point2D(0.5 * (xmin + xmax), 0),
-                                volmdlr.Point2D(
-                                    0.5 * (xmin + xmax), 1))
-        line_y = None
-        if self.surface3d.y_periodicity and (
-                ymax - ymin) >= 0.45 * self.surface3d.y_periodicity:
-            line_y = vme.Line2D(
-                volmdlr.Point2D(0., 0.5 * (ymin + ymax)),
-                volmdlr.Point2D(1, 0.5 * (ymin + ymax)))
-
-        if line_x:
-            subsurfaces2 = []
-            for subsurface2d in subsurfaces2d:
-                subsurfaces2.extend(subsurface2d.cut_by_line(line_x))
-            subsurfaces2d = subsurfaces2
-
-        if line_y:
-            subsurfaces2 = []
-            for subsurface2d in subsurfaces2d:
-                subsurfaces2.extend(subsurface2d.cut_by_line(line_y))
-            subsurfaces2d = subsurfaces2
-
-        if len(subsurfaces2d) > 1:
-            content = ''
-            face_ids = []
-            for subsurface2d in subsurfaces2d:
-                face = self.__class__(self.surface3d, subsurface2d)
-                face_content, face_id = face.to_step_without_splitting(
-                    current_id)
-                face_ids.append(face_id[0])
-                content += face_content
-                current_id = face_id[0] + 1
-            return content, face_ids
-        return self.to_step_without_splitting(current_id)
-
-    def to_step_without_splitting(self, current_id):
         content, surface3d_ids = self.surface3d.to_step(current_id)
         current_id = max(surface3d_ids) + 1
 
@@ -558,11 +518,11 @@ class Face3D(volmdlr.core.Primitive3D):
 
         lines = self.geo_lines()
 
-        with open(file_name + '.geo', 'w', encoding="utf-8") as f:
+        with open(file_name + '.geo', 'w', encoding="utf-8") as file:
             for line in lines:
-                f.write(line)
-                f.write('\n')
-        f.close()
+                file.write(line)
+                file.write('\n')
+        file.close()
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
         """
@@ -1530,7 +1490,7 @@ class Triangle3D(PlaneFace3D):
         self._inner_contours3d = None
         # self.bounding_box = self._bounding_box()
 
-        # DessiaObject.__init__(self, name=name)
+        PlaneFace3D.__init__(self, self.surface3d, self.surface2d)
 
     def _data_hash(self):
         """
@@ -1572,6 +1532,10 @@ class Triangle3D(PlaneFace3D):
             self._surface3d = surfaces.Plane3D.from_3_points(self.point1, self.point2, self.point3)
         return self._surface3d
 
+    @surface3d.setter
+    def surface3d(self, new_surface3d):
+        self._surface3d = new_surface3d
+
     @property
     def surface2d(self):
         if self._surface2d is None:
@@ -1585,6 +1549,10 @@ class Triangle3D(PlaneFace3D):
             self._surface2d = surfaces.Surface2D(outer_contour=contour2d, inner_contours=[])
 
         return self._surface2d
+
+    @surface2d.setter
+    def surface2d(self, new_surface2d):
+        self._surface2d = new_surface2d
 
     def to_dict(self, *args, **kwargs):
         dict_ = {'object_class': 'volmdlr.faces.Triangle3D',
@@ -1988,7 +1956,7 @@ class CylindricalFace3D(Face3D):
 
     @classmethod
     def from_surface_rectangular_cut(cls, cylindrical_surface, theta1: float, theta2: float,
-                                     z1: float, z2: float, name: str = ''):
+                                     param_z1: float, param_z2: float, name: str = ''):
         """
         Cut a rectangular piece of the CylindricalSurface3D object and return a CylindricalFace3D object.
 
@@ -1997,10 +1965,10 @@ class CylindricalFace3D(Face3D):
         if theta1 == theta2:
             theta2 += volmdlr.TWO_PI
 
-        point1 = volmdlr.Point2D(theta1, z1)
-        point2 = volmdlr.Point2D(theta2, z1)
-        point3 = volmdlr.Point2D(theta2, z2)
-        point4 = volmdlr.Point2D(theta1, z2)
+        point1 = volmdlr.Point2D(theta1, param_z1)
+        point2 = volmdlr.Point2D(theta2, param_z1)
+        point3 = volmdlr.Point2D(theta2, param_z2)
+        point4 = volmdlr.Point2D(theta1, param_z2)
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(cylindrical_surface, surface2d, name)
@@ -2369,7 +2337,7 @@ class SphericalFace3D(Face3D):
 
     @classmethod
     def from_surface_rectangular_cut(cls, spherical_surface, theta1: float = 0.0, theta2: float = volmdlr.TWO_PI,
-                                     phi1: float = 0.0, phi2: float = volmdlr.TWO_PI, name=''):
+                                     phi1: float = - 0.5 * math.pi, phi2: float = 0.5 * math.pi, name=''):
         """
         Cut a rectangular piece of the SphericalSurface3D object and return a SphericalFace3D object.
 
@@ -3037,6 +3005,15 @@ class BSplineFace3D(Face3D):
         :param edge: curve to be approximated by an arc.
         :return: An arc if possible, otherwise None.
         """
+        if edge.start.is_close(edge.end):
+            start = edge.point_at_abscissa(0.25 * edge.length())
+            interior = edge.point_at_abscissa(0.5 * edge.length())
+            end = edge.point_at_abscissa(0.75 * edge.length())
+            vector1 = interior - start
+            vector2 = interior - end
+            if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
+                return None
+            return vme.Arc3D(start, interior, end)
         interior = edge.point_at_abscissa(0.5 * edge.length())
         vector1 = interior - edge.start
         vector2 = interior - edge.end
@@ -3056,7 +3033,7 @@ class BSplineFace3D(Face3D):
         radius = []
         centers = []
         for curve in curve_list:
-            if curve.simplify.__class__.__name__ == "Arc3D":
+            if curve.simplify.__class__.__name__ in ("Arc3D", "FullArc3D"):
                 arc = curve.simplify
             else:
                 arc = self.approximate_with_arc(curve)
@@ -3101,7 +3078,10 @@ class BSplineFace3D(Face3D):
         Returns the faces' neutral fiber.
         """
         neutral_fiber_points = self.neutral_fiber_points()
-        neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
+        if len(neutral_fiber_points) == 2:
+            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[1])
+        else:
+            neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
                                                                      min(self.surface3d.degree_u,
                                                                          self.surface3d.degree_v))
         return volmdlr.wires.Wire3D([neutral_fiber])
