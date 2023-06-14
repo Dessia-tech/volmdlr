@@ -10,6 +10,7 @@ bsplinecurve
 bsplinesurface
 Bspline
 bsplines
+BSpline's
 cosinus
 ctrlpts
 dataset
@@ -43,12 +44,13 @@ matplolib
 maxiter
 .msh
 msh
-plt
 nbv
 networkx.DiGraph
 ndarray
 numpy
 numpy
+octree
+plt
 Rapshon
 rtype
 STEP
