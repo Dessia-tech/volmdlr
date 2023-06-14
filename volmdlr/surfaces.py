@@ -5085,9 +5085,6 @@ class BSplineSurface3D(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        self.save_to_file("bspline_surface_with_arcellipse.json")
-        arcellipse3d.save_to_file("arcellipse_bspline_surface.json")
-        print("Got test to BSplineSurface3D.arcellipse3d_to_2d")
         # todo: Is this right? Needs detailed investigation
         number_points = max(self.nb_u, self.nb_v)
         degree = max(self.degree_u, self.degree_v)
