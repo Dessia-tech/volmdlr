@@ -842,6 +842,25 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 [[face.outer_contour3d], face.inner_contours3d], min_points, size))
         return lines
 
+    @classmethod
+    def from_faces(cls, faces):
+        """
+        Defines a List of separated OpenShell3D from a list of faces, based on the faces graph.
+        """
+
+        graph = cls(faces).faces_graph()
+        components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
+
+        shells_list = []
+        for _,graph_i in enumerate(components,start=1):
+            faces = []
+            for n_index in graph_i.nodes:
+                faces.append(faces[n_index])
+
+            shells_list.append(cls(faces))
+
+        return shells_list
+
 
 class ClosedShell3D(OpenShell3D):
     """
