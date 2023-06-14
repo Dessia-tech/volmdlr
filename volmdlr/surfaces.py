@@ -1551,6 +1551,9 @@ class PeriodicalSurface(Surface3D):
     """
 
     def point2d_to_3d(self, point2d):
+        """
+        Abstract method.
+        """
         raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
 
     def point3d_to_2d(self, point3d):
@@ -3950,6 +3953,12 @@ class RuledSurface3D(Surface3D):
         Surface3D.__init__(self, name=name)
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        """
+        Coverts a parametric coordinate on the surface into a 3D spatial point (x, y, z).
+
+        :param point2d: Point at the ToroidalSuface3D
+        :type point2d: `volmdlr.`Point2D`
+        """
         x, y = point2d
         point1 = self.wire1.point_at_abscissa(x * self.length1)
         point2 = self.wire2.point_at_abscissa(x * self.length2)
@@ -3958,6 +3967,12 @@ class RuledSurface3D(Surface3D):
         return point
 
     def point3d_to_2d(self, point3d):
+        """
+        Returns the parametric coordinates volmdlr.Point2D(u, v) of a cartesian coordinates point (x, y, z).
+
+        :param point3d: Point at the CylindricalSuface3D
+        :type point3d: `volmdlr.`Point3D`
+        """
         raise NotImplementedError
 
     def rectangular_cut(self, x1: float, x2: float,
