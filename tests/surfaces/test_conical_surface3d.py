@@ -62,10 +62,10 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertEqual(area_cone, 0.2 * math.pi)
         self.assertEqual(area_demi_cone, 0.1 * math.pi)
         self.assertEqual(fullarc2d.start, Point2D(0, 0.1))
-        self.assertEqual(fullarc2d.end, Point2D(-2 * math.pi, 0.1))
+        self.assertEqual(fullarc2d.end, Point2D(2 * math.pi, 0.1))
         self.assertEqual(fullarc2d.length(), 2 * math.pi)
-        self.assertEqual(linesegment2d_cone.start, Point2D(-2 * math.pi, 0.1))
-        self.assertEqual(linesegment2d_cone.end, Point2D(-2 * math.pi, 0.0))
+        self.assertEqual(linesegment2d_cone.start, Point2D(2 * math.pi, 0.1))
+        self.assertEqual(linesegment2d_cone.end, Point2D(2 * math.pi, 0.0))
 
     def bsplinecurve3d_to_2d(self):
         conical_surface3 = conical_surfaces.conical_surface3
