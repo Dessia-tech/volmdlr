@@ -828,15 +828,18 @@ class Surface3D(DessiaObject):
         :return: A list of primitives.
         :rtype: list
         """
-        x_periodicity = self.x_periodicity if self.x_periodicity is not None else 0
-        y_periodicity = self.y_periodicity if self.y_periodicity is not None else 0
+        x_periodicity = self.x_periodicity
+        y_periodicity = self.y_periodicity
 
         if x_periodicity or y_periodicity:
             pos = vm_parametric.find_index_defined_brep_primitive_on_periodical_surface(primitives2d,
                                                                                         [x_periodicity, y_periodicity])
             if pos != 0:
                 primitives2d = primitives2d[pos:] + primitives2d[:pos]
-
+        if x_periodicity is None:
+            x_periodicity = -1
+        if y_periodicity is None:
+            y_periodicity = -1
         for i in range(1, len(primitives2d)):
             previous_primitive = primitives2d[i - 1]
             current_primitive = primitives2d[i]
