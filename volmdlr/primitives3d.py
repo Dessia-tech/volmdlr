@@ -1882,6 +1882,15 @@ class Sphere(RevolvedProfile):
     def volume(self):
         return 4 / 3 * math.pi * self.radius**3
 
+    def point_belongs(self, point3d: volmdlr.Point3D, **kwargs) -> bool:
+        """
+        Returns if the point belongs to the sphere.
+
+        :param point3d: volmdlr Point3D
+        :return: True if the given point is inside the sphere, False otherwise
+        """
+        return self.center.point_distance(point3d) <= self.radius
+
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Sphere.
