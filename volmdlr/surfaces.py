@@ -4486,7 +4486,13 @@ class RevolutionSurface3D(PeriodicalSurface):
                     semi_angle = volmdlr.geometry.vectors3d_angle(self.axis, generatrix_line_direction)
                 else:
                     semi_angle = volmdlr.geometry.vectors3d_angle(self.axis, -generatrix_line_direction)
-                return ConicalSurface3D(self.frame, semi_angle, self.name)
+                if not self.axis_point.is_close(intersections):
+                    new_w = self.axis_point - intersections
+                    new_w = new_w.unit_vector()
+                    new_frame = volmdlr.Frame3D(intersections, self.frame.u, new_w.cross(self.frame.u), new_w)
+                else:
+                    new_frame = volmdlr.Frame3D(intersections, self.frame.u, self.frame.v, self.frame.w)
+                return ConicalSurface3D(new_frame, semi_angle, self.name)
             generatrix_line_direction = generatrix_line.unit_direction_vector()
             if self.axis.is_colinear_to(generatrix_line_direction):
                 radius = self.wire.point_distance(self.axis_point)
