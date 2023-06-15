@@ -830,46 +830,57 @@ class Surface3D(DessiaObject):
         """
         x_periodicity = self.x_periodicity
         y_periodicity = self.y_periodicity
-        # Search for a primitive that can be used as reference for repairing periodicity
+
         if x_periodicity or y_periodicity:
             pos = vm_parametric.find_index_defined_brep_primitive_on_periodical_surface(primitives2d,
                                                                                         [x_periodicity, y_periodicity])
             if pos != 0:
                 primitives2d = primitives2d[pos:] + primitives2d[:pos]
-
-        i = 1
         if x_periodicity is None:
             x_periodicity = -1
         if y_periodicity is None:
             y_periodicity = -1
-        while i < len(primitives2d):
+        for i in range(1, len(primitives2d)):
             previous_primitive = primitives2d[i - 1]
-            delta = previous_primitive.end - primitives2d[i].start
-
+            current_primitive = primitives2d[i]
+            delta = previous_primitive.end - current_primitive.start
             distance = delta.norm()
-            is_connected = math.isclose(distance, 0, abs_tol=1e-3)
-            if not is_connected and \
-                    math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2):
-                delta_end = previous_primitive.end - primitives2d[i].end
-                delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
-                if primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
-                    primitives2d[i] = primitives2d[i].reverse()
-                elif delta_min_index == 0:
-                    primitives2d[i] = primitives2d[i].translation(delta)
+            is_connected = math.isclose(distance, 0, abs_tol=1e-2)
+
+            if not is_connected:
+                if math.isclose(current_primitive.length(), x_periodicity, abs_tol=1e-2) or \
+                        math.isclose(current_primitive.length(), y_periodicity, abs_tol=1e-2):
+                    delta_end = previous_primitive.end - current_primitive.end
+                    delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
+
+                    if current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
+                        primitives2d[i] = current_primitive.reverse()
+                    elif delta_min_index == 0:
+                        primitives2d[i] = current_primitive.translation(delta)
+                    else:
+                        new_primitive = current_primitive.reverse()
+                        primitives2d[i] = new_primitive.translation(delta_end)
+
+                elif current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
+                    primitives2d[i] = current_primitive.reverse()
+                elif hasattr(self, "is_singularity_point") and \
+                        self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
+                        self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
+                    primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, current_primitive.start,
+                                                               name="construction"))
+                    i += 1
                 else:
-                    new_primitive = primitives2d[i].reverse()
-                    primitives2d[i] = new_primitive.translation(delta_end)
-            elif not is_connected and \
-                    primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
-                primitives2d[i] = primitives2d[i].reverse()
-            elif not is_connected and math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
-                    math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
-                new_primitive = primitives2d[i].reverse()
-                new_delta = previous_primitive.end - new_primitive.start
-                primitives2d[i] = new_primitive.translation(new_delta)
-            elif not is_connected:
-                primitives2d[i] = primitives2d[i].translation(delta)
-            i += 1
+                    primitives2d[i] = current_primitive.translation(delta)
+
+        previous_primitive = primitives2d[-1]
+        delta = previous_primitive.end - primitives2d[0].start
+        distance = delta.norm()
+        is_connected = math.isclose(distance, 0, abs_tol=1e-2)
+        if not is_connected and hasattr(self, "is_singularity_point") and \
+                self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
+                self.is_singularity_point(self.point2d_to_3d(primitives2d[0].start)):
+            primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start,
+                                                    name="construction"))
 
         return primitives2d
 
@@ -3983,7 +3994,7 @@ class RuledSurface3D(Surface3D):
 
 class ExtrusionSurface3D(Surface3D):
     """
-    Defines a surface of revolution.
+    Defines a surface of extrusion.
 
     An extrusion surface is a surface that is a generic cylindrical surface generated by the linear
     extrusion of a curve, generally an Ellipse or a B-Spline curve.
@@ -3992,7 +4003,7 @@ class ExtrusionSurface3D(Surface3D):
     :type edge: Union[:class:`vmw.Wire3D`, :class:`vmw.Contour3D`]
     :param axis_point: Axis placement
     :type axis_point: :class:`volmdlr.Point3D`
-    :param axis: Axis of revolution
+    :param axis: Axis of extrusion
     :type axis: :class:`volmdlr.Vector3D`
     """
     face_class = 'ExtrusionFace3D'
@@ -4241,8 +4252,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         self.axis = axis
 
         point1 = wire.point_at_abscissa(0)
-        if point1 == axis_point:
-            point1 = wire.point_at_abscissa(wire.length())
+        if point1.is_close(axis_point):
+            point1 = wire.point_at_abscissa(0.5 * wire.length())
         vector1 = point1 - axis_point
         w_vector = axis
         w_vector.normalize()
@@ -4317,18 +4328,20 @@ class RevolutionSurface3D(PeriodicalSurface):
         :return: The corresponding RevolutionSurface3D object.
         :rtype: :class:`volmdlr.faces.RevolutionSurface3D`
         """
-        x_periodicity = None
+
+        y_periodicity = None
         name = arguments[0][1:-1]
         wire = object_dict[arguments[1]]
         if wire.__class__ is wires.Circle3D:
             start_end = wire.center + wire.frame.u * wire.radius
             wire = edges.FullArc3D(wire.frame.origin, start_end, wire.frame.w)
-            x_periodicity = 1
+            y_periodicity = 1
 
         if hasattr(wire, "simplify"):
             wire = wire.simplify
         axis_point, axis = object_dict[arguments[2]]
         surface = cls(wire=wire, axis_point=axis_point, axis=axis, name=name)
+        surface.y_periodicity = y_periodicity
         return surface
 
     def to_step(self, current_id):
@@ -4353,6 +4366,15 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
+        if hasattr(self.wire, "radius") and math.isclose(self.wire.radius, arc3d.radius, rel_tol=0.01):
+            if self.wire.is_point_edge_extremity(arc3d.start):
+                start = self.point3d_to_2d(arc3d.start)
+                interior = self.point3d_to_2d(arc3d.interior)
+                start = volmdlr.Point2D(interior.x, start.y)
+            if self.wire.is_point_edge_extremity(arc3d.end):
+                end = self.point3d_to_2d(arc3d.end)
+                interior = self.point3d_to_2d(arc3d.interior)
+                end = volmdlr.Point2D(interior.x, end.y)
         if math.isclose(start.y, end.y, rel_tol=0.01):
             point_after_start, point_before_end = self._reference_points(arc3d)
             point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
@@ -4486,6 +4508,11 @@ class RevolutionSurface3D(PeriodicalSurface):
             return CylindricalSurface3D(self.frame, radius, self.name)
         return self
 
+    def is_singularity_point(self, point):
+        """Verifies if point is on the surface singularity."""
+        if self.wire.__class__.__name__ == "Line3D":
+            return False
+        return self.wire.is_point_edge_extremity(point)
 
 class BSplineSurface3D(Surface3D):
     """
