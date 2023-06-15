@@ -29,7 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineFace3D: neutral_fiber
 - surfaces.Plane3D: linesegment_intersections
 - Step export
+- Step import
 - Sphere: point_belongs, inherits from ClosedShell3D instead of RevolvedProfile
+
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
