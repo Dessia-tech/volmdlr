@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 - Sweep with muitiform profile contour.
+- OpenShell3D: from_faces (using faces graph)
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
@@ -36,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - face3D: get_face_cutting_contours
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
+- Improve step translator.
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
