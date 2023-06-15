@@ -33,7 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
 - BoundingBox: bbox_intersection
-- face3D: get_face_cutting_contours
+- Face3D: get_face_cutting_contours
+- parametric.py: fix numerical instability in some functions used in Arc3D to parametric surface domain transformation.
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
 - Improve step translator.
