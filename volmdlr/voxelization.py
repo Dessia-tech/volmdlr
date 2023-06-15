@@ -1,7 +1,6 @@
 """
 Class for voxel representation of volmdlr closed_shell
 """
-# pylint: disable=C0103
 import warnings
 from typing import List, Set, Tuple
 
