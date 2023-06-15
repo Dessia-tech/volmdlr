@@ -615,7 +615,7 @@ class Voxelization(PhysicalObject):
             Triangle3D(Point3D(*triangle[0]), Point3D(*triangle[1]), Point3D(*triangle[2]))
             for triangle in tqdm(self.to_triangles())
         ]
-        shell = ClosedTriangleShell3D(triangles3d, name="voxel")
+        shell = ClosedTriangleShell3D(triangles3d, name="Voxels")
 
         return shell
 
