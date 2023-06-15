@@ -472,8 +472,8 @@ def shape_representation(arguments, object_dict):
     :rtype: TYPE
 
     """
-    # does it have the extra argument comming from
-    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this cas return
+    # does it have the extra argument coming from
+    # SHAPE_REPRESENTATION_RELATIONSHIP ? In this case return
     # them
     if len(arguments) == 4:
         shells = object_dict[int(arguments[3])]
@@ -1126,7 +1126,7 @@ class Step(dc.DessiaObject):
                         if connection not in visited_set:
                             stack.append(connection)
                 else:
-                    # Entities without connections should be instatiate first
+                    # Entities without connections should be instantiated first
                     list_head.append(node)
         return list_head + list_nodes[::-1]
 
@@ -1173,7 +1173,7 @@ class Step(dc.DessiaObject):
         if len(self.functions[id_shape_representation].arg) < 4:
             # From the step file, the SHAPE_REPRESENTATION entity has 3 arguments. But we add a 4th argument to
             # those SHAPE_REPRESENTATION entity that are related to a representation entity. So, if the length of arg
-            # is less of 4 there is no representation entity related to it and we return None.
+            # is less of 4 there is no representation entity related to it, and we return None.
             return None
         id_representation_entity = int(self.functions[id_shape_representation].arg[3][1:])
         id_solid_entity = int(self.functions[id_representation_entity].arg[1][0][1:])
@@ -1316,11 +1316,17 @@ class Step(dc.DessiaObject):
         return assemblies_shapes, assemblies_positions
 
     def context_dependent_shape_representation_to_next_assembly_usage_occurrence(self, node):
+        """
+        Returns id of the next_assembly_usage_occurrence related to the given context_dependent_shape_representation.
+        """
         arg = self.functions[node].arg
         id_product_definition_shape = int(arg[1][1:])
         return int(self.functions[id_product_definition_shape].arg[2][1:])
 
     def create_connections(self):
+        """
+        Create connections between step entities.
+        """
         for node in self.root_nodes['SHAPE_REPRESENTATION_RELATIONSHIP']:
             # Associate each step representation entity to its SHAPE_REPRESENTATION
             function = self.functions[node]
@@ -1338,7 +1344,7 @@ class Step(dc.DessiaObject):
             self.functions[id_product_definition].arg.append(f'#{node}')
             if self.functions[id_shape_representation].name == "SHAPE_REPRESENTATION" and \
                     len(self.functions[id_shape_representation].arg) >= 4:
-                # todo: take all the arg starting from index 3 to end ??? needs investigation
+                # todo: take all the "arg" starting from index 3 to end ??? needs investigation
                 id_shapes = [int(arg[1:]) for arg in self.functions[id_shape_representation].arg[3:]]
                 self.connections[id_product_definition].extend(id_shapes)
                 for id_shape in id_shapes:
@@ -1366,10 +1372,11 @@ class Step(dc.DessiaObject):
         # assembly_data = self.get_assembly_data()
         instanciate_ids = list(assembly_data.keys())
         error = True
+        last_error = None
         while error:
             try:
                 # here we invert instantiate_ids because if the code enter inside the except
-                # block, we want to loop from the last KeyError to the fisrt. This avoids an infinite loop
+                # block, we want to loop from the last KeyError to the first. This avoids an infinite loop
                 for instanciate_id in instanciate_ids[::-1]:
                     if instanciate_id in object_dict:
                         instanciate_ids.pop()
@@ -1399,14 +1406,17 @@ class Step(dc.DessiaObject):
 
                 error = False
             except KeyError as key:
-                # Sometimes the bfs search don't instanciate the nodes of a
+                # Sometimes the search don't instanciate the nodes of a
                 # depth in the right order, leading to error
+                if last_error == key.args[0]:
+                    raise NotImplementedError('Error instantiating assembly') from key
                 print(key.args[0])
                 if key.args[0] in assembly_data:
                     instanciate_ids.append(key.args[0])
                     instanciate_ids.extend(assembly_data[key.args[0]])
                 else:
                     instanciate_ids.append(key.args[0])
+                last_error = key.args[0]
         return volmdlr_object
 
     def to_volume_model(self, show_times: bool = False):
@@ -1435,7 +1445,6 @@ class Step(dc.DessiaObject):
         self.length_conversion_factor = object_dict[int(arguments[2][0][1:])]
         self.angle_conversion_factor = object_dict[int(arguments[2][1][1:])]
         # ------------------------------------------------------
-        shell_nodes = root_nodes["SHELLS"]
         shape_representations = root_nodes["SHAPE_REPRESENTATION"]
         nodes = self.create_node_list(shape_representations)
         errors = set()
@@ -1476,7 +1485,7 @@ class Step(dc.DessiaObject):
         while error:
             try:
                 # here we invert instantiate_ids because if the code enter inside the except
-                # block, we want to loop from the last KeyError to the fisrt. This avoids an infinite loop
+                # block, we want to loop from the last KeyError to the first. This avoids an infinite loop
                 for instanciate_id in instanciate_ids[::-1]:
                     t = time.time()
                     volmdlr_object = self.instantiate(
@@ -1492,7 +1501,7 @@ class Step(dc.DessiaObject):
                             times[volmdlr_object.__class__][1] += t
                 error = False
             except KeyError as key:
-                # Sometimes the bfs search don't instanciate the nodes of a
+                # Sometimes the search don't instantiate the nodes of a
                 # depth in the right order, leading to error
                 instanciate_ids.append(key.args[0])
 
@@ -1536,17 +1545,6 @@ class StepReaderReport:
     sucess_rate: float = 0.0
     errors: list = field(default_factory=list)
 
-
-# @dataclass
-# class StepRootNodes:
-#     """
-#     Data class to save the root nodes of a step file.
-#     """
-#     NEXT_ASSEMBLY_USAGE_OCCURRENCE: str = " "
-#     total_number_of_faces: int = 0
-#     faces_read: int = 0
-#     sucess_rate: float = 0.0
-#     errors: list = field(default_factory=list)
 
 STEP_TO_VOLMDLR = {
     # GEOMETRICAL ENTITIES

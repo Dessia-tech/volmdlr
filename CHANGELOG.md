@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - surfaces.Plane3D: linesegment_intersections
 - Step export
 - Face3D: is_linesegment_crossing.
+- babylondata: removes empty objects.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
@@ -139,6 +140,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - ContourMixin: delete_shared_contour_section
 - PlaneFace3D: merge_faces
 - Contour2D: divide
+- Step: raise NotimplementedError when it's not possible to instatiate assembly object.
 
 
 ### Refactor
