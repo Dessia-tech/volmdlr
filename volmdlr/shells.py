@@ -157,14 +157,25 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def _faces_graph_search_bridges(self, graph, components, face_vertices):
         """
-        If the graph contains more than one set of connected components we fix it.
+        Search for neighboring faces in the connected components to fix the graph.
 
-        The fix is done by searching the first bridge that connects the sets.
+        To make the shell faces' topology graph, we search faces that share the same vertices.
+        Sometimes, in very specific cases, it can occur that two faces are neighbors of each other
+        but their vertices aren't coincident.
 
-        :param graph:
-        :param components:
-        :param face_vertices:
-        :return: new graph with nos disconnected components.
+        This method tries to find those cases, by searching bridges, which are edges that connect two components.
+        The search is performed by checking if any vertices of one face in one component lie on the contours of
+        another face in the other component. If such a connection is found, the two faces are considered neighbors.
+        Once a connection is found between a pair of components we break the execution and proceed to
+        the next pair of components. This behavior, in the average, avoids the need to verify all possible combinations
+
+        :param graph: The graph representing the faces' topology.
+        :type graph: nx.Graph
+        :param components: A list of sets, where each set contains the indices of faces in a connected component.
+        :type components: list
+        :param face_vertices: A dictionary mapping face indices to their corresponding vertex indices.
+        :type face_vertices: dict
+        :return: The updated graph with no disconnected components.
         """
         stack = components.copy()
         found = False

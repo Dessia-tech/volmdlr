@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
 - Improve step translator.
+- OpenShell3D: faces_graph.
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
