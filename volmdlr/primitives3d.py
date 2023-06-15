@@ -1852,7 +1852,6 @@ class Sweep(shells.ClosedShell3D):
                      alpha=self.alpha, name=self.name)
 
 
-# class Sphere(volmdlr.Primitive3D):
 class Sphere(shells.ClosedShell3D):
     """
     Defines a sphere at a given position & radius.
