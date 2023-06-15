@@ -1873,6 +1873,11 @@ class Sphere(shells.ClosedShell3D):
         shells.ClosedShell3D.__init__(self, faces=[spherical_face], color=color, alpha=alpha, name=name)
 
     def volume(self):
+        """
+        Computes the volume of the sphere.
+
+        :return: sphere's volume (m³)
+        """
         return 4 / 3 * math.pi * self.radius**3
 
     def point_belongs(self, point3d: volmdlr.Point3D, **kwargs) -> bool:
