@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
 - ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
+- RevolutionSurface3D: fix some special cases whiling transforming from 3D space to parametric domain.
 - fix drone python version
 - BSplineFace3D: neutral_fiber
 - surfaces.Plane3D: linesegment_intersections
