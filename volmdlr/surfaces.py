@@ -4407,7 +4407,6 @@ class RevolutionSurface3D(PeriodicalSurface):
         start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(
             [start, end], [undefined_start_theta, undefined_end_theta],
             [point_after_start.x, point_before_end.x], discontinuity)
-
         theta1, z1 = start
         theta2, _ = end
         theta3, z3 = point_after_start
