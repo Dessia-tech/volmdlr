@@ -1853,10 +1853,9 @@ class Sweep(shells.ClosedShell3D):
 
 
 # class Sphere(volmdlr.Primitive3D):
-class Sphere(RevolvedProfile):
+class Sphere(shells.ClosedShell3D):
     """
     Defines a sphere at a given position & radius.
-
     """
 
     def __init__(self, center: volmdlr.Point3D, radius: float,
@@ -1866,18 +1865,12 @@ class Sphere(RevolvedProfile):
         self.radius = radius
         self.position = center
 
-        # Revolved Profile for complete sphere
-        s = volmdlr.Point2D(-self.radius, 0.01 * self.radius)
-        i = volmdlr.Point2D(0, 1.01 * self.radius)
-        e = volmdlr.Point2D(self.radius, 0.01 * self.radius)  # Not coherent but it works at first, to change !!
+        self.frame = volmdlr.Frame3D(center, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
 
-        contour = volmdlr.wires.Contour2D([
-            volmdlr.edges.Arc2D(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
+        spherical_surface = surfaces.SphericalSurface3D(self.frame, self.radius)
+        spherical_face = volmdlr.faces.SphericalFace3D.from_surface_rectangular_cut(spherical_surface)
 
-        axis = volmdlr.X3D
-        y = axis.random_unit_normal_vector()
-        RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
-                                 color=color, alpha=alpha, name=name)
+        shells.ClosedShell3D.__init__(self, faces=[spherical_face], color=color, alpha=alpha, name=name)
 
     def volume(self):
         return 4 / 3 * math.pi * self.radius**3
