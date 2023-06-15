@@ -153,6 +153,16 @@ def named_unit_si_unit_solid_angle_unit(arguments, *args, **kwargs):
     return SI_PREFIX[arguments[1]]
 
 
+def named_unit_length_unit_si_unit(arguments, *args, **kwargs):
+    """
+    Returns the dimension of solid angle measure.
+
+    :param arguments: step primitive arguments
+    :return: SI unit dimension.
+    """
+    return SI_PREFIX[arguments[1]]
+
+
 def plane_angle_measure_with_unit(arguments, object_dict):
     """
     Returns the angle plane measure with the right unit.
@@ -604,6 +614,23 @@ def representation_relationship_representation_relationship_with_transformation_
 
 
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
+        arguments, object_dict):
+    """
+    Bounded b spline with knots curve geometric representation item. To clarify.
+    """
+    modified_arguments = [''] + arguments
+    if modified_arguments[-1] == "''":
+        modified_arguments.pop()
+    return STEP_TO_VOLMDLR['BOUNDED_CURVE, '
+                           'B_SPLINE_CURVE, '
+                           'B_SPLINE_CURVE_WITH_KNOTS, '
+                           'CURVE, GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_CURVE, '
+                           'REPRESENTATION_ITEM'].from_step(
+        modified_arguments, object_dict)
+
+
+def b_spline_curve_b_spline_curve_with_knots_rational_b_spline_curve_bounded_curve_representation_item_geometric_representation_item_curve(
         arguments, object_dict):
     """
     Bounded b spline with knots curve geometric representation item. To clarify.

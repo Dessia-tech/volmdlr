@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineFace3D: neutral_fiber
 - surfaces.Plane3D: linesegment_intersections
 - Step export
+- Step import
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
@@ -172,7 +173,9 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
 - Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
-- Change python suport version from >=3.7 to >= 3.9.
+- Change python suport version from >=3.7 to >= 3.9
+- LICENSE changed from GPL to Lesser GPL 
+- Readme logo updated
 
 ### Unittests
 - Arc2D: test_arc_intersections
