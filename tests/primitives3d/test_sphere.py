@@ -5,7 +5,7 @@ import volmdlr
 from volmdlr.primitives3d import Sphere
 
 
-class TestCylinder(unittest.TestCase):
+class TestSphere(unittest.TestCase):
     def setUp(self):
         self.sphere = Sphere(
             center=volmdlr.O3D,
