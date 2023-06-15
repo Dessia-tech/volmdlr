@@ -281,7 +281,7 @@ class Stl(dc.DessiaObject):
 
         :return: An open triangle shell representation of the STL object.
         :rtype: shells.OpenTriangleShell3D
-       """
+        """
         return shells.OpenTriangleShell3D(self.triangles, name=self.name)
 
     def to_volume_model(self):
