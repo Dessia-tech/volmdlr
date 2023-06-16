@@ -10,7 +10,7 @@ from tqdm import tqdm
 from volmdlr import Point3D, Vector3D, Point2D
 from volmdlr.core import VolumeModel
 from volmdlr.faces import Triangle3D, PlaneFace3D
-from volmdlr.surfaces import Surface2D, PLANE3D_OYZ, PLANE3D_OZX, PLANE3D_OXY
+from volmdlr.surfaces import Surface2D, PLANE3D_OYZ, PLANE3D_OXY, PLANE3D_OXZ
 from volmdlr.wires import ClosedPolygon2D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 
@@ -569,7 +569,7 @@ class Voxelization(PhysicalObject):
 
     def to_closed_shell(self):
         polygons = self._triangles_to_closed_polygon(self.to_triangles())
-        planes = [PLANE3D_OYZ, PLANE3D_OZX, PLANE3D_OXY]
+        planes = [PLANE3D_OYZ, PLANE3D_OXZ, PLANE3D_OXY]
         faces = []
 
         for i, polygons_i in enumerate(polygons):
