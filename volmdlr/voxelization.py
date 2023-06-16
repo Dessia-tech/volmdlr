@@ -12,8 +12,6 @@ from volmdlr.core import VolumeModel
 from volmdlr.faces import Triangle3D, PlaneFace3D
 from volmdlr.surfaces import Surface2D, PLANE3D_OYZ, PLANE3D_OZX, PLANE3D_OXY
 from volmdlr.wires import ClosedPolygon2D
-from volmdlr.wires import Contour2D
-from volmdlr.edges import LineSegment2D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 
 
@@ -532,15 +530,20 @@ class Voxelization(PhysicalObject):
 
     @staticmethod
     def _simplify_polygon_points(points):
-        return points
         simplifyed_point = []
 
-        for i in range(len(points)):
+        for i in range(len(points) - 1):
             if not (
-                    points[i - 2][0] == points[i - 1][0] == points[i][0]
-                    or points[i - 2][1] == points[i - 1][1] == points[i][1]
+                    points[i - 1][0] == points[i][0] == points[i + 1][0]
+                    or points[i - 1][1] == points[i][1] == points[i + 1][1]
             ):
-                simplifyed_point.append(points[i - 1])
+                simplifyed_point.append(points[i])
+
+        if not (
+            points[-2][0] == points[-1][0] == points[0][0]
+            or points[-2][1] == points[-1][1] == points[0][1]
+        ):
+            simplifyed_point.append(points[-1])
 
         return simplifyed_point
 
@@ -549,10 +552,8 @@ class Voxelization(PhysicalObject):
         return ClosedPolygon2D(
             points=Voxelization._simplify_polygon_points(
                 [Point2D(*segment[0]) for segment in ordered_segments]
-                + [Point2D(*ordered_segments[-1][1])]
             )
         )
-        # return Contour2D([LineSegment2D(Point2D(*x), Point2D(*y)) for x, y in ordered_segments])
 
     def to_triangles(self):
         triangles = set()
