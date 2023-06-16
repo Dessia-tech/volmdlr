@@ -26,17 +26,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
 - ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
+- RevolutionSurface3D: fix some special cases whiling transforming from 3D space to parametric domain.
+- fix drone python version
 - BSplineFace3D: neutral_fiber
+- BSplineSurface3D: arc3d_to_2d, removes repeated parametric points if any.
 - surfaces.Plane3D: linesegment_intersections
 - Step export
 - Line3D: point_at_abscissa
+- Step import
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
 - BoundingBox: bbox_intersection
-- face3D: get_face_cutting_contours
+- Face3D: get_face_cutting_contours
+- parametric.py: fix numerical instability in some functions used in Arc3D to parametric surface domain transformation.
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
+- bspline_compiled: refactor binomial_coefficient for performance.
 - Improve step translator.
 
 ### Changed
@@ -171,7 +177,9 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
 - Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
-- Change python suport version from >=3.7 to >= 3.9.
+- Change python suport version from >=3.7 to >= 3.9
+- LICENSE changed from GPL to Lesser GPL 
+- Readme logo updated
 
 ### Unittests
 - Arc2D: test_arc_intersections
