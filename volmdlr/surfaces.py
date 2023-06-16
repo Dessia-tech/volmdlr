@@ -1819,6 +1819,10 @@ class PeriodicalSurface(Surface3D):
         """
         start = self.point3d_to_2d(linesegment3d.start)
         end = self.point3d_to_2d(linesegment3d.end)
+        _, _, z1 = self.frame.global_to_local_coordinates(linesegment3d.start)
+        _, _, z2 = self.frame.global_to_local_coordinates(linesegment3d.end)
+        if math.isclose(z1, z2, rel_tol=0.005):
+            return [edges.LineSegment2D(start, end)]
         if start.x != end.x:
             end = volmdlr.Point2D(start.x, end.y)
         if not start.is_close(end):
