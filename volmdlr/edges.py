@@ -1555,7 +1555,7 @@ class BSplineCurve(Edge):
     @staticmethod
     def _get_shared_section_from_split(bspline1_, bspline2_, other_bspline2, abs_tol):
         """
-        Helper function to get_shared_section
+        Helper function to get_shared_section.
         """
         shared_bspline_section = []
         for bspline in [bspline1_, bspline2_]:
