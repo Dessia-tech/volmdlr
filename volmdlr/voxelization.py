@@ -32,31 +32,31 @@ class Voxelization(PhysicalObject):
     def from_closed_triangle_shell(
         cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float
     ):
-        triangles = cls.closed_triangle_shell_to_triangles(closed_triangle_shell)
-        voxels = cls.triangles_to_voxels(triangles, voxel_size)
+        triangles = cls._closed_triangle_shell_to_triangles(closed_triangle_shell)
+        voxels = cls._triangles_to_voxels(triangles, voxel_size)
         return cls(voxels, voxel_size)
 
     @classmethod
     def from_closed_shell(cls, closed_shell: ClosedShell3D, voxel_size: float):
-        triangles = cls.closed_shell_to_triangles(closed_shell)
-        voxels = cls.triangles_to_voxels(triangles, voxel_size)
+        triangles = cls._closed_shell_to_triangles(closed_shell)
+        voxels = cls._triangles_to_voxels(triangles, voxel_size)
         return cls(voxels, voxel_size)
 
     @classmethod
     def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float):
-        triangles = cls.volume_model_to_triangles(volume_model)
-        voxels = cls.triangles_to_voxels(triangles, voxel_size)
+        triangles = cls._volume_model_to_triangles(volume_model)
+        voxels = cls._triangles_to_voxels(triangles, voxel_size)
         return cls(voxels, voxel_size)
 
     @staticmethod
-    def closed_triangle_shell_to_triangles(cs: ClosedTriangleShell3D):
+    def _closed_triangle_shell_to_triangles(cs: ClosedTriangleShell3D):
         return list(
             tuple(tuple([point.x, point.y, point.z]) for point in [tr.point1, tr.point2, tr.point3])
             for tr in cs.primitives
         )
 
     @staticmethod
-    def closed_shell_to_triangles(cs: ClosedShell3D):
+    def _closed_shell_to_triangles(cs: ClosedShell3D):
         triangulation = cs.triangulation()
         return list(
             tuple(
@@ -71,7 +71,7 @@ class Voxelization(PhysicalObject):
         )
 
     @staticmethod
-    def volume_model_to_triangles(vm: VolumeModel):
+    def _volume_model_to_triangles(vm: VolumeModel):
         triangles = []
         for primitive in vm.primitives:
             triangulation = primitive.triangulation()
@@ -89,7 +89,7 @@ class Voxelization(PhysicalObject):
         return triangles
 
     @staticmethod
-    def triangle_aabb_intersection(
+    def _triangle_aabb_intersection(
         triangle: np.ndarray, box_center: np.ndarray, box_extents: np.ndarray
     ) -> bool:
         X, Y, Z = 0, 1, 2
@@ -163,7 +163,7 @@ class Voxelization(PhysicalObject):
         return True
 
     @staticmethod
-    def intersecting_boxes(
+    def _intersecting_boxes(
         min_point: Tuple[float, ...],
         max_point: Tuple[float, ...],
         voxel_size: float,
@@ -226,7 +226,7 @@ class Voxelization(PhysicalObject):
     #     return all_centers
 
     @staticmethod
-    def intersecting_voxels(
+    def _intersecting_voxels(
         voxel_array: np.ndarray,
         voxel_size: float,
     ) -> Set[Tuple[float, ...]]:
@@ -252,20 +252,20 @@ class Voxelization(PhysicalObject):
         return set(tuple(center) for center in centers)
 
     @staticmethod
-    def surrounding_voxels(
+    def _surrounding_voxels(
         voxel_array: np.ndarray,
         voxel_size: float,
     ) -> Set[Tuple[float, ...]]:
-        surrounding_voxels = Voxelization.round_point_cloud_voxel_size(voxel_array, voxel_size)
+        surrounding_voxels = Voxelization._round_point_cloud_voxel_size(voxel_array, voxel_size)
 
         split_surruding_voxels = set()
         for voxel in surrounding_voxels:
-            split_surruding_voxels.update(Voxelization.subdivide(voxel, voxel_size * 2))
+            split_surruding_voxels.update(Voxelization._subdivide(voxel, voxel_size * 2))
 
         return split_surruding_voxels
 
     @staticmethod
-    def subdivide(voxel, voxel_size):
+    def _subdivide(voxel, voxel_size):
         children = []
         half_size = voxel_size / 2
         for i in range(2):
@@ -283,7 +283,7 @@ class Voxelization(PhysicalObject):
         return children
 
     @staticmethod
-    def triangles_to_voxels(
+    def _triangles_to_voxels(
         triangles: List[Tuple[Tuple[float, ...], ...]],
         voxel_size: float,
     ) -> set:
@@ -303,9 +303,9 @@ class Voxelization(PhysicalObject):
             min_point = tuple(min(p[i] for p in triangle) for i in range(3))
             max_point = tuple(max(p[i] for p in triangle) for i in range(3))
 
-            for bbox_center in Voxelization.intersecting_boxes(min_point, max_point, voxel_size):
+            for bbox_center in Voxelization._intersecting_boxes(min_point, max_point, voxel_size):
                 if bbox_center not in bbox_centers:
-                    if Voxelization.triangle_aabb_intersection(
+                    if Voxelization._triangle_aabb_intersection(
                         triangle, bbox_center, [voxel_size for _ in range(3)]
                     ):
                         bbox_centers.add(bbox_center)
@@ -313,7 +313,7 @@ class Voxelization(PhysicalObject):
         return bbox_centers
 
     @staticmethod
-    def voxel_faces(center, voxel_size):
+    def _voxel_faces(center, voxel_size):
         x, y, z = center
         sx, sy, sz = voxel_size, voxel_size, voxel_size
         hx, hy, hz = sx / 2, sy / 2, sz / 2
@@ -413,20 +413,8 @@ class Voxelization(PhysicalObject):
         faces = [tuple(tuple(round(_, 6) for _ in point) for point in face) for face in faces]
         return faces
 
-    def to_triangles(self):
-        triangles = set()
-
-        for voxel in tqdm(self.voxels):
-            for triangle in self.voxel_faces(voxel, self.voxel_size):
-                if triangle not in triangles:
-                    triangles.add(triangle)
-                else:
-                    triangles.remove(triangle)
-
-        return triangles
-
     @staticmethod
-    def triangles_to_segments(triangles):
+    def _triangles_to_segments(triangles):
         segments_x = {}
         segments_y = {}
         segments_z = {}
@@ -498,7 +486,7 @@ class Voxelization(PhysicalObject):
         return segments_x, segments_y, segments_z
 
     @staticmethod
-    def order_segments(segments):
+    def _order_segments(segments):
         segments = list(segments)
         ordered_segments_list = []
 
@@ -528,22 +516,22 @@ class Voxelization(PhysicalObject):
         return ordered_segments_list
 
     @staticmethod
-    def triangles_to_closed_polygon(triangles):
-        segments_x, segments_y, segments_z = Voxelization.triangles_to_segments(triangles)
+    def _triangles_to_closed_polygon(triangles):
+        segments_x, segments_y, segments_z = Voxelization._triangles_to_segments(triangles)
         polygons = [{}, {}, {}]
 
         for i, segments_i in enumerate([segments_x, segments_y, segments_z]):
             for absicssa, segments in segments_i.items():
-                ordered_segments_list = Voxelization.order_segments(segments)
+                ordered_segments_list = Voxelization._order_segments(segments)
                 polygons[i][absicssa] = [
-                    Voxelization.ordered_segments_to_closed_polygon_2d(ordered_segments)
+                    Voxelization._ordered_segments_to_closed_polygon_2d(ordered_segments)
                     for ordered_segments in ordered_segments_list
                 ]
 
         return polygons
 
     @staticmethod
-    def simplify_polygon_points(points):
+    def _simplify_polygon_points(points):
         return points
         simplifyed_point = []
 
@@ -557,17 +545,29 @@ class Voxelization(PhysicalObject):
         return simplifyed_point
 
     @staticmethod
-    def ordered_segments_to_closed_polygon_2d(ordered_segments):
+    def _ordered_segments_to_closed_polygon_2d(ordered_segments):
         return ClosedPolygon2D(
-            points=Voxelization.simplify_polygon_points(
+            points=Voxelization._simplify_polygon_points(
                 [Point2D(*segment[0]) for segment in ordered_segments]
                 + [Point2D(*ordered_segments[-1][1])]
             )
         )
         # return Contour2D([LineSegment2D(Point2D(*x), Point2D(*y)) for x, y in ordered_segments])
 
+    def to_triangles(self):
+        triangles = set()
+
+        for voxel in tqdm(self.voxels):
+            for triangle in self._voxel_faces(voxel, self.voxel_size):
+                if triangle not in triangles:
+                    triangles.add(triangle)
+                else:
+                    triangles.remove(triangle)
+
+        return triangles
+
     def to_closed_shell(self):
-        polygons = self.triangles_to_closed_polygon(self.to_triangles())
+        polygons = self._triangles_to_closed_polygon(self.to_triangles())
         planes = [PLANE3D_OYZ, PLANE3D_OZX, PLANE3D_OXY]
         faces = []
 
@@ -647,7 +647,7 @@ class Voxelization(PhysicalObject):
         return Voxelization(self.voxels.difference(other_voxelization.voxels), self.voxel_size)
 
     @staticmethod
-    def round_point_cloud_voxel_size(point_cloud: np.ndarray, voxel_size: float) -> np.ndarray:
+    def _round_point_cloud_voxel_size(point_cloud: np.ndarray, voxel_size: float) -> np.ndarray:
         """
         Round the coordinates of a point cloud dictionary to be the center point of the voxel it's in.
         """
@@ -657,7 +657,7 @@ class Voxelization(PhysicalObject):
         return transformed_point_cloud
 
     @staticmethod
-    def rotation_matrix(axis: Vector3D, angle: float):
+    def _rotation_matrix(axis: Vector3D, angle: float):
         """
         Return the rotation matrix associated with counterclockwise rotation about
         the given axis by theta radians.
@@ -678,12 +678,12 @@ class Voxelization(PhysicalObject):
         )
 
     def rotation(self, center: Point3D, axis: Vector3D, angle: float):
-        R = self.rotation_matrix(axis, angle)
+        R = self._rotation_matrix(axis, angle)
         voxel_array = np.array(list(self.voxels)) - np.array([center.x, center.y, center.z])
         rotated_voxels = np.dot(voxel_array, R.T)
         rotated_voxels += np.array([center.x, center.y, center.z])
 
-        intersecting_voxels = self.intersecting_voxels(rotated_voxels, self.voxel_size)
+        intersecting_voxels = self._intersecting_voxels(rotated_voxels, self.voxel_size)
         # intersecting_voxels = set(tuple(voxel) for voxel in self.round_point_cloud_voxel_size(rotated_voxels, self.voxel_size))
         # intersecting_voxels = self.surrounding_voxels(rotated_voxels, self.voxel_size)
 
@@ -693,7 +693,7 @@ class Voxelization(PhysicalObject):
         voxel_array = np.array(list(self.voxels))
         translated_voxels = voxel_array + np.array([offset.x, offset.y, offset.z])
 
-        intersecting_voxels = self.intersecting_voxels(translated_voxels, self.voxel_size)
+        intersecting_voxels = self._intersecting_voxels(translated_voxels, self.voxel_size)
         # intersecting_voxels = set(tuple(voxel) for voxel in self.round_point_cloud_voxel_size(translated_voxels, self.voxel_size))
         # intersecting_voxels = self.surrounding_voxels(translated_voxels, self.voxel_size)
 
