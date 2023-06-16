@@ -1543,6 +1543,7 @@ class Plane3D(Surface3D):
 PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
 PLANE3D_OYZ = Plane3D(volmdlr.OYZX)
 PLANE3D_OZX = Plane3D(volmdlr.OZXY)
+PLANE3D_OXZ = Plane3D(volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Z3D, volmdlr.Y3D))
 
 
 class PeriodicalSurface(Surface3D):
