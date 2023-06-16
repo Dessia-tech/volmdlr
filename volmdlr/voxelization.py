@@ -2,7 +2,7 @@
 Class for voxel representation of volmdlr closed_shell
 """
 import warnings
-from typing import List, Set, Tuple, Any, Dict
+from typing import List, Set, Tuple
 
 import numpy as np
 from dessia_common.core import PhysicalObject
@@ -91,11 +91,6 @@ class Voxelization(PhysicalObject):
         triangle: np.ndarray, box_center: np.ndarray, box_extents: np.ndarray
     ) -> bool:
         X, Y, Z = 0, 1, 2
-
-        # Ensure inputs are numpy arrays
-        triangle = np.array(triangle)
-        box_center = np.array(box_center)
-        box_extents = np.array(box_extents)
 
         # Translate triangle as conceptually moving AABB to origin
         v = triangle - box_center
@@ -304,7 +299,7 @@ class Voxelization(PhysicalObject):
             for bbox_center in Voxelization._intersecting_boxes(min_point, max_point, voxel_size):
                 if bbox_center not in bbox_centers:
                     if Voxelization._triangle_aabb_intersection(
-                        triangle, bbox_center, [voxel_size for _ in range(3)]
+                        np.array(triangle), np.array(bbox_center), np.array([voxel_size for _ in range(3)])
                     ):
                         bbox_centers.add(bbox_center)
 
@@ -520,17 +515,52 @@ class Voxelization(PhysicalObject):
 
         for i, segments_i in enumerate([segments_x, segments_y, segments_z]):
             for absicssa, segments in segments_i.items():
+                # Order the segments lists
                 ordered_segments_list = Voxelization._order_segments(segments)
+
+                # Split the self-intersecting polygons
+                splitted_ordered_segments_list = []
+                for ordered_segments in ordered_segments_list:
+                    splitted_ordered_segments_list.extend(
+                        Voxelization._split_ordered_segments(ordered_segments)
+                    )
+                print(splitted_ordered_segments_list)
+
                 polygons[i][absicssa] = [
-                    Voxelization._ordered_segments_to_closed_polygon_2d(ordered_segments)
-                    for ordered_segments in ordered_segments_list
+                    Voxelization._ordered_segments_to_closed_polygon_2d(splitted_ordered_segments)
+                    for splitted_ordered_segments in splitted_ordered_segments_list
                 ]
 
         return polygons
 
     @staticmethod
+    def _split_ordered_segments(ordered_segments):
+        points = [segment[0] for segment in ordered_segments]
+
+        if len(points) == len(set(points)):
+            # If no duplicate points, the polygon is not self-intersecting
+            return [ordered_segments]
+
+        graph = Graph(ordered_segments)
+        ordered_segments_list = []
+        print("")
+        for cycle in graph.find_cycles():
+            ordered_segments_list.extend(Voxelization._order_segments(cycle))
+            # print(Voxelization._order_segments(cycle))
+
+        print(ordered_segments_list)
+
+        # for ordered_segments in ordered_segments_list:
+        #     ClosedPolygon2D([Point2D(*segment[0]) for segment in ordered_segments]).plot()
+
+        return ordered_segments_list
+
+    @staticmethod
     def _simplify_polygon_points(points):
         simplifyed_point = []
+
+        if len(points) != len(set(points)):
+            ClosedPolygon2D([Point2D(*point) for point in points]).plot()
 
         for i in range(len(points) - 1):
             if not (
@@ -597,11 +627,11 @@ class Voxelization(PhysicalObject):
                         for polygon_2 in polygons:
                             if polygon_1 != polygon_2:
                                 if polygon_1.is_inside(polygon_2):
-                                    children[polygon_2].append(polygon_1)
-                                    parents[polygon_1].append(polygon_2)
-                                elif polygon_2.is_inside(polygon_1):
                                     children[polygon_1].append(polygon_2)
                                     parents[polygon_2].append(polygon_1)
+                                elif polygon_2.is_inside(polygon_1):
+                                    children[polygon_2].append(polygon_1)
+                                    parents[polygon_1].append(polygon_2)
 
                     for polygon in polygons:
                         if len(parents[polygon]) // 2 == 0:
