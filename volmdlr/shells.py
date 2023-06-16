@@ -779,9 +779,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                     discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
                                                                                   start_point_tag=start_point_tag
-                                                                                  + point_account,
+                                                                                                  + point_account,
                                                                                   end_point_tag=end_point_tag
-                                                                                  + point_account))
+                                                                                                + point_account))
 
                             if isinstance(primitive, volmdlr.edges.LineSegment):
 
@@ -807,7 +807,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             line_account += 1
 
                         if primitives[index].is_close(primitive.reverse()):
-
                             lines_tags.append(-indices_check[index])
 
                     lines.append(contour.get_geo_lines(line_loop_account + 1, lines_tags))
@@ -974,7 +973,7 @@ class ClosedShell3D(OpenShell3D):
         vec3 = bbox_outside_points[2] - point3d
         vec3 = vec3.to_vector()
         rays = [edges.LineSegment3D(
-                point3d, point3d + 2 * vec1 + random.random()*vec2 + random.random()*vec3) for _ in range(10)]
+            point3d, point3d + 2 * vec1 + random.random() * vec2 + random.random() * vec3) for _ in range(10)]
         return rays
 
     def point_belongs(self, point3d: volmdlr.Point3D, **kwargs):
@@ -1600,6 +1599,134 @@ class ClosedShell3D(OpenShell3D):
         step_content += f"#{brep_id} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id}),#7);\n"
 
         return step_content, brep_id
+
+    def to_step_product(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
+        step_content = ''
+        faces_content = ''
+        face_ids = []
+
+        product_definition_context_id = current_id + 1
+        step_content += (f"#{product_definition_context_id} = "
+                         + "PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n")
+
+        product_context_id = product_definition_context_id + 1
+        step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
+        product_id = product_context_id + 1
+        step_content += f"#{product_id} = PRODUCT('{self.name}'," \
+                        f"'{self.name}','',(#{product_context_id}));\n"
+        product_definition_formation_id = product_id + 1
+        step_content += f"#{product_definition_formation_id} = " \
+                        f"PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
+        product_definition_id = product_definition_formation_id + 1
+        step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
+                        f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
+        product_definition_shape_id = product_definition_id + 1
+        step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
+                        f"'',#{product_definition_id});\n"
+        shape_definition_repr_id = product_definition_shape_id + 1
+        shape_representation_id = shape_definition_repr_id + 1
+        step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
+                        f"#{product_definition_shape_id},#{shape_representation_id});\n"
+
+        brep_id = shape_representation_id
+        frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id + 1)
+        manifold_id = frame_id + 1
+        shell_id = manifold_id + 1
+
+        current_id = shell_id + 1
+        for face in self.faces:
+            if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
+                face_content, face_sub_ids = face.to_step(current_id)
+            else:
+                face_content, face_sub_ids = face.to_step(current_id)
+                face_sub_ids = [face_sub_ids]
+            faces_content += face_content
+            face_ids.extend(face_sub_ids)
+            current_id = max(face_sub_ids) + 1
+
+        legth_unit_id = current_id
+        plane_angle_unit_id = legth_unit_id + 1
+        solid_angle_unit = plane_angle_unit_id + 1
+        uncertainty_id = solid_angle_unit + 1
+        geometric_representation_context_id = uncertainty_id + 1
+
+        step_content += f"#{brep_id} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id})," \
+                        f"#{geometric_representation_context_id});\n"
+        step_content += frame_content
+        step_content += f"#{manifold_id} = MANIFOLD_SOLID_BREP('{self.name}',#{shell_id});\n"
+        step_content += f"#{shell_id} = {self.STEP_FUNCTION}('{self.name}'," \
+                        f"({volmdlr.core.step_ids_to_str(face_ids)}));\n"
+        step_content += faces_content
+
+        step_content += f"#{legth_unit_id} = ( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) );\n"
+        step_content += f"#{plane_angle_unit_id} = ( NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.) );\n"
+        step_content += f"#{solid_angle_unit} = ( NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT() );\n"
+        step_content += f"#{uncertainty_id} = UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-07),#{legth_unit_id}," \
+                        f"'distance_accuracy_value','confusion accuracy');\n"
+        step_content += f"#{geometric_representation_context_id} = ( GEOMETRIC_REPRESENTATION_CONTEXT(3) " \
+                        f"GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#{uncertainty_id})) " \
+                        f"GLOBAL_UNIT_ASSIGNED_CONTEXT((#{legth_unit_id},#{plane_angle_unit_id}," \
+                        f"#{solid_angle_unit})) " \
+                        f"REPRESENTATION_CONTEXT('Context #1','3D Context with UNIT and UNCERTAINTY') );\n"
+
+        product_related_category = geometric_representation_context_id + 1
+        step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
+                        f"'part',$,(#{product_id}));\n"
+        draughting_id = product_related_category + 1
+        step_content += f"#{draughting_id} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n"
+        color_id = draughting_id + 1
+        primitive_color = (1, 1, 1)
+        if hasattr(self, 'color') and self.color is not None:
+            primitive_color = self.color
+        step_content += f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)}," \
+                        f"{round(float(primitive_color[1]), 4)},{round(float(primitive_color[2]), 4)});\n"
+
+        curve_style_id = color_id + 1
+        step_content += f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," \
+                        f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
+
+        fill_area_color_id = curve_style_id + 1
+        step_content += f"#{fill_area_color_id} = FILL_AREA_STYLE_COLOUR('',#{color_id});\n"
+
+        fill_area_id = fill_area_color_id + 1
+        step_content += f"#{fill_area_id} = FILL_AREA_STYLE('',#{fill_area_color_id});\n"
+
+        suface_fill_area_id = fill_area_id + 1
+        step_content += f"#{suface_fill_area_id} = SURFACE_STYLE_FILL_AREA(#{fill_area_id});\n"
+
+        suface_side_style_id = suface_fill_area_id + 1
+        step_content += f"#{suface_side_style_id} = SURFACE_SIDE_STYLE('',(#{suface_fill_area_id}));\n"
+
+        suface_style_usage_id = suface_side_style_id + 1
+        step_content += f"#{suface_style_usage_id} = SURFACE_STYLE_USAGE(.BOTH.,#{suface_side_style_id});\n"
+
+        presentation_style_id = suface_style_usage_id + 1
+
+        step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
+                        f"#{curve_style_id}));\n"
+
+        styled_item_id = presentation_style_id + 1
+        if self.__class__.__name__ == 'OpenShell3D':
+            for face_id in face_ids:
+                step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                                f"#{face_id});\n"
+                styled_item_id += 1
+            styled_item_id -= 1
+        else:
+            step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                            f"#{manifold_id});\n"
+        mechanical_design_id = styled_item_id + 1
+        step_content += f"#{mechanical_design_id} =" \
+                        f" MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION(" \
+                        f"'',(#{styled_item_id}),#{geometric_representation_context_id});\n"
+        current_id = mechanical_design_id
+
+        current_id = geometric_representation_context_id
+        return step_content, current_id
+
 
 class OpenTriangleShell3D(OpenShell3D):
     """
