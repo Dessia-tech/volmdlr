@@ -6745,9 +6745,29 @@ class BSplineSurface3D(Surface3D):
                 derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])
         return derivatives
 
+    def _determine_contour_params(self,outer_contour_start, outer_contour_end, inner_contour_start, inner_contour_end):
+        """
+        Helper function.
+        """
+        u1, v1 = outer_contour_start
+        u2, v2 = outer_contour_end
+        u3, v3 = inner_contour_start
+        u4, v4 = inner_contour_end
+        if self.x_periodicity and self.y_periodicity:
+            raise NotImplementedError
+        if self.x_periodicity:
+            outer_contour_param = [u1, u2]
+            inner_contour_param = [u3, u4]
+        elif self.y_periodicity:
+            outer_contour_param = [v1, v2]
+            inner_contour_param = [v3, v4]
+        else:
+            raise NotImplementedError
+        return outer_contour_param, inner_contour_param
+
     def connect_contours(self, outer_contour, inner_contours):
         """
-        Repair contours on parametric domain.
+        Create connections between contours on parametric domain.
 
         :param outer_contour: Outer contour 2D.
         :type inner_contours: wires.Contour2D
@@ -6759,39 +6779,20 @@ class BSplineSurface3D(Surface3D):
         point1 = outer_contour.primitives[0].start
         point2 = outer_contour.primitives[-1].end
 
-        u1, v1 = point1
-        u2, v2 = point2
-
         for inner_contour in inner_contours:
-            u3, v3 = inner_contour.primitives[0].start
-            u4, v4 = inner_contour.primitives[-1].end
-
             if not inner_contour.is_ordered():
-                if self.x_periodicity and self.y_periodicity:
-                    raise NotImplementedError
-                if self.x_periodicity:
-                    outer_contour_param = [u1, u2]
-                    inner_contour_param = [u3, u4]
-                elif self.y_periodicity:
-                    outer_contour_param = [v1, v2]
-                    inner_contour_param = [v3, v4]
-                else:
-                    raise NotImplementedError
-
-                point1 = outer_contour.primitives[0].start
-                point2 = outer_contour.primitives[-1].end
-                point3 = inner_contour.primitives[0].start
-                point4 = inner_contour.primitives[-1].end
+                outer_contour_param, inner_contour_param = self._determine_contour_params(point1, point2,
+                                                inner_contour.primitives[0].start, inner_contour.primitives[-1].end)
 
                 outer_contour_direction = outer_contour_param[0] < outer_contour_param[1]
                 inner_contour_direction = inner_contour_param[0] < inner_contour_param[1]
                 if outer_contour_direction == inner_contour_direction:
                     inner_contour = inner_contour.invert()
-                    point3 = inner_contour.primitives[0].start
-                    point4 = inner_contour.primitives[-1].end
 
-                closing_linesegment1 = edges.LineSegment2D(point2, point3)
-                closing_linesegment2 = edges.LineSegment2D(point4, point1)
+                closing_linesegment1 = edges.LineSegment2D(outer_contour.primitives[-1].end,
+                                                           inner_contour.primitives[0].start)
+                closing_linesegment2 = edges.LineSegment2D(inner_contour.primitives[-1].end,
+                                                           outer_contour.primitives[0].start)
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
                                                inner_contour.primitives + \
                                                [closing_linesegment2]
@@ -6801,7 +6802,8 @@ class BSplineSurface3D(Surface3D):
                 new_inner_contours.append(inner_contour)
         return new_outer_contour, new_inner_contours
 
-    def _get_overlapping_theta(self, outer_contour_startend_theta, inner_contour_startend_theta):
+    @staticmethod
+    def _get_overlapping_theta(outer_contour_startend_theta, inner_contour_startend_theta):
         """
         Find overlapping theta domain between two contours on periodical Surfaces.
         """

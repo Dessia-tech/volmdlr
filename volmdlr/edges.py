@@ -1550,9 +1550,16 @@ class BSplineCurve(Edge):
         else:
             return []
             # raise NotImplementedError
+        return self._get_shared_section_from_split(bspline1_, bspline2_, other_bspline2, abs_tol)
+
+    @staticmethod
+    def _get_shared_section_from_split(bspline1_, bspline2_, other_bspline2, abs_tol):
+        """
+        Helper function to get_shared_section
+        """
         shared_bspline_section = []
         for bspline in [bspline1_, bspline2_]:
-            if bspline and all(other_bspline2.point_belongs(point)
+            if bspline and all(other_bspline2.point_belongs(point, abs_tol=abs_tol)
                                for point in bspline.discretization_points(number_points=10)):
                 shared_bspline_section.append(bspline)
                 break
