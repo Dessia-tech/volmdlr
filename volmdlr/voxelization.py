@@ -299,7 +299,9 @@ class Voxelization(PhysicalObject):
             for bbox_center in Voxelization._intersecting_boxes(min_point, max_point, voxel_size):
                 if bbox_center not in bbox_centers:
                     if Voxelization._triangle_aabb_intersection(
-                        np.array(triangle), np.array(bbox_center), np.array([voxel_size for _ in range(3)])
+                        np.array(triangle),
+                        np.array(bbox_center),
+                        np.array([voxel_size for _ in range(3)]),
                     ):
                         bbox_centers.add(bbox_center)
 
@@ -524,7 +526,6 @@ class Voxelization(PhysicalObject):
                     splitted_ordered_segments_list.extend(
                         Voxelization._split_ordered_segments(ordered_segments)
                     )
-                print(splitted_ordered_segments_list)
 
                 polygons[i][absicssa] = [
                     Voxelization._ordered_segments_to_closed_polygon_2d(splitted_ordered_segments)
@@ -543,17 +544,63 @@ class Voxelization(PhysicalObject):
 
         graph = Graph(ordered_segments)
         ordered_segments_list = []
-        print("")
+
         for cycle in graph.find_cycles():
             ordered_segments_list.extend(Voxelization._order_segments(cycle))
             # print(Voxelization._order_segments(cycle))
 
-        print(ordered_segments_list)
+        polygons = {}
+        for ordered_segments in ordered_segments_list:
+            polygons[tuple(ordered_segments)] = Voxelization._ordered_segments_to_closed_polygon_2d(ordered_segments)
 
-        # for ordered_segments in ordered_segments_list:
-        #     ClosedPolygon2D([Point2D(*segment[0]) for segment in ordered_segments]).plot()
+        # Check for polygon inclusion
+        children = {}
+        parents = {}
+        for polygon in polygons.values():
+            children[polygon] = []
+            parents[polygon] = []
 
-        return ordered_segments_list
+        for polygon_1 in polygons.values():
+            for polygon_2 in polygons.values():
+                if polygon_1 != polygon_2:
+                    if polygon_1.is_inside(polygon_2):
+                        children[polygon_1].append(polygon_2)
+                        parents[polygon_2].append(polygon_1)
+                    elif polygon_2.is_inside(polygon_1):
+                        children[polygon_2].append(polygon_1)
+                        parents[polygon_1].append(polygon_2)
+
+        # Actual splited polygons have no childen in the cycle-defined polygons from the self-intersecting polygon
+        candidate_polygons = {}
+        for ordered_segments, polygon in polygons.items():
+            if len(children[polygon]) == 0:
+                candidate_polygons[ordered_segments] = polygon
+
+        # If the polygon has all its segments part of the other polygons segments, it is an inner polygon
+        ordered_segments_list = []
+        for ordered_segments in candidate_polygons.keys():
+            ordered_segments_list.append(list(ordered_segments))
+
+        ordered_segments_list_valid = []
+        for i in range(len(ordered_segments_list)):
+            all_current_polygon_segments = []
+            all_other_polygons_segments = []
+
+            for segment in ordered_segments_list[i]:
+                all_current_polygon_segments.append(segment)
+                all_current_polygon_segments.append(segment[::-1])
+
+            for segments in ordered_segments_list[:i] + ordered_segments_list[i+1:]:
+                for segment in segments:
+                    all_other_polygons_segments.append(segment)
+                    all_other_polygons_segments.append(segment[::-1])
+
+            for segment in all_current_polygon_segments:
+                if segment not in all_other_polygons_segments:
+                    ordered_segments_list_valid.append(ordered_segments_list[i])
+                    break
+
+        return ordered_segments_list_valid
 
     @staticmethod
     def _simplify_polygon_points(points):

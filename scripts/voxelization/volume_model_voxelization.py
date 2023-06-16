@@ -12,7 +12,7 @@ cylinder = Cylinder(volmdlr.Point3D(0.0, 0.0, 0.1), volmdlr.Z3D, 0.1, 0.2, name=
 volume_model = VolumeModel([sphere, cylinder])
 
 # Voxelize the volume model (it uses the triangulated model to create the voxelization)
-voxelization = Voxelization.from_volume_model(volume_model, 0.005)
+voxelization = Voxelization.from_volume_model(volume_model, 0.1, name="Voxels")
 
 # Display the result
 volume_model.primitives.extend(voxelization.volmdlr_primitives())
