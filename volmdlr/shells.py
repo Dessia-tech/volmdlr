@@ -1572,7 +1572,34 @@ class ClosedShell3D(OpenShell3D):
                         break
         self._faces_graph = None
 
+    def to_step(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
+        step_content = ''
+        face_ids = []
+        for face in self.faces:
+            if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
+                face_content, face_sub_ids = face.to_step(current_id)
+            else:
+                face_content, face_sub_ids = face.to_step(current_id)
+                face_sub_ids = [face_sub_ids]
+            step_content += face_content
+            face_ids.extend(face_sub_ids)
+            current_id = max(face_sub_ids) + 1
 
+        shell_id = current_id
+        step_content += f"#{current_id} = {self.STEP_FUNCTION}('{self.name}'," \
+                        f"({volmdlr.core.step_ids_to_str(face_ids)}));\n"
+        manifold_id = shell_id + 1
+        step_content += f"#{manifold_id} = MANIFOLD_SOLID_BREP('{self.name}',#{shell_id});\n"
+
+        frame_content, frame_id = volmdlr.OXYZ.to_step(manifold_id + 1)
+        step_content += frame_content
+        brep_id = frame_id + 1
+        step_content += f"#{brep_id} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id}),#7);\n"
+
+        return step_content, brep_id
 
 class OpenTriangleShell3D(OpenShell3D):
     """

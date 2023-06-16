@@ -1194,15 +1194,31 @@ class Assembly(dc.PhysicalObject):
         """
         Creates step file entities from volmdlr objects.
         """
-        step_content = []
-        for primitive in self.primitives:
+        step_content = ''
+
+        # 10 = SHAPE_REPRESENTATION('',(#11,#15,#19),#23);
+        for primitive, position in (self.components, self.positions):
+
+            # step_content +=
+
+
+            # 52 = ITEM_DEFINED_TRANSFORMATION('','',#11,#15);
+            # 36 = SHAPE_REPRESENTATION('',(#11,#37,#41),#45);
+            # 51 = ( REPRESENTATION_RELATIONSHIP('','',#36,#10)
+            # REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION(  # 52)
+            #    SHAPE_REPRESENTATION_RELATIONSHIP());
+            # 50 = CONTEXT_DEPENDENT_SHAPE_REPRESENTATION(#51,#53);
+
+
+            # 53 = PRODUCT_DEFINITION_SHAPE('Placement','Placement of an item',#54);
+            # 54 = NEXT_ASSEMBLY_USAGE_OCCURRENCE('17','Bauteil-2_Filter2','',#5,#31, $);
+
             if primitive.__class__.__name__ == 'OpenShell3D':
                 primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
             else:
                 primitive_content, primitive_id = primitive.to_step(current_id)
 
             step_content += primitive_content
-
             product_definition_context_id = primitive_id + 1
             step_content += (f"#{product_definition_context_id} = "
                              + "PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n")
