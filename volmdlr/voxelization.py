@@ -28,7 +28,7 @@ class Voxelization(PhysicalObject):
 
     @classmethod
     def from_closed_triangle_shell(
-            cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, name: str = ""
+        cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, name: str = ""
     ):
         triangles = cls._closed_triangle_shell_to_triangles(closed_triangle_shell)
         voxels = cls._triangles_to_voxels(triangles, voxel_size)
@@ -88,7 +88,7 @@ class Voxelization(PhysicalObject):
 
     @staticmethod
     def _triangle_aabb_intersection(
-            triangle: np.ndarray, box_center: np.ndarray, box_extents: np.ndarray
+        triangle: np.ndarray, box_center: np.ndarray, box_extents: np.ndarray
     ) -> bool:
         X, Y, Z = 0, 1, 2
 
@@ -149,9 +149,9 @@ class Voxelization(PhysicalObject):
 
         # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
         r = (
-                box_extents[X] * abs(plane_normal[X])
-                + box_extents[Y] * abs(plane_normal[Y])
-                + box_extents[Z] * abs(plane_normal[Z])
+            box_extents[X] * abs(plane_normal[X])
+            + box_extents[Y] * abs(plane_normal[Y])
+            + box_extents[Z] * abs(plane_normal[Z])
         )
 
         # Intersection occurs when plane distance falls within [-r,+r] interval
@@ -162,9 +162,9 @@ class Voxelization(PhysicalObject):
 
     @staticmethod
     def _intersecting_boxes(
-            min_point: Tuple[float, ...],
-            max_point: Tuple[float, ...],
-            voxel_size: float,
+        min_point: Tuple[float, ...],
+        max_point: Tuple[float, ...],
+        voxel_size: float,
     ) -> List[Tuple[float, ...]]:
         """
         Calculate the indices of the cubes that intersect with a bounding box.
@@ -225,8 +225,8 @@ class Voxelization(PhysicalObject):
 
     @staticmethod
     def _intersecting_voxels(
-            voxel_array: np.ndarray,
-            voxel_size: float,
+        voxel_array: np.ndarray,
+        voxel_size: float,
     ) -> Set[Tuple[float, ...]]:
         """
         Calculate the indices of the cubes that intersect with a bounding box.
@@ -251,8 +251,8 @@ class Voxelization(PhysicalObject):
 
     @staticmethod
     def _surrounding_voxels(
-            voxel_array: np.ndarray,
-            voxel_size: float,
+        voxel_array: np.ndarray,
+        voxel_size: float,
     ) -> Set[Tuple[float, ...]]:
         surrounding_voxels = Voxelization._round_point_cloud_voxel_size(voxel_array, voxel_size)
 
@@ -282,8 +282,8 @@ class Voxelization(PhysicalObject):
 
     @staticmethod
     def _triangles_to_voxels(
-            triangles: List[Tuple[Tuple[float, ...], ...]],
-            voxel_size: float,
+        triangles: List[Tuple[Tuple[float, ...], ...]],
+        voxel_size: float,
     ) -> set:
         """
         Convert a list of triangles into a voxel representation.
@@ -304,7 +304,7 @@ class Voxelization(PhysicalObject):
             for bbox_center in Voxelization._intersecting_boxes(min_point, max_point, voxel_size):
                 if bbox_center not in bbox_centers:
                     if Voxelization._triangle_aabb_intersection(
-                            triangle, bbox_center, [voxel_size for _ in range(3)]
+                        triangle, bbox_center, [voxel_size for _ in range(3)]
                     ):
                         bbox_centers.add(bbox_center)
 
@@ -514,7 +514,7 @@ class Voxelization(PhysicalObject):
         return ordered_segments_list
 
     @staticmethod
-    def _triangles_to_closed_polygon(triangles):
+    def _triangles_to_closed_polygons(triangles):
         segments_x, segments_y, segments_z = Voxelization._triangles_to_segments(triangles)
         polygons = [{}, {}, {}]
 
@@ -534,8 +534,8 @@ class Voxelization(PhysicalObject):
 
         for i in range(len(points) - 1):
             if not (
-                    points[i - 1][0] == points[i][0] == points[i + 1][0]
-                    or points[i - 1][1] == points[i][1] == points[i + 1][1]
+                points[i - 1][0] == points[i][0] == points[i + 1][0]
+                or points[i - 1][1] == points[i][1] == points[i + 1][1]
             ):
                 simplifyed_point.append(points[i])
 
@@ -550,9 +550,12 @@ class Voxelization(PhysicalObject):
     @staticmethod
     def _ordered_segments_to_closed_polygon_2d(ordered_segments):
         return ClosedPolygon2D(
-            points=Voxelization._simplify_polygon_points(
-                [Point2D(*segment[0]) for segment in ordered_segments]
-            )
+            points=[
+                Point2D(*point)
+                for point in Voxelization._simplify_polygon_points(
+                    [segment[0] for segment in ordered_segments]
+                )
+            ]
         )
 
     def to_triangles(self):
@@ -568,7 +571,7 @@ class Voxelization(PhysicalObject):
         return triangles
 
     def to_closed_shell(self):
-        polygons = self._triangles_to_closed_polygon(self.to_triangles())
+        polygons = self._triangles_to_closed_polygons(self.to_triangles())
         planes = [PLANE3D_OYZ, PLANE3D_OXZ, PLANE3D_OXY]
         faces = []
 
