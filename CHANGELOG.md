@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: fix some special cases whiling transforming from 3D space to parametric domain.
 - fix drone python version
 - BSplineFace3D: neutral_fiber
+- BSplineSurface3D: arc3d_to_2d, removes repeated parametric points if any.
 - surfaces.Plane3D: linesegment_intersections
 - Step export
 - Step import
