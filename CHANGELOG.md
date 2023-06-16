@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - surfaces.Plane3D: linesegment_intersections
 - Step export
 - Step import
+- Edge: fix orientation of edges commig from step.
+
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces

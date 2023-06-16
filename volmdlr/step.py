@@ -241,7 +241,9 @@ def face_outer_bound(arguments, object_dict):
     :return: A Contour3D representing the BREP of a face.
     :rtype: volmdlr.wires.Contour3D
     """
-    return object_dict[arguments[1]]
+    if arguments[2] == '.T.':
+        return object_dict[arguments[1]]
+    return object_dict[arguments[1]].invert()
 
 
 def face_bound(arguments, object_dict):
