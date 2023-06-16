@@ -2,7 +2,7 @@
 Class for voxel representation of volmdlr closed_shell
 """
 import warnings
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Any, Dict
 
 import numpy as np
 from dessia_common.core import PhysicalObject
@@ -702,3 +702,53 @@ class Voxelization(PhysicalObject):
         # intersecting_voxels = self.surrounding_voxels(translated_voxels, self.voxel_size)
 
         return Voxelization(intersecting_voxels, self.voxel_size)
+
+
+class Graph:
+    def __init__(self, edges):
+        self.graph = self.build_graph(edges)
+        self.visited = {node: False for node in self.graph}
+
+    @staticmethod
+    def build_graph(edges):
+        """Builds adjacency list representation of graph from edge list"""
+        graph = {}
+        for edge in edges:
+            if edge[0] not in graph:
+                graph[edge[0]] = []
+            if edge[1] not in graph:
+                graph[edge[1]] = []
+            graph[edge[0]].append(edge[1])
+            graph[edge[1]].append(edge[0])  # assuming undirected graph
+        return graph
+
+    def find_cycles(self):
+        """Finds all unique cycles in the graph"""
+        cycles = []
+        for node in self.graph:
+            self._dfs(node, node, [], cycles)
+        return self._convert_to_edge_cycles(cycles)
+
+    def _dfs(self, node, start, path, cycles):
+        """Performs depth-first search to find cycles"""
+        self.visited[node] = True
+        path.append(node)
+        for neighbor in self.graph[node]:
+            if not self.visited[neighbor]:
+                self._dfs(neighbor, start, path, cycles)
+            elif neighbor == start and len(path) >= 3:
+                cycles.append(path[:])
+        path.pop()
+        self.visited[node] = False
+
+    @staticmethod
+    def _convert_to_edge_cycles(cycles):
+        """Converts node-based cycles to edge-based cycles, removing duplicates"""
+        edge_cycles_set = set()
+        for cycle in cycles:
+            edge_cycle = []
+            for i in range(len(cycle)):
+                edge_cycle.append(tuple(sorted([cycle[i], cycle[(i + 1) % len(cycle)]])))
+            edge_cycle.sort()  # sort the edges in the cycle
+            edge_cycles_set.add(tuple(edge_cycle))  # add it to the set
+        return [list(cycle) for cycle in edge_cycles_set]
