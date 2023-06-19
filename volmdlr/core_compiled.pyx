@@ -2113,6 +2113,7 @@ class Point3D(Vector3D):
             and the new current id
         :rtype: tuple
         """
+        current_id += 1
         content = "#{} = CARTESIAN_POINT('{}',({:.6f},{:.6f},{:.6f}));\n".format(current_id, self.name,
                                                                                  1000. * self.x,
                                                                                  1000. * self.y,
