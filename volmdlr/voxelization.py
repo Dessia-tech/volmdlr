@@ -1,5 +1,5 @@
 """
-Class for voxel representation of volmdlr closed_shell
+Class for voxel representation of volmdlr models
 """
 import warnings
 from typing import List, Set, Tuple
@@ -187,36 +187,6 @@ class Voxelization(PhysicalObject):
                     centers.append(center)
 
         return centers
-
-    # @staticmethod
-    # def intersecting_voxels(
-    #         voxel_array: np.ndarray,
-    #         voxel_size: float,
-    # ) -> Set[Tuple[float, ...]]:
-    #     """
-    #     Calculate the indices of the cubes that intersect with a bounding box.
-    #
-    #     :param voxel_array: array of voxel centers
-    #     :type voxel_array: np.ndarray
-    #     :param voxel_size: the size of the grid cubes
-    #     :type voxel_size: float
-    #     :return: a set of the centers of the intersecting cubes
-    #     :rtype: Set[Tuple[float, ...]]
-    #     """
-    #     min_points = (voxel_array - voxel_size / 2) // voxel_size
-    #     max_points = (voxel_array + voxel_size / 2) // voxel_size
-    #
-    #     all_centers = set()
-    #     for min_point, max_point in zip(min_points, max_points):
-    #         x_indices = range(int(min_point[0]), int(max_point[0]))
-    #         y_indices = range(int(min_point[1]), int(max_point[1]))
-    #         z_indices = range(int(min_point[2]), int(max_point[2]))
-    #
-    #         centers = list(itertools.product(x_indices, y_indices, z_indices))
-    #         centers = [tuple([round((_ + 1 / 2) * voxel_size, 6) for _ in c]) for c in centers]
-    #         all_centers.update(centers)  # updates the set with all new centers, ignoring duplicates
-    #
-    #     return all_centers
 
     @staticmethod
     def _intersecting_voxels(
@@ -782,6 +752,7 @@ class Voxelization(PhysicalObject):
 
 
 class Graph:
+    """Helper Class for subdividing self-crossing polygons."""
     def __init__(self, edges):
         self.graph = self.build_graph(edges)
         self.visited = {node: False for node in self.graph}
