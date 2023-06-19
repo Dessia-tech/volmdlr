@@ -14,13 +14,18 @@ from volmdlr.surfaces import Surface2D, PLANE3D_OYZ, PLANE3D_OXY, PLANE3D_OXZ
 from volmdlr.wires import ClosedPolygon2D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 
+# Typings
+Point = Tuple[float, ...]
+Triangle = Tuple[Point, ...]
+Mesh = List[Triangle]
+
 
 class Voxelization(PhysicalObject):
     """
     Class for manipulation voxelization of geometry
     """
 
-    def __init__(self, voxels: Set[Tuple[float, ...]], voxel_size: float, name: str = ""):
+    def __init__(self, voxels: Set[Point], voxel_size: float, name: str = ""):
         self.voxels = voxels
         self.voxel_size = voxel_size
 
@@ -157,10 +162,10 @@ class Voxelization(PhysicalObject):
 
     @staticmethod
     def _intersecting_boxes(
-        min_point: Tuple[float, ...],
-        max_point: Tuple[float, ...],
+        min_point: Point,
+        max_point: Point,
         voxel_size: float,
-    ) -> List[Tuple[float, ...]]:
+    ) -> List[Point]:
         """
         Calculate the indices of the cubes that intersect with a bounding box.
 
@@ -192,7 +197,7 @@ class Voxelization(PhysicalObject):
     def _intersecting_voxels(
         voxel_array: np.ndarray,
         voxel_size: float,
-    ) -> Set[Tuple[float, ...]]:
+    ) -> Set[Point]:
         """
         Calculate the indices of the cubes that intersect with a bounding box.
 
@@ -201,7 +206,7 @@ class Voxelization(PhysicalObject):
         :param voxel_size: the size of the grid cubes
         :type voxel_size: float
         :return: a set of the centers of the intersecting cubes
-        :rtype: Set[Tuple[float, ...]]
+        :rtype: Set[Point]
         """
         # Compute the voxel indices
         indices = np.floor(voxel_array / voxel_size).astype(int)
@@ -218,7 +223,7 @@ class Voxelization(PhysicalObject):
     def _surrounding_voxels(
         voxel_array: np.ndarray,
         voxel_size: float,
-    ) -> Set[Tuple[float, ...]]:
+    ) -> Set[Point]:
         surrounding_voxels = Voxelization._round_point_cloud_voxel_size(voxel_array, voxel_size)
 
         split_surruding_voxels = set()
@@ -247,9 +252,9 @@ class Voxelization(PhysicalObject):
 
     @staticmethod
     def _triangles_to_voxels(
-        triangles: List[Tuple[Tuple[float, ...], ...]],
+        triangles: List[Triangle],
         voxel_size: float,
-    ) -> set:
+    ) -> Set[Point]:
         """
         Convert a list of triangles into a voxel representation.
 
@@ -278,7 +283,7 @@ class Voxelization(PhysicalObject):
         return bbox_centers
 
     @staticmethod
-    def _voxel_faces(center, voxel_size):
+    def _voxel_faces(center: Point, voxel_size: float) -> List[Triangle]:
         x, y, z = center
         sx, sy, sz = voxel_size, voxel_size, voxel_size
         hx, hy, hz = sx / 2, sy / 2, sz / 2
@@ -379,7 +384,7 @@ class Voxelization(PhysicalObject):
         return faces
 
     @staticmethod
-    def _triangles_to_segments(triangles):
+    def _triangles_to_segments(triangles: List[Triangle]):
         segments_x = {}
         segments_y = {}
         segments_z = {}
@@ -605,7 +610,7 @@ class Voxelization(PhysicalObject):
             ]
         )
 
-    def to_triangles(self):
+    def to_triangles(self) -> Set[Triangle]:
         triangles = set()
 
         for voxel in tqdm(self.voxels):
@@ -617,7 +622,7 @@ class Voxelization(PhysicalObject):
 
         return triangles
 
-    def to_closed_shell(self):
+    def to_closed_shell(self) -> ClosedShell3D:
         polygons = self._triangles_to_closed_polygons(self.to_triangles())
         planes = [PLANE3D_OYZ, PLANE3D_OXZ, PLANE3D_OXY]
         faces = []
@@ -661,7 +666,7 @@ class Voxelization(PhysicalObject):
 
         return ClosedShell3D(faces, name=self.name)
 
-    def to_closed_triangle_shell(self):
+    def to_closed_triangle_shell(self) -> ClosedTriangleShell3D:
         triangles3d = [
             Triangle3D(Point3D(*triangle[0]), Point3D(*triangle[1]), Point3D(*triangle[2]))
             for triangle in tqdm(self.to_triangles())
@@ -677,7 +682,7 @@ class Voxelization(PhysicalObject):
 
         return [self.to_closed_shell()]
 
-    def intersection(self, other_voxelization: "Voxelization"):
+    def intersection(self, other_voxelization: "Voxelization") -> "Voxelization":
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError(
                 "Both voxelizations must have same voxel_size to perform intersection."
@@ -685,13 +690,13 @@ class Voxelization(PhysicalObject):
 
         return Voxelization(self.voxels.intersection(other_voxelization.voxels), self.voxel_size)
 
-    def union(self, other_voxelization: "Voxelization"):
+    def union(self, other_voxelization: "Voxelization") -> "Voxelization":
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform union.")
 
         return Voxelization(self.voxels.union(other_voxelization.voxels), self.voxel_size)
 
-    def difference(self, other_voxelization: "Voxelization"):
+    def difference(self, other_voxelization: "Voxelization") -> "Voxelization":
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform difference.")
 
