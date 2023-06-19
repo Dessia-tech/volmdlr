@@ -2416,7 +2416,7 @@ class LineSegment2D(LineSegment):
         """
         return 0.
 
-    def straight_line_second_moment_area(self, point: volmdlr.Point2D):
+    def straight_line_second_moment_area(self, *args, **kwargs):
         """Straight line second moment area for a line segment."""
         return 0, 0, 0
 
