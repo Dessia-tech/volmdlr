@@ -800,3 +800,81 @@ class Graph:
             edge_cycle.sort()  # sort the edges in the cycle
             edge_cycles_set.add(tuple(edge_cycle))  # add it to the set
         return [list(cycle) for cycle in edge_cycles_set]
+
+
+class OctreeNode:
+    def __init__(self, center: Point, size: float, depth: int, max_depth: int, count: int = 1):
+        self.children = []
+        self.center = center
+        self.size = size
+        self.depth = depth
+        self.max_depth = max_depth
+        if depth == 1:
+            print(f"{count} of 8")
+
+    def subdivide(self, mesh: Mesh):
+        children = []
+        if self.depth < self.max_depth:
+            half_size = self.size / 2
+            for i in range(2):
+                for j in range(2):
+                    for k in range(2):
+                        # calculate the center of the child node
+                        child_center = (
+                            self.center[0] + (i - 0.5) * half_size,
+                            self.center[1] + (j - 0.5) * half_size,
+                            self.center[2] + (k - 0.5) * half_size,
+                        )
+
+                        # create a new OctreeNode for the child
+                        count = k + 2 * j + 4 * i + 1
+                        child_node = OctreeNode(
+                            child_center,
+                            half_size,
+                            self.depth + 1,
+                            self.max_depth,
+                            count,
+                        )
+
+                        # check if the child node intersects with the mesh
+                        if self.depth != 0:
+                            # add the child node to the list of children
+                            self.children.extend(self.process_node(child_node, mesh))
+                        else:
+                            children.append(child_node)
+
+            if self.depth == 0:
+                for node in tqdm(
+                        self.process_node(node, mesh) for node in children
+                ):
+                    self.children.extend(node)
+
+        else:
+            return  # reached max depth, do not subdivide further.
+
+    def intersecting_triangles(self, mesh: Mesh) -> List[Triangle]:
+        intersecting_triangles = [
+            triangle
+            for triangle in mesh
+            if Voxelization._triangle_aabb_intersection(np.array(triangle), np.array(self.center), np.array([self.size for _ in range(3)]))
+        ]
+
+        return intersecting_triangles
+
+    def get_leaf_centers(self):
+        if self.depth == self.max_depth:  # if the node has no children, it is a leaf node
+            return [self.center]
+        else:
+            centers = []
+            for child in self.children:
+                centers += child.get_leaf_centers()
+            return centers
+
+    @staticmethod
+    def process_node(node, mesh):
+        triangles = node.intersecting_triangles(mesh)
+        if len(triangles) > 0:
+            # recursively subdivide the child node
+            node.subdivide(triangles)
+            return [node]
+        return []
