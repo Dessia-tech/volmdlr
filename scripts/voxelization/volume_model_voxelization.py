@@ -15,9 +15,15 @@ volume_model = VolumeModel([sphere, cylinder])
 voxelization = Voxelization.from_volume_model(volume_model, 0.005, name="Voxels")
 
 # Display the result
-volume_model.primitives.extend(voxelization.volmdlr_primitives())
-volume_model.babylonjs()
+# volume_model.primitives.extend(voxelization.volmdlr_primitives())
+# volume_model.babylonjs()
 
 # Compare triangulation methods
-voxelization.to_closed_shell().babylonjs()
-voxelization.to_closed_triangle_shell().babylonjs()
+closed_shell = voxelization.to_closed_shell()
+closed_triangle_shell = voxelization.to_closed_triangle_shell()
+
+print(sum([face.area() for face in closed_shell.faces]))
+print(sum([face.area() for face in closed_triangle_shell.faces]))
+
+volume_model = VolumeModel([closed_shell, closed_triangle_shell])
+volume_model.babylonjs()
