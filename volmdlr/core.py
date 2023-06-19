@@ -1759,6 +1759,9 @@ class VolumeModel(dc.PhysicalObject):
         stream.write(step_content)
 
     def volmdlr_volume_model(self):
+        """
+        Method needed due to PhysicalObject inheritance.
+        """
         return self
 
     def get_geo_lines(self):
