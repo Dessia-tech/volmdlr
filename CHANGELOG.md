@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix drone python version
 - BSplineFace3D: neutral_fiber
 - surfaces.Plane3D: linesegment_intersections
-- Step export
+- Export to step file
 - Step import
 - Edge: fix orientation of edges commig from step.
 
