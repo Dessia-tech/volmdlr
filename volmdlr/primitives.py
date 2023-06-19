@@ -203,7 +203,7 @@ class RoundedLineSegments:
             # Creating arcs
             for ipoint, radius in self.radius.items():
                 p_start, p_iterior, p_end, _, _ = self.arc_features(ipoint)
-                arcs[ipoint] = self.arc_class(p_start, p_iterior, p_end)
+                arcs[ipoint] = self.arc_class.from_3_points(p_start, p_iterior, p_end)
 
         return self.primitives_from_arcs(arcs)
 

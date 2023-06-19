@@ -12,8 +12,7 @@ import warnings
 import matplotlib.patches
 
 import volmdlr
-import volmdlr.edges
-import volmdlr.wires
+from volmdlr import wires, edges, curves
 from volmdlr.core import EdgeStyle
 from volmdlr.primitives import RoundedLineSegments
 
@@ -361,9 +360,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         if len(line_indexes) > 1:
             intersection = volmdlr.Point2D.line_intersection(
-                volmdlr.edges.Line2D(self.points[line_indexes[0]],
+                curves.Line2D(self.points[line_indexes[0]],
                                      self.points[line_indexes[0]] + dir_vec_1),
-                volmdlr.edges.Line2D(self.points[line_indexes[-1] + 1],
+                curves.Line2D(self.points[line_indexes[-1] + 1],
                                      self.points[line_indexes[-1] + 1] + dir_vec_2))
             vec1 = intersection.point_distance(
                 self.points[line_indexes[0]]) * dir_vec_1

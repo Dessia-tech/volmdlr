@@ -1236,7 +1236,7 @@ class Point2D(Vector2D):
                 min_distance, min_point = pd, point
         return min_point
 
-    def axial_symmetry(self, line: "volmdlr.edges.Line2D"):
+    def axial_symmetry(self, line: "volmdlr.curves.Line2D"):
         """
         Returns the symmetric two-dimensional point according to a line.
 
@@ -3806,6 +3806,24 @@ class Frame3D(Basis3D):
         w = Z3D.rotation(O3D, rot_axis, rot_angle)
 
         return cls(point, u, v, w)
+
+    @classmethod
+    def from_3_points(cls, point1, point2, point3):
+        """
+        Creates a frame 3d from 3 points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :param point3: point 3.
+        :return: a frame 3d.
+        """
+        vector1 = point2 - point1
+        vector2 = point3 - point1
+        vector1 = vector1.to_vector().unit_vector()
+        vector2 = vector2.to_vector().unit_vector()
+        normal = vector1.cross(vector2)
+        normal.normalize()
+        return cls(point1, vector1, normal.cross(vector1), normal)
 
     # def babylonjs(self, size=0.1, parent=None):
     #     """

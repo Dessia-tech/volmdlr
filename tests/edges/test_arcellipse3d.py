@@ -81,7 +81,7 @@ class TestArcEllipse3D(unittest.TestCase):
         self.assertTrue(arc_ellipse3d_complementary.start.is_close(self.arc_ellipse3d.end))
         self.assertTrue(arc_ellipse3d_complementary.end.is_close(self.arc_ellipse3d.start))
         self.assertAlmostEqual(self.arc_ellipse3d.length() + arc_ellipse3d_complementary.length(),
-                               self.arc_ellipse3d.ellipse3d.length())
+                               self.arc_ellipse3d.ellipse.length())
 
     def test_abscissa(self):
         expected_abcissas = [0, 1.1246510017713454, 2.4709452498238225,
@@ -102,7 +102,7 @@ class TestArcEllipse3D(unittest.TestCase):
             volmdlr.Point3D(-0.816496580927726, 0.40824829046386313, 0.40824829046386313)))
 
     def test_translation(self):
-        translated_arc_ellipse3d = self.arc_ellipse3d.translation(self.arc_ellipse3d.ellipse3d.frame.w)
+        translated_arc_ellipse3d = self.arc_ellipse3d.translation(self.arc_ellipse3d.ellipse.frame.w)
         self.assertTrue(translated_arc_ellipse3d.start.is_close(
             volmdlr.Point3D(0.2391463117381003, 1.8122784967090868, 0.39806493433599155)))
         self.assertTrue(translated_arc_ellipse3d.end.is_close(
@@ -111,7 +111,7 @@ class TestArcEllipse3D(unittest.TestCase):
 
     def test_rotation(self):
         rotated_arc_ellipse3d = self.arc_ellipse3d.rotation(
-            volmdlr.O3D,self.arc_ellipse3d.ellipse3d.frame.v, math.pi / 2)
+            volmdlr.O3D,self.arc_ellipse3d.ellipse.frame.v, math.pi / 2)
         self.assertTrue(rotated_arc_ellipse3d.start.is_close(
             volmdlr.Point3D(-0.577350269189626, -0.7113248654051868, 1.288675134594813)))
         self.assertTrue(rotated_arc_ellipse3d.end.is_close(
@@ -119,7 +119,7 @@ class TestArcEllipse3D(unittest.TestCase):
         self.assertAlmostEqual(self.arc_ellipse3d.length(), rotated_arc_ellipse3d.length())
 
     def test_frame_mapping(self):
-        frame_mapped_arc_ellipse3d = self.arc_ellipse3d.frame_mapping(self.arc_ellipse3d.ellipse3d.frame, 'new')
+        frame_mapped_arc_ellipse3d = self.arc_ellipse3d.frame_mapping(self.arc_ellipse3d.ellipse.frame, 'new')
         self.assertTrue(frame_mapped_arc_ellipse3d.start.is_close(
             volmdlr.Point3D(1.414213562373095, -0.7071067811865475, 0.0)))
         self.assertTrue(frame_mapped_arc_ellipse3d.end.is_close(

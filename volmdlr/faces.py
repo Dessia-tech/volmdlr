@@ -19,6 +19,7 @@ from volmdlr.core import EdgeStyle
 import volmdlr.core_compiled
 import volmdlr.display as vmd
 import volmdlr.edges as vme
+import volmdlr.curves as volmdlr_curves
 import volmdlr.geometry
 import volmdlr.grid
 from volmdlr import surfaces
@@ -220,13 +221,13 @@ class Face3D(volmdlr.core.Primitive3D):
         subsurfaces2d = [self.surface2d]
         line_x = None
         if self.surface3d.x_periodicity and (xmax - xmin) >= 0.45 * self.surface3d.x_periodicity:
-            line_x = vme.Line2D(volmdlr.Point2D(0.5 * (xmin + xmax), 0),
+            line_x = volmdlr_curves.Line2D(volmdlr.Point2D(0.5 * (xmin + xmax), 0),
                                 volmdlr.Point2D(
                                     0.5 * (xmin + xmax), 1))
         line_y = None
         if self.surface3d.y_periodicity and (
                 ymax - ymin) >= 0.45 * self.surface3d.y_periodicity:
-            line_y = vme.Line2D(
+            line_y = volmdlr_curves.Line2D(
                 volmdlr.Point2D(0., 0.5 * (ymin + ymax)),
                 volmdlr.Point2D(1, 0.5 * (ymin + ymax)))
 
@@ -424,7 +425,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return intersections
 
     def line_intersections(self,
-                           line: vme.Line3D,
+                           line: volmdlr_curves.Line3D,
                            ) -> List[volmdlr.Point3D]:
         intersections = []
         for intersection in self.surface3d.line_intersections(line):
@@ -496,7 +497,7 @@ class Face3D(volmdlr.core.Primitive3D):
         point_account, line_account, line_loop_account = 0, 0, 1
         for c_index, contour in enumerate(list(chain(*[[self.outer_contour3d], self.inner_contours3d]))):
 
-            if isinstance(contour, volmdlr.wires.Circle2D):
+            if isinstance(contour, volmdlr_curves.Circle2D):
                 # point=[contour.radius, contour.center.y, 0]
                 # lines.append('Point('+str(point_account+1)+') = {'+str(point)[1:-1]+', '+str(mesh_size)+'};')
 
@@ -1162,7 +1163,7 @@ class PlaneFace3D(Face3D):
                 return False
         return True
 
-    def circle_inside(self, circle: volmdlr.wires.Circle3D):
+    def circle_inside(self, circle: volmdlr_curves.Circle3D):
         if not math.isclose(abs(circle.frame.w.dot(self.surface3d.frame.w)), 1.0, abs_tol=1e-6):
             return False
         points = circle.discretization_points(number_points=4)
@@ -1209,7 +1210,7 @@ class PlaneFace3D(Face3D):
 
     def cylindricalface_intersections(self, cylindricalface: 'CylindricalFace3D'):
         cylindricalsurfaceface_intersections = cylindricalface.surface3d.plane_intersection(self.surface3d)
-        if not isinstance(cylindricalsurfaceface_intersections[0], vme.Line3D):
+        if not isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Line3D):
             if all(self.edge3d_inside(intersection) and cylindricalface.edge3d_inside(intersection)
                    for intersection in cylindricalsurfaceface_intersections):
                 return cylindricalsurfaceface_intersections
@@ -1225,7 +1226,7 @@ class PlaneFace3D(Face3D):
                     points_on_primitive.append(point)
             if not points_on_primitive:
                 continue
-            if isinstance(primitive, vme.Line3D):
+            if isinstance(primitive, volmdlr_curves.Line3D):
                 points_on_primitive = primitive.sort_points_along_line(points_on_primitive)
             else:
                 points_on_primitive = primitive.sort_points_along_wire(points_on_primitive)
@@ -1885,7 +1886,7 @@ class CylindricalFace3D(Face3D):
         lines = []
         for i in range(nlines):
             theta = theta_min + (i + 1) / (nlines + 1) * delta_theta
-            lines.append(vme.Line2D(volmdlr.Point2D(theta, zmin),
+            lines.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, zmin),
                                     volmdlr.Point2D(theta, zmax)))
         return lines, []
 
@@ -2110,14 +2111,14 @@ class ToroidalFace3D(Face3D):
         lines_x = []
         for i in range(nlines_x):
             theta = theta_min + (i + 1) / (nlines_x + 1) * delta_theta
-            lines_x.append(vme.Line2D(volmdlr.Point2D(theta, phi_min),
+            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, phi_min),
                                       volmdlr.Point2D(theta, phi_max)))
         delta_phi = phi_max - phi_min
         nlines_y = int(delta_phi * angle_resolution)
         lines_y = []
         for i in range(nlines_y):
             phi = phi_min + (i + 1) / (nlines_y + 1) * delta_phi
-            lines_y.append(vme.Line2D(volmdlr.Point2D(theta_min, phi),
+            lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta_min, phi),
                                       volmdlr.Point2D(theta_max, phi)))
         return lines_x, lines_y
 
@@ -2173,7 +2174,7 @@ class ToroidalFace3D(Face3D):
         Returns the faces' neutral fiber.
         """
         theta_min, theta_max, _, _ = self.surface2d.outer_contour.bounding_rectangle.bounds()
-        circle = volmdlr.wires.Circle3D(self.surface3d.frame, self.surface3d.tore_radius)
+        circle = volmdlr_curves.Circle3D(self.surface3d.frame, self.surface3d.tore_radius)
         point1, point2 = [circle.center + circle.radius * math.cos(theta) * circle.frame.u +
                           circle.radius * math.sin(theta) * circle.frame.v for theta in
                           [theta_max, theta_min]]
@@ -2224,12 +2225,12 @@ class ConicalFace3D(Face3D):
         lines_x = []
         for i in range(nlines):
             theta = theta_min + (i + 1) / (nlines + 1) * delta_theta
-            lines_x.append(vme.Line2D(volmdlr.Point2D(theta, zmin),
+            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, zmin),
                                       volmdlr.Point2D(theta, zmax)))
 
         if zmin < 1e-9:
             delta_z = zmax - zmin
-            lines_y = [vme.Line2D(volmdlr.Point2D(theta_min, zmin + 0.1 * delta_z),
+            lines_y = [volmdlr_curves.Line2D(volmdlr.Point2D(theta_min, zmin + 0.1 * delta_z),
                                   volmdlr.Point2D(theta_max, zmin + 0.1 * delta_z))]
         else:
             lines_y = []
@@ -2349,14 +2350,14 @@ class SphericalFace3D(Face3D):
         lines_x = []
         for i in range(nlines_x):
             theta = theta_min + (i + 1) / (nlines_x + 1) * delta_theta
-            lines_x.append(vme.Line2D(volmdlr.Point2D(theta, phi_min),
+            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, phi_min),
                                       volmdlr.Point2D(theta, phi_max)))
         delta_phi = phi_max - phi_min
         nlines_y = int(delta_phi * angle_resolution)
         lines_y = []
         for i in range(nlines_y):
             phi = phi_min + (i + 1) / (nlines_y + 1) * delta_phi
-            lines_y.append(vme.Line2D(volmdlr.Point2D(theta_min, phi),
+            lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta_min, phi),
                                       volmdlr.Point2D(theta_max, phi)))
         return lines_x, lines_y
 
@@ -2462,7 +2463,7 @@ class RuledFace3D(Face3D):
         lines = []
         for i in range(nlines):
             x = xmin + (i + 1) / (nlines + 1) * delta_x
-            lines.append(vme.Line2D(volmdlr.Point2D(x, ymin),
+            lines.append(volmdlr_curves.Line2D(volmdlr.Point2D(x, ymin),
                                     volmdlr.Point2D(x, ymax)))
         return lines, []
 
@@ -2672,14 +2673,14 @@ class BSplineFace3D(Face3D):
         lines_x = []
         for i in range(nlines_x):
             u = u_min + (i + 1) / (nlines_x + 1) * delta_u
-            lines_x.append(vme.Line2D(volmdlr.Point2D(u, v_min),
+            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(u, v_min),
                                       volmdlr.Point2D(u, v_max)))
         delta_v = v_max - v_min
         nlines_y = int(delta_v * resolution)
         lines_y = []
         for i in range(nlines_y):
             v = v_min + (i + 1) / (nlines_y + 1) * delta_v
-            lines_y.append(vme.Line2D(volmdlr.Point2D(v_min, v),
+            lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(v_min, v),
                                       volmdlr.Point2D(v_max, v)))
         return lines_x, lines_y
 
@@ -3080,9 +3081,9 @@ class BSplineFace3D(Face3D):
         :returns: The neutral fiber points if they exist, otherwise None.
         :rtype: Union[list, None]
         """
-        curves = self.surface3d.surface_curves
-        u_curves = curves['u']
-        v_curves = curves['v']
+        surface_curves = self.surface3d.surface_curves
+        u_curves = surface_curves['u']
+        v_curves = surface_curves['v']
         u_curves = [primitive.simplify
                     for primitive in u_curves if not isinstance(primitive.simplify, vme.LineSegment3D)]
         v_curves = [primitive.simplify

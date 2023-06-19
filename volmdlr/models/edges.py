@@ -11,7 +11,7 @@ bspline1 = edges.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, N
 
 lineseg = edges.LineSegment2D(volmdlr.Point2D(0, 0.2), volmdlr.Point2D(3, -0.2))
 
-arc = edges.Arc2D(volmdlr.Point2D(0, 0.3), volmdlr.Point2D(1, -0.3), volmdlr.Point2D(2, 2))
+arc = edges.Arc2D.from_3_points(volmdlr.Point2D(0, 0.3), volmdlr.Point2D(1, -0.3), volmdlr.Point2D(2, 2))
 u_vector = volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475)
 v_vector = volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)
 frame = volmdlr.Frame2D(volmdlr.O2D, u_vector, v_vector)

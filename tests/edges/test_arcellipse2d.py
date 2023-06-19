@@ -36,6 +36,18 @@ class TestArcEllipse2D(unittest.TestCase):
     def test_length(self):
         self.assertAlmostEqual(self.arc_ellipse2d.length(), 7.757120732103266)
 
+    def test_to_3d(self):
+        expected_points = [volmdlr.Point3D(1.0, 1.5, 2.5),
+                           volmdlr.Point3D(1.0, 0.0803671345838155, 1.477169381251236),
+                           volmdlr.Point3D(1.0, -0.581093271630204, 0.060946250290002224),
+                           volmdlr.Point3D(1.0, 0.06094625029000189, -0.5810932716302042),
+                           volmdlr.Point3D(1.0, 1.4771693812512356, 0.08036713458381528),
+                           volmdlr.Point3D(1.0, 2.5, 1.5)]
+        arcellipse3d = self.arc_ellipse2d.to_3d(volmdlr.Point3D(1, 1, 1), volmdlr.Y3D, volmdlr.Z3D)
+        points = arcellipse3d.discretization_points(number_points=6)
+        for point, expected_point in zip(points, expected_points):
+            self.assertTrue(point.is_close(expected_point))
+
     def test_discretization_points(self):
         expected_discretized_points = [volmdlr.Point2D(0.5000000000000001, 1.5),
                                        volmdlr.Point2D(-1.1944775825843852, 0.11208538229199128),

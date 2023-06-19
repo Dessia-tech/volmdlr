@@ -20,6 +20,7 @@ import volmdlr
 import volmdlr.core
 import volmdlr.edges
 import volmdlr.faces
+import volmdlr.curves
 import volmdlr.primitives3d
 import volmdlr.wires
 from volmdlr import surfaces
@@ -1387,9 +1388,9 @@ STEP_TO_VOLMDLR = {
     'AXIS2_PLACEMENT_2D': None,  # ??????????????????
     'AXIS2_PLACEMENT_3D': volmdlr.Frame3D,
 
-    'LINE': volmdlr.edges.Line3D,  # LineSegment3D,
-    'CIRCLE': volmdlr.wires.Circle3D,
-    'ELLIPSE': volmdlr.wires.Ellipse3D,
+    'LINE': volmdlr.curves.Line3D,  # LineSegment3D,
+    'CIRCLE': volmdlr.curves.Circle3D,
+    'ELLIPSE': volmdlr.curves.Ellipse3D,
     'PARABOLA': None,
     'HYPERBOLA': None,
     # 'PCURVE': None,

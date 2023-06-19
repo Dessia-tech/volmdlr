@@ -14,7 +14,7 @@ from dessia_common.core import DessiaObject
 import volmdlr.bspline_compiled
 import volmdlr.core_compiled
 import volmdlr.core
-from volmdlr import display, edges, wires, surfaces
+from volmdlr import display, edges, wires, surfaces, curves
 import volmdlr.faces
 import volmdlr.geometry
 from volmdlr.core import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
@@ -499,7 +499,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         # return intersections
 
     def line_intersections(self,
-                           line3d: edges.Line3D) \
+                           line3d: curves.Line3D) \
             -> List[Tuple[volmdlr.faces.Face3D, List[volmdlr.Point3D]]]:
         """
         Gets the intersections of a Shell3D with a Line Segment 3D.
