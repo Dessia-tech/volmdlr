@@ -2416,7 +2416,7 @@ class LineSegment2D(LineSegment):
         """
         return 0.
 
-    def straight_line_second_moment_area(self, point: volmdlr.Point2D):
+    def straight_line_second_moment_area(self, *args, **kwargs):
         """Straight line second moment area for a line segment."""
         return 0, 0, 0
 
@@ -2688,7 +2688,7 @@ class LineSegment2D(LineSegment):
 
         return Line2D(offset_point_1, offset_point_2)
 
-    def to_wire(self, n: int):
+    def to_wire(self, *args, **kwargs):
         """
         Convert a linesegment2d to a wire 2D defined with 'n' line_segments.
 
@@ -3730,7 +3730,7 @@ class FullArc2D(FullArc, Arc2D):
         return FullArc2D(self.center.copy(), self.start.copy())
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    def dict_to_object(cls, dict_, *args, **kwargs):
         center = volmdlr.Point2D.dict_to_object(dict_['center'])
         start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
 
