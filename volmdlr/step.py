@@ -1048,10 +1048,7 @@ class Step(dc.DessiaObject):
         """
         Gives the volmdlr object related to the step function.
         """
-        print('avant', arguments)
         self.parse_arguments(arguments)
-        print('apres', arguments)
-
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
         try:
