@@ -29,11 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: fix some special cases whiling transforming from 3D space to parametric domain.
 - fix drone python version
 - BSplineFace3D: neutral_fiber
+- BSplineSurface3D: arc3d_to_2d, removes repeated parametric points if any.
 - surfaces.Plane3D: linesegment_intersections
 - Export to step file
 - Step import
 - Edge: fix orientation of edges commig from step.
-
+- PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
