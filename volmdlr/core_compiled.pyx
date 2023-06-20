@@ -3597,9 +3597,9 @@ class Frame3D(Basis3D):
         """
         content, origin_id = self.origin.to_point().to_step(current_id)
         current_id = origin_id + 1
-        u_content, u_id = Vector3D.to_step(self.u, current_id)
+        u_content, u_id = Vector3D.to_step(self.w, current_id)
         current_id = u_id + 1
-        v_content, v_id = Vector3D.to_step(self.v, current_id)
+        v_content, v_id = Vector3D.to_step(self.x, current_id)
         current_id = v_id + 1
         content += u_content + v_content
         content += "#{} = AXIS2_PLACEMENT_3D('{}',#{},#{},#{});\n"\
