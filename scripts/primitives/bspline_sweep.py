@@ -31,7 +31,7 @@ bspline_curve3d = vme.BSplineCurve3D(degree=degree,
                                      name='B Spline Curve 3D 1')
 
 circle = curves.Circle2D(vm.O2D, 0.015)
-contour = vmw.Contour2D(circle.split_at_absccissa(circle.length()*.5))
+contour = vmw.Contour2D(circle.split_at_abscissa(circle.length()*.5))
 
 # rl = primitives3d.OpenRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
 

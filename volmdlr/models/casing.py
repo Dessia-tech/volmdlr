@@ -6,7 +6,7 @@ Test case representing a casing. Use extrusion features.
 
 import volmdlr as vm
 import volmdlr.wires
-from volmdlr import primitives2d, primitives3d, curves
+from volmdlr import primitives2d, primitives3d, curves, edges
 
 thickness = 0.005
 height = 0.080
@@ -42,7 +42,7 @@ for i in range(N_SCREWS):
     s = i * length / N_SCREWS
     p = screw_holes_rl.point_at_abscissa(s)
     circle = curves.Circle2D(p, SCREW_HOLES_DIAMETER*0.5)
-    screw_holes.append(volmdlr.wires.Contour2D(circle.split_at_absccissa(circle.length() * 0.5)))
+    screw_holes.append(volmdlr.wires.Contour2D([edges.FullArc2D.from_curve(circle)]))
 
 belt_outer_contour = inner_contour.offset(-(2*SCREW_HOLES_CLEARANCE + SCREW_HOLES_DIAMETER+thickness))
 belt = primitives3d.ExtrudedProfile(vm.Z3D*(height - 2*thickness), vm.X3D, vm.Y3D,

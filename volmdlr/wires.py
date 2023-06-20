@@ -1340,9 +1340,9 @@ class ContourMixin(WireMixin):
     Abstract class for Contour, storing methods and attributes used by Contour2D and Contour3D.
 
     """
-    @classmethod
-    def from_circle(cls, circle):
-        return cls(circle.split_at_absccissa(circle.length() * 0.5))
+    # @classmethod
+    # def from_curve(cls, curve):
+    #     return cls(circle.split_at_absccissa(circle.length() * 0.5))
 
     def is_ordered(self, tol=1e-6):
         """
@@ -2239,7 +2239,7 @@ class Contour2D(ContourMixin, Wire2D):
         if not intersections or len(intersections) < 2:
             return [self]
         points_intersections = [point for point, prim in intersections]
-        sorted_points = line.sort_points_along_line(points_intersections)
+        sorted_points = line.sort_points_along_curve(points_intersections)
         list_contours = []
         contour_to_cut = self
 

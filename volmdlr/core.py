@@ -1566,6 +1566,7 @@ class VolumeModel(dc.PhysicalObject):
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
+        import volmdlr.stl
         stl = volmdlr.stl.Stl.from_display_mesh(mesh)
         return stl
 

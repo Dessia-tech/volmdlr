@@ -351,6 +351,8 @@ class Edge(dc.DessiaObject):
         abscissa2 = self.abscissa(point2)
         discretized_points_between_1_2 = []
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
+            if abscissa > self.length() + 1e-6:
+                continue
             abscissa_point = self.point_at_abscissa(abscissa)
             if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
                 discretized_points_between_1_2.append(abscissa_point)
@@ -3047,6 +3049,10 @@ class FullArc(Arc):
         return [class_(self.circle, self.start, split_point, self.is_trigo),
                 class_(self.circle, split_point, self.end, self.is_trigo)]
 
+    @classmethod
+    def from_curve(cls, circle):
+        return cls(circle, circle.center + circle.frame.u * circle.radius)
+
 
 class Arc2D(Arc):
     """
@@ -3092,6 +3098,12 @@ class Arc2D(Arc):
             return False
         return (self.circle == other_arc.circle and self.start == other_arc.start
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
+
+    # @classmethod
+    # def dict_to_object(cls, dict_, force_generic: bool = False, global_dict=None,
+    #                    pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    #     if 'interior' in dict_:
+    #         print(True)
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
@@ -4334,6 +4346,12 @@ class ArcEllipse2D(Edge):
             _, ax = plt.subplots()
 
         # self.interior.plot(ax=ax, color='m')
+        # start = self.ellipse.frame.global_to_local_coordinates(self.start)
+        # end = self.ellipse.frame.global_to_local_coordinates(self.end)
+        # center = self.ellipse.frame.global_to_local_coordinates(self.ellipse.center)
+        # start.plot(ax=ax, color='r')
+        # end.plot(ax=ax, color='b')
+        # center.plot(ax=ax, color='y')
         self.start.plot(ax=ax, color='r')
         self.end.plot(ax=ax, color='b')
         self.ellipse.center.plot(ax=ax, color='y')
@@ -4623,6 +4641,10 @@ class FullArcEllipse(Edge):
         :rtype: float
         """
         raise NotImplementedError(f'the abscissa method must be overloaded by {self.__class__.__name__}')
+
+    @classmethod
+    def from_curve(cls, ellipse):
+        return cls(ellipse, ellipse.center + ellipse.frame.u * ellipse.major_axis)
 
 
 class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
@@ -5603,11 +5625,11 @@ class LineSegment3D(LineSegment):
                 # Only 2 circles as contours
                 bigger_circle = volmdlr_curves.Circle2D(volmdlr.O2D, bigger_r)
                 outer_contour2d = volmdlr.wires.Contour2D(
-                    bigger_circle.split_at_absccissa(bigger_circle.length() * 0.5))
+                    bigger_circle.split_at_abscissa(bigger_circle.length() * 0.5))
                 if not math.isclose(smaller_r, 0, abs_tol=1e-9):
                     smaller_circle = volmdlr_curves.Circle2D(volmdlr.O2D, smaller_r)
                     inner_contours2d = [volmdlr.wires.Contour2D(
-                        smaller_circle.split_at_absccissa(smaller_circle.length() * 0.5))]
+                        smaller_circle.split_at_abscissa(smaller_circle.length() * 0.5))]
                 else:
                     inner_contours2d = []
             else:
@@ -6291,7 +6313,7 @@ class Arc3D(Arc):
         """
         # TODO: implement exact calculation
 
-        points = self.discretization_points(angle_resolution=10)
+        points = self.discretization_points(angle_resolution=5)
         xmin = min(point.x for point in points)
         xmax = max(point.x for point in points)
         ymin = min(point.y for point in points)
@@ -7022,7 +7044,7 @@ class FullArc3D(FullArc, Arc3D):
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
-            ax = Axes3D(plt.figure())
+            ax = plt.figure().add_subplot(111, projection='3d')
 
         x = []
         y = []
@@ -7107,6 +7129,18 @@ class FullArc3D(FullArc, Arc3D):
         return [Arc3D(self.circle, self.start, split_point),
                 Arc3D(self.circle, split_point, self.end)]
 
+    @classmethod
+    def from_center_normal(cls, center: volmdlr.Point3D, normal: volmdlr.Vector3D, start_end: volmdlr.Point3D):
+        u_vector = normal.deterministic_unit_normal_vector()
+        v_vector = normal.cross(u_vector)
+        circle = volmdlr_curves.Circle3D(volmdlr.Frame3D(center, u_vector, v_vector, normal),
+                                  center.point_distance(start_end))
+        return cls(circle, start_end)
+
+    @classmethod
+    def from_curve(cls, circle):
+        return cls(circle, circle.center + circle.frame.u * circle.radius)
+
 
 class ArcEllipse3D(Edge):
     """
@@ -7121,6 +7155,7 @@ class ArcEllipse3D(Edge):
         self.angle = self.angle_end - self.angle_start
         self._self_2d = None
         self._length = None
+        self._bbox = None
         # self.interior = interior
         # self.center = center
         # major_dir.normalize()
@@ -7149,7 +7184,7 @@ class ArcEllipse3D(Edge):
         #     self.start), frame.global_to_local_coordinates(self.end)
         # interior_new, center_new = frame.global_to_local_coordinates(
         #     self.interior), frame.global_to_local_coordinates(self.center)
-        # self._bbox = None
+        #
 
         # from :
         # https://math.stackexchange.com/questions/339126/how-to-draw-an-ellipse-if-a-center-and-3-arbitrary-points-on-it-are-given
@@ -7240,7 +7275,7 @@ class ArcEllipse3D(Edge):
         # else:
         #     self.offset_angle = angle2
 
-    def  get_start_end_angles(self):
+    def get_start_end_angles(self):
         # print('.....................*******************...................calculating start end angles.....................*******************...................')
         local_start_point = self.ellipse.frame.global_to_local_coordinates(self.start)
         u1, u2 = local_start_point.x / self.ellipse.major_axis, local_start_point.y / self.ellipse.minor_axis
@@ -7622,6 +7657,19 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
 
         FullArcEllipse.__init__(self, self.ellipse, start_end, name)
         ArcEllipse3D.__init__(self, self.ellipse, start_end, start_end)
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        dict_ = self.base_dict()
+        dict_["ellipse"] = self.ellipse.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/ellipse')
+        dict_['start_end'] = self.start_end.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
+        return dict_
+
+    @classmethod
+    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+        ellipse = volmdlr_curves.Ellipse3D.dict_to_object(dict_['ellipse'])
+        start_end = volmdlr.Point3D.dict_to_object(dict_['start_end'])
+
+        return cls(ellipse, start_end, name=dict_['name'])
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """

@@ -1182,7 +1182,7 @@ class PlaneFace3D(Face3D):
             for intersection in contour.line_intersections(face2_plane_interections[0]):
                 if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
                     points_intersections.append(intersection)
-        points_intersections = face2_plane_interections[0].sort_points_along_line(points_intersections)
+        points_intersections = face2_plane_interections[0].sort_points_along_curve(points_intersections)
         planeface_intersections = []
         for point1, point2 in zip(points_intersections[:-1], points_intersections[1:]):
             linesegment3d = vme.LineSegment3D(point1, point2)
@@ -1213,7 +1213,13 @@ class PlaneFace3D(Face3D):
         if not isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Line3D):
             if all(self.edge3d_inside(intersection) and cylindricalface.edge3d_inside(intersection)
                    for intersection in cylindricalsurfaceface_intersections):
-                return cylindricalsurfaceface_intersections
+                if isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Circle3D):
+                    contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArc3D.from_curve(
+                        cylindricalsurfaceface_intersections[0])])
+                else:
+                    contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArcEllipse3D.from_curve(
+                        cylindricalsurfaceface_intersections[0])])
+                return [contour3d]
         intersections_points = self.face_intersections_outer_contour(cylindricalface)
         for point in cylindricalface.face_intersections_outer_contour(self):
             if point not in intersections_points:
@@ -1226,10 +1232,8 @@ class PlaneFace3D(Face3D):
                     points_on_primitive.append(point)
             if not points_on_primitive:
                 continue
-            if isinstance(primitive, volmdlr_curves.Line3D):
-                points_on_primitive = primitive.sort_points_along_line(points_on_primitive)
-            else:
-                points_on_primitive = primitive.sort_points_along_wire(points_on_primitive)
+            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
+            if not isinstance(primitive, volmdlr_curves.Line3D):
                 points_on_primitive = points_on_primitive + [points_on_primitive[0]]
             for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
                 edge = primitive.trim(point1, point2)
@@ -1986,7 +1990,7 @@ class CylindricalFace3D(Face3D):
         :param arcellipse: ArcEllipse3D to be verified.
         :return: True if it is inside, False otherwise.
         """
-        for point in arcellipse.points:
+        for point in [arcellipse.start, arcellipse.middle_point(), arcellipse.end]:
             if not self.point_belongs(point):
                 return False
         return True
@@ -3051,7 +3055,7 @@ class BSplineFace3D(Face3D):
         vector2 = interior - edge.end
         if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
             return None
-        return vme.Arc3D(edge.start, interior, edge.end)
+        return vme.Arc3D.from_3_points(edge.start, interior, edge.end)
 
     def get_approximating_arc_parameters(self, curve_list):
         """
@@ -3070,8 +3074,8 @@ class BSplineFace3D(Face3D):
             else:
                 arc = self.approximate_with_arc(curve)
             if arc:
-                radius.append(arc.radius)
-                centers.append(arc.center)
+                radius.append(arc.circle.radius)
+                centers.append(arc.circle.center)
         return radius, centers
 
     def neutral_fiber_points(self):

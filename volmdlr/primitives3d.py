@@ -967,7 +967,7 @@ class Cylinder(shells.ClosedShell3D):
         circle = volmdlr.curves.Circle2D(self.position.to_2d(self.frame.origin, self.frame.u,
                                                              self.frame.v), self.radius)
         lower_face = volmdlr.faces.PlaneFace3D(
-            lower_plane, surfaces.Surface2D(volmdlr.wires.Contour2D.from_circle(circle), []))
+            lower_plane, surfaces.Surface2D(volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(circle)]), []))
         upper_face = lower_face.translation(self.frame.w * self.length)
         return [lower_face, cylindrical_face, upper_face]
 

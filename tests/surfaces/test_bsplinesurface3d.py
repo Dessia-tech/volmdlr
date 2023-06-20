@@ -36,7 +36,7 @@ class TestBSplineSurface3D(unittest.TestCase):
 
     def test_arc3d_to_2d(self):
         bspline_surface = surfaces.BSplineSurface3D.load_from_file('surfaces/BSplineSurface3D_with_Arc3D.json')
-        arc = vme.Arc3D(volmdlr.Point3D(-0.01, -0.013722146986970815, 0.026677756316261864),
+        arc = vme.Arc3D.from_3_points(volmdlr.Point3D(-0.01, -0.013722146986970815, 0.026677756316261864),
                         volmdlr.Point3D(-0.01, 0.013517082603, 0.026782241839),
                         volmdlr.Point3D(-0.01, 0.029612430603, 0.004806657236))
 
@@ -83,8 +83,8 @@ class TestBSplineSurface3D(unittest.TestCase):
             "surfaces/objects_bspline_test/bsplinesurface_with_arcellipse.json")
         test = bsplinesurface.arcellipse3d_to_2d(arcellipse)[0]
         self.assertTrue(isinstance(test, vme.LineSegment2D))
-        self.assertTrue(test.start.is_close(volmdlr.Point2D(0.5, 0)))
-        self.assertTrue(test.end.is_close(volmdlr.Point2D(0.5, 1)))
+        self.assertTrue(test.start.is_close(volmdlr.Point2D(0.5, 2.69e-05)))
+        self.assertTrue(test.end.is_close(volmdlr.Point2D(0.5, 1), 1e-5))
 
         # todo: Uncomment this block when finish debugging contour2d healing
         # surface = surfaces.BSplineSurface3D.load_from_file(

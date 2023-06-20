@@ -7,7 +7,7 @@ import numpy as npy
 
 import dessia_common.core
 import volmdlr
-from volmdlr import Z3D, Point2D, Point3D, edges, wires, surfaces
+from volmdlr import Z3D, Point2D, Point3D, edges, wires, surfaces, curves
 from volmdlr.models import cylindrical_surfaces
 
 
@@ -18,7 +18,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
     cylindrical_surface4 = cylindrical_surfaces.cylindrical_surface4
 
     def test_line_intersections(self):
-        line3d = edges.Line3D(volmdlr.O3D, volmdlr.Point3D(0.3, 0.3, .3))
+        line3d = curves.Line3D(volmdlr.O3D, volmdlr.Point3D(0.3, 0.3, .3))
         line_inters = self.cylindrical_surface.line_intersections(line3d)
         self.assertEqual(len(line_inters), 2)
         self.assertTrue(line_inters[0].is_close(volmdlr.Point3D(0.22627416, 0.22627416, 0.22627416)))
@@ -40,13 +40,13 @@ class TestCylindricalSurface3D(unittest.TestCase):
         cylinder_surface_secant_parallel_plane_intersec = self.cylindrical_surface.plane_intersection(
             parallel_plane_secant_cylinder)
         self.assertEqual(len(cylinder_surface_secant_parallel_plane_intersec), 2)
-        self.assertTrue(isinstance(cylinder_surface_secant_parallel_plane_intersec[0], edges.Line3D))
-        self.assertTrue(isinstance(cylinder_surface_secant_parallel_plane_intersec[1], edges.Line3D))
+        self.assertTrue(isinstance(cylinder_surface_secant_parallel_plane_intersec[0], curves.Line3D))
+        self.assertTrue(isinstance(cylinder_surface_secant_parallel_plane_intersec[1], curves.Line3D))
 
         cylinder_surface_tangent_plane = self.cylindrical_surface.plane_intersection(
             cylinder_tanget_plane)
         self.assertEqual(len(cylinder_surface_tangent_plane), 1)
-        self.assertTrue(isinstance(cylinder_surface_tangent_plane[0], edges.Line3D))
+        self.assertTrue(isinstance(cylinder_surface_tangent_plane[0], curves.Line3D))
 
         cylinder_surface_tangent_plane_not_intersecting = self.cylindrical_surface.plane_intersection(
             not_intersecting_cylinder_parallel_plane)
@@ -54,11 +54,11 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
         cylinder_surface_concurrent_plane_intersec = self.cylindrical_surface.plane_intersection(
             cylinder_concurrent_plane)
-        self.assertTrue(isinstance(cylinder_surface_concurrent_plane_intersec[0], wires.Ellipse3D))
+        self.assertTrue(isinstance(cylinder_surface_concurrent_plane_intersec[0], curves.Ellipse3D))
 
         cylinder_surface_perpendicular_plane_intersec = self.cylindrical_surface.plane_intersection(
             cylinder_perpendicular_plane)
-        self.assertTrue(isinstance(cylinder_surface_perpendicular_plane_intersec[0], wires.Circle3D))
+        self.assertTrue(isinstance(cylinder_surface_perpendicular_plane_intersec[0], curves.Circle3D))
 
     def test_is_coincident(self):
         cyl_surface1 = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 1)
@@ -78,13 +78,13 @@ class TestCylindricalSurface3D(unittest.TestCase):
         pass
 
     def test_arc3d_to_2d(self):
-        arc1 = edges.Arc3D(volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(1 / math.sqrt(2), 1 / math.sqrt(2), 0),
+        arc1 = edges.Arc3D.from_3_points(volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(1 / math.sqrt(2), 1 / math.sqrt(2), 0),
                            volmdlr.Point3D(0, 1, 0))
-        arc2 = edges.Arc3D(volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(1 / math.sqrt(2), -1 / math.sqrt(2), 0),
+        arc2 = edges.Arc3D.from_3_points(volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(1 / math.sqrt(2), -1 / math.sqrt(2), 0),
                            volmdlr.Point3D(0, -1, 0))
-        arc3 = edges.Arc3D(volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 0), volmdlr.Point3D(-1, 0, 0),
+        arc3 = edges.Arc3D.from_3_points(volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 0), volmdlr.Point3D(-1, 0, 0),
                            volmdlr.Point3D(-1 / math.sqrt(2), -1 / math.sqrt(2), 0))
-        arc4 = edges.Arc3D(volmdlr.Point3D(0, -1, 0), volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 0),
+        arc4 = edges.Arc3D.from_3_points(volmdlr.Point3D(0, -1, 0), volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 0),
                            volmdlr.Point3D(1, 0, 0))
         test1 = self.cylindrical_surface2.arc3d_to_2d(arc3d=arc1)[0]
         test2 = self.cylindrical_surface2.arc3d_to_2d(arc3d=arc2)[0]
@@ -100,33 +100,40 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertIsInstance(test4, edges.LineSegment2D)
 
         # Assert that the returned object is right on the parametric domain (take into account periodicity)
-        self.assertEqual(test1.start, volmdlr.Point2D(0, 0))
-        self.assertEqual(test1.end, volmdlr.Point2D(0.5 * math.pi, 0))
-        self.assertEqual(test2.start, volmdlr.Point2D(0, 0))
-        self.assertEqual(test2.end, volmdlr.Point2D(-0.5 * math.pi, 0))
-        self.assertEqual(test3.start, volmdlr.Point2D(0.75 * math.pi, 0))
-        self.assertEqual(test3.end, volmdlr.Point2D(1.25 * math.pi, 0))
-        self.assertEqual(test4.start, volmdlr.Point2D(-0.5 * math.pi, 0))
-        self.assertEqual(test4.end, volmdlr.Point2D(-2 * math.pi, 0))
+        self.assertTrue(test1.start.is_close(volmdlr.Point2D(0, 0)))
+        self.assertTrue(test1.end.is_close(volmdlr.Point2D(0.5 * math.pi, 0)))
+        self.assertTrue(test2.start.is_close(volmdlr.Point2D(0, 0)))
+        self.assertTrue(test2.end.is_close(volmdlr.Point2D(-0.5 * math.pi, 0)))
+        self.assertTrue(test3.start.is_close(volmdlr.Point2D(0.75 * math.pi, 0)))
+        self.assertTrue(test3.end.is_close(volmdlr.Point2D(1.25 * math.pi, 0)))
+        self.assertTrue(test4.start.is_close(volmdlr.Point2D(-0.5 * math.pi, 0)))
+        self.assertTrue(test4.end.is_close(volmdlr.Point2D(-2 * math.pi, 0)))
 
         # Verifies the inversion operation
         self.assertIsInstance(inv_prof, edges.Arc3D)
         # self.assertEqual(inv_prof, arc4)
         self.assertTrue(inv_prof.start.is_close(arc4.start))
-        self.assertTrue(inv_prof.interior.is_close(arc4.interior))
+        self.assertTrue(inv_prof.middle_point().is_close(arc4.middle_point()))
         self.assertTrue(inv_prof.end.is_close(arc4.end))
 
     def test_contour3d_to_2d(self):
+        center1 = Point3D(0, 0, 0.013)
+        start_end1 = Point3D(0.03, 0, 0.013)
+        circle1 = curves.Circle3D(volmdlr.Frame3D(center1, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D),
+                                  center1.point_distance(start_end1))
+        center2 = Point3D(0, 0, 0.003)
+        start_end2 = Point3D(0.03, 0, 0.003)
+        circle2 = curves.Circle3D(volmdlr.Frame3D(center2, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D),
+                                  center2.point_distance(start_end2))
         primitives_cylinder = [edges.LineSegment3D(Point3D(0.03, 0, 0.003), Point3D(0.03, 0, 0.013)),
-                               edges.FullArc3D(Point3D(0, 0, 0.013), Point3D(0.03, 0, 0.013), Z3D),
+                               edges.FullArc3D(circle1, start_end1),
                                edges.LineSegment3D(Point3D(0.03, 0, 0.013), Point3D(0.03, 0, 0.003)),
-                               edges.FullArc3D(Point3D(0, 0, 0.003), Point3D(0.03, 0, 0.003), Z3D)
-                               ]
+                               edges.FullArc3D(circle2, start_end2)]
         contour_cylinder = wires.Contour3D(primitives_cylinder)
 
         contour2d_cylinder = self.cylindrical_surface4.contour3d_to_2d(contour_cylinder)
-        ax = contour2d_cylinder.plot()
-        ax.set_aspect("auto")
+        # ax = contour2d_cylinder.plot()
+        # ax.set_aspect("auto")
         area = contour2d_cylinder.area()
         linesegment2d = contour2d_cylinder.primitives[3]
         fullarc2d = contour2d_cylinder.primitives[2]

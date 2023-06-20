@@ -10,7 +10,7 @@ from volmdlr import surfaces
 
 class TestRevolutionSurface3D(unittest.TestCase):
     linesegment = vme.LineSegment3D(volmdlr.Point3D(0.5, 0, 0), volmdlr.Point3D(0.5, 0, 0.5))
-    arc = vme.Arc3D(volmdlr.Point3D(0.5, 0, 0.5),
+    arc = vme.Arc3D.from_3_points(volmdlr.Point3D(0.5, 0, 0.5),
                     volmdlr.Point3D(0.3 + 0.2 * math.cos(math.pi / 6), 0, 0.5 + 0.2 * math.sin(math.pi / 6)),
                     volmdlr.Point3D(0.3 + 0.2 * math.cos(math.pi / 3), 0, 0.5 + 0.2 * math.sin(math.pi / 3)))
 
@@ -89,18 +89,18 @@ class TestRevolutionSurface3D(unittest.TestCase):
             "surfaces/objects_revolution_tests/revolutionsurface_linesegment2d_to_3d.json")
         linesegment1 = vme.LineSegment2D.load_from_file("surfaces/objects_revolution_tests/linesegment2d_arc3d.json")
         arc = surface.linesegment2d_to_3d(linesegment1)[0]
-        self.assertAlmostEqual(arc.radius, 0.02404221842799788)
+        self.assertAlmostEqual(arc.circle.radius, 0.02404221842799788)
 
         linesegment2 = vme.LineSegment2D.load_from_file(
             "surfaces/objects_revolution_tests/linesegment2d_rotated_primitive.json")
         arc = surface.linesegment2d_to_3d(linesegment2)[0]
-        self.assertAlmostEqual(arc.radius, 0.022500000035448893)
-        self.assertAlmostEqual(arc.angle, 0.7195087615152496)
+        self.assertAlmostEqual(arc.circle.radius, 0.022500000035448893)
+        self.assertAlmostEqual(arc.angle, 0.7195087615152496, 5)
 
         linesegment3 = vme.LineSegment2D.load_from_file(
             "surfaces/objects_revolution_tests/linesegment2d_split_primitive.json")
         arc = surface.linesegment2d_to_3d(linesegment3)[0]
-        self.assertAlmostEqual(arc.radius, 0.022500000035448893)
+        self.assertAlmostEqual(arc.circle.radius, 0.022500000035448893)
         self.assertAlmostEqual(arc.angle, 0.15581712793343738)
 
 

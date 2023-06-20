@@ -2253,9 +2253,11 @@ class CylindricalSurface3D(PeriodicalSurface):
             major_axis = axis_2
             minor_axis = axis_1
             major_dir = ellipse_pi_by_2 - center3d_plane
-        return [curves.Ellipse3D(major_axis, minor_axis,
-                                 volmdlr.Frame3D(center3d_plane, major_dir,
-                                                 plane3d.frame.w.cross(major_dir), plane3d.frame.w))]
+            u_vector = major_dir.unit_vector()
+        ellipse = curves.Ellipse3D(major_axis, minor_axis,
+                                 volmdlr.Frame3D(center3d_plane, u_vector,
+                                                 plane3d.frame.w.cross(u_vector), plane3d.frame.w))
+        return [ellipse]
 
     def plane_intersection(self, plane3d):
         """
@@ -2566,7 +2568,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         # theta2, phi2 = end
         theta3, phi3 = point_after_start
         # theta4, phi4 = point_before_end
-        if self.frame.w.is_colinear_to(fullarc3d.normal, abs_tol=1e-4):
+        if self.frame.w.is_colinear_to(fullarc3d.circle.normal, abs_tol=1e-4):
             point1 = start
             if theta1 > theta3:
                 point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi1)
@@ -3260,10 +3262,11 @@ class SphericalSurface3D(PeriodicalSurface):
         Returns True if it is, False otherwise.
         """
         # Check if curve is a longitude curve (phi is constant)
-        if self.frame.w.is_colinear_to(arc.normal, abs_tol=1e-4):
+        if self.frame.w.is_colinear_to(arc.circle.normal, abs_tol=1e-4):
             return True
         # Check if curve is a latitude curve (theta is constant)
-        if self.frame.w.is_perpendicular_to(arc.normal, abs_tol=1e-4) and arc.center.is_close(self.frame.origin, 1e-4):
+        if self.frame.w.is_perpendicular_to(arc.circle.normal, abs_tol=1e-4) and\
+            arc.circle.center.is_close(self.frame.origin, 1e-4):
             return True
         return False
 
@@ -3273,7 +3276,7 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        theta_i, _ = self.point3d_to_2d(arc3d.interior)
+        theta_i, _ = self.point3d_to_2d(arc3d.middle_point())
         theta1, phi1 = start
         theta2, phi2 = end
         point_after_start, point_before_end = self._reference_points(arc3d)
@@ -3615,7 +3618,7 @@ class SphericalSurface3D(PeriodicalSurface):
         theta3, phi3 = point_after_start
         theta4, _ = point_before_end
 
-        if self.frame.w.is_colinear_to(fullarc3d.normal, abs_tol=1e-4):
+        if self.frame.w.is_colinear_to(fullarc3d.circle.normal, abs_tol=1e-4):
             point1 = volmdlr.Point2D(theta1, phi1)
             if theta1 > theta3:
                 point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi2)
@@ -3623,7 +3626,7 @@ class SphericalSurface3D(PeriodicalSurface):
                 point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
             return [edges.LineSegment2D(point1, point2)]
 
-        if self.frame.w.is_perpendicular_to(fullarc3d.normal, abs_tol=1e-4):
+        if self.frame.w.is_perpendicular_to(fullarc3d.circle.normal, abs_tol=1e-4):
             if theta1 > theta3:
                 theta_plus_pi = theta1 - math.pi
             else:
@@ -3799,7 +3802,8 @@ class SphericalSurface3D(PeriodicalSurface):
         circle_radius = math.sqrt(self.radius ** 2 - dist ** 2)
         circle_center = plane3d.line_intersections(line)[0]
         start_end = circle_center + plane3d.frame.u * circle_radius
-        circle = curves.Circle3D(volmdlr.Frame3D(circle_center, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w))
+        circle = curves.Circle3D(volmdlr.Frame3D(circle_center, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
+                                 circle_radius)
         return [edges.FullArc3D(circle, start_end)]
 
     def line_intersections(self, line3d: curves.Line3D):
@@ -4273,7 +4277,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         theta2, _ = end
         theta3, z3 = point_after_start
 
-        if self.frame.w.is_colinear_to(fullarc3d.normal):
+        if self.frame.w.is_colinear_to(fullarc3d.circle.normal):
             if start.is_close(end):
                 start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, theta3)
             return [edges.LineSegment2D(start, end, name="parametric.fullarc")]
@@ -4352,10 +4356,10 @@ class RevolutionSurface3D(PeriodicalSurface):
     def simplify(self):
         line3d = curves.Line3D(self.axis_point, self.axis_point + self.axis)
         if isinstance(self.wire, edges.Arc3D):
-            tore_center, _ = line3d.point_projection(self.wire.center)
+            tore_center, _ = line3d.point_projection(self.wire.circle.center)
             # Sphere
-            if math.isclose(tore_center.point_distance(self.wire.center), 0., abs_tol=1e-6):
-                return SphericalSurface3D(self.frame, self.wire.radius, self.name)
+            if math.isclose(tore_center.point_distance(self.wire.circle.center), 0., abs_tol=1e-6):
+                return SphericalSurface3D(self.frame, self.wire.circle.radius, self.name)
         if isinstance(self.wire, edges.LineSegment3D):
             generatrix_line = curves.Line3D(self.wire.start, self.wire.end)
             intersections = line3d.intersection(generatrix_line)
