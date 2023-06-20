@@ -1837,7 +1837,8 @@ class ContourMixin(WireMixin):
             points.update(primitive.get_geo_points())
         return points
 
-    def to_polygon(self, angle_resolution, discretize_line: bool = False, discretize_line_direction: str = "xy"):
+    def to_polygon(self, angle_resolution, discretize_line: bool = False, discretize_line_direction: str = "xy",
+                   number_points_x=None, number_points_y=None):
         """
         Transform the contour_mixin to a polygon, COPY/PASTE from Contour2D.
 
@@ -1862,8 +1863,15 @@ class ContourMixin(WireMixin):
                                         (discretize_line_direction == "x" and is_horizontal) or \
                                         (discretize_line_direction == "y" and is_vertical)
                     if should_discretize:
-                        polygon_points.extend(primitive.discretization_points(
-                            angle_resolution=angle_resolution)[:-1])
+                        if is_horizontal and number_points_x:
+                            polygon_points.extend(primitive.discretization_points(
+                                number_points=number_points_x + 2)[:-1])
+                        elif is_vertical and number_points_y:
+                            polygon_points.extend(primitive.discretization_points(
+                                number_points=number_points_y + 2)[:-1])
+                        else:
+                            polygon_points.extend(primitive.discretization_points(
+                                angle_resolution=angle_resolution)[:-1])
                     else:
                         polygon_points.append(primitive.start)
 

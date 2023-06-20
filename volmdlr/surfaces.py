@@ -195,7 +195,9 @@ class Surface2D(volmdlr.core.Primitive2D):
         if number_points_y == 0:
             discretize_line_direction = "x"
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
-                                                      discretize_line_direction=discretize_line_direction)
+                                                      discretize_line_direction=discretize_line_direction,
+                                                      number_points_x=number_points_x,
+                                                      number_points_y=number_points_y)
 
         if not self.inner_contours and not triangulates_with_grid:
             return outer_polygon.triangulation()
@@ -5079,7 +5081,7 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                n = len(bspline_curve3d.control_points)
+                n = min(len(bspline_curve3d.control_points), 20)
                 points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
                 if self.x_periodicity:
