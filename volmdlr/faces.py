@@ -185,8 +185,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
             check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
             if any(check_contours):
-                # Not implemented yet, but repair_contours2d should also return outer_contour3d and inner_contours3d
-                outer_contour2d, inner_contours2d = surface.repair_contours2d(contours2d[0], contours2d[1:])
+                # Not implemented yet, but connect_contours should also return outer_contour3d and inner_contours3d
+                outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
             else:
                 for contour2d, contour3d in zip(contours2d, contours3d):
                     # if not contour2d.is_ordered(1e-4):
