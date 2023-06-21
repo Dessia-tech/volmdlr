@@ -6812,7 +6812,9 @@ class Arc3D(Arc):
         if not math.isclose(point.point_distance(self.center), self.radius, abs_tol=abs_tol):
             return False
         vector = point - self.center
-        if not math.isclose(vector.dot(self.frame.w), 0.0, abs_tol=abs_tol):
+        vector = vector.unit_vector()
+        #TODO: test if with the new refactor curve.py this is more numerically stable
+        if not math.isclose(vector.dot(self.frame.w), 0.0, abs_tol=1e-4):
             return False
         point_abscissa = self.abscissa(point)
         abscissa_start = self.abscissa(self.start)
