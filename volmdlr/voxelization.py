@@ -50,6 +50,12 @@ class Voxelization(PhysicalObject):
             and self.voxel_size == other_voxelization.voxel_size
         )
 
+    def __add__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        return self.union(other_voxelization)
+
+    def __sub__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        return self.difference(other_voxelization)
+
     @classmethod
     def from_closed_triangle_shell(
         cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, method: str = "octree", name: str = ""
