@@ -24,7 +24,7 @@ class Voxelization(PhysicalObject):
 
     def __init__(self, voxels_centers: Set[Point], voxel_size: float, octree_root: "OctreeNode" = None, name: str = ""):
         """
-        Initializes the voxelization.
+        Initializes the Voxelization.
 
         :param voxels_centers: The set of points representing voxel centers.
         :type voxels_centers: set[tuple[float, float, float]]
@@ -44,33 +44,91 @@ class Voxelization(PhysicalObject):
     @classmethod
     def from_closed_triangle_shell(
         cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, name: str = ""
-    ):
+    ) -> "Voxelization":
+        """
+        Creates a Voxelization from a ClosedTriangleShell3D.
+
+        :param closed_triangle_shell: The ClosedTriangleShell3D to voxelize.
+        :type closed_triangle_shell: ClosedTriangleShell3D
+        :param voxel_size: The voxel edges size.
+        :type voxel_size: float
+        :param name: The name of the Voxelization.
+        :type name: str, optional
+
+        :return: The created Voxelization.
+        :rtype: Voxelization
+        """
         triangles = cls._closed_triangle_shell_to_triangles(closed_triangle_shell)
         voxels = cls._triangles_to_voxels(triangles, voxel_size)
         return cls(voxels, voxel_size, name=name)
 
     @classmethod
-    def from_closed_shell(cls, closed_shell: ClosedShell3D, voxel_size: float, name: str = ""):
+    def from_closed_shell(cls, closed_shell: ClosedShell3D, voxel_size: float, name: str = "") -> "Voxelization":
+        """
+        Creates a Voxelization from a ClosedShell3D.
+
+        :param closed_shell: The ClosedShell3D to voxelize.
+        :type closed_shell: ClosedShell3D
+        :param voxel_size: The voxel edges size.
+        :type voxel_size: float
+        :param name: The name of the Voxelization.
+        :type name: str, optional
+
+        :return: The created Voxelization.
+        :rtype: Voxelization
+        """
         triangles = cls._closed_shell_to_triangles(closed_shell)
         voxels = cls._triangles_to_voxels(triangles, voxel_size)
         return cls(voxels, voxel_size, name=name)
 
     @classmethod
-    def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = ""):
+    def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = "") -> "Voxelization":
+        """
+        Creates a Voxelization from a VolumeModel.
+
+        :param volume_model: The VolumeModel to voxelize.
+        :type volume_model: VolumeModel
+        :param voxel_size: The voxel edges size.
+        :type voxel_size: float
+        :param name: The name of the Voxelization.
+        :type name: str, optional
+
+        :return: The created Voxelization.
+        :rtype: Voxelization
+        """
         triangles = cls._volume_model_to_triangles(volume_model)
         voxels = cls._triangles_to_voxels(triangles, voxel_size)
         return cls(voxels, voxel_size, name=name)
 
     @staticmethod
-    def _closed_triangle_shell_to_triangles(cs: ClosedTriangleShell3D):
+    def _closed_triangle_shell_to_triangles(closed_triangle_shell: ClosedTriangleShell3D) -> List[Triangle]:
+        """
+        Helper method to convert a ClosedTriangleShell3D to a list of triangles.
+
+        :param closed_triangle_shell: The ClosedTriangleShell3D to convert to triangles.
+        :type closed_triangle_shell: ClosedTriangleShell3D
+
+        :return: The list of triangles extracted from the ClosedTriangleShell3D.
+        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        """
         return list(
             tuple(tuple([point.x, point.y, point.z]) for point in [tr.point1, tr.point2, tr.point3])
-            for tr in cs.primitives
+            for tr in closed_triangle_shell.primitives
         )
 
     @staticmethod
-    def _closed_shell_to_triangles(cs: ClosedShell3D):
-        triangulation = cs.triangulation()
+    def _closed_shell_to_triangles(closed_shell: ClosedShell3D):
+        """
+        Helper method to convert a ClosedShell3D to a list of triangles.
+        It uses the "triangulation" method to triangulate the ClosedShell3D.
+
+        :param closed_shell: The ClosedShell3D to convert to triangles.
+        :type closed_shell: ClosedShell3D
+
+        :return: The list of triangles extracted from the triangulated ClosedShell3D.
+        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        """
+        triangulation = closed_shell.triangulation()
         return list(
             tuple(
                 tuple([point.x, point.y, point.z])
@@ -84,9 +142,9 @@ class Voxelization(PhysicalObject):
         )
 
     @staticmethod
-    def _volume_model_to_triangles(vm: VolumeModel):
+    def _volume_model_to_triangles(volume_model: VolumeModel):
         triangles = []
-        for primitive in vm.primitives:
+        for primitive in volume_model.primitives:
             triangulation = primitive.triangulation()
             triangles += list(
                 tuple(
