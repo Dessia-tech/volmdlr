@@ -3602,8 +3602,7 @@ class Frame3D(Basis3D):
         v_content, v_id = Vector3D.to_step(self.w, current_id)
         current_id = v_id + 1
         content += u_content + v_content
-        content += "#{} = AXIS2_PLACEMENT_3D('{}',#{},#{},#{});\n"\
-            .format(current_id, self.name, origin_id, u_id, v_id)
+        content += f"#{current_id} = AXIS2_PLACEMENT_3D('{self.name}',#{origin_id},#{u_id},#{v_id});\n"
         return content, current_id
 
     def plot2d(self, x=X3D, y=Y3D, ax=None, color="k"):
