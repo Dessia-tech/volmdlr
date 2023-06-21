@@ -29,6 +29,28 @@ class TestFrame3D(unittest.TestCase):
         self.assertEqual(vector_global.y, 4)
         self.assertEqual(vector_global.z, 5)
 
+    def test_from_step(self):
+        arguments = [' ', 14, '$', '$']
+        object_dict = {14: volmdlr.O3D}
+        frame = volmdlr.Frame3D.from_step(arguments, object_dict)
+        self.assertEqual(frame, volmdlr.OXYZ)
+
+        arguments = [' ', 43, 44, 45]
+        object_dict = {43: volmdlr.Point3D(-5.829000000001e0, -9.909144910505e-1, 8.766383164265e-1),
+                       44: volmdlr.Vector3D(0.e0, 6.625993710787e-1, 7.489740138657e-1),
+                       45: volmdlr.Vector3D(-5.829000000001e0, -9.909144910505e-1, 8.766383164265e-1)
+                       }
+        frame = volmdlr.Frame3D.from_step(arguments, object_dict)
+        self.assertEqual(frame.w, object_dict[44])
+        self.assertEqual(frame.origin, object_dict[43])
+
+        arguments = [' ', 20, 21, '$']
+        object_dict = {20: volmdlr.O3D,
+                       21: volmdlr.Y3D
+                       }
+        frame = volmdlr.Frame3D.from_step(arguments, object_dict)
+        self.assertTrue(frame.w.is_close(object_dict[21]))
+
 
 if __name__ == "__main__":
     unittest.main()

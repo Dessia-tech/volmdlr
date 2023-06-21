@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Step import
 - Edge: fix orientation of edges commig from step.
 - PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
+- Frame3D: import/export step.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces

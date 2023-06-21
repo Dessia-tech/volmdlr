@@ -3695,9 +3695,14 @@ class Frame3D(Basis3D):
         :rtype: :class:`volmdlr.Frame3D`
         """
         origin = object_dict[arguments[1]]
-        if arguments[2] == "$" or arguments[3] == "$":
+        if arguments[2] == "$" and arguments[3] == "$":
             return cls(origin, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D, arguments[0][1:-1])
-
+        if arguments[2] == "$":
+            return cls.from_point_and_vector(origin, object_dict[arguments[3]], main_axis=X3D,
+                                             name= arguments[0][1:-1])
+        if arguments[3] == "$":
+            return cls.from_point_and_vector(origin, object_dict[arguments[2]], main_axis=Z3D,
+                                             name= arguments[0][1:-1])
         w = object_dict[arguments[2]]
         u = object_dict[arguments[3]]
         u = u - u.dot(w) * w
@@ -3707,7 +3712,7 @@ class Frame3D(Basis3D):
 
     @classmethod
     def from_point_and_vector(cls, point: Point3D, vector: Vector3D,
-                              main_axis: Vector3D = X3D):
+                              main_axis: Vector3D = X3D, name: str=''):
         """
         Creates a new frame from a point and vector by rotating the global
         frame. Global frame rotates in order to have 'vector' and 'main_axis'
@@ -3723,6 +3728,8 @@ class Frame3D(Basis3D):
             (can be X3D, Y3D or Z3D). Default value is X3D,
             the vector (1, 0, 0)
         :type main_axis: :class:`volmdlr.Vector3D`, optional
+        :param name: Frame's name.
+        :type name: str
         :return: The created local frame
         :rtype: :class:`volmdlr.Frame3D`
         """
@@ -3752,7 +3759,7 @@ class Frame3D(Basis3D):
         v = Y3D.rotation(O3D, rot_axis, rot_angle)
         w = Z3D.rotation(O3D, rot_axis, rot_angle)
 
-        return cls(point, u, v, w)
+        return cls(point, u, v, w, name=name)
 
     # def babylonjs(self, size=0.1, parent=None):
     #     """
