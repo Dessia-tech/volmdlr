@@ -16,6 +16,7 @@ from typing import List, Text, Tuple
 import matplotlib.pyplot as plt
 import numpy as npy
 import plot_data
+import volmdlr
 from dessia_common.core import DessiaObject
 from matplotlib.patches import FancyArrow, FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
@@ -3694,22 +3695,13 @@ class Frame3D(Basis3D):
         :rtype: :class:`volmdlr.Frame3D`
         """
         origin = object_dict[arguments[1]]
-        if arguments[2] == "$" and arguments[3] == "$":
-            u = X3D
-            w = Z3D
-        elif arguments[2] == "$":
-            frame = cls.from_point_and_vector(origin, object_dict[arguments[3]], main_axis=X3D)
-            u = frame.u
-            w = frame.w
-        elif arguments[3] == "$":
-            frame = cls.from_point_and_vector(origin, object_dict[arguments[2]], main_axis=Z3D)
-            u = frame.u
-            w = frame.w
-        else:
-            w = object_dict[arguments[2]]
-            a = object_dict[arguments[3]]
-            u = a - a.dot(w) * w
-            u = u.unit_vector()
+        if arguments[2] == "$" or arguments[3] == "$":
+            return cls(origin, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D, arguments[0][1:-1])
+
+        w = object_dict[arguments[2]]
+        u = object_dict[arguments[3]]
+        u = u - u.dot(w) * w
+        u = u.unit_vector()
         v = w.cross(u)
         return cls(origin, u, v, w, arguments[0][1:-1])
 
