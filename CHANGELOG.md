@@ -29,7 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineFace3D: neutral_fiber
 - surfaces.Plane3D: linesegment_intersections
 - Step export
+<<<<<<< HEAD
 - Edge: fix orientation of edges commig from step.
+=======
+- Face3D: is_linesegment_crossing.
+- babylondata: removes empty objects.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
@@ -38,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - parametric.py: fix numerical instability in some functions used in Arc3D to parametric surface domain transformation.
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
+- Improve step translator.
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
@@ -164,12 +169,18 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - CompositePrimitive3D: babylon_points
 - WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
 - ContourMixin: contours_from_edges
+<<<<<<< HEAD
 - Improve step translator.
+=======
+>>>>>>> step_reader_renault
 - ExtrusionSurface3D: simplify bsplinecurve3d_to_2d method
 
 ### Changed
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
+- remove useless attribute in Bspline serialization
+- Improve CylincricalFace3D rendering mesh.
+- Improve CylincricalFace3D rendering mesh.
 - Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
 - Change python suport version from >=3.7 to >= 3.9.
