@@ -242,9 +242,9 @@ class Voxelization(PhysicalObject):
 
         # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
         r = (
-                voxel_extents[0] * abs(plane_normal[0])
-                + voxel_extents[1] * abs(plane_normal[1])
-                + voxel_extents[2] * abs(plane_normal[2])
+            voxel_extents[0] * abs(plane_normal[0])
+            + voxel_extents[1] * abs(plane_normal[1])
+            + voxel_extents[2] * abs(plane_normal[2])
         )
 
         # Intersection occurs when plane distance falls within [-r,+r] interval
@@ -254,29 +254,27 @@ class Voxelization(PhysicalObject):
         return True
 
     @staticmethod
-    def _intersecting_boxes(
-        min_point: Point,
-        max_point: Point,
-        voxel_size: float,
-    ) -> List[Point]:
+    def _aabb_intersecting_boxes(min_point: Point, max_point: Point, voxel_size: float) -> List[Point]:
         """
-        Calculate the indices of the cubes that intersect with a bounding box.
+        Helper method to compute the center of the voxels that intersect with a given axis aligned
+        bounding box (defined by 2 points).
 
-        :param min_point: the minimum point of the bounding box
-        :type min_point: Tuple[float, ...]
-        :param max_point: the maximum point of the bounding box
-        :type max_point: Tuple[float, ...]
-        :param voxel_size: the size of the grid cubes
+        :param min_point: The minimum point of the bounding box.
+        :type min_point: tuple[float, float, float]
+        :param max_point: The maximum point of the bounding box.
+        :type max_point: tuple[float, float, float]
+        :param voxel_size: The voxel edges size.
         :type voxel_size: float
-        :return: a list of the centers of the intersecting cubes
-        :rtype: List[Tuple[float, ...]]
+
+        :return: a list of the centers of the intersecting voxels
+        :rtype: list[tuple[float, float, float]]
         """
         # Calculate the indices of the cubes that intersect with the bounding box
         x_indices = range(int(min_point[0] / voxel_size) - 1, int(max_point[0] / voxel_size) + 1)
         y_indices = range(int(min_point[1] / voxel_size) - 1, int(max_point[1] / voxel_size) + 1)
         z_indices = range(int(min_point[2] / voxel_size) - 1, int(max_point[2] / voxel_size) + 1)
 
-        # Create a list of all the intersecting bounding boxes
+        # Create a list of the centers of all the intersecting voxels
         centers = []
         for x in x_indices:
             for y in y_indices:
@@ -287,22 +285,25 @@ class Voxelization(PhysicalObject):
         return centers
 
     @staticmethod
-    def _intersecting_voxels(
-        voxel_array: np.ndarray,
-        voxel_size: float,
-    ) -> Set[Point]:
+    def _voxels_intersecting_voxels(voxel_centers_array: np.ndarray, voxel_size: float) -> Set[Point]:
         """
-        Calculate the indices of the cubes that intersect with a bounding box.
+        Helper method to compute the center of the voxels that intersect with a given array of voxels.
+        The returned voxels are part of an implicit 3D grid defined by the voxel size, whereas the given voxels centers
+        are not.
 
-        :param voxel_array: array of voxel centers
-        :type voxel_array: np.ndarray
-        :param voxel_size: the size of the grid cubes
+        This method is used when translating or rotating the voxels get back to the implicit 3D grid and perform
+        efficient boolean operations (thanks to voxels defined in the same grid).
+
+        :param voxel_centers_array: The array of voxel centers.
+        :type voxel_centers_array: numpy.ndarray
+        :param voxel_size: The voxel edges size.
         :type voxel_size: float
-        :return: a set of the centers of the intersecting cubes
-        :rtype: Set[Point]
+
+        :return: A set of the centers of the intersecting voxels.
+        :rtype: set[tuple[float, float, float]]
         """
         # Compute the voxel indices
-        indices = np.floor(voxel_array / voxel_size).astype(int)
+        indices = np.floor(voxel_centers_array / voxel_size).astype(int)
 
         # Compute unique indices to avoid duplicates
         unique_indices = np.unique(indices, axis=0)
@@ -313,50 +314,17 @@ class Voxelization(PhysicalObject):
         return set(tuple(center) for center in centers)
 
     @staticmethod
-    def _surrounding_voxels(
-        voxel_array: np.ndarray,
-        voxel_size: float,
-    ) -> Set[Point]:
-        surrounding_voxels = Voxelization._round_point_cloud_voxel_size(voxel_array, voxel_size)
-
-        split_surruding_voxels = set()
-        for voxel in surrounding_voxels:
-            split_surruding_voxels.update(Voxelization._subdivide(voxel, voxel_size * 2))
-
-        return split_surruding_voxels
-
-    @staticmethod
-    def _subdivide(voxel, voxel_size):
-        children = []
-        half_size = voxel_size / 2
-        for i in range(2):
-            for j in range(2):
-                for k in range(2):
-                    # calculate the center of the child node
-                    child = (
-                        voxel[0] + (i - 0.5) * half_size,
-                        voxel[1] + (j - 0.5) * half_size,
-                        voxel[2] + (k - 0.5) * half_size,
-                    )
-
-                    children.append(child)
-
-        return children
-
-    @staticmethod
-    def _triangles_to_voxels(
-        triangles: List[Triangle],
-        voxel_size: float,
-    ) -> Set[Point]:
+    def _triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
         """
-        Convert a list of triangles into a voxel representation.
+        Helper method to compute all the voxels intersecting with a given list of triangles.
 
-        :param triangles: a list of tuples representing the triangles
-        :type triangles: List[Tuple[Tuple[float, ...], Tuple[float, ...], Tuple[float, ...]]]
-        :param voxel_size: the size of the grid cubes
+        :param triangles: The triangles to compute the intersecting voxels.
+        :type triangles: List[Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]]
+        :param voxel_size: The voxel edges size.
         :type voxel_size: float
-        :return: a set of the centers of the bounding boxes that intersect with the triangles
-        :rtype: set
+
+        :return: The centers of the voxels that intersect with the triangles.
+        :rtype: set[tuple[float, float, float]]
         """
         bbox_centers = set()
 
@@ -364,7 +332,7 @@ class Voxelization(PhysicalObject):
             min_point = tuple(min(p[i] for p in triangle) for i in range(3))
             max_point = tuple(max(p[i] for p in triangle) for i in range(3))
 
-            for bbox_center in Voxelization._intersecting_boxes(min_point, max_point, voxel_size):
+            for bbox_center in Voxelization._aabb_intersecting_boxes(min_point, max_point, voxel_size):
                 if bbox_center not in bbox_centers:
                     if Voxelization._triangle_voxel_intersection(
                         triangle,
@@ -376,8 +344,18 @@ class Voxelization(PhysicalObject):
         return bbox_centers
 
     @staticmethod
-    def _voxel_faces(center: Point, voxel_size: float) -> List[Triangle]:
-        x, y, z = center
+    def _voxel_triangular_faces(voxel_center: Point, voxel_size: float) -> List[Triangle]:
+        """
+        Helper method to compute the 12 triangular faces that compose a voxel, for visualization.
+
+        :param voxel_center: The voxel center point.
+        :type voxel_center: tuple[float, float, float]
+        :param voxel_size: The voxel edges size.
+        :type voxel_size: float
+
+        :return: The 12 triangles representing the 6 faces of the given voxel.
+        """
+        x, y, z = voxel_center
         sx, sy, sz = voxel_size, voxel_size, voxel_size
         hx, hy, hz = sx / 2, sy / 2, sz / 2
         faces = [
@@ -473,8 +451,8 @@ class Voxelization(PhysicalObject):
             ),
         ]
 
-        faces = [tuple(tuple(round(_, 6) for _ in point) for point in face) for face in faces]
-        return faces
+        triangular_faces = [tuple(tuple(round(_, 6) for _ in point) for point in face) for face in faces]
+        return triangular_faces
 
     @staticmethod
     def _triangles_to_segments(triangles: List[Triangle]):
@@ -700,7 +678,7 @@ class Voxelization(PhysicalObject):
         triangles = set()
 
         for voxel in tqdm(self.voxels_centers):
-            for triangle in self._voxel_faces(voxel, self.voxel_size):
+            for triangle in self._voxel_triangular_faces(voxel, self.voxel_size):
                 if triangle not in triangles:
                     triangles.add(triangle)
                 else:
@@ -787,16 +765,6 @@ class Voxelization(PhysicalObject):
         return Voxelization(self.voxels_centers.difference(other_voxelization.voxels_centers), self.voxel_size)
 
     @staticmethod
-    def _round_point_cloud_voxel_size(point_cloud: np.ndarray, voxel_size: float) -> np.ndarray:
-        """
-        Round the coordinates of a point cloud dictionary to be the center point of the voxel it's in.
-        """
-        transformed_point_cloud = np.round((point_cloud / voxel_size) + 0.5, 6) * voxel_size
-        transformed_point_cloud = np.round(transformed_point_cloud, 6)
-
-        return transformed_point_cloud
-
-    @staticmethod
     def _rotation_matrix(axis: Vector3D, angle: float):
         """
         Return the rotation matrix associated with counterclockwise rotation about
@@ -823,9 +791,7 @@ class Voxelization(PhysicalObject):
         rotated_voxels = np.dot(voxel_array, rotation_matrix.T)
         rotated_voxels += np.array([center.x, center.y, center.z])
 
-        intersecting_voxels = self._intersecting_voxels(rotated_voxels, self.voxel_size)
-        # intersecting_voxels = set(tuple(voxel) for voxel in self.round_point_cloud_voxel_size(rotated_voxels, self.voxel_size))
-        # intersecting_voxels = self.surrounding_voxels(rotated_voxels, self.voxel_size)
+        intersecting_voxels = self._voxels_intersecting_voxels(rotated_voxels, self.voxel_size)
 
         return Voxelization(intersecting_voxels, self.voxel_size)
 
@@ -833,9 +799,7 @@ class Voxelization(PhysicalObject):
         voxel_array = np.array(list(self.voxels_centers))
         translated_voxels = voxel_array + np.array([offset.x, offset.y, offset.z])
 
-        intersecting_voxels = self._intersecting_voxels(translated_voxels, self.voxel_size)
-        # intersecting_voxels = set(tuple(voxel) for voxel in self.round_point_cloud_voxel_size(translated_voxels, self.voxel_size))
-        # intersecting_voxels = self.surrounding_voxels(translated_voxels, self.voxel_size)
+        intersecting_voxels = self._voxels_intersecting_voxels(translated_voxels, self.voxel_size)
 
         return Voxelization(intersecting_voxels, self.voxel_size)
 
