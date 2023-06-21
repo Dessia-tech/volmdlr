@@ -361,9 +361,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         if len(line_indexes) > 1:
             intersection = volmdlr.Point2D.line_intersection(
                 curves.Line2D(self.points[line_indexes[0]],
-                                     self.points[line_indexes[0]] + dir_vec_1),
+                              self.points[line_indexes[0]] + dir_vec_1),
                 curves.Line2D(self.points[line_indexes[-1] + 1],
-                                     self.points[line_indexes[-1] + 1] + dir_vec_2))
+                              self.points[line_indexes[-1] + 1] + dir_vec_2))
             vec1 = intersection.point_distance(
                 self.points[line_indexes[0]]) * dir_vec_1
             vec2 = intersection.point_distance(
@@ -437,7 +437,7 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
 
     def copy(self, deep=True, memo=None):
         return self.__class__([point.copy(deep, memo) for point in self.points], self.radius.copy(),
-                              self.adapt_radius, name='copy_'+self.name)
+                              self.adapt_radius, name='copy_' + self.name)
 
 
 class Measure2D(volmdlr.edges.LineSegment2D):

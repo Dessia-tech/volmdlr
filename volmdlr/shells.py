@@ -976,7 +976,7 @@ class ClosedShell3D(OpenShell3D):
         vec3 = bbox_outside_points[2] - point3d
         vec3 = vec3.to_vector()
         rays = [edges.LineSegment3D(
-                point3d, point3d + 2 * vec1 + random.random()*vec2 + random.random()*vec3) for _ in range(10)]
+                point3d, point3d + 2 * vec1 + random.random() * vec2 + random.random() * vec3) for _ in range(10)]
         return rays
 
     def point_belongs(self, point3d: volmdlr.Point3D, **kwargs):
@@ -1573,7 +1573,6 @@ class ClosedShell3D(OpenShell3D):
                         self.faces.remove(face)
                         break
         self._faces_graph = None
-
 
 
 class OpenTriangleShell3D(OpenShell3D):

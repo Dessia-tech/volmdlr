@@ -274,7 +274,7 @@ class WireMixin:
             current_abscissa += primitive.length()
         return primitives1, primitives2
 
-    def abscissa(self, point, tol:float=1e-6):
+    def abscissa(self, point, tol: float = 1e-6):
         """
         Compute the curvilinear abscissa of a point on a wire.
 
@@ -457,7 +457,7 @@ class WireMixin:
         if cls.__name__[:-2] in ['Contour', 'Wire']:
             wires = [cls(new_primitives)]
         else:
-            wire_class_ = getattr(sys.modules[__name__], 'Wire'+cls.__name__[-2:])
+            wire_class_ = getattr(sys.modules[__name__], 'Wire' + cls.__name__[-2:])
             wires = [wire_class_(new_primitives)]
         return wires
 
@@ -541,7 +541,7 @@ class WireMixin:
                         broke = True
                         break
 
-                if ((not broke) and (len(edges) == p+1)) or len(edges) == 0:
+                if ((not broke) and (len(edges) == p + 1)) or len(edges) == 0:
                     to_continue = False
 
         wires = [cls(primitives_wire) for primitives_wire in new_primitives]
@@ -1206,6 +1206,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         """
         return False
 
+
 class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
     """
     A collection of simple primitives, following each other making a wire.
@@ -1807,7 +1808,7 @@ class ContourMixin(WireMixin):
         """
         return self.primitive_over_wire(primitive, tol)
 
-    def primitive_section_over_contour(self, primitive, abs_tol: float=1e-6):
+    def primitive_section_over_contour(self, primitive, abs_tol: float = 1e-6):
         """
         Verifies if at least a small section of a primitive is over a contour, not necessarilly the entire primitive.
 
@@ -1864,8 +1865,8 @@ class ContourMixin(WireMixin):
                     is_horizontal = math.isclose(primitive.start.y, primitive.end.y, abs_tol=1e-6)
                     is_vertical = math.isclose(primitive.start.x, primitive.end.x, abs_tol=1e-6)
                     should_discretize = discretize_line_direction == "xy" or \
-                                        (discretize_line_direction == "x" and is_horizontal) or \
-                                        (discretize_line_direction == "y" and is_vertical)
+                        (discretize_line_direction == "x" and is_horizontal) or \
+                        (discretize_line_direction == "y" and is_vertical)
                     if should_discretize:
                         polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
                     else:
@@ -2291,7 +2292,7 @@ class Contour2D(ContourMixin, Wire2D):
         for i in range(n - 1):
             xi = x_min + (i + 1) * (x_max - x_min) / n
             cut_line = curves.Line2D(volmdlr.Point2D(xi, 0),
-                                            volmdlr.Point2D(xi, 1))
+                                     volmdlr.Point2D(xi, 1))
 
             iteration_contours2 = []
             for c in iteration_contours:
@@ -2438,7 +2439,7 @@ class Contour2D(ContourMixin, Wire2D):
                     point1, point2 = [cutting_contour.primitives[0].start,
                                       cutting_contour.primitives[-1].end]
                     cutting_points = []
-                    if  base_contour.point_belongs(cutting_contour.middle_point()) and\
+                    if base_contour.point_belongs(cutting_contour.middle_point()) and\
                             base_contour.point_over_contour(point1) and base_contour.point_over_contour(point2):
                         cutting_points = [point1, point2]
                     if cutting_points:

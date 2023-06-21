@@ -222,7 +222,7 @@ class Face3D(volmdlr.core.Primitive3D):
         line_x = None
         if self.surface3d.x_periodicity and (xmax - xmin) >= 0.45 * self.surface3d.x_periodicity:
             line_x = volmdlr_curves.Line2D(volmdlr.Point2D(0.5 * (xmin + xmax), 0),
-                                volmdlr.Point2D(
+                                           volmdlr.Point2D(
                                     0.5 * (xmin + xmax), 1))
         line_y = None
         if self.surface3d.y_periodicity and (
@@ -1178,7 +1178,7 @@ class PlaneFace3D(Face3D):
             return []
         points_intersections = []
         for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d + \
-                       planeface.inner_contours3d:
+                planeface.inner_contours3d:
             for intersection in contour.line_intersections(face2_plane_interections[0]):
                 if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
                     points_intersections.append(intersection)
@@ -1891,7 +1891,7 @@ class CylindricalFace3D(Face3D):
         for i in range(nlines):
             theta = theta_min + (i + 1) / (nlines + 1) * delta_theta
             lines.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, zmin),
-                                    volmdlr.Point2D(theta, zmax)))
+                                               volmdlr.Point2D(theta, zmax)))
         return lines, []
 
     def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6):
@@ -2116,14 +2116,14 @@ class ToroidalFace3D(Face3D):
         for i in range(nlines_x):
             theta = theta_min + (i + 1) / (nlines_x + 1) * delta_theta
             lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, phi_min),
-                                      volmdlr.Point2D(theta, phi_max)))
+                                                 volmdlr.Point2D(theta, phi_max)))
         delta_phi = phi_max - phi_min
         nlines_y = int(delta_phi * angle_resolution)
         lines_y = []
         for i in range(nlines_y):
             phi = phi_min + (i + 1) / (nlines_y + 1) * delta_phi
             lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta_min, phi),
-                                      volmdlr.Point2D(theta_max, phi)))
+                                                 volmdlr.Point2D(theta_max, phi)))
         return lines_x, lines_y
 
     def grid_size(self):
@@ -2230,12 +2230,12 @@ class ConicalFace3D(Face3D):
         for i in range(nlines):
             theta = theta_min + (i + 1) / (nlines + 1) * delta_theta
             lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, zmin),
-                                      volmdlr.Point2D(theta, zmax)))
+                                                 volmdlr.Point2D(theta, zmax)))
 
         if zmin < 1e-9:
             delta_z = zmax - zmin
             lines_y = [volmdlr_curves.Line2D(volmdlr.Point2D(theta_min, zmin + 0.1 * delta_z),
-                                  volmdlr.Point2D(theta_max, zmin + 0.1 * delta_z))]
+                                             volmdlr.Point2D(theta_max, zmin + 0.1 * delta_z))]
         else:
             lines_y = []
         return lines_x, lines_y
@@ -2355,14 +2355,14 @@ class SphericalFace3D(Face3D):
         for i in range(nlines_x):
             theta = theta_min + (i + 1) / (nlines_x + 1) * delta_theta
             lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, phi_min),
-                                      volmdlr.Point2D(theta, phi_max)))
+                                                 volmdlr.Point2D(theta, phi_max)))
         delta_phi = phi_max - phi_min
         nlines_y = int(delta_phi * angle_resolution)
         lines_y = []
         for i in range(nlines_y):
             phi = phi_min + (i + 1) / (nlines_y + 1) * delta_phi
             lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta_min, phi),
-                                      volmdlr.Point2D(theta_max, phi)))
+                                                 volmdlr.Point2D(theta_max, phi)))
         return lines_x, lines_y
 
     def grid_size(self):
@@ -2468,7 +2468,7 @@ class RuledFace3D(Face3D):
         for i in range(nlines):
             x = xmin + (i + 1) / (nlines + 1) * delta_x
             lines.append(volmdlr_curves.Line2D(volmdlr.Point2D(x, ymin),
-                                    volmdlr.Point2D(x, ymax)))
+                                               volmdlr.Point2D(x, ymax)))
         return lines, []
 
     def grid_size(self):
@@ -2678,14 +2678,14 @@ class BSplineFace3D(Face3D):
         for i in range(nlines_x):
             u = u_min + (i + 1) / (nlines_x + 1) * delta_u
             lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(u, v_min),
-                                      volmdlr.Point2D(u, v_max)))
+                                                 volmdlr.Point2D(u, v_max)))
         delta_v = v_max - v_min
         nlines_y = int(delta_v * resolution)
         lines_y = []
         for i in range(nlines_y):
             v = v_min + (i + 1) / (nlines_y + 1) * delta_v
             lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(v_min, v),
-                                      volmdlr.Point2D(v_max, v)))
+                                                 volmdlr.Point2D(v_max, v)))
         return lines_x, lines_y
 
     def grid_size(self):

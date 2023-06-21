@@ -961,7 +961,7 @@ class Cylinder(shells.ClosedShell3D):
     def shell_faces(self):
         surface3d = surfaces.CylindricalSurface3D(self.frame, self.radius)
         cylindrical_face = volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
-            surface3d, 0, 2*math.pi, 0, self.length)
+            surface3d, 0, 2 * math.pi, 0, self.length)
         lower_plane = surfaces.Plane3D.from_plane_vectors(
             self.frame.origin, self.frame.u, self.frame.v)
         circle = volmdlr.curves.Circle2D(self.position.to_2d(self.frame.origin, self.frame.u,
@@ -1793,7 +1793,7 @@ class Sweep(shells.ClosedShell3D):
                 tangents = []
                 for k, _ in enumerate(wire_primitive.points):
                     position = k / (len(wire_primitive.points) - 1)
-                    tangents.append(wire_primitive.unit_direction_vector(position*wire_primitive.length()))
+                    tangents.append(wire_primitive.unit_direction_vector(position * wire_primitive.length()))
 
                 circles = []
                 for pt, tan in zip(wire_primitive.points, tangents):

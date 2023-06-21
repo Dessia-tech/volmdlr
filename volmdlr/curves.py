@@ -34,6 +34,7 @@ from volmdlr.core import EdgeStyle
 
 class Curve(DessiaObject):
     """Abstract class for a curve object."""
+
     def __init__(self, name: str = ''):
         DessiaObject.__init__(self, name=name)
 
@@ -645,7 +646,7 @@ class Line3D(Line):
             return projected_point
         vector = self.point1 - line2.point1
         t_coefficient = (vector.dot(direction_vector2) * direction_vector2.dot(direction_vector1) -
-                        vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
+                         vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
                         direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
                         direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
         # u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
@@ -663,9 +664,9 @@ class Line3D(Line):
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
-        v1 = self.point1 - u*3
+        v1 = self.point1 - u * 3
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = self.point2 - u*3
+        v2 = self.point2 - u * 3
         x2, y2, z2 = v2.x, v2.y, v2.z
         if dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
@@ -794,7 +795,7 @@ class CircleMixin(Curve):
 
         """
         if abscissa == 0.0:
-            fullarc_class_ = getattr(volmdlr.edges, "FullArc"+self.__class__.__name__[-2:])
+            fullarc_class_ = getattr(volmdlr.edges, "FullArc" + self.__class__.__name__[-2:])
             return [fullarc_class_.from_curve(self)]
         start = self.point_at_abscissa(0.0)
         point_at_absccissa = self.point_at_abscissa(abscissa)
@@ -1893,7 +1894,7 @@ class Ellipse3D(Curve):
         # _d2 = self.minor_dir.to_2d(plane_origin, x, y)
         return Ellipse2D(self.major_axis, self.minor_axis, volmdlr.Frame2D(center, major_dir_2d, minor_dir_2d))
 
-    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6 ):
+    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
         """
         Calculates the abscissa a given point.
 

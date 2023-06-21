@@ -158,7 +158,7 @@ class Edge(dc.DessiaObject):
         :return: a list of sampled points
         """
         if angle_resolution:
-            number_points = int(angle_resolution * (self.length()/math.pi))
+            number_points = int(angle_resolution * (self.length() / math.pi))
         if number_points is None or number_points <= 1:
             number_points = 2
         step = self.length() / (number_points - 1)
@@ -2328,7 +2328,7 @@ class Arc(Edge):
                [other_arc2.start, other_arc2.middle_point(), other_arc2.end]):
             return [other_arc2]
         if all(other_arc2.point_belongs(point, abs_tol) for point in
-               [self.start, self.point_at_abscissa(self.length()*.5), self.end]):
+               [self.start, self.point_at_abscissa(self.length() * .5), self.end]):
             return [self]
         if self.point_belongs(other_arc2.start, abs_tol):
             arc1_, arc2_ = self.split(other_arc2.start)
@@ -2409,7 +2409,7 @@ class FullArc(Arc):
             return [None, self.copy()]
         if split_point.is_close(self.end, 1e-6):
             return [self.copy(), None]
-        class_ = getattr(sys.modules[__name__], 'Arc'+self.__class__.__name__[-2:])
+        class_ = getattr(sys.modules[__name__], 'Arc' + self.__class__.__name__[-2:])
         return [class_(self.circle, self.start, split_point, self.is_trigo),
                 class_(self.circle, split_point, self.end, self.is_trigo)]
 
@@ -2435,7 +2435,7 @@ class Arc2D(Arc):
         self.is_trigo = is_trigo
         self._angle = None
         self._bounding_rectangle = None
-        Arc.__init__(self, circle, start=start, end=end, is_trigo=is_trigo,  name=name)
+        Arc.__init__(self, circle, start=start, end=end, is_trigo=is_trigo, name=name)
         start_to_center = start - self.circle.center
         end_to_center = end - self.circle.center
         angle1 = math.atan2(start_to_center.y, start_to_center.x)
@@ -3369,7 +3369,7 @@ class ArcEllipse2D(Edge):
         if self.angle >= math.pi:
             angle = volmdlr.TWO_PI - self.angle
             area = math.pi * self.ellipse.major_axis * self.ellipse.minor_axis -\
-                   0.5 * self.ellipse.major_axis * self.ellipse.minor_axis * (angle - math.sin(angle))
+                0.5 * self.ellipse.major_axis * self.ellipse.minor_axis * (angle - math.sin(angle))
         else:
             angle = self.angle
             area = 0.5 * self.ellipse.major_axis * self.ellipse.minor_axis * (angle - math.sin(angle))
@@ -3421,7 +3421,7 @@ class ArcEllipse2D(Edge):
         :return: A 3D arc of ellipse.
         :type: ArcEllipse3D.
         """
-        interior2d = self.point_at_abscissa(self.length()*0.5)
+        interior2d = self.point_at_abscissa(self.length() * 0.5)
         ellipse3d = self.ellipse.to_3d(plane_origin, x, y)
         start3d = self.start.to_3d(plane_origin, x, y)
         end3d = self.end.to_3d(plane_origin, x, y)
@@ -3502,9 +3502,9 @@ class ArcEllipse2D(Edge):
 
     def get_reverse(self):
         ellipse = self.ellipse.__class__(self.ellipse.major_axis, self.ellipse.minor_axis,
-                                           volmdlr.Frame2D(self.ellipse.center, self.ellipse.frame.u,
-                                                           -self.ellipse.frame.v))
-        return self.__class__(ellipse, self.end.copy(), self.start.copy(), self.name+'_reverse')
+                                         volmdlr.Frame2D(self.ellipse.center, self.ellipse.frame.u,
+                                                         -self.ellipse.frame.v))
+        return self.__class__(ellipse, self.end.copy(), self.start.copy(), self.name + '_reverse')
 
     def line_intersections(self, line2d: volmdlr_curves.Line2D):
         """
@@ -3629,14 +3629,14 @@ class ArcEllipse2D(Edge):
 
         if isinstance(other_edge, self.__class__):
             if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
-                    and self.ellipse.center.is_close(other_edge.ellipse.center, tol) and\
-                    self.point_belongs(other_edge.point_at_abscissa(other_edge.length()*0.5), tol)):
+                    and self.ellipse.center.is_close(other_edge.ellipse.center, tol) and
+                    self.point_belongs(other_edge.point_at_abscissa(other_edge.length() * 0.5), tol)):
                 return True
         return False
 
     def complementary(self):
         """Gets the complementary arc of ellipse."""
-        return self.__class__(self.ellipse, self.end, self.start, name=self.name+'_complementary')
+        return self.__class__(self.ellipse, self.end, self.start, name=self.name + '_complementary')
 
 
 class FullArcEllipse(Edge):
@@ -3750,7 +3750,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         """
         point_start_end3d = self.start_end.to_3d(plane_origin, x, y)
         ellipse = self.ellipse.to_3d(plane_origin, x, y)
-        return FullArcEllipse3D(ellipse, point_start_end3d, name=self.name+"_3D")
+        return FullArcEllipse3D(ellipse, point_start_end3d, name=self.name + "_3D")
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -5598,7 +5598,7 @@ class FullArc3D(FullArc, Arc3D):
         u_vector = normal.deterministic_unit_normal_vector()
         v_vector = normal.cross(u_vector)
         circle = volmdlr_curves.Circle3D(volmdlr.Frame3D(center, u_vector, v_vector, normal),
-                                  center.point_distance(start_end))
+                                         center.point_distance(start_end))
         return cls(circle, start_end)
 
     @classmethod
@@ -5862,7 +5862,7 @@ class ArcEllipse3D(Edge):
         if isinstance(other_edge, self.__class__):
             if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
                     and self.ellipse.center.is_close(other_edge.ellipse3d.center, tol)
-                    and self.point_belongs(other_edge.point_at_abscissa(other_edge.length()*0.5), tol)):
+                    and self.point_belongs(other_edge.point_at_abscissa(other_edge.length() * 0.5), tol)):
                 return True
         return False
 
@@ -5898,7 +5898,7 @@ class ArcEllipse3D(Edge):
         new_frame = volmdlr.Frame3D(self.ellipse.frame.origin, self.ellipse.frame.u, -self.ellipse.frame.v,
                                     self.ellipse.frame.u.cross(-self.ellipse.frame.v))
         ellipse3d = volmdlr_curves.Ellipse3D(self.ellipse.major_axis, self.ellipse.minor_axis, new_frame)
-        return self.__class__(ellipse3d, self.end, self.start, self.name+'_reverse')
+        return self.__class__(ellipse3d, self.end, self.start, self.name + '_reverse')
 
 
 class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
@@ -5906,7 +5906,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
     Defines a FullArcEllipse3D.
     """
 
-    def __init__(self, ellipse: volmdlr_curves.Ellipse3D,  start_end: volmdlr.Point3D, name: str = ''):
+    def __init__(self, ellipse: volmdlr_curves.Ellipse3D, start_end: volmdlr.Point3D, name: str = ''):
         self.ellipse = ellipse
         self.normal = self.ellipse.normal
         center2d = self.ellipse.center.to_2d(self.ellipse.center,

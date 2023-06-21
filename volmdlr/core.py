@@ -1011,7 +1011,7 @@ class BoundingBox(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def point_belongs(self, point: volmdlr.Point3D, tol = 1e-6) -> bool:
+    def point_belongs(self, point: volmdlr.Point3D, tol=1e-6) -> bool:
         """
         Determines if a point belongs to the bounding box.
 

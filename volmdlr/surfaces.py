@@ -215,7 +215,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         holes = []
         for inner_contour in self.inner_contours:
             inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
-                                                      discretize_line_direction=discretize_line_direction)
+                                                     discretize_line_direction=discretize_line_direction)
             inner_polygon_nodes = [display.Node2D.from_point(p) for p in inner_polygon.points]
             for point in inner_polygon_nodes:
                 if point not in point_index:
@@ -294,7 +294,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         for i in range(n - 1):
             xi = bounding_rectangle[0] + (i + 1) * (bounding_rectangle[1] - bounding_rectangle[0]) / n
             lines.append(curves.Line2D(volmdlr.Point2D(xi, 0),
-                                      volmdlr.Point2D(xi, 1)))
+                                       volmdlr.Point2D(xi, 1)))
         return self.split_by_lines(lines)
 
     def cut_by_line(self, line: curves.Line2D):
@@ -862,7 +862,7 @@ class Surface3D(DessiaObject):
                     primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=1e-2):
                 primitives2d[i] = primitives2d[i].reverse()
             elif not is_connected and math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=1e-2) or \
-                math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
+                    math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=1e-2):
                 new_primitive = primitives2d[i].reverse()
                 new_delta = previous_primitive.end - new_primitive.start
                 primitives2d[i] = new_primitive.translation(new_delta)
@@ -1598,7 +1598,7 @@ class PeriodicalSurface(Surface3D):
                         outer_contour_theta,
                         inner_contour_theta)
                     line = curves.Line2D(volmdlr.Point2D(overlapping_theta, z1),
-                                        volmdlr.Point2D(overlapping_theta, z3))
+                                         volmdlr.Point2D(overlapping_theta, z3))
                     cutted_contours = inner_contour.split_by_line(line)
                     number_contours = len(cutted_contours)
                     if number_contours == 2:
@@ -1630,7 +1630,7 @@ class PeriodicalSurface(Surface3D):
                     elif number_contours == 1:
                         contour = cutted_contours[0]
                         theta_offset = outer_contour_theta[outer_contour_side] - \
-                                       inner_contour_theta[inner_contour_side]
+                            inner_contour_theta[inner_contour_side]
                         translation_vector = volmdlr.Vector2D(theta_offset, 0)
                         old_innner_contour_positioned = contour.translation(offset=translation_vector)
 
@@ -2255,8 +2255,8 @@ class CylindricalSurface3D(PeriodicalSurface):
             major_dir = ellipse_pi_by_2 - center3d_plane
             u_vector = major_dir.unit_vector()
         ellipse = curves.Ellipse3D(major_axis, minor_axis,
-                                 volmdlr.Frame3D(center3d_plane, u_vector,
-                                                 plane3d.frame.w.cross(u_vector), plane3d.frame.w))
+                                   volmdlr.Frame3D(center3d_plane, u_vector,
+                                                   plane3d.frame.w.cross(u_vector), plane3d.frame.w))
         return [ellipse]
 
     def plane_intersection(self, plane3d):
@@ -2561,9 +2561,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         point_after_start, point_before_end = self._reference_points(fullarc3d)
 
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(start, end, angle3d,
-                                                                               [point_after_start, point_before_end],
-                                                                               [self.x_periodicity,
-                                                                                self.y_periodicity])
+                                                                              [point_after_start, point_before_end],
+                                                                              [self.x_periodicity,
+                                                                               self.y_periodicity])
         theta1, phi1 = start
         # theta2, phi2 = end
         theta3, phi3 = point_after_start
@@ -2593,9 +2593,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         point_after_start, point_before_end = self._reference_points(arc3d)
 
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(start, end, angle3d,
-                                                                               [point_after_start, point_before_end],
-                                                                               [self.x_periodicity,
-                                                                                self.y_periodicity])
+                                                                              [point_after_start, point_before_end],
+                                                                              [self.x_periodicity,
+                                                                               self.y_periodicity])
 
         return [edges.LineSegment2D(start, end)]
 
@@ -3266,7 +3266,7 @@ class SphericalSurface3D(PeriodicalSurface):
             return True
         # Check if curve is a latitude curve (theta is constant)
         if self.frame.w.is_perpendicular_to(arc.circle.normal, abs_tol=1e-4) and\
-            arc.circle.center.is_close(self.frame.origin, 1e-4):
+                arc.circle.center.is_close(self.frame.origin, 1e-4):
             return True
         return False
 
@@ -3342,10 +3342,10 @@ class SphericalSurface3D(PeriodicalSurface):
                 theta2 = -math.pi
 
             primitives = [edges.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
-                edges.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta2, half_pi),
-                                    name="construction"),
-                edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
-                ]
+                          edges.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(theta2, half_pi),
+                                              name="construction"),
+                          edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
+                          ]
             return primitives
         warnings.warn("Could not find BREP of the Arc3D on the sphere domain")
         return None
@@ -3384,7 +3384,7 @@ class SphericalSurface3D(PeriodicalSurface):
                                         volmdlr.Point2D(theta2, -0.5 * math.pi),
                                         name="construction"),
                     edges.LineSegment2D(volmdlr.Point2D(theta2, -0.5 * math.pi), volmdlr.Point2D(theta2, phi2))
-                    ]
+                ]
             if arc3d.is_point_edge_extremity(point_negative_singularity):
                 return [
                     edges.LineSegment2D(start, volmdlr.Point2D(start.x, 0.5 * math.pi)),
@@ -3392,7 +3392,7 @@ class SphericalSurface3D(PeriodicalSurface):
                                         volmdlr.Point2D(theta2, 0.5 * math.pi),
                                         name="construction"),
                     edges.LineSegment2D(volmdlr.Point2D(theta2, 0.5 * math.pi), volmdlr.Point2D(theta2, phi2))
-                    ]
+                ]
             return [edges.LineSegment2D(volmdlr.Point2D(theta1, phi1), volmdlr.Point2D(theta1, half_pi)),
                     edges.LineSegment2D(volmdlr.Point2D(theta1, half_pi), volmdlr.Point2D(thetai, half_pi),
                                         name="construction"),
@@ -3417,11 +3417,11 @@ class SphericalSurface3D(PeriodicalSurface):
         direction_line = curves.Line2D(reference_point, reference_point + direction_vector)
         if phi > 0:
             line_positive_singularity = curves.Line2D(volmdlr.Point2D(-math.pi, 0.5 * math.pi),
-                                                     volmdlr.Point2D(math.pi, 0.5 * math.pi))
+                                                      volmdlr.Point2D(math.pi, 0.5 * math.pi))
             return direction_line.line_intersections(line_positive_singularity)[0]
 
         line_negative_singularity = curves.Line2D(volmdlr.Point2D(-math.pi, -0.5 * math.pi),
-                                                 volmdlr.Point2D(math.pi, -0.5 * math.pi))
+                                                  volmdlr.Point2D(math.pi, -0.5 * math.pi))
 
         return direction_line.line_intersections(line_negative_singularity)[0]
 
@@ -3457,7 +3457,7 @@ class SphericalSurface3D(PeriodicalSurface):
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[1:]
             else:
-                number_points = int(distance/maximum_linear_distance_reference_point)
+                number_points = int(distance / maximum_linear_distance_reference_point)
 
                 local_discretization = [self.point3d_to_2d(point)
                                         for point in edge3d.local_discretization(
@@ -3481,7 +3481,7 @@ class SphericalSurface3D(PeriodicalSurface):
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[:-1]
             else:
-                number_points = int(distance/maximum_linear_distance_reference_point)
+                number_points = int(distance / maximum_linear_distance_reference_point)
 
                 local_discretization = [self.point3d_to_2d(point)
                                         for point in edge3d.local_discretization(
@@ -3506,7 +3506,7 @@ class SphericalSurface3D(PeriodicalSurface):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         singularity_points = self.edge_passes_on_singularity_point(arc3d)
-        half_pi = 0.5 * math.pi # this variable avoid doing this multiplication several times (performance)
+        half_pi = 0.5 * math.pi  # this variable avoid doing this multiplication several times (performance)
         point_positive_singularity, point_negative_singularity = singularity_points
 
         if point_positive_singularity and point_negative_singularity:
@@ -3831,19 +3831,19 @@ class SphericalSurface3D(PeriodicalSurface):
         vector_linept1_center = self.frame.origin - line3d.point1
         vector_linept1_center = vector_linept1_center.to_vector()
         a_param = line_direction_vector[0]**2 + line_direction_vector[1]**2 + line_direction_vector[2]**2
-        b_param = -2 * (line_direction_vector[0]*vector_linept1_center[0] +
-                        line_direction_vector[1]*vector_linept1_center[1] +
-                        line_direction_vector[2]*vector_linept1_center[2])
+        b_param = -2 * (line_direction_vector[0] * vector_linept1_center[0] +
+                        line_direction_vector[1] * vector_linept1_center[1] +
+                        line_direction_vector[2] * vector_linept1_center[2])
         c_param = (vector_linept1_center[0]**2 + vector_linept1_center[1]**2 +
                    vector_linept1_center[2]**2 - self.radius**2)
-        b2_minus4ac = b_param**2 - 4*a_param*c_param
+        b2_minus4ac = b_param**2 - 4 * a_param * c_param
         if math.isclose(b2_minus4ac, 0, abs_tol=1e-8):
             t_param = -b_param / (2 * a_param)
             return [line3d.point1 + line_direction_vector * t_param]
         if b2_minus4ac < 0:
             return []
-        t_param1 = (-b_param + math.sqrt(b2_minus4ac)) / (2*a_param)
-        t_param2 = (-b_param - math.sqrt(b2_minus4ac)) / (2*a_param)
+        t_param1 = (-b_param + math.sqrt(b2_minus4ac)) / (2 * a_param)
+        t_param2 = (-b_param - math.sqrt(b2_minus4ac)) / (2 * a_param)
         return line3d.point1 + line_direction_vector * t_param1, line3d.point1 + line_direction_vector * t_param2
 
     def linesegment_intersections(self, linesegment3d: edges.LineSegment3D):
@@ -4305,7 +4305,6 @@ class RevolutionSurface3D(PeriodicalSurface):
                     edges.LineSegment2D(point2, point3, name="parametric.singularity"),
                     edges.LineSegment2D(point3, point4, name="parametric.arc")
                     ]
-
 
         raise NotImplementedError
 
@@ -4840,7 +4839,7 @@ class BSplineSurface3D(Surface3D):
         points[-1] = end
 
         if all((math.isclose(p[i], max_bound, abs_tol=1e-4) or math.isclose(p[i], min_bound, abs_tol=1e-4)) for
-                    p in points):
+               p in points):
             # if the line is at the boundary of the surface domain, we take the first point as reference
             t_param = max_bound if math.isclose(points[0][i], max_bound, abs_tol=1e-4) else min_bound
             if direction_periodicity == 'x':
@@ -6344,26 +6343,26 @@ class BSplineSurface3D(Surface3D):
                 delta_u = u_max - u_min
                 nlines_x = int(delta_u * resolution)
                 lines_x = [curves.Line2D(volmdlr.Point2D(u_min, v_min),
-                                        volmdlr.Point2D(u_min, v_max))]
+                                         volmdlr.Point2D(u_min, v_max))]
                 for i in range(nlines_x):
                     u = u_min + (i + 1) / (nlines_x + 1) * delta_u
                     lines_x.append(curves.Line2D(volmdlr.Point2D(u, v_min),
-                                                volmdlr.Point2D(u, v_max)))
+                                                 volmdlr.Point2D(u, v_max)))
                 lines_x.append(curves.Line2D(volmdlr.Point2D(u_max, v_min),
-                                            volmdlr.Point2D(u_max, v_max)))
+                                             volmdlr.Point2D(u_max, v_max)))
                 lines = lines_x
 
             else:
                 delta_v = v_max - v_min
                 nlines_y = int(delta_v * resolution)
                 lines_y = [curves.Line2D(volmdlr.Point2D(v_min, v_min),
-                                        volmdlr.Point2D(v_max, v_min))]
+                                         volmdlr.Point2D(v_max, v_min))]
                 for i in range(nlines_y):
                     v = v_min + (i + 1) / (nlines_y + 1) * delta_v
                     lines_y.append(curves.Line2D(volmdlr.Point2D(v_min, v),
-                                                volmdlr.Point2D(v_max, v)))
+                                                 volmdlr.Point2D(v_max, v)))
                 lines_y.append(curves.Line2D(volmdlr.Point2D(v_min, v_max),
-                                            volmdlr.Point2D(v_max, v_max)))
+                                             volmdlr.Point2D(v_max, v_max)))
                 lines = lines_y
 
             pt0 = volmdlr.O2D
