@@ -17,17 +17,27 @@ from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 # Typings
 Point = Tuple[float, ...]
 Triangle = Tuple[Point, ...]
-Mesh = List[Triangle]
 
 
 class Voxelization(PhysicalObject):
-    """
-    Class for manipulation voxelization of geometry
-    """
+    """Class for creation and manipulation of voxelization of volmdlr geometry."""
 
-    def __init__(self, voxels: Set[Point], voxel_size: float, name: str = ""):
-        self.voxels = voxels
+    def __init__(self, voxels_centers: Set[Point], voxel_size: float, octree_root: "OctreeNode" = None, name: str = ""):
+        """
+        Initializes the voxelization.
+
+        :param voxels_centers: The set of points representing voxel centers.
+        :type voxels_centers: set[tuple[float, float, float]]
+        :param voxel_size: The voxel edges size.
+        :type voxel_size: float
+        :param octree_root: The octree root used to create the voxelization, if so.
+        :type octree_root: OctreeNode, optional
+        :param name: The name of the Voxelization.
+        :type name: str, optional
+        """
+        self.voxels_centers = voxels_centers
         self.voxel_size = voxel_size
+        self.octree_root = octree_root
 
         PhysicalObject.__init__(self, name=name)
 
@@ -92,9 +102,7 @@ class Voxelization(PhysicalObject):
         return triangles
 
     @staticmethod
-    def _triangle_aabb_intersection(
-        triangle: np.ndarray, box_center: np.ndarray, box_extents: np.ndarray
-    ) -> bool:
+    def _triangle_aabb_intersection(triangle: np.ndarray, box_center: np.ndarray, box_extents: np.ndarray) -> bool:
         X, Y, Z = 0, 1, 2
 
         # Translate triangle as conceptually moving AABB to origin
@@ -112,9 +120,9 @@ class Voxelization(PhysicalObject):
             a[np.mod(i + 1, 3)] = -f[i][np.mod(i + 2, 3)]
             a[np.mod(i + 2, 3)] = f[i][np.mod(i + 1, 3)]
             p = np.dot(v, a)
-            r = box_extents[np.mod(i + 1, 3)] * abs(f[i][np.mod(i + 2, 3)]) + box_extents[
-                np.mod(i + 2, 3)
-            ] * abs(f[i][np.mod(i + 1, 3)])
+            r = box_extents[np.mod(i + 1, 3)] * abs(f[i][np.mod(i + 2, 3)]) + box_extents[np.mod(i + 2, 3)] * abs(
+                f[i][np.mod(i + 1, 3)]
+            )
             if (max(-max(p), min(p))) > r:
                 return False
 
@@ -122,9 +130,9 @@ class Voxelization(PhysicalObject):
             a[np.mod(i + 2, 3)] = -f[i][np.mod(i, 3)]
             a[np.mod(i, 3)] = f[i][np.mod(i + 2, 3)]
             p = np.dot(v, a)
-            r = box_extents[np.mod(i, 3)] * abs(f[i][np.mod(i + 2, 3)]) + box_extents[
-                np.mod(i + 2, 3)
-            ] * abs(f[i][np.mod(i, 3)])
+            r = box_extents[np.mod(i, 3)] * abs(f[i][np.mod(i + 2, 3)]) + box_extents[np.mod(i + 2, 3)] * abs(
+                f[i][np.mod(i, 3)]
+            )
             if (max(-max(p), min(p))) > r:
                 return False
 
@@ -132,9 +140,9 @@ class Voxelization(PhysicalObject):
             a[np.mod(i, 3)] = -f[i][np.mod(i + 1, 3)]
             a[np.mod(i + 1, 3)] = f[i][np.mod(i, 3)]
             p = np.dot(v, a)
-            r = box_extents[np.mod(i, 3)] * abs(f[i][np.mod(i + 1, 3)]) + box_extents[
-                np.mod(i + 1, 3)
-            ] * abs(f[i][np.mod(i, 3)])
+            r = box_extents[np.mod(i, 3)] * abs(f[i][np.mod(i + 1, 3)]) + box_extents[np.mod(i + 1, 3)] * abs(
+                f[i][np.mod(i, 3)]
+            )
             if (max(-max(p), min(p))) > r:
                 return False
 
@@ -143,7 +151,6 @@ class Voxelization(PhysicalObject):
             return False
 
         # Test separating axis corresponding to triangle face normal (category 2)
-
         plane_normal = np.cross(f[0], f[1])
         plane_distance = np.dot(plane_normal, v[0])
 
@@ -498,9 +505,7 @@ class Voxelization(PhysicalObject):
                 # Split the self-intersecting polygons
                 splitted_ordered_segments_list = []
                 for ordered_segments in ordered_segments_list:
-                    splitted_ordered_segments_list.extend(
-                        Voxelization._split_ordered_segments(ordered_segments)
-                    )
+                    splitted_ordered_segments_list.extend(Voxelization._split_ordered_segments(ordered_segments))
 
                 polygons[i][absicssa] = [
                     Voxelization._ordered_segments_to_closed_polygon_2d(splitted_ordered_segments)
@@ -565,7 +570,7 @@ class Voxelization(PhysicalObject):
                 all_current_polygon_segments.append(segment)
                 all_current_polygon_segments.append(segment[::-1])
 
-            for segments in ordered_segments_list[:i] + ordered_segments_list[i+1:]:
+            for segments in ordered_segments_list[:i] + ordered_segments_list[i + 1 :]:
                 for segment in segments:
                     all_other_polygons_segments.append(segment)
                     all_other_polygons_segments.append(segment[::-1])
@@ -591,10 +596,7 @@ class Voxelization(PhysicalObject):
             ):
                 simplifyed_point.append(points[i])
 
-        if not (
-            points[-2][0] == points[-1][0] == points[0][0]
-            or points[-2][1] == points[-1][1] == points[0][1]
-        ):
+        if not (points[-2][0] == points[-1][0] == points[0][0] or points[-2][1] == points[-1][1] == points[0][1]):
             simplifyed_point.append(points[-1])
 
         return simplifyed_point
@@ -604,16 +606,14 @@ class Voxelization(PhysicalObject):
         return ClosedPolygon2D(
             points=[
                 Point2D(*point)
-                for point in Voxelization._simplify_polygon_points(
-                    [segment[0] for segment in ordered_segments]
-                )
+                for point in Voxelization._simplify_polygon_points([segment[0] for segment in ordered_segments])
             ]
         )
 
     def to_triangles(self) -> Set[Triangle]:
         triangles = set()
 
-        for voxel in tqdm(self.voxels):
+        for voxel in tqdm(self.voxels_centers):
             for triangle in self._voxel_faces(voxel, self.voxel_size):
                 if triangle not in triangles:
                     triangles.add(triangle)
@@ -676,7 +676,7 @@ class Voxelization(PhysicalObject):
         return shell
 
     def volmdlr_primitives(self, **kwargs):
-        if len(self.voxels) == 0:
+        if len(self.voxels_centers) == 0:
             warnings.warn("Empty voxelization.")
             return []
 
@@ -684,23 +684,21 @@ class Voxelization(PhysicalObject):
 
     def intersection(self, other_voxelization: "Voxelization") -> "Voxelization":
         if self.voxel_size != other_voxelization.voxel_size:
-            raise ValueError(
-                "Both voxelizations must have same voxel_size to perform intersection."
-            )
+            raise ValueError("Both voxelizations must have same voxel_size to perform intersection.")
 
-        return Voxelization(self.voxels.intersection(other_voxelization.voxels), self.voxel_size)
+        return Voxelization(self.voxels_centers.intersection(other_voxelization.voxels_centers), self.voxel_size)
 
     def union(self, other_voxelization: "Voxelization") -> "Voxelization":
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform union.")
 
-        return Voxelization(self.voxels.union(other_voxelization.voxels), self.voxel_size)
+        return Voxelization(self.voxels_centers.union(other_voxelization.voxels_centers), self.voxel_size)
 
     def difference(self, other_voxelization: "Voxelization") -> "Voxelization":
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform difference.")
 
-        return Voxelization(self.voxels.difference(other_voxelization.voxels), self.voxel_size)
+        return Voxelization(self.voxels_centers.difference(other_voxelization.voxels_centers), self.voxel_size)
 
     @staticmethod
     def _round_point_cloud_voxel_size(point_cloud: np.ndarray, voxel_size: float) -> np.ndarray:
@@ -734,9 +732,9 @@ class Voxelization(PhysicalObject):
         )
 
     def rotation(self, center: Point3D, axis: Vector3D, angle: float):
-        R = self._rotation_matrix(axis, angle)
-        voxel_array = np.array(list(self.voxels)) - np.array([center.x, center.y, center.z])
-        rotated_voxels = np.dot(voxel_array, R.T)
+        rotation_matrix = self._rotation_matrix(axis, angle)
+        voxel_array = np.array(list(self.voxels_centers)) - np.array([center.x, center.y, center.z])
+        rotated_voxels = np.dot(voxel_array, rotation_matrix.T)
         rotated_voxels += np.array([center.x, center.y, center.z])
 
         intersecting_voxels = self._intersecting_voxels(rotated_voxels, self.voxel_size)
@@ -746,7 +744,7 @@ class Voxelization(PhysicalObject):
         return Voxelization(intersecting_voxels, self.voxel_size)
 
     def translation(self, offset: Vector3D):
-        voxel_array = np.array(list(self.voxels))
+        voxel_array = np.array(list(self.voxels_centers))
         translated_voxels = voxel_array + np.array([offset.x, offset.y, offset.z])
 
         intersecting_voxels = self._intersecting_voxels(translated_voxels, self.voxel_size)
@@ -758,13 +756,14 @@ class Voxelization(PhysicalObject):
 
 class Graph:
     """Helper Class for subdividing self-crossing polygons."""
+
     def __init__(self, edges):
         self.graph = self.build_graph(edges)
         self.visited = {node: False for node in self.graph}
 
     @staticmethod
     def build_graph(edges):
-        """Builds adjacency list representation of graph from edge list"""
+        """Builds adjacency list representation of graph from edge list."""
         graph = {}
         for edge in edges:
             if edge[0] not in graph:
@@ -808,16 +807,14 @@ class Graph:
 
 
 class OctreeNode:
-    def __init__(self, center: Point, size: float, depth: int, max_depth: int, count: int = 1):
+    def __init__(self, center: Point, size: float, depth: int, max_depth: int):
         self.children = []
         self.center = center
         self.size = size
         self.depth = depth
         self.max_depth = max_depth
-        if depth == 1:
-            print(f"{count} of 8")
 
-    def subdivide(self, mesh: Mesh):
+    def subdivide(self, triangles: List[Triangle]):
         children = []
         if self.depth < self.max_depth:
             half_size = self.size / 2
@@ -832,42 +829,40 @@ class OctreeNode:
                         )
 
                         # create a new OctreeNode for the child
-                        count = k + 2 * j + 4 * i + 1
                         child_node = OctreeNode(
                             child_center,
                             half_size,
                             self.depth + 1,
                             self.max_depth,
-                            count,
                         )
 
                         # check if the child node intersects with the mesh
                         if self.depth != 0:
                             # add the child node to the list of children
-                            self.children.extend(self.process_node(child_node, mesh))
+                            self.children.extend(self.process_node(child_node, triangles))
                         else:
                             children.append(child_node)
 
             if self.depth == 0:
-                for node in tqdm(
-                        self.process_node(node, mesh) for node in children
-                ):
+                for node in tqdm(self.process_node(node, triangles) for node in children):
                     self.children.extend(node)
 
         else:
             return  # reached max depth, do not subdivide further.
 
-    def intersecting_triangles(self, mesh: Mesh) -> List[Triangle]:
+    def intersecting_triangles(self, triangles: List[Triangle]) -> List[Triangle]:
         intersecting_triangles = [
             triangle
-            for triangle in mesh
-            if Voxelization._triangle_aabb_intersection(np.array(triangle), np.array(self.center), np.array([self.size for _ in range(3)]))
+            for triangle in triangles
+            if Voxelization._triangle_aabb_intersection(
+                np.array(triangle), np.array(self.center), np.array([self.size for _ in range(3)])
+            )
         ]
 
         return intersecting_triangles
 
     def get_leaf_centers(self):
-        if self.depth == self.max_depth:  # if the node has no children, it is a leaf node
+        if self.depth == self.max_depth:  # if max depth reached, it is a leaf node
             return [self.center]
         else:
             centers = []
