@@ -2,7 +2,7 @@
 Class for voxel representation of volmdlr models
 """
 import warnings
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Iterable, Dict
 
 import numpy as np
 from dessia_common.core import PhysicalObject
@@ -17,6 +17,7 @@ from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 # Typings
 Point = Tuple[float, ...]
 Triangle = Tuple[Point, ...]
+Segment = Tuple[Point, ...]
 
 
 class Voxelization(PhysicalObject):
@@ -170,9 +171,7 @@ class Voxelization(PhysicalObject):
         return triangles
 
     @staticmethod
-    def _triangle_voxel_intersection(
-        triangle: Triangle, voxel_center: Point, voxel_extents: List[float]
-    ) -> bool:
+    def _triangle_voxel_intersection(triangle: Triangle, voxel_center: Point, voxel_extents: List[float]) -> bool:
         """
         Helper method to compute if there is an intersection between a 3D triangle and a voxel.
 
@@ -266,7 +265,7 @@ class Voxelization(PhysicalObject):
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
 
-        :return: a list of the centers of the intersecting voxels
+        :return: A list of the centers of the intersecting voxels.
         :rtype: list[tuple[float, float, float]]
         """
         # Calculate the indices of the cubes that intersect with the bounding box
@@ -319,7 +318,7 @@ class Voxelization(PhysicalObject):
         Helper method to compute all the voxels intersecting with a given list of triangles.
 
         :param triangles: The triangles to compute the intersecting voxels.
-        :type triangles: List[Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]]
+        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
 
@@ -455,7 +454,9 @@ class Voxelization(PhysicalObject):
         return triangular_faces
 
     @staticmethod
-    def _triangles_to_segments(triangles: List[Triangle]):
+    def _triangles_to_segments(
+        triangles: Set[Triangle],
+    ) -> Tuple[Dict[float, List[Segment]], Dict[float, List[Segment]], Dict[float, List[Segment]]]:
         """
         Helper method to extract the segments of a given list of triangle representing a voxelization.
         The segments are sorted by plane: a plane is defined by its normal vector (X, Y or Z) and abscissa.
@@ -464,10 +465,11 @@ class Voxelization(PhysicalObject):
         These relevant segments are the one that are only present in the list of triangles, because if a segment is
         present twice, this means that it's inside the face and is not interesting for defining the face contour.
 
-        :param triangles: The triangles defined the voxelization.
-        :type triangles: list[Triangle]
+        :param triangles: The triangles defining the voxelization.
+        :type triangles: Set[Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]]
 
-        :return: The extra
+        :return: The extracted relevant segments, sorted by plane.
+        :rtype: tuple[dict[float, list[Segment]], dict[float, list[Segment]], dict[float, list[Segment]]]
         """
         segments_x = {}
         segments_y = {}
@@ -540,7 +542,18 @@ class Voxelization(PhysicalObject):
         return segments_x, segments_y, segments_z
 
     @staticmethod
-    def _order_segments(segments):
+    def _order_segments(segments: Iterable[Segment]) -> List[List[Segment]]:
+        """
+        Helper method to order a given set of segments defined in the same plane.
+        The segments may define several contours, so this method define a list of lists of ordered segments,
+        representing the multiple contours with ordered segments.
+
+        :param segments: The segments to order.
+        :type segments: Iterable[tuple[tuple[float, float, float], tuple[float, float, float]]]
+
+        :return: The ordered segments lists.
+        :rtype: list[list[tuple[tuple[float, float, float], tuple[float, float, float]]]]
+        """
         segments = list(segments)
         ordered_segments_list = []
 
@@ -570,29 +583,48 @@ class Voxelization(PhysicalObject):
         return ordered_segments_list
 
     @staticmethod
-    def _triangles_to_closed_polygons(triangles):
+    def _triangles_to_closed_polygons(triangles: Set[Triangle]) -> List[Dict[float, List[ClosedPolygon2D]]]:
+        """
+        Helper method to convert the triangles defined the faces of the voxelization to ClosedPolygon2D, sorted
+        by plane (a plane is defined by its normal vector (X, Y or Z) and its abscissa).
+
+        :param triangles: The triangles defining the voxelization.
+        :type triangles: Set[Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]]
+
+        :return: All the ClosedPolygon2D defining the faces of the voxelization, sorted by plane.
+        :rtype: list[dict[float, list[ClosedPolygon2D]]]
+        """
         segments_x, segments_y, segments_z = Voxelization._triangles_to_segments(triangles)
         polygons = [{}, {}, {}]
 
         for i, segments_i in enumerate([segments_x, segments_y, segments_z]):
-            for absicssa, segments in segments_i.items():
+            for abscissa, segments in segments_i.items():
                 # Order the segments lists
                 ordered_segments_list = Voxelization._order_segments(segments)
 
                 # Split the self-intersecting polygons
-                splitted_ordered_segments_list = []
+                split_ordered_segments_list = []
                 for ordered_segments in ordered_segments_list:
-                    splitted_ordered_segments_list.extend(Voxelization._split_ordered_segments(ordered_segments))
+                    split_ordered_segments_list.extend(Voxelization._split_ordered_segments(ordered_segments))
 
-                polygons[i][absicssa] = [
-                    Voxelization._ordered_segments_to_closed_polygon_2d(splitted_ordered_segments)
-                    for splitted_ordered_segments in splitted_ordered_segments_list
+                polygons[i][abscissa] = [
+                    Voxelization._ordered_segments_to_closed_polygon_2d(split_ordered_segments)
+                    for split_ordered_segments in split_ordered_segments_list
                 ]
 
         return polygons
 
     @staticmethod
-    def _split_ordered_segments(ordered_segments):
+    def _split_ordered_segments(ordered_segments: List[Segment]) -> List[List[Segment]]:
+        """
+        Helper method to split the self-crossing polygons into multiple polygons to avoid triangulation errors.
+
+        :param ordered_segments: The ordered segments defining the polygon.
+        :type ordered_segments: list[tuple[tuple[float, float, float], tuple[float, float, float]]]
+
+        :return: The split polygon into multiple polygons, defined by segment list.
+        :rtype: list[list[tuple[tuple[float, float, float], tuple[float, float, float]]]]
+        """
         points = [segment[0] for segment in ordered_segments]
 
         if len(points) == len(set(points)):
@@ -627,7 +659,7 @@ class Voxelization(PhysicalObject):
                         children[polygon_2].append(polygon_1)
                         parents[polygon_1].append(polygon_2)
 
-        # Actual splited polygons have no childen in the cycle-defined polygons from the self-intersecting polygon
+        # Actual split polygons have no children in the cycle-defined polygons from the self-intersecting polygon
         candidate_polygons = {}
         for ordered_segments, polygon in polygons.items():
             if len(children[polygon]) == 0:
@@ -660,26 +692,42 @@ class Voxelization(PhysicalObject):
         return ordered_segments_list_valid
 
     @staticmethod
-    def _simplify_polygon_points(points):
-        simplifyed_point = []
+    def _simplify_polygon_points(points: List[Point]) -> List[Point]:
+        """
+        Helper method to simplify the list of points defining a polygon, by removing the points that are not relevant
+        for the polygon definition, i.e. the points that are not in a corner of the polygon.
 
-        if len(points) != len(set(points)):
-            ClosedPolygon2D([Point2D(*point) for point in points]).plot()
+        :param points: The points defining the polygon.
+        :type points: list[tuple[float, float, float]]
+
+        :return: The simplified points.
+        :rtype: list[tuple[float, float, float]]
+        """
+        simplified_point = []
 
         for i in range(len(points) - 1):
             if not (
                 points[i - 1][0] == points[i][0] == points[i + 1][0]
                 or points[i - 1][1] == points[i][1] == points[i + 1][1]
             ):
-                simplifyed_point.append(points[i])
+                simplified_point.append(points[i])
 
         if not (points[-2][0] == points[-1][0] == points[0][0] or points[-2][1] == points[-1][1] == points[0][1]):
-            simplifyed_point.append(points[-1])
+            simplified_point.append(points[-1])
 
-        return simplifyed_point
+        return simplified_point
 
     @staticmethod
-    def _ordered_segments_to_closed_polygon_2d(ordered_segments):
+    def _ordered_segments_to_closed_polygon_2d(ordered_segments: Iterable[Segment]) -> ClosedPolygon2D:
+        """
+        Helper method to convert an iterable of ordered segments to a ClosedPolygon2D.
+
+        :param ordered_segments: The segments that compose the ClosedPolygon2D.
+        :type ordered_segments: Iterable[tuple[tuple[float, float, float], tuple[float, float, float]]]
+
+        :return: The created ClosedPolygon2D.
+        :rtype: ClosedPolygon2D
+        """
         return ClosedPolygon2D(
             points=[
                 Point2D(*point)
@@ -688,6 +736,15 @@ class Voxelization(PhysicalObject):
         )
 
     def to_triangles(self) -> Set[Triangle]:
+        """
+        Convert the voxelization to triangles for display purpose.
+
+        Only the relevant faces are returned (i.e. the faces that are not at the interface of two different voxel,
+        i.e. the faces that are only present once in the list of triangles representing the triangulated voxels).
+
+        :return: The triangles representing the voxelization.
+        :rtype: set[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        """
         triangles = set()
 
         for voxel in tqdm(self.voxels_centers):
@@ -700,6 +757,16 @@ class Voxelization(PhysicalObject):
         return triangles
 
     def to_closed_shell(self) -> ClosedShell3D:
+        """
+        Convert the voxelization to a ClosedShell3D for display purpose.
+
+        This ClosedShell3D is only composed of PlaneFace3D that represent the faces of the voxelized geometry, and
+        are made to be the lightest geometrical representation of the voxelization (in terms of number of triangles
+        in the babylonjs model).
+
+        :return: The created ClosedShell3D with only PlaneFace3D.
+        :rtype: ClosedShell3D
+        """
         polygons = self._triangles_to_closed_polygons(self.to_triangles())
         planes = [PLANE3D_OYZ, PLANE3D_OXZ, PLANE3D_OXY]
         faces = []
@@ -753,6 +820,10 @@ class Voxelization(PhysicalObject):
         return shell
 
     def volmdlr_primitives(self, **kwargs):
+        """
+        Return a list of volmdlr primitives to build up volume model.
+        It uses the simplified representation of the voxelization given by the "to_closed_shell" method.
+        """
         if len(self.voxels_centers) == 0:
             warnings.warn("Empty voxelization.")
             return []
