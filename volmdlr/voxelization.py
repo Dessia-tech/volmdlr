@@ -71,7 +71,7 @@ class Voxelization(PhysicalObject):
         elif method == "octree":
             triangles = cls._closed_triangle_shell_to_triangles(closed_triangle_shell)
             octree_root_node = OctreeNode.octree_voxelization_size_based(triangles, voxel_size)
-            voxels = octree_root_node.get_leaf_centers()
+            voxels = set(octree_root_node.get_leaf_centers())
 
         else:
             raise ValueError("Invalid 'method' argument: must be 'naive' or 'octree'")
@@ -105,7 +105,7 @@ class Voxelization(PhysicalObject):
         elif method == "octree":
             triangles = cls._closed_shell_to_triangles(closed_shell)
             octree_root_node = OctreeNode.octree_voxelization_size_based(triangles, voxel_size)
-            voxels = octree_root_node.get_leaf_centers()
+            voxels = set(octree_root_node.get_leaf_centers())
 
         else:
             raise ValueError("Invalid 'method' argument: must be 'naive' or 'octree'")
@@ -139,7 +139,7 @@ class Voxelization(PhysicalObject):
         elif method == "octree":
             triangles = cls._volume_model_to_triangles(volume_model)
             octree_root_node = OctreeNode.octree_voxelization_size_based(triangles, voxel_size)
-            voxels = octree_root_node.get_leaf_centers()
+            voxels = set(octree_root_node.get_leaf_centers())
 
         else:
             raise ValueError("Invalid 'method' argument: must be 'naive' or 'octree'")
@@ -370,22 +370,22 @@ class Voxelization(PhysicalObject):
         :return: The centers of the voxels that intersect with the triangles.
         :rtype: set[tuple[float, float, float]]
         """
-        bbox_centers = set()
+        voxel_centers = set()
 
         for triangle in tqdm(triangles):
             min_point = tuple(min(p[i] for p in triangle) for i in range(3))
             max_point = tuple(max(p[i] for p in triangle) for i in range(3))
 
             for bbox_center in Voxelization._aabb_intersecting_boxes(min_point, max_point, voxel_size):
-                if bbox_center not in bbox_centers:
+                if bbox_center not in voxel_centers:
                     if Voxelization.triangle_voxel_intersection(
                         triangle,
                         bbox_center,
-                        [voxel_size for _ in range(3)],
+                        [0.5 * voxel_size for _ in range(3)],
                     ):
-                        bbox_centers.add(bbox_center)
+                        voxel_centers.add(bbox_center)
 
-        return bbox_centers
+        return voxel_centers
 
     @staticmethod
     def _voxel_triangular_faces(voxel_center: Point, voxel_size: float) -> List[Triangle]:
@@ -1013,7 +1013,7 @@ class OctreeNode:
         max_corner = np.max([np.max(triangle, axis=0) for triangle in triangles], axis=0)
 
         # Compute the corners in the implicit grid defined by the voxel size
-        min_corner = (min_corner // voxel_size) * voxel_size
+        min_corner = (min_corner // voxel_size - 1) * voxel_size
         max_corner = (max_corner // voxel_size + 1) * voxel_size
 
         root_size = max(max_corner - min_corner)
@@ -1023,9 +1023,10 @@ class OctreeNode:
 
         # Compute the max corner to have voxel of given voxel size with the octree process
         max_corner = min_corner + ((2**max_depth) * voxel_size)
+        root_size = max(max_corner - min_corner)
 
         corners = np.stack([min_corner, max_corner])
-        center = corners.mean(axis=0)
+        center = np.round(corners.mean(axis=0), 6)
 
         root = cls(center, root_size, 0, max_depth)
         root.subdivide(triangles)
@@ -1035,15 +1036,15 @@ class OctreeNode:
     def subdivide(self, triangles: List[Triangle]) -> None:
         children = []
         if self.depth < self.max_depth:
-            half_size = self.size / 2
+            half_size = round(self.size / 2, 6)
             for i in range(2):
                 for j in range(2):
                     for k in range(2):
                         # calculate the center of the child node
                         child_center = (
-                            self.center[0] + (i - 0.5) * half_size,
-                            self.center[1] + (j - 0.5) * half_size,
-                            self.center[2] + (k - 0.5) * half_size,
+                            np.round(self.center[0] + (i - 0.5) * half_size, 6),
+                            np.round(self.center[1] + (j - 0.5) * half_size, 6),
+                            np.round(self.center[2] + (k - 0.5) * half_size, 6),
                         )
 
                         # create a new OctreeNode for the child
@@ -1054,9 +1055,9 @@ class OctreeNode:
                             self.max_depth,
                         )
 
-                        # check if the child node intersects with the mesh
                         if self.depth != 0:
                             # add the child node to the list of children
+                            # if the child node intersects with the triangles
                             self.children.extend(self.process_node(child_node, triangles))
                         else:
                             children.append(child_node)
@@ -1069,11 +1070,11 @@ class OctreeNode:
             return  # reached max depth, do not subdivide further.
 
     def intersecting_triangles(self, triangles: List[Triangle]) -> List[Triangle]:
-        intersecting_triangles = [
-            triangle
-            for triangle in triangles
-            if Voxelization.triangle_voxel_intersection(triangle, self.center, [self.size for _ in range(3)])
-        ]
+        intersecting_triangles = []
+        for triangle in triangles:
+            # if Voxelization.triangle_voxel_intersection(triangle, self.center, [0.5 * self.size for _ in range(3)]):
+            if intersects_box(triangle, self.center, [0.5 * self.size for _ in range(3)]):
+                intersecting_triangles.append(triangle)
 
         return intersecting_triangles
 
@@ -1087,11 +1088,11 @@ class OctreeNode:
             return centers
 
     @staticmethod
-    def process_node(node, mesh):
-        triangles = node.intersecting_triangles(mesh)
-        if len(triangles) > 0:
+    def process_node(node, triangles):
+        intersecting_triangles = node.intersecting_triangles(triangles)
+        if len(intersecting_triangles) > 0:
             # recursively subdivide the child node
-            node.subdivide(triangles)
+            node.subdivide(intersecting_triangles)
             return [node]
         return []
 
