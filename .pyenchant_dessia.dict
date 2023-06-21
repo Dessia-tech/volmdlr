@@ -10,6 +10,7 @@ bsplinecurve
 bsplinesurface
 Bspline
 bsplines
+BSpline's
 cosinus
 ctrlpts
 dataset
@@ -21,6 +22,7 @@ discretized
 discretize
 dof
 euler
+filepath
 freecad
 .geo
 geo
@@ -43,12 +45,13 @@ matplolib
 maxiter
 .msh
 msh
-plt
 nbv
 networkx.DiGraph
 ndarray
 numpy
 numpy
+octree
+plt
 Rapshon
 rtype
 STEP

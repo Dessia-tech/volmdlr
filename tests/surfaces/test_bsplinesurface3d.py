@@ -50,6 +50,13 @@ class TestBSplineSurface3D(unittest.TestCase):
         # self.assertTrue(inv_prof.interior.is_close(arc.interior))
         self.assertTrue(inv_prof.end.is_close(arc.end))
 
+        # Strange case from step file
+        bspline_surface = surfaces.BSplineSurface3D.load_from_file(
+            'surfaces/objects_bspline_test/bsplinesurface_arc3d_to_2d_surface.json')
+        arc = vme.Arc3D.load_from_file("surfaces/objects_bspline_test/bsplinesurface_arc3d_to_2d_arc3d.json")
+        brep = bspline_surface.arc3d_to_2d(arc)[0]
+        self.assertTrue(brep.start.is_close(volmdlr.Point2D(1, 0)))
+
     def test_bsplinecurve3d_to_2d(self):
         bspline_surface = bspline_surfaces.bspline_surface_4
         control_points = [volmdlr.Point3D(-0.012138106431296442, 0.11769707710908962, -0.10360094389690414),

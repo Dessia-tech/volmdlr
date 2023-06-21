@@ -186,6 +186,7 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
+        step_id = kwargs.get("step_id")
         # obj can be an instance of wires or edges.
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
@@ -204,7 +205,7 @@ class Edge(dc.DessiaObject):
                 point1, point2 = point2, point1
             return obj.trim(point1, point2)
 
-        raise NotImplementedError(f'Unsupported: {object_dict[arguments[3]]}')
+        raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
 
     def normal_vector(self, abscissa):
         """
@@ -661,7 +662,7 @@ class LineSegment(Edge):
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
-        return content, [current_id]
+        return content, current_id
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
@@ -1382,9 +1383,16 @@ class BSplineCurve(Edge):
         else:
             return []
             # raise NotImplementedError
+        return self._get_shared_section_from_split(bspline1_, bspline2_, other_bspline2, abs_tol)
+
+    @staticmethod
+    def _get_shared_section_from_split(bspline1_, bspline2_, other_bspline2, abs_tol):
+        """
+        Helper function to get_shared_section.
+        """
         shared_bspline_section = []
         for bspline in [bspline1_, bspline2_]:
-            if bspline and all(other_bspline2.point_belongs(point)
+            if bspline and all(other_bspline2.point_belongs(point, abs_tol=abs_tol)
                                for point in bspline.discretization_points(number_points=10)):
                 shared_bspline_section.append(bspline)
                 break
@@ -1645,7 +1653,7 @@ class BSplineCurve2D(BSplineCurve):
         content += f"#{point_id} = B_SPLINE_CURVE_WITH_KNOTS('{self.name}',{self.degree}," \
                    f"({volmdlr.core.step_ids_to_str(points_ids)})," \
                    f".UNSPECIFIED.,.F.,.F.,{tuple(self.knot_multiplicities)},{tuple(self.knots)},.UNSPECIFIED.);\n"
-        return content, [point_id + 1]
+        return content, point_id + 1
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """
@@ -2890,7 +2898,11 @@ class Arc2D(Arc):
 
     def copy(self, *args, **kwargs):
         """
-        Creates a copy of the arc 2D.
+        Creates and returns a deep copy of the Arc2D object.
+
+        :param *args: Variable-length argument list.
+        :param **kwargs: Arbitrary keyword arguments.
+        :return: A new Arc2D object that is a deep copy of the original.
 
         """
         return Arc2D(self.circle.copy(), self.start.copy(), self.end.copy(), self.is_trigo)
@@ -4541,12 +4553,12 @@ class BSplineCurve3D(BSplineCurve):
                    f".UNSPECIFIED.,.F.,.F.,{tuple(self.knot_multiplicities)},{tuple(self.knots)}," \
                    f".UNSPECIFIED.);\n"
 
-        if surface_id:
+        if surface_id and curve2d:
             content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{curve_id + 2}),.PCURVE_S1.);\n"
             content += f"#{curve_id + 2} = PCURVE('',#{surface_id},#{curve_id + 3});\n"
 
             # 2D parametric curve
-            curve2d_content, (curve2d_id,) = curve2d.to_step(curve_id + 3)  # 5
+            curve2d_content, curve2d_id = curve2d.to_step(curve_id + 3)  # 5
 
             # content += f"#{curve_id + 3} = DEFINITIONAL_REPRESENTATION('',(#{curve2d_id - 1}),#{curve_id + 4});\n"
             # content += f"#{curve_id + 4} = ( GEOMETRIC_REPRESENTATION_CONTEXT(2)" \
@@ -4563,10 +4575,10 @@ class BSplineCurve3D(BSplineCurve):
         content += start_content + end_content
         current_id = end_id + 1
         if surface_id:
-            content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id + 1},.T.);\n"
+            content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
         else:
             content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
-        return content, [current_id]
+        return content, current_id
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -5324,21 +5336,6 @@ class Arc3D(Arc):
                                                                           arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
-        """Exports to STEP format."""
-        if self.angle >= math.pi:
-            length = self.length()
-            arc1, arc2 = self.split(self.point_at_abscissa(0.33 * length))
-            arc2, arc3 = arc2.split(self.point_at_abscissa(0.66 * length))
-            content, arcs1_id = arc1.to_step_without_splitting(current_id)
-            arc2_content, arcs2_id = arc2.to_step_without_splitting(
-                arcs1_id[0] + 1)
-            arc3_content, arcs3_id = arc3.to_step_without_splitting(
-                arcs2_id[0] + 1)
-            content += arc2_content + arc3_content
-            return content, [arcs1_id[0], arcs2_id[0], arcs3_id[0]]
-        return self.to_step_without_splitting(current_id)
-
-    def to_step_without_splitting(self, current_id, surface_id=None):
         u = self.start - self.circle.center
         u.normalize()
         v = self.circle.normal.cross(u)
@@ -5358,7 +5355,7 @@ class Arc3D(Arc):
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
-        return content, [current_id]
+        return content, current_id
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
         """
@@ -5494,7 +5491,7 @@ class FullArc3D(FullArc, Arc3D):
         content += f"#{edge_curve} = EDGE_CURVE('{self.name}',#{p1_id},#{p1_id},#{curve_id},.T.);\n"
         curve_id += 1
 
-        return content, [edge_curve]
+        return content, edge_curve
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:

@@ -77,8 +77,7 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
     if not math.isclose(theta, 0.0, abs_tol=1e-6) and not math.isclose(theta, 2 * math.pi, abs_tol=1e-6):
         frame = volmdlr.Frame2D(ellipse2d.center, ellipse2d.major_dir, ellipse2d.minor_dir)
         frame_mapped_ellipse = ellipse2d.frame_mapping(frame, 'new')
-        frame_mapped_line = line2d.frame_mapping(frame, 'new')
-        line_inters = frame_mapped_ellipse.line_intersections(frame_mapped_line)
+        line_inters = frame_mapped_ellipse.line_intersections(line2d.frame_mapping(frame, 'new'))
         line_intersections = [frame.local_to_global_coordinates(point) for point in line_inters]
         return line_intersections
 
@@ -87,7 +86,6 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
         x2 = x1
         y1 = ellipse2d.minor_axis * math.sqrt((1 - x1 ** 2 / ellipse2d.major_axis ** 2))
         y2 = -y1
-        c = ellipse2d.center.y + line2d.point1.y
     else:
         m = (line2d.point2.y - line2d.point1.y) / (line2d.point2.x - line2d.point1.x)
         c = - m * (line2d.point1.x + ellipse2d.center.x) + line2d.point1.y + ellipse2d.center.y
