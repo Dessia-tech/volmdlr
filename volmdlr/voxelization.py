@@ -1154,6 +1154,19 @@ class Voxelization(PhysicalObject):
         )
 
     def rotation(self, center: Point3D, axis: Vector3D, angle: float):
+        """
+        Rotate the voxelization around the specified center, axis, and angle.
+
+        :param center: The center point of rotation.
+        :type center: Point3D
+        :param axis: The rotation axis.
+        :type axis: Vector3D
+        :param angle: The rotation angle in radians.
+        :type angle: float
+
+        :return: A new Voxelization object resulting from the rotation.
+        :rtype: Voxelization
+        """
         rotation_matrix = self._rotation_matrix(axis, angle)
         voxel_array = np.array(list(self.voxels_centers)) - np.array([center.x, center.y, center.z])
         rotated_voxels = np.dot(voxel_array, rotation_matrix.T)
@@ -1164,6 +1177,15 @@ class Voxelization(PhysicalObject):
         return Voxelization(intersecting_voxels, self.voxel_size)
 
     def translation(self, offset: Vector3D):
+        """
+        Translate the voxelization by the specified offset.
+
+        :param offset: The translation offset.
+        :type offset: Vector3D
+
+        :return: A new Voxelization object resulting from the translation.
+        :rtype: Voxelization
+        """
         voxel_array = np.array(list(self.voxels_centers))
         translated_voxels = voxel_array + np.array([offset.x, offset.y, offset.z])
 
