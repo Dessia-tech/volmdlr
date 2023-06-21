@@ -117,7 +117,7 @@ class Voxelization(PhysicalObject):
         )
 
     @staticmethod
-    def _closed_shell_to_triangles(closed_shell: ClosedShell3D):
+    def _closed_shell_to_triangles(closed_shell: ClosedShell3D) -> List[Triangle]:
         """
         Helper method to convert a ClosedShell3D to a list of triangles.
         It uses the "triangulation" method to triangulate the ClosedShell3D.
@@ -142,7 +142,17 @@ class Voxelization(PhysicalObject):
         )
 
     @staticmethod
-    def _volume_model_to_triangles(volume_model: VolumeModel):
+    def _volume_model_to_triangles(volume_model: VolumeModel) -> List[Triangle]:
+        """
+        Helper method to convert a VolumeModel to a list of triangles.
+        It uses the "triangulation" method to triangulate the primitives of the VolumeModel.
+
+        :param volume_model: The VolumeModel to convert to triangles.
+        :type volume_model: VolumeModel
+
+        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
+        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        """
         triangles = []
         for primitive in volume_model.primitives:
             triangulation = primitive.triangulation()
@@ -160,11 +170,29 @@ class Voxelization(PhysicalObject):
         return triangles
 
     @staticmethod
-    def _triangle_aabb_intersection(triangle: np.ndarray, box_center: np.ndarray, box_extents: np.ndarray) -> bool:
-        X, Y, Z = 0, 1, 2
+    def _triangle_voxel_intersection(
+        triangle: Triangle, voxel_center: Point, voxel_extents: List[float, float, float]
+    ) -> bool:
+        """
+        Helper method to compute if there is an intersection between a 3D triangle and a voxel.
+
+        :param triangle: The triangle to check if it intersects with the voxel.
+        :type: triangle: tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]
+        :param voxel_center: The center point of the voxel.
+        :type voxel_center: tuple[float, float, float]
+        :param voxel_extents: The extents of the voxel in each direction.
+        :type voxel_extents: list[float, float, float]
+
+        :return: True if there is an intersection, False otherwise.
+        :rtype: bool
+        """
+        # Convert to numpy ndarray
+        triangle = np.ndarray(triangle)
+        voxel_center = np.ndarray(voxel_center)
+        voxel_extents = np.ndarray(voxel_extents)
 
         # Translate triangle as conceptually moving AABB to origin
-        v = triangle - box_center
+        v = triangle - voxel_center
 
         # Compute edge vectors for triangle
         f = np.empty_like(triangle)
@@ -178,7 +206,7 @@ class Voxelization(PhysicalObject):
             a[np.mod(i + 1, 3)] = -f[i][np.mod(i + 2, 3)]
             a[np.mod(i + 2, 3)] = f[i][np.mod(i + 1, 3)]
             p = np.dot(v, a)
-            r = box_extents[np.mod(i + 1, 3)] * abs(f[i][np.mod(i + 2, 3)]) + box_extents[np.mod(i + 2, 3)] * abs(
+            r = voxel_extents[np.mod(i + 1, 3)] * abs(f[i][np.mod(i + 2, 3)]) + voxel_extents[np.mod(i + 2, 3)] * abs(
                 f[i][np.mod(i + 1, 3)]
             )
             if (max(-max(p), min(p))) > r:
@@ -188,7 +216,7 @@ class Voxelization(PhysicalObject):
             a[np.mod(i + 2, 3)] = -f[i][np.mod(i, 3)]
             a[np.mod(i, 3)] = f[i][np.mod(i + 2, 3)]
             p = np.dot(v, a)
-            r = box_extents[np.mod(i, 3)] * abs(f[i][np.mod(i + 2, 3)]) + box_extents[np.mod(i + 2, 3)] * abs(
+            r = voxel_extents[np.mod(i, 3)] * abs(f[i][np.mod(i + 2, 3)]) + voxel_extents[np.mod(i + 2, 3)] * abs(
                 f[i][np.mod(i, 3)]
             )
             if (max(-max(p), min(p))) > r:
@@ -198,14 +226,14 @@ class Voxelization(PhysicalObject):
             a[np.mod(i, 3)] = -f[i][np.mod(i + 1, 3)]
             a[np.mod(i + 1, 3)] = f[i][np.mod(i, 3)]
             p = np.dot(v, a)
-            r = box_extents[np.mod(i, 3)] * abs(f[i][np.mod(i + 1, 3)]) + box_extents[np.mod(i + 1, 3)] * abs(
+            r = voxel_extents[np.mod(i, 3)] * abs(f[i][np.mod(i + 1, 3)]) + voxel_extents[np.mod(i + 1, 3)] * abs(
                 f[i][np.mod(i, 3)]
             )
             if (max(-max(p), min(p))) > r:
                 return False
 
         # Test the three axes corresponding to the face normals of AABB b (category 1)
-        if np.any(np.max(v, axis=0) < -box_extents) or np.any(np.min(v, axis=0) > box_extents):
+        if np.any(np.max(v, axis=0) < -voxel_extents) or np.any(np.min(v, axis=0) > voxel_extents):
             return False
 
         # Test separating axis corresponding to triangle face normal (category 2)
@@ -214,9 +242,9 @@ class Voxelization(PhysicalObject):
 
         # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
         r = (
-            box_extents[X] * abs(plane_normal[X])
-            + box_extents[Y] * abs(plane_normal[Y])
-            + box_extents[Z] * abs(plane_normal[Z])
+                voxel_extents[0] * abs(plane_normal[0])
+                + voxel_extents[1] * abs(plane_normal[1])
+                + voxel_extents[2] * abs(plane_normal[2])
         )
 
         # Intersection occurs when plane distance falls within [-r,+r] interval
@@ -338,10 +366,10 @@ class Voxelization(PhysicalObject):
 
             for bbox_center in Voxelization._intersecting_boxes(min_point, max_point, voxel_size):
                 if bbox_center not in bbox_centers:
-                    if Voxelization._triangle_aabb_intersection(
-                        np.array(triangle),
-                        np.array(bbox_center),
-                        np.array([voxel_size for _ in range(3)]),
+                    if Voxelization._triangle_voxel_intersection(
+                        triangle,
+                        bbox_center,
+                        [voxel_size for _ in range(3)],
                     ):
                         bbox_centers.add(bbox_center)
 
@@ -912,9 +940,7 @@ class OctreeNode:
         intersecting_triangles = [
             triangle
             for triangle in triangles
-            if Voxelization._triangle_aabb_intersection(
-                np.array(triangle), np.array(self.center), np.array([self.size for _ in range(3)])
-            )
+            if Voxelization._triangle_voxel_intersection(triangle, self.center, [self.size for _ in range(3)])
         ]
 
         return intersecting_triangles
