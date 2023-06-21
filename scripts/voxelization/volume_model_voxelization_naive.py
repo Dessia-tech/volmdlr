@@ -1,10 +1,10 @@
 """
 Voxelization of a volume model using "naive" method.
 """
-from volmdlr.voxelization import Voxelization
-from volmdlr.primitives3d import Sphere, Cylinder
-from volmdlr.core import VolumeModel
 import volmdlr
+from volmdlr.core import VolumeModel
+from volmdlr.primitives3d import Cylinder, Sphere
+from volmdlr.voxelization import Voxelization
 
 VOXEL_SIZE = 0.01
 
@@ -17,5 +17,5 @@ volume_model = VolumeModel([sphere, cylinder])
 voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="naive", name="Voxels")
 
 # Display the result
-volume_model.primitives.append(voxelization.to_closed_triangle_shell())
+volume_model.primitives.append(voxelization.to_closed_shell())
 volume_model.babylonjs()
