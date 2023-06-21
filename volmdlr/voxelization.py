@@ -16,7 +16,7 @@ from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
 from volmdlr.wires import ClosedPolygon2D
 
-# Typings
+# Custom types
 Point = Tuple[float, ...]
 Triangle = Tuple[Point, ...]
 Segment = Tuple[Point, ...]
@@ -231,18 +231,20 @@ class Voxelization(PhysicalObject):
     def triangle_voxel_intersection(triangle: Triangle, voxel_center: Point, voxel_extents: List[float]) -> bool:
         """
         Helper method to compute if there is an intersection between a 3D triangle and a voxel.
+        This method uses the "Separating Axis Theorem".
 
         :param triangle: The triangle to check if it intersects with the voxel.
         :type: triangle: tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]
         :param voxel_center: The center point of the voxel.
         :type voxel_center: tuple[float, float, float]
-        :param voxel_extents: The extents of the voxel in each direction.
+        :param voxel_extents: The extents of the voxel in each direction (half-size of the voxel size).
         :type voxel_extents: list[float, float, float]
 
         :return: True if there is an intersection, False otherwise.
         :rtype: bool
         """
         # Method ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
+        # pylint: disable=invalid-name,too-many-locals,too-many-return-statements,too-many-statements,too-many-branches
 
         triangle = np.array(triangle)
         box_center = np.array(voxel_center)
@@ -260,7 +262,7 @@ class Voxelization(PhysicalObject):
         f1 = triangle[2] - triangle[1]
         f2 = triangle[0] - triangle[2]
 
-        "region Test axes a00..a22 (category 3)"
+        # REGION TEST AXES a00..a22 (CATEGORY 3)
 
         # Test axis a00
         a00 = np.array([0, -f0[z], f0[y]])
@@ -343,9 +345,9 @@ class Voxelization(PhysicalObject):
         if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
             return False
 
-        "endregion"
+        # ENDREGION
 
-        "region Test the three axes corresponding to the face normals of AABB b (category 1)"
+        # REGION TEST THE THREE AXES CORRESPONDING TO THE FACE NORMALS OF AABB B (CATEGORY 1)
 
         # Exit if...
         # ... [-extents.X, extents.X] and [min(v0.X,v1.X,v2.X), max(v0.X,v1.X,v2.X)] do not overlap
@@ -360,9 +362,9 @@ class Voxelization(PhysicalObject):
         if max(v0[z], v1[z], v2[z]) < -box_extents[z] or min(v0[z], v1[z], v2[z]) > box_extents[z]:
             return False
 
-        "endregion"
+        # ENDREGION
 
-        "region Test separating axis corresponding to triangle face normal (category 2)"
+        # REGION TEST SEPARATING AXIS CORRESPONDING TO TRIANGLE FACE NORMAL (CATEGORY 2)
 
         plane_normal = np.cross(f0, f1)
         plane_distance = abs(np.dot(plane_normal, v0))
@@ -378,7 +380,7 @@ class Voxelization(PhysicalObject):
         if plane_distance > r:
             return False
 
-        "endregion"
+        # ENDREGION
 
         return True
 
@@ -421,7 +423,7 @@ class Voxelization(PhysicalObject):
         are not.
 
         This method is used when translating or rotating the voxels get back to the implicit 3D grid and perform
-        efficient boolean operations (thanks to voxels defined in the same grid).
+        efficient Boolean operations (thanks to voxels defined in the same grid).
 
         :param voxel_centers_array: The array of voxel centers.
         :type voxel_centers_array: numpy.ndarray
@@ -484,6 +486,8 @@ class Voxelization(PhysicalObject):
 
         :return: The 12 triangles representing the 6 faces of the given voxel.
         """
+        # pylint: disable=invalid-name
+
         x, y, z = voxel_center
         sx, sy, sz = voxel_size, voxel_size, voxel_size
         hx, hy, hz = sx / 2, sy / 2, sz / 2
@@ -586,7 +590,7 @@ class Voxelization(PhysicalObject):
     @staticmethod
     def _triangles_to_segments(
         triangles: Set[Triangle],
-    ) -> Tuple[Dict[float, List[Segment]], Dict[float, List[Segment]], Dict[float, List[Segment]]]:
+    ) -> Tuple[Dict[float, Set[Segment]], Dict[float, Set[Segment]], Dict[float, Set[Segment]]]:
         """
         Helper method to extract the segments of a given list of triangle representing a voxelization.
         The segments are sorted by plane: a plane is defined by its normal vector (X, Y or Z) and abscissa.
@@ -599,7 +603,7 @@ class Voxelization(PhysicalObject):
         :type triangles: Set[Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]]
 
         :return: The extracted relevant segments, sorted by plane.
-        :rtype: tuple[dict[float, list[Segment]], dict[float, list[Segment]], dict[float, list[Segment]]]
+        :rtype: tuple[dict[float, set[Segment]], dict[float, set[Segment]], dict[float, set[Segment]]]
         """
         segments_x = {}
         segments_y = {}
@@ -613,16 +617,10 @@ class Voxelization(PhysicalObject):
                     (tuple(triangle[1][1:]), tuple(triangle[2][1:])),
                     (tuple(triangle[2][1:]), tuple(triangle[0][1:])),
                 ]
-                for segment in triangle_segments:
-                    if segment not in segments and segment[::-1] not in segments:
-                        segments.add(segment)
-                    else:
-                        if segment in segments:
-                            segments.remove(segment)
-                        else:
-                            segments.remove(segment[::-1])
 
-                segments_x[triangle[0][0]] = segments
+                segments_x[triangle[0][0]] = Voxelization._add_triangle_segments_to_segments_set(
+                    triangle_segments, segments
+                )
 
             elif triangle[0][1] == triangle[1][1] == triangle[2][1]:
                 segments = segments_y.get(triangle[0][1], set())
@@ -640,16 +638,10 @@ class Voxelization(PhysicalObject):
                         tuple([triangle[0][0], triangle[0][2]]),
                     ),
                 ]
-                for segment in triangle_segments:
-                    if segment not in segments and segment[::-1] not in segments:
-                        segments.add(segment)
-                    else:
-                        if segment in segments:
-                            segments.remove(segment)
-                        else:
-                            segments.remove(segment[::-1])
 
-                segments_y[triangle[0][1]] = segments
+                segments_y[triangle[0][1]] = Voxelization._add_triangle_segments_to_segments_set(
+                    triangle_segments, segments
+                )
 
             else:
                 segments = segments_z.get(triangle[0][2], set())
@@ -658,18 +650,39 @@ class Voxelization(PhysicalObject):
                     (tuple(triangle[1][:2]), tuple(triangle[2][:2])),
                     (tuple(triangle[2][:2]), tuple(triangle[0][:2])),
                 ]
-                for segment in triangle_segments:
-                    if segment not in segments and segment[::-1] not in segments:
-                        segments.add(segment)
-                    else:
-                        if segment in segments:
-                            segments.remove(segment)
-                        else:
-                            segments.remove(segment[::-1])
 
-                segments_z[triangle[0][2]] = segments
+                segments_z[triangle[0][2]] = Voxelization._add_triangle_segments_to_segments_set(
+                    triangle_segments, segments
+                )
 
         return segments_x, segments_y, segments_z
+
+    @staticmethod
+    def _add_triangle_segments_to_segments_set(
+        triangle_segments: List[Segment], segments_set: Set[Segment]
+    ) -> Set[Segment]:
+        """
+        Helper method to add the segments defining a triangle to a set of segments, avoiding non-relevant segments
+        (i.e. segments that does not represent an inner or outer contour of the face, but that are inside the face).
+
+        :param triangle_segments: The segments defining the triangle.
+        :type triangle_segments: list[tuple[tuple[float, float], tuple[float, float]]]
+        :param segments_set: The set in which the segments are added.
+        :type segments_set: set[tuple[tuple[float, float], tuple[float, float]]]
+
+        :return: The edited set of segments.
+        :rtype: set[tuple[tuple[float, float], tuple[float, float]]]
+        """
+        for segment in triangle_segments:
+            if segment not in segments_set and segment[::-1] not in segments_set:
+                segments_set.add(segment)
+            else:
+                if segment in segments_set:
+                    segments_set.remove(segment)
+                else:
+                    segments_set.remove(segment[::-1])
+
+        return segments_set
 
     @staticmethod
     def _order_segments(segments: Iterable[Segment]) -> List[List[Segment]]:
@@ -679,10 +692,10 @@ class Voxelization(PhysicalObject):
         representing the multiple contours with ordered segments.
 
         :param segments: The segments to order.
-        :type segments: Iterable[tuple[tuple[float, float, float], tuple[float, float, float]]]
+        :type segments: Iterable[tuple[tuple[float, float], tuple[float, float]]]
 
         :return: The ordered segments lists.
-        :rtype: list[list[tuple[tuple[float, float, float], tuple[float, float, float]]]]
+        :rtype: list[list[tuple[tuple[float, float], tuple[float, float]]]]
         """
         segments = list(segments)
         ordered_segments_list = []
@@ -696,14 +709,14 @@ class Voxelization(PhysicalObject):
                 last_segment = ordered_segments[-1]
 
                 # Find the next segment
-                for i, s in enumerate(segments):
-                    if s[0] == last_segment[1]:
+                for i, segment in enumerate(segments):
+                    if segment[0] == last_segment[1]:
                         ordered_segments.append(segments.pop(i))
                         break
 
-                    elif s[1] == last_segment[1]:
+                    if segment[1] == last_segment[1]:
                         # If the segment is in the opposite direction, reverse it
-                        ordered_segments.append((s[1], s[0]))
+                        ordered_segments.append((segment[1], segment[0]))
                         segments.pop(i)
                         break
                 else:
@@ -750,10 +763,10 @@ class Voxelization(PhysicalObject):
         Helper method to split the self-crossing polygons into multiple polygons to avoid triangulation errors.
 
         :param ordered_segments: The ordered segments defining the polygon.
-        :type ordered_segments: list[tuple[tuple[float, float, float], tuple[float, float, float]]]
+        :type ordered_segments: list[tuple[tuple[float, float], tuple[float, float]]]
 
         :return: The split polygon into multiple polygons, defined by segment list.
-        :rtype: list[list[tuple[tuple[float, float, float], tuple[float, float, float]]]]
+        :rtype: list[list[tuple[tuple[float, float], tuple[float, float]]]]
         """
         points = [segment[0] for segment in ordered_segments]
 
@@ -769,8 +782,8 @@ class Voxelization(PhysicalObject):
             # print(Voxelization._order_segments(cycle))
 
         polygons = {}
-        for ordered_segments in ordered_segments_list:
-            polygons[tuple(ordered_segments)] = Voxelization._ordered_segments_to_closed_polygon_2d(ordered_segments)
+        for _ordered_segments in ordered_segments_list:
+            polygons[tuple(_ordered_segments)] = Voxelization._ordered_segments_to_closed_polygon_2d(_ordered_segments)
 
         # Check for polygon inclusion
         children = {}
@@ -791,23 +804,23 @@ class Voxelization(PhysicalObject):
 
         # Actual split polygons have no children in the cycle-defined polygons from the self-intersecting polygon
         candidate_polygons = {}
-        for ordered_segments, polygon in polygons.items():
+        for _ordered_segments, polygon in polygons.items():
             if len(children[polygon]) == 0:
-                candidate_polygons[ordered_segments] = polygon
+                candidate_polygons[_ordered_segments] = polygon
 
         # If the polygon has all its segments part of the other polygons segments, it is an inner polygon
         ordered_segments_list = []
-        for ordered_segments in candidate_polygons.keys():
-            ordered_segments_list.append(list(ordered_segments))
+        for _ordered_segments in candidate_polygons:
+            ordered_segments_list.append(list(_ordered_segments))
 
         ordered_segments_list_valid = []
-        for i in range(len(ordered_segments_list)):
+        for i, _ordered_segments in enumerate(ordered_segments_list):
             all_current_polygon_segments = []
             all_other_polygons_segments = []
 
-            for segment in ordered_segments_list[i]:
-                all_current_polygon_segments.append(segment)
-                all_current_polygon_segments.append(segment[::-1])
+            for segments in _ordered_segments:
+                all_current_polygon_segments.append(segments)
+                all_current_polygon_segments.append(segments[::-1])
 
             for segments in ordered_segments_list[:i] + ordered_segments_list[i + 1 :]:
                 for segment in segments:
@@ -816,7 +829,7 @@ class Voxelization(PhysicalObject):
 
             for segment in all_current_polygon_segments:
                 if segment not in all_other_polygons_segments:
-                    ordered_segments_list_valid.append(ordered_segments_list[i])
+                    ordered_segments_list_valid.append(_ordered_segments)
                     break
 
         return ordered_segments_list_valid
@@ -853,7 +866,7 @@ class Voxelization(PhysicalObject):
         Helper method to convert an iterable of ordered segments to a ClosedPolygon2D.
 
         :param ordered_segments: The segments that compose the ClosedPolygon2D.
-        :type ordered_segments: Iterable[tuple[tuple[float, float, float], tuple[float, float, float]]]
+        :type ordered_segments: Iterable[tuple[tuple[float, float], tuple[float, float]]]
 
         :return: The created ClosedPolygon2D.
         :rtype: ClosedPolygon2D
@@ -971,13 +984,13 @@ class Voxelization(PhysicalObject):
 
     def intersection(self, other_voxelization: "Voxelization") -> "Voxelization":
         """
-        Create a voxelization that is the boolean intersection of two voxelization.
+        Create a voxelization that is the Boolean intersection of two voxelization.
         Both voxelization must have same voxel size.
 
-        :param other_voxelization: The other voxelization to compute the boolean intersection with.
+        :param other_voxelization: The other voxelization to compute the Boolean intersection with.
         :type other_voxelization: Voxelization
 
-        :return: The created voxelization resulting from the boolean intersection.
+        :return: The created voxelization resulting from the Boolean intersection.
         :rtype: Voxelization
         """
         if self.voxel_size != other_voxelization.voxel_size:
@@ -987,13 +1000,13 @@ class Voxelization(PhysicalObject):
 
     def union(self, other_voxelization: "Voxelization") -> "Voxelization":
         """
-        Create a voxelization that is the boolean union of two voxelization.
+        Create a voxelization that is the Boolean union of two voxelization.
         Both voxelization must have same voxel size.
 
-        :param other_voxelization: The other voxelization to compute the boolean union with.
+        :param other_voxelization: The other voxelization to compute the Boolean union with.
         :type other_voxelization: Voxelization
 
-        :return: The created voxelization resulting from the boolean union.
+        :return: The created voxelization resulting from the Boolean union.
         :rtype: Voxelization
         """
         if self.voxel_size != other_voxelization.voxel_size:
@@ -1003,13 +1016,13 @@ class Voxelization(PhysicalObject):
 
     def difference(self, other_voxelization: "Voxelization") -> "Voxelization":
         """
-        Create a voxelization that is the boolean difference of two voxelization.
+        Create a voxelization that is the Boolean difference of two voxelization.
         Both voxelization must have same voxel size.
 
-        :param other_voxelization: The other voxelization to compute the boolean difference with.
+        :param other_voxelization: The other voxelization to compute the Boolean difference with.
         :type other_voxelization: Voxelization
 
-        :return: The created voxelization resulting from the boolean difference.
+        :return: The created voxelization resulting from the Boolean difference.
         :rtype: Voxelization
         """
         if self.voxel_size != other_voxelization.voxel_size:
@@ -1030,6 +1043,7 @@ class Voxelization(PhysicalObject):
         :return: The computed rotation matrix.
         :rtype: numpy.array
         """
+        # pylint: disable=invalid-name
         axis = np.array([axis.x, axis.y, axis.z])
 
         axis = axis / np.linalg.norm(axis)
@@ -1165,11 +1179,12 @@ class OctreeNode:
     def get_leaf_centers(self) -> List[Point]:
         if self.depth == self.max_depth:  # if max depth reached, it is a leaf node
             return [self.center]
-        else:
-            centers = []
-            for child in self.children:
-                centers += child.get_leaf_centers()
-            return centers
+
+        centers = []
+        for child in self.children:
+            centers += child.get_leaf_centers()
+
+        return centers
 
     @staticmethod
     def process_node(node, triangles):
@@ -1227,8 +1242,9 @@ class Graph:
         edge_cycles_set = set()
         for cycle in cycles:
             edge_cycle = []
-            for i in range(len(cycle)):
-                edge_cycle.append(tuple(sorted([cycle[i], cycle[(i + 1) % len(cycle)]])))
+            for i, node in enumerate(cycle):
+                edge_cycle.append(tuple(sorted([node, cycle[(i + 1) % len(cycle)]])))
             edge_cycle.sort()  # sort the edges in the cycle
             edge_cycles_set.add(tuple(edge_cycle))  # add it to the set
+
         return [list(cycle) for cycle in edge_cycles_set]
