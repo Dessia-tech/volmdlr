@@ -17,12 +17,14 @@ volume_model = VolumeModel([sphere, cylinder])
 
 # Voxelize the volume model with "naive" method
 start = time.perf_counter()
-voxelization_naive = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="naive", name="Voxels")
+voxelization_naive = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="naive", name="Naive voxelization")
 print(f"Naive voxelization computed in {round((time.perf_counter() - start) * 1000)}ms")
 
 # Voxelize the volume model with "octree" method
 start = time.perf_counter()
-voxelization_octree = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="octree", name="Voxels")
+voxelization_octree = Voxelization.from_volume_model(
+    volume_model, VOXEL_SIZE, method="octree", name="Octree voxelization"
+)
 print(f"Octree voxelization computed in {round((time.perf_counter() - start) * 1000)}ms")
 
 # Check for difference between voxelization
