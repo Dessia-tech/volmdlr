@@ -1585,8 +1585,8 @@ class PeriodicalSurface(Surface3D):
         overlapping_theta, outer_contour_side, inner_contour_side, side = self._get_overlapping_theta(
             outer_contour_theta,
             inner_contour_theta)
-        line = edges.Line2D(volmdlr.Point2D(overlapping_theta, z_outer_contour),
-                            volmdlr.Point2D(overlapping_theta, z_inner_contour))
+        line = curves.Line2D(volmdlr.Point2D(overlapping_theta, z_outer_contour),
+                             volmdlr.Point2D(overlapping_theta, z_inner_contour))
         cutted_contours = inner_contour.split_by_line(line)
         number_contours = len(cutted_contours)
         if number_contours == 2:

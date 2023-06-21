@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as npy
 
 import dessia_common.core as dc
+from dessia_common.errors import ConsistencyError
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
@@ -2370,7 +2371,7 @@ class MovingVolumeModel(VolumeModel):
         self.step_frames = step_frames
 
         if not self.is_consistent():
-            raise dc.ConsistencyError
+            raise ConsistencyError
 
     def is_consistent(self):
         n_primitives = len(self.primitives)

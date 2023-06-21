@@ -813,12 +813,12 @@ class RevolvedProfile(shells.ClosedShell3D):
         """
         Volume from Guldin formulae.
         """
-        point1 = self.axis_point.PlaneProjection3D(self.plane_origin,
+        point1 = self.axis_point.plane_projection3d(self.plane_origin,
                                                    self.x, self.y)
-        p1_2d = point1.To2D(self.axis_point, self.x, self.y)
+        p1_2d = point1.to_2d(self.axis_point, self.x, self.y)
         p2_3d = self.axis_point + volmdlr.Point3D(self.axis.vector)
-        p2_2d = p2_3d.To2D(self.plane_origin, self.x, self.y)
-        axis_2d = volmdlr.edges.Line2D(p1_2d, p2_2d)
+        p2_2d = p2_3d.to_2d(self.plane_origin, self.x, self.y)
+        axis_2d = curves.Line2D(p1_2d, p2_2d)
         com = self.contour2d.center_of_mass()
         if com is not False:
             dist = axis_2d.point_distance(com)
