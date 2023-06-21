@@ -56,6 +56,21 @@ class Voxelization(PhysicalObject):
     def __sub__(self, other_voxelization: "Voxelization") -> "Voxelization":
         return self.difference(other_voxelization)
 
+    def __and__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        return self.intersection(other_voxelization)
+
+    def __or__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        return self.union(other_voxelization)
+
+    def __xor__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        return self.union(other_voxelization) - self.intersection(other_voxelization)
+
+    def __invert__(self):
+        pass
+
+    def __len__(self):
+        return len(self.voxels_centers)
+
     @classmethod
     def from_closed_triangle_shell(
         cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, method: str = "octree", name: str = ""

@@ -34,5 +34,5 @@ if not voxelization_naive == voxelization_octree:
     difference_2 = voxelization_naive - voxelization_octree
 
     for voxelization in [difference_1, difference_2]:
-        if len(voxelization.voxels_centers) > 0:
+        if len(voxelization) > 0:
             voxelization.babylonjs()
