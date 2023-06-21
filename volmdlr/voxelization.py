@@ -44,6 +44,12 @@ class Voxelization(PhysicalObject):
 
         PhysicalObject.__init__(self, name=name)
 
+    def __eq__(self, other_voxelization: "Voxelization") -> bool:
+        return (
+            self.voxels_centers == other_voxelization.voxels_centers
+            and self.voxel_size == other_voxelization.voxel_size
+        )
+
     @classmethod
     def from_closed_triangle_shell(
         cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, method: str = "octree", name: str = ""
@@ -230,70 +236,143 @@ class Voxelization(PhysicalObject):
         :return: True if there is an intersection, False otherwise.
         :rtype: bool
         """
-        # Convert to numpy ndarray
+        # Method ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
+
         triangle = np.array(triangle)
-        voxel_center = np.array(voxel_center)
-        voxel_extents = np.array(voxel_extents)
+        box_center = np.array(voxel_center)
+        box_extents = np.array(voxel_extents)
+
+        x, y, z = 0, 1, 2
 
         # Translate triangle as conceptually moving AABB to origin
-        v = triangle - voxel_center
+        v0 = triangle[0] - box_center
+        v1 = triangle[1] - box_center
+        v2 = triangle[2] - box_center
 
         # Compute edge vectors for triangle
-        f = np.empty_like(triangle)
-        f[0] = triangle[1] - triangle[0]
-        f[1] = triangle[2] - triangle[1]
-        f[2] = triangle[0] - triangle[2]
+        f0 = triangle[1] - triangle[0]
+        f1 = triangle[2] - triangle[1]
+        f2 = triangle[0] - triangle[2]
 
-        for i in range(3):
-            a = np.zeros(3)
-            # axis a0i
-            a[np.mod(i + 1, 3)] = -f[i][np.mod(i + 2, 3)]
-            a[np.mod(i + 2, 3)] = f[i][np.mod(i + 1, 3)]
-            p = np.dot(v, a)
-            r = voxel_extents[np.mod(i + 1, 3)] * abs(f[i][np.mod(i + 2, 3)]) + voxel_extents[np.mod(i + 2, 3)] * abs(
-                f[i][np.mod(i + 1, 3)]
-            )
-            if (max(-max(p), min(p))) > r:
-                return False
+        "region Test axes a00..a22 (category 3)"
 
-            # axis a1i
-            a[np.mod(i + 2, 3)] = -f[i][np.mod(i, 3)]
-            a[np.mod(i, 3)] = f[i][np.mod(i + 2, 3)]
-            p = np.dot(v, a)
-            r = voxel_extents[np.mod(i, 3)] * abs(f[i][np.mod(i + 2, 3)]) + voxel_extents[np.mod(i + 2, 3)] * abs(
-                f[i][np.mod(i, 3)]
-            )
-            if (max(-max(p), min(p))) > r:
-                return False
-
-            # axis a2i
-            a[np.mod(i, 3)] = -f[i][np.mod(i + 1, 3)]
-            a[np.mod(i + 1, 3)] = f[i][np.mod(i, 3)]
-            p = np.dot(v, a)
-            r = voxel_extents[np.mod(i, 3)] * abs(f[i][np.mod(i + 1, 3)]) + voxel_extents[np.mod(i + 1, 3)] * abs(
-                f[i][np.mod(i, 3)]
-            )
-            if (max(-max(p), min(p))) > r:
-                return False
-
-        # Test the three axes corresponding to the face normals of AABB b (category 1)
-        if np.any(np.max(v, axis=0) < -voxel_extents) or np.any(np.min(v, axis=0) > voxel_extents):
+        # Test axis a00
+        a00 = np.array([0, -f0[z], f0[y]])
+        p0 = np.dot(v0, a00)
+        p1 = np.dot(v1, a00)
+        p2 = np.dot(v2, a00)
+        r = box_extents[y] * abs(f0[z]) + box_extents[z] * abs(f0[y])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
             return False
 
-        # Test separating axis corresponding to triangle face normal (category 2)
-        plane_normal = np.cross(f[0], f[1])
-        plane_distance = np.dot(plane_normal, v[0])
+        # Test axis a01
+        a01 = np.array([0, -f1[z], f1[y]])
+        p0 = np.dot(v0, a01)
+        p1 = np.dot(v1, a01)
+        p2 = np.dot(v2, a01)
+        r = box_extents[y] * abs(f1[z]) + box_extents[z] * abs(f1[y])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a02
+        a02 = np.array([0, -f2[z], f2[y]])
+        p0 = np.dot(v0, a02)
+        p1 = np.dot(v1, a02)
+        p2 = np.dot(v2, a02)
+        r = box_extents[y] * abs(f2[z]) + box_extents[z] * abs(f2[y])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a10
+        a10 = np.array([f0[z], 0, -f0[x]])
+        p0 = np.dot(v0, a10)
+        p1 = np.dot(v1, a10)
+        p2 = np.dot(v2, a10)
+        r = box_extents[x] * abs(f0[z]) + box_extents[z] * abs(f0[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a11
+        a11 = np.array([f1[z], 0, -f1[x]])
+        p0 = np.dot(v0, a11)
+        p1 = np.dot(v1, a11)
+        p2 = np.dot(v2, a11)
+        r = box_extents[x] * abs(f1[z]) + box_extents[z] * abs(f1[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a12
+        a11 = np.array([f2[z], 0, -f2[x]])
+        p0 = np.dot(v0, a11)
+        p1 = np.dot(v1, a11)
+        p2 = np.dot(v2, a11)
+        r = box_extents[x] * abs(f2[z]) + box_extents[z] * abs(f2[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a20
+        a20 = np.array([-f0[y], f0[x], 0])
+        p0 = np.dot(v0, a20)
+        p1 = np.dot(v1, a20)
+        p2 = np.dot(v2, a20)
+        r = box_extents[x] * abs(f0[y]) + box_extents[y] * abs(f0[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a21
+        a21 = np.array([-f1[y], f1[x], 0])
+        p0 = np.dot(v0, a21)
+        p1 = np.dot(v1, a21)
+        p2 = np.dot(v2, a21)
+        r = box_extents[x] * abs(f1[y]) + box_extents[y] * abs(f1[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a22
+        a22 = np.array([-f2[y], f2[x], 0])
+        p0 = np.dot(v0, a22)
+        p1 = np.dot(v1, a22)
+        p2 = np.dot(v2, a22)
+        r = box_extents[x] * abs(f2[y]) + box_extents[y] * abs(f2[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        "endregion"
+
+        "region Test the three axes corresponding to the face normals of AABB b (category 1)"
+
+        # Exit if...
+        # ... [-extents.X, extents.X] and [min(v0.X,v1.X,v2.X), max(v0.X,v1.X,v2.X)] do not overlap
+        if max(v0[x], v1[x], v2[x]) < -box_extents[x] or min(v0[x], v1[x], v2[x]) > box_extents[x]:
+            return False
+
+        # ... [-extents.Y, extents.Y] and [min(v0.Y,v1.Y,v2.Y), max(v0.Y,v1.Y,v2.Y)] do not overlap
+        if max(v0[y], v1[y], v2[y]) < -box_extents[y] or min(v0[y], v1[y], v2[y]) > box_extents[y]:
+            return False
+
+        # ... [-extents.Z, extents.Z] and [min(v0.Z,v1.Z,v2.Z), max(v0.Z,v1.Z,v2.Z)] do not overlap
+        if max(v0[z], v1[z], v2[z]) < -box_extents[z] or min(v0[z], v1[z], v2[z]) > box_extents[z]:
+            return False
+
+        "endregion"
+
+        "region Test separating axis corresponding to triangle face normal (category 2)"
+
+        plane_normal = np.cross(f0, f1)
+        plane_distance = abs(np.dot(plane_normal, v0))
 
         # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
         r = (
-            voxel_extents[0] * abs(plane_normal[0])
-            + voxel_extents[1] * abs(plane_normal[1])
-            + voxel_extents[2] * abs(plane_normal[2])
+            box_extents[x] * abs(plane_normal[x])
+            + box_extents[y] * abs(plane_normal[y])
+            + box_extents[z] * abs(plane_normal[z])
         )
 
         # Intersection occurs when plane distance falls within [-r,+r] interval
-        if abs(plane_distance) > r:
+        if plane_distance > r:
             return False
+
+        "endregion"
 
         return True
 
@@ -1072,8 +1151,7 @@ class OctreeNode:
     def intersecting_triangles(self, triangles: List[Triangle]) -> List[Triangle]:
         intersecting_triangles = []
         for triangle in triangles:
-            # if Voxelization.triangle_voxel_intersection(triangle, self.center, [0.5 * self.size for _ in range(3)]):
-            if intersects_box(triangle, self.center, [0.5 * self.size for _ in range(3)]):
+            if Voxelization.triangle_voxel_intersection(triangle, self.center, [0.5 * self.size for _ in range(3)]):
                 intersecting_triangles.append(triangle)
 
         return intersecting_triangles
