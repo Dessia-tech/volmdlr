@@ -761,7 +761,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             line_surface = []
             for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
                 lines_tags = []
-                if isinstance(contour, volmdlr.wires.Circle2D):
+                if isinstance(contour, curves.Circle2D):
                     pass
                 else:
                     for _, primitive in enumerate(contour.primitives):
@@ -1502,7 +1502,7 @@ class ClosedShell3D(OpenShell3D):
 
     def subtract_to_closed_shell(self, shell2: OpenShell3D, tol: float = 1e-8):
         """
-        Substracts shell2's volume from self.
+        Subtracts shell2's volume from self.
 
         :param shell2: other shell
         :param tol: tolerance

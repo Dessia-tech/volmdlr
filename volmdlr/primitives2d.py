@@ -80,7 +80,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         :param center: rotation center
         :param angle: angle rotation
-        :return: a new rotationed OpenedRoundedLineSegments2D
+        :return: a new rotated OpenedRoundedLineSegments2D
         """
         return self.__class__([point.rotation(center, angle)
                                for point in self.points],
@@ -242,10 +242,10 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
                 if self.closed and line_index == len(self.points) - 1:
                     normal_vector = volmdlr.Vector2D(
-                        self.points[0] - point).normalVector(unit=True)
+                        self.points[0] - point).unit_normal_vector()
                 else:
                     normal_vector = volmdlr.Vector2D(
-                        self.points[i + 1] - point).normalVector(unit=True)
+                        self.points[i + 1] - point).unit_normal_vector()
 
                 alpha1 = math.acos(dir_vec_1.dot(normal_vector))
                 alpha2 = math.acos(dir_vec_2.dot(normal_vector))

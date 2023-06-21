@@ -456,7 +456,7 @@ class Block(shells.ClosedShell3D):
 
     def plot2d(self, x3d, y3d, ax=None):
         """
-        Plot 2d with matplotlib.
+        Plot 2d with Matplotlib.
 
         """
         if ax is None:
@@ -1956,7 +1956,7 @@ class Sphere(RevolvedProfile):
         return skin_points
 
     def inner_points(self, resolution: float = 1e-3):
-        """Gives points inside of the sphere with a subsphere strategy."""
+        """Gives points inside the sphere with a sub-sphere strategy."""
         in_points = [self.center]
         nb_spheres = int(self.radius / resolution)
         if nb_spheres == 0:

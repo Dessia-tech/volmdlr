@@ -119,19 +119,19 @@ def reorder_contour3d_edges_from_step(raw_edges, step_data):
         return None
 
     if index == 0:
-        edges = [raw_edges[0], raw_edges[1]]
+        new_edges = [raw_edges[0], raw_edges[1]]
     elif index == 1:
-        edges = [raw_edges[0].reverse(), raw_edges[1]]
+        new_edges = [raw_edges[0].reverse(), raw_edges[1]]
     elif index == 2:
-        edges = [raw_edges[0], raw_edges[1].reverse()]
+        new_edges = [raw_edges[0], raw_edges[1].reverse()]
     elif index == 3:
-        edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]
+        new_edges = [raw_edges[0].reverse(), raw_edges[1].reverse()]
     else:
         raise NotImplementedError
 
     # Connecting the next edges
-    last_edge = edges[-1]
-    for i, raw_edge in enumerate(raw_edges[2:]):
+    last_edge = new_edges[-1]
+    for raw_edge in raw_edges[2:]:
         if raw_edge.direction_independent_is_close(last_edge):
             continue
         distances = [raw_edge.start.point_distance(last_edge.end),
@@ -172,8 +172,8 @@ def reorder_contour3d_edges_from_step(raw_edges, step_data):
         elif index == 1:
             last_edge = raw_edge.reverse()
 
-        edges.append(last_edge)
-    return edges
+        new_edges.append(last_edge)
+    return new_edges
 
 
 class WireMixin:
@@ -408,10 +408,10 @@ class WireMixin:
 
         """
         linesegment_name = 'LineSegment' + points[0].__class__.__name__[-2:]
-        edges = []
+        primitives = []
         for i in range(0, len(points) - 1):
-            edges.append(getattr(volmdlr.edges, linesegment_name)(points[i], points[i + 1]))
-        contour = cls(edges)
+            primitives.append(getattr(edges, linesegment_name)(points[i], points[i + 1]))
+        contour = cls(primitives)
         return contour
 
     @classmethod
@@ -487,12 +487,12 @@ class WireMixin:
         return split_wires
 
     @classmethod
-    def wires_from_edges(cls, edges, tol=1e-6):
+    def wires_from_edges(cls, list_edges, tol=1e-6):
         """
         Defines a list of wires from edges, by ordering successive edges.
 
-        :param edges: A list of edges
-        :type edges: List[edges.Edge]
+        :param list_edges: A list of edges
+        :type list_edges: List[edges.Edge]
         :param tol: A tolerance, defaults to 1e-6
         :type tol: float, optional
 
@@ -500,29 +500,29 @@ class WireMixin:
         :rtype: List[wires.WireMixin]
         """
 
-        if not edges:
+        if not list_edges:
             return []
-        if len(edges) == 1:
-            return [cls(edges)]
+        if len(list_edges) == 1:
+            return [cls(list_edges)]
 
         new_primitives, i = [], -1
-        while edges:
+        while list_edges:
             i += 1
-            new_primitives.append([edges[0]])
-            edges.remove(edges[0])
+            new_primitives.append([list_edges[0]])
+            list_edges.remove(list_edges[0])
 
             to_continue = True
 
             while to_continue:
                 broke = False
-                for p, primitive in enumerate(edges):
+                for p, primitive in enumerate(list_edges):
 
                     if primitive.is_point_edge_extremity(new_primitives[i][-1].end, tol):
                         if new_primitives[i][-1].end.is_close(primitive.start, tol):
                             new_primitives[i].append(primitive)
                         else:
                             new_primitives[i].append(primitive.reverse())
-                        edges.remove(primitive)
+                        list_edges.remove(primitive)
                         broke = True
                         break
 
@@ -531,11 +531,11 @@ class WireMixin:
                             new_primitives[i].insert(0, primitive)
                         else:
                             new_primitives[i].insert(0, primitive.reverse())
-                        edges.remove(primitive)
+                        list_edges.remove(primitive)
                         broke = True
                         break
 
-                if ((not broke) and (len(edges) == p + 1)) or len(edges) == 0:
+                if ((not broke) and (len(list_edges) == p + 1)) or len(list_edges) == 0:
                     to_continue = False
 
         wires = [cls(primitives_wire) for primitives_wire in new_primitives]
@@ -544,7 +544,7 @@ class WireMixin:
 
     def to_wire_with_linesegments(self, number_segments: int):
         """
-        Convert a wire with different primitives to a wire with just linesegments by discretizing primitives.
+        Convert a wire with different primitives to a wire with just line segments by discretizing primitives.
 
         :param number_segments: number of segment for each primitive to be converted.
         :type number_segments: int
@@ -1129,7 +1129,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         Returns a list of crossings in the form of a tuple (point, primitive).
         """
 
-        linesegments = bsplinecurve.to_wire(25).primitives
+        linesegments = Wire2D.from_edge(bsplinecurve, 25).primitives
         crossings_points = []
         for linesegment in linesegments:
             crossings_linesegment = self.linesegment_crossings(linesegment)
@@ -1145,7 +1145,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         Returns a list of intersections in the form of a tuple (point, primitive).
         """
 
-        linesegments = bsplinecurve.to_wire(25).primitives
+        linesegments = Wire2D.from_edge(bsplinecurve, 25).primitives
         intersections_points = []
         for linesegment in linesegments:
             intersections_linesegments = self.linesegment_intersections(linesegment)
@@ -1361,10 +1361,10 @@ class ContourMixin(WireMixin):
         return self
 
     @staticmethod
-    def touching_edges_pairs(edges):  # TO DO: move this to edges?
+    def touching_edges_pairs(list_edges):  # TO DO: move this to edges?
         touching_primitives = []
-        for i, primitive1 in enumerate(edges):
-            for j, primitive2 in enumerate(edges):
+        for i, primitive1 in enumerate(list_edges):
+            for j, primitive2 in enumerate(list_edges):
                 if j > i:
                     if primitive1.unit_direction_vector(abscissa=0).is_colinear_to(
                             primitive2.unit_direction_vector(abscissa=0)):
@@ -1447,26 +1447,26 @@ class ContourMixin(WireMixin):
         return edge_connected
 
     @staticmethod
-    def find_connected_edges(edges, contours_list, contour_primitives, tol):
-        for line in edges:
+    def find_connected_edges(list_edges, contours_list, contour_primitives, tol):
+        for line in list_edges:
             if contours_list:
                 contours_list, remove = ContourMixin.connected_to_splited_primitives(line, contours_list)
                 if remove:
-                    edges.remove(line)
+                    list_edges.remove(line)
                     break
             if not contour_primitives:
                 contour_primitives.append(line)
-                edges.remove(line)
+                list_edges.remove(line)
                 break
             edge_connected = ContourMixin.is_edge_connected(contour_primitives, line, tol)
             if edge_connected is not None:
                 contour_primitives.append(edge_connected)
-                edges.remove(edge_connected)
+                list_edges.remove(edge_connected)
                 break
-        return edges, contour_primitives, contours_list
+        return list_edges, contour_primitives, contours_list
 
     @staticmethod
-    def get_edges_bifurcations(contour_primitives, edges, finished_loop):
+    def get_edges_bifurcations(contour_primitives, list_edges, finished_loop):
         graph = nx.Graph()
         for prim in contour_primitives[:]:
             graph.add_edge(prim.start, prim.end)
@@ -1479,29 +1479,29 @@ class ContourMixin(WireMixin):
                     i_edge = volmdlr.edges.LineSegment2D(node, neihgbor)
                     if i_edge in contour_primitives:
                         contour_primitives.remove(i_edge)
-                        edges.append(volmdlr.edges.LineSegment2D(node, neihgbor))
+                        list_edges.append(volmdlr.edges.LineSegment2D(node, neihgbor))
                         finished_loop = False
                         if i + 1 == degree - 2:
                             break
-        return contour_primitives, edges, finished_loop
+        return contour_primitives, list_edges, finished_loop
 
     @classmethod
-    def contours_from_edges(cls, edges, tol=1e-6):
-        if not edges:
+    def contours_from_edges(cls, list_edges, tol=1e-6):
+        if not list_edges:
             return []
-        if len(edges) == 1:
-            return [cls(edges)]
+        if len(list_edges) == 1:
+            return [cls(list_edges)]
         list_contours = []
-        points = [edges[0].start, edges[0].end]
-        contour_primitives = [edges.pop(0)]
+        points = [list_edges[0].start, list_edges[0].end]
+        contour_primitives = [list_edges.pop(0)]
         while True:
-            for i, edge in enumerate(edges):
+            for i, edge in enumerate(list_edges):
                 if edge.is_point_edge_extremity(contour_primitives[-1].end, tol):
                     if contour_primitives[-1].end.is_close(edge.start, tol):
                         contour_primitives.append(edge)
                     else:
                         contour_primitives.append(edge.reverse())
-                    edges.pop(i)
+                    list_edges.pop(i)
                     validating_points = points[:]
                     validating_point = contour_primitives[-1].end
                     points.append(contour_primitives[-1].end)
@@ -1514,14 +1514,14 @@ class ContourMixin(WireMixin):
                     validating_points = points[:]
                     validating_point = contour_primitives[0].start
                     points.insert(0, contour_primitives[0].start)
-                    edges.pop(i)
+                    list_edges.pop(i)
                     break
             else:
                 list_contours.append(cls(contour_primitives))
-                if not edges:
+                if not list_edges:
                     break
-                points = [edges[0].start, edges[0].end]
-                contour_primitives = [edges.pop(0)]
+                points = [list_edges[0].start, list_edges[0].end]
+                contour_primitives = [list_edges.pop(0)]
                 continue
             if volmdlr.core.point_in_list(validating_point, validating_points):
                 if not validating_point.is_close(validating_points[0]):
@@ -1538,9 +1538,9 @@ class ContourMixin(WireMixin):
                     list_contours.append(new_contour)
                 else:
                     list_contours.append(cls(contour_primitives))
-                    if edges:
-                        points = [edges[0].start, edges[0].end]
-                        contour_primitives = [edges.pop(0)]
+                    if list_edges:
+                        points = [list_edges[0].start, list_edges[0].end]
+                        contour_primitives = [list_edges.pop(0)]
         valid_contours = [list_contours[0]]
         list_contours.remove(list_contours[0])
         for contour in list_contours:
@@ -1556,13 +1556,13 @@ class ContourMixin(WireMixin):
         Discretize each contour's primitive and return a list of discretized primitives.
 
         """
-        edges = []
+        list_edges = []
         for primitive in self.primitives:
             auto_nb_pts = min(number_points, max(2, int(primitive.length() / 1e-6)))
             points = primitive.discretization_points(number_points=auto_nb_pts)
             for point1, point2 in zip(points[:-1], points[1:]):
-                edges.append(volmdlr.edges.LineSegment2D(point1, point2))
-        return edges
+                list_edges.append(edges.LineSegment2D(point1, point2))
+        return list_edges
 
     def shares_primitives(self, contour):
         """
@@ -1639,8 +1639,8 @@ class ContourMixin(WireMixin):
 
         list_p, edges1 = [], set()
         for edge_1, edge_2 in itertools.product(self.primitives, contour.primitives):
-            edges = [edge_1, edge_2, edge_1]
-            for edge1, edge2 in zip(edges, edges[1:]):
+            list_edges = [edge_1, edge_2, edge_1]
+            for edge1, edge2 in zip(list_edges, list_edges[1:]):
                 for point in [edge2.start, edge2.end]:
                     if edge1.point_belongs(point, 1e-6):
                         if not list_p:
@@ -1884,15 +1884,15 @@ class ContourMixin(WireMixin):
             raise ValueError('contour is defined at least with three points')
 
         linesegment_name = 'LineSegment' + points[0].__class__.__name__[-2:]
-        edges = []
+        list_edges = []
         for i in range(0, len(points) - 1):
             if points[i].is_close(points[i + 1]):
                 continue
-            edges.append(getattr(volmdlr.edges, linesegment_name)(points[i], points[i + 1]))
+            list_edges.append(getattr(edges, linesegment_name)(points[i], points[i + 1]))
         if not points[-1].is_close(points[0]):
-            edges.append(getattr(volmdlr.edges, linesegment_name)(points[-1], points[0]))
+            list_edges.append(getattr(edges, linesegment_name)(points[-1], points[0]))
 
-        contour = cls(edges)
+        contour = cls(list_edges)
         return contour
 
     def reorder_contour_at_point(self, point):
@@ -2469,9 +2469,7 @@ class Contour2D(ContourMixin, Wire2D):
         edge2 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_max, y_max), volmdlr.Point2D(x_min, y_max))
         edge3 = volmdlr.edges.LineSegment2D(volmdlr.Point2D(x_min, y_max), volmdlr.Point2D(x_min, y_min))
 
-        edges = [edge0, edge1, edge2, edge3]
-
-        return Contour2D(edges)
+        return Contour2D([edge0, edge1, edge2, edge3])
 
     def cut_by_bspline_curve(self, bspline_curve2d: volmdlr.edges.BSplineCurve2D):
         """
@@ -4111,9 +4109,9 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
 
-        edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
-        if edges:
-            return cls(edges, name=name)
+        list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
+        if list_edges:
+            return cls(list_edges, name=name)
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):

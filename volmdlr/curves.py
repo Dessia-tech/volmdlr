@@ -1,33 +1,23 @@
 """This module defines volmdlr curves."""
-import copy
 import math
-import sys
-import warnings
-from itertools import product
-from typing import Any, Dict, List, Union
+from typing import List, Union
 
-import dessia_common.core as dc
-import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as npy
-import plot_data.core as plot_data
-import plot_data.colors
 import scipy.integrate as scipy_integrate
-from scipy.optimize import least_squares
-from geomdl import NURBS, BSpline, fitting, operations, utilities
-from geomdl.operations import length_curve, split_curve
+import volmdlr.core_compiled
 from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
+
+from dessia_common.core import DessiaObject
+import plot_data.colors
+import plot_data.core as plot_data
+import volmdlr
 import volmdlr.core
-import volmdlr.core_compiled
 import volmdlr.geometry
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
-from volmdlr.core import EdgeStyle
-
-from dessia_common.core import DessiaObject
-import volmdlr
 import volmdlr.utils.intersections as volmdlr_intersections
 from volmdlr.core import EdgeStyle
 
@@ -879,7 +869,7 @@ class Circle2D(CircleMixin):
 
     def point_symmetric(self, point):
         """
-        Creates a circle simetrically from a point.
+        Creates a circle symmetrically from a point.
 
         :param point: symmetry point.
         :return: Circle 2D symmetric to point.
@@ -1082,7 +1072,7 @@ class Circle2D(CircleMixin):
         return volmdlr_intersections.get_bsplinecurve_intersections(self, bsplinecurve, abs_tol)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        """Plots the circle using matplotlib."""
+        """Plots the circle using Matplotlib."""
         return vm_common_operations.plot_circle(self, ax, edge_style)
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
@@ -1874,7 +1864,7 @@ class Ellipse3D(Curve):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Transforms a Ellipse3D into an EllipseD, given a plane origin and an u and v plane vector.
+        Transforms an Ellipse 3D into an Ellipse 2D, given a plane origin and an u and v plane vector.
 
         :param plane_origin: plane origin.
         :param x: plane u vector.
@@ -1927,11 +1917,11 @@ class Ellipse3D(Curve):
         :param point2: trim point 2.
         :return: An arcellipse between the two given points.
         """
-        import volmdlr.edges
+        from volmdlr import edges
         if point1.is_close(point2):
-            return volmdlr.edges.FullArcEllipse3D(point1, self.major_axis, self.minor_axis, self.center, self.normal,
-                                                  self.major_dir, self.name)
-        return volmdlr.edges.ArcEllipse3D(self, point1, point2)
+            return edges.FullArcEllipse3D(point1, self.major_axis, self.minor_axis, self.center, self.normal,
+                                          self.major_dir, self.name)
+        return edges.ArcEllipse3D(self, point1, point2)
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -1963,7 +1953,7 @@ class Ellipse3D(Curve):
         return Ellipse3D(self.major_axis, self.minor_axis, self.frame.frame_mapping(frame, side))
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        """Plots an ellipse using matplotlib."""
+        """Plots an ellipse using Matplotlib."""
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 

@@ -6660,11 +6660,11 @@ class BSplineSurface3D(Surface3D):
             i = distances.index((min(distances)))
             j = distances[i].index(min(distances[i]))
 
-            curves = [contour2.primitives[j], contour1.primitives[i]]
+            curves_ = [contour2.primitives[j], contour1.primitives[i]]
 
             # split surface
             for i, bspline in enumerate(bsplines):
-                surfaces = bspline.split_surface_with_bspline_curve(curves[i])
+                surfaces = bspline.split_surface_with_bspline_curve(curves_[i])
 
                 errors = []
                 for surface in surfaces:

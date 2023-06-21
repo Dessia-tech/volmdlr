@@ -20,9 +20,6 @@ import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
 from geomdl import NURBS, BSpline, fitting, operations, utilities
 from geomdl.operations import length_curve, split_curve
-from matplotlib import __version__ as _mpl_version
-from mpl_toolkits.mplot3d import Axes3D
-from packaging import version
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -779,7 +776,7 @@ class BSplineCurve(Edge):
 
     def get_reverse(self):
         """
-        Reverses the B-Spline's direction by reversing its control points.
+        Reverses the BSpline's direction by reversing its control points.
 
         :return: A reversed B-Spline curve.
         :rtype: :class:`volmdlr.edges.BSplineCurve`.
@@ -903,8 +900,8 @@ class BSplineCurve(Edge):
         length = self.length()
         initial_condition_list = [0, 0.15, 0.25, 0.35, 0.5, 0.65, 0.75, 0.9, 1]
 
-        def evaluate_point_distance(u):
-            return (point - self.evaluate_single(u)).norm()
+        def evaluate_point_distance(u_param):
+            return (point - self.evaluate_single(u_param)).norm()
         results = []
         initial_condition_list.sort(key=evaluate_point_distance)
         for u0 in initial_condition_list:
@@ -2125,7 +2122,7 @@ class LineSegment2D(LineSegment):
         return self.__class__(points_symmetry[0], points_symmetry[1])
 
 
-class Arc(Edge):
+class ArcMixin(Edge):
     """
     Abstract class representing an arc.
 
@@ -2390,7 +2387,7 @@ class Arc(Edge):
         return False
 
 
-class FullArc(Arc):
+class FullArc(ArcMixin):
     """
     Abstract class for representing a circle with a start and end points that are the same.
     """
@@ -2399,7 +2396,7 @@ class FullArc(Arc):
                  start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
         self.circle = circle
         self.start_end = start_end
-        Arc.__init__(self, circle=circle, start=start_end, end=start_end, name=name)  # !!! this is dangerous
+        ArcMixin.__init__(self, circle=circle, start=start_end, end=start_end, name=name)  # !!! this is dangerous
 
     @property
     def angle(self):
@@ -2426,7 +2423,7 @@ class FullArc(Arc):
         return cls(circle, circle.center + circle.frame.u * circle.radius)
 
 
-class Arc2D(Arc):
+class Arc2D(ArcMixin):
     """
     Class to draw Arc2D.
 
@@ -2443,7 +2440,7 @@ class Arc2D(Arc):
         self.is_trigo = is_trigo
         self._angle = None
         self._bounding_rectangle = None
-        Arc.__init__(self, circle, start=start, end=end, is_trigo=is_trigo, name=name)
+        ArcMixin.__init__(self, circle, start=start, end=end, is_trigo=is_trigo, name=name)
         start_to_center = start - self.circle.center
         end_to_center = end - self.circle.center
         angle1 = math.atan2(start_to_center.y, start_to_center.x)
@@ -2874,8 +2871,7 @@ class Arc2D(Arc):
         return volmdlr.geometry.huygens2d(moment_area_x, moment_area_y, moment_area_xy, self.area(),
                                           self.circle.center, point)
 
-    def plot_data(self, edge_style: plot_data.EdgeStyle = None,
-                  anticlockwise: bool = None):
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None, anticlockwise: bool = None):
         """
         Plot data method for a Arc2D.
 
@@ -2917,7 +2913,7 @@ class Arc2D(Arc):
         raise NotImplementedError
 
     def infinite_primitive(self, offset):
-        """Create an offseted curve from a distance of the original curve."""
+        """Create an offset curve from a distance of the original curve."""
         vector_start_center = self.start - self.circle.center
         vector_start_center.normalize()
         vector_end_center = self.end - self.circle.center
@@ -2954,7 +2950,7 @@ class FullArc2D(FullArc, Arc2D):
                  name: str = ''):
         # self.interior = start_end.rotation(center, math.pi)
         self._bounding_rectangle = None
-        FullArc.__init__(self, circle=circle, start_end=start_end, name=name)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
         Arc2D.__init__(self, circle=circle, start=start_end, end=start_end)
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
@@ -3072,7 +3068,7 @@ class FullArc2D(FullArc, Arc2D):
         return volmdlr.wires.ClosedPolygon2D(self.discretization_points(angle_resolution=15))
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        """Plots a fullarc using matplotlib."""
+        """Plots a fullarc using Matplotlib."""
         return vm_common_operations.plot_circle(self.circle, ax, edge_style)
 
     def cut_between_two_points(self, point1, point2):
@@ -3606,7 +3602,7 @@ class ArcEllipse2D(Edge):
 
     def split(self, split_point):
         """
-        Splits arc-elipse at a given point.
+        Splits arc-ellipse at a given point.
 
         :param split_point: splitting point.
         :return: list of two Arc-Ellipse.
@@ -3621,9 +3617,9 @@ class ArcEllipse2D(Edge):
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
-        Checks if two arc-elipse are the same considering the Euclidean distance.
+        Checks if two arc-ellipse are the same considering the Euclidean distance.
 
-        :param other_edge: other arc-elipse.
+        :param other_edge: other arc-ellipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
@@ -4891,7 +4887,7 @@ class BSplineCurve3D(BSplineCurve):
 
 class BezierCurve3D(BSplineCurve3D):
     """
-    A class for 3-dimensional Bezier curves.
+    A class for 3-dimensional Bézier curves.
 
     :param degree: The degree of the Bézier curve
     :type degree: int
@@ -4912,14 +4908,14 @@ class BezierCurve3D(BSplineCurve3D):
                                 None, False, name)
 
 
-class Arc3D(Arc):
+class Arc3D(ArcMixin):
     """
     An arc is defined by a starting point, an end point and an interior point.
 
     """
 
     def __init__(self, circle, start, end, name=''):
-        Arc.__init__(self, circle, start=start, end=end, name=name)
+        ArcMixin.__init__(self, circle, start=start, end=end, name=name)
         self._angle = None
         self.angle_start, self.angle_end = self.get_start_end_angles()
 
@@ -5431,7 +5427,7 @@ class FullArc3D(FullArc, Arc3D):
                  name: str = ''):
         self._utd_frame = None
         self._bbox = None
-        FullArc.__init__(self, circle=circle, start_end=start_end, name=name)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
         Arc3D.__init__(self, circle=circle, start=start_end, end=start_end)
 
     def __hash__(self):
@@ -5838,7 +5834,7 @@ class ArcEllipse3D(Edge):
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
-        Checks if two arc-elipse are the same considering the Euclidean distance.
+        Checks if two arc-ellipse are the same considering the Euclidean distance.
 
         :param other_edge: other arc-ellipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
@@ -5868,7 +5864,7 @@ class ArcEllipse3D(Edge):
 
     def split(self, split_point):
         """
-        Splits arc-elipse at a given point.
+        Splits arc-ellipse at a given point.
 
         :param split_point: splitting point.
         :return: list of two Arc-Ellipse.

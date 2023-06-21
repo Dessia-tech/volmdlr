@@ -3,7 +3,9 @@ babylon
 babylonjs
 Bbox
 Bentley-Ottmann
+Ottmann
 Bezier
+Bézier
 bool
 bspline
 bsplinecurve
@@ -84,3 +86,8 @@ Tore's
 deserialization
 Trimesh
 networkx
+arcellipse
+bendjebla
+vmc
+WireMixin
+BoundingRectangle

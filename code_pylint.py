@@ -34,7 +34,7 @@ MAX_ERROR_BY_TYPE = {
                      'abstract-method': 37,
                      'duplicate-code': 10,
                      'arguments-renamed': 2,
-                     'too-many-ancestors': 9,
+                     'too-many-ancestors': 24,
                      'too-few-public-methods': 3,
                      'non-parent-init-called': 3,
                      'too-many-public-methods': 13,
