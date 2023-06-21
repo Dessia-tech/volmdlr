@@ -3597,12 +3597,12 @@ class Frame3D(Basis3D):
         """
         content, origin_id = self.origin.to_point().to_step(current_id)
         current_id = origin_id + 1
+        w_content, w_id = Vector3D.to_step(self.w, current_id)
+        current_id = w_id + 1
         u_content, u_id = Vector3D.to_step(self.u, current_id)
         current_id = u_id + 1
-        v_content, v_id = Vector3D.to_step(self.w, current_id)
-        current_id = v_id + 1
-        content += u_content + v_content
-        content += f"#{current_id} = AXIS2_PLACEMENT_3D('{self.name}',#{origin_id},#{u_id},#{v_id});\n"
+        content += w_content + u_content
+        content += f"#{current_id} = AXIS2_PLACEMENT_3D('{self.name}',#{origin_id},#{w_id},#{u_id});\n"
         return content, current_id
 
     def plot2d(self, x=X3D, y=Y3D, ax=None, color="k"):
@@ -3695,20 +3695,22 @@ class Frame3D(Basis3D):
         """
         origin = object_dict[arguments[1]]
         if arguments[2] == "$" and arguments[3] == "$":
-            u = Z3D
-            v = X3D
+            u = X3D
+            w = Z3D
         elif arguments[2] == "$":
             frame = cls.from_point_and_vector(origin, object_dict[arguments[3]], main_axis=X3D)
             u = frame.u
-            v = frame.v
+            w = frame.w
         elif arguments[3] == "$":
-            frame = cls.from_point_and_vector(origin, object_dict[arguments[2]], main_axis=X3D)
+            frame = cls.from_point_and_vector(origin, object_dict[arguments[2]], main_axis=Z3D)
             u = frame.u
-            v = frame.v
+            w = frame.w
         else:
-            u = object_dict[arguments[2]]
-            v = object_dict[arguments[3]]
-        w = u.cross(v)
+            w = object_dict[arguments[2]]
+            a = object_dict[arguments[3]]
+            u = a - a.dot(w) * w
+            u = u.unit_vector()
+        v = w.cross(u)
         return cls(origin, u, v, w, arguments[0][1:-1])
 
     @classmethod

@@ -283,14 +283,14 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         faces_content = ''
         face_ids = []
 
-        product_content, shape_representation_id = product_writer(current_id, self.name)
-        product_id = shape_representation_id - 5
-        product_definition_id = shape_representation_id - 3
+        product_content, shape_definition_repr_id = product_writer(current_id, self.name)
+        product_id = shape_definition_repr_id - 4
+        product_definition_id = shape_definition_repr_id - 2
         step_content += product_content
 
-        brep_id = shape_representation_id
-        # frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
-        frame_content, frame_id = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.Y3D, volmdlr.X3D).to_step(brep_id)
+        brep_id = shape_definition_repr_id + 1
+        frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
+
         manifold_id = frame_id + 1
         shell_id = manifold_id + 1
 

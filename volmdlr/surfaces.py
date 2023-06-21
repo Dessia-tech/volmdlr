@@ -1102,20 +1102,20 @@ class Plane3D(Surface3D):
         :return: The corresponding Plane3D object.
         :rtype: :class:`volmdlr.faces.Plane3D`
         """
-        frame3d = object_dict[arguments[1]]
-        frame3d.normalize()
-        frame = volmdlr.Frame3D(frame3d.origin,
-                                frame3d.v, frame3d.w, frame3d.u)
+        frame = object_dict[arguments[1]]
+        frame.normalize()
         return cls(frame, arguments[0][1:-1])
 
     def to_step(self, current_id):
         """
-        Transform a Plane 3D to step.
+        Converts the object to a STEP representation.
 
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
         """
-        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                self.frame.v)
-        content, frame_id = frame.to_step(current_id)
+        content, frame_id = self.frame.to_step(current_id)
         plane_id = frame_id + 1
         content += f"#{plane_id} = PLANE('{self.name}',#{frame_id});\n"
         return content, [plane_id]
@@ -2117,22 +2117,20 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
 
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        frame3d = object_dict[arguments[1]]
-        u_vector, w_vector = frame3d.v, -frame3d.u
-        u_vector.normalize()
-        w_vector.normalize()
-        v_vector = w_vector.cross(u_vector)
-        frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
+        frame = object_dict[arguments[1]]
         radius = float(arguments[2]) * length_conversion_factor
-        return cls(frame_direct, radius, arguments[0][1:-1])
+        return cls(frame, radius, arguments[0][1:-1])
 
     def to_step(self, current_id):
         """
-        Translate volmdlr primitive to step syntax.
+        Converts the object to a STEP representation.
+
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
         """
-        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                self.frame.v)
-        content, frame_id = frame.to_step(current_id)
+        content, frame_id = self.frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = CYLINDRICAL_SURFACE('{self.name}',#{frame_id},{round(1000 * self.radius, 4)});\n"
         return content, [current_id]
@@ -2483,36 +2481,22 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
-        frame3d = object_dict[arguments[1]]
-        u_vector, w_vector = frame3d.v, -frame3d.u
-        u_vector.normalize()
-        w_vector.normalize()
-        v_vector = w_vector.cross(u_vector)
-        frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
+        frame = object_dict[arguments[1]]
         rcenter = float(arguments[2]) * length_conversion_factor
         rcircle = float(arguments[3]) * length_conversion_factor
-        return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
+        return cls(frame , rcenter, rcircle, arguments[0][1:-1])
 
     def to_step(self, current_id):
         """
         Converts the object to a STEP representation.
 
-        This method converts the object to a STEP (Standard for the Exchange of Product model data) representation.
-        It first creates a copy of the object's frame using the `volmdlr.Frame3D` constructor. Then, it converts
-        the frame to a STEP representation using the `to_step` method of the `Frame3D` class. The resulting content
-        and updated ID are stored in the `content` variable and the `current_id` variable, respectively. Next,
-        the method constructs a STEP string representing the toroidal surface using the object's attributes and
-        the generated frame ID. The content is updated with the toroidal surface representation. Finally, the
-        updated content and a list containing the updated current ID are returned as a tuple.
-
-        :param current_id: The current ID counter for generating unique STEP entity IDs.
-
-        :return: A tuple containing the STEP representation of the object and the updated current ID.
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
         """
 
-        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                self.frame.v)
-        content, frame_id = frame.to_step(current_id)
+        content, frame_id = self.frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = TOROIDAL_SURFACE('{self.name}',#{frame_id}," \
                    f"{round(1000 * self.tore_radius, 4)},{round(1000 * self.small_radius, 4)});\n"
@@ -2849,6 +2833,9 @@ class ConicalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, name=name)
 
     def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
+        """
+        Plots the ConicalSurface3D.
+        """
         z = kwargs.get("z", 0.5)
         if ax is None:
             fig = plt.figure()
@@ -2883,21 +2870,22 @@ class ConicalSurface3D(PeriodicalSurface):
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
         angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
-        frame3d = object_dict[arguments[1]]
-        u, w = frame3d.v, frame3d.u
-        u.normalize()
-        w.normalize()
-        v = w.cross(u)
+        frame = object_dict[arguments[1]]
         radius = float(arguments[2]) * length_conversion_factor
         semi_angle = float(arguments[3]) * angle_conversion_factor
-        origin = frame3d.origin - radius / math.tan(semi_angle) * w
-        frame_direct = volmdlr.Frame3D(origin, u, v, w)
-        return cls(frame_direct, semi_angle, arguments[0][1:-1])
+        frame.origin = frame.origin - radius / math.tan(semi_angle) * frame.w
+        return cls(frame, semi_angle, arguments[0][1:-1])
 
     def to_step(self, current_id):
-        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                self.frame.v)
-        content, frame_id = frame.to_step(current_id)
+        """
+        Converts the object to a STEP representation.
+
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
+        """
+        content, frame_id = self.frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = CONICAL_SURFACE('{self.name}',#{frame_id},{0.},{round(self.semi_angle, 4)});\n"
         return content, [current_id]
@@ -3215,22 +3203,20 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
-        frame3d = object_dict[arguments[1]]
-        u_vector, w_vector = frame3d.v, frame3d.u
-        u_vector.normalize()
-        w_vector.normalize()
-        v_vector = w_vector.cross(u_vector)
-        frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
+        frame = object_dict[arguments[1]]
         radius = float(arguments[2]) * length_conversion_factor
-        return cls(frame_direct, radius, arguments[0][1:-1])
+        return cls(frame, radius, arguments[0][1:-1])
 
     def to_step(self, current_id):
         """
-        Translate volmdlr primitive to step syntax.
+        Converts the object to a STEP representation.
+
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
         """
-        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                self.frame.v)
-        content, frame_id = frame.to_step(current_id)
+        content, frame_id = self.frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = SPHERICAL_SURFACE('{self.name}',#{frame_id},{round(1000 * self.radius, 4)});\n"
         return content, [current_id]

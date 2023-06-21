@@ -6799,12 +6799,15 @@ class Arc3D(Arc):
                                                                           arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
-        u = self.start - self.center
-        u.normalize()
-        v = self.normal.cross(u)
-        frame = volmdlr.Frame3D(self.center, self.normal, u, v)
+        """
+        Converts the object to a STEP representation.
 
-        content, frame_id = frame.to_step(current_id)
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
+        """
+        content, frame_id = self.frame.to_step(current_id)
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}', #{frame_id}, {self.radius * 1000});\n"
 
@@ -6936,12 +6939,7 @@ class FullArc3D(FullArc, Arc3D):
 
     def to_step(self, current_id, surface_id=None):
         """Exports to STEP format."""
-        # Not calling Circle3D.to_step because of circular imports
-        u = self.start - self.center
-        u.normalize()
-        v = self.normal.cross(u)
-        frame = volmdlr.Frame3D(self.center, self.normal, u, v)
-        content, frame_id = frame.to_step(current_id)
+        content, frame_id = self.frame.to_step(current_id)
         curve_id = frame_id + 1
         # Not calling Circle3D.to_step because of circular imports
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.radius * 1000});\n"
@@ -6950,7 +6948,7 @@ class FullArc3D(FullArc, Arc3D):
         #     content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
         #     curve_id += 1
 
-        point1 = (self.center + u * self.radius).to_point()
+        point1 = (self.center + self.frame.u * self.radius).to_point()
 
         p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
         content += p1_content
