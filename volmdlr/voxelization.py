@@ -1214,9 +1214,9 @@ class Voxelization(PhysicalObject):
                 for k, voxel in enumerate(col):
                     if voxel:
                         center = (
-                            min_voxel_center[0] + i * voxel_size,
-                            min_voxel_center[1] + j * voxel_size,
-                            min_voxel_center[2] + k * voxel_size,
+                            round(min_voxel_center[0] + i * voxel_size, 6),
+                            round(min_voxel_center[1] + j * voxel_size, 6),
+                            round(min_voxel_center[2] + k * voxel_size, 6),
                         )
                         voxels_centers.add(center)
 
@@ -1265,9 +1265,9 @@ class Voxelization(PhysicalObject):
                 col = []
                 for k in range(int((max_center[2] - min_center[2]) / self.voxel_size) + 1):
                     voxel_center = (
-                        min_center[0] + i * self.voxel_size,
-                        min_center[1] + j * self.voxel_size,
-                        min_center[2] + k * self.voxel_size,
+                        round(min_center[0] + i * self.voxel_size, 6),
+                        round(min_center[1] + j * self.voxel_size, 6),
+                        round(min_center[2] + k * self.voxel_size, 6),
                     )
                     voxel_present = voxel_center in self.voxels_centers
                     col.append(voxel_present)
