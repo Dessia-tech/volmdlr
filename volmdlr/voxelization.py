@@ -25,7 +25,7 @@ class Voxelization(PhysicalObject):
 
     def __init__(self, voxels_centers: Set[Point], voxel_size: float, octree_root: "OctreeNode" = None, name: str = ""):
         """
-        Initializes the Voxelization.
+        Initialize the Voxelization.
 
         :param voxels_centers: The set of points representing voxel centers.
         :type voxels_centers: set[tuple[float, float, float]]
@@ -47,7 +47,7 @@ class Voxelization(PhysicalObject):
         cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, name: str = ""
     ) -> "Voxelization":
         """
-        Creates a Voxelization from a ClosedTriangleShell3D.
+        Create a Voxelization from a ClosedTriangleShell3D.
 
         :param closed_triangle_shell: The ClosedTriangleShell3D to voxelize.
         :type closed_triangle_shell: ClosedTriangleShell3D
@@ -66,7 +66,7 @@ class Voxelization(PhysicalObject):
     @classmethod
     def from_closed_shell(cls, closed_shell: ClosedShell3D, voxel_size: float, name: str = "") -> "Voxelization":
         """
-        Creates a Voxelization from a ClosedShell3D.
+        Create a Voxelization from a ClosedShell3D.
 
         :param closed_shell: The ClosedShell3D to voxelize.
         :type closed_shell: ClosedShell3D
@@ -85,7 +85,7 @@ class Voxelization(PhysicalObject):
     @classmethod
     def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = "") -> "Voxelization":
         """
-        Creates a Voxelization from a VolumeModel.
+        Create a Voxelization from a VolumeModel.
 
         :param volume_model: The VolumeModel to voxelize.
         :type volume_model: VolumeModel
@@ -171,7 +171,7 @@ class Voxelization(PhysicalObject):
         return triangles
 
     @staticmethod
-    def _triangle_voxel_intersection(triangle: Triangle, voxel_center: Point, voxel_extents: List[float]) -> bool:
+    def triangle_voxel_intersection(triangle: Triangle, voxel_center: Point, voxel_extents: List[float]) -> bool:
         """
         Helper method to compute if there is an intersection between a 3D triangle and a voxel.
 
@@ -333,7 +333,7 @@ class Voxelization(PhysicalObject):
 
             for bbox_center in Voxelization._aabb_intersecting_boxes(min_point, max_point, voxel_size):
                 if bbox_center not in bbox_centers:
-                    if Voxelization._triangle_voxel_intersection(
+                    if Voxelization.triangle_voxel_intersection(
                         triangle,
                         bbox_center,
                         [voxel_size for _ in range(3)],
@@ -747,7 +747,7 @@ class Voxelization(PhysicalObject):
         """
         triangles = set()
 
-        for voxel in tqdm(self.voxels_centers):
+        for voxel in self.voxels_centers:
             for triangle in self._voxel_triangular_faces(voxel, self.voxel_size):
                 if triangle not in triangles:
                     triangles.add(triangle)
@@ -811,9 +811,18 @@ class Voxelization(PhysicalObject):
         return ClosedShell3D(faces, name=self.name)
 
     def to_closed_triangle_shell(self) -> ClosedTriangleShell3D:
+        """
+        Convert the voxelization to a ClosedTriangleShell3D for display purpose.
+
+        To create the ClosedTriangleShell3D, this method triangulates each voxel and convert it to Triangle3D.
+        The method is robust and fast but creates over-triangulated geometry.
+
+        :return: The created ClosedShell3D with only Triangle3D.
+        :rtype: ClosedTriangleShell3D
+        """
         triangles3d = [
             Triangle3D(Point3D(*triangle[0]), Point3D(*triangle[1]), Point3D(*triangle[2]))
-            for triangle in tqdm(self.to_triangles())
+            for triangle in self.to_triangles()
         ]
         shell = ClosedTriangleShell3D(triangles3d, name=self.name)
 
@@ -831,36 +840,75 @@ class Voxelization(PhysicalObject):
         return [self.to_closed_shell()]
 
     def intersection(self, other_voxelization: "Voxelization") -> "Voxelization":
+        """
+        Create a voxelization that is the boolean intersection of two voxelization.
+        Both voxelization must have same voxel size.
+
+        :param other_voxelization: The other voxelization to compute the boolean intersection with.
+        :type other_voxelization: Voxelization
+
+        :return: The created voxelization resulting from the boolean intersection.
+        :rtype: Voxelization
+        """
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform intersection.")
 
         return Voxelization(self.voxels_centers.intersection(other_voxelization.voxels_centers), self.voxel_size)
 
     def union(self, other_voxelization: "Voxelization") -> "Voxelization":
+        """
+        Create a voxelization that is the boolean union of two voxelization.
+        Both voxelization must have same voxel size.
+
+        :param other_voxelization: The other voxelization to compute the boolean union with.
+        :type other_voxelization: Voxelization
+
+        :return: The created voxelization resulting from the boolean union.
+        :rtype: Voxelization
+        """
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform union.")
 
         return Voxelization(self.voxels_centers.union(other_voxelization.voxels_centers), self.voxel_size)
 
     def difference(self, other_voxelization: "Voxelization") -> "Voxelization":
+        """
+        Create a voxelization that is the boolean difference of two voxelization.
+        Both voxelization must have same voxel size.
+
+        :param other_voxelization: The other voxelization to compute the boolean difference with.
+        :type other_voxelization: Voxelization
+
+        :return: The created voxelization resulting from the boolean difference.
+        :rtype: Voxelization
+        """
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform difference.")
 
         return Voxelization(self.voxels_centers.difference(other_voxelization.voxels_centers), self.voxel_size)
 
     @staticmethod
-    def _rotation_matrix(axis: Vector3D, angle: float):
+    def _rotation_matrix(axis: Vector3D, angle: float) -> np.array:
         """
-        Return the rotation matrix associated with counterclockwise rotation about
-        the given axis by theta radians.
+        Helper method that compute a rotation matrix from an axis and a radians angle.
+
+        :param axis: The rotation axis.
+        :type axis: Vector3D
+        :param angle: The rotation angle.
+        :type angle: float
+
+        :return: The computed rotation matrix.
+        :rtype: numpy.array
         """
         axis = np.array([axis.x, axis.y, axis.z])
 
         axis = axis / np.linalg.norm(axis)
         a = np.cos(angle / 2.0)
+
         b, c, d = -axis * np.sin(angle / 2.0)
         aa, bb, cc, dd = a * a, b * b, c * c, d * d
         bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
+
         return np.array(
             [
                 [aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
@@ -888,59 +936,8 @@ class Voxelization(PhysicalObject):
         return Voxelization(intersecting_voxels, self.voxel_size)
 
 
-class Graph:
-    """Helper Class for subdividing self-crossing polygons."""
-
-    def __init__(self, edges):
-        self.graph = self.build_graph(edges)
-        self.visited = {node: False for node in self.graph}
-
-    @staticmethod
-    def build_graph(edges):
-        """Builds adjacency list representation of graph from edge list."""
-        graph = {}
-        for edge in edges:
-            if edge[0] not in graph:
-                graph[edge[0]] = []
-            if edge[1] not in graph:
-                graph[edge[1]] = []
-            graph[edge[0]].append(edge[1])
-            graph[edge[1]].append(edge[0])  # assuming undirected graph
-        return graph
-
-    def find_cycles(self):
-        """Finds all unique cycles in the graph"""
-        cycles = []
-        for node in self.graph:
-            self._dfs(node, node, [], cycles)
-        return self._convert_to_edge_cycles(cycles)
-
-    def _dfs(self, node, start, path, cycles):
-        """Performs depth-first search to find cycles"""
-        self.visited[node] = True
-        path.append(node)
-        for neighbor in self.graph[node]:
-            if not self.visited[neighbor]:
-                self._dfs(neighbor, start, path, cycles)
-            elif neighbor == start and len(path) >= 3:
-                cycles.append(path[:])
-        path.pop()
-        self.visited[node] = False
-
-    @staticmethod
-    def _convert_to_edge_cycles(cycles):
-        """Converts node-based cycles to edge-based cycles, removing duplicates"""
-        edge_cycles_set = set()
-        for cycle in cycles:
-            edge_cycle = []
-            for i in range(len(cycle)):
-                edge_cycle.append(tuple(sorted([cycle[i], cycle[(i + 1) % len(cycle)]])))
-            edge_cycle.sort()  # sort the edges in the cycle
-            edge_cycles_set.add(tuple(edge_cycle))  # add it to the set
-        return [list(cycle) for cycle in edge_cycles_set]
-
-
 class OctreeNode:
+    """Class representing an octree node for octree voxelization purpose."""
     def __init__(self, center: Point, size: float, depth: int, max_depth: int):
         self.children = []
         self.center = center
@@ -988,7 +985,7 @@ class OctreeNode:
         intersecting_triangles = [
             triangle
             for triangle in triangles
-            if Voxelization._triangle_voxel_intersection(triangle, self.center, [self.size for _ in range(3)])
+            if Voxelization.triangle_voxel_intersection(triangle, self.center, [self.size for _ in range(3)])
         ]
 
         return intersecting_triangles
@@ -1010,3 +1007,56 @@ class OctreeNode:
             node.subdivide(triangles)
             return [node]
         return []
+
+
+class Graph:
+    """Helper class for subdividing self-crossing polygons using graph theory algorithm."""
+
+    def __init__(self, edges):
+        """Initialize the graph from edges."""
+        self.graph = self.build_graph(edges)
+        self.visited = {node: False for node in self.graph}
+
+    @staticmethod
+    def build_graph(edges):
+        """Builds adjacency list representation of graph from edge list."""
+        graph = {}
+        for edge in edges:
+            if edge[0] not in graph:
+                graph[edge[0]] = []
+            if edge[1] not in graph:
+                graph[edge[1]] = []
+            graph[edge[0]].append(edge[1])
+            graph[edge[1]].append(edge[0])  # assuming undirected graph
+        return graph
+
+    def find_cycles(self):
+        """Finds all unique cycles in the graph."""
+        cycles = []
+        for node in self.graph:
+            self._dfs(node, node, [], cycles)
+        return self._convert_to_edge_cycles(cycles)
+
+    def _dfs(self, node, start, path, cycles):
+        """Performs depth-first search to find cycles."""
+        self.visited[node] = True
+        path.append(node)
+        for neighbor in self.graph[node]:
+            if not self.visited[neighbor]:
+                self._dfs(neighbor, start, path, cycles)
+            elif neighbor == start and len(path) >= 3:
+                cycles.append(path[:])
+        path.pop()
+        self.visited[node] = False
+
+    @staticmethod
+    def _convert_to_edge_cycles(cycles):
+        """Converts node-based cycles to edge-based cycles, removing duplicates."""
+        edge_cycles_set = set()
+        for cycle in cycles:
+            edge_cycle = []
+            for i in range(len(cycle)):
+                edge_cycle.append(tuple(sorted([cycle[i], cycle[(i + 1) % len(cycle)]])))
+            edge_cycle.sort()  # sort the edges in the cycle
+            edge_cycles_set.add(tuple(edge_cycle))  # add it to the set
+        return [list(cycle) for cycle in edge_cycles_set]
