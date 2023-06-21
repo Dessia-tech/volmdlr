@@ -48,7 +48,6 @@ nbv
 networkx.DiGraph
 ndarray
 numpy
-numpy
 Rapshon
 rtype
 STEP
@@ -81,3 +80,12 @@ Tore's
 deserialization
 Trimesh
 networkx
+voxel
+voxels
+voxelization
+octree
+voxelized
+Iterable
+iterable
+voxelize
+undirected
