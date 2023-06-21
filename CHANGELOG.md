@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - face3D: get_face_cutting_contours
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
+- Big refactor: New module curves.py containing classes as Line, Circle and Ellipse.
+Most edges will now be formed by a curve and start and end points. Unittests for all these classes have been created.
+All adequations have been done for all tests and existing scripts.
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
