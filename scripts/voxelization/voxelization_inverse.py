@@ -22,11 +22,9 @@ voxelization_inverse.name = "Inversed voxelization"
 # Display the result
 voxelization_cs = voxelization.to_closed_triangle_shell()
 voxelization_cs.color = (1, 0, 0)
-# voxelization_cs.alpha = 0.9
 
 voxelization_inverse_cs = voxelization_inverse.to_closed_triangle_shell()
-voxelization_inverse_cs.color = (0, 1, 0)
-# voxelization_inverse_cs.alpha = 0.9
+voxelization_inverse_cs.color = (0, 0, 1)
 
 volume_model.primitives.extend([voxelization_cs, voxelization_inverse_cs])
 volume_model.babylonjs()
