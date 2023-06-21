@@ -3,8 +3,7 @@
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
 # run arbitrary code.
-extension-pkg-allow-list=volmdlr.core_compiled, volmdlr.bspline_fitting, volmdlr.bspline_evaluators,\
-                         volmdlr.bspline_compiled
+extension-pkg-allow-list=volmdlr.core_compiled, volmdlr.bspline_fitting, volmdlr.bspline_evaluators, volmdlr.bspline_compiled
 
 # Specify a score threshold to be exceeded before program exits with error.
 fail-under=10.0
