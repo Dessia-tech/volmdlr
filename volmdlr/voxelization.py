@@ -45,30 +45,95 @@ class Voxelization(PhysicalObject):
         PhysicalObject.__init__(self, name=name)
 
     def __eq__(self, other_voxelization: "Voxelization") -> bool:
+        """
+        Check if the current voxelization is equal to another voxelization.
+
+        :param other_voxelization: The voxelization to compare.
+        :type other_voxelization: Voxelization
+
+        :return: True if the voxelizations are equal, False otherwise.
+        :rtype: bool
+        """
         return (
             self.voxels_centers == other_voxelization.voxels_centers
             and self.voxel_size == other_voxelization.voxel_size
         )
 
     def __add__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        """
+        Return the union of the current voxelization with another voxelization.
+
+        :param other_voxelization: The voxelization to union with.
+        :type other_voxelization: Voxelization
+
+        :return: The union of the voxelizations.
+        :rtype: Voxelization
+        """
         return self.union(other_voxelization)
 
     def __sub__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        """
+        Return the difference between the current voxelization and another voxelization.
+
+        :param other_voxelization: The voxelization to subtract.
+        :type other_voxelization: Voxelization
+
+        :return: The difference between the voxelizations.
+        :rtype: Voxelization
+        """
         return self.difference(other_voxelization)
 
     def __and__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        """
+        Return the intersection of the current voxelization with another voxelization.
+
+        :param other_voxelization: The voxelization to intersect with.
+        :type other_voxelization: Voxelization
+
+        :return: The intersection of the voxelizations.
+        :rtype: Voxelization
+        """
         return self.intersection(other_voxelization)
 
     def __or__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        """
+        Return the union of the current voxelization with another voxelization.
+
+        :param other_voxelization: The voxelization to union with.
+        :type other_voxelization: Voxelization
+
+        :return: The union of the voxelizations.
+        :rtype: Voxelization
+        """
         return self.union(other_voxelization)
 
     def __xor__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        """
+        Return the symmetric difference between the current voxelization and another voxelization.
+
+        :param other_voxelization: The voxelization to calculate the symmetric difference with.
+        :type other_voxelization: Voxelization
+        :return: The symmetric difference between the voxelizations.
+        :rtype: Voxelization
+        """
         return self.union(other_voxelization) - self.intersection(other_voxelization)
 
-    def __invert__(self):
-        pass
+    def __invert__(self) -> "Voxelization":
+        """
+        Return the inverse of the current voxelization.
+
+        :return: The inverse Voxelization object.
+        :rtype: Voxelization
+        """
+        return self.inverse()
 
     def __len__(self):
+        """
+        Return the number of voxels in the voxelization.
+
+        :return: The number of voxels.
+        :rtype: int
+        """
         return len(self.voxels_centers)
 
     @classmethod
