@@ -1,18 +1,20 @@
 """
 Class for voxel representation of volmdlr models
 """
+import math
 import warnings
-from typing import List, Set, Tuple, Iterable, Dict
+from typing import Dict, Iterable, List, Set, Tuple
 
 import numpy as np
 from dessia_common.core import PhysicalObject
 from tqdm import tqdm
-from volmdlr import Point3D, Vector3D, Point2D
+
+from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import VolumeModel
-from volmdlr.faces import Triangle3D, PlaneFace3D
-from volmdlr.surfaces import Surface2D, PLANE3D_OYZ, PLANE3D_OXY, PLANE3D_OXZ
-from volmdlr.wires import ClosedPolygon2D
+from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
+from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
+from volmdlr.wires import ClosedPolygon2D
 
 # Typings
 Point = Tuple[float, ...]
@@ -44,7 +46,7 @@ class Voxelization(PhysicalObject):
 
     @classmethod
     def from_closed_triangle_shell(
-        cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, name: str = ""
+        cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, method: str = "octree", name: str = ""
     ) -> "Voxelization":
         """
         Create a Voxelization from a ClosedTriangleShell3D.
@@ -53,18 +55,33 @@ class Voxelization(PhysicalObject):
         :type closed_triangle_shell: ClosedTriangleShell3D
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
+        :param method: The method used to voxelize the geometry ("naive" or "octree"). Default is "octree".
+        :type method: str, optional
         :param name: The name of the Voxelization.
         :type name: str, optional
 
         :return: The created Voxelization.
         :rtype: Voxelization
         """
-        triangles = cls._closed_triangle_shell_to_triangles(closed_triangle_shell)
-        voxels = cls._triangles_to_voxels(triangles, voxel_size)
-        return cls(voxels, voxel_size, name=name)
+        octree_root_node = None
+        if method == "naive":
+            triangles = cls._closed_triangle_shell_to_triangles(closed_triangle_shell)
+            voxels = cls._triangles_to_voxels(triangles, voxel_size)
+
+        elif method == "octree":
+            triangles = cls._closed_triangle_shell_to_triangles(closed_triangle_shell)
+            octree_root_node = OctreeNode.octree_voxelization_size_based(triangles, voxel_size)
+            voxels = octree_root_node.get_leaf_centers()
+
+        else:
+            raise ValueError("Invalid 'method' argument: must be 'naive' or 'octree'")
+
+        return cls(voxels_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
 
     @classmethod
-    def from_closed_shell(cls, closed_shell: ClosedShell3D, voxel_size: float, name: str = "") -> "Voxelization":
+    def from_closed_shell(
+        cls, closed_shell: ClosedShell3D, voxel_size: float, method: str = "octree", name: str = ""
+    ) -> "Voxelization":
         """
         Create a Voxelization from a ClosedShell3D.
 
@@ -72,18 +89,33 @@ class Voxelization(PhysicalObject):
         :type closed_shell: ClosedShell3D
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
+        :param method: The method used to voxelize the geometry ("naive" or "octree"). Default is "octree".
+        :type method: str, optional
         :param name: The name of the Voxelization.
         :type name: str, optional
 
         :return: The created Voxelization.
         :rtype: Voxelization
         """
-        triangles = cls._closed_shell_to_triangles(closed_shell)
-        voxels = cls._triangles_to_voxels(triangles, voxel_size)
-        return cls(voxels, voxel_size, name=name)
+        octree_root_node = None
+        if method == "naive":
+            triangles = cls._closed_shell_to_triangles(closed_shell)
+            voxels = cls._triangles_to_voxels(triangles, voxel_size)
+
+        elif method == "octree":
+            triangles = cls._closed_shell_to_triangles(closed_shell)
+            octree_root_node = OctreeNode.octree_voxelization_size_based(triangles, voxel_size)
+            voxels = octree_root_node.get_leaf_centers()
+
+        else:
+            raise ValueError("Invalid 'method' argument: must be 'naive' or 'octree'")
+
+        return cls(voxels_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
 
     @classmethod
-    def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = "") -> "Voxelization":
+    def from_volume_model(
+        cls, volume_model: VolumeModel, voxel_size: float, method: str = "octree", name: str = ""
+    ) -> "Voxelization":
         """
         Create a Voxelization from a VolumeModel.
 
@@ -91,15 +123,28 @@ class Voxelization(PhysicalObject):
         :type volume_model: VolumeModel
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
+        :param method: The method used to voxelize the geometry ("naive" or "octree"). Default is "octree".
+        :type method: str, optional
         :param name: The name of the Voxelization.
         :type name: str, optional
 
         :return: The created Voxelization.
         :rtype: Voxelization
         """
-        triangles = cls._volume_model_to_triangles(volume_model)
-        voxels = cls._triangles_to_voxels(triangles, voxel_size)
-        return cls(voxels, voxel_size, name=name)
+        octree_root_node = None
+        if method == "naive":
+            triangles = cls._volume_model_to_triangles(volume_model)
+            voxels = cls._triangles_to_voxels(triangles, voxel_size)
+
+        elif method == "octree":
+            triangles = cls._volume_model_to_triangles(volume_model)
+            octree_root_node = OctreeNode.octree_voxelization_size_based(triangles, voxel_size)
+            voxels = octree_root_node.get_leaf_centers()
+
+        else:
+            raise ValueError("Invalid 'method' argument: must be 'naive' or 'octree'")
+
+        return cls(voxels_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
 
     @staticmethod
     def _closed_triangle_shell_to_triangles(closed_triangle_shell: ClosedTriangleShell3D) -> List[Triangle]:
@@ -938,6 +983,7 @@ class Voxelization(PhysicalObject):
 
 class OctreeNode:
     """Class representing an octree node for octree voxelization purpose."""
+
     def __init__(self, center: Point, size: float, depth: int, max_depth: int):
         self.children = []
         self.center = center
@@ -945,7 +991,48 @@ class OctreeNode:
         self.depth = depth
         self.max_depth = max_depth
 
-    def subdivide(self, triangles: List[Triangle]):
+    @classmethod
+    def octree_voxelization_depth_based(cls, triangles: List[Triangle], max_depth: int) -> "OctreeNode":
+        # Compute the size of the bounding cube (root voxel)
+        min_corner = np.min([np.min(triangle, axis=0) for triangle in triangles], axis=0)
+        max_corner = np.max([np.max(triangle, axis=0) for triangle in triangles], axis=0)
+        root_size = max(max_corner - min_corner)
+
+        # Compute the center of the bounding cube (root voxel)
+        corners = np.stack([min_corner, max_corner])
+        center = corners.mean(axis=0)
+
+        root = cls(center, root_size, 0, max_depth)
+        root.subdivide(triangles)
+
+        return root
+
+    @classmethod
+    def octree_voxelization_size_based(cls, triangles: List[Triangle], voxel_size: float) -> "OctreeNode":
+        min_corner = np.min([np.min(triangle, axis=0) for triangle in triangles], axis=0)
+        max_corner = np.max([np.max(triangle, axis=0) for triangle in triangles], axis=0)
+
+        # Compute the corners in the implicit grid defined by the voxel size
+        min_corner = (min_corner // voxel_size) * voxel_size
+        max_corner = (max_corner // voxel_size + 1) * voxel_size
+
+        root_size = max(max_corner - min_corner)
+
+        # Compute the max depth corresponding the voxel_size
+        max_depth = math.ceil(math.log2(root_size // voxel_size))
+
+        # Compute the max corner to have voxel of given voxel size with the octree process
+        max_corner = min_corner + ((2**max_depth) * voxel_size)
+
+        corners = np.stack([min_corner, max_corner])
+        center = corners.mean(axis=0)
+
+        root = cls(center, root_size, 0, max_depth)
+        root.subdivide(triangles)
+
+        return root
+
+    def subdivide(self, triangles: List[Triangle]) -> None:
         children = []
         if self.depth < self.max_depth:
             half_size = self.size / 2
@@ -990,7 +1077,7 @@ class OctreeNode:
 
         return intersecting_triangles
 
-    def get_leaf_centers(self):
+    def get_leaf_centers(self) -> List[Point]:
         if self.depth == self.max_depth:  # if max depth reached, it is a leaf node
             return [self.center]
         else:
