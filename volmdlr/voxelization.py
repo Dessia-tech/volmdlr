@@ -171,7 +171,7 @@ class Voxelization(PhysicalObject):
 
     @staticmethod
     def _triangle_voxel_intersection(
-        triangle: Triangle, voxel_center: Point, voxel_extents: List[float, float, float]
+        triangle: Triangle, voxel_center: Point, voxel_extents: List[float]
     ) -> bool:
         """
         Helper method to compute if there is an intersection between a 3D triangle and a voxel.
@@ -187,9 +187,9 @@ class Voxelization(PhysicalObject):
         :rtype: bool
         """
         # Convert to numpy ndarray
-        triangle = np.ndarray(triangle)
-        voxel_center = np.ndarray(voxel_center)
-        voxel_extents = np.ndarray(voxel_extents)
+        triangle = np.array(triangle)
+        voxel_center = np.array(voxel_center)
+        voxel_extents = np.array(voxel_extents)
 
         # Translate triangle as conceptually moving AABB to origin
         v = triangle - voxel_center
@@ -456,6 +456,19 @@ class Voxelization(PhysicalObject):
 
     @staticmethod
     def _triangles_to_segments(triangles: List[Triangle]):
+        """
+        Helper method to extract the segments of a given list of triangle representing a voxelization.
+        The segments are sorted by plane: a plane is defined by its normal vector (X, Y or Z) and abscissa.
+
+        Only the segments representing the relevant contours of a faces are returned.
+        These relevant segments are the one that are only present in the list of triangles, because if a segment is
+        present twice, this means that it's inside the face and is not interesting for defining the face contour.
+
+        :param triangles: The triangles defined the voxelization.
+        :type triangles: list[Triangle]
+
+        :return: The extra
+        """
         segments_x = {}
         segments_y = {}
         segments_z = {}
