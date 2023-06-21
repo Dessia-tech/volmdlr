@@ -2460,7 +2460,6 @@ class Arc2D(Arc):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
-        # def get_center(self):
         """
         Creates a circle 2d from 3 points.
 
@@ -2471,16 +2470,6 @@ class Arc2D(Arc):
         if not arc.point_belongs(point2):
             return cls(circle, point1, point3, False)
         return arc
-
-    # @property
-    # def clockwise_and_trigowise_paths(self):
-    #     """Gets clock-wise and trigo-wise paths."""
-    #     if not self._clockwise_and_trigowise_paths:
-    #         radius_1 = self.start - self.circle.center
-    #         radius_2 = self.end - self.circle.center
-    #         radius_i = self.interior - self.circle.center
-    #         self._clockwise_and_trigowise_paths = self.get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i)
-    #     return self._clockwise_and_trigowise_paths
 
     @property
     def angle(self):

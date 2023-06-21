@@ -170,12 +170,6 @@ class TestCircle2D(unittest.TestCase):
             volmdlr.Point2D(0, 0.5), volmdlr.Point2D(-0.5, 0), volmdlr.Point2D(0, -0.5))
         self.assertEqual(list_arcs[0], arc1_validate)
         self.assertEqual(list_arcs[1], arc2_validate)
-        # self.assertEqual(list_arcs[0].length(), arc1_validate.length())
-        # self.assertEqual(list_arcs[0].start, arc1_validate.start)
-        # self.assertEqual(list_arcs[0].end, arc1_validate.end)
-        # self.assertEqual(list_arcs[1].length(), arc2_validate.length())
-        # self.assertEqual(list_arcs[1].start, arc2_validate.start)
-        # self.assertEqual(list_arcs[1].end, arc2_validate.end)
 
     def test_point_distance(self):
         circle_ = curves.Circle2D(volmdlr.Point2D(1.5, 0), 1)

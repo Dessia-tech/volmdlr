@@ -2513,11 +2513,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             frame = volmdlr.Frame3D(center, u_vector, v_vector, w_vector)
             circle = curves.Circle3D(frame, start3d.point_distance(center))
             if math.isclose(abs(phi1 - phi2), volmdlr.TWO_PI, abs_tol=1e-4):
-                # u_vector = self.frame.u.rotation(self.frame.origin, self.frame.w, angle=theta1) #todo Is this Correct?
-                # v_vector = self.frame.u.rotation(self.frame.origin, self.frame.w, angle=theta1)
-                # center = self.frame.origin + self.tore_radius * u_vector
                 return [edges.FullArc3D(circle, start_end=center + self.small_radius * u_vector)]
-            # interior_point = self.point2d_to_3d(volmdlr.Point2D(theta1, 0.5 * (phi1 + phi2)))
             return [edges.Arc3D(circle, start3d, self.point2d_to_3d(linesegment2d.end))]
         if math.isclose(phi1, phi2, abs_tol=1e-4):
             center = self.frame.origin + self.small_radius * math.sin(phi1) * self.frame.w
@@ -2532,7 +2528,6 @@ class ToroidalSurface3D(PeriodicalSurface):
 
                 start_end = center + self.frame.u * (self.small_radius + self.tore_radius)
                 return [edges.FullArc3D(circle=circle, start_end=start_end)]
-            # interior_point = self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), phi1))
             return [edges.Arc3D(circle, start3d, self.point2d_to_3d(linesegment2d.end))]
         n = 10
         degree = 3

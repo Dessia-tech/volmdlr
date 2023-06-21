@@ -4,13 +4,11 @@ import volmdlr
 import volmdlr.edges as vme
 from volmdlr import curves
 
+
 class TestFullArcEllipse3D(unittest.TestCase):
     start_end = volmdlr.Point3D(0.0225, 0.0, 0.0)
     major_axis = 0.0225
     minor_axis = 0.0075
-    # center = volmdlr.O3D
-    # major_dir = volmdlr.X3D
-    # normal = volmdlr.Z3D
     ellipse3d = curves.Ellipse3D(major_axis, minor_axis, volmdlr.OXYZ)
     ellipse = vme.FullArcEllipse3D(ellipse3d, start_end)
 

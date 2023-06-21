@@ -79,11 +79,6 @@ class TestCircle3D(unittest.TestCase):
             for expected_point, point in zip(expected_points[i],
                                              framed_mapped_circle.discretization_points(number_points=5)):
                 self.assertTrue(expected_point.is_close(point))
-            # framed_center = circle.frame.origin.frame_mapping(frame, side)
-            # framed_normal = circle.frame.w.frame_mapping(frame, side)
-            # self.assertAlmostEqual(framed_center.point_distance(framed_mapped_circle.frame.origin), 0.)
-            # self.assertAlmostEqual(framed_normal.point_distance(framed_mapped_circle.frame.w), 0.)
-            # self.assertEqual(circle.radius, framed_mapped_circle.radius)
 
     def test_to_2d(self):
         arc2d = circle3d.to_2d(circle3d.center, circle3d.frame.u, circle3d.frame.v)
