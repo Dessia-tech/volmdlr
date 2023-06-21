@@ -29,9 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineFace3D: neutral_fiber
 - surfaces.Plane3D: linesegment_intersections
 - Step export
-<<<<<<< HEAD
 - Edge: fix orientation of edges commig from step.
-=======
 - Face3D: is_linesegment_crossing.
 - babylondata: removes empty objects.
 
