@@ -5,19 +5,18 @@ from typing import List, Union
 import matplotlib.pyplot as plt
 import numpy as npy
 import scipy.integrate as scipy_integrate
-import volmdlr.core_compiled
 from matplotlib import __version__ as _mpl_version
 from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
 
 from dessia_common.core import DessiaObject
+
 import plot_data.colors
 import plot_data.core as plot_data
+import volmdlr.core_compiled
 import volmdlr
-import volmdlr.core
-import volmdlr.geometry
+from volmdlr import core, geometry
 import volmdlr.utils.common_operations as vm_common_operations
-import volmdlr.utils.intersections as vm_utils_intersections
 import volmdlr.utils.intersections as volmdlr_intersections
 from volmdlr.core import EdgeStyle
 
@@ -567,7 +566,7 @@ class Line3D(Line):
         zmin = min([self.point1[2], self.point2[2]])
         zmax = max([self.point1[2], self.point2[2]])
 
-        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+        return core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def point_belongs(self, point3d):
         """
@@ -852,7 +851,7 @@ class Circle2D(CircleMixin):
     def second_moment_area(self, point):
         """Second moment area of part of disk."""
         sma = math.pi * self.radius ** 4 / 4
-        return volmdlr.geometry.huygens2d(sma, sma, 0, self.area(), self.center, point)
+        return geometry.huygens2d(sma, sma, 0, self.area(), self.center, point)
 
     def center_of_mass(self):
         """Gets the circle's center of mass."""
@@ -910,7 +909,7 @@ class Circle2D(CircleMixin):
         if not math.isclose(point.point_distance(self.center), self.radius, abs_tol=tol):
             raise ValueError('Point not in arc')
         u1, u2 = point.x / self.radius, point.y / self.radius
-        point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        point_angle = geometry.sin_cos_angle(u1, u2)
         return self.radius * point_angle
 
     def point_belongs(self, point, include_edge_points: bool = True, tol: float = 1e-6):
@@ -957,7 +956,7 @@ class Circle2D(CircleMixin):
         x_max = self.center.x + self.radius
         y_min = self.center.y - self.radius
         y_max = self.center.y + self.radius
-        return volmdlr.core.BoundingRectangle(x_min, x_max, y_min, y_max)
+        return core.BoundingRectangle(x_min, x_max, y_min, y_max)
 
     def cut_by_line(self, line: Line2D):
         """
@@ -981,8 +980,8 @@ class Circle2D(CircleMixin):
             arc1, arc2 = self.split(intersection_points[0],
                                     intersection_points[1])
             from volmdlr import wires
-            contour1 = volmdlr.wires.Contour2D([arc1, linesegment.copy()])
-            contour2 = volmdlr.wires.Contour2D([arc2, linesegment.copy()])
+            contour1 = wires.Contour2D([arc1, linesegment.copy()])
+            contour2 = wires.Contour2D([arc2, linesegment.copy()])
             return [contour1, contour2]
         raise ValueError
 
@@ -1224,7 +1223,7 @@ class Circle3D(CircleMixin):
         x, y, _ = self.frame.global_to_local_coordinates(point)
         u1 = x / self.radius
         u2 = y / self.radius
-        theta = volmdlr.geometry.sin_cos_angle(u1, u2)
+        theta = geometry.sin_cos_angle(u1, u2)
 
         return self.radius * abs(theta)
 
@@ -1293,7 +1292,7 @@ class Circle3D(CircleMixin):
         :return: list of points intersecting Circle
         """
         intersections = []
-        circle3d_line_intersections = vm_utils_intersections.circle_3d_line_intersections(self, linesegment.line)
+        circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, linesegment.line)
         for intersection in circle3d_line_intersections:
             if linesegment.point_belongs(intersection):
                 intersections.append(intersection)
@@ -1366,7 +1365,7 @@ class Circle3D(CircleMixin):
         points = [self.frame.origin + self.radius * v
                   for v in [self.frame.u, -self.frame.u,
                             self.frame.v, -self.frame.v]]
-        return volmdlr.core.BoundingBox.from_points(points)
+        return core.BoundingBox.from_points(points)
 
     def to_2d(self, plane_origin, x, y):
         """
@@ -1499,7 +1498,7 @@ class Circle3D(CircleMixin):
         if point1.is_close(point2):
             return volmdlr.edges.FullArc3D(self, point1)
 
-        interior = volmdlr.geometry.clockwise_interior_from_circle3d(
+        interior = geometry.clockwise_interior_from_circle3d(
             point1, point2, self)
         arc = volmdlr.edges.Arc3D(self, point1, point2)
         if not arc.point_belongs(interior):
@@ -1551,7 +1550,7 @@ class Ellipse2D(Curve):
             self.angle_start = volmdlr.TWO_PI
             self.angle_end = 0.0
             self.is_trigo = False
-        self.theta = volmdlr.geometry.clockwise_angle(self.major_dir, volmdlr.X2D)
+        self.theta = geometry.clockwise_angle(self.major_dir, volmdlr.X2D)
         if self.theta == math.pi * 2:
             self.theta = 0.0
         DessiaObject.__init__(self, name=name)
@@ -1633,7 +1632,7 @@ class Ellipse2D(Curve):
         :param line: line to calculate intersections
         :return: list of points intersections, if there are any
         """
-        intersections = vm_utils_intersections.ellipse2d_line_intersections(self, line)
+        intersections = volmdlr_intersections.ellipse2d_line_intersections(self, line)
         return intersections
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D'):
@@ -1699,7 +1698,7 @@ class Ellipse2D(Curve):
             aproximation_abscissa += dist1
         initial_point = self.frame.global_to_local_coordinates(aproximation_point)
         u1, u2 = initial_point.x / self.major_axis, initial_point.y / self.minor_axis
-        initial_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        initial_angle = geometry.sin_cos_angle(u1, u2)
         angle_start = 0
 
         def ellipse_arc_length(theta):
@@ -1730,7 +1729,7 @@ class Ellipse2D(Curve):
         """
         initial_point = self.frame.global_to_local_coordinates(point2d)
         u1, u2 = initial_point.x / self.major_axis, initial_point.y / self.minor_axis
-        angle_abscissa = volmdlr.geometry.sin_cos_angle(u1, u2)
+        angle_abscissa = geometry.sin_cos_angle(u1, u2)
         return angle_abscissa
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):

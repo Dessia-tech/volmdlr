@@ -17,7 +17,7 @@ from volmdlr.core import EdgeStyle
 from volmdlr.primitives import RoundedLineSegments
 
 
-class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
+class OpenedRoundedLineSegments2D(RoundedLineSegments, wires.Wire2D):
     """
     Opened Rounded LineSegment2D class.
 
@@ -27,8 +27,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
     :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}.
     """
     closed = False
-    line_class = volmdlr.edges.LineSegment2D
-    arc_class = volmdlr.edges.Arc2D
+    line_class = edges.LineSegment2D
+    arc_class = edges.Arc2D
 
     def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
                  adapt_radius: bool = False, name: str = ''):
@@ -37,7 +37,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                                      adapt_radius=adapt_radius,
                                      name='')
 
-        volmdlr.wires.Wire2D.__init__(self, self._primitives(), name)
+        wires.Wire2D.__init__(self, self._primitives(), name)
 
     def arc_features(self, point_index: int):
         """
@@ -416,7 +416,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
 
 class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
-                                  volmdlr.wires.Contour2D, RoundedLineSegments):
+                                  wires.Contour2D, RoundedLineSegments):
     """
     Defines a polygon with some rounded corners.
 
@@ -433,14 +433,14 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
                                      closed=True,
                                      adapt_radius=adapt_radius, name='')
 
-        volmdlr.wires.Contour2D.__init__(self, self._primitives(), name)
+        wires.Contour2D.__init__(self, self._primitives(), name)
 
     def copy(self, deep=True, memo=None):
         return self.__class__([point.copy(deep, memo) for point in self.points], self.radius.copy(),
                               self.adapt_radius, name='copy_' + self.name)
 
 
-class Measure2D(volmdlr.edges.LineSegment2D):
+class Measure2D(edges.LineSegment2D):
     """
     Measure 2D class.
 
@@ -453,7 +453,7 @@ class Measure2D(volmdlr.edges.LineSegment2D):
 
         """
         # TODO: offset parameter
-        volmdlr.edges.LineSegment2D.__init__(self, point1, point2)
+        edges.LineSegment2D.__init__(self, point1, point2)
         self.label = label
         self.unit = unit
         self.type_ = type_

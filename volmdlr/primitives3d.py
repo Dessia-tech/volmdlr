@@ -2002,7 +2002,7 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
         self.obj = obj
         vectorextru.normalize()
         self.vectorextru = vectorextru
-        if obj.__class__ is volmdlr.wires.Ellipse3D:
+        if obj.__class__ is curves.Ellipse3D:
             self.points = obj.tessel_points
         else:
             self.points = obj.points
@@ -2023,7 +2023,7 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
         :rtype: :class:`volmdlr.primitives3d.BSplineExtrusion`
         """
         name = arguments[0][1:-1]
-        if object_dict[arguments[1]].__class__ is volmdlr.wires.Ellipse3D:
+        if object_dict[arguments[1]].__class__ is curves.Ellipse3D:
             ell = object_dict[arguments[1]]
             vectextru = -object_dict[arguments[2]]
             return cls(ell, vectextru, name)

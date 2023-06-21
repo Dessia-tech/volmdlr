@@ -1586,8 +1586,7 @@ class BSplineCurve2D(BSplineCurve):
         :return: A 2-dimensional point representing the tangent
         :rtype: :class:`volmdlr.Point2D`
         """
-        _, tangent = operations.tangent(self.curve, position,
-                                        normalize=True)
+        _, tangent = operations.tangent(self.curve, position, normalize=True)
         tangent = volmdlr.Point2D(tangent[0], tangent[1])
         return tangent
 
@@ -2950,7 +2949,7 @@ class FullArc2D(FullArc, Arc2D):
                  name: str = ''):
         # self.interior = start_end.rotation(center, math.pi)
         self._bounding_rectangle = None
-        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
+        FullArc.__init__(self, circle=circle, start_end=start_end, name=name)
         Arc2D.__init__(self, circle=circle, start=start_end, end=start_end)
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
@@ -5277,11 +5276,11 @@ class Arc3D(ArcMixin):
             if angle2 < angle1:
                 angle2 += volmdlr.TWO_PI
             from volmdlr import surfaces, faces
-            cylinder = volmdlr.surfaces.CylindricalSurface3D(
+            cylinder = surfaces.CylindricalSurface3D(
                 volmdlr.Frame3D(self.circle.center, u, v, w),
                 self.circle.radius
             )
-            return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
+            return [faces.CylindricalFace3D.from_surface_rectangular_cut(
                 cylinder, angle1, angle2, 0., extrusion_vector.norm())]
         raise NotImplementedError(f'Elliptic faces not handled: dot={self.circle.normal.dot(extrusion_vector)}')
 
@@ -5324,12 +5323,11 @@ class Arc3D(ArcMixin):
 
         radius = tore_center.point_distance(self.circle.center)
         from volmdlr import surfaces, faces
-        surface = volmdlr.surfaces.ToroidalSurface3D(
+        surface = surfaces.ToroidalSurface3D(
             volmdlr.Frame3D(tore_center, u, v, axis), radius,
             self.circle.radius)
         arc2d = self.to_2d(tore_center, u, axis)
-        return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(surface, 0, angle,
-                                                                          arc2d.angle1, arc2d.angle2)]
+        return [faces.ToroidalFace3D.from_surface_rectangular_cut(surface, 0, angle, arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
         u = self.start - self.circle.center
@@ -5427,7 +5425,7 @@ class FullArc3D(FullArc, Arc3D):
                  name: str = ''):
         self._utd_frame = None
         self._bbox = None
-        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
+        FullArc.__init__(self, circle=circle, start_end=start_end, name=name)
         Arc3D.__init__(self, circle=circle, start=start_end, end=start_end)
 
     def __hash__(self):

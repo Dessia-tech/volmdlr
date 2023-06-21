@@ -2197,9 +2197,7 @@ class Contour2D(ContourMixin, Wire2D):
             remaining_transitions.remove(best_transition)
             point_start, primitive1 = intersections[2 * best_transition + n]
             point2, primitive2 = intersections[2 * best_transition + 1 + n]
-            primitives = self.extract_primitives(point_start, primitive1,
-                                                 point2, primitive2,
-                                                 inside=not n)
+            primitives = self.extract_with_points(point_start, point2, inside=not n)
             last_point = point2
             for transition in enclosed_transitions[best_transition]:
                 point1, primitive1 = intersections[2 * transition + n]
@@ -2207,8 +2205,7 @@ class Contour2D(ContourMixin, Wire2D):
                 primitives.append(
                     volmdlr.edges.LineSegment2D(last_point, point1))
                 primitives.extend(
-                    self.extract_primitives(point1, primitive1, point2,
-                                            primitive2, inside=not n))
+                    self.extract_with_points(point1, point2, inside=not n))
                 last_point = point2
                 if transition in remaining_transitions:
                     remaining_transitions.remove(transition)
@@ -2260,15 +2257,15 @@ class Contour2D(ContourMixin, Wire2D):
             return [self]
         if len(intersections) < 2:
             extracted_outerpoints_contour1 = \
-                volmdlr.wires.Contour2D.extract(self, self.primitives[0].start, intersections[0], True)[0]
+                Contour2D.extract(self, self.primitives[0].start, intersections[0], True)[0]
             extracted_innerpoints_contour1 = \
-                volmdlr.wires.Contour2D.extract(self, intersections[0], self.primitives[-1].end, True)[0]
+                Contour2D.extract(self, intersections[0], self.primitives[-1].end, True)[0]
             return extracted_outerpoints_contour1, extracted_innerpoints_contour1
         if len(intersections) == 2:
             extracted_outerpoints_contour1 = \
-                volmdlr.wires.Contour2D.extract(self, intersections[0], intersections[1], True)[0]
+                Contour2D.extract(self, intersections[0], intersections[1], True)[0]
             extracted_innerpoints_contour1 = \
-                volmdlr.wires.Contour2D.extract(self, intersections[0], intersections[1], False)[0]
+                Contour2D.extract(self, intersections[0], intersections[1], False)[0]
             return extracted_innerpoints_contour1, extracted_outerpoints_contour1
         raise NotImplementedError
 
@@ -2299,7 +2296,7 @@ class Contour2D(ContourMixin, Wire2D):
         return cutted_contours
 
     def triangulation(self):
-        """Returns the triangulation of the contour2d."""
+        """Returns the triangulation of the contour 2d."""
         return self.grid_triangulation(number_points_x=20,
                                        number_points_y=20)
 
