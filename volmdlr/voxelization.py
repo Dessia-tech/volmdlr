@@ -1110,6 +1110,18 @@ class Voxelization(PhysicalObject):
 
         return Voxelization(self.voxels_centers.difference(other_voxelization.voxels_centers), self.voxel_size)
 
+    def interference(self, other_voxelization: "Voxelization") -> float:
+        """
+        Compute the percentage of interference between two voxelization.
+
+        :param other_voxelization: The other voxelization to compute percentage of interference with.
+        :type other_voxelization: Voxelization
+
+        :return: The percentage of interference between the two voxelization.
+        :rtype: float
+        """
+        return len(self.intersection(other_voxelization)) / len(self.union(other_voxelization))
+
     @staticmethod
     def _rotation_matrix(axis: Vector3D, angle: float) -> np.array:
         """
