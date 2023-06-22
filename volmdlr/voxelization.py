@@ -15,6 +15,7 @@ from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
 from volmdlr.wires import ClosedPolygon2D
+from volmdlr.voxelization_compiled import box_intersects_triangle
 
 # Custom types
 Point = Tuple[float, ...]
@@ -325,6 +326,8 @@ class Voxelization(PhysicalObject):
         """
         # Method ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
         # pylint: disable=invalid-name,too-many-locals,too-many-return-statements,too-many-statements,too-many-branches
+
+        return box_intersects_triangle(triangle, voxel_center, voxel_extents)
 
         triangle = np.array(triangle)
         box_center = np.array(voxel_center)

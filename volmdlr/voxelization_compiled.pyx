@@ -87,3 +87,6 @@ cdef bint test_axis_triangle(tuple plane_normal, tuple v0, tuple v1, tuple v2, l
     cdef float plane_distance = abs(plane_normal[0] * v0[0] + plane_normal[1] * v0[1] + plane_normal[2] * v0[2])
     cdef float r = voxel_extents[0] * abs(plane_normal[0]) + voxel_extents[1] * abs(plane_normal[1]) + voxel_extents[2] * abs(plane_normal[2])
     return plane_distance <= r
+
+def box_intersects_triangle(triangle, voxel_center, voxel_extents):
+    return BoxIntersectsTriangle(triangle, voxel_center, voxel_extents)
