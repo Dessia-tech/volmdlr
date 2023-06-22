@@ -353,21 +353,20 @@ class Line2D(Line):
         """
         Static helper method to compute some data used in create_tangent_circle method.
         """
+        def vectors_from_line_and_point(line1, line2, point_):
+            vector_i = core_compiled.Vector2D(point_.x, point_.y)
+            vector_a = core_compiled.Vector2D(line1.point1.x, line1.point1.y)
+            vector_b = core_compiled.Vector2D(line1.point2.x, line1.point2.y)
+            vector_c = core_compiled.Vector2D(line2.point1.x, line2.point1.y)
+            vector_d = core_compiled.Vector2D(line2.point2.x, line2.point2.y)
+            return vector_i, vector_a, vector_b, vector_c, vector_d
         if math.isclose(line.point_distance(point), 0, abs_tol=1e-10):
-            vector_i = core_compiled.Vector2D(point.x, point.y)
-            vector_a = core_compiled.Vector2D(line.point1.x, line.point1.y)
-            vector_b = core_compiled.Vector2D(line.point2.x, line.point2.y)
-            vector_c = core_compiled.Vector2D(other_line.point1.x, other_line.point1.y)
-            vector_d = core_compiled.Vector2D(other_line.point2.x, other_line.point2.y)
+            vectors = vectors_from_line_and_point(line, other_line, point)
         elif math.isclose(other_line.point_distance(point), 0, abs_tol=1e-10):
-            vector_i = core_compiled.Vector2D(line.x, point.y)
-            vector_c = core_compiled.Vector2D(line.point1.x, line.point1.y)
-            vector_d = core_compiled.Vector2D(line.point2.x, line.point2.y)
-            vector_a = core_compiled.Vector2D(other_line.point1.x, other_line.point1.y)
-            vector_b = core_compiled.Vector2D(other_line.point2.x, other_line.point2.y)
+            vectors = vectors_from_line_and_point(other_line, line, point)
         else:
             raise AttributeError("The point isn't on any of the two lines")
-        return vector_i, vector_a, vector_b, vector_c, vector_d
+        return vectors
 
     @staticmethod
     def _change_reference_frame(vector_i, vector_a, vector_b, vector_c, vector_d):
@@ -1270,18 +1269,18 @@ class Circle3D(CircleMixin):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        x = []
-        y = []
-        z = []
-        for point_x, point_y, point_z in self.discretization_points():
-            x.append(point_x)
-            y.append(point_y)
-            z.append(point_z)
-        x.append(x[0])
-        y.append(y[0])
-        z.append(z[0])
-        ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
-        return ax
+        # x = []
+        # y = []
+        # z = []
+        # for point_x, point_y, point_z in self.discretization_points():
+        #     x.append(point_x)
+        #     y.append(point_y)
+        #     z.append(point_z)
+        # x.append(x[0])
+        # y.append(y[0])
+        # z.append(z[0])
+        # ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
+        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
 
     def point_at_abscissa(self, curvilinear_abscissa):
         """ Start point is at intersection of frame.u axis. """
@@ -1961,16 +1960,17 @@ class Ellipse3D(Curve):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 
-        x, y, z = [], [], []
-        for point_x, point_y, point_z in self.discretization_points():
-            x.append(point_x)
-            y.append(point_y)
-            z.append(point_z)
-        x.append(x[0])
-        y.append(y[0])
-        z.append(z[0])
-        ax.plot(x, y, z, edge_style.color)
-        return ax
+        # x, y, z = [], [], []
+        # for point_x, point_y, point_z in self.discretization_points():
+        #     x.append(point_x)
+        #     y.append(point_y)
+        #     z.append(point_z)
+        # x.append(x[0])
+        # y.append(y[0])
+        # z.append(z[0])
+        # ax.plot(x, y, z, edge_style.color)
+        # return ax
+        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):

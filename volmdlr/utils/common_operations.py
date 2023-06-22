@@ -85,3 +85,29 @@ def split_wire_by_plane(wire, plane3d):
         raise NotImplementedError
     wire1, wire2 = wire.split_with_sorted_points([wire_plane_intersections[0], wire.primitives[-1].end])
     return wire1, wire2
+
+
+def plot_from_discretization_points(ax, edge_style, element, number_points: int = None, close_plot:bool = False):
+    # x = []
+    # y = []
+    # z = []
+    components = [[], [], []]
+    for point in element.discretization_points(number_points=number_points):
+    # for point_x, point_y, point_z in element.discretization_points(number_points=number_points):
+        for i, component in enumerate(point):
+            components[i].append(component)
+        # x.append(point_x)
+        # y.append(point_y)
+        # z.append(point_z)
+    valid_components = []
+    for list_components in components:
+        if list_components:
+            if close_plot:
+                list_components.append(list_components[0])
+            valid_components.append(list_components)
+    # x.append(x[0])
+    # y.append(y[0])
+    # z.append(z[0])
+    # valid_components = [list_components for list_components in components id ]
+    ax.plot(*valid_components, color=edge_style.color, alpha=edge_style.alpha)
+    return ax

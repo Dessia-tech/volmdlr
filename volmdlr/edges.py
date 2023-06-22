@@ -1368,11 +1368,13 @@ class BSplineCurve(Edge):
             if self.simplify.__class__ == other_bspline2.__class__:
                 return self.simplify.get_shared_section(other_bspline2, abs_tol)
             return []
-        if self.__class__.__name__[-2:] == '3D':
-            if self.bounding_box.distance_to_bbox(other_bspline2.bounding_box) > 1e-7:
-                return []
-        elif self.bounding_rectangle.distance_to_b_rectangle(other_bspline2.bounding_rectangle) > 1e-7:
+        if not self.is_shared_section_possible(other_bspline2, 1e-7):
             return []
+        # if self.__class__.__name__[-2:] == '3D':
+        #     if self.bounding_box.distance_to_bbox(other_bspline2.bounding_box) > 1e-7:
+        #         return []
+        # elif self.bounding_rectangle.distance_to_b_rectangle(other_bspline2.bounding_rectangle) > 1e-7:
+        #     return []
         if not any(self.point_belongs(point, abs_tol=abs_tol)
                    for point in other_bspline2.discretization_points(number_points=10)):
             return []
@@ -1388,6 +1390,16 @@ class BSplineCurve(Edge):
             return []
             # raise NotImplementedError
         return self._get_shared_section_from_split(bspline1_, bspline2_, other_bspline2, abs_tol)
+
+    def is_shared_section_possible(self, other_bspline2, tol):
+        """
+        Verifies if it there is any possibility of the two bsplines share a section.
+
+        :param other_bspline2: other bspline.
+        :param tol: tolerance used.
+        :return: True or False.
+        """
+        raise NotImplementedError(f"is_shared_section_possible is not yet implemented by {self.__class__.__name__}")
 
     @staticmethod
     def _get_shared_section_from_split(bspline1_, bspline2_, other_bspline2, abs_tol):
@@ -1799,6 +1811,18 @@ class BSplineCurve2D(BSplineCurve):
         offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree,
                                                                     self.periodic)
         return offseted_bspline
+
+    def is_shared_section_possible(self, other_bspline2, tol):
+        """
+        Verifies if it there is any possibility of the two bsplines share a section.
+
+        :param other_bspline2: other bspline.
+        :param tol: tolerance used.
+        :return: True or False.
+        """
+        if self.bounding_rectangle.distance_to_b_rectangle(other_bspline2.bounding_rectangle) > tol:
+            return False
+        return True
 
 
 class BezierCurve2D(BSplineCurve2D):
@@ -3449,14 +3473,15 @@ class ArcEllipse2D(Edge):
         self.end.plot(ax=ax, color='b')
         self.ellipse.center.plot(ax=ax, color='y')
 
-        x = []
-        y = []
-        for x_component, y_component in self.discretization_points(number_points=100):
-            x.append(x_component)
-            y.append(y_component)
-
-        plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
-        return ax
+        # x = []
+        # y = []
+        # for x_component, y_component in self.discretization_points(number_points=100):
+        #     x.append(x_component)
+        #     y.append(y_component)
+        #
+        # plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
+        # return ax
+        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, number_points=100)
 
     def normal_vector(self, abscissa):
         """
@@ -3798,12 +3823,14 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         """
         if ax is None:
             _, ax = plt.subplots()
-        x = []
-        y = []
-        for point_x, point_y in self.discretization_points(number_points=50):
-            x.append(point_x)
-            y.append(point_y)
-        plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
+        # x = []
+        # y = []
+        # for point_x, point_y in self.discretization_points(number_points=50):
+        #     x.append(point_x)
+        #     y.append(point_y)
+        # plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
+        ax = vm_common_operations.plot_from_discretization_points(
+            ax, edge_style=edge_style, element=self, number_points=50)
         if edge_style.equal_aspect:
             ax.set_aspect('equal')
         return ax
@@ -4811,7 +4838,6 @@ class BSplineCurve3D(BSplineCurve):
         if point_in_curve:
             maximum_curvarture, point = max(self.global_maximum_curvature(nb_eval=21, point_in_curve=point_in_curve))
             return maximum_curvarture, point
-        # print(self.global_maximum_curvature(point_in_curve))
         maximum_curvarture = max(self.global_maximum_curvature(nb_eval=21, point_in_curve=point_in_curve))
         return maximum_curvarture
 
@@ -4825,12 +4851,12 @@ class BSplineCurve3D(BSplineCurve):
         maximum_curvarture = self.maximum_curvature(point_in_curve)
         return 1 / maximum_curvarture
 
-    def global_minimum_curvature(self, nb_eval: int = 21):
-        check = [i / (nb_eval - 1) for i in range(nb_eval)]
-        radius = []
-        for u in check:
-            radius.append(self.minimum_curvature(u))
-        return radius
+    # def global_minimum_curvature(self, nb_eval: int = 21):
+    #     check = [i / (nb_eval - 1) for i in range(nb_eval)]
+    #     radius = []
+    #     for u in check:
+    #         radius.append(self.minimum_curvature(u))
+    #     return radius
 
     def triangulation(self):
         return None
@@ -4889,6 +4915,18 @@ class BSplineCurve3D(BSplineCurve):
         new_control_points = [control_point.frame_mapping(frame, side) for control_point in self.control_points]
         return BSplineCurve3D(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights,
                               self.periodic, self.name)
+
+    def is_shared_section_possible(self, other_bspline2, tol):
+        """
+        Verifies if it there is any possibility of the two bsplines share a section.
+
+        :param other_bspline2: other bspline.
+        :param tol: tolerance used.
+        :return: True or False.
+        """
+        if self.bounding_box.distance_to_bbox(other_bspline2.bounding_box) > tol:
+            return False
+        return True
 
 
 class BezierCurve3D(BSplineCurve3D):
@@ -5103,15 +5141,17 @@ class Arc3D(ArcMixin):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
-        x = []
-        y = []
-        z = []
-        for pointx, pointy, pointz in self.discretization_points(number_points=25):
-            x.append(pointx)
-            y.append(pointy)
-            z.append(pointz)
-
-        ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
+        # x = []
+        # y = []
+        # z = []
+        # for pointx, pointy, pointz in self.discretization_points(number_points=25):
+        #     x.append(pointx)
+        #     y.append(pointy)
+        #     z.append(pointz)
+        #
+        # ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
+        ax = vm_common_operations.plot_from_discretization_points(
+            ax, edge_style=edge_style, element=self, number_points=25)
         if edge_style.edge_ends:
             self.start.plot(ax=ax, color='r')
             self.end.plot(ax=ax, color='b')
@@ -5498,18 +5538,19 @@ class FullArc3D(FullArc, Arc3D):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 
-        x = []
-        y = []
-        z = []
-        for x_component, y_component, z_component in self.discretization_points(number_points=20):
-            x.append(x_component)
-            y.append(y_component)
-            z.append(z_component)
-        x.append(x[0])
-        y.append(y[0])
-        z.append(z[0])
-        ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
-
+        # x = []
+        # y = []
+        # z = []
+        # for x_component, y_component, z_component in self.discretization_points(number_points=20):
+        #     x.append(x_component)
+        #     y.append(y_component)
+        #     z.append(z_component)
+        # x.append(x[0])
+        # y.append(y[0])
+        # z.append(z[0])
+        # ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
+        ax = vm_common_operations.plot_from_discretization_points(
+            ax, edge_style=edge_style, element=self, number_points=25, close_plot=True)
         if edge_style.edge_ends:
             self.start.plot(ax=ax)
             self.end.plot(ax=ax)
@@ -5704,15 +5745,17 @@ class ArcEllipse3D(Edge):
 
         ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
         ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='b')
-        x = []
-        y = []
-        z = []
-        for x_component, y_component, z_component in self.discretization_points(number_points=20):
-            x.append(x_component)
-            y.append(y_component)
-            z.append(z_component)
-
-        ax.plot(x, y, z, edge_style.color, alpha=edge_style.alpha)
+        # x = []
+        # y = []
+        # z = []
+        # for x_component, y_component, z_component in self.discretization_points(number_points=20):
+        #     x.append(x_component)
+        #     y.append(y_component)
+        #     z.append(z_component)
+        #
+        # ax.plot(x, y, z, edge_style.color, alpha=edge_style.alpha)
+        ax = vm_common_operations.plot_from_discretization_points(
+            ax, edge_style=edge_style, element=self, number_points=25)
         if edge_style.edge_ends:
             self.start.plot(ax, 'r')
             self.end.plot(ax, 'b')

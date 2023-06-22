@@ -599,6 +599,17 @@ class WireMixin:
     def middle_point(self):
         return self.point_at_abscissa(self.length() / 2)
 
+    def is_superposing(self, contour2):
+        """
+        Check if the contours are superposing (one on the other without necessarily having an absolute equality).
+
+        """
+
+        for primitive_2 in contour2.primitives:
+            if not self.primitive_over_wire(primitive_2):
+                return False
+        return True
+
 
 class EdgeCollection3D(WireMixin):
     """
@@ -1573,17 +1584,6 @@ class ContourMixin(WireMixin):
             if contour.primitive_over_contour(prim1):
                 return True
         return False
-
-    def is_superposing(self, contour2):
-        """
-        Check if the contours are superposing (one on the other without necessarily having an absolute equality).
-
-        """
-
-        for primitive_2 in contour2.primitives:
-            if not self.primitive_over_contour(primitive_2):
-                return False
-        return True
 
     def is_overlapping(self, contour2, intersecting_points=None):
         """

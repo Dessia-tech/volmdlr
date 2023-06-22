@@ -519,7 +519,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         Returns a Measure object if the distance is not zero, otherwise returns None.
 
         """
-        shell2_inter = self.shell_intersection(shell2, resolution)
+        shell2_inter = self.is_intersecting_with(shell2)
         if shell2_inter is not None and shell2_inter != 1:
             return None
 
@@ -842,6 +842,34 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 [[face.outer_contour3d], face.inner_contours3d], min_points, size))
         return lines
 
+    def is_disjoint_from(self, shell2, tol=1e-8):
+        """
+        Verifies and returns a Boolean if two shells are disjointed or not.
+
+        """
+        disjoint = True
+        if self.bounding_box.is_intersecting(shell2.bounding_box, tol):
+            return False
+        return disjoint
+
+    def is_face_intersecting(self, face: volmdlr.faces.Face3D):
+        """Verifies if face is intersecting shell somehow."""
+        if not self.bounding_box.is_intersecting(face.bounding_box):
+            return False
+        for i_face in self.faces:
+            if i_face.face_intersections(face):
+                return True
+        return False
+
+    def is_intersecting_with(self, shell2):
+        """Verifies if two closed shells are intersecting somehow."""
+        if self.is_disjoint_from(shell2):
+            return False
+        for face2 in shell2.faces:
+            if self.is_face_intersecting(face2):
+                return True
+        return False
+
 
 class ClosedShell3D(OpenShell3D):
     """
@@ -884,75 +912,6 @@ class ClosedShell3D(OpenShell3D):
             if not point_inside_shell:
                 return False
         return True
-
-    def is_face_intersecting(self, face: volmdlr.faces.Face3D):
-        """Verifies if face is intersecting shell somehow."""
-        if not self.bounding_box.is_intersecting(face.bounding_box):
-            return False
-        for i_face in self.faces:
-            if i_face.face_intersections(face):
-                return True
-        return False
-
-    def shell_intersection(self, shell2: 'OpenShell3D', resolution: float):
-        """
-        Return None if disjointed.
-
-        Return (1, 0) or (0, 1) if one is inside the other
-        Return (n1, n2) if intersection
-
-        4 cases :
-            (n1, n2) with face intersection             => (n1, n2)
-            (0, 0) with face intersection               => (0, 0)
-            (0, 0) with no face intersection            => None
-            (1, 0) or (0, 1) with no face intersection  => 1
-        """
-        # Check if boundary boxes don't intersect
-        if not self.bounding_box.is_intersecting(shell2.bounding_box):
-            return None
-
-        # Check if any point of the first shell is in the second shell
-        points1 = []
-        for face in self.faces:
-            points1.extend(
-                face.outer_contour3d.discretization_points(angle_resolution=resolution))
-        points2 = []
-        for face in shell2.faces:
-            points2.extend(
-                face.outer_contour3d.discretization_points(angle_resolution=resolution))
-
-        nb_pts1 = len(points1)
-        nb_pts2 = len(points2)
-        compteur1 = 0
-        compteur2 = 0
-        for point1 in points1:
-            if shell2.point_belongs(point1):
-                compteur1 += 1
-        for point2 in points2:
-            if self.point_belongs(point2):
-                compteur2 += 1
-
-        inter1 = compteur1 / nb_pts1
-        inter2 = compteur2 / nb_pts2
-
-        for face1 in self.faces:
-            for face2 in shell2.faces:
-                intersection_points = face1.face_intersections(face2)
-                if intersection_points:
-                    return inter1, inter2
-
-        if inter1 == 0. and inter2 == 0.:
-            return None
-        return 1
-
-    def is_intersecting_with(self, shell2):
-        """Verifies if two closed shells are intersecting somehow."""
-        if self.is_disjoint_from(shell2):
-            return False
-        for face2 in shell2.faces:
-            if self.is_face_intersecting(face2):
-                return True
-        return False
 
     def get_ray_casting_line_segment(self, point3d):
         """Gets the best ray for performing ray casting algorithm."""
@@ -1026,16 +985,6 @@ class ClosedShell3D(OpenShell3D):
             if not shell2.is_face_inside(face):
                 return False
         return True
-
-    def is_disjoint_from(self, shell2, tol=1e-8):
-        """
-        Verifies and returns a Boolean if two shells are disjointed or not.
-
-        """
-        disjoint = True
-        if self.bounding_box.is_intersecting(shell2.bounding_box, tol):
-            return False
-        return disjoint
 
     def intersecting_faces_combinations(self, shell2, tol=1e-8):
         """
