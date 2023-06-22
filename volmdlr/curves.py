@@ -827,19 +827,18 @@ class Circle2D(CircleMixin):
         x_interior, y_interior = point2.x, point2.y
         x_end, y_end = point3.x, point3.y
         x_start, y_start = point1.x, point1.y
+        matrix1 = [[2 * (x_start - x_interior), 2 * (y_start - y_interior)],
+                   [2 * (x_start - x_end), 2 * (y_start - y_end)]]
+        b_vector_components = [x_interior ** 2 + y_interior ** 2 - x_start ** 2 - y_start ** 2,
+                               x_end ** 2 + y_end ** 2 - x_start ** 2 - y_start ** 2]
         try:
-            matrix_a = core_compiled.Matrix22(2 * (x_start - x_interior), 2 * (y_start - y_interior),
-                                              2 * (x_start - x_end), 2 * (y_start - y_end))
-            b_vector = - core_compiled.Vector2D(x_interior ** 2 + y_interior ** 2 - x_start ** 2 - y_start ** 2,
-                                                x_end ** 2 + y_end ** 2 - x_start ** 2 - y_start ** 2)
+            matrix_a = core_compiled.Matrix22(*matrix1[0], *matrix1[1])
+            b_vector = - core_compiled.Vector2D(*b_vector_components)
             inv_matrix_a = matrix_a.inverse()
-            x = inv_matrix_a.vector_multiplication(b_vector)
-            center = core_compiled.Point2D(x.x, x.y)
+            center = core_compiled.Point2D(*inv_matrix_a.vector_multiplication(b_vector))
         except ValueError:
-            matrix_a = npy.array([[2 * (x_start - x_interior), 2 * (y_start - y_interior)],
-                                  [2 * (x_start - x_end), 2 * (y_start - y_end)]])
-            b_vector = - npy.array([x_interior ** 2 + y_interior ** 2 - x_start ** 2 - y_start ** 2,
-                                    x_end ** 2 + y_end ** 2 - x_start ** 2 - y_start ** 2])
+            matrix_a = npy.array(matrix1)
+            b_vector = - npy.array(b_vector_components)
             center = core_compiled.Point2D(*npy.linalg.solve(matrix_a, b_vector))
         circle = cls(center, point1.point_distance(center))
         return circle

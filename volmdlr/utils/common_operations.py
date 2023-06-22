@@ -87,7 +87,7 @@ def split_wire_by_plane(wire, plane3d):
     return wire1, wire2
 
 
-def plot_from_discretization_points(ax, edge_style, element, number_points: int = None, close_plot:bool = False):
+def plot_from_discretization_points(ax, edge_style, element, number_points: int = None, close_plot: bool = False):
     # x = []
     # y = []
     # z = []
