@@ -2812,7 +2812,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             barycenter1_2d += point
         return barycenter1_2d / len(self.points)
 
-    def point_belongs(self, point, include_edge_points: bool = False):
+    def point_belongs(self, point, include_edge_points: bool = False, tol: float = 1e-6):
         """
         Ray casting algorithm copied from internet.
         """

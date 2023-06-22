@@ -13,7 +13,7 @@ from volmdlr.models.contours import contour2d_1, contour2d_2, contour1_cut_by_wi
 class TestContour2D(unittest.TestCase):
     contour1 = wires.Contour2D([edges.FullArc2D(circle=curves.Circle2D(volmdlr.O2D, 0.029999999),
                                                 start_end=volmdlr.Point2D(0.029999999, 0))])
-    not_ordered_contour = DessiaObject.load_from_file('wires/contour_not_ordered.json')
+    # not_ordered_contour = DessiaObject.load_from_file('wires/contour_not_ordered.json')
     # ordered_contour = DessiaObject.load_from_file('wires/contour_ordered.json')
     contour_to_extract_from = contour = wires.Contour2D.from_points(
         [volmdlr.Point2D(-.15, .15), volmdlr.Point2D(-.15, -.15), volmdlr.Point2D(.15, -.15),
@@ -190,7 +190,7 @@ class TestContour2D(unittest.TestCase):
         self.assertEqual(furthest_point2, volmdlr.Point2D(1.5, 1.0))
 
     def test_intersection_contour_with(self):
-        vol = DessiaObject.load_from_file('wires/test_intersection_contour_with.json')
+        vol = DessiaObject.load_from_file('test_intersection_contour_with.json')
         contour2 = vol.primitives[0]
         contour3 = vol.primitives[1]
         intersection_contours1 = contour2.intersection_contour_with(contour3, abs_tol=1e-5)

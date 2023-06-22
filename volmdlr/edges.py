@@ -2953,12 +2953,14 @@ class FullArc2D(FullArcMixin, Arc2D):
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
         dict_ = self.base_dict()
-        dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/circle')
+        dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
+                                              id_method=id_method, id_memo=id_memo, path=path + '/circle')
         dict_['angle'] = self.angle
         dict_['is_trigo'] = self.is_trigo
-        dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
+        dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
+                                              id_method=id_method, id_memo=id_memo, path=path + '/start_end')
         return dict_
 
     def copy(self, *args, **kwargs):
@@ -4945,11 +4947,14 @@ class Arc3D(ArcMixin, Edge):
         return (self.circle == other_arc.circle and self.start == other_arc.start
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
         dict_ = self.base_dict()
-        dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/circle')
-        dict_['start'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start')
-        dict_['end'] = self.end.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/end')
+        dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
+                                              id_method=id_method, id_memo=id_memo, path=path + '/circle')
+        dict_['start'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
+                                              id_method=id_method, id_memo=id_memo, path=path + '/start')
+        dict_['end'] = self.end.to_dict(use_pointers=use_pointers, memo=memo,
+                                              id_method=id_method, id_memo=id_memo, path=path + '/end')
         return dict_
 
     def get_arc_point_angle(self, point):
