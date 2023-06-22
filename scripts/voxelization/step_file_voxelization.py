@@ -7,8 +7,7 @@ from volmdlr.step import Step
 VOXEL_SIZE = 0.1
 
 # Load and convert the SETP
-model = Step.load_from_file("model.step")
-volume_model = model.to_volume_model()
+volume_model = Step.load_from_file("model.step").to_volume_model()
 
 # Voxelize the model
 voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE)
