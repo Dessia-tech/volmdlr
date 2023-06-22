@@ -1601,19 +1601,6 @@ class BSplineCurve2D(BSplineCurve):
             self._bounding_rectangle = volmdlr.core.BoundingRectangle.from_points(self.points)
         return self._bounding_rectangle
 
-    def tangent(self, position: float = 0.0):
-        """
-        Computes the tangent at a given parameter between 0 and 1.
-
-        :param position: The parameter at which the tangent is computed.
-        :type position: float
-        :return: A 2-dimensional point representing the tangent
-        :rtype: :class:`volmdlr.Point2D`
-        """
-        _, tangent = operations.tangent(self.curve, position, normalize=True)
-        tangent = volmdlr.Point2D(tangent[0], tangent[1])
-        return tangent
-
     def straight_line_area(self):
         """
         Uses shoelace algorithm for evaluating the area.

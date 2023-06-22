@@ -638,7 +638,8 @@ class Line3D(Line):
         Calculates the intersection between to Line3D, if there is an intersection.
 
         :param line2: other Line3D
-        :return: None if there is no intersection between Lines. A core_compiled.Point3D if there exists an intersection.
+        :return: None if there is no intersection between Lines.
+        A core_compiled.Point3D if there exists an intersection.
         """
         direction_vector1 = self.direction_vector()
         direction_vector2 = line2.direction_vector()
