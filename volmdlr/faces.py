@@ -1887,17 +1887,17 @@ class CylindricalFace3D(Face3D):
         return number_points_x, number_points_y
 
     def minimum_distance(self, other_face, return_points=False):
-        if other_face.__class__ is CylindricalFace3D:
-            point1, point2 = self.minimum_distance_points_cyl(other_face)
-            if return_points:
-                return point1.point_distance(point2), point1, point2
-            return point1.point_distance(point2)
-
-        if other_face.__class__ is PlaneFace3D:
-            point1, point2 = self.minimum_distance_points_plane(other_face)
-            if return_points:
-                return point1.point_distance(point2), point1, point2
-            return point1.point_distance(point2)
+        # if other_face.__class__ is CylindricalFace3D:
+        #     point1, point2 = self.minimum_distance_points_cyl(other_face)
+        #     if return_points:
+        #         return point1.point_distance(point2), point1, point2
+        #     return point1.point_distance(point2)
+        #
+        # if other_face.__class__ is PlaneFace3D:
+        #     point1, point2 = self.minimum_distance_points_plane(other_face)
+        #     if return_points:
+        #         return point1.point_distance(point2), point1, point2
+        #     return point1.point_distance(point2)
 
         if other_face.__class__ is ToroidalFace3D:
             point1, point2 = other_face.minimum_distance_points_cyl(self)

@@ -151,8 +151,10 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     _non_data_hash_attributes = ['name']
 
     def __init__(self, points: List[volmdlr.Point3D], radius: float, adapt_radius: bool = False, name: str = ''):
-        super().__init__(points, radius, adapt_radius=adapt_radius, name='')
-        self.closed = True
+        volmdlr.primitives.RoundedLineSegments.__init__(
+                self, points, radius, closed=True, adapt_radius=adapt_radius,
+                name='')
+
         volmdlr.wires.Contour3D.__init__(self, primitives=self._primitives(), name=name)
 
 

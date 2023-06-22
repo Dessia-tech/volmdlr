@@ -440,6 +440,11 @@ class LineSegment(Edge):
 
     """
 
+    def __init__(self, start: Union[volmdlr.Point2D, volmdlr.Point3D], end: Union[volmdlr.Point2D, volmdlr.Point3D], *,
+                 line: [volmdlr_curves.Line2D, volmdlr_curves.Line3D] = None, name: str = ''):
+        self.line = line
+        Edge.__init__(self, start, end, name)
+
     def length(self):
         if not self._length:
             self._length = self.end.point_distance(self.start)
@@ -1862,7 +1867,7 @@ class LineSegment2D(LineSegment):
         self.line = line
         if not line:
             self.line = volmdlr_curves.Line2D(start, end)
-        LineSegment.__init__(self, start, end, name=name)
+        LineSegment.__init__(self, start, end, self.line, name=name)
 
     def copy(self, deep=True, memo=None):
         """
