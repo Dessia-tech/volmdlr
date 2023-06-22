@@ -405,6 +405,14 @@ def shell_based_surface_model(arguments, object_dict):
     return volmdlr.core.Compound(primitives)
 
 
+def oriented_closed_shell(arguments, object_dict):
+    """
+    Returns the data in case of a Shell3D.
+    """
+    #TODO: How to use the orientation (arguments[3]
+    return object_dict[arguments[2]]
+
+
 def item_defined_transformation(arguments, object_dict):
     """
     Returns xx.
