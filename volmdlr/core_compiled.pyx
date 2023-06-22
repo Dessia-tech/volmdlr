@@ -951,6 +951,8 @@ class Point2D(Vector2D):
     """
 
     def __init__(self, x: float, y: float, name: Text = ""):
+        self.x = x
+        self.y = y
         Vector2D.__init__(self, x=x, y=y, name=name)
 
     def __add__(self, other_vector):
@@ -1981,6 +1983,9 @@ class Point3D(Vector3D):
     _standalone_in_db = False
 
     def __init__(self, x: float, y: float, z: float, name: Text = ""):
+        self.x = x
+        self.y = y
+        self.z = z
         Vector3D.__init__(self, x, y, z, name)
 
     def __add__(self, other_vector):

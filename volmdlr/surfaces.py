@@ -6769,7 +6769,7 @@ class BSplineSurface3D(Surface3D):
                 derivatives[i][j] = core_compiled.Vector3D(*derivatives[i][j])
         return derivatives
 
-    def _determine_contour_params(self,outer_contour_start, outer_contour_end, inner_contour_start, inner_contour_end):
+    def _determine_contour_params(self, outer_contour_start, outer_contour_end, inner_contour_start, inner_contour_end):
         """
         Helper function.
         """
@@ -6805,8 +6805,8 @@ class BSplineSurface3D(Surface3D):
 
         for inner_contour in inner_contours:
             if not inner_contour.is_ordered():
-                outer_contour_param, inner_contour_param = self._determine_contour_params(point1, point2,
-                                                inner_contour.primitives[0].start, inner_contour.primitives[-1].end)
+                outer_contour_param, inner_contour_param = self._determine_contour_params(
+                    point1, point2, inner_contour.primitives[0].start, inner_contour.primitives[-1].end)
 
                 outer_contour_direction = outer_contour_param[0] < outer_contour_param[1]
                 inner_contour_direction = inner_contour_param[0] < inner_contour_param[1]
@@ -6818,8 +6818,7 @@ class BSplineSurface3D(Surface3D):
                 closing_linesegment2 = edges.LineSegment2D(inner_contour.primitives[-1].end,
                                                            outer_contour.primitives[0].start)
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
-                                               inner_contour.primitives + \
-                                               [closing_linesegment2]
+                                               inner_contour.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:

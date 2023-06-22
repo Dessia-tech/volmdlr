@@ -791,10 +791,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                 lines.append(primitive.get_geo_lines(tag=line_account,
                                                                      start_point_tag=start_point_tag + point_account,
                                                                      end_point_tag=end_point_tag + point_account))
-                            elif isinstance(primitive, volmdlr.edges.Arc):
+                            elif isinstance(primitive, volmdlr.edges.ArcMixin):
 
                                 start_point_tag = get_point_index_in_list(primitive.start, points) + 1
-                                center_point_tag = get_point_index_in_list(primitive.center, points) + 1
+                                center_point_tag = get_point_index_in_list(primitive.circle.center, points) + 1
                                 end_point_tag = get_point_index_in_list(primitive.end, points) + 1
 
                                 lines.append(primitive.get_geo_lines(tag=line_account,
