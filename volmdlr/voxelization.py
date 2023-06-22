@@ -139,7 +139,7 @@ class Voxelization(PhysicalObject):
 
     @classmethod
     def from_closed_triangle_shell(
-        cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, method: str = "octree", name: str = ""
+        cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, method: str = "iterative", name: str = ""
     ) -> "Voxelization":
         """
         Create a Voxelization from a ClosedTriangleShell3D.
@@ -173,7 +173,7 @@ class Voxelization(PhysicalObject):
 
     @classmethod
     def from_closed_shell(
-        cls, closed_shell: ClosedShell3D, voxel_size: float, method: str = "octree", name: str = ""
+        cls, closed_shell: ClosedShell3D, voxel_size: float, method: str = "iterative", name: str = ""
     ) -> "Voxelization":
         """
         Create a Voxelization from a ClosedShell3D.
@@ -207,7 +207,7 @@ class Voxelization(PhysicalObject):
 
     @classmethod
     def from_volume_model(
-        cls, volume_model: VolumeModel, voxel_size: float, method: str = "octree", name: str = ""
+        cls, volume_model: VolumeModel, voxel_size: float, method: str = "iterative", name: str = ""
     ) -> "Voxelization":
         """
         Create a Voxelization from a VolumeModel.
