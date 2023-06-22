@@ -51,6 +51,21 @@ class TestFrame3D(unittest.TestCase):
         frame = volmdlr.Frame3D.from_step(arguments, object_dict)
         self.assertTrue(frame.w.is_close(object_dict[21]))
 
+    def test_to_step(self):
+        step_content, _ = volmdlr.OXYZ.to_step(10)
+        expected_result = "#11 = CARTESIAN_POINT('',(0.000000,0.000000,0.000000));\n" \
+                          "#12 = DIRECTION('',(0.000000,0.000000,1.000000));\n" \
+                          "#13 = DIRECTION('',(1.000000,0.000000,0.000000));\n" \
+                          "#14 = AXIS2_PLACEMENT_3D('',#11,#12,#13);\n"
+        self.assertEqual(step_content, expected_result)
+
+        step_content, _ = volmdlr.OYZX.to_step(10)
+        expected_result = "#11 = CARTESIAN_POINT('',(0.000000,0.000000,0.000000));\n" \
+                          "#12 = DIRECTION('',(1.000000,0.000000,0.000000));\n" \
+                          "#13 = DIRECTION('',(0.000000,1.000000,0.000000));\n" \
+                          "#14 = AXIS2_PLACEMENT_3D('',#11,#12,#13);\n"
+        self.assertEqual(step_content, expected_result)
+
 
 if __name__ == "__main__":
     unittest.main()
