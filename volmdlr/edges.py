@@ -5273,23 +5273,26 @@ class Arc3D(ArcMixin):
         w = self.circle.center - other_line.start
         v = self.circle.normal.cross(k)
 
-        radius = self.circle.radius
+        # radius = self.circle.radius
+        results = []
+        for initial_value in [npy.array([0.5, self.angle / 2]), npy.array([0.5, 0]), npy.array([0.5, self.angle])]:
+            results.append(least_squares(self.distance_squared, initial_value,
+                                         bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w)))
+        # x01 = npy.array([0.5, self.angle / 2])
+        # x02 = npy.array([0.5, 0])
+        # x03 = npy.array([0.5, self.angle])
+        #
+        # res1 = least_squares(self.distance_squared, x01, bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
+        # res2 = least_squares(self.distance_squared, x02, bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
+        # res3 = least_squares(self.distance_squared, x03, bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
 
-        x01 = npy.array([0.5, self.angle / 2])
-        x02 = npy.array([0.5, 0])
-        x03 = npy.array([0.5, self.angle])
+        point1 = other_line.point_at_abscissa(results[0].x[0] * other_line.length())
+        point2 = self.point_at_abscissa(results[1].x[1] * self.circle.radius)
 
-        res1 = least_squares(self.distance_squared, x01, bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
-        res2 = least_squares(self.distance_squared, x02, bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
-        res3 = least_squares(self.distance_squared, x03, bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w))
-
-        point1 = other_line.point_at_abscissa(res1.x[0] * other_line.length())
-        point2 = self.point_at_abscissa(res1.x[1] * radius)
-
-        res = [res2, res3]
-        for couple in res:
+        # res = [res2, res3]
+        for couple in results[1:]:
             ptest1 = other_line.point_at_abscissa(couple.x[0] * other_line.length())
-            ptest2 = self.point_at_abscissa(couple.x[1] * radius)
+            ptest2 = self.point_at_abscissa(couple.x[1] * self.circle.radius)
             dtest = ptest1.point_distance(ptest2)
             if dtest < v.dot(v):
                 point1, point2 = ptest1, ptest2

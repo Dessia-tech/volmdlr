@@ -1701,22 +1701,9 @@ class Triangle3D(PlaneFace3D):
         new_bounding_box = self.get_bounding_box()
         self.bounding_box = new_bounding_box
 
-    def subdescription(self, resolution=0.01):
-        """
-        Returns a list of Point3D with resolution as max between Point3D.
-        """
-
-        lengths = [self.points[0].point_distance(self.points[1]),
-                   self.points[1].point_distance(self.points[2]),
-                   self.points[2].point_distance(self.points[0])]
-        max_length = max(lengths)
-
-        if max_length <= resolution:
-            return self.points
-
-        pos_length_max = lengths.index(max_length)
-        new_points = [self.points[-3 + pos_length_max + k] for k in range(3)]
-
+    @staticmethod
+    def get_subdescription_points(new_points, resolution, max_length):
+        """Gets subdescription points."""
         vector = new_points[0] - new_points[1]
         vector.normalize()
         points_0_1 = []
@@ -1747,6 +1734,23 @@ class Triangle3D(PlaneFace3D):
                         points_in.append(p0_1 + vector_2_0 * min(i * step_in, length_2_0))
 
         return npy.unique(points_0_1 + points_in).tolist()
+
+    def subdescription(self, resolution=0.01):
+        """
+        Returns a list of Point3D with resolution as max between Point3D.
+        """
+
+        lengths = [self.points[0].point_distance(self.points[1]),
+                   self.points[1].point_distance(self.points[2]),
+                   self.points[2].point_distance(self.points[0])]
+        max_length = max(lengths)
+
+        if max_length <= resolution:
+            return self.points
+
+        pos_length_max = lengths.index(max_length)
+        new_points = [self.points[-3 + pos_length_max + k] for k in range(3)]
+        return self.get_subdescription_points(new_points, resolution, max_length)
 
     def subdescription_to_triangles(self, resolution=0.01):
         """
