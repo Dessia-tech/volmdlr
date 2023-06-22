@@ -2152,27 +2152,25 @@ class LineSegment2D(LineSegment):
         return self.__class__(points_symmetry[0], points_symmetry[1])
 
 
-class ArcMixin(Edge):
+class ArcMixin:
     """
     Abstract class representing an arc.
 
     :param circle: arc related circle curve.
     :type circle: Union['volmdlr.curves.Circle2D', 'volmdlr.curves.Circle2D'].
-    :param start: The starting point
-    :type start: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
-    :param end: The finish point
-    :type end: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
-    :param name: The name of the arc. Default value is an empty string
-    :type name: str, optional
+    # :param start: The starting point
+    # :type start: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+    # :param end: The finish point
+    # :type end: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+    # :param name: The name of the arc. Default value is an empty string
+    # :type name: str, optional
     """
 
-    def __init__(self, circle, start, end, is_trigo: bool = True, name: str = ''):
-        Edge.__init__(self, start=start, end=end, name=name)
+    def __init__(self, circle, is_trigo: bool = True):
+        # Edge.__init__(self, start=start, end=end, name=name)
         self.circle = circle
+        self.center = circle.center
         self.is_trigo = is_trigo
-        self._utd_clockwise_and_trigowise_paths = False
-        self._clockwise_and_trigowise_paths = None
-        self._radius = None
         self._length = None
 
     def length(self):
@@ -2218,37 +2216,6 @@ class ArcMixin(Edge):
         :return: The direction vector of the Arc2D
         """
         return -self.normal_vector(abscissa=abscissa).normal_vector()
-
-    @staticmethod
-    def get_clockwise_and_trigowise_paths(radius_1, radius_2, radius_i):
-        """
-        Get arc paths from radius.
-
-        :param radius_1: radius from center to start point.
-        :param radius_2: radius form center to end point.
-        :param radius_i: radius from center to interior point.
-        :return: the clockwise and trigowise paths.
-        """
-        angle1 = math.atan2(radius_1.y, radius_1.x)
-        anglei = math.atan2(radius_i.y, radius_i.x)
-        angle2 = math.atan2(radius_2.y, radius_2.x)
-
-        # Going trigo/clock wise from start to interior
-        if anglei < angle1:
-            trigowise_path = (anglei + volmdlr.TWO_PI) - angle1
-            clockwise_path = angle1 - anglei
-        else:
-            trigowise_path = anglei - angle1
-            clockwise_path = angle1 - anglei + volmdlr.TWO_PI
-
-        # Going trigo wise from interior to interior
-        if angle2 < anglei:
-            trigowise_path += (angle2 + volmdlr.TWO_PI) - anglei
-            clockwise_path += anglei - angle2
-        else:
-            trigowise_path += angle2 - anglei
-            clockwise_path += anglei - angle2 + volmdlr.TWO_PI
-        return clockwise_path, trigowise_path
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
@@ -2417,7 +2384,7 @@ class ArcMixin(Edge):
         return False
 
 
-class FullArc(ArcMixin):
+class FullArcMixin(ArcMixin):
     """
     Abstract class for representing a circle with a start and end points that are the same.
     """
@@ -2426,7 +2393,7 @@ class FullArc(ArcMixin):
                  start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
         self.circle = circle
         self.start_end = start_end
-        ArcMixin.__init__(self, circle=circle, start=start_end, end=start_end, name=name)  # !!! this is dangerous
+        ArcMixin.__init__(self, circle=circle)  # !!! this is dangerous
 
     @property
     def angle(self):
@@ -2453,7 +2420,7 @@ class FullArc(ArcMixin):
         return cls(circle, circle.center + circle.frame.u * circle.radius)
 
 
-class Arc2D(ArcMixin):
+class Arc2D(ArcMixin, Edge):
     """
     Class to draw Arc2D.
 
@@ -2470,7 +2437,8 @@ class Arc2D(ArcMixin):
         self.is_trigo = is_trigo
         self._angle = None
         self._bounding_rectangle = None
-        ArcMixin.__init__(self, circle, start=start, end=end, is_trigo=is_trigo, name=name)
+        ArcMixin.__init__(self, circle, is_trigo)
+        Edge.__init__(self, start=start, end=end, name=name)
         start_to_center = start - self.circle.center
         end_to_center = end - self.circle.center
         angle1 = math.atan2(start_to_center.y, start_to_center.x)
@@ -2973,14 +2941,14 @@ class Arc2D(ArcMixin):
                               end=points_symmetry[1], is_trigo=self.is_trigo)
 
 
-class FullArc2D(FullArc, Arc2D):
+class FullArc2D(FullArcMixin, Arc2D):
     """ An edge that starts at start_end, ends at the same point after having described a circle. """
 
     def __init__(self, circle: 'volmdlr.curves.Circle2D', start_end: volmdlr.Point2D,
                  name: str = ''):
         # self.interior = start_end.rotation(center, math.pi)
         self._bounding_rectangle = None
-        FullArc.__init__(self, circle=circle, start_end=start_end, name=name)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
         Arc2D.__init__(self, circle=circle, start=start_end, end=start_end)
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
@@ -3168,6 +3136,7 @@ class ArcEllipse2D(Edge):
         self.ellipse = ellipse
         self.angle_start, self.angle_end = self.get_start_end_angles()
         self.angle = self.angle_end - self.angle_start
+        self.center = ellipse.center
         self._bounding_rectangle = None
         self._reverse = None
 
@@ -3678,6 +3647,7 @@ class FullArcEllipse(Edge):
         self.ellipse = ellipse
         self.is_trigo = True
         self.angle_start = 0.0
+        self.center = ellipse.center
         self.angle_end = volmdlr.TWO_PI
         Edge.__init__(self, start=start_end, end=start_end, name=name)
 
@@ -4952,14 +4922,15 @@ class BezierCurve3D(BSplineCurve3D):
                                 None, False, name)
 
 
-class Arc3D(ArcMixin):
+class Arc3D(ArcMixin, Edge):
     """
     An arc is defined by a starting point, an end point and an interior point.
 
     """
 
     def __init__(self, circle, start, end, name=''):
-        ArcMixin.__init__(self, circle, start=start, end=end, name=name)
+        ArcMixin.__init__(self, circle)
+        Edge.__init__(self, start=start, end=end, name=name)
         self._angle = None
         self.angle_start, self.angle_end = self.get_start_end_angles()
 
@@ -4973,6 +4944,13 @@ class Arc3D(ArcMixin):
             return False
         return (self.circle == other_arc.circle and self.start == other_arc.start
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        dict_ = self.base_dict()
+        dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/circle')
+        dict_['start'] = self.start.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start')
+        dict_['end'] = self.end.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/end')
+        return dict_
 
     def get_arc_point_angle(self, point):
         local_start_point = self.circle.frame.global_to_local_coordinates(point)
@@ -5465,7 +5443,7 @@ class Arc3D(ArcMixin):
         return Arc3D(self.circle, self.end, self.start)
 
 
-class FullArc3D(FullArc, Arc3D):
+class FullArc3D(FullArcMixin, Arc3D):
     """
     An edge that starts at start_end, ends at the same point after having described a circle.
 
@@ -5475,7 +5453,7 @@ class FullArc3D(FullArc, Arc3D):
                  name: str = ''):
         self._utd_frame = None
         self._bbox = None
-        FullArc.__init__(self, circle=circle, start_end=start_end, name=name)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
         Arc3D.__init__(self, circle=circle, start=start_end, end=start_end)
 
     def __hash__(self):
@@ -5648,6 +5626,7 @@ class ArcEllipse3D(Edge):
         self.ellipse = ellipse
         self.angle_start, self.angle_end = self.get_start_end_angles()
         self.angle = self.angle_end - self.angle_start
+        self.center = ellipse.center
         self._self_2d = None
         self._length = None
         self._bbox = None

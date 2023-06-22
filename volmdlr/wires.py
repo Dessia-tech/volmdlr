@@ -690,7 +690,7 @@ class EdgeCollection3D(WireMixin):
         return [babylon_mesh]
 
 
-class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
+class Wire2D(WireMixin, volmdlr.core.CompositePrimitive2D):
     """
     A collection of simple primitives, following each other making a wire.
 
@@ -1212,7 +1212,7 @@ class Wire2D(volmdlr.core.CompositePrimitive2D, WireMixin):
         return False
 
 
-class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
+class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
     """
     A collection of simple primitives, following each other making a wire.
 

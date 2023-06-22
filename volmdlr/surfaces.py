@@ -4394,15 +4394,15 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        if hasattr(self.wire, "radius") and math.isclose(self.wire.radius, arc3d.radius, rel_tol=0.01):
+        if hasattr(self.wire, "circle") and math.isclose(self.wire.circle.radius, arc3d.circle.radius, rel_tol=0.01):
             if self.wire.is_point_edge_extremity(arc3d.start):
                 start = self.point3d_to_2d(arc3d.start)
-                interior = self.point3d_to_2d(arc3d.interior)
-                start = core_compiled.Point2D(interior.x, start.y)
+                middle_point = self.point3d_to_2d(arc3d.middle_point())
+                start = core_compiled.Point2D(middle_point.x, start.y)
             if self.wire.is_point_edge_extremity(arc3d.end):
                 end = self.point3d_to_2d(arc3d.end)
-                interior = self.point3d_to_2d(arc3d.interior)
-                end = core_compiled.Point2D(interior.x, end.y)
+                middle_point = self.point3d_to_2d(arc3d.middle_point())
+                end = core_compiled.Point2D(middle_point.x, end.y)
         if math.isclose(start.y, end.y, rel_tol=0.01):
             point_after_start, point_before_end = self._reference_points(arc3d)
             point_theta_discontinuity = self.point2d_to_3d(core_compiled.Point2D(math.pi, start.y))

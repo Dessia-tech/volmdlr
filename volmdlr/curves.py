@@ -785,7 +785,7 @@ class Line3D(Line):
         return Line2D(*p2d, name=self.name)
 
 
-class CircleMixin(Curve):
+class CircleMixin:
     def split_at_abscissa(self, abscissa):
         """
         Splits a Circle into two at a given fraction of its length (abscissa parameter).
@@ -808,13 +808,13 @@ class CircleMixin(Curve):
         return self.split(start, point_at_absccissa)
 
 
-class Circle2D(CircleMixin):
+class Circle2D(CircleMixin, Curve):
     def __init__(self, center: core_compiled.Point2D, radius: float, name: str = ''):
         self.center = center
         self.radius = radius
         self._bounding_rectangle = None
         self.frame = core_compiled.Frame2D(center, core_compiled.X2D, core_compiled.Y2D)
-        CircleMixin.__init__(self, name=name)
+        Curve.__init__(self, name=name)
 
     def __hash__(self):
         return int(round(1e6 * (self.center.x + self.center.y + self.radius)))
@@ -1175,7 +1175,7 @@ class Circle2D(CircleMixin):
                 core_compiled.Point3D(-self.radius, self.center.y, 0)]
 
 
-class Circle3D(CircleMixin):
+class Circle3D(CircleMixin, Curve):
     """
     Defines a Circle in three dimensions, with a center and a radius.
 
@@ -1190,7 +1190,7 @@ class Circle3D(CircleMixin):
                  name: str = ''):
         self.radius = radius
         self.frame = frame
-        CircleMixin.__init__(self, name=name)
+        Curve.__init__(self, name=name)
 
     @property
     def center(self):
