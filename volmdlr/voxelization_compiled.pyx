@@ -25,7 +25,7 @@ cdef struct VoxelExtents:
     double y
     double z
 
-cdef bint triangle_voxel_intersection_c(Triangle triangle, VoxelCenter voxel_center, VoxelExtents voxel_extents):
+cdef bint triangle_intersects_voxel_c(Triangle triangle, VoxelCenter voxel_center, VoxelExtents voxel_extents):
     # Method ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
 
     cdef Point v0, v1, v2
@@ -207,6 +207,35 @@ cdef bint triangle_voxel_intersection_c(Triangle triangle, VoxelCenter voxel_cen
     return True
 
 
+cdef int aabb_intersecting_boxes_c(Point min_point, Point max_point, double voxel_size, Point** centers):
+    cdef int x_start, x_end, y_start, y_end, z_start, z_end, x, y, z, num_centers
+    cdef Point* c_centers
+    cdef Point center
+
+    x_start = int(min_point.x / voxel_size) - 1
+    x_end = int(max_point.x / voxel_size) + 1
+    y_start = int(min_point.y / voxel_size) - 1
+    y_end = int(max_point.y / voxel_size) + 1
+    z_start = int(min_point.z / voxel_size) - 1
+    z_end = int(max_point.z / voxel_size) + 1
+
+    num_centers = (x_end - x_start) * (y_end - y_start) * (z_end - z_start)
+    c_centers = <Point*>malloc(num_centers * sizeof(Point))
+
+    num_centers = 0
+    for x in range(x_start, x_end):
+        for y in range(y_start, y_end):
+            for z in range(z_start, z_end):
+                center.x = round((x + 0.5) * voxel_size, 6)
+                center.y = round((y + 0.5) * voxel_size, 6)
+                center.z = round((z + 0.5) * voxel_size, 6)
+                c_centers[num_centers] = center
+                num_centers += 1
+
+    centers[0] = c_centers
+    return num_centers
+
+
 def triangle_intersects_voxel(
     triangle: Tuple[Tuple[float, ...]], voxel_center: Tuple[float, ...], voxel_extents: List[float]
 ) -> bool:
@@ -248,4 +277,41 @@ def triangle_intersects_voxel(
     extents.y = voxel_extents[1]
     extents.z = voxel_extents[2]
 
-    return triangle_voxel_intersection_c(tri, center, extents)
+    return triangle_intersects_voxel_c(tri, center, extents)
+
+
+def aabb_intersecting_boxes(
+    min_point: Tuple[float, ...], max_point: Tuple[float, ...], voxel_size: float
+) -> List[Tuple[float, ...]]:
+    """
+    Helper method to compute the center of the voxels that intersect with a given axis aligned
+    bounding box (defined by 2 points).
+
+    :param min_point: The minimum point of the bounding box.
+    :type min_point: tuple[float, float, float]
+    :param max_point: The maximum point of the bounding box.
+    :type max_point: tuple[float, float, float]
+    :param voxel_size: The voxel edges size.
+    :type voxel_size: float
+
+    :return: A list of the centers of the intersecting voxels.
+    :rtype: list[tuple[float, float, float]]
+    """
+    cdef Point c_min_point, c_max_point, *c_centers
+    cdef int num_centers
+
+    c_min_point.x = min_point[0]
+    c_min_point.y = min_point[1]
+    c_min_point.z = min_point[2]
+
+    c_max_point.x = max_point[0]
+    c_max_point.y = max_point[1]
+    c_max_point.z = max_point[2]
+
+    num_centers = aabb_intersecting_boxes_c(c_min_point, c_max_point, voxel_size, &c_centers)
+
+    centers = [(c_centers[i].x, c_centers[i].y, c_centers[i].z) for i in range(num_centers)]
+
+    free(c_centers)
+
+    return centers
