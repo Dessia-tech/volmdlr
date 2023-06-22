@@ -143,13 +143,19 @@ setup(
         "gmsh",
         "tqdm",
     ],
-    classifiers=["Topic :: Scientific/Engineering",
-                 "Topic :: Multimedia :: Graphics :: 3D Modeling",
-                 "Development Status :: 5 - Production/Stable"],
-
-    ext_modules=cythonize(["volmdlr/core_compiled.pyx",
-                           "volmdlr/bspline_compiled.pyx",
-                           "volmdlr/bspline_fitting.pyx",
-                           "volmdlr/bspline_evaluators.pyx"]),
+    classifiers=[
+        "Topic :: Scientific/Engineering",
+        "Topic :: Multimedia :: Graphics :: 3D Modeling",
+        "Development Status :: 5 - Production/Stable",
+    ],
+    ext_modules=cythonize(
+        [
+            "volmdlr/core_compiled.pyx",
+            "volmdlr/bspline_compiled.pyx",
+            "volmdlr/bspline_fitting.pyx",
+            "volmdlr/bspline_evaluators.pyx",
+            "volmdlr/voxelization_compiled.pyx",
+        ]
+    ),
     python_requires=">=3.9",
 )
