@@ -17,7 +17,6 @@ from scipy.optimize import least_squares, minimize
 from dessia_common.core import DessiaObject
 from volmdlr.bspline_evaluators import evaluate_single
 import volmdlr.bspline_compiled
-# import volmdlr.core_compiled
 import volmdlr.core
 from volmdlr import display, edges, grid, wires, curves, core_compiled
 import volmdlr.geometry
@@ -867,8 +866,7 @@ class Surface3D(DessiaObject):
 
                 elif current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
                     primitives2d[i] = current_primitive.reverse()
-                elif hasattr(self, "is_singularity_point") and \
-                        self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
+                elif self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                         self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
                     primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, current_primitive.start,
                                                                name="construction"))
@@ -880,8 +878,7 @@ class Surface3D(DessiaObject):
         delta = previous_primitive.end - primitives2d[0].start
         distance = delta.norm()
         is_connected = math.isclose(distance, 0, abs_tol=1e-2)
-        if not is_connected and hasattr(self, "is_singularity_point") and \
-                self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
+        if not is_connected and self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                 self.is_singularity_point(self.point2d_to_3d(primitives2d[0].start)):
             primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start,
                                                     name="construction"))
@@ -1069,6 +1066,10 @@ class Surface3D(DessiaObject):
         if hasattr(self, method_name):
             intersections = getattr(self, method_name)(edge)
         return intersections
+
+    def is_singularity_point(self, point):
+        """Verifies if point is on the surface singularity."""
+        return False
 
 
 class Plane3D(Surface3D):
@@ -3151,7 +3152,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def face_from_base_and_vertex(self, contour: wires.Contour3D, vertex: core_compiled.Point3D, name: str = ''):
 
-        raise AttributeError(f'Use method from ConicalFace3D{volmdlr.faces.ConicalFace3D.face_from_base_and_vertex}')
+        raise AttributeError(f'Use method from ConicalFace3D{volmdlr.faces.ConicalFace3D.from_base_and_vertex}')
 
 
 class SphericalSurface3D(PeriodicalSurface):

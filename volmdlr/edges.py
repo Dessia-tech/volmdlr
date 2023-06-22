@@ -102,7 +102,14 @@ class Edge(dc.DessiaObject):
         Gets the same edge, but in the opposite direction.
 
         """
-        raise NotImplementedError(f'is_close method not implemented by {self.__class__.__name__}')
+        raise NotImplementedError(f'get_reverse method not implemented by {self.__class__.__name__}')
+
+    def split(self):
+        """
+        Gets the same edge, but in the opposite direction.
+
+        """
+        raise NotImplementedError(f'split method not implemented by {self.__class__.__name__}')
 
     def reverse(self):
         if self._reverse is None:

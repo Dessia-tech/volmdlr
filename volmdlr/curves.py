@@ -34,6 +34,12 @@ class Curve(DessiaObject):
         """
         return sorted(points, key=self.abscissa)
 
+    def abscissa(self, point):
+        """
+        Calculate the abscissa of a point on the curve.
+        """
+        raise NotImplementedError(f'abscissa method not implemented by {self.__class__.__name__}')
+
 
 class Line(Curve):
     """
