@@ -10,7 +10,7 @@ VOXEL_SIZE = 0.01
 volume_model = Stl.load_from_file("model.stl").to_volume_model()
 
 # Voxelize the model
-voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="naive")
+voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="iterative")
 
 # Display the result
 volume_model.primitives.append(voxelization.to_closed_shell())

@@ -21,7 +21,7 @@ moved_volume_model = moved_volume_model.translation(volmdlr.Vector3D(0.0, 0.5, 0
 moved_volume_model.primitives[0].color = (0, 0, 1)
 
 # Voxelize the volume model
-voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="naive")
+voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="iterative")
 
 # Move the voxelization
 start = time.perf_counter()
