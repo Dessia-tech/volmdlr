@@ -459,9 +459,9 @@ def manifold_surface_shape_representation(arguments, object_dict):
     primitives = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
-                      vmshells.OpenShell3D):
+                      (vmshells.OpenShell3D, volmdlr.core.Compound)):
             primitives.extend(object_dict[int(arg[1:])].primitives)
-    return vmshells.ClosedShell3D(primitives)
+    return volmdlr.core.Compound(primitives)
 
 
 def faceted_brep(arguments, object_dict):
