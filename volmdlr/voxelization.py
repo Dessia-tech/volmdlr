@@ -117,7 +117,7 @@ class Voxelization(PhysicalObject):
         :return: The symmetric difference between the voxelizations.
         :rtype: Voxelization
         """
-        return self.union(other_voxelization) - self.intersection(other_voxelization)
+        return self.symmetric_difference(other_voxelization)
 
     def __invert__(self) -> "Voxelization":
         """
@@ -327,7 +327,7 @@ class Voxelization(PhysicalObject):
         # Method ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
         # pylint: disable=invalid-name,too-many-locals,too-many-return-statements,too-many-statements,too-many-branches
 
-        return box_intersects_triangle(triangle, voxel_center, voxel_extents)
+        # return box_intersects_triangle(triangle, voxel_center, voxel_extents)
 
         triangle = np.array(triangle)
         box_center = np.array(voxel_center)
@@ -1112,6 +1112,22 @@ class Voxelization(PhysicalObject):
             raise ValueError("Both voxelizations must have same voxel_size to perform difference.")
 
         return Voxelization(self.voxels_centers.difference(other_voxelization.voxels_centers), self.voxel_size)
+
+    def symmetric_difference(self, other_voxelization: "Voxelization") -> "Voxelization":
+        """
+        Create a voxelization that is the Boolean symmetric difference (XOR) of two voxelization.
+        Both voxelization must have same voxel size.
+
+        :param other_voxelization: The other voxelization to compute the Boolean symmetric difference with.
+        :type other_voxelization: Voxelization
+
+        :return: The created voxelization resulting from the Boolean symmetric difference.
+        :rtype: Voxelization
+        """
+        if self.voxel_size != other_voxelization.voxel_size:
+            raise ValueError("Both voxelizations must have same voxel_size to perform symmetric difference.")
+
+        return Voxelization(self.voxels_centers.symmetric_difference(other_voxelization.voxels_centers), self.voxel_size)
 
     def interference(self, other_voxelization: "Voxelization") -> float:
         """
