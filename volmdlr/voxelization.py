@@ -342,6 +342,41 @@ class Voxelization(PhysicalObject):
         f1 = triangle[2] - triangle[1]
         f2 = triangle[0] - triangle[2]
 
+        # REGION TEST THE THREE AXES CORRESPONDING TO THE FACE NORMALS OF AABB B (CATEGORY 1)
+
+        # Exit if...
+        # ... [-extents.X, extents.X] and [min(v0.X,v1.X,v2.X), max(v0.X,v1.X,v2.X)] do not overlap
+        if max(v0[x], v1[x], v2[x]) < -box_extents[x] or min(v0[x], v1[x], v2[x]) > box_extents[x]:
+            return False
+
+        # ... [-extents.Y, extents.Y] and [min(v0.Y,v1.Y,v2.Y), max(v0.Y,v1.Y,v2.Y)] do not overlap
+        if max(v0[y], v1[y], v2[y]) < -box_extents[y] or min(v0[y], v1[y], v2[y]) > box_extents[y]:
+            return False
+
+        # ... [-extents.Z, extents.Z] and [min(v0.Z,v1.Z,v2.Z), max(v0.Z,v1.Z,v2.Z)] do not overlap
+        if max(v0[z], v1[z], v2[z]) < -box_extents[z] or min(v0[z], v1[z], v2[z]) > box_extents[z]:
+            return False
+
+        # ENDREGION
+
+        # REGION TEST SEPARATING AXIS CORRESPONDING TO TRIANGLE FACE NORMAL (CATEGORY 2)
+
+        plane_normal = np.cross(f0, f1)
+        plane_distance = abs(np.dot(plane_normal, v0))
+
+        # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
+        r = (
+            box_extents[x] * abs(plane_normal[x])
+            + box_extents[y] * abs(plane_normal[y])
+            + box_extents[z] * abs(plane_normal[z])
+        )
+
+        # Intersection occurs when plane distance falls within [-r,+r] interval
+        if plane_distance > r:
+            return False
+
+        # ENDREGION
+
         # REGION TEST AXES a00..a22 (CATEGORY 3)
 
         # Test axis a00
@@ -423,41 +458,6 @@ class Voxelization(PhysicalObject):
         p2 = np.dot(v2, a22)
         r = box_extents[x] * abs(f2[y]) + box_extents[y] * abs(f2[x])
         if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
-            return False
-
-        # ENDREGION
-
-        # REGION TEST THE THREE AXES CORRESPONDING TO THE FACE NORMALS OF AABB B (CATEGORY 1)
-
-        # Exit if...
-        # ... [-extents.X, extents.X] and [min(v0.X,v1.X,v2.X), max(v0.X,v1.X,v2.X)] do not overlap
-        if max(v0[x], v1[x], v2[x]) < -box_extents[x] or min(v0[x], v1[x], v2[x]) > box_extents[x]:
-            return False
-
-        # ... [-extents.Y, extents.Y] and [min(v0.Y,v1.Y,v2.Y), max(v0.Y,v1.Y,v2.Y)] do not overlap
-        if max(v0[y], v1[y], v2[y]) < -box_extents[y] or min(v0[y], v1[y], v2[y]) > box_extents[y]:
-            return False
-
-        # ... [-extents.Z, extents.Z] and [min(v0.Z,v1.Z,v2.Z), max(v0.Z,v1.Z,v2.Z)] do not overlap
-        if max(v0[z], v1[z], v2[z]) < -box_extents[z] or min(v0[z], v1[z], v2[z]) > box_extents[z]:
-            return False
-
-        # ENDREGION
-
-        # REGION TEST SEPARATING AXIS CORRESPONDING TO TRIANGLE FACE NORMAL (CATEGORY 2)
-
-        plane_normal = np.cross(f0, f1)
-        plane_distance = abs(np.dot(plane_normal, v0))
-
-        # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
-        r = (
-            box_extents[x] * abs(plane_normal[x])
-            + box_extents[y] * abs(plane_normal[y])
-            + box_extents[z] * abs(plane_normal[z])
-        )
-
-        # Intersection occurs when plane distance falls within [-r,+r] interval
-        if plane_distance > r:
             return False
 
         # ENDREGION
