@@ -487,13 +487,6 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
         babylon_curves = self.babylon_lines(points)[0]
         return babylon_curves
 
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
-        """
-        Gets discretization points of the primitive.
-
-        """
-        raise NotImplementedError(f'discretization_points method not implemented by {self.__class__.__name__}')
-
 
 class BoundingRectangle(dc.DessiaObject):
     """

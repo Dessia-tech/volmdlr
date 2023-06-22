@@ -695,7 +695,6 @@ class Wire2D(WireMixin, volmdlr.core.CompositePrimitive2D):
     A collection of simple primitives, following each other making a wire.
 
     """
-
     def __init__(self, primitives: List[volmdlr.core.Primitive2D],
                  name: str = ''):
         self._bounding_rectangle = None
@@ -2195,13 +2194,13 @@ class Contour2D(ContourMixin, Wire2D):
                                                        i2 + 1:i1:2]]
 
             remaining_transitions.remove(best_transition)
-            point_start, primitive1 = intersections[2 * best_transition + n]
-            point2, primitive2 = intersections[2 * best_transition + 1 + n]
+            point_start, _ = intersections[2 * best_transition + n]
+            point2, _ = intersections[2 * best_transition + 1 + n]
             primitives = self.extract_with_points(point_start, point2, inside=not n)
             last_point = point2
             for transition in enclosed_transitions[best_transition]:
-                point1, primitive1 = intersections[2 * transition + n]
-                point2, primitive2 = intersections[2 * transition + 1 + n]
+                point1, _ = intersections[2 * transition + n]
+                point2, _ = intersections[2 * transition + 1 + n]
                 primitives.append(
                     volmdlr.edges.LineSegment2D(last_point, point1))
                 primitives.extend(
