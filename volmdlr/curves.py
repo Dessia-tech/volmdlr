@@ -415,6 +415,45 @@ class Line2D(Line):
 
         return circle1, circle2
 
+    @staticmethod
+    def get_concurrent_segments_tangent_circles(vector_i, vector_c, vector_d, new_point_k, new_basis):
+        point_k = core_compiled.Point2D(new_basis.local_to_global_coordinates(new_point_k))
+
+        if point_k.is_close(vector_i):
+            return None, None
+
+        # CHANGEMENT DE REPERE:
+        new_u2 = core_compiled.Vector2D(point_k - vector_i).unit_vector()
+        new_v2 = new_u2.unit_vector()
+        new_basis2 = core_compiled.Frame2D(vector_i, new_u2, new_v2)
+        new_vector_c = new_basis2.global_to_local_coordinates(vector_c)
+        new_vector_d = new_basis2.global_to_local_coordinates(vector_d)
+        new_point_k = new_basis2.global_to_local_coordinates(point_k)
+        teta1 = math.atan2(new_vector_c[1], new_vector_c[0] - new_point_k[0])
+        teta2 = math.atan2(new_vector_d[1], new_vector_d[0] - new_point_k[0])
+
+        if teta1 < 0:
+            teta1 += math.pi
+        if teta2 < 0:
+            teta2 += math.pi
+        teta = teta1
+        if not math.isclose(teta1, teta2, abs_tol=1e-08):
+            if math.isclose(teta1, math.pi, abs_tol=1e-08) or math.isclose(
+                    teta1, 0., abs_tol=1e-08):
+                teta = teta2
+            elif math.isclose(teta2, math.pi,
+                              abs_tol=1e-08) or math.isclose(teta2, 0.,
+                                                             abs_tol=1e-08):
+                teta = teta1
+        radius1 = new_point_k[0] * math.sin(teta) / (1 + math.cos(teta))
+        radius2 = new_point_k[0] * math.sin(teta) / (1 - math.cos(teta))
+        circle_center1 = new_basis2.local_to_global_coordinates(core_compiled.Point2D(0, -radius1))
+        circle_center2 = new_basis2.local_to_global_coordinates(core_compiled.Point2D(0, radius2))
+
+        if new_basis.global_to_local_coordinates(circle_center1)[1] > 0:
+            return Circle2D(circle_center1, radius1), Circle2D(circle_center2, radius2)
+        return Circle2D(circle_center2, radius2), Circle2D(circle_center1, radius1)
+
     def create_tangent_circle(self, point, other_line):
         """
         Computes the two circles that are tangent to 2 lines and intersect a point located on one of the two lines.
@@ -450,57 +489,31 @@ class Line2D(Line):
         line_ab = Line2D(core_compiled.Point2D(new_a), core_compiled.Point2D(new_b))
         line_cd = Line2D(core_compiled.Point2D(new_c), core_compiled.Point2D(new_d))
         new_pt_k = core_compiled.Point2D.line_intersection(line_ab, line_cd)
-        pt_k = core_compiled.Point2D(new_basis.local_to_global_coordinates(new_pt_k))
-
-        if pt_k.is_close(vector_i):
-            return None, None
-
-        # CHANGEMENT DE REPERE:
-        new_u2 = core_compiled.Vector2D(pt_k - vector_i)
-        new_u2.normalize()
-        new_v2 = new_u2.normal_vector(unit=True)
-        new_basis2 = core_compiled.Frame2D(vector_i, new_u2, new_v2)
-
-        new_c = new_basis2.global_to_local_coordinates(vector_c)
-        new_d = new_basis2.global_to_local_coordinates(vector_d)
-        new_pt_k = new_basis2.global_to_local_coordinates(pt_k)
-
-        teta1 = math.atan2(new_c[1], new_c[0] - new_pt_k[0])
-        teta2 = math.atan2(new_d[1], new_d[0] - new_pt_k[0])
-
-        if teta1 < 0:
-            teta1 += math.pi
-        if teta2 < 0:
-            teta2 += math.pi
-
-        if not math.isclose(teta1, teta2, abs_tol=1e-08):
-            if math.isclose(teta1, math.pi, abs_tol=1e-08) or math.isclose(
-                    teta1, 0., abs_tol=1e-08):
-                teta = teta2
-            elif math.isclose(teta2, math.pi,
-                              abs_tol=1e-08) or math.isclose(teta2, 0.,
-                                                             abs_tol=1e-08):
-                teta = teta1
-        else:
-            teta = teta1
-
-        radius1 = new_pt_k[0] * math.sin(teta) / (1 + math.cos(teta))
-        radius2 = new_pt_k[0] * math.sin(teta) / (1 - math.cos(teta))
-
-        new_circle_center1 = core_compiled.Point2D(0, -radius1)
-        new_circle_center2 = core_compiled.Point2D(0, radius2)
-
-        circle_center1 = new_basis2.local_to_global_coordinates(new_circle_center1)
-        circle_center2 = new_basis2.local_to_global_coordinates(new_circle_center2)
-
-        if new_basis.global_to_local_coordinates(circle_center1)[1] > 0:
-            circle1 = Circle2D(circle_center1, radius1)
-            circle2 = Circle2D(circle_center2, radius2)
-        else:
-            circle1 = Circle2D(circle_center2, radius2)
-            circle2 = Circle2D(circle_center1, radius1)
-
-        return circle1, circle2
+        return self.get_concurrent_segments_tangent_circles(vector_i, vector_c, vector_d, new_pt_k, new_basis)
+        # pt_k = core_compiled.Point2D(new_basis.local_to_global_coordinates(new_pt_k))
+        #
+        # if pt_k.is_close(vector_i):
+        #     return None, None
+        #
+        # # CHANGEMENT DE REPERE:
+        # new_u2 = core_compiled.Vector2D(pt_k - vector_i).unit_vector()
+        # new_v2 = new_u2.unit_vector()
+        # new_basis2 = core_compiled.Frame2D(vector_i, new_u2, new_v2)
+        #
+        # # new_c = new_basis2.global_to_local_coordinates(vector_c)
+        # # new_d = new_basis2.global_to_local_coordinates(vector_d)
+        # # new_pt_k = new_basis2.global_to_local_coordinates(pt_k)
+        #
+        # # teta = self.get_tangent_circle_theta(new_c, new_d, new_pt_k)
+        # # radius1 = new_pt_k[0] * math.sin(teta) / (1 + math.cos(teta))
+        # # radius2 = new_pt_k[0] * math.sin(teta) / (1 - math.cos(teta))
+        # radius1, radius2 = self.get_tangent_circles_radius()
+        # circle_center1 = new_basis2.local_to_global_coordinates(core_compiled.Point2D(0, -radius1))
+        # circle_center2 = new_basis2.local_to_global_coordinates(core_compiled.Point2D(0, radius2))
+        #
+        # if new_basis.global_to_local_coordinates(circle_center1)[1] > 0:
+        #     return Circle2D(circle_center1, radius1), Circle2D(circle_center2, radius2)
+        # return Circle2D(circle_center2, radius2), Circle2D(circle_center1, radius1)
 
     def cut_between_two_points(self, point1: core_compiled.Point2D,
                                point2: core_compiled.Point2D):
