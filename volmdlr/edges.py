@@ -2166,8 +2166,10 @@ class ArcMixin:
     # :type name: str, optional
     """
 
-    def __init__(self, circle, is_trigo: bool = True):
+    def __init__(self, circle, start, end, is_trigo: bool = True):
         # Edge.__init__(self, start=start, end=end, name=name)
+        self.start = start
+        self.end = end
         self.circle = circle
         self.center = circle.center
         self.is_trigo = is_trigo
@@ -2393,7 +2395,7 @@ class FullArcMixin(ArcMixin):
                  start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
         self.circle = circle
         self.start_end = start_end
-        ArcMixin.__init__(self, circle=circle)  # !!! this is dangerous
+        ArcMixin.__init__(self, circle=circle, start=start_end, end=start_end)  # !!! this is dangerous
 
     @property
     def angle(self):
@@ -2437,7 +2439,7 @@ class Arc2D(ArcMixin, Edge):
         self.is_trigo = is_trigo
         self._angle = None
         self._bounding_rectangle = None
-        ArcMixin.__init__(self, circle, is_trigo)
+        ArcMixin.__init__(self, circle, start, end, is_trigo)
         Edge.__init__(self, start=start, end=end, name=name)
         start_to_center = start - self.circle.center
         end_to_center = end - self.circle.center
@@ -2960,7 +2962,7 @@ class FullArc2D(FullArcMixin, Arc2D):
         dict_['angle'] = self.angle
         dict_['is_trigo'] = self.is_trigo
         dict_['start_end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
-                                              id_method=id_method, id_memo=id_memo, path=path + '/start_end')
+                                                id_method=id_method, id_memo=id_memo, path=path + '/start_end')
         return dict_
 
     def copy(self, *args, **kwargs):
@@ -3720,6 +3722,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
 
     def __init__(self, ellipse: volmdlr_curves.Ellipse2D, start_end: volmdlr.Point2D, name: str = ''):
         FullArcEllipse.__init__(self, ellipse, start_end, name)
+        ArcEllipse2D.__init__(self, ellipse, start_end, start_end, name)
         self.theta = volmdlr.geometry.clockwise_angle(self.ellipse.major_dir, volmdlr.X2D)
         if self.theta == math.pi * 2:
             self.theta = 0.0
@@ -4931,7 +4934,7 @@ class Arc3D(ArcMixin, Edge):
     """
 
     def __init__(self, circle, start, end, name=''):
-        ArcMixin.__init__(self, circle)
+        ArcMixin.__init__(self, circle, start=start, end=end)
         Edge.__init__(self, start=start, end=end, name=name)
         self._angle = None
         self.angle_start, self.angle_end = self.get_start_end_angles()
@@ -4952,9 +4955,9 @@ class Arc3D(ArcMixin, Edge):
         dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
                                               id_method=id_method, id_memo=id_memo, path=path + '/circle')
         dict_['start'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
-                                              id_method=id_method, id_memo=id_memo, path=path + '/start')
+                                            id_method=id_method, id_memo=id_memo, path=path + '/start')
         dict_['end'] = self.end.to_dict(use_pointers=use_pointers, memo=memo,
-                                              id_method=id_method, id_memo=id_memo, path=path + '/end')
+                                        id_method=id_method, id_memo=id_memo, path=path + '/end')
         return dict_
 
     def get_arc_point_angle(self, point):

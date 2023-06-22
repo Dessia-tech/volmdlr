@@ -3091,6 +3091,6 @@ class BSplineFace3D(Face3D):
             neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[1])
         else:
             neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
-                                                                     min(self.surface3d.degree_u,
-                                                                         self.surface3d.degree_v))
+                                                                         min(self.surface3d.degree_u,
+                                                                             self.surface3d.degree_v))
         return volmdlr.wires.Wire3D([neutral_fiber])

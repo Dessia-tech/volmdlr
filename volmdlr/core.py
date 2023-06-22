@@ -1297,6 +1297,7 @@ class Compound(dc.PhysicalObject):
     """
     A class that can be a collection of any volmdlr primitives.
     """
+
     def __init__(self, primitives, name: str = ""):
         self.primitives = primitives
         self._bbox = None

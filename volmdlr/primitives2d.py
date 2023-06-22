@@ -429,11 +429,10 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
 
     def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
                  adapt_radius: bool = False, name: str = ''):
-        RoundedLineSegments.__init__(self, points, radius,
-                                     closed=True,
-                                     adapt_radius=adapt_radius, name='')
+        super().__init__(points, radius, adapt_radius=adapt_radius, name='')
 
         wires.Contour2D.__init__(self, self._primitives(), name)
+        self.closed = True
 
     def copy(self, deep=True, memo=None):
         return self.__class__([point.copy(deep, memo) for point in self.points], self.radius.copy(),

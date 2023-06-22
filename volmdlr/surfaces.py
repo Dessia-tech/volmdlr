@@ -1110,7 +1110,7 @@ class Plane3D(Surface3D):
         frame3d = object_dict[arguments[1]]
         frame3d.normalize()
         frame = core_compiled.Frame3D(frame3d.origin,
-                                frame3d.v, frame3d.w, frame3d.u)
+                                      frame3d.v, frame3d.w, frame3d.u)
         return cls(frame, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -1119,7 +1119,7 @@ class Plane3D(Surface3D):
 
         """
         frame = core_compiled.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                self.frame.v)
+                                      self.frame.v)
         content, frame_id = frame.to_step(current_id)
         plane_id = frame_id + 1
         content += f"#{plane_id} = PLANE('{self.name}',#{frame_id});\n"
@@ -1150,7 +1150,8 @@ class Plane3D(Surface3D):
         return cls(core_compiled.Frame3D(point, v1, v2, normal))
 
     @classmethod
-    def from_plane_vectors(cls, plane_origin: core_compiled.Point3D, plane_x: core_compiled.Vector3D, plane_y: core_compiled.Vector3D):
+    def from_plane_vectors(cls, plane_origin: core_compiled.Point3D,
+                           plane_x: core_compiled.Vector3D, plane_y: core_compiled.Vector3D):
         """
         Initializes a 3D plane object with a given plane origin and plane x and y vectors.
 
@@ -1466,7 +1467,7 @@ class Plane3D(Surface3D):
         :param ax: Matplotlib Axes3D object to plot on. If None, create a new figure.
         :type ax: Axes3D or None
         :param edge_style: edge styles.
-        :type edge_style; EdgeStyle.
+        :type edge_style: EdgeStyle.
         :param length: plotted length
         :type length: float
         :return: Matplotlib Axes3D object containing the plotted wire-frame.
@@ -1565,6 +1566,7 @@ class PeriodicalSurface(Surface3D):
     """
     Abstract class for surfaces with two-pi periodicity that creates some problems.
     """
+
     def point2d_to_3d(self, point2d):
         """
         Abstract method.
@@ -1706,7 +1708,7 @@ class PeriodicalSurface(Surface3D):
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
-                                               old_innner_contour_positioned.primitives + [closing_linesegment2]
+                    old_innner_contour_positioned.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:
@@ -2001,7 +2003,13 @@ class PeriodicalSurface(Surface3D):
             circle3d = curves.Circle3D(core_compiled.Frame3D(
                 center, self.frame.u, -self.frame.v, self.frame.u.cross(-self.frame.v)), self.radius)
         else:
-            circle3d = curves.Circle3D(core_compiled.Frame3D(center, self.frame.u, self.frame.v, self.frame.w), self.radius)
+            circle3d = curves.Circle3D(
+                core_compiled.Frame3D(
+                    center,
+                    self.frame.u,
+                    self.frame.v,
+                    self.frame.w),
+                self.radius)
         if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametic.linesegment":
             if start3d.is_close(end3d):
                 return None
@@ -2049,7 +2057,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :param ax: Matplotlib Axes3D object to plot on. If None, create a new figure.
         :type ax: Axes3D or None
         :param edge_style: edge styles.
-        :type edge_style; EdgeStyle.
+        :type edge_style: EdgeStyle.
         :param length: plotted length
         :type length: float
         :return: Matplotlib Axes3D object containing the plotted wire-frame.
@@ -2085,8 +2093,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
 
         point = core_compiled.Point3D(self.radius * math.cos(point2d.x),
-                                self.radius * math.sin(point2d.x),
-                                point2d.y)
+                                      self.radius * math.sin(point2d.x),
+                                      point2d.y)
         return self.frame.local_to_global_coordinates(point)
 
     def point3d_to_2d(self, point3d):
@@ -2138,7 +2146,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         Translate volmdlr primitive to step syntax.
         """
         frame = core_compiled.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                self.frame.v)
+                                      self.frame.v)
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = CYLINDRICAL_SURFACE('{self.name}',#{frame_id},{round(1000 * self.radius, 4)});\n"
@@ -2284,7 +2292,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         line = curves.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
         center3d_plane = plane3d.line_intersections(line)[0]
         circle3d = curves.Circle3D(core_compiled.Frame3D(center3d_plane, plane3d.frame.u,
-                                                   plane3d.frame.v, plane3d.frame.w), self.radius)
+                                                         plane3d.frame.v, plane3d.frame.w), self.radius)
         return [circle3d]
 
     def concurrent_plane_intersection(self, plane3d):
@@ -2325,7 +2333,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             u_vector = major_dir.unit_vector()
         ellipse = curves.Ellipse3D(major_axis, minor_axis,
                                    core_compiled.Frame3D(center3d_plane, u_vector,
-                                                   plane3d.frame.w.cross(u_vector), plane3d.frame.w))
+                                                         plane3d.frame.w.cross(u_vector), plane3d.frame.w))
         return [ellipse]
 
     def plane_intersection(self, plane3d):
@@ -2405,21 +2413,21 @@ class ToroidalSurface3D(PeriodicalSurface):
     def _bounding_box(self):
         distance = self.tore_radius + self.small_radius
         point1 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point2 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point3 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point4 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
         point5 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point6 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point7 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point8 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
 
         return volmdlr.core.BoundingBox.from_points(
             [point1, point2, point3, point4, point5, point6, point7, point8])
@@ -2464,7 +2472,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         theta = math.atan2(u2, u1)
 
         vector_to_tube_center = core_compiled.Vector3D(self.tore_radius * math.cos(theta),
-                                                 self.tore_radius * math.sin(theta), 0)
+                                                       self.tore_radius * math.sin(theta), 0)
         vector_from_tube_center_to_point = core_compiled.Vector3D(x, y, z) - vector_to_tube_center
         phi2 = volmdlr.geometry.vectors3d_angle(vector_to_tube_center, vector_from_tube_center_to_point)
 
@@ -2522,7 +2530,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
 
         frame = core_compiled.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                self.frame.v)
+                                      self.frame.v)
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = TOROIDAL_SURFACE('{self.name}',#{frame_id}," \
@@ -2621,10 +2629,10 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         point_theta_discontinuity = self.point2d_to_3d(core_compiled.Point2D(math.pi, start.y))
         theta_discontinuity = arc3d.point_belongs(point_theta_discontinuity) and \
-                              not arc3d.is_point_edge_extremity(point_theta_discontinuity)
+            not arc3d.is_point_edge_extremity(point_theta_discontinuity)
         point_phi_discontinuity = self.point2d_to_3d(core_compiled.Point2D(start.x, math.pi))
         phi_discontinuity = arc3d.point_belongs(point_phi_discontinuity) and \
-                            not arc3d.is_point_edge_extremity(point_phi_discontinuity)
+            not arc3d.is_point_edge_extremity(point_phi_discontinuity)
         undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
         undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
         undefined_start_phi = arc3d.start.is_close(point_phi_discontinuity)
@@ -2642,7 +2650,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         point_after_start, point_before_end = self._reference_points(fullarc3d)
         theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
             undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(
-            fullarc3d, start)
+                fullarc3d, start)
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(
             [start, end],
             [undefined_start_theta, undefined_end_theta, undefined_start_phi, undefined_end_phi],
@@ -2818,7 +2826,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         theta = math.atan2(y, x)
 
         vector_to_tube_center = core_compiled.Vector3D(self.tore_radius * math.cos(theta),
-                                                 self.tore_radius * math.sin(theta), 0)
+                                                       self.tore_radius * math.sin(theta), 0)
         vector_from_tube_center_to_point = core_compiled.Vector3D(x, y, z) - vector_to_tube_center
         phi = volmdlr.geometry.vectors3d_angle(vector_to_tube_center, vector_from_tube_center_to_point)
         if z < 0:
@@ -2912,7 +2920,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def to_step(self, current_id):
         frame = core_compiled.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                self.frame.v)
+                                      self.frame.v)
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = CONICAL_SURFACE('{self.name}',#{frame_id},{0.},{round(self.semi_angle, 4)});\n"
@@ -2948,8 +2956,8 @@ class ConicalSurface3D(PeriodicalSurface):
         theta, z = point2d
         radius = math.tan(self.semi_angle) * z
         new_point = core_compiled.Point3D(radius * math.cos(theta),
-                                    radius * math.sin(theta),
-                                    z)
+                                          radius * math.sin(theta),
+                                          z)
         return self.frame.local_to_global_coordinates(new_point)
 
     def point3d_to_2d(self, point3d: core_compiled.Point3D):
@@ -3186,11 +3194,11 @@ class SphericalSurface3D(PeriodicalSurface):
 
     def _bounding_box(self):
         points = [self.frame.origin + core_compiled.Point3D(-self.radius,
-                                                      -self.radius,
-                                                      -self.radius),
+                                                            -self.radius,
+                                                            -self.radius),
                   self.frame.origin + core_compiled.Point3D(self.radius,
-                                                      self.radius,
-                                                      self.radius),
+                                                            self.radius,
+                                                            self.radius),
 
                   ]
         return volmdlr.core.BoundingBox.from_points(points)
@@ -3246,7 +3254,7 @@ class SphericalSurface3D(PeriodicalSurface):
         Translate volmdlr primitive to step syntax.
         """
         frame = core_compiled.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                self.frame.v)
+                                      self.frame.v)
         content, frame_id = frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = SPHERICAL_SURFACE('{self.name}',#{frame_id},{round(1000 * self.radius, 4)});\n"
@@ -3436,10 +3444,15 @@ class SphericalSurface3D(PeriodicalSurface):
             if theta2 == math.pi and theta1 != math.pi:
                 theta2 = -math.pi
 
-            primitives = [edges.LineSegment2D(core_compiled.Point2D(theta1, phi1), core_compiled.Point2D(theta1, half_pi)),
-                          edges.LineSegment2D(core_compiled.Point2D(theta1, half_pi), core_compiled.Point2D(theta2, half_pi),
+            primitives = [edges.LineSegment2D(core_compiled.Point2D(theta1, phi1),
+                                              core_compiled.Point2D(theta1, half_pi)),
+                          edges.LineSegment2D(core_compiled.Point2D(theta1, half_pi),
+                                              core_compiled.Point2D(theta2, half_pi),
                                               name="construction"),
-                          edges.LineSegment2D(core_compiled.Point2D(theta2, half_pi), core_compiled.Point2D(theta2, phi2))
+                          edges.LineSegment2D(
+                core_compiled.Point2D(
+                    theta2, half_pi), core_compiled.Point2D(
+                    theta2, phi2))
                           ]
             return primitives
         warnings.warn("Could not find BREP of the Arc3D on the sphere domain")
@@ -3478,7 +3491,8 @@ class SphericalSurface3D(PeriodicalSurface):
                     edges.LineSegment2D(core_compiled.Point2D(start.x, -0.5 * math.pi),
                                         core_compiled.Point2D(theta2, -0.5 * math.pi),
                                         name="construction"),
-                    edges.LineSegment2D(core_compiled.Point2D(theta2, -0.5 * math.pi), core_compiled.Point2D(theta2, phi2))
+                    edges.LineSegment2D(core_compiled.Point2D(theta2, -0.5 * math.pi),
+                                        core_compiled.Point2D(theta2, phi2))
                 ]
             if arc3d.is_point_edge_extremity(point_negative_singularity):
                 return [
@@ -3486,13 +3500,16 @@ class SphericalSurface3D(PeriodicalSurface):
                     edges.LineSegment2D(core_compiled.Point2D(start.x, 0.5 * math.pi),
                                         core_compiled.Point2D(theta2, 0.5 * math.pi),
                                         name="construction"),
-                    edges.LineSegment2D(core_compiled.Point2D(theta2, 0.5 * math.pi), core_compiled.Point2D(theta2, phi2))
+                    edges.LineSegment2D(core_compiled.Point2D(theta2, 0.5 * math.pi),
+                                        core_compiled.Point2D(theta2, phi2))
                 ]
             return [edges.LineSegment2D(core_compiled.Point2D(theta1, phi1), core_compiled.Point2D(theta1, half_pi)),
                     edges.LineSegment2D(core_compiled.Point2D(theta1, half_pi), core_compiled.Point2D(thetai, half_pi),
                                         name="construction"),
-                    edges.LineSegment2D(core_compiled.Point2D(thetai, half_pi), core_compiled.Point2D(thetai, -half_pi)),
-                    edges.LineSegment2D(core_compiled.Point2D(thetai, -half_pi), core_compiled.Point2D(theta2, -half_pi),
+                    edges.LineSegment2D(core_compiled.Point2D(thetai, half_pi),
+                                        core_compiled.Point2D(thetai, -half_pi)),
+                    edges.LineSegment2D(core_compiled.Point2D(thetai, -half_pi),
+                                        core_compiled.Point2D(theta2, -half_pi),
                                         name="construction"),
                     edges.LineSegment2D(core_compiled.Point2D(theta2, -half_pi), core_compiled.Point2D(theta2, phi2))
                     ]
@@ -3731,8 +3748,10 @@ class SphericalSurface3D(PeriodicalSurface):
             else:
                 half_pi = -0.5 * math.pi
             if abs(phi1) == 0.5 * math.pi:
-                return [edges.LineSegment2D(core_compiled.Point2D(theta3, phi1), core_compiled.Point2D(theta3, -half_pi)),
-                        edges.LineSegment2D(core_compiled.Point2D(theta4, -half_pi), core_compiled.Point2D(theta4, phi2))]
+                return [edges.LineSegment2D(core_compiled.Point2D(theta3, phi1),
+                                            core_compiled.Point2D(theta3, -half_pi)),
+                        edges.LineSegment2D(core_compiled.Point2D(theta4, -half_pi),
+                                            core_compiled.Point2D(theta4, phi2))]
 
             return [edges.LineSegment2D(core_compiled.Point2D(theta1, phi1), core_compiled.Point2D(theta1, -half_pi)),
                     edges.LineSegment2D(core_compiled.Point2D(theta_plus_pi, -half_pi),
@@ -3836,12 +3855,12 @@ class SphericalSurface3D(PeriodicalSurface):
                 else:
                     half_pi = 0.5 * math.pi
                 if not first_start.is_close(core_compiled.Point2D(first_start.x, half_pi)):
-                    lines = [edges.LineSegment2D(last_end, core_compiled.Point2D(last_end.x, half_pi), name="construction"),
-                             edges.LineSegment2D(core_compiled.Point2D(last_end.x, half_pi),
-                                                 core_compiled.Point2D(first_start.x, half_pi), name="construction"),
-                             edges.LineSegment2D(core_compiled.Point2D(first_start.x, half_pi),
-                                                 first_start, name="construction")
-                             ]
+                    lines = [edges.LineSegment2D(
+                        last_end, core_compiled.Point2D(last_end.x, half_pi), name="construction"),
+                        edges.LineSegment2D(core_compiled.Point2D(last_end.x, half_pi),
+                                            core_compiled.Point2D(first_start.x, half_pi), name="construction"),
+                        edges.LineSegment2D(core_compiled.Point2D(first_start.x, half_pi),
+                                            first_start, name="construction")]
                     primitives2d.extend(lines)
             else:
                 primitives2d.append(edges.LineSegment2D(last_end, first_start))
@@ -3897,7 +3916,8 @@ class SphericalSurface3D(PeriodicalSurface):
         circle_radius = math.sqrt(self.radius ** 2 - dist ** 2)
         circle_center = plane3d.line_intersections(line)[0]
         start_end = circle_center + plane3d.frame.u * circle_radius
-        circle = curves.Circle3D(core_compiled.Frame3D(circle_center, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
+        circle = curves.Circle3D(core_compiled.Frame3D(circle_center, plane3d.frame.u,
+                                                       plane3d.frame.v, plane3d.frame.w),
                                  circle_radius)
         return [edges.FullArc3D(circle, start_end)]
 
@@ -4866,8 +4886,8 @@ class BSplineSurface3D(Surface3D):
         u = min(max(u, 0), 1)
         v = min(max(v, 0), 1)
         return core_compiled.Point3D(*evaluate_single((u, v), self.surface.data,
-                                                self.surface.rational,
-                                                self.surface.evaluator._span_func))
+                                                      self.surface.rational,
+                                                      self.surface.evaluator._span_func))
         # uses derivatives for performance because it's already compiled
         # return core_compiled.Point3D(*self.derivatives(u, v, 0)[0][0])
         # return core_compiled.Point3D(*self.surface.evaluate_single((x, y)))
@@ -5815,28 +5835,30 @@ class BSplineSurface3D(Surface3D):
                         3].point_belongs(point2d)):
                 break
 
-        frame_deformed = core_compiled.Frame2D(finite_elements[k].center_of_mass(),
-                                         core_compiled.Vector2D(finite_elements[k].primitives[1].middle_point()[0] -
-                                                          finite_elements[k].center_of_mass()[0],
-                                                          finite_elements[k].primitives[1].middle_point()[1] -
-                                                          finite_elements[k].center_of_mass()[1]),
-                                         core_compiled.Vector2D(finite_elements[k].primitives[0].middle_point()[0] -
-                                                          finite_elements[k].center_of_mass()[0],
-                                                          finite_elements[k].primitives[0].middle_point()[1] -
-                                                          finite_elements[k].center_of_mass()[1]))
+        frame_deformed = core_compiled.Frame2D(
+            finite_elements[k].center_of_mass(),
+            core_compiled.Vector2D(finite_elements[k].primitives[1].middle_point()[0] -
+                                   finite_elements[k].center_of_mass()[0],
+                                   finite_elements[k].primitives[1].middle_point()[1] -
+                                   finite_elements[k].center_of_mass()[1]),
+            core_compiled.Vector2D(finite_elements[k].primitives[0].middle_point()[0] -
+                                   finite_elements[k].center_of_mass()[0],
+                                   finite_elements[k].primitives[0].middle_point()[1] -
+                                   finite_elements[k].center_of_mass()[1]))
 
         point2d_frame_deformed = core_compiled.Point2D(point2d.frame_mapping(frame_deformed, 'new')[0],
-                                                 point2d.frame_mapping(frame_deformed, 'new')[1])
+                                                       point2d.frame_mapping(frame_deformed, 'new')[1])
 
-        frame_inital = core_compiled.Frame2D(finite_elements_initial[k].center_of_mass(),
-                                       core_compiled.Vector2D(finite_elements_initial[k].primitives[1].middle_point()[0] -
-                                                        finite_elements_initial[k].center_of_mass()[0],
-                                                        finite_elements_initial[k].primitives[1].middle_point()[1] -
-                                                        finite_elements_initial[k].center_of_mass()[1]),
-                                       core_compiled.Vector2D(finite_elements_initial[k].primitives[0].middle_point()[0] -
-                                                        finite_elements_initial[k].center_of_mass()[0],
-                                                        finite_elements_initial[k].primitives[0].middle_point()[1] -
-                                                        finite_elements_initial[k].center_of_mass()[1]))
+        frame_inital = core_compiled.Frame2D(
+            finite_elements_initial[k].center_of_mass(),
+            core_compiled.Vector2D(finite_elements_initial[k].primitives[1].middle_point()[0] -
+                                   finite_elements_initial[k].center_of_mass()[0],
+                                   finite_elements_initial[k].primitives[1].middle_point()[1] -
+                                   finite_elements_initial[k].center_of_mass()[1]),
+            core_compiled.Vector2D(finite_elements_initial[k].primitives[0].middle_point()[0] -
+                                   finite_elements_initial[k].center_of_mass()[0],
+                                   finite_elements_initial[k].primitives[0].middle_point()[1] -
+                                   finite_elements_initial[k].center_of_mass()[1]))
 
         point2d = point2d_frame_deformed.frame_mapping(frame_inital, 'old')
         if point2d.x < 0:
@@ -6379,10 +6401,10 @@ class BSplineSurface3D(Surface3D):
             z = least_squares(fun, x0=x0, bounds=([0, 1]))
             if z.fun < 1e-20:
                 solution = z.x
-                intersection_points.append(core_compiled.Point3D(self.surface.evaluate_single((solution[0], solution[1]))[0],
-                                                           self.surface.evaluate_single((solution[0], solution[1]))[1],
-                                                           self.surface.evaluate_single((solution[0], solution[1]))[
-                                                               2]))
+                intersection_points.append(core_compiled.Point3D(
+                    self.surface.evaluate_single((solution[0], solution[1]))[0],
+                    self.surface.evaluate_single((solution[0], solution[1]))[1],
+                    self.surface.evaluate_single((solution[0], solution[1]))[2]))
         return intersection_points
 
     def error_with_point3d(self, point3d):
@@ -6823,7 +6845,7 @@ class BSplineSurface3D(Surface3D):
                 closing_linesegment2 = edges.LineSegment2D(inner_contour.primitives[-1].end,
                                                            outer_contour.primitives[0].start)
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
-                                               inner_contour.primitives + [closing_linesegment2]
+                    inner_contour.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:

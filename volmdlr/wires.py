@@ -695,6 +695,7 @@ class Wire2D(WireMixin, volmdlr.core.CompositePrimitive2D):
     A collection of simple primitives, following each other making a wire.
 
     """
+
     def __init__(self, primitives: List[volmdlr.core.Primitive2D],
                  name: str = ''):
         self._bounding_rectangle = None

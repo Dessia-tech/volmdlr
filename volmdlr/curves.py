@@ -1342,7 +1342,7 @@ class Circle3D(CircleMixin, Curve):
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
         circle_frame = core_compiled.Frame3D(self.center, self.frame.w, self.frame.u,
-                                       self.frame.v)
+                                             self.frame.v)
         content, frame_id = circle_frame.to_step(current_id)
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{round(self.radius * 1000, 3)});\n"
@@ -1494,7 +1494,7 @@ class Circle3D(CircleMixin, Curve):
 
         """
         frame = core_compiled.Frame3D(self.center, self.frame.u, -self.frame.v,
-                                self.frame.u.cross(-self.frame.v))
+                                      self.frame.u.cross(-self.frame.v))
         return Circle3D(frame, self.radius)
 
     def trim(self, point1: core_compiled.Point3D, point2: core_compiled.Point3D):
@@ -1569,7 +1569,7 @@ class Ellipse2D(Curve):
         self.theta = geometry.clockwise_angle(self.major_dir, core_compiled.X2D)
         if self.theta == math.pi * 2:
             self.theta = 0.0
-        DessiaObject.__init__(self, name=name)
+        Curve.__init__(self, name=name)
 
     def __hash__(self):
         return hash((self.center, self.major_dir, self.major_axis, self.minor_axis))
@@ -1823,7 +1823,7 @@ class Ellipse3D(Curve):
         self.major_dir = frame.u
         self.minor_dir = frame.v
         self._self_2d = None
-        DessiaObject.__init__(self, name=name)
+        Curve.__init__(self, name=name)
 
     @property
     def self_2d(self):
@@ -2012,5 +2012,5 @@ class Ellipse3D(Curve):
 
         """
         frame = core_compiled.Frame3D(self.center, self.frame.u, -self.frame.v,
-                                self.frame.u.cross(-self.frame.v))
+                                      self.frame.u.cross(-self.frame.v))
         return Ellipse3D(self.major_axis, self.minor_axis, frame)

@@ -151,10 +151,8 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     _non_data_hash_attributes = ['name']
 
     def __init__(self, points: List[volmdlr.Point3D], radius: float, adapt_radius: bool = False, name: str = ''):
-        volmdlr.primitives.RoundedLineSegments.__init__(
-                self, points, radius, closed=True, adapt_radius=adapt_radius,
-                name='')
-
+        super().__init__(points, radius, adapt_radius=adapt_radius, name='')
+        self.closed = True
         volmdlr.wires.Contour3D.__init__(self, primitives=self._primitives(), name=name)
 
 
@@ -814,7 +812,7 @@ class RevolvedProfile(shells.ClosedShell3D):
         Volume from Guldin formulae.
         """
         point1 = self.axis_point.plane_projection3d(self.plane_origin,
-                                                   self.x, self.y)
+                                                    self.x, self.y)
         p1_2d = point1.to_2d(self.axis_point, self.x, self.y)
         p2_3d = self.axis_point + volmdlr.Point3D(self.axis.vector)
         p2_2d = p2_3d.to_2d(self.plane_origin, self.x, self.y)
