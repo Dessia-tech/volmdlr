@@ -6,7 +6,7 @@ from volmdlr.core import VolumeModel
 from volmdlr.primitives3d import Cylinder, Sphere
 from volmdlr.voxelization import Voxelization
 
-VOXEL_SIZE = 0.005
+VOXEL_SIZE = 0.01
 
 # Create a volume model
 sphere = Sphere(volmdlr.O3D, 0.1, name="Sphere")
@@ -17,5 +17,5 @@ volume_model = VolumeModel([sphere, cylinder])
 voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="naive", name="Voxelization")
 
 # Display the result
-volume_model.primitives.append(voxelization.to_closed_shell())
+volume_model.primitives.append(voxelization.to_closed_triangle_shell())
 volume_model.babylonjs()
