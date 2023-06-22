@@ -8,14 +8,14 @@ import volmdlr
 from volmdlr.voxelization import Voxelization
 from volmdlr.stl import Stl
 
-VOXEL_SIZE = 0.023
+VOXEL_SIZE = 0.02
 
 # Define the volume model from file
 volume_model = volmdlr.stl.Stl.load_from_file("model.stl").to_volume_model()
 volume_model.color = (1, 0, 0)
 
 # Move the volume model
-moved_volume_model = volume_model.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2.3)
+moved_volume_model = volume_model.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2.1)
 moved_volume_model = moved_volume_model.translation(volmdlr.Vector3D(0.0, 0.5, 0.3))
 moved_volume_model.color = (0, 0, 1)
 
@@ -23,7 +23,7 @@ moved_volume_model.color = (0, 0, 1)
 voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="naive")
 
 start = time.perf_counter()
-moved_voxelization = voxelization.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2.3)
+moved_voxelization = voxelization.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2.1)
 print(f"Voxels rotation computing time: {(time.perf_counter() - start)*1000}ms")
 
 start = time.perf_counter()
@@ -38,10 +38,13 @@ moved_volume_model.primitives.append(moved_voxelization.to_closed_triangle_shell
 moved_volume_model.babylonjs()
 
 # Display the difference between the voxelization from moved volume model and the moved voxelization
+equality = voxelization_from_moved_volume_model == moved_voxelization
 print(
-    f"Moved volume model voxelization and moved voxelization are equal: {voxelization_from_moved_volume_model == moved_voxelization}"
+    f"Moved volume model voxelization and moved voxelization are equal: {equality}"
 )
-if not voxelization_from_moved_volume_model == moved_voxelization:
+if not equality:
     print("Displaying the symmetric difference")
     symmetric_diff = moved_voxelization ^ voxelization_from_moved_volume_model
+    # equivalent to moved_voxelization.symmetric_difference(voxelization_from_moved_volume_model)
+
     symmetric_diff.babylonjs()
