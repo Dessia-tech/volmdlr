@@ -1530,7 +1530,7 @@ class Ellipse2D(Curve):
     :type frame: core_compiled.Frame2D.
 
     :Example:
-    >>> ellipse2d = Ellipse2D(4, 2, volmdlr.O2D, core_compiled.Vector2D(1, 1))
+    >>> ellipse2d = Ellipse2D(4, 2, core_compiled.O2D, core_compiled.Vector2D(1, 1))
     """
 
     def __init__(self, major_axis, minor_axis, frame, name=''):
