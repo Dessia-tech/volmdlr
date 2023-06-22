@@ -738,7 +738,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     if not point_in_list(point_contour, points):
                         points.append(point_contour)
 
-                if isinstance(contour, volmdlr.wires.Circle2D):
+                if isinstance(contour, curves.Circle2D):
                     pass
                 else:
                     for _, primitive in enumerate(contour.primitives):

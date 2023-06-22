@@ -802,6 +802,10 @@ class Surface3D(DessiaObject):
     y_periodicity = None
     face_class = None
 
+    def __init__(self, frame: core_compiled.Frame3D = None, name: str = ''):
+        self.frame = frame
+        DessiaObject.__init__(self, name=name)
+
     def point2d_to_3d(self, point2d):
         raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
 
@@ -1079,7 +1083,7 @@ class Plane3D(Surface3D):
 
         self.frame = frame
         self.name = name
-        Surface3D.__init__(self, name=name)
+        Surface3D.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
         return hash(('plane 3d', self.frame))
@@ -1560,7 +1564,6 @@ class PeriodicalSurface(Surface3D):
     """
     Abstract class for surfaces with two-pi periodicity that creates some problems.
     """
-
     def point2d_to_3d(self, point2d):
         """
         Abstract method.
@@ -2035,7 +2038,7 @@ class CylindricalSurface3D(PeriodicalSurface):
     def __init__(self, frame, radius: float, name: str = ''):
         self.frame = frame
         self.radius = radius
-        PeriodicalSurface.__init__(self, name=name)
+        PeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5),
              length: float = 1):
@@ -2385,7 +2388,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         self.frame = frame
         self.tore_radius = tore_radius
         self.small_radius = small_radius
-        PeriodicalSurface.__init__(self, name=name)
+        PeriodicalSurface.__init__(self, frame=frame, name=name)
 
         self._bbox = None
 
@@ -2858,7 +2861,7 @@ class ConicalSurface3D(PeriodicalSurface):
                  name: str = ''):
         self.frame = frame
         self.semi_angle = semi_angle
-        PeriodicalSurface.__init__(self, name=name)
+        PeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
         z = kwargs.get("z", 0.5)
@@ -3167,7 +3170,7 @@ class SphericalSurface3D(PeriodicalSurface):
     def __init__(self, frame, radius, name=''):
         self.frame = frame
         self.radius = radius
-        PeriodicalSurface.__init__(self, name=name)
+        PeriodicalSurface.__init__(self, frame=frame, name=name)
 
         # Hidden Attributes
         self._bbox = None
@@ -4045,7 +4048,7 @@ class ExtrusionSurface3D(Surface3D):
             self.frame = core_compiled.Frame3D.from_point_and_vector(edge.start, direction, volmdlr.Z3D)
         self._x_periodicity = False
 
-        Surface3D.__init__(self, name=name)
+        Surface3D.__init__(self, frame=self.frame, name=name)
 
     @property
     def x_periodicity(self):
@@ -4289,7 +4292,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         v_vector = w_vector.cross(u_vector)
         self.frame = core_compiled.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
 
-        PeriodicalSurface.__init__(self, name=name)
+        PeriodicalSurface.__init__(self, frame=self.frame, name=name)
 
     def point2d_to_3d(self, point2d: core_compiled.Point2D):
         """
@@ -4356,7 +4359,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         y_periodicity = None
         name = arguments[0][1:-1]
         wire = object_dict[arguments[1]]
-        if wire.__class__ is wires.Circle3D:
+        if wire.__class__ is curves.Circle3D:
             start_end = wire.center + wire.frame.u * wire.radius
             wire = edges.FullArc3D(wire.frame.origin, start_end, wire.frame.w)
             y_periodicity = 1
@@ -4537,6 +4540,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         if self.wire.__class__.__name__ == "Line3D":
             return False
         return self.wire.is_point_edge_extremity(point)
+
 
 class BSplineSurface3D(Surface3D):
     """

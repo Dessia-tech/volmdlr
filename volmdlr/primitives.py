@@ -25,7 +25,7 @@ class RoundedLineSegments:
     _non_serializable_attributes = ['line_class', 'arc_class', 'basis_primitives', 'primitives']
 
     line_class = volmdlr.edges.LineSegment
-    arc_class = volmdlr.edges.Arc
+    arc_class = volmdlr.edges.ArcMixin
 
     def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
                  closed: bool = False, adapt_radius: bool = False, name: str = ''):
