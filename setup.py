@@ -141,6 +141,7 @@ setup(
         "trimesh",
         "rtree",
         "gmsh",
+        "tqdm",
     ],
     classifiers=["Topic :: Scientific/Engineering",
                  "Topic :: Multimedia :: Graphics :: 3D Modeling",
