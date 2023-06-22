@@ -6,7 +6,7 @@ from volmdlr.core import VolumeModel
 from volmdlr.primitives3d import Cylinder, Sphere
 from volmdlr.voxelization import Voxelization
 
-VOXEL_SIZE = 0.01
+VOXEL_SIZE = 0.005
 
 # Create a volume model
 sphere = Sphere(volmdlr.O3D, 0.1, name="Sphere")
