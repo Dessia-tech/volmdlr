@@ -157,7 +157,7 @@ class Line(Curve):
         :return: The point that corresponds to the given abscissa.
         :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
         """
-        return self.point1 + (self.point2 - self.point1) * abscissa
+        return self.point1 + self.unit_direction_vector() * abscissa
 
     def split(self, split_point):
         """
