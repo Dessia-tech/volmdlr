@@ -866,6 +866,9 @@ class Voxelization(PhysicalObject):
         :return: The split polygon into multiple polygons, defined by segment list.
         :rtype: list[list[tuple[tuple[float, float], tuple[float, float]]]]
         """
+        # TODO: refactor this method to make it more understandable
+        # pylint: disable=too-many-locals,too-many-branches
+
         points = [segment[0] for segment in ordered_segments]
 
         if len(points) == len(set(points)):
@@ -1008,6 +1011,9 @@ class Voxelization(PhysicalObject):
         :return: The created ClosedShell3D with only PlaneFace3D.
         :rtype: ClosedShell3D
         """
+        # TODO: refactor this method to make it more understandable
+        # pylint: disable=too-many-nested-blocks
+
         polygons = self._triangles_to_closed_polygons(self.to_triangles())
         planes = [PLANE3D_OYZ, PLANE3D_OXZ, PLANE3D_OXY]
         faces = []
@@ -1186,7 +1192,7 @@ class Voxelization(PhysicalObject):
         :return: The computed rotation matrix.
         :rtype: numpy.array
         """
-        # pylint: disable=invalid-name
+        # pylint: disable=invalid-name,too-many-locals
         axis = np.array([axis.x, axis.y, axis.z])
 
         axis = axis / np.linalg.norm(axis)
