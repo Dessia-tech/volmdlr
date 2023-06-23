@@ -1982,8 +1982,7 @@ class PeriodicalSurface(Surface3D):
                 return [arcellipse]
             plane3d = Plane3D.from_3_points(start, middle_point, extra_point)
             ellipse = self.concurrent_plane_intersection(plane3d)[0]
-            return [edges.FullArcEllipse3D(start, ellipse.major_axis, ellipse.minor_axis,
-                                           ellipse.center, ellipse.normal, ellipse.major_dir)]
+            return [edges.FullArcEllipse3D(ellipse, start)]
         n = len(bspline_curve2d.control_points)
         points = [self.point2d_to_3d(p)
                   for p in bspline_curve2d.discretization_points(number_points=n)]

@@ -996,9 +996,9 @@ class Circle2D(CircleMixin, Curve):
                                                       intersection_points[1])
             arc1, arc2 = self.split(intersection_points[0],
                                     intersection_points[1])
-            from volmdlr import wires
-            contour1 = wires.Contour2D([arc1, linesegment.copy()])
-            contour2 = wires.Contour2D([arc2, linesegment.copy()])
+            # from volmdlr import wires
+            contour1 = volmdlr.wires.Contour2D([arc1, linesegment.copy()])
+            contour2 = volmdlr.wires.Contour2D([arc2, linesegment.copy()])
             return [contour1, contour2]
         raise ValueError
 
@@ -1933,11 +1933,10 @@ class Ellipse3D(Curve):
         :param point2: trim point 2.
         :return: An arcellipse between the two given points.
         """
-        from volmdlr import edges
+        # from volmdlr import edges
         if point1.is_close(point2):
-            return edges.FullArcEllipse3D(point1, self.major_axis, self.minor_axis, self.center, self.normal,
-                                          self.major_dir, self.name)
-        return edges.ArcEllipse3D(self, point1, point2)
+            return volmdlr.edges.FullArcEllipse3D(self, point1, self.name)
+        return volmdlr.edges.ArcEllipse3D(self, point1, point2)
 
     def rotation(self, center: core_compiled.Point3D, axis: core_compiled.Vector3D, angle: float):
         """

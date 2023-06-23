@@ -104,7 +104,7 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError(f'get_reverse method not implemented by {self.__class__.__name__}')
 
-    def split(self):
+    def split(self, split_point):
         """
         Gets the same edge, but in the opposite direction.
 
@@ -440,7 +440,7 @@ class LineSegment(Edge):
 
     """
 
-    def __init__(self, start: Union[volmdlr.Point2D, volmdlr.Point3D], end: Union[volmdlr.Point2D, volmdlr.Point3D], *,
+    def __init__(self, start: Union[volmdlr.Point2D, volmdlr.Point3D], end: Union[volmdlr.Point2D, volmdlr.Point3D],
                  line: [volmdlr_curves.Line2D, volmdlr_curves.Line3D] = None, name: str = ''):
         self.line = line
         Edge.__init__(self, start, end, name)
@@ -3815,7 +3815,7 @@ class LineSegment3D(LineSegment):
             raise NotImplementedError('Start and end of Linesegment3D are equal')
         if not line:
             self.line = volmdlr_curves.Line3D(start, end)
-        LineSegment.__init__(self, start=start, end=end, name=name)
+        LineSegment.__init__(self, start=start, end=end, line=self.line, name=name)
         self._bbox = None
 
     @property
@@ -3997,9 +3997,10 @@ class LineSegment3D(LineSegment):
         edge2d.plot(ax=ax, edge_style=EdgeStyle(color=color, width=width))
         return ax
 
-    def plot_data(self, x_3d, y_3d, color=plot_data.colors.BLACK, stroke_width=1):
+    def plot_data(self, x_3d, y_3d, edge_style = plot_data.EdgeStyle(color_stroke=plot_data.colors.BLACK,
+                                                                     line_width=1, dashline=None)):
         edge2d = self.plane_projection2d(volmdlr.O3D, x_3d, y_3d)
-        return edge2d.plot_data(plot_data.EdgeStyle(color_stroke=color, line_width=stroke_width))
+        return edge2d.plot_data(edge_style)
 
     def to_2d(self, plane_origin, x, y):
         """
@@ -5303,12 +5304,12 @@ class Arc3D(ArcMixin, Edge):
             angle1, angle2 = arc2d.angle1, arc2d.angle2
             if angle2 < angle1:
                 angle2 += volmdlr.TWO_PI
-            from volmdlr import surfaces, faces
-            cylinder = surfaces.CylindricalSurface3D(
+            # from volmdlr import surfaces, faces
+            cylinder = volmdlr.surfaces.CylindricalSurface3D(
                 volmdlr.Frame3D(self.circle.center, u, v, w),
                 self.circle.radius
             )
-            return [faces.CylindricalFace3D.from_surface_rectangular_cut(
+            return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
                 cylinder, angle1, angle2, 0., extrusion_vector.norm())]
         raise NotImplementedError(f'Elliptic faces not handled: dot={self.circle.normal.dot(extrusion_vector)}')
 
@@ -5350,12 +5351,12 @@ class Arc3D(ArcMixin, Edge):
                 'Outside of plane revolution not supported')
 
         radius = tore_center.point_distance(self.circle.center)
-        from volmdlr import surfaces, faces
-        surface = surfaces.ToroidalSurface3D(
+        # from volmdlr import surfaces, faces
+        surface = volmdlr.surfaces.ToroidalSurface3D(
             volmdlr.Frame3D(tore_center, u, v, axis), radius,
             self.circle.radius)
         arc2d = self.to_2d(tore_center, u, axis)
-        return [faces.ToroidalFace3D.from_surface_rectangular_cut(surface, 0, angle, arc2d.angle1, arc2d.angle2)]
+        return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(surface, 0, angle, arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
         u = self.start - self.circle.center

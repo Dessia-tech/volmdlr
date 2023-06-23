@@ -543,15 +543,14 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return point1_min, point2_min
 
-    def distance_to_shell(self, other_shell: 'OpenShell3D', resolution: float):
+    def distance_to_shell(self, other_shell: 'OpenShell3D'):
         """
         Gets the distance between two shells.
 
         :param other_shell: other shell.
-        :param resolution: resolution used.
         :return: return distance between faces.
         """
-        min_dist = self.minimum_distance_points(other_shell, resolution)
+        min_dist = self.minimum_distance_points(other_shell)
         if min_dist is not None:
             point1, point2 = min_dist
             return point1.point_distance(point2)

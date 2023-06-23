@@ -9,6 +9,8 @@ import warnings
 from random import uniform
 from typing import Dict, List, Tuple
 
+import plot_data
+
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -23,44 +25,25 @@ import volmdlr.primitives
 import volmdlr.wires
 from volmdlr import shells, surfaces, curves
 
-# import dessia_common.typings as dct
 
 npy.seterr(divide='raise')
 
 
-class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
-                                volmdlr.primitives.RoundedLineSegments):
-    """
-    Defines an open rounded line segments.
-
-    :param points: Points used to draw the wire.
-    :type points: List of Point3D.
-    :param radius: Radius used to connect different parts of the wire.
-    :type radius: {position1(n): float which is the radius linked the n-1 and.
-    n+1 points, position2(n+1):...}
-    """
-    _non_data_eq_attributes = ['name']
-    _non_data_hash_attributes = ['name']
-
+class RoundedLineSegments3D(volmdlr.primitives.RoundedLineSegments):
     line_class = volmdlr.edges.LineSegment3D
     arc_class = volmdlr.edges.Arc3D
 
     def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
                  adapt_radius: bool = False, name: str = ''):
-        volmdlr.primitives.RoundedLineSegments.__init__(
-            self, points, radius, closed=False, adapt_radius=adapt_radius,
-            name='')
-
-        volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
+        volmdlr.primitives.RoundedLineSegments.__init__(self, points, radius, adapt_radius=adapt_radius, name=name)
 
     def arc_features(self, point_index: int):
-        # raise NotImplementedError
         radius = self.radius[point_index]
         pt1, pti, pt2 = self.get_points(point_index)
         dist1 = (pt1 - pti).norm()
         dist2 = (pt2 - pti).norm()
         dist3 = (pt1 - pt2).norm()
-        alpha = math.acos(-(dist3**2 - dist1**2 - dist2**2) / (2 * dist1 * dist2)) / 2.
+        alpha = math.acos(-(dist3 ** 2 - dist1 ** 2 - dist2 ** 2) / (2 * dist1 * dist2)) / 2.
         dist = radius / math.tan(alpha)
 
         u1 = (pt1 - pti) / dist1
@@ -97,20 +80,20 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
                                for point in self.points],
                               self.radius, self.closed, self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D,
-                         axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        OpenRoundedLineSegments3D rotation. Object is updated inplace.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for point in self.points:
-            point.rotation_inplace(center, axis, angle)
+    # def rotation_inplace(self, center: volmdlr.Point3D,
+    #                      axis: volmdlr.Vector3D,
+    #                      angle: float):
+    #     """
+    #     OpenRoundedLineSegments3D rotation. Object is updated inplace.
+    #
+    #     :param center: rotation center
+    #     :param axis: rotation axis
+    #     :param angle: rotation angle
+    #     """
+    #     warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+    #
+    #     for point in self.points:
+    #         point.rotation_inplace(center, axis, angle)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -123,20 +106,40 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
                                for point in self.points],
                               self.radius, self.closed, self.name)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        OpenRoundedLineSegments3D translation. Object is updated inplace.
+    # def translation_inplace(self, offset: volmdlr.Vector3D):
+    #     """
+    #     OpenRoundedLineSegments3D translation. Object is updated inplace.
+    #
+    #     :param offset: translation vector
+    #     """
+    #     warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
+    #
+    #     for point in self.points:
+    #         point.translation_inplace(offset)
 
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
-        for point in self.points:
-            point.translation_inplace(offset)
+class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D, RoundedLineSegments3D):
+    """
+    Defines an open rounded line segments.
+
+    :param points: Points used to draw the wire.
+    :type points: List of Point3D.
+    :param radius: Radius used to connect different parts of the wire.
+    :type radius: {position1(n): float which is the radius linked the n-1 and.
+    n+1 points, position2(n+1):...}
+    """
+    _non_data_eq_attributes = ['name']
+    _non_data_hash_attributes = ['name']
+
+    def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
+                 adapt_radius: bool = False, name: str = ''):
+        RoundedLineSegments3D.__init__(self, points, radius, adapt_radius=adapt_radius, name='')
+        self.closed = False
+
+        volmdlr.wires.Wire3D.__init__(self, self._primitives(), name)
 
 
-class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
-                                  OpenRoundedLineSegments3D, volmdlr.primitives.RoundedLineSegments):
+class ClosedRoundedLineSegments3D(RoundedLineSegments3D, volmdlr.wires.Contour3D):
     """
     Defines a closed rounded line segment in 3D.
 
@@ -151,10 +154,8 @@ class ClosedRoundedLineSegments3D(volmdlr.wires.Contour3D,
     _non_data_hash_attributes = ['name']
 
     def __init__(self, points: List[volmdlr.Point3D], radius: float, adapt_radius: bool = False, name: str = ''):
-        volmdlr.primitives.RoundedLineSegments.__init__(
-                self, points, radius, closed=True, adapt_radius=adapt_radius,
-                name='')
-
+        RoundedLineSegments3D.__init__(self, points, radius, adapt_radius, name)
+        self.closed = True
         volmdlr.wires.Contour3D.__init__(self, primitives=self._primitives(), name=name)
 
 
@@ -444,13 +445,11 @@ class Block(shells.ClosedShell3D):
         return Block(new_frame, color=self.color,
                      alpha=self.alpha, name=self.name)
 
-    def plot_data(self, x3d, y3d, marker=None, color='black', stroke_width=1,
-                  dash=False, opacity=1, arrow=False):
+    def plot_data(self, x3d, y3d, edge_style = plot_data.EdgeStyle):
         """Plot the 2D projections of a block."""
         lines = []
         for edge3d in self.edges():
-            lines.append(edge3d.plot_data(x3d, y3d, marker, color,
-                                          stroke_width, dash, opacity, arrow))
+            lines.append(edge3d.plot_data(x3d, y3d, edge_style))
 
         return lines
 
