@@ -1025,7 +1025,9 @@ class Voxelization(PhysicalObject):
         return Voxelization(intersecting_voxels, self.voxel_size)
 
     @classmethod
-    def from_voxel_matrix(cls, voxel_matrix: List[List[List[bool]]], voxel_size: float, min_voxel_center: Point):
+    def from_voxel_matrix(
+        cls, voxel_matrix: List[List[List[bool]]], voxel_size: float, voxel_matrix_origin_center: Point
+    ):
         """
         Create a Voxelization object from a voxel matrix.
 
@@ -1033,8 +1035,8 @@ class Voxelization(PhysicalObject):
         :type voxel_matrix: list[list[list[bool]]]
         :param voxel_size: The size of the voxel edges.
         :type voxel_size: float
-        :param min_voxel_center: The minimum voxel center point.
-        :type min_voxel_center: tuple[float, float, float]
+        :param voxel_matrix_origin_center: Voxel center of the origin of the voxel matrix, i.e 'voxel_matrix[0][0][0]'.
+        :type voxel_matrix_origin_center: tuple[float, float, float]
 
         :return: A Voxelization object created from the voxel matrix.
         :rtype: Voxelization
@@ -1045,17 +1047,18 @@ class Voxelization(PhysicalObject):
                 for k, voxel in enumerate(col):
                     if voxel:
                         center = (
-                            round(min_voxel_center[0] + i * voxel_size, 6),
-                            round(min_voxel_center[1] + j * voxel_size, 6),
-                            round(min_voxel_center[2] + k * voxel_size, 6),
+                            round(voxel_matrix_origin_center[0] + i * voxel_size, 6),
+                            round(voxel_matrix_origin_center[1] + j * voxel_size, 6),
+                            round(voxel_matrix_origin_center[2] + k * voxel_size, 6),
                         )
                         voxels_centers.add(center)
 
         return cls(voxels_centers, voxel_size)
 
-    def get_min_voxel_center(self) -> Point:
+    def get_min_voxel_grid_center(self) -> Point:
         """
-        Get the minimum center point from the set of voxel centers.
+        Get the minimum center point from the set of voxel centers, in the voxel 3D grid.
+        This point may not be a voxel of the voxelization, because it is the minimum center in each direction (X, Y, Z).
 
         :return: The minimum center point.
         :rtype: tuple[float, float, float]
@@ -1066,9 +1069,10 @@ class Voxelization(PhysicalObject):
 
         return min_x, min_y, min_z
 
-    def get_max_voxel_center(self) -> Point:
+    def get_max_voxel_grid_center(self) -> Point:
         """
-        Get the maximum center point from the set of voxel centers.
+        Get the maximum center point from the set of voxel centers, in the voxel 3D grid.
+        This point may not be a voxel of the voxelization, because it is the maximum center in each direction (X, Y, Z).
 
         :return: The maximum center point.
         :rtype: tuple[float, float, float]
@@ -1079,31 +1083,28 @@ class Voxelization(PhysicalObject):
 
         return max_x, max_y, max_z
 
-    def to_matrix(self) -> List[List[List[bool]]]:
+    def to_voxel_matrix(self) -> List[List[List[bool]]]:
         """
         Convert the voxelization to a voxel matrix.
 
         :return: The voxel matrix representing the voxelization.
         :rtype: list[list[list[bool]]]
         """
-        min_center = self.get_min_voxel_center()
-        max_center = self.get_max_voxel_center()
-        matrix = []
+        min_center = self.get_min_voxel_grid_center()
+        max_center = self.get_max_voxel_grid_center()
 
-        for i in range(int((max_center[0] - min_center[0]) / self.voxel_size) + 1):
-            row = []
-            for j in range(int((max_center[1] - min_center[1]) / self.voxel_size) + 1):
-                col = []
-                for k in range(int((max_center[2] - min_center[2]) / self.voxel_size) + 1):
-                    voxel_center = (
-                        round(min_center[0] + i * self.voxel_size, 6),
-                        round(min_center[1] + j * self.voxel_size, 6),
-                        round(min_center[2] + k * self.voxel_size, 6),
-                    )
-                    voxel_present = voxel_center in self.voxels_centers
-                    col.append(voxel_present)
-                row.append(col)
-            matrix.append(row)
+        dim_x = round((max_center[0] - min_center[0]) / self.voxel_size + 1)
+        dim_y = round((max_center[1] - min_center[1]) / self.voxel_size + 1)
+        dim_z = round((max_center[2] - min_center[2]) / self.voxel_size + 1)
+
+        matrix = [[[False for _ in range(dim_z)] for _ in range(dim_y)] for _ in range(dim_x)]
+
+        for voxel_center in self.voxels_centers:
+            x = round((voxel_center[0] - min_center[0]) / self.voxel_size)
+            y = round((voxel_center[1] - min_center[1]) / self.voxel_size)
+            z = round((voxel_center[2] - min_center[2]) / self.voxel_size)
+
+            matrix[x][y][z] = True
 
         return matrix
 
@@ -1114,9 +1115,9 @@ class Voxelization(PhysicalObject):
         :return: The inverse Voxelization object.
         :rtype: Voxelization
         """
-        voxel_matrix = self.to_matrix()
+        voxel_matrix = self.to_voxel_matrix()
         inverted_matrix = np.logical_not(np.array(voxel_matrix)).tolist()
-        min_voxel_center = self.get_min_voxel_center()
+        min_voxel_center = self.get_min_voxel_grid_center()
 
         return Voxelization.from_voxel_matrix(inverted_matrix, self.voxel_size, min_voxel_center)
 

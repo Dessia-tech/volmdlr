@@ -17,7 +17,7 @@ voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, name="Vo
 
 # Compute the inverse of the voxelization
 voxelization_inverse = ~voxelization  # equivalent to voxelization.inverse()
-voxelization_inverse.name = "Inversed voxelization"
+voxelization_inverse.name = "Invert voxelization"
 
 # Display the result
 voxelization_cs = voxelization.to_closed_triangle_shell()
