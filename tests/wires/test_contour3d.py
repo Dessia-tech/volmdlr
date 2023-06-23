@@ -1,3 +1,4 @@
+import pip
 import unittest
 from volmdlr.step import Step
 from volmdlr.wires import Contour3D
@@ -13,18 +14,17 @@ class TestContour3D(unittest.TestCase):
         self.assertTrue(contour_to_order.is_ordered())
 
     def test_merge_with(self):
-        contour1_to_merge = Contour3D.load_from_file('wires/contour3d_merge_with1.json')
-        contour2_to_merge = Contour3D.load_from_file('wires/contour3d_merge_with2.json')
-        expected_contour1 = Contour3D.load_from_file('wires/expected_contour_merge_with1.json')
-        expected_contour2 = Contour3D.load_from_file('wires/expected_contour_merge_with2.json')
+        contour1_to_merge = Contour3D.load_from_file('contour3d_merge_with1.json')
+        contour2_to_merge = Contour3D.load_from_file('contour3d_merge_with2.json')
+        expected_contour1 = Contour3D.load_from_file('expected_contour_merge_with1.json')
+        expected_contour2 = Contour3D.load_from_file('expected_contour_merge_with2.json')
         merged_contours = contour1_to_merge.merge_with(contour2_to_merge)
         self.assertEqual(merged_contours[0], expected_contour1)
         self.assertEqual(merged_contours[1], expected_contour2)
-        contour1 = Contour3D.load_from_file('wires/contour1_merge_bug.json')
-        contour2 = Contour3D.load_from_file('wires/contour2_merge_bug.json')
+        contour1 = Contour3D.load_from_file('contour1_merge_bug.json')
+        contour2 = Contour3D.load_from_file('contour2_merge_bug.json')
         merged_contour1_contour2 = contour1.merge_with(contour2)
         merged_contour2_contour1 = contour2.merge_with(contour1)
-        print(merged_contour2_contour1, merged_contour1_contour2)
         self.assertEqual(len(merged_contour1_contour2), len(merged_contour2_contour1))
         self.assertEqual(merged_contour1_contour2[0], merged_contour2_contour1[0])
 
