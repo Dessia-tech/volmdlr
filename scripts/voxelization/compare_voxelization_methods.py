@@ -34,9 +34,5 @@ print(f"Both voxelization are equal: {voxelization_iterative == voxelization_oct
 
 # Display the difference if there is one
 if not voxelization_iterative == voxelization_octree:
-    difference_1 = voxelization_octree - voxelization_iterative
-    difference_2 = voxelization_iterative - voxelization_octree
-
-    for voxelization in [difference_1, difference_2]:
-        if len(voxelization) > 0:
-            voxelization.babylonjs()
+    symmetric_difference = voxelization_iterative.symmetric_difference(voxelization_octree)
+    symmetric_difference.babylonjs()

@@ -17,5 +17,9 @@ volume_model = VolumeModel([sphere, cylinder])
 voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="octree", name="Voxelization")
 
 # Display the result
-volume_model.primitives.append(voxelization.to_closed_triangle_shell())
+voxelization_primitive = voxelization.to_closed_triangle_shell()
+voxelization_primitive.alpha = 0.5
+voxelization_primitive.color = (1, 0, 0)
+
+volume_model.primitives.append(voxelization_primitive)
 volume_model.babylonjs()
