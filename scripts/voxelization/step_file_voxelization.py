@@ -4,14 +4,19 @@ Example of voxelization from a STEP file.
 from volmdlr.voxelization import Voxelization
 from volmdlr.step import Step
 
-VOXEL_SIZE = 0.1
+VOXEL_SIZE = 0.001
+STEP_MODEL_FILE_PATH = "../step/tore1.step"
 
 # Load and convert the SETP
-volume_model = Step.load_from_file("model.step").to_volume_model()
+volume_model = Step.from_file(STEP_MODEL_FILE_PATH).to_volume_model()
 
 # Voxelize the model
 voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE)
 
 # Display the result
-volume_model.primitives.append(voxelization.to_closed_triangle_shell())
+voxelization_primitive = voxelization.to_closed_triangle_shell()
+voxelization_primitive.alpha = 0.5
+voxelization_primitive.color = (1, 0, 0)
+
+volume_model.primitives.append(voxelization_primitive)
 volume_model.babylonjs()
