@@ -767,6 +767,7 @@ class Line3D(Line):
 
 
 class CircleMixin:
+    """Circle abstract class."""
     def split_at_abscissa(self, abscissa):
         """
         Splits a Circle into two at a given fraction of its length (abscissa parameter).
@@ -808,6 +809,7 @@ class Circle2D(CircleMixin, Curve):
     :type radius: float.
     :param name: The name of the circle. Defaults to ''.
     :type name: str, optional
+
     """
     def __init__(self, center: volmdlr.Point2D, radius: float, name: str = ''):
         self.center = center
