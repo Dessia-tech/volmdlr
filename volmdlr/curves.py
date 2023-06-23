@@ -797,19 +797,12 @@ class Circle2D(CircleMixin, Curve):
     This class inherits from `CircleMixin` and `Curve` classes,
     and provides methods to work with 2D circles.
 
-    Attributes:
-        center (volmdlr.Point2D): The center point of the circle.
-        radius (float): The radius of the circle.
-        _bounding_rectangle (None): A private attribute to store the bounding rectangle of the circle.
-        frame (volmdlr.Frame2D): The coordinate frame associated with the circle.
-
     :param center: The center point of the circle.
     :type center: volmdlr.Point2D
     :param radius: The radius of the circle.
     :type radius: float.
     :param name: The name of the circle. Defaults to ''.
     :type name: str, optional
-
     """
     def __init__(self, center: volmdlr.Point2D, radius: float, name: str = ''):
         self.center = center
