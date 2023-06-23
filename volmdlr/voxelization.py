@@ -1379,6 +1379,7 @@ class OctreeNode:
 
     @classmethod
     def octree_voxelization_depth_based(cls, triangles: List[Triangle], max_depth: int) -> "OctreeNode":
+        """Create a voxelization based on the depth of the tree."""
         # Compute the size of the bounding cube (root voxel)
         min_corner = np.min([np.min(triangle, axis=0) for triangle in triangles], axis=0)
         max_corner = np.max([np.max(triangle, axis=0) for triangle in triangles], axis=0)
@@ -1395,6 +1396,7 @@ class OctreeNode:
 
     @classmethod
     def octree_voxelization_size_based(cls, triangles: List[Triangle], voxel_size: float) -> "OctreeNode":
+        """Create a voxelization based on the size of the voxel."""
         min_corner = np.min([np.min(triangle, axis=0) for triangle in triangles], axis=0)
         max_corner = np.max([np.max(triangle, axis=0) for triangle in triangles], axis=0)
 
@@ -1420,6 +1422,7 @@ class OctreeNode:
         return root
 
     def subdivide(self, triangles: List[Triangle]) -> None:
+        """Recursive method to subdivide the voxelization in 8 until the wanted tree depth is reached."""
         children = []
         if self.depth < self.max_depth:
             half_size = round(self.size / 2, 6)
@@ -1456,6 +1459,7 @@ class OctreeNode:
             return  # reached max depth, do not subdivide further.
 
     def intersecting_triangles(self, triangles: List[Triangle]) -> List[Triangle]:
+        """Given a list of triangle, return the triangles that are intersecting with the node."""
         intersecting_triangles = [
             triangle
             for triangle in triangles
@@ -1464,6 +1468,7 @@ class OctreeNode:
         return intersecting_triangles
 
     def get_leaf_centers(self) -> List[Point]:
+        """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
         if self.depth == self.max_depth:  # if max depth reached, it is a leaf node
             return [self.center]
 
@@ -1475,6 +1480,10 @@ class OctreeNode:
 
     @staticmethod
     def process_node(node, triangles):
+        """
+        Helper method to process a node .
+        In other terms, adding it to the tree and recursively divide it if it intersects with the geometry.
+        """
         intersecting_triangles = node.intersecting_triangles(triangles)
         if len(intersecting_triangles) > 0:
             # recursively subdivide the child node
