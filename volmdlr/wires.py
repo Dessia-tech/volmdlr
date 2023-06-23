@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as npy
 import plot_data.core as plot_data
-from scipy.spatial import ConvexHull, Delaunay
+from scipy.spatial.qhull import ConvexHull, Delaunay
 from triangle import triangulate
 
 import volmdlr
