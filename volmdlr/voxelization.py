@@ -891,6 +891,21 @@ class Voxelization(PhysicalObject):
 
         return Voxelization(self.voxels_centers.intersection(other_voxelization.voxels_centers), self.voxel_size)
 
+    def is_intersecting(self, other_voxelization: "Voxelization") -> bool:
+        """
+        Check if two voxelizations are intersecting.
+        Both voxelization must have same voxel size.
+
+        :param other_voxelization: The other voxelization to check if there is an intersection with.
+        :type other_voxelization: Voxelization
+
+        :return: True if the voxelizations are intersecting, False otherwise.
+        :rtype: bool
+        """
+        intersection = self.intersection(other_voxelization)
+
+        return len(intersection) > 0
+
     def union(self, other_voxelization: "Voxelization") -> "Voxelization":
         """
         Create a voxelization that is the Boolean union of two voxelization.
@@ -1024,6 +1039,25 @@ class Voxelization(PhysicalObject):
 
         return Voxelization(intersecting_voxels, self.voxel_size)
 
+    @staticmethod
+    def voxel_center_in_implicit_grid(voxel_center: Point, voxel_size: float) -> bool:
+        """
+        Check if a given voxel center point is a voxel center of the implicit grid, defined by voxel_size.
+
+        :param voxel_center: The voxel center point to chech.
+        :type voxel_center: tuple[float, float, float]
+        :param voxel_size: The voxel edges size.
+        :type voxel_size: float
+
+        :return: True if the given voxel center point is a voxel center of the implicit grid, False otherwise.
+        :rtype: bool
+        """
+        for coord in voxel_center:
+            if not round((coord - 0.5 * voxel_size) / voxel_size, 6).is_integer():
+                return False
+
+        return True
+
     @classmethod
     def from_voxel_matrix(
         cls, voxel_matrix: List[List[List[bool]]], voxel_size: float, voxel_matrix_origin_center: Point
@@ -1041,6 +1075,12 @@ class Voxelization(PhysicalObject):
         :return: A Voxelization object created from the voxel matrix.
         :rtype: Voxelization
         """
+        if not cls.voxel_center_in_implicit_grid(voxel_matrix_origin_center, voxel_size):
+            warnings.warn(
+                """This voxel matrix is not defined in the implicit grid defined by the voxel_size. 
+            Some methods like boolean operation or interference computing may not work as expected."""
+            )
+
         voxels_centers = set()
         for i, row in enumerate(voxel_matrix):
             for j, col in enumerate(row):
