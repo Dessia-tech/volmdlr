@@ -2773,8 +2773,6 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         y1 = [y[-1]] + y[0:-1]
         return 0.5 * abs(sum(i * j for i, j in zip(x, y1))
                          - sum(i * j for i, j in zip(y, x1)))
-        # return 0.5 * npy.abs(
-        #     npy.dot(x, npy.roll(y, 1)) - npy.dot(y, npy.roll(x, 1)))
 
     def center_of_mass(self):
         lp = len(self.points)
@@ -3236,7 +3234,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                         ok_middle_points.append(middle_point)
                         list_cossines.append(cos)
             if len(ok_middle_points) > 0:
-                #  We want the middle-point to be the one with the widest angle (smallest cossine)
+                #  We want the middle-point to be the one with the widest angle (smallest cosine)
                 min_cossine_index = list_cossines.index(min(list_cossines))
                 divided_line.append(volmdlr.edges.LineSegment2D(line.start,
                                                                 ok_middle_points[

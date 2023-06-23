@@ -987,10 +987,6 @@ class Cylinder(shells.ClosedShell3D):
         dy2 = (point_a[1] - point_b[1])**2
         dz2 = (point_a[2] - point_b[2])**2
 
-        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
-
         if point_a[0] > point_b[0]:
             point_a, point_b = point_b, point_a
         xmin = point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
@@ -1543,10 +1539,6 @@ class HollowCylinder(RevolvedProfile):
         dy2 = (point_a[1] - point_b[1])**2
         dz2 = (point_a[2] - point_b[2])**2
 
-        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
-
         if point_a[0] > point_b[0]:
             point_a, point_b = point_b, point_a
         xmin = point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
@@ -2031,4 +2023,4 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
             bsplinecurve = object_dict[arguments[1]]
             vectextru = object_dict[arguments[2]]
             return cls(bsplinecurve, vectextru, name)
-        raise NotImplementedError  # a adapter pour les bpsline
+        raise NotImplementedError  # to be adapted to bspline
