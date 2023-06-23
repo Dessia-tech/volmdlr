@@ -309,6 +309,198 @@ class Voxelization(PhysicalObject):
         return triangles
 
     @staticmethod
+    def __triangle_intersects_voxel(triangle: Triangle, voxel_center: Point, voxel_extents: List[float]) -> bool:
+        """
+        Helper method to compute if there is an intersection between a 3D triangle and a voxel.
+        This method uses the "Separating Axis Theorem".
+
+        This method has been implemented in Cython in voxelization_compiled.pyx file.
+
+        :param triangle: The triangle to check if it intersects with the voxel.
+        :type: triangle: tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]
+        :param voxel_center: The center point of the voxel.
+        :type voxel_center: tuple[float, float, float]
+        :param voxel_extents: The extents of the voxel in each direction (half-size of the voxel size).
+        :type voxel_extents: list[float, float, float]
+
+        :return: True if there is an intersection, False otherwise.
+        :rtype: bool
+        """
+        # Method ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
+        # pylint: disable=invalid-name,too-many-locals,too-many-return-statements,too-many-statements,too-many-branches
+
+        triangle = np.array(triangle)
+        box_center = np.array(voxel_center)
+        box_extents = np.array(voxel_extents)
+
+        x, y, z = 0, 1, 2
+
+        # Translate triangle as conceptually moving AABB to origin
+        v0 = triangle[0] - box_center
+        v1 = triangle[1] - box_center
+        v2 = triangle[2] - box_center
+
+        # Compute edge vectors for triangle
+        f0 = triangle[1] - triangle[0]
+        f1 = triangle[2] - triangle[1]
+        f2 = triangle[0] - triangle[2]
+
+        # REGION TEST AXES a00..a22 (CATEGORY 3)
+
+        # Test axis a00
+        a00 = np.array([0, -f0[z], f0[y]])
+        p0 = np.dot(v0, a00)
+        p1 = np.dot(v1, a00)
+        p2 = np.dot(v2, a00)
+        r = box_extents[y] * abs(f0[z]) + box_extents[z] * abs(f0[y])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a01
+        a01 = np.array([0, -f1[z], f1[y]])
+        p0 = np.dot(v0, a01)
+        p1 = np.dot(v1, a01)
+        p2 = np.dot(v2, a01)
+        r = box_extents[y] * abs(f1[z]) + box_extents[z] * abs(f1[y])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a02
+        a02 = np.array([0, -f2[z], f2[y]])
+        p0 = np.dot(v0, a02)
+        p1 = np.dot(v1, a02)
+        p2 = np.dot(v2, a02)
+        r = box_extents[y] * abs(f2[z]) + box_extents[z] * abs(f2[y])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a10
+        a10 = np.array([f0[z], 0, -f0[x]])
+        p0 = np.dot(v0, a10)
+        p1 = np.dot(v1, a10)
+        p2 = np.dot(v2, a10)
+        r = box_extents[x] * abs(f0[z]) + box_extents[z] * abs(f0[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a11
+        a11 = np.array([f1[z], 0, -f1[x]])
+        p0 = np.dot(v0, a11)
+        p1 = np.dot(v1, a11)
+        p2 = np.dot(v2, a11)
+        r = box_extents[x] * abs(f1[z]) + box_extents[z] * abs(f1[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a12
+        a11 = np.array([f2[z], 0, -f2[x]])
+        p0 = np.dot(v0, a11)
+        p1 = np.dot(v1, a11)
+        p2 = np.dot(v2, a11)
+        r = box_extents[x] * abs(f2[z]) + box_extents[z] * abs(f2[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a20
+        a20 = np.array([-f0[y], f0[x], 0])
+        p0 = np.dot(v0, a20)
+        p1 = np.dot(v1, a20)
+        p2 = np.dot(v2, a20)
+        r = box_extents[x] * abs(f0[y]) + box_extents[y] * abs(f0[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a21
+        a21 = np.array([-f1[y], f1[x], 0])
+        p0 = np.dot(v0, a21)
+        p1 = np.dot(v1, a21)
+        p2 = np.dot(v2, a21)
+        r = box_extents[x] * abs(f1[y]) + box_extents[y] * abs(f1[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # Test axis a22
+        a22 = np.array([-f2[y], f2[x], 0])
+        p0 = np.dot(v0, a22)
+        p1 = np.dot(v1, a22)
+        p2 = np.dot(v2, a22)
+        r = box_extents[x] * abs(f2[y]) + box_extents[y] * abs(f2[x])
+        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
+            return False
+
+        # ENDREGION
+
+        # REGION TEST THE THREE AXES CORRESPONDING TO THE FACE NORMALS OF AABB B (CATEGORY 1)
+
+        # Exit if...
+        # ... [-extents.X, extents.X] and [min(v0.X,v1.X,v2.X), max(v0.X,v1.X,v2.X)] do not overlap
+        if max(v0[x], v1[x], v2[x]) < -box_extents[x] or min(v0[x], v1[x], v2[x]) > box_extents[x]:
+            return False
+
+        # ... [-extents.Y, extents.Y] and [min(v0.Y,v1.Y,v2.Y), max(v0.Y,v1.Y,v2.Y)] do not overlap
+        if max(v0[y], v1[y], v2[y]) < -box_extents[y] or min(v0[y], v1[y], v2[y]) > box_extents[y]:
+            return False
+
+        # ... [-extents.Z, extents.Z] and [min(v0.Z,v1.Z,v2.Z), max(v0.Z,v1.Z,v2.Z)] do not overlap
+        if max(v0[z], v1[z], v2[z]) < -box_extents[z] or min(v0[z], v1[z], v2[z]) > box_extents[z]:
+            return False
+
+        # ENDREGION
+
+        # REGION TEST SEPARATING AXIS CORRESPONDING TO TRIANGLE FACE NORMAL (CATEGORY 2)
+
+        plane_normal = np.cross(f0, f1)
+        plane_distance = abs(np.dot(plane_normal, v0))
+
+        # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
+        r = (
+            box_extents[x] * abs(plane_normal[x])
+            + box_extents[y] * abs(plane_normal[y])
+            + box_extents[z] * abs(plane_normal[z])
+        )
+
+        # Intersection occurs when plane distance falls within [-r,+r] interval
+        if plane_distance > r:
+            return False
+
+        # ENDREGION
+
+        return True
+
+    @staticmethod
+    def __aabb_intersecting_boxes(min_point: Point, max_point: Point, voxel_size: float) -> List[Point]:
+        """
+        Helper method to compute the center of the voxels that intersect with a given axis aligned
+        bounding box (defined by 2 points).
+
+        This method has been implemented in Cython in voxelization_compiled.pyx file.
+
+        :param min_point: The minimum point of the bounding box.
+        :type min_point: tuple[float, float, float]
+        :param max_point: The maximum point of the bounding box.
+        :type max_point: tuple[float, float, float]
+        :param voxel_size: The voxel edges size.
+        :type voxel_size: float
+
+        :return: A list of the centers of the intersecting voxels.
+        :rtype: list[tuple[float, float, float]]
+        """
+        # Calculate the indices of the cubes that intersect with the bounding box
+        x_indices = range(int(min_point[0] / voxel_size) - 1, int(max_point[0] / voxel_size) + 1)
+        y_indices = range(int(min_point[1] / voxel_size) - 1, int(max_point[1] / voxel_size) + 1)
+        z_indices = range(int(min_point[2] / voxel_size) - 1, int(max_point[2] / voxel_size) + 1)
+
+        # Create a list of the centers of all the intersecting voxels
+        centers = []
+        for x in x_indices:
+            for y in y_indices:
+                for z in z_indices:
+                    center = tuple(round((_ + 1 / 2) * voxel_size, 6) for _ in [x, y, z])
+                    centers.append(center)
+
+        return centers
+
+    @staticmethod
     def _voxels_intersecting_voxels(voxel_centers_array: np.ndarray, voxel_size: float) -> Set[Point]:
         """
         Helper method to compute the center of the voxels that intersect with a given array of voxels.
@@ -1044,7 +1236,7 @@ class Voxelization(PhysicalObject):
         """
         Check if a given voxel center point is a voxel center of the implicit grid, defined by voxel_size.
 
-        :param voxel_center: The voxel center point to chech.
+        :param voxel_center: The voxel center point to check.
         :type voxel_center: tuple[float, float, float]
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
