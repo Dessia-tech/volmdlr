@@ -1084,7 +1084,7 @@ class Voxelization(PhysicalObject):
             warnings.warn("Empty voxelization.")
             return []
 
-        return [self.to_closed_shell()]
+        return [self.to_closed_triangle_shell()]
 
     def intersection(self, other_voxelization: "Voxelization") -> "Voxelization":
         """
