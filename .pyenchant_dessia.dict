@@ -22,6 +22,7 @@ discretized
 discretize
 dof
 euler
+filepath
 freecad
 .geo
 geo
@@ -83,3 +84,16 @@ Tore's
 deserialization
 Trimesh
 networkx
+voxel
+voxels
+voxelization
+voxelizations
+octree
+voxelized
+Iterable
+iterable
+voxelize
+undirected
+Cython
+discretize
+discretizing
