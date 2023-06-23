@@ -17,8 +17,10 @@ volume_model = VolumeModel([sphere, cylinder])
 
 # Voxelize the volume model with "iterative" method
 start = time.perf_counter()
-voxelization_iterative = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="iterative", name="Naive voxelization")
-print(f"Naive voxelization computed in {round((time.perf_counter() - start) * 1000)}ms")
+voxelization_iterative = Voxelization.from_volume_model(
+    volume_model, VOXEL_SIZE, method="iterative", name="Iterative voxelization"
+)
+print(f"Iterative voxelization computed in {round((time.perf_counter() - start) * 1000)}ms")
 
 # Voxelize the volume model with "octree" method
 start = time.perf_counter()

@@ -31,7 +31,9 @@ moved_voxelization = moved_voxelization.translation(volmdlr.Vector3D(0.0, 0.5, 0
 print(f"Voxels translation computing time: {(time.perf_counter() - start)*1000}ms")
 
 # Define a voxelization from the moved volume_model to compare it
-voxelization_from_moved_volume_model = Voxelization.from_volume_model(moved_volume_model, VOXEL_SIZE, method="iterative")
+voxelization_from_moved_volume_model = Voxelization.from_volume_model(
+    moved_volume_model, VOXEL_SIZE, method="iterative"
+)
 
 # Display the result
 moved_volume_model.primitives.append(moved_voxelization.to_closed_triangle_shell())
@@ -39,9 +41,7 @@ moved_volume_model.babylonjs()
 
 # Display the difference between the voxelization from moved volume model and the moved voxelization
 equality = voxelization_from_moved_volume_model == moved_voxelization
-print(
-    f"Moved volume model voxelization and moved voxelization are equal: {equality}"
-)
+print(f"Moved volume model voxelization and moved voxelization are equal: {equality}")
 if not equality:
     print("Displaying the symmetric difference")
     symmetric_diff = moved_voxelization ^ voxelization_from_moved_volume_model
