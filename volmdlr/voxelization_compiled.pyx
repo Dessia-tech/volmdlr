@@ -7,6 +7,9 @@ from cython.view cimport array as cvarray
 from cython.operator cimport dereference as deref
 from typing import List, Tuple
 
+
+# C TYPES DEFINITION
+
 cdef struct Point:
     double x
     double y
@@ -24,6 +27,9 @@ cdef struct VoxelExtents:
     double x
     double y
     double z
+
+
+# C FUNCTIONS DEFINTIONS
 
 cdef bint triangle_intersects_voxel_c(Triangle triangle, VoxelCenter voxel_center, VoxelExtents voxel_extents):
     # Method ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
@@ -235,6 +241,8 @@ cdef int aabb_intersecting_boxes_c(Point min_point, Point max_point, double voxe
     centers[0] = c_centers
     return num_centers
 
+
+# DEFINITION OF PYTHON FUNCTION THAT INTERFACE WITH THE CYTHON FUNCTION
 
 def triangle_intersects_voxel(
     triangle: Tuple[Tuple[float, ...]], voxel_center: Tuple[float, ...], voxel_extents: List[float]
