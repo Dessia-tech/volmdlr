@@ -2565,11 +2565,12 @@ class ToroidalSurface3D(PeriodicalSurface):
                 return [edges.FullArc3D(center=center,
                                         start_end=center + self.small_radius * u_vector,
                                         normal=v_vector)]
-            return [edges.Arc3D(
-                self.point2d_to_3d(linesegment2d.start),
-                self.point2d_to_3d(volmdlr.Point2D(theta1, 0.5 * (phi1 + phi2))),
-                self.point2d_to_3d(linesegment2d.end),
-            )]
+            start = self.point2d_to_3d(linesegment2d.start)
+            interior = self.point2d_to_3d(volmdlr.Point2D(theta1, 0.5 * (phi1 + phi2)))
+            end = self.point2d_to_3d(linesegment2d.end)
+            if start.is_close(interior) or end.is_close(interior):
+                return None
+            return [edges.Arc3D(start, interior, end)]
         if math.isclose(phi1, phi2, abs_tol=1e-4):
             if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
                 center = self.frame.origin + self.small_radius * math.sin(phi1) * self.frame.w
@@ -2577,11 +2578,12 @@ class ToroidalSurface3D(PeriodicalSurface):
                 return [edges.FullArc3D(center=center,
                                         start_end=start_end,
                                         normal=self.frame.w)]
-            return [edges.Arc3D(
-                self.point2d_to_3d(linesegment2d.start),
-                self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), phi1)),
-                self.point2d_to_3d(linesegment2d.end),
-            )]
+            start=self.point2d_to_3d(linesegment2d.start)
+            interior = self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), phi1))
+            end = self.point2d_to_3d(linesegment2d.end)
+            if start.is_close(interior) or end.is_close(interior):
+                return None
+            return [edges.Arc3D(start, interior, end)]
         n = 10
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
