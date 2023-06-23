@@ -24,7 +24,20 @@ Segment = Tuple[Point, ...]
 
 
 class Voxelization(PhysicalObject):
-    """Class for creation and manipulation of voxelization of volmdlr geometry."""
+    """
+    Class for creation and manipulation of voxelization of volmdlr geometry.
+
+    The voxelization is defined in an implicit grid of the 3D space. The grid is defined by the size of the voxels.
+    The implicit grid is defined by discretizing the 3D space into axis aligned cubes with given size, witn the
+    origin of the global landmark (0, 0, 0) always being a corner point (and not inside a cube).
+
+    For example, in 1D and with a voxel size of t, the set of voxels (defined by minimal and maximal point) can only
+    be defined as {i ∈ N, t ∈ R | (i * t, (i+1) * t)}
+    The corresponding set of voxel centers is defined by the following set: {i ∈ N, t ∈ R | (i + 0.5) * t}
+
+    This approach allows to always define voxelization of same size in the same grid of the 3D space, which is very
+    useful to perform very fast boolean operations.
+    """
 
     def __init__(self, voxels_centers: Set[Point], voxel_size: float, octree_root: "OctreeNode" = None, name: str = ""):
         """
