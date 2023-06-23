@@ -3438,14 +3438,6 @@ class ArcEllipse2D(Edge):
         self.end.plot(ax=ax, color='b')
         self.ellipse.center.plot(ax=ax, color='y')
 
-        # x = []
-        # y = []
-        # for x_component, y_component in self.discretization_points(number_points=100):
-        #     x.append(x_component)
-        #     y.append(y_component)
-        #
-        # plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
-        # return ax
         return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, number_points=100)
 
     def normal_vector(self, abscissa):
@@ -3790,12 +3782,6 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         """
         if ax is None:
             _, ax = plt.subplots()
-        # x = []
-        # y = []
-        # for point_x, point_y in self.discretization_points(number_points=50):
-        #     x.append(point_x)
-        #     y.append(point_y)
-        # plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
         ax = vm_common_operations.plot_from_discretization_points(
             ax, edge_style=edge_style, element=self, number_points=50)
         if edge_style.equal_aspect:
@@ -5120,15 +5106,6 @@ class Arc3D(ArcMixin, Edge):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
-        # x = []
-        # y = []
-        # z = []
-        # for pointx, pointy, pointz in self.discretization_points(number_points=25):
-        #     x.append(pointx)
-        #     y.append(pointy)
-        #     z.append(pointz)
-        #
-        # ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
         ax = vm_common_operations.plot_from_discretization_points(
             ax, edge_style=edge_style, element=self, number_points=25)
         if edge_style.edge_ends:
@@ -5356,7 +5333,8 @@ class Arc3D(ArcMixin, Edge):
             volmdlr.Frame3D(tore_center, u, v, axis), radius,
             self.circle.radius)
         arc2d = self.to_2d(tore_center, u, axis)
-        return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(surface, 0, angle, arc2d.angle1, arc2d.angle2)]
+        return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(
+            surface, 0, angle, arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
         u = self.start - self.circle.center
@@ -5520,17 +5498,6 @@ class FullArc3D(FullArcMixin, Arc3D):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 
-        # x = []
-        # y = []
-        # z = []
-        # for x_component, y_component, z_component in self.discretization_points(number_points=20):
-        #     x.append(x_component)
-        #     y.append(y_component)
-        #     z.append(z_component)
-        # x.append(x[0])
-        # y.append(y[0])
-        # z.append(z[0])
-        # ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
         ax = vm_common_operations.plot_from_discretization_points(
             ax, edge_style=edge_style, element=self, number_points=25, close_plot=True)
         if edge_style.edge_ends:
@@ -5728,15 +5695,6 @@ class ArcEllipse3D(Edge):
 
         ax.plot([self.start[0]], [self.start[1]], [self.start[2]], c='r')
         ax.plot([self.end[0]], [self.end[1]], [self.end[2]], c='b')
-        # x = []
-        # y = []
-        # z = []
-        # for x_component, y_component, z_component in self.discretization_points(number_points=20):
-        #     x.append(x_component)
-        #     y.append(y_component)
-        #     z.append(z_component)
-        #
-        # ax.plot(x, y, z, edge_style.color, alpha=edge_style.alpha)
         ax = vm_common_operations.plot_from_discretization_points(
             ax, edge_style=edge_style, element=self, number_points=25)
         if edge_style.edge_ends:

@@ -1281,18 +1281,6 @@ class Circle3D(CircleMixin, Curve):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-
-        # x = []
-        # y = []
-        # z = []
-        # for point_x, point_y, point_z in self.discretization_points():
-        #     x.append(point_x)
-        #     y.append(point_y)
-        #     z.append(point_z)
-        # x.append(x[0])
-        # y.append(y[0])
-        # z.append(z[0])
-        # ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
         return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
 
     def point_at_abscissa(self, curvilinear_abscissa):
@@ -1756,12 +1744,8 @@ class Ellipse2D(Curve):
         """
         if ax is None:
             _, ax = plt.subplots()
-        x = []
-        y = []
-        for point_x, point_y in self.discretization_points(number_points=50):
-            x.append(point_x)
-            y.append(point_y)
-        plt.plot(x, y, color=edge_style.color, alpha=edge_style.alpha)
+        ax = vm_common_operations.plot_from_discretization_points(ax, edge_style, self,
+                                                                  number_points=100, close_plot=True)
         if edge_style.equal_aspect:
             ax.set_aspect('equal')
         return ax
@@ -1972,16 +1956,6 @@ class Ellipse3D(Curve):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 
-        # x, y, z = [], [], []
-        # for point_x, point_y, point_z in self.discretization_points():
-        #     x.append(point_x)
-        #     y.append(point_y)
-        #     z.append(point_z)
-        # x.append(x[0])
-        # y.append(y[0])
-        # z.append(z[0])
-        # ax.plot(x, y, z, edge_style.color)
-        # return ax
         return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
 
     @classmethod
