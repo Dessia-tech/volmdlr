@@ -8,14 +8,6 @@ import numpy as npy
 
 import volmdlr
 
-def curve_linesegment_intersections(curve, linesegment, tol):
-    line_intersections = curve.line_intersections(linesegment.line, tol)
-    linesegment_intersections = []
-    for intersection in line_intersections:
-        if linesegment.point_belongs(intersection):
-            linesegment_intersections.append(intersection)
-    return linesegment_intersections
-
 
 def circle_3d_line_intersections(circle_3d, line):
     """

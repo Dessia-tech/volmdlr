@@ -1,4 +1,7 @@
-"""This module defines volmdlr curves."""
+"""
+Volmdlr curves.
+
+"""
 import math
 from typing import List, Union
 
@@ -29,6 +32,7 @@ class Curve(DessiaObject):
     def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
         """
         Sort point along a curve.
+
         :param points: list of points to be sorted.
         :return: sorted points.
         """
@@ -567,7 +571,7 @@ class Line3D(Line):
 
         :param point3d: point to be verified.
         :return: returns True if point belongs to the line, and False otherwise.
-         """
+        """
         if point3d.is_close(self.point1):
             return True
         return self.direction_vector().is_colinear_to(point3d - self.point1)
@@ -786,6 +790,25 @@ class CircleMixin:
 
 
 class Circle2D(CircleMixin, Curve):
+    """
+    A class representing a 2D circle.
+
+    This class inherits from `CircleMixin` and `Curve` classes,
+    and provides methods to work with 2D circles.
+
+    Attributes:
+        center (volmdlr.Point2D): The center point of the circle.
+        radius (float): The radius of the circle.
+        _bounding_rectangle (None): A private attribute to store the bounding rectangle of the circle.
+        frame (volmdlr.Frame2D): The coordinate frame associated with the circle.
+
+    :param center: The center point of the circle.
+    :type center: volmdlr.Point2D
+    :param radius: The radius of the circle.
+    :type radius: float.
+    :param name: The name of the circle. Defaults to ''.
+    :type name: str, optional
+    """
     def __init__(self, center: volmdlr.Point2D, radius: float, name: str = ''):
         self.center = center
         self.radius = radius
@@ -1034,7 +1057,7 @@ class Circle2D(CircleMixin, Curve):
         :type circle: (Circle2D).
         :return: A list of intersection points between the two circles.
         :rtype: List[Point2D].
-       """
+        """
         return volmdlr_intersections.get_circle_intersections(self, circle)
 
     def arc_intersections(self, arc2d: 'volmdlr.edges.Arc2D'):
@@ -1045,7 +1068,7 @@ class Circle2D(CircleMixin, Curve):
         :type arc2d: (edges.Arc2D).
         :return: A list of intersection points between the circle and the arc.
         :rtype: List[Point2D].
-       """
+        """
         circle_intesections = self.circle_intersections(arc2d.circle)
         intersections = []
         for inter in circle_intesections:
@@ -1489,6 +1512,7 @@ class Circle3D(CircleMixin, Curve):
     def split(self, split_start, split_end):
         """
         Splits a circle into two arcs, at two given points.
+
         :param split_start: split point 1.
         :param split_end:  split point 2.
         :return: A list with two split arc 3D.

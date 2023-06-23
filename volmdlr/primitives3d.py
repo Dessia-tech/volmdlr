@@ -30,6 +30,22 @@ npy.seterr(divide='raise')
 
 
 class RoundedLineSegments3D(volmdlr.primitives.RoundedLineSegments):
+    """
+    A class representing a series of rounded line segments in 3D.
+
+    This class inherits from the `RoundedLineSegments` class,
+    and provides methods to work with rounded line segments in 3D.
+
+    :param points: The list of points defining the line segments.
+    :type points: List[volmdlr.Point3D]
+    :param radius: The dictionary mapping segment indices to their respective radii.
+    :type radius:Dict[int, float]
+    :param adapt_radius: Flag indicating whether to adapt the radius based on segment length.
+    Defaults to False.
+    :type adapt_radius: bool, optional
+    :param name: The name of the rounded line segments. Defaults to ''.
+    :type name: str, optional
+    """
     line_class = volmdlr.edges.LineSegment3D
     arc_class = volmdlr.edges.Arc3D
 

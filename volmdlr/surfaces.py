@@ -2587,6 +2587,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             circle = curves.Circle3D(frame, start3d.point_distance(center))
             if math.isclose(abs(phi1 - phi2), volmdlr.TWO_PI, abs_tol=1e-4):
                 return [edges.FullArc3D(circle, start_end=center + self.small_radius * u_vector)]
+            # interior_point = self.point2d_to_3d(volmdlr.Point2D(theta1, 0.5 * (phi1 + phi2)))
             return [edges.Arc3D(circle, start3d, self.point2d_to_3d(linesegment2d.end))]
         if math.isclose(phi1, phi2, abs_tol=1e-4):
             center = self.frame.origin + self.small_radius * math.sin(phi1) * self.frame.w
