@@ -15,7 +15,7 @@ TRANSLATION_VECTOR = volmdlr.Vector3D(-0.0015, 0.005, 0.01)
 ROTATION_ANGLE = math.pi / 2
 
 # Define the volume model from file
-volume_model = volmdlr.stl.Stl.load_from_file(STL_MODEL_FILE_PATH).to_volume_model()
+volume_model = Stl.load_from_file(STL_MODEL_FILE_PATH).to_volume_model()
 volume_model.primitives[0].color = (0, 1, 0)
 
 # Move the volume model

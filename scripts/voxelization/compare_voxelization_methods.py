@@ -1,5 +1,5 @@
 """
-Comparaison of "iterative" and "octree" voxelization methods.
+Comparison of "iterative" and "octree" voxelization methods.
 """
 import time
 
@@ -33,6 +33,6 @@ print(f"Octree voxelization computed in {round((time.perf_counter() - start) * 1
 print(f"Both voxelization are equal: {voxelization_iterative == voxelization_octree}")
 
 # Display the difference if there is one
-if not voxelization_iterative == voxelization_octree:
+if voxelization_iterative != voxelization_octree:
     symmetric_difference = voxelization_iterative.symmetric_difference(voxelization_octree)
     symmetric_difference.babylonjs()

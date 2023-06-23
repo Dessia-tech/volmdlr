@@ -1,5 +1,5 @@
 """
-Comparaison of display methods
+Comparison of display methods
 """
 import time
 
@@ -28,7 +28,7 @@ start = time.perf_counter()
 primitive_fully_triangulated.babylonjs()
 print(f"Fully triangulated shell displayed in {round((time.perf_counter() - start) * 1000)}ms")
 
-area = sum([primitive.area() for primitive in primitive_fully_triangulated.primitives])
+area = sum(primitive.area() for primitive in primitive_fully_triangulated.primitives)
 print(f"Fully triangulated shell primitives area: {area}")
 
 n_triangles = len(primitive_fully_triangulated.triangulation().triangles)
@@ -44,7 +44,7 @@ start = time.perf_counter()
 primitive_simplified.babylonjs()
 print(f"Simplified shell displayed in {round((time.perf_counter() - start) * 1000)}ms")
 
-area = sum([primitive.area() for primitive in primitive_simplified.primitives])
+area = sum(primitive.area() for primitive in primitive_simplified.primitives)
 print(f"Simplified shell primitives area: {area}")
 
 n_triangles = len(primitive_simplified.triangulation().triangles)

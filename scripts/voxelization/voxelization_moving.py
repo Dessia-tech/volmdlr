@@ -11,7 +11,7 @@ from volmdlr.stl import Stl
 VOXEL_SIZE = 0.02
 
 # Define the volume model from file
-volume_model = volmdlr.stl.Stl.load_from_file("model.stl").to_volume_model()
+volume_model = Stl.load_from_file("model.stl").to_volume_model()
 volume_model.color = (1, 0, 0)
 
 # Move the volume model
