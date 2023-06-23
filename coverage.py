@@ -20,7 +20,6 @@ untracked_modules = ['volmdlr/templates.py',
                      'volmdlr/mesh.py',
                      'volmdlr/gmsh_vm.py',
                      'models/__init__.py',
-                     'workflows/__init__.py',
                      'models/contours.py',
                      'models/bspline_curves.py'
                      ]
