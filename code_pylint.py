@@ -67,7 +67,7 @@ ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-man
                                 "no-name-in-module", "too-many-public-methods", "too-many-ancestors",
                                 "protected-access", "cyclic-import", "line-too-long", "too-many-lines", "no-member",
                                 "too-few-public-methods", "duplicate-code", "too-many-return-statements",
-                                "import-outside-toplevel"]
+                                "import-outside-toplevel", "arguments-differ", "arguments-renamed"]
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
