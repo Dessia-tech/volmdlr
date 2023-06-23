@@ -15,7 +15,7 @@ from typing import List, Tuple
 
 try:
     import gmsh
-except TypeError:
+except (TypeError, OSError):
     pass
 import matplotlib.pyplot as plt
 import numpy as npy
