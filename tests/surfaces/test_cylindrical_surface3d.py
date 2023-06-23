@@ -77,6 +77,15 @@ class TestCylindricalSurface3D(unittest.TestCase):
     def test_arcellipse3d_to_2d(self):
         pass
 
+    def test_linesegment3d_to_2d(self):
+        surface = surfaces.CylindricalSurface3D.load_from_file(
+            "surfaces/objects_cylindrical_tests/cylindricalsurface_with_linesegment3d.json")
+        linesegment3d = edges.LineSegment3D.load_from_file(
+            "surfaces/objects_cylindrical_tests/cylindricalsurface_linesegment3d.json")
+        linesegment2d = surface.linesegment3d_to_2d(linesegment3d)[0]
+        self.assertTrue(linesegment2d.start.is_close(volmdlr.Point2D(-0.021051754138835845, -0.0033749825505284136)))
+        self.assertTrue(linesegment2d.end.is_close(volmdlr.Point2D(0.0, -0.0033725697172752008)))
+
     def test_arc3d_to_2d(self):
         arc1 = edges.Arc3D(volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(1 / math.sqrt(2), 1 / math.sqrt(2), 0),
                            volmdlr.Point3D(0, 1, 0))
