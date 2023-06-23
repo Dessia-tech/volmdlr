@@ -387,11 +387,13 @@ def geometric_set(arguments, object_dict):
         sub_objects.append(sub_obj)
         print('GEOMETRIC_SET', sub_obj)
     return sub_objects
+
+
 # =======
 #     TODO: IS THIS RIGHT?
-    # primitives = [object_dict[int(node[1:])]
-    #               for node in arguments[1] if not isinstance(object_dict[int(node[1:])], volmdlr.Point3D)]
-    # return primitives
+# primitives = [object_dict[int(node[1:])]
+#               for node in arguments[1] if not isinstance(object_dict[int(node[1:])], volmdlr.Point3D)]
+# return primitives
 # >>>>>>> enhance_step_reader
 
 
@@ -409,7 +411,7 @@ def oriented_closed_shell(arguments, object_dict):
     """
     Returns the data in case of a Shell3D.
     """
-    #TODO: How to use the orientation (arguments[3]
+    # TODO: How to use the orientation (arguments[3]
     return object_dict[arguments[2]]
 
 
@@ -457,10 +459,20 @@ def manifold_surface_shape_representation(arguments, object_dict):
     Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
     """
     primitives = []
+    counter = 0
     for arg in arguments[1]:
-        if isinstance(object_dict[int(arg[1:])],
-                      (vmshells.OpenShell3D, volmdlr.core.Compound)):
-            primitives.extend(object_dict[int(arg[1:])].primitives)
+        primitive = object_dict[int(arg[1:])]
+        if isinstance(primitive, vmshells.OpenShell3D):
+            primitive.name = arguments[0][1:-1] + str(counter)
+            primitives.append(primitive)
+            counter += 1
+        if isinstance(primitive, volmdlr.core.Compound):
+            for sub_prim in primitive.primitives:
+                sub_prim.name = arguments[0][1:-1] + str(counter)
+                counter += 1
+            primitives.append(primitive)
+    if len(primitives) == 1:
+        return primitives[0]
     return volmdlr.core.Compound(primitives)
 
 
@@ -1339,7 +1351,7 @@ class Step(dc.DessiaObject):
             #     ids_shape_definition_representation = [int(self.functions[id_product_definition].arg[4][1:])]
             # else:
             ids_shape_definition_representation = [int(arg[1:]) for
-                                                          arg in self.functions[id_product_definition].arg[4:]
+                                                   arg in self.functions[id_product_definition].arg[4:]
                                                    if int(arg[1:]) in valid_entities]
             assemblies_shapes.setdefault(assembly_node, []).extend(ids_shape_definition_representation)
             id_context_dependent_shape_representation = int(function.arg[-1][1:])
@@ -1349,7 +1361,7 @@ class Step(dc.DessiaObject):
             component_frame = int(self.functions[id_item_defined_transformation].arg[3][1:])
             assemblies_positions.setdefault(assembly_node, {assembly_node: assembly_frame}).update(
                 {shape_definition_representation: component_frame for shape_definition_representation
-                                in ids_shape_definition_representation})
+                 in ids_shape_definition_representation})
         return assemblies_shapes, assemblies_positions
 
     def context_dependent_shape_representation_to_next_assembly_usage_occurrence(self, node):
@@ -1514,7 +1526,7 @@ class Step(dc.DessiaObject):
             else:
                 primitives.append(shape)
         volume_model = volmdlr.core.VolumeModel(primitives)
-        #volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
+        # volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
         return volume_model
 
     def _helper_instantiate(self, node, object_dict, times, show_times):
