@@ -1905,7 +1905,7 @@ class LineSegment2D(LineSegment):
         """
         return 0.
 
-    def straight_line_second_moment_area(self, point: volmdlr.Point2D):
+    def straight_line_second_moment_area(self, *args, **kwargs):
         """Straight line second moment area for a line segment."""
         return 0, 0, 0
 
@@ -3426,7 +3426,7 @@ class ArcEllipse2D(Edge):
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
-        Plot arc-ellipse 2d using Matplotlob.
+        Plot arc-ellipse 2d using Matplotlib.
 
         :param ax: Matplotlib plot if there exists any.
         :param edge_style: edge styles.

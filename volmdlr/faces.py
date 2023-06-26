@@ -991,11 +991,9 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         Verify if a face 3d is being crossed by a line segment 3d.
         """
-        if not self._is_linesegment_intersection_possible(linesegment):
-            return False
-        for inter in self._get_linesegment_intersections_approximation(linesegment):
-            if inter:
-                return True
+        intersections = self.linesegment_intersections(linesegment)
+        if intersections:
+            return True
         return False
 
     def linesegment_intersections_approximation(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:

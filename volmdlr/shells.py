@@ -1068,6 +1068,7 @@ class ClosedShell3D(OpenShell3D):
 
         return list_coincident_faces
 
+
     def two_shells_intersecting_contour(self, shell2, dict_intersecting_combinations=None):
         """
         Computes intersecting_contour between two shells.
@@ -1625,3 +1626,4 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
+        ClosedShell3D.__init__(self, faces, color, alpha, name)
