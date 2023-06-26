@@ -20,6 +20,7 @@ import volmdlr
 import volmdlr.core
 import volmdlr.edges
 import volmdlr.faces
+import volmdlr.curves
 import volmdlr.primitives3d
 import volmdlr.wires
 from volmdlr import surfaces
@@ -144,6 +145,16 @@ def named_unit_plane_angle_unit_si_unit(arguments, *args, **kwargs):
 
 
 def named_unit_si_unit_solid_angle_unit(arguments, *args, **kwargs):
+    """
+    Returns the dimension of solid angle measure.
+
+    :param arguments: step primitive arguments
+    :return: SI unit dimension.
+    """
+    return SI_PREFIX[arguments[1]]
+
+
+def named_unit_length_unit_si_unit(arguments, *args, **kwargs):
     """
     Returns the dimension of solid angle measure.
 
@@ -369,7 +380,7 @@ def geometric_set(arguments, object_dict):
     :rtype: TYPE
 
     """
-    #TODO: IS THIS RIGHT?
+    # TODO: IS THIS RIGHT?
     primitives = [object_dict[int(node[1:])]
                   for node in arguments[1] if not isinstance(object_dict[int(node[1:])], volmdlr.Point3D)]
     return primitives
@@ -604,6 +615,23 @@ def representation_relationship_representation_relationship_with_transformation_
 
 
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
+        arguments, object_dict):
+    """
+    Bounded b spline with knots curve geometric representation item. To clarify.
+    """
+    modified_arguments = [''] + arguments
+    if modified_arguments[-1] == "''":
+        modified_arguments.pop()
+    return STEP_TO_VOLMDLR['BOUNDED_CURVE, '
+                           'B_SPLINE_CURVE, '
+                           'B_SPLINE_CURVE_WITH_KNOTS, '
+                           'CURVE, GEOMETRIC_REPRESENTATION_ITEM, '
+                           'RATIONAL_B_SPLINE_CURVE, '
+                           'REPRESENTATION_ITEM'].from_step(
+        modified_arguments, object_dict)
+
+
+def b_spline_curve_b_spline_curve_with_knots_rational_b_spline_curve_bounded_curve_representation_item_geometric_representation_item_curve(
         arguments, object_dict):
     """
     Bounded b spline with knots curve geometric representation item. To clarify.
@@ -1239,7 +1267,7 @@ class Step(dc.DessiaObject):
             #     ids_shape_definition_representation = [int(self.functions[id_product_definition].arg[4][1:])]
             # else:
             ids_shape_definition_representation = [int(arg[1:]) for
-                                                          arg in self.functions[id_product_definition].arg[4:]
+                                                   arg in self.functions[id_product_definition].arg[4:]
                                                    if int(arg[1:]) in valid_entities]
             assemblies_shapes.setdefault(assembly_node, []).extend(ids_shape_definition_representation)
             id_context_dependent_shape_representation = int(function.arg[-1][1:])
@@ -1249,7 +1277,7 @@ class Step(dc.DessiaObject):
             component_frame = [int(self.functions[id_item_defined_transformation].arg[3][1:])]
             assemblies_positions.setdefault(assembly_node, [assembly_frame]).extend(
                 component_frame * len(ids_shape_definition_representation))
-        return assemblies_shapes  #, assemblies_positions
+        return assemblies_shapes  # , assemblies_positions
 
     def context_dependent_shape_representation_to_next_assembly_usage_occurrence(self, node):
         """
@@ -1406,7 +1434,7 @@ class Step(dc.DessiaObject):
             else:
                 primitives.append(shape)
         volume_model = volmdlr.core.VolumeModel(primitives)
-        #volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
+        # volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
         return volume_model
 
     def _helper_instantiate(self, node, object_dict, times, show_times):
@@ -1489,9 +1517,9 @@ STEP_TO_VOLMDLR = {
     'AXIS2_PLACEMENT_2D': None,  # ??????????????????
     'AXIS2_PLACEMENT_3D': volmdlr.Frame3D,
 
-    'LINE': volmdlr.edges.Line3D,  # LineSegment3D,
-    'CIRCLE': volmdlr.wires.Circle3D,
-    'ELLIPSE': volmdlr.wires.Ellipse3D,
+    'LINE': volmdlr.curves.Line3D,  # LineSegment3D,
+    'CIRCLE': volmdlr.curves.Circle3D,
+    'ELLIPSE': volmdlr.curves.Ellipse3D,
     'PARABOLA': None,
     'HYPERBOLA': None,
     # 'PCURVE': None,

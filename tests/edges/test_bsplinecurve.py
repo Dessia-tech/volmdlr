@@ -8,6 +8,7 @@ from geomdl import BSpline, utilities
 
 import volmdlr
 import volmdlr.edges as vme
+from volmdlr import curves
 from volmdlr.models import bspline_curves
 
 
@@ -55,7 +56,7 @@ class TestBSplineCurve2D(unittest.TestCase):
 
     def test_line_intersections(self):
         bspline_curve2d = DessiaObject.load_from_file('edges/bsplinecurve2d_1.json')
-        line = vme.Line2D(volmdlr.Point2D(1.263163105753452, -0.002645572020392778),
+        line = curves.Line2D(volmdlr.Point2D(1.263163105753452, -0.002645572020392778),
                           volmdlr.Point2D(1.263163105753452, -0.001820963841291406))
 
         line_intersections = bspline_curve2d.line_intersections(line)
@@ -207,7 +208,7 @@ class TestBSplineCurve3D(unittest.TestCase):
                                          knots=[0.0, 0.4999999725155696, 1.0])
 
     def test_line_intersections(self):
-        line = vme.Line3D(volmdlr.Point3D(0.5334, -0.44659009801843536, 0.0),
+        line = curves.Line3D(volmdlr.Point3D(0.5334, -0.44659009801843536, 0.0),
                           volmdlr.Point3D(0.5334, 0.4342689853571558, -0.47337857496375274))
         bspline_line_intersections = self.b_splinecurve3d.line_intersections(line)
         self.assertTrue(bspline_line_intersections[0].is_close(

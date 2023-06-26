@@ -214,13 +214,13 @@ BABYLON_UNPACKER_BODY_TEMPLATE = Template(
                         mat.alpha = prim_mesh_data['alpha'];
                         child_mesh.parent = mesh
                     }
-                        
+
                 }
                 else{
                     var normals = [];
                     var vertexData = new BABYLON.VertexData();
                     BABYLON.VertexData.ComputeNormals(mesh_data['positions'], mesh_data['indices'], normals);
-    
+
                     vertexData.positions = mesh_data['positions'];
                     vertexData.indices = mesh_data['indices'];
                     vertexData.normals = normals;

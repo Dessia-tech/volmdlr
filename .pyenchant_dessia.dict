@@ -3,7 +3,9 @@ babylon
 babylonjs
 Bbox
 Bentley-Ottmann
+Ottmann
 Bezier
+Bézier
 bool
 bspline
 bsplinecurve
@@ -22,6 +24,7 @@ discretized
 discretize
 dof
 euler
+filepath
 freecad
 .geo
 geo
@@ -83,3 +86,8 @@ Tore's
 deserialization
 Trimesh
 networkx
+arcellipse
+bendjebla
+vmc
+WireMixin
+BoundingRectangle
