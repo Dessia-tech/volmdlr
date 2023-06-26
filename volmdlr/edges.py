@@ -5527,13 +5527,44 @@ class FullArc3D(FullArcMixin, Arc3D):
         return ax
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
+        """
+        Rotates the FullArc3D object around a specified axis by a given angle.
+
+        :param center: The center point of rotation.
+        :type center: (volmdlr.Point3D)
+        :param axis: The axis of rotation.
+        :type axis: (volmdlr.Vector3D)
+        :param angle: The angle of rotation in radians.
+        :type angle: (float)
+
+        :return: A new FullArc3D object that is the result of the rotation.
+        :rtype: FullArc3D:
+        """
         new_start_end = self.start.rotation(center, axis, angle)
         new_circle = self.circle.rotation(center, axis, angle)
         return FullArc3D(new_circle, new_start_end, name=self.name)
 
     def translation(self, offset: volmdlr.Vector3D):
+        """
+        Translates the FullArc3D object by a specified offset.
+
+        :param offset: The translation offset vector.
+        :type offset: (volmdlr.Vector3D).
+        :return: A new FullArc3D object that is the result of the translation.
+        :rtype: FullArc3D.
+        """
         new_start_end = self.start.translation(offset, True)
         new_circle = self.circle.translation(offset, True)
+        return FullArc3D(new_circle, new_start_end, name=self.name)
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes vector frame_mapping and return a new FullArc3D.
+
+        side = 'old' or 'new'
+        """
+        new_circle = self.circle.frame_mapping(frame, side)
+        new_start_end = self.start_end.frame_mapping(frame, side)
         return FullArc3D(new_circle, new_start_end, name=self.name)
 
     def linesegment_intersections(self, linesegment3d: LineSegment3D):

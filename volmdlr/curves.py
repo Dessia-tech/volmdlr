@@ -81,7 +81,7 @@ class Line(Curve):
         :rtype:  Union[:class:`volmdlr.Vector2D`, :class:`volmdlr.Vector3D`]
         """
         vector = self.direction_vector()
-        vector.normalize()
+        vector = vector.unit_vector()
         return vector
 
     def direction_vector(self, *args, **kwargs):

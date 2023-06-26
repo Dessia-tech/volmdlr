@@ -49,6 +49,18 @@ class TestLine3D(unittest.TestCase):
         for point, expected_point in zip(sorted_points_along_line3d, expected_sorted_points3d):
             self.assertEqual(point, expected_point)
 
+    def test_point_at_abscissa(self):
+        line3d = curves.Line3D(volmdlr.Point3D(-0.16532959009, 0.669230747399, 0.6255868826019999),
+                               volmdlr.Point3D(-0.1653592907723126, 0.6687168836734351, 0.6247295250680509))
+
+        abscissa1 = -0.00019339887669772427
+        self.assertTrue(line3d.point_at_abscissa(abscissa1).is_close(
+            volmdlr.Point3D(-0.1653238460114036, 0.6693301280663, 0.6257526945859939)))
+
+        abscissa2 = 0.00019337655078049366
+        self.assertTrue(line3d.point_at_abscissa(abscissa2).is_close(
+            volmdlr.Point3D(-0.16533533350550145, 0.6691313782041791, 0.6254210897592992)))
+
 
 if __name__ == '__main__':
     unittest.main()
