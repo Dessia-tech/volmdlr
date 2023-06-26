@@ -94,6 +94,7 @@ steps:
   - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
   - python setup.py build_ext --inplace
   - python setup.py install
+  - pip list
   - cd doc
   - make html
   - cd ../tests
