@@ -3,11 +3,10 @@
 import matplotlib.pyplot as plt
 
 import volmdlr as vm
-import volmdlr.edges as edges
 from volmdlr.core import EdgeStyle
 import volmdlr.primitives2d as p2d
-import volmdlr.wires as wires
-
+from volmdlr import edges, curves
+from volmdlr.utils.common_operations import random_color
 plt, (ax1, ax2, ax3) = plt.subplots(1, 3)
 
 u = vm.Vector2D.random(0, 1, 0, 1)
@@ -33,15 +32,15 @@ contour =p2d.ClosedRoundedLineSegments2D(
     {3:0.3*l})
 
 ax = contour.plot(ax=ax1)
-line = edges.Line2D(vm.O2D, u)
-line2 = edges.Line2D(0.3*v, u+0.3*v)
+line = curves.Line2D(vm.O2D, u)
+line2 = curves.Line2D(0.3*v, u+0.3*v)
 
 line.plot(ax=ax1, edge_style=EdgeStyle(color='b'))
 line2.plot(ax=ax1, edge_style=EdgeStyle(color='g'))
 
 split_contours1 = contour.cut_by_line(line)
 for c in split_contours1:
-    c.plot(ax=ax2, edge_style=EdgeStyle(color='b'))
+    c.plot(ax=ax2, edge_style=EdgeStyle(color=random_color()))
 ax2.set_title('{} splitted contours'.format(len(split_contours1)))
 
 split_contours2 = contour.cut_by_line(line2)

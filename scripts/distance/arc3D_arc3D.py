@@ -20,7 +20,7 @@ rad_min, rad_max = 1, 3
 pt1 = vm.Point3D.random(mini, maxi, mini, maxi, mini, maxi)
 rad1 = random.randint(rad_min, rad_max)
 start1, interior1, end1 = pt1, pt1 + vm.Point3D(0,-rad1,rad1), pt1 + vm.Point3D(0,-2*rad1,0)
-arc1 = vme.Arc3D(start1, interior1, end1)
+arc1 = vme.Arc3D.from_3_points(start1, interior1, end1)
 
 pt2 = vm.Point3D.random(mini, maxi, mini, maxi, mini, maxi)
 rad2 = random.randint(rad_min, rad_max)
@@ -28,7 +28,7 @@ start2, interior2, end2 = pt2, pt2 + vm.Point3D(-2*rad2,0,0), pt2 + vm.Point3D(-
 
 # TODO testcase to make robust
 try:
-    arc2 = vme.Arc3D(start2, interior2, end2)
+    arc2 = vme.Arc3D.from_3_points(start2, interior2, end2)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')

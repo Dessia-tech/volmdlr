@@ -3,7 +3,7 @@ import os
 import math
 from dessia_common.core import DessiaObject
 import volmdlr
-from volmdlr import faces, surfaces, wires
+from volmdlr import faces, surfaces, wires, curves
 from volmdlr.models import conical_surfaces
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_conical_tests')
@@ -47,7 +47,7 @@ class TestConicalFace3D(unittest.TestCase):
         self.assertAlmostEqual(conical_face.area(), 0.0009613769926732048 * volmdlr.TWO_PI, 4)
 
     def test_from_base_and_vertex(self):
-        circle = wires.Circle3D(
+        circle = curves.Circle3D(
             volmdlr.Frame3D(volmdlr.Point3D(0, 0, 1), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D), 0.5 * math.sqrt(3)
         )
         trim_point = volmdlr.Point3D(0.5 * math.sqrt(3), 0, 1)
