@@ -41,7 +41,7 @@ def standardize_knot_vector(knot_vector):
         x = 1 / (last_knot - first_knot)
         y = first_knot / (first_knot - last_knot)
         for u in knot_vector:
-            standard_u_knots.append(u * x + y)
+            standard_u_knots.append(round(u * x + y, 7))
         return standard_u_knots
     return knot_vector
 
@@ -196,18 +196,26 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         orientation = arguments[4]
-        if orientation == '.F.':
-            point1, point2 = point2, point1
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
+            if orientation == '.F.':
+                point1, point2 = point2, point1
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D':
-                point1, point2 = point2, point1
-            return obj.trim(point1, point2)
+                if orientation == '.T.':
+                    point1, point2 = point2, point1
+                trimmed_edge = obj.trim(point1, point2)
+                if orientation == '.T.':
+                    trimmed_edge = trimmed_edge.reverse()
+                return trimmed_edge
+            trimmed_edge = obj.trim(point1, point2)
+            if orientation == '.F.':
+                trimmed_edge = trimmed_edge.reverse()
+            return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
 
@@ -960,7 +968,7 @@ class BSplineCurve(Edge):
         func, func_first_derivative, curve_derivatives, distance_vector = self._point_inversion_funcs(u0, point)
         if self._check_convergence(curve_derivatives, distance_vector, tol1=tol1, tol2=tol2):
             return u0, True
-        new_u = u0 - func / func_first_derivative
+        new_u = u0 - func / (func_first_derivative + 1e-18)
         new_u = self._check_bounds(new_u)
         residual = (new_u - u0) * curve_derivatives[1]
         if residual.norm() <= 1e-6:
@@ -1220,7 +1228,8 @@ class BSplineCurve(Edge):
             number_points = int(math.pi * angle_resolution)
 
         if len(self.points) == number_points or (not number_points and not angle_resolution):
-            return self.points
+            number_points = 20
+            # return self.points
         curve = self.curve
         curve.delta = 1 / number_points
         curve_points = curve.evalpts
@@ -1513,7 +1522,7 @@ class BSplineCurve(Edge):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         # special case periodical bsplinecurve
-        if self.periodic and abscissa2 == 0.0:
+        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=1e-6):
             abscissa2 = self.length()
         discretized_points_between_1_2 = []
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
@@ -3255,6 +3264,8 @@ class ArcEllipse2D(Edge):
 
     def point_at_abscissa(self, abscissa):
         """Get a point at given abscissa."""
+        if abscissa < 0:
+            return self.start
         if math.isclose(abscissa, 0.0, abs_tol=1e-6):
             return self.start
         if math.isclose(abscissa, self.length(), abs_tol=1e-6):
@@ -3292,6 +3303,9 @@ class ArcEllipse2D(Edge):
                 if iter_counter == 0:
                     increment_factor = -1e-5
                 else:
+                    # self.save_to_file('/home/axel/Bureau/arcellipse2d')
+                    # print(abscissa)
+                    # ax = self.plot()
                     raise NotImplementedError
             initial_angle += increment_factor
             iter_counter += 1
@@ -4516,17 +4530,9 @@ class BSplineCurve3D(BSplineCurve):
             dir_vector = lines[0].unit_direction_vector()
             if all(line.unit_direction_vector() == dir_vector for line in lines):
                 return LineSegment3D(points[0], points[-1])
-        # curve_form = arguments[3]
-        if arguments[4] == '.F.':
-            closed_curve = False
-        elif arguments[4] == '.T.':
-            closed_curve = True
-        else:
-            raise ValueError
-        # self_intersect = arguments[5]
+
         knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
         knots = [float(i) for i in arguments[7][1:-1].split(",")]
-        # knot_spec = arguments[8]
         knot_vector = []
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
@@ -4536,10 +4542,8 @@ class BSplineCurve3D(BSplineCurve):
         else:
             weight_data = None
 
-        # FORCING CLOSED_CURVE = FALSE:
-        # closed_curve = False
-        return cls(degree, points, knot_multiplicities, knots, weight_data,
-                   closed_curve, name)
+        closed_curve = points[0].is_close(points[-1])
+        return cls(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
 
     def to_step(self, current_id, surface_id=None, curve2d=None):
         """Exports to STEP format."""
@@ -4721,7 +4725,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
-        curves = operations.split_curve(self.curve, round(parameter, 7))
+        curves = operations.split_curve(self.curve, round(parameter, 6))
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
@@ -4739,7 +4743,9 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-        curves = operations.split_curve(self.curve, round(parameter, 7))
+
+        curves = operations.split_curve(self.curve, round(parameter, 6))
+
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
@@ -4979,6 +4985,8 @@ class Arc3D(ArcMixin, Edge):
     def bounding_box(self):
         if not self._bbox:
             self._bbox = self.get_bounding_box()
+        if isinstance(self._bbox, str):
+            raise ValueError
         return self._bbox
 
     @bounding_box.setter
@@ -5628,6 +5636,21 @@ class FullArc3D(FullArcMixin, Arc3D):
         return cls(circle, circle.center + circle.frame.u * circle.radius)
 
 
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str = "new"):
+        if side == 'old':
+            new_center = frame.local_to_global_coordinates(self.center.copy())
+            new_start_end = frame.local_to_global_coordinates(self.start_end.copy())
+            new_normal = frame.local_to_global_coordinates(self.normal.copy())
+        elif side == 'new':
+            new_center = frame.global_to_local_coordinates(self.center.copy())
+            new_start_end = frame.global_to_local_coordinates(self.start_end.copy())
+            new_normal = frame.global_to_local_coordinates(self.normal.copy())
+        else:
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
+        return FullArc3D(new_center, new_start_end, new_normal, name=self.name)
+
+
 class ArcEllipse3D(Edge):
     """
     An arc is defined by a starting point, an end point and an interior point.
@@ -6022,7 +6045,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: list of two Arc of ellipse.
         """
         if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):
-            raise ValueError("Point should be different of start and end.")
+            return [self, None]
         if not self.point_belongs(split_point, 1e-5):
             raise ValueError("Point not on the ellipse.")
         return [ArcEllipse3D(self.ellipse, self.start_end, split_point),

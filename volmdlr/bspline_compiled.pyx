@@ -8,7 +8,6 @@ Cython functions for bspline
 
 """
 from functools import lru_cache
-
 import cython
 
 

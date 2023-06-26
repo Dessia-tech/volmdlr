@@ -657,10 +657,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         """
         meshes = []
+        face_mesh = None
         for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
-
             except Exception:
                 face_mesh = None
                 warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
@@ -868,6 +868,25 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             if self.is_face_intersecting(face2):
                 return True
         return False
+
+    @classmethod
+    def from_faces(cls, faces):
+        """
+        Defines a List of separated OpenShell3D from a list of faces, based on the faces graph.
+        """
+
+        graph = cls(faces).faces_graph()
+        components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
+
+        shells_list = []
+        for _,graph_i in enumerate(components,start=1):
+            faces_list = []
+            for n_index in graph_i.nodes:
+                faces_list.append(faces[n_index])
+
+            shells_list.append(cls(faces_list))
+
+        return shells_list
 
 
 class ClosedShell3D(OpenShell3D):
@@ -1444,7 +1463,7 @@ class ClosedShell3D(OpenShell3D):
                                            list_coincident_faces
                                            )
         faces += new_valid_faces
-        return [OpenShell3D(faces)]
+        return OpenShell3D.from_faces(faces)
 
     def subtract_to_closed_shell(self, shell2: OpenShell3D, tol: float = 1e-8):
         """
@@ -1466,9 +1485,9 @@ class ClosedShell3D(OpenShell3D):
         faces += shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
         new_valid_faces = self.subtraction_faces(shell2, intersecting_faces, intersecting_combinations)
         faces += new_valid_faces
-        new_shell = ClosedShell3D(faces)
+        # new_shell = ClosedShell3D(faces)
         # new_shell.eliminate_not_valid_closedshell_faces()
-        return [new_shell]
+        return self.from_faces(faces)
 
     def validate_intersection_operation(self, shell2):
         """

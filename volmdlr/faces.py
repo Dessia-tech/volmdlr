@@ -211,9 +211,13 @@ class Face3D(volmdlr.core.Primitive3D):
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
         face = cls(surface, surface2d=surface2d, name=name)
+        # if isinstance(face, ToroidalFace3D):
+        #     ax = surface2d.plot()
+        #     ax.set_aspect("auto")
         # To improve performance while reading from step file
-        face.outer_contour3d = outer_contour3d
-        face.inner_contours3d = inner_contours3d
+        # face.outer_contour3d = outer_contour3d
+        # face.inner_contours3d = inner_contours3d
+
         return face
 
     def to_step(self, current_id):
@@ -2504,12 +2508,12 @@ class ExtrusionFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 11
+        angle_resolution = 15
         xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
         number_points_x = int(delta_x * angle_resolution)
 
-        number_points_y = number_points_x
+        number_points_y = 0
 
         return number_points_x, number_points_y
 
@@ -2576,7 +2580,7 @@ class RevolutionFace3D(Face3D):
         delta_x = xmax - xmin
         number_points_x = int(delta_x * angle_resolution)
 
-        number_points_y = number_points_x
+        number_points_y = 0
 
         return number_points_x, number_points_y
 
@@ -2654,16 +2658,18 @@ class BSplineFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
-            resolution = 25
-        else:
-            resolution = 15
+        # if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
+        #     resolution = 25
+        # else:
+        #     resolution = 15
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
-        number_points_x = int(delta_u * resolution)
-
+        # number_points_x = int(delta_u * resolution)
+        #
         delta_v = v_max - v_min
-        number_points_y = int(delta_v * resolution)
+        # number_points_y = int(delta_v * resolution)
+        number_points_x = int(delta_u * self.surface3d.nb_u)
+        number_points_y = int(delta_v * self.surface3d.nb_v)
 
         return number_points_x, number_points_y
 

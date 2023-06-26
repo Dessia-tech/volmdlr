@@ -242,7 +242,9 @@ def face_outer_bound(arguments, object_dict):
     :return: A Contour3D representing the BREP of a face.
     :rtype: volmdlr.wires.Contour3D
     """
-    return object_dict[arguments[1]]
+    if arguments[2] == '.T.':
+        return object_dict[arguments[1]]
+    return object_dict[arguments[1]].invert()
 
 
 def face_bound(arguments, object_dict):
@@ -334,7 +336,7 @@ def composite_curve(arguments, object_dict):
     Returns the data in case of a COMPOSITE_CURVE.
     """
     name = arguments[0]
-    list_primitives = [object_dict[int(arg[1:])]for arg in arguments[1]]
+    list_primitives = [object_dict[int(lp[1:])] for lp in arguments[1]]
     first_primitive = list_primitives[0]
     last_primitive = list_primitives[-1]
     if first_primitive.start.is_close(last_primitive.end):
@@ -380,17 +382,30 @@ def geometric_set(arguments, object_dict):
     :rtype: TYPE
 
     """
-    # TODO: IS THIS RIGHT?
-    primitives = [object_dict[int(node[1:])]
-                  for node in arguments[1] if not isinstance(object_dict[int(node[1:])], volmdlr.Point3D)]
-    return primitives
+    sub_objects = []
+    for argument in arguments[1]:
+        sub_obj = object_dict[int(argument[1:])]
+        sub_objects.append(sub_obj)
+        print('GEOMETRIC_SET', sub_obj)
+    return sub_objects
 
 
 def shell_based_surface_model(arguments, object_dict):
     """
     Returns the data in case of a Shell3D.
     """
-    return object_dict[int(arguments[1][0][1:])]
+    if len(arguments[1]) == 1:
+        return object_dict[int(arguments[1][0][1:])]
+    primitives = [object_dict[int(arg[1:])] for arg in arguments[1]]
+    return volmdlr.core.Compound(primitives)
+
+
+def oriented_closed_shell(arguments, object_dict):
+    """
+    Returns the data in case of a Shell3D.
+    """
+    # TODO: How to use the orientation (arguments[3]
+    return object_dict[arguments[2]]
 
 
 def item_defined_transformation(arguments, object_dict):
@@ -413,16 +428,43 @@ def item_defined_transformation(arguments, object_dict):
     return [volmdlr_object1, volmdlr_object2]
 
 
+# def geometrically_bounded_surface_shape_representation(arguments, object_dict):
+#     """
+#     Returns xx.
+#
+#     :param arguments: DESCRIPTION
+#     :type arguments: TYPE
+#     :param object_dict: DESCRIPTION
+#     :type object_dict: TYPE
+#     :return: DESCRIPTION
+#     :rtype: TYPE
+#
+#     """
+#     sub_objects = []
+#     for argument in arguments[1]:
+#         sub_obj = object_dict[int(argument[1:])]
+#         sub_objects.append(sub_obj)
+#     return sub_objects
+
+
 def manifold_surface_shape_representation(arguments, object_dict):
     """
     Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
     """
     primitives = []
     for arg in arguments[1]:
-        if isinstance(object_dict[int(arg[1:])],
-                      vmshells.OpenShell3D):
-            primitives.extend(object_dict[int(arg[1:])].primitives)
-    return vmshells.ClosedShell3D(primitives)
+        primitive = object_dict[int(arg[1:])]
+        if isinstance(primitive, vmshells.OpenShell3D):
+            primitives.append(primitive)
+        if isinstance(primitive, volmdlr.core.Compound):
+            counter = 0
+            for sub_prim in primitive.primitives:
+                sub_prim.name = arguments[0][1:-1] + str(counter)
+                counter += 1
+            primitives.append(primitive)
+    if len(primitives) == 1:
+        return primitives[0]
+    return volmdlr.core.Compound(primitives)
 
 
 def faceted_brep(arguments, object_dict):
@@ -481,6 +523,7 @@ def shape_representation(arguments, object_dict):
         return shells
     shells = []
     frames = []
+    print('shape_representation', arguments)
     for arg in arguments[1]:
         if int(arg[1:]) in object_dict and \
                 isinstance(object_dict[int(arg[1:])], list) and \
@@ -522,14 +565,20 @@ def advanced_brep_shape_representation(arguments, object_dict):
     :rtype: TYPE
 
     """
-    shells = []
+    primitives = []
     for arg in arguments[1]:
-        if isinstance(object_dict[int(arg[1:])],
-                      vmshells.OpenShell3D):
-            shells.append(object_dict[int(arg[1:])])
-    if len(shells) > 1:
-        return volmdlr.core.Compound(shells, name=arguments[0])
-    return shells
+        primitive = object_dict[int(arg[1:])]
+        if isinstance(primitive, vmshells.OpenShell3D):
+            primitives.append(primitive)
+        if isinstance(primitive, volmdlr.core.Compound):
+            counter = 0
+            for sub_prim in primitive.primitives:
+                sub_prim.name = arguments[0][1:-1] + str(counter)
+                counter += 1
+            primitives.append(primitive)
+    if len(primitives) == 1:
+        return primitives[0]
+    return volmdlr.core.Compound(primitives)
 
 
 def geometrically_bounded_surface_shape_representation(arguments, object_dict):
@@ -547,9 +596,45 @@ def geometrically_bounded_surface_shape_representation(arguments, object_dict):
     primitives = []
     for arg in arguments[1]:
         primitives.extend(object_dict[int(arg[1:])])
+    primitives = [primi for primi in primitives
+                  if not isinstance(primi, volmdlr.Point3D)]
     if len(primitives) > 1:
         return volmdlr.core.Compound(primitives, name=arguments[0])
     return primitives
+
+
+def map_primitive(primitive, global_frame, transformed_frame):
+    """
+    Frame maps a primitive in an assembly to its good position.
+
+    :param primitive: primitive to map
+    :type primitive: Primitive3D
+    :param global_frame: Assembly frame
+    :type global_frame: volmdlr.Frame3D
+    :param transformed_frame: position of the primitive on the assembly
+    :type transformed_frame: volmdlr.Frame3D
+    :return: A new positioned primitive
+    :rtype: Primitive3D
+
+    """
+    if global_frame == transformed_frame:
+        return primitive
+    basis_a = global_frame.basis()
+    basis_b = transformed_frame.basis()
+    matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+                          [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                          [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+    matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+                          [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                          [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+    transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
+    u_vector = volmdlr.Vector3D(*transfer_matrix[0])
+    v_vector = volmdlr.Vector3D(*transfer_matrix[1])
+    w_vector = volmdlr.Vector3D(*transfer_matrix[2])
+    new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
+
+    new_primitive = primitive.frame_mapping(new_frame, 'old')
+    return new_primitive
 
 
 def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, shape_representation_frames):
@@ -844,14 +929,13 @@ class Step(dc.DessiaObject):
                 previous_line = str()
                 continue
 
-            function = line.split("=")
+            function = line.split("=", maxsplit=1)
             function_id = int(function[0][1:])
             function_name_arg = function[1].split("(", 1)
             function_name = function_name_arg[0]
             function_arg = function_name_arg[1].split("#")
             function_connections = []
             connections = []
-            # print(function_id, function_name)
             for connec in function_arg[1:]:
                 connec = connec.split(",")
                 connec = connec[0].split(")")
@@ -860,7 +944,6 @@ class Step(dc.DessiaObject):
                     connections.append(function_connection)
                     function_connections.append(
                         (function_id, function_connection))
-            # print(function_connections)
             dict_connections[function_id] = connections
             all_connections.extend(function_connections)
 
@@ -883,7 +966,6 @@ class Step(dc.DessiaObject):
                     if arg[0] == '#':
                         function_connections.append(
                             (function_id, int(arg[1:])))
-            # print('=', function_connections)
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
@@ -1048,7 +1130,6 @@ class Step(dc.DessiaObject):
         Gives the volmdlr object related to the step function.
         """
         self.parse_arguments(arguments)
-
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
         try:
@@ -1250,7 +1331,10 @@ class Step(dc.DessiaObject):
         shapes = set()
         for node in root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             function = self.functions[node]
-            assembly_product_definition = int(function.arg[3][1:])
+            try:
+                assembly_product_definition = int(function.arg[3][1:])
+            except Exception:
+                print(True)
             assembly_node = int(self.functions[assembly_product_definition].arg[4][1:])
             assemblies.add(assembly_node)
             id_product_definition = int(function.arg[4][1:])
@@ -1274,10 +1358,11 @@ class Step(dc.DessiaObject):
             id_transformation = int(self.functions[id_context_dependent_shape_representation].arg[0][1:])
             id_item_defined_transformation = int(self.functions[id_transformation].arg[4][1:])
             assembly_frame = int(self.functions[id_item_defined_transformation].arg[2][1:])
-            component_frame = [int(self.functions[id_item_defined_transformation].arg[3][1:])]
-            assemblies_positions.setdefault(assembly_node, [assembly_frame]).extend(
-                component_frame * len(ids_shape_definition_representation))
-        return assemblies_shapes  # , assemblies_positions
+            component_frame = int(self.functions[id_item_defined_transformation].arg[3][1:])
+            assemblies_positions.setdefault(assembly_node, {assembly_node: assembly_frame}).update(
+                {shape_definition_representation: component_frame for shape_definition_representation
+                 in ids_shape_definition_representation})
+        return assemblies_shapes, assemblies_positions
 
     def context_dependent_shape_representation_to_next_assembly_usage_occurrence(self, node):
         """
@@ -1330,13 +1415,14 @@ class Step(dc.DessiaObject):
             self.functions[next_assembly_usage_occurrence].arg.append(f'#{node}')
 
     def instatiate_assembly(self, object_dict):
-        # assemblies_shapes, assemblies_positions = self.get_assembly_data()
+        assembly_data, assemblies_positions = self.get_assembly_data()
         # instanciate_ids = list(assemblies_shapes.keys())
 
-        assembly_data = self.get_assembly_data()
+        # assembly_data = self.get_assembly_data()
         instanciate_ids = list(assembly_data.keys())
         error = True
         last_error = None
+        none_primitives = set()
         while error:
             try:
                 # here we invert instantiate_ids because if the code enter inside the except
@@ -1347,21 +1433,32 @@ class Step(dc.DessiaObject):
                         continue
                     product_id = self.shape_definition_representation_to_product_node(instanciate_id)
                     name = self.functions[product_id].arg[0]
-                    id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
-                    ids_frames = self.functions[id_shape_representation].arg[1]
-                    self.parse_arguments(ids_frames)
-                    frames = [object_dict[ids_frames[0]]]
+                    # id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
+                    # ids_frames = self.functions[id_shape_representation].arg[1]
+                    # self.parse_arguments(ids_frames)
+
+                    frames_dict = assemblies_positions[instanciate_id]
                     list_primitives = []
-                    for i, node in enumerate(assembly_data[instanciate_id]):
+                    frames = [object_dict[frames_dict[instanciate_id]]]
+                    for node in assembly_data[instanciate_id]:
+                        if node in none_primitives:
+                            assembly_data[instanciate_id].remove(node)
+                            continue
                         primitives = object_dict[node]
-                        frame = object_dict[ids_frames[i + 1]]
+                        frame = object_dict[frames_dict[node]]
+
                         if isinstance(primitives, list):
                             list_primitives.extend(primitives)
                             frames.extend([frame] * len(primitives))
                         else:
                             list_primitives.append(primitives)
                             frames.append(frame)
-
+                    if not list_primitives:
+                        none_primitives.add(instanciate_id)
+                        instanciate_ids.pop()
+                        continue
+                    # list_primitives = [primi for primi in list_primitives
+                    #                    if primi is not None]
                     volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
                     object_dict[instanciate_id] = volmdlr_object
 
@@ -1371,7 +1468,7 @@ class Step(dc.DessiaObject):
                 # depth in the right order, leading to error
                 if last_error == key.args[0]:
                     raise NotImplementedError('Error instantiating assembly') from key
-                print(key.args[0])
+                print('step reading keyerror', key.args[0])
                 if key.args[0] in assembly_data:
                     instanciate_ids.append(key.args[0])
                     instanciate_ids.extend(assembly_data[key.args[0]])
@@ -1394,6 +1491,7 @@ class Step(dc.DessiaObject):
         object_dict = {}
         times = {}
         self.create_connections()
+        print('step - graph created')
         root_nodes = self.root_nodes
         # ------------------------------------------------------
         # TODO: This isn't a 100% right. Each SHAPE_REPRESENTATION has its own geometric context
@@ -1409,6 +1507,7 @@ class Step(dc.DessiaObject):
         shape_representations = root_nodes["SHAPE_REPRESENTATION"]
         nodes = self.create_node_list(shape_representations)
         errors = set()
+        print('step - instanciating')
         for node in nodes:
 
             if node is None:
@@ -1572,7 +1671,6 @@ STEP_TO_VOLMDLR = {
 
     'EDGE_CURVE': volmdlr.edges.Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
     'ORIENTED_EDGE': None,  # TOPOLOGICAL EDGE
-    "GEOMETRIC_SET": None,
     # The one above can influence the direction with their last argument
     # TODO : maybe take them into consideration
 
@@ -1592,6 +1690,7 @@ STEP_TO_VOLMDLR = {
     #        'ORIENTED_CLOSED_SHELL': None,
     'CONNECTED_FACE_SET': vmshells.OpenShell3D,
     'GEOMETRIC_CURVE_SET': None,
+    'GEOMETRIC_SET': None,
 
     # step subfunctions
     'UNCERTAINTY_MEASURE_WITH_UNIT': None,
@@ -1608,10 +1707,10 @@ STEP_TO_VOLMDLR = {
     'MANIFOLD_SOLID_BREP': None,
     'BREP_WITH_VOIDS': None,
     'SHAPE_REPRESENTATION': None,
+    'GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION': None,
     'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
     "FACETED_BREP_SHAPE_REPRESENTATION": None,
     "GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION": None,
-    "GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION": None,
     "EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION": None,
     'ITEM_DEFINED_TRANSFORMATION': None,
     'SHAPE_REPRESENTATION_RELATIONSHIP': None,
@@ -1637,7 +1736,8 @@ SI_PREFIX = {'.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9, '.MEG
              '.HECTO.': 1e2, '.DECA.': 1e1, '$': 1, '.DECI.': 1e-1, '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6,
              '.NANO.': 1e-9, '.PICO.': 1e-12, '.FEMTO.': 1e-15, '.ATTO.': 1e-18}
 
-STEP_REPRESENTATION_ENTITIES = {"ADVANCED_BREP_SHAPE_REPRESENTATION", "FACETED_BREP_SHAPE_REPRESENTATION",
+STEP_REPRESENTATION_ENTITIES = {"ADVANCED_BREP_SHAPE_REPRESENTATION",
+                                "FACETED_BREP_SHAPE_REPRESENTATION",
                                 "MANIFOLD_SURFACE_SHAPE_REPRESENTATION",
                                 "GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION",
                                 "GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION",

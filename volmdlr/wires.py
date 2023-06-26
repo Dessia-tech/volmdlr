@@ -98,7 +98,7 @@ def reorder_contour3d_edges_from_step(raw_edges, step_data):
         # # Green color : well-placed and well-read
         # ax = raw_edges[0].plot(edge_style=EdgeStyle(color='g'))
         # ax.set_title(f"Step ID: #{step_id}")
-        #
+
         # # Red color : can't be connected to green edge
         # raw_edges[1].plot(ax=ax, edge_style=EdgeStyle(color='r'))
         # # Black color : to be placed
@@ -284,9 +284,9 @@ class WireMixin:
 
         raise ValueError('Point is not on wire')
 
-    def sort_points_along_wire(self, points):
+    def sort_points_along_wire(self, points, tol=1e-6):
         """ Sort given points along the wire with respect to the abscissa. """
-        return sorted(points, key=self.abscissa)
+        return sorted(points, key=lambda point: self.abscissa(point, tol))
 
     def is_ordered(self, tol=1e-6):
         """ Check if the wire's primitives are ordered or not. """
@@ -1251,6 +1251,7 @@ class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
         """
         new_wire = []
         for primitive in self.primitives:
+            print('Wire3D', primitive)
             new_wire.append(primitive.frame_mapping(frame, side))
         return Wire3D(new_wire)
 
@@ -1836,7 +1837,8 @@ class ContourMixin(WireMixin):
             points.update(primitive.get_geo_points())
         return points
 
-    def to_polygon(self, angle_resolution, discretize_line: bool = False, discretize_line_direction: str = "xy"):
+    def to_polygon(self, angle_resolution, discretize_line: bool = False, discretize_line_direction: str = "xy",
+                   number_points_x=None, number_points_y=None):
         """
         Transform the contour_mixin to a polygon, COPY/PASTE from Contour2D.
 
@@ -1861,7 +1863,15 @@ class ContourMixin(WireMixin):
                         (discretize_line_direction == "x" and is_horizontal) or \
                         (discretize_line_direction == "y" and is_vertical)
                     if should_discretize:
-                        polygon_points.extend(primitive.discretization_points(angle_resolution=angle_resolution)[:-1])
+                        if is_horizontal and number_points_x:
+                            polygon_points.extend(primitive.discretization_points(
+                                number_points=number_points_x + 2)[:-1])
+                        elif is_vertical and number_points_y:
+                            polygon_points.extend(primitive.discretization_points(
+                                number_points=number_points_y + 2)[:-1])
+                        else:
+                            polygon_points.extend(primitive.discretization_points(
+                                angle_resolution=angle_resolution)[:-1])
                     else:
                         polygon_points.append(primitive.start)
 
@@ -3386,7 +3396,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         return ax
 
-    def triangulation(self, tri_opt: str = 'pd'):
+    def triangulation(self, tri_opt: str = 'p'):
         """
         Perform triangulation on the polygon.
 
@@ -4105,10 +4115,12 @@ class Contour3D(ContourMixin, Wire3D):
                 # Case of a circle, ellipse...
                 return raw_edges[0]
             return cls(raw_edges, name=name)
-
-        list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
-        if list_edges:
-            return cls(list_edges, name=name)
+        contour = cls(raw_edges, name=name)
+        if contour.is_ordered():
+            return contour
+        edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
+        if edges:
+            return cls(edges, name=name)
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
@@ -4200,6 +4212,7 @@ class Contour3D(ContourMixin, Wire3D):
 
         side = 'old' or 'new'.
         """
+        print('Contour3D', self.primitives)
         new_edges = [edge.frame_mapping(frame, side) for edge in
                      self.primitives]
         return Contour3D(new_edges, self.name)
