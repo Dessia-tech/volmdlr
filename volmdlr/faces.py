@@ -970,7 +970,6 @@ class Face3D(volmdlr.core.Primitive3D):
             return False
         if math.isclose(self.area(), 0.0, abs_tol=1e-10):
             return False
-        import volmdlr.primitives3d
         bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
         if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
             return False
