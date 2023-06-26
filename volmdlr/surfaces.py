@@ -921,6 +921,30 @@ class Surface3D(DessiaObject):
                 raise AttributeError(f'Class {self.__class__.__name__} does not implement {method_name}')
         return primitives2d
 
+    def _fix_brep(self, primitives2d):
+        """
+        Special case when the step file is defined with a 3D contour is coonected on the periodicity.
+        """
+        if self.x_periodicity and self.y_periodicity:
+            is_vertical = primitives2d[0].unit_direction_vector().is_colinear_to(volmdlr.Y2D, 1e-4)
+            if is_vertical:
+                primitives2d[-1] = primitives2d[-1].translation(volmdlr.Vector2D(self.x_periodicity, 0))
+                closing_linesegment1 = edges.LineSegment2D(primitives2d[0].end, primitives2d[-1].start)
+                closing_linesegment2 = edges.LineSegment2D(primitives2d[-1].end, primitives2d[0].start)
+            else:
+                primitives2d[-1] = primitives2d[-1].translation(volmdlr.Vector2D(0, self.y_periodicity))
+                closing_linesegment1 = edges.LineSegment2D(primitives2d[0].end, primitives2d[-1].start)
+                closing_linesegment2 = edges.LineSegment2D(primitives2d[-1].end, primitives2d[0].start)
+        elif self.x_periodicity:
+            primitives2d[-1] = primitives2d[-1].translation(volmdlr.Vector2D(self.x_periodicity, 0))
+            closing_linesegment1 = edges.LineSegment2D(primitives2d[0].end, primitives2d[-1].start)
+            closing_linesegment2 = edges.LineSegment2D(primitives2d[-1].end, primitives2d[0].start)
+        else:
+            primitives2d[-1] = primitives2d[-1].translation(volmdlr.Vector2D(0, self.y_periodicity))
+            closing_linesegment1 = edges.LineSegment2D(primitives2d[0].end, primitives2d[-1].start)
+            closing_linesegment2 = edges.LineSegment2D(primitives2d[-1].end, primitives2d[0].start)
+        return wires.Contour2D([primitives2d[0], closing_linesegment1, primitives2d[-1], closing_linesegment2])
+
     def contour3d_to_2d(self, contour3d):
         """
         Transforms a Contour3D into a Contour2D in the parametric domain of the surface.
@@ -937,6 +961,11 @@ class Surface3D(DessiaObject):
         if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
             return wires.Contour2D(primitives2d)
         # Fix contour
+        contour2d = wires.Contour2D(primitives2d)
+        if contour2d.is_ordered():
+            if len(primitives2d) == 2 and all(isinstance(prim, edges.LineSegment2D) for prim in primitives2d):
+                return self._fix_brep(primitives2d)
+            return contour2d
         if self.x_periodicity or self.y_periodicity:
             primitives2d = self.repair_primitives_periodicity(primitives2d)
         return wires.Contour2D(primitives2d)
