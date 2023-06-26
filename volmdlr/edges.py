@@ -4331,7 +4331,7 @@ class ArcEllipse2D(Edge):
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
-        Plot arc-ellipse 2d using Matplotlob.
+        Plot arc-ellipse 2d using Matplotlib.
 
         :param ax: Matplotlib plot if there exists any.
         :param edge_style: edge styles.
@@ -4467,7 +4467,7 @@ class ArcEllipse2D(Edge):
 
     def split(self, split_point):
         """
-        Splits arc-elipse at a given point.
+        Splits arc-ellipse at a given point.
 
         :param split_point: splitting point.
         :return: list of two Arc-Ellipse.
@@ -4485,9 +4485,9 @@ class ArcEllipse2D(Edge):
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
-        Checks if two arc-elipse are the same considering the Euclidean distance.
+        Checks if two arc-ellipse are the same considering the Euclidean distance.
 
-        :param other_edge: other arc-elipse.
+        :param other_edge: other arc-ellipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
@@ -7482,7 +7482,7 @@ class ArcEllipse3D(Edge):
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
-        Checks if two arc-elipse are the same considering the Euclidean distance.
+        Checks if two arc-ellipse are the same considering the Euclidean distance.
 
         :param other_edge: other arc-ellipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
@@ -7515,7 +7515,7 @@ class ArcEllipse3D(Edge):
 
     def split(self, split_point):
         """
-        Splits arc-elipse at a given point.
+        Splits arc-ellipse at a given point.
 
         :param split_point: splitting point.
         :return: list of two Arc-Ellipse.
