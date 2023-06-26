@@ -1879,6 +1879,7 @@ class LineSegment2D(LineSegment):
         return self.start == other_object.start and self.end == other_object.end
 
     def to_dict(self, *args, **kwargs):
+        """Stores all Line Segment 2D in a dict object."""
         return {'object_class': 'volmdlr.edges.LineSegment2D',
                 'name': self.name,
                 'start': self.start.to_dict(),
@@ -3840,6 +3841,7 @@ class LineSegment3D(LineSegment):
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def to_dict(self, *args, **kwargs):
+        """Stores all Line Segment 3D in a dict object."""
         return {'object_class': 'volmdlr.edges.LineSegment3D',
                 'name': self.name,
                 'start': self.start.to_dict(),
@@ -3985,6 +3987,7 @@ class LineSegment3D(LineSegment):
 
     def plot_data(self, x_3d, y_3d, edge_style = plot_data.EdgeStyle(color_stroke=plot_data.colors.BLACK,
                                                                      line_width=1, dashline=None)):
+        """Plot a Line Segment 3D object using dessia's plot_data library."""
         edge2d = self.plane_projection2d(volmdlr.O3D, x_3d, y_3d)
         return edge2d.plot_data(edge_style)
 
@@ -4037,6 +4040,12 @@ class LineSegment3D(LineSegment):
         return self.start, other_line.start
 
     def matrix_distance(self, other_line):
+        """
+        Gets the points corresponding to the distance between to lines using matrix distance.
+
+        :param other_line: Other line.
+        :return: Two points corresponding to the distance between to lines.
+        """
         u = self.direction_vector()
         v = other_line.direction_vector()
         w = self.start - other_line.start
@@ -4141,6 +4150,7 @@ class LineSegment3D(LineSegment):
         return p1, p2
 
     def parallel_distance(self, other_linesegment):
+        """Calculates the paralel distance between two Line Segments 3D."""
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
@@ -4185,6 +4195,13 @@ class LineSegment3D(LineSegment):
         raise NotImplementedError
 
     def minimum_distance(self, element, return_points=False):
+        """
+        Gets the minimum distance between a Line segment 3D and another edge.
+
+        :param element: Other edge.
+        :param return_points: Weather to return corresponding points or not.
+        :return: minimum distance. Or minimum distance and points.
+        """
         if element.__class__ is Arc3D or element.__class__ is volmdlr_curves.Circle3D:
             pt1, pt2 = element.minimum_distance_points_line(self)
             if return_points:
@@ -4217,6 +4234,12 @@ class LineSegment3D(LineSegment):
         raise NotImplementedError
 
     def extrusion(self, extrusion_vector):
+        """
+        Extrusion of a Line Segment 3D, in a specific extrusion direction.
+
+        :param extrusion_vector: the extrusion vector used.
+        :return: An extruded Plane Face 3D.
+        """
         u = self.unit_direction_vector()
         v = extrusion_vector.copy()
         v.normalize()
