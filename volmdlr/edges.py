@@ -8,7 +8,7 @@ import math
 import sys
 import warnings
 from itertools import product
-from typing import List, Union
+from typing import List, Union, Dict, Any
 
 import dessia_common.core as dc
 import matplotlib.patches
