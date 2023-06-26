@@ -14,7 +14,7 @@ from dessia_common.core import DessiaObject
 import volmdlr.bspline_compiled
 import volmdlr.core_compiled
 import volmdlr.core
-from volmdlr import display, edges, wires, surfaces
+from volmdlr import display, edges, wires, surfaces, curves
 import volmdlr.faces
 import volmdlr.geometry
 from volmdlr.core import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
@@ -499,7 +499,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         # return intersections
 
     def line_intersections(self,
-                           line3d: edges.Line3D) \
+                           line3d: curves.Line3D) \
             -> List[Tuple[volmdlr.faces.Face3D, List[volmdlr.Point3D]]]:
         """
         Gets the intersections of a Shell3D with a Line Segment 3D.
@@ -514,12 +514,12 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 intersections.append((face, face_intersections))
         return intersections
 
-    def minimum_distance_points(self, shell2, resolution):
+    def minimum_distance_points(self, shell2):
         """
         Returns a Measure object if the distance is not zero, otherwise returns None.
 
         """
-        shell2_inter = self.shell_intersection(shell2, resolution)
+        shell2_inter = self.is_intersecting_with(shell2)
         if shell2_inter is not None and shell2_inter != 1:
             return None
 
@@ -543,15 +543,14 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return point1_min, point2_min
 
-    def distance_to_shell(self, other_shell: 'OpenShell3D', resolution: float):
+    def distance_to_shell(self, other_shell: 'OpenShell3D'):
         """
         Gets the distance between two shells.
 
         :param other_shell: other shell.
-        :param resolution: resolution used.
         :return: return distance between faces.
         """
-        min_dist = self.minimum_distance_points(other_shell, resolution)
+        min_dist = self.minimum_distance_points(other_shell)
         if min_dist is not None:
             point1, point2 = min_dist
             return point1.point_distance(point2)
@@ -738,7 +737,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     if not point_in_list(point_contour, points):
                         points.append(point_contour)
 
-                if isinstance(contour, volmdlr.wires.Circle2D):
+                if isinstance(contour, curves.Circle2D):
                     pass
                 else:
                     for _, primitive in enumerate(contour.primitives):
@@ -761,7 +760,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             line_surface = []
             for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
                 lines_tags = []
-                if isinstance(contour, volmdlr.wires.Circle2D):
+                if isinstance(contour, curves.Circle2D):
                     pass
                 else:
                     for _, primitive in enumerate(contour.primitives):
@@ -791,10 +790,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                 lines.append(primitive.get_geo_lines(tag=line_account,
                                                                      start_point_tag=start_point_tag + point_account,
                                                                      end_point_tag=end_point_tag + point_account))
-                            elif isinstance(primitive, volmdlr.edges.Arc):
+                            elif isinstance(primitive, volmdlr.edges.ArcMixin):
 
                                 start_point_tag = get_point_index_in_list(primitive.start, points) + 1
-                                center_point_tag = get_point_index_in_list(primitive.center, points) + 1
+                                center_point_tag = get_point_index_in_list(primitive.circle.center, points) + 1
                                 end_point_tag = get_point_index_in_list(primitive.end, points) + 1
 
                                 lines.append(primitive.get_geo_lines(tag=line_account,
@@ -842,6 +841,34 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 [[face.outer_contour3d], face.inner_contours3d], min_points, size))
         return lines
 
+    def is_disjoint_from(self, shell2, tol=1e-8):
+        """
+        Verifies and returns a Boolean if two shells are disjointed or not.
+
+        """
+        disjoint = True
+        if self.bounding_box.is_intersecting(shell2.bounding_box, tol):
+            return False
+        return disjoint
+
+    def is_face_intersecting(self, face: volmdlr.faces.Face3D):
+        """Verifies if face is intersecting shell somehow."""
+        if not self.bounding_box.is_intersecting(face.bounding_box):
+            return False
+        for i_face in self.faces:
+            if i_face.face_intersections(face):
+                return True
+        return False
+
+    def is_intersecting_with(self, shell2):
+        """Verifies if two closed shells are intersecting somehow."""
+        if self.is_disjoint_from(shell2):
+            return False
+        for face2 in shell2.faces:
+            if self.is_face_intersecting(face2):
+                return True
+        return False
+
 
 class ClosedShell3D(OpenShell3D):
     """
@@ -885,75 +912,6 @@ class ClosedShell3D(OpenShell3D):
                 return False
         return True
 
-    def is_face_intersecting(self, face: volmdlr.faces.Face3D):
-        """Verifies if face is intersecting shell somehow."""
-        if not self.bounding_box.is_intersecting(face.bounding_box):
-            return False
-        for i_face in self.faces:
-            if i_face.face_intersections(face):
-                return True
-        return False
-
-    def shell_intersection(self, shell2: 'OpenShell3D', resolution: float):
-        """
-        Return None if disjointed.
-
-        Return (1, 0) or (0, 1) if one is inside the other
-        Return (n1, n2) if intersection
-
-        4 cases :
-            (n1, n2) with face intersection             => (n1, n2)
-            (0, 0) with face intersection               => (0, 0)
-            (0, 0) with no face intersection            => None
-            (1, 0) or (0, 1) with no face intersection  => 1
-        """
-        # Check if boundary boxes don't intersect
-        if not self.bounding_box.is_intersecting(shell2.bounding_box):
-            return None
-
-        # Check if any point of the first shell is in the second shell
-        points1 = []
-        for face in self.faces:
-            points1.extend(
-                face.outer_contour3d.discretization_points(angle_resolution=resolution))
-        points2 = []
-        for face in shell2.faces:
-            points2.extend(
-                face.outer_contour3d.discretization_points(angle_resolution=resolution))
-
-        nb_pts1 = len(points1)
-        nb_pts2 = len(points2)
-        compteur1 = 0
-        compteur2 = 0
-        for point1 in points1:
-            if shell2.point_belongs(point1):
-                compteur1 += 1
-        for point2 in points2:
-            if self.point_belongs(point2):
-                compteur2 += 1
-
-        inter1 = compteur1 / nb_pts1
-        inter2 = compteur2 / nb_pts2
-
-        for face1 in self.faces:
-            for face2 in shell2.faces:
-                intersection_points = face1.face_intersections(face2)
-                if intersection_points:
-                    return inter1, inter2
-
-        if inter1 == 0. and inter2 == 0.:
-            return None
-        return 1
-
-    def is_intersecting_with(self, shell2):
-        """Verifies if two closed shells are intersecting somehow."""
-        if self.is_disjoint_from(shell2):
-            return False
-        for face2 in shell2.faces:
-            if self.is_face_intersecting(face2):
-                return True
-        return False
-
     def get_ray_casting_line_segment(self, point3d):
         """Gets the best ray for performing ray casting algorithm."""
         boxes_size = [self.bounding_box.size[0] / 2, self.bounding_box.size[1] / 2, self.bounding_box.size[2] / 2]
@@ -974,7 +932,7 @@ class ClosedShell3D(OpenShell3D):
         vec3 = bbox_outside_points[2] - point3d
         vec3 = vec3.to_vector()
         rays = [edges.LineSegment3D(
-                point3d, point3d + 2 * vec1 + random.random()*vec2 + random.random()*vec3) for _ in range(10)]
+                point3d, point3d + 2 * vec1 + random.random() * vec2 + random.random() * vec3) for _ in range(10)]
         return rays
 
     def point_belongs(self, point3d: volmdlr.Point3D, **kwargs):
@@ -1026,16 +984,6 @@ class ClosedShell3D(OpenShell3D):
             if not shell2.is_face_inside(face):
                 return False
         return True
-
-    def is_disjoint_from(self, shell2, tol=1e-8):
-        """
-        Verifies and returns a Boolean if two shells are disjointed or not.
-
-        """
-        disjoint = True
-        if self.bounding_box.is_intersecting(shell2.bounding_box, tol):
-            return False
-        return disjoint
 
     def intersecting_faces_combinations(self, shell2, tol=1e-8):
         """
@@ -1120,15 +1068,13 @@ class ClosedShell3D(OpenShell3D):
 
         return list_coincident_faces
 
-    def two_shells_intersecting_contour(self, shell2,
-                                        list_coincident_faces: List[volmdlr.faces.Face3D],
-                                        dict_intersecting_combinations=None):
+
+    def two_shells_intersecting_contour(self, shell2, dict_intersecting_combinations=None):
         """
         Computes intersecting_contour between two shells.
 
         :param shell2: ClosedShell3D
-        :type shell2: :class:`volmdlr.faces.ClosedShell3D`
-        :type list_coincident_faces: List[:class:`volmdlr.faces.Face3D`]
+        :type shell2: :class:`volmdlr.faces.ClosedShell3D`.
         :param dict_intersecting_combinations: dictionary containing as keys
             the combination of intersecting faces and as the values the
             resulting primitive from the two intersecting faces
@@ -1502,7 +1448,7 @@ class ClosedShell3D(OpenShell3D):
 
     def subtract_to_closed_shell(self, shell2: OpenShell3D, tol: float = 1e-8):
         """
-        Substracts shell2's volume from self.
+        Subtracts shell2's volume from self.
 
         :param shell2: other shell
         :param tol: tolerance
@@ -1571,7 +1517,6 @@ class ClosedShell3D(OpenShell3D):
                         self.faces.remove(face)
                         break
         self._faces_graph = None
-
 
 
 class OpenTriangleShell3D(OpenShell3D):
@@ -1681,3 +1626,4 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
+        ClosedShell3D.__init__(self, faces, color, alpha, name)

@@ -4,29 +4,32 @@
   "package_version": "0.6.1.dev420+g2c11c1cb",
   "primitives": [
     {
-      "name": "",
       "object_class": "volmdlr.edges.Arc2D",
-      "package_version": "0.6.1.dev420+g2c11c1cb",
+      "name": "",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle2D",
+        "name": "",
+        "center": {
+          "object_class": "volmdlr.Point2D",
+          "x": 10.000000000000002,
+          "y": 1.4000000000000021
+        },
+        "radius": 2.000000000000002
+      },
+      "is_trigo": true,
       "start": {
         "object_class": "volmdlr.Point2D",
         "x": 10.0,
-        "y": -0.6,
-        "name": ""
+        "y": -0.6
       },
       "end": {
         "object_class": "volmdlr.Point2D",
         "x": 12.0,
-        "y": 1.4,
-        "name": ""
-      },
-      "interior": {
-        "object_class": "volmdlr.Point2D",
-        "x": 11.414213562373096,
-        "y": -0.014213562373095234,
-        "name": ""
+        "y": 1.4
       },
       "angle1": -1.5707963267948974,
-      "angle2": -1.1102230246251575e-15
+      "angle2": -1.1102230246251575e-15,
+      "_references": {}
     },
     {
       "object_class": "volmdlr.edges.LineSegment2D",
@@ -77,29 +80,32 @@
       }
     },
     {
-      "name": "",
       "object_class": "volmdlr.edges.Arc2D",
-      "package_version": "0.6.1.dev420+g2c11c1cb",
+      "name": "",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle2D",
+        "name": "",
+        "center": {
+          "object_class": "volmdlr.Point2D",
+          "x": 8.99999999999998,
+          "y": 1.1000000000000192
+        },
+        "radius": 0.5000000000000195
+      },
+      "is_trigo": false,
       "start": {
         "object_class": "volmdlr.Point2D",
         "x": 9.5,
-        "y": 1.1,
-        "name": ""
+        "y": 1.1
       },
       "end": {
         "object_class": "volmdlr.Point2D",
         "x": 9.0,
-        "y": 0.6,
-        "name": ""
-      },
-      "interior": {
-        "object_class": "volmdlr.Point2D",
-        "x": 9.353553390593273,
-        "y": 0.7464466094067264,
-        "name": ""
+        "y": 0.6
       },
       "angle1": -1.5707963267948575,
-      "angle2": -3.8191672047103896e-14
+      "angle2": -3.8191672047103896e-14,
+      "_references": {}
     },
     {
       "object_class": "volmdlr.edges.LineSegment2D",
@@ -118,29 +124,32 @@
       }
     },
     {
-      "name": "",
       "object_class": "volmdlr.edges.Arc2D",
-      "package_version": "0.6.1.dev420+g2c11c1cb",
+      "name": "",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle2D",
+        "name": "",
+        "center": {
+          "object_class": "volmdlr.Point2D",
+          "x": -10.000000000000002,
+          "y": -1.4000000000000021
+        },
+        "radius": 2.000000000000002
+      },
+      "is_trigo": true,
       "start": {
         "object_class": "volmdlr.Point2D",
         "x": -10.0,
-        "y": 0.6,
-        "name": ""
+        "y": 0.6
       },
       "end": {
         "object_class": "volmdlr.Point2D",
         "x": -12.0,
-        "y": -1.4,
-        "name": ""
-      },
-      "interior": {
-        "object_class": "volmdlr.Point2D",
-        "x": -11.414213562373096,
-        "y": 0.014213562373095234,
-        "name": ""
+        "y": -1.4
       },
       "angle1": 1.5707963267948957,
-      "angle2": 3.141592653589792
+      "angle2": 3.141592653589792,
+      "_references": {}
     },
     {
       "object_class": "volmdlr.edges.LineSegment2D",
@@ -191,29 +200,32 @@
       }
     },
     {
-      "name": "",
       "object_class": "volmdlr.edges.Arc2D",
-      "package_version": "0.6.1.dev420+g2c11c1cb",
+      "name": "",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle2D",
+        "name": "",
+        "center": {
+          "object_class": "volmdlr.Point2D",
+          "x": -10.300000015045514,
+          "y": -1.0999999849544846
+        },
+        "radius": 0.49999998495448694
+      },
+      "is_trigo": false,
       "start": {
         "object_class": "volmdlr.Point2D",
         "x": -10.8,
-        "y": -1.1,
-        "name": ""
+        "y": -1.1
       },
       "end": {
         "object_class": "volmdlr.Point2D",
         "x": -10.3,
-        "y": -0.6,
-        "name": ""
-      },
-      "interior": {
-        "object_class": "volmdlr.Point2D",
-        "x": -10.65355339,
-        "y": -0.7464466,
-        "name": ""
+        "y": -0.6
       },
       "angle1": 1.570796296703869,
-      "angle2": -3.1415926234987612
+      "angle2": -3.1415926234987612,
+      "_references": {}
     },
     {
       "object_class": "volmdlr.edges.LineSegment2D",

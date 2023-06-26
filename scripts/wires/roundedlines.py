@@ -14,7 +14,7 @@ import volmdlr as vm
 from volmdlr.core import EdgeStyle
 import volmdlr.primitives2d as primitives2d
 import volmdlr.primitives3d as primitives3d
-
+from volmdlr import curves
 # Ajout commentaire juste pour tester
 # =============================================================================
 #  2D version
@@ -66,7 +66,7 @@ rl2D_c2.plot(ax=ax2)
 
 
 com = rl2D_c2.center_of_mass()
-cut_line = vm.edges.Line2D(com, com+ vm.Point2D.random(-1, 1, 0, 1))
+cut_line = curves.Line2D(com, com+ vm.Point2D.random(-1, 1, 0, 1))
 ax3 = rl2D_c2.plot()
 cut_line.plot(ax=ax3, edge_style=EdgeStyle(color='red'))
 com.plot(color='b', ax=ax3)
