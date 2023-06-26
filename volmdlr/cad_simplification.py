@@ -15,6 +15,7 @@ class OctreeBlockSimplify(DessiaObject):
     :param name: Optional. A name for the OctreeBlockSimplify instance.
 
     """
+
     def __init__(self, closed_shell: shells.ClosedShell3D, name: str = ''):
         self.closed_shell = closed_shell
         self.block = primitives3d.Block.from_bounding_box(self.closed_shell.bounding_box)
@@ -107,6 +108,7 @@ class TrippleExtrusionSimplify(DessiaObject):
     :param name (str): Optional. A name for the TrippleExtrusionSimplify instance.
 
     """
+
     def __init__(self, volume_model, name: str = ''):
         self.volume_model = volume_model
         DessiaObject.__init__(self, name=name)

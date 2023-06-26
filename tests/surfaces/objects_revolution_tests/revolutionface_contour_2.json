@@ -178,74 +178,152 @@
       "periodic": false
     },
     {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.00020000000081021874,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
       "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.10.1.dev1106+gab56340c",
-      "start": {
+      "origin": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.593919165039,
-        "y": 0.64819672659,
-        "z": 0.000771852970123
+        "x": 0.5937191650381898,
+        "y": 0.6481967265908102,
+        "z": 0.0007718529704199483
       },
-      "end": {
+      "u": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.593719165039,
-        "y": 0.64799672659,
-        "z": 0.000771852970123
+        "x": -0.38268354202761135,
+        "y": -0.9238794870875755,
+        "z": -8.035361673504158e-10
       },
-      "interior": {
+      "v": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.593860586362,
-        "y": 0.648055305201,
-        "z": 0.00077185297
+        "x": -0.9238794870875755,
+        "y": 0.38268354202761135,
+        "z": 1.939908564358268e-09
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": -1.4847416627671629e-09,
+        "y": 1.4847416627663388e-09,
+        "z": -1.0
       }
-    },
+    }
+  },
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.593919165039,
+    "y": 0.64819672659,
+    "z": 0.000771852970123
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.593719165039,
+    "y": 0.64799672659,
+    "z": 0.000771852970123
+  }
+},
     {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.01034999999999997,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
       "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.10.1.dev1106+gab56340c",
-      "start": {
-        "object_class": "volmdlr.Point3D",
-        "x": 0.593719165039,
-        "y": 0.64799672659,
-        "z": 0.000771852970123
-      },
-      "end": {
-        "object_class": "volmdlr.Point3D",
-        "x": 0.593719165039,
-        "y": 0.62729672659,
-        "z": 0.000771852970123
-      },
-      "interior": {
+      "origin": {
         "object_class": "volmdlr.Point3D",
         "x": 0.593719165039,
         "y": 0.63764672659,
-        "z": -0.00957814703
-      }
-    },
-    {
-      "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.10.1.dev1106+gab56340c",
-      "start": {
-        "object_class": "volmdlr.Point3D",
-        "x": 0.593719165039,
-        "y": 0.62729672659,
-        "z": 0.000771852970123
+        "z": 0.0007718529700000264
       },
-      "end": {
+      "u": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.593919165039,
-        "y": 0.62709672659,
-        "z": 0.000771855163486
+        "x": 0.0,
+        "y": -0.7071067811823449,
+        "z": -0.7071067811907501
       },
-      "interior": {
+      "v": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.593860586362,
-        "y": 0.627238147979,
-        "z": 0.00077185297
+        "x": -0.0,
+        "y": -0.7071067811907501,
+        "z": 0.7071067811823449
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": -1.0,
+        "y": 0.0,
+        "z": -0.0
       }
     }
+  },
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.593719165039,
+    "y": 0.64799672659,
+    "z": 0.000771852970123
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.593719165039,
+    "y": 0.62729672659,
+    "z": 0.000771852970123
+  }
+},
+  {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.00020000000079575786,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
+      "name": "",
+      "origin": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.5937191650382103,
+        "y": 0.6270967265892393,
+        "z": 0.0007718567147239611
+      },
+      "u": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.9238795763848032,
+        "y": -0.38268332644503433,
+        "z": -8.03536620019241e-10
+      },
+      "v": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.38268332636643343,
+        "y": -0.9238795761950864,
+        "z": 2.0265966126294804e-05
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": -7.756189701904841e-06,
+        "y": -1.8723004699723405e-05,
+        "z": -0.9999999997946453
+      }
+    }
+  },
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.593719165039,
+    "y": 0.62729672659,
+    "z": 0.000771852970123
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.593919165039,
+    "y": 0.62709672659,
+    "z": 0.000771855163486
+  }
+}
   ],
   "basis_primitives": [],
   "color": null,

@@ -85,3 +85,28 @@ def split_wire_by_plane(wire, plane3d):
         raise NotImplementedError
     wire1, wire2 = wire.split_with_sorted_points([wire_plane_intersections[0], wire.primitives[-1].end])
     return wire1, wire2
+
+
+def plot_from_discretization_points(ax, edge_style, element, number_points: int = None, close_plot: bool = False):
+    """
+    General plot method using discretization_points method to generate points.
+
+    :param ax: Matplotlib plot.
+    :param edge_style: edge_style to be applied to plot.
+    :param element: volmdlr element to be ploted (either 2D or 3D).
+    :param number_points: number of points to be used in the plot.
+    :param close_plot: specifies if plot is to be closed or not.
+    :return: Matplolib plot axis.
+    """
+    components = [[], [], []]
+    for point in element.discretization_points(number_points=number_points):
+        for i, component in enumerate(point):
+            components[i].append(component)
+    valid_components = []
+    for list_components in components:
+        if list_components:
+            if close_plot:
+                list_components.append(list_components[0])
+            valid_components.append(list_components)
+    ax.plot(*valid_components, color=edge_style.color, alpha=edge_style.alpha)
+    return ax

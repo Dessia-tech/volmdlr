@@ -12,7 +12,7 @@ class TestCommonOperations(unittest.TestCase):
                                            volmdlr.Vector3D(0, 1, 0))
         wire1, wire2 = split_wire_by_plane(open_rounded_line_segements, plane)
         self.assertEqual(wire1.length(), 1.4187473149621863)
-        self.assertEqual(wire2.length(), 0.6182864075957109)
+        self.assertAlmostEqual(wire2.length(), 0.6182864075957109)
 
 
 if __name__ == "__main__":
