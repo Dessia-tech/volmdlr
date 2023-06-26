@@ -936,7 +936,7 @@ class Step(dc.DessiaObject):
                 previous_line = str()
                 continue
 
-            function = line.split("=")
+            function = line.split("=", maxsplit=1)
             function_id = int(function[0][1:])
             function_name_arg = function[1].split("(", 1)
             function_name = function_name_arg[0]
@@ -1338,7 +1338,10 @@ class Step(dc.DessiaObject):
         shapes = set()
         for node in root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             function = self.functions[node]
-            assembly_product_definition = int(function.arg[3][1:])
+            try:
+                assembly_product_definition = int(function.arg[3][1:])
+            except Exception:
+                print(True)
             assembly_node = int(self.functions[assembly_product_definition].arg[4][1:])
             assemblies.add(assembly_node)
             id_product_definition = int(function.arg[4][1:])
