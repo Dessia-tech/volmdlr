@@ -409,7 +409,7 @@ class Primitive3D(dc.PhysicalObject):
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
-    def babylon_meshes(self, merge_meshes=True):
+    def babylon_meshes(self, *args, **kwargs):
         """
         Returns the babylonjs mesh.
         """
