@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as npy
 
 import dessia_common.core as dc
+from dessia_common.errors import ConsistencyError
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
@@ -1011,7 +1012,7 @@ class BoundingBox(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def point_belongs(self, point: volmdlr.Point3D, tol = 1e-6) -> bool:
+    def point_belongs(self, point: volmdlr.Point3D, tol=1e-6) -> bool:
         """
         Determines if a point belongs to the bounding box.
 
@@ -1296,6 +1297,7 @@ class Compound(dc.PhysicalObject):
     """
     A class that can be a collection of any volmdlr primitives.
     """
+
     def __init__(self, primitives, name: str = ""):
         self.primitives = primitives
         self._bbox = None
@@ -1643,6 +1645,7 @@ class VolumeModel(dc.PhysicalObject):
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
+        # from volmdlr import stl
         stl = volmdlr.stl.Stl.from_display_mesh(mesh)
         return stl
 
@@ -2369,7 +2372,7 @@ class MovingVolumeModel(VolumeModel):
         self.step_frames = step_frames
 
         if not self.is_consistent():
-            raise dc.ConsistencyError
+            raise ConsistencyError
 
     def is_consistent(self):
         n_primitives = len(self.primitives)

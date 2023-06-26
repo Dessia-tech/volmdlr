@@ -119,7 +119,6 @@ setup(
     packages=[
         "volmdlr",
         "volmdlr.models",
-        "volmdlr.models.workflows",
         "volmdlr.utils",
     ],  # ,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
     package_dir={},

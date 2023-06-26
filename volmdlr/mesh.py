@@ -487,7 +487,7 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
 
         # self.area = self._area()
         self._line_segments = None
-        TriangularElement.__init__(self, points)
+        super().__init__(points)
 
     # def _to_linear_elements(self):
     #     vec1 = vm.Vector2D(self.points[1].x - self.points[0].x,
