@@ -1,4 +1,4 @@
-"""Open rounded line segements model."""
+"""Open rounded line segments model."""
 import random
 
 import volmdlr

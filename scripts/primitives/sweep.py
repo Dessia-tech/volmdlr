@@ -11,6 +11,7 @@ import volmdlr
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
 import volmdlr.wires as wires
+from volmdlr import curves
 from volmdlr.models.open_rounded_line_segments import open_rounded_line_segements
 
 # contour = wires.Circle2D(vm.O2D, 0.008)
@@ -27,7 +28,7 @@ for prim in open_rounded_line_segements.primitives:
 r1 = open_rounded_line_segements.to_dict()
 r2 = primitives3d.OpenRoundedLineSegments3D.dict_to_object(r1)
 c1 = contour.to_dict()
-c2 = vm.wires.Circle2D.dict_to_object(c1)
+c2 = curves.Circle2D.dict_to_object(c1)
 
 sweep = primitives3d.Sweep(contour, open_rounded_line_segements, name='Random pipe')
 

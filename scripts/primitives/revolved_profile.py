@@ -78,7 +78,7 @@ bi1 = OpenedRoundedLineSegments2D([pbi6, pbi5, pbi4, pbi3, pbi2, pbi1],
                                           3: radius,
                                           4: radius},
                                           adapt_radius=True)
-cbi1 = vm.edges.Arc2D(pbi1, vm.Point2D(0, F/2), pbi6)
+cbi1 = vm.edges.Arc2D.from_3_points(pbi1, vm.Point2D(0, F/2), pbi6)
 c5 = vm.wires.Contour2D([cbi1] + bi1.primitives)
 # c5.MPLPlot(plot_points=True)
 
@@ -99,10 +99,10 @@ th = 0.008
 rim_contour = vmw.ClosedPolygon2D([vm.Point2D(-0.5*w, Rb),
                                    vm.Point2D(-0.5*w+wb, Rb),
                                    vm.Point2D(-0.5*w+wb, R),
-                                   vm.Point2D(-0.05 * w , r),
+                                   vm.Point2D(-0.05 * w, r),
                                    vm.Point2D(0, r),
                                    vm.Point2D(0, r-th),
-                                   vm.Point2D(-0.05 * w , r - th),
+                                   vm.Point2D(-0.05 * w, r - th),
                                    vm.Point2D(-0.5*w, R-th),
                                    ])
 
