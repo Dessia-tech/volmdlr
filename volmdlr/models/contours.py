@@ -16,15 +16,15 @@ primitives = [
     edges.LineSegment2D(volmdlr.Point2D(0.001, 0.014),
                                 volmdlr.Point2D(0.001, 0.0125)),
 
-    edges.Arc2D(volmdlr.Point2D(0.001, 0.0125),
+    edges.Arc2D.from_3_points(volmdlr.Point2D(0.001, 0.0125),
                         volmdlr.Point2D(0.009862829911410362, 0.007744326060968065),
                         volmdlr.Point2D(0.012539936203984454, 0.0)),
 
-    edges.Arc2D(volmdlr.Point2D(0.012539936203984454, 0.0),
+    edges.Arc2D.from_3_points(volmdlr.Point2D(0.012539936203984454, 0.0),
                         volmdlr.Point2D(0.0, -0.012539936203984454),
                         volmdlr.Point2D(-0.012539936203984454, 0.0)),
 
-    edges.Arc2D(volmdlr.Point2D(-0.012539936203984454, 0.0),
+    edges.Arc2D.from_3_points(volmdlr.Point2D(-0.012539936203984454, 0.0),
                         volmdlr.Point2D(-0.00921384654213387, 0.008506176103162205),
                         volmdlr.Point2D(-0.001, 0.0125)),
 
@@ -150,7 +150,7 @@ contour2_cut_by_wire = wires.Contour2D.from_points(points)
 
 
 line_segment1 = edges.LineSegment2D(volmdlr.Point2D(1, -1), volmdlr.Point2D(1.5, 1))
-arc = edges.Arc2D(volmdlr.Point2D(1.5, 1), volmdlr.Point2D(1.3, 1.5), volmdlr.Point2D(0.5, 1.5))
+arc = edges.Arc2D.from_3_points(volmdlr.Point2D(1.5, 1), volmdlr.Point2D(1.3, 1.5), volmdlr.Point2D(0.5, 1.5))
 line_segment2 = edges.LineSegment2D(volmdlr.Point2D(0.5, 1.5), volmdlr.Point2D(-2, 1))
 line_segment3 = edges.LineSegment2D(volmdlr.Point2D(-2, 1), volmdlr.Point2D(-2, 0.7))
 line_segment4 = edges.LineSegment2D(volmdlr.Point2D(-2, 0.7), volmdlr.Point2D(-1, 1))

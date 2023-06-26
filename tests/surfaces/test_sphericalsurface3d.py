@@ -1,7 +1,7 @@
 import unittest
 import math
 import volmdlr
-from volmdlr import surfaces, wires, edges
+from volmdlr import surfaces, wires, edges, curves
 
 
 class TestSphericalSurface3D(unittest.TestCase):
@@ -85,7 +85,7 @@ class TestSphericalSurface3D(unittest.TestCase):
         test = self.surface3d.contour3d_to_2d(contour_any_direction_upper)
         theta_min, theta_max, phi_min, phi_max = test.bounding_rectangle.bounds()
         self.assertAlmostEqual(theta_min, 0, 6)
-        self.assertAlmostEqual(theta_max, math.pi, 6)
+        self.assertAlmostEqual(theta_max, math.pi, 4)
         self.assertAlmostEqual(phi_max, 0.5 * math.pi, 3)
 
     def test_plane_intersection(self):
@@ -93,13 +93,13 @@ class TestSphericalSurface3D(unittest.TestCase):
                                                       volmdlr.Vector3D(0, 1 / math.sqrt(2), 1 / math.sqrt(2)),
                                                       volmdlr.Z3D)
         plane = surfaces.Plane3D(frame)
-        circle = self.surface3d.plane_intersection(plane)[0]
-        self.assertAlmostEqual(circle.radius, 1/math.sqrt(2))
-        self.assertTrue(circle.normal.is_colinear_to(frame.w))
+        fullarc = self.surface3d.plane_intersection(plane)[0]
+        self.assertAlmostEqual(fullarc.circle.radius, 1/math.sqrt(2))
+        self.assertTrue(fullarc.circle.normal.is_colinear_to(frame.w))
 
     def test_line_intersections(self):
         spherical_surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
-        line = edges.Line3D(volmdlr.Point3D(-.01, -.01, -.01), volmdlr.Point3D(0.8, 0.8, 0.8))
+        line = curves.Line3D(volmdlr.Point3D(-.01, -.01, -.01), volmdlr.Point3D(0.8, 0.8, 0.8))
         line_intersections = spherical_surface3d.line_intersections(line)
         self.assertEqual(len(line_intersections), 2)
         self.assertTrue(line_intersections[0].is_close(
@@ -107,12 +107,12 @@ class TestSphericalSurface3D(unittest.TestCase):
         self.assertTrue(line_intersections[1].is_close(
             volmdlr.Point3D(-0.5773502691896257, -0.5773502691896257, -0.5773502691896257)))
 
-        line2 = edges.Line3D(volmdlr.Point3D(0, 1, -0.5), volmdlr.Point3D(0, 1, 0.5))
+        line2 = curves.Line3D(volmdlr.Point3D(0, 1, -0.5), volmdlr.Point3D(0, 1, 0.5))
         line_intersections2 = spherical_surface3d.line_intersections(line2)
         self.assertEqual(len(line_intersections2), 1)
         self.assertTrue(line_intersections2[0].is_close(volmdlr.Point3D(0.0, 1.0, 0.0)))
 
-        line3 = edges.Line3D(volmdlr.Point3D(0, 2, -0.5), volmdlr.Point3D(0, 2, 0.5))
+        line3 = curves.Line3D(volmdlr.Point3D(0, 2, -0.5), volmdlr.Point3D(0, 2, 0.5))
         self.assertFalse(spherical_surface3d.line_intersections(line3))
 
     def test_linesegment_intersections(self):

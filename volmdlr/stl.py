@@ -229,7 +229,7 @@ class Stl(dc.DessiaObject):
             print('Adding .stl extension: ', filepath)
 
         with open(filepath, 'wb') as file:
-            self.to_stream(file, distance_multiplier=distance_multiplier)
+            self.save_to_stream(file, distance_multiplier=distance_multiplier)
 
     def save_to_stream(self, stream, distance_multiplier=1000):
         """

@@ -90,8 +90,10 @@ class TestCylindricalFace3D(unittest.TestCase):
 
         frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
         cylindrical = surfaces.CylindricalSurface3D(frame, 0.2)
-        fullarc1 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(0.2, 0.0, 0.0), normal=volmdlr.Z3D)
-        fullarc2 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(-0.2, 0.0, 0.2), normal=volmdlr.Z3D)
+        fullarc1 = edges.FullArc3D.from_center_normal(
+            center=volmdlr.O3D, start_end=volmdlr.Point3D(0.2, 0.0, 0.0), normal=volmdlr.Z3D)
+        fullarc2 = edges.FullArc3D.from_center_normal(
+            center=volmdlr.O3D, start_end=volmdlr.Point3D(-0.2, 0.0, 0.2), normal=volmdlr.Z3D)
         contour1 = wires.Contour3D([fullarc1])
         contour2 = wires.Contour3D([fullarc2])
         face = faces.CylindricalFace3D.from_contours3d(cylindrical, [contour1, contour2])
