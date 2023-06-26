@@ -459,14 +459,12 @@ def manifold_surface_shape_representation(arguments, object_dict):
     Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
     """
     primitives = []
-    counter = 0
     for arg in arguments[1]:
         primitive = object_dict[int(arg[1:])]
         if isinstance(primitive, vmshells.OpenShell3D):
-            primitive.name = arguments[0][1:-1] + str(counter)
             primitives.append(primitive)
-            counter += 1
         if isinstance(primitive, volmdlr.core.Compound):
+            counter = 0
             for sub_prim in primitive.primitives:
                 sub_prim.name = arguments[0][1:-1] + str(counter)
                 counter += 1
@@ -574,14 +572,20 @@ def advanced_brep_shape_representation(arguments, object_dict):
     :rtype: TYPE
 
     """
-    shells = []
+    primitives = []
     for arg in arguments[1]:
-        if isinstance(object_dict[int(arg[1:])],
-                      vmshells.OpenShell3D):
-            shells.append(object_dict[int(arg[1:])])
-    if len(shells) > 1:
-        return volmdlr.core.Compound(shells, name=arguments[0])
-    return shells
+        primitive = object_dict[int(arg[1:])]
+        if isinstance(primitive, vmshells.OpenShell3D):
+            primitives.append(primitive)
+        if isinstance(primitive, volmdlr.core.Compound):
+            counter = 0
+            for sub_prim in primitive.primitives:
+                sub_prim.name = arguments[0][1:-1] + str(counter)
+                counter += 1
+            primitives.append(primitive)
+    if len(primitives) == 1:
+        return primitives[0]
+    return volmdlr.core.Compound(primitives)
 
 
 def geometrically_bounded_surface_shape_representation(arguments, object_dict):
@@ -1422,6 +1426,7 @@ class Step(dc.DessiaObject):
         instanciate_ids = list(assembly_data.keys())
         error = True
         last_error = None
+        none_primitives = set()
         while error:
             try:
                 # here we invert instantiate_ids because if the code enter inside the except
@@ -1439,7 +1444,10 @@ class Step(dc.DessiaObject):
                     frames_dict = assemblies_positions[instanciate_id]
                     list_primitives = []
                     frames = [object_dict[frames_dict[instanciate_id]]]
-                    for i, node in enumerate(assembly_data[instanciate_id]):
+                    for node in assembly_data[instanciate_id]:
+                        if node in none_primitives:
+                            assembly_data[instanciate_id].remove(node)
+                            continue
                         primitives = object_dict[node]
                         frame = object_dict[frames_dict[node]]
 
@@ -1449,7 +1457,10 @@ class Step(dc.DessiaObject):
                         else:
                             list_primitives.append(primitives)
                             frames.append(frame)
-
+                    if not list_primitives:
+                        none_primitives.add(instanciate_id)
+                        instanciate_ids.pop()
+                        continue
                     # list_primitives = [primi for primi in list_primitives
                     #                    if primi is not None]
                     volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)

@@ -1090,8 +1090,8 @@ class Assembly(dc.PhysicalObject):
 
     def __init__(self, components: List[Primitive3D], positions: List[volmdlr.Frame3D],
                  frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
-        if components is None or not components or None in components:
-            raise NotImplementedError
+        # if components is None or not components or None in components:
+        #     raise NotImplementedError
         self.components = components
         self.frame = frame
         self.positions = positions

@@ -7718,7 +7718,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: list of two Arc of ellipse.
         """
         if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):
-            raise ValueError("Point should be different of start and end.")
+            return [self, None]
         if not self.point_belongs(split_point, 1e-5):
             raise ValueError("Point not on the ellipse.")
         ellipse_2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)

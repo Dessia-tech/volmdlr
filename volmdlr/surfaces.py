@@ -2773,7 +2773,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        self.frame.plot(ax=ax)
+        self.frame.plot(ax=ax, ratio=self.tore_radius)
         number_arcs = 50
         for i in range(number_arcs):
             theta = i / number_arcs * volmdlr.TWO_PI
@@ -4024,7 +4024,7 @@ class ExtrusionSurface3D(Surface3D):
         start = self.edge.start
         end = self.edge.end
         if start.is_close(end, 1e-4):
-            return 1
+            return math.pi
         return None
 
     @x_periodicity.setter
@@ -4095,13 +4095,13 @@ class ExtrusionSurface3D(Surface3D):
                                                     edge.center, edge.normal, edge.major_dir, edge.name)
             direction = -object_dict[arguments[2]]
             surface = cls(edge=fullarcellipse, direction=direction, name=name)
-            surface.x_periodicity = 1
+            surface._x_periodicity = math.pi
         elif edge.__class__ is wires.Circle3D:
             start_end = edge.center + edge.frame.u * edge.radius
             fullarc = edges.FullArc3D(edge.frame.origin, start_end, edge.frame.w)
             direction = object_dict[arguments[2]]
             surface = cls(edge=fullarc, direction=direction, name=name)
-            surface.x_periodicity = 1
+            surface._x_periodicity = math.pi
 
         else:
             direction = object_dict[arguments[2]]
@@ -4209,6 +4209,19 @@ class ExtrusionSurface3D(Surface3D):
         n = len(bspline_curve3d.control_points)
         points = [self.point3d_to_2d(point)
                   for point in bspline_curve3d.discretization_points(number_points=n)]
+        if self.x_periodicity:
+            # if self.x_periodicity in points_x:
+            # for i, x in enumerate(points_x[:-1]):
+            if math.isclose(points[0].x, self.x_periodicity, abs_tol=1e-4):
+                vec1 = points[1] - points[0]
+                vec2 = points[2] - points[1]
+                if vec2.dot(vec1) < 0:
+                    points[0].x = 0
+            if math.isclose(points[-1].x, self.x_periodicity, abs_tol=1e-4):
+                vec1 = points[-1] - points[-2]
+                vec2 = points[-2] - points[-3]
+                if vec2.dot(vec1) < 0:
+                    points[-1].x = 0
         return [edges.BSplineCurve2D.from_points_interpolation(
             points, bspline_curve3d.degree, bspline_curve3d.periodic).simplify]
 
