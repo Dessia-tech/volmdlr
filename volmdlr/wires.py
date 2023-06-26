@@ -1552,6 +1552,8 @@ class ContourMixin(WireMixin):
                     if list_edges:
                         points = [list_edges[0].start, list_edges[0].end]
                         contour_primitives = [list_edges.pop(0)]
+                    else:
+                        break
         valid_contours = [list_contours[0]]
         list_contours.remove(list_contours[0])
         for contour in list_contours:
