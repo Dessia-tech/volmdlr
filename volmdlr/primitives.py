@@ -38,7 +38,9 @@ class RoundedLineSegments:
         self.npoints = len(points)
 
     def get_points(self, point_index):
-        """Gets points to calculate the arc features."""
+        """
+        Gets points to calculate the arc features.
+        """
         if self.closed:
             if point_index == 0:
                 pt1 = self.points[-1]
