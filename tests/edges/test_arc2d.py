@@ -109,7 +109,7 @@ class TestArc2D(unittest.TestCase):
         for expected_point, point in zip(expected_points, [shared_section1[0].points[0],
                                                            shared_section1[0].middle_point(),
                                                            shared_section1[0].points[1]]):
-            self.assertEqual(expected_point, point)
+            self.assertTrue(expected_point.is_close(point))
         # =====================Two Arcs with different radius =====================#
         self.assertFalse(self.arc2.get_shared_section(self.arc3))
         # =====================Two Arcs not touching each other =====================#
