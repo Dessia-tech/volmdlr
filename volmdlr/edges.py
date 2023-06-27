@@ -5972,7 +5972,7 @@ class BSplineCurve3D(BSplineCurve):
         Returns a new BSplineCurve3D.
 
         """
-        curve_copy = self.curve.copy.deepcopy({})
+        curve_copy = self.curve.__deepcopy__({})
         modified_curve = operations.insert_knot(curve_copy, [knot], num=[num])
         return self.from_geomdl_curve(modified_curve)
 
