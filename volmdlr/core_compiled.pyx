@@ -211,13 +211,14 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False, tol:
         dot_product = u[0] * v[0] + u[1] * v[1]
         length_squared = v[0] ** 2 + v[1] ** 2
         t = (dot_product / length_squared)
-        projection_vector = (v[0] * t, v[1] * t)
-        projection_point = (p1x + projection_vector[0], p1y + projection_vector[1])
-        distance_projection_to_point = math.sqrt((projection_point[0] - x) ** 2 + (projection_point[1] - y) ** 2)
-        if distance_projection_to_point <= tol:
-            if include_edge_points:
-                return True
-            return False
+        if 0.0 <= t <= 1.0:
+            projection_vector = (v[0] * t, v[1] * t)
+            projection_point = (p1x + projection_vector[0], p1y + projection_vector[1])
+            distance_projection_to_point = math.sqrt((projection_point[0] - x) ** 2 + (projection_point[1] - y) ** 2)
+            if distance_projection_to_point <= tol:
+                if include_edge_points:
+                    return True
+                return False
         xints = math.inf
         if min(p1y, p2y) <= y <= max(p1y, p2y) and min(p1x, p2x) <= x <= max(p1x, p2x):
             if p1y != p2y:
