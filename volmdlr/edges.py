@@ -190,24 +190,31 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
-        step_id = kwargs.get("step_id")
+        # step_id = kwargs.get("step_id")
         # obj can be an instance of wires or edges.
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         orientation = arguments[4]
-        if orientation == '.F.':
-            point1, point2 = point2, point1
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
+            if orientation == '.F.':
+                point1, point2 = point2, point1
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D':
                 point1, point2 = point2, point1
-            return obj.trim(point1, point2)
+                trimmed_edge = obj.trim(point1, point2)
+                if orientation == '.T.':
+                    trimmed_edge = trimmed_edge.reverse()
+                return trimmed_edge
+            trimmed_edge = obj.trim(point1, point2)
+            if orientation == '.F.':
+                trimmed_edge = trimmed_edge.reverse()
+            return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
 
@@ -3800,6 +3807,7 @@ class LineSegment3D(LineSegment):
                  name: str = ''):
         if start.is_close(end):
             raise NotImplementedError('Start and end of Linesegment3D are equal')
+        self.line = line
         if not line:
             self.line = volmdlr_curves.Line3D(start, end)
         LineSegment.__init__(self, start=start, end=end, line=self.line, name=name)
