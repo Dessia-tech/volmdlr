@@ -3807,6 +3807,7 @@ class LineSegment3D(LineSegment):
                  name: str = ''):
         if start.is_close(end):
             raise NotImplementedError('Start and end of Linesegment3D are equal')
+        self.line = line
         if not line:
             self.line = volmdlr_curves.Line3D(start, end)
         LineSegment.__init__(self, start=start, end=end, line=self.line, name=name)
