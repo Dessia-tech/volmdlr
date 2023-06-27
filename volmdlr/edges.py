@@ -3557,7 +3557,7 @@ class Arc2D(Arc):
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
-        self.__init__(*[point.frame_mapping(frame, side) for point in
+        self.__class__(*[point.frame_mapping(frame, side) for point in
                         [self.start, self.interior, self.end]])
 
     def second_moment_area(self, point):
