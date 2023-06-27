@@ -1200,6 +1200,12 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         return min(distance)
 
     def point_distance(self, point):
+        """
+        Gets the distance from a point a Wire 3D object.
+
+        :param point: other point.
+        :return: the distance to wire and corresponding point.
+        """
         distance, distance_point = math.inf, None
         for prim in self.primitives:
             prim_distance, prim_point = prim.point_distance(point)
@@ -1209,6 +1215,12 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         return distance, distance_point
 
     def extrusion(self, extrusion_vector):
+        """
+        Extrudes a Wire 3D in a given direction.
+
+        :param extrusion_vector: extrusion vector used.
+        :return: A list of extruded faces.
+        """
         faces = []
         for primitive in self.primitives:
             faces.extend(primitive.extrusion(extrusion_vector))
@@ -1226,6 +1238,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         return bspline_curve
 
     def triangulation(self):
+        """Triangulatio method for a Wire3D."""
         return None
 
     def get_primitives_2d(self, plane_origin, x, y):
@@ -1247,6 +1260,10 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         return primitives2d
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a Wire 3D into a Wire 2D, given a plane origin and an x and y vector.
+
+        """
         primitives2d = self.get_primitives_2d(plane_origin, x, y)
         return Wire2D(primitives=primitives2d)
 
