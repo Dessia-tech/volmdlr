@@ -4179,7 +4179,7 @@ class ExtrusionSurface3D(Surface3D):
             direction = -object_dict[arguments[2]]
             surface = cls(edge=fullarcellipse, direction=direction, name=name)
             surface._x_periodicity = math.pi
-        elif edge.__class__ is wires.Circle3D:
+        elif edge.__class__ is curves.Circle3D:
             start_end = edge.center + edge.frame.u * edge.radius
             fullarc = edges.FullArc3D(edge, start_end)
             direction = object_dict[arguments[2]]

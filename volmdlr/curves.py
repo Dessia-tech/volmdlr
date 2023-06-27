@@ -1681,6 +1681,7 @@ class Ellipse2D(Curve):
 
             res, _ = scipy_integrate.quad(arc_length, 0, angle_abscissa)
             return res
+        print(True)
         raise ValueError(f'point {point} does not belong to ellipse')
 
     def point_at_abscissa(self, abscissa):

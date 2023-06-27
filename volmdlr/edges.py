@@ -19,7 +19,6 @@ import plot_data.colors
 import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
 from geomdl import NURBS, BSpline, fitting, operations, utilities
-from geomdl.operations import length_curve, split_curve
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -202,7 +201,7 @@ class Edge(dc.DessiaObject):
             if orientation == '.F.':
                 point1, point2 = point2, point1
             if not point1.is_close(point2):
-                return LineSegment3D(point1, point2, arguments[0][1:-1])
+                return LineSegment3D(point1, point2, obj, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D':
@@ -879,7 +878,7 @@ class BSplineCurve(Edge):
         :rtype: float
         """
         if not self._length:
-            self._length = length_curve(self.curve)
+            self._length = operations.length_curve(self.curve)
         return self._length
 
     def normal_vector(self, abscissa):
@@ -1026,7 +1025,7 @@ class BSplineCurve(Edge):
         if point.is_close(self.end, tol):
             return [self.copy(), None]
         adim_abscissa = min(1.0, max(0.0, round(self.abscissa(point) / self.length(), 7)))
-        curve1, curve2 = split_curve(self.curve, adim_abscissa)
+        curve1, curve2 = operations.split_curve(self.curve, adim_abscissa)
 
         return [self.__class__.from_geomdl_curve(curve1),
                 self.__class__.from_geomdl_curve(curve2)]
@@ -3294,21 +3293,28 @@ class ArcEllipse2D(Edge):
         abscissa_angle = None
         iter_counter = 0
         increment_factor = 1e-5
-        while True:
+        last_res = abscissa
+        while iter_counter < 20:
             res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
             if math.isclose(res, abscissa, abs_tol=1e-5):
                 abscissa_angle = initial_angle
                 break
+            if math.isclose(res, last_res, abs_tol=1e-5):
+                abscissa_angle = initial_angle
+                break
             if res > abscissa:
-                if iter_counter == 0:
-                    increment_factor = -1e-5
-                else:
+                # if iter_counter == 0:
+                increment_factor = -1e-5
+            else:
+                increment_factor = 5e-6
+                # else:
                     # self.save_to_file('/home/axel/Bureau/arcellipse2d')
                     # print(abscissa)
                     # ax = self.plot()
-                    raise NotImplementedError
+                    # raise NotImplementedError
             initial_angle += increment_factor
             iter_counter += 1
+            last_res = res
         x = self.ellipse.major_axis * math.cos(abscissa_angle)
         y = self.ellipse.minor_axis * math.sin(abscissa_angle)
         return self.ellipse.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
@@ -3780,7 +3786,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         """
         return FullArcEllipse2D(self.ellipse.translation(offset), self.start_end.translation(offset), self.name)
 
-    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], tol: float = 1e-6):
+    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], tol: float = 1e-3):
         """
         Calculates the abscissa of a given point.
 
@@ -3816,6 +3822,8 @@ class LineSegment3D(LineSegment):
             raise NotImplementedError('Start and end of Linesegment3D are equal')
         if not line:
             self.line = volmdlr_curves.Line3D(start, end)
+        else:
+            self.line = line
         LineSegment.__init__(self, start=start, end=end, line=self.line, name=name)
         self._bbox = None
 

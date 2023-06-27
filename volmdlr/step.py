@@ -1299,6 +1299,8 @@ class Step(dc.DessiaObject):
                 product_definitions.append(function.id)
             elif function.name == "SHAPE_REPRESENTATION_RELATIONSHIP":
                 shape_representation_relationship.append(function.id)
+                id_shape_representation = int(function.arg[3][1:])
+                shape_representations.append(id_shape_representation)
             elif function.name == "SHAPE_DEFINITION_REPRESENTATION":
                 id_shape_representation = int(function.arg[1][1:])
                 shape_representations.append(id_shape_representation)
@@ -1526,7 +1528,8 @@ class Step(dc.DessiaObject):
         if self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             return volmdlr.core.VolumeModel([self.instatiate_assembly(object_dict)])
         primitives = []
-        shapes = [object_dict[shape] for shape in shape_representations]
+        shapes = [object_dict[shape] for shape in shape_representations
+                  if self.functions[shape].name != "SHAPE_REPRESENTATION"]
         for shape in shapes:
             if isinstance(shape, list):
                 primitives.extend(shape)
