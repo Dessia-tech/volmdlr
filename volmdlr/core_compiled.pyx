@@ -197,7 +197,7 @@ cdef(double, double, double,
 
 # =============================================================================
 
-def polygon_point_belongs(point, points, include_edge_points: bool = False, tol:float = 1e-6):
+def polygon_point_belongs(point, points, include_edge_points: bool = False, tol: float = 1e-6):
     cdef int i
     cdef int n = len(points)
     cdef bint inside = False
