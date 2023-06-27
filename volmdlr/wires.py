@@ -2818,7 +2818,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         Ray casting algorithm copied from internet.
         """
         return polygon_point_belongs((point.x, point.y), [(point_.x, point_.y) for point_ in self.points],
-                                     include_edge_points=include_edge_points)
+                                     include_edge_points=include_edge_points, tol=tol)
 
     def second_moment_area(self, point):
         second_moment_area_x, second_moment_area_y, second_moment_area_xy = 0., 0., 0.
