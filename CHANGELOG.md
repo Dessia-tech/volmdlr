@@ -91,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PlaneFace3D: merge_faces
 - Contour2D: divide
 - Step: raise NotimplementedError when it's not possible to instatiate assembly object.
+- fix: protect gmsh import
 
 ### Refactor
 - Contour2D: cut_by_wire

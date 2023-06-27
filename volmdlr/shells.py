@@ -1084,15 +1084,12 @@ class ClosedShell3D(OpenShell3D):
 
         return list_coincident_faces
 
-    def two_shells_intersecting_contour(self, shell2,
-                                        list_coincident_faces: List[volmdlr.faces.Face3D],
-                                        dict_intersecting_combinations=None):
+    def two_shells_intersecting_contour(self, shell2, dict_intersecting_combinations=None):
         """
         Computes intersecting_contour between two shells.
 
         :param shell2: ClosedShell3D
-        :type shell2: :class:`volmdlr.faces.ClosedShell3D`
-        :type list_coincident_faces: List[:class:`volmdlr.faces.Face3D`]
+        :type shell2: :class:`volmdlr.faces.ClosedShell3D`.
         :param dict_intersecting_combinations: dictionary containing as keys
             the combination of intersecting faces and as the values the
             resulting primitive from the two intersecting faces
@@ -1658,3 +1655,4 @@ class ClosedTriangleShell3D(ClosedShell3D, OpenTriangleShell3D):
                  color: Tuple[float, float, float] = None,
                  alpha: float = 1., name: str = ''):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
+        ClosedShell3D.__init__(self, faces)

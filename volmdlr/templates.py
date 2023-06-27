@@ -1,4 +1,6 @@
-
+"""
+Babylon templates.
+"""
 import os
 from string import Template
 

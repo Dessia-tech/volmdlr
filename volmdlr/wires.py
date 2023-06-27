@@ -1200,6 +1200,12 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         return min(distance)
 
     def point_distance(self, point):
+        """
+        Gets the distance from a point a Wire 3D object.
+
+        :param point: other point.
+        :return: the distance to wire and corresponding point.
+        """
         distance, distance_point = math.inf, None
         for prim in self.primitives:
             prim_distance, prim_point = prim.point_distance(point)
@@ -1209,6 +1215,12 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         return distance, distance_point
 
     def extrusion(self, extrusion_vector):
+        """
+        Extrudes a Wire 3D in a given direction.
+
+        :param extrusion_vector: extrusion vector used.
+        :return: A list of extruded faces.
+        """
         faces = []
         for primitive in self.primitives:
             faces.extend(primitive.extrusion(extrusion_vector))
@@ -1220,12 +1232,13 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
         """
 
-        discretized_points = self.discretization_points(discretization_parameter)
+        discretized_points = self.discretization_points(number_points=discretization_parameter)
         bspline_curve = volmdlr.edges.BSplineCurve3D.from_points_interpolation(discretized_points, degree)
 
         return bspline_curve
 
     def triangulation(self):
+        """Triangulatio method for a Wire3D."""
         return None
 
     def get_primitives_2d(self, plane_origin, x, y):
@@ -1247,6 +1260,10 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         return primitives2d
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Tranforms a Wire 3D into a Wire 2D, given a plane origin and an x and y vector.
+
+        """
         primitives2d = self.get_primitives_2d(plane_origin, x, y)
         return Wire2D(primitives=primitives2d)
 
@@ -3126,8 +3143,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                         point_x_rel_pos = int(point.x / scale_factor)
                         point_y_rel_pos = int(point.y / scale_factor)
                         if boundary[0] <= point_x_rel_pos <= boundary[1] \
-                                and point_y_rel_pos >= boundary[2] \
-                                and point_y_rel_pos <= boundary[3]:
+                                and boundary[2] <= point_y_rel_pos <= boundary[3]:
                             nearby_points.append(point)
 
                 scale_factor *= 4 / 3
@@ -5091,9 +5107,9 @@ class Circle3D(Contour3D):
         try:
             vector_u1.normalize()
             vector_u2.normalize()
-        except ZeroDivisionError:
+        except ZeroDivisionError as exc:
             raise ZeroDivisionError(
-                'the 3 points must be distincts')
+                'the 3 points must be distincts') from exc
 
         normal = vector_u2.cross(vector_u1)
         normal.normalize()
@@ -5113,9 +5129,9 @@ class Circle3D(Contour3D):
 
         try:
             center, _ = line1.minimum_distance_points(line2)
-        except ZeroDivisionError:
+        except ZeroDivisionError as exc:
             raise ZeroDivisionError(
-                'Start, end and interior points  of an arc must be distincts')
+                'Start, end and interior points  of an arc must be distincts') from exc
 
         radius = (center - point1).norm()
         return cls(frame=volmdlr.Frame3D(center, vector_u1, normal.cross(vector_u1), normal),

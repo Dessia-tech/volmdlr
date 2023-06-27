@@ -170,7 +170,7 @@ class Edge(dc.DessiaObject):
         warnings.warn('polygon_points is deprecated,\
         please use discretization_points instead',
                       DeprecationWarning)
-        return self.discretization_points(discretization_resolution)
+        return self.discretization_points(angle_resolution=discretization_resolution)
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
@@ -3557,7 +3557,7 @@ class Arc2D(Arc):
         """
         warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
 
-        self.__init__(*[point.frame_mapping(frame, side) for point in
+        self.__class__(*[point.frame_mapping(frame, side) for point in
                         [self.start, self.interior, self.end]])
 
     def second_moment_area(self, point):
@@ -5232,8 +5232,7 @@ class LineSegment3D(LineSegment):
     def plot_data(self, x_3d, y_3d, marker=None, color='black', stroke_width=1,
                   dash=False, opacity=1, arrow=False):
         edge2d = self.plane_projection2d(volmdlr.O3D, x_3d, y_3d)
-        return edge2d.plot_data(marker, color, stroke_width,
-                                dash, opacity, arrow)
+        return edge2d.plot_data(marker, plot_data.EdgeStyle(stroke_width, color, dash))
 
     def to_line(self):
         """
