@@ -202,7 +202,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
 
         :param line_index: 0 being the 1st line
         """
-        new_linesegment2D_points = []
+        new_linesegment2d_points = []
         dont_add_last_point = False
 
         for i, point in enumerate(
@@ -268,8 +268,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
                 else:
                     new_point2 = self.points[i + 1] + distance_dir2 * dir_vec_2
 
-                new_linesegment2D_points.append(new_point1)
-                new_linesegment2D_points.append(new_point2)
+                new_linesegment2d_points.append(new_point1)
+                new_linesegment2d_points.append(new_point2)
 
             elif i == line_index + 1:
                 pass
@@ -277,12 +277,12 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             elif line_index == len(self.points) - 1 and i == 0:
                 pass
             else:
-                new_linesegment2D_points.append(point)
+                new_linesegment2d_points.append(point)
 
         if not dont_add_last_point and not self.closed:
-            new_linesegment2D_points.append(self.points[-1])
+            new_linesegment2d_points.append(self.points[-1])
 
-        rls_2d = self.__class__(new_linesegment2D_points, self.radius,
+        rls_2d = self.__class__(new_linesegment2d_points, self.radius,
                                 adapt_radius=self.adapt_radius)
 
         return rls_2d
@@ -296,7 +296,7 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         if self.close last line_index can be len(self.points)-1
         if not, last line_index can be len(self.points)-2
         """
-        new_linesegment2D_points = []
+        new_linesegment2d_points = []
 
         # =============================================================================
         # COMPUTES THE DIRECTIVE VECTORS BETWEEN WHICH THE OFFSET WILL BE DRAWN
@@ -406,11 +406,11 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         # =============================================================================
         for i, point in enumerate(self.points):
             if i in new_points:
-                new_linesegment2D_points.append(new_points[i])
+                new_linesegment2d_points.append(new_points[i])
             else:
-                new_linesegment2D_points.append(point)
+                new_linesegment2d_points.append(point)
 
-        rls_2d = self.__class__(new_linesegment2D_points, self.radius,
+        rls_2d = self.__class__(new_linesegment2d_points, self.radius,
                                 adapt_radius=self.adapt_radius)
 
         return rls_2d
