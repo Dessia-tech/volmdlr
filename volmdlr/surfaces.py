@@ -3250,6 +3250,7 @@ class SphericalSurface3D(PeriodicalSurface):
                 edges.LineSegment2D(volmdlr.Point2D(theta2, half_pi), volmdlr.Point2D(theta2, phi2))
                 ]
             return primitives
+        return []
 
     def arc3d_to_2d_with_singularity(self, arc3d, start, end, singularity_points):
         """

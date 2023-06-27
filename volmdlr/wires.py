@@ -1220,7 +1220,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
         """
 
-        discretized_points = self.discretization_points(discretization_parameter)
+        discretized_points = self.discretization_points(number_points=discretization_parameter)
         bspline_curve = volmdlr.edges.BSplineCurve3D.from_points_interpolation(discretized_points, degree)
 
         return bspline_curve
@@ -3126,8 +3126,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                         point_x_rel_pos = int(point.x / scale_factor)
                         point_y_rel_pos = int(point.y / scale_factor)
                         if boundary[0] <= point_x_rel_pos <= boundary[1] \
-                                and point_y_rel_pos >= boundary[2] \
-                                and point_y_rel_pos <= boundary[3]:
+                                and boundary[2] <= point_y_rel_pos <= boundary[3]:
                             nearby_points.append(point)
 
                 scale_factor *= 4 / 3
@@ -5091,9 +5090,9 @@ class Circle3D(Contour3D):
         try:
             vector_u1.normalize()
             vector_u2.normalize()
-        except ZeroDivisionError:
+        except ZeroDivisionError as exc:
             raise ZeroDivisionError(
-                'the 3 points must be distincts')
+                'the 3 points must be distincts') from exc
 
         normal = vector_u2.cross(vector_u1)
         normal.normalize()
@@ -5113,9 +5112,9 @@ class Circle3D(Contour3D):
 
         try:
             center, _ = line1.minimum_distance_points(line2)
-        except ZeroDivisionError:
+        except ZeroDivisionError as exc:
             raise ZeroDivisionError(
-                'Start, end and interior points  of an arc must be distincts')
+                'Start, end and interior points  of an arc must be distincts') from exc
 
         radius = (center - point1).norm()
         return cls(frame=volmdlr.Frame3D(center, vector_u1, normal.cross(vector_u1), normal),
