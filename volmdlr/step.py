@@ -389,7 +389,10 @@ def shell_based_surface_model(arguments, object_dict):
     """
     Returns the data in case of a Shell3D.
     """
-    return object_dict[int(arguments[1][0][1:])]
+    if len(arguments[1]) == 1:
+        return object_dict[int(arguments[1][0][1:])]
+    primitives = [object_dict[int(arg[1:])] for arg in arguments[1]]
+    return volmdlr.core.Compound(primitives)
 
 
 def item_defined_transformation(arguments, object_dict):
