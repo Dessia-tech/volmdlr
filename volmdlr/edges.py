@@ -5197,7 +5197,7 @@ class Arc3D(ArcMixin, Edge):
         point_interior = self.middle_point().to_2d(plane_origin, x, y)
         point_end = self.end.to_2d(plane_origin, x, y)
         arc = Arc2D(circle2d, point_start, point_end, self.is_trigo, name=self.name)
-        if not arc.point_belongs(point_interior):
+        if not arc.point_belongs(point_interior, 1e-6):
             arc = Arc2D(circle2d, point_start, point_end, False, name=self.name)
         return arc
 

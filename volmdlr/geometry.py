@@ -270,9 +270,9 @@ def clockwise_angle(vector1, vector2):
     norm_vec_2 = vector2.norm()
     sol = dot_v1v2 / (norm_vec_1 * norm_vec_2)
     cross_v1v2 = vector1.cross(vector2)
-    if math.isclose(sol, 1, abs_tol=1e-6):
+    if math.isclose(sol, 1, abs_tol=1e-8):
         inner_angle = 0
-    elif math.isclose(sol, -1, abs_tol=1e-6):
+    elif math.isclose(sol, -1, abs_tol=1e-8):
         inner_angle = math.pi
     else:
         inner_angle = math.acos(sol)
