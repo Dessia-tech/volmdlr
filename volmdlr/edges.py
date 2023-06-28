@@ -8,7 +8,7 @@ import math
 import sys
 import warnings
 from itertools import product
-from typing import Any, Dict, List, Union
+from typing import List, Union, Dict, Any
 
 import dessia_common.core as dc
 import matplotlib.patches
@@ -190,24 +190,31 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
-        step_id = kwargs.get("step_id")
+        # step_id = kwargs.get("step_id")
         # obj can be an instance of wires or edges.
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         orientation = arguments[4]
-        if orientation == '.F.':
-            point1, point2 = point2, point1
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
+            if orientation == '.F.':
+                point1, point2 = point2, point1
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D':
                 point1, point2 = point2, point1
-            return obj.trim(point1, point2)
+                trimmed_edge = obj.trim(point1, point2)
+                if orientation == '.T.':
+                    trimmed_edge = trimmed_edge.reverse()
+                return trimmed_edge
+            trimmed_edge = obj.trim(point1, point2)
+            if orientation == '.F.':
+                trimmed_edge = trimmed_edge.reverse()
+            return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
 
@@ -2963,7 +2970,7 @@ class FullArc2D(FullArcMixin, Arc2D):
         return FullArc2D(self.circle.copy(), self.start.copy())
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    def dict_to_object(cls, dict_, *args, **kwargs):
         circle = volmdlr_curves.Circle2D.dict_to_object(dict_['circle'])
         start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
 
@@ -3800,6 +3807,7 @@ class LineSegment3D(LineSegment):
                  name: str = ''):
         if start.is_close(end):
             raise NotImplementedError('Start and end of Linesegment3D are equal')
+        self.line = line
         if not line:
             self.line = volmdlr_curves.Line3D(start, end)
         LineSegment.__init__(self, start=start, end=end, line=self.line, name=name)
@@ -4516,17 +4524,9 @@ class BSplineCurve3D(BSplineCurve):
             dir_vector = lines[0].unit_direction_vector()
             if all(line.unit_direction_vector() == dir_vector for line in lines):
                 return LineSegment3D(points[0], points[-1])
-        # curve_form = arguments[3]
-        if arguments[4] == '.F.':
-            closed_curve = False
-        elif arguments[4] == '.T.':
-            closed_curve = True
-        else:
-            raise ValueError
-        # self_intersect = arguments[5]
+
         knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
         knots = [float(i) for i in arguments[7][1:-1].split(",")]
-        # knot_spec = arguments[8]
         knot_vector = []
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
@@ -4536,10 +4536,8 @@ class BSplineCurve3D(BSplineCurve):
         else:
             weight_data = None
 
-        # FORCING CLOSED_CURVE = FALSE:
-        # closed_curve = False
-        return cls(degree, points, knot_multiplicities, knots, weight_data,
-                   closed_curve, name)
+        closed_curve = points[0].is_close(points[-1])
+        return cls(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
 
     def to_step(self, current_id, surface_id=None, curve2d=None):
         """Exports to STEP format."""

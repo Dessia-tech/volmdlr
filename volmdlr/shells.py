@@ -1,5 +1,6 @@
 """volmdlr shells module."""
 import random
+import sys
 import traceback
 import warnings
 from itertools import chain
@@ -86,6 +87,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box', 'primitives']
     _non_data_hash_attributes = []
     STEP_FUNCTION = 'OPEN_SHELL'
+    _from_face_class = 'OpenShell3D'
 
     def __init__(self, faces: List[volmdlr.faces.Face3D],
                  color: Tuple[float, float, float] = None,
@@ -841,6 +843,25 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 [[face.outer_contour3d], face.inner_contours3d], min_points, size))
         return lines
 
+    @classmethod
+    def from_faces(cls, faces):
+        """
+        Defines a List of separated OpenShell3D from a list of faces, based on the faces graph.
+        """
+        class_ = getattr(sys.modules[__name__], cls._from_face_class)
+        graph = class_(faces).faces_graph()
+        components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
+
+        shells_list = []
+        for _,graph_i in enumerate(components, start=1):
+            faces_list = []
+            for n_index in graph_i.nodes:
+                faces_list.append(faces[n_index])
+
+            shells_list.append(class_(faces_list))
+
+        return shells_list
+
     def is_disjoint_from(self, shell2, tol=1e-8):
         """
         Verifies and returns a Boolean if two shells are disjointed or not.
@@ -890,7 +911,7 @@ class ClosedShell3D(OpenShell3D):
     """
 
     STEP_FUNCTION = 'CLOSED_SHELL'
-
+    _from_face_class = 'ClosedShell3D'
     def is_face_inside(self, face: volmdlr.faces.Face3D):
         """
         Verifies if a face is inside the closed shell 3D.
@@ -1444,7 +1465,7 @@ class ClosedShell3D(OpenShell3D):
                                            list_coincident_faces
                                            )
         faces += new_valid_faces
-        return [OpenShell3D(faces)]
+        return OpenShell3D.from_faces(faces)
 
     def subtract_to_closed_shell(self, shell2: OpenShell3D, tol: float = 1e-8):
         """
@@ -1466,9 +1487,9 @@ class ClosedShell3D(OpenShell3D):
         faces += shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
         new_valid_faces = self.subtraction_faces(shell2, intersecting_faces, intersecting_combinations)
         faces += new_valid_faces
-        new_shell = ClosedShell3D(faces)
+        # new_shell = ClosedShell3D(faces)
         # new_shell.eliminate_not_valid_closedshell_faces()
-        return [new_shell]
+        return self.from_faces(faces)
 
     def validate_intersection_operation(self, shell2):
         """
@@ -1536,6 +1557,7 @@ class OpenTriangleShell3D(OpenShell3D):
     :param name: The name of the shell.
     :type name: str
     """
+    _from_face_class = 'OpenTriangleShell3D'
 
     def __init__(self, faces: List[volmdlr.faces.Triangle3D],
                  color: Tuple[float, float, float] = None,
@@ -1621,6 +1643,7 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     :param name: The name of the shell.
     :type name: str
     """
+    _from_face_class = 'ClosedTriangleShell3D'
 
     def __init__(self, faces: List[volmdlr.faces.Triangle3D],
                  color: Tuple[float, float, float] = None,
