@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - babylondata: removes empty objects.
 - ClosedPolygon2D: point_belongs.
 - Fullarc: get_reverse.
+- ArcEllipse2D: point_at_abscissa
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces

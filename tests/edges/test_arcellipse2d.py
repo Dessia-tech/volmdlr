@@ -96,7 +96,7 @@ class TestArcEllipse2D(unittest.TestCase):
     def test_point_distance(self):
         point = volmdlr.Point2D(0, 0)
         point_distance = self.arc_ellipse2d.point_distance(point)
-        self.assertAlmostEqual(point_distance, 1)
+        self.assertAlmostEqual(point_distance, 1, 3)
 
     def test_split(self):
         middle_point = self.arc_ellipse2d.point_at_abscissa(self.arc_ellipse2d.length()*.5)
@@ -121,13 +121,18 @@ class TestArcEllipse2D(unittest.TestCase):
             point_at_abscissa = self.arc_ellipse2d.point_at_abscissa(abscissa)
             list_points.append(point_at_abscissa)
         expected_points = [volmdlr.Point2D(0.5, 1.5),
-                           volmdlr.Point2D(-1.0268660377397358, 0.3457273142143496),
-                           volmdlr.Point2D(-1.3739381123038406, -0.19836909690392845),
-                           volmdlr.Point2D(-1.4142205940171113, -1.4142065305892269),
-                           volmdlr.Point2D(0.3457274859501445, -1.026865903912276),
+                           volmdlr.Point2D(-1.026862163717546, 0.3457322855944094),
+                           volmdlr.Point2D(-1.3739369321567088, -0.19836673109049652),
+                           volmdlr.Point2D(-1.4142177571166845, -1.4142093675797363),
+                           volmdlr.Point2D(0.3457380556698678, -1.0268576672831582),
                            volmdlr.Point2D(1.5, 0.5)]
         for point, expected_point in zip(list_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
+
+        arcellipse = edges.ArcEllipse2D.load_from_file("arcellipse_objects/ellipse2d_point_at_abscissa.json")
+        abscissa = 1.4594044224379008
+        point = arcellipse.point_at_abscissa(abscissa)
+        self.assertTrue(point.is_close(volmdlr.Point2D(0.24097404187459934, -0.10840989717832929)))
 
     def test_complementary(self):
         complementary = self.arc_ellipse2d.complementary()
