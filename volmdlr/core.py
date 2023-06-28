@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as npy
 
 import dessia_common.core as dc
+from dessia_common.errors import ConsistencyError
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
@@ -409,7 +410,7 @@ class Primitive3D(dc.PhysicalObject):
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
-    def babylon_meshes(self, merge_meshes=True):
+    def babylon_meshes(self, *args, **kwargs):
         """
         Returns the babylonjs mesh.
         """
@@ -483,8 +484,10 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_curves(self):
         points = self.babylon_points()
-        babylon_curves = self.babylon_lines(points)[0]
-        return babylon_curves
+        if points:
+            babylon_curves = self.babylon_lines(points)[0]
+            return babylon_curves
+        return None
 
 
 class BoundingRectangle(dc.DessiaObject):
@@ -1011,7 +1014,7 @@ class BoundingBox(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def point_belongs(self, point: volmdlr.Point3D, tol = 1e-6) -> bool:
+    def point_belongs(self, point: volmdlr.Point3D, tol=1e-6) -> bool:
         """
         Determines if a point belongs to the bounding box.
 
@@ -1119,17 +1122,19 @@ class Assembly(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        meshes = []
-        lines = []
+        babylon_data = {'meshes': [],
+                        'lines': []}
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+                    curves = primitive.babylon_curves()
+                    if curves:
+                        babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1137,10 +1142,8 @@ class Assembly(dc.PhysicalObject):
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
 
-        babylon_data = {'meshes': meshes,
-                        'lines': lines,
-                        'max_length': max_length,
-                        'center': list(center)}
+        babylon_data['max_length'] = max_length
+        babylon_data['center'] = list(center)
 
         return babylon_data
 
@@ -1296,6 +1299,7 @@ class Compound(dc.PhysicalObject):
     """
     A class that can be a collection of any volmdlr primitives.
     """
+
     def __init__(self, primitives, name: str = ""):
         self.primitives = primitives
         self._bbox = None
@@ -1339,17 +1343,19 @@ class Compound(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        meshes = []
-        lines = []
+        babylon_data = {'meshes': [],
+                        'lines': []}
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+                    curves = primitive.babylon_curves()
+                    if curves:
+                        babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1357,10 +1363,8 @@ class Compound(dc.PhysicalObject):
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
 
-        babylon_data = {'meshes': meshes,
-                        'lines': lines,
-                        'max_length': max_length,
-                        'center': list(center)}
+        babylon_data['max_length'] = max_length
+        babylon_data['center'] = list(center)
 
         return babylon_data
 
@@ -1556,17 +1560,19 @@ class VolumeModel(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        meshes = []
-        lines = []
+        babylon_data = {'meshes': [],
+                        'lines': []}
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+                    curves = primitive.babylon_curves()
+                    if curves:
+                        babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1574,10 +1580,8 @@ class VolumeModel(dc.PhysicalObject):
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
 
-        babylon_data = {'meshes': meshes,
-                        'lines': lines,
-                        'max_length': max_length,
-                        'center': list(center)}
+        babylon_data['max_length'] = max_length
+        babylon_data['center'] = list(center)
 
         return babylon_data
 
@@ -1643,6 +1647,7 @@ class VolumeModel(dc.PhysicalObject):
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
+        # from volmdlr import stl
         stl = volmdlr.stl.Stl.from_display_mesh(mesh)
         return stl
 
@@ -2369,7 +2374,7 @@ class MovingVolumeModel(VolumeModel):
         self.step_frames = step_frames
 
         if not self.is_consistent():
-            raise dc.ConsistencyError
+            raise ConsistencyError
 
     def is_consistent(self):
         n_primitives = len(self.primitives)

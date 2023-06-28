@@ -6,31 +6,58 @@
   "alpha": 1,
   "primitives": [
     {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.00700901099103195,
+    "y": 0.00252512671515575,
+    "z": 0.02325
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.00700901099103195,
+    "y": -0.00252512671515575,
+    "z": 0.02325
+  },
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.007449999999999921,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
       "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.7.1.dev905+g8a826d99",
-      "start": {
+      "origin": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.00700901099103195,
-        "y": 0.00252512671515575,
-        "z": 0.02325,
-        "name": ""
+        "x": 7.892991815694472e-17,
+        "y": 2.168404344971009e-18,
+        "z": 0.02325
       },
-      "end": {
+      "u": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.00700901099103195,
-        "y": -0.00252512671515575,
-        "z": 0.02325,
-        "name": ""
+        "x": 0.17203655943749543,
+        "y": -0.9850905654897468,
+        "z": 0.0
       },
-      "interior": {
+      "v": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.00745,
-        "y": -0.0,
-        "z": 0.02325,
-        "name": ""
+        "x": -0.9850905654897468,
+        "y": -0.17203655943749543,
+        "z": -0.0
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.0,
+        "y": 0.0,
+        "z": -1.0
       }
-    },
+    }
+  },
+  "is_trigo": true,
+  "angle_start": 4.539492299913965,
+  "angle_end": 5.231079021796865,
+  "_references": {}
+},
     {
       "name": "",
       "object_class": "volmdlr.edges.BSplineCurve3D",
@@ -4478,27 +4505,58 @@
       ]
     },
     {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.00569132937861561,
+    "y": -0.00480741821606014,
+    "z": 0.02325
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.00131768161241634,
+    "y": -0.00733254493121589,
+    "z": 0.02325
+  },
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.00745000000267122,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
       "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.7.1.dev905+g8a826d99",
-      "start": {
-        "$ref": "#/primitives/6/end"
-      },
-      "end": {
+      "origin": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.00131768161241634,
-        "y": -0.00733254493121589,
-        "z": 0.02325,
-        "name": ""
+        "x": -1.4196395795029737e-12,
+        "y": 2.458897668811133e-12,
+        "z": 0.02325
       },
-      "interior": {
+      "u": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.003725,
-        "y": -0.006451889258,
-        "z": 0.02325,
-        "name": ""
+        "x": -0.7670951750610099,
+        "y": -0.6415333135528649,
+        "z": 0.0
+      },
+      "v": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.6415333135528649,
+        "y": 0.7670951750610099,
+        "z": -0.0
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.0,
+        "y": -0.0,
+        "z": -1.0
       }
-    },
+    }
+  },
+  "is_trigo": true,
+  "angle_start": 4.539492299985066,
+  "angle_end": 5.231079021609609,
+  "_references": {}
+},
     {
       "name": "",
       "object_class": "volmdlr.edges.BSplineCurve3D",
@@ -8946,27 +9004,58 @@
       ]
     },
     {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": -0.00131768161241634,
+    "y": -0.00733254493121589,
+    "z": 0.02325
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": -0.00569132937861561,
+    "y": -0.00480741821606014,
+    "z": 0.02325
+  },
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.007450000002671219,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
       "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.7.1.dev905+g8a826d99",
-      "start": {
-        "$ref": "#/primitives/13/end"
-      },
-      "end": {
+      "origin": {
         "object_class": "volmdlr.Point3D",
-        "x": -0.00569132937861561,
-        "y": -0.00480741821606014,
-        "z": 0.02325,
-        "name": ""
+        "x": 1.4196404468647117e-12,
+        "y": 2.458896801449395e-12,
+        "z": 0.02325
       },
-      "interior": {
+      "u": {
         "object_class": "volmdlr.Point3D",
-        "x": -0.003725,
-        "y": -0.006451889258,
-        "z": 0.02325,
-        "name": ""
+        "x": -0.9391317344368195,
+        "y": 0.3435572519591039,
+        "z": 0.0
+      },
+      "v": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.3435572519591039,
+        "y": 0.9391317344368195,
+        "z": -0.0
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.0,
+        "y": -0.0,
+        "z": -1.0
       }
-    },
+    }
+  },
+  "is_trigo": true,
+  "angle_start": 4.539492299972041,
+  "angle_end": 5.231079021596584,
+  "_references": {}
+},
     {
       "name": "",
       "object_class": "volmdlr.edges.BSplineCurve3D",
@@ -13414,27 +13503,58 @@
       ]
     },
     {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": -0.00700901099103195,
+    "y": -0.00252512671515575,
+    "z": 0.02325
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": -0.00700901099103195,
+    "y": 0.00252512671515575,
+    "z": 0.02325
+  },
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.007449999999999921,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
       "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.7.1.dev905+g8a826d99",
-      "start": {
-        "$ref": "#/primitives/20/end"
-      },
-      "end": {
+      "origin": {
         "object_class": "volmdlr.Point3D",
-        "x": -0.00700901099103195,
-        "y": 0.00252512671515575,
-        "z": 0.02325,
-        "name": ""
+        "x": -7.892991815694472e-17,
+        "y": -2.168404344971009e-18,
+        "z": 0.02325
       },
-      "interior": {
+      "u": {
         "object_class": "volmdlr.Point3D",
-        "x": -0.00745,
-        "y": -0.0,
-        "z": 0.02325,
-        "name": ""
+        "x": -0.17203655943749543,
+        "y": 0.9850905654897468,
+        "z": 0.0
+      },
+      "v": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.9850905654897468,
+        "y": 0.17203655943749543,
+        "z": 0.0
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.0,
+        "y": 0.0,
+        "z": -1.0
       }
-    },
+    }
+  },
+  "is_trigo": true,
+  "angle_start": 4.539492299913965,
+  "angle_end": 5.231079021796865,
+  "_references": {}
+},
     {
       "name": "",
       "object_class": "volmdlr.edges.BSplineCurve3D",
@@ -17882,27 +18002,58 @@
       ]
     },
     {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": -0.00569132937861561,
+    "y": 0.00480741821606014,
+    "z": 0.02325
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": -0.00131768161241634,
+    "y": 0.00733254493121589,
+    "z": 0.02325
+  },
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.00745000000267122,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
       "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.7.1.dev905+g8a826d99",
-      "start": {
-        "$ref": "#/primitives/27/end"
-      },
-      "end": {
+      "origin": {
         "object_class": "volmdlr.Point3D",
-        "x": -0.00131768161241634,
-        "y": 0.00733254493121589,
-        "z": 0.02325,
-        "name": ""
+        "x": 1.4196395795029737e-12,
+        "y": -2.458897668811133e-12,
+        "z": 0.02325
       },
-      "interior": {
+      "u": {
         "object_class": "volmdlr.Point3D",
-        "x": -0.003725,
-        "y": 0.006451889258,
-        "z": 0.02325,
-        "name": ""
+        "x": 0.7670951750610099,
+        "y": 0.6415333135528649,
+        "z": 0.0
+      },
+      "v": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.6415333135528649,
+        "y": -0.7670951750610099,
+        "z": -0.0
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.0,
+        "y": 0.0,
+        "z": -1.0
       }
-    },
+    }
+  },
+  "is_trigo": true,
+  "angle_start": 4.539492299985066,
+  "angle_end": 5.231079021609609,
+  "_references": {}
+},
     {
       "name": "",
       "object_class": "volmdlr.edges.BSplineCurve3D",
@@ -22350,27 +22501,58 @@
       ]
     },
     {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.00131768161241634,
+    "y": 0.00733254493121589,
+    "z": 0.02325
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.00569132937861561,
+    "y": 0.00480741821606014,
+    "z": 0.02325
+  },
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.007450000002671219,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
       "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.7.1.dev905+g8a826d99",
-      "start": {
-        "$ref": "#/primitives/34/end"
-      },
-      "end": {
+      "origin": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.00569132937861561,
-        "y": 0.00480741821606014,
-        "z": 0.02325,
-        "name": ""
+        "x": -1.4196404468647117e-12,
+        "y": -2.458896801449395e-12,
+        "z": 0.02325
       },
-      "interior": {
+      "u": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.003725,
-        "y": 0.006451889258,
-        "z": 0.02325,
-        "name": ""
+        "x": 0.9391317344368195,
+        "y": -0.3435572519591039,
+        "z": 0.0
+      },
+      "v": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.3435572519591039,
+        "y": -0.9391317344368195,
+        "z": -0.0
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.0,
+        "y": 0.0,
+        "z": -1.0
       }
-    },
+    }
+  },
+  "is_trigo": true,
+  "angle_start": 4.539492299972041,
+  "angle_end": 5.231079021596584,
+  "_references": {}
+},
     {
       "name": "",
       "object_class": "volmdlr.edges.BSplineCurve3D",
