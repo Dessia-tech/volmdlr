@@ -3003,8 +3003,12 @@ class ConicalSurface3D(PeriodicalSurface):
             return []
         start3d = self.point2d_to_3d(linesegment2d.start)
         center = self.frame.origin + param_z1 * self.frame.w
-        circle = curves.Circle3D(volmdlr.Frame3D(
-            center, self.frame.u, self.frame.v, self.frame.w), center.point_distance(start3d))
+        if linesegment2d.unit_direction_vector().dot(volmdlr.X2D) > 0:
+            circle = curves.Circle3D(volmdlr.Frame3D(
+                center, self.frame.u, self.frame.v, self.frame.w), center.point_distance(start3d))
+        else:
+            circle = curves.Circle3D(volmdlr.Frame3D(
+                center, self.frame.u, -self.frame.v, -self.frame.w), center.point_distance(start3d))
         if math.isclose(param_z1, param_z2, abs_tol=1e-4):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
                 return [edges.FullArc3D(circle, start3d)]

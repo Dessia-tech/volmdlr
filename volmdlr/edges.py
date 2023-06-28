@@ -205,12 +205,8 @@ class Edge(dc.DessiaObject):
                 return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
-            if obj.__class__.__name__ == 'Circle3D':
+            if obj.__class__.__name__ == 'Circle3D' and orientation == '.T.':
                 point1, point2 = point2, point1
-                trimmed_edge = obj.trim(point1, point2)
-                if orientation == '.T.':
-                    trimmed_edge = trimmed_edge.reverse()
-                return trimmed_edge
             trimmed_edge = obj.trim(point1, point2)
             if orientation == '.F.':
                 trimmed_edge = trimmed_edge.reverse()
@@ -3676,7 +3672,8 @@ class FullArcEllipse(Edge):
         Defines a new FullArcEllipse, identical to self, but in the opposite direction.
 
         """
-        return self
+        ellipse = self.ellipse.reverse()
+        return self.__class__(ellipse, self.start_end)
 
     def straight_line_point_belongs(self, point):
         """
@@ -5042,9 +5039,7 @@ class Arc3D(ArcMixin, Edge):
         Defines a new Arc3D, identical to self, but in the opposite direction.
 
         """
-        new_frame = volmdlr.Frame3D(self.circle.frame.origin, self.circle.frame.u, -self.circle.frame.v,
-                                    self.circle.frame.u.cross(-self.circle.frame.v))
-        circle3d = volmdlr_curves.Circle3D(new_frame, self.circle.radius)
+        circle3d = self.circle.reverse()
         return self.__class__(circle3d, self.end, self.start, self.name + '_reverse')
 
     def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
@@ -5507,10 +5502,11 @@ class FullArc3D(FullArcMixin, Arc3D):
 
         return content, edge_curve
 
-    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), show_frame=False):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
-
+        if show_frame:
+            self.circle.frame.plot(ax, ratio=self.circle.radius)
         ax = vm_common_operations.plot_from_discretization_points(
             ax, edge_style=edge_style, element=self, number_points=25, close_plot=True)
         if edge_style.edge_ends:
@@ -5583,7 +5579,8 @@ class FullArc3D(FullArcMixin, Arc3D):
         Defines a new FullArc3D, identical to self, but in the opposite direction.
 
         """
-        return self
+        circle = self.circle.reverse()
+        return self.__class__(circle, self.start_end)
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
         """
