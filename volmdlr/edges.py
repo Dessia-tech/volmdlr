@@ -5484,7 +5484,7 @@ class FullArc3D(FullArcMixin, Arc3D):
 
     def to_step(self, current_id, surface_id=None):
         """Exports to STEP format."""
-        content, frame_id = self.frame.to_step(current_id)
+        content, frame_id = self.circle.frame.to_step(current_id)
         # Not calling Circle3D.to_step because of circular imports
         u = self.start - self.circle.center
         u.normalize()
