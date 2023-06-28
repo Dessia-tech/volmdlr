@@ -1008,6 +1008,18 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return linesegment_intersections
 
+    def face_minimum_distance(self, other_face, return_points: bool = False):
+        """
+        Gets the minimum distance between two faces.
+
+        :param other_face: second face to search for minimum distance.
+        :param return_points: return corresponding point or not.
+        :return:
+        """
+        method_name = f'{other_face.__class__.__name__.lower()[:-2]}_minimum_distance'
+        minimum_distance = getattr(self, method_name)(other_face, return_points)
+        return minimum_distance
+
 
 class PlaneFace3D(Face3D):
     """
@@ -1198,6 +1210,18 @@ class PlaneFace3D(Face3D):
                 if self.edge3d_inside(edge) and cylindricalface.edge3d_inside(edge):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
         return face_intersections
+
+    def planeface_minimum_distance(self, planeface: 'PlaneFace3D', return_points: bool = False):
+        dist, point1, point2 = self.minimum_distance_points_plane(planeface, return_points=return_points)
+        if not return_points:
+            return dist
+        return dist, point1, point2
+
+    def cylindricalface_minimum_distance(self, cylindricaface: 'CylindricalFace3D', return_points: bool = False):
+        point1, point2 = cylindricaface.minimum_distance_points_cyl(self)
+        if return_points:
+            return point1.point_distance(point2), point1, point2
+        return point1.point_distance(point2)
 
     def minimum_distance(self, other_face, return_points=False):
         """
@@ -1798,6 +1822,9 @@ class Triangle3D(PlaneFace3D):
         normal.normalize()
         return normal
 
+    def triangle_minimum_distance(self, triangle_face, return_points=False):
+        return self.planeface_minimum_distance(triangle_face, return_points)
+
 
 class CylindricalFace3D(Face3D):
     """
@@ -1883,6 +1910,8 @@ class CylindricalFace3D(Face3D):
         number_points_y = int(delta_z * z_resolution)
 
         return number_points_x, number_points_y
+
+    # def planeface_minimal_distance(self, planeface, return_points=False):
 
     def minimum_distance(self, other_face, return_points=False):
         # if other_face.__class__ is CylindricalFace3D:
