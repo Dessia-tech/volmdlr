@@ -209,7 +209,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             break
         return graph
 
-    def faces_graph(self):
+    def faces_graph(self, verify_connected_components=True):
         """
         Gets the shells faces topology graph using networkx.
 
@@ -234,9 +234,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     connected_faces.discard(i)
                     for j in connected_faces:
                         graph.add_edge(i, j)
-            components = list(nx.connected_components(graph))
-            if len(components) > 1:
-                graph = self._faces_graph_search_bridges(graph, components, face_vertices)
+            if verify_connected_components:
+                components = list(nx.connected_components(graph))
+                if len(components) > 1:
+                    graph = self._faces_graph_search_bridges(graph, components, face_vertices)
             self._faces_graph = graph
         return self._faces_graph
 
@@ -895,7 +896,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         Defines a List of separated OpenShell3D from a list of faces, based on the faces graph.
         """
         class_ = getattr(sys.modules[__name__], cls._from_face_class)
-        graph = class_(faces).faces_graph()
+        graph = class_(faces).faces_graph(verify_connected_components=False)
         components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
 
         shells_list = []
