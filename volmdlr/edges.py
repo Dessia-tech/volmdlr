@@ -2518,7 +2518,7 @@ class Arc2D(ArcMixin, Edge):
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
         point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
-        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=abs_tol):
+        if math.isclose(arc_angle, point_start_angle + point_end_angle, rel_tol=0.01):
             return True
         return False
 
