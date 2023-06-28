@@ -20,6 +20,7 @@ import volmdlr
 import volmdlr.core
 import volmdlr.edges
 import volmdlr.faces
+import volmdlr.curves
 import volmdlr.primitives3d
 import volmdlr.wires
 from volmdlr import surfaces
@@ -381,7 +382,7 @@ def geometric_set(arguments, object_dict):
     :rtype: TYPE
 
     """
-    #TODO: IS THIS RIGHT?
+    # TODO: IS THIS RIGHT?
     primitives = [object_dict[int(node[1:])]
                   for node in arguments[1] if not isinstance(object_dict[int(node[1:])], volmdlr.Point3D)]
     return primitives
@@ -1269,7 +1270,7 @@ class Step(dc.DessiaObject):
             #     ids_shape_definition_representation = [int(self.functions[id_product_definition].arg[4][1:])]
             # else:
             ids_shape_definition_representation = [int(arg[1:]) for
-                                                          arg in self.functions[id_product_definition].arg[4:]
+                                                   arg in self.functions[id_product_definition].arg[4:]
                                                    if int(arg[1:]) in valid_entities]
             assemblies_shapes.setdefault(assembly_node, []).extend(ids_shape_definition_representation)
             id_context_dependent_shape_representation = int(function.arg[-1][1:])
@@ -1279,7 +1280,7 @@ class Step(dc.DessiaObject):
             component_frame = [int(self.functions[id_item_defined_transformation].arg[3][1:])]
             assemblies_positions.setdefault(assembly_node, [assembly_frame]).extend(
                 component_frame * len(ids_shape_definition_representation))
-        return assemblies_shapes  #, assemblies_positions
+        return assemblies_shapes  # , assemblies_positions
 
     def context_dependent_shape_representation_to_next_assembly_usage_occurrence(self, node):
         """
@@ -1436,7 +1437,7 @@ class Step(dc.DessiaObject):
             else:
                 primitives.append(shape)
         volume_model = volmdlr.core.VolumeModel(primitives)
-        #volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
+        # volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
         return volume_model
 
     def _helper_instantiate(self, node, object_dict, times, show_times):
@@ -1519,9 +1520,9 @@ STEP_TO_VOLMDLR = {
     'AXIS2_PLACEMENT_2D': None,  # ??????????????????
     'AXIS2_PLACEMENT_3D': volmdlr.Frame3D,
 
-    'LINE': volmdlr.edges.Line3D,  # LineSegment3D,
-    'CIRCLE': volmdlr.wires.Circle3D,
-    'ELLIPSE': volmdlr.wires.Ellipse3D,
+    'LINE': volmdlr.curves.Line3D,  # LineSegment3D,
+    'CIRCLE': volmdlr.curves.Circle3D,
+    'ELLIPSE': volmdlr.curves.Ellipse3D,
     'PARABOLA': None,
     'HYPERBOLA': None,
     # 'PCURVE': None,

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 - Sweep with muitiform profile contour.
+- OpenShell3D: from_faces (using faces graph)
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
@@ -31,10 +32,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineFace3D: neutral_fiber
 - BSplineSurface3D: arc3d_to_2d, removes repeated parametric points if any.
 - surfaces.Plane3D: linesegment_intersections
+- Step export
+- Face3D: is_linesegment_crossing.
+- Edge: fix orientation of edges commig from step.
+- BSplineCurve3D: from_step.
 - Export to step file
 - Step import
 - Edge: fix orientation of edges commig from step.
 - PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
+- babylondata: removes empty objects.
+- ClosedPolygon2D: point_belongs.
 - Frame3D: import/export step.
 
 ### Refactor
@@ -44,8 +51,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - parametric.py: fix numerical instability in some functions used in Arc3D to parametric surface domain transformation.
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
+- Big refactor: New module curves.py containing classes as Line, Circle and Ellipse.
+Most edges will now be formed by a curve and a start and end points. Unittests for all these classes have been created.
+All adequations have been done for all tests and existing scripts.
+
 - bspline_compiled: refactor binomial_coefficient for performance.
 - Improve step translator.
+
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
