@@ -5043,9 +5043,7 @@ class Arc3D(ArcMixin, Edge):
         Defines a new Arc3D, identical to self, but in the opposite direction.
 
         """
-        new_frame = volmdlr.Frame3D(self.circle.frame.origin, self.circle.frame.u, -self.circle.frame.v,
-                                    self.circle.frame.u.cross(-self.circle.frame.v))
-        circle3d = volmdlr_curves.Circle3D(new_frame, self.circle.radius)
+        circle3d = self.circle.reverse()
         return self.__class__(circle3d, self.end, self.start, self.name + '_reverse')
 
     def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
