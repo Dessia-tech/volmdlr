@@ -3676,7 +3676,8 @@ class FullArcEllipse(Edge):
         Defines a new FullArcEllipse, identical to self, but in the opposite direction.
 
         """
-        return self
+        ellipse = self.ellipse.reverse()
+        return self.__class__(ellipse, self.start_end)
 
     def straight_line_point_belongs(self, point):
         """
@@ -5582,7 +5583,8 @@ class FullArc3D(FullArcMixin, Arc3D):
         Defines a new FullArc3D, identical to self, but in the opposite direction.
 
         """
-        return self
+        circle = self.circle.reverse()
+        return self.__class__(circle, self.start_end)
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
         """
