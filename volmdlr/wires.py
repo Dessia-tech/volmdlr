@@ -2828,7 +2828,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         Ray casting algorithm copied from internet.
         """
         return polygon_point_belongs((point.x, point.y), [(point_.x, point_.y) for point_ in self.points],
-                                     include_edge_points=include_edge_points)
+                                     include_edge_points=include_edge_points, tol=tol)
 
     def second_moment_area(self, point):
         second_moment_area_x, second_moment_area_y, second_moment_area_xy = 0., 0., 0.
@@ -4118,9 +4118,9 @@ class Contour3D(ContourMixin, Wire3D):
         contour = cls(raw_edges, name=name)
         if contour.is_ordered():
             return contour
-        edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
-        if edges:
-            return cls(edges, name=name)
+        list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
+        if list_edges:
+            return cls(list_edges, name=name)
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):

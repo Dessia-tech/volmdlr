@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 - Sweep with muitiform profile contour.
+- OpenShell3D: from_faces (using faces graph)
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
@@ -34,9 +35,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Step export
 - Edge: fix orientation of edges commig from step.
 - Face3D: is_linesegment_crossing.
+- Edge: fix orientation of edges commig from step.
+- BSplineCurve3D: from_step.
 - Step import
 - PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
 - babylondata: removes empty objects.
+- ClosedPolygon2D: point_belongs.
+- Fullarc: get_reverse.
+- Arc2D: point_belongs
+- ArcEllipse2D: point_at_abscissa
+
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
@@ -46,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
 - Big refactor: New module curves.py containing classes as Line, Circle and Ellipse.
-Most edges will now be formed by a curve and start and end points. Unittests for all these classes have been created.
+Most edges will now be formed by a curve and a start and end points. Unittests for all these classes have been created.
 All adequations have been done for all tests and existing scripts.
 
 - bspline_compiled: refactor binomial_coefficient for performance.

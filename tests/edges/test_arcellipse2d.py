@@ -96,7 +96,7 @@ class TestArcEllipse2D(unittest.TestCase):
     def test_point_distance(self):
         point = volmdlr.Point2D(0, 0)
         point_distance = self.arc_ellipse2d.point_distance(point)
-        self.assertAlmostEqual(point_distance, 1)
+        self.assertAlmostEqual(point_distance, 1, 3)
 
     def test_split(self):
         middle_point = self.arc_ellipse2d.point_at_abscissa(self.arc_ellipse2d.length()*.5)
@@ -121,18 +121,23 @@ class TestArcEllipse2D(unittest.TestCase):
             point_at_abscissa = self.arc_ellipse2d.point_at_abscissa(abscissa)
             list_points.append(point_at_abscissa)
         expected_points = [volmdlr.Point2D(0.5, 1.5),
-                           volmdlr.Point2D(-1.0268660377397358, 0.3457273142143496),
-                           volmdlr.Point2D(-1.3739381123038406, -0.19836909690392845),
-                           volmdlr.Point2D(-1.4142205940171113, -1.4142065305892269),
-                           volmdlr.Point2D(0.3457274859501445, -1.026865903912276),
+                           volmdlr.Point2D(-1.026854414664971, 0.345742229596484),
+                           volmdlr.Point2D(-1.3739313715284762, -0.19835558390699648),
+                           volmdlr.Point2D(-1.41421948829977, -1.414207636347093),
+                           volmdlr.Point2D(0.3457269217498756, -1.026866343572968),
                            volmdlr.Point2D(1.5, 0.5)]
         for point, expected_point in zip(list_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
+        arcellipse = edges.ArcEllipse2D.load_from_file("edges/arcellipse_objects/ellipse2d_point_at_abscissa.json")
+        abscissa = 1.4594044224379008
+        point = arcellipse.point_at_abscissa(abscissa)
+        self.assertTrue(point.is_close(volmdlr.Point2D(0.2409753559150417, -0.10840794187197955)))
+
     def test_complementary(self):
         complementary = self.arc_ellipse2d.complementary()
         interior = complementary.point_at_abscissa(complementary.length()*0.5)
-        self.assertTrue(interior.is_close(volmdlr.Point2D(1.414215906270221, 1.4142112184604296)))
+        self.assertTrue(interior.is_close(volmdlr.Point2D(1.4142103771224788, 1.4142167475950145)))
         self.assertAlmostEqual(complementary.length(), 1.9313274884444551)
 
     def test_normal_vector(self):

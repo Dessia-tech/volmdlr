@@ -8,7 +8,7 @@ import math
 import sys
 import warnings
 from itertools import product
-from typing import Any, Dict, List, Union
+from typing import List, Union, Dict, Any
 
 import dessia_common.core as dc
 import matplotlib.patches
@@ -2519,7 +2519,7 @@ class Arc2D(ArcMixin, Edge):
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
         point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
-        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=abs_tol):
+        if math.isclose(arc_angle, point_start_angle + point_end_angle, rel_tol=0.01):
             return True
         return False
 
@@ -2971,7 +2971,7 @@ class FullArc2D(FullArcMixin, Arc2D):
         return FullArc2D(self.circle.copy(), self.start.copy())
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    def dict_to_object(cls, dict_, *args, **kwargs):
         circle = volmdlr_curves.Circle2D.dict_to_object(dict_['circle'])
         start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
 
@@ -3290,11 +3290,10 @@ class ArcEllipse2D(Edge):
         def ellipse_arc_length(theta):
             return math.sqrt((self.ellipse.major_axis ** 2) * math.sin(theta) ** 2 +
                              (self.ellipse.minor_axis ** 2) * math.cos(theta) ** 2)
-        abscissa_angle = None
+
         iter_counter = 0
-        increment_factor = 1e-5
-        last_res = abscissa
-        while iter_counter < 20:
+        while True:
+
             res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
             if math.isclose(res, abscissa, abs_tol=1e-5):
                 abscissa_angle = initial_angle
@@ -3303,15 +3302,9 @@ class ArcEllipse2D(Edge):
                 abscissa_angle = initial_angle
                 break
             if res > abscissa:
-                # if iter_counter == 0:
-                increment_factor = -1e-5
+                increment_factor = (initial_angle * (abscissa - res))/(10 * res)
             else:
-                increment_factor = 5e-6
-                # else:
-                    # self.save_to_file('/home/axel/Bureau/arcellipse2d')
-                    # print(abscissa)
-                    # ax = self.plot()
-                    # raise NotImplementedError
+                increment_factor = (initial_angle * (abscissa - res))/(5 * res)
             initial_angle += increment_factor
             iter_counter += 1
             last_res = res
@@ -3689,7 +3682,8 @@ class FullArcEllipse(Edge):
         Defines a new FullArcEllipse, identical to self, but in the opposite direction.
 
         """
-        return self
+        ellipse = self.ellipse.reverse()
+        return self.__class__(ellipse, self.start_end)
 
     def straight_line_point_belongs(self, point):
         """
@@ -3820,6 +3814,7 @@ class LineSegment3D(LineSegment):
                  name: str = ''):
         if start.is_close(end):
             raise NotImplementedError('Start and end of Linesegment3D are equal')
+        self.line = line
         if not line:
             self.line = volmdlr_curves.Line3D(start, end)
         else:
@@ -5060,9 +5055,7 @@ class Arc3D(ArcMixin, Edge):
         Defines a new Arc3D, identical to self, but in the opposite direction.
 
         """
-        new_frame = volmdlr.Frame3D(self.circle.frame.origin, self.circle.frame.u, -self.circle.frame.v,
-                                    self.circle.frame.u.cross(-self.circle.frame.v))
-        circle3d = volmdlr_curves.Circle3D(new_frame, self.circle.radius)
+        circle3d = self.circle.reverse()
         return self.__class__(circle3d, self.end, self.start, self.name + '_reverse')
 
     def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
@@ -5600,7 +5593,8 @@ class FullArc3D(FullArcMixin, Arc3D):
         Defines a new FullArc3D, identical to self, but in the opposite direction.
 
         """
-        return self
+        circle = self.circle.reverse()
+        return self.__class__(circle, self.start_end)
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
         """
