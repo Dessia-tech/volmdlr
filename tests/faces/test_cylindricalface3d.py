@@ -133,7 +133,7 @@ class TestCylindricalFace3D(unittest.TestCase):
             'faces/plane_face_cylindrical_face_intersec.json')
         plane_face_3 = plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 7)
         split_by_plane = cylindricalface.split_by_plane(plane_face_3.surface3d)
-        self.assertTrue(len(split_by_plane), 3)
+        self.assertTrue(len(split_by_plane), 4)
         list_expected_points = DessiaObject.load_from_file(
             'faces/objects_cylindrical_tests/test_cylindrical_faces_split_by_plane_'
             'expected_discretization_points.json').primitives
