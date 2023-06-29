@@ -31,7 +31,8 @@ class TestFullArcEllipse3D(unittest.TestCase):
         self.assertAlmostEqual(ellipse2d.ellipse.minor_axis, 0.0075, places=4)
 
     def test_reverse(self):
-        self.assertEqual(self.ellipse, self.ellipse.reverse())
+        reverse = self.ellipse.reverse()
+        self.assertEqual(self.ellipse.ellipse.frame.w.dot(reverse.ellipse.frame.w), -1)
 
     def test_frame_mapping(self):
         new_frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.X3D, -volmdlr.Y3D)
