@@ -3287,19 +3287,17 @@ class ArcEllipse2D(Edge):
         def ellipse_arc_length(theta):
             return math.sqrt((self.ellipse.major_axis ** 2) * math.sin(theta) ** 2 +
                              (self.ellipse.minor_axis ** 2) * math.cos(theta) ** 2)
-        abscissa_angle = None
+
         iter_counter = 0
-        increment_factor = 1e-5
         while True:
             res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-            if math.isclose(res, abscissa, abs_tol=1e-5):
+            if math.isclose(res, abscissa, abs_tol=1e-8):
                 abscissa_angle = initial_angle
                 break
             if res > abscissa:
-                if iter_counter == 0:
-                    increment_factor = -1e-5
-                else:
-                    raise NotImplementedError
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(2 * res)
+            else:
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/res
             initial_angle += increment_factor
             iter_counter += 1
         x = self.ellipse.major_axis * math.cos(abscissa_angle)
