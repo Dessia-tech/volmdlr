@@ -4093,10 +4093,14 @@ class Contour3D(ContourMixin, Wire3D):
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
+        last_edge = object_dict[int(arguments[1][-1][1:])]
         for edge_id in arguments[1]:
             edge = object_dict[int(edge_id[1:])]
+            if edge.direction_independent_is_close(last_edge):
+                continue
             if edge:
                 raw_edges.append(edge)
+            last_edge = edge
 
         if step_name == "POLY_LOOP":
             return cls.from_points(raw_edges)
