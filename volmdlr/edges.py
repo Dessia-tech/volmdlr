@@ -3300,7 +3300,6 @@ class ArcEllipse2D(Edge):
                 increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/res
             initial_angle += increment_factor
             iter_counter += 1
-        print(iter_counter)
         x = self.ellipse.major_axis * math.cos(abscissa_angle)
         y = self.ellipse.minor_axis * math.sin(abscissa_angle)
         return self.ellipse.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
