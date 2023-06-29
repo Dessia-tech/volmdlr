@@ -392,7 +392,18 @@ def shell_based_surface_model(arguments, object_dict):
     """
     Returns the data in case of a Shell3D.
     """
-    return object_dict[int(arguments[1][0][1:])]
+    if len(arguments[1]) == 1:
+        return object_dict[int(arguments[1][0][1:])]
+    primitives = [object_dict[int(arg[1:])] for arg in arguments[1]]
+    return volmdlr.core.Compound(primitives)
+
+
+def oriented_closed_shell(arguments, object_dict):
+    """
+    Returns the data in case of a Shell3D.
+    """
+    # TODO: How to use the orientation (arguments[3]
+    return object_dict[arguments[2]]
 
 
 def item_defined_transformation(arguments, object_dict):
@@ -421,10 +432,18 @@ def manifold_surface_shape_representation(arguments, object_dict):
     """
     primitives = []
     for arg in arguments[1]:
-        if isinstance(object_dict[int(arg[1:])],
-                      vmshells.OpenShell3D):
-            primitives.extend(object_dict[int(arg[1:])].primitives)
-    return vmshells.ClosedShell3D(primitives)
+        primitive = object_dict[int(arg[1:])]
+        if isinstance(primitive, vmshells.OpenShell3D):
+            primitives.append(primitive)
+        if isinstance(primitive, volmdlr.core.Compound):
+            counter = 0
+            for sub_prim in primitive.primitives:
+                sub_prim.name = arguments[0][1:-1] + str(counter)
+                counter += 1
+            primitives.append(primitive)
+    if len(primitives) == 1:
+        return primitives[0]
+    return volmdlr.core.Compound(primitives)
 
 
 def faceted_brep(arguments, object_dict):
@@ -524,14 +543,20 @@ def advanced_brep_shape_representation(arguments, object_dict):
     :rtype: TYPE
 
     """
-    shells = []
+    primitives = []
     for arg in arguments[1]:
-        if isinstance(object_dict[int(arg[1:])],
-                      vmshells.OpenShell3D):
-            shells.append(object_dict[int(arg[1:])])
-    if len(shells) > 1:
-        return volmdlr.core.Compound(shells, name=arguments[0])
-    return shells
+        primitive = object_dict[int(arg[1:])]
+        if isinstance(primitive, vmshells.OpenShell3D):
+            primitives.append(primitive)
+        if isinstance(primitive, volmdlr.core.Compound):
+            counter = 0
+            for sub_prim in primitive.primitives:
+                sub_prim.name = arguments[0][1:-1] + str(counter)
+                counter += 1
+            primitives.append(primitive)
+    if len(primitives) == 1:
+        return primitives[0]
+    return volmdlr.core.Compound(primitives)
 
 
 def geometrically_bounded_surface_shape_representation(arguments, object_dict):
@@ -846,14 +871,13 @@ class Step(dc.DessiaObject):
                 previous_line = str()
                 continue
 
-            function = line.split("=")
+            function = line.split("=", maxsplit=1)
             function_id = int(function[0][1:])
             function_name_arg = function[1].split("(", 1)
             function_name = function_name_arg[0]
             function_arg = function_name_arg[1].split("#")
             function_connections = []
             connections = []
-            # print(function_id, function_name)
             for connec in function_arg[1:]:
                 connec = connec.split(",")
                 connec = connec[0].split(")")
@@ -862,7 +886,6 @@ class Step(dc.DessiaObject):
                     connections.append(function_connection)
                     function_connections.append(
                         (function_id, function_connection))
-            # print(function_connections)
             dict_connections[function_id] = connections
             all_connections.extend(function_connections)
 
@@ -885,7 +908,6 @@ class Step(dc.DessiaObject):
                     if arg[0] == '#':
                         function_connections.append(
                             (function_id, int(arg[1:])))
-            # print('=', function_connections)
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
@@ -1050,7 +1072,6 @@ class Step(dc.DessiaObject):
         Gives the volmdlr object related to the step function.
         """
         self.parse_arguments(arguments)
-
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
         try:
@@ -1220,6 +1241,8 @@ class Step(dc.DessiaObject):
                 product_definitions.append(function.id)
             elif function.name == "SHAPE_REPRESENTATION_RELATIONSHIP":
                 shape_representation_relationship.append(function.id)
+                id_shape_representation = int(function.arg[3][1:])
+                shape_representations.append(id_shape_representation)
             elif function.name == "SHAPE_DEFINITION_REPRESENTATION":
                 id_shape_representation = int(function.arg[1][1:])
                 shape_representations.append(id_shape_representation)
