@@ -155,7 +155,9 @@ class Face3D(volmdlr.core.Primitive3D):
             base = next(contour for contour in contours if contour is not vertex)
             return face.from_base_and_vertex(base, vertex, name)
         if point_in_contours3d:
-            raise NotImplementedError
+            point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
+            contours = [contour for contour in contours if contour is not point]
+            return face.from_contours3d_and_rectangular_cut(surface, contours, point)
 
         return face.from_contours3d(surface, contours, name)
 
@@ -279,25 +281,6 @@ class Face3D(volmdlr.core.Primitive3D):
                                               angle=angle)
         return self.__class__(new_surface, self.surface2d)
 
-    def rotation_inplace(self, center: volmdlr.Point3D,
-                         axis: volmdlr.Vector3D, angle: float):
-        """
-        Face3D rotation.
-
-         Object is updated inplace.
-        :param center: rotation center.
-        :type center: `volmdlr.Point3D`
-        :param axis: rotation axis.
-        :type axis: `volmdlr.Vector3D`
-        :param angle: rotation angle.
-        :type angle: float
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.surface3d.rotation_inplace(center=center, axis=axis, angle=angle)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Face3D translation.
@@ -309,18 +292,6 @@ class Face3D(volmdlr.core.Primitive3D):
         new_surface3d = self.surface3d.translation(offset=offset)
         return self.__class__(new_surface3d, self.surface2d)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Face3D translation. Object is updated inplace.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.surface3d.translation_inplace(offset=offset)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Face3D.
@@ -330,18 +301,6 @@ class Face3D(volmdlr.core.Primitive3D):
         new_surface3d = self.surface3d.frame_mapping(frame, side)
         return self.__class__(new_surface3d, self.surface2d.copy(),
                               self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.surface3d.frame_mapping_inplace(frame, side)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
         """Returns a copy of the Face3D."""
@@ -693,7 +652,7 @@ class Face3D(volmdlr.core.Primitive3D):
                     new_contour = volmdlr.wires.Contour2D.contours_from_edges(
                         cutting_contour.primitives + connecting_split_contour.primitives)[0]
 
-                    if self.surface2d.outer_contour.are_extremity_points_touching(new_contour) or\
+                    if self.surface2d.outer_contour.are_extremity_points_touching(new_contour) or \
                             new_contour.is_contour_closed():
                         valid_cutting_contours.append(new_contour)
                         break
@@ -1612,20 +1571,6 @@ class Triangle3D(PlaneFace3D):
         np3 = self.point3.frame_mapping(frame, side)
         return self.__class__(np1, np2, np3, self.name)
 
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated in-place.
-
-        :param side: 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.point1.frame_mapping_inplace(frame, side)
-        self.point2.frame_mapping_inplace(frame, side)
-        self.point3.frame_mapping_inplace(frame, side)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def copy(self, deep=True, memo=None):
         return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
                           self.name)
@@ -1651,20 +1596,6 @@ class Triangle3D(PlaneFace3D):
                                   self.alpha, self.color, self.name)
         return new_triangle
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Plane3D translation. Object is updated in-place.
-
-        :param offset: translation vector.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.point1.translation_inplace(offset)
-        self.point2.translation_inplace(offset)
-        self.point3.translation_inplace(offset)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
@@ -1681,23 +1612,6 @@ class Triangle3D(PlaneFace3D):
         new_triangle = Triangle3D(new_point1, new_point2, new_point3,
                                   self.alpha, self.color, self.name)
         return new_triangle
-
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Triangle3D rotation. Object is updated inplace.
-
-        :param center: rotation center.
-        :param axis: rotation axis.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.point1.rotation_inplace(center, axis, angle)
-        self.point2.rotation_inplace(center, axis, angle)
-        self.point3.rotation_inplace(center, axis, angle)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
 
     @staticmethod
     def get_subdescription_points(new_points, resolution, max_length):
@@ -2364,6 +2278,36 @@ class SphericalFace3D(Face3D):
         point4 = volmdlr.Point2D(theta1, phi2)
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         return cls(spherical_surface, surfaces.Surface2D(outer_contour, []), name=name)
+
+    @classmethod
+    def from_contours3d_and_rectangular_cut(cls, surface3d, contours: List[volmdlr.wires.Contour3D],
+                                            point: volmdlr.Point3D, name: str = ''):
+        """
+        Face defined by contours and a point indicating the portion of the parametric domain that should be considered.
+
+        :param surface3d: surface 3d.
+        :param contours: Cone, contour base.
+        :type contours: List[volmdlr.wires.Contour3D]
+        :type point: volmdlr.Point3D
+        :param name: the name to inject in the new face
+        :return: Spherical face.
+        :rtype: SphericalFace3D
+        """
+        inner_contours = []
+        point1 = volmdlr.Point2D(-math.pi, -0.5 * math.pi)
+        point2 = volmdlr.Point2D(math.pi, -0.5 * math.pi)
+        point3 = volmdlr.Point2D(math.pi, 0.5 * math.pi)
+        point4 = volmdlr.Point2D(-math.pi, 0.5 * math.pi)
+        surface_rectangular_cut = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
+        contours2d = [surface3d.contour3d_to_2d(contour) for contour in contours]
+        point2d = surface3d.point3d_to_2d(point)
+        for contour in contours2d:
+            if not contour.point_belongs(point2d):
+                inner_contours.append(contour)
+
+        surface2d = surfaces.Surface2D(outer_contour=surface_rectangular_cut,
+                                       inner_contours=inner_contours)
+        return cls(surface3d, surface2d=surface2d, name=name)
 
 
 class RuledFace3D(Face3D):

@@ -126,13 +126,13 @@ class TestPlaneFace3D(unittest.TestCase):
             2.6567716615652136e-17, 0.4338837391180807, -0.9009688679021675)))
         self.assertAlmostEqual(face_intersections[0].primitives[0].ellipse.major_axis, 0.3457147306439571)
         list_expected_points = [[volmdlr.Point3D(0.08947272158306664, 0.12039365470206077, -0.25),
-                                 volmdlr.Point3D(0.136635222503, 0.061893585867, -0.128523355363),
+                                 volmdlr.Point3D(0.136637076048, 0.061889493851, -0.128514858204),
                                  volmdlr.Point3D(0.15, 0.0, 0.0)],
                                 [volmdlr.Point3D(0.15, 0.0, 0.0),
-                                 volmdlr.Point3D(0.136638993384, -0.061885260661, 0.128506067896),
+                                 volmdlr.Point3D(0.136637075473, -0.06188949512, 0.128514860839),
                                  volmdlr.Point3D(0.08947272158306664, -0.12039365470206077, 0.25)],
                                 [volmdlr.Point3D(-0.08947272158306664, -0.12039365470206077, 0.25),
-                                 volmdlr.Point3D(-0.149999999967, -3.139398e-06, 6.519026e-06),
+                                 volmdlr.Point3D(-0.15, 0, 0),
                                  volmdlr.Point3D(-0.08947272158306664, 0.12039365470206077, -0.25)]]
         for expected_points, wire in zip(list_expected_points, face_intersections):
             arcellipse = wire.primitives[0]

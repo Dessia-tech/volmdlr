@@ -5,7 +5,6 @@ Common primitives 3D.
 """
 
 import math
-import warnings
 from random import uniform
 from typing import Dict, List, Tuple
 
@@ -96,21 +95,6 @@ class RoundedLineSegments3D(volmdlr.primitives.RoundedLineSegments):
                                for point in self.points],
                               self.radius, self.closed, self.name)
 
-    # def rotation_inplace(self, center: volmdlr.Point3D,
-    #                      axis: volmdlr.Vector3D,
-    #                      angle: float):
-    #     """
-    #     OpenRoundedLineSegments3D rotation. Object is updated inplace.
-    #
-    #     :param center: rotation center
-    #     :param axis: rotation axis
-    #     :param angle: rotation angle
-    #     """
-    #     warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-    #
-    #     for point in self.points:
-    #         point.rotation_inplace(center, axis, angle)
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         OpenRoundedLineSegments3D translation.
@@ -121,17 +105,6 @@ class RoundedLineSegments3D(volmdlr.primitives.RoundedLineSegments):
         return self.__class__([point.translation(offset)
                                for point in self.points],
                               self.radius, self.closed, self.name)
-
-    # def translation_inplace(self, offset: volmdlr.Vector3D):
-    #     """
-    #     OpenRoundedLineSegments3D translation. Object is updated inplace.
-    #
-    #     :param offset: translation vector
-    #     """
-    #     warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-    #
-    #     for point in self.points:
-    #         point.translation_inplace(offset)
 
 
 class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D, RoundedLineSegments3D):
@@ -347,20 +320,6 @@ class Block(shells.ClosedShell3D):
         return Block(new_frame, color=self.color,
                      alpha=self.alpha, name=self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Block rotation. Object is updated inplace.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.frame.rotation_inplace(center, axis, angle)
-        self.faces = self.shell_faces()
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Block translation.
@@ -371,17 +330,6 @@ class Block(shells.ClosedShell3D):
         new_frame = self.frame.translation(offset)
         return Block(new_frame, color=self.color,
                      alpha=self.alpha, name=self.name)
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Block translation. Object is updated inplace.
-
-        :param offset: translation vector.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.frame.translation_inplace(offset)
-        self.faces = self.shell_faces()
 
     def cut_by_orthogonal_plane(self, plane_3d: surfaces.Plane3D):
         bouding_box = self.bounding_box
@@ -435,18 +383,6 @@ class Block(shells.ClosedShell3D):
         new_frame = self.frame_mapping_parametres(frame, side)
         return Block(new_frame, color=self.color,
                      alpha=self.alpha, name=self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        new_frame = self.frame_mapping_parametres(frame, side)
-        self.frame = new_frame
-        self.faces = self.shell_faces()
 
     def copy(self, deep=True, memo=None):
         """
@@ -657,18 +593,6 @@ class ExtrudedProfile(shells.ClosedShell3D):
             x, y, self.outer_contour2d, self.inner_contours2d,
             extrusion_vector)
 
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        :param side: = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.extrusion_vector, self.x, self.y =\
-            self.frame_mapping_parameters(frame, side)
-        self.plane_origin.frame_mapping_inplace(frame, side)
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
@@ -689,22 +613,6 @@ class ExtrudedProfile(shells.ClosedShell3D):
                                                             axis, angle),
             color=self.color, alpha=self.alpha)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Extruded Profile rotation. Object is updated inplace.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.plane_origin.rotation_inplace(center, axis, angle)
-        self.x.rotation_inplace(volmdlr.O3D, axis, angle)
-        self.y.rotation_inplace(volmdlr.O3D, axis, angle)
-        self.extrusion_vector.rotation_inplace(volmdlr.O3D, axis, angle)
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Extruded Profile translation.
@@ -719,16 +627,6 @@ class ExtrudedProfile(shells.ClosedShell3D):
             inner_contours2d=self.inner_contours2d,
             extrusion_vector=self.extrusion_vector,
             color=self.color, alpha=self.alpha)
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Extruded profile translation. Object is updated inplace.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.plane_origin.translation_inplace(offset)
 
 
 class RevolvedProfile(shells.ClosedShell3D):
@@ -865,26 +763,6 @@ class RevolvedProfile(shells.ClosedShell3D):
             angle=self.angle,
             color=self.color, alpha=self.alpha)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Revolved profile rotation. Object is updated inplace.
-
-        :param center: rotation center.
-        :type center: `volmdlr.Point3D`.
-        :param axis: rotation axis.
-        :type axis: `volmdlr.Vector3D`.
-        :param angle: rotation angle.
-        :type angle: float.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.plane_origin.rotation_inplace(center, axis, angle)
-        self.x.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
-        self.y.rotation_inplace(center=volmdlr.O3D, axis=axis, angle=angle)
-        self.axis_point.rotation_inplace(center, axis, angle)
-        self.axis.rotation_inplace(volmdlr.O3D, axis, angle)
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Revolved Profile translation.
@@ -899,17 +777,6 @@ class RevolvedProfile(shells.ClosedShell3D):
             axis=self.axis,
             angle=self.angle,
             color=self.color, alpha=self.alpha)
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Revolved Profile translation. Object is updated inplace.
-
-        :param offset: translation vector.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.plane_origin.translation_inplace(offset)
-        self.axis_point.translation_inplace(offset)
 
     def frame_mapping_parameters(self, frame: volmdlr.Frame3D,
                                  side: str):
@@ -939,18 +806,6 @@ class RevolvedProfile(shells.ClosedShell3D):
             x, y, self.contour2d,
             self.axis_point.frame_mapping(frame, side),
             axis, self.angle)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.axis, self.x, self.y = self.frame_mapping_parameters(frame, side)
-        self.plane_origin.frame_mapping_inplace(frame, side)
-        self.axis_point.frame_mapping_inplace(frame, side)
 
 
 class Cylinder(shells.ClosedShell3D):
@@ -1051,20 +906,6 @@ class Cylinder(shells.ClosedShell3D):
             axis=self.axis.rotation(volmdlr.O3D, axis, angle),
             length=self.length, radius=self.radius)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Cylinder rotation. Object is updated inplace.
-
-        :param center: rotation center.
-        :param axis: rotation axis.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.position.rotation_inplace(center, axis, angle)
-        self.axis.rotation_inplace(volmdlr.O3D, axis, angle)
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Cylinder translation.
@@ -1075,16 +916,6 @@ class Cylinder(shells.ClosedShell3D):
         return self.__class__(
             position=self.position.translation(offset),
             axis=self.axis, length=self.length, radius=self.radius)
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Cylinder translation. Object is updated inplace.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.position.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1102,24 +933,6 @@ class Cylinder(shells.ClosedShell3D):
         return Cylinder(self.position.frame_mapping(frame, side),
                         axis, self.radius, self.length,
                         color=self.color, alpha=self.alpha)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        basis = frame.basis()
-        if side == 'old':
-            axis = basis.local_to_global_coordinates(self.axis)
-        elif side == 'new':
-            axis = basis.global_to_local_coordinates(self.axis)
-        else:
-            raise ValueError('side must be either old or new')
-        self.position.frame_mapping_inplace(frame, side)
-        self.axis = axis
 
     def to_dict(self, *args, **kwargs):
         """
@@ -1465,16 +1278,6 @@ class Cone(RevolvedProfile):
                               color=self.color,
                               alpha=self.alpha)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Plane3D translation. Object is updated inplace.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.position.translation_inplace(offset)
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
@@ -1489,20 +1292,6 @@ class Cone(RevolvedProfile):
             center, axis, angle), axis=self.axis.rotation(center, axis, angle),
             radius=self.radius, length=self.length, color=self.color,
             alpha=self.alpha)
-
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Cone rotation. Object is updated inplace.
-
-        :param center: rotation center.
-        :param axis: rotation axis.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.position.rotation_inplace(center, axis, angle)
-        self.axis.rotation_inplace(center, axis, angle)
 
     def volume(self):
         """
@@ -1618,20 +1407,6 @@ class HollowCylinder(RevolvedProfile):
             length=self.length, inner_radius=self.inner_radius,
             outer_radius=self.outer_radius)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Hollow cylinder rotation. Object is updated inplace.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.position.rotation_inplace(center, axis, angle)
-        self.axis.rotation_inplace(volmdlr.O3D, axis, angle)
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Hollow cylinder translation.
@@ -1643,16 +1418,6 @@ class HollowCylinder(RevolvedProfile):
             position=self.position.translation(offset), axis=self.axis,
             length=self.length, inner_radius=self.inner_radius,
             outer_radius=self.outer_radius)
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Hollow cylinder translation. Object is updated in-place.
-
-        :param offset: translation vector.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.position.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1672,24 +1437,6 @@ class HollowCylinder(RevolvedProfile):
             position=self.position.frame_mapping(frame, side),
             axis=axis, inner_radius=self.inner_radius,
             outer_radius=self.outer_radius, length=self.length)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        basis = frame.basis()
-        if side == 'old':
-            axis = basis.local_to_global_coordinates(self.axis)
-        elif side == 'new':
-            axis = basis.global_to_local_coordinates(self.axis)
-        else:
-            raise ValueError('side must be either old or new')
-        self.position.frame_mapping_inplace(frame, side)
-        self.axis = axis
 
 
 class Sweep(shells.ClosedShell3D):
@@ -1854,18 +1601,6 @@ class Sweep(shells.ClosedShell3D):
         return Sweep(self.contour2d, new_wire, color=self.color,
                      alpha=self.alpha, name=self.name)
 
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        :param side: 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.wire3d.frame_mapping_inplace(frame, side)
-        for face in self.faces:
-            face.frame_mapping_inplace(frame, side)
-
     def copy(self, deep=True, memo=None):
         """Creates a copy of the Sweep."""
         new_contour2d = self.contour2d.copy()
@@ -1915,16 +1650,6 @@ class Sphere(shells.ClosedShell3D):
         :param side: 'old' or 'new'
         """
         return Sphere(self.center.frame_mapping(frame, side), self.radius)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.center.frame_mapping_inplace(frame, side)
 
     def skin_points(self, resolution: float = 1e-3):
         """Gives points on the skin with respect to a resolution."""
