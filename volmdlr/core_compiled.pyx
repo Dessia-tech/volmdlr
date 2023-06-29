@@ -2146,6 +2146,7 @@ class Point3D(Vector3D):
             and the new current id
         :rtype: tuple
         """
+        current_id += 1
         content = "#{} = CARTESIAN_POINT('{}',({:.6f},{:.6f},{:.6f}));\n".format(current_id, self.name,
                                                                                  1000. * self.x,
                                                                                  1000. * self.y,
@@ -3664,11 +3665,10 @@ class Frame3D(Basis3D):
         current_id = origin_id + 1
         u_content, u_id = Vector3D.to_step(self.u, current_id)
         current_id = u_id + 1
-        v_content, v_id = Vector3D.to_step(self.v, current_id)
+        v_content, v_id = Vector3D.to_step(self.w, current_id)
         current_id = v_id + 1
         content += u_content + v_content
-        content += "#{} = AXIS2_PLACEMENT_3D('{}',#{},#{},#{});\n"\
-            .format(current_id, self.name, origin_id, u_id, v_id)
+        content += f"#{current_id} = AXIS2_PLACEMENT_3D('{self.name}',#{origin_id},#{u_id},#{v_id});\n"
         return content, current_id
 
     def plot2d(self, x=X3D, y=Y3D, ax=None, color="k"):
