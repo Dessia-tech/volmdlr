@@ -129,7 +129,8 @@ class TestArcEllipse3D(unittest.TestCase):
     def test_direction_vector(self):
         direction_vector = self.arc_ellipse3d.direction_vector(
             self.arc_ellipse3d.abscissa(self.discretization_points[2]))
-        self.assertTrue(direction_vector.is_close(volmdlr.Point3D(0.3693374098293317, 0.6813566988697731, 0.6813566988697731)))
+        self.assertTrue(direction_vector.is_close(
+            volmdlr.Point3D(0.36933737285964724, 0.6813567173546152, 0.6813567173546152)))
 
     def test_normal_vector(self):
         normal_vector = self.arc_ellipse3d.normal_vector(
