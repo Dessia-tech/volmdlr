@@ -5,7 +5,6 @@ Common primitives 3D.
 """
 
 import math
-import warnings
 from random import uniform
 from typing import Dict, List, Tuple
 

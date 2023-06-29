@@ -7,8 +7,6 @@ Extended primitives 2D classes.
 import math
 from typing import List, Dict
 
-import warnings
-
 import matplotlib.patches
 
 import volmdlr
