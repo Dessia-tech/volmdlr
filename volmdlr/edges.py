@@ -3291,7 +3291,7 @@ class ArcEllipse2D(Edge):
         iter_counter = 0
         while True:
             res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-            if math.isclose(res, abscissa, abs_tol=1e-5):
+            if math.isclose(res, abscissa, abs_tol=1e-8):
                 abscissa_angle = initial_angle
                 break
             if res > abscissa:

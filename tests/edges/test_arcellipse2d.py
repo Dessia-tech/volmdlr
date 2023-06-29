@@ -121,10 +121,10 @@ class TestArcEllipse2D(unittest.TestCase):
             point_at_abscissa = self.arc_ellipse2d.point_at_abscissa(abscissa)
             list_points.append(point_at_abscissa)
         expected_points = [volmdlr.Point2D(0.5, 1.5),
-                           volmdlr.Point2D(-1.026854414664971, 0.345742229596484),
-                           volmdlr.Point2D(-1.3739313715284762, -0.19835558390699648),
-                           volmdlr.Point2D(-1.41421948829977, -1.414207636347093),
-                           volmdlr.Point2D(0.3457269217498756, -1.026866343572968),
+                           volmdlr.Point2D(-1.0268603272197745, 0.34573464229361694),
+                           volmdlr.Point2D(-1.373935276754997, -0.19836341255508938),
+                           volmdlr.Point2D(-1.414213568389262, -1.4142135563569278),
+                           volmdlr.Point2D(0.3457346310451254, -1.026860335985359),
                            volmdlr.Point2D(1.5, 0.5)]
         for point, expected_point in zip(list_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
@@ -132,21 +132,21 @@ class TestArcEllipse2D(unittest.TestCase):
         arcellipse = edges.ArcEllipse2D.load_from_file("edges/arcellipse_objects/ellipse2d_point_at_abscissa.json")
         abscissa = 1.4594044224379008
         point = arcellipse.point_at_abscissa(abscissa)
-        self.assertTrue(point.is_close(volmdlr.Point2D(0.2409753559150417, -0.10840794187197955)))
+        self.assertTrue(point.is_close(volmdlr.Point2D(0.2409700344646443, -0.10841585996396141)))
 
     def test_complementary(self):
         complementary = self.arc_ellipse2d.complementary()
         interior = complementary.point_at_abscissa(complementary.length()*0.5)
-        self.assertTrue(interior.is_close(volmdlr.Point2D(1.4142103771224788, 1.4142167475950145)))
+        self.assertTrue(interior.is_close(volmdlr.Point2D(1.4142135565836316, 1.4142135681625583)))
         self.assertAlmostEqual(complementary.length(), 1.9313274884444551)
 
     def test_normal_vector(self):
         direc_vector = self.arc_ellipse2d.normal_vector(self.arc_ellipse2d.length() * 0.4)
-        self.assertTrue(direc_vector.is_close(volmdlr.Vector2D(-1.1621961833691277, 0.25201737900396726)))
+        self.assertTrue(direc_vector.is_close(volmdlr.Vector2D(-1.1622013637446964, 0.25201219862839874)))
 
     def test_direction_vector(self):
         direc_vector = self.arc_ellipse2d.direction_vector(self.arc_ellipse2d.length() * 0.4)
-        self.assertTrue(direc_vector.is_close(volmdlr.Vector2D(0.25201737900396726, 1.1621961833691277)))
+        self.assertTrue(direc_vector.is_close(volmdlr.Vector2D(0.25201219862839874, 1.1622013637446964)))
 
     def test_rotation(self):
         rotationed_ellipse2d = self.arc_ellipse2d.rotation(volmdlr.O2D, math.pi / 4)
