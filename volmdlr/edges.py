@@ -19,7 +19,6 @@ import plot_data.colors
 import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
 from geomdl import NURBS, BSpline, fitting, operations, utilities
-from geomdl.operations import length_curve, split_curve
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -41,7 +40,7 @@ def standardize_knot_vector(knot_vector):
         x = 1 / (last_knot - first_knot)
         y = first_knot / (first_knot - last_knot)
         for u in knot_vector:
-            standard_u_knots.append(u * x + y)
+            standard_u_knots.append(round(u * x + y, 7))
         return standard_u_knots
     return knot_vector
 
@@ -190,7 +189,7 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
-        # step_id = kwargs.get("step_id")
+        step_id = kwargs.get("step_id")
         # obj can be an instance of wires or edges.
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
@@ -202,11 +201,12 @@ class Edge(dc.DessiaObject):
             if orientation == '.F.':
                 point1, point2 = point2, point1
             if not point1.is_close(point2):
-                return LineSegment3D(point1, point2, arguments[0][1:-1])
+                return LineSegment3D(point1, point2, obj, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D':
-                point1, point2 = point2, point1
+                if orientation == '.T.':
+                    point1, point2 = point2, point1
                 trimmed_edge = obj.trim(point1, point2)
                 if orientation == '.T.':
                     trimmed_edge = trimmed_edge.reverse()
@@ -878,7 +878,7 @@ class BSplineCurve(Edge):
         :rtype: float
         """
         if not self._length:
-            self._length = length_curve(self.curve)
+            self._length = operations.length_curve(self.curve)
         return self._length
 
     def normal_vector(self, abscissa):
@@ -967,7 +967,7 @@ class BSplineCurve(Edge):
         func, func_first_derivative, curve_derivatives, distance_vector = self._point_inversion_funcs(u0, point)
         if self._check_convergence(curve_derivatives, distance_vector, tol1=tol1, tol2=tol2):
             return u0, True
-        new_u = u0 - func / func_first_derivative
+        new_u = u0 - func / (func_first_derivative + 1e-18)
         new_u = self._check_bounds(new_u)
         residual = (new_u - u0) * curve_derivatives[1]
         if residual.norm() <= 1e-6:
@@ -1025,7 +1025,7 @@ class BSplineCurve(Edge):
         if point.is_close(self.end, tol):
             return [self.copy(), None]
         adim_abscissa = min(1.0, max(0.0, round(self.abscissa(point) / self.length(), 7)))
-        curve1, curve2 = split_curve(self.curve, adim_abscissa)
+        curve1, curve2 = operations.split_curve(self.curve, adim_abscissa)
 
         return [self.__class__.from_geomdl_curve(curve1),
                 self.__class__.from_geomdl_curve(curve2)]
@@ -1227,7 +1227,8 @@ class BSplineCurve(Edge):
             number_points = int(math.pi * angle_resolution)
 
         if len(self.points) == number_points or (not number_points and not angle_resolution):
-            return self.points
+            number_points = 20
+            # return self.points
         curve = self.curve
         curve.delta = 1 / number_points
         curve_points = curve.evalpts
@@ -1520,7 +1521,7 @@ class BSplineCurve(Edge):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         # special case periodical bsplinecurve
-        if self.periodic and abscissa2 == 0.0:
+        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=1e-6):
             abscissa2 = self.length()
         discretized_points_between_1_2 = []
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
@@ -2518,7 +2519,7 @@ class Arc2D(ArcMixin, Edge):
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
         point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
-        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=abs_tol):
+        if math.isclose(arc_angle, point_start_angle + point_end_angle, rel_tol=0.01):
             return True
         return False
 
@@ -3262,6 +3263,8 @@ class ArcEllipse2D(Edge):
 
     def point_at_abscissa(self, abscissa):
         """Get a point at given abscissa."""
+        if abscissa < 0:
+            return self.start
         if math.isclose(abscissa, 0.0, abs_tol=1e-6):
             return self.start
         if math.isclose(abscissa, self.length(), abs_tol=1e-6):
@@ -3287,21 +3290,24 @@ class ArcEllipse2D(Edge):
         def ellipse_arc_length(theta):
             return math.sqrt((self.ellipse.major_axis ** 2) * math.sin(theta) ** 2 +
                              (self.ellipse.minor_axis ** 2) * math.cos(theta) ** 2)
-        abscissa_angle = None
+
         iter_counter = 0
-        increment_factor = 1e-5
         while True:
+
             res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
             if math.isclose(res, abscissa, abs_tol=1e-5):
                 abscissa_angle = initial_angle
                 break
+            if math.isclose(res, last_res, abs_tol=1e-5):
+                abscissa_angle = initial_angle
+                break
             if res > abscissa:
-                if iter_counter == 0:
-                    increment_factor = -1e-5
-                else:
-                    raise NotImplementedError
+                increment_factor = (initial_angle * (abscissa - res))/(10 * res)
+            else:
+                increment_factor = (initial_angle * (abscissa - res))/(5 * res)
             initial_angle += increment_factor
             iter_counter += 1
+            last_res = res
         x = self.ellipse.major_axis * math.cos(abscissa_angle)
         y = self.ellipse.minor_axis * math.sin(abscissa_angle)
         return self.ellipse.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
@@ -3676,7 +3682,8 @@ class FullArcEllipse(Edge):
         Defines a new FullArcEllipse, identical to self, but in the opposite direction.
 
         """
-        return self
+        ellipse = self.ellipse.reverse()
+        return self.__class__(ellipse, self.start_end)
 
     def straight_line_point_belongs(self, point):
         """
@@ -3773,7 +3780,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         """
         return FullArcEllipse2D(self.ellipse.translation(offset), self.start_end.translation(offset), self.name)
 
-    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], tol: float = 1e-6):
+    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], tol: float = 1e-3):
         """
         Calculates the abscissa of a given point.
 
@@ -3810,6 +3817,8 @@ class LineSegment3D(LineSegment):
         self.line = line
         if not line:
             self.line = volmdlr_curves.Line3D(start, end)
+        else:
+            self.line = line
         LineSegment.__init__(self, start=start, end=end, line=self.line, name=name)
         self._bbox = None
 
@@ -4719,7 +4728,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
-        curves = operations.split_curve(self.curve, round(parameter, 7))
+        curves = operations.split_curve(self.curve, round(parameter, 6))
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
@@ -4737,7 +4746,9 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-        curves = operations.split_curve(self.curve, round(parameter, 7))
+
+        curves = operations.split_curve(self.curve, round(parameter, 6))
+
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
@@ -4977,6 +4988,8 @@ class Arc3D(ArcMixin, Edge):
     def bounding_box(self):
         if not self._bbox:
             self._bbox = self.get_bounding_box()
+        if isinstance(self._bbox, str):
+            raise ValueError
         return self._bbox
 
     @bounding_box.setter
@@ -5042,9 +5055,7 @@ class Arc3D(ArcMixin, Edge):
         Defines a new Arc3D, identical to self, but in the opposite direction.
 
         """
-        new_frame = volmdlr.Frame3D(self.circle.frame.origin, self.circle.frame.u, -self.circle.frame.v,
-                                    self.circle.frame.u.cross(-self.circle.frame.v))
-        circle3d = volmdlr_curves.Circle3D(new_frame, self.circle.radius)
+        circle3d = self.circle.reverse()
         return self.__class__(circle3d, self.end, self.start, self.name + '_reverse')
 
     def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
@@ -5179,7 +5190,7 @@ class Arc3D(ArcMixin, Edge):
         point_interior = self.middle_point().to_2d(plane_origin, x, y)
         point_end = self.end.to_2d(plane_origin, x, y)
         arc = Arc2D(circle2d, point_start, point_end, self.is_trigo, name=self.name)
-        if not arc.point_belongs(point_interior):
+        if not arc.point_belongs(point_interior, 1e-4):
             arc = Arc2D(circle2d, point_start, point_end, False, name=self.name)
         return arc
 
@@ -5582,7 +5593,8 @@ class FullArc3D(FullArcMixin, Arc3D):
         Defines a new FullArc3D, identical to self, but in the opposite direction.
 
         """
-        return self
+        circle = self.circle.reverse()
+        return self.__class__(circle, self.start_end)
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
         """
@@ -5624,6 +5636,21 @@ class FullArc3D(FullArcMixin, Arc3D):
     @classmethod
     def from_curve(cls, circle):
         return cls(circle, circle.center + circle.frame.u * circle.radius)
+
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str = "new"):
+        if side == 'old':
+            new_center = frame.local_to_global_coordinates(self.center.copy())
+            new_start_end = frame.local_to_global_coordinates(self.start_end.copy())
+            new_normal = frame.local_to_global_coordinates(self.normal.copy())
+        elif side == 'new':
+            new_center = frame.global_to_local_coordinates(self.center.copy())
+            new_start_end = frame.global_to_local_coordinates(self.start_end.copy())
+            new_normal = frame.global_to_local_coordinates(self.normal.copy())
+        else:
+            raise ValueError('side value not valid, please specify'
+                             'a correct value: \'old\' or \'new\'')
+        return FullArc3D(new_center, new_start_end, new_normal, name=self.name)
 
 
 class ArcEllipse3D(Edge):
@@ -6020,7 +6047,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: list of two Arc of ellipse.
         """
         if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):
-            raise ValueError("Point should be different of start and end.")
+            return [self, None]
         if not self.point_belongs(split_point, 1e-5):
             raise ValueError("Point not on the ellipse.")
         return [ArcEllipse3D(self.ellipse, self.start_end, split_point),

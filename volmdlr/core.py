@@ -8,6 +8,7 @@ import os
 import tempfile
 import warnings
 import webbrowser
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
@@ -830,6 +831,9 @@ class BoundingBox(dc.DessiaObject):
         :return: A new bounding box that contains all the input bounding boxes.
         :rtype: BoundingBox
         """
+        print('=', bounding_boxes)
+        for bb in bounding_boxes:
+            print(bb.__dict__)
         xmin = min(bb.xmin for bb in bounding_boxes)
         xmax = max(bb.xmax for bb in bounding_boxes)
         ymin = min(bb.ymin for bb in bounding_boxes)
@@ -1087,6 +1091,8 @@ class Assembly(dc.PhysicalObject):
 
     def __init__(self, components: List[Primitive3D], positions: List[volmdlr.Frame3D],
                  frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
+        # if components is None or not components or None in components:
+        #     raise NotImplementedError
         self.components = components
         self.frame = frame
         self.positions = positions
@@ -1113,6 +1119,7 @@ class Assembly(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
+        print('==', self.primitives)
         return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
 
     def babylon_data(self, merge_meshes=True):
@@ -1172,6 +1179,8 @@ class Assembly(dc.PhysicalObject):
         :rtype: Primitive3D
 
         """
+        if global_frame == transformed_frame:
+            return primitive
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
         matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
@@ -1199,7 +1208,7 @@ class Assembly(dc.PhysicalObject):
         """
         step_content = []
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'OpenShell3D':
+            if primitive.__class__.__name__ in ('OpenShell3D', "ClosedShell3D"):
                 primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
             else:
                 primitive_content, primitive_id = primitive.to_step(current_id)
@@ -1324,6 +1333,7 @@ class Compound(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
+        print('compound primitives', self.primitives)
         return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -2346,19 +2356,21 @@ class VolumeModel(dc.PhysicalObject):
         """
 
         list_shells = []
-
-        def unpack_assembly(assembly):
-            for prim in assembly.primitives:
-                if primitive.__class__.__name__ in ('Assembly', "Compound"):
-                    unpack_assembly(prim)
-                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-                    list_shells.append(prim)
+        list_assembly = deque()
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ in ('Assembly', "Compound"):
-                unpack_assembly(primitive)
+            if primitive.__class__.__name__ in ('Assembly', 'Compound'):
+                list_assembly.append(primitive)
             elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
                 list_shells.append(primitive)
+
+        while list_assembly:
+            assembly = list_assembly.popleft()
+            for primitive in assembly.primitives:
+                if primitive.__class__.__name__ in ('Assembly', 'Compound'):
+                    list_assembly.append(primitive)
+                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                    list_shells.append(primitive)
 
         return list_shells
 

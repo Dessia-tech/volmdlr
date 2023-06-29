@@ -1476,8 +1476,7 @@ class Circle3D(CircleMixin, Curve):
         Reverses the direction of the circle.
 
         """
-        frame = volmdlr.Frame3D(self.center, self.frame.u, -self.frame.v,
-                                      self.frame.u.cross(-self.frame.v))
+        frame = volmdlr.Frame3D(self.center, self.frame.u, -self.frame.v, self.frame.u.cross(-self.frame.v))
         return Circle3D(frame, self.radius)
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
@@ -1681,6 +1680,7 @@ class Ellipse2D(Curve):
 
             res, _ = scipy_integrate.quad(arc_length, 0, angle_abscissa)
             return res
+        print(True)
         raise ValueError(f'point {point} does not belong to ellipse')
 
     def point_at_abscissa(self, abscissa):
@@ -1780,6 +1780,14 @@ class Ellipse2D(Curve):
         side = 'old' or 'new'.
         """
         return Ellipse2D(self.major_axis, self.minor_axis, self.frame.frame_mapping(frame, side))
+
+    def reverse(self):
+        """
+        Reverses the direction of the Ellipse.
+
+        """
+        frame = volmdlr.Frame2D(self.center, self.frame.u, -self.frame.v)
+        return Ellipse2D(self.major_axis, self.minor_axis, frame)
 
 
 class Ellipse3D(Curve):
