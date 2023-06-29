@@ -53,6 +53,17 @@ class Stl(dc.DessiaObject):
 
     @classmethod
     def points_from_file(cls, filename: str, distance_multiplier=0.001):
+        """
+        Read points from an STL file and return a list of points.
+
+        :param filename: The path to the STL file.
+        :type filename: str
+        :param distance_multiplier: (optional) The distance multiplier. Defaults to 0.001.
+        :type distance_multiplier: float
+
+        :return: A list of Point3D objects.
+        :rtype: List[vm.Point3D]
+        """
         if is_binary(filename):
             with open(filename, 'rb') as file:
                 stream = KaitaiStream(file)
@@ -84,6 +95,16 @@ class Stl(dc.DessiaObject):
 
     @classmethod
     def from_binary_stream(cls, stream: BinaryFile, distance_multiplier: float = 0.001):
+        """
+        Create an STL object from a binary stream.
+
+        :param stream: The binary stream containing the STL data.
+        :type stream: BinaryFile
+        :param distance_multiplier: (optional) The distance multiplier. Defaults to 0.001.
+        :type distance_multiplier: float
+        :return: An instance of the Stl class.
+        :rtype: Stl
+        """
         stream.seek(0)
 
         stream = KaitaiStream(stream)
@@ -130,6 +151,16 @@ class Stl(dc.DessiaObject):
     @classmethod
     def from_text_stream(cls, stream: StringFile,
                          distance_multiplier: float = 0.001):
+        """
+        Create an STL object from a text stream.
+
+        :param stream: The text stream containing the STL data.
+        :type stream: StringFile
+        :param distance_multiplier: (optional) The distance multiplier. Defaults to 0.001.
+        :type distance_multiplier: float
+        :return: An instance of the Stl class.
+        :rtype: Stl
+        """
         stream.seek(0)
 
         header = stream.readline()
@@ -163,6 +194,16 @@ class Stl(dc.DessiaObject):
 
     @classmethod
     def load_from_file(cls, filepath: str, distance_multiplier: float = 0.001):
+        """
+        Load an STL object from a file.
+
+        :param filepath: The path to the STL file.
+        :type filepath: str
+        :param distance_multiplier: (optional) The distance multiplier. Defaults to 0.001.
+        :type distance_multiplier: float
+        :return: An instance of the Stl class.
+        :rtype: Stl
+        """
         if is_binary(filepath):
             with open(filepath, 'rb') as file:
                 return cls.from_binary_stream(
@@ -173,14 +214,34 @@ class Stl(dc.DessiaObject):
                 file, distance_multiplier=distance_multiplier)
 
     def save_to_binary_file(self, filepath, distance_multiplier=1000):
+        """
+        Save the STL object into a binary file.
+
+        :param filepath: The path to the STL file.
+        :type filepath: str
+        :param distance_multiplier: (optional) The distance multiplier. Defaults to 1000.
+        :type distance_multiplier: float
+        :return: An instance of the Stl class.
+        :rtype: Stl
+        """
         if not filepath.endswith('.stl'):
             filepath += '.stl'
             print('Adding .stl extension: ', filepath)
 
         with open(filepath, 'wb') as file:
-            self.to_stream(file, distance_multiplier=distance_multiplier)
+            self.save_to_stream(file, distance_multiplier=distance_multiplier)
 
     def save_to_stream(self, stream, distance_multiplier=1000):
+        """
+        Save the STL object into a binary file.
+
+        :param stream: The binary stream containing the STL data.
+        :type filepath: BinaryFile
+        :param distance_multiplier: (optional) The distance multiplier. Defaults to 1000.
+        :type distance_multiplier: float
+        :return: An instance of the Stl class.
+        :rtype: Stl
+        """
         stream.seek(0)
 
         BINARY_HEADER = "80sI"
@@ -206,17 +267,40 @@ class Stl(dc.DessiaObject):
             stream.write(struct.pack(BINARY_FACET, *data))
 
     def to_closed_shell(self):
+        """
+        Convert the STL object to a closed triangle shell.
+
+        :return: A closed triangle shell representation of the STL object.
+        :rtype: shells.ClosedTriangleShell3D
+        """
         return shells.ClosedTriangleShell3D(self.triangles, name=self.name)
 
     def to_open_shell(self):
+        """
+        Convert the STL object to an open triangle shell.
+
+        :return: An open triangle shell representation of the STL object.
+        :rtype: shells.OpenTriangleShell3D
+        """
         return shells.OpenTriangleShell3D(self.triangles, name=self.name)
 
     def to_volume_model(self):
+        """
+        Convert the STL object to a volume model.
+
+        :return: A volume model representation of the STL object.
+        :rtype: vmc.VolumeModel
+        """
         closed_shell = self.to_closed_shell()
         return vmc.VolumeModel([closed_shell], name=self.name)
 
     def extract_points(self):
+        """
+        Extract the unique points from the STL object.
 
+        :return: A list of unique Point3D objects.
+        :rtype: List[vm.Point3D]
+        """
         points1 = [t.point1 for t in self.triangles]
         points2 = [t.point2 for t in self.triangles]
         points3 = [t.point3 for t in self.triangles]
@@ -251,7 +335,15 @@ class Stl(dc.DessiaObject):
         return valid_points
 
     @classmethod
-    def from_display_mesh(cls, mesh):
+    def from_display_mesh(cls, mesh: vm.display.DisplayMesh3D):
+        """
+        Create an STL object from a display mesh.
+
+        :param mesh: The display mesh to convert to an STL object.
+        :type mesh: vm.display.DisplayMesh3D
+        :return: An instance of the Stl class.
+        :rtype: Stl
+        """
         triangles = []
         for i1, i2, i3 in mesh.triangles:
             triangles.append(vmf.Triangle3D(mesh.points[i1],
@@ -291,10 +383,16 @@ class Stl(dc.DessiaObject):
         self.normals = normals
         return points_normals
 
-    def clean_flat_triangles(self) -> 'Stl':
+    def clean_flat_triangles(self, threshold: float = 1e-12) -> 'Stl':
+        """
+        Clean the STL object by removing flat triangles with an area below a threshold.
+
+        :return: A new instance of the Stl class with the flat triangles removed.
+        :rtype: Stl
+        """
         invalid_triangles = []
         for it, triangles in enumerate(self.triangles):
-            if triangles.area() < 1e-12:
+            if triangles.area() < threshold:
                 invalid_triangles.append(it)
                 print(it, triangles.area())
 

@@ -27,7 +27,7 @@ LS1 = vme.LineSegment3D(pt1, pt2)
 pt = vm.Point3D.random(mini, maxi, mini, maxi, mini, maxi)
 radius = 2
 start, interior, end = pt, pt + vm.Point3D(0,-radius,radius),pt + vm.Point3D(0,-radius,-radius)
-arc = vme.Arc3D(start, interior, end)
+arc = vme.Arc3D.from_3_points(start, interior, end)
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')

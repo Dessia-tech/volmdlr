@@ -1,5 +1,5 @@
 """
-Unit tests for functions defined in volmdlr core.py
+Unit tests for functions defined in volmdlr.core.py
 """
 import unittest
 import volmdlr

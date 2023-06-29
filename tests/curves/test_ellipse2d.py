@@ -5,11 +5,13 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import edges, wires
+from volmdlr import edges, curves
 
 
 class TestEllipse2D(unittest.TestCase):
-    ellipse2d = wires.Ellipse2D(4, 2, volmdlr.O2D, volmdlr.Vector2D(1, 1))
+    ellipse2d = curves.Ellipse2D(4, 2, volmdlr.Frame2D(volmdlr.O2D,
+                                                       volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475),
+                                                       volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)))
     discretized_points = ellipse2d.discretization_points(number_points=10)
 
     def test_length(self):
@@ -19,7 +21,7 @@ class TestEllipse2D(unittest.TestCase):
         self.assertEqual(self.ellipse2d.area(), 25.132741228718345)
 
     def test_line_intersections(self):
-        line = edges.Line2D(volmdlr.O2D, volmdlr.Point2D(2, 3))
+        line = curves.Line2D(volmdlr.O2D, volmdlr.Point2D(2, 3))
         line_intersections = self.ellipse2d.line_intersections(line)
         self.assertEqual(len(line_intersections), 2)
         self.assertTrue(line_intersections[0].is_close(volmdlr.Point2D(-2.1009029257555607,
@@ -32,7 +34,7 @@ class TestEllipse2D(unittest.TestCase):
         linesegment_intersections = self.ellipse2d.linesegment_intersections(line_segment)
         self.assertEqual(len(linesegment_intersections), 1)
         self.assertTrue(linesegment_intersections[0].is_close(volmdlr.Point2D(2.82842712474619,
-                                                                       2.82842712474619)))
+                                                                              2.82842712474619)))
 
     def test_discretization_points(self):
         self.assertTrue(self.discretized_points[0].is_close(volmdlr.Point2D(2.8284271247461903, 2.82842712474619)))

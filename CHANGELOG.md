@@ -22,21 +22,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 - Sweep with muitiform profile contour.
+- OpenShell3D: from_faces (using faces graph)
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
 - ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
+- RevolutionSurface3D: fix some special cases whiling transforming from 3D space to parametric domain.
+- fix drone python version
 - BSplineFace3D: neutral_fiber
+- BSplineSurface3D: arc3d_to_2d, removes repeated parametric points if any.
 - surfaces.Plane3D: linesegment_intersections
 - Step export
+- Face3D: is_linesegment_crossing.
+- Edge: fix orientation of edges commig from step.
 - BSplineCurve3D: from_step.
+- Step import
+- PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
+- babylondata: removes empty objects.
+- ClosedPolygon2D: point_belongs.
+- Fullarc: get_reverse.
+- Arc2D: point_belongs
+- ArcEllipse2D: point_at_abscissa
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
 - BoundingBox: bbox_intersection
-- face3D: get_face_cutting_contours
+- Face3D: get_face_cutting_contours
+- parametric.py: fix numerical instability in some functions used in Arc3D to parametric surface domain transformation.
 - intersections: get_bsplinecurve_intersections generalization, so it can also be used
 to calculate intersections between a plane 3d and bsplinecurve3d.
+- Big refactor: New module curves.py containing classes as Line, Circle and Ellipse.
+Most edges will now be formed by a curve and a start and end points. Unittests for all these classes have been created.
+All adequations have been done for all tests and existing scripts.
+
+- bspline_compiled: refactor binomial_coefficient for performance.
+- Improve step translator.
+- Delete inplace methods: rotation, translation and frame_mapping
+- OpenShell3D: faces_graph.
+
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
@@ -137,6 +160,7 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - ContourMixin: delete_shared_contour_section
 - PlaneFace3D: merge_faces
 - Contour2D: divide
+- Step: raise NotimplementedError when it's not possible to instatiate assembly object.
 
 
 ### Refactor
@@ -169,7 +193,9 @@ to calculate intersections between a plane 3d and bsplinecurve3d.
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
 - Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
-- Change python suport version from >=3.7 to >= 3.9.
+- Change python suport version from >=3.7 to >= 3.9
+- LICENSE changed from GPL to Lesser GPL 
+- Readme logo updated
 
 ### Unittests
 - Arc2D: test_arc_intersections

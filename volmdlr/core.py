@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as npy
 
 import dessia_common.core as dc
+from dessia_common.errors import ConsistencyError
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
@@ -279,21 +280,6 @@ class CompositePrimitive2D(CompositePrimitive):
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
 
-    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
-        """
-        Rotates the CompositePrimitive2D. Object is updated in-place.
-
-        :param center: rotation center.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.rotation(center, angle))
-        self.primitives = primitives
-        self.update_basis_primitives()
-
     def translation(self, offset: volmdlr.Vector2D):
         """
         Translates the CompositePrimitive2D.
@@ -304,20 +290,6 @@ class CompositePrimitive2D(CompositePrimitive):
         return self.__class__([primitive.translation(offset)
                                for primitive in self.primitives])
 
-    def translation_inplace(self, offset: volmdlr.Vector2D):
-        """
-        Translates the CompositePrimitive2D. Object is updated in-place.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.translation(offset))
-        self.primitives = primitives
-        self.update_basis_primitives()
-
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new CompositePrimitive2D.
@@ -326,20 +298,6 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         return self.__class__([primitive.frame_mapping(frame, side)
                                for primitive in self.primitives])
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.frame_mapping(frame, side))
-        self.primitives = primitives
-        self.update_basis_primitives()
 
     def plot(self, ax=None, edge_style=EdgeStyle()):
 
@@ -409,7 +367,7 @@ class Primitive3D(dc.PhysicalObject):
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
-    def babylon_meshes(self, merge_meshes=True):
+    def babylon_meshes(self, *args, **kwargs):
         """
         Returns the babylonjs mesh.
         """
@@ -483,8 +441,10 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_curves(self):
         points = self.babylon_points()
-        babylon_curves = self.babylon_lines(points)[0]
-        return babylon_curves
+        if points:
+            babylon_curves = self.babylon_lines(points)[0]
+            return babylon_curves
+        return None
 
 
 class BoundingRectangle(dc.DessiaObject):
@@ -1011,7 +971,7 @@ class BoundingBox(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def point_belongs(self, point: volmdlr.Point3D, tol = 1e-6) -> bool:
+    def point_belongs(self, point: volmdlr.Point3D, tol=1e-6) -> bool:
         """
         Determines if a point belongs to the bounding box.
 
@@ -1119,17 +1079,19 @@ class Assembly(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        meshes = []
-        lines = []
+        babylon_data = {'meshes': [],
+                        'lines': []}
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+                    curves = primitive.babylon_curves()
+                    if curves:
+                        babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1137,10 +1099,8 @@ class Assembly(dc.PhysicalObject):
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
 
-        babylon_data = {'meshes': meshes,
-                        'lines': lines,
-                        'max_length': max_length,
-                        'center': list(center)}
+        babylon_data['max_length'] = max_length
+        babylon_data['center'] = list(center)
 
         return babylon_data
 
@@ -1292,6 +1252,84 @@ class Assembly(dc.PhysicalObject):
         return ax
 
 
+class Compound(dc.PhysicalObject):
+    """
+    A class that can be a collection of any volmdlr primitives.
+    """
+
+    def __init__(self, primitives, name: str = ""):
+        self.primitives = primitives
+        self._bbox = None
+        dc.PhysicalObject.__init__(self, name=name)
+
+    @property
+    def bounding_box(self):
+        """
+        Returns the bounding box.
+
+        """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        """Bounding box setter."""
+        self._bbox = new_bounding_box
+
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model.
+        """
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Compound.
+
+        side = 'old' or 'new'
+        """
+        new_primitives = [primitive.frame_mapping(frame, side)
+                          for primitive in self.primitives]
+        return Compound(new_primitives, self.name)
+
+    def babylon_data(self, merge_meshes=True):
+        """
+        Get babylonjs data.
+
+        :return: Dictionary with babylon data.
+        """
+
+        babylon_data = {'meshes': [],
+                        'lines': []}
+        for primitive in self.primitives:
+            if hasattr(primitive, 'babylon_meshes'):
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                if hasattr(primitive, 'babylon_curves'):
+                    curves = primitive.babylon_curves()
+                    if curves:
+                        babylon_data['lines'].append(curves)
+            elif hasattr(primitive, 'babylon_data'):
+                data = primitive.babylon_data(merge_meshes=merge_meshes)
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
+
+        bbox = self.bounding_box
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
+
+        babylon_data['max_length'] = max_length
+        babylon_data['center'] = list(center)
+
+        return babylon_data
+
+    def volmdlr_primitives(self):
+        """Return primitives."""
+        return [self]
+
+
 class VolumeModel(dc.PhysicalObject):
     """
     A class containing one or several :class:`volmdlr.core.Primitive3D`.
@@ -1378,21 +1416,6 @@ class VolumeModel(dc.PhysicalObject):
             primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Rotates the VolumeModel. Object is updated inplace.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitive in self.primitives:
-            primitive.rotation_inplace(center, axis, angle)
-        self.bounding_box = self._bounding_box()
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Translates the VolumeModel.
@@ -1404,18 +1427,6 @@ class VolumeModel(dc.PhysicalObject):
                           primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Translates the VolumeModel. Object is updated inplace.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitives in self.primitives:
-            primitives.translation_inplace(offset)
-        self.bounding_box = self._bounding_box()
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new VolumeModel.
@@ -1425,18 +1436,6 @@ class VolumeModel(dc.PhysicalObject):
         new_primitives = [primitive.frame_mapping(frame, side)
                           for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitives in self.primitives:
-            primitives.frame_mapping_inplace(frame, side)
-        self.bounding_box = self._bounding_box()
 
     def copy(self, deep=True, memo=None):
         """
@@ -1479,17 +1478,19 @@ class VolumeModel(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        meshes = []
-        lines = []
+        babylon_data = {'meshes': [],
+                        'lines': []}
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+                    curves = primitive.babylon_curves()
+                    if curves:
+                        babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1497,10 +1498,8 @@ class VolumeModel(dc.PhysicalObject):
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
 
-        babylon_data = {'meshes': meshes,
-                        'lines': lines,
-                        'max_length': max_length,
-                        'center': list(center)}
+        babylon_data['max_length'] = max_length
+        babylon_data['center'] = list(center)
 
         return babylon_data
 
@@ -1566,6 +1565,7 @@ class VolumeModel(dc.PhysicalObject):
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
+        # from volmdlr import stl
         stl = volmdlr.stl.Stl.from_display_mesh(mesh)
         return stl
 
@@ -1680,6 +1680,9 @@ class VolumeModel(dc.PhysicalObject):
         stream.write(step_content)
 
     def volmdlr_volume_model(self):
+        """
+        Method needed due to PhysicalObject inheritance.
+        """
         return self
 
     def get_geo_lines(self):
@@ -2263,14 +2266,14 @@ class VolumeModel(dc.PhysicalObject):
         list_shells = []
 
         def unpack_assembly(assembly):
-            for primitive in assembly.primitives:
-                if primitive.__class__.__name__ == 'Assembly':
-                    unpack_assembly(primitive)
+            for prim in assembly.primitives:
+                if primitive.__class__.__name__ in ('Assembly', "Compound"):
+                    unpack_assembly(prim)
                 elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-                    list_shells.append(primitive)
+                    list_shells.append(prim)
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'Assembly':
+            if primitive.__class__.__name__ in ('Assembly', "Compound"):
                 unpack_assembly(primitive)
             elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
                 list_shells.append(primitive)
@@ -2289,7 +2292,7 @@ class MovingVolumeModel(VolumeModel):
         self.step_frames = step_frames
 
         if not self.is_consistent():
-            raise dc.ConsistencyError
+            raise ConsistencyError
 
     def is_consistent(self):
         n_primitives = len(self.primitives)

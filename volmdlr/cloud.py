@@ -252,7 +252,7 @@ class PointCloud3D(dc.DessiaObject):
         Plot the cloud 3d.
 
         """
-        
+
         if self.points:
             ax = self.points[0].plot(ax=ax)
             if len(self.points) > 1000:
@@ -295,7 +295,6 @@ class PointCloud3D(dc.DessiaObject):
         new_poly = [poly.offset(offset) for poly in polyconvexe]
 
         return new_position_plane, new_poly
-
 
 
 class PointCloud2D(dc.DessiaObject):
