@@ -4306,6 +4306,16 @@ class ExtrusionSurface3D(Surface3D):
                 vec2 = points[-2] - points[-3]
                 if vec2.dot(vec1) < 0:
                     points[-1].x = 0
+            if math.isclose(points[0].x, 0, abs_tol=1e-4):
+                vec1 = points[1] - points[0]
+                vec2 = points[2] - points[1]
+                if vec2.dot(vec1) < 0:
+                    points[0].x = self.x_periodicity
+            if math.isclose(points[-1].x, 0, abs_tol=1e-4):
+                vec1 = points[-1] - points[-2]
+                vec2 = points[-2] - points[-3]
+                if vec2.dot(vec1) < 0:
+                    points[-1].x = self.x_periodicity
         return [edges.BSplineCurve2D.from_points_interpolation(
             points, bspline_curve3d.degree, bspline_curve3d.periodic).simplify]
 

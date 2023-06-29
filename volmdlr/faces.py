@@ -156,8 +156,6 @@ class Face3D(volmdlr.core.Primitive3D):
             return face.from_base_and_vertex(base, vertex, name)
         if point_in_contours3d:
             raise NotImplementedError
-        if step_id == 10191:
-            print("faces.py")
         return face.from_contours3d(surface, contours, name)
 
     @classmethod
@@ -212,7 +210,7 @@ class Face3D(volmdlr.core.Primitive3D):
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
         face = cls(surface, surface2d=surface2d, name=name)
-        if isinstance(face, RevolutionFace3D):
+        if isinstance(face, ExtrusionFace3D):
             ax = surface2d.plot()
             ax.set_aspect("auto")
         # To improve performance while reading from step file
