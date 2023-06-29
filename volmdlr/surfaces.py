@@ -1067,6 +1067,16 @@ class Surface3D(DessiaObject):
             intersections = getattr(self, method_name)(edge)
         return intersections
 
+    def contour_intersections(self, contour3d: wires.Contour3D):
+        outer_contour_intersections_with_plane = []
+        for primitive in contour3d.primitives:
+            primitive_plane_intersections = self.edge_intersections(primitive)
+            for primitive_plane_intersection in primitive_plane_intersections:
+                if not volmdlr.core.point_in_list(primitive_plane_intersection,
+                                                  outer_contour_intersections_with_plane):
+                    outer_contour_intersections_with_plane.append(primitive_plane_intersection)
+        return outer_contour_intersections_with_plane
+
     def is_singularity_point(self, point):
         """Verifies if point is on the surface singularity."""
         return False
