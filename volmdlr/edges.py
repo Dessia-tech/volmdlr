@@ -3298,9 +3298,9 @@ class ArcEllipse2D(Edge):
                 abscissa_angle = initial_angle
                 break
             if res > abscissa:
-                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(2 * res)
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(4 * res)
             else:
-                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/res
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(2 * res)
             initial_angle += increment_factor
             iter_counter += 1
         x = self.ellipse.major_axis * math.cos(abscissa_angle)
