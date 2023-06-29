@@ -56,6 +56,7 @@ All adequations have been done for all tests and existing scripts.
 
 - bspline_compiled: refactor binomial_coefficient for performance.
 - Improve step translator.
+- OpenShell3D: faces_graph.
 
 
 ### Changed
