@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedPolygon2D: point_belongs.
 - Fullarc: get_reverse.
 - Arc2D: point_belongs
+- ArcEllipse2D: point_at_abscissa
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
@@ -57,6 +58,7 @@ All adequations have been done for all tests and existing scripts.
 
 - bspline_compiled: refactor binomial_coefficient for performance.
 - Improve step translator.
+- OpenShell3D: faces_graph.
 
 
 ### Changed
