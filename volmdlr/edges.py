@@ -5355,10 +5355,6 @@ class Arc3D(ArcMixin, Edge):
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}', #{frame_id}, {self.circle.radius * 1000});\n"
 
-        # if surface_id:
-        #     content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
-        #     curve_id += 1
-
         current_id = curve_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         end_content, end_id = self.end.to_step(start_id + 1, vertex=True)
@@ -5487,10 +5483,6 @@ class FullArc3D(FullArcMixin, Arc3D):
         curve_id = frame_id + 1
         # Not calling Circle3D.to_step because of circular imports
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.circle.radius * 1000});\n"
-
-        # if surface_id:
-        #     content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
-        #     curve_id += 1
 
         point1 = (self.circle.center + u * self.circle.radius).to_point()
 
