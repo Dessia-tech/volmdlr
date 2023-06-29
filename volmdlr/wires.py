@@ -3629,7 +3629,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         barycenter = self.barycenter()
         if not self.point_belongs(barycenter):
             barycenter1_2d = self.point_in_polygon()
-            self.translation_inplace(-barycenter1_2d)
+            new_polygon = self.translation(-barycenter1_2d)
             way_back = barycenter1_2d.to_3d(volmdlr.O3D, x, y)
         else:
             inters = self.linesegment_intersections(linex)
@@ -3638,10 +3638,10 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                     self.point_distance(inters[0][0]),
                     self.point_distance(inters[-1][0])):
                 mid_point = (inters[0][0] + inters[-1][0]) * 0.5
-                self.translation(-mid_point)
+                new_polygon = self.translation(-mid_point)
                 way_back = mid_point.to_3d(volmdlr.O3D, x, y)
 
-        return self, way_back
+        return new_polygon, way_back
 
     def get_possible_sewing_closing_points(self, polygon2, polygon_primitive,
                                            line_segment1: None, line_segment2: None):
