@@ -210,7 +210,7 @@ class Face3D(volmdlr.core.Primitive3D):
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
         face = cls(surface, surface2d=surface2d, name=name)
-        if isinstance(face, RevolutionFace3D):
+        if isinstance(face, ExtrusionFace3D):
             ax = surface2d.plot()
             ax.set_aspect("auto")
         # To improve performance while reading from step file
