@@ -2518,7 +2518,7 @@ class Arc2D(ArcMixin, Edge):
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
         point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
-        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=abs_tol):
+        if math.isclose(arc_angle, point_start_angle + point_end_angle, rel_tol=0.01):
             return True
         return False
 
@@ -3676,7 +3676,8 @@ class FullArcEllipse(Edge):
         Defines a new FullArcEllipse, identical to self, but in the opposite direction.
 
         """
-        return self
+        ellipse = self.ellipse.reverse()
+        return self.__class__(ellipse, self.start_end)
 
     def straight_line_point_belongs(self, point):
         """
@@ -5042,9 +5043,7 @@ class Arc3D(ArcMixin, Edge):
         Defines a new Arc3D, identical to self, but in the opposite direction.
 
         """
-        new_frame = volmdlr.Frame3D(self.circle.frame.origin, self.circle.frame.u, -self.circle.frame.v,
-                                    self.circle.frame.u.cross(-self.circle.frame.v))
-        circle3d = volmdlr_curves.Circle3D(new_frame, self.circle.radius)
+        circle3d = self.circle.reverse()
         return self.__class__(circle3d, self.end, self.start, self.name + '_reverse')
 
     def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
@@ -5582,7 +5581,8 @@ class FullArc3D(FullArcMixin, Arc3D):
         Defines a new FullArc3D, identical to self, but in the opposite direction.
 
         """
-        return self
+        circle = self.circle.reverse()
+        return self.__class__(circle, self.start_end)
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
         """

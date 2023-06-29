@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
 - babylondata: removes empty objects.
 - ClosedPolygon2D: point_belongs.
+- Fullarc: get_reverse.
+- Arc2D: point_belongs
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
