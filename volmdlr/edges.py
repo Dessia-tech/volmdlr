@@ -4669,9 +4669,7 @@ class BSplineCurve3D(BSplineCurve):
             return self
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self.reverse()
-        #     raise ValueError('Nothing will be left from the BSplineCurve3D')
-
-        curves = operations.split_curve(self.curve, round(parameter, 7))
+        curves = operations.split_curve(self.curve, round(parameter, 6))
         return self.from_geomdl_curve(curves[1])
 
     def cut_after(self, parameter: float):
@@ -4682,17 +4680,11 @@ class BSplineCurve3D(BSplineCurve):
         :type parameter: float
         """
         # Is a value of parameter below 4e-3 a real need for precision ?
-        if math.isclose(parameter, 0, abs_tol=1e-6):
-            #     # raise ValueError('Nothing will be left from the BSplineCurve3D')
-            #     curves = operations.split_curve(operations.refine_knotvector(self.curve, [4]), parameter)
-            #     return self.from_geomdl_curve(curves[0])
+        if math.isclose(parameter, 0, abs_tol=4e-3):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-        try:
-            curves = operations.split_curve(self.curve, round(parameter, 6))
-        except Exception:
-            self.save_to_file("bsplinecurve_split_test.json")
+        curves = operations.split_curve(self.curve, round(parameter, 6))
         return self.from_geomdl_curve(curves[0])
 
     def insert_knot(self, knot: float, num: int = 1):
