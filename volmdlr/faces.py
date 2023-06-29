@@ -156,8 +156,6 @@ class Face3D(volmdlr.core.Primitive3D):
             return face.from_base_and_vertex(base, vertex, name)
         if point_in_contours3d:
             raise NotImplementedError
-        if step_id == 10191:
-            print("faces.py")
         return face.from_contours3d(surface, contours, name)
 
     @classmethod

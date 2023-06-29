@@ -831,9 +831,9 @@ class BoundingBox(dc.DessiaObject):
         :return: A new bounding box that contains all the input bounding boxes.
         :rtype: BoundingBox
         """
-        print('=', bounding_boxes)
-        for bb in bounding_boxes:
-            print(bb.__dict__)
+        # print('=', bounding_boxes)
+        # for bb in bounding_boxes:
+        #     print(bb.__dict__)
         xmin = min(bb.xmin for bb in bounding_boxes)
         xmax = max(bb.xmax for bb in bounding_boxes)
         ymin = min(bb.ymin for bb in bounding_boxes)
