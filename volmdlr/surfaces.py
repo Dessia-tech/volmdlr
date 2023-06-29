@@ -3768,7 +3768,8 @@ class SphericalSurface3D(PeriodicalSurface):
                 point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
             return [edges.LineSegment2D(point1, point2)]
 
-        if self.frame.w.is_perpendicular_to(fullarc3d.circle.normal, abs_tol=1e-4):
+        if self.frame.w.is_perpendicular_to(fullarc3d.circle.normal, abs_tol=1e-4) and \
+                self.frame.origin.is_close(fullarc3d.center):
             if theta1 > theta3:
                 theta_plus_pi = theta1 - math.pi
             else:
