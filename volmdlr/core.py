@@ -1169,12 +1169,12 @@ class Assembly(dc.PhysicalObject):
         """
         step_content = ''
 
-        product_content, current_id, assembly_data = self._to_step_product(current_id)
+        product_content, current_id, assembly_data = self.to_step_product(current_id)
         step_content += product_content
         assembly_frames = assembly_data[-1]
         for i, primitive in enumerate(self.components):
             if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-                primitive_content, current_id, primitive_data = primitive._to_step_product(current_id)
+                primitive_content, current_id, primitive_data = primitive.to_step_product(current_id)
                 assembly_frame_id = assembly_frames[0]
                 component_frame_id = assembly_frames[i + 1]
                 assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
@@ -1211,7 +1211,7 @@ class Assembly(dc.PhysicalObject):
         ax.margins(0.1)
         return ax
 
-    def _to_step_product(self, current_id):
+    def to_step_product(self, current_id):
         """
         Returns step product entities from volmdlr objects.
         """
@@ -1335,7 +1335,8 @@ class Compound(dc.PhysicalObject):
             manifold_ids.append(current_id - 1)
 
         geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
-        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{frame_id},{step_ids_to_str(manifold_ids)})," \
+        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION(''," \
+                        f"(#{frame_id},{step_ids_to_str(manifold_ids)})," \
                         f"#{geometric_representation_context_id});\n"
         step_content += frame_content
         step_content += primitives_content
@@ -1652,7 +1653,7 @@ class VolumeModel(dc.PhysicalObject):
 
         for primitive in self.primitives:
             if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-                primitive_content, primitive_id, _ = primitive._to_step_product(current_id)
+                primitive_content, primitive_id, _ = primitive.to_step_product(current_id)
             else:
                 primitive_content, primitive_id, _ = primitive.to_step(current_id)
 

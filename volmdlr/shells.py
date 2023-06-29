@@ -277,7 +277,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         return step_content, manifold_id
 
-    def _to_step_product(self, current_id):
+    def to_step_product(self, current_id):
         """
         Creates step file entities from volmdlr objects.
         """

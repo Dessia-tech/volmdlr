@@ -48,8 +48,8 @@ def geometric_context_writer(current_id, uncertainty: float = 1e-4):
     step_content += f"#{legth_unit_id} = ( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) );\n"
     step_content += f"#{plane_angle_unit_id} = ( NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.) );\n"
     step_content += f"#{solid_angle_unit} = ( NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT() );\n"
-    step_content += f"#{uncertainty_id} = UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE({uncertainty}),#{legth_unit_id}," \
-                    f"'distance_accuracy_value','confusion accuracy');\n"
+    step_content += f"#{uncertainty_id} = UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE({uncertainty})," \
+                    f"#{legth_unit_id},'distance_accuracy_value','confusion accuracy');\n"
     step_content += f"#{geometric_representation_context_id} = ( GEOMETRIC_REPRESENTATION_CONTEXT(3) " \
                     f"GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#{uncertainty_id})) " \
                     f"GLOBAL_UNIT_ASSIGNED_CONTEXT((#{legth_unit_id},#{plane_angle_unit_id}," \
@@ -95,6 +95,7 @@ def step_ids_to_str(ids):
     :rtype: str
     """
     return ','.join([f"#{i}" for i in ids])
+
 
 STEP_HEADER = '''ISO-10303-21;
 HEADER;
