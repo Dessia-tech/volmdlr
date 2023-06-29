@@ -101,6 +101,10 @@ class TestArc2D(unittest.TestCase):
         for result_list, expected_result_list in zip(list_point_belongs, expected_results):
             self.assertEqual(result_list, expected_result_list)
 
+        arc = Arc2D.load_from_file("edges/arc_objects/arc2d_bug_point_belongs.json")
+        point = volmdlr.Point2D(0.01330629098214331, 0.0032923224261096617)
+        self.assertTrue(arc.point_belongs(point))
+
     def test_get_shared_section(self):
         # =====================Sharing one end of the arc=====================#
         shared_section1 = self.arc1.get_shared_section(self.arc2)
