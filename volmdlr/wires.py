@@ -4093,14 +4093,10 @@ class Contour3D(ContourMixin, Wire3D):
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
-        last_edge = object_dict[int(arguments[1][-1][1:])]
         for edge_id in arguments[1]:
             edge = object_dict[int(edge_id[1:])]
-            if edge.direction_independent_is_close(last_edge):
-                continue
             if edge:
                 raw_edges.append(edge)
-            last_edge = edge
 
         if step_name == "POLY_LOOP":
             return cls.from_points(raw_edges)
@@ -4109,9 +4105,6 @@ class Contour3D(ContourMixin, Wire3D):
                 # Case of a circle, ellipse...
                 return raw_edges[0]
             return cls(raw_edges, name=name)
-        contour = cls(raw_edges, name=name)
-        if contour.is_ordered():
-            return contour
         list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         if list_edges:
             return cls(list_edges, name=name)
