@@ -120,6 +120,7 @@ All adequations have been done for all tests and existing scripts.
 - DisplayMesh3D: triangulation_faces
 - Woodpecker CI setup
 - ContourMixin: primitive_section_over_contour.
+- Face3D: split_by_plane
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -216,6 +217,7 @@ All adequations have been done for all tests and existing scripts.
 - PlaneFace3D: merge_faces
 - Contour2D: divide.
 - BSplineFace3D: test_linesegment_intersections_approximation.
+- CylindricalFace3D: split_by_plane.
 
 v0.10.0 [Released 20/04/2023]
 

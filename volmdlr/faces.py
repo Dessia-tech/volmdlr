@@ -965,6 +965,41 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return linesegment_intersections
 
+    def plane_intersections(self, plane3d: surfaces.Plane3D):
+        surfaces_intersections = self.surface3d.plane_intersection(plane3d)
+        outer_contour_intersections_with_plane = plane3d.contour_intersections(self.outer_contour3d)
+        plane_intersections = []
+        for plane_intersection in surfaces_intersections:
+            points_on_curve = []
+            for point in outer_contour_intersections_with_plane:
+                if plane_intersection.point_belongs(point):
+                    points_on_curve.append(point)
+            points_on_primitive = plane_intersection.sort_points_along_curve(points_on_curve)
+            if not isinstance(plane_intersection, volmdlr_curves.Line3D):
+                points_on_primitive = points_on_primitive + [points_on_primitive[0]]
+            for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                edge = plane_intersection.trim(point1, point2)
+                if self.edge3d_inside(edge):
+                    plane_intersections.append(volmdlr.wires.Wire3D([edge]))
+        return plane_intersections
+
+    def split_by_plane(self, plane3d: surfaces.Plane3D):
+        intersections_with_plane = self.plane_intersections(plane3d)
+        intersections_with_plane2d = [self.surface3d.contour3d_to_2d(intersection_wire)
+                                      for intersection_wire in intersections_with_plane]
+        while True:
+            for i, intersection2d in enumerate(intersections_with_plane2d):
+                if not self.surface2d.outer_contour.is_inside(intersection2d):
+                    for translation in [volmdlr.Vector2D(-2*math.pi, 0), volmdlr.Vector2D(2*math.pi, 0)]:
+                        translated_contour = intersection2d.translation(translation)
+                        if not self.surface2d.outer_contour.is_inside(translated_contour):
+                            continue
+                        intersections_with_plane2d.pop(i)
+                        intersections_with_plane2d.append(translated_contour)
+                    break
+            else:
+                break
+        return self.divide_face(intersections_with_plane2d)
 
 class PlaneFace3D(Face3D):
     """

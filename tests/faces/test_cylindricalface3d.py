@@ -124,6 +124,24 @@ class TestCylindricalFace3D(unittest.TestCase):
         self.assertLess(n_triangles, n_triangles_max,
                         f'Too much triangles in cylindrical face triangulation: {n_triangles}/{n_triangles_max}')
 
+    def test_split_by_plane(self):
+        R = 0.15
+        cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, R)
+        cylindricalface = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindricalsurface, 0, volmdlr.TWO_PI,
+                                                                               -.25, .25)
+        plane_face_cylindricalface_intersec = DessiaObject.load_from_file(
+            'faces/plane_face_cylindrical_face_intersec.json')
+        plane_face_3 = plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 7)
+        split_by_plane = cylindricalface.split_by_plane(plane_face_3.surface3d)
+        self.assertTrue(len(split_by_plane), 3)
+        list_expected_points = DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/test_cylindrical_faces_split_by_plane_'
+            'expected_discretization_points.json').primitives
+        for i, face in enumerate(split_by_plane):
+            points = face.outer_contour3d.discretization_points(number_points=10)
+            for point, expected_point in zip(points, list_expected_points[i]):
+                self.assertTrue(point.is_close(expected_point))
+
 
 if __name__ == '__main__':
     unittest.main()
