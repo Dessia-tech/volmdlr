@@ -68,17 +68,6 @@ class RoundedLineSegments:
                               adapt_radius=self.adapt_radius,
                               name=self.name)
 
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for point in self.points:
-            point.frame_mapping_inplace(frame, side)
-
     def arc_features(self, point_index: int):
         raise NotImplementedError('The method arc_features should be overloaded.')
 

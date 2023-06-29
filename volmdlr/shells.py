@@ -315,22 +315,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                      in self.faces]
         return self.__class__(new_faces, color=self.color, alpha=self.alpha, name=self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Shell 3D rotation. Object is updated in-place.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for face in self.faces:
-            face.rotation_inplace(center, axis, angle)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Shell3D translation.
@@ -343,22 +327,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return self.__class__(new_faces, color=self.color, alpha=self.alpha,
                               name=self.name)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Open Shell 3D translation. Object is updated in-place.
-
-        :param offset: Translation vector.
-        :type offset: `volmdlr.Vector3D`.
-        :return: Translate the Open Shell 3D in place.
-        :rtype: None.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for face in self.faces:
-            face.translation_inplace(offset)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new OpenShell3D.
@@ -368,19 +336,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         new_faces = [face.frame_mapping(frame, side) for face in
                      self.faces]
         return self.__class__(new_faces, name=self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated in-place.
-
-        side = 'old' or 'new'.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for face in self.faces:
-            face.frame_mapping_inplace(frame, side)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
         """
