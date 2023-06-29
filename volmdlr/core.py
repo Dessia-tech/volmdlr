@@ -1652,7 +1652,7 @@ class VolumeModel(dc.PhysicalObject):
         current_id = 2
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
                 primitive_content, primitive_id, _ = primitive.to_step_product(current_id)
             else:
                 primitive_content, primitive_id, _ = primitive.to_step(current_id)
