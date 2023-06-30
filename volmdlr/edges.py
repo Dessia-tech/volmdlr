@@ -18,7 +18,7 @@ import plot_data.core as plot_data
 import plot_data.colors
 import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
-from geomdl import NURBS, BSpline, fitting, operations, utilities
+from geomdl.core import NURBS, BSpline, fitting, operations, utilities
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -196,6 +196,8 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         orientation = arguments[4]
+        if step_id == 54413:
+            print("edges.py 200")
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
@@ -212,9 +214,12 @@ class Edge(dc.DessiaObject):
                 if orientation == '.T.':
                     trimmed_edge = trimmed_edge.reverse()
                 return trimmed_edge
-            trimmed_edge = obj.trim(point1, point2)
-            if orientation == '.F.':
-                trimmed_edge = trimmed_edge.reverse()
+            if obj.periodic and orientation == '.F.':
+                trimmed_edge = obj.trim(point2, point1)
+            else:
+                trimmed_edge = obj.trim(point1, point2)
+                if orientation == '.F.':
+                    trimmed_edge = trimmed_edge.reverse()
             return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')

@@ -158,7 +158,9 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
-        return face.from_contours3d(surface, contours, name)
+        if step_id == 19716:
+            print("faces.py 162")
+        return face.from_contours3d(surface, contours, step_id)
 
     @classmethod
     def from_contours3d(cls, surface, contours3d: List[volmdlr.wires.Contour3D], name: str = ''):

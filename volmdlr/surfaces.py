@@ -8,10 +8,10 @@ import traceback
 import matplotlib.pyplot as plt
 import numpy as npy
 import triangle as triangle_lib
-from geomdl import NURBS, BSpline, utilities
-from geomdl.construct import extract_curves
-from geomdl.fitting import approximate_surface, interpolate_surface
-from geomdl.operations import split_surface_u, split_surface_v
+from geomdl.core import NURBS, BSpline, utilities
+from geomdl.core.construct import extract_curves
+from geomdl.core.fitting import approximate_surface, interpolate_surface
+from geomdl.core.operations import split_surface_u, split_surface_v
 from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject
@@ -857,8 +857,12 @@ class Surface3D(DessiaObject):
                         math.isclose(current_primitive.length(), y_periodicity, abs_tol=1e-2):
                     delta_end = previous_primitive.end - current_primitive.end
                     delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
-
-                    if current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
+                    if self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
+                         self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
+                        primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, current_primitive.start,
+                                                                   name="construction"))
+                        i += 1
+                    elif current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
                         primitives2d[i] = current_primitive.reverse()
                     elif delta_min_index == 0:
                         primitives2d[i] = current_primitive.translation(delta)
