@@ -208,12 +208,15 @@ class Edge(dc.DessiaObject):
             if obj.__class__.__name__ == 'Circle3D':
                 point1, point2 = point2, point1
                 trimmed_edge = obj.trim(point1, point2)
-                if orientation == '.T.':
+                if orientation == '.F.':
                     trimmed_edge = trimmed_edge.reverse()
                 return trimmed_edge
-            trimmed_edge = obj.trim(point1, point2)
-            if orientation == '.F.':
-                trimmed_edge = trimmed_edge.reverse()
+            if obj.periodic and orientation == '.F.':
+                trimmed_edge = obj.trim(point2, point1)
+            else:
+                trimmed_edge = obj.trim(point1, point2)
+                if orientation == '.F.':
+                    trimmed_edge = trimmed_edge.reverse()
             return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
