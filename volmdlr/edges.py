@@ -28,6 +28,7 @@ import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
 
+c=0
 
 def standardize_knot_vector(knot_vector):
     """
@@ -3294,13 +3295,13 @@ class ArcEllipse2D(Edge):
         iter_counter = 0
         while True:
             res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-            if math.isclose(res, abscissa, abs_tol=1e-8):
+            if math.isclose(res, abscissa, abs_tol=1e-7):
                 abscissa_angle = initial_angle
                 break
             if res > abscissa:
-                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(4 * res)
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(6 * abs(res))
             else:
-                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(2 * res)
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(3 * abs(res))
             initial_angle += increment_factor
             iter_counter += 1
         x = self.ellipse.major_axis * math.cos(abscissa_angle)
@@ -5364,10 +5365,6 @@ class Arc3D(ArcMixin, Edge):
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}', #{frame_id}, {self.circle.radius * 1000});\n"
 
-        if surface_id:
-            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
-            curve_id += 1
-
         current_id = curve_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         end_content, end_id = self.end.to_step(start_id + 1, vertex=True)
@@ -5496,10 +5493,6 @@ class FullArc3D(FullArcMixin, Arc3D):
         curve_id = frame_id + 1
         # Not calling Circle3D.to_step because of circular imports
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.circle.radius * 1000});\n"
-
-        if surface_id:
-            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
-            curve_id += 1
 
         point1 = (self.circle.center + u * self.circle.radius).to_point()
 
@@ -5631,21 +5624,6 @@ class FullArc3D(FullArcMixin, Arc3D):
     @classmethod
     def from_curve(cls, circle):
         return cls(circle, circle.center + circle.frame.u * circle.radius)
-
-
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str = "new"):
-        if side == 'old':
-            new_center = frame.local_to_global_coordinates(self.center.copy())
-            new_start_end = frame.local_to_global_coordinates(self.start_end.copy())
-            new_normal = frame.local_to_global_coordinates(self.normal.copy())
-        elif side == 'new':
-            new_center = frame.global_to_local_coordinates(self.center.copy())
-            new_start_end = frame.global_to_local_coordinates(self.start_end.copy())
-            new_normal = frame.global_to_local_coordinates(self.normal.copy())
-        else:
-            raise ValueError('side value not valid, please specify'
-                             'a correct value: \'old\' or \'new\'')
-        return FullArc3D(new_center, new_start_end, new_normal, name=self.name)
 
 
 class ArcEllipse3D(Edge):

@@ -4115,9 +4115,6 @@ class Contour3D(ContourMixin, Wire3D):
                 # Case of a circle, ellipse...
                 return raw_edges[0]
             return cls(raw_edges, name=name)
-        contour = cls(raw_edges, name=name)
-        if contour.is_ordered():
-            return contour
         list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         if list_edges:
             return cls(list_edges, name=name)
