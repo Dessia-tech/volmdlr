@@ -3150,6 +3150,8 @@ class SphericalSurface3D(PeriodicalSurface):
         start = self.point2d_to_3d(linesegment2d.start)
         interior = self.point2d_to_3d(0.5 * (linesegment2d.start + linesegment2d.end))
         end = self.point2d_to_3d(linesegment2d.end)
+        if start.is_close(interior) and interior.is_close(end) and end.is_close(start):
+            return []
         u_vector = start - self.frame.origin
         u_vector.normalize()
         v_vector = interior - self.frame.origin
