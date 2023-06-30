@@ -1609,11 +1609,9 @@ class Sweep(shells.ClosedShell3D):
                      alpha=self.alpha, name=self.name)
 
 
-# class Sphere(volmdlr.Primitive3D):
-class Sphere(RevolvedProfile):
+class Sphere(shells.ClosedShell3D):
     """
     Defines a sphere at a given position & radius.
-
     """
 
     def __init__(self, center: volmdlr.Point3D, radius: float,
@@ -1623,21 +1621,27 @@ class Sphere(RevolvedProfile):
         self.radius = radius
         self.position = center
 
-        # Revolved Profile for complete sphere
-        s = volmdlr.Point2D(-self.radius, 0.01 * self.radius)
-        i = volmdlr.Point2D(0, 1.01 * self.radius)
-        e = volmdlr.Point2D(self.radius, 0.01 * self.radius)  # Not coherent but it works at first, to change !!
-
-        contour = volmdlr.wires.Contour2D([
-            volmdlr.edges.Arc2D.from_3_points(s, i, e), volmdlr.edges.LineSegment2D(s, e)])
-
-        axis = volmdlr.X3D
-        y = axis.random_unit_normal_vector()
-        RevolvedProfile.__init__(self, center, axis, y, contour, center, axis,
-                                 color=color, alpha=alpha, name=name)
+        self.frame = volmdlr.Frame3D(center, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
+        spherical_surface = surfaces.SphericalSurface3D(self.frame, self.radius)
+        spherical_face = volmdlr.faces.SphericalFace3D.from_surface_rectangular_cut(spherical_surface)
+        shells.ClosedShell3D.__init__(self, faces=[spherical_face], color=color, alpha=alpha, name=name)
 
     def volume(self):
+        """
+        Computes the volume of the sphere.
+
+        :return: sphere's volume (m³)
+        """
         return 4 / 3 * math.pi * self.radius**3
+
+    def point_belongs(self, point3d: volmdlr.Point3D, **kwargs) -> bool:
+        """
+        Returns if the point belongs to the sphere.
+
+        :param point3d: volmdlr Point3D
+        :return: True if the given point is inside the sphere, False otherwise
+        """
+        return self.center.point_distance(point3d) <= self.radius
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
