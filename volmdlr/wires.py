@@ -2114,20 +2114,28 @@ class Contour2D(ContourMixin, Wire2D):
                                    surface_style=surface_style,
                                    name=self.name)
 
+    def is_edge_inside(self, edge):
+        """
+        Verifies if given edge is inside self contour perimeter, including its edges.
+
+        :param edge: othe edge to verify if inside contour.
+        :returns: True or False
+        """
+        for point in edge.discretization_points(number_points=5):
+            if not self.point_belongs(point, include_edge_points=True):
+                return False
+        return True
+
     def is_inside(self, contour2):
         """
-        Verifies if a contour is inside another contour perimeter, including the edges.
+        Verifies if given contour is inside self contour perimeter, including its edges.
 
         :returns: True or False
         """
         if contour2.area() > self.area() and not math.isclose(contour2.area(), self.area(), rel_tol=0.01):
             return False
-        points_contour2 = []
-        for prim in contour2.primitives:
-            points = prim.discretization_points(number_points=5)
-            points_contour2.extend(points[:-1])
-        for point in points_contour2:
-            if not self.point_belongs(point, include_edge_points=True):
+        for edge in contour2.primitives:
+            if not self.is_edge_inside(edge):
                 return False
         return True
 

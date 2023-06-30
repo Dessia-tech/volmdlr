@@ -155,7 +155,9 @@ class Face3D(volmdlr.core.Primitive3D):
             base = next(contour for contour in contours if contour is not vertex)
             return face.from_base_and_vertex(base, vertex, name)
         if point_in_contours3d:
-            raise NotImplementedError
+            point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
+            contours = [contour for contour in contours if contour is not point]
+            return face.from_contours3d_and_rectangular_cut(surface, contours, point)
 
         return face.from_contours3d(surface, contours, name)
 
@@ -650,7 +652,7 @@ class Face3D(volmdlr.core.Primitive3D):
                     new_contour = volmdlr.wires.Contour2D.contours_from_edges(
                         cutting_contour.primitives + connecting_split_contour.primitives)[0]
 
-                    if self.surface2d.outer_contour.are_extremity_points_touching(new_contour) or\
+                    if self.surface2d.outer_contour.are_extremity_points_touching(new_contour) or \
                             new_contour.is_contour_closed():
                         valid_cutting_contours.append(new_contour)
                         break
@@ -965,6 +967,41 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return linesegment_intersections
 
+    def plane_intersections(self, plane3d: surfaces.Plane3D):
+        surfaces_intersections = self.surface3d.plane_intersection(plane3d)
+        outer_contour_intersections_with_plane = plane3d.contour_intersections(self.outer_contour3d)
+        plane_intersections = []
+        for plane_intersection in surfaces_intersections:
+            points_on_curve = []
+            for point in outer_contour_intersections_with_plane:
+                if plane_intersection.point_belongs(point):
+                    points_on_curve.append(point)
+            points_on_primitive = plane_intersection.sort_points_along_curve(points_on_curve)
+            if not isinstance(plane_intersection, volmdlr_curves.Line3D):
+                points_on_primitive = points_on_primitive + [points_on_primitive[0]]
+            for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                edge = plane_intersection.trim(point1, point2)
+                if self.edge3d_inside(edge):
+                    plane_intersections.append(volmdlr.wires.Wire3D([edge]))
+        return plane_intersections
+
+    def split_by_plane(self, plane3d: surfaces.Plane3D):
+        intersections_with_plane = self.plane_intersections(plane3d)
+        intersections_with_plane2d = [self.surface3d.contour3d_to_2d(intersection_wire)
+                                      for intersection_wire in intersections_with_plane]
+        while True:
+            for i, intersection2d in enumerate(intersections_with_plane2d):
+                if not self.surface2d.outer_contour.is_inside(intersection2d):
+                    for translation in [volmdlr.Vector2D(-2*math.pi, 0), volmdlr.Vector2D(2*math.pi, 0)]:
+                        translated_contour = intersection2d.translation(translation)
+                        if not self.surface2d.outer_contour.is_inside(translated_contour):
+                            continue
+                        intersections_with_plane2d.pop(i)
+                        intersections_with_plane2d.append(translated_contour)
+                    break
+            else:
+                break
+        return self.divide_face(intersections_with_plane2d)
 
 class PlaneFace3D(Face3D):
     """
@@ -2276,6 +2313,36 @@ class SphericalFace3D(Face3D):
         point4 = volmdlr.Point2D(theta1, phi2)
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         return cls(spherical_surface, surfaces.Surface2D(outer_contour, []), name=name)
+
+    @classmethod
+    def from_contours3d_and_rectangular_cut(cls, surface3d, contours: List[volmdlr.wires.Contour3D],
+                                            point: volmdlr.Point3D, name: str = ''):
+        """
+        Face defined by contours and a point indicating the portion of the parametric domain that should be considered.
+
+        :param surface3d: surface 3d.
+        :param contours: Cone, contour base.
+        :type contours: List[volmdlr.wires.Contour3D]
+        :type point: volmdlr.Point3D
+        :param name: the name to inject in the new face
+        :return: Spherical face.
+        :rtype: SphericalFace3D
+        """
+        inner_contours = []
+        point1 = volmdlr.Point2D(-math.pi, -0.5 * math.pi)
+        point2 = volmdlr.Point2D(math.pi, -0.5 * math.pi)
+        point3 = volmdlr.Point2D(math.pi, 0.5 * math.pi)
+        point4 = volmdlr.Point2D(-math.pi, 0.5 * math.pi)
+        surface_rectangular_cut = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
+        contours2d = [surface3d.contour3d_to_2d(contour) for contour in contours]
+        point2d = surface3d.point3d_to_2d(point)
+        for contour in contours2d:
+            if not contour.point_belongs(point2d):
+                inner_contours.append(contour)
+
+        surface2d = surfaces.Surface2D(outer_contour=surface_rectangular_cut,
+                                       inner_contours=inner_contours)
+        return cls(surface3d, surface2d=surface2d, name=name)
 
 
 class RuledFace3D(Face3D):

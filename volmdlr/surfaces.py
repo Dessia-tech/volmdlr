@@ -1039,6 +1039,16 @@ class Surface3D(DessiaObject):
             intersections = getattr(self, method_name)(edge)
         return intersections
 
+    def contour_intersections(self, contour3d: wires.Contour3D):
+        outer_contour_intersections_with_plane = []
+        for primitive in contour3d.primitives:
+            primitive_plane_intersections = self.edge_intersections(primitive)
+            for primitive_plane_intersection in primitive_plane_intersections:
+                if not volmdlr.core.point_in_list(primitive_plane_intersection,
+                                                  outer_contour_intersections_with_plane):
+                    outer_contour_intersections_with_plane.append(primitive_plane_intersection)
+        return outer_contour_intersections_with_plane
+
     def is_singularity_point(self, point):
         """Verifies if point is on the surface singularity."""
         return False
@@ -3565,7 +3575,8 @@ class SphericalSurface3D(PeriodicalSurface):
                 point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
             return [edges.LineSegment2D(point1, point2)]
 
-        if self.frame.w.is_perpendicular_to(fullarc3d.circle.normal, abs_tol=1e-4):
+        if self.frame.w.is_perpendicular_to(fullarc3d.circle.normal, abs_tol=1e-4) and \
+                self.frame.origin.is_close(fullarc3d.center):
             if theta1 > theta3:
                 theta_plus_pi = theta1 - math.pi
             else:
