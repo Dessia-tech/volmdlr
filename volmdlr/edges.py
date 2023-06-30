@@ -28,6 +28,7 @@ import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
 
+c=0
 
 def standardize_knot_vector(knot_vector):
     """
@@ -3294,13 +3295,13 @@ class ArcEllipse2D(Edge):
         iter_counter = 0
         while True:
             res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-            if math.isclose(res, abscissa, abs_tol=1e-8):
+            if math.isclose(res, abscissa, abs_tol=1e-7):
                 abscissa_angle = initial_angle
                 break
             if res > abscissa:
-                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(4 * res)
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(6 * abs(res))
             else:
-                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(2 * res)
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(3 * abs(res))
             initial_angle += increment_factor
             iter_counter += 1
         x = self.ellipse.major_axis * math.cos(abscissa_angle)
@@ -5623,21 +5624,6 @@ class FullArc3D(FullArcMixin, Arc3D):
     @classmethod
     def from_curve(cls, circle):
         return cls(circle, circle.center + circle.frame.u * circle.radius)
-
-
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str = "new"):
-        if side == 'old':
-            new_center = frame.local_to_global_coordinates(self.center.copy())
-            new_start_end = frame.local_to_global_coordinates(self.start_end.copy())
-            new_normal = frame.local_to_global_coordinates(self.normal.copy())
-        elif side == 'new':
-            new_center = frame.global_to_local_coordinates(self.center.copy())
-            new_start_end = frame.global_to_local_coordinates(self.start_end.copy())
-            new_normal = frame.global_to_local_coordinates(self.normal.copy())
-        else:
-            raise ValueError('side value not valid, please specify'
-                             'a correct value: \'old\' or \'new\'')
-        return FullArc3D(new_center, new_start_end, new_normal, name=self.name)
 
 
 class ArcEllipse3D(Edge):
