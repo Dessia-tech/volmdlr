@@ -19,6 +19,7 @@ from volmdlr import display, edges, wires, surfaces, curves
 import volmdlr.faces
 import volmdlr.geometry
 from volmdlr.core import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
+from volmdlr.utils.step_writer import product_writer, geometric_context_writer, step_ids_to_str
 
 
 def union_list_of_shells(list_shells):
@@ -295,29 +296,136 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         Creates step file entities from volmdlr objects.
         """
         step_content = ''
+        faces_content = ''
         face_ids = []
+
+        manifold_id = current_id + 1
+        shell_id = manifold_id + 1
+
+        current_id = shell_id + 1
         for face in self.faces:
             if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
                 face_content, face_sub_ids = face.to_step(current_id)
             else:
                 face_content, face_sub_ids = face.to_step(current_id)
                 face_sub_ids = [face_sub_ids]
-            step_content += face_content
+            faces_content += face_content
             face_ids.extend(face_sub_ids)
-            current_id = max(face_sub_ids) + 1
+            current_id = max(face_sub_ids)
 
-        shell_id = current_id
-        step_content += f"#{current_id} = {self.STEP_FUNCTION}('{self.name}'," \
-                        f"({volmdlr.core.step_ids_to_str(face_ids)}));\n"
-        manifold_id = shell_id + 1
-        step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
+        if self.STEP_FUNCTION == "CLOSED_SHELL":
+            step_content += f"#{manifold_id} = MANIFOLD_SOLID_BREP('{self.name}',#{shell_id});\n"
+        else:
+            step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
 
-        frame_content, frame_id = volmdlr.OXYZ.to_step(manifold_id + 1)
-        step_content += frame_content
-        brep_id = frame_id + 1
-        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id}),#7);\n"
+        step_content += f"#{shell_id} = {self.STEP_FUNCTION}('{self.name}'," \
+                        f"({step_ids_to_str(face_ids)}));\n"
+        step_content += faces_content
 
-        return step_content, brep_id
+        return step_content, manifold_id
+
+    def to_step_product(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
+        step_content = ''
+        faces_content = ''
+        face_ids = []
+
+        product_content, shape_representation_id = product_writer(current_id, self.name)
+        product_id = shape_representation_id - 5
+        product_definition_id = shape_representation_id - 3
+        step_content += product_content
+
+        brep_id = shape_representation_id
+        # frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
+        frame_content, frame_id = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.Y3D, volmdlr.X3D).to_step(brep_id)
+        manifold_id = frame_id + 1
+        shell_id = manifold_id + 1
+
+        current_id = shell_id + 1
+        for face in self.faces:
+            if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
+                face_content, face_sub_ids = face.to_step(current_id)
+            else:
+                face_content, face_sub_ids = face.to_step(current_id)
+                face_sub_ids = [face_sub_ids]
+            faces_content += face_content
+            face_ids.extend(face_sub_ids)
+            current_id = max(face_sub_ids)
+
+        geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
+
+        if self.STEP_FUNCTION == "CLOSED_SHELL":
+            step_content += f"#{brep_id} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id})," \
+                            f"#{geometric_representation_context_id});\n"
+            step_content += frame_content
+            step_content += f"#{manifold_id} = MANIFOLD_SOLID_BREP('{self.name}',#{shell_id});\n"
+        else:
+            step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id})," \
+                            f"#{geometric_representation_context_id});\n"
+            step_content += frame_content
+            step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
+
+        step_content += f"#{shell_id} = {self.STEP_FUNCTION}('{self.name}'," \
+                        f"({step_ids_to_str(face_ids)}));\n"
+        step_content += faces_content
+
+        step_content += geometric_context_content
+
+        product_related_category = geometric_representation_context_id + 1
+        step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
+                        f"'part',$,(#{product_id}));\n"
+        draughting_id = product_related_category + 1
+        step_content += f"#{draughting_id} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n"
+        color_id = draughting_id + 1
+        primitive_color = (1, 1, 1)
+        if hasattr(self, 'color') and self.color is not None:
+            primitive_color = self.color
+        step_content += f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)}," \
+                        f"{round(float(primitive_color[1]), 4)},{round(float(primitive_color[2]), 4)});\n"
+
+        curve_style_id = color_id + 1
+        step_content += f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," \
+                        f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
+
+        fill_area_color_id = curve_style_id + 1
+        step_content += f"#{fill_area_color_id} = FILL_AREA_STYLE_COLOUR('',#{color_id});\n"
+
+        fill_area_id = fill_area_color_id + 1
+        step_content += f"#{fill_area_id} = FILL_AREA_STYLE('',#{fill_area_color_id});\n"
+
+        suface_fill_area_id = fill_area_id + 1
+        step_content += f"#{suface_fill_area_id} = SURFACE_STYLE_FILL_AREA(#{fill_area_id});\n"
+
+        suface_side_style_id = suface_fill_area_id + 1
+        step_content += f"#{suface_side_style_id} = SURFACE_SIDE_STYLE('',(#{suface_fill_area_id}));\n"
+
+        suface_style_usage_id = suface_side_style_id + 1
+        step_content += f"#{suface_style_usage_id} = SURFACE_STYLE_USAGE(.BOTH.,#{suface_side_style_id});\n"
+
+        presentation_style_id = suface_style_usage_id + 1
+
+        step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
+                        f"#{curve_style_id}));\n"
+
+        styled_item_id = presentation_style_id + 1
+        if self.__class__.__name__ == 'OpenShell3D':
+            for face_id in face_ids:
+                step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                                f"#{face_id});\n"
+                styled_item_id += 1
+            styled_item_id -= 1
+        else:
+            step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                            f"#{manifold_id});\n"
+        mechanical_design_id = styled_item_id + 1
+        step_content += f"#{mechanical_design_id} =" \
+                        f" MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION(" \
+                        f"'',(#{styled_item_id}),#{geometric_representation_context_id});\n"
+        current_id = mechanical_design_id
+
+        return step_content, current_id, [brep_id, product_definition_id]
 
     def to_step_face_ids(self, current_id):
         """
@@ -782,9 +890,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                     discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
                                                                                   start_point_tag=start_point_tag
-                                                                                  + point_account,
+                                                                                                  + point_account,
                                                                                   end_point_tag=end_point_tag
-                                                                                  + point_account))
+                                                                                                + point_account))
 
                             if isinstance(primitive, volmdlr.edges.LineSegment):
 
@@ -810,7 +918,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             line_account += 1
 
                         if primitives[index].is_close(primitive.reverse()):
-
                             lines_tags.append(-indices_check[index])
 
                     lines.append(contour.get_geo_lines(line_loop_account + 1, lines_tags))
