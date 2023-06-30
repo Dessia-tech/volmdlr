@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sweep with muitiform profile contour.
 - New module: Voxelization
 - OpenShell3D: from_faces (using faces graph)
+- SphericalFace3D: from_contours3d_and_rectangular_cut
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
@@ -41,6 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
 - babylondata: removes empty objects.
 - ClosedPolygon2D: point_belongs.
+- Fullarc: get_reverse.
+- Arc2D: point_belongs
+- ArcEllipse2D: point_at_abscissa
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
@@ -55,6 +59,8 @@ All adequations have been done for all tests and existing scripts.
 
 - bspline_compiled: refactor binomial_coefficient for performance.
 - Improve step translator.
+- Delete inplace methods: rotation, translation and frame_mapping
+- OpenShell3D: faces_graph.
 
 
 ### Changed
@@ -116,6 +122,7 @@ All adequations have been done for all tests and existing scripts.
 - DisplayMesh3D: triangulation_faces
 - Woodpecker CI setup
 - ContourMixin: primitive_section_over_contour.
+- Face3D: split_by_plane
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -212,6 +219,7 @@ All adequations have been done for all tests and existing scripts.
 - PlaneFace3D: merge_faces
 - Contour2D: divide.
 - BSplineFace3D: test_linesegment_intersections_approximation.
+- CylindricalFace3D: split_by_plane.
 
 v0.10.0 [Released 20/04/2023]
 

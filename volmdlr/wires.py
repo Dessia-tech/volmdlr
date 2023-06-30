@@ -2114,20 +2114,28 @@ class Contour2D(ContourMixin, Wire2D):
                                    surface_style=surface_style,
                                    name=self.name)
 
+    def is_edge_inside(self, edge):
+        """
+        Verifies if given edge is inside self contour perimeter, including its edges.
+
+        :param edge: othe edge to verify if inside contour.
+        :returns: True or False
+        """
+        for point in edge.discretization_points(number_points=5):
+            if not self.point_belongs(point, include_edge_points=True):
+                return False
+        return True
+
     def is_inside(self, contour2):
         """
-        Verifies if a contour is inside another contour perimeter, including the edges.
+        Verifies if given contour is inside self contour perimeter, including its edges.
 
         :returns: True or False
         """
         if contour2.area() > self.area() and not math.isclose(contour2.area(), self.area(), rel_tol=0.01):
             return False
-        points_contour2 = []
-        for prim in contour2.primitives:
-            points = prim.discretization_points(number_points=5)
-            points_contour2.extend(points[:-1])
-        for point in points_contour2:
-            if not self.point_belongs(point, include_edge_points=True):
+        for edge in contour2.primitives:
+            if not self.is_edge_inside(edge):
                 return False
         return True
 
@@ -3629,7 +3637,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         barycenter = self.barycenter()
         if not self.point_belongs(barycenter):
             barycenter1_2d = self.point_in_polygon()
-            self.translation_inplace(-barycenter1_2d)
+            new_polygon = self.translation(-barycenter1_2d)
             way_back = barycenter1_2d.to_3d(volmdlr.O3D, x, y)
         else:
             inters = self.linesegment_intersections(linex)
@@ -3638,10 +3646,10 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                     self.point_distance(inters[0][0]),
                     self.point_distance(inters[-1][0])):
                 mid_point = (inters[0][0] + inters[-1][0]) * 0.5
-                self.translation(-mid_point)
+                new_polygon = self.translation(-mid_point)
                 way_back = mid_point.to_3d(volmdlr.O3D, x, y)
 
-        return self, way_back
+        return new_polygon, way_back
 
     def get_possible_sewing_closing_points(self, polygon2, polygon_primitive,
                                            line_segment1: None, line_segment2: None):
