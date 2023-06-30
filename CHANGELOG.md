@@ -41,12 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export to step file
 - Step import
 - Edge: fix orientation of edges commig from step.
+- Sphere: point_belongs, inherits from ClosedShell3D instead of RevolvedProfile
 - PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
 - babylondata: removes empty objects.
 - ClosedPolygon2D: point_belongs.
 - Fullarc: get_reverse.
 - Arc2D: point_belongs
 - ArcEllipse2D: point_at_abscissa
+- Edge: from_step trim of periodic curves with different orientation of original edge
 
 
 ### Refactor
@@ -62,6 +64,7 @@ All adequations have been done for all tests and existing scripts.
 
 - bspline_compiled: refactor binomial_coefficient for performance.
 - Improve step translator.
+- Delete inplace methods: rotation, translation and frame_mapping
 - OpenShell3D: faces_graph.
 
 
@@ -124,6 +127,7 @@ All adequations have been done for all tests and existing scripts.
 - DisplayMesh3D: triangulation_faces
 - Woodpecker CI setup
 - ContourMixin: primitive_section_over_contour.
+- Face3D: split_by_plane
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -227,6 +231,7 @@ All adequations have been done for all tests and existing scripts.
 - PlaneFace3D: merge_faces
 - Contour2D: divide.
 - BSplineFace3D: test_linesegment_intersections_approximation.
+- CylindricalFace3D: split_by_plane.
 
 v0.10.0 [Released 20/04/2023]
 

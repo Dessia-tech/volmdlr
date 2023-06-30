@@ -286,25 +286,6 @@ class Face3D(volmdlr.core.Primitive3D):
                                               angle=angle)
         return self.__class__(new_surface, self.surface2d)
 
-    def rotation_inplace(self, center: volmdlr.Point3D,
-                         axis: volmdlr.Vector3D, angle: float):
-        """
-        Face3D rotation.
-
-         Object is updated inplace.
-        :param center: rotation center.
-        :type center: `volmdlr.Point3D`
-        :param axis: rotation axis.
-        :type axis: `volmdlr.Vector3D`
-        :param angle: rotation angle.
-        :type angle: float
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.surface3d.rotation_inplace(center=center, axis=axis, angle=angle)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Face3D translation.
@@ -316,18 +297,6 @@ class Face3D(volmdlr.core.Primitive3D):
         new_surface3d = self.surface3d.translation(offset=offset)
         return self.__class__(new_surface3d, self.surface2d)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Face3D translation. Object is updated inplace.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.surface3d.translation_inplace(offset=offset)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Face3D.
@@ -337,18 +306,6 @@ class Face3D(volmdlr.core.Primitive3D):
         new_surface3d = self.surface3d.frame_mapping(frame, side)
         return self.__class__(new_surface3d, self.surface2d.copy(),
                               self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.surface3d.frame_mapping_inplace(frame, side)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
         """Returns a copy of the Face3D."""
@@ -1015,6 +972,41 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return linesegment_intersections
 
+    def plane_intersections(self, plane3d: surfaces.Plane3D):
+        surfaces_intersections = self.surface3d.plane_intersection(plane3d)
+        outer_contour_intersections_with_plane = plane3d.contour_intersections(self.outer_contour3d)
+        plane_intersections = []
+        for plane_intersection in surfaces_intersections:
+            points_on_curve = []
+            for point in outer_contour_intersections_with_plane:
+                if plane_intersection.point_belongs(point):
+                    points_on_curve.append(point)
+            points_on_primitive = plane_intersection.sort_points_along_curve(points_on_curve)
+            if not isinstance(plane_intersection, volmdlr_curves.Line3D):
+                points_on_primitive = points_on_primitive + [points_on_primitive[0]]
+            for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                edge = plane_intersection.trim(point1, point2)
+                if self.edge3d_inside(edge):
+                    plane_intersections.append(volmdlr.wires.Wire3D([edge]))
+        return plane_intersections
+
+    def split_by_plane(self, plane3d: surfaces.Plane3D):
+        intersections_with_plane = self.plane_intersections(plane3d)
+        intersections_with_plane2d = [self.surface3d.contour3d_to_2d(intersection_wire)
+                                      for intersection_wire in intersections_with_plane]
+        while True:
+            for i, intersection2d in enumerate(intersections_with_plane2d):
+                if not self.surface2d.outer_contour.is_inside(intersection2d):
+                    for translation in [volmdlr.Vector2D(-2*math.pi, 0), volmdlr.Vector2D(2*math.pi, 0)]:
+                        translated_contour = intersection2d.translation(translation)
+                        if not self.surface2d.outer_contour.is_inside(translated_contour):
+                            continue
+                        intersections_with_plane2d.pop(i)
+                        intersections_with_plane2d.append(translated_contour)
+                    break
+            else:
+                break
+        return self.divide_face(intersections_with_plane2d)
 
 class PlaneFace3D(Face3D):
     """
@@ -1619,20 +1611,6 @@ class Triangle3D(PlaneFace3D):
         np3 = self.point3.frame_mapping(frame, side)
         return self.__class__(np1, np2, np3, self.name)
 
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated in-place.
-
-        :param side: 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.point1.frame_mapping_inplace(frame, side)
-        self.point2.frame_mapping_inplace(frame, side)
-        self.point3.frame_mapping_inplace(frame, side)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def copy(self, deep=True, memo=None):
         return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
                           self.name)
@@ -1658,20 +1636,6 @@ class Triangle3D(PlaneFace3D):
                                   self.alpha, self.color, self.name)
         return new_triangle
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Plane3D translation. Object is updated in-place.
-
-        :param offset: translation vector.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.point1.translation_inplace(offset)
-        self.point2.translation_inplace(offset)
-        self.point3.translation_inplace(offset)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
         """
@@ -1688,23 +1652,6 @@ class Triangle3D(PlaneFace3D):
         new_triangle = Triangle3D(new_point1, new_point2, new_point3,
                                   self.alpha, self.color, self.name)
         return new_triangle
-
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Triangle3D rotation. Object is updated inplace.
-
-        :param center: rotation center.
-        :param axis: rotation axis.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.point1.rotation_inplace(center, axis, angle)
-        self.point2.rotation_inplace(center, axis, angle)
-        self.point3.rotation_inplace(center, axis, angle)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
 
     @staticmethod
     def get_subdescription_points(new_points, resolution, max_length):

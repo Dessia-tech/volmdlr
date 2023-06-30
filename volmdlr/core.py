@@ -251,21 +251,6 @@ class CompositePrimitive2D(CompositePrimitive):
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
 
-    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
-        """
-        Rotates the CompositePrimitive2D. Object is updated in-place.
-
-        :param center: rotation center.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.rotation(center, angle))
-        self.primitives = primitives
-        self.update_basis_primitives()
-
     def translation(self, offset: volmdlr.Vector2D):
         """
         Translates the CompositePrimitive2D.
@@ -276,20 +261,6 @@ class CompositePrimitive2D(CompositePrimitive):
         return self.__class__([primitive.translation(offset)
                                for primitive in self.primitives])
 
-    def translation_inplace(self, offset: volmdlr.Vector2D):
-        """
-        Translates the CompositePrimitive2D. Object is updated in-place.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.translation(offset))
-        self.primitives = primitives
-        self.update_basis_primitives()
-
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new CompositePrimitive2D.
@@ -298,20 +269,6 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         return self.__class__([primitive.frame_mapping(frame, side)
                                for primitive in self.primitives])
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.frame_mapping(frame, side))
-        self.primitives = primitives
-        self.update_basis_primitives()
 
     def plot(self, ax=None, edge_style=EdgeStyle()):
 
@@ -1441,21 +1398,6 @@ class VolumeModel(dc.PhysicalObject):
             primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Rotates the VolumeModel. Object is updated inplace.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitive in self.primitives:
-            primitive.rotation_inplace(center, axis, angle)
-        self.bounding_box = self._bounding_box()
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Translates the VolumeModel.
@@ -1467,18 +1409,6 @@ class VolumeModel(dc.PhysicalObject):
                           primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Translates the VolumeModel. Object is updated inplace.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitives in self.primitives:
-            primitives.translation_inplace(offset)
-        self.bounding_box = self._bounding_box()
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new VolumeModel.
@@ -1488,18 +1418,6 @@ class VolumeModel(dc.PhysicalObject):
         new_primitives = [primitive.frame_mapping(frame, side)
                           for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitives in self.primitives:
-            primitives.frame_mapping_inplace(frame, side)
-        self.bounding_box = self._bounding_box()
 
     def copy(self, deep=True, memo=None):
         """

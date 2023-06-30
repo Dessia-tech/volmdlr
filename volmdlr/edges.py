@@ -211,7 +211,7 @@ class Edge(dc.DessiaObject):
                 if orientation == '.T.':
                     point1, point2 = point2, point1
                 trimmed_edge = obj.trim(point1, point2)
-                if orientation == '.T.':
+                if orientation == '.F.':
                     trimmed_edge = trimmed_edge.reverse()
                 return trimmed_edge
             if obj.periodic and orientation == '.F.':
@@ -1052,20 +1052,6 @@ class BSplineCurve(Edge):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
-    def translation_inplace(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
-        """
-        Translates the B-spline curve and its parameters are modified inplace.
-
-        :param offset: The translation vector
-        :type offset: Union[:class:`volmdlr.Vector2D`,
-            :class:`volmdlr.Vector3D`]
-        :return: None.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for point in self.control_points:
-            point.translation_inplace(offset)
-
     def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-6):
         """
         Checks if a 2D or 3D point belongs to the B-spline curve or not. It uses the point_distance.
@@ -1689,18 +1675,6 @@ class BSplineCurve2D(BSplineCurve):
         return BSplineCurve2D(self.degree, control_points,
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
-
-    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
-        """
-        BSplineCurve2D rotation. Object is updated inplace.
-
-        :param center: rotation center
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for point in self.control_points:
-            point.rotation_inplace(center, angle)
 
     def line_crossings(self, line2d: volmdlr_curves.Line2D):
         """Bspline Curve crossings with a line 2d."""
@@ -4610,27 +4584,6 @@ class BSplineCurve3D(BSplineCurve):
                                             self.knots, self.weights,
                                             self.periodic, self.name)
         return new_bsplinecurve3d
-
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
-        """
-        BSplineCurve3D rotation. Object is updated inplace.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        new_control_points = [point.rotation(center, axis, angle) for point in
-                              self.control_points]
-        new_bsplinecurve3d = BSplineCurve3D(self.degree, new_control_points,
-                                            self.knot_multiplicities,
-                                            self.knots, self.weights,
-                                            self.periodic, self.name)
-        self.control_points = new_control_points
-        self.curve = new_bsplinecurve3d.curve
-        self.points = new_bsplinecurve3d.points
-        self._bbox = None
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if self.periodic and not point1.is_close(point2):
