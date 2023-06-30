@@ -671,23 +671,6 @@ class Vector2D(Vector):
         v2x, v2y = self.rotation_parameters(center, angle)
         return self.__class__(v2x, v2y)
 
-    def rotation_inplace(self, center: "Point2D", angle: float):
-        """
-        Rotates the 2-dimensional vector and changes its values inplace
-
-        :param center: The center of rotation
-        :type center: :class:`volmdlr.Point2D`
-        :param angle: The angle of the rotation in radian
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        v2x, v2y = self.rotation_parameters(center, angle)
-        self.x = v2x
-        self.y = v2y
-
     def translation(self, offset: "Vector2D"):
         """
         Translates the 2-dimensional vector and returns a new translated vector
@@ -700,22 +683,6 @@ class Vector2D(Vector):
         v2x = self.x + offset[0]
         v2y = self.y + offset[1]
         return self.__class__(v2x, v2y)
-
-    def translation_inplace(self, offset: "Vector2D"):
-        """
-        Translates the vector and changes its values inplace
-
-        :param offset: The offset vector of the translation
-        :type offset: :class:`volmdlr.Vector2D`
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        v2x = self.x + offset[0]
-        v2y = self.y + offset[1]
-        self.x = v2x
-        self.y = v2y
 
     def frame_mapping(self, frame: "Frame2D", side: str):
         """
@@ -738,26 +705,6 @@ class Vector2D(Vector):
         if side == "new":
             new_vector = frame.global_to_local_coordinates(self)
         return new_vector
-
-    def frame_mapping_inplace(self, frame: "Frame2D", side: str):
-        """
-        # TODO: To be completed
-
-        :param frame: The input reference frame
-        :type frame: :class:`volmdlr.Frame2D`
-        :param side: Choose between 'old' and 'new'
-        :type side: str
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        if side == "old":
-            new_vector = frame.local_to_global_coordinates(self)
-        if side == "new":
-            new_vector = frame.global_to_local_coordinates(self)
-        self.x = new_vector.x
-        self.y = new_vector.y
 
     def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
         """
@@ -1545,30 +1492,6 @@ class Vector3D(Vector):
         vector2 = vector3D_rotation(self, center, axis, angle)
         return self.__class__(*vector2)
 
-    def rotation_inplace(self, center: "Point3D", axis: "Vector3D",
-                         angle: float):
-        """
-        Rotates of angle around axis the 2-dimensional vector and changes
-        its values inplace.
-        Using Rodrigues Formula:
-            https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula.
-
-        :param center: The center of rotation
-        :type center: :class:`volmdlr.Point3D`
-        :param axis: The axis of rotation
-        :type axis: :class:`volmdlr.Vector3D`
-        :param angle: The angle of the rotation in radian
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        vector2 = vector3D_rotation(self, center, axis, angle)
-        self.x = vector2[0]
-        self.y = vector2[1]
-        self.z = vector2[2]
-
     @staticmethod
     def axis_rotation_parameters(axis1_value, axis2_value, angle):
         """
@@ -1604,22 +1527,6 @@ class Vector3D(Vector):
 
         return Point3D(self.x, y1, z1)
 
-    def x_rotation_inplace(self, angle: float):
-        """
-        Rotation of angle around X axis and changes the vector parameters
-        inplace.
-
-        :param angle: Value of the angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        y1, z1 = self.axis_rotation_parameters(self.y, self.z, angle)
-        self.y = y1
-        self.z = z1
-
     def y_rotation(self, angle: float):
         """
         Rotation of angle around Y axis and returns a new vector as result.
@@ -1631,22 +1538,6 @@ class Vector3D(Vector):
         """
         z1, x1 = self.axis_rotation_parameters(self.z, self.x, angle)
         return Point3D(x1, self.y, z1)
-
-    def y_rotation_inplace(self, angle):
-        """
-        Rotation of vector around the Y axis and changes its parameters
-        inplace.
-
-        :param angle: Value of the angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        z1, x1 = self.axis_rotation_parameters(self.z, self.x, angle)
-        self.x = x1
-        self.z = z1
 
     def z_rotation(self, angle: float):
         """
@@ -1660,22 +1551,6 @@ class Vector3D(Vector):
         x1, y1 = self.axis_rotation_parameters(self.x, self.y, angle)
         return Point3D(x1, y1, self.z)
 
-    def z_rotation_inplace(self, angle: float):
-        """
-        Rotation of vector around the Z axis and changes its parameters
-        inplace
-
-        :param angle: Value of the angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        x1, y1 = self.axis_rotation_parameters(self.x, self.y, angle)
-        self.x = x1
-        self.y = y1
-
     def translation(self, offset: "Vector3D"):
         """
         Translates the vector and returns a new translated vector
@@ -1686,21 +1561,6 @@ class Vector3D(Vector):
         :rtype: :class:`volmdlr.Vector3D`
         """
         return self + offset
-
-    def translation_inplace(self, offset: "Vector3D"):
-        """
-        Translates the vector and changes its values inplace.
-
-        :param offset: A Vector3D-like object used for offsetting
-        :type offset: :class:`volmdlr.Vector3D`
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.x += offset[0]
-        self.y += offset[1]
-        self.z += offset[2]
 
     def frame_mapping(self, frame: "Frame3D", side: str):
         """
@@ -1724,28 +1584,6 @@ class Vector3D(Vector):
         if side == "new":
             new_vector = frame.global_to_local_coordinates(self)
         return new_vector
-
-    def frame_mapping_inplace(self, frame: "Frame3D", side: str):
-        """
-        # TODO: To be completed
-
-        :param frame: The input reference frame
-        :type frame: :class:`volmdlr.Frame3D`
-        :param side: Choose between 'old' and 'new'
-        :type side: str
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        if side == "old":
-            new_vector = frame.local_to_global_coordinates(self)
-
-        if side == "new":
-            new_vector = frame.global_to_local_coordinates(self)
-        self.x = new_vector.x
-        self.y = new_vector.y
-        self.z = new_vector.z
 
     def plane_projection3d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
         """
@@ -2645,23 +2483,6 @@ class Basis2D(Basis):
         new_v = self.v.rotation(center, angle)
         return Basis2D(new_u, new_v)
 
-    def roation_inplace(self, angle: float):
-        """
-        Rotates the basis and changes its parameters inplace.
-
-        :param angle: The angle of rotation in rad
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        center = O2D
-        new_u = self.u.rotation(center, angle)
-        new_v = self.v.rotation(center, angle)
-        self.u = new_u
-        self.v = new_v
-
     def copy(self, deep=True, memo=None):
         """
         Creates a copy of a 2-dimensional basis.
@@ -2826,27 +2647,6 @@ class Basis3D(Basis):
         new_w = self.w.rotation(center, axis, angle)
         return Basis3D(new_u, new_v, new_w, self.name)
 
-    def rotation_inplace(self, axis: Vector3D, angle: float):
-        """
-        Rotates the basis and changes its parameters inplace.
-
-        :param axis: The axis around which the rotation is made
-        :type axis: :class:`volmdlr.Vector3D`
-        :param angle: The angle of rotation in rad
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        center = O3D
-        new_u = self.u.rotation(center, axis, angle)
-        new_v = self.v.rotation(center, axis, angle)
-        new_w = self.w.rotation(center, axis, angle)
-        self.u = new_u
-        self.v = new_v
-        self.w = new_w
-
     def x_rotation(self, angle: float):
         """
         Rotates the basis around the X axis and a new basis is returned
@@ -2861,22 +2661,6 @@ class Basis3D(Basis):
         new_v = self.v.x_rotation(angle)
         new_w = self.w.x_rotation(angle)
         return Basis3D(new_u, new_v, new_w, self.name)
-
-    def x_rotation_inplace(self, angle: float):
-        """
-        Rotates the basis around the X axis and its parameters are
-        changed inplace.
-
-        :param angle: The rotation angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.u = self.u.x_rotation(angle)
-        self.v = self.v.x_rotation(angle)
-        self.w = self.w.x_rotation(angle)
 
     def y_rotation(self, angle: float):
         """
@@ -2893,22 +2677,6 @@ class Basis3D(Basis):
         new_w = self.w.y_rotation(angle)
         return Basis3D(new_u, new_v, new_w, self.name)
 
-    def y_rotation_inplace(self, angle: float):
-        """
-        Rotates the basis around the Y axis and its parameters are
-        changed inplace.
-
-        :param angle: The rotation angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.u = self.u.y_rotation(angle)
-        self.v = self.v.y_rotation(angle)
-        self.w = self.w.y_rotation(angle)
-
     def z_rotation(self, angle: float):
         """
         Rotates the basis around the Z axis and a new basis is returned
@@ -2924,48 +2692,6 @@ class Basis3D(Basis):
         new_w = self.w.z_rotation(angle)
         return Basis3D(new_u, new_v, new_w, self.name)
 
-    def z_rotation_inplace(self, angle: float):
-        """
-        Rotates the basis around the Z axis and its parameters are
-        changed inplace.
-
-        :param angle: The rotation angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.u = self.u.z_rotation(angle)
-        self.v = self.v.z_rotation(angle)
-        self.w = self.w.z_rotation(angle)
-
-    # def Eulerrotation(self, angles:Tuple[float, float, float], copy:bool=True):
-    #     psi, theta, phi = angles
-    #     center = O3D
-    #
-    #     vect_u = self.u.copy()
-    #     vect_v = self.v.copy()
-    #     vect_w = self.w.copy()
-    #
-    #     # rotation around w
-    #     vect_u.rotation(center, vect_w, psi, False)
-    #     vect_v.rotation(center, vect_w, psi, False)
-    #
-    #     # rotation around v
-    #     vect_v.rotation(center, vect_u, theta, False)
-    #     vect_w.rotation(center, vect_u, theta, False)
-    #
-    #     # rotation around w
-    #     vect_u.rotation(center, vect_w, phi, False)
-    #     vect_v.rotation(center, vect_w, phi, False)
-    #
-    #     if copy:
-    #         return Basis3D(vect_u, vect_v, vect_w)
-    #     self.u = vect_u
-    #     self.v = vect_v
-    #     self.w = vect_w
-
     def euler_rotation_parameters(self, angles: Tuple[float, float, float]):
         """
         Computes the new basis' parameter after rotation of the basis using
@@ -2980,21 +2706,17 @@ class Basis3D(Basis):
         psi, theta, phi = angles
         center = O3D
 
-        vect_u = self.u.copy()
-        vect_v = self.v.copy()
-        vect_w = self.w.copy()
-
         # rotation around w
-        vect_u.rotation_inplace(center, vect_w, psi)
-        vect_v.rotation_inplace(center, vect_w, psi)
+        vect_u = self.u.rotation(center, self.w, psi)
+        vect_v = self.v.rotation(center, self.w, psi)
 
         # rotation around v
-        vect_v.rotation_inplace(center, vect_u, theta)
-        vect_w.rotation_inplace(center, vect_u, theta)
+        vect_v = vect_v.rotation(center, vect_u, theta)
+        vect_w = self.w.rotation(center, vect_u, theta)
 
         # rotation around w
-        vect_u.rotation_inplace(center, vect_w, phi)
-        vect_v.rotation_inplace(center, vect_w, phi)
+        vect_u = vect_u.rotation(center, vect_w, phi)
+        vect_v = vect_v.rotation(center, vect_w, phi)
         return vect_u, vect_v, vect_w
 
     def euler_rotation(self, angles: Tuple[float, float, float]):
@@ -3009,23 +2731,6 @@ class Basis3D(Basis):
         """
         vect_u, vect_v, vect_w = self.euler_rotation_parameters(angles)
         return Basis3D(vect_u, vect_v, vect_w)
-
-    def euler_rotation_inplace(self, angles: Tuple[float, float, float]):
-        """
-        Rotates the 3-dimensional basis using euler rotation and
-        its parameters are changed in place.
-
-        :param angles: Three angles corresponding to psi, theta, phi in rad
-        :type angles: tuple
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        vect_u, vect_v, vect_w = self.euler_rotation_parameters(angles)
-        self.u = vect_u
-        self.v = vect_v
-        self.w = vect_w
 
     def transfer_matrix(self):
         """
@@ -3293,19 +2998,6 @@ class Frame2D(Basis2D):
         new_origin = self.origin.translation(vector)
         return Frame2D(new_origin, self.u, self.v)
 
-    def translation_inplace(self, vector):
-        """
-        Translates the 2-dimensional frame and changes its parameters inplace.
-
-        :param vector: The translation vector
-        :type vector: :class:`volmdlr.Vector2D`
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.origin = self.origin.translation(vector)
-
     def rotation(self, angle):
         """
         Returns a rotated 2-dimensional frame.
@@ -3317,21 +3009,6 @@ class Frame2D(Basis2D):
         """
         new_base = Basis2D.rotation(self, angle)
         return Frame2D(self.origin, new_base.u, new_base.v)
-
-    def rotation_inplace(self, angle: float):
-        """
-        Rotates the 2-dimensional frame and changes its parameters inplace.
-
-        :param angle: The rotation angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        new_base = Basis2D.rotation(self, angle)
-        self.u = new_base.u
-        self.v = new_base.v
 
     def Draw(self, ax=None, style="ok"):
         """
@@ -3592,29 +3269,6 @@ class Frame3D(Basis3D):
                        new_base.u, new_base.v, new_base.w,
                        self.name)
 
-    def rotation_inplace(self, center: Point3D,  axis: Vector3D, angle: float):
-        """
-        Rotates the center as a point and vectors as directions
-        (calling Basis). Object is updated inplace.
-
-        :param center: The center of rotation
-        :type center: :class:`volmdlr.Point3D`
-        :param axis: The axis around which the rotation will be made
-        :type axis: :class:`volmdlr.Vector3D`
-        :param angle: The rotation angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        new_base = Basis3D.rotation(self, axis, angle)
-        new_origin = self.origin.rotation(center, axis, angle)
-        self.origin = new_origin
-        self.u = new_base.u
-        self.v = new_base.v
-        self.w = new_base.w
-
     def translation(self, offset: Vector3D):
         """
         Translates a 3-dimensional frame.
@@ -3626,19 +3280,6 @@ class Frame3D(Basis3D):
         """
         return Frame3D(self.origin.translation(offset),
                        self.u, self.v, self.w, self.name)
-
-    def translation_inplace(self, offset: Vector3D):
-        """
-        Translates the 3-dimensional frame and changes its parameters inplace.
-
-        :param vector: The translation vector
-        :type vector: :class:`volmdlr.Vector3D`
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.origin.translation_inplace(offset)
 
     def copy(self, deep=True, memo=None):
         """

@@ -1042,20 +1042,6 @@ class BSplineCurve(Edge):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
 
-    def translation_inplace(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
-        """
-        Translates the B-spline curve and its parameters are modified inplace.
-
-        :param offset: The translation vector
-        :type offset: Union[:class:`volmdlr.Vector2D`,
-            :class:`volmdlr.Vector3D`]
-        :return: None.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for point in self.control_points:
-            point.translation_inplace(offset)
-
     def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-6):
         """
         Checks if a 2D or 3D point belongs to the B-spline curve or not. It uses the point_distance.
@@ -1678,18 +1664,6 @@ class BSplineCurve2D(BSplineCurve):
         return BSplineCurve2D(self.degree, control_points,
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic)
-
-    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
-        """
-        BSplineCurve2D rotation. Object is updated inplace.
-
-        :param center: rotation center
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for point in self.control_points:
-            point.rotation_inplace(center, angle)
 
     def line_crossings(self, line2d: volmdlr_curves.Line2D):
         """Bspline Curve crossings with a line 2d."""
@@ -2514,7 +2488,7 @@ class Arc2D(ArcMixin, Edge):
         arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
         point_start_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_point)
         point_end_angle = volmdlr.geometry.clockwise_angle(vector_point, vector_end)
-        if math.isclose(arc_angle, point_start_angle + point_end_angle, abs_tol=abs_tol):
+        if math.isclose(arc_angle, point_start_angle + point_end_angle, rel_tol=0.01):
             return True
         return False
 
@@ -3283,19 +3257,17 @@ class ArcEllipse2D(Edge):
         def ellipse_arc_length(theta):
             return math.sqrt((self.ellipse.major_axis ** 2) * math.sin(theta) ** 2 +
                              (self.ellipse.minor_axis ** 2) * math.cos(theta) ** 2)
-        abscissa_angle = None
+
         iter_counter = 0
-        increment_factor = 1e-5
         while True:
             res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-            if math.isclose(res, abscissa, abs_tol=1e-5):
+            if math.isclose(res, abscissa, abs_tol=1e-8):
                 abscissa_angle = initial_angle
                 break
             if res > abscissa:
-                if iter_counter == 0:
-                    increment_factor = -1e-5
-                else:
-                    raise NotImplementedError
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(2 * res)
+            else:
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/res
             initial_angle += increment_factor
             iter_counter += 1
         x = self.ellipse.major_axis * math.cos(abscissa_angle)
@@ -4598,27 +4570,6 @@ class BSplineCurve3D(BSplineCurve):
                                             self.periodic, self.name)
         return new_bsplinecurve3d
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
-        """
-        BSplineCurve3D rotation. Object is updated inplace.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        new_control_points = [point.rotation(center, axis, angle) for point in
-                              self.control_points]
-        new_bsplinecurve3d = BSplineCurve3D(self.degree, new_control_points,
-                                            self.knot_multiplicities,
-                                            self.knots, self.weights,
-                                            self.periodic, self.name)
-        self.control_points = new_control_points
-        self.curve = new_bsplinecurve3d.curve
-        self.points = new_bsplinecurve3d.points
-        self._bbox = None
-
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
         if self.periodic and not point1.is_close(point2):
             return self.trim_with_interpolation(point1, point2)
@@ -5356,10 +5307,6 @@ class Arc3D(ArcMixin, Edge):
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}', #{frame_id}, {self.circle.radius * 1000});\n"
 
-        # if surface_id:
-        #     content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
-        #     curve_id += 1
-
         current_id = curve_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         end_content, end_id = self.end.to_step(start_id + 1, vertex=True)
@@ -5486,10 +5433,6 @@ class FullArc3D(FullArcMixin, Arc3D):
         curve_id = frame_id + 1
         # Not calling Circle3D.to_step because of circular imports
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.circle.radius * 1000});\n"
-
-        # if surface_id:
-        #     content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
-        #     curve_id += 1
 
         point1 = (self.circle.center + u * self.circle.radius).to_point()
 

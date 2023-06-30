@@ -6,14 +6,12 @@ Common abstract primitives.
 """
 
 import math
-import warnings
 from typing import Dict, List
 
 from numpy import zeros
 from scipy.optimize import linprog
 
 # import dessia_common as dc
-import volmdlr
 import volmdlr.edges
 
 
@@ -67,17 +65,6 @@ class RoundedLineSegments:
                                for point in self.points], radius=self.radius,
                               adapt_radius=self.adapt_radius,
                               name=self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for point in self.points:
-            point.frame_mapping_inplace(frame, side)
 
     def arc_features(self, point_index: int):
         raise NotImplementedError('The method arc_features should be overloaded.')
