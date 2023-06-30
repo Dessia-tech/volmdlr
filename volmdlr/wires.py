@@ -2126,15 +2126,16 @@ class Contour2D(ContourMixin, Wire2D):
                 return False
         return True
 
-    def is_inside(self, contour2):
+    def is_inside(self, other_contour):
         """
         Verifies if given contour is inside self contour perimeter, including its edges.
 
+        :param other_contour: other contour.
         :returns: True or False
         """
-        if contour2.area() > self.area() and not math.isclose(contour2.area(), self.area(), rel_tol=0.01):
+        if other_contour.area() > self.area() and not math.isclose(other_contour.area(), self.area(), rel_tol=0.01):
             return False
-        for edge in contour2.primitives:
+        for edge in other_contour.primitives:
             if not self.is_edge_inside(edge):
                 return False
         return True

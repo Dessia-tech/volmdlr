@@ -7,7 +7,7 @@ import math
 import warnings
 from itertools import chain
 from typing import List
-
+from scipy.optimize._lsq import least_squares
 import matplotlib.pyplot as plt
 import numpy as npy
 
@@ -1946,6 +1946,137 @@ class CylindricalFace3D(Face3D):
         number_points_y = int(delta_z * z_resolution)
 
         return number_points_x, number_points_y
+
+    def minimum_maximum(self):
+        poly = self.surface2d.outer_contour.to_polygon(angle_resolution=10) 
+        points = poly.points
+        min_h, min_theta = min([pt.y for pt in points]), min(
+            [pt.x for pt in points])
+        max_h, max_theta = max([pt.y for pt in points]), max(
+            [pt.x for pt in points])
+        return min_h, min_theta, max_h, max_theta
+
+    def minimum_distance_points_cyl(self, other_cyl):
+        r1, r2 = self.radius, other_cyl.radius
+        min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum()
+
+        n1 = self.normal
+        u1 = self.surface3d.frame.u
+        v1 = self.surface3d.frame.v
+        frame1 = volmdlr.Frame3D(self.center, u1, v1, n1)
+
+        min_h2, min_theta2, max_h2, max_theta2 = other_cyl.minimum_maximum()
+
+        n2 = other_cyl.normal
+        u2 = other_cyl.surface3d.frame.u
+        v2 = other_cyl.surface3d.frame.v
+        frame2 = volmdlr.Frame3D(other_cyl.center, u2, v2, n2)
+
+        w = other_cyl.center - self.center
+
+        n1n1, n1u1, n1v1, n1n2, n1u2, n1v2 = n1.dot(n1), n1.dot(u1), n1.dot(
+            v1), n1.dot(n2), n1.dot(u2), n1.dot(v2)
+        u1u1, u1v1, u1n2, u1u2, u1v2 = u1.dot(u1), u1.dot(v1), u1.dot(
+            n2), u1.dot(u2), u1.dot(v2)
+        v1v1, v1n2, v1u2, v1v2 = v1.dot(v1), v1.dot(n2), v1.dot(u2), v1.dot(v2)
+        n2n2, n2u2, n2v2 = n2.dot(n2), n2.dot(u2), n2.dot(v2)
+        u2u2, u2v2, v2v2 = u2.dot(u2), u2.dot(v2), v2.dot(v2)
+
+        w2, wn1, wu1, wv1, wn2, wu2, wv2 = w.dot(w), w.dot(n1), w.dot(
+            u1), w.dot(v1), w.dot(n2), w.dot(u2), w.dot(v2)
+
+        # x = (theta1, h1, theta2, h2)
+        def distance_squared(x):
+            return (n1n1 * (x[1] ** 2) + u1u1 * ((math.cos(x[0])) ** 2) * (
+                    r1 ** 2) + v1v1 * ((math.sin(x[0])) ** 2) * (r1 ** 2)
+                    + w2 + n2n2 * (x[3] ** 2) + u2u2 * (
+                            (math.cos(x[2])) ** 2) * (r2 ** 2) + v2v2 * (
+                            (math.sin(x[2])) ** 2) * (r2 ** 2)
+                    + 2 * x[1] * r1 * math.cos(x[0]) * n1u1 + 2 * x[
+                        1] * r1 * math.sin(x[0]) * n1v1 - 2 * x[1] * wn1
+                    - 2 * x[1] * x[3] * n1n2 - 2 * x[1] * r2 * math.cos(
+                        x[2]) * n1u2 - 2 * x[1] * r2 * math.sin(x[2]) * n1v2
+                    + 2 * math.cos(x[0]) * math.sin(x[0]) * u1v1 * (
+                            r1 ** 2) - 2 * r1 * math.cos(x[0]) * wu1
+                    - 2 * r1 * x[3] * math.cos(
+                        x[0]) * u1n2 - 2 * r1 * r2 * math.cos(x[0]) * math.cos(
+                        x[2]) * u1u2
+                    - 2 * r1 * r2 * math.cos(x[0]) * math.sin(
+                        x[2]) * u1v2 - 2 * r1 * math.sin(x[0]) * wv1
+                    - 2 * r1 * x[3] * math.sin(
+                        x[0]) * v1n2 - 2 * r1 * r2 * math.sin(x[0]) * math.cos(
+                        x[2]) * v1u2
+                    - 2 * r1 * r2 * math.sin(x[0]) * math.sin(
+                        x[2]) * v1v2 + 2 * x[3] * wn2 + 2 * r2 * math.cos(
+                        x[2]) * wu2
+                    + 2 * r2 * math.sin(x[2]) * wv2 + 2 * x[3] * r2 * math.cos(
+                        x[2]) * n2u2 + 2 * x[3] * r2 * math.sin(x[2]) * n2v2
+                    + 2 * math.cos(x[2]) * math.sin(x[2]) * u2v2 * (r2 ** 2))
+
+        x01 = npy.array([(min_theta1 + max_theta1) / 2, (min_h1 + max_h1) / 2,
+                         (min_theta2 + max_theta2) / 2, (min_h2 + max_h2) / 2])
+        x02 = npy.array([min_theta1, (min_h1 + max_h1) / 2,
+                         min_theta2, (min_h2 + max_h2) / 2])
+        x03 = npy.array([max_theta1, (min_h1 + max_h1) / 2,
+                         max_theta2, (min_h2 + max_h2) / 2])
+
+        minimax = [(min_theta1, min_h1, min_theta2, min_h2),
+                   (max_theta1, max_h1, max_theta2, max_h2)]
+
+        res1 = least_squares(distance_squared, x01, bounds=minimax)
+        res2 = least_squares(distance_squared, x02, bounds=minimax)
+        res3 = least_squares(distance_squared, x03, bounds=minimax)
+
+        pt1 = volmdlr.Point3D(r1 * math.cos(res1.x[0]), 
+                              r1 * math.sin(res1.x[0]),
+                              res1.x[1])
+        p1 = frame1.old_coordinates(pt1)
+        pt2 = volmdlr.Point3D(r2 * math.cos(res1.x[2]), 
+                              r2 * math.sin(res1.x[2]),
+                              res1.x[3])
+        p2 = frame2.old_coordinates(pt2)
+        d = p1.point_distance(p2)
+        result = res1
+
+        res = [res2, res3]
+        for couple in res:
+            pttest1 = volmdlr.Point3D(r1 * math.cos(couple.x[0]),
+                                      r1 * math.sin(couple.x[0]),
+                                      couple.x[1])
+            pttest2 = volmdlr.Point3D(r2 * math.cos(couple.x[2]),
+                                      r2 * math.sin(couple.x[2]),
+                                      couple.x[3])
+            ptest1 = frame1.old_coordinates(pttest1)
+            ptest2 = frame2.old_coordinates(pttest2)
+            dtest = ptest1.point_distance(ptest2)
+            if dtest < d:
+                result = couple
+                p1, p2 = ptest1, ptest2
+
+        pt1_2d = volmdlr.Point2D(result.x[0], result.x[1])
+        pt2_2d = volmdlr.Point2D(result.x[2], result.x[3])
+
+        if not (self.surface2d.outer_contour.point_belongs(pt1_2d)):
+            # Find the closest one
+
+            poly1 = self.surface2d.outer_contour.to_polygon(angle_resolution=10)
+            _, new_pt1_2d = poly1.point_border_distance(pt1_2d, return_other_point=True)
+            pt1 = volmdlr.Point3D(r1 * math.cos(new_pt1_2d[0]),
+                                  r1 * math.sin(new_pt1_2d[0]),
+                                  new_pt1_2d[1])
+            p1 = frame1.old_coordinates(pt1)
+
+        if not (other_cyl.surface2d.outer_contour.point_belongs(pt2_2d)):
+            # Find the closest one
+
+            poly2 = other_cyl.surface2d.outer_contour.to_polygon(angle_resolution=10)
+            _, new_pt2_2d = poly2.point_border_distance(pt2_2d, return_other_point=True)
+            pt2 = volmdlr.Point3D(r2 * math.cos(new_pt2_2d[0]),
+                                  r2 * math.sin(new_pt2_2d[0]),
+                                  new_pt2_2d[1])
+            p2 = frame2.old_coordinates(pt2)
+
+        return p1, p2
 
     # def planeface_minimal_distance(self, planeface, return_points=False):
 
