@@ -2264,18 +2264,22 @@ class VolumeModel(dc.PhysicalObject):
         """
 
         list_shells = []
+        shell_classes = ('OpenShell3D', 'ClosedShell3D', 'OpenTriangleShell3D',
+                         'ClosedTriangleShell3D', 'Block', 'ExtrudedProfile',
+                         'RevolvedProfile', 'Cylinder', 'Cone',
+                         'HollowCylinder', 'Sweep', 'Sphere')
 
         def unpack_assembly(assembly):
             for prim in assembly.primitives:
                 if primitive.__class__.__name__ in ('Assembly', "Compound"):
                     unpack_assembly(prim)
-                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                elif primitive.__class__.__name__ in shell_classes:
                     list_shells.append(prim)
 
         for primitive in self.primitives:
             if primitive.__class__.__name__ in ('Assembly', "Compound"):
                 unpack_assembly(primitive)
-            elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+            elif primitive.__class__.__name__ in shell_classes:
                 list_shells.append(primitive)
 
         return list_shells
