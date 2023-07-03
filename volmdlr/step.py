@@ -910,7 +910,7 @@ class Step(dc.DessiaObject):
         functions = {}
 
         for line in lines:
-            line = line.replace(" ", "")
+            # line = line.replace(" ", "")
             line = line.replace("\n", "")
 
             # SKIP EMPTY LINE
@@ -930,9 +930,9 @@ class Step(dc.DessiaObject):
                 continue
 
             function = line.split("=", maxsplit=1)
-            function_id = int(function[0][1:])
+            function_id = int(function[0][1:].strip())
             function_name_arg = function[1].split("(", 1)
-            function_name = function_name_arg[0]
+            function_name = function_name_arg[0].replace(" ", "")
             function_arg = function_name_arg[1].split("#")
             function_connections = []
             connections = []
@@ -1074,7 +1074,7 @@ class Step(dc.DessiaObject):
     @staticmethod
     def step_subfunctions(subfunctions):
         """Handles context elements from step file."""
-        subfunctions = subfunctions[0]
+        subfunctions = subfunctions[0].replace(" ", "")
         parenthesis_count = 0
         subfunction_names = []
         subfunction_args = []
