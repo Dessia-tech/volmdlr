@@ -4887,7 +4887,7 @@ class Contour3D(ContourMixin, Wire3D):
         """
 
         merged_primitives = self.delete_shared_contour_section(contour3d, abs_tol)
-        contours = Contour3D.contours_from_edges(merged_primitives, tol=1e-6)
+        contours = Contour3D.contours_from_edges(merged_primitives, tol=abs_tol)
 
         return contours
 
