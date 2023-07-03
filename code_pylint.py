@@ -16,7 +16,7 @@ EFFECTIVE_DATE = date(2023, 1, 31)
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
-                     "wrong-spelling-in-comment": 216,
+                     "wrong-spelling-in-comment": 204,
                      "wrong-spelling-in-docstring": 143,
                      'invalid-name': 190,
                      'no-member': 3,
@@ -31,12 +31,11 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-statements': 18,
                      'super-init-not-called': 13,
                      'no-name-in-module': 11,
-                     'abstract-method': 37,
+                     'abstract-method': 32,
                      'duplicate-code': 10,
                      'arguments-renamed': 2,
                      'too-many-ancestors': 9,
                      'too-few-public-methods': 3,
-                     'non-parent-init-called': 3,
                      'too-many-public-methods': 12,
                      'too-many-instance-attributes': 14,
                      'protected-access': 4,
@@ -46,19 +45,15 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-nested-blocks': 10,
                      'too-many-return-statements': 5,
                      'cyclic-import': 1,
-                     'raise-missing-from': 2,
                      'undefined-variable': 0,  # 2 when gmsh is fixed
                      'broad-except': 1,
                      "broad-exception-caught": 2,
                      'too-many-boolean-expressions': 3,
                      'too-many-lines': 4,
-                     'redundant-keyword-arg': 3,
                      'consider-using-with': 1,
                      'unnecessary-dunder-call': 2,
                      'chained-comparison': 2,
-                     'missing-module-docstring': 2,
                      'consider-using-generator': 1,
-                     'import-outside-toplevel': 1,
                      'unsubscriptable-object': 1,
                      'signature-differs': 1}
 
