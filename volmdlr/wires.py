@@ -1238,7 +1238,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         return bspline_curve
 
     def triangulation(self):
-        """Triangulatio method for a Wire3D."""
+        """Triangulation method for a Wire3D."""
         return None
 
     def get_primitives_2d(self, plane_origin, x, y):
@@ -2051,7 +2051,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def is_inside(self, contour2):
         """
-        Verifies if a contour is inside another contour perimiter, including the edges.
+        Verifies if a contour is inside another contour perimeter, including the edges.
 
         :returns: True or False
         """

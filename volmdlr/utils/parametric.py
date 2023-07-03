@@ -83,7 +83,7 @@ def is_undefined_brep_primitive(primitive, periodicity):
 
 def find_index_defined_brep_primitive_on_periodical_surface(primitives2d, periodicity):
     """
-    Search for a primitive on the boundary representation that can be used as reference for reparing the contour.
+    Search for a primitive on the boundary representation that can be used as reference for repairing the contour.
     """
     pos = 0
     for i, primitive in enumerate(primitives2d):
