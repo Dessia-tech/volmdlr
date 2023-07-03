@@ -214,7 +214,7 @@ class Edge(dc.DessiaObject):
                 if orientation == '.F.':
                     trimmed_edge = trimmed_edge.reverse()
                 return trimmed_edge
-            if obj.periodic and orientation == '.F.':
+            if hasattr(obj, "periodic") and obj.periodic and orientation == '.F.':
                 trimmed_edge = obj.trim(point2, point1)
             else:
                 trimmed_edge = obj.trim(point1, point2)
