@@ -1545,9 +1545,9 @@ class BSplineCurve(Edge):
         if all(other_bspline2.point_belongs(point, abs_tol=abs_tol) for point in self.points):
             return [self]
         if self.point_belongs(other_bspline2.start, abs_tol=abs_tol):
-            bspline1_, bspline2_ = self.split(other_bspline2.start)
+            bspline1_, bspline2_ = self.split(other_bspline2.start, abs_tol)
         elif self.point_belongs(other_bspline2.end, abs_tol=abs_tol):
-            bspline1_, bspline2_ = self.split(other_bspline2.end)
+            bspline1_, bspline2_ = self.split(other_bspline2.end, abs_tol)
         else:
             return []
             # raise NotImplementedError
