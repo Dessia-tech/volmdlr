@@ -125,6 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change python suport version from >=3.7 to >= 3.9
 - LICENSE changed from GPL to Lesser GPL 
 - Readme logo updated
+- CI: do not check quality on tag
 
 ### Unittests
 - Arc2D: test_arc_intersections
