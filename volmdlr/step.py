@@ -1012,7 +1012,7 @@ class Step(dc.DessiaObject):
                         if connection not in visited_set:
                             stack.append(connection)
                 else:
-                    # Entities without connections should be instatiate first
+                    # Entities without connections should be instantiate first
                     list_head.append(node)
         return list_head + list_nodes[::-1]
 

@@ -3251,7 +3251,7 @@ class Arc2D(Arc):
         """
         Intersections between an arc 2d and arc-ellipse 2d.
 
-        :param arcellipse: arc ellipse 2d.
+        :param arcellipse: arc-ellipse 2d.
         :param abs_tol: tolerance
         :return: list of intersection points.
         """
@@ -4441,7 +4441,7 @@ class ArcEllipse2D(Edge):
         """
         Checks if two arc-elipse are the same considering the Euclidean distance.
 
-        :param other_edge: other arc-elipse.
+        :param other_edge: other arc-ellipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
@@ -7463,7 +7463,7 @@ class ArcEllipse3D(Edge):
         """
         Checks if two arc-elipse are the same considering the Euclidean distance.
 
-        :param other_edge: other arc-elipse.
+        :param other_edge: other arc-ellipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
