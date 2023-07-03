@@ -2309,9 +2309,9 @@ class ArcMixin:
                [self.start, self.point_at_abscissa(self.length() * .5), self.end]):
             return [self]
         if self.point_belongs(other_arc2.start, abs_tol):
-            arc1_, arc2_ = self.split(other_arc2.start)
+            arc1_, arc2_ = self.split(other_arc2.start, abs_tol)
         elif self.point_belongs(other_arc2.end, abs_tol):
-            arc1_, arc2_ = self.split(other_arc2.end)
+            arc1_, arc2_ = self.split(other_arc2.end, abs_tol)
         else:
             raise NotImplementedError
         shared_arc_section = []
