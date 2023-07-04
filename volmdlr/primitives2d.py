@@ -437,6 +437,7 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
         volmdlr.wires.Contour2D.__init__(self, self._primitives(), name)
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the object."""
         return self.__class__([point.copy(deep, memo) for point in self.points], self.radius.copy(),
                               self.adapt_radius, name='copy_' + self.name)
 
@@ -460,6 +461,7 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         self.type_ = type_
 
     def plot(self, ax, edge_style: EdgeStyle()):
+        """Plots the Measure2D."""
         ndigits = 6
         x1, y1 = self.start
         x2, y2 = self.end

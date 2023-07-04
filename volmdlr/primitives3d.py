@@ -346,7 +346,7 @@ class Block(shells.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Block translation.
+        Returns a new translated block.
 
         :param offset: translation vector.
         :return: A new translated Block.
@@ -604,11 +604,13 @@ class ExtrudedProfile(shells.ClosedShell3D):
         return [lower_face, upper_face] + lateral_faces
 
     def area(self):
+        """Returns the area of the extruded 2D surface."""
         areas = self.outer_contour2d.area()
         areas -= sum([contour.area() for contour in self.inner_contours2d])
         return areas
 
     def volume(self):
+        """Returns the volume of the extruded profile."""
         z = self.x.cross(self.y)
         z.normalize()
         return self.area() * self.extrusion_vector.dot(z)
@@ -775,6 +777,10 @@ class RevolvedProfile(shells.ClosedShell3D):
                               name=self.name)
 
     def shell_faces(self):
+        """
+        Computes the shell faces from init data.
+
+        """
         faces = []
 
         for edge in self.contour3d.primitives:
@@ -799,6 +805,7 @@ class RevolvedProfile(shells.ClosedShell3D):
     def volume(self):
         """
         Volume from Guldin formulae.
+
         """
         point1 = self.axis_point.PlaneProjection3D(self.plane_origin,
                                                    self.x, self.y)
@@ -946,6 +953,10 @@ class Cylinder(shells.ClosedShell3D):
         shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
+        """
+        Computes the shell faces from init data.
+
+        """
         surface3d = surfaces.CylindricalSurface3D(self.frame, self.radius)
         cylindrical_face = volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
             surface3d, 0, 2*math.pi, 0, self.length)
@@ -1541,6 +1552,7 @@ class HollowCylinder(RevolvedProfile):
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def volume(self):
+        """Returns the volume of the hollow cylinder."""
         return self.length * math.pi * (self.outer_radius**2
                                         - self.inner_radius**2)
 
@@ -1859,6 +1871,7 @@ class Sphere(RevolvedProfile):
                                  color=color, alpha=alpha, name=name)
 
     def volume(self):
+        """Returns the volume of the sphere."""
         return 4 / 3 * math.pi * self.radius**3
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
