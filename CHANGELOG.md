@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fullarc: get_reverse.
 - Arc2D: point_belongs
 - ArcEllipse2D: point_at_abscissa
+- Frame3D: import/export step.
 - Edge: from_step trim of periodic curves with different orientation of original edge
 
 ### Refactor
