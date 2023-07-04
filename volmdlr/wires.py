@@ -4120,8 +4120,12 @@ class Contour3D(ContourMixin, Wire3D):
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
         """
-        Create a Circle3D step object.
+        Converts the object to a STEP representation.
 
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
         """
         content = ''
         edge_ids = []
