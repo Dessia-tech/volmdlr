@@ -197,7 +197,7 @@ class Line(Curve):
         p1_content, p1_id = self.point1.to_step(current_id)
         # p2_content, p2_id = self.point2.to_step(current_id+1)
         current_id = p1_id + 1
-        u_content, u_id = self.unit_direction_vector().to_step(current_id)
+        u_content, u_id = self.unit_direction_vector().to_step(current_id, vector=True)
         current_id = u_id + 1
         content = p1_content + u_content
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
@@ -1313,20 +1313,12 @@ class Circle3D(CircleMixin, Curve):
 
         center = object_dict[arguments[1]].origin
         radius = float(arguments[2]) * length_conversion_factor
-        if object_dict[arguments[1]].u is not None:
-            normal = object_dict[arguments[1]].u
-            other_vec = object_dict[arguments[1]].v
-            if other_vec is not None:
-                other_vec.normalize()
-        else:
-            normal = object_dict[arguments[1]].v
+        normal = object_dict[arguments[1]].w
         normal.normalize()
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
-        circle_frame = volmdlr.Frame3D(self.center, self.frame.w, self.frame.u,
-                                             self.frame.v)
-        content, frame_id = circle_frame.to_step(current_id)
+        content, frame_id = self.frame.to_step(current_id)
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{round(self.radius * 1000, 3)});\n"
 
