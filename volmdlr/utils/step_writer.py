@@ -31,7 +31,7 @@ def product_writer(current_id, product_name):
     step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
                     f"#{product_definition_shape_id},#{shape_representation_id});\n"
 
-    return step_content, shape_representation_id
+    return step_content, shape_definition_repr_id
 
 
 def geometric_context_writer(current_id, uncertainty: float = 1e-4):
