@@ -49,6 +49,7 @@ def step_split_arguments(function_arg):
     ex: IN: '#123,#124,#125)'
        OUT: ['#123', '#124', '#125']
     """
+    function_arg = function_arg.strip()
     if len(function_arg) > 0 and function_arg[-1] != ')':
         function_arg += ')'
     arguments = []
@@ -67,7 +68,8 @@ def step_split_arguments(function_arg):
             is_str = False
         # if char != "," or parenthesis > 1 or is_str:
         #     argument += char
-
+        if not is_str and char == " ":
+            continue
         if parenthesis > 1 or is_str:
             argument += char
         elif char != ",":
@@ -828,7 +830,7 @@ class Step(dc.DessiaObject):
         functions = {}
 
         for line in lines:
-            line = line.replace(" ", "")
+            # line = line.replace(" ", "")
             line = line.replace("\n", "")
 
             # SKIP EMPTY LINE
@@ -847,10 +849,10 @@ class Step(dc.DessiaObject):
                 previous_line = str()
                 continue
 
-            function = line.split("=")
-            function_id = int(function[0][1:])
+            function = line.split("=", maxsplit=1)
+            function_id = int(function[0][1:].strip())
             function_name_arg = function[1].split("(", 1)
-            function_name = function_name_arg[0]
+            function_name = function_name_arg[0].replace(" ", "")
             function_arg = function_name_arg[1].split("#")
             function_connections = []
             connections = []
@@ -995,7 +997,7 @@ class Step(dc.DessiaObject):
     @staticmethod
     def step_subfunctions(subfunctions):
         """Handles context elements from step file."""
-        subfunctions = subfunctions[0]
+        subfunctions = subfunctions[0].replace(" ", "")
         parenthesis_count = 0
         subfunction_names = []
         subfunction_args = []

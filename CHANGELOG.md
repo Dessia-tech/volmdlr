@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fullarc: get_reverse.
 - Arc2D: point_belongs
 - ArcEllipse2D: point_at_abscissa
+- Step: read_lines, take into account the space character in step entity names
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
