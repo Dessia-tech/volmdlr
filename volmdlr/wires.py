@@ -1238,7 +1238,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
         return bspline_curve
 
     def triangulation(self):
-        """Triangulatio method for a Wire3D."""
+        """Triangulation method for a Wire3D."""
         return None
 
     def get_primitives_2d(self, plane_origin, x, y):
@@ -1261,7 +1261,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a Wire 3D into a Wire 2D, given a plane origin and an x and y vector.
+        Transforms a Wire 3D into a Wire 2D, given a plane origin and an x and y vector.
 
         """
         primitives2d = self.get_primitives_2d(plane_origin, x, y)
@@ -2051,15 +2051,15 @@ class Contour2D(ContourMixin, Wire2D):
 
     def is_inside(self, contour2):
         """
-        Verifies if a contour is inside another contour perimiter, including the edges.
+        Verifies if a contour is inside another contour perimeter, including the edges.
 
         :returns: True or False
         """
         if contour2.area() > self.area() and not math.isclose(contour2.area(), self.area(), rel_tol=0.01):
             return False
         points_contour2 = []
-        for i, prim in enumerate(contour2.primitives):
-            points = prim.discretization_points(number_points=5)
+        for primitive in contour2.primitives:
+            points = primitive.discretization_points(number_points=5)
             points_contour2.extend(points[:-1])
         for point in points_contour2:
             if not self.point_belongs(point, include_edge_points=True):
@@ -2415,7 +2415,7 @@ class Contour2D(ContourMixin, Wire2D):
         Cut a contour 2d with bspline_curve 2d to define two different contours.
 
         """
-        # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
+        # TODO: BsplineCurve is discretized and defined with a wire. To be improved!
 
         contours = self.cut_by_wire(Wire2D.from_edge(bspline_curve2d, 20))
 

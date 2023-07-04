@@ -408,7 +408,7 @@ class Primitive3D(dc.PhysicalObject):
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
-    def babylon_meshes(self, merge_meshes=True):
+    def babylon_meshes(self, **kwargs):
         """
         Returns the babylonjs mesh.
         """
@@ -1455,7 +1455,7 @@ class VolumeModel(dc.PhysicalObject):
         return babylon_data
 
     @classmethod
-    def babylonjs_script(cls, babylon_data, use_cdn=True, debug=False):
+    def babylonjs_script(cls, babylon_data, use_cdn=True, **kwargs):
         """
         Run babylonjs script.
 
@@ -1662,11 +1662,7 @@ class VolumeModel(dc.PhysicalObject):
 
         return lines
 
-    def get_mesh_lines(self,
-                       factor: float, **kwargs):
-        # curvature_mesh_size: int = 0,
-        # min_points: int = None,
-        # initial_mesh_size: float = 5):
+    def get_mesh_lines(self, factor: float, **kwargs):
         """
         Gets the lines that define mesh parameters for a VolumeModel, to be added to a .geo file.
 
@@ -1690,20 +1686,6 @@ class VolumeModel(dc.PhysicalObject):
             if element[0] not in kwargs:
                 kwargs[element[0]] = element[1]
 
-        # try:
-        #     curvature_mesh_size = kwargs['curvature_mesh_size']
-        # except KeyError:
-        #     curvature_mesh_size = 0
-        # try:
-        #     min_points = kwargs['min_points']
-        # except KeyError:
-        #     min_points = None
-        # try:
-        #     initial_mesh_size = kwargs['initial_mesh_size']
-        # except KeyError:
-        #     initial_mesh_size = 5
-
-        # meshsizes_max = []
         field_num = 1
         field_nums = []
         lines = []
@@ -1725,31 +1707,10 @@ class VolumeModel(dc.PhysicalObject):
 
                 size = ((volume ** (1. / 3.)) / kwargs['initial_mesh_size']) * factor
 
-                # meshsizes_max.append(size)
-
                 if kwargs['min_points']:
                     lines.extend(primitive.get_mesh_lines_with_transfinite_curves(min_points=kwargs['min_points'],
                                                                                   size=size))
 
-                    # primitives, primitives_length = [], []
-                    # for face in primitive.faces:
-                    #     for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
-                    #         if isinstance(contour, volmdlr.wires.Circle2D):
-                    #             primitives.append(contour)
-                    #             primitives.append(contour)
-                    #             primitives_length.append(contour.length() / 2)
-                    #             primitives_length.append(contour.length() / 2)
-                    #         else:
-                    #             for _, primitive_c in enumerate(contour.primitives):
-                    #                 if ((primitive_c not in primitives)
-                    #                         and (primitive_c.reverse() not in primitives)):
-                    #                     primitives.append(primitive_c)
-                    #                     primitives_length.append(primitive_c.length())
-
-                    # for i, length in enumerate(primitives_length):
-                    #     if length < kwargs['min_points'] * size:
-                    #         lines.append('Transfinite Curve {' + str(i) + '} = ' +
-                    #                      str(kwargs['min_points']) + ' Using Progression 1;')
 
                 lines.append('Field[' + str(field_num) + '] = MathEval;')
                 lines.append('Field[' + str(field_num) + '].F = "' + str(size) + '";')
@@ -1762,12 +1723,6 @@ class VolumeModel(dc.PhysicalObject):
 
             elif isinstance(primitive, volmdlr.shells.OpenShell3D):
                 continue
-
-        # meshsize_max = max(meshsizes_max)
-        # meshsize_min = meshsize_max/100
-
-        # lines.append('Mesh.CharacteristicLengthMin = ' + str(meshsize_min) + ';')
-        # lines.append('Mesh.CharacteristicLengthMax = ' + str(meshsize_max) + ';')
 
         lines.append('Field[' + str(field_num) + '] = MinAniso;')
         lines.append('Field[' + str(field_num) + '].FieldsList = {' + str(field_nums)[1:-1] + '};')
@@ -2255,7 +2210,7 @@ class MovingVolumeModel(VolumeModel):
                 primitive.frame_mapping(frame, side='old'))
         return VolumeModel(primitives)
 
-    def babylon_data(self):
+    def babylon_data(self, merge_meshes=True):
         """
         Get babylonjs data.
 
@@ -2265,7 +2220,7 @@ class MovingVolumeModel(VolumeModel):
         primitives_to_meshes = []
         for i_prim, primitive in enumerate(self.primitives):
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes())
+                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 primitives_to_meshes.append(i_prim)
 
         bbox = self._bounding_box()

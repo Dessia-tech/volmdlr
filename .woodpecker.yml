@@ -22,14 +22,14 @@ pipeline:
       - bash code_pep8.sh
 
   check-changelog-update:
-    image: python:3.8
+    image: python:3.9
     when:
       event: pull_request
     commands:
       - bash code_changelog.sh
 
   install-doc-coverage:
-    image: python:3.8
+    image: python:3.9
     commands:
       - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
       - python setup.py install
@@ -48,7 +48,7 @@ pipeline:
       - python coverage.py
 
   generate-sdist:
-    image: python:3.8
+    image: python:3.9
     commands:
       - git fetch --tags
       - pip install Cython

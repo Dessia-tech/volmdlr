@@ -8,7 +8,7 @@ import math
 import sys
 import warnings
 from itertools import product
-from typing import Any, Dict, List, Union
+from typing import List, Union
 
 import dessia_common.core as dc
 import matplotlib.patches
@@ -3251,7 +3251,7 @@ class Arc2D(Arc):
         """
         Intersections between an arc 2d and arc-ellipse 2d.
 
-        :param arcellipse: arc ellipse 2d.
+        :param arcellipse: arc-ellipse 2d.
         :param abs_tol: tolerance
         :return: list of intersection points.
         """
@@ -3684,7 +3684,7 @@ class FullArc2D(FullArc, Arc2D):
         return FullArc2D(self.center.copy(), self.start.copy())
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    def dict_to_object(cls, dict_, **kwargs):
         center = volmdlr.Point2D.dict_to_object(dict_['center'])
         start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
 
@@ -4042,7 +4042,7 @@ class ArcEllipse2D(Edge):
 
     def length(self):
         """
-        Calculates the length of the arcellipse 2d.
+        Calculates the length of the arc-ellipse 2d.
 
         :return: arc ellipse 2d's length
         """
@@ -4285,7 +4285,7 @@ class ArcEllipse2D(Edge):
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
-        Plot arc-ellipse 2d using Matplotlob.
+        Plot arc-ellipse 2d using Matplotlib.
 
         :param ax: Matplotlib plot if there exists any.
         :param edge_style: edge styles.
@@ -4421,7 +4421,7 @@ class ArcEllipse2D(Edge):
 
     def split(self, split_point):
         """
-        Splits arc-elipse at a given point.
+        Splits arc-ellipse at a given point.
 
         :param split_point: splitting point.
         :return: list of two Arc-Ellipse.
@@ -4439,9 +4439,9 @@ class ArcEllipse2D(Edge):
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
-        Checks if two arc-elipse are the same considering the Euclidean distance.
+        Checks if two arc-ellipse are the same considering the Euclidean distance.
 
-        :param other_edge: other arc-elipse.
+        :param other_edge: other arc-ellipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
@@ -7461,9 +7461,9 @@ class ArcEllipse3D(Edge):
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
-        Checks if two arc-elipse are the same considering the Euclidean distance.
+        Checks if two arc-ellipse are the same considering the Euclidean distance.
 
-        :param other_edge: other arc-elipse.
+        :param other_edge: other arc-ellipse.
         :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
         :type tol: float, optional
         """
@@ -7494,7 +7494,7 @@ class ArcEllipse3D(Edge):
 
     def split(self, split_point):
         """
-        Splits arc-elipse at a given point.
+        Splits arc-ellipse at a given point.
 
         :param split_point: splitting point.
         :return: list of two Arc-Ellipse.

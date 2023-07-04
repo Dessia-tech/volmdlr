@@ -124,9 +124,9 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             point.translation_inplace(offset)
 
     def offset(self, offset):
-        nb = len(self.points)
+        number_points = len(self.points)
         vectors = []
-        for i in range(nb - 1):
+        for i in range(number_points - 1):
             v1 = self.points[i + 1] - self.points[i]
             v2 = self.points[i] - self.points[i + 1]
             v1.normalize()
@@ -146,20 +146,20 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         new_radii = {}
         offset_points = []
 
-        for i in range((not self.closed), nb - (not self.closed)):
+        for i in range((not self.closed), number_points - (not self.closed)):
 
             check = False
-            ni = vectors[2 * i - 1] + vectors[2 * i]
-            if ni.is_close(volmdlr.Vector2D(0, 0)):
-                ni = vectors[2 * i]
-                ni = ni.normalVector()
-                offset_vectors.append(ni)
+            normal_i = vectors[2 * i - 1] + vectors[2 * i]
+            if normal_i.is_close(volmdlr.Vector2D(0, 0)):
+                normal_i = vectors[2 * i]
+                normal_i = normal_i.normal_vector()
+                offset_vectors.append(normal_i)
             else:
-                ni.normalize()
-                if ni.dot(vectors[2 * i - 1].normal_vector()) > 0:
-                    ni = - ni
+                normal_i.normalize()
+                if normal_i.dot(vectors[2 * i - 1].normal_vector()) > 0:
+                    normal_i = - normal_i
                     check = True
-                offset_vectors.append(ni)
+                offset_vectors.append(normal_i)
 
             if i in self.radius:
                 if (check and offset > 0) or (not check and offset < 0):
@@ -183,8 +183,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             offset_points.append(offset_point)
 
         if not self.closed:
-            n1 = vectors[0].normal_vector()
-            offset_vectors.insert(0, n1)
+            normal_1 = vectors[0].normal_vector()
+            offset_vectors.insert(0, normal_1)
             offset_points.insert(0,
                                  self.points[0] + offset * offset_vectors[0])
 
@@ -378,19 +378,19 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         new_points[line_indexes[0]] = self.points[line_indexes[
             0]] + distance_dir1 * dir_vec_1
 
-        for nb, index in enumerate(line_indexes[1:]):
+        for iline, index in enumerate(line_indexes[1:]):
             coeff_vec_2 = volmdlr.Point2D.point_distance(
                 self.points[line_indexes[0]],
                 self.points[index]) / volmdlr.Point2D.point_distance(
                 self.points[line_indexes[0]],
                 self.points[line_indexes[-1] + 1])
             coeff_vec_1 = 1 - coeff_vec_2
-            if dir_vec_1.dot(normal_vectors[nb + 1]) < 0:
+            if dir_vec_1.dot(normal_vectors[iline + 1]) < 0:
                 coeff_vec_1 = - coeff_vec_1
-            if dir_vec_2.dot(normal_vectors[nb + 1]) < 0:
+            if dir_vec_2.dot(normal_vectors[iline + 1]) < 0:
                 coeff_vec_2 = - coeff_vec_2
             index_dir_vector = coeff_vec_1 * vec1 + coeff_vec_2 * vec2
-            index_dot = index_dir_vector.dot(normal_vectors[nb + 1])
+            index_dot = index_dir_vector.dot(normal_vectors[iline + 1])
             index_distance_dir = offset / index_dot
             new_points[index] = self.points[
                                     index] + index_distance_dir * index_dir_vector
@@ -437,8 +437,9 @@ class ClosedRoundedLineSegments2D(OpenedRoundedLineSegments2D,
         volmdlr.wires.Contour2D.__init__(self, self._primitives(), name)
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the object."""
         return self.__class__([point.copy(deep, memo) for point in self.points], self.radius.copy(),
-                              self.adapt_radius, name='copy_'+self.name)
+                              self.adapt_radius, name='copy_' + self.name)
 
 
 class Measure2D(volmdlr.edges.LineSegment2D):
@@ -460,10 +461,11 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         self.type_ = type_
 
     def plot(self, ax, edge_style: EdgeStyle()):
+        """Plots the Measure2D."""
         ndigits = 6
         x1, y1 = self.start
         x2, y2 = self.end
-        xm, ym = 0.5 * (self.start + self.end)
+        x_middle, y_middle = 0.5 * (self.start + self.end)
         distance = self.end.point_distance(self.start)
 
         if self.label != '':
@@ -491,4 +493,4 @@ class Measure2D(volmdlr.edges.LineSegment2D):
             theta = 90.
         else:
             theta = math.degrees(math.atan((y2 - y1) / (x2 - x1)))
-        ax.text(xm, ym, label, va='bottom', ha='center', rotation=theta)
+        ax.text(x_middle, y_middle, label, va='bottom', ha='center', rotation=theta)
