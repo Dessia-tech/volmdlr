@@ -1958,7 +1958,7 @@ class PeriodicalSurface(Surface3D):
                 plane3d = Plane3D.from_3_points(start, middle_point, end)
                 ellipse = self.concurrent_plane_intersection(plane3d)[0]
                 arcellipse = edges.ArcEllipse3D(ellipse, start, end)
-                if not arcellipse.point_belongs(middle_point):
+                if not arcellipse.point_belongs(middle_point, 1e-2):
                     raise NotImplementedError
                 return [arcellipse]
             plane3d = Plane3D.from_3_points(start, middle_point, extra_point)
@@ -2270,6 +2270,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             major_axis = axis_1
             minor_axis = axis_2
             major_dir = ellipse_0 - center3d_plane
+            u_vector = major_dir.unit_vector()
         else:
             major_axis = axis_2
             minor_axis = axis_1
