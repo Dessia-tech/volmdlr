@@ -26,31 +26,13 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
+from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer,\
+    STEP_HEADER, STEP_FOOTER, step_ids_to_str
+
 
 npy.seterr(divide='raise')
 
 DEFAULT_COLOR = (0.8, 0.8, 0.8)
-
-# TODO: put volmdlr metadata in this freecad header
-STEP_HEADER = '''ISO-10303-21;
-HEADER;
-FILE_DESCRIPTION(('{name}'),'2;1');
-FILE_NAME('{filename}','{timestamp}',('Author'),(''),'Volmdlr v{version}','','Unknown');
-FILE_SCHEMA(('AUTOMOTIVE_DESIGN {{ 1 0 10303 214 1 1 1 1 }}'));
-ENDSEC;
-DATA;
-#1 = APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000,#2);
-#2 = APPLICATION_CONTEXT('core data for automotive mechanical design processes');
-#3 = ( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) );
-#4 = ( NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.) );
-#5 = ( NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT() );
-#6 = UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-07),#3,'distance_accuracy_value','confusion accuracy');
-#7 = ( GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#6)) GLOBAL_UNIT_ASSIGNED_CONTEXT ((#3,#4,#5)) REPRESENTATION_CONTEXT('Context #1','3D Context with UNIT and UNCERTAINTY') );
-'''
-
-STEP_FOOTER = '''ENDSEC;
-END-ISO-10303-21;
-'''
 
 
 def element_in_list(element, list_elements, tol: float = 1e-6):
@@ -166,18 +148,6 @@ def delete_double_point(list_point):
     return points
 
 
-def step_ids_to_str(ids):
-    """
-    Returns a string with a '#' in front of each ID and a comma separating each-one.
-
-    :param ids: A list of step primitives IDs
-    :type ids: List[int]
-    :return: A string containing all the IDs
-    :rtype: str
-    """
-    return ','.join([f"#{i}" for i in ids])
-
-
 @dataclass
 class EdgeStyle:
     """
@@ -280,21 +250,6 @@ class CompositePrimitive2D(CompositePrimitive):
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
 
-    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
-        """
-        Rotates the CompositePrimitive2D. Object is updated in-place.
-
-        :param center: rotation center.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.rotation(center, angle))
-        self.primitives = primitives
-        self.update_basis_primitives()
-
     def translation(self, offset: volmdlr.Vector2D):
         """
         Translates the CompositePrimitive2D.
@@ -305,20 +260,6 @@ class CompositePrimitive2D(CompositePrimitive):
         return self.__class__([primitive.translation(offset)
                                for primitive in self.primitives])
 
-    def translation_inplace(self, offset: volmdlr.Vector2D):
-        """
-        Translates the CompositePrimitive2D. Object is updated in-place.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.translation(offset))
-        self.primitives = primitives
-        self.update_basis_primitives()
-
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new CompositePrimitive2D.
@@ -327,20 +268,6 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         return self.__class__([primitive.frame_mapping(frame, side)
                                for primitive in self.primitives])
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.frame_mapping(frame, side))
-        self.primitives = primitives
-        self.update_basis_primitives()
 
     def plot(self, ax=None, edge_style=EdgeStyle()):
 
@@ -1197,85 +1124,32 @@ class Assembly(dc.PhysicalObject):
         """
         Creates step file entities from volmdlr objects.
         """
-        step_content = []
-        for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'OpenShell3D':
-                primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
-            else:
-                primitive_content, primitive_id = primitive.to_step(current_id)
+        step_content = ''
 
+        product_content, current_id, assembly_data = self.to_step_product(current_id)
+        step_content += product_content
+        assembly_frames = assembly_data[-1]
+        for i, primitive in enumerate(self.components):
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                primitive_content, current_id, primitive_data = primitive.to_step_product(current_id)
+                assembly_frame_id = assembly_frames[0]
+                component_frame_id = assembly_frames[i + 1]
+                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
+                                                                              primitive_data, assembly_frame_id,
+                                                                              component_frame_id)
+
+            else:
+                primitive_content, current_id, primitive_data = primitive.to_step(current_id)
+                step_content += primitive_content
+                assembly_frame_id = assembly_frames[0]
+                component_frame_id = assembly_frames[i + 1]
+                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
+                                                                              primitive_data, assembly_frame_id,
+                                                                              component_frame_id)
             step_content += primitive_content
+            step_content += assembly_content
 
-            product_definition_context_id = primitive_id + 1
-            step_content += (f"#{product_definition_context_id} = "
-                             + "PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n")
-
-            product_context_id = product_definition_context_id + 1
-            step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
-            product_id = product_context_id + 1
-            step_content += f"#{product_id} = PRODUCT('{primitive.name}'," \
-                            f"'{primitive.name}','',(#{product_context_id}));\n"
-            product_definition_formation_id = product_id + 1
-            step_content += f"#{product_definition_formation_id} = " \
-                            f"PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
-            product_definition_id = product_definition_formation_id + 1
-            step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
-                            f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
-            product_definition_shape_id = product_definition_id + 1
-            step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
-                            f"'',#{product_definition_id});\n"
-            shape_definition_repr_id = product_definition_shape_id + 1
-            step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
-                            f"#{product_definition_shape_id},#{primitive_id});\n"
-            product_related_category = shape_definition_repr_id + 1
-            step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
-                            f"'part',$,(#{product_id}));\n"
-            draughting_id = product_related_category + 1
-            step_content += f"#{draughting_id} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n"
-            color_id = draughting_id + 1
-            primitive_color = (1, 1, 1)
-            if hasattr(primitive, 'color') and primitive.color is not None:
-                primitive_color = primitive.color
-            step_content += f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)}," \
-                            f"{round(float(primitive_color[1]), 4)}, {round(float(primitive_color[2]), 4)});\n"
-
-            curve_style_id = color_id + 1
-            step_content += f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," \
-                            f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
-
-            fill_area_color_id = curve_style_id + 1
-            step_content += f"#{fill_area_color_id} = FILL_AREA_STYLE_COLOUR('',#{color_id});\n"
-
-            fill_area_id = fill_area_color_id + 1
-            step_content += f"#{fill_area_id} = FILL_AREA_STYLE('',#{fill_area_color_id});\n"
-
-            suface_fill_area_id = fill_area_id + 1
-            step_content += f"#{suface_fill_area_id} = SURFACE_STYLE_FILL_AREA(#{fill_area_id});\n"
-
-            suface_side_style_id = suface_fill_area_id + 1
-            step_content += f"#{suface_side_style_id} = SURFACE_SIDE_STYLE('',(#{suface_fill_area_id}));\n"
-
-            suface_style_usage_id = suface_side_style_id + 1
-            step_content += f"#{suface_style_usage_id} = SURFACE_STYLE_USAGE(.BOTH.,#{suface_side_style_id});\n"
-
-            presentation_style_id = suface_style_usage_id + 1
-
-            step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
-                            f"#{curve_style_id}));\n"
-
-            styled_item_id = presentation_style_id + 1
-            if primitive.__class__.__name__ == 'OpenShell3D':
-                for face_id in face_ids:
-                    step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
-                                    f"#{face_id});\n"
-                    styled_item_id += 1
-                styled_item_id -= 1
-            else:
-                step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
-                                f"#{primitive_id});\n"
-
-            current_id = styled_item_id + 1
-        return step_content, current_id
+        return step_content, current_id, assembly_data[:-1]
 
     def plot(self, ax=None, equal_aspect=True):
         """
@@ -1293,6 +1167,35 @@ class Assembly(dc.PhysicalObject):
             ax.set_aspect('auto')
         ax.margins(0.1)
         return ax
+
+    def to_step_product(self, current_id):
+        """
+        Returns step product entities from volmdlr objects.
+        """
+        step_content = ''
+        product_content, shape_definition_repr_id = product_writer(current_id, self.name)
+        product_definition_id = shape_definition_repr_id - 2
+        step_content += product_content
+        shape_representation_id = shape_definition_repr_id + 1
+        current_id = shape_representation_id
+        assembly_position_content = ''
+        frame_ids = []
+        for frame in [self.frame] + self.positions:
+            frame_content, current_id = frame.to_step(current_id + 1)
+            assembly_position_content += frame_content
+            frame_ids.append(current_id)
+
+        geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
+
+        step_content += f"#{shape_representation_id} = SHAPE_REPRESENTATION('',({step_ids_to_str(frame_ids)})," \
+                        f"#{geometric_representation_context_id});\n"
+
+        step_content += assembly_position_content
+
+        step_content += geometric_context_content
+
+        return step_content, geometric_representation_context_id, \
+            [shape_representation_id, product_definition_id, frame_ids]
 
 
 class Compound(dc.PhysicalObject):
@@ -1371,6 +1274,35 @@ class Compound(dc.PhysicalObject):
     def volmdlr_primitives(self):
         """Return primitives."""
         return [self]
+
+    def to_step(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
+        step_content = ''
+        primitives_content = ''
+        manifold_ids = []
+        product_content, current_id = product_writer(current_id, self.name)
+        product_definition_id = current_id - 2
+        step_content += product_content
+        brep_id = current_id + 1
+        frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
+        current_id = frame_id
+
+        for primitive in self.primitives:
+            primitive_content, current_id = primitive.to_step(current_id)
+            primitives_content += primitive_content
+            manifold_ids.append(current_id)
+
+        geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
+        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION(''," \
+                        f"({step_ids_to_str(manifold_ids)})," \
+                        f"#{geometric_representation_context_id});\n"
+        step_content += frame_content
+        step_content += primitives_content
+        step_content += geometric_context_content
+
+        return step_content, geometric_representation_context_id, [brep_id, product_definition_id]
 
 
 class VolumeModel(dc.PhysicalObject):
@@ -1459,21 +1391,6 @@ class VolumeModel(dc.PhysicalObject):
             primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Rotates the VolumeModel. Object is updated inplace.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitive in self.primitives:
-            primitive.rotation_inplace(center, axis, angle)
-        self.bounding_box = self._bounding_box()
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Translates the VolumeModel.
@@ -1485,18 +1402,6 @@ class VolumeModel(dc.PhysicalObject):
                           primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Translates the VolumeModel. Object is updated inplace.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitives in self.primitives:
-            primitives.translation_inplace(offset)
-        self.bounding_box = self._bounding_box()
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new VolumeModel.
@@ -1506,18 +1411,6 @@ class VolumeModel(dc.PhysicalObject):
         new_primitives = [primitive.frame_mapping(frame, side)
                           for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitives in self.primitives:
-            primitives.frame_mapping_inplace(frame, side)
-        self.bounding_box = self._bounding_box()
 
     def copy(self, deep=True, memo=None):
         """
@@ -1677,85 +1570,16 @@ class VolumeModel(dc.PhysicalObject):
                                           filename='',
                                           timestamp=datetime.now().isoformat(),
                                           version=volmdlr.__version__)
-        current_id = 8
+        current_id = 2
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'OpenShell3D':
-                primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
+                primitive_content, primitive_id, _ = primitive.to_step_product(current_id)
             else:
-                primitive_content, primitive_id = primitive.to_step(current_id)
+                primitive_content, primitive_id, _ = primitive.to_step(current_id)
 
             step_content += primitive_content
-
-            product_definition_context_id = primitive_id + 1
-            step_content += (f"#{product_definition_context_id} = "
-                             + "PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n")
-
-            product_context_id = product_definition_context_id + 1
-            step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
-            product_id = product_context_id + 1
-            step_content += f"#{product_id} = PRODUCT('{primitive.name}'," \
-                            f"'{primitive.name}','',(#{product_context_id}));\n"
-            product_definition_formation_id = product_id + 1
-            step_content += f"#{product_definition_formation_id} = " \
-                            f"PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
-            product_definition_id = product_definition_formation_id + 1
-            step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
-                            f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
-            product_definition_shape_id = product_definition_id + 1
-            step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
-                            f"'',#{product_definition_id});\n"
-            shape_definition_repr_id = product_definition_shape_id + 1
-            step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
-                            f"#{product_definition_shape_id},#{primitive_id});\n"
-            product_related_category = shape_definition_repr_id + 1
-            step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
-                            f"'part',$,(#{product_id}));\n"
-            draughting_id = product_related_category + 1
-            step_content += f"#{draughting_id} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n"
-            color_id = draughting_id + 1
-            primitive_color = (1, 1, 1)
-            if hasattr(primitive, 'color') and primitive.color is not None:
-                primitive_color = primitive.color
-            step_content += f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)}," \
-                            f"{round(float(primitive_color[1]), 4)}, {round(float(primitive_color[2]), 4)});\n"
-
-            curve_style_id = color_id + 1
-            step_content += f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," \
-                            f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
-
-            fill_area_color_id = curve_style_id + 1
-            step_content += f"#{fill_area_color_id} = FILL_AREA_STYLE_COLOUR('',#{color_id});\n"
-
-            fill_area_id = fill_area_color_id + 1
-            step_content += f"#{fill_area_id} = FILL_AREA_STYLE('',#{fill_area_color_id});\n"
-
-            suface_fill_area_id = fill_area_id + 1
-            step_content += f"#{suface_fill_area_id} = SURFACE_STYLE_FILL_AREA(#{fill_area_id});\n"
-
-            suface_side_style_id = suface_fill_area_id + 1
-            step_content += f"#{suface_side_style_id} = SURFACE_SIDE_STYLE('',(#{suface_fill_area_id}));\n"
-
-            suface_style_usage_id = suface_side_style_id + 1
-            step_content += f"#{suface_style_usage_id} = SURFACE_STYLE_USAGE(.BOTH.,#{suface_side_style_id});\n"
-
-            presentation_style_id = suface_style_usage_id + 1
-
-            step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
-                            f"#{curve_style_id}));\n"
-
-            styled_item_id = presentation_style_id + 1
-            if primitive.__class__.__name__ == 'OpenShell3D':
-                for face_id in face_ids:
-                    step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
-                                    f"#{face_id});\n"
-                    styled_item_id += 1
-                styled_item_id -= 1
-            else:
-                step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
-                                f"#{primitive_id});\n"
-
-            current_id = styled_item_id + 1
+            current_id = primitive_id
 
         step_content += STEP_FOOTER
 

@@ -548,16 +548,6 @@ class Surface2D(volmdlr.core.Primitive2D):
 
         return self.__class__(outer_contour, inner_contours)
 
-    def rotation_inplace(self, center, angle):
-        """
-        Rotate the surface in-place.
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        new_surface2d = self.rotation(center, angle)
-        self.outer_contour = new_surface2d.outer_contour
-        self.inner_contours = new_surface2d.inner_contours
-
     def translation(self, offset: volmdlr.Vector2D):
         """
         Surface2D translation.
@@ -569,29 +559,11 @@ class Surface2D(volmdlr.core.Primitive2D):
         inner_contours = [contour.translation(offset) for contour in self.inner_contours]
         return self.__class__(outer_contour, inner_contours)
 
-    def translation_inplace(self, offset: volmdlr.Vector2D):
-        """
-        Translate the surface in-place.
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        new_contour = self.translation(offset)
-        self.outer_contour = new_contour.outer_contour
-        self.inner_contours = new_contour.inner_contours
-
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """Frame mapping of a surface 2d."""
         outer_contour = self.outer_contour.frame_mapping(frame, side)
         inner_contours = [contour.frame_mapping(frame, side) for contour in self.inner_contours]
         return self.__class__(outer_contour, inner_contours)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
-        """'in-place' methods are deprecated. Use a not in-place method instead."""
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        new_contour = self.frame_mapping(frame, side)
-        self.outer_contour = new_contour.outer_contour
-        self.inner_contours = new_contour.inner_contours
 
     def geo_lines(self):  # , mesh_size_list=None):
         """
@@ -1067,6 +1039,16 @@ class Surface3D(DessiaObject):
             intersections = getattr(self, method_name)(edge)
         return intersections
 
+    def contour_intersections(self, contour3d: wires.Contour3D):
+        outer_contour_intersections_with_plane = []
+        for primitive in contour3d.primitives:
+            primitive_plane_intersections = self.edge_intersections(primitive)
+            for primitive_plane_intersection in primitive_plane_intersections:
+                if not volmdlr.core.point_in_list(primitive_plane_intersection,
+                                                  outer_contour_intersections_with_plane):
+                    outer_contour_intersections_with_plane.append(primitive_plane_intersection)
+        return outer_contour_intersections_with_plane
+
     def is_singularity_point(self, point):
         """Verifies if point is on the surface singularity."""
         return False
@@ -1107,20 +1089,20 @@ class Plane3D(Surface3D):
         :return: The corresponding Plane3D object.
         :rtype: :class:`volmdlr.faces.Plane3D`
         """
-        frame3d = object_dict[arguments[1]]
-        frame3d.normalize()
-        frame = volmdlr.Frame3D(frame3d.origin,
-                                      frame3d.v, frame3d.w, frame3d.u)
+        frame = object_dict[arguments[1]]
+        frame.normalize()
         return cls(frame, arguments[0][1:-1])
 
     def to_step(self, current_id):
         """
-        Transform a Plane 3D to step.
+        Converts the object to a STEP representation.
 
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
         """
-        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                      self.frame.v)
-        content, frame_id = frame.to_step(current_id)
+        content, frame_id = self.frame.to_step(current_id)
         plane_id = frame_id + 1
         content += f"#{plane_id} = PLANE('{self.name}',#{frame_id});\n"
         return content, [plane_id]
@@ -1396,18 +1378,6 @@ class Plane3D(Surface3D):
         new_frame = self.frame.rotation(center=center, axis=axis, angle=angle)
         return Plane3D(new_frame)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
-        """
-        Plane3D rotation. Object is updated in-place.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        self.frame.rotation_inplace(center=center, axis=axis, angle=angle)
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Plane3D translation.
@@ -1417,16 +1387,6 @@ class Plane3D(Surface3D):
         """
         new_frame = self.frame.translation(offset)
         return Plane3D(new_frame)
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Plane3D translation. Object is updated in-place.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        self.frame.translation_inplace(offset)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1438,22 +1398,6 @@ class Plane3D(Surface3D):
         """
         new_frame = self.frame.frame_mapping(frame, side)
         return Plane3D(new_frame, self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated in-place.
-
-        :param frame: Frame of reference
-        :type frame: `volmdlr.Frame3D`
-        :param side: 'old' or 'new'
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        new_frame = self.frame.frame_mapping(frame, side)
-        self.frame.origin = new_frame.origin
-        self.frame.u = new_frame.u
-        self.frame.v = new_frame.v
-        self.frame.w = new_frame.w
 
     def copy(self, deep=True, memo=None):
         """Creates a copy of the plane."""
@@ -2128,22 +2072,20 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
 
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
-        frame3d = object_dict[arguments[1]]
-        u_vector, w_vector = frame3d.v, -frame3d.u
-        u_vector.normalize()
-        w_vector.normalize()
-        v_vector = w_vector.cross(u_vector)
-        frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
+        frame = object_dict[arguments[1]]
         radius = float(arguments[2]) * length_conversion_factor
-        return cls(frame_direct, radius, arguments[0][1:-1])
+        return cls(frame, radius, arguments[0][1:-1])
 
     def to_step(self, current_id):
         """
-        Translate volmdlr primitive to step syntax.
+        Converts the object to a STEP representation.
+
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
         """
-        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                      self.frame.v)
-        content, frame_id = frame.to_step(current_id)
+        content, frame_id = self.frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = CYLINDRICAL_SURFACE('{self.name}',#{frame_id},{round(1000 * self.radius, 4)});\n"
         return content, [current_id]
@@ -2157,17 +2099,6 @@ class CylindricalSurface3D(PeriodicalSurface):
         new_frame = self.frame.frame_mapping(frame, side)
         return CylindricalSurface3D(new_frame, self.radius,
                                     name=self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated in-place.
-
-        :param side: 'old' or 'new'
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        new_frame = self.frame.frame_mapping(frame, side)
-        self.frame = new_frame
 
     def rectangular_cut(self, theta1: float, theta2: float,
                         param_z1: float, param_z2: float, name: str = ''):
@@ -2187,18 +2118,6 @@ class CylindricalSurface3D(PeriodicalSurface):
                                         angle=angle)
         return CylindricalSurface3D(new_frame, self.radius)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
-        """
-        CylindricalFace3D rotation. Object is updated in-place.
-
-        :param center: rotation center.
-        :param axis: rotation axis.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        self.frame.rotation_inplace(center, axis, angle)
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         CylindricalFace3D translation.
@@ -2207,16 +2126,6 @@ class CylindricalSurface3D(PeriodicalSurface):
         :return: A new translated CylindricalFace3D.
         """
         return CylindricalSurface3D(self.frame.translation(offset), self.radius)
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        CylindricalFace3D translation. Object is updated in-place.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        self.frame.translation_inplace(offset)
 
     def grid3d(self, grid2d: grid.Grid2D):
         """
@@ -2498,36 +2407,21 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
-        frame3d = object_dict[arguments[1]]
-        u_vector, w_vector = frame3d.v, -frame3d.u
-        u_vector.normalize()
-        w_vector.normalize()
-        v_vector = w_vector.cross(u_vector)
-        frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
+        frame = object_dict[arguments[1]]
         rcenter = float(arguments[2]) * length_conversion_factor
         rcircle = float(arguments[3]) * length_conversion_factor
-        return cls(frame_direct, rcenter, rcircle, arguments[0][1:-1])
+        return cls(frame , rcenter, rcircle, arguments[0][1:-1])
 
     def to_step(self, current_id):
         """
         Converts the object to a STEP representation.
 
-        This method converts the object to a STEP (Standard for the Exchange of Product model data) representation.
-        It first creates a copy of the object's frame using the `volmdlr.Frame3D` constructor. Then, it converts
-        the frame to a STEP representation using the `to_step` method of the `Frame3D` class. The resulting content
-        and updated ID are stored in the `content` variable and the `current_id` variable, respectively. Next,
-        the method constructs a STEP string representing the toroidal surface using the object's attributes and
-        the generated frame ID. The content is updated with the toroidal surface representation. Finally, the
-        updated content and a list containing the updated current ID are returned as a tuple.
-
-        :param current_id: The current ID counter for generating unique STEP entity IDs.
-
-        :return: A tuple containing the STEP representation of the object and the updated current ID.
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
         """
-
-        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                      self.frame.v)
-        content, frame_id = frame.to_step(current_id)
+        content, frame_id = self.frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = TOROIDAL_SURFACE('{self.name}',#{frame_id}," \
                    f"{round(1000 * self.tore_radius, 4)},{round(1000 * self.small_radius, 4)});\n"
@@ -2545,21 +2439,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         new_frame = self.frame.frame_mapping(frame, side)
         return ToroidalSurface3D(new_frame, self.tore_radius, self.small_radius, name=self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated in-place.
-
-        :param frame: The new frame to map to.
-        :type frame: `volmdlr.Frame3D
-        :param side: Indicates whether the frame should be mapped to the 'old' or 'new' frame.
-            Acceptable values are 'old' or 'new'.
-        :type side: str
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        new_frame = self.frame.frame_mapping(frame, side)
-        self.frame = new_frame
 
     def rectangular_cut(self, theta1: float, theta2: float, phi1: float, phi2: float, name: str = ""):
         """Deprecated method, Use ToroidalFace3D from_surface_rectangular_cut method."""
@@ -2751,16 +2630,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         return ToroidalSurface3D(self.frame.translation(
             offset), self.tore_radius, self.small_radius)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        ToroidalSurface3D translation. Object is updated in-place.
-
-        :param offset: translation vector.
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        self.frame.translation_inplace(offset)
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         ToroidalSurface3D rotation.
@@ -2773,18 +2642,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         new_frame = self.frame.rotation(center=center, axis=axis,
                                         angle=angle)
         return self.__class__(new_frame, self.tore_radius, self.small_radius)
-
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
-        """
-        ToroidalSurface3D rotation. Object is updated in-place.
-
-        :param center: rotation center.
-        :param axis: rotation axis.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        self.frame.rotation_inplace(center, axis, angle)
 
     def plot(self, ax=None, color='grey', alpha=0.5):
         """Plot torus arcs."""
@@ -2870,6 +2727,9 @@ class ConicalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
+        """
+        Plots the ConicalSurface3D.
+        """
         z = kwargs.get("z", 0.5)
         if ax is None:
             fig = plt.figure()
@@ -2904,21 +2764,22 @@ class ConicalSurface3D(PeriodicalSurface):
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
         angle_conversion_factor = kwargs.get("angle_conversion_factor", 1)
 
-        frame3d = object_dict[arguments[1]]
-        u, w = frame3d.v, frame3d.u
-        u.normalize()
-        w.normalize()
-        v = w.cross(u)
+        frame = object_dict[arguments[1]]
         radius = float(arguments[2]) * length_conversion_factor
         semi_angle = float(arguments[3]) * angle_conversion_factor
-        origin = frame3d.origin - radius / math.tan(semi_angle) * w
-        frame_direct = volmdlr.Frame3D(origin, u, v, w)
-        return cls(frame_direct, semi_angle, arguments[0][1:-1])
+        frame.origin = frame.origin - radius / math.tan(semi_angle) * frame.w
+        return cls(frame, semi_angle, arguments[0][1:-1])
 
     def to_step(self, current_id):
-        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                      self.frame.v)
-        content, frame_id = frame.to_step(current_id)
+        """
+        Converts the object to a STEP representation.
+
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
+        """
+        content, frame_id = self.frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = CONICAL_SURFACE('{self.name}',#{frame_id},{0.},{round(self.semi_angle, 4)});\n"
         return content, [current_id]
@@ -2931,17 +2792,6 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         new_frame = self.frame.frame_mapping(frame, side)
         return ConicalSurface3D(new_frame, self.semi_angle, name=self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated in-place.
-
-        :param side:'old' or 'new'
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        new_frame = self.frame.frame_mapping(frame, side)
-        self.frame = new_frame
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """
@@ -3016,8 +2866,12 @@ class ConicalSurface3D(PeriodicalSurface):
             return []
         start3d = self.point2d_to_3d(linesegment2d.start)
         center = self.frame.origin + param_z1 * self.frame.w
-        circle = curves.Circle3D(volmdlr.Frame3D(
-            center, self.frame.u, self.frame.v, self.frame.w), center.point_distance(start3d))
+        if linesegment2d.unit_direction_vector().dot(volmdlr.X2D) > 0:
+            circle = curves.Circle3D(volmdlr.Frame3D(
+                center, self.frame.u, self.frame.v, self.frame.w), center.point_distance(start3d))
+        else:
+            circle = curves.Circle3D(volmdlr.Frame3D(
+                center, self.frame.u, -self.frame.v, -self.frame.w), center.point_distance(start3d))
         if math.isclose(param_z1, param_z2, abs_tol=1e-4):
             if abs(theta1 - theta2) == volmdlr.TWO_PI:
                 return [edges.FullArc3D(circle, start3d)]
@@ -3063,16 +2917,6 @@ class ConicalSurface3D(PeriodicalSurface):
         return self.__class__(self.frame.translation(offset),
                               self.semi_angle)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        ConicalSurface3D translation. Object is updated in-place.
-
-        :param offset: translation vector.
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        self.frame.translation_inplace(offset)
-
     def rotation(self, center: volmdlr.Point3D,
                  axis: volmdlr.Vector3D, angle: float):
         """
@@ -3085,19 +2929,6 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         new_frame = self.frame.rotation(center=center, axis=axis, angle=angle)
         return self.__class__(new_frame, self.semi_angle)
-
-    def rotation_inplace(self, center: volmdlr.Point3D,
-                         axis: volmdlr.Vector3D, angle: float):
-        """
-        ConicalSurface3D rotation. Object is updated in-place.
-
-        :param center: rotation center.
-        :param axis: rotation axis.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        self.frame.rotation_inplace(center, axis, angle)
 
     def repair_primitives_periodicity(self, primitives2d):
         """
@@ -3237,22 +3068,20 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
-        frame3d = object_dict[arguments[1]]
-        u_vector, w_vector = frame3d.v, frame3d.u
-        u_vector.normalize()
-        w_vector.normalize()
-        v_vector = w_vector.cross(u_vector)
-        frame_direct = volmdlr.Frame3D(frame3d.origin, u_vector, v_vector, w_vector)
+        frame = object_dict[arguments[1]]
         radius = float(arguments[2]) * length_conversion_factor
-        return cls(frame_direct, radius, arguments[0][1:-1])
+        return cls(frame, radius, arguments[0][1:-1])
 
     def to_step(self, current_id):
         """
-        Translate volmdlr primitive to step syntax.
+        Converts the object to a STEP representation.
+
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
         """
-        frame = volmdlr.Frame3D(self.frame.origin, self.frame.w, self.frame.u,
-                                      self.frame.v)
-        content, frame_id = frame.to_step(current_id)
+        content, frame_id = self.frame.to_step(current_id)
         current_id = frame_id + 1
         content += f"#{current_id} = SPHERICAL_SURFACE('{self.name}',#{frame_id},{round(1000 * self.radius, 4)});\n"
         return content, [current_id]
@@ -3310,6 +3139,8 @@ class SphericalSurface3D(PeriodicalSurface):
         start = self.point2d_to_3d(linesegment2d.start)
         interior = self.point2d_to_3d(0.5 * (linesegment2d.start + linesegment2d.end))
         end = self.point2d_to_3d(linesegment2d.end)
+        if start.is_close(interior) and interior.is_close(end) and end.is_close(start):
+            return []
         u_vector = start - self.frame.origin
         u_vector.normalize()
         v_vector = interior - self.frame.origin
@@ -3735,7 +3566,8 @@ class SphericalSurface3D(PeriodicalSurface):
                 point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi2)
             return [edges.LineSegment2D(point1, point2)]
 
-        if self.frame.w.is_perpendicular_to(fullarc3d.circle.normal, abs_tol=1e-4):
+        if self.frame.w.is_perpendicular_to(fullarc3d.circle.normal, abs_tol=1e-4) and \
+                self.frame.origin.is_close(fullarc3d.center):
             if theta1 > theta3:
                 theta_plus_pi = theta1 - math.pi
             else:
@@ -5334,26 +5166,6 @@ class BSplineSurface3D(Surface3D):
                                                 self.weights, self.name)
         return new_bsplinesurface3d
 
-    def rotation_inplace(self, center: volmdlr.Vector3D,
-                         axis: volmdlr.Vector3D, angle: float):
-        """
-        BSplineSurface3D rotation. Object is updated in-place.
-
-        :param center: rotation center.
-        :type center: `volmdlr.Vector3D`
-        :param axis: rotation axis.
-        :type axis: `volmdlr.Vector3D`
-        :param angle: rotation angle.
-        :type angle: float
-        :return: None, BSplineSurface3D is updated in-place
-        :rtype: None
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        new_bsplinesurface3d = self.rotation(center, axis, angle)
-        self.control_points = new_bsplinesurface3d.control_points
-        self.surface = new_bsplinesurface3d.surface
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         BSplineSurface3D translation.
@@ -5373,18 +5185,6 @@ class BSplineSurface3D(Surface3D):
 
         return new_bsplinesurface3d
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        BSplineSurface3D translation. Object is updated in-place.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        new_bsplinesurface3d = self.translation(offset)
-        self.control_points = new_bsplinesurface3d.control_points
-        self.surface = new_bsplinesurface3d.surface
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new BSplineSurface3D.
@@ -5401,18 +5201,6 @@ class BSplineSurface3D(Surface3D):
                                                 self.u_knots, self.v_knots,
                                                 self.weights, self.name)
         return new_bsplinesurface3d
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated in-place.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        new_bsplinesurface3d = self.frame_mapping(frame, side)
-        self.control_points = new_bsplinesurface3d.control_points
-        self.surface = new_bsplinesurface3d.surface
 
     def plot(self, ax=None, color='grey', alpha=0.5):
         u_curves = [edges.BSplineCurve3D.from_geomdl_curve(u) for u in self.curves['u']]
