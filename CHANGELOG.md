@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse2D: point_at_abscissa
 - Edge: from_step trim of periodic curves with different orientation of original edge
 - Step: read_lines, take into account the space character in step entity names
+- Frame3D: import/export step.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces

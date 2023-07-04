@@ -1182,9 +1182,10 @@ class Assembly(dc.PhysicalObject):
         Returns step product entities from volmdlr objects.
         """
         step_content = ''
-        product_content, shape_representation_id = product_writer(current_id, self.name)
-        product_definition_id = shape_representation_id - 3
+        product_content, shape_definition_repr_id = product_writer(current_id, self.name)
+        product_definition_id = shape_definition_repr_id - 2
         step_content += product_content
+        shape_representation_id = shape_definition_repr_id + 1
         current_id = shape_representation_id
         assembly_position_content = ''
         frame_ids = []
@@ -1292,24 +1293,26 @@ class Compound(dc.PhysicalObject):
         primitives_content = ''
         manifold_ids = []
         product_content, current_id = product_writer(current_id, self.name)
+        product_definition_id = current_id - 2
         step_content += product_content
         brep_id = current_id + 1
         frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
         current_id = frame_id
-        for primitive in enumerate(self.primitives):
+
+        for primitive in self.primitives:
             primitive_content, current_id = primitive.to_step(current_id)
             primitives_content += primitive_content
-            manifold_ids.append(current_id - 1)
+            manifold_ids.append(current_id)
 
         geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
         step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION(''," \
-                        f"(#{frame_id},{step_ids_to_str(manifold_ids)})," \
+                        f"({step_ids_to_str(manifold_ids)})," \
                         f"#{geometric_representation_context_id});\n"
         step_content += frame_content
         step_content += primitives_content
         step_content += geometric_context_content
 
-        return step_content, geometric_representation_context_id
+        return step_content, geometric_representation_context_id, [brep_id, product_definition_id]
 
 
 class VolumeModel(dc.PhysicalObject):
