@@ -1122,7 +1122,7 @@ class Step(dc.DessiaObject):
         return self.product_definition_to_product(id_product_definition)
 
     def get_root_nodes(self):
-        """Returns a dictionnary containing the nodes of the step file function that are used as start points."""
+        """Returns a dictionary containing the nodes of the step file function that are used as start points."""
         next_assembly_usage_occurrence = []
         product_definitions = []
         shape_representation_relationship = []

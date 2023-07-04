@@ -1261,7 +1261,7 @@ class Wire3D(volmdlr.core.CompositePrimitive3D, WireMixin):
 
     def to_2d(self, plane_origin, x, y):
         """
-        Tranforms a Wire 3D into a Wire 2D, given a plane origin and an x and y vector.
+        Transforms a Wire 3D into a Wire 2D, given a plane origin and an x and y vector.
 
         """
         primitives2d = self.get_primitives_2d(plane_origin, x, y)

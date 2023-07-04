@@ -4042,7 +4042,7 @@ class ArcEllipse2D(Edge):
 
     def length(self):
         """
-        Calculates the length of the arcellipse 2d.
+        Calculates the length of the arc-ellipse 2d.
 
         :return: arc ellipse 2d's length
         """

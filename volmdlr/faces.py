@@ -48,11 +48,11 @@ class Face3D(volmdlr.core.Primitive3D):
         return DessiaObject.to_dict(self, use_pointers=False)
 
     def __hash__(self):
-        """Compute the hash."""
+        """Computes the hash."""
         return hash(self.surface3d) + hash(self.surface2d)
 
     def __eq__(self, other_):
-        """Compute the equality to anoter face."""
+        """Computes the equality to anoter face."""
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
         equal = (self.surface3d == other_.surface3d
@@ -120,7 +120,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.outer_contour3d.bounding_box
 
     def area(self):
-        """Compute the area of the surface2d."""
+        """Computes the area of the surface2d."""
         return self.surface2d.area()
 
     @classmethod
@@ -1848,7 +1848,7 @@ class Triangle3D(PlaneFace3D):
                           self.name)
 
     def triangulation(self):
-        """Computes the triangulation of the Triangle3D, basicaly returns itself."""
+        """Computes the triangulation of the Triangle3D, basically returns itself."""
         return vmd.DisplayMesh3D([vmd.Node3D.from_point(self.point1),
                                   vmd.Node3D.from_point(self.point2),
                                   vmd.Node3D.from_point(self.point3)],
