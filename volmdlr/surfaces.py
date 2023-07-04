@@ -8,10 +8,10 @@ import traceback
 import matplotlib.pyplot as plt
 import numpy as npy
 import triangle as triangle_lib
-from geomdl.core import NURBS, BSpline, utilities
-from geomdl.core.construct import extract_curves
-from geomdl.core.fitting import approximate_surface, interpolate_surface
-from geomdl.core.operations import split_surface_u, split_surface_v
+from geomdl import NURBS, BSpline, utilities
+from geomdl.construct import extract_curves
+from geomdl.fitting import approximate_surface, interpolate_surface
+from geomdl.operations import split_surface_u, split_surface_v
 from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject
@@ -1949,21 +1949,21 @@ class PeriodicalSurface(Surface3D):
         """
         Is this right?.
         """
-        if bspline_curve2d.name in ("parametric.arcellipse", "parametric.fullarcellipse"):
-            start = self.point2d_to_3d(bspline_curve2d.start)
-            middle_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.5 * bspline_curve2d.length()))
-            extra_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.75 * bspline_curve2d.length()))
-            if bspline_curve2d.name == "parametric.arcellipse":
-                end = self.point2d_to_3d(bspline_curve2d.end)
-                plane3d = Plane3D.from_3_points(start, middle_point, end)
-                ellipse = self.concurrent_plane_intersection(plane3d)[0]
-                arcellipse = edges.ArcEllipse3D(ellipse, start, end)
-                if not arcellipse.point_belongs(middle_point, 1e-2):
-                    raise NotImplementedError
-                return [arcellipse]
-            plane3d = Plane3D.from_3_points(start, middle_point, extra_point)
-            ellipse = self.concurrent_plane_intersection(plane3d)[0]
-            return [edges.FullArcEllipse3D(ellipse, start)]
+        # if bspline_curve2d.name in ("parametric.arcellipse", "parametric.fullarcellipse"):
+        #     start = self.point2d_to_3d(bspline_curve2d.start)
+        #     middle_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.5 * bspline_curve2d.length()))
+        #     extra_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.75 * bspline_curve2d.length()))
+        #     if bspline_curve2d.name == "parametric.arcellipse":
+        #         end = self.point2d_to_3d(bspline_curve2d.end)
+        #         plane3d = Plane3D.from_3_points(start, middle_point, end)
+        #         ellipse = self.concurrent_plane_intersection(plane3d)[0]
+        #         arcellipse = edges.ArcEllipse3D(ellipse, start, end)
+        #         if not arcellipse.point_belongs(middle_point, 1e-2):
+        #             raise NotImplementedError
+        #         return [arcellipse]
+        #     plane3d = Plane3D.from_3_points(start, middle_point, extra_point)
+        #     ellipse = self.concurrent_plane_intersection(plane3d)[0]
+        #     return [edges.FullArcEllipse3D(ellipse, start)]
         n = len(bspline_curve2d.control_points)
         points = [self.point2d_to_3d(p)
                   for p in bspline_curve2d.discretization_points(number_points=n)]
@@ -4411,7 +4411,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         if math.isclose(theta1, theta2, abs_tol=1e-3):
             primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if isinstance(self.wire, edges.Line3D):
+                if isinstance(self.wire, curves.Line3D):
                     return [edges.LineSegment3D(start3d, end3d)]
                 if self.wire.is_point_edge_extremity(start3d) and self.wire.is_point_edge_extremity(end3d):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):

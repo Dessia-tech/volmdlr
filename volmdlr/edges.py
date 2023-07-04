@@ -18,7 +18,7 @@ import plot_data.core as plot_data
 import plot_data.colors
 import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
-from geomdl.core import NURBS, BSpline, fitting, operations, utilities
+from geomdl import NURBS, BSpline, fitting, operations, utilities
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -28,7 +28,6 @@ import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
 
-c=0
 
 def standardize_knot_vector(knot_vector):
     """
@@ -2234,7 +2233,7 @@ class ArcMixin:
             if not angle_resolution:
                 number_points = 2
             else:
-                number_points = math.ceil(self.angle * angle_resolution) + 1
+                number_points = max(math.ceil(self.angle * angle_resolution) + 1, 2)
 
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step)

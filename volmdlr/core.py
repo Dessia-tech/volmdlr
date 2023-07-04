@@ -1235,7 +1235,6 @@ class Compound(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        print('compound primitives', self.primitives)
         return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
