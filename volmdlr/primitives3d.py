@@ -54,18 +54,18 @@ class OpenRoundedLineSegments3D(volmdlr.wires.Wire3D,
     def arc_features(self, point_index: int):
         # raise NotImplementedError
         radius = self.radius[point_index]
-        pt1, pti, pt2 = self.get_points(point_index)
-        dist1 = (pt1 - pti).norm()
-        dist2 = (pt2 - pti).norm()
-        dist3 = (pt1 - pt2).norm()
+        point_1, point_i, point_2 = self.get_points(point_index)
+        dist1 = (point_1 - point_i).norm()
+        dist2 = (point_2 - point_i).norm()
+        dist3 = (point_1 - point_2).norm()
         alpha = math.acos(-(dist3**2 - dist1**2 - dist2**2) / (2 * dist1 * dist2)) / 2.
         dist = radius / math.tan(alpha)
 
-        u1 = (pt1 - pti) / dist1
-        u2 = (pt2 - pti) / dist2
+        u1 = (point_1 - point_i) / dist1
+        u2 = (point_2 - point_i) / dist2
 
-        p3 = pti + u1 * dist
-        p4 = pti + u2 * dist
+        p3 = point_i + u1 * dist
+        p4 = point_i + u2 * dist
 
         n = u1.cross(u2)
         n /= n.norm()
@@ -216,12 +216,12 @@ class Block(shells.ClosedShell3D):
         Transform a bounding box into a block.
         """
         origin = bounding_box.center
-        sx = bounding_box.xmax - bounding_box.xmin
-        sy = bounding_box.ymax - bounding_box.ymin
-        sz = bounding_box.zmax - bounding_box.zmin
-        frame = volmdlr.Frame3D(origin, sx * volmdlr.Vector3D(1, 0, 0),
-                                sy * volmdlr.Vector3D(0, 1, 0),
-                                sz * volmdlr.Vector3D(0, 0, 1))
+        length_x = bounding_box.xmax - bounding_box.xmin
+        length_y = bounding_box.ymax - bounding_box.ymin
+        length_z = bounding_box.zmax - bounding_box.zmin
+        frame = volmdlr.Frame3D(origin, length_x * volmdlr.Vector3D(1, 0, 0),
+                                length_y * volmdlr.Vector3D(0, 1, 0),
+                                length_z * volmdlr.Vector3D(0, 0, 1))
         return cls(frame=frame)
 
     def vertices(self):
@@ -465,9 +465,8 @@ class Block(shells.ClosedShell3D):
         else:
             fig = None
 
-        for edge3D in self.edges():
-            # edge2D = edge3D.PlaneProjection2D()
-            edge3D.plot2d(x3d, y3d, ax=ax)
+        for edge3d in self.edges():
+            edge3d.plot2d(x3d, y3d, ax=ax)
 
         return fig, ax
 
@@ -1764,9 +1763,9 @@ class Sweep(shells.ClosedShell3D):
                     tangents.append(wire_primitive.tangent(position))
 
                 circles = []
-                for pt, tan in zip(wire_primitive.points, tangents):
+                for point, tan in zip(wire_primitive.points, tangents):
                     # TODO: replace circle by real contour!
-                    circles.append(volmdlr.wires.Circle3D.from_center_normal(center=pt,
+                    circles.append(volmdlr.wires.Circle3D.from_center_normal(center=point,
                                                                              normal=tan,
                                                                              radius=self.contour2d.radius))
 

@@ -1455,7 +1455,7 @@ class VolumeModel(dc.PhysicalObject):
         return babylon_data
 
     @classmethod
-    def babylonjs_script(cls, babylon_data, use_cdn=True, debug=False):
+    def babylonjs_script(cls, babylon_data, use_cdn=True, **kwargs):
         """
         Run babylonjs script.
 

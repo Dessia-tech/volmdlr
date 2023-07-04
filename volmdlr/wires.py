@@ -2058,8 +2058,8 @@ class Contour2D(ContourMixin, Wire2D):
         if contour2.area() > self.area() and not math.isclose(contour2.area(), self.area(), rel_tol=0.01):
             return False
         points_contour2 = []
-        for i, prim in enumerate(contour2.primitives):
-            points = prim.discretization_points(number_points=5)
+        for primitive in contour2.primitives:
+            points = primitive.discretization_points(number_points=5)
             points_contour2.extend(points[:-1])
         for point in points_contour2:
             if not self.point_belongs(point, include_edge_points=True):

@@ -3,7 +3,7 @@ from geomdl import utilities
 import volmdlr
 from volmdlr import edges
 
-degree = 3
+DEGREE = 3
 points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
 knotvector = utilities.generate_knot_vector(degree, len(points))
 knot_multiplicity = [1] * len(knotvector)

@@ -149,17 +149,17 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
         for i in range((not self.closed), nb - (not self.closed)):
 
             check = False
-            ni = vectors[2 * i - 1] + vectors[2 * i]
-            if ni.is_close(volmdlr.Vector2D(0, 0)):
-                ni = vectors[2 * i]
-                ni = ni.normalVector()
-                offset_vectors.append(ni)
+            normal_i = vectors[2 * i - 1] + vectors[2 * i]
+            if normal_i.is_close(volmdlr.Vector2D(0, 0)):
+                normal_i = vectors[2 * i]
+                normal_i = normal_i.normal_vector()
+                offset_vectors.append(normal_i)
             else:
                 ni.normalize()
                 if ni.dot(vectors[2 * i - 1].normal_vector()) > 0:
-                    ni = - ni
+                    normal_i = - normal_i
                     check = True
-                offset_vectors.append(ni)
+                offset_vectors.append(normal_i)
 
             if i in self.radius:
                 if (check and offset > 0) or (not check and offset < 0):
@@ -183,8 +183,8 @@ class OpenedRoundedLineSegments2D(RoundedLineSegments, volmdlr.wires.Wire2D):
             offset_points.append(offset_point)
 
         if not self.closed:
-            n1 = vectors[0].normal_vector()
-            offset_vectors.insert(0, n1)
+            normal_1 = vectors[0].normal_vector()
+            offset_vectors.insert(0, normal_1)
             offset_points.insert(0,
                                  self.points[0] + offset * offset_vectors[0])
 
@@ -463,7 +463,7 @@ class Measure2D(volmdlr.edges.LineSegment2D):
         ndigits = 6
         x1, y1 = self.start
         x2, y2 = self.end
-        xm, ym = 0.5 * (self.start + self.end)
+        x_middle, y_middle = 0.5 * (self.start + self.end)
         distance = self.end.point_distance(self.start)
 
         if self.label != '':
@@ -491,4 +491,4 @@ class Measure2D(volmdlr.edges.LineSegment2D):
             theta = 90.
         else:
             theta = math.degrees(math.atan((y2 - y1) / (x2 - x1)))
-        ax.text(xm, ym, label, va='bottom', ha='center', rotation=theta)
+        ax.text(x_middle, y_middle, label, va='bottom', ha='center', rotation=theta)
