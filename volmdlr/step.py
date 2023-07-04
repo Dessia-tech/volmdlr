@@ -49,6 +49,7 @@ def step_split_arguments(function_arg):
     ex: IN: '#123,#124,#125)'
        OUT: ['#123', '#124', '#125']
     """
+    function_arg = function_arg.strip()
     if len(function_arg) > 0 and function_arg[-1] != ')':
         function_arg += ')'
     arguments = []
@@ -67,7 +68,8 @@ def step_split_arguments(function_arg):
             is_str = False
         # if char != "," or parenthesis > 1 or is_str:
         #     argument += char
-
+        if not is_str and char == " ":
+            continue
         if parenthesis > 1 or is_str:
             argument += char
         elif char != ",":
