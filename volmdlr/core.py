@@ -2210,7 +2210,7 @@ class MovingVolumeModel(VolumeModel):
                 primitive.frame_mapping(frame, side='old'))
         return VolumeModel(primitives)
 
-    def babylon_data(self):
+    def babylon_data(self, merge_meshes=True):
         """
         Get babylonjs data.
 
@@ -2220,7 +2220,7 @@ class MovingVolumeModel(VolumeModel):
         primitives_to_meshes = []
         for i_prim, primitive in enumerate(self.primitives):
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes())
+                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 primitives_to_meshes.append(i_prim)
 
         bbox = self._bounding_box()
