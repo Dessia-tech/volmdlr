@@ -23,8 +23,6 @@ import volmdlr.primitives
 import volmdlr.wires
 from volmdlr import shells, surfaces
 
-# import dessia_common.typings as dct
-
 npy.seterr(divide='raise')
 
 
@@ -458,7 +456,7 @@ class Block(shells.ClosedShell3D):
 
     def plot2d(self, x3d, y3d, ax=None):
         """
-        Plot 2d with matplotlib.
+        Plot 2d with Matplotlib.
 
         """
         if ax is None:
@@ -978,10 +976,6 @@ class Cylinder(shells.ClosedShell3D):
         dy2 = (point_a[1] - point_b[1])**2
         dz2 = (point_a[2] - point_b[2])**2
 
-        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
-
         if point_a[0] > point_b[0]:
             point_a, point_b = point_b, point_a
         xmin = point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * radius
@@ -1409,10 +1403,6 @@ class Cone(RevolvedProfile):
         dy2 = (point_a[1] - point_b[1])**2
         dz2 = (point_a[2] - point_b[2])**2
 
-        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
-
         x_bound = (point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
                    point_a[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[0])
         xmin = min(x_bound)
@@ -1533,10 +1523,6 @@ class HollowCylinder(RevolvedProfile):
         dx2 = (point_a[0] - point_b[0])**2
         dy2 = (point_a[1] - point_b[1])**2
         dz2 = (point_a[2] - point_b[2])**2
-
-        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
 
         if point_a[0] > point_b[0]:
             point_a, point_b = point_b, point_a
