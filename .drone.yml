@@ -118,7 +118,7 @@ steps:
 
 
 - name: generate sdist
-  image: python:3.8
+  image: python:3.9
   commands:
   - git fetch --tags
   - pip install Cython
