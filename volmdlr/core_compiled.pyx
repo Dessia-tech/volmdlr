@@ -3419,7 +3419,7 @@ class Frame3D(Basis3D):
 
     @classmethod
     def from_point_and_vector(cls, point: Point3D, vector: Vector3D,
-                              main_axis: Vector3D = X3D, name: str=''):
+                              main_axis: Vector3D = X3D, name: str = ''):
         """
         Creates a new frame from a point and vector by rotating the global
         frame. Global frame rotates in order to have 'vector' and 'main_axis'
