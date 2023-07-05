@@ -440,6 +440,46 @@ class Edge(dc.DessiaObject):
             return True
         return False
 
+    def minimum_distance(self, element, return_points=False):
+        """
+        Gets the minimum distance two methods.
+
+        This is a generelized method in a case an analytical method has not yet been defined.
+
+        :param element: another edge.
+        :param return_points: weather also to return the corresponding points.
+        :return: minimum distance.
+        """
+        linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
+        def clean_points(list_pts):
+            points_ = []
+            for point in list_pts:
+                if not volmdlr.core.point_in_list(point, points_):
+                    points_.append(point)
+            return points_
+        points = clean_points(self.discretization_points(number_points=100))
+        # for point in self.points:
+        #     if not volmdlr.core.point_in_list(point, points):
+        #         points.append(point)
+        discretization_primitves1 = [linesegment_class_(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        discretization_points2 = element.discretization_points(number_points=100)
+        points = clean_points(discretization_points2)
+        # for point in discretization_points2:
+        #     if not volmdlr.core.point_in_list(point, points):
+        #         points.append(point)
+        discretization_primitves2 = [linesegment_class_(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        minimum_distance = math.inf
+        points = None
+        for prim1 in discretization_primitves1:
+            for prim2 in discretization_primitves2:
+                distance, point1, point2 = prim1.minimum_distance(prim2, return_points=True)
+                if distance < minimum_distance:
+                    minimum_distance = distance
+                    points = (point1, point2)
+        if return_points:
+            return minimum_distance, points[0], points[1]
+        return minimum_distance
+
 
 class LineSegment(Edge):
     """
@@ -4054,108 +4094,7 @@ class LineSegment3D(LineSegment):
         :param other_line: Other line.
         :return: Two points corresponding to the distance between to lines.
         """
-        u = self.direction_vector()
-        v = other_line.direction_vector()
-        w = self.start - other_line.start
-        a = u.dot(u)
-        b = u.dot(v)
-        c = v.dot(v)
-        d = u.dot(w)
-        e = v.dot(w)
-        determinant = a * c - b * c
-        if determinant > - 1e-6:
-            b_times_e = b * e
-            c_times_d = c * d
-            if b_times_e <= c_times_d:
-                s_parameter = 0.0
-                if e <= 0.0:
-                    t_parameter = 0.0
-                    negative_d = -d
-                    if negative_d >= a:
-                        s_parameter = 1.0
-                    elif negative_d > 0.0:
-                        s_parameter = negative_d / a
-                elif e < c:
-                    t_parameter = e / c
-                else:
-                    t_parameter = 1.0
-                    b_minus_d = b - d
-                    if b_minus_d >= a:
-                        s_parameter = 1.0
-                    elif b_minus_d > 0.0:
-                        s_parameter = b_minus_d / a
-            else:
-                s_parameter = b_times_e - c_times_d
-                if s_parameter >= determinant:
-                    s_parameter = 1.0
-                    b_plus_e = b + e
-                    if b_plus_e <= 0.0:
-                        t_parameter = 0.0
-                        negative_d = -d
-                        if negative_d <= 0.0:
-                            s_parameter = 0.0
-                        elif negative_d < a:
-                            s_parameter = negative_d / a
-                    elif b_plus_e < c:
-                        t_parameter = b_plus_e / c
-                    else:
-                        t_parameter = 1.0
-                        b_minus_d = b - d
-                        if b_minus_d <= 0.0:
-                            s_parameter = 0.0
-                        elif b_minus_d < a:
-                            s_parameter = b_minus_d / a
-                else:
-                    a_times_e = a * e
-                    b_times_d = a * d
-                    if a_times_e <= b_times_d:
-                        t_parameter = 0.0
-                        negative_d = -d
-                        if negative_d <= 0.0:
-                            s_parameter = 0.0
-                        elif negative_d >= a:
-                            s_parameter = 1.0
-                        else:
-                            s_parameter = negative_d / a
-                    else:
-                        t_parameter = a_times_e - b_times_d
-                        if t_parameter >= determinant:
-                            t_parameter = 1.0
-                            b_minus_d = b - d
-                            if b_minus_d <= 0.0:
-                                s_parameter = 0.0
-                            elif b_minus_d >= a:
-                                s_parameter = 1.0
-                            else:
-                                s_parameter = b_minus_d / a
-                        else:
-                            s_parameter /= determinant
-                            t_parameter /= determinant
-        else:
-            if e <= 0.0:
-                t_parameter = 0.0
-                negative_d = -d
-                if negative_d <= 0.0:
-                    s_parameter = 0.0
-                elif negative_d >= a:
-                    s_parameter = 1.0
-                else:
-                    s_parameter = negative_d / a
-            elif e >= c:
-                t_parameter = 1.0
-                b_minus_d = b - d
-                if b_minus_d <= 0.0:
-                    s_parameter = 0.0
-                elif b_minus_d >= a:
-                    s_parameter = 1.0
-                else:
-                    s_parameter = b_minus_d / a
-            else:
-                s_parameter = 0.0
-                t_parameter = e / c
-        p1 = self.start + u * s_parameter
-        p2 = other_line.start + v * t_parameter
-        return p1, p2
+        return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
         """Calculates the paralel distance between two Line Segments 3D."""
@@ -5268,7 +5207,7 @@ class Arc3D(ArcMixin, Edge):
         return point1, point2
 
     def minimum_distance(self, element, return_points=False):
-        if element.__class__ is Arc3D or element.__class__.__name__ == 'Circle3D':
+        if element.__class__.__name__ in ['Arc3D', 'Circle3D', 'FullArc3D']:
             p1, p2 = self.minimum_distance_points_arc(element)
             if return_points:
                 return p1.point_distance(p2), p1, p2
@@ -5279,8 +5218,7 @@ class Arc3D(ArcMixin, Edge):
             if return_points:
                 return pt1.point_distance(pt2), pt1, pt2
             return pt1.point_distance(pt2)
-
-        return NotImplementedError
+        return super().minimum_distance(element, return_points)
 
     def extrusion(self, extrusion_vector):
         if self.circle.normal.is_colinear_to(extrusion_vector):

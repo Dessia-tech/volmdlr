@@ -171,6 +171,17 @@ class TestClosedShell3D(unittest.TestCase):
         for i, expected_result in enumerate(expected_results):
             self.assertEqual(closed_shell.point_belongs(points[i]), expected_result)
 
+    def test_minimum_distance(self):
+        closed_shell = dessia_common.core.DessiaObject.load_from_file(
+            'shells/test_shells_distance2.json')
+        frame = volmdlr.Frame3D(volmdlr.Point3D(-0.015122945913888401, 0.014332516640826326, -0.024821238133162993),
+                                volmdlr.Vector3D(-0.5773502691896258, -0.5773502691896258, -0.5773502691896258),
+                                volmdlr.Vector3D(0.8164965809277258, -0.40824829046386313, -0.40824829046386313),
+                                volmdlr.Vector3D(0.0, -0.7071067811865476, 0.7071067811865476))
+        fm_shell = closed_shell.frame_mapping(frame, 'new')
+        min_distance = closed_shell.minimum_distance2(fm_shell, False)
+        self.assertAlmostEqual(min_distance, 0.004067629192869989)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -303,6 +303,122 @@ cdef (double, (double, double, double)) CLineSegment3DPointDistance((double, dou
 def LineSegment3DPointDistance(points, point):
     return CLineSegment3DPointDistance(tuple(points[0]), tuple(points[1]), tuple(point))
 
+
+cdef (double, double) CLineSegment3DDistance((double, double, double) u,
+                                             (double, double, double) v,
+                                             (double, double, double) w):
+    cdef double a = CVector3DDot(u[0], u[1], u[2], u[0], u[1], u[2])
+    cdef double b = CVector3DDot(u[0], u[1], u[2], v[0], v[1], v[2])
+    cdef double c = CVector3DDot(v[0], v[1], v[2], v[0], v[1], v[2])
+    cdef double d = CVector3DDot(u[0], u[1], u[2], w[0], w[1], w[2])
+    cdef double e = CVector3DDot(v[0], v[1], v[2], w[0], w[1], w[2])
+    cdef double determinant = a * c - b * c
+    cdef double s_parameter
+    cdef double t_parameter
+    if determinant > - 1e-6:
+        b_times_e = b * e
+        c_times_d = c * d
+        if b_times_e <= c_times_d:
+            s_parameter = 0.0
+            if e <= 0.0:
+                t_parameter = 0.0
+                negative_d = -d
+                if negative_d >= a:
+                    s_parameter = 1.0
+                elif negative_d > 0.0:
+                    s_parameter = negative_d / a
+            elif e < c:
+                t_parameter = e / c
+            else:
+                t_parameter = 1.0
+                b_minus_d = b - d
+                if b_minus_d >= a:
+                    s_parameter = 1.0
+                elif b_minus_d > 0.0:
+                    s_parameter = b_minus_d / a
+        else:
+            s_parameter = b_times_e - c_times_d
+            if s_parameter >= determinant:
+                s_parameter = 1.0
+                b_plus_e = b + e
+                if b_plus_e <= 0.0:
+                    t_parameter = 0.0
+                    negative_d = -d
+                    if negative_d <= 0.0:
+                        s_parameter = 0.0
+                    elif negative_d < a:
+                        s_parameter = negative_d / a
+                elif b_plus_e < c:
+                    t_parameter = b_plus_e / c
+                else:
+                    t_parameter = 1.0
+                    b_minus_d = b - d
+                    if b_minus_d <= 0.0:
+                        s_parameter = 0.0
+                    elif b_minus_d < a:
+                        s_parameter = b_minus_d / a
+            else:
+                a_times_e = a * e
+                b_times_d = a * d
+                if a_times_e <= b_times_d:
+                    t_parameter = 0.0
+                    negative_d = -d
+                    if negative_d <= 0.0:
+                        s_parameter = 0.0
+                    elif negative_d >= a:
+                        s_parameter = 1.0
+                    else:
+                        s_parameter = negative_d / a
+                else:
+                    t_parameter = a_times_e - b_times_d
+                    if t_parameter >= determinant:
+                        t_parameter = 1.0
+                        b_minus_d = b - d
+                        if b_minus_d <= 0.0:
+                            s_parameter = 0.0
+                        elif b_minus_d >= a:
+                            s_parameter = 1.0
+                        else:
+                            s_parameter = b_minus_d / a
+                    else:
+                        s_parameter /= determinant
+                        t_parameter /= determinant
+    else:
+        if e <= 0.0:
+            t_parameter = 0.0
+            negative_d = -d
+            if negative_d <= 0.0:
+                s_parameter = 0.0
+            elif negative_d >= a:
+                s_parameter = 1.0
+            else:
+                s_parameter = negative_d / a
+        elif e >= c:
+            t_parameter = 1.0
+            b_minus_d = b - d
+            if b_minus_d <= 0.0:
+                s_parameter = 0.0
+            elif b_minus_d >= a:
+                s_parameter = 1.0
+            else:
+                s_parameter = b_minus_d / a
+        else:
+            s_parameter = 0.0
+            t_parameter = e / c
+    return s_parameter, t_parameter
+
+
+def LineSegment3DDistance(points_linesegment1, points_linesegment2):
+    u = Csub3D(points_linesegment1[1].x, points_linesegment1[1].y, points_linesegment1[1].z,
+               points_linesegment1[0].x, points_linesegment1[0].y, points_linesegment1[0].z)
+    v = Csub3D(points_linesegment2[1].x, points_linesegment2[1].y, points_linesegment2[1].z,
+               points_linesegment2[0].x, points_linesegment2[0].y, points_linesegment2[0].z)
+    w = Csub3D(points_linesegment1[0].x, points_linesegment1[0].y, points_linesegment1[0].z,
+               points_linesegment2[0].x, points_linesegment2[0].y, points_linesegment2[0].z)
+    s_parameter, t_parameter = CLineSegment3DDistance(u, v, w)
+    point1 = points_linesegment1[0] + Vector3D(*u) * s_parameter
+    point2 = points_linesegment2[0] + Vector3D(*v) * t_parameter
+    return point1, point2
 # =============================================================================
 #  Points, Vectors
 # =============================================================================

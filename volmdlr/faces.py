@@ -5,9 +5,10 @@ Surfaces & faces.
 
 import math
 import warnings
-from itertools import chain
+from itertools import chain, product
 from typing import List
 from scipy.optimize._lsq import least_squares
+from scipy.optimize import Bounds, NonlinearConstraint, minimize
 import matplotlib.pyplot as plt
 import numpy as npy
 
@@ -26,6 +27,24 @@ from volmdlr import surfaces
 import volmdlr.wires
 
 
+def octree_decomposition(bbox, faces):
+    decomposition = {octant: [] for octant in bbox.octree()}
+    for face in faces:
+        center = face.bounding_box.center
+        for octant in bbox.octree():
+            if octant.point_belongs(center):
+                decomposition[octant].append(face)
+                break
+    decomposed = {octant: faces for octant, faces in decomposition.items() if faces}
+    return decomposed
+
+
+def octree_face_decomposition(face):
+    triangulation = face.triangulation()
+    triangulation_faces = triangulation.faces
+    return octree_decomposition(face.bounding_box, triangulation_faces)
+
+
 class Face3D(volmdlr.core.Primitive3D):
     """
     Abstract method to define 3D faces.
@@ -40,6 +59,7 @@ class Face3D(volmdlr.core.Primitive3D):
         self.surface2d = surface2d
         self._outer_contour3d = None
         self._inner_contours3d = None
+        self._face_octree_decomposition = None
         # self.bounding_box = self._bounding_box()
 
         volmdlr.core.Primitive3D.__init__(self, name=name)
@@ -252,8 +272,11 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         return [0, 0]
 
-    def triangulation(self):
-        number_points_x, number_points_y = self.grid_size()
+    def triangulation(self, grid_size=None):
+        if not grid_size:
+            number_points_x, number_points_y = self.grid_size()
+        else:
+            number_points_x, number_points_y = grid_size
         mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
         if mesh2d is None:
             return None
@@ -1008,6 +1031,11 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return linesegment_intersections
 
+    def face_decomposition(self):
+        if not self._face_octree_decomposition:
+            self._face_octree_decomposition = octree_face_decomposition(self)
+        return self._face_octree_decomposition
+
     def face_minimum_distance(self, other_face, return_points: bool = False):
         """
         Gets the minimum distance between two faces.
@@ -1017,7 +1045,39 @@ class Face3D(volmdlr.core.Primitive3D):
         :return:
         """
         method_name = f'{other_face.__class__.__name__.lower()[:-2]}_minimum_distance'
-        minimum_distance = getattr(self, method_name)(other_face, return_points)
+        if hasattr(self, method_name):
+            return getattr(self, method_name)(other_face, return_points)
+        face_decomposition1 = self.face_decomposition()
+        face_decomposition2 = other_face.face_decomposition()
+        list_set_points1 = [{point for face in faces1 for point in face.points} for _, faces1 in face_decomposition1.items()]
+        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in list_set_points1]
+        list_set_points2 = [{point for face in faces2 for point in face.points} for _, faces2 in
+                            face_decomposition2.items()]
+        list_set_points2 = [npy.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
+                            list_set_points2]
+
+        minimum_distance = math.inf
+        index1, index2 = None, None
+        for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
+            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
+            sets_min_dist = npy.min(distances)
+            if sets_min_dist < minimum_distance:
+                minimum_distance = sets_min_dist
+                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
+                index2 = next((i for i, x in enumerate(list_set_points2) if npy.array_equal(x, sets_points2)), -1)
+        faces1 = list(face_decomposition1.values())[index1]
+        faces2 = list(face_decomposition2.values())[index2]
+
+        minimum_distance = math.inf
+        best_distance_points = None
+
+        for face1, face2 in product(faces1, faces2):
+            distance, point1, point2 = face1.planeface_minimum_distance(face2, True)
+            if distance < minimum_distance:
+                minimum_distance = distance
+                best_distance_points = [point1, point2]
+        if return_points:
+            return minimum_distance, *best_distance_points
         return minimum_distance
 
     def plane_intersections(self, plane3d: surfaces.Plane3D):
@@ -1153,9 +1213,8 @@ class PlaneFace3D(Face3D):
                     if dist[0] < min_distance:
                         min_distance = dist[0]
                         point1, point2 = dist[1], dist[2]
-                else:
-                    if dist < min_distance:
-                        min_distance = dist
+                elif dist < min_distance:
+                    min_distance = dist
         if return_points:
             return min_distance, point1, point2
         return min_distance
@@ -1252,51 +1311,6 @@ class PlaneFace3D(Face3D):
         if not return_points:
             return dist
         return dist, point1, point2
-
-    def cylindricalface_minimum_distance(self, cylindricaface: 'CylindricalFace3D', return_points: bool = False):
-        point1, point2 = cylindricaface.minimum_distance_points_cyl(self)
-        if return_points:
-            return point1.point_distance(point2), point1, point2
-        return point1.point_distance(point2)
-
-    def minimum_distance(self, other_face, return_points=False):
-        """
-        Returns the minimum distance between the current face and the specified other face.
-
-        :param other_face: Face to evaluate the minimum distance.
-        :type other_face: :class:`PlaneFace3D`
-        :param return_points: A boolean value indicating whether to return the minimum distance as
-            well as the two points on each face that are closest to each other. If True, the function
-            returns a tuple of the form (distance, point1, point2). If False, the function only returns
-            the distance.
-        :type return_points: bool
-        :return: If the return_points parameter is set to True, it also returns the two points on each face
-            that are closest to each other. The return type is a float if return_points is False and
-            a tuple (distance, point1, point2) if return_points is True.
-        :rtype: float, Tuple[float, float, float]
-        """
-        if other_face.__class__ is CylindricalFace3D:
-            point1, point2 = other_face.minimum_distance_points_cyl(self)
-            if return_points:
-                return point1.point_distance(point2), point1, point2
-            return point1.point_distance(point2)
-
-        if other_face.__class__ is PlaneFace3D:
-            if return_points:
-                dist, point1, point2 = self.minimum_distance_points_plane(other_face,
-                                                                          return_points=return_points)
-                return dist, point1, point2
-            dist = self.minimum_distance_points_plane(other_face,
-                                                      return_points=return_points)
-            return dist
-
-        if other_face.__class__ is ToroidalFace3D:
-            point1, point2 = other_face.minimum_distance_points_plane(self)
-            if return_points:
-                return point1.point_distance(point2), point1, point2
-            return point1.point_distance(point2)
-
-        raise NotImplementedError
 
     def is_adjacent(self, face2: Face3D):
         contour1 = self.outer_contour3d.to_2d(
@@ -1932,174 +1946,24 @@ class CylindricalFace3D(Face3D):
 
         return any(self.surface2d.point_belongs(pt2d) for pt2d in [point2d, point2d_plus_2pi, point2d_minus_2pi])
 
-    def grid_size(self):
-        """
-        Specifies an adapted size of the discretization grid used in face triangulation.
-        """
-        angle_resolution = 5
-        z_resolution = 0
+    def parametrized_grid_size(self, angle_resolution, z_resolution):
+        # angle_resolution = 5
+        # z_resolution = 0
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         number_points_x = max(angle_resolution, int(delta_theta * angle_resolution))
 
         delta_z = zmax - zmin
         number_points_y = int(delta_z * z_resolution)
-
         return number_points_x, number_points_y
 
-    def minimum_maximum(self):
-        poly = self.surface2d.outer_contour.to_polygon(angle_resolution=10) 
-        points = poly.points
-        min_h, min_theta = min([pt.y for pt in points]), min(
-            [pt.x for pt in points])
-        max_h, max_theta = max([pt.y for pt in points]), max(
-            [pt.x for pt in points])
-        return min_h, min_theta, max_h, max_theta
-
-    def minimum_distance_points_cyl(self, other_cyl):
-        r1, r2 = self.radius, other_cyl.radius
-        min_h1, min_theta1, max_h1, max_theta1 = self.minimum_maximum()
-
-        n1 = self.normal
-        u1 = self.surface3d.frame.u
-        v1 = self.surface3d.frame.v
-        frame1 = volmdlr.Frame3D(self.center, u1, v1, n1)
-
-        min_h2, min_theta2, max_h2, max_theta2 = other_cyl.minimum_maximum()
-
-        n2 = other_cyl.normal
-        u2 = other_cyl.surface3d.frame.u
-        v2 = other_cyl.surface3d.frame.v
-        frame2 = volmdlr.Frame3D(other_cyl.center, u2, v2, n2)
-
-        w = other_cyl.center - self.center
-
-        n1n1, n1u1, n1v1, n1n2, n1u2, n1v2 = n1.dot(n1), n1.dot(u1), n1.dot(
-            v1), n1.dot(n2), n1.dot(u2), n1.dot(v2)
-        u1u1, u1v1, u1n2, u1u2, u1v2 = u1.dot(u1), u1.dot(v1), u1.dot(
-            n2), u1.dot(u2), u1.dot(v2)
-        v1v1, v1n2, v1u2, v1v2 = v1.dot(v1), v1.dot(n2), v1.dot(u2), v1.dot(v2)
-        n2n2, n2u2, n2v2 = n2.dot(n2), n2.dot(u2), n2.dot(v2)
-        u2u2, u2v2, v2v2 = u2.dot(u2), u2.dot(v2), v2.dot(v2)
-
-        w2, wn1, wu1, wv1, wn2, wu2, wv2 = w.dot(w), w.dot(n1), w.dot(
-            u1), w.dot(v1), w.dot(n2), w.dot(u2), w.dot(v2)
-
-        # x = (theta1, h1, theta2, h2)
-        def distance_squared(x):
-            return (n1n1 * (x[1] ** 2) + u1u1 * ((math.cos(x[0])) ** 2) * (
-                    r1 ** 2) + v1v1 * ((math.sin(x[0])) ** 2) * (r1 ** 2)
-                    + w2 + n2n2 * (x[3] ** 2) + u2u2 * (
-                            (math.cos(x[2])) ** 2) * (r2 ** 2) + v2v2 * (
-                            (math.sin(x[2])) ** 2) * (r2 ** 2)
-                    + 2 * x[1] * r1 * math.cos(x[0]) * n1u1 + 2 * x[
-                        1] * r1 * math.sin(x[0]) * n1v1 - 2 * x[1] * wn1
-                    - 2 * x[1] * x[3] * n1n2 - 2 * x[1] * r2 * math.cos(
-                        x[2]) * n1u2 - 2 * x[1] * r2 * math.sin(x[2]) * n1v2
-                    + 2 * math.cos(x[0]) * math.sin(x[0]) * u1v1 * (
-                            r1 ** 2) - 2 * r1 * math.cos(x[0]) * wu1
-                    - 2 * r1 * x[3] * math.cos(
-                        x[0]) * u1n2 - 2 * r1 * r2 * math.cos(x[0]) * math.cos(
-                        x[2]) * u1u2
-                    - 2 * r1 * r2 * math.cos(x[0]) * math.sin(
-                        x[2]) * u1v2 - 2 * r1 * math.sin(x[0]) * wv1
-                    - 2 * r1 * x[3] * math.sin(
-                        x[0]) * v1n2 - 2 * r1 * r2 * math.sin(x[0]) * math.cos(
-                        x[2]) * v1u2
-                    - 2 * r1 * r2 * math.sin(x[0]) * math.sin(
-                        x[2]) * v1v2 + 2 * x[3] * wn2 + 2 * r2 * math.cos(
-                        x[2]) * wu2
-                    + 2 * r2 * math.sin(x[2]) * wv2 + 2 * x[3] * r2 * math.cos(
-                        x[2]) * n2u2 + 2 * x[3] * r2 * math.sin(x[2]) * n2v2
-                    + 2 * math.cos(x[2]) * math.sin(x[2]) * u2v2 * (r2 ** 2))
-
-        x01 = npy.array([(min_theta1 + max_theta1) / 2, (min_h1 + max_h1) / 2,
-                         (min_theta2 + max_theta2) / 2, (min_h2 + max_h2) / 2])
-        x02 = npy.array([min_theta1, (min_h1 + max_h1) / 2,
-                         min_theta2, (min_h2 + max_h2) / 2])
-        x03 = npy.array([max_theta1, (min_h1 + max_h1) / 2,
-                         max_theta2, (min_h2 + max_h2) / 2])
-
-        minimax = [(min_theta1, min_h1, min_theta2, min_h2),
-                   (max_theta1, max_h1, max_theta2, max_h2)]
-
-        res1 = least_squares(distance_squared, x01, bounds=minimax)
-        res2 = least_squares(distance_squared, x02, bounds=minimax)
-        res3 = least_squares(distance_squared, x03, bounds=minimax)
-
-        pt1 = volmdlr.Point3D(r1 * math.cos(res1.x[0]), 
-                              r1 * math.sin(res1.x[0]),
-                              res1.x[1])
-        p1 = frame1.old_coordinates(pt1)
-        pt2 = volmdlr.Point3D(r2 * math.cos(res1.x[2]), 
-                              r2 * math.sin(res1.x[2]),
-                              res1.x[3])
-        p2 = frame2.old_coordinates(pt2)
-        d = p1.point_distance(p2)
-        result = res1
-
-        res = [res2, res3]
-        for couple in res:
-            pttest1 = volmdlr.Point3D(r1 * math.cos(couple.x[0]),
-                                      r1 * math.sin(couple.x[0]),
-                                      couple.x[1])
-            pttest2 = volmdlr.Point3D(r2 * math.cos(couple.x[2]),
-                                      r2 * math.sin(couple.x[2]),
-                                      couple.x[3])
-            ptest1 = frame1.old_coordinates(pttest1)
-            ptest2 = frame2.old_coordinates(pttest2)
-            dtest = ptest1.point_distance(ptest2)
-            if dtest < d:
-                result = couple
-                p1, p2 = ptest1, ptest2
-
-        pt1_2d = volmdlr.Point2D(result.x[0], result.x[1])
-        pt2_2d = volmdlr.Point2D(result.x[2], result.x[3])
-
-        if not (self.surface2d.outer_contour.point_belongs(pt1_2d)):
-            # Find the closest one
-
-            poly1 = self.surface2d.outer_contour.to_polygon(angle_resolution=10)
-            _, new_pt1_2d = poly1.point_border_distance(pt1_2d, return_other_point=True)
-            pt1 = volmdlr.Point3D(r1 * math.cos(new_pt1_2d[0]),
-                                  r1 * math.sin(new_pt1_2d[0]),
-                                  new_pt1_2d[1])
-            p1 = frame1.old_coordinates(pt1)
-
-        if not (other_cyl.surface2d.outer_contour.point_belongs(pt2_2d)):
-            # Find the closest one
-
-            poly2 = other_cyl.surface2d.outer_contour.to_polygon(angle_resolution=10)
-            _, new_pt2_2d = poly2.point_border_distance(pt2_2d, return_other_point=True)
-            pt2 = volmdlr.Point3D(r2 * math.cos(new_pt2_2d[0]),
-                                  r2 * math.sin(new_pt2_2d[0]),
-                                  new_pt2_2d[1])
-            p2 = frame2.old_coordinates(pt2)
-
-        return p1, p2
-
-    # def planeface_minimal_distance(self, planeface, return_points=False):
-
-    def minimum_distance(self, other_face, return_points=False):
-        # if other_face.__class__ is CylindricalFace3D:
-        #     point1, point2 = self.minimum_distance_points_cyl(other_face)
-        #     if return_points:
-        #         return point1.point_distance(point2), point1, point2
-        #     return point1.point_distance(point2)
-        #
-        # if other_face.__class__ is PlaneFace3D:
-        #     point1, point2 = self.minimum_distance_points_plane(other_face)
-        #     if return_points:
-        #         return point1.point_distance(point2), point1, point2
-        #     return point1.point_distance(point2)
-
-        if other_face.__class__ is ToroidalFace3D:
-            point1, point2 = other_face.minimum_distance_points_cyl(self)
-            if return_points:
-                return point1.point_distance(point2), point1, point2
-            return point1.point_distance(point2)
-
-        raise NotImplementedError
+    def grid_size(self):
+        """
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
+        angle_resolution = 5
+        z_resolution = 2
+        return self.parametrized_grid_size(angle_resolution, z_resolution)
 
     def adjacent_direction(self, other_face3d):
         """
