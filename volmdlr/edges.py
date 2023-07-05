@@ -4967,7 +4967,7 @@ class Arc3D(ArcMixin, Edge):
         point_theta = self.get_arc_point_angle(point)
         if not self.angle_start <= point_theta <= self.angle_end:
             raise ValueError(f"{point} not in Arc3D.")
-        return self.circle.radius * abs(point_theta)
+        return self.circle.radius * abs(point_theta - self.angle_start)
 
     def point_at_abscissa(self, abscissa):
         """
