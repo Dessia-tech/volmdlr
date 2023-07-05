@@ -4153,7 +4153,7 @@ class ExtrusionSurface3D(Surface3D):
                 if vec2.dot(vec1) < 0:
                     points[-1].x = self.x_periodicity
         return [edges.BSplineCurve2D.from_points_interpolation(
-            points, bspline_curve3d.degree, bspline_curve3d.periodic).simplify]
+            points, bspline_curve3d.degree, bspline_curve3d.periodic)]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """

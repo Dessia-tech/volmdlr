@@ -1046,7 +1046,6 @@ class Assembly(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        print('==', self.primitives)
         return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
 
     def babylon_data(self, merge_meshes=True):

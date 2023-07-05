@@ -5509,8 +5509,8 @@ class FullArc3D(FullArcMixin, Arc3D):
         :return: A new FullArc3D object that is the result of the translation.
         :rtype: FullArc3D.
         """
-        new_start_end = self.start.translation(offset, True)
-        new_circle = self.circle.translation(offset, True)
+        new_start_end = self.start.translation(offset)
+        new_circle = self.circle.translation(offset)
         return FullArc3D(new_circle, new_start_end, name=self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):

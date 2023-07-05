@@ -1465,7 +1465,6 @@ class Step(dc.DessiaObject):
                 # depth in the right order, leading to error
                 if last_error == key.args[0]:
                     raise NotImplementedError('Error instantiating assembly') from key
-                print('step reading keyerror', key.args[0])
                 if key.args[0] in assembly_data:
                     instanciate_ids.append(key.args[0])
                     instanciate_ids.extend(assembly_data[key.args[0]])
