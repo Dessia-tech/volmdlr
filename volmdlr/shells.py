@@ -291,8 +291,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         # ----------------------------------
         name = arguments[0][1:-1]
         if isinstance(arguments[-1], int):
-            product = object_dict[arguments[-1]]
-            name = product[1:-1]
+            step_product = object_dict[arguments[-1]]
+            name = step_product[1:-1]
         # ----------------------------------
         faces = [object_dict[int(face[1:])] for face in arguments[1] if object_dict[int(face[1:])]]
         return cls(faces, name=name)

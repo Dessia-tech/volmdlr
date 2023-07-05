@@ -7,8 +7,6 @@ import math
 import warnings
 from itertools import chain, product
 from typing import List
-from scipy.optimize._lsq import least_squares
-from scipy.optimize import Bounds, NonlinearConstraint, minimize
 import matplotlib.pyplot as plt
 import numpy as npy
 

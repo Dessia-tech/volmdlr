@@ -1004,10 +1004,10 @@ class BoundingBox(dc.DessiaObject):
                 mins_maxs = []
                 for i, size_component in enumerate(_size):
                     mins_maxs.extend([octant_center[i] - size_component / 2, octant_center[i] + size_component / 2])
-                octants.append(self.__class__(*mins_maxs))
+                octants.append(self.__class__(mins_maxs[0], mins_maxs[1], mins_maxs[2], mins_maxs[3],
+                                              mins_maxs[4], mins_maxs[5]))
             self._octree = octants
         return self._octree
-
 
 
 class Assembly(dc.PhysicalObject):
