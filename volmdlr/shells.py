@@ -64,10 +64,6 @@ def union_list_of_shells(list_shells):
     return shells
 
 
-def octree_shell_decomposition(shell):
-    return volmdlr.faces.octree_decomposition(shell.bounding_box, shell.faces)
-
-
 class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     """
     A 3D open shell composed of multiple faces.
@@ -744,7 +740,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
     def shell_decomposition(self):
         if not self._shell_octree_decomposition:
-            self._shell_octree_decomposition = octree_shell_decomposition(self)
+            self._shell_octree_decomposition = volmdlr.faces.octree_decomposition(self.bounding_box, self.faces)
         return self._shell_octree_decomposition
 
     def intersection_internal_aabb_volume(self, shell2: 'OpenShell3D',

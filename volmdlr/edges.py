@@ -4728,6 +4728,7 @@ class BSplineCurve3D(BSplineCurve):
     #     return radius
 
     def triangulation(self):
+        """Triangulatio method for a BSplineCurve3D."""
         return None
 
     def linesegment_intersections(self, linesegment3d: LineSegment3D):
@@ -4845,6 +4846,7 @@ class Arc3D(ArcMixin, Edge):
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
+        """Saves the obejct parameters into a dictionnary."""
         dict_ = self.base_dict()
         dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
                                               id_method=id_method, id_memo=id_memo, path=path + '/circle')
@@ -4855,12 +4857,14 @@ class Arc3D(ArcMixin, Edge):
         return dict_
 
     def get_arc_point_angle(self, point):
+        """Determines the angle for given point."""
         local_start_point = self.circle.frame.global_to_local_coordinates(point)
         u1, u2 = local_start_point.x / self.circle.radius, local_start_point.y / self.circle.radius
         point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         return point_angle
 
     def get_start_end_angles(self):
+        """Searches the angles for start and end points."""
         start_angle = self.get_arc_point_angle(self.start)
         end_angle = self.get_arc_point_angle(self.end)
         if start_angle >= end_angle:
@@ -4869,6 +4873,7 @@ class Arc3D(ArcMixin, Edge):
 
     @property
     def bounding_box(self):
+        """Bounding boc for Arc 3D."""
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
@@ -4912,6 +4917,14 @@ class Arc3D(ArcMixin, Edge):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
+        """
+        Creates an Arc 3d using three points.
+
+        :param point1: start point.
+        :param point2: interior point.
+        :param point3: end point.
+        :return: Arc 3D.
+        """
         circle = volmdlr_curves.Circle3D.from_3_points(point1, point2, point3)
         arc = cls(circle, point1, point3)
         return arc
@@ -5017,6 +5030,7 @@ class Arc3D(ArcMixin, Edge):
         return Arc3D(new_circle, new_start, new_end, name=self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Plot method for Arc 3D using Matplolib."""
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         ax = vm_common_operations.plot_from_discretization_points(
@@ -5076,7 +5090,7 @@ class Arc3D(ArcMixin, Edge):
         return arc
 
     def minimum_distance_points_arc(self, other_arc):
-
+        """Calculates the minimum distance points betweeen two arcs."""
         u1 = self.start - self.circle.center
         u1.normalize()
         u2 = self.circle.normal.cross(u1)
@@ -5121,6 +5135,7 @@ class Arc3D(ArcMixin, Edge):
         return point1, point2
 
     def distance_squared(self, x, u, v, k, w):
+        """Calculates the squared distance."""
         radius = self.circle.radius
         return (u.dot(u) * x[0] ** 2 + w.dot(w) + v.dot(v) * (
                 (math.sin(x[1])) ** 2) * radius ** 2 + k.dot(k) * ((math.cos(x[1])) ** 2) * radius ** 2
@@ -5160,6 +5175,7 @@ class Arc3D(ArcMixin, Edge):
         return point1, point2
 
     def minimum_distance(self, element, return_points=False):
+        """Gets the mininum distace between an Arc 3D and another edge."""
         if element.__class__.__name__ in ['Arc3D', 'Circle3D', 'FullArc3D']:
             p1, p2 = self.minimum_distance_points_arc(element)
             if return_points:
@@ -5174,6 +5190,7 @@ class Arc3D(ArcMixin, Edge):
         return super().minimum_distance(element, return_points)
 
     def extrusion(self, extrusion_vector):
+        """Extrudes an arc 3d in the given extrusion vector direction."""
         if self.circle.normal.is_colinear_to(extrusion_vector):
             u = self.start - self.circle.center
             u.normalize()

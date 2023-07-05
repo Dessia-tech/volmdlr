@@ -994,6 +994,7 @@ class BoundingBox(dc.DessiaObject):
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
     def octree(self):
+        """Creates a simple octree structure for a bounding box."""
         if not self._octree:
             octants = []
             points_x, points_y, points_z = 2, 2, 2
