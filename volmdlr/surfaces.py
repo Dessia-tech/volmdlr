@@ -4275,8 +4275,8 @@ class RevolutionSurface3D(PeriodicalSurface):
             wire = edges.FullArc3D(wire.frame.origin, start_end, wire.frame.w)
             y_periodicity = wire.length()
 
-        # if hasattr(wire, "simplify"):
-        #     wire = wire.simplify
+        if hasattr(wire, "simplify"):
+            wire = wire.simplify
         axis_point, axis = object_dict[arguments[2]]
         surface = cls(wire=wire, axis_point=axis_point, axis=axis, name=name)
         surface.y_periodicity = y_periodicity
@@ -4304,7 +4304,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        if hasattr(self.wire, "circle") and math.isclose(self.wire.circle.radius, arc3d.circle.radius, rel_tol=0.01):
+        if hasattr(self.wire.simplify, "circle") and\
+                math.isclose(self.wire.simplify.circle.radius, arc3d.circle.radius, rel_tol=0.01):
             if self.wire.is_point_edge_extremity(arc3d.start):
                 start = self.point3d_to_2d(arc3d.start)
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
