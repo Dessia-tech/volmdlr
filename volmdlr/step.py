@@ -808,7 +808,7 @@ class Step(dc.DessiaObject):
         stream.seek(0)
         lines = []
         for line in stream:
-            line = line.decode("ISO-8859-1")
+            line = line.decode("utf-8")
             line = line.replace("\r", "")
             lines.append(line)
         return cls(lines)
@@ -816,7 +816,7 @@ class Step(dc.DessiaObject):
     @classmethod
     def from_file(cls, filepath: str = None):
         """Instantiate a Step object from a step file."""
-        with open(filepath, "r", encoding="ISO-8859-1") as file:
+        with open(filepath, "r", encoding="utf-8") as file:
             lines = []
             for line in file:
                 lines.append(line)
