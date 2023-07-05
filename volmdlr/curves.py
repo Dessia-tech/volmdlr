@@ -1968,8 +1968,8 @@ class Ellipse3D(Curve):
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
         center = object_dict[arguments[1]].origin
-        normal = object_dict[arguments[1]].u  # ancien w
-        major_dir = object_dict[arguments[1]].v  # ancien u
+        normal = object_dict[arguments[1]].w  # ancien w
+        major_dir = object_dict[arguments[1]].u  # ancien u
         major_axis = float(arguments[2]) * length_conversion_factor
         minor_axis = float(arguments[3]) * length_conversion_factor
         return cls(major_axis, minor_axis, volmdlr.Frame3D(center, major_dir, normal.cross(major_dir), normal),
