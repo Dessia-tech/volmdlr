@@ -2118,8 +2118,8 @@ class Contour2D(ContourMixin, Wire2D):
         """
         Verifies if given edge is inside self contour perimeter, including its edges.
 
-        :param edge: othe edge to verify if inside contour.
-        :returns: True or False
+        :param edge: other edge to verify if inside contour.
+        :returns: True or False.
         """
         for point in edge.discretization_points(number_points=5):
             if not self.point_belongs(point, include_edge_points=True):
@@ -3638,7 +3638,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         barycenter = self.barycenter()
         if not self.point_belongs(barycenter):
             barycenter1_2d = self.point_in_polygon()
-            self.translation_inplace(-barycenter1_2d)
+            new_polygon = self.translation(-barycenter1_2d)
             way_back = barycenter1_2d.to_3d(volmdlr.O3D, x, y)
         else:
             inters = self.linesegment_intersections(linex)
@@ -3647,10 +3647,10 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                     self.point_distance(inters[0][0]),
                     self.point_distance(inters[-1][0])):
                 mid_point = (inters[0][0] + inters[-1][0]) * 0.5
-                self.translation(-mid_point)
+                new_polygon = self.translation(-mid_point)
                 way_back = mid_point.to_3d(volmdlr.O3D, x, y)
 
-        return self, way_back
+        return new_polygon, way_back
 
     def get_possible_sewing_closing_points(self, polygon2, polygon_primitive,
                                            line_segment1: None, line_segment2: None):
@@ -4114,7 +4114,6 @@ class Contour3D(ContourMixin, Wire3D):
                 # Case of a circle, ellipse...
                 return raw_edges[0]
             return cls(raw_edges, name=name)
-
         list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         if list_edges:
             return cls(list_edges, name=name)
@@ -4122,8 +4121,12 @@ class Contour3D(ContourMixin, Wire3D):
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
         """
-        Create a Circle3D step object.
+        Converts the object to a STEP representation.
 
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
         """
         content = ''
         edge_ids = []
