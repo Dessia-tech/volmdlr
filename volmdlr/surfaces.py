@@ -4304,7 +4304,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        if hasattr(self.wire.simplify, "circle") and\
+        if self.wire.__class__.__name__ != "Line3D" and hasattr(self.wire.simplify, "circle") and\
                 math.isclose(self.wire.simplify.circle.radius, arc3d.circle.radius, rel_tol=0.01):
             if self.wire.is_point_edge_extremity(arc3d.start):
                 start = self.point3d_to_2d(arc3d.start)
