@@ -2999,7 +2999,7 @@ class BSplineFace3D(Face3D):
             vector2 = interior - end
             if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
                 return None
-            return vme.Arc3D(start, interior, end)
+            return vme.Arc3D.from_3_points(start, interior, end)
         interior = edge.point_at_abscissa(0.5 * edge.length())
         vector1 = interior - edge.start
         vector2 = interior - edge.end
@@ -3064,7 +3064,11 @@ class BSplineFace3D(Face3D):
         Returns the faces' neutral fiber.
         """
         neutral_fiber_points = self.neutral_fiber_points()
-        if len(neutral_fiber_points) == 2:
+        is_line = True
+        if not neutral_fiber_points[0].is_close(neutral_fiber_points[-1]):
+            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
+            is_line = all(neutral_fiber.point_belongs(point) for point in neutral_fiber_points)
+        if len(neutral_fiber_points) == 2 or is_line:
             neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
         else:
             neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
