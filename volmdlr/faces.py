@@ -1049,8 +1049,10 @@ class Face3D(volmdlr.core.Primitive3D):
             return getattr(self, method_name)(other_face, return_points)
         face_decomposition1 = self.face_decomposition()
         face_decomposition2 = other_face.face_decomposition()
-        list_set_points1 = [{point for face in faces1 for point in face.points} for _, faces1 in face_decomposition1.items()]
-        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in list_set_points1]
+        list_set_points1 = [{point for face in faces1 for point in face.points}
+                            for _, faces1 in face_decomposition1.items()]
+        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1])
+                            for sets_points1 in list_set_points1]
         list_set_points2 = [{point for face in faces2 for point in face.points} for _, faces2 in
                             face_decomposition2.items()]
         list_set_points2 = [npy.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in

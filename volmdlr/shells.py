@@ -621,13 +621,11 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         minimum_distance = math.inf
         best_distance_points = None
-        faces_ = []
         for face1, face2 in product(faces1, faces2):
             distance, point1, point2 = face1.face_minimum_distance(face2, True)
             if distance < minimum_distance:
                 minimum_distance = distance
                 best_distance_points = [point1, point2]
-                faces_ = [face1, face2]
         if return_points:
             return minimum_distance, *best_distance_points
         return minimum_distance
