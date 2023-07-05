@@ -269,11 +269,10 @@ class PointCloud3D(dc.DessiaObject):
         spheres, extended_points = [], []
         for point in self.points:
             extended_zone = p3d.Sphere(point, distance_extended)
-            sphere_primitive = extended_zone.shell_faces[0]
 
-            spheres.append(vmshells.ClosedShell3D([sphere_primitive]))
+            spheres.append(extended_zone)
 
-            extended_points.extend(sphere_primitive.triangulation().points)
+            extended_points.extend(extended_zone.triangulation().points)
 
         for sphere in spheres:
             clean_extended_zone = []

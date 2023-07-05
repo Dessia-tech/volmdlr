@@ -38,13 +38,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: is_linesegment_crossing.
 - Edge: fix orientation of edges commig from step.
 - BSplineCurve3D: from_step.
+- Export to step file
 - Step import
+- Edge: fix orientation of edges commig from step.
+- Sphere: point_belongs, inherits from ClosedShell3D instead of RevolvedProfile
 - PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
 - babylondata: removes empty objects.
 - ClosedPolygon2D: point_belongs.
 - Fullarc: get_reverse.
 - Arc2D: point_belongs
 - ArcEllipse2D: point_at_abscissa
+- Frame3D: import/export step.
+- Edge: from_step trim of periodic curves with different orientation of original edge
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces

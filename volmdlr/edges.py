@@ -205,15 +205,18 @@ class Edge(dc.DessiaObject):
                 return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
         if hasattr(obj, 'trim'):
-            if obj.__class__.__name__ == 'Circle3D':
+            if obj.__class__.__name__ == 'Circle3D' and orientation == '.T.':
                 point1, point2 = point2, point1
                 trimmed_edge = obj.trim(point1, point2)
-                if orientation == '.T.':
+                if orientation == '.F.':
                     trimmed_edge = trimmed_edge.reverse()
                 return trimmed_edge
-            trimmed_edge = obj.trim(point1, point2)
-            if orientation == '.F.':
-                trimmed_edge = trimmed_edge.reverse()
+            if obj.periodic and orientation == '.F.':
+                trimmed_edge = obj.trim(point2, point1)
+            else:
+                trimmed_edge = obj.trim(point1, point2)
+                if orientation == '.F.':
+                    trimmed_edge = trimmed_edge.reverse()
             return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
@@ -5299,18 +5302,17 @@ class Arc3D(ArcMixin, Edge):
             surface, 0, angle, arc2d.angle1, arc2d.angle2)]
 
     def to_step(self, current_id, surface_id=None):
-        u = self.start - self.circle.center
-        u.normalize()
-        v = self.circle.normal.cross(u)
-        frame = volmdlr.Frame3D(self.circle.center, self.circle.normal, u, v)
+        """
+        Converts the object to a STEP representation.
 
-        content, frame_id = frame.to_step(current_id)
+        :param current_id: The ID of the last written primitive.
+        :type current_id: int
+        :return: The STEP representation of the object and the last ID.
+        :rtype: tuple[str, list[int]]
+        """
+        content, frame_id = self.circle.frame.to_step(current_id)
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}', #{frame_id}, {self.circle.radius * 1000});\n"
-
-        if surface_id:
-            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
-            curve_id += 1
 
         current_id = curve_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
@@ -5431,19 +5433,13 @@ class FullArc3D(FullArcMixin, Arc3D):
 
     def to_step(self, current_id, surface_id=None):
         """Exports to STEP format."""
+        content, frame_id = self.circle.frame.to_step(current_id)
         # Not calling Circle3D.to_step because of circular imports
         u = self.start - self.circle.center
         u.normalize()
-        v = self.circle.normal.cross(u)
-        frame = volmdlr.Frame3D(self.circle.center, self.circle.normal, u, v)
-        content, frame_id = frame.to_step(current_id)
         curve_id = frame_id + 1
         # Not calling Circle3D.to_step because of circular imports
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.circle.radius * 1000});\n"
-
-        if surface_id:
-            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
-            curve_id += 1
 
         point1 = (self.circle.center + u * self.circle.radius).to_point()
 
@@ -5456,10 +5452,11 @@ class FullArc3D(FullArcMixin, Arc3D):
 
         return content, edge_curve
 
-    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), show_frame=False):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
-
+        if show_frame:
+            self.circle.frame.plot(ax, ratio=self.circle.radius)
         ax = vm_common_operations.plot_from_discretization_points(
             ax, edge_style=edge_style, element=self, number_points=25, close_plot=True)
         if edge_style.edge_ends:

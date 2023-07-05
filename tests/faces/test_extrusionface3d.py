@@ -10,7 +10,7 @@ class TestExtrusionFace3D(unittest.TestCase):
 
     def test_bounding_box(self):
         bbox = self.face.bounding_box
-        self.assertAlmostEqual(bbox.volume(), 3.54136919512989e-08 )
+        self.assertAlmostEqual(bbox.volume(), 3.54136919512989e-08)
 
     def test_to_step(self):
         model = VolumeModel.load_from_file("faces/objects_extrusion_tests/extrusionface_export_test.json")
