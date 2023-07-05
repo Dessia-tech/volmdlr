@@ -168,7 +168,7 @@ All adequations have been done for all tests and existing scripts.
 - PlaneFace3D: merge_faces
 - Contour2D: divide
 - Step: raise NotimplementedError when it's not possible to instatiate assembly object.
-
+- STL: handle mutiple space as separator
 
 ### Refactor
 - Contour2D: cut_by_wire
