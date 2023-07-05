@@ -4431,13 +4431,16 @@ class RevolutionSurface3D(PeriodicalSurface):
 
     def simplify(self):
         line3d = curves.Line3D(self.axis_point, self.axis_point + self.axis)
-        if isinstance(self.wire, edges.Arc3D):
-            tore_center, _ = line3d.point_projection(self.wire.circle.center)
-            # Sphere
-            if math.isclose(tore_center.point_distance(self.wire.circle.center), 0., abs_tol=1e-6):
-                return SphericalSurface3D(self.frame, self.wire.circle.radius, self.name)
-        if isinstance(self.wire, edges.LineSegment3D):
-            generatrix_line = curves.Line3D(self.wire.start, self.wire.end)
+        # if isinstance(self.wire, edges.Arc3D):
+        #     tore_center, _ = line3d.point_projection(self.wire.center)
+        #     # Sphere
+        #     if math.isclose(tore_center.point_distance(self.wire.center), 0., abs_tol=1e-6):
+        #         return SphericalSurface3D(self.frame, self.wire.radius, self.name)
+        if isinstance(self.wire, (edges.LineSegment3D, curves.Line3D)):
+            if isinstance(self.wire, edges.LineSegment3D):
+                generatrix_line = self.wire.line
+            else:
+                generatrix_line = self.wire
             intersections = line3d.intersection(generatrix_line)
             if intersections:
                 generatrix_line_direction = generatrix_line.unit_direction_vector()
