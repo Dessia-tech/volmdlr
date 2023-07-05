@@ -207,9 +207,14 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             raise ValueError('Must have at least one contour')
 
-        # if outer_contour3d and not outer_contour3d.is_ordered():
-        #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
+        # if outer_contour3d and not outer_contour3d.is_ordered() and not outer_contour2d.is_ordered():
+        #     warnings.warn("Impossible to instatiate face because of topology inconsistency in the "
+        #                   "face contour from step file.")
+        #     return None
+            # outer_contour2d = contour2d_healing(outer_contour2d)
         if (not outer_contour2d) or (not outer_contour2d.primitives):
+            warnings.warn("Impossible to instatiate face because of topology inconsistency in the "
+                          "face's contour from step file.")
             return None
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)

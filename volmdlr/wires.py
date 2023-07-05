@@ -1316,6 +1316,8 @@ class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
         plane3d = volmdlr.surfaces.Plane3D(volmdlr.Frame3D(plane_origin, x, y, z))
         primitives2d = []
         for primitive in self.primitives:
+            if hasattr(primitive, "circle") and not primitive.circle.normal.is_colinear_to(z):
+                continue
             primitive2d = plane3d.point3d_to_2d(primitive)
             if primitive2d:
                 primitives2d.append(primitive2d)
