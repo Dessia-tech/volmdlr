@@ -207,9 +207,16 @@ class Edge(dc.DessiaObject):
         if hasattr(obj, 'trim'):
             if obj.__class__.__name__ == 'Circle3D' and orientation == '.T.':
                 point1, point2 = point2, point1
-            trimmed_edge = obj.trim(point1, point2)
-            if orientation == '.F.':
-                trimmed_edge = trimmed_edge.reverse()
+                trimmed_edge = obj.trim(point1, point2)
+                if orientation == '.F.':
+                    trimmed_edge = trimmed_edge.reverse()
+                return trimmed_edge
+            if obj.periodic and orientation == '.F.':
+                trimmed_edge = obj.trim(point2, point1)
+            else:
+                trimmed_edge = obj.trim(point1, point2)
+                if orientation == '.F.':
+                    trimmed_edge = trimmed_edge.reverse()
             return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
@@ -5008,7 +5015,7 @@ class Arc3D(ArcMixin, Edge):
         point_theta = self.get_arc_point_angle(point)
         if not self.angle_start <= point_theta <= self.angle_end:
             raise ValueError(f"{point} not in Arc3D.")
-        return self.circle.radius * abs(point_theta)
+        return self.circle.radius * abs(point_theta - self.angle_start)
 
     def point_at_abscissa(self, abscissa):
         """
