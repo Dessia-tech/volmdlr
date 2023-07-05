@@ -1,6 +1,7 @@
 """volmdlr shells module."""
 import math
 import random
+import sys
 import traceback
 import warnings
 from itertools import chain, product
@@ -19,6 +20,7 @@ from volmdlr import display, edges, wires, surfaces, curves
 import volmdlr.faces
 import volmdlr.geometry
 from volmdlr.core import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
+from volmdlr.utils.step_writer import product_writer, geometric_context_writer, step_ids_to_str
 
 
 def union_list_of_shells(list_shells):
@@ -91,6 +93,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box', 'primitives']
     _non_data_hash_attributes = []
     STEP_FUNCTION = 'OPEN_SHELL'
+    _from_face_class = 'OpenShell3D'
 
     def __init__(self, faces: List[volmdlr.faces.Face3D],
                  color: Tuple[float, float, float] = None,
@@ -161,9 +164,61 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             self._vertices_graph = vertices_graph
         return self._vertices_graph
 
-    def faces_graph(self):
+    def _faces_graph_search_bridges(self, graph, components, face_vertices):
         """
-        Gets the shells faces graph using networkx.
+        Search for neighboring faces in the connected components to fix the graph.
+
+        To make the shell faces' topology graph, we search faces that share the same vertices.
+        Sometimes, in very specific cases, it can occur that two faces are neighbors of each other
+        but their vertices aren't coincident.
+
+        This method tries to find those cases, by searching bridges, which are edges that connect two components.
+        The search is performed by checking if any vertices of one face in one component lie on the contours of
+        another face in the other component. If such a connection is found, the two faces are considered neighbors.
+        Once a connection is found between a pair of components we break the execution and proceed to
+        the next pair of components. This behavior, in the average, avoids the need to verify all possible combinations
+
+        :param graph: The graph representing the faces' topology.
+        :type graph: nx.Graph
+        :param components: A list of sets, where each set contains the indices of faces in a connected component.
+        :type components: list
+        :param face_vertices: A dictionary mapping face indices to their corresponding vertex indices.
+        :type face_vertices: dict
+        :return: The updated graph with no disconnected components.
+        """
+        stack = components.copy()
+        found = False
+
+        def check_faces(face, other_face_id):
+            for point_id in face_vertices[other_face_id]:
+                point = self.vertices_points[point_id]
+                if face.outer_contour3d.point_over_contour(point):
+                    return True
+                if face.inner_contours3d:
+                    for inner_contour in face.inner_contours3d:
+                        if inner_contour.point_over_contour(point):
+                            return True
+            return False
+
+        while stack:
+            group = stack.pop(0)
+            for face_id_i in group:
+                face_i = self.faces[face_id_i]
+                for other_group in stack:
+                    for face_id_j in other_group:
+                        if check_faces(face_i, face_id_j):
+                            found = True
+                            graph.add_edge(face_id_i, face_id_j)
+                            for face_id_k in graph.neighbors(face_id_j):
+                                if check_faces(face_i, face_id_k):
+                                    graph.add_edge(face_id_i, face_id_k)
+                        if found:
+                            break
+        return graph
+
+    def faces_graph(self, verify_connected_components=True):
+        """
+        Gets the shells faces topology graph using networkx.
 
         :return: return a networkx graph for a shell faces.
         """
@@ -171,30 +226,25 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             graph = nx.Graph()
             vertice_faces = {}
             face_vertices = {}
-            vertice_edges = {}
-            face_edges = {}
             for face_index, face in enumerate(self.faces):
-                outer_contour = face.outer_contour3d
-                for edge in outer_contour.primitives:
+                face_contour_primitives = face.outer_contour3d.primitives
+                for inner_contour in face.inner_contours3d:
+                    face_contour_primitives.extend(inner_contour.primitives)
+                for edge in face_contour_primitives:
                     start_index = volmdlr.core.get_point_index_in_list(edge.start, self.vertices_points)
                     vertice_faces.setdefault(start_index, set()).add(face_index)
-                    vertice_edges.setdefault(start_index, set()).add(edge)
-                    face_edges.setdefault(face_index, set()).add(edge)
                     face_vertices.setdefault(face_index, set()).add(start_index)
-            for i, face_i in enumerate(self.faces):
-                face_i_edges = face_edges[i]
+            for i, _ in enumerate(self.faces):
                 face_i_vertices = face_vertices[i]
                 for vertice in face_i_vertices:
                     connected_faces = vertice_faces[vertice]
                     connected_faces.discard(i)
                     for j in connected_faces:
-                        face_j_edges = face_edges[j]
-                        edges_j_set = face_j_edges.intersection(vertice_edges[vertice])
-                        for edge_i in face_i_edges:
-                            for edge_j in edges_j_set:
-                                if edge_i.get_shared_section(edge_j):
-                                    graph.add_edge(i, j)
-
+                        graph.add_edge(i, j)
+            if verify_connected_components:
+                components = list(nx.connected_components(graph))
+                if len(components) > 1:
+                    graph = self._faces_graph_search_bridges(graph, components, face_vertices)
             self._faces_graph = graph
         return self._faces_graph
 
@@ -252,29 +302,136 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         Creates step file entities from volmdlr objects.
         """
         step_content = ''
+        faces_content = ''
         face_ids = []
+
+        manifold_id = current_id + 1
+        shell_id = manifold_id + 1
+
+        current_id = shell_id + 1
         for face in self.faces:
             if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
                 face_content, face_sub_ids = face.to_step(current_id)
             else:
                 face_content, face_sub_ids = face.to_step(current_id)
                 face_sub_ids = [face_sub_ids]
-            step_content += face_content
+            faces_content += face_content
             face_ids.extend(face_sub_ids)
-            current_id = max(face_sub_ids) + 1
+            current_id = max(face_sub_ids)
 
-        shell_id = current_id
-        step_content += f"#{current_id} = {self.STEP_FUNCTION}('{self.name}'," \
-                        f"({volmdlr.core.step_ids_to_str(face_ids)}));\n"
-        manifold_id = shell_id + 1
-        step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
+        if self.STEP_FUNCTION == "CLOSED_SHELL":
+            step_content += f"#{manifold_id} = MANIFOLD_SOLID_BREP('{self.name}',#{shell_id});\n"
+        else:
+            step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
 
-        frame_content, frame_id = volmdlr.OXYZ.to_step(manifold_id + 1)
-        step_content += frame_content
-        brep_id = frame_id + 1
-        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id}),#7);\n"
+        step_content += f"#{shell_id} = {self.STEP_FUNCTION}('{self.name}'," \
+                        f"({step_ids_to_str(face_ids)}));\n"
+        step_content += faces_content
 
-        return step_content, brep_id
+        return step_content, manifold_id
+
+    def to_step_product(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
+        step_content = ''
+        faces_content = ''
+        face_ids = []
+
+        product_content, shape_definition_repr_id = product_writer(current_id, self.name)
+        shape_representation_id = shape_definition_repr_id + 1
+        product_id = shape_definition_repr_id - 4
+        product_definition_id = shape_definition_repr_id - 2
+        step_content += product_content
+
+        brep_id = shape_representation_id
+        # frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
+        frame_content, frame_id = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.Y3D, volmdlr.X3D).to_step(brep_id)
+        manifold_id = frame_id + 1
+        shell_id = manifold_id + 1
+        current_id = shell_id + 1
+        for face in self.faces:
+            if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
+                face_content, face_sub_ids = face.to_step(current_id)
+            else:
+                face_content, face_sub_ids = face.to_step(current_id)
+                face_sub_ids = [face_sub_ids]
+            faces_content += face_content
+            face_ids.extend(face_sub_ids)
+            current_id = max(face_sub_ids)
+
+        geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
+
+        if self.STEP_FUNCTION == "CLOSED_SHELL":
+            step_content += f"#{brep_id} = ADVANCED_BREP_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id})," \
+                            f"#{geometric_representation_context_id});\n"
+            step_content += frame_content
+            step_content += f"#{manifold_id} = MANIFOLD_SOLID_BREP('{self.name}',#{shell_id});\n"
+        else:
+            step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION('',(#{frame_id},#{manifold_id})," \
+                            f"#{geometric_representation_context_id});\n"
+            step_content += frame_content
+            step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
+
+        step_content += f"#{shell_id} = {self.STEP_FUNCTION}('{self.name}'," \
+                        f"({step_ids_to_str(face_ids)}));\n"
+        step_content += faces_content
+
+        step_content += geometric_context_content
+
+        product_related_category = geometric_representation_context_id + 1
+        step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
+                        f"'part',$,(#{product_id}));\n"
+        draughting_id = product_related_category + 1
+        step_content += f"#{draughting_id} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n"
+        color_id = draughting_id + 1
+        primitive_color = (1, 1, 1)
+        if hasattr(self, 'color') and self.color is not None:
+            primitive_color = self.color
+        step_content += f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)}," \
+                        f"{round(float(primitive_color[1]), 4)},{round(float(primitive_color[2]), 4)});\n"
+
+        curve_style_id = color_id + 1
+        step_content += f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," \
+                        f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
+
+        fill_area_color_id = curve_style_id + 1
+        step_content += f"#{fill_area_color_id} = FILL_AREA_STYLE_COLOUR('',#{color_id});\n"
+
+        fill_area_id = fill_area_color_id + 1
+        step_content += f"#{fill_area_id} = FILL_AREA_STYLE('',#{fill_area_color_id});\n"
+
+        suface_fill_area_id = fill_area_id + 1
+        step_content += f"#{suface_fill_area_id} = SURFACE_STYLE_FILL_AREA(#{fill_area_id});\n"
+
+        suface_side_style_id = suface_fill_area_id + 1
+        step_content += f"#{suface_side_style_id} = SURFACE_SIDE_STYLE('',(#{suface_fill_area_id}));\n"
+
+        suface_style_usage_id = suface_side_style_id + 1
+        step_content += f"#{suface_style_usage_id} = SURFACE_STYLE_USAGE(.BOTH.,#{suface_side_style_id});\n"
+
+        presentation_style_id = suface_style_usage_id + 1
+
+        step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
+                        f"#{curve_style_id}));\n"
+
+        styled_item_id = presentation_style_id + 1
+        if self.__class__.__name__ == 'OpenShell3D':
+            for face_id in face_ids:
+                step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                                f"#{face_id});\n"
+                styled_item_id += 1
+            styled_item_id -= 1
+        else:
+            step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
+                            f"#{manifold_id});\n"
+        mechanical_design_id = styled_item_id + 1
+        step_content += f"#{mechanical_design_id} =" \
+                        f" MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION(" \
+                        f"'',(#{styled_item_id}),#{geometric_representation_context_id});\n"
+        current_id = mechanical_design_id
+
+        return step_content, current_id, [brep_id, product_definition_id]
 
     def to_step_face_ids(self, current_id):
         """
@@ -319,22 +476,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                      in self.faces]
         return self.__class__(new_faces, color=self.color, alpha=self.alpha, name=self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Shell 3D rotation. Object is updated in-place.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for face in self.faces:
-            face.rotation_inplace(center, axis, angle)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Shell3D translation.
@@ -347,22 +488,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return self.__class__(new_faces, color=self.color, alpha=self.alpha,
                               name=self.name)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Open Shell 3D translation. Object is updated in-place.
-
-        :param offset: Translation vector.
-        :type offset: `volmdlr.Vector3D`.
-        :return: Translate the Open Shell 3D in place.
-        :rtype: None.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for face in self.faces:
-            face.translation_inplace(offset)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new OpenShell3D.
@@ -372,19 +497,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         new_faces = [face.frame_mapping(frame, side) for face in
                      self.faces]
         return self.__class__(new_faces, name=self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated in-place.
-
-        side = 'old' or 'new'.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for face in self.faces:
-            face.frame_mapping_inplace(frame, side)
-        new_bounding_box = self.get_bounding_box()
-        self.bounding_box = new_bounding_box
 
     def copy(self, deep=True, memo=None):
         """
@@ -841,9 +953,9 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                                     discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
                                                                                   start_point_tag=start_point_tag
-                                                                                  + point_account,
+                                                                                                  + point_account,
                                                                                   end_point_tag=end_point_tag
-                                                                                  + point_account))
+                                                                                                + point_account))
 
                             if isinstance(primitive, volmdlr.edges.LineSegment):
 
@@ -869,7 +981,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                             line_account += 1
 
                         if primitives[index].is_close(primitive.reverse()):
-
                             lines_tags.append(-indices_check[index])
 
                     lines.append(contour.get_geo_lines(line_loop_account + 1, lines_tags))
@@ -903,6 +1014,24 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
             lines.extend(face.surface2d.get_mesh_lines_with_transfinite_curves(
                 [[face.outer_contour3d], face.inner_contours3d], min_points, size))
         return lines
+
+    @classmethod
+    def from_faces(cls, faces):
+        """
+        Defines a List of separated OpenShell3D from a list of faces, based on the faces graph.
+        """
+        class_ = getattr(sys.modules[__name__], cls._from_face_class)
+        graph = class_(faces).faces_graph(verify_connected_components=False)
+        components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
+
+        shells_list = []
+        for _,graph_i in enumerate(components, start=1):
+            faces_list = []
+            for n_index in graph_i.nodes:
+                faces_list.append(faces[n_index])
+            shells_list.append(class_(faces_list))
+
+        return shells_list
 
     def is_disjoint_from(self, shell2, tol=1e-8):
         """
@@ -953,7 +1082,7 @@ class ClosedShell3D(OpenShell3D):
     """
 
     STEP_FUNCTION = 'CLOSED_SHELL'
-
+    _from_face_class = 'ClosedShell3D'
     def is_face_inside(self, face: volmdlr.faces.Face3D):
         """
         Verifies if a face is inside the closed shell 3D.
@@ -1507,7 +1636,7 @@ class ClosedShell3D(OpenShell3D):
                                            list_coincident_faces
                                            )
         faces += new_valid_faces
-        return [OpenShell3D(faces)]
+        return OpenShell3D.from_faces(faces)
 
     def subtract_to_closed_shell(self, shell2: OpenShell3D, tol: float = 1e-8):
         """
@@ -1529,9 +1658,9 @@ class ClosedShell3D(OpenShell3D):
         faces += shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
         new_valid_faces = self.subtraction_faces(shell2, intersecting_faces, intersecting_combinations)
         faces += new_valid_faces
-        new_shell = ClosedShell3D(faces)
+        # new_shell = ClosedShell3D(faces)
         # new_shell.eliminate_not_valid_closedshell_faces()
-        return [new_shell]
+        return self.from_faces(faces)
 
     def validate_intersection_operation(self, shell2):
         """
@@ -1599,6 +1728,7 @@ class OpenTriangleShell3D(OpenShell3D):
     :param name: The name of the shell.
     :type name: str
     """
+    _from_face_class = 'OpenTriangleShell3D'
 
     def __init__(self, faces: List[volmdlr.faces.Triangle3D],
                  color: Tuple[float, float, float] = None,
@@ -1684,6 +1814,7 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     :param name: The name of the shell.
     :type name: str
     """
+    _from_face_class = 'ClosedTriangleShell3D'
 
     def __init__(self, faces: List[volmdlr.faces.Triangle3D],
                  color: Tuple[float, float, float] = None,
