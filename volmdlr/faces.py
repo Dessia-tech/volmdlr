@@ -1199,7 +1199,12 @@ class PlaneFace3D(Face3D):
         :param return_points: Boolean to return corresponding points or not.
         :return: minimal distance.
         """
-
+        for edge in other_plane_face.outer_contour3d.primitives:
+            edge_intersections = self.edge_intersections(edge)
+            if edge_intersections:
+                if return_points:
+                    return 0.0, edge_intersections[0], edge_intersections[0]
+                return 0.0
         min_distance = math.inf
         for edge1 in self.outer_contour3d.primitives:
             for edge2 in other_plane_face.outer_contour3d.primitives:
@@ -1307,7 +1312,7 @@ class PlaneFace3D(Face3D):
         return face_intersections
 
     def planeface_minimum_distance(self, planeface: 'PlaneFace3D', return_points: bool = False):
-        dist, point1, point2 = self.minimum_distance_points_plane(planeface, return_points=return_points)
+        dist, point1, point2 = self.minimum_distance_points_plane(planeface, return_points=True)
         if not return_points:
             return dist
         return dist, point1, point2
