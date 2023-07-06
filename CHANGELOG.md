@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse2D: point_at_abscissa
 - Frame3D: import/export step.
 - Edge: from_step trim of periodic curves with different orientation of original edge
-- Arc3D: fix abscissa.
+- Arc3D: fix abscissa, fix get_arc_point_angle
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces

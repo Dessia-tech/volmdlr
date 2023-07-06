@@ -4918,7 +4918,9 @@ class Arc3D(ArcMixin, Edge):
     def get_arc_point_angle(self, point):
         local_start_point = self.circle.frame.global_to_local_coordinates(point)
         u1, u2 = local_start_point.x / self.circle.radius, local_start_point.y / self.circle.radius
-        point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        u1 = max(-1.0, min(1.0, u1))
+        u2 = max(-1.0, min(1.0, u2))
+        point_angle = math.atan2(u2, u1)
         return point_angle
 
     def get_start_end_angles(self):
