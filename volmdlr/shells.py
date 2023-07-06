@@ -689,19 +689,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return point1_min
 
     def minimum_distance(self, other_shell, return_points=False):
-        mininum_distance = math.inf
-        for face1, face2 in product(self.faces, other_shell.faces):
-            min_dist = face1.face_minimum_distance(face2, return_points)
-            if return_points:
-                min_dist, point1_, point2_ = min_dist
-                if min_dist < mininum_distance:
-                    mininum_distance = min_dist
-                    point1, point2 = point1_, point2_
-        if return_points:
-            return mininum_distance, point1, point2
-        return mininum_distance
-
-    def minimum_distance2(self, other_shell, return_points=False):
         shell_decomposition1 = self.shell_decomposition()
         shell_decomposition2 = other_shell.shell_decomposition()
         list_set_points1 = [{point for face in faces1

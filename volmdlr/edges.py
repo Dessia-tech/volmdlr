@@ -461,15 +461,9 @@ class Edge(dc.DessiaObject):
                     points_.append(point)
             return points_
         points = clean_points(self.discretization_points(number_points=100))
-        # for point in self.points:
-        #     if not volmdlr.core.point_in_list(point, points):
-        #         points.append(point)
         discretization_primitves1 = [linesegment_class_(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
         discretization_points2 = element.discretization_points(number_points=100)
         points = clean_points(discretization_points2)
-        # for point in discretization_points2:
-        #     if not volmdlr.core.point_in_list(point, points):
-        #         points.append(point)
         discretization_primitves2 = [linesegment_class_(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
         minimum_distance = math.inf
         points = None
@@ -5201,7 +5195,6 @@ class Arc3D(ArcMixin, Edge):
             angle1, angle2 = arc2d.angle1, arc2d.angle2
             if angle2 < angle1:
                 angle2 += volmdlr.TWO_PI
-            # from volmdlr import surfaces, faces
             cylinder = volmdlr.surfaces.CylindricalSurface3D(
                 volmdlr.Frame3D(self.circle.center, u, v, w),
                 self.circle.radius
