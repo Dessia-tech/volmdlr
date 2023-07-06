@@ -1484,16 +1484,9 @@ class Circle3D(CircleMixin, Curve):
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')
             raise ValueError('Point not on circle for trim method')
-
         if point1.is_close(point2):
             return volmdlr.edges.FullArc3D(self, point1)
-
-        interior = geometry.clockwise_interior_from_circle3d(
-            point1, point2, self)
-        arc = volmdlr.edges.Arc3D(self, point1, point2)
-        if not arc.point_belongs(interior):
-            arc = volmdlr.edges.Arc3D(self.reverse(), point1, point2)
-        return arc
+        return volmdlr.edges.Arc3D(self, point1, point2)
 
     def split(self, split_start, split_end):
         """

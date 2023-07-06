@@ -134,9 +134,9 @@ class TestCircle3D(unittest.TestCase):
 
     def test_trim(self):
         trim = circle3d.trim(self.list_points[2], self.list_points[5])
-        self.assertAlmostEqual(trim.length(), 3.9269908169872423)
-        trim = circle3d.trim(self.list_points[5], self.list_points[2])
         self.assertAlmostEqual(trim.length(), 2.3561944901923444)
+        trim = circle3d.trim(self.list_points[5], self.list_points[2])
+        self.assertAlmostEqual(trim.length(), 3.926990816987242)
         trim = circle3d.trim(self.list_points[5], self.list_points[5])
         self.assertAlmostEqual(trim.length(), 6.283185307179586)
 
