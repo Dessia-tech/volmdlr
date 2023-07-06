@@ -2118,23 +2118,24 @@ class Contour2D(ContourMixin, Wire2D):
         """
         Verifies if given edge is inside self contour perimeter, including its edges.
 
-        :param edge: othe edge to verify if inside contour.
-        :returns: True or False
+        :param edge: other edge to verify if inside contour.
+        :returns: True or False.
         """
         for point in edge.discretization_points(number_points=5):
             if not self.point_belongs(point, include_edge_points=True):
                 return False
         return True
 
-    def is_inside(self, contour2):
+    def is_inside(self, other_contour):
         """
         Verifies if given contour is inside self contour perimeter, including its edges.
 
+        :param other_contour: other contour.
         :returns: True or False
         """
-        if contour2.area() > self.area() and not math.isclose(contour2.area(), self.area(), rel_tol=0.01):
+        if other_contour.area() > self.area() and not math.isclose(other_contour.area(), self.area(), rel_tol=0.01):
             return False
-        for edge in contour2.primitives:
+        for edge in other_contour.primitives:
             if not self.is_edge_inside(edge):
                 return False
         return True
@@ -2518,7 +2519,7 @@ class Contour2D(ContourMixin, Wire2D):
             return [self, contour2d]
 
         merged_primitives = self.delete_shared_contour_section(contour2d, abs_tol)
-        contours = Contour2D.contours_from_edges(merged_primitives)
+        contours = Contour2D.contours_from_edges(merged_primitives, abs_tol)
         contours = sorted(contours, key=lambda contour: contour.area(),
                           reverse=True)
         return contours
@@ -4332,7 +4333,7 @@ class Contour3D(ContourMixin, Wire3D):
         """
 
         merged_primitives = self.delete_shared_contour_section(contour3d, abs_tol)
-        contours = Contour3D.contours_from_edges(merged_primitives, tol=1e-6)
+        contours = Contour3D.contours_from_edges(merged_primitives, tol=abs_tol)
 
         return contours
 

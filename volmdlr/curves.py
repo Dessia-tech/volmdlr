@@ -421,6 +421,7 @@ class Line2D(Line):
 
     @staticmethod
     def get_concurrent_segments_tangent_circles(vector_i, vector_c, vector_d, new_point_k, new_basis):
+        """Creates circles tangents to concurrent segments."""
         point_k = volmdlr.Point2D(new_basis.local_to_global_coordinates(new_point_k))
 
         if point_k.is_close(vector_i):
@@ -1272,6 +1273,7 @@ class Circle3D(CircleMixin, Curve):
         return Circle3D(self.frame.frame_mapping(frame, side), self.radius)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Plot method for Circle3D."""
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -1375,6 +1377,7 @@ class Circle3D(CircleMixin, Curve):
                            normal: volmdlr.Vector3D,
                            radius: float,
                            name: str = ''):
+        """Creates a Circle 3D from a center point and a normal vector, along with is radius."""
         u = normal.deterministic_unit_normal_vector()
         v = normal.cross(u)
         return cls(volmdlr.Frame3D(center, u, v, normal), radius, name)
