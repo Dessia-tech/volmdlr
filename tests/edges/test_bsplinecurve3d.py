@@ -20,6 +20,8 @@ class TestBSplineCurve3D(unittest.TestCase):
         bsplinecurve = vme.Edge.from_step(arguments, object_dict)
         self.assertTrue(bsplinecurve.start.is_close(object_dict[2], 1e-5))
         self.assertTrue(bsplinecurve.end.is_close(object_dict[1], 1e-5))
+        self.assertTrue(bsplinecurve.point_at_abscissa(0.5*bsplinecurve.length()).is_close(
+            volmdlr.Point3D(0.04916207191208274, -0.0426452922068, 0.14332757998779702)))
 
 
 if __name__ == '__main__':

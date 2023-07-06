@@ -1474,7 +1474,7 @@ class Circle3D(CircleMixin, Curve):
         frame = volmdlr.Frame3D(self.center, self.frame.u, -self.frame.v, self.frame.u.cross(-self.frame.v))
         return Circle3D(frame, self.radius)
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
         """
         Trims a circle between two points.
 
@@ -1482,21 +1482,17 @@ class Circle3D(CircleMixin, Curve):
         :param point2: point2 used to trim circle.
         :return: arc 2d betweeen these two points.
         """
+        circle = self
+        if not same_sense:
+            circle = self.reverse()
         if not self.point_belongs(point1, 1e-4) or not self.point_belongs(point2, 1e-4):
             ax = self.plot()
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')
             raise ValueError('Point not on circle for trim method')
-
         if point1.is_close(point2):
-            return volmdlr.edges.FullArc3D(self, point1)
-
-        interior = geometry.clockwise_interior_from_circle3d(
-            point1, point2, self)
-        arc = volmdlr.edges.Arc3D(self, point1, point2)
-        if not arc.point_belongs(interior):
-            arc = volmdlr.edges.Arc3D(self.reverse(), point1, point2)
-        return arc
+            return volmdlr.edges.FullArc3D(circle, point1)
+        return volmdlr.edges.Arc3D(circle, point1, point2)
 
     def split(self, split_start, split_end):
         """

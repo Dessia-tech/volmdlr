@@ -192,31 +192,47 @@ class Edge(dc.DessiaObject):
         """
         # step_id = kwargs.get("step_id")
         # obj can be an instance of wires or edges.
+        # obj = object_dict[arguments[3]]
+        # point1 = object_dict[arguments[1]]
+        # point2 = object_dict[arguments[2]]
+        # orientation = arguments[4]
+        # if obj.__class__.__name__ == 'LineSegment3D':
+        #     return object_dict[arguments[3]]
+        # if obj.__class__.__name__ == 'Line3D':
+        #     if orientation == '.F.':
+        #         point1, point2 = point2, point1
+        #     if not point1.is_close(point2):
+        #         return LineSegment3D(point1, point2, arguments[0][1:-1])
+        #     return None
+        #
+        # if hasattr(obj, 'trim'):
+        #     if hasattr(obj, "periodic") and obj.periodic and orientation == '.F.':
+        #         trimmed_edge = obj.trim(point2, point1)
+        #     else:
+        #         trimmed_edge = obj.trim(point1, point2)
+        #         if orientation == '.F.':
+        #             trimmed_edge = trimmed_edge.reverse()
+        #     return trimmed_edge
+        #
+        # raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
-        orientation = arguments[4]
+        same_sense = True if arguments[4] == ".T." else False
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
-            if orientation == '.F.':
+            if not same_sense:
                 point1, point2 = point2, point1
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
+
         if hasattr(obj, 'trim'):
-            if obj.__class__.__name__ == 'Circle3D' and orientation == '.T.':
-                point1, point2 = point2, point1
-                trimmed_edge = obj.trim(point1, point2)
-                if orientation == '.F.':
-                    trimmed_edge = trimmed_edge.reverse()
-                return trimmed_edge
-            if obj.periodic and orientation == '.F.':
+            if hasattr(obj, "periodic") and obj.periodic and not same_sense:
                 trimmed_edge = obj.trim(point2, point1)
             else:
-                trimmed_edge = obj.trim(point1, point2)
-                if orientation == '.F.':
-                    trimmed_edge = trimmed_edge.reverse()
+                trimmed_edge = obj.trim(point1, point2, same_sense)
             return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
@@ -4513,7 +4529,7 @@ class BSplineCurve3D(BSplineCurve):
                                             self.periodic, self.name)
         return new_bsplinecurve3d
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
         if self.periodic and not point1.is_close(point2):
             return self.trim_with_interpolation(point1, point2)
 
