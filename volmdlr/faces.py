@@ -1003,6 +1003,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 break
         return self.divide_face(intersections_with_plane2d)
 
+
 class PlaneFace3D(Face3D):
     """
     Defines a PlaneFace3D class.

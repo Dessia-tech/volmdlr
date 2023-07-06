@@ -104,7 +104,7 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError(f'get_reverse method not implemented by {self.__class__.__name__}')
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Gets the same edge, but in the opposite direction.
 
@@ -519,16 +519,17 @@ class LineSegment(Edge):
 
         return projection, t_param * norm_u
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Split a Line Segment at a given point into two Line Segments.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list with the two split line segments.
         """
-        if split_point.is_close(self.start):
+        if split_point.is_close(self.start, tol):
             return [None, self.copy()]
-        if split_point.is_close(self.end):
+        if split_point.is_close(self.end, tol):
             return [self.copy(), None]
         return [self.__class__(self.start, split_point),
                 self.__class__(split_point, self.end)]
@@ -2275,16 +2276,17 @@ class ArcMixin:
 
         return self.__class__(self.circle, start=self.end, end=self.start, is_trigo=not self.is_trigo)
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two Arc.
         """
-        if split_point.is_close(self.start, 1e-6):
+        if split_point.is_close(self.start, tol):
             return [None, self.copy()]
-        if split_point.is_close(self.end, 1e-6):
+        if split_point.is_close(self.end, tol):
             return [self.copy(), None]
         return [self.__class__(self.circle, self.start, split_point, self.is_trigo),
                 self.__class__(self.circle, split_point, self.end, self.is_trigo)]
@@ -2379,16 +2381,17 @@ class FullArcMixin(ArcMixin):
         """Angle of Full Arc. """
         return volmdlr.TWO_PI
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two Arc.
         """
-        if split_point.is_close(self.start, 1e-6):
+        if split_point.is_close(self.start, tol):
             return [None, self.copy()]
-        if split_point.is_close(self.end, 1e-6):
+        if split_point.is_close(self.end, tol):
             return [self.copy(), None]
         class_ = getattr(sys.modules[__name__], 'Arc' + self.__class__.__name__[-2:])
         return [class_(self.circle, self.start, split_point, self.is_trigo),
@@ -3571,18 +3574,18 @@ class ArcEllipse2D(Edge):
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc-ellipse at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two Arc-Ellipse.
         """
-        if split_point.is_close(self.start, 1e-6):
+        if split_point.is_close(self.start, tol):
             return [None, self.copy()]
-        if split_point.is_close(self.end, 1e-6):
+        if split_point.is_close(self.end, tol):
             return [self.copy(), None]
-        abscissa = self.abscissa(split_point)
         return [self.__class__(self.ellipse, self.start, split_point),
                 self.__class__(self.ellipse, split_point, self.end)]
 
@@ -5547,14 +5550,15 @@ class FullArc3D(FullArcMixin, Arc3D):
         fullarc = cls(volmdlr_curves.Circle3D.from_3_points(point1, point2, point3), point1)
         return fullarc
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits the circle into two arcs at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two arcs.
         """
-        if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):
+        if split_point.is_close(self.start, tol) or split_point.is_close(self.end, tol):
             raise ValueError("Point should be different of start and end.")
         if not self.point_belongs(split_point, 1e-5):
             raise ValueError("Point not on the circle.")
@@ -5842,16 +5846,17 @@ class ArcEllipse3D(Edge):
         point2d = self.self_2d.point_at_abscissa(abscissa)
         return point2d.to_3d(self.ellipse.center, self.ellipse.major_dir, self.ellipse.minor_dir)
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc-ellipse at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two Arc-Ellipse.
         """
-        if split_point.is_close(self.start, 1e-6):
+        if split_point.is_close(self.start, tol):
             return [None, self.copy()]
-        if split_point.is_close(self.end, 1e-6):
+        if split_point.is_close(self.end, tol):
             return [self.copy(), None]
         return [self.__class__(self.ellipse, self.start, split_point),
                 self.__class__(self.ellipse, split_point, self.end)]
@@ -5960,14 +5965,15 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         point2d = point.to_2d(self.ellipse.center, self.ellipse.major_dir, self.ellipse.minor_dir)
         return self.self_2d.abscissa(point2d)
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits the ellipse into two arc of ellipse at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two Arc of ellipse.
         """
-        if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):
+        if split_point.is_close(self.start, tol) or split_point.is_close(self.end, tol):
             raise ValueError("Point should be different of start and end.")
         if not self.point_belongs(split_point, 1e-5):
             raise ValueError("Point not on the ellipse.")
