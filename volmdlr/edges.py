@@ -4915,17 +4915,24 @@ class Arc3D(ArcMixin, Edge):
                                         id_method=id_method, id_memo=id_memo, path=path + '/end')
         return dict_
 
-    def get_arc_point_angle(self, point):
+    def _arc_point_angle(self, point):
+        """Helper function to calculate the angle of point on a trigonometric arc."""
         local_start_point = self.circle.frame.global_to_local_coordinates(point)
         u1, u2 = local_start_point.x / self.circle.radius, local_start_point.y / self.circle.radius
-        u1 = max(-1.0, min(1.0, u1))
-        u2 = max(-1.0, min(1.0, u2))
-        point_angle = math.atan2(u2, u1)
+        point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         return point_angle
 
+    def get_arc_point_angle(self, point):
+        """Returns the angle of point on a trigonometric arc."""
+        point_theta = self._arc_point_angle(point)
+        if self.angle_start > point_theta:
+            point_theta += volmdlr.TWO_PI
+        return point_theta
+
     def get_start_end_angles(self):
-        start_angle = self.get_arc_point_angle(self.start)
-        end_angle = self.get_arc_point_angle(self.end)
+        """Returns the start and end angle of the arc."""
+        start_angle = self._arc_point_angle(self.start)
+        end_angle = self._arc_point_angle(self.end)
         if start_angle >= end_angle:
             end_angle += volmdlr.TWO_PI
         return start_angle, end_angle
@@ -5339,8 +5346,6 @@ class Arc3D(ArcMixin, Edge):
         if not math.isclose(vector.dot(self.circle.frame.w), 0.0, abs_tol=abs_tol):
             return False
         point_theta = self.get_arc_point_angle(point)
-        if self.angle_start > point_theta:
-            point_theta += volmdlr.TWO_PI
         if not self.angle_start <= point_theta <= self.angle_end:
             return False
         return True
