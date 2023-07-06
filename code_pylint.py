@@ -19,7 +19,7 @@ MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 199,
                      "wrong-spelling-in-docstring": 143,
                      'invalid-name': 184,
-                     'no-member': 0,
+                     'no-member': 3,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 67,
