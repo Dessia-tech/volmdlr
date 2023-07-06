@@ -4191,14 +4191,13 @@ class RevolutionSurface3D(PeriodicalSurface):
         self.axis = axis
 
         point1 = wire.point_at_abscissa(0)
-        if point1.is_close(axis_point):
-            point1 = wire.point_at_abscissa(0.5 * wire.length())
         vector1 = point1 - axis_point
         w_vector = axis
         w_vector.normalize()
         u_vector = vector1
-
-        if not w_vector.is_perpendicular_to(u_vector):
+        if point1.is_close(axis_point) or not w_vector.is_perpendicular_to(u_vector):
+            point1 = wire.point_at_abscissa(0.5 * wire.length())
+            vector1 = point1 - axis_point
             u_vector = vector1 - vector1.vector_projection(w_vector)
         u_vector.normalize()
         v_vector = w_vector.cross(u_vector)
@@ -4275,8 +4274,8 @@ class RevolutionSurface3D(PeriodicalSurface):
             wire = edges.FullArc3D(wire.frame.origin, start_end, wire.frame.w)
             y_periodicity = wire.length()
 
-        # if hasattr(wire, "simplify"):
-        #     wire = wire.simplify
+        if hasattr(wire, "simplify"):
+            wire = wire.simplify
         axis_point, axis = object_dict[arguments[2]]
         surface = cls(wire=wire, axis_point=axis_point, axis=axis, name=name)
         surface.y_periodicity = y_periodicity
