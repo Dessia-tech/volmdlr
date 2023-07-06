@@ -727,16 +727,7 @@ def b_spline_curve_b_spline_curve_with_knots_rational_b_spline_curve_bounded_cur
     """
     Bounded b spline with knots curve geometric representation item. To clarify.
     """
-    modified_arguments = [''] + arguments
-    if modified_arguments[-1] == "''":
-        modified_arguments.pop()
-    return STEP_TO_VOLMDLR['BOUNDED_CURVE, '
-                           'B_SPLINE_CURVE, '
-                           'B_SPLINE_CURVE_WITH_KNOTS, '
-                           'CURVE, GEOMETRIC_REPRESENTATION_ITEM, '
-                           'RATIONAL_B_SPLINE_CURVE, '
-                           'REPRESENTATION_ITEM'].from_step(
-        modified_arguments, object_dict)
+    return bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(arguments, object_dict)
 
 
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
@@ -760,16 +751,16 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometr
     """
     Bounded b spline surface with knots curve geometric representation item. To clarify.
     """
-    modified_arguments = [''] + arguments
-    if modified_arguments[-1] == "''":
-        modified_arguments.pop()
-    return STEP_TO_VOLMDLR['BOUNDED_SURFACE, B_SPLINE_SURFACE, '
-                           'B_SPLINE_SURFACE_WITH_KNOTS, '
-                           'GEOMETRIC_REPRESENTATION_ITEM, '
-                           'RATIONAL_B_SPLINE_SURFACE, '
-                           'REPRESENTATION_ITEM, SURFACE'].from_step(
-        modified_arguments, object_dict)
+    return bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
+        arguments, object_dict)
 
+
+def b_spline_surface_b_spline_surface_with_knots_rational_b_spline_surface_bounded_surface_representation_item_geometric_representation_item_surface(arguments, object_dict):
+    """
+    Bounded b spline surface with knots curve geometric representation item. To clarify.
+    """
+    return bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
+        arguments, object_dict)
 
 def product_definition_shape(arguments, object_dict):
     """
@@ -1149,8 +1140,10 @@ class Step(dc.DessiaObject):
                     angle_conversion_factor=self.angle_conversion_factor)
 
             else:
+                print("step.py")
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
         except (ValueError, NotImplementedError) as error:
+            print("step.py")
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
         return volmdlr_object
 
