@@ -180,7 +180,7 @@ class TestClosedShell3D(unittest.TestCase):
         frame = volmdlr.Frame3D(volmdlr.Point3D(-0.01661984584195119, -0.04221251977732219, -0.04351622102493058),
                                 u_vector, v_vector, w_vector)
         fm_shell = closed_shell.frame_mapping(frame, 'new')
-        min_distance = closed_shell.minimum_distance2(fm_shell, False)
+        min_distance = closed_shell.minimum_distance(fm_shell, False)
         self.assertAlmostEqual(min_distance, 0.022807339491534427)
         frame = volmdlr.Frame3D(volmdlr.Point3D(0.011516851705803667, 0.012859651289434018, 0.015147046170848444),
                                 u_vector, v_vector, w_vector)
