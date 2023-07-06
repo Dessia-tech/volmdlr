@@ -143,14 +143,8 @@ def sin_cos_angle(u1, u2):
     :return: The angle verifying the two equations
     :rtype: float
     """
-    if u1 < -1:
-        u1 = -1
-    elif u1 > 1:
-        u1 = 1
-    if u2 < -1:
-        u2 = -1
-    elif u2 > 1:
-        u2 = 1
+    u1 = max(-1.0, min(u1, 1.0))
+    u2 = max(-1.0, min(u2, 1.0))
 
     if u1 > 0:
         if u2 >= 0:

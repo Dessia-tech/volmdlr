@@ -217,6 +217,7 @@ class DisplayMesh3D(DisplayMesh):
 
     def __init__(self, points: List[volmdlr.Point3D],
                  triangles: List[Tuple[int, int, int]], name=''):
+        self._faces = None
         DisplayMesh.__init__(self, points, triangles, name=name)
 
     def to_babylon(self):
@@ -236,6 +237,12 @@ class DisplayMesh3D(DisplayMesh):
             flatten_indices.extend(vertex)
         return positions, flatten_indices
 
+    @property
+    def faces(self):
+        if not self._faces:
+            self._faces = self.triangular_faces()
+        return self._faces
+
     def triangular_faces(self):
         triangular_faces = []
         for (vertex1, vertex2, vertex3) in self.triangles:
@@ -244,7 +251,7 @@ class DisplayMesh3D(DisplayMesh):
             point3 = self.points[vertex3]
             if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3):
                 face = volmdlr.faces.Triangle3D(point1, point2, point3)
-                if face.area() >= 1e-08:
+                if face.area() >= 1e-11:
                     triangular_faces.append(face)
         return triangular_faces
 
