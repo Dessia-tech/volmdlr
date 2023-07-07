@@ -200,7 +200,7 @@ class Edge(dc.DessiaObject):
             if not same_sense:
                 point1, point2 = point2, point1
             if not point1.is_close(point2):
-                return LineSegment3D(point1, point2, arguments[0][1:-1])
+                return LineSegment3D(point1, point2, name=arguments[0][1:-1])
             return None
 
         if hasattr(obj, 'trim'):
@@ -697,7 +697,8 @@ class LineSegment(Edge):
     def to_step(self, current_id, *args, **kwargs):
         """Exports to STEP format."""
         line = self.line
-        content, (line_id,) = line.to_step(current_id)
+        content, line_id = line.to_step(current_id)
+
         current_id = line_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         current_id = start_id + 1
