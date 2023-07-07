@@ -200,7 +200,10 @@ class Face3D(volmdlr.core.Primitive3D):
         outer_contour2d = None
         outer_contour3d, inner_contours3d = None, None
         if lc3d == 1:
-            outer_contour2d = surface.contour3d_to_2d(contours3d[0])
+            try:
+                outer_contour2d = surface.contour3d_to_2d(contours3d[0])
+            except Exception:
+                print(True)
             outer_contour3d = contours3d[0]
             inner_contours2d = []
 
