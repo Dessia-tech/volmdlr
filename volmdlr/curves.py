@@ -671,6 +671,10 @@ class Line3D(Line):
         """
         Returns the points on this line and the other line that are the closest of lines.
         """
+        if self.point_belongs(other_line.point1):
+            return other_line.point1, other_line.point1
+        if self.point_belongs(other_line.point2):
+            return other_line.point2, other_line.point2
         u = self.point2 - self.point1
         v = other_line.point2 - other_line.point1
         w = self.point1 - other_line.point1

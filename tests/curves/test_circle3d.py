@@ -148,8 +148,8 @@ class TestCircle3D(unittest.TestCase):
             line_seg2)
         self.assertEqual(len(circle_linseg_intersections), 3)
         expected_intersections = [volmdlr.Point3D(1.0, 0.0, 0.0),
-                                  volmdlr.Point3D(0.447213595499958, 0.894427190999916, 0.0),
-                                  volmdlr.Point3D(-0.447213595499958, -0.8944271909999157, 0.0)]
+                                  volmdlr.Point3D(-0.447213595499958, -0.894427190999916, 0.0),
+                                  volmdlr.Point3D(0.447213595499958, 0.8944271909999157, 0.0)]
         for expected_point, point in zip(expected_intersections, circle_linseg_intersections):
             self.assertTrue(expected_point.is_close(point))
         circle2 = curves.Circle3D(volmdlr.OYZX, 1)
