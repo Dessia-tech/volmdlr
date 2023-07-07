@@ -2,6 +2,7 @@ import math
 import unittest
 from itertools import product
 
+import dessia_common.core
 import volmdlr
 from volmdlr import edges, wires, curves
 from volmdlr.models.curves import circle3d
@@ -209,12 +210,12 @@ class TestArc3D(unittest.TestCase):
         inters3 = self.arc3d_2.linesegment_intersections(lineseg3)
         expected_point = volmdlr.Point3D(-0.7071067811865476, -0.7071067811865475, 0.0)
         self.assertEqual(len(inters1), 1)
-        self.assertEqual(inters1[0], expected_point)
+        self.assertTrue(inters1[0].is_close(expected_point))
         self.assertFalse(inters2)
         self.assertEqual(len(inters3), 1)
         self.assertTrue(inters3[0].is_close(expected_point))
         point = volmdlr.Point3D(0, 1.5, -1)
-        lineseg = edges.LineSegment3D(point, point + ( self.list_points[-5] - point) * 2)
+        lineseg = edges.LineSegment3D(point, point + (self.list_points[-5] - point) * 2)
         lineseg2 = edges.LineSegment3D(point, point + (volmdlr.Point3D(1, 1.5, -1) - point) * 2)
         arc3d_lineseg_inters = self.arc3d.linesegment_intersections(lineseg)
         no_arc3d_lineseg_inters = self.arc3d.linesegment_intersections(lineseg2)
@@ -249,6 +250,10 @@ class TestArc3D(unittest.TestCase):
 
         point4 = volmdlr.Point3D(0, 1, 0)
         self.assertEqual(arc.point_distance(point4), math.sqrt(2))
+
+        point = volmdlr.Point3D(0.33525, -0.51106, 0.639935)
+        arc = dessia_common.core.DessiaObject.load_from_file('edges/arc_objects/arc3d_test_point_distance.json')
+        self.assertAlmostEqual(arc.point_distance(point), 0.0021097842575404403)
 
 
 if __name__ == '__main__':
