@@ -815,7 +815,8 @@ class Surface3D(DessiaObject):
             x_periodicity = -1
         if y_periodicity is None:
             y_periodicity = -1
-        for i in range(1, len(primitives2d)):
+        i = 1
+        while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
             current_primitive = primitives2d[i]
             delta = previous_primitive.end - current_primitive.start
@@ -827,8 +828,12 @@ class Surface3D(DessiaObject):
                         math.isclose(current_primitive.length(), y_periodicity, abs_tol=1e-2):
                     delta_end = previous_primitive.end - current_primitive.end
                     delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
-
-                    if current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
+                    if self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
+                         self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
+                        primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, current_primitive.start,
+                                                                   name="construction"))
+                        i += 1
+                    elif current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
                         primitives2d[i] = current_primitive.reverse()
                     elif delta_min_index == 0:
                         primitives2d[i] = current_primitive.translation(delta)
@@ -845,7 +850,7 @@ class Surface3D(DessiaObject):
                     i += 1
                 else:
                     primitives2d[i] = current_primitive.translation(delta)
-
+            i += 1
         previous_primitive = primitives2d[-1]
         delta = previous_primitive.end - primitives2d[0].start
         distance = delta.norm()
@@ -4246,12 +4251,14 @@ class RevolutionSurface3D(PeriodicalSurface):
         if self.wire.__class__.__name__ != "Line3D" and hasattr(self.wire.simplify, "circle") and\
                 math.isclose(self.wire.simplify.circle.radius, arc3d.circle.radius, rel_tol=0.01):
             if self.wire.is_point_edge_extremity(arc3d.start):
-                start = self.point3d_to_2d(arc3d.start)
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
+                if middle_point.x == math.pi:
+                    middle_point.x = -math.pi
                 start = volmdlr.Point2D(middle_point.x, start.y)
             if self.wire.is_point_edge_extremity(arc3d.end):
-                end = self.point3d_to_2d(arc3d.end)
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
+                if middle_point.x == math.pi:
+                    middle_point.x = -math.pi
                 end = volmdlr.Point2D(middle_point.x, end.y)
         if math.isclose(start.y, end.y, rel_tol=0.01):
             point_after_start, point_before_end = self._reference_points(arc3d)
@@ -4371,11 +4378,11 @@ class RevolutionSurface3D(PeriodicalSurface):
 
     def simplify(self):
         line3d = curves.Line3D(self.axis_point, self.axis_point + self.axis)
-        # if isinstance(self.wire, edges.Arc3D):
-        #     tore_center, _ = line3d.point_projection(self.wire.center)
-        #     # Sphere
-        #     if math.isclose(tore_center.point_distance(self.wire.center), 0., abs_tol=1e-6):
-        #         return SphericalSurface3D(self.frame, self.wire.radius, self.name)
+        if isinstance(self.wire, edges.Arc3D):
+            tore_center, _ = line3d.point_projection(self.wire.center)
+            # Sphere
+            if math.isclose(tore_center.point_distance(self.wire.center), 0., abs_tol=1e-6):
+                return SphericalSurface3D(self.frame, self.wire.circle.radius, self.name)
         if isinstance(self.wire, (edges.LineSegment3D, curves.Line3D)):
             if isinstance(self.wire, edges.LineSegment3D):
                 generatrix_line = self.wire.line
