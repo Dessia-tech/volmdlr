@@ -4129,16 +4129,17 @@ class RevolutionSurface3D(PeriodicalSurface):
         self.axis = axis
 
         point1 = wire.point_at_abscissa(0)
-        if point1.is_close(axis_point):
-            point1 = wire.point_at_abscissa(0.5 * wire.length())
         vector1 = point1 - axis_point
         w_vector = axis
-        w_vector.normalize()
-        u_vector = vector1
-
-        if not w_vector.is_perpendicular_to(u_vector):
-            u_vector = vector1 - vector1.vector_projection(w_vector)
-        u_vector.normalize()
+        w_vector = w_vector.unit_vector()
+        if point1.is_close(axis_point) or w_vector.is_colinear_to(vector1):
+            if wire.__class__.__name__ != "Line3D":
+                point1 = wire.point_at_abscissa(0.5 * wire.length())
+            else:
+                point1 = wire.point_at_abscissa(0.05)
+            vector1 = point1 - axis_point
+        u_vector = vector1 - vector1.vector_projection(w_vector)
+        u_vector = u_vector.unit_vector()
         v_vector = w_vector.cross(u_vector)
         self.frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
 
@@ -4205,21 +4206,20 @@ class RevolutionSurface3D(PeriodicalSurface):
         :return: The corresponding RevolutionSurface3D object.
         :rtype: :class:`volmdlr.faces.RevolutionSurface3D`
         """
-
         y_periodicity = None
         name = arguments[0][1:-1]
         wire = object_dict[arguments[1]]
         if wire.__class__ is curves.Circle3D:
             start_end = wire.center + wire.frame.u * wire.radius
-            wire = edges.FullArc3D(wire.frame.origin, start_end, wire.frame.w)
-            y_periodicity = 1
+            wire = edges.FullArc3D(wire, start_end, wire.name)
+            y_periodicity = wire.length()
 
-        if hasattr(wire, "simplify"):
-            wire = wire.simplify
+        # if hasattr(wire, "simplify"):
+        #     wire = wire.simplify
         axis_point, axis = object_dict[arguments[2]]
         surface = cls(wire=wire, axis_point=axis_point, axis=axis, name=name)
         surface.y_periodicity = y_periodicity
-        return surface
+        return surface.simplify()
 
     def to_step(self, current_id):
         """
@@ -4243,7 +4243,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        if hasattr(self.wire, "circle") and math.isclose(self.wire.circle.radius, arc3d.circle.radius, rel_tol=0.01):
+        if self.wire.__class__.__name__ != "Line3D" and hasattr(self.wire.simplify, "circle") and\
+                math.isclose(self.wire.simplify.circle.radius, arc3d.circle.radius, rel_tol=0.01):
             if self.wire.is_point_edge_extremity(arc3d.start):
                 start = self.point3d_to_2d(arc3d.start)
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
@@ -4339,7 +4340,9 @@ class RevolutionSurface3D(PeriodicalSurface):
         if math.isclose(theta1, theta2, abs_tol=1e-3):
             primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if math.isclose(abs(abscissa1 - abscissa2), self.wire.length(), abs_tol=1e-4):
+                if isinstance(self.wire, curves.Line3D):
+                    return [edges.LineSegment3D(start3d, end3d)]
+                if self.wire.is_point_edge_extremity(start3d) and self.wire.is_point_edge_extremity(end3d):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
                         return [primitive]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
@@ -4368,21 +4371,34 @@ class RevolutionSurface3D(PeriodicalSurface):
 
     def simplify(self):
         line3d = curves.Line3D(self.axis_point, self.axis_point + self.axis)
-        if isinstance(self.wire, edges.Arc3D):
-            tore_center, _ = line3d.point_projection(self.wire.circle.center)
-            # Sphere
-            if math.isclose(tore_center.point_distance(self.wire.circle.center), 0., abs_tol=1e-6):
-                return SphericalSurface3D(self.frame, self.wire.circle.radius, self.name)
-        if isinstance(self.wire, edges.LineSegment3D):
-            generatrix_line = curves.Line3D(self.wire.start, self.wire.end)
+        # if isinstance(self.wire, edges.Arc3D):
+        #     tore_center, _ = line3d.point_projection(self.wire.center)
+        #     # Sphere
+        #     if math.isclose(tore_center.point_distance(self.wire.center), 0., abs_tol=1e-6):
+        #         return SphericalSurface3D(self.frame, self.wire.radius, self.name)
+        if isinstance(self.wire, (edges.LineSegment3D, curves.Line3D)):
+            if isinstance(self.wire, edges.LineSegment3D):
+                generatrix_line = self.wire.line
+            else:
+                generatrix_line = self.wire
             intersections = line3d.intersection(generatrix_line)
             if intersections:
-                semi_angle = volmdlr.geometry.vectors3d_angle(self.axis,
-                                                              self.wire.end - self.wire.start)
-                return ConicalSurface3D(self.frame, semi_angle, self.name)
-            start_projection, _ = line3d.point_projection(self.wire.start)
-            radius = start_projection.point_distance(self.wire.start)
-            return CylindricalSurface3D(self.frame, radius, self.name)
+                generatrix_line_direction = generatrix_line.unit_direction_vector()
+                if self.axis.dot(generatrix_line_direction) > 0:
+                    semi_angle = volmdlr.geometry.vectors3d_angle(self.axis, generatrix_line_direction)
+                else:
+                    semi_angle = volmdlr.geometry.vectors3d_angle(self.axis, -generatrix_line_direction)
+                if not self.axis_point.is_close(intersections):
+                    new_w = self.axis_point - intersections
+                    new_w = new_w.unit_vector()
+                    new_frame = volmdlr.Frame3D(intersections, self.frame.u, new_w.cross(self.frame.u), new_w)
+                else:
+                    new_frame = volmdlr.Frame3D(intersections, self.frame.u, self.frame.v, self.frame.w)
+                return ConicalSurface3D(new_frame, semi_angle, self.name)
+            generatrix_line_direction = generatrix_line.unit_direction_vector()
+            if self.axis.is_colinear_to(generatrix_line_direction):
+                radius = self.wire.point_distance(self.axis_point)
+                return CylindricalSurface3D(self.frame, radius, self.name)
         return self
 
     def is_singularity_point(self, point):
