@@ -82,7 +82,6 @@ def bounding_rectangle_adjacent_contours(contours: List):
 
 def reorder_contour3d_edges_from_step(raw_edges, step_data):
     """Helper function to order edges from a 3D contour coming from a step file."""
-    print("Not ordered")
     step_id, step_name, arguments = step_data
     reversed_distances = [edge1.start.point_distance(edge2.end)
                           for edge1, edge2 in zip(raw_edges[::-1][1:], raw_edges[::-1][:-1])]

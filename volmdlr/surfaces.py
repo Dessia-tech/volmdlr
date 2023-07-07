@@ -4195,9 +4195,11 @@ class RevolutionSurface3D(PeriodicalSurface):
         w_vector = axis
         w_vector.normalize()
         u_vector = vector1
-        if wire.__class__.__name__ != "Line3D" and \
-                point1.is_close(axis_point) or not w_vector.is_perpendicular_to(u_vector):
-            point1 = wire.point_at_abscissa(0.5 * wire.length())
+        if point1.is_close(axis_point) or not w_vector.is_perpendicular_to(u_vector):
+            if wire.__class__.__name__ != "Line3D":
+                point1 = wire.point_at_abscissa(0.5 * wire.length())
+            else:
+                point1 = wire.point_at_abscissa(0.05)
             vector1 = point1 - axis_point
             u_vector = vector1 - vector1.vector_projection(w_vector)
         u_vector.normalize()
