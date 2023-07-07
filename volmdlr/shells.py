@@ -1042,24 +1042,24 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                 return True
         return False
 
-    @classmethod
-    def from_faces(cls, faces):
-        """
-        Defines a List of separated OpenShell3D from a list of faces, based on the faces graph.
-        """
+    # @classmethod
+    # def from_faces(cls, faces):
+    #     """
+    #     Defines a List of separated OpenShell3D from a list of faces, based on the faces graph.
+    #     """
 
-        graph = cls(faces).faces_graph()
-        components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
+    #     graph = cls(faces).faces_graph()
+    #     components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
 
-        shells_list = []
-        for _,graph_i in enumerate(components,start=1):
-            faces_list = []
-            for n_index in graph_i.nodes:
-                faces_list.append(faces[n_index])
+    #     shells_list = []
+    #     for _,graph_i in enumerate(components,start=1):
+    #         faces_list = []
+    #         for n_index in graph_i.nodes:
+    #             faces_list.append(faces[n_index])
 
-            shells_list.append(cls(faces_list))
+    #         shells_list.append(cls(faces_list))
 
-        return shells_list
+    #     return shells_list
 
 
 class ClosedShell3D(OpenShell3D):
