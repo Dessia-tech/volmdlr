@@ -194,8 +194,6 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = True if arguments[4] == ".T." else False
-        if not same_sense:
-            print("test_found")
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
