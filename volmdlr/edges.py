@@ -228,10 +228,8 @@ class Edge(dc.DessiaObject):
             return None
 
         if hasattr(obj, 'trim'):
-            if hasattr(obj, "periodic") and obj.periodic and not same_sense:
-                trimmed_edge = obj.trim(point2, point1)
-            else:
-                trimmed_edge = obj.trim(point1, point2, same_sense)
+            trimmed_edge = obj.trim(point1, point2, same_sense)
+            trimmed_edge.name = arguments[0][1:-1]
             return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
@@ -4535,7 +4533,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
         if self.periodic and not point1.is_close(point2):
-            return self.trim_with_interpolation(point1, point2)
+            return self.trim_with_interpolation(point1, point2, same_sense)
 
         if (point1.is_close(self.start) and point2.is_close(self.end)) \
                 or (point1.is_close(self.end) and point2.is_close(self.start)):
@@ -4567,13 +4565,17 @@ class BSplineCurve3D(BSplineCurve):
         trimmed_bspline_cruve = bspline_curve.cut_after(new_param2)
         return trimmed_bspline_cruve
 
-    def trim_with_interpolation(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+    def trim_with_interpolation(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
         """
         Creates a new BSplineCurve3D between point1 and point2 using interpolation method.
         """
-        n = len(self.control_points)
-        local_discretization = self.local_discretization(point1, point2, n)
-        return self.__class__.from_points_interpolation(local_discretization, self.degree, self.periodic)
+        bspline_curve = self
+        if not same_sense:
+            bspline_curve = self.reverse()
+        n = len(bspline_curve.control_points)
+        local_discretization = bspline_curve.local_discretization(point1, point2, n)
+        return bspline_curve.__class__.from_points_interpolation(
+            local_discretization, bspline_curve.degree, bspline_curve.periodic)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         warnings.warn('Use BSplineCurve3D.trim instead of trim_between_evaluation')
