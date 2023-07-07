@@ -1487,8 +1487,8 @@ class Circle3D(CircleMixin, Curve):
 
         :param point1: point 1 used to trim circle.
         :param point2: point2 used to trim circle.
-        :same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
-            direction (False) to the edge direction. By default, it's assumed True
+        :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
         :return: arc between these two points.
         """
         circle = self

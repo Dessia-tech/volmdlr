@@ -190,31 +190,6 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
-        # step_id = kwargs.get("step_id")
-        # obj can be an instance of wires or edges.
-        # obj = object_dict[arguments[3]]
-        # point1 = object_dict[arguments[1]]
-        # point2 = object_dict[arguments[2]]
-        # orientation = arguments[4]
-        # if obj.__class__.__name__ == 'LineSegment3D':
-        #     return object_dict[arguments[3]]
-        # if obj.__class__.__name__ == 'Line3D':
-        #     if orientation == '.F.':
-        #         point1, point2 = point2, point1
-        #     if not point1.is_close(point2):
-        #         return LineSegment3D(point1, point2, arguments[0][1:-1])
-        #     return None
-        #
-        # if hasattr(obj, 'trim'):
-        #     if hasattr(obj, "periodic") and obj.periodic and orientation == '.F.':
-        #         trimmed_edge = obj.trim(point2, point1)
-        #     else:
-        #         trimmed_edge = obj.trim(point1, point2)
-        #         if orientation == '.F.':
-        #             trimmed_edge = trimmed_edge.reverse()
-        #     return trimmed_edge
-        #
-        # raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
@@ -4528,6 +4503,15 @@ class BSplineCurve3D(BSplineCurve):
         return new_bsplinecurve3d
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+        """
+        Trims a bspline curve between two points.
+
+        :param point1: point 1 used to trime.
+        :param point2: point2 used to trim.
+        :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :return: New BSpline curve between these two points.
+        """
         if self.periodic and not point1.is_close(point2):
             return self.trim_with_interpolation(point1, point2, same_sense)
 
