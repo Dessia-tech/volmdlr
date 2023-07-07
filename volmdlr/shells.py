@@ -64,12 +64,12 @@ def union_list_of_shells(list_shells):
     return shells
 
 
-class OpenShell3D(volmdlr.core.CompositePrimitive3D):
+class Shell3D(volmdlr.core.CompositePrimitive3D):
     """
-    A 3D open shell composed of multiple faces.
+    A 3D shell composed of multiple faces.
 
-    This class represents a 3D open shell, which is a collection of connected
-    faces with no volume. It is a subclass of the `CompositePrimitive3D` class
+    This class represents a 3D shell, which is a collection of connected
+    faces with volume. It is a subclass of the `CompositePrimitive3D` class
     and inherits all of its attributes and methods.
 
 
@@ -88,8 +88,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
     _non_serializable_attributes = ['primitives']
     _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box', 'primitives']
     _non_data_hash_attributes = []
-    STEP_FUNCTION = 'OPEN_SHELL'
-    _from_face_class = 'OpenShell3D'
 
     def __init__(self, faces: List[volmdlr.faces.Face3D],
                  color: Tuple[float, float, float] = None,
@@ -504,17 +502,6 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return self.__class__(new_faces, color=self.color, alpha=self.alpha,
                               name=self.name)
 
-    def union(self, shell2):
-        """
-        Combine two shells faces.
-
-        :return: a new OpenShell3D with the combined faces.
-        """
-        new_faces = self.faces + shell2.faces
-        new_name = self.name + ' union ' + shell2.name
-        new_color = self.color
-        return self.__class__(new_faces, name=new_name, color=new_color)
-
     def volume(self):
         """
         Does not consider holes.
@@ -634,41 +621,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
 
         """
         shell2_inter = self.is_intersecting_with(shell2)
-        if shell2_inter is not None and shell2_inter != 1:
+        if shell2_inter:
             return None
-
-        # distance_min, point1_min, point2_min = self.faces[0].distance_to_face(shell2.faces[0], return_points=True)
-        distance_min, point1_min, point2_min = self.faces[0].minimum_distance(
-            shell2.faces[0], return_points=True)
-        for face1 in self.faces:
-            bbox1 = face1.bounding_box
-            for face2 in shell2.faces:
-                bbox2 = face2.bounding_box
-                bbox_distance = bbox1.distance_to_bbox(bbox2)
-
-                if bbox_distance < distance_min:
-                    # distance, point1, point2 = face1.distance_to_face(face2, return_points=True)
-                    distance, point1, point2 = face1.minimum_distance(face2,
-                                                                      return_points=True)
-                    if distance == 0:
-                        return None
-                    if distance < distance_min:
-                        distance_min, point1_min, point2_min = distance, point1, point2
-
-        return point1_min, point2_min
-
-    def distance_to_shell(self, other_shell: 'OpenShell3D'):
-        """
-        Gets the distance between two shells.
-
-        :param other_shell: other shell.
-        :return: return distance between faces.
-        """
-        min_dist = self.minimum_distance_points(other_shell)
-        if min_dist is not None:
-            point1, point2 = min_dist
-            return point1.point_distance(point2)
-        return 0
+        _, point1, point2 = self.minimum_distance(shell2, return_points=True)
+        return point1, point2
 
     def minimum_distance_point(self,
                                point: volmdlr.Point3D) -> volmdlr.Point3D:
@@ -1043,12 +999,45 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         return False
 
 
-class ClosedShell3D(OpenShell3D):
+class OpenShell3D(Shell3D):
+    """
+    A 3D Open shell composed of multiple faces.
+
+    This class represents a 3D oepn shell, which is a collection of connected
+    faces with no volume. It is a subclass of the `Shell3D` class and
+    inherits all of its attributes and methods.
+
+    :param faces: The faces of the shell.
+    :type faces: List[`Face3D`]
+    :param color: The color of the shell.
+    :type color: Tuple[float, float, float]
+    :param alpha: The transparency of the shell, should be a value in the range (0, 1).
+    :type alpha: float
+    :param name: The name of the shell.
+    :type name: str
+    """
+
+    STEP_FUNCTION = 'OPEN_SHELL'
+    _from_face_class = 'OpenShell3D'
+
+    def union(self, shell2):
+        """
+        Combine two shells faces.
+
+        :return: a new OpenShell3D with the combined faces.
+        """
+        new_faces = self.faces + shell2.faces
+        new_name = self.name + ' union ' + shell2.name
+        new_color = self.color
+        return self.__class__(new_faces, name=new_name, color=new_color)
+
+
+class ClosedShell3D(Shell3D):
     """
     A 3D closed shell composed of multiple faces.
 
     This class represents a 3D closed shell, which is a collection of connected
-    faces with a volume. It is a subclass of the `OpenShell3D` class and
+    faces with a volume. It is a subclass of the `Shell3D` class and
     inherits all of its attributes and methods. In addition, it has a method
     to check whether a face is inside the shell.
 
