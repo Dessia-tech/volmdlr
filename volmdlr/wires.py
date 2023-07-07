@@ -2118,23 +2118,24 @@ class Contour2D(ContourMixin, Wire2D):
         """
         Verifies if given edge is inside self contour perimeter, including its edges.
 
-        :param edge: othe edge to verify if inside contour.
-        :returns: True or False
+        :param edge: other edge to verify if inside contour.
+        :returns: True or False.
         """
         for point in edge.discretization_points(number_points=5):
             if not self.point_belongs(point, include_edge_points=True):
                 return False
         return True
 
-    def is_inside(self, contour2):
+    def is_inside(self, other_contour):
         """
         Verifies if given contour is inside self contour perimeter, including its edges.
 
+        :param other_contour: other contour.
         :returns: True or False
         """
-        if contour2.area() > self.area() and not math.isclose(contour2.area(), self.area(), rel_tol=0.01):
+        if other_contour.area() > self.area() and not math.isclose(other_contour.area(), self.area(), rel_tol=0.01):
             return False
-        for edge in contour2.primitives:
+        for edge in other_contour.primitives:
             if not self.is_edge_inside(edge):
                 return False
         return True
@@ -4113,6 +4114,9 @@ class Contour3D(ContourMixin, Wire3D):
                 # Case of a circle, ellipse...
                 return raw_edges[0]
             return cls(raw_edges, name=name)
+        contour = cls(raw_edges, name=name)
+        if contour.is_ordered():
+            return contour
         list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         if list_edges:
             return cls(list_edges, name=name)

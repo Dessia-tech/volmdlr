@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 - Sweep with muitiform profile contour.
+- minimum_distance: face-to-face, shell-to-shell
 - OpenShell3D: from_faces (using faces graph)
 - SphericalFace3D: from_contours3d_and_rectangular_cut
 
@@ -49,10 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse2D: point_at_abscissa
 - Frame3D: import/export step.
 - BSplineFace3D: neutral_fiber.
+- Circle3D: fix trim.
 - Edge: from_step trim of periodic curves with different orientation of original edge
 - Arc3D: fix abscissa, fix get_arc_point_angle
 - add missing toleraces to some methods.
-
+- Arc3D: line_intersections
+- Line3D: minimum_distance_points
+- remove arcellipse handleling for bspline2d_3d.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
@@ -69,6 +73,7 @@ All adequations have been done for all tests and existing scripts.
 - Improve step translator.
 - Delete inplace methods: rotation, translation and frame_mapping
 - OpenShell3D: faces_graph.
+- RevolutionSurface3D: Improve init and methods
 
 
 ### Changed
