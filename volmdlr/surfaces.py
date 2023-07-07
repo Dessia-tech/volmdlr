@@ -4274,7 +4274,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         wire = object_dict[arguments[1]]
         if wire.__class__ is curves.Circle3D:
             start_end = wire.center + wire.frame.u * wire.radius
-            wire = edges.FullArc3D(wire.frame.origin, start_end, wire.frame.w)
+            wire = edges.FullArc3D(wire, start_end, wire.name)
             y_periodicity = wire.length()
 
         # if hasattr(wire, "simplify"):
