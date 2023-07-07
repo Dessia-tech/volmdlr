@@ -2593,11 +2593,15 @@ class RevolutionFace3D(Face3D):
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
         angle_resolution = 10
-        xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
+        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
         number_points_x = int(delta_x * angle_resolution)
 
-        number_points_y = 0
+        if self.surface3d.wire.__class__.__name__ == "Line3D":
+            number_points_y = 0
+        else:
+            delta_y = ymax - ymin
+            number_points_y = max(10, int(delta_y * angle_resolution))
 
         return number_points_x, number_points_y
 
