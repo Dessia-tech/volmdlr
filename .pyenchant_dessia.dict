@@ -3,7 +3,9 @@ babylon
 babylonjs
 Bbox
 Bentley-Ottmann
+Ottmann
 Bezier
+Bézier
 bool
 bspline
 bsplinecurve
@@ -97,3 +99,8 @@ undirected
 Cython
 discretize
 discretizing
+arcellipse
+bendjebla
+vmc
+WireMixin
+BoundingRectangle

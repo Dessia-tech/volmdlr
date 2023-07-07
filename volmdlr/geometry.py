@@ -143,14 +143,8 @@ def sin_cos_angle(u1, u2):
     :return: The angle verifying the two equations
     :rtype: float
     """
-    if u1 < -1:
-        u1 = -1
-    elif u1 > 1:
-        u1 = 1
-    if u2 < -1:
-        u2 = -1
-    elif u2 > 1:
-        u2 = 1
+    u1 = max(-1.0, min(u1, 1.0))
+    u2 = max(-1.0, min(u2, 1.0))
 
     if u1 > 0:
         if u2 >= 0:
@@ -270,12 +264,8 @@ def clockwise_angle(vector1, vector2):
     norm_vec_2 = vector2.norm()
     sol = dot_v1v2 / (norm_vec_1 * norm_vec_2)
     cross_v1v2 = vector1.cross(vector2)
-    if math.isclose(sol, 1, abs_tol=1e-6):
-        inner_angle = 0
-    elif math.isclose(sol, -1, abs_tol=1e-6):
-        inner_angle = math.pi
-    else:
-        inner_angle = math.acos(sol)
+    sol = max(-1.0, min(1.0, sol))
+    inner_angle = math.acos(sol)
 
     if cross_v1v2 < 0:
         return inner_angle

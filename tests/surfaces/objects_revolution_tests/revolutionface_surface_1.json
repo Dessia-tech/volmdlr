@@ -1,0 +1,94 @@
+{
+  "name": "",
+  "object_class": "volmdlr.surfaces.RevolutionSurface3D",
+  "package_version": "0.10.1.dev1106+gab56340c",
+  "wire": {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.0003000225926810343,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
+      "name": "",
+      "origin": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.6178191473899859,
+        "y": 0.628196703998235,
+        "z": -0.00954634970823758
+      },
+      "u": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.26866061712201234,
+        "y": 0.9341479353627758,
+        "z": 0.23492362091769842
+      },
+      "v": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.7032182318644031,
+        "y": -0.3568860250240446,
+        "z": 0.6149117688872442
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.6582595165898646,
+        "y": 1.9799081186702765e-09,
+        "z": 0.7527910791307758
+      }
+    }
+  },
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.618044847172,
+    "y": 0.628185606784,
+    "z": -0.009743707293230002
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.617819165039,
+    "y": 0.62849672659,
+    "z": -0.00954636514177
+  }
+},
+  "axis_point": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.617819165039,
+    "y": 0.62819672659,
+    "z": -0.00954636514155
+  },
+  "axis": {
+    "object_class": "volmdlr.Vector3D",
+    "x": -0.5323037404291937,
+    "y": 0.7071066979992574,
+    "z": 0.46545982164916944
+  },
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.617819165039,
+      "y": 0.62819672659,
+      "z": -0.00954636514155
+    },
+    "u": {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.5323036146912508,
+      "y": 0.707106864373828,
+      "z": -0.46545971269492437
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.6582595154737364,
+      "y": -5.292083160579608e-10,
+      "z": -0.7527910801067466
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.5323037404291937,
+      "y": 0.7071066979992574,
+      "z": 0.46545982164916944
+    }
+  }
+}

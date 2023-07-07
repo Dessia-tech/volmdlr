@@ -252,7 +252,7 @@ class PointCloud3D(dc.DessiaObject):
         Plot the cloud 3d.
 
         """
-        
+
         if self.points:
             ax = self.points[0].plot(ax=ax)
             if len(self.points) > 1000:
@@ -269,11 +269,10 @@ class PointCloud3D(dc.DessiaObject):
         spheres, extended_points = [], []
         for point in self.points:
             extended_zone = p3d.Sphere(point, distance_extended)
-            sphere_primitive = extended_zone.shell_faces[0]
 
-            spheres.append(vmshells.ClosedShell3D([sphere_primitive]))
+            spheres.append(extended_zone)
 
-            extended_points.extend(sphere_primitive.triangulation().points)
+            extended_points.extend(extended_zone.triangulation().points)
 
         for sphere in spheres:
             clean_extended_zone = []
@@ -295,7 +294,6 @@ class PointCloud3D(dc.DessiaObject):
         new_poly = [poly.offset(offset) for poly in polyconvexe]
 
         return new_position_plane, new_poly
-
 
 
 class PointCloud2D(dc.DessiaObject):
