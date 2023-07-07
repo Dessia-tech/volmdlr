@@ -5601,8 +5601,7 @@ class BSplineSurface3D(Surface3D):
                                        points_2d[index_points[point[3]]])))
         k = 0
         for k, point in enumerate(finite_elements_points):
-            if (wires.Contour2D(finite_elements[k].primitives).point_belongs(
-                    point2d)  # finite_elements[k].point_belongs(point2d)
+            if (wires.Contour2D(finite_elements[k].primitives).point_belongs(point2d)
                     or wires.Contour2D(finite_elements[k].primitives).point_over_contour(point2d)
                     or ((points_2d[index_points[point[0]]][0] < point2d.x <
                          points_2d[index_points[point[1]]][0])

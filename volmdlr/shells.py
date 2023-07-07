@@ -1,9 +1,10 @@
 """volmdlr shells module."""
+import math
 import random
 import sys
 import traceback
 import warnings
-from itertools import chain
+from itertools import chain, product
 from typing import List, Tuple
 
 import matplotlib.pyplot as plt
@@ -109,6 +110,7 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         self._faces_graph = None
         self._vertices_graph = None
         self._vertices_points = None
+        self._shell_octree_decomposition = None
 
         volmdlr.core.CompositePrimitive3D.__init__(self,
                                                    primitives=faces, color=color, alpha=alpha,
@@ -285,8 +287,8 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
         # ----------------------------------
         name = arguments[0][1:-1]
         if isinstance(arguments[-1], int):
-            product = object_dict[arguments[-1]]
-            name = product[1:-1]
+            step_product = object_dict[arguments[-1]]
+            name = step_product[1:-1]
         # ----------------------------------
         faces = [object_dict[int(face[1:])] for face in arguments[1] if object_dict[int(face[1:])]]
         return cls(faces, name=name)
@@ -685,6 +687,48 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     distance_min, point1_min = distance, point1
 
         return point1_min
+
+    def minimum_distance(self, other_shell, return_points=False):
+        shell_decomposition1 = self.shell_decomposition()
+        shell_decomposition2 = other_shell.shell_decomposition()
+        list_set_points1 = [{point for face in faces1
+                             for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces1 in
+                            shell_decomposition1.items()]
+        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in
+                            list_set_points1]
+        list_set_points2 = [{point for face in faces2
+                             for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces2 in
+                            shell_decomposition2.items()]
+        list_set_points2 = [npy.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
+                            list_set_points2]
+
+        minimum_distance = math.inf
+        index1, index2 = None, None
+        for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
+            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
+            sets_min_dist = npy.min(distances)
+            if sets_min_dist < minimum_distance:
+                minimum_distance = sets_min_dist
+                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
+                index2 = next((i for i, x in enumerate(list_set_points2) if npy.array_equal(x, sets_points2)), -1)
+        faces1 = list(shell_decomposition1.values())[index1]
+        faces2 = list(shell_decomposition2.values())[index2]
+
+        minimum_distance = math.inf
+        best_distance_points = None
+        for face1, face2 in product(faces1, faces2):
+            distance, point1, point2 = face1.face_minimum_distance(face2, True)
+            if distance < minimum_distance:
+                minimum_distance = distance
+                best_distance_points = [point1, point2]
+        if return_points:
+            return minimum_distance, *best_distance_points
+        return minimum_distance
+
+    def shell_decomposition(self):
+        if not self._shell_octree_decomposition:
+            self._shell_octree_decomposition = volmdlr.faces.octree_decomposition(self.bounding_box, self.faces)
+        return self._shell_octree_decomposition
 
     def intersection_internal_aabb_volume(self, shell2: 'OpenShell3D',
                                           resolution: float):

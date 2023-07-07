@@ -103,7 +103,7 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError(f'get_reverse method not implemented by {self.__class__.__name__}')
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Gets the same edge, but in the opposite direction.
 
@@ -191,32 +191,47 @@ class Edge(dc.DessiaObject):
         """
         step_id = kwargs.get("step_id")
         # obj can be an instance of wires or edges.
+        # obj = object_dict[arguments[3]]
+        # point1 = object_dict[arguments[1]]
+        # point2 = object_dict[arguments[2]]
+        # orientation = arguments[4]
+        # if obj.__class__.__name__ == 'LineSegment3D':
+        #     return object_dict[arguments[3]]
+        # if obj.__class__.__name__ == 'Line3D':
+        #     if orientation == '.F.':
+        #         point1, point2 = point2, point1
+        #     if not point1.is_close(point2):
+        #         return LineSegment3D(point1, point2, arguments[0][1:-1])
+        #     return None
+        #
+        # if hasattr(obj, 'trim'):
+        #     if hasattr(obj, "periodic") and obj.periodic and orientation == '.F.':
+        #         trimmed_edge = obj.trim(point2, point1)
+        #     else:
+        #         trimmed_edge = obj.trim(point1, point2)
+        #         if orientation == '.F.':
+        #             trimmed_edge = trimmed_edge.reverse()
+        #     return trimmed_edge
+        #
+        # raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
-        orientation = arguments[4]
+        same_sense = True if arguments[4] == ".T." else False
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
-            if orientation == '.F.':
+            if not same_sense:
                 point1, point2 = point2, point1
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, obj, arguments[0][1:-1])
             return None
+
         if hasattr(obj, 'trim'):
-            if obj.__class__.__name__ == 'Circle3D':
-                # if orientation == '.T.':
-                #     point1, point2 = point2, point1
-                trimmed_edge = obj.trim(point1, point2)
-                if orientation == '.F.':
-                    trimmed_edge = trimmed_edge.reverse()
-                return trimmed_edge
-            if hasattr(obj, "periodic") and obj.periodic and orientation == '.F.':
+            if hasattr(obj, "periodic") and obj.periodic and not same_sense:
                 trimmed_edge = obj.trim(point2, point1)
             else:
-                trimmed_edge = obj.trim(point1, point2)
-                if orientation == '.F.':
-                    trimmed_edge = trimmed_edge.reverse()
+                trimmed_edge = obj.trim(point1, point2, same_sense)
             return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
@@ -443,6 +458,40 @@ class Edge(dc.DessiaObject):
             return True
         return False
 
+    def minimum_distance(self, element, return_points=False):
+        """
+        Gets the minimum distance two methods.
+
+        This is a generelized method in a case an analytical method has not yet been defined.
+
+        :param element: another edge.
+        :param return_points: weather also to return the corresponding points.
+        :return: minimum distance.
+        """
+        linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
+        def clean_points(list_pts):
+            points_ = []
+            for point in list_pts:
+                if not volmdlr.core.point_in_list(point, points_):
+                    points_.append(point)
+            return points_
+        points = clean_points(self.discretization_points(number_points=100))
+        discretization_primitves1 = [linesegment_class_(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        discretization_points2 = element.discretization_points(number_points=100)
+        points = clean_points(discretization_points2)
+        discretization_primitves2 = [linesegment_class_(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
+        minimum_distance = math.inf
+        points = None
+        for prim1 in discretization_primitves1:
+            for prim2 in discretization_primitves2:
+                distance, point1, point2 = prim1.minimum_distance(prim2, return_points=True)
+                if distance < minimum_distance:
+                    minimum_distance = distance
+                    points = (point1, point2)
+        if return_points:
+            return minimum_distance, points[0], points[1]
+        return minimum_distance
+
 
 class LineSegment(Edge):
     """
@@ -519,16 +568,17 @@ class LineSegment(Edge):
 
         return projection, t_param * norm_u
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Split a Line Segment at a given point into two Line Segments.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list with the two split line segments.
         """
-        if split_point.is_close(self.start):
+        if split_point.is_close(self.start, tol):
             return [None, self.copy()]
-        if split_point.is_close(self.end):
+        if split_point.is_close(self.end, tol):
             return [self.copy(), None]
         return [self.__class__(self.start, split_point),
                 self.__class__(split_point, self.end)]
@@ -2276,16 +2326,17 @@ class ArcMixin:
 
         return self.__class__(self.circle, start=self.end, end=self.start, is_trigo=not self.is_trigo)
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two Arc.
         """
-        if split_point.is_close(self.start, 1e-6):
+        if split_point.is_close(self.start, tol):
             return [None, self.copy()]
-        if split_point.is_close(self.end, 1e-6):
+        if split_point.is_close(self.end, tol):
             return [self.copy(), None]
         return [self.__class__(self.circle, self.start, split_point, self.is_trigo),
                 self.__class__(self.circle, split_point, self.end, self.is_trigo)]
@@ -2313,9 +2364,9 @@ class ArcMixin:
                [self.start, self.point_at_abscissa(self.length() * .5), self.end]):
             return [self]
         if self.point_belongs(other_arc2.start, abs_tol):
-            arc1_, arc2_ = self.split(other_arc2.start)
+            arc1_, arc2_ = self.split(other_arc2.start, abs_tol)
         elif self.point_belongs(other_arc2.end, abs_tol):
-            arc1_, arc2_ = self.split(other_arc2.end)
+            arc1_, arc2_ = self.split(other_arc2.end, abs_tol)
         else:
             raise NotImplementedError
         shared_arc_section = []
@@ -2380,16 +2431,17 @@ class FullArcMixin(ArcMixin):
         """Angle of Full Arc. """
         return volmdlr.TWO_PI
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two Arc.
         """
-        if split_point.is_close(self.start, 1e-6):
+        if split_point.is_close(self.start, tol):
             return [None, self.copy()]
-        if split_point.is_close(self.end, 1e-6):
+        if split_point.is_close(self.end, tol):
             return [self.copy(), None]
         class_ = getattr(sys.modules[__name__], 'Arc' + self.__class__.__name__[-2:])
         return [class_(self.circle, self.start, split_point, self.is_trigo),
@@ -3574,18 +3626,18 @@ class ArcEllipse2D(Edge):
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc-ellipse at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two Arc-Ellipse.
         """
-        if split_point.is_close(self.start, 1e-6):
+        if split_point.is_close(self.start, tol):
             return [None, self.copy()]
-        if split_point.is_close(self.end, 1e-6):
+        if split_point.is_close(self.end, tol):
             return [self.copy(), None]
-        abscissa = self.abscissa(split_point)
         return [self.__class__(self.ellipse, self.start, split_point),
                 self.__class__(self.ellipse, split_point, self.end)]
 
@@ -4035,108 +4087,7 @@ class LineSegment3D(LineSegment):
         :param other_line: Other line.
         :return: Two points corresponding to the distance between to lines.
         """
-        u = self.direction_vector()
-        v = other_line.direction_vector()
-        w = self.start - other_line.start
-        a = u.dot(u)
-        b = u.dot(v)
-        c = v.dot(v)
-        d = u.dot(w)
-        e = v.dot(w)
-        determinant = a * c - b * c
-        if determinant > - 1e-6:
-            b_times_e = b * e
-            c_times_d = c * d
-            if b_times_e <= c_times_d:
-                s_parameter = 0.0
-                if e <= 0.0:
-                    t_parameter = 0.0
-                    negative_d = -d
-                    if negative_d >= a:
-                        s_parameter = 1.0
-                    elif negative_d > 0.0:
-                        s_parameter = negative_d / a
-                elif e < c:
-                    t_parameter = e / c
-                else:
-                    t_parameter = 1.0
-                    b_minus_d = b - d
-                    if b_minus_d >= a:
-                        s_parameter = 1.0
-                    elif b_minus_d > 0.0:
-                        s_parameter = b_minus_d / a
-            else:
-                s_parameter = b_times_e - c_times_d
-                if s_parameter >= determinant:
-                    s_parameter = 1.0
-                    b_plus_e = b + e
-                    if b_plus_e <= 0.0:
-                        t_parameter = 0.0
-                        negative_d = -d
-                        if negative_d <= 0.0:
-                            s_parameter = 0.0
-                        elif negative_d < a:
-                            s_parameter = negative_d / a
-                    elif b_plus_e < c:
-                        t_parameter = b_plus_e / c
-                    else:
-                        t_parameter = 1.0
-                        b_minus_d = b - d
-                        if b_minus_d <= 0.0:
-                            s_parameter = 0.0
-                        elif b_minus_d < a:
-                            s_parameter = b_minus_d / a
-                else:
-                    a_times_e = a * e
-                    b_times_d = a * d
-                    if a_times_e <= b_times_d:
-                        t_parameter = 0.0
-                        negative_d = -d
-                        if negative_d <= 0.0:
-                            s_parameter = 0.0
-                        elif negative_d >= a:
-                            s_parameter = 1.0
-                        else:
-                            s_parameter = negative_d / a
-                    else:
-                        t_parameter = a_times_e - b_times_d
-                        if t_parameter >= determinant:
-                            t_parameter = 1.0
-                            b_minus_d = b - d
-                            if b_minus_d <= 0.0:
-                                s_parameter = 0.0
-                            elif b_minus_d >= a:
-                                s_parameter = 1.0
-                            else:
-                                s_parameter = b_minus_d / a
-                        else:
-                            s_parameter /= determinant
-                            t_parameter /= determinant
-        else:
-            if e <= 0.0:
-                t_parameter = 0.0
-                negative_d = -d
-                if negative_d <= 0.0:
-                    s_parameter = 0.0
-                elif negative_d >= a:
-                    s_parameter = 1.0
-                else:
-                    s_parameter = negative_d / a
-            elif e >= c:
-                t_parameter = 1.0
-                b_minus_d = b - d
-                if b_minus_d <= 0.0:
-                    s_parameter = 0.0
-                elif b_minus_d >= a:
-                    s_parameter = 1.0
-                else:
-                    s_parameter = b_minus_d / a
-            else:
-                s_parameter = 0.0
-                t_parameter = e / c
-        p1 = self.start + u * s_parameter
-        p2 = other_line.start + v * t_parameter
-        return p1, p2
+        return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
         """Calculates the paralel distance between two Line Segments 3D."""
@@ -4582,7 +4533,7 @@ class BSplineCurve3D(BSplineCurve):
                                             self.periodic, self.name)
         return new_bsplinecurve3d
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
         if self.periodic and not point1.is_close(point2):
             return self.trim_with_interpolation(point1, point2)
 
@@ -4796,6 +4747,7 @@ class BSplineCurve3D(BSplineCurve):
     #     return radius
 
     def triangulation(self):
+        """Triangulatio method for a BSplineCurve3D."""
         return None
 
     def linesegment_intersections(self, linesegment3d: LineSegment3D):
@@ -4913,6 +4865,7 @@ class Arc3D(ArcMixin, Edge):
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
+        """Saves the obejct parameters into a dictionnary."""
         dict_ = self.base_dict()
         dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
                                               id_method=id_method, id_memo=id_memo, path=path + '/circle')
@@ -4948,6 +4901,7 @@ class Arc3D(ArcMixin, Edge):
 
     @property
     def bounding_box(self):
+        """Bounding boc for Arc 3D."""
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         if isinstance(self._bbox, str):
@@ -4993,6 +4947,14 @@ class Arc3D(ArcMixin, Edge):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
+        """
+        Creates an Arc 3d using three points.
+
+        :param point1: start point.
+        :param point2: interior point.
+        :param point3: end point.
+        :return: Arc 3D.
+        """
         circle = volmdlr_curves.Circle3D.from_3_points(point1, point2, point3)
         arc = cls(circle, point1, point3)
         return arc
@@ -5098,6 +5060,7 @@ class Arc3D(ArcMixin, Edge):
         return Arc3D(new_circle, new_start, new_end, name=self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Plot method for Arc 3D using Matplolib."""
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         ax = vm_common_operations.plot_from_discretization_points(
@@ -5157,7 +5120,7 @@ class Arc3D(ArcMixin, Edge):
         return arc
 
     def minimum_distance_points_arc(self, other_arc):
-
+        """Calculates the minimum distance points betweeen two arcs."""
         u1 = self.start - self.circle.center
         u1.normalize()
         u2 = self.circle.normal.cross(u1)
@@ -5202,6 +5165,7 @@ class Arc3D(ArcMixin, Edge):
         return point1, point2
 
     def distance_squared(self, x, u, v, k, w):
+        """Calculates the squared distance."""
         radius = self.circle.radius
         return (u.dot(u) * x[0] ** 2 + w.dot(w) + v.dot(v) * (
                 (math.sin(x[1])) ** 2) * radius ** 2 + k.dot(k) * ((math.cos(x[1])) ** 2) * radius ** 2
@@ -5241,7 +5205,8 @@ class Arc3D(ArcMixin, Edge):
         return point1, point2
 
     def minimum_distance(self, element, return_points=False):
-        if element.__class__ is Arc3D or element.__class__.__name__ == 'Circle3D':
+        """Gets the mininum distace between an Arc 3D and another edge."""
+        if element.__class__.__name__ in ['Arc3D', 'Circle3D', 'FullArc3D']:
             p1, p2 = self.minimum_distance_points_arc(element)
             if return_points:
                 return p1.point_distance(p2), p1, p2
@@ -5252,10 +5217,10 @@ class Arc3D(ArcMixin, Edge):
             if return_points:
                 return pt1.point_distance(pt2), pt1, pt2
             return pt1.point_distance(pt2)
-
-        return NotImplementedError
+        return super().minimum_distance(element, return_points)
 
     def extrusion(self, extrusion_vector):
+        """Extrudes an arc 3d in the given extrusion vector direction."""
         if self.circle.normal.is_colinear_to(extrusion_vector):
             u = self.start - self.circle.center
             u.normalize()
@@ -5266,7 +5231,6 @@ class Arc3D(ArcMixin, Edge):
             angle1, angle2 = arc2d.angle1, arc2d.angle2
             if angle2 < angle1:
                 angle2 += volmdlr.TWO_PI
-            # from volmdlr import surfaces, faces
             cylinder = volmdlr.surfaces.CylindricalSurface3D(
                 volmdlr.Frame3D(self.circle.center, u, v, w),
                 self.circle.radius
@@ -5565,14 +5529,15 @@ class FullArc3D(FullArcMixin, Arc3D):
         fullarc = cls(volmdlr_curves.Circle3D.from_3_points(point1, point2, point3), point1)
         return fullarc
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits the circle into two arcs at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two arcs.
         """
-        if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):
+        if split_point.is_close(self.start, tol) or split_point.is_close(self.end, tol):
             raise ValueError("Point should be different of start and end.")
         if not self.point_belongs(split_point, 1e-5):
             raise ValueError("Point not on the circle.")
@@ -5860,16 +5825,17 @@ class ArcEllipse3D(Edge):
         point2d = self.self_2d.point_at_abscissa(abscissa)
         return point2d.to_3d(self.ellipse.center, self.ellipse.major_dir, self.ellipse.minor_dir)
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc-ellipse at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two Arc-Ellipse.
         """
-        if split_point.is_close(self.start, 1e-6):
+        if split_point.is_close(self.start, tol):
             return [None, self.copy()]
-        if split_point.is_close(self.end, 1e-6):
+        if split_point.is_close(self.end, tol):
             return [self.copy(), None]
         return [self.__class__(self.ellipse, self.start, split_point),
                 self.__class__(self.ellipse, split_point, self.end)]
@@ -5978,11 +5944,12 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         point2d = point.to_2d(self.ellipse.center, self.ellipse.major_dir, self.ellipse.minor_dir)
         return self.self_2d.abscissa(point2d)
 
-    def split(self, split_point):
+    def split(self, split_point, tol: float = 1e-6):
         """
         Splits the ellipse into two arc of ellipse at a given point.
 
         :param split_point: splitting point.
+        :param tol: tolerance.
         :return: list of two Arc of ellipse.
         """
         if split_point.is_close(self.start, 1e-6) or split_point.is_close(self.end, 1e-6):

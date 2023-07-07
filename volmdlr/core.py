@@ -334,7 +334,7 @@ class Primitive3D(dc.PhysicalObject):
 
         return babylon_param
 
-    def triangulation(self):
+    def triangulation(self, *args, **kwargs):
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
@@ -637,7 +637,7 @@ class BoundingBox(dc.DessiaObject):
         self.zmin = zmin
         self.zmax = zmax
         self._size = None
-
+        self._octree = None
         # disabling super init call for efficiency, put back when dc disable kwargs
         # dc.DessiaObject.__init__(self, name=name)
         self.name = name
@@ -996,6 +996,23 @@ class BoundingBox(dc.DessiaObject):
         else:
             dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
+
+    def octree(self):
+        """Creates a simple octree structure for a bounding box."""
+        if not self._octree:
+            octants = []
+            points_x, points_y, points_z = 2, 2, 2
+            _size = [self.size[0] / points_x, self.size[1] / points_y,
+                     self.size[2] / points_z]
+            octants_center = self.get_points_inside_bbox(points_x, points_y, points_z)
+            for octant_center in octants_center:
+                mins_maxs = []
+                for i, size_component in enumerate(_size):
+                    mins_maxs.extend([octant_center[i] - size_component / 2, octant_center[i] + size_component / 2])
+                octants.append(self.__class__(mins_maxs[0], mins_maxs[1], mins_maxs[2], mins_maxs[3],
+                                              mins_maxs[4], mins_maxs[5]))
+            self._octree = octants
+        return self._octree
 
 
 class Assembly(dc.PhysicalObject):

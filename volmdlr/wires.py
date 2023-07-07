@@ -82,6 +82,7 @@ def bounding_rectangle_adjacent_contours(contours: List):
 
 def reorder_contour3d_edges_from_step(raw_edges, step_data):
     """Helper function to order edges from a 3D contour coming from a step file."""
+    print("Not ordered")
     step_id, step_name, arguments = step_data
     reversed_distances = [edge1.start.point_distance(edge2.end)
                           for edge1, edge2 in zip(raw_edges[::-1][1:], raw_edges[::-1][:-1])]
@@ -2130,23 +2131,24 @@ class Contour2D(ContourMixin, Wire2D):
         """
         Verifies if given edge is inside self contour perimeter, including its edges.
 
-        :param edge: othe edge to verify if inside contour.
-        :returns: True or False
+        :param edge: other edge to verify if inside contour.
+        :returns: True or False.
         """
         for point in edge.discretization_points(number_points=5):
             if not self.point_belongs(point, include_edge_points=True):
                 return False
         return True
 
-    def is_inside(self, contour2):
+    def is_inside(self, other_contour):
         """
         Verifies if given contour is inside self contour perimeter, including its edges.
 
+        :param other_contour: other contour.
         :returns: True or False
         """
-        if contour2.area() > self.area() and not math.isclose(contour2.area(), self.area(), rel_tol=0.01):
+        if other_contour.area() > self.area() and not math.isclose(other_contour.area(), self.area(), rel_tol=0.01):
             return False
-        for edge in contour2.primitives:
+        for edge in other_contour.primitives:
             if not self.is_edge_inside(edge):
                 return False
         return True
@@ -2530,7 +2532,7 @@ class Contour2D(ContourMixin, Wire2D):
             return [self, contour2d]
 
         merged_primitives = self.delete_shared_contour_section(contour2d, abs_tol)
-        contours = Contour2D.contours_from_edges(merged_primitives)
+        contours = Contour2D.contours_from_edges(merged_primitives, abs_tol)
         contours = sorted(contours, key=lambda contour: contour.area(),
                           reverse=True)
         return contours
@@ -4125,6 +4127,9 @@ class Contour3D(ContourMixin, Wire3D):
                 # Case of a circle, ellipse...
                 return raw_edges[0]
             return cls(raw_edges, name=name)
+        contour = cls(raw_edges, name=name)
+        if contour.is_ordered():
+            return contour
         list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         if list_edges:
             return cls(list_edges, name=name)
@@ -4345,7 +4350,7 @@ class Contour3D(ContourMixin, Wire3D):
         """
 
         merged_primitives = self.delete_shared_contour_section(contour3d, abs_tol)
-        contours = Contour3D.contours_from_edges(merged_primitives, tol=1e-6)
+        contours = Contour3D.contours_from_edges(merged_primitives, tol=abs_tol)
 
         return contours
 

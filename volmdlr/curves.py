@@ -421,6 +421,7 @@ class Line2D(Line):
 
     @staticmethod
     def get_concurrent_segments_tangent_circles(vector_i, vector_c, vector_d, new_point_k, new_basis):
+        """Creates circles tangents to concurrent segments."""
         point_k = volmdlr.Point2D(new_basis.local_to_global_coordinates(new_point_k))
 
         if point_k.is_close(vector_i):
@@ -1272,6 +1273,7 @@ class Circle3D(CircleMixin, Curve):
         return Circle3D(self.frame.frame_mapping(frame, side), self.radius)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Plot method for Circle3D."""
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -1375,6 +1377,7 @@ class Circle3D(CircleMixin, Curve):
                            normal: volmdlr.Vector3D,
                            radius: float,
                            name: str = ''):
+        """Creates a Circle 3D from a center point and a normal vector, along with is radius."""
         u = normal.deterministic_unit_normal_vector()
         v = normal.cross(u)
         return cls(volmdlr.Frame3D(center, u, v, normal), radius, name)
@@ -1471,22 +1474,26 @@ class Circle3D(CircleMixin, Curve):
         frame = volmdlr.Frame3D(self.center, self.frame.u, -self.frame.v, self.frame.u.cross(-self.frame.v))
         return Circle3D(frame, self.radius)
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
         """
         Trims a circle between two points.
 
         :param point1: point 1 used to trim circle.
         :param point2: point2 used to trim circle.
-        :return: arc 2d betweeen these two points.
+        :return: arc 2d between these two points.
         """
+        circle = self
+        if not same_sense:
+            circle = self.reverse()
         if not self.point_belongs(point1, 1e-4) or not self.point_belongs(point2, 1e-4):
             ax = self.plot()
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')
             raise ValueError('Point not on circle for trim method')
         if point1.is_close(point2):
-            return volmdlr.edges.FullArc3D(self, point1)
-        return volmdlr.edges.Arc3D(self, point1, point2)
+            return volmdlr.edges.FullArc3D(circle, point1)
+        return volmdlr.edges.Arc3D(circle, point1, point2)
+
 
     def split(self, split_start, split_end):
         """
