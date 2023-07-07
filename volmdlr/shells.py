@@ -125,20 +125,24 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 return False
 
         return True
+    @staticmethod
+    def _helper_getter_vertices_points(faces):
+        """Helper method to get shells faces vertices."""
+        vertices_points = []
+        for face in faces:
+            for contour in [face.outer_contour3d] + face.inner_contours3d:
+                for edge in contour.primitives:
+                    if not volmdlr.core.point_in_list(edge.start, vertices_points):
+                        vertices_points.append(edge.start)
+                    if not volmdlr.core.point_in_list(edge.end, vertices_points):
+                        vertices_points.append(edge.end)
+        return vertices_points
 
     @property
     def vertices_points(self):
         """Gets the shell's vertices points. """
         if self._vertices_points is None:
-            vertices_points = []
-            for face in self.faces:
-                for contour in [face.outer_contour3d] + face.inner_contours3d:
-                    for edge in contour.primitives:
-                        if not volmdlr.core.point_in_list(edge.start, vertices_points):
-                            vertices_points.append(edge.start)
-                        if not volmdlr.core.point_in_list(edge.end, vertices_points):
-                            vertices_points.append(edge.end)
-            self._vertices_points = vertices_points
+            self._vertices_points = self._helper_getter_vertices_points(self.faces)
         return self._vertices_points
 
     @property
@@ -158,7 +162,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             self._vertices_graph = vertices_graph
         return self._vertices_graph
 
-    def _faces_graph_search_bridges(self, graph, components, face_vertices):
+    @staticmethod
+    def _faces_graph_search_bridges(faces, graph, components, face_vertices, vertices_points):
         """
         Search for neighboring faces in the connected components to fix the graph.
 
@@ -178,6 +183,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         :type components: list
         :param face_vertices: A dictionary mapping face indices to their corresponding vertex indices.
         :type face_vertices: dict
+        :param vertices_points: A list containing all faces vertices points.
+        :type vertices_points: list[Point3D].
         :return: The updated graph with no disconnected components.
         """
         stack = components.copy()
@@ -185,7 +192,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         def check_faces(face, other_face_id):
             for point_id in face_vertices[other_face_id]:
-                point = self.vertices_points[point_id]
+                point = vertices_points[point_id]
                 if face.outer_contour3d.point_over_contour(point):
                     return True
                 if face.inner_contours3d:
@@ -197,7 +204,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         while stack:
             group = stack.pop(0)
             for face_id_i in group:
-                face_i = self.faces[face_id_i]
+                face_i = faces[face_id_i]
                 for other_group in stack:
                     for face_id_j in other_group:
                         if check_faces(face_i, face_id_j):
@@ -210,6 +217,38 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                             break
         return graph
 
+    @staticmethod
+    def _helper_create_faces_graph(faces, vertices_points=None, verify_connected_components=True):
+        if vertices_points is None:
+            vertices_points = Shell3D._helper_getter_vertices_points(faces)
+
+        graph = nx.Graph()
+        vertice_faces = {}
+        face_vertices = {}
+
+        for face_index, face in enumerate(faces):
+            face_contour_primitives = face.outer_contour3d.primitives
+            for inner_contour in face.inner_contours3d:
+                face_contour_primitives.extend(inner_contour.primitives)
+            for edge in face_contour_primitives:
+                start_index = volmdlr.core.get_point_index_in_list(edge.start, vertices_points)
+                vertice_faces.setdefault(start_index, set()).add(face_index)
+                face_vertices.setdefault(face_index, set()).add(start_index)
+
+        for i, _ in enumerate(faces):
+            face_i_vertices = face_vertices[i]
+            for vertice in face_i_vertices:
+                connected_faces = vertice_faces[vertice]
+                connected_faces.discard(i)
+                for j in connected_faces:
+                    graph.add_edge(i, j)
+
+        if verify_connected_components:
+            components = list(nx.connected_components(graph))
+            if len(components) > 1:
+                graph = Shell3D._faces_graph_search_bridges(faces, graph, components, face_vertices, vertices_points)
+        return graph
+
     def faces_graph(self, verify_connected_components=True):
         """
         Gets the shells faces topology graph using networkx.
@@ -217,29 +256,30 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         :return: return a networkx graph for a shell faces.
         """
         if not self._faces_graph:
-            graph = nx.Graph()
-            vertice_faces = {}
-            face_vertices = {}
-            for face_index, face in enumerate(self.faces):
-                face_contour_primitives = face.outer_contour3d.primitives
-                for inner_contour in face.inner_contours3d:
-                    face_contour_primitives.extend(inner_contour.primitives)
-                for edge in face_contour_primitives:
-                    start_index = volmdlr.core.get_point_index_in_list(edge.start, self.vertices_points)
-                    vertice_faces.setdefault(start_index, set()).add(face_index)
-                    face_vertices.setdefault(face_index, set()).add(start_index)
-            for i, _ in enumerate(self.faces):
-                face_i_vertices = face_vertices[i]
-                for vertice in face_i_vertices:
-                    connected_faces = vertice_faces[vertice]
-                    connected_faces.discard(i)
-                    for j in connected_faces:
-                        graph.add_edge(i, j)
-            if verify_connected_components:
-                components = list(nx.connected_components(graph))
-                if len(components) > 1:
-                    graph = self._faces_graph_search_bridges(graph, components, face_vertices)
-            self._faces_graph = graph
+            # graph = nx.Graph()
+            # vertice_faces = {}
+            # face_vertices = {}
+            # for face_index, face in enumerate(self.faces):
+            #     face_contour_primitives = face.outer_contour3d.primitives
+            #     for inner_contour in face.inner_contours3d:
+            #         face_contour_primitives.extend(inner_contour.primitives)
+            #     for edge in face_contour_primitives:
+            #         start_index = volmdlr.core.get_point_index_in_list(edge.start, self.vertices_points)
+            #         vertice_faces.setdefault(start_index, set()).add(face_index)
+            #         face_vertices.setdefault(face_index, set()).add(start_index)
+            # for i, _ in enumerate(self.faces):
+            #     face_i_vertices = face_vertices[i]
+            #     for vertice in face_i_vertices:
+            #         connected_faces = vertice_faces[vertice]
+            #         connected_faces.discard(i)
+            #         for j in connected_faces:
+            #             graph.add_edge(i, j)
+            # if verify_connected_components:
+            #     components = list(nx.connected_components(graph))
+            #     if len(components) > 1:
+            #         graph = self._faces_graph_search_bridges(graph, components, face_vertices)
+            self._faces_graph = self._helper_create_faces_graph(
+                self.faces, self.vertices_points, verify_connected_components)
         return self._faces_graph
 
     def to_dict(self, *args, **kwargs):
@@ -952,21 +992,37 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 [[face.outer_contour3d], face.inner_contours3d], min_points, size))
         return lines
 
+    @staticmethod
+    def is_openshell(faces, faces_graph=None):
+        if faces_graph is None:
+            vertices_points = Shell3D._helper_getter_vertices_points(faces)
+            faces_graph = Shell3D._helper_create_faces_graph(faces, vertices_points, False)
+        for n_index in faces_graph.nodes:
+            face = faces[n_index]
+            for prim in face.outer_contour3d.primitives:
+                for neihgbor in faces_graph.neighbors(n_index):
+                    if faces[neihgbor].outer_contour3d.primitive_over_contour(prim):
+                        break
+                else:
+                    return True
+        return False
+
     @classmethod
     def from_faces(cls, faces):
         """
         Defines a List of separated OpenShell3D from a list of faces, based on the faces graph.
         """
-        class_ = getattr(sys.modules[__name__], cls._from_face_class)
-        graph = class_(faces).faces_graph(verify_connected_components=False)
+        vertices_points = Shell3D._helper_getter_vertices_points(faces)
+        graph = Shell3D._helper_create_faces_graph(faces, vertices_points, verify_connected_components=False)
         components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
 
         shells_list = []
-        for _,graph_i in enumerate(components, start=1):
-            faces_list = []
-            for n_index in graph_i.nodes:
-                faces_list.append(faces[n_index])
-            shells_list.append(class_(faces_list))
+        for _, graph_i in enumerate(components, start=1):
+            faces_list = [faces[n_index] for n_index in graph_i.nodes]
+            if cls.is_openshell(faces, graph_i):
+                shells_list.append(OpenShell3D(faces_list))
+            else:
+                shells_list.append(ClosedShell3D(faces_list))
 
         return shells_list
 
@@ -1018,7 +1074,6 @@ class OpenShell3D(Shell3D):
     """
 
     STEP_FUNCTION = 'OPEN_SHELL'
-    _from_face_class = 'OpenShell3D'
 
     def union(self, shell2):
         """
@@ -1052,7 +1107,7 @@ class ClosedShell3D(Shell3D):
     """
 
     STEP_FUNCTION = 'CLOSED_SHELL'
-    _from_face_class = 'ClosedShell3D'
+
     def is_face_inside(self, face: volmdlr.faces.Face3D):
         """
         Verifies if a face is inside the closed shell 3D.
@@ -1698,7 +1753,6 @@ class OpenTriangleShell3D(OpenShell3D):
     :param name: The name of the shell.
     :type name: str
     """
-    _from_face_class = 'OpenTriangleShell3D'
 
     def __init__(self, faces: List[volmdlr.faces.Triangle3D],
                  color: Tuple[float, float, float] = None,
@@ -1784,7 +1838,6 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     :param name: The name of the shell.
     :type name: str
     """
-    _from_face_class = 'ClosedTriangleShell3D'
 
     def __init__(self, faces: List[volmdlr.faces.Triangle3D],
                  color: Tuple[float, float, float] = None,

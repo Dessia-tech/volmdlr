@@ -53,7 +53,7 @@ box_blue.color = (0.1, 0.1, 1)
 box_blue.name = 'box_blue'
 
 assert box.faces[0] == box.faces[0]
-print(box.distance_to_shell(box_red))
+print(box.minimum_distance(box_red))
 print(box_green.is_intersecting_with(box_blue))
 print(box_green.intersection_internal_aabb_volume(box_blue, resolution))
 print(box_green.intersection_external_aabb_volume(box_blue, resolution))
@@ -106,7 +106,7 @@ box_red = primitives3d.Block(
 
 for i in range(1):
     # print('----NEW STEP----', box_red.is_inside_shell(box, resolution))
-    print('distance_to_shell', box.distance_to_shell(box_red))
+    print('distance_to_shell', box.minimum_distance(box_red))
     # print('shell_intersection', box.shell_intersection(box_red, resolution))
     print('volume', box_red.bounding_box.volume(), box.bounding_box.volume())
     print('intersection_internal_aabb_volume', box.intersection_internal_aabb_volume(box_red, resolution), box_red.intersection_internal_aabb_volume(box, resolution))
