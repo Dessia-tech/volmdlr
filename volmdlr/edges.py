@@ -190,33 +190,22 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
-        # step_id = kwargs.get("step_id")
-        # obj can be an instance of wires or edges.
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
-        orientation = arguments[4]
+        same_sense = bool(arguments[4] == ".T.")
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
-            if orientation == '.F.':
+            if not same_sense:
                 point1, point2 = point2, point1
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, arguments[0][1:-1])
             return None
+
         if hasattr(obj, 'trim'):
-            if obj.__class__.__name__ == 'Circle3D' and orientation == '.T.':
-                point1, point2 = point2, point1
-                trimmed_edge = obj.trim(point1, point2)
-                if orientation == '.F.':
-                    trimmed_edge = trimmed_edge.reverse()
-                return trimmed_edge
-            if obj.periodic and orientation == '.F.':
-                trimmed_edge = obj.trim(point2, point1)
-            else:
-                trimmed_edge = obj.trim(point1, point2)
-                if orientation == '.F.':
-                    trimmed_edge = trimmed_edge.reverse()
+            trimmed_edge = obj.trim(point1, point2, same_sense)
+            trimmed_edge.name = arguments[0][1:-1]
             return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
@@ -4513,9 +4502,18 @@ class BSplineCurve3D(BSplineCurve):
                                             self.periodic, self.name)
         return new_bsplinecurve3d
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+        """
+        Trims a bspline curve between two points.
+
+        :param point1: point 1 used to trime.
+        :param point2: point2 used to trim.
+        :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :return: New BSpline curve between these two points.
+        """
         if self.periodic and not point1.is_close(point2):
-            return self.trim_with_interpolation(point1, point2)
+            return self.trim_with_interpolation(point1, point2, same_sense)
 
         if (point1.is_close(self.start) and point2.is_close(self.end)) \
                 or (point1.is_close(self.end) and point2.is_close(self.start)):
@@ -4547,13 +4545,17 @@ class BSplineCurve3D(BSplineCurve):
         trimmed_bspline_cruve = bspline_curve.cut_after(new_param2)
         return trimmed_bspline_cruve
 
-    def trim_with_interpolation(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+    def trim_with_interpolation(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
         """
         Creates a new BSplineCurve3D between point1 and point2 using interpolation method.
         """
-        n = len(self.control_points)
-        local_discretization = self.local_discretization(point1, point2, n)
-        return self.__class__.from_points_interpolation(local_discretization, self.degree, self.periodic)
+        bspline_curve = self
+        if not same_sense:
+            bspline_curve = self.reverse()
+        n = len(bspline_curve.control_points)
+        local_discretization = bspline_curve.local_discretization(point1, point2, n)
+        return bspline_curve.__class__.from_points_interpolation(
+            local_discretization, bspline_curve.degree, bspline_curve.periodic)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         warnings.warn('Use BSplineCurve3D.trim instead of trim_between_evaluation')
