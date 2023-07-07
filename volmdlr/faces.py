@@ -23,7 +23,7 @@ import volmdlr.geometry
 import volmdlr.grid
 from volmdlr import surfaces
 import volmdlr.wires
-c = 0
+
 
 def octree_decomposition(bbox, faces):
     """Decomposes a list of faces into eight Boundingbox subdivided boxes."""
@@ -242,13 +242,6 @@ class Face3D(volmdlr.core.Primitive3D):
         surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
                                        inner_contours=inner_contours2d)
         face = cls(surface, surface2d=surface2d, name=name)
-        if (isinstance(face, ExtrusionFace3D) or isinstance(face, RevolutionFace3D) or isinstance(face, CylindricalFace3D)) and \
-                not outer_contour2d.is_ordered():
-            global c
-            c += 1
-            if c == 5:
-                ax = surface2d.plot()
-                ax.set_aspect("auto")
         # To improve performance while reading from step file
         # face.outer_contour3d = outer_contour3d
         # face.inner_contours3d = inner_contours3d
