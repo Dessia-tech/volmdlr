@@ -725,7 +725,14 @@ class Line3D(Line):
             raise ValueError('Please Enter a valid side: old or new')
         return Line3D(new_start, new_end)
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, **kwargs):
+        """
+        Trims a line creating a line segment.
+
+        :param point1: line segment start.
+        :param point2: line segment end.
+        :return: line segment.
+        """
         if not self.point_belongs(point1) or not self.point_belongs(point2):
             raise ValueError('Point not on curve')
 
@@ -1480,7 +1487,9 @@ class Circle3D(CircleMixin, Curve):
 
         :param point1: point 1 used to trim circle.
         :param point2: point2 used to trim circle.
-        :return: arc 2d betweeen these two points.
+        :same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
+            direction (False) to the edge direction. By default, it's assumed True
+        :return: arc between these two points.
         """
         circle = self
         if not same_sense:
@@ -1902,18 +1911,22 @@ class Ellipse3D(Curve):
         point2d = self.self_2d.point_at_abscissa(abscissa)
         return point2d.to_3d(self.center, self.frame.u, self.frame.v)
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
         """
-        Trim's a circle at two points.
+        Trims an ellipse between two points.
 
-        :param point1: trim point 1.
-        :param point2: trim point 2.
-        :return: An arcellipse between the two given points.
+        :param point1: point1 used to trim ellipse.
+        :param point2: point2 used to trim ellipse.
+        :same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
+            direction (False) to the edge direction. By default, it's assumed True
+        :return: arc of ellipse between these two points.
         """
-        # from volmdlr import edges
+        ellipse = self
+        if not same_sense:
+            ellipse = self.reverse()
         if point1.is_close(point2):
-            return volmdlr.edges.FullArcEllipse3D(self, point1, self.name)
-        return volmdlr.edges.ArcEllipse3D(self, point1, point2)
+            return volmdlr.edges.FullArcEllipse3D(ellipse, point1, self.name)
+        return volmdlr.edges.ArcEllipse3D(ellipse, point1, point2)
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
