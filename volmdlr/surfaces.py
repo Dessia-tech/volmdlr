@@ -817,7 +817,8 @@ class Surface3D(DessiaObject):
             x_periodicity = -1
         if y_periodicity is None:
             y_periodicity = -1
-        for i in range(1, len(primitives2d)):
+        i = 1
+        while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
             current_primitive = primitives2d[i]
             delta = previous_primitive.end - current_primitive.start
@@ -851,7 +852,7 @@ class Surface3D(DessiaObject):
                     i += 1
                 else:
                     primitives2d[i] = current_primitive.translation(delta)
-
+            i += 1
         previous_primitive = primitives2d[-1]
         delta = previous_primitive.end - primitives2d[0].start
         distance = delta.norm()
@@ -4193,16 +4194,15 @@ class RevolutionSurface3D(PeriodicalSurface):
         point1 = wire.point_at_abscissa(0)
         vector1 = point1 - axis_point
         w_vector = axis
-        w_vector.normalize()
-        u_vector = vector1
-        if point1.is_close(axis_point) or not w_vector.is_perpendicular_to(u_vector):
+        w_vector = w_vector.unit_vector()
+        if point1.is_close(axis_point) or w_vector.is_colinear_to(vector1):
             if wire.__class__.__name__ != "Line3D":
                 point1 = wire.point_at_abscissa(0.5 * wire.length())
             else:
                 point1 = wire.point_at_abscissa(0.05)
             vector1 = point1 - axis_point
-            u_vector = vector1 - vector1.vector_projection(w_vector)
-        u_vector.normalize()
+        u_vector = vector1 - vector1.vector_projection(w_vector)
+        u_vector = u_vector.unit_vector()
         v_vector = w_vector.cross(u_vector)
         self.frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
 
@@ -4277,8 +4277,8 @@ class RevolutionSurface3D(PeriodicalSurface):
             wire = edges.FullArc3D(wire.frame.origin, start_end, wire.frame.w)
             y_periodicity = wire.length()
 
-        if hasattr(wire, "simplify"):
-            wire = wire.simplify
+        # if hasattr(wire, "simplify"):
+        #     wire = wire.simplify
         axis_point, axis = object_dict[arguments[2]]
         surface = cls(wire=wire, axis_point=axis_point, axis=axis, name=name)
         surface.y_periodicity = y_periodicity
