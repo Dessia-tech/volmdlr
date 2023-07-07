@@ -201,7 +201,7 @@ class Line(Curve):
         current_id = u_id + 1
         content = p1_content + u_content
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
-        return content, [current_id]
+        return content, current_id
 
 
 class Line2D(Line):
