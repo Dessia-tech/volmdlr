@@ -27,6 +27,8 @@ class Voxelization(PhysicalObject):
     """
     Class for creation and manipulation of voxelization of volmdlr geometry.
 
+    This approach is used to create a Voxelization of the surfaces, and do not fill the volume.
+
     The voxelization is defined in an implicit grid of the 3D space. The grid is defined by the size of the voxels.
     The implicit grid is defined by discretizing the 3D space into axis aligned cubes with given size, with the
     origin of the global landmark (0, 0, 0) always being a corner point (and not inside a cube).
