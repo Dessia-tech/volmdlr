@@ -4,63 +4,63 @@
   "primitives": [
     [
       {
-        "$ref": "#/_references/e687ad52-169f-11ee-9913-d2c33e3011fd"
+        "$ref": "#/_references/ef69ff2c-1c28-11ee-9f80-d2c33e3011fd"
       },
       {
         "object_class": "volmdlr.Point3D",
         "x": 0.15,
         "y": 0.0,
-        "z": -0.07519173425803855
+        "z": -0.07519169513672866
       },
       {
         "object_class": "volmdlr.Point3D",
         "x": 0.15,
         "y": 0.0,
-        "z": -0.1503834685160771
+        "z": -0.15038339027345732
       },
       {
         "object_class": "volmdlr.Point3D",
         "x": 0.15,
         "y": 0.0,
-        "z": -0.22557520277411564
+        "z": -0.225575085410186
       },
       {
         "object_class": "volmdlr.Point3D",
-        "x": 0.14149075259319607,
-        "y": 0.04980328232768376,
+        "x": 0.14149080454964283,
+        "y": 0.04980313471956124,
         "z": -0.25
       },
       {
         "object_class": "volmdlr.Point3D",
-        "x": 0.10015019521499523,
-        "y": 0.11166887837888562,
+        "x": 0.10015034083600324,
+        "y": 0.11166874777856328,
         "z": -0.25
       },
       {
         "object_class": "volmdlr.Point3D",
-        "x": 0.115073119419,
-        "y": 0.096219451254,
-        "z": -0.199801740576
+        "x": 0.11336543561503566,
+        "y": 0.09822565927473226,
+        "z": -0.20396768850533775
       },
       {
         "object_class": "volmdlr.Point3D",
-        "x": 0.135270257281,
-        "y": 0.064822541911,
-        "z": -0.134605383679
+        "x": 0.1339958540564158,
+        "y": 0.0674174484802919,
+        "z": -0.13999378186146028
       },
       {
         "object_class": "volmdlr.Point3D",
-        "x": 0.146420205431,
-        "y": 0.032574926848,
-        "z": -0.067642524294
+        "x": 0.14603770000956434,
+        "y": 0.03424893573687284,
+        "z": -0.07111865317707486
       },
       {
-        "$ref": "#/_references/e687ad52-169f-11ee-9913-d2c33e3011fd"
+        "$ref": "#/_references/ef69ff2c-1c28-11ee-9f80-d2c33e3011fd"
       }
     ],
     [
       {
-        "$ref": "#/_references/e687baa4-169f-11ee-9913-d2c33e3011fd"
+        "$ref": "#/_references/ef6a0b2a-1c28-11ee-9f80-d2c33e3011fd"
       },
       {
         "object_class": "volmdlr.Point3D",
@@ -111,12 +111,12 @@
         "z": 0.25
       },
       {
-        "$ref": "#/_references/e687baa4-169f-11ee-9913-d2c33e3011fd"
+        "$ref": "#/_references/ef6a0b2a-1c28-11ee-9f80-d2c33e3011fd"
       }
     ],
     [
       {
-        "$ref": "#/_references/e687bdec-169f-11ee-9913-d2c33e3011fd"
+        "$ref": "#/_references/ef6a12e6-1c28-11ee-9f80-d2c33e3011fd"
       },
       {
         "object_class": "volmdlr.Point3D",
@@ -229,24 +229,24 @@
         "z": -0.2351519305700393
       },
       {
-        "$ref": "#/_references/e687bdec-169f-11ee-9913-d2c33e3011fd"
+        "$ref": "#/_references/ef6a12e6-1c28-11ee-9f80-d2c33e3011fd"
       }
     ]
   ],
   "_references": {
-    "e687ad52-169f-11ee-9913-d2c33e3011fd": {
+    "ef69ff2c-1c28-11ee-9f80-d2c33e3011fd": {
       "object_class": "volmdlr.Point3D",
       "x": 0.15,
       "y": 0.0,
       "z": 0.0
     },
-    "e687baa4-169f-11ee-9913-d2c33e3011fd": {
+    "ef6a0b2a-1c28-11ee-9f80-d2c33e3011fd": {
       "object_class": "volmdlr.Point3D",
       "x": 0.08947272158308199,
       "y": -0.12039365470204937,
       "z": 0.2499999999999762
     },
-    "e687bdec-169f-11ee-9913-d2c33e3011fd": {
+    "ef6a12e6-1c28-11ee-9f80-d2c33e3011fd": {
       "object_class": "volmdlr.Point3D",
       "x": -0.08947272158299999,
       "y": 0.1203936547021103,
