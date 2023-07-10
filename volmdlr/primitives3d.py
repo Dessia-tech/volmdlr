@@ -520,7 +520,7 @@ class ExtrudedProfile(shells.ClosedShell3D):
         dict_ = dc.DessiaObject.base_dict(self)
         dict_.update({'color': self.color,
                       'alpha': self.alpha,
-                      'frame': self.frame,
+                      'frame': self.frame.to_dict(),
                       # 'plane_origin': self.plane_origin.to_dict(),
                       'outer_contour2d': self.outer_contour2d.to_dict(),
                       'inner_contours2d': [c.to_dict() for c in self.inner_contours2d],
