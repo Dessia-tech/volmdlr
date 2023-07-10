@@ -2241,7 +2241,7 @@ class ArcMixin:
             return self.circle.radius - linesegment.length()
         return min(self.start.point_distance(point), self.end.point_distance(point))
 
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
         Discretize an Edge to have "n" points.
 
