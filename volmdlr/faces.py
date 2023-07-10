@@ -2129,8 +2129,8 @@ class ToroidalFace3D(Face3D):
         circle = volmdlr_curves.Circle3D(self.surface3d.frame, self.surface3d.tore_radius)
         point1, point2 = [circle.center + circle.radius * math.cos(theta) * circle.frame.u +
                           circle.radius * math.sin(theta) * circle.frame.v for theta in
-                          [theta_max, theta_min]]
-        return volmdlr.wires.Wire3D([circle.trim(point1, point2).reverse()])
+                          [theta_min, theta_max]]
+        return volmdlr.wires.Wire3D([circle.trim(point1, point2)])
 
 
 class ConicalFace3D(Face3D):
@@ -3036,7 +3036,7 @@ class BSplineFace3D(Face3D):
             vector2 = interior - end
             if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
                 return None
-            return vme.Arc3D(start, interior, end)
+            return vme.Arc3D.from_3_points(start, interior, end)
         interior = edge.point_at_abscissa(0.5 * edge.length())
         vector1 = interior - edge.start
         vector2 = interior - edge.end
@@ -3101,10 +3101,20 @@ class BSplineFace3D(Face3D):
         Returns the faces' neutral fiber.
         """
         neutral_fiber_points = self.neutral_fiber_points()
-        if len(neutral_fiber_points) == 2:
-            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[1])
+        is_line = True
+        if not neutral_fiber_points[0].is_close(neutral_fiber_points[-1]):
+            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
+            is_line = all(neutral_fiber.point_belongs(point) for point in neutral_fiber_points)
+        if len(neutral_fiber_points) == 2 or is_line:
+            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
         else:
             neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
                                                                          min(self.surface3d.degree_u,
                                                                              self.surface3d.degree_v))
+        umin, umax, vmin, vmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
+        point3d_min = self.surface3d.point2d_to_3d(volmdlr.Point2D(umin, vmin))
+        point3d_max = self.surface3d.point2d_to_3d(volmdlr.Point2D(umax, vmax))
+        point1 = neutral_fiber.point_projection(point3d_min)[0]
+        point2 = neutral_fiber.point_projection(point3d_max)[0]
+        neutral_fiber = neutral_fiber.trim(point1, point2)
         return volmdlr.wires.Wire3D([neutral_fiber])

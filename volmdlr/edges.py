@@ -1520,7 +1520,7 @@ class BSplineCurve(Edge):
         :param point: point to be verified.
         :return: point projection.
         """
-        return self.point_at_abscissa(self.abscissa(point))
+        return [self.point_at_abscissa(self.abscissa(point))]
 
     def local_discretization(self, point1, point2, number_points: int = 10):
         """
@@ -2241,7 +2241,7 @@ class ArcMixin:
             return self.circle.radius - linesegment.length()
         return min(self.start.point_distance(point), self.end.point_distance(point))
 
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
         Discretize an Edge to have "n" points.
 

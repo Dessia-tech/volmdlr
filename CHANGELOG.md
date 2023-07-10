@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: point_belongs
 - ArcEllipse2D: point_at_abscissa
 - Frame3D: import/export step.
+- BSplineFace3D: neutral_fiber.
 - Step: read_lines, take into account the space character in step entity names
 - Circle3D: fix trim.
 - Edge: from_step trim of periodic curves with different orientation of original edge
