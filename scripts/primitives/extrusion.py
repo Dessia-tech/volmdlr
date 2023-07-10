@@ -33,7 +33,7 @@ l3 = edges.LineSegment2D(p8, p6)
 c2 = wires.Contour2D([l1, l2, l3])
 
 
-profile=primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, outer_profile, [c2], vm.X3D*0.1, name = 'extrusion')
+profile=primitives3d.ExtrudedProfile(vm.OYZX, outer_profile, [c2], 0.1, name = 'extrusion')
 
 model=vm.core.VolumeModel([profile])
 

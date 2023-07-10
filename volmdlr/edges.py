@@ -3045,8 +3045,8 @@ class FullArc2D(FullArcMixin, Arc2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """Rotation of a full arc 2D."""
-        new_circle = self.circle.rotation(center, angle, True)
-        new_start_end = self.start.rotation(center, angle, True)
+        new_circle = self.circle.rotation(center, angle)
+        new_start_end = self.start.rotation(center, angle)
         return FullArc2D(new_circle, new_start_end)
 
     def translation(self, offset: volmdlr.Vector2D):

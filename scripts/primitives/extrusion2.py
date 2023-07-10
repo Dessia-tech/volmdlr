@@ -39,7 +39,7 @@ c2.plot(ax=ax, edge_style=volmdlr.core.EdgeStyle(color='r'))
 
 
 
-profile = primitives3d.ExtrudedProfile(vm.O3D, vm.Y3D, vm.Z3D, c1, [], 0.1*vm.X3D)
+profile = primitives3d.ExtrudedProfile(vm.OYZX, c1, [], 0.1)
 
 model = vmc.VolumeModel([profile])
 model.babylonjs()

@@ -3,13 +3,18 @@
 """
 Demo of cylinders
 """
+import volmdlr
 
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
 
-cylinder1 = primitives3d.Cylinder(vm.O3D, vm.X3D, 0.03, 0.02, name="cylinder1")
+cylinder1 = primitives3d.Cylinder(
+    # vm.O3D, vm.X3D,
+    vm.OYZX,
+    0.03, 0.02, name="cylinder1")
 cyl2_center = vm.Point3D(0.1, 0, 0)
-cylinder2 = primitives3d.HollowCylinder(cyl2_center, vm.X3D, 0.02, 0.06, 0.03, name="cylinder2")
+frame = volmdlr.Frame3D(cyl2_center, vm.Y3D, vm.Z3D, vm.X3D)
+cylinder2 = primitives3d.HollowCylinder(frame, 0.02, 0.06, 0.03, name="cylinder2")
 
 model = vm.core.VolumeModel([cylinder1, cylinder2])
 

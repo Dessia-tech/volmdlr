@@ -12,8 +12,8 @@ POSITION = volmdlr.O3D
 AXIS = volmdlr.X3D
 RADIUS = 0.1
 LENGTH = 0.5
-
-cylinder = volmdlr.primitives3d.Cylinder(POSITION, AXIS, RADIUS, LENGTH, alpha=0.1)
+frame = volmdlr.Frame3D.from_point_and_normal(POSITION, AXIS)
+cylinder = volmdlr.primitives3d.Cylinder(frame, RADIUS, LENGTH, alpha=0.1)
 cylinder.babylonjs()
 
 
@@ -26,7 +26,7 @@ def shell_faces(cyl: volmdlr.primitives3d.Cylinder):
     return ls.revolution(axis_point=cyl.position, axis=cyl.axis, angle=volmdlr.TWO_PI)
 
 
-cs = volmdlr.faces.ClosedShell3D(faces=shell_faces(cylinder))
+cs = volmdlr.shells.ClosedShell3D(faces=shell_faces(cylinder))
 cs.babylonjs()
 
 # cs2 = cs.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi/2)

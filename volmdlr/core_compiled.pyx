@@ -3602,6 +3602,14 @@ class Frame3D(Basis3D):
         normal.normalize()
         return cls(point1, vector1, normal.cross(vector1), normal)
 
+    @classmethod
+    def from_point_and_normal(cls, origin, normal):
+        """Creates a frame 3D from a point and a normal vector."""
+        u_vector = normal.deterministic_unit_normal_vector()
+        v_vector = normal.cross(u_vector)
+        return cls(origin, u_vector, v_vector, normal)
+
+
     # def babylonjs(self, size=0.1, parent=None):
     #     """
     #     # TODO: to be deleted ?
