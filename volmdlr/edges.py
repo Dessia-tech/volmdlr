@@ -190,34 +190,10 @@ class Edge(dc.DessiaObject):
         :rtype: :class:`volmdlr.edges.Edge`
         """
         step_id = kwargs.get("step_id")
-        # obj can be an instance of wires or edges.
-        # obj = object_dict[arguments[3]]
-        # point1 = object_dict[arguments[1]]
-        # point2 = object_dict[arguments[2]]
-        # orientation = arguments[4]
-        # if obj.__class__.__name__ == 'LineSegment3D':
-        #     return object_dict[arguments[3]]
-        # if obj.__class__.__name__ == 'Line3D':
-        #     if orientation == '.F.':
-        #         point1, point2 = point2, point1
-        #     if not point1.is_close(point2):
-        #         return LineSegment3D(point1, point2, arguments[0][1:-1])
-        #     return None
-        #
-        # if hasattr(obj, 'trim'):
-        #     if hasattr(obj, "periodic") and obj.periodic and orientation == '.F.':
-        #         trimmed_edge = obj.trim(point2, point1)
-        #     else:
-        #         trimmed_edge = obj.trim(point1, point2)
-        #         if orientation == '.F.':
-        #             trimmed_edge = trimmed_edge.reverse()
-        #     return trimmed_edge
-        #
-        # raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
-        same_sense = True if arguments[4] == ".T." else False
+        same_sense = bool(arguments[4] == ".T.")
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':

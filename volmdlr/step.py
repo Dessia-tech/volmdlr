@@ -451,22 +451,18 @@ def manifold_surface_shape_representation(arguments, object_dict):
     Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
     """
     primitives = []
-    shell_primitives = []
-    only_open_shell = True
     for arg in arguments[1]:
         primitive = object_dict[int(arg[1:])]
         if isinstance(primitive, vmshells.OpenShell3D):
             primitives.append(primitive)
-            shell_primitives.extend(primitive.primitives)
         if isinstance(primitive, volmdlr.core.Compound):
-            only_open_shell = False
             counter = 0
             for sub_prim in primitive.primitives:
                 sub_prim.name = arguments[0][1:-1] + str(counter)
                 counter += 1
             primitives.append(primitive)
-    if only_open_shell:
-        return vmshells.OpenShell3D(shell_primitives)
+    if len(primitives) == 1:
+        return primitives[0]
     return volmdlr.core.Compound(primitives)
 
 
@@ -568,22 +564,18 @@ def advanced_brep_shape_representation(arguments, object_dict):
 
     """
     primitives = []
-    shell_primitives = []
-    only_closed_shell = True
     for arg in arguments[1]:
         primitive = object_dict[int(arg[1:])]
         if isinstance(primitive, vmshells.OpenShell3D):
             primitives.append(primitive)
-            shell_primitives.extend(primitive.primitives)
         if isinstance(primitive, volmdlr.core.Compound):
-            only_closed_shell = False
             counter = 0
             for sub_prim in primitive.primitives:
                 sub_prim.name = arguments[0][1:-1] + str(counter)
                 counter += 1
             primitives.append(primitive)
-    if only_closed_shell:
-        return vmshells.ClosedShell3D(shell_primitives)
+    if len(primitives) == 1:
+        return primitives[0]
     return volmdlr.core.Compound(primitives)
 
 
