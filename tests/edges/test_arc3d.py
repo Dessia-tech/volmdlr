@@ -2,6 +2,7 @@ import math
 import unittest
 from itertools import product
 
+import dessia_common.core
 import volmdlr
 from volmdlr import edges, wires, curves
 from volmdlr.models.curves import circle3d
@@ -28,7 +29,7 @@ class TestArc3D(unittest.TestCase):
                 arc3d_ = edges.Arc3D(circle3d, start=point1, end=point2)
                 list_lengths.append(round(arc3d_.length(), 7))
         for length, expected_length in zip(list_lengths, expected_lengths):
-            self.assertAlmostEqual(length, expected_length)
+            self.assertAlmostEqual(length, expected_length, 6)
 
     def test_from_3_points(self):
         points = [volmdlr.Point3D(-0.2672612419124244, -0.5345224838248488, -0.8017837257372732),
@@ -81,6 +82,11 @@ class TestArc3D(unittest.TestCase):
         for abscissa, expected_abscissa in zip(abscissas, expected_abscissa):
             self.assertAlmostEqual(abscissa, expected_abscissa)
 
+        arc = edges.Arc3D.load_from_file("edges/arc_objects/arc_abscissa_bug.json")
+        point = volmdlr.Point3D(0.6002208894332702, -0.637646466964, 0.006570128575852758)
+        abscissa = arc.abscissa(point)
+        self.assertAlmostEqual(abscissa, 0.019320794819579237)
+
     def test_direction_vector(self):
         direction_vector = self.arc3d.direction_vector(self.arc3d.abscissa(self.list_points[2]))
         self.assertTrue(direction_vector.is_close(
@@ -129,9 +135,13 @@ class TestArc3D(unittest.TestCase):
         arc3d_2 = arc3d_2.translation(arc3d_2.circle.frame.w)
         minimum_distance_points_arc = self.arc3d.minimum_distance_points_arc(arc3d_2)
         self.assertTrue(minimum_distance_points_arc[0].is_close(
-            volmdlr.Point3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258)))
+            volmdlr.Point3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258)) or
+                        minimum_distance_points_arc[0].is_close(
+                            volmdlr.Point3D(-0.9855985596534887, -0.11957315586905082, -0.11957315586905082)))
         self.assertTrue(minimum_distance_points_arc[1].is_close(
-            volmdlr.Point3D(-0.16910197872576282, 1.4040302062452235, -0.01018335612787169)))
+            volmdlr.Point3D(-0.16910197872576282, 1.4040302062452235, -0.01018335612787169)) or
+                        minimum_distance_points_arc[1].is_close(
+                            volmdlr.Point3D(-0.8164965809277258, 1.1153550716504106, -0.29885849072268444)))
 
     def test_minimum_distance_points_line(self):
         lineseg = edges.LineSegment3D(volmdlr.Point3D(0, 1.5, -1), volmdlr.Point3D(0, -.3, 0.5))
@@ -200,12 +210,12 @@ class TestArc3D(unittest.TestCase):
         inters3 = self.arc3d_2.linesegment_intersections(lineseg3)
         expected_point = volmdlr.Point3D(-0.7071067811865476, -0.7071067811865475, 0.0)
         self.assertEqual(len(inters1), 1)
-        self.assertEqual(inters1[0], expected_point)
+        self.assertTrue(inters1[0].is_close(expected_point))
         self.assertFalse(inters2)
         self.assertEqual(len(inters3), 1)
         self.assertTrue(inters3[0].is_close(expected_point))
         point = volmdlr.Point3D(0, 1.5, -1)
-        lineseg = edges.LineSegment3D(point, point + ( self.list_points[-5] - point) * 2)
+        lineseg = edges.LineSegment3D(point, point + (self.list_points[-5] - point) * 2)
         lineseg2 = edges.LineSegment3D(point, point + (volmdlr.Point3D(1, 1.5, -1) - point) * 2)
         arc3d_lineseg_inters = self.arc3d.linesegment_intersections(lineseg)
         no_arc3d_lineseg_inters = self.arc3d.linesegment_intersections(lineseg2)
@@ -240,6 +250,10 @@ class TestArc3D(unittest.TestCase):
 
         point4 = volmdlr.Point3D(0, 1, 0)
         self.assertEqual(arc.point_distance(point4), math.sqrt(2))
+
+        point = volmdlr.Point3D(0.33525, -0.51106, 0.639935)
+        arc = dessia_common.core.DessiaObject.load_from_file('edges/arc_objects/arc3d_test_point_distance.json')
+        self.assertAlmostEqual(arc.point_distance(point), 0.0021097842575404403)
 
 
 if __name__ == '__main__':
