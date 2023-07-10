@@ -23,6 +23,7 @@ from volmdlr.core import EdgeStyle
 class FlatElementError(Exception):
     """An error in case an element is flat."""
 
+
 # def find_duplicate_linear_element(linear_elements1, linear_elements2):
 #     duplicates = []
 #     for linear_element in linear_elements1:
@@ -36,6 +37,9 @@ class Node2D(vm.Point2D):
     A node is a Point2D with some hash capabilities for performance used for Mesh.
 
     """
+
+    def __init__(self, x: float, y: float, name: str = ""):
+        vm.Point2D.__init__(self, x, y, name)
 
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
@@ -65,6 +69,9 @@ class Node3D(vm.Point3D):
     """
     A node is a Point3D with some hash capabilities for performance used for Mesh.
     """
+
+    def __init__(self, x: float, y: float, z: float, name: str = ""):
+        vm.Point3D.__init__(self, x, y, z, name)
 
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))
