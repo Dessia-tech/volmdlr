@@ -39,6 +39,8 @@ class Node2D(vm.Point2D):
     """
 
     def __init__(self, x: float, y: float, name: str = ""):
+        self.x = x
+        self.y = y
         vm.Point2D.__init__(self, x, y, name)
 
     def __hash__(self):
@@ -71,6 +73,9 @@ class Node3D(vm.Point3D):
     """
 
     def __init__(self, x: float, y: float, z: float, name: str = ""):
+        self.x = x
+        self.y = y
+        self.z = z
         vm.Point3D.__init__(self, x, y, z, name)
 
     def __hash__(self):
