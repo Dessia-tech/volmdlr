@@ -171,7 +171,8 @@ class Stl(dc.DessiaObject):
             if 'vertex' in line:
                 line = line.replace('vertex', '')
                 line = line.lstrip(' ')
-                x, y, z = line.split(' ')
+                x, y, z = [i for i in line.split(' ') if i]
+
                 points.append(vm.Point3D(distance_multiplier * float(x),
                                          distance_multiplier * float(y),
                                          distance_multiplier * float(z)))
@@ -180,7 +181,7 @@ class Stl(dc.DessiaObject):
                     triangles.append(vmf.Triangle3D(points[0],
                                                     points[1],
                                                     points[2]))
-                except ZeroDivisionError:
+                except (ZeroDivisionError, NotImplementedError):  # NotImplementedError comes from equal points
                     pass
                 points = []
         return cls(triangles, name=name)
