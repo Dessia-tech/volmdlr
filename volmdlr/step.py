@@ -450,24 +450,14 @@ def manifold_surface_shape_representation(arguments, object_dict):
     """
     Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
     """
-    primitives = []
-    shell_primitives = []
-    only_open_shell = True
+    shells = []
     for arg in arguments[1]:
-        primitive = object_dict[int(arg[1:])]
-        if isinstance(primitive, vmshells.OpenShell3D):
-            primitives.append(primitive)
-            shell_primitives.extend(primitive.primitives)
-        if isinstance(primitive, volmdlr.core.Compound):
-            only_open_shell = False
-            counter = 0
-            for sub_prim in primitive.primitives:
-                sub_prim.name = arguments[0][1:-1] + str(counter)
-                counter += 1
-            primitives.append(primitive)
-    if only_open_shell:
-        return vmshells.OpenShell3D(shell_primitives)
-    return volmdlr.core.Compound(primitives)
+        if isinstance(object_dict[int(arg[1:])],
+                      vmshells.OpenShell3D):
+            shells.append(object_dict[int(arg[1:])])
+    if len(shells) > 1:
+        return volmdlr.core.Compound(shells, name=arguments[0])
+    return shells
 
 
 def faceted_brep(arguments, object_dict):
@@ -567,24 +557,14 @@ def advanced_brep_shape_representation(arguments, object_dict):
     :rtype: TYPE
 
     """
-    primitives = []
-    shell_primitives = []
-    only_closed_shell = True
+    shells = []
     for arg in arguments[1]:
-        primitive = object_dict[int(arg[1:])]
-        if isinstance(primitive, vmshells.OpenShell3D):
-            primitives.append(primitive)
-            shell_primitives.extend(primitive.primitives)
-        if isinstance(primitive, volmdlr.core.Compound):
-            only_closed_shell = False
-            counter = 0
-            for sub_prim in primitive.primitives:
-                sub_prim.name = arguments[0][1:-1] + str(counter)
-                counter += 1
-            primitives.append(primitive)
-    if only_closed_shell:
-        return vmshells.ClosedShell3D(shell_primitives)
-    return volmdlr.core.Compound(primitives)
+        if isinstance(object_dict[int(arg[1:])],
+                      vmshells.OpenShell3D):
+            shells.append(object_dict[int(arg[1:])])
+    if len(shells) > 1:
+        return volmdlr.core.Compound(shells, name=arguments[0])
+    return shells
 
 
 def geometrically_bounded_surface_shape_representation(arguments, object_dict):
