@@ -9,8 +9,6 @@ import numpy as np
 from dessia_common.core import PhysicalObject
 from tqdm import tqdm
 
-import volmdlr
-from volmdlr import display
 from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import VolumeModel
 from volmdlr.faces import PlaneFace3D, Triangle3D
@@ -307,18 +305,9 @@ class Voxelization(PhysicalObject):
         :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
         :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
         """
-
         triangles = []
-        list_prim = []
-        for primitive in volume_model.primitives:
-            if isinstance(primitive, volmdlr.core.Compound):
-                for prim in primitive.primitives:
-                    if hasattr(prim, 'triangulation'):
-                        list_prim.append(prim.triangulation())
-                triangulation = display.DisplayMesh3D.merge_meshes(list_prim)
-                
-            else:
-                triangulation = primitive.triangulation()
+        for primitive in volume_model.get_shells():
+            triangulation = primitive.triangulation()
             triangles += list(
                 tuple(
                     tuple([point.x, point.y, point.z])
