@@ -450,14 +450,20 @@ def manifold_surface_shape_representation(arguments, object_dict):
     """
     Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
     """
-    shells = []
+    primitives = []
     for arg in arguments[1]:
-        if isinstance(object_dict[int(arg[1:])],
-                      vmshells.OpenShell3D):
-            shells.append(object_dict[int(arg[1:])])
-    if len(shells) > 1:
-        return volmdlr.core.Compound(shells, name=arguments[0])
-    return shells
+        primitive = object_dict[int(arg[1:])]
+        if isinstance(primitive, vmshells.OpenShell3D):
+            primitives.append(primitive)
+        if isinstance(primitive, volmdlr.core.Compound):
+            counter = 0
+            for sub_prim in primitive.primitives:
+                sub_prim.name = arguments[0][1:-1] + str(counter)
+                counter += 1
+            primitives.append(primitive)
+    if len(primitives) == 1:
+        return primitives[0]
+    return volmdlr.core.Compound(primitives)
 
 
 def faceted_brep(arguments, object_dict):
@@ -557,14 +563,20 @@ def advanced_brep_shape_representation(arguments, object_dict):
     :rtype: TYPE
 
     """
-    shells = []
+    primitives = []
     for arg in arguments[1]:
-        if isinstance(object_dict[int(arg[1:])],
-                      vmshells.OpenShell3D):
-            shells.append(object_dict[int(arg[1:])])
-    if len(shells) > 1:
-        return volmdlr.core.Compound(shells, name=arguments[0])
-    return shells
+        primitive = object_dict[int(arg[1:])]
+        if isinstance(primitive, vmshells.OpenShell3D):
+            primitives.append(primitive)
+        if isinstance(primitive, volmdlr.core.Compound):
+            counter = 0
+            for sub_prim in primitive.primitives:
+                sub_prim.name = arguments[0][1:-1] + str(counter)
+                counter += 1
+            primitives.append(primitive)
+    if len(primitives) == 1:
+        return primitives[0]
+    return volmdlr.core.Compound(primitives)
 
 
 def geometrically_bounded_surface_shape_representation(arguments, object_dict):
