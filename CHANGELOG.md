@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Step import
 - Edge: fix orientation of edges commig from step.
 - Sphere: point_belongs, inherits from ClosedShell3D instead of RevolvedProfile
+- Step import.
 - PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
 - babylondata: removes empty objects.
 - ClosedPolygon2D: point_belongs.
@@ -49,9 +50,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: point_belongs
 - ArcEllipse2D: point_at_abscissa
 - Frame3D: import/export step.
+- Circle3D: fix trim.
 - Edge: from_step trim of periodic curves with different orientation of original edge
 - Arc3D: fix abscissa, fix get_arc_point_angle
 - add missing toleraces to some methods.
+- Arc3D: line_intersections
+- Line3D: minimum_distance_points
 - remove arcellipse handleling for bspline2d_3d.
 
 ### Refactor
@@ -70,6 +74,7 @@ All adequations have been done for all tests and existing scripts.
 - Delete inplace methods: rotation, translation and frame_mapping
 - OpenShell3D: faces_graph.
 - Shells: refactor. 
+- RevolutionSurface3D: Improve init and methods
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
@@ -172,7 +177,7 @@ All adequations have been done for all tests and existing scripts.
 - PlaneFace3D: merge_faces
 - Contour2D: divide
 - Step: raise NotimplementedError when it's not possible to instatiate assembly object.
-
+- STL: handle mutiple space as separator
 
 ### Refactor
 - Contour2D: cut_by_wire
