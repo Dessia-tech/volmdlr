@@ -19,7 +19,7 @@ class TestStep(unittest.TestCase):
         self.assertAlmostEqual(fullarc.circle.radius, 0.007, places=3)
 
     def test_read_lines(self):
-        step = volmdlr.step.Step.from_file(filepath="step/test_names.STEP")
+        step = volmdlr.step.Step.from_file(filepath="step/test_names.step")
         model = step.to_volume_model()
         self.assertEqual(model.primitives[0].name, "'cube assembly =,v1'")
         self.assertEqual(model.primitives[0].primitives[0].name, "Part 2")
