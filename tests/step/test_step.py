@@ -1,5 +1,7 @@
 import unittest
 import volmdlr.step
+
+
 class TestStep(unittest.TestCase):
     step = volmdlr.step.Step.from_file(filepath="step/test_conversion_factor.step")
     model = step.to_volume_model()

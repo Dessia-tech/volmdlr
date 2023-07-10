@@ -390,15 +390,29 @@ class WireMixin:
 
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
         """
-        Verifies if point is over wire.
+        Verifies if primitive is over wire.
 
-        :param primitive: point to be verified.
+        :param primitive: primitive to be verified.
         :param tol: tolerance to be considered.
         :return: True or False
         """
         points = primitive.discretization_points(number_points=10)
         if all(self.point_over_wire(point, tol) for point in points):
             return True
+        return False
+
+    def is_primitive_section_over_wire(self, primitive, tol:float = 1e-6):
+        """
+        Verifies if primitive's section is over wire.
+
+        :param primitive: primitive to be verified.
+        :param tol: tolerance to be considered.
+        :return: True or False
+        """
+        for edge in self.primitives:
+            shared_section = edge.get_shared_section(primitive, tol)
+            if shared_section:
+                return True
         return False
 
     @classmethod

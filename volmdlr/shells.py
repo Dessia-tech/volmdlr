@@ -123,8 +123,20 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         for face1, face2 in zip(self.faces, other_object.faces):
             if not face1._data_eq(face2):
                 return False
-
         return True
+
+    def __eq__(self, other_face):
+        if not self.__class__ == other_face.__class__:
+            return False
+        if len(self.faces) != len(other_face.faces):
+            return False
+        if all(face in self.faces for face in other_face.faces):
+            return True
+        return False
+
+    def __hash__(self):
+        return hash((self.__class__.__name__, tuple(self.faces)))
+
     @staticmethod
     def _helper_getter_vertices_points(faces):
         """Helper method to get shells faces vertices."""
@@ -541,31 +553,6 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         new_faces = [face.copy(deep=deep, memo=memo) for face in self.faces]
         return self.__class__(new_faces, color=self.color, alpha=self.alpha,
                               name=self.name)
-
-    def volume(self):
-        """
-        Does not consider holes.
-
-        """
-        volume = 0
-        for face in self.faces:
-            display3d = face.triangulation()
-            for triangle_index in display3d.triangles:
-                point1 = display3d.points[triangle_index[0]]
-                point2 = display3d.points[triangle_index[1]]
-                point3 = display3d.points[triangle_index[2]]
-
-                v321 = point3[0] * point2[1] * point1[2]
-                v231 = point2[0] * point3[1] * point1[2]
-                v312 = point3[0] * point1[1] * point2[2]
-                v132 = point1[0] * point3[1] * point2[2]
-                v213 = point2[0] * point1[1] * point3[2]
-                v123 = point1[0] * point2[1] * point3[2]
-                volume_tetraedre = 1 / 6 * (-v321 + v231 + v312 - v132 - v213 + v123)
-
-                volume += volume_tetraedre
-
-        return abs(volume)
 
     @property
     def bounding_box(self):
@@ -993,7 +980,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         return lines
 
     @staticmethod
-    def is_openshell(faces, faces_graph=None):
+    def is_shell_open(faces, faces_graph=None):
         if faces_graph is None:
             vertices_points = Shell3D._helper_getter_vertices_points(faces)
             faces_graph = Shell3D._helper_create_faces_graph(faces, vertices_points, False)
@@ -1001,7 +988,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             face = faces[n_index]
             for prim in face.outer_contour3d.primitives:
                 for neihgbor in faces_graph.neighbors(n_index):
-                    if faces[neihgbor].outer_contour3d.primitive_over_contour(prim):
+                    if faces[neihgbor].outer_contour3d.is_primitive_section_over_wire(prim):
                         break
                 else:
                     return True
@@ -1019,7 +1006,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         shells_list = []
         for _, graph_i in enumerate(components, start=1):
             faces_list = [faces[n_index] for n_index in graph_i.nodes]
-            if cls.is_openshell(faces, graph_i):
+            if cls.is_shell_open(faces, graph_i):
                 shells_list.append(OpenShell3D(faces_list))
             else:
                 shells_list.append(ClosedShell3D(faces_list))
@@ -1107,6 +1094,31 @@ class ClosedShell3D(Shell3D):
     """
 
     STEP_FUNCTION = 'CLOSED_SHELL'
+
+    def volume(self):
+        """
+        Does not consider holes.
+
+        """
+        volume = 0
+        for face in self.faces:
+            display3d = face.triangulation()
+            for triangle_index in display3d.triangles:
+                point1 = display3d.points[triangle_index[0]]
+                point2 = display3d.points[triangle_index[1]]
+                point3 = display3d.points[triangle_index[2]]
+
+                v321 = point3[0] * point2[1] * point1[2]
+                v231 = point2[0] * point3[1] * point1[2]
+                v312 = point3[0] * point1[1] * point2[2]
+                v132 = point1[0] * point3[1] * point2[2]
+                v213 = point2[0] * point1[1] * point3[2]
+                v123 = point1[0] * point2[1] * point3[2]
+                volume_tetraedre = 1 / 6 * (-v321 + v231 + v312 - v132 - v213 + v123)
+
+                volume += volume_tetraedre
+
+        return abs(volume)
 
     def is_face_inside(self, face: volmdlr.faces.Face3D):
         """
