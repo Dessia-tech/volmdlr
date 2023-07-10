@@ -1,3 +1,6 @@
+"""
+Volmdlr init module.
+"""
 # -*- coding: utf-8 -*-
 """volmdlr package init."""
 import math
