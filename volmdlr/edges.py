@@ -4507,7 +4507,7 @@ class BSplineCurve3D(BSplineCurve):
         """
         Trims a bspline curve between two points.
 
-        :param point1: point 1 used to trime.
+        :param point1: point 1 used to trim.
         :param point2: point2 used to trim.
         :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
@@ -4846,7 +4846,7 @@ class Arc3D(ArcMixin, Edge):
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
-        """Saves the obejct parameters into a dictionnary."""
+        """Saves the obejct parameters into a dictionary."""
         dict_ = self.base_dict()
         dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
                                               id_method=id_method, id_memo=id_memo, path=path + '/circle')
@@ -4880,7 +4880,7 @@ class Arc3D(ArcMixin, Edge):
 
     @property
     def bounding_box(self):
-        """Bounding boc for Arc 3D."""
+        """Bounding box for Arc 3D."""
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
@@ -5182,7 +5182,7 @@ class Arc3D(ArcMixin, Edge):
         return point1, point2
 
     def minimum_distance(self, element, return_points=False):
-        """Gets the mininum distace between an Arc 3D and another edge."""
+        """Gets the minimum distance between an Arc 3D and another edge."""
         if element.__class__.__name__ in ['Arc3D', 'Circle3D', 'FullArc3D']:
             p1, p2 = self.minimum_distance_points_arc(element)
             if return_points:

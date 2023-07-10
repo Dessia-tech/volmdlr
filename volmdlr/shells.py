@@ -88,6 +88,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
     _non_serializable_attributes = ['primitives']
     _non_data_eq_attributes = ['name', 'color', 'alpha', 'bounding_box', 'primitives']
     _non_data_hash_attributes = []
+    STEP_FUNCTION = None
 
     def __init__(self, faces: List[volmdlr.faces.Face3D],
                  color: Tuple[float, float, float] = None,

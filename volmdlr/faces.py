@@ -26,7 +26,7 @@ import volmdlr.wires
 
 
 def octree_decomposition(bbox, faces):
-    """Decomposes a list of faces into eight Boundingbox subdivided boxes."""
+    """Decomposes a list of faces into eight Bounding boxes subdivided boxes."""
     decomposition = {octant: [] for octant in bbox.octree()}
     for face in faces:
         center = face.bounding_box.center
@@ -613,7 +613,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         Given a list contours cutting the face, it calculates inner contours intersections with these contours.
 
-        Then, these inner contours were split at the found intrsecting points.
+        Then, these inner contours were split at the found intersecting points.
         :param list_cutting_contours: list of contours cutting face.
         :return:
         """
@@ -1752,7 +1752,7 @@ class Triangle3D(PlaneFace3D):
 
     def subdescription_to_triangles(self, resolution=0.01):
         """
-        Returns a list of Triangle3D with resolution as max length of subtriangles side.
+        Returns a list of Triangle3D with resolution as max length of sub triangles side.
 
         """
 
