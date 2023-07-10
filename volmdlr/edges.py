@@ -189,7 +189,6 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
-        step_id = kwargs.get("step_id")
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
@@ -697,7 +696,8 @@ class LineSegment(Edge):
     def to_step(self, current_id, *args, **kwargs):
         """Exports to STEP format."""
         line = self.line
-        content, (line_id,) = line.to_step(current_id)
+        content, line_id = line.to_step(current_id)
+
         current_id = line_id + 1
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         current_id = start_id + 1
@@ -2241,7 +2241,7 @@ class ArcMixin:
             return self.circle.radius - linesegment.length()
         return min(self.start.point_distance(point), self.end.point_distance(point))
 
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
         Discretize an Edge to have "n" points.
 
@@ -4508,6 +4508,15 @@ class BSplineCurve3D(BSplineCurve):
         return new_bsplinecurve3d
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+        """
+        Trims a bspline curve between two points.
+
+        :param point1: point 1 used to trime.
+        :param point2: point2 used to trim.
+        :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :return: New BSpline curve between these two points.
+        """
         if self.periodic and not point1.is_close(point2):
             return self.trim_with_interpolation(point1, point2, same_sense)
 

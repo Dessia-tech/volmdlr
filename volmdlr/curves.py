@@ -201,7 +201,7 @@ class Line(Curve):
         current_id = u_id + 1
         content = p1_content + u_content
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
-        return content, [current_id]
+        return content, current_id
 
 
 class Line2D(Line):
@@ -671,6 +671,10 @@ class Line3D(Line):
         """
         Returns the points on this line and the other line that are the closest of lines.
         """
+        if self.point_belongs(other_line.point1):
+            return other_line.point1, other_line.point1
+        if self.point_belongs(other_line.point2):
+            return other_line.point2, other_line.point2
         u = self.point2 - self.point1
         v = other_line.point2 - other_line.point1
         w = self.point1 - other_line.point1
@@ -1487,8 +1491,8 @@ class Circle3D(CircleMixin, Curve):
 
         :param point1: point 1 used to trim circle.
         :param point2: point2 used to trim circle.
-        :same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
-            direction (False) to the edge direction. By default, it's assumed True
+        :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
         :return: arc between these two points.
         """
         circle = self
