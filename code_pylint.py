@@ -16,35 +16,12 @@ EFFECTIVE_DATE = date(2023, 1, 31)
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
-<<<<<<< HEAD
                      "wrong-spelling-in-comment": 199,
-=======
-                     "wrong-spelling-in-comment": 204,
->>>>>>> testing
                      "wrong-spelling-in-docstring": 143,
                      'invalid-name': 184,
                      'no-member': 3,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
-<<<<<<< HEAD
-                     'arguments-differ': 67,
-                     'too-many-locals': 74,
-                     'unused-argument': 29,
-                     'too-many-arguments': 25,
-                     'line-too-long': 12,
-                     'too-many-branches': 26,
-                     'too-many-statements': 13,
-                     'super-init-not-called': 13,
-                     'no-name-in-module': 1,
-                     'abstract-method': 32,
-                     'duplicate-code': 10,
-                     'arguments-renamed': 52,
-                     'too-many-ancestors': 24,
-                     'too-few-public-methods': 3,
-                     'non-parent-init-called': 3,
-                     'too-many-public-methods': 10,
-                     'too-many-instance-attributes': 16,
-=======
                      'arguments-differ': 17,
                      'too-many-locals': 72,
                      'unused-argument': 32,
@@ -61,18 +38,12 @@ MAX_ERROR_BY_TYPE = {
                      'too-few-public-methods': 2,
                      'too-many-public-methods': 12,
                      'too-many-instance-attributes': 14,
->>>>>>> testing
                      'protected-access': 4,
                      'undefined-loop-variable': 2,
                      'unspecified-encoding': 1,
                      'too-many-function-args': 4,
-<<<<<<< HEAD
                      'too-many-nested-blocks': 7,
                      'too-many-return-statements': 3,
-=======
-                     'too-many-nested-blocks': 9,
-                     'too-many-return-statements': 6,
->>>>>>> testing
                      'cyclic-import': 1,
                      'undefined-variable': 0,  # 2 when gmsh is fixed
                      'broad-except': 1,
@@ -83,10 +54,7 @@ MAX_ERROR_BY_TYPE = {
                      'unnecessary-dunder-call': 2,
                      'chained-comparison': 2,
                      'consider-using-generator': 1,
-<<<<<<< HEAD
                      'import-outside-toplevel': 5,
-=======
->>>>>>> testing
                      'unsubscriptable-object': 1,
                      'signature-differs': 1}
 
