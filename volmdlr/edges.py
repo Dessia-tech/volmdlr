@@ -1495,7 +1495,7 @@ class BSplineCurve(Edge):
         :param point: point to be verified.
         :return: point projection.
         """
-        return self.point_at_abscissa(self.abscissa(point))
+        return [self.point_at_abscissa(self.abscissa(point))]
 
     def local_discretization(self, point1, point2, number_points: int = 10):
         """
