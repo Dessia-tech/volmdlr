@@ -442,7 +442,7 @@ class Arrow3D(FancyArrowPatch):
         x1, y1, z1 = self.starting_point
         dx, dy, dz = self._xyz
         x2, y2, z2 = (dx + x1, dy + y1, dz + z1)
-        
+
         xn, yn, zn = proj3d.proj_transform((x1, x2), (y1, y2), (z1, z2), self.axes.M)
         self.set_positions((xn[0], yn[0]), (xn[1], yn[1]))
         FancyArrowPatch.draw(self, renderer)
