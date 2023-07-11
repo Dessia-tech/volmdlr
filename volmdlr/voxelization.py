@@ -6,12 +6,13 @@ import warnings
 from typing import Dict, Iterable, List, Set, Tuple
 
 import numpy as np
+
 from dessia_common.core import PhysicalObject
 from tqdm import tqdm
 from copy import copy
 
 from volmdlr import Point2D, Point3D, Vector3D
-from volmdlr.core import VolumeModel
+from volmdlr.core import VolumeModel, BoundingBox
 from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
@@ -1452,6 +1453,41 @@ class Voxelization(PhysicalObject):
         min_voxel_center = self.get_min_voxel_grid_center()
 
         return Voxelization.from_voxel_matrix(inverted_matrix, self.voxel_size, min_voxel_center)
+
+    def bounding_box(self):
+        min_point = (np.array([self.get_min_voxel_grid_center()]) - np.array([self.voxel_size, self.voxel_size, self.voxel_size]))[0]
+        max_point = (np.array([self.get_max_voxel_grid_center()]) + np.array([self.voxel_size, self.voxel_size, self.voxel_size]))[0]
+
+        return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
+
+    def _point_to_local_grid_index(self, point: Point) -> Tuple[int, ...]:
+        if not self.bounding_box().point_belongs(Point3D(*point)):
+            raise ValueError("Point not in local voxel grid.")
+
+        bb = self.bounding_box()
+
+        x_index = int((point[0] - bb.xmin) // self.voxel_size)
+        y_index = int((point[1] - bb.ymin) // self.voxel_size)
+        z_index = int((point[2] - bb.zmin) // self.voxel_size)
+
+        return x_index, y_index, z_index
+
+    def flood_fill(self, start_point: Point, fill_with: bool) -> 'Voxelization':
+        directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
+        start = self._point_to_local_grid_index(start_point)
+        stack = [start]
+        matrix = self.to_voxel_matrix()
+        old_value = matrix[start[0]][start[1]][start[2]]
+
+        while stack:
+            x, y, z = stack.pop()
+            if (0 <= x < len(matrix)) and (0 <= y < len(matrix[0])) and (0 <= z < len(matrix[0][0])) and matrix[x][y][z] == old_value:
+                matrix[x][y][z] = fill_with
+                for dx, dy, dz in directions:
+                    nx, ny, nz = x + dx, y + dy, z + dz
+                    stack.append((nx, ny, nz))
+
+        return self.from_voxel_matrix(matrix, self.voxel_size, self.get_min_voxel_grid_center())
 
 
 class OctreeNode:
