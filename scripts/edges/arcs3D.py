@@ -50,7 +50,6 @@ arc1.end.plot(ax=ax, color='g')
 arc1.circle.center.plot(ax=ax, color='m')
 ax.set_aspect('equal')
 
-
 print(arc1.circle.center)
 print(arc1.circle.center-volmdlr.Point3D(-0.030962035803739997, 0.0011626900994054661, -0.02))
 print(arc1.circle.center-volmdlr.Point3D(-0.031209642286239472, -0.00040063570451895954, -0.02))
