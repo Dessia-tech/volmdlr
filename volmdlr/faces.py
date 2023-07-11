@@ -3123,9 +3123,17 @@ class BSplineFace3D(Face3D):
                                                                          min(self.surface3d.degree_u,
                                                                              self.surface3d.degree_v))
         umin, umax, vmin, vmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
-        point3d_min = self.surface3d.point2d_to_3d(volmdlr.Point2D(umin, vmin))
-        point3d_max = self.surface3d.point2d_to_3d(volmdlr.Point2D(umax, vmax))
-        point1 = neutral_fiber.point_projection(point3d_min)[0]
-        point2 = neutral_fiber.point_projection(point3d_max)[0]
+        min_bound_u, max_bound_u = self.surface3d.surface.domain[0]
+        min_bound_v, max_bound_v = self.surface3d.surface.domain[1]
+        if not math.isclose(umin, min_bound_u, rel_tol=0.01) or not math.isclose(vmin, min_bound_v, rel_tol=0.01):
+            point3d_min = self.surface3d.point2d_to_3d(volmdlr.Point2D(umin, vmin))
+            point1 = neutral_fiber.point_projection(point3d_min)[0]
+        else:
+            point1 = neutral_fiber.start
+        if not math.isclose(umax, max_bound_u, rel_tol=0.01) or not math.isclose(vmax, max_bound_v, rel_tol=0.01):
+            point3d_max = self.surface3d.point2d_to_3d(volmdlr.Point2D(umax, vmax))
+            point2 = neutral_fiber.point_projection(point3d_max)[0]
+        else:
+            point2 = neutral_fiber.end
         neutral_fiber = neutral_fiber.trim(point1, point2)
         return volmdlr.wires.Wire3D([neutral_fiber])
