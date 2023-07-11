@@ -74,9 +74,11 @@ class Face3D(volmdlr.core.Primitive3D):
         return DessiaObject.to_dict(self, use_pointers=False)
 
     def __hash__(self):
+        """Computes the hash."""
         return hash(self.surface3d) + hash(self.surface2d)
 
     def __eq__(self, other_):
+        """Computes the equality to anoter face."""
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
         equal = (self.surface3d == other_.surface3d
@@ -146,6 +148,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.outer_contour3d.bounding_box
 
     def area(self):
+        """Computes the area of the surface2d."""
         return self.surface2d.area()
 
     @classmethod
@@ -271,6 +274,9 @@ class Face3D(volmdlr.core.Primitive3D):
         return content, [current_id]
 
     def triangulation_lines(self):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         return [], []
 
     def grid_size(self):
@@ -406,6 +412,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return intersections
 
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+        """Plots the face."""
         if not ax:
             ax = plt.figure().add_subplot(111, projection='3d')
 
@@ -1108,6 +1115,7 @@ class PlaneFace3D(Face3D):
                         name=name)
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the PlaneFace3D."""
         return PlaneFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                            self.name)
 
@@ -1570,6 +1578,7 @@ class Triangle3D(PlaneFace3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
+        """General method to get the bounding box."""
         return volmdlr.core.BoundingBox.from_points([self.point1,
                                                      self.point2,
                                                      self.point3])
@@ -1658,10 +1667,12 @@ class Triangle3D(PlaneFace3D):
         return self.__class__(np1, np2, np3, self.name)
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the Triangle3D."""
         return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
                           self.name)
 
     def triangulation(self):
+        """Computes the triangulation of the Triangle3D, basically returns itself."""
         return vmd.DisplayMesh3D([vmd.Node3D.from_point(self.point1),
                                   vmd.Node3D.from_point(self.point2),
                                   vmd.Node3D.from_point(self.point3)],
@@ -1832,6 +1843,7 @@ class CylindricalFace3D(Face3D):
         self._bbox = None
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the CylindricalFace3D."""
         return CylindricalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                                  self.name)
 
@@ -1849,6 +1861,9 @@ class CylindricalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=5):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         nlines = math.ceil(delta_theta * angle_resolution)
@@ -2021,6 +2036,7 @@ class ToroidalFace3D(Face3D):
         self._bbox = None
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the ToroidalFace3D."""
         return ToroidalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
@@ -2056,6 +2072,9 @@ class ToroidalFace3D(Face3D):
         self._bbox = new_bounding_box
 
     def triangulation_lines(self, angle_resolution=5):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
@@ -2129,8 +2148,8 @@ class ToroidalFace3D(Face3D):
         circle = volmdlr_curves.Circle3D(self.surface3d.frame, self.surface3d.tore_radius)
         point1, point2 = [circle.center + circle.radius * math.cos(theta) * circle.frame.u +
                           circle.radius * math.sin(theta) * circle.frame.v for theta in
-                          [theta_max, theta_min]]
-        return volmdlr.wires.Wire3D([circle.trim(point1, point2).reverse()])
+                          [theta_min, theta_max]]
+        return volmdlr.wires.Wire3D([circle.trim(point1, point2)])
 
 
 class ConicalFace3D(Face3D):
@@ -2171,6 +2190,9 @@ class ConicalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=5):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         nlines = int(delta_theta * angle_resolution)
@@ -2425,8 +2447,11 @@ class RuledFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
-        # To be enhance by restricting wires to cut
-        # xmin, xmax, ymin, ymax = self.surface2d.outer_contour.bounding_rectangle()
+        """
+        General method to get the bounding box.
+
+        To be enhanced by restricting wires to cut
+        """
         points = [self.surface3d.point2d_to_3d(volmdlr.Point2D(i / 30, 0.)) for
                   i in range(31)]
         points.extend(
@@ -2648,6 +2673,9 @@ class BSplineFace3D(Face3D):
         self._bbox = new_bounding_box
 
     def triangulation_lines(self, resolution=25):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_u = u_max - u_min
@@ -3036,7 +3064,7 @@ class BSplineFace3D(Face3D):
             vector2 = interior - end
             if vector1.is_colinear_to(vector2) or vector1.norm() == 0 or vector2.norm() == 0:
                 return None
-            return vme.Arc3D(start, interior, end)
+            return vme.Arc3D.from_3_points(start, interior, end)
         interior = edge.point_at_abscissa(0.5 * edge.length())
         vector1 = interior - edge.start
         vector2 = interior - edge.end
@@ -3101,10 +3129,20 @@ class BSplineFace3D(Face3D):
         Returns the faces' neutral fiber.
         """
         neutral_fiber_points = self.neutral_fiber_points()
-        if len(neutral_fiber_points) == 2:
-            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[1])
+        is_line = True
+        if not neutral_fiber_points[0].is_close(neutral_fiber_points[-1]):
+            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
+            is_line = all(neutral_fiber.point_belongs(point) for point in neutral_fiber_points)
+        if len(neutral_fiber_points) == 2 or is_line:
+            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
         else:
             neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
                                                                          min(self.surface3d.degree_u,
                                                                              self.surface3d.degree_v))
+        umin, umax, vmin, vmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
+        point3d_min = self.surface3d.point2d_to_3d(volmdlr.Point2D(umin, vmin))
+        point3d_max = self.surface3d.point2d_to_3d(volmdlr.Point2D(umax, vmax))
+        point1 = neutral_fiber.point_projection(point3d_min)[0]
+        point2 = neutral_fiber.point_projection(point3d_max)[0]
+        neutral_fiber = neutral_fiber.trim(point1, point2)
         return volmdlr.wires.Wire3D([neutral_fiber])

@@ -1241,7 +1241,6 @@ class ClosedShell3D(OpenShell3D):
 
         return list_coincident_faces
 
-
     def two_shells_intersecting_contour(self, shell2, dict_intersecting_combinations=None):
         """
         Computes intersecting_contour between two shells.

@@ -1,4 +1,7 @@
+"""
+Some Volmdlr models for curves.
 
+"""
 import volmdlr
 from volmdlr import curves
 
