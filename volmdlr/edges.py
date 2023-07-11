@@ -1520,7 +1520,7 @@ class BSplineCurve(Edge):
         :param point: point to be verified.
         :return: point projection.
         """
-        return self.point_at_abscissa(self.abscissa(point))
+        return [self.point_at_abscissa(self.abscissa(point))]
 
     def local_discretization(self, point1, point2, number_points: int = 10):
         """
@@ -2241,7 +2241,7 @@ class ArcMixin:
             return self.circle.radius - linesegment.length()
         return min(self.start.point_distance(point), self.end.point_distance(point))
 
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
         Discretize an Edge to have "n" points.
 
@@ -2586,7 +2586,7 @@ class Arc2D(ArcMixin, Edge):
         """
         Intersections between an arc 2d and arc-ellipse 2d.
 
-        :param arcellipse: arc ellipse 2d.
+        :param arcellipse: arc-ellipse 2d.
         :param abs_tol: tolerance
         :return: list of intersection points.
         """
@@ -2974,6 +2974,7 @@ class FullArc2D(FullArcMixin, Arc2D):
         return FullArc2D(self.circle.copy(), self.start.copy())
 
     @classmethod
+
     def dict_to_object(cls, dict_, *args, **kwargs):
         circle = volmdlr_curves.Circle2D.dict_to_object(dict_['circle'])
         start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
@@ -3210,7 +3211,7 @@ class ArcEllipse2D(Edge):
 
     def length(self):
         """
-        Calculates the length of the arcellipse 2d.
+        Calculates the length of the arc-ellipse 2d.
 
         :return: arc ellipse 2d's length
         """
