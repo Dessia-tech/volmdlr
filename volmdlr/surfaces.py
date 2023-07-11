@@ -1959,7 +1959,7 @@ class PeriodicalSurface(Surface3D):
         #         plane3d = Plane3D.from_3_points(start, middle_point, end)
         #         ellipse = self.concurrent_plane_intersection(plane3d)[0]
         #         arcellipse = edges.ArcEllipse3D(ellipse, start, end)
-        #         if not arcellipse.point_belongs(middle_point, 1e-2):
+        #         if not arcellipse.point_belongs(middle_point):
         #             raise NotImplementedError
         #         return [arcellipse]
         #     plane3d = Plane3D.from_3_points(start, middle_point, extra_point)
@@ -4309,12 +4309,14 @@ class RevolutionSurface3D(PeriodicalSurface):
         if self.wire.__class__.__name__ != "Line3D" and hasattr(self.wire.simplify, "circle") and\
                 math.isclose(self.wire.simplify.circle.radius, arc3d.circle.radius, rel_tol=0.01):
             if self.wire.is_point_edge_extremity(arc3d.start):
-                start = self.point3d_to_2d(arc3d.start)
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
+                if middle_point.x == math.pi:
+                    middle_point.x = -math.pi
                 start = volmdlr.Point2D(middle_point.x, start.y)
             if self.wire.is_point_edge_extremity(arc3d.end):
-                end = self.point3d_to_2d(arc3d.end)
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
+                if middle_point.x == math.pi:
+                    middle_point.x = -math.pi
                 end = volmdlr.Point2D(middle_point.x, end.y)
         if math.isclose(start.y, end.y, rel_tol=0.01):
             point_after_start, point_before_end = self._reference_points(arc3d)

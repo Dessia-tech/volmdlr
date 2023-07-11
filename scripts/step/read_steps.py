@@ -15,6 +15,7 @@ for step_file in [
     'cylinder.step',
     'block.step',
     'strange_gasket.step',
+    "assembly.step",
     # '2_bspline_faces.stp'# Uncomment when bug of delta fixed!
   ]:
     print('Reading step file: ', step_file)

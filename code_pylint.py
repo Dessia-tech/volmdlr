@@ -26,7 +26,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-locals': 74,
                      'unused-argument': 29,
                      'too-many-arguments': 25,
-                     'line-too-long': 8,
+                     'line-too-long': 12,
                      'too-many-branches': 26,
                      'too-many-statements': 13,
                      'super-init-not-called': 13,

@@ -2134,8 +2134,8 @@ class ToroidalFace3D(Face3D):
         circle = volmdlr_curves.Circle3D(self.surface3d.frame, self.surface3d.tore_radius)
         point1, point2 = [circle.center + circle.radius * math.cos(theta) * circle.frame.u +
                           circle.radius * math.sin(theta) * circle.frame.v for theta in
-                          [theta_max, theta_min]]
-        return volmdlr.wires.Wire3D([circle.trim(point1, point2).reverse()])
+                          [theta_min, theta_max]]
+        return volmdlr.wires.Wire3D([circle.trim(point1, point2)])
 
 
 class ConicalFace3D(Face3D):
