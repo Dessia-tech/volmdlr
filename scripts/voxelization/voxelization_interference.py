@@ -19,8 +19,12 @@ volume_model = Stl.load_from_file(STL_MODEL_FILE_PATH).to_volume_model()
 volume_model.primitives[0].color = (0, 1, 0)
 
 # Move the volume model
+start = time.perf_counter()
 moved_volume_model = volume_model.rotation(volmdlr.O3D, volmdlr.X3D, ROTATION_ANGLE)
+print(f"Volume model rotation computing time: {(time.perf_counter() - start)*1000}ms")
+start = time.perf_counter()
 moved_volume_model = moved_volume_model.translation(TRANSLATION_VECTOR)
+print(f"Volume model translation computing time: {(time.perf_counter() - start)*1000}ms")
 moved_volume_model.primitives[0].color = (0, 0, 1)
 
 # Voxelize the volume model
@@ -29,7 +33,7 @@ voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="
 # Move the voxelization
 start = time.perf_counter()
 moved_voxelization = voxelization.rotation(volmdlr.O3D, volmdlr.X3D, ROTATION_ANGLE)
-print(f"Voxels rotation computing time: {(time.perf_counter() - start)*1000}ms")
+print(f"\nVoxels rotation computing time: {(time.perf_counter() - start)*1000}ms")
 
 start = time.perf_counter()
 moved_voxelization = moved_voxelization.translation(TRANSLATION_VECTOR)
