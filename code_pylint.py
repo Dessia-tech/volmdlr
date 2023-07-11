@@ -7,7 +7,7 @@ import math
 from pylint import __version__
 from pylint.lint import Run
 
-MIN_NOTE = 9.3
+MIN_NOTE = 9.6
 
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
