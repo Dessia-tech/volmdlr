@@ -1728,7 +1728,11 @@ class OpenTriangleShell3D(OpenShell3D):
         triangles = []
         points = [volmdlr.Point3D(px, py, pz) for px, py, pz in positions]
         for i1, i2, i3 in faces:
-            triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
+            triangle_points = []
+            triangle_points = [point for point in (points[i1], points[i2], points[i3])
+                               if not volmdlr.core.point_in_list(point, triangle_points)]
+            if len(triangle_points) == 3:
+                triangles.append(volmdlr.faces.Triangle3D(triangle_points))
         return cls(triangles)
 
     def to_trimesh(self):
