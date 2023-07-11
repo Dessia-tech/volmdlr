@@ -152,8 +152,8 @@ class TrippleExtrusionSimplify(DessiaObject):
             cloud2d = cloud3d.to_2d(volmdlr.O3D, u_vector, v_vector)
             polygon2d = cloud2d.to_polygon(convex=True)
             contour2d = wires.Contour2D(polygon2d.line_segments)
-            dir_shell = primitives3d.ExtrudedProfile((center - 0.5 * length) * w_vector, u_vector,
-                                                     v_vector, contour2d, [], w_vector * length)
+            frame = volmdlr.Frame3D((center - 0.5 * length) * w_vector, u_vector, v_vector, w_vector)
+            dir_shell = primitives3d.ExtrudedProfile(frame, contour2d, [], length)
             dir_shell.merge_faces()
 
             list_shells.append(dir_shell)
