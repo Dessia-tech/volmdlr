@@ -582,7 +582,14 @@ class Voxelization(PhysicalObject):
     @staticmethod
     def _triangle_interface_voxels(triangle: Triangle, voxel_size: float) -> Set[Point]:
         """
-        TODO: write the doctring, improve the method
+        Calculate the set of voxel centers that intersect the interface of a triangle within the voxelization.
+
+        :param triangle: The triangle to calculate the voxel centers for.
+        :type triangle: Triangle
+        :param voxel_size: The size of the voxels in the voxelization.
+        :type voxel_size: float
+        :return: The set of voxel centers that intersect the triangle interface.
+        :rtype: Set[Point]
         """
         voxel_centers = set()
 
@@ -590,9 +597,9 @@ class Voxelization(PhysicalObject):
             if round(triangle[0][i], 6) == round(triangle[1][i], 6) == round(triangle[2][i], 6):
                 abscissa = round(triangle[0][i], 6)
                 if round(abscissa / voxel_size, 6).is_integer():
-                    v0 = triangle[0][:i] + triangle[0][i + 1:]
-                    v1 = triangle[1][:i] + triangle[1][i + 1:]
-                    v2 = triangle[2][:i] + triangle[2][i + 1:]
+                    v0 = triangle[0][:i] + triangle[0][i + 1 :]
+                    v1 = triangle[1][:i] + triangle[1][i + 1 :]
+                    v2 = triangle[2][:i] + triangle[2][i + 1 :]
 
                     triangle_2d = np.array([v0, v1, v2])
 
@@ -610,7 +617,15 @@ class Voxelization(PhysicalObject):
     @staticmethod
     def _rasterize_triangle_2d(triangle_2d, cell_size):
         """
-        TODO: write the doctring, improve the method
+        Rasterize a 2D triangle and return a list of center points of intersecting cells.
+
+        :param triangle_2d: The 2D triangle to rasterize.
+        :type triangle_2d: np.ndarray
+        :param cell_size: The size of each cell in the grid.
+        :type cell_size: float
+
+        :return: A list of center points of intersecting cells.
+        :rtype: List[Point]
         """
         # Get the bounding box of the triangle
         min_x = np.floor(min(triangle_2d[:, 0]))
@@ -645,7 +660,17 @@ class Voxelization(PhysicalObject):
     @staticmethod
     def _point_in_triangle_2d(x, y, triangle2d):
         """
-        TODO: write the doctring, improve the method
+        Check if a 2D point is inside a triangle using the barycentric coordinate method.
+
+        :param x: The x-coordinate of the point.
+        :type x: float
+        :param y: The y-coordinate of the point.
+        :type y: float
+        :param triangle2d: The 2D triangle defined by its three vertices.
+        :type triangle2d: np.ndarray
+
+        :return: True if the point is inside the triangle, False otherwise.
+        :rtype: bool
         """
         # Barycentric coordinate method
         v0, v1, v2 = triangle2d
@@ -1455,12 +1480,32 @@ class Voxelization(PhysicalObject):
         return Voxelization.from_voxel_matrix(inverted_matrix, self.voxel_size, min_voxel_center)
 
     def bounding_box(self):
-        min_point = (np.array([self.get_min_voxel_grid_center()]) - np.array([self.voxel_size, self.voxel_size, self.voxel_size]))[0]
-        max_point = (np.array([self.get_max_voxel_grid_center()]) + np.array([self.voxel_size, self.voxel_size, self.voxel_size]))[0]
+        """
+        Get the bounding box of the voxelization.
+
+        :return: The bounding box of the voxelization.
+        :rtype: BoundingBox
+        """
+        min_point = (
+            np.array([self.get_min_voxel_grid_center()]) - np.array([self.voxel_size, self.voxel_size, self.voxel_size])
+        )[0]
+        max_point = (
+            np.array([self.get_max_voxel_grid_center()]) + np.array([self.voxel_size, self.voxel_size, self.voxel_size])
+        )[0]
 
         return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
 
     def _point_to_local_grid_index(self, point: Point) -> Tuple[int, ...]:
+        """
+        Convert a point to the local grid index within the voxelization.
+
+        :param point: The point to convert.
+        :type point: Point
+        :return: The local grid index of the point.
+
+        :rtype: Tuple[int, ...]
+        :raises ValueError: If the point is not within the voxelization's bounding box.
+        """
         if not self.bounding_box().point_belongs(Point3D(*point)):
             raise ValueError("Point not in local voxel grid.")
 
@@ -1472,7 +1517,18 @@ class Voxelization(PhysicalObject):
 
         return x_index, y_index, z_index
 
-    def flood_fill(self, start_point: Point, fill_with: bool) -> 'Voxelization':
+    def flood_fill(self, start_point: Point, fill_with: bool) -> "Voxelization":
+        """
+        Perform a flood fill operation within the voxelization starting from the given point.
+
+        :param start_point: The starting point of the flood fill operation.
+        :type start_point: Point
+        :param fill_with: The value to fill the voxels during the flood fill operation.
+        :type fill_with: bool
+
+        :return: A new Voxelization object with the filled voxels.
+        :rtype: Voxelization
+        """
         directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
         start = self._point_to_local_grid_index(start_point)
         stack = [start]
@@ -1481,7 +1537,12 @@ class Voxelization(PhysicalObject):
 
         while stack:
             x, y, z = stack.pop()
-            if (0 <= x < len(matrix)) and (0 <= y < len(matrix[0])) and (0 <= z < len(matrix[0][0])) and matrix[x][y][z] == old_value:
+            if (
+                (0 <= x < len(matrix))
+                and (0 <= y < len(matrix[0]))
+                and (0 <= z < len(matrix[0][0]))
+                and matrix[x][y][z] == old_value
+            ):
                 matrix[x][y][z] = fill_with
                 for dx, dy, dz in directions:
                     nx, ny, nz = x + dx, y + dy, z + dz
