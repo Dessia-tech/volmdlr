@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 
 
 ### Refactor
--
+
+- Shells: refactor. 
 
 ### Changed
 -
@@ -93,7 +94,6 @@ All adequations have been done for all tests and existing scripts.
 - Improve step translator.
 - Delete inplace methods: rotation, translation and frame_mapping
 - OpenShell3D: faces_graph.
-- Shells: refactor. 
 - RevolutionSurface3D: Improve init and methods
 
 ### Changed
