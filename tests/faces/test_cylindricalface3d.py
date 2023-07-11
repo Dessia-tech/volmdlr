@@ -90,8 +90,10 @@ class TestCylindricalFace3D(unittest.TestCase):
 
         frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
         cylindrical = surfaces.CylindricalSurface3D(frame, 0.2)
-        fullarc1 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(0.2, 0.0, 0.0), normal=volmdlr.Z3D)
-        fullarc2 = edges.FullArc3D(center=volmdlr.O3D, start_end=volmdlr.Point3D(-0.2, 0.0, 0.2), normal=volmdlr.Z3D)
+        fullarc1 = edges.FullArc3D.from_center_normal(
+            center=volmdlr.O3D, start_end=volmdlr.Point3D(0.2, 0.0, 0.0), normal=volmdlr.Z3D)
+        fullarc2 = edges.FullArc3D.from_center_normal(
+            center=volmdlr.O3D, start_end=volmdlr.Point3D(-0.2, 0.0, 0.2), normal=volmdlr.Z3D)
         contour1 = wires.Contour3D([fullarc1])
         contour2 = wires.Contour3D([fullarc2])
         face = faces.CylindricalFace3D.from_contours3d(cylindrical, [contour1, contour2])
@@ -106,6 +108,11 @@ class TestCylindricalFace3D(unittest.TestCase):
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
         self.assertAlmostEqual(face.surface2d.area(), 0.003143137591511259, 3)
 
+    def neutral_fiber(self):
+        face = self.cylindrical_face1
+        neutral_fiber = face.neutral_fiber()
+        self.assertEqual(neutral_fiber.length(), 0.4)
+
     def test_number_triangles(self):
         cylindrical_surface1 = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 0.32)
         cylindrical_face1 = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindrical_surface1,
@@ -116,6 +123,24 @@ class TestCylindricalFace3D(unittest.TestCase):
         n_triangles_max = 30  # Could be 14 (7 slices on theta)
         self.assertLess(n_triangles, n_triangles_max,
                         f'Too much triangles in cylindrical face triangulation: {n_triangles}/{n_triangles_max}')
+
+    def test_split_by_plane(self):
+        R = 0.15
+        cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, R)
+        cylindricalface = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindricalsurface, 0, volmdlr.TWO_PI,
+                                                                               -.25, .25)
+        plane_face_cylindricalface_intersec = DessiaObject.load_from_file(
+            'faces/plane_face_cylindrical_face_intersec.json')
+        plane_face_3 = plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 7)
+        split_by_plane = cylindricalface.split_by_plane(plane_face_3.surface3d)
+        self.assertTrue(len(split_by_plane), 4)
+        list_expected_points = DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/test_cylindrical_faces_split_by_plane_'
+            'expected_discretization_points.json').primitives
+        for i, face in enumerate(split_by_plane):
+            points = face.outer_contour3d.discretization_points(number_points=10)
+            for point, expected_point in zip(points, list_expected_points[i]):
+                self.assertTrue(point.is_close(expected_point))
 
 
 if __name__ == '__main__':

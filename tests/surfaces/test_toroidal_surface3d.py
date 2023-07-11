@@ -14,7 +14,7 @@ class TestToroidalSurface3D(unittest.TestCase):
     toroidal_surface2 = surfaces.ToroidalSurface3D(frame, 0.000725, 0.000125)
 
     def test_arc3d_to_2d(self):
-        arc1 = edges.Arc3D(volmdlr.Point3D(1-0.1/math.sqrt(2), 0, 0.1/math.sqrt(2)),
+        arc1 = edges.Arc3D.from_3_points(volmdlr.Point3D(1-0.1/math.sqrt(2), 0, 0.1/math.sqrt(2)),
                            volmdlr.Point3D(0.9, 0, 0), volmdlr.Point3D(1-0.1/math.sqrt(2), 0, -0.1/math.sqrt(2)))
 
         test1 = self.toroidal_surface.arc3d_to_2d(arc3d=arc1)[0]
@@ -26,7 +26,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertTrue(test1.start.is_close(volmdlr.Point2D(0, 0.75 * math.pi)))
         self.assertTrue(test1.end.is_close(volmdlr.Point2D(0, 1.25 * math.pi)))
 
-        arc2 = edges.Arc3D(volmdlr.Point3D(-0.169132244445, 0.06508125180570001, 0.627719515715),
+        arc2 = edges.Arc3D.from_3_points(volmdlr.Point3D(-0.169132244445, 0.06508125180570001, 0.627719515715),
         volmdlr.Point3D(-0.169169279223, 0.064939567779, 0.628073066814),
         volmdlr.Point3D(-0.169258691383, 0.064597504793, 0.628219515715))
         surface2 = surfaces.ToroidalSurface3D.load_from_file("surfaces/objects_toroidal_tests/surface.json")
@@ -86,6 +86,15 @@ class TestToroidalSurface3D(unittest.TestCase):
 
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1.3773892114076673, 2)
+
+        surface = surfaces.ToroidalSurface3D.load_from_file(
+            "surfaces/objects_toroidal_tests/buggy_toroidalface_surface.json")
+        contour = wires.Contour3D.load_from_file(
+            "surfaces/objects_toroidal_tests/buggy_toroidalface_contour.json")
+        contour2d = surface.contour3d_to_2d(contour)
+
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 1.0990644259885822, 2)
 
 
 if __name__ == '__main__':

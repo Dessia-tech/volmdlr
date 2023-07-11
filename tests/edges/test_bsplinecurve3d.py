@@ -12,6 +12,17 @@ class TestBSplineCurve3D(unittest.TestCase):
         self.assertTrue(trimmed_curve.start.is_close(point1))
         self.assertAlmostEqual(trimmed_curve.length(), 0.03513727259692126, 2)
 
+    def test_from_step(self):
+        obj_list = volmdlr.core.VolumeModel.load_from_file(
+            "edges/bsplinecurve_objects/periodic_bsplinecurve_from_step_test_object_dict.json").primitives
+        object_dict = {0: obj_list[0], 1: obj_list[1], 2: obj_list[2]}
+        arguments = ["''", 1, 2, 0, '.F.']
+        bsplinecurve = vme.Edge.from_step(arguments, object_dict)
+        self.assertTrue(bsplinecurve.start.is_close(object_dict[1], 1e-5))
+        self.assertTrue(bsplinecurve.end.is_close(object_dict[2], 1e-5))
+        self.assertTrue(bsplinecurve.point_at_abscissa(0.5*bsplinecurve.length()).is_close(
+            volmdlr.Point3D(0.04916207191208274, -0.0426452922068, 0.14332757998779702)))
+
 
 if __name__ == '__main__':
     unittest.main()

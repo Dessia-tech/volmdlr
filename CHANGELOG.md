@@ -6,7 +6,90 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## v0.11.0 [future]
+## v0.12.0 [future]
+
+### New Features
+- New module: cad_simplification - OctreeBlockSimplify, TrippleExtrusionSimplify
+- shells.py : function to performe union operations for a given list of shells.
+- ClosedShell3D: is_face_intersecting, is_intersecting_with
+- BoundingBox: get_points_inside_bbox, size
+- Vector3D: unit_vector
+- Face3D: split_inner_contour_intersecting_cutting_contours
+- Shell3D: get_ray_casting_line_segment
+- WireMixin: get_connected_wire, is_sharing_primitives_with
+- OpenShell3D: faces_graph
+- Plane3D: arc_intersections, bsplinecurve_intersections
+- common_operations: split_wire_by_plane
+- SphericalSurface3D: line_intersections, linesegment_intersections.
+- Sweep with muitiform profile contour.
+- minimum_distance: face-to-face, shell-to-shell
+- OpenShell3D: from_faces (using faces graph)
+- SphericalFace3D: from_contours3d_and_rectangular_cut
+
+### Fixed
+- ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
+- ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
+- RevolutionSurface3D: fix some special cases whiling transforming from 3D space to parametric domain.
+- fix drone python version
+- BSplineFace3D: neutral_fiber
+- BSplineSurface3D: arc3d_to_2d, removes repeated parametric points if any.
+- surfaces.Plane3D: linesegment_intersections
+- Step export
+- Face3D: is_linesegment_crossing.
+- Edge: fix orientation of edges commig from step.
+- BSplineCurve3D: from_step.
+- Export to step file
+- Step import
+- Edge: fix orientation of edges commig from step.
+- Sphere: point_belongs, inherits from ClosedShell3D instead of RevolvedProfile
+- Step import.
+- PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
+- babylondata: removes empty objects.
+- ClosedPolygon2D: point_belongs.
+- Fullarc: get_reverse.
+- Arc2D: point_belongs
+- ArcEllipse2D: point_at_abscissa
+- Frame3D: import/export step.
+- BSplineFace3D: neutral_fiber.
+- Step: read_lines, take into account the space character in step entity names
+- Circle3D: fix trim.
+- Edge: from_step trim of periodic curves with different orientation of original edge
+- Arc3D: fix abscissa, fix get_arc_point_angle
+- add missing toleraces to some methods.
+- Arc3D: line_intersections
+- Line3D: minimum_distance_points
+- remove arcellipse handleling for bspline2d_3d.
+
+### Refactor
+- ClosedShell3D: point_belongs, get_non_intersecting_faces
+- BoundingBox: bbox_intersection
+- Face3D: get_face_cutting_contours
+- parametric.py: fix numerical instability in some functions used in Arc3D to parametric surface domain transformation.
+- intersections: get_bsplinecurve_intersections generalization, so it can also be used
+to calculate intersections between a plane 3d and bsplinecurve3d.
+- Big refactor: New module curves.py containing classes as Line, Circle and Ellipse.
+Most edges will now be formed by a curve and a start and end points. Unittests for all these classes have been created.
+All adequations have been done for all tests and existing scripts.
+
+- bspline_compiled: refactor binomial_coefficient for performance.
+- Improve step translator.
+- Delete inplace methods: rotation, translation and frame_mapping
+- OpenShell3D: faces_graph.
+- RevolutionSurface3D: Improve init and methods
+
+
+### Changed
+- OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
+
+### Unittests
+- FullArc2D: split_between_two_points
+- Face3D: set_operations_new_faces
+- ClosedShell3D: point_belongs
+- Plane3D: arc_intersections, bsplinecurve_intersections
+- common_operations: split_wire_by_plane
+- SphericalSurface3D: line_intersections, linesegment_intersections.
+
+## v0.11.0 [unreleased]
 
 
 ### New Features
@@ -48,11 +131,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D: split, point_at_abscissa
 - Vector: is_perpendicular_to
 - babylonjs: add nested meshes
+- CylindricalFace3D, ConicalFace3D, ToroidalFace3D, BSplineFace3D: neutral_fiber
 - VolumeModel: get_shells
 - WireMixin: wires_from_edges
 - DisplayMesh3D: triangulation_faces
 - Woodpecker CI setup
 - ContourMixin: primitive_section_over_contour.
+- Face3D: split_by_plane
 
 ### Fixed
 - 2D conversion: create 2D function name in core_compiled
@@ -80,9 +165,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Contour3D: from_step removes repeated edges from primitives list
 - Face3D: add fixes to divide_face.
 - ExtrusionSurface3D: linesegment2d_to_3d.
+- Surface3D: repair_primitive_periodicity
+- BSplineSurface3D: ban useless attr in serialization 
 - utils.parametric: fix contour2d_healing
 - BSplineSurface3D: ban useless attr in serialization
 - BSplineCurve: simplify
+- SphericalSurface3D: contour3d_to_2d
 - WireMixin: to_wire_with_linesegments (use new methods, for 2D and 3D)
 - ArcEllipse2d: point_belongs, abscissa, init.
 - Face3D: face_inside - now considers inners_contours
@@ -91,6 +179,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PlaneFace3D: merge_faces
 - Contour2D: divide
 - Step: raise NotimplementedError when it's not possible to instatiate assembly object.
+- STL: handle mutiple space as separator
 - fix: protect gmsh import
 
 ### Refactor
@@ -116,6 +205,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CompositePrimitive3D: babylon_points
 - WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
 - ContourMixin: contours_from_edges
+- ExtrusionSurface3D: simplify bsplinecurve3d_to_2d method
 
 ### Changed
 - better surface3d plots
@@ -146,6 +236,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PlaneFace3D: merge_faces
 - Contour2D: divide.
 - BSplineFace3D: test_linesegment_intersections_approximation.
+- CylindricalFace3D: split_by_plane.
 
 v0.10.0 [Released 20/04/2023]
 
