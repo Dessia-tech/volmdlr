@@ -6,7 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## v0.12.0 [future]
+## v0.13.0 [future]
+
+### New Features
+- 
+
+### Fixed
+- 
+
+### Refactor
+-
+
+### Changed
+-
+
+### Unittests
+-
+
+## v0.12.0 [unreleased]
+
 
 ### New Features
 - New module: cad_simplification - OctreeBlockSimplify, TrippleExtrusionSimplify
@@ -89,7 +107,7 @@ All adequations have been done for all tests and existing scripts.
 - common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 
-## v0.11.0 [unreleased]
+## v0.11.0
 
 
 ### New Features
