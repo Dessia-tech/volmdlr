@@ -52,6 +52,10 @@ steps:
 
 - name: check code complexity
   image: dessia/python-ci:3.9
+  when:
+    event:
+      exclude:
+      - tag
   commands:
   - git fetch --tags
   - pip install Cython
@@ -70,6 +74,10 @@ steps:
 
 - name: check pep8 formatting
   image: python:3.9
+  when:
+    event:
+      exclude:
+      - tag
   commands:
     - git fetch --tags
     - pip3 install -U pip autopep8==2.0.0
