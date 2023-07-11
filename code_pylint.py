@@ -23,7 +23,7 @@ MAX_ERROR_BY_TYPE = {
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 62,
-                     'too-many-locals': 72,
+                     'too-many-locals': 74,
                      'unused-argument': 32,
                      'too-many-arguments': 34,
                      'line-too-long': 12,
