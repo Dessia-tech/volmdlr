@@ -963,7 +963,8 @@ class Cylinder(shells.ClosedShell3D):
         return Cylinder(
             frame=self.frame.frame_mapping(frame, side),
             # self.position.frame_mapping(frame, side),
-            #             axis, self.radius,
+            #             axis,
+            radius=self.radius,
             length=self.length,
             color=self.color, alpha=self.alpha)
 
@@ -1440,9 +1441,7 @@ class HollowCylinder(shells.ClosedShell3D):
         Creates a copy of HollowCylinder.
 
         """
-        new_position = self.position.copy()
-        new_axis = self.axis.copy()
-        return HollowCylinder(new_position, new_axis, self.inner_radius, self.outer_radius, self.length,
+        return HollowCylinder(self.frame.copy(), self.inner_radius, self.outer_radius, self.length,
                               color=self.color, alpha=self.alpha, name=self.name)
 
     @classmethod
