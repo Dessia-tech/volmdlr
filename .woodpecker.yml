@@ -26,7 +26,7 @@ pipeline:
       - bash code_pep8.sh
 
   check-changelog-update:
-    image: python:3.8
+    image: python:3.9
     when:
       event: pull_request
     commands:
