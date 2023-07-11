@@ -30,11 +30,11 @@ class TestClosedPolygon3D(unittest.TestCase):
             points.append(radius*x.rotation(volmdlr.O3D, z, theta))
             theta += theta_r + (random.random() - 0.5)*theta_r
         return vmw.ClosedPolygon3D(points)
-    
+
     def test_sewing(self):
         z1 = 0.1
         z2 = 0.18
-        
+
         polygon1 = self.circular_polygon(0.15, 0.07, 12, volmdlr.X3D, volmdlr.Y3D)
         polygon1 = polygon1.translation(z1*volmdlr.Z3D)
 

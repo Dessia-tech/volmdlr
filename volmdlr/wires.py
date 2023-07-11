@@ -4811,36 +4811,31 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                 new_list_remove_closing_indexes = list(
                     dict.fromkeys(list_remove_closing_points))
                 if len(list_remove_closing_points) == len(triangles_points):
-                    triangles_points = \
-                        polygon2_3d.redefine_sewing_triangles_points(
-                            triangles_points, passed_by_zero_index,
-                            closing_point_index, previous_closing_point_index)
+                    triangles_points = polygon2_3d.redefine_sewing_triangles_points(triangles_points,
+                                                                                    passed_by_zero_index,
+                                                                                    closing_point_index,
+                                                                                    previous_closing_point_index)
                     if dict_closing_pairs:
                         dict_closing_pairs, lower_bounddary_closing_point = \
-                            self.clean_sewing_closing_pairs_dictionary(
-                                dict_closing_pairs,
-                                closing_point_index,
-                                passed_by_zero_index)
+                            self.clean_sewing_closing_pairs_dictionary(dict_closing_pairs,
+                                                                       closing_point_index,
+                                                                       passed_by_zero_index)
 
-                        if len(new_list_remove_closing_indexes) < \
-                                len(new_list_closing_point_indexes):
-                            dict_closing_pairs[
-                                lower_bounddary_closing_point] = (
-                                new_list_closing_point_indexes[
-                                    -(len(new_list_remove_closing_indexes) + 1)],
+                        if len(new_list_remove_closing_indexes) < len(new_list_closing_point_indexes):
+                            dict_closing_pairs[lower_bounddary_closing_point] = (
+                                new_list_closing_point_indexes[-(len(new_list_remove_closing_indexes) + 1)],
                                 closing_point_index)
                     for pt_index in list_remove_closing_points:
                         list_closing_point_indexes.remove(pt_index)
                     list_closing_point_indexes.append(closing_point_index)
 
-                elif (not passed_by_zero_index and
-                      closing_point_index > polygon2_3d.points.index(
+                elif (not passed_by_zero_index and closing_point_index > polygon2_3d.points.index(
                             triangles_points[-len(list_remove_closing_points) - 1][2])) or \
                         (passed_by_zero_index and closing_point_index >= 0):
-                    triangles_points = \
-                        polygon2_3d.redefine_sewing_triangles_points(
-                            triangles_points, passed_by_zero_index,
-                            closing_point_index, previous_closing_point_index)
+                    triangles_points = polygon2_3d.redefine_sewing_triangles_points(triangles_points,
+                                                                                    passed_by_zero_index,
+                                                                                    closing_point_index,
+                                                                                    previous_closing_point_index)
                     dict_closing_pairs, lower_bounddary_closing_point = \
                         self.clean_sewing_closing_pairs_dictionary(
                             dict_closing_pairs, closing_point_index, passed_by_zero_index)
