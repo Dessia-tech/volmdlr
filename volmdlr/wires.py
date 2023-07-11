@@ -4775,8 +4775,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             polygon1_2d, polygon2_2d)
         polygon1_2d = polygon1_3d.to_2d(volmdlr.O2D, x, y)
 
-        # ax=polygon1_2d.plot()
-        # polygon2_2d.plot(ax=ax, color='r')
 
         dict_closing_pairs = {}
         triangles_points = []
@@ -4897,6 +4895,12 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return triangles_points
 
     def sewing(self, polygon2, x, y):
+        """
+        Sew two polygon3D together.
+
+        :param x: The vector representing first direction to project polygons in
+        :param y: The vector representing second direction to project polygons in
+        """
         polygon1_2d = self.to_2d(volmdlr.O2D, x, y)
         polygon2_2d = polygon2.to_2d(volmdlr.O2D, x, y)
         if polygon1_2d.is_convex() and polygon2_2d.is_convex():

@@ -2068,6 +2068,7 @@ class Point3D(Vector3D):
         :return: A Vector3D
         :rtype: :class:`volmdlr.Vector3D`
         """
+        print('returns', Vector3D(self.x, self.y, self.z))
         return Vector3D(self.x, self.y, self.z)
 
     def point_distance(self, point2: "Point3D") -> float:

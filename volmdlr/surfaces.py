@@ -1120,8 +1120,6 @@ class Plane3D(Surface3D):
         point1, point2, point3 = args
         vector1 = point2 - point1
         vector2 = point3 - point1
-        vector1 = vector1.to_vector()
-        vector2 = vector2.to_vector()
         vector1.normalize()
         vector2.normalize()
         normal = vector1.cross(vector2)

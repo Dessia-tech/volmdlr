@@ -88,30 +88,30 @@ class PointCloud3D(dc.DessiaObject):
         return dist_between_plane, position_plane
 
     @staticmethod
-    def check_area_polygon(initial_polygon2d, position_plane,
+    def check_area_polygon(initial_polygons2d, position_plane,
                            normal, vec1, vec2):
-        areas = [0] * len(initial_polygon2d)
-        for n, poly in enumerate(initial_polygon2d):
+        areas = [0] * len(initial_polygons2d)
+        for n, poly in enumerate(initial_polygons2d):
             if poly is not None:
                 areas[n] = poly.area()
         avg_area = sum(areas) / len(areas)
 
-        polygon2d, polygon3d = [], []
-        for n, poly in enumerate(initial_polygon2d):
-            if poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygon2d) - 1]):
+        polygon2d, polygons_3d = [], []
+        for n, poly in enumerate(initial_polygons2d):
+            if poly is None or (poly.area() < avg_area / 10) and (n not in [0, len(initial_polygons2d) - 1]):
                 continue
             if poly.area() < avg_area / 10:
                 new_poly = vmw.ClosedPolygon2D.concave_hull(poly.points, -1, 0.000005)
                 new_polygon = new_poly.to_3d(position_plane[n] * normal, vec1,
                                              vec2)
-                polygon3d.append(new_polygon)
+                polygons_3d.append(new_polygon)
             else:
 
                 polygon2d.append(poly)
                 new_polygon = poly.to_3d(position_plane[n] * normal, vec1, vec2)
-                polygon3d.append(new_polygon)
+                polygons_3d.append(new_polygon)
 
-        return polygon3d
+        return polygons_3d
 
     def to_subcloud2d(self, pos_normal, vec1, vec2):
         subcloud2d_tosimp = self.to_2d(pos_normal, vec1, vec2)
@@ -131,48 +131,42 @@ class PointCloud3D(dc.DessiaObject):
 
         dist_between_plane, position_plane = self.position_plane(posmax=posmax,
                                                                  resolution=resolution)
-        subcloud3d = [
-            self.extract(
-                normal,
-                pos_plane -
-                dist_between_plane /
-                2,
-                pos_plane +
-                dist_between_plane /
-                2) for pos_plane in position_plane]
-        subcloud2d = [subcloud3d[n].to_subcloud2d(position_plane[n] * normal, vec1, vec2) for n in range(resolution)]
+        sub_clouds3d = [self.extract(normal, pos_plane - 0.5*dist_between_plane,
+                                     pos_plane + 0.5*dist_between_plane) for pos_plane in position_plane]
+        sub_clouds2d = [sub_clouds3d[n].to_subcloud2d(position_plane[n] * normal, vec1, vec2)
+                        for n in range(resolution)]
 
         # Offsetting
         if offset != 0:
-            initial_polygon2d = [cloud2d.to_polygon(convex=True) for cloud2d in subcloud2d]
-            position_plane, initial_polygon2d = self.offset_to_shell(position_plane, initial_polygon2d, offset)
+            initial_polygons2d = [cloud2d.to_polygon(convex=True) for cloud2d in sub_clouds2d]
+            position_plane, initial_polygons2d = self.offset_to_shell(position_plane, initial_polygons2d, offset)
         else:
-            initial_polygon2d = [cloud2d.to_polygon() for cloud2d in subcloud2d]
-        polygon3d = self.check_area_polygon(initial_polygon2d=initial_polygon2d,
-                                            position_plane=position_plane,
-                                            normal=normal,
-                                            vec1=vec1, vec2=vec2)
+            initial_polygons2d = [cloud2d.to_polygon() for cloud2d in sub_clouds2d]
+        polygons_3d = self.check_area_polygon(initial_polygons2d=initial_polygons2d,
+                                              position_plane=position_plane,
+                                              normal=normal,
+                                              vec1=vec1, vec2=vec2)
 
-        return self.generate_shell(polygon3d, normal, vec1, vec2)
+        return self.generate_shell(polygons_3d, normal, vec1, vec2)
 
     @classmethod
-    def generate_shell(cls, polygon3d: List[vm.wires.ClosedPolygon3D],
+    def generate_shell(cls, polygons_3d: List[vm.wires.ClosedPolygon3D],
                        normal: vm.Vector3D, vec1: vm.Vector3D, vec2: vm.Vector3D):
         """
         Generates a shell from a list of polygon 3d, using a sewing algorithm.
 
-        :param polygon3d: list of polygon 3d to be sewed.
+        :param polygons_3d: list of polygon 3d to be sewed.
         :param normal: normal to the sewing plane.
         :param vec1: u vector in the sewing plane.
         :param vec2: v vector in the sewing plane.
         :return: return a shell.
         """
-        position_plane = [p.points[0].dot(normal) for p in polygon3d]
-        resolution = len(polygon3d)
+        position_plane = [p.points[0].dot(normal) for p in polygons_3d]
+        resolution = len(polygons_3d)
 
         faces = []
         for n in range(resolution):
-            poly1 = polygon3d[n]
+            poly1 = polygons_3d[n]
             poly1_simplified = cls._helper_simplify_polygon(poly1, position_plane[n], normal, vec1, vec2)
 
             if n in (resolution - 1, 0):
@@ -182,7 +176,7 @@ class PointCloud3D(dc.DessiaObject):
                         surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2)))
 
             if n != resolution - 1:
-                poly2 = polygon3d[n + 1]
+                poly2 = polygons_3d[n + 1]
                 poly2_simplified = cls._helper_simplify_polygon(poly2, position_plane[n + 1], normal, vec1, vec2)
 
                 list_triangles_points = cls._helper_sew_polygons(poly1_simplified, poly2_simplified, vec1, vec2)
