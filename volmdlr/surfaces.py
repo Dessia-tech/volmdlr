@@ -940,6 +940,8 @@ class Surface3D(DessiaObject):
             return wires.Contour2D(primitives2d)
         # Fix contour
         contour2d = wires.Contour2D(primitives2d)
+        if len(primitives2d) == 2 and contour2d.area() == 0.0:
+            return None
         if contour2d.is_ordered():
             if len(primitives2d) == 2 and all(isinstance(prim, edges.LineSegment2D) for prim in primitives2d):
                 return self._fix_brep(primitives2d)
