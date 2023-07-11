@@ -1732,7 +1732,10 @@ class OpenTriangleShell3D(OpenShell3D):
             triangle_points = [point for point in (points[i1], points[i2], points[i3])
                                if not volmdlr.core.point_in_list(point, triangle_points)]
             if len(triangle_points) == 3:
-                triangles.append(volmdlr.faces.Triangle3D(*triangle_points))
+                vec1 = triangle_points[1] - triangle_points[0]
+                vec2 = triangle_points[2] - triangle_points[0]
+                if not vec1.is_colinear_to(vec2):
+                    triangles.append(volmdlr.faces.Triangle3D(*triangle_points))
         return cls(triangles)
 
     def to_trimesh(self):
