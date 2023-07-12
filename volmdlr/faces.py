@@ -74,9 +74,11 @@ class Face3D(volmdlr.core.Primitive3D):
         return DessiaObject.to_dict(self, use_pointers=False)
 
     def __hash__(self):
+        """Computes the hash."""
         return hash(self.surface3d) + hash(self.surface2d)
 
     def __eq__(self, other_):
+        """Computes the equality to anoter face."""
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
         equal = (self.surface3d == other_.surface3d
@@ -146,6 +148,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.outer_contour3d.bounding_box
 
     def area(self):
+        """Computes the area of the surface2d."""
         return self.surface2d.area()
 
     @classmethod
@@ -276,6 +279,9 @@ class Face3D(volmdlr.core.Primitive3D):
         return content, [current_id]
 
     def triangulation_lines(self):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         return [], []
 
     def grid_size(self):
@@ -411,6 +417,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return intersections
 
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+        """Plots the face."""
         if not ax:
             ax = plt.figure().add_subplot(111, projection='3d')
 
@@ -1113,6 +1120,7 @@ class PlaneFace3D(Face3D):
                         name=name)
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the PlaneFace3D."""
         return PlaneFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                            self.name)
 
@@ -1575,6 +1583,7 @@ class Triangle3D(PlaneFace3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
+        """General method to get the bounding box."""
         return volmdlr.core.BoundingBox.from_points([self.point1,
                                                      self.point2,
                                                      self.point3])
@@ -1663,10 +1672,12 @@ class Triangle3D(PlaneFace3D):
         return self.__class__(np1, np2, np3, self.name)
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the Triangle3D."""
         return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
                           self.name)
 
     def triangulation(self):
+        """Computes the triangulation of the Triangle3D, basically returns itself."""
         return vmd.DisplayMesh3D([vmd.Node3D.from_point(self.point1),
                                   vmd.Node3D.from_point(self.point2),
                                   vmd.Node3D.from_point(self.point3)],
@@ -1837,6 +1848,7 @@ class CylindricalFace3D(Face3D):
         self._bbox = None
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the CylindricalFace3D."""
         return CylindricalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                                  self.name)
 
@@ -1854,6 +1866,9 @@ class CylindricalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=5):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         nlines = math.ceil(delta_theta * angle_resolution)
@@ -2026,6 +2041,7 @@ class ToroidalFace3D(Face3D):
         self._bbox = None
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the ToroidalFace3D."""
         return ToroidalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
@@ -2061,6 +2077,9 @@ class ToroidalFace3D(Face3D):
         self._bbox = new_bounding_box
 
     def triangulation_lines(self, angle_resolution=5):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
@@ -2176,6 +2195,9 @@ class ConicalFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=5):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         nlines = int(delta_theta * angle_resolution)
@@ -2430,8 +2452,11 @@ class RuledFace3D(Face3D):
         self._bbox = new_bouding_box
 
     def get_bounding_box(self):
-        # To be enhance by restricting wires to cut
-        # xmin, xmax, ymin, ymax = self.surface2d.outer_contour.bounding_rectangle()
+        """
+        General method to get the bounding box.
+
+        To be enhanced by restricting wires to cut
+        """
         points = [self.surface3d.point2d_to_3d(volmdlr.Point2D(i / 30, 0.)) for
                   i in range(31)]
         points.extend(
@@ -2657,6 +2682,9 @@ class BSplineFace3D(Face3D):
         self._bbox = new_bounding_box
 
     def triangulation_lines(self, resolution=25):
+        """
+        Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
+        """
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_u = u_max - u_min

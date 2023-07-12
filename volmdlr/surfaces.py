@@ -3682,7 +3682,6 @@ class SphericalSurface3D(PeriodicalSurface):
         :return: A list of primitives.
         :rtype: list
         """
-        # # Search for a primitive that can be used as reference for repairing periodicity
         i = 1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
@@ -3691,6 +3690,14 @@ class SphericalSurface3D(PeriodicalSurface):
                 if primitives2d[i].end.is_close(previous_primitive.end, 1e-3) and \
                         primitives2d[i].length() == volmdlr.TWO_PI:
                     primitives2d[i] = primitives2d[i].reverse()
+                elif self.is_undefined_brep(primitives2d[i]):
+                    if not self.is_undefined_brep(primitives2d[(i+1) % len(primitives2d)]):
+                        delta = primitives2d[(i+1) % len(primitives2d)].start - primitives2d[i].end
+                        primitives2d[i] = primitives2d[i].translation(delta)
+                    else:
+                        primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+                                                                   name="construction"))
+                        i += 1
                 elif self.is_point2d_on_sphere_singularity(previous_primitive.end, 1e-5):
                     primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                name="construction"))
@@ -3867,6 +3874,13 @@ class SphericalSurface3D(PeriodicalSurface):
                 intersections.append(intersection)
         return intersections
 
+    @staticmethod
+    def is_undefined_brep(edge):
+        """Returns True if the edge is contained within the periodicity boundary."""
+        if isinstance(edge, edges.LineSegment2D) and edge.line.unit_direction_vector().is_colinear_to(volmdlr.Y2D) \
+                and math.isclose(abs(edge.start.x), math.pi, abs_tol=1e-6):
+            return True
+        return False
 
 class RuledSurface3D(Surface3D):
     """

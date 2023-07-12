@@ -54,18 +54,18 @@ class RoundedLineSegments3D(volmdlr.primitives.RoundedLineSegments):
 
     def arc_features(self, point_index: int):
         radius = self.radius[point_index]
-        pt1, pti, pt2 = self.get_points(point_index)
-        dist1 = (pt1 - pti).norm()
-        dist2 = (pt2 - pti).norm()
-        dist3 = (pt1 - pt2).norm()
-        alpha = math.acos(-(dist3 ** 2 - dist1 ** 2 - dist2 ** 2) / (2 * dist1 * dist2)) / 2.
+        point_1, point_i, point_2 = self.get_points(point_index)
+        dist1 = (point_1 - point_i).norm()
+        dist2 = (point_2 - point_i).norm()
+        dist3 = (point_1 - point_2).norm()
+        alpha = math.acos(-(dist3**2 - dist1**2 - dist2**2) / (2 * dist1 * dist2)) / 2.
         dist = radius / math.tan(alpha)
 
-        u1 = (pt1 - pti) / dist1
-        u2 = (pt2 - pti) / dist2
+        u1 = (point_1 - point_i) / dist1
+        u2 = (point_2 - point_i) / dist2
 
-        p3 = pti + u1 * dist
-        p4 = pti + u2 * dist
+        p3 = point_i + u1 * dist
+        p4 = point_i + u2 * dist
 
         n = u1.cross(u2)
         n /= n.norm()
@@ -322,7 +322,7 @@ class Block(shells.ClosedShell3D):
 
     def translation(self, offset: volmdlr.Vector3D):
         """
-        Block translation.
+        Returns a new translated block.
 
         :param offset: translation vector.
         :return: A new translated Block.
@@ -416,9 +416,8 @@ class Block(shells.ClosedShell3D):
         else:
             fig = None
 
-        for edge3D in self.edges():
-            # edge2D = edge3D.PlaneProjection2D()
-            edge3D.plot2d(x3d, y3d, ax=ax)
+        for edge3d in self.edges():
+            edge3d.plot2d(x3d, y3d, ax=ax)
 
         return fig, ax
 
@@ -556,11 +555,13 @@ class ExtrudedProfile(shells.ClosedShell3D):
         return [lower_face, upper_face] + lateral_faces
 
     def area(self):
+        """Returns the area of the extruded 2D surface."""
         areas = self.outer_contour2d.area()
         areas -= sum([contour.area() for contour in self.inner_contours2d])
         return areas
 
     def volume(self):
+        """Returns the volume of the extruded profile."""
         z = self.x.cross(self.y)
         z.normalize()
         return self.area() * self.extrusion_vector.dot(z)
@@ -701,6 +702,10 @@ class RevolvedProfile(shells.ClosedShell3D):
                               name=self.name)
 
     def shell_faces(self):
+        """
+        Computes the shell faces from init data.
+
+        """
         faces = []
 
         for edge in self.contour3d.primitives:
@@ -725,6 +730,7 @@ class RevolvedProfile(shells.ClosedShell3D):
     def volume(self):
         """
         Volume from Guldin formulae.
+
         """
         point1 = self.axis_point.plane_projection3d(self.plane_origin,
                                                     self.x, self.y)
@@ -829,6 +835,10 @@ class Cylinder(shells.ClosedShell3D):
         shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
+        """
+        Computes the shell faces from init data.
+
+        """
         surface3d = surfaces.CylindricalSurface3D(self.frame, self.radius)
         cylindrical_face = volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
             surface3d, 0, 2 * math.pi, 0, self.length)
@@ -1243,10 +1253,6 @@ class Cone(RevolvedProfile):
         dy2 = (point_a[1] - point_b[1])**2
         dz2 = (point_a[2] - point_b[2])**2
 
-        # kx = ((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # ky = ((dx2 + dz2) / (dx2 + dy2 + dz2))**0.5
-        # kz = ((dx2 + dy2) / (dx2 + dy2 + dz2))**0.5
-
         x_bound = (point_a[0] - (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius,
                    point_a[0] + (((dy2 + dz2) / (dx2 + dy2 + dz2))**0.5) * self.radius, point_b[0])
         xmin = min(x_bound)
@@ -1362,6 +1368,7 @@ class HollowCylinder(RevolvedProfile):
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def volume(self):
+        """Returns the volume of the hollow cylinder."""
         return self.length * math.pi * (self.outer_radius**2
                                         - self.inner_radius**2)
 
@@ -1550,13 +1557,11 @@ class Sweep(shells.ClosedShell3D):
                     tangents.append(wire_primitive.unit_direction_vector(position * wire_primitive.length()))
 
                 circles = []
-                for pt, tan in zip(wire_primitive.points, tangents):
+                for point, tan in zip(wire_primitive.points, tangents):
                     # TODO: replace circle by real contour!
                     normal = tan.deterministic_unit_normal_vector()
                     v_vector = tan.cross(normal)
-                    circles.append(self.contour2d.to_3d(pt, normal, v_vector))
-                    # circles.append(curves.Circle3D.from_center_normal(
-                    #     center=pt, normal=tan, radius=self.contour2d.primitives[0].circle.radius))
+                    circles.append(self.contour2d.to_3d(point, normal, v_vector))
 
                 polys = [volmdlr.wires.ClosedPolygon3D(c.discretization_points(number_points=36)) for c in circles]
 
