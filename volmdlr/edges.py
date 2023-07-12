@@ -436,7 +436,7 @@ class Edge(dc.DessiaObject):
         """
         Gets the minimum distance two methods.
 
-        This is a generelized method in a case an analytical method has not yet been defined.
+        This is a generlalized method in a case an analytical method has not yet been defined.
 
         :param element: another edge.
         :param return_points: weather also to return the corresponding points.
