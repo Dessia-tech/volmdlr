@@ -41,8 +41,8 @@ class TestClosedPolygon3D(unittest.TestCase):
         polygon2 = self.circular_polygon(0.17, 0.03, 25, volmdlr.X3D, volmdlr.Y3D)
         polygon2 = polygon2.translation(z2*volmdlr.Z3D)
 
-        # ax = polygon1.plot()
-        # polygon2.plot(ax = ax, edge_style=vmc.EdgeStyle(color='r'))
+        ax = polygon1.plot()
+        polygon2.plot(ax=ax, edge_style=vmc.EdgeStyle(color='r'))
 
         sewing_triangles = polygon1.sewing(polygon2, volmdlr.X3D, volmdlr.Y3D)
         poly1_normal_out = 0.
@@ -57,12 +57,16 @@ class TestClosedPolygon3D(unittest.TestCase):
                 poly1_normal_out += triangle_normal.dot(triangle_middle)
             else:
                 poly2_normal_out += triangle_normal.dot(triangle_middle)
-            # triangle.plot(ax=ax)
+            triangle.plot(ax=ax)
             plot_normal = 0.05*triangle_normal
-            # plot_normal.plot(ax=ax, starting_point=triangle_middle)
+            plot_normal.plot(ax=ax, starting_point=triangle_middle)
 
         # If normals are in different directions, the test fails
         self.assertGreater(poly1_normal_out/poly2_normal_out, 0.)
+
+        # Normals should point on the outside
+        self.assertGreater(poly1_normal_out, 0.)
+        self.assertGreater(poly2_normal_out, 0.)
 
 if __name__ == '__main__':
     unittest.main()
