@@ -681,7 +681,7 @@ class EdgeCollection3D(WireMixin):
         indices = list(range(len(positions)))
         return positions, indices
 
-    def babylon_meshes(self):
+    def babylon_meshes(self, **kwargs):
         """ Set the mesh for babylonjs. """
         positions, indices = self.to_babylon()
         babylon_mesh = {'positions': positions,
