@@ -3299,8 +3299,7 @@ class SphericalSurface3D(PeriodicalSurface):
             return [edges.LineSegment2D(start, end)]
         return self.arc3d_to_2d_any_direction(arc3d)
 
-    @staticmethod
-    def helper_arc3d_to_2d_with_singularity(arc3d, start, end, point_singularity, half_pi):
+    def helper_arc3d_to_2d_with_singularity(self, arc3d, start, end, point_singularity, half_pi):
         """Helper function to arc3d_to_2d_with_singularity."""
         theta1, phi1 = start
         theta2, phi2 = end
@@ -3324,8 +3323,13 @@ class SphericalSurface3D(PeriodicalSurface):
                     theta2, phi2))
                           ]
             return primitives
-        warnings.warn("Could not find BREP of the Arc3D on the sphere domain")
-        return None
+        n = 50
+        degree = 2
+        points = [self.point3d_to_2d(point3d) for point3d in arc3d.discretization_points(number_points=n)]
+        periodic = points[0].is_close(points[-1])
+        return [edges.BSplineCurve2D.from_points_interpolation(points, degree, periodic)]
+        # warnings.warn("Could not find BREP of the Arc3D on the sphere domain")
+        # return None
 
     def arc3d_to_2d_with_singularity(self, arc3d, start, end, singularity_points):
         """
