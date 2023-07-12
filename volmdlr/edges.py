@@ -4278,6 +4278,26 @@ class LineSegment3D(LineSegment):
 
         return LineSegment3D(point1, point2)
 
+    def sweep(self, *args):
+        """
+        Line Segment 3D is used as path for sweeping given section through it.
+
+        :return:
+        """
+        section_contour2d, section_contour3d = args
+        if section_contour3d is None:
+            start_tangent = self.unit_direction_vector(0.)
+            normal = self.unit_normal_vector(0.)
+            if normal is None:
+                normal = start_tangent.deterministic_unit_normal_vector()
+            tangent_normal_orthonormal = start_tangent.cross(normal)
+            section_contour3d = section_contour2d.to_3d(self.start, normal, tangent_normal_orthonormal)
+        new_faces = []
+        for contour_primitive in section_contour3d.primitives:
+            new_faces.extend(contour_primitive.extrusion(self.length()
+                                                         * self.unit_direction_vector()))
+        return new_faces
+
 
 class BSplineCurve3D(BSplineCurve):
     """
@@ -4798,6 +4818,50 @@ class BSplineCurve3D(BSplineCurve):
         if self.bounding_box.distance_to_bbox(other_bspline2.bounding_box) > tol:
             return False
         return True
+
+    def sweep(self, *args):
+        """
+        BSpline 3D is used as path for sweeping given section through it.
+
+        :return:
+        """
+        new_faces = []
+        tangents = []
+        section_contour2d, _ = args
+        for k, _ in enumerate(self.points):
+            position = k / (len(self.points) - 1)
+            tangents.append(self.unit_direction_vector(position * self.length()))
+
+        contours = []
+        for point, tan in zip(self.points, tangents):
+            normal = tan.deterministic_unit_normal_vector()
+            v_vector = tan.cross(normal)
+            section_contour3d = section_contour2d.to_3d(point, normal, v_vector)
+            contours.append(section_contour3d)
+
+        polys = [volmdlr.wires.ClosedPolygon3D(c.discretization_points(number_points=36)) for c in contours]
+
+        size_v, size_u = len(polys[0].points) + 1, len(polys)
+        degree_u, degree_v = 3, 3
+
+        points_3d = []
+        for poly in polys:
+            points_3d.extend(poly.points)
+            points_3d.append(poly.points[0])
+
+        bezier_surface3d = volmdlr.surfaces.BezierSurface3D(degree_u, degree_v, points_3d, size_u, size_v)
+
+        outer_contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D),
+                                                 volmdlr.edges.LineSegment2D(
+                                                     volmdlr.X2D, volmdlr.X2D + volmdlr.Y2D),
+                                                 volmdlr.edges.LineSegment2D(
+                                                     volmdlr.X2D + volmdlr.Y2D, volmdlr.Y2D),
+                                                 volmdlr.edges.LineSegment2D(volmdlr.Y2D, volmdlr.O2D)])
+        surf2d = volmdlr.surfaces.Surface2D(outer_contour, [])
+
+        bsface3d = volmdlr.faces.BSplineFace3D(bezier_surface3d, surf2d)
+        new_faces.append(bsface3d)
+        return new_faces
 
 
 class BezierCurve3D(BSplineCurve3D):
@@ -5344,6 +5408,19 @@ class Arc3D(ArcMixin, Edge):
 
     def complementary(self):
         return Arc3D(self.circle, self.end, self.start)
+
+    def sweep(self, *args):
+        """
+        Arc 3D is used as path for sweeping given section through it.
+
+        :return:
+        """
+        new_faces = []
+        _, section_contour_3d = args
+        for contour_primitive in section_contour_3d.primitives:
+            new_faces.extend(contour_primitive.revolution(
+                self.circle.center, self.circle.normal, self.angle))
+        return new_faces
 
 
 class FullArc3D(FullArcMixin, Arc3D):

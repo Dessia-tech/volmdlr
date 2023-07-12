@@ -2240,7 +2240,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             major_axis = axis_2
             minor_axis = axis_1
             major_dir = ellipse_pi_by_2 - center3d_plane
-            u_vector = major_dir.unit_vector()
+        u_vector = major_dir.unit_vector()
         ellipse = curves.Ellipse3D(major_axis, minor_axis,
                                    volmdlr.Frame3D(center3d_plane, u_vector,
                                                          plane3d.frame.w.cross(u_vector), plane3d.frame.w))

@@ -1197,6 +1197,7 @@ class Circle3D(CircleMixin, Curve):
                  name: str = ''):
         self.radius = radius
         self.frame = frame
+        self._bbox = None
         Curve.__init__(self, name=name)
 
     @property
@@ -1361,6 +1362,13 @@ class Circle3D(CircleMixin, Curve):
 
         return content, current_id
 
+    @property
+    def bounding_box(self):
+        """Bounding boc for Arc 3D."""
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
     def _bounding_box(self):
         """
         Computes the bounding box.
@@ -1517,6 +1525,19 @@ class Circle3D(CircleMixin, Curve):
         """
         return [volmdlr.edges.Arc3D(self, split_start, split_end),
                 volmdlr.edges.Arc3D(self, split_end, split_start)]
+
+    def sweep(self, *args):
+        """
+        Circle 3D is used as path for sweeping given section through it.
+
+        :return:
+        """
+        _, section_contour = args
+        new_faces = []
+        for contour_primitive in section_contour.primitives:
+            new_faces.extend(contour_primitive.revolution(
+                self.center, self.normal, volmdlr.TWO_PI))
+        return new_faces
 
 
 class Ellipse2D(Curve):
