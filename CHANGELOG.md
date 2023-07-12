@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - plot of vector3D.
+- SphericalSurface3D: enhance repair_periodicity_method
 
 ### Refactor
 -
