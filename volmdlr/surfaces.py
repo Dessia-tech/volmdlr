@@ -191,8 +191,10 @@ class Surface2D(volmdlr.core.Primitive2D):
             tri_opt = "pq"
 
         discretize_line_direction = "xy"
-        if number_points_y == 0:
+        if number_points_y == 0 or number_points_x > 25 * number_points_y:
             discretize_line_direction = "x"
+        elif number_points_y > 25 * number_points_x:
+            discretize_line_direction = "y"
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
                                                       discretize_line_direction=discretize_line_direction)
 
@@ -213,7 +215,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
+            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=discretize_line,
                                                      discretize_line_direction=discretize_line_direction)
             inner_polygon_nodes = [display.Node2D.from_point(p) for p in inner_polygon.points]
             for point in inner_polygon_nodes:
@@ -4744,7 +4746,7 @@ class BSplineSurface3D(Surface3D):
         # return volmdlr.Point3D(*self.derivatives(u, v, 0)[0][0])
         # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
-    def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-5):
+    def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-6):
         """
         Evaluates the parametric coordinates (u, v) of a 3D point (x, y, z).
 
@@ -4796,7 +4798,10 @@ class BSplineSurface3D(Surface3D):
         index = npy.argmin(distances)
         # Find the parametric coordinates of the point
         # indexes = int(npy.argmin(distances))
-        x0s.insert(0, self.surface.vertices[index].uv)
+        if self.x_periodicity or self.y_periodicity:
+            x0s.insert(1, self.surface.vertices[index].uv)
+        else:
+            x0s.insert(0, self.surface.vertices[index].uv)
         results = []
         for x0 in x0s:
             res = minimize(fun, x0=npy.array(x0), jac=True,
@@ -4988,7 +4993,7 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                n = len(bspline_curve3d.control_points)
+                n = min(len(bspline_curve3d.control_points), 20) # limit points to avoid uncovergence
                 points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
                 if self.x_periodicity:
