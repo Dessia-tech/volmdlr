@@ -88,6 +88,24 @@ class TestSphericalSurface3D(unittest.TestCase):
         self.assertAlmostEqual(theta_max, math.pi, 4)
         self.assertAlmostEqual(phi_max, 0.5 * math.pi, 3)
 
+        surface = surfaces.SphericalSurface3D.load_from_file(
+            "surfaces/objects_spherical_tests/test_sphericalsurface_repair_periodicity_surface.json")
+        contour = wires.Contour3D.load_from_file(
+            "surfaces/objects_spherical_tests/test_sphericalsurface_repair_periodicity_contour.json")
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertEqual(len(contour2d.primitives), 6)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 6.129921072323977, 2)
+
+        surface = surfaces.SphericalSurface3D.load_from_file(
+            "surfaces/objects_spherical_tests/test_2_sphericalsurface_repair_periodicity_surface.json")
+        contour = wires.Contour3D.load_from_file(
+            "surfaces/objects_spherical_tests/test_2_sphericalsurface_repair_periodicity_contour.json")
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertEqual(len(contour2d.primitives), 8)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 2.1665348983853794, 2)
+
     def test_plane_intersection(self):
         frame = volmdlr.Frame3D.from_point_and_vector(volmdlr.Point3D(0, 0.5, 0.5),
                                                       volmdlr.Vector3D(0, 1 / math.sqrt(2), 1 / math.sqrt(2)),
