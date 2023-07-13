@@ -1976,6 +1976,27 @@ class PeriodicalSurface(Surface3D):
         periodic = points[0].is_close(points[-1])
         return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
 
+    @staticmethod
+    def is_undefined_brep(edge):
+        """Returns True if the edge is contained within the periodicity boundary."""
+        if isinstance(edge.simplify, edges.LineSegment2D) and \
+                edge.simplify.line.unit_direction_vector().is_colinear_to(volmdlr.Y2D) \
+                and math.isclose(abs(edge.start.x), math.pi, abs_tol=1e-6):
+            return True
+        return False
+
+    def fix_undefined_brep_with_neighbors(self, edge, previous_edge, next_edge):
+        """Uses neighbors edges to fix edge contained within the periodicity boundary."""
+        delta_previous = previous_edge.end - edge.start
+        delta_next = next_edge.start - edge.end
+        if not self.is_undefined_brep(previous_edge) and \
+                math.isclose(delta_previous.norm(), self.x_periodicity, abs_tol=1e-3):
+            edge = edge.translation(delta_previous)
+        elif not self.is_undefined_brep(next_edge) and \
+                math.isclose(delta_next.norm(), self.x_periodicity, abs_tol=1e-3):
+            edge = edge.translation(delta_next)
+        return edge
+
 
 class CylindricalSurface3D(PeriodicalSurface):
     """
@@ -3826,27 +3847,6 @@ class SphericalSurface3D(PeriodicalSurface):
             if linesegment3d.point_belongs(intersection):
                 intersections.append(intersection)
         return intersections
-
-    @staticmethod
-    def is_undefined_brep(edge):
-        """Returns True if the edge is contained within the periodicity boundary."""
-        if isinstance(edge.simplify, edges.LineSegment2D) and \
-                edge.simplify.line.unit_direction_vector().is_colinear_to(volmdlr.Y2D) \
-                and math.isclose(abs(edge.start.x), math.pi, abs_tol=1e-6):
-            return True
-        return False
-
-    def fix_undefined_brep_with_neighbors(self, edge, previous_edge, next_edge):
-        """Uses neighbors edges to fix edge contained within the periodicity boundary."""
-        delta_previous = previous_edge.end - edge.start
-        delta_next = next_edge.start - edge.end
-        if not self.is_undefined_brep(previous_edge) and \
-                math.isclose(delta_previous.norm(), self.x_periodicity, abs_tol=1e-3):
-            edge = edge.translation(delta_previous)
-        elif not self.is_undefined_brep(next_edge) and \
-                math.isclose(delta_next.norm(), self.x_periodicity, abs_tol=1e-3):
-            edge = edge.translation(delta_next)
-        return edge
 
 
 class RuledSurface3D(Surface3D):

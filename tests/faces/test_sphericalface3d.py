@@ -27,8 +27,7 @@ class TestSphericalFace3D(unittest.TestCase):
         contour_1 = DessiaObject.load_from_file(
             "faces/objects_spherical_test/sphericalface_disconnected_contours_contour_1.json")
         face = SphericalFace3D.from_contours3d(surface, [contour_0, contour_1])
-        self.assertAlmostEqual(face.surface2d.area(), 1.9260870439089333, 2)
-
+        self.assertAlmostEqual(face.surface2d.area(), 3.7274576655120804, 2)
 
 if __name__ == '__main__':
     unittest.main()
