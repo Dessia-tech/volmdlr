@@ -3861,10 +3861,11 @@ class LineSegment3D(LineSegment):
                 }
 
     def normal_vector(self, abscissa=0.):
-        return None
+        direction_vector = self.direction_vector()
+        return direction_vector.deterministic_normal_vector()
 
     def unit_normal_vector(self, abscissa=0.):
-        return None
+        return self.direction_vector().unit_vector()
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
@@ -4061,7 +4062,7 @@ class LineSegment3D(LineSegment):
         return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
-        """Calculates the paralel distance between two Line Segments 3D."""
+        """Calculates the parallel distance between two Line Segments 3D."""
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
@@ -4911,7 +4912,7 @@ class Arc3D(ArcMixin, Edge):
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
-        """Saves the obejct parameters into a dictionnary."""
+        """Saves the object parameters into a dictionary."""
         dict_ = self.base_dict()
         dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
                                               id_method=id_method, id_memo=id_memo, path=path + '/circle')
@@ -4945,7 +4946,7 @@ class Arc3D(ArcMixin, Edge):
 
     @property
     def bounding_box(self):
-        """Bounding boc for Arc 3D."""
+        """Bounding box for Arc 3D."""
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
@@ -5162,7 +5163,7 @@ class Arc3D(ArcMixin, Edge):
         return arc
 
     def minimum_distance_points_arc(self, other_arc):
-        """Calculates the minimum distance points betweeen two arcs."""
+        """Calculates the minimum distance points between two arcs."""
         u1 = self.start - self.circle.center
         u1.normalize()
         u2 = self.circle.normal.cross(u1)

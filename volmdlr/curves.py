@@ -1364,7 +1364,7 @@ class Circle3D(CircleMixin, Curve):
 
     @property
     def bounding_box(self):
-        """Bounding boc for Arc 3D."""
+        """Bounding box for Arc 3D."""
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
