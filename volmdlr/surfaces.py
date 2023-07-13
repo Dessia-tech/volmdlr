@@ -3997,7 +3997,7 @@ class ExtrusionSurface3D(Surface3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
-        """Creates an extrusion durface from step data."""
+        """Creates an extrusion surface from step data."""
         name = arguments[0][1:-1]
         edge = object_dict[arguments[1]]
         if edge.__class__ is curves.Ellipse3D:

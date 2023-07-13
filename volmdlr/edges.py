@@ -436,7 +436,7 @@ class Edge(dc.DessiaObject):
         """
         Gets the minimum distance two methods.
 
-        This is a generelized method in a case an analytical method has not yet been defined.
+        This is a generalized method in a case an analytical method has not yet been defined.
 
         :param element: another edge.
         :param return_points: weather also to return the corresponding points.
@@ -4061,7 +4061,7 @@ class LineSegment3D(LineSegment):
         return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
-        """Calculates the paralel distance between two Line Segments 3D."""
+        """Calculates the paralell distance between two Line Segments 3D."""
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
@@ -4729,7 +4729,7 @@ class BSplineCurve3D(BSplineCurve):
     #     return radius
 
     def triangulation(self):
-        """Triangulatio method for a BSplineCurve3D."""
+        """Triangulation method for a BSplineCurve3D."""
         return None
 
     def linesegment_intersections(self, linesegment3d: LineSegment3D):
@@ -4847,7 +4847,7 @@ class Arc3D(ArcMixin, Edge):
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
-        """Saves the obejct parameters into a dictionnary."""
+        """Saves the object parameters into a dictionnary."""
         dict_ = self.base_dict()
         dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
                                               id_method=id_method, id_memo=id_memo, path=path + '/circle')
@@ -4881,7 +4881,7 @@ class Arc3D(ArcMixin, Edge):
 
     @property
     def bounding_box(self):
-        """Bounding boc for Arc 3D."""
+        """Bounding box for Arc 3D."""
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
@@ -5183,7 +5183,7 @@ class Arc3D(ArcMixin, Edge):
         return point1, point2
 
     def minimum_distance(self, element, return_points=False):
-        """Gets the mininum distace between an Arc 3D and another edge."""
+        """Gets the minimum distance between an Arc 3D and another edge."""
         if element.__class__.__name__ in ['Arc3D', 'Circle3D', 'FullArc3D']:
             p1, p2 = self.minimum_distance_points_arc(element)
             if return_points:
