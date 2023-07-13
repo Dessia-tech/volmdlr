@@ -1,6 +1,5 @@
 """volmdlr module for 3D Surfaces."""
 import math
-import warnings
 from itertools import chain
 from typing import List, Union
 import traceback
@@ -2010,6 +2009,27 @@ class PeriodicalSurface(Surface3D):
         periodic = points[0].is_close(points[-1])
         return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
 
+    @staticmethod
+    def is_undefined_brep(edge):
+        """Returns True if the edge is contained within the periodicity boundary."""
+        if isinstance(edge.simplify, edges.LineSegment2D) and \
+                edge.simplify.line.unit_direction_vector().is_colinear_to(volmdlr.Y2D) \
+                and math.isclose(abs(edge.start.x), math.pi, abs_tol=1e-6):
+            return True
+        return False
+
+    def fix_undefined_brep_with_neighbors(self, edge, previous_edge, next_edge):
+        """Uses neighbors edges to fix edge contained within the periodicity boundary."""
+        delta_previous = previous_edge.end - edge.start
+        delta_next = next_edge.start - edge.end
+        if not self.is_undefined_brep(previous_edge) and \
+                math.isclose(delta_previous.norm(), self.x_periodicity, abs_tol=1e-3):
+            edge = edge.translation(delta_previous)
+        elif not self.is_undefined_brep(next_edge) and \
+                math.isclose(delta_next.norm(), self.x_periodicity, abs_tol=1e-3):
+            edge = edge.translation(delta_next)
+        return edge
+
 
 class CylindricalSurface3D(PeriodicalSurface):
     """
@@ -3323,13 +3343,11 @@ class SphericalSurface3D(PeriodicalSurface):
                     theta2, phi2))
                           ]
             return primitives
-        n = 50
+        n = 20
         degree = 2
         points = [self.point3d_to_2d(point3d) for point3d in arc3d.discretization_points(number_points=n)]
         periodic = points[0].is_close(points[-1])
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree, periodic)]
-        # warnings.warn("Could not find BREP of the Arc3D on the sphere domain")
-        # return None
 
     def arc3d_to_2d_with_singularity(self, arc3d, start, end, singularity_points):
         """
@@ -3726,6 +3744,7 @@ class SphericalSurface3D(PeriodicalSurface):
             #     primitives2d.insert(i + 1, primitive2)
             #     primitives2d[i + 2] = primitive3
             #     i += 1
+
             i += 1
         #     return primitives2d
         # primitives2d = repair(primitives2d)
@@ -3879,26 +3898,6 @@ class SphericalSurface3D(PeriodicalSurface):
                 intersections.append(intersection)
         return intersections
 
-    @staticmethod
-    def is_undefined_brep(edge):
-        """Returns True if the edge is contained within the periodicity boundary."""
-        if isinstance(edge.simplify, edges.LineSegment2D) and \
-                edge.simplify.line.unit_direction_vector().is_colinear_to(volmdlr.Y2D) \
-                and math.isclose(abs(edge.start.x), math.pi, abs_tol=1e-6):
-            return True
-        return False
-
-    def fix_undefined_brep_with_neighbors(self, edge, previous_edge, next_edge):
-        """Uses neighbors edges to fix edge contained within the periodicity boundary."""
-        delta_previous = previous_edge.end - edge.start
-        delta_next = next_edge.start - edge.end
-        if not self.is_undefined_brep(previous_edge) and \
-                math.isclose(delta_previous.norm(), self.x_periodicity, abs_tol=1e-3):
-            edge = edge.translation(delta_previous)
-        elif not self.is_undefined_brep(next_edge) and \
-                math.isclose(delta_next.norm(), self.x_periodicity, abs_tol=1e-3):
-            edge = edge.translation(delta_next)
-        return edge
 
 class RuledSurface3D(Surface3D):
     """
@@ -3979,6 +3978,7 @@ class ExtrusionSurface3D(Surface3D):
 
     @property
     def x_periodicity(self):
+        """Returns the periodicity in x direction."""
         if self._x_periodicity:
             return self._x_periodicity
         start = self.edge.start
@@ -3989,6 +3989,7 @@ class ExtrusionSurface3D(Surface3D):
 
     @x_periodicity.setter
     def x_periodicity(self, value):
+        """X periodicity setter."""
         self._x_periodicity = value
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
@@ -4047,6 +4048,7 @@ class ExtrusionSurface3D(Surface3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
+        """Creates an extrusion surface from step data."""
         name = arguments[0][1:-1]
         edge = object_dict[arguments[1]]
         if edge.__class__ is curves.Ellipse3D:
