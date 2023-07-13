@@ -807,10 +807,9 @@ class Surface3D(DessiaObject):
         y_periodicity = self.y_periodicity
 
         if x_periodicity or y_periodicity:
-            pos = vm_parametric.find_index_defined_brep_primitive_on_periodical_surface(primitives2d,
-                                                                                        [x_periodicity, y_periodicity])
-            if pos != 0:
-                primitives2d = primitives2d[pos:] + primitives2d[:pos]
+            if self.is_undefined_brep(primitives2d[0]):
+                primitives2d[0] = self.fix_undefined_brep_with_neighbors(primitives2d[0], primitives2d[-1],
+                                                                         primitives2d[1])
         if x_periodicity is None:
             x_periodicity = -1
         if y_periodicity is None:
@@ -828,11 +827,21 @@ class Surface3D(DessiaObject):
                         math.isclose(current_primitive.length(), y_periodicity, abs_tol=1e-2):
                     delta_end = previous_primitive.end - current_primitive.end
                     delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
-                    if self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
+                    if self.is_undefined_brep(primitives2d[i]):
+                        primitives2d[i] = self.fix_undefined_brep_with_neighbors(primitives2d[i], previous_primitive,
+                                                                                 primitives2d[(i + 1) % len(primitives2d)])
+                        delta = previous_primitive.end - primitives2d[i].start
+                        if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
+                            primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+                                                                       name="construction"))
+                            if i < len(primitives2d):
+                                i += 1
+                    elif self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                          self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
                         primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, current_primitive.start,
                                                                    name="construction"))
-                        i += 1
+                        if i < len(primitives2d):
+                            i += 1
                     elif current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
                         primitives2d[i] = current_primitive.reverse()
                     elif delta_min_index == 0:
@@ -1056,6 +1065,10 @@ class Surface3D(DessiaObject):
 
     def is_singularity_point(self, point):
         """Verifies if point is on the surface singularity."""
+        return False
+
+    def is_undefined_brep(self, edge):
+        """Verifies if the edge is contained within the periodicity boundary."""
         return False
 
 
@@ -1974,6 +1987,27 @@ class PeriodicalSurface(Surface3D):
                   for p in linesegment2d.discretization_points(number_points=n)]
         periodic = points[0].is_close(points[-1])
         return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
+
+    @staticmethod
+    def is_undefined_brep(edge):
+        """Returns True if the edge is contained within the periodicity boundary."""
+        if isinstance(edge.simplify, edges.LineSegment2D) and \
+                edge.simplify.line.unit_direction_vector().is_colinear_to(volmdlr.Y2D) \
+                and math.isclose(abs(edge.start.x), math.pi, abs_tol=1e-6):
+            return True
+        return False
+
+    def fix_undefined_brep_with_neighbors(self, edge, previous_edge, next_edge):
+        """Uses neighbors edges to fix edge contained within the periodicity boundary."""
+        delta_previous = previous_edge.end - edge.start
+        delta_next = next_edge.start - edge.end
+        if not self.is_undefined_brep(previous_edge) and \
+                math.isclose(delta_previous.norm(), self.x_periodicity, abs_tol=1e-3):
+            edge = edge.translation(delta_previous)
+        elif not self.is_undefined_brep(next_edge) and \
+                math.isclose(delta_next.norm(), self.x_periodicity, abs_tol=1e-3):
+            edge = edge.translation(delta_next)
+        return edge
 
 
 class CylindricalSurface3D(PeriodicalSurface):

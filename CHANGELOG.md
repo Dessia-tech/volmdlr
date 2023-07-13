@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - plot of vector3D.
 
 ### Refactor
--
+- Surface3D: enhance repair_primitives_periodicity method.
 
 ### Changed
 -
