@@ -3682,6 +3682,15 @@ class SphericalSurface3D(PeriodicalSurface):
         :return: A list of primitives.
         :rtype: list
         """
+        if self.is_undefined_brep(primitives2d[0]):
+            if not self.is_undefined_brep(primitives2d[-1]):
+                delta = primitives2d[-1].end - primitives2d[0].start
+                if math.isclose(delta.norm(), self.x_periodicity, abs_tol=1e-3):
+                    primitives2d[0] = primitives2d[0].translation(delta)
+            elif not self.is_undefined_brep(primitives2d[1]):
+                delta = primitives2d[1].start - primitives2d[0].end
+                if math.isclose(delta.norm(), self.x_periodicity, abs_tol=1e-3):
+                    primitives2d[0] = primitives2d[0].translation(delta)
         i = 1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
@@ -3697,30 +3706,32 @@ class SphericalSurface3D(PeriodicalSurface):
                     else:
                         primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                    name="construction"))
-                        i += 1
+                        if i < len(primitives2d):
+                            i += 1
                 elif self.is_point2d_on_sphere_singularity(previous_primitive.end, 1e-5):
                     primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                name="construction"))
-                    i += 1
+                    if i < len(primitives2d):
+                        i += 1
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
-            elif self.is_point2d_on_sphere_singularity(primitives2d[i].start, 1e-5) and \
-                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-3) and \
-                    math.isclose(primitives2d[i].start.x, previous_primitive.start.x, abs_tol=1e-3):
-
-                if primitives2d[i + 1].end.x < primitives2d[i].end.x:
-                    theta_offset = volmdlr.TWO_PI
-                elif primitives2d[i + 1].end.x > primitives2d[i].end.x:
-                    theta_offset = -volmdlr.TWO_PI
-                primitive1 = edges.LineSegment2D(previous_primitive.end,
-                                                 previous_primitive.end + volmdlr.Point2D(theta_offset, 0),
-                                                 name="construction")
-                primitive2 = primitives2d[i].translation(volmdlr.Vector2D(theta_offset, 0))
-                primitive3 = primitives2d[i + 1].translation(volmdlr.Vector2D(theta_offset, 0))
-                primitives2d[i] = primitive1
-                primitives2d.insert(i + 1, primitive2)
-                primitives2d[i + 2] = primitive3
-                i += 1
+            # elif self.is_point2d_on_sphere_singularity(primitives2d[i].start, 1e-5) and \
+            #         math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-3) and \
+            #         math.isclose(primitives2d[i].start.x, previous_primitive.start.x, abs_tol=1e-3):
+            #
+            #     if primitives2d[(i + 1) % len(primitives2d)].end.x < primitives2d[i].end.x:
+            #         theta_offset = volmdlr.TWO_PI
+            #     elif primitives2d[(i + 1) % len(primitives2d)].end.x > primitives2d[i].end.x:
+            #         theta_offset = -volmdlr.TWO_PI
+            #     primitive1 = edges.LineSegment2D(previous_primitive.end,
+            #                                      previous_primitive.end + volmdlr.Point2D(theta_offset, 0),
+            #                                      name="construction")
+            #     primitive2 = primitives2d[i].translation(volmdlr.Vector2D(theta_offset, 0))
+            #     primitive3 = primitives2d[i + 1].translation(volmdlr.Vector2D(theta_offset, 0))
+            #     primitives2d[i] = primitive1
+            #     primitives2d.insert(i + 1, primitive2)
+            #     primitives2d[i + 2] = primitive3
+            #     i += 1
             i += 1
         #     return primitives2d
         # primitives2d = repair(primitives2d)
