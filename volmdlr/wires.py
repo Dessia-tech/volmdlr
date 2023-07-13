@@ -4616,14 +4616,14 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                         face_points = [self.points[i - 1],
                                        point_polygon2,
                                        list(dict_closing_pairs.keys())[j]]
-                        triangles_points.append(face_points)
+                        triangles_points.append(face_points[::-1])
                     elif index[0] > index[1]:
                         if (i - 1 <= index[0] and i <= index[1]) or (
                                 (i - 1 >= index[0]) and i >= index[1]):
                             face_points = [self.points[i - 1],
                                            point_polygon2,
                                            list(dict_closing_pairs.keys())[j]]
-                            triangles_points.append(face_points)
+                            triangles_points.append(face_points[::-1])
         return triangles_points
 
     def check_sewing(self, polygon2, sewing_faces):

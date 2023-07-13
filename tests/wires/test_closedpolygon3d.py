@@ -68,5 +68,6 @@ class TestClosedPolygon3D(unittest.TestCase):
         self.assertGreater(poly1_normal_out, 0.)
         self.assertGreater(poly2_normal_out, 0.)
 
+
 if __name__ == '__main__':
     unittest.main()
