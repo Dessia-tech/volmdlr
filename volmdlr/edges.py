@@ -3866,7 +3866,7 @@ class LineSegment3D(LineSegment):
         return direction_vector.deterministic_normal_vector()
 
     def unit_normal_vector(self, abscissa=0.):
-        return self.direction_vector().unit_vector()
+        return self.normal_vector().unit_vector()
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
