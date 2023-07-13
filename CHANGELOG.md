@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 
 
 ### Fixed
+- Sweep with non smoth path
 - plot of vector3D.
 
 ### Refactor
