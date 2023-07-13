@@ -3683,14 +3683,8 @@ class SphericalSurface3D(PeriodicalSurface):
         :rtype: list
         """
         if self.is_undefined_brep(primitives2d[0]):
-            if not self.is_undefined_brep(primitives2d[-1]):
-                delta = primitives2d[-1].end - primitives2d[0].start
-                if math.isclose(delta.norm(), self.x_periodicity, abs_tol=1e-3):
-                    primitives2d[0] = primitives2d[0].translation(delta)
-            elif not self.is_undefined_brep(primitives2d[1]):
-                delta = primitives2d[1].start - primitives2d[0].end
-                if math.isclose(delta.norm(), self.x_periodicity, abs_tol=1e-3):
-                    primitives2d[0] = primitives2d[0].translation(delta)
+            primitives2d[0] = self.fix_undefined_brep_with_neighbors(primitives2d[0], primitives2d[-1],
+                                                                     primitives2d[1])
         i = 1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
@@ -3700,10 +3694,10 @@ class SphericalSurface3D(PeriodicalSurface):
                         primitives2d[i].length() == volmdlr.TWO_PI:
                     primitives2d[i] = primitives2d[i].reverse()
                 elif self.is_undefined_brep(primitives2d[i]):
-                    if not self.is_undefined_brep(primitives2d[(i+1) % len(primitives2d)]):
-                        delta = primitives2d[(i+1) % len(primitives2d)].start - primitives2d[i].end
-                        primitives2d[i] = primitives2d[i].translation(delta)
-                    else:
+                    primitives2d[i] = self.fix_undefined_brep_with_neighbors(primitives2d[i], previous_primitive,
+                                                                             primitives2d[(i+1) % len(primitives2d)])
+                    delta = previous_primitive.end - primitives2d[i].start
+                    if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
                         primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                    name="construction"))
                         if i < len(primitives2d):
@@ -3888,10 +3882,23 @@ class SphericalSurface3D(PeriodicalSurface):
     @staticmethod
     def is_undefined_brep(edge):
         """Returns True if the edge is contained within the periodicity boundary."""
-        if isinstance(edge, edges.LineSegment2D) and edge.line.unit_direction_vector().is_colinear_to(volmdlr.Y2D) \
+        if isinstance(edge.simplify, edges.LineSegment2D) and \
+                edge.simplify.line.unit_direction_vector().is_colinear_to(volmdlr.Y2D) \
                 and math.isclose(abs(edge.start.x), math.pi, abs_tol=1e-6):
             return True
         return False
+
+    def fix_undefined_brep_with_neighbors(self, edge, previous_edge, next_edge):
+        """Uses neighbors edges to fix edge contained within the periodicity boundary."""
+        delta_previous = previous_edge.end - edge.start
+        delta_next = next_edge.start - edge.end
+        if not self.is_undefined_brep(previous_edge) and \
+                math.isclose(delta_previous.norm(), self.x_periodicity, abs_tol=1e-3):
+            edge = edge.translation(delta_previous)
+        elif not self.is_undefined_brep(next_edge) and \
+                math.isclose(delta_next.norm(), self.x_periodicity, abs_tol=1e-3):
+            edge = edge.translation(delta_next)
+        return edge
 
 class RuledSurface3D(Surface3D):
     """
