@@ -3708,6 +3708,7 @@ class FullArcEllipse(Edge):
 
     @classmethod
     def from_curve(cls, ellipse):
+        """Creates a fullarc ellipse from a ellipse curve."""
         return cls(ellipse, ellipse.center + ellipse.frame.u * ellipse.major_axis)
 
 
@@ -4694,14 +4695,10 @@ class BSplineCurve3D(BSplineCurve):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic, self.name)
 
-    def polygon_points(self, discretization_resolution: int):
-        warnings.warn('polygon_points is deprecated,\
-                please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(angle_resolution=discretization_resolution)
-
     def curvature(self, u: float, point_in_curve: bool = False):
-        # u should be in the interval [0,1]
+        """
+        Returns the curvature of a curve and the point where it is located.
+        """
         ders = self.derivatives(u, 3)  # 3 first derivative
         c1, c2 = ders[1], ders[2]
         denom = c1.cross(c2)
@@ -4716,6 +4713,9 @@ class BSplineCurve3D(BSplineCurve):
         return 1 / r_c
 
     def global_maximum_curvature(self, nb_eval: int = 21, point_in_curve: bool = False):
+        """
+        Returns the global maximum curvature of a curve and the point where it is located.
+        """
         check = [i / (nb_eval - 1) for i in range(nb_eval)]
         curvatures = []
         for u in check:
