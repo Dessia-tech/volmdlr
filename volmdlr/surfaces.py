@@ -1,6 +1,5 @@
 """volmdlr module for 3D Surfaces."""
 import math
-import warnings
 from itertools import chain
 from typing import List, Union
 import traceback
