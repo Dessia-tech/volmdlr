@@ -4822,7 +4822,7 @@ class BSplineCurve3D(BSplineCurve):
 
     def sweep(self, *args):
         """
-        BSpline 3D is used as path for sweeping given section through it.
+        Bspline 3D is used as path for sweeping given section through it.
 
         :return:
         """
