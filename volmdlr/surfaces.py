@@ -3291,7 +3291,7 @@ class SphericalSurface3D(PeriodicalSurface):
                     theta2, phi2))
                           ]
             return primitives
-        n = 50
+        n = 20
         degree = 2
         points = [self.point3d_to_2d(point3d) for point3d in arc3d.discretization_points(number_points=n)]
         periodic = points[0].is_close(points[-1])
