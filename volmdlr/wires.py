@@ -4532,6 +4532,19 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return ClosedPolygon3D(self.simplify_polygon(
             min_distance=min_distance, max_distance=max_distance).points)
 
+    @staticmethod
+    def fix_sewing_normals(triangles, reference_linesegment):
+        """ Fixes sewing triangle normal so it faces always outwards."""
+        first_triangles_points = triangles[0]
+        frame = volmdlr.Frame3D.from_3_points(*first_triangles_points)
+        normal = frame.w
+        middle_point = (first_triangles_points[0] + first_triangles_points[1] + first_triangles_points[2]) / 3
+        point1 = middle_point + 0.05 * normal
+        point2 = middle_point - 0.05 * normal
+        if reference_linesegment.line.point_distance(point1) < reference_linesegment.line.point_distance(point2):
+            return [points[::-1] for points in triangles]
+        return triangles
+
     def convex_sewing(self, polygon2, x, y):
         """
         Sew to Convex Polygon.
@@ -4586,7 +4599,11 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
                 list_closing_point_indexes.append(closing_point_index)
                 previous_closing_point_index = closing_point_index
-        triangles += polygon2.close_sewing(dict_closing_pairs)
+        reference_linesegment = edges.LineSegment3D(center1, center2)
+        triangles = self.fix_sewing_normals(triangles, reference_linesegment)
+        closing_triangles = polygon2.close_sewing(dict_closing_pairs)
+        closing_triangles = self.fix_sewing_normals(closing_triangles, reference_linesegment)
+        triangles += closing_triangles
 
         return triangles
 

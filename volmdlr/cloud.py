@@ -163,7 +163,6 @@ class PointCloud3D(dc.DessiaObject):
         """
         position_plane = [p.points[0].dot(normal) for p in polygons_3d]
         resolution = len(polygons_3d)
-
         faces = []
         for n in range(resolution):
             poly1 = polygons_3d[n]
