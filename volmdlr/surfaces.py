@@ -4781,12 +4781,22 @@ class BSplineSurface3D(Surface3D):
                (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
                (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
                (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10)]
+               (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
+               (0.33333333, 0.009), (0.5555555, 0.0099)]
 
-        # Sort the initial conditions
+            # Sort the initial conditions
         x0s.sort(key=f)
+        matrix = npy.array(self.surface.evalpts)
+        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]])
 
+        # Calculate distances
+        distances = npy.linalg.norm(matrix - point3d_array, axis=1)
+
+        # Find the minimal index
+        index = npy.argmin(distances)
         # Find the parametric coordinates of the point
+        # indexes = int(npy.argmin(distances))
+        x0s.insert(0, self.surface.vertices[index].uv)
         results = []
         for x0 in x0s:
             res = minimize(fun, x0=npy.array(x0), jac=True,
