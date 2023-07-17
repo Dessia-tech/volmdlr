@@ -17,8 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - EdgeCollection3D: babylon_meshes.
 
 ### Refactor
-
-- Shells: refactor. 
+- refator some classes' init in primitives3D. 
+- Shells: refactor.
+- 
 
 ### Changed
 -

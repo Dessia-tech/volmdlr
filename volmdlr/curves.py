@@ -548,15 +548,18 @@ class Line3D(Line):
 
     @property
     def bounding_box(self):
+        """Bounding Box getter."""
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
+        """Bounding Box setter."""
         self._bbox = new_bounding_box
 
     def _bounding_box(self):
+        """Calculates the Bouding box."""
         xmin = min([self.point1[0], self.point2[0]])
         xmax = max([self.point1[0], self.point2[0]])
         ymin = min([self.point1[1], self.point2[1]])
