@@ -203,6 +203,10 @@ class Line(Curve):
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
         return content, current_id
 
+    def reverse(self):
+        """Gets a line in the reverse direction."""
+        return self.__class__(self.point2, self.point1, name=self.name+'_reverse')
+
 
 class Line2D(Line):
     """
