@@ -829,13 +829,12 @@ class Surface3D(DessiaObject):
                     delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
                     if self.is_undefined_brep(primitives2d[i]):
                         primitives2d[i] = self.fix_undefined_brep_with_neighbors(primitives2d[i], previous_primitive,
-                                                                                 primitives2d[(i + 1) % len(primitives2d)])
+                                                                            primitives2d[(i + 1) % len(primitives2d)])
                         delta = previous_primitive.end - primitives2d[i].start
                         if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
                             primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                        name="construction"))
-                            if i < len(primitives2d):
-                                i += 1
+                            i += 1
                     elif self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                          self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
                         primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, current_primitive.start,
