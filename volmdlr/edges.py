@@ -200,8 +200,8 @@ class Edge(dc.DessiaObject):
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
-            # if not same_sense:
-            #     point1, point2 = point2, point1
+            if not same_sense:
+                obj = obj.reverse()
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, obj, arguments[0][1:-1])
             return None
