@@ -108,4 +108,3 @@ casing.save_babylonjs_to_file(filename='/tmp/casing')
 
 
 casing.to_step('/tmp/casing')
-
