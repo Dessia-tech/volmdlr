@@ -436,7 +436,7 @@ class Edge(dc.DessiaObject):
         """
         Gets the minimum distance two methods.
 
-        This is a generlalized method in a case an analytical method has not yet been defined.
+        This is a generalized method in a case an analytical method has not yet been defined.
 
         :param element: another edge.
         :param return_points: weather also to return the corresponding points.
@@ -4064,7 +4064,7 @@ class LineSegment3D(LineSegment):
         return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
-        """Calculates the parallel distance between two Line Segments 3D."""
+        """Calculates the paralell distance between two Line Segments 3D."""
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
@@ -4751,7 +4751,7 @@ class BSplineCurve3D(BSplineCurve):
     #     return radius
 
     def triangulation(self):
-        """Triangulatio method for a BSplineCurve3D."""
+        """Triangulation method for a BSplineCurve3D."""
         return None
 
     def linesegment_intersections(self, linesegment3d: LineSegment3D):
