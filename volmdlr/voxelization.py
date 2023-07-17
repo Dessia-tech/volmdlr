@@ -4,21 +4,20 @@ Class for voxel representation of volmdlr models
 import math
 import warnings
 from collections import deque
+from copy import copy
 from typing import Dict, Iterable, List, Set, Tuple
 
 import numpy as np
-
 from dessia_common.core import PhysicalObject
 from tqdm import tqdm
-from copy import copy
 
 from volmdlr import Point2D, Point3D, Vector3D
-from volmdlr.core import VolumeModel, BoundingBox
+from volmdlr.core import BoundingBox, VolumeModel
 from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
+from volmdlr.voxelization_compiled import aabb_intersecting_boxes, triangle_intersects_voxel
 from volmdlr.wires import ClosedPolygon2D
-from volmdlr.voxelization_compiled import triangle_intersects_voxel, aabb_intersecting_boxes
 
 # Custom types
 Point = Tuple[float, ...]
@@ -1549,11 +1548,11 @@ class Voxelization(PhysicalObject):
             for dx, dy, dz in directions:
                 nx, ny, nz = x + dx, y + dy, z + dz
                 if (
-                        0 <= nx < len(matrix)
-                        and 0 <= ny < len(matrix[0])
-                        and 0 <= nz < len(matrix[0][0])
-                        and matrix[nx][ny][nz] == old_value
-                        and (nx, ny, nz) not in visited
+                    0 <= nx < len(matrix)
+                    and 0 <= ny < len(matrix[0])
+                    and 0 <= nz < len(matrix[0][0])
+                    and matrix[nx][ny][nz] == old_value
+                    and (nx, ny, nz) not in visited
                 ):
                     stack.append((nx, ny, nz))
                     visited.add((nx, ny, nz))
