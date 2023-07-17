@@ -193,6 +193,10 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
+        step_id = kwargs.get("step_id")
+        if step_id in (600692, 600687):
+            print(True)
+            print("debug_point edges.py")
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
