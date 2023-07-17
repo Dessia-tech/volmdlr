@@ -1,6 +1,5 @@
 """volmdlr module for 3D Surfaces."""
 import math
-import warnings
 from itertools import chain
 from typing import List, Union
 import traceback
@@ -936,6 +935,8 @@ class Surface3D(DessiaObject):
         """
         primitives3d = []
         for primitive2d in contour2d.primitives:
+            if primitive2d.name == "construction":
+                continue
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
             if hasattr(self, method_name):
                 try:
@@ -2269,11 +2270,12 @@ class CylindricalSurface3D(PeriodicalSurface):
             major_axis = axis_1
             minor_axis = axis_2
             major_dir = ellipse_0 - center3d_plane
+            u_vector = major_dir.unit_vector()
         else:
             major_axis = axis_2
             minor_axis = axis_1
             major_dir = ellipse_pi_by_2 - center3d_plane
-            u_vector = major_dir.unit_vector()
+        u_vector = major_dir.unit_vector()
         ellipse = curves.Ellipse3D(major_axis, minor_axis,
                                    volmdlr.Frame3D(center3d_plane, u_vector,
                                                          plane3d.frame.w.cross(u_vector), plane3d.frame.w))
@@ -2516,7 +2518,6 @@ class ToroidalSurface3D(PeriodicalSurface):
             circle = curves.Circle3D(frame, start3d.point_distance(center))
             start3d = self.point2d_to_3d(linesegment2d.start)
             if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
-
                 start_end = center + self.frame.u * (self.small_radius + self.tore_radius)
                 return [edges.FullArc3D(circle=circle, start_end=start_end)]
             return [edges.Arc3D(circle, start3d, self.point2d_to_3d(linesegment2d.end))]
@@ -2687,7 +2688,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        self.frame.plot(ax=ax)
+        self.frame.plot(ax=ax, ratio=self.tore_radius)
         number_arcs = 50
         for i in range(number_arcs):
             theta = i / number_arcs * volmdlr.TWO_PI
@@ -3075,6 +3076,8 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         primitives3d = []
         for primitive2d in contour2d.primitives:
+            if primitive2d.name == "construction":
+                continue
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
             if hasattr(self, method_name):
                 try:
@@ -3296,8 +3299,7 @@ class SphericalSurface3D(PeriodicalSurface):
             return [edges.LineSegment2D(start, end)]
         return self.arc3d_to_2d_any_direction(arc3d)
 
-    @staticmethod
-    def helper_arc3d_to_2d_with_singularity(arc3d, start, end, point_singularity, half_pi):
+    def helper_arc3d_to_2d_with_singularity(self, arc3d, start, end, point_singularity, half_pi):
         """Helper function to arc3d_to_2d_with_singularity."""
         theta1, phi1 = start
         theta2, phi2 = end
@@ -3321,8 +3323,11 @@ class SphericalSurface3D(PeriodicalSurface):
                     theta2, phi2))
                           ]
             return primitives
-        warnings.warn("Could not find BREP of the Arc3D on the sphere domain")
-        return None
+        n = 20
+        degree = 2
+        points = [self.point3d_to_2d(point3d) for point3d in arc3d.discretization_points(number_points=n)]
+        periodic = points[0].is_close(points[-1])
+        return [edges.BSplineCurve2D.from_points_interpolation(points, degree, periodic)]
 
     def arc3d_to_2d_with_singularity(self, arc3d, start, end, singularity_points):
         """
@@ -3675,7 +3680,9 @@ class SphericalSurface3D(PeriodicalSurface):
         :return: A list of primitives.
         :rtype: list
         """
-        # # Search for a primitive that can be used as reference for repairing periodicity
+        if self.is_undefined_brep(primitives2d[0]):
+            primitives2d[0] = self.fix_undefined_brep_with_neighbors(primitives2d[0], primitives2d[-1],
+                                                                     primitives2d[1])
         i = 1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
@@ -3684,29 +3691,22 @@ class SphericalSurface3D(PeriodicalSurface):
                 if primitives2d[i].end.is_close(previous_primitive.end, 1e-3) and \
                         primitives2d[i].length() == volmdlr.TWO_PI:
                     primitives2d[i] = primitives2d[i].reverse()
+                elif self.is_undefined_brep(primitives2d[i]):
+                    primitives2d[i] = self.fix_undefined_brep_with_neighbors(primitives2d[i], previous_primitive,
+                                                                             primitives2d[(i+1) % len(primitives2d)])
+                    delta = previous_primitive.end - primitives2d[i].start
+                    if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
+                        primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+                                                                   name="construction"))
+                        if i < len(primitives2d):
+                            i += 1
                 elif self.is_point2d_on_sphere_singularity(previous_primitive.end, 1e-5):
                     primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                name="construction"))
-                    i += 1
+                    if i < len(primitives2d):
+                        i += 1
                 else:
                     primitives2d[i] = primitives2d[i].translation(delta)
-            elif self.is_point2d_on_sphere_singularity(primitives2d[i].start, 1e-5) and \
-                    math.isclose(primitives2d[i].start.x, primitives2d[i].end.x, abs_tol=1e-3) and \
-                    math.isclose(primitives2d[i].start.x, previous_primitive.start.x, abs_tol=1e-3):
-
-                if primitives2d[i + 1].end.x < primitives2d[i].end.x:
-                    theta_offset = volmdlr.TWO_PI
-                elif primitives2d[i + 1].end.x > primitives2d[i].end.x:
-                    theta_offset = -volmdlr.TWO_PI
-                primitive1 = edges.LineSegment2D(previous_primitive.end,
-                                                 previous_primitive.end + volmdlr.Point2D(theta_offset, 0),
-                                                 name="construction")
-                primitive2 = primitives2d[i].translation(volmdlr.Vector2D(theta_offset, 0))
-                primitive3 = primitives2d[i + 1].translation(volmdlr.Vector2D(theta_offset, 0))
-                primitives2d[i] = primitive1
-                primitives2d.insert(i + 1, primitive2)
-                primitives2d[i + 2] = primitive3
-                i += 1
             i += 1
         #     return primitives2d
         # primitives2d = repair(primitives2d)
@@ -3730,7 +3730,7 @@ class SphericalSurface3D(PeriodicalSurface):
                                             first_start, name="construction")]
                     primitives2d.extend(lines)
             else:
-                primitives2d.append(edges.LineSegment2D(last_end, first_start))
+                primitives2d.append(edges.LineSegment2D(last_end, first_start, name="construction"))
         return primitives2d
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -3940,6 +3940,7 @@ class ExtrusionSurface3D(Surface3D):
 
     @property
     def x_periodicity(self):
+        """Returns the periodicity in x direction."""
         if self._x_periodicity:
             return self._x_periodicity
         start = self.edge.start
@@ -3950,6 +3951,7 @@ class ExtrusionSurface3D(Surface3D):
 
     @x_periodicity.setter
     def x_periodicity(self, value):
+        """X periodicity setter."""
         self._x_periodicity = value
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
@@ -4007,6 +4009,7 @@ class ExtrusionSurface3D(Surface3D):
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
+        """Creates an extrusion surface from step data."""
         name = arguments[0][1:-1]
         edge = object_dict[arguments[1]]
         if edge.__class__ is curves.Ellipse3D:
