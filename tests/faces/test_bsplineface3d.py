@@ -19,7 +19,6 @@ class TestBSplineFace3D(unittest.TestCase):
         self.assertEqual(len(intersections), 1)
         self.assertTrue(intersections[0], volmdlr.Point3D(0.0, 0.002350000000000002, 0.0019700000000000004))
 
-
     def test_from_contours3d(self):
         surface = surfaces.BSplineSurface3D.load_from_file(
             "faces/objects_bspline_test/bspline_surface_openned_contour.json")
@@ -39,6 +38,7 @@ class TestBSplineFace3D(unittest.TestCase):
         face = faces.BSplineFace3D.load_from_file("faces/objects_bspline_test/test_neutral_fiber_2.json")
         neutral_fiber = face.neutral_fiber()
         self.assertAlmostEqual(neutral_fiber.length(), 0.5327006535550406, 2)
+
 
 if __name__ == '__main__':
     unittest.main()
