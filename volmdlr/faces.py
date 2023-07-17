@@ -40,7 +40,7 @@ def octree_decomposition(bbox, faces):
 
 def octree_face_decomposition(face):
     """
-    Decomposes the face discretization triangle faces inside eight boxes from a bondingbox octree structure.
+    Decomposes the face discretization triangle faces inside eight boxes from a bounding box octree structure.
 
     :param face: given face.
     :return: returns a dictionary containing bounding boxes as keys and as values, a list of faces inside that bbox.
