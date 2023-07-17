@@ -465,39 +465,24 @@ class ExtrudedProfile(shells.ClosedShell3D):
     _non_serializable_attributes = ['faces', 'inner_contours3d',
                                     'outer_contour3d']
 
-    # def __init__(self, plane_origin: volmdlr.Point3D,
-    #              x: volmdlr.Vector3D, y: volmdlr.Vector3D,
-    #              outer_contour2d: volmdlr.wires.Contour2D,
-    #              inner_contours2d: List[volmdlr.wires.Contour2D],
-    #              extrusion_vector: volmdlr.Vector3D,
-    #              color: Tuple[float, float, float] = None, alpha: float = 1.,
-    #              name: str = ''):
     def __init__(self, frame: volmdlr.Frame3D,
-                 # plane_origin: volmdlr.Point3D,
-                 # x: volmdlr.Vector3D, y: volmdlr.Vector3D,
                  outer_contour2d: volmdlr.wires.Contour2D,
                  inner_contours2d: List[volmdlr.wires.Contour2D],
-                 # extrusion_vector: volmdlr.Vector3D,
                  extrusion_length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
         self.frame = frame
-        # self.plane_origin = plane_origin
 
         self.outer_contour2d = outer_contour2d
-        # self.outer_contour3d = outer_contour2d.to_3d(plane_origin, x, y)
         self.outer_contour3d = outer_contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
         self.extrusion_length = extrusion_length
         self.inner_contours2d = inner_contours2d
         self.extrusion_vector = self.frame.w * extrusion_length
         self.inner_contours3d = []
-        # self.x = x
-        # self.y = y
         self.color = color
 
         bool_areas = []
         for contour in inner_contours2d:
-            # self.inner_contours3d.append(contour.to_3d(plane_origin, x, y))
             self.inner_contours3d.append(contour.to_3d(self.frame.origin, self.frame.u, self.frame.v))
             if contour.area() > outer_contour2d.area():
                 bool_areas.append(True)
@@ -520,13 +505,9 @@ class ExtrudedProfile(shells.ClosedShell3D):
         dict_.update({'color': self.color,
                       'alpha': self.alpha,
                       'frame': self.frame.to_dict(),
-                      # 'plane_origin': self.plane_origin.to_dict(),
                       'outer_contour2d': self.outer_contour2d.to_dict(),
                       'inner_contours2d': [c.to_dict() for c in self.inner_contours2d],
-                      # 'extrusion_vector': self.extrusion_vector.to_dict(),
                       'extrusion_length': self.extrusion_length,
-                      # 'x': self.x.to_dict(),
-                      # 'y': self.y.to_dict(),
                       })
 
         return dict_
@@ -537,13 +518,9 @@ class ExtrudedProfile(shells.ClosedShell3D):
 
         """
         return self.__class__(
-            # plane_origin=self.plane_origin.copy(),
-            #                   x=self.x.copy(),
-            #                   y=self.y.copy(),
             frame=self.frame.copy(),
             outer_contour2d=self.outer_contour2d.copy(),
             inner_contours2d=[c.copy() for c in self.inner_contours2d],
-            # extrusion_vector=self.extrusion_vector.copy(),
             extrusion_length=self.extrusion_length,
             color=self.color,
             alpha=self.alpha,
@@ -587,8 +564,6 @@ class ExtrudedProfile(shells.ClosedShell3D):
 
         :param side: = 'old' or 'new'.
         """
-        # extrusion_vector, x, y = self.frame_mapping_parameters(frame,
-        #                                                        side)
         return ExtrudedProfile(
             self.frame.frame_mapping(frame, side),
             self.outer_contour2d, self.inner_contours2d,
@@ -604,15 +579,6 @@ class ExtrudedProfile(shells.ClosedShell3D):
         :param angle: angle rotation.
         :return: a new rotated ExtrudedProfile.
         """
-        # return self.__class__(
-        #     plane_origin=self.plane_origin.rotation(center, axis, angle),
-        #     x=self.x.rotation(volmdlr.O3D, axis, angle),
-        #     y=self.y.rotation(volmdlr.O3D, axis, angle),
-        #     outer_contour2d=self.outer_contour2d,
-        #     inner_contours2d=self.inner_contours2d,
-        #     extrusion_vector=self.extrusion_vector.rotation(volmdlr.O3D,
-        #                                                     axis, angle),
-        #     color=self.color, alpha=self.alpha)
         return self.__class__(
             frame=self.frame.rotation(center, axis, angle),
             outer_contour2d=self.outer_contour2d,
@@ -642,13 +608,6 @@ class RevolvedProfile(shells.ClosedShell3D):
     """
     _non_serializable_attributes = ['faces', 'contour3D']
 
-    # def __init__(self, plane_origin: volmdlr.Point3D,
-    #              x: volmdlr.Vector3D, y: volmdlr.Vector3D,
-    #              contour2d: volmdlr.wires.Contour2D,
-    #              axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
-    #              angle: float = 2 * math.pi, *,
-    #              color: Tuple[float, float, float] = None, alpha: float = 1,
-    #              name: str = ''):
     def __init__(self, frame: volmdlr.Frame3D,
                  contour2d: volmdlr.wires.Contour2D,
                  axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -663,9 +622,6 @@ class RevolvedProfile(shells.ClosedShell3D):
         self.axis = axis
         self.angle = angle
         self.frame = frame
-        # self.plane_origin = plane_origin
-        # self.x = x
-        # self.y = y
         self.contour3d = self.contour2d.to_3d(frame.origin, frame.u, frame.v)
 
         faces = self.shell_faces()
@@ -692,11 +648,8 @@ class RevolvedProfile(shells.ClosedShell3D):
         dict_.update({'color': self.color,
                       'alpha': self.alpha,
                       'frame': self.frame,
-                      # 'plane_origin': self.plane_origin.to_dict(),
                       'contour2d': self.contour2d.to_dict(),
                       'axis_point': self.axis_point.to_dict(),
-                      # 'x': self.x.to_dict(),
-                      # 'y': self.y.to_dict(),
                       'angle': self.angle,
                       'axis': self.axis.to_dict()
                       })
@@ -709,8 +662,6 @@ class RevolvedProfile(shells.ClosedShell3D):
 
         """
         return self.__class__(frame=self.frame.copy(),
-            # plane_origin=self.plane_origin.copy(),
-            #                   x=self.x.copy(), y=self.y.copy(),
                               contour2d=self.contour2d.copy(deep=deep, memo=memo),
                               axis=self.axis.copy(), angle=self.angle,
                               axis_point=self.axis_point.copy(),
@@ -729,7 +680,6 @@ class RevolvedProfile(shells.ClosedShell3D):
 
         if not math.isclose(self.angle, volmdlr.TWO_PI, abs_tol=1e-9):
             # Adding contours face to close
-            # w = self.x.cross(self.y)
             plane1 = surfaces.Plane3D(self.frame)
             face1 = volmdlr.faces.PlaneFace3D(
                 plane1, surfaces.Surface2D(self.contour2d, []))
@@ -771,9 +721,6 @@ class RevolvedProfile(shells.ClosedShell3D):
         """
         return self.__class__(
             frame=self.frame.rotation(center, axis, angle),
-            # plane_origin=self.plane_origin.rotation(center, axis, angle),
-            # x=self.x.rotation(center=volmdlr.O3D, axis=axis, angle=angle),
-            # y=self.y.rotation(center=volmdlr.O3D, axis=axis, angle=angle),
             contour2d=self.contour2d,
             axis_point=self.axis_point.rotation(center, axis, angle),
             axis=self.axis.rotation(center=volmdlr.O3D, axis=axis,
@@ -790,8 +737,6 @@ class RevolvedProfile(shells.ClosedShell3D):
         """
         return self.__class__(
             frame=self.frame.translation(offset),
-            # plane_origin=self.plane_origin.translation(offset),
-            # x=self.x, y=self.y,
             contour2d=self.contour2d,
             axis_point=self.axis_point.translation(offset),
             axis=self.axis,
@@ -802,12 +747,8 @@ class RevolvedProfile(shells.ClosedShell3D):
         basis = frame.Basis()
         if side == 'old':
             axis = basis.local_to_global_coordinates(self.axis)
-            # x = basis.local_to_global_coordinates(self.x)
-            # y = basis.local_to_global_coordinates(self.y)
         elif side == 'new':
             axis = basis.global_to_local_coordinates(self.axis)
-            # x = basis.global_to_local_coordinates(self.x)
-            # y = basis.global_to_local_coordinates(self.y)
         else:
             raise ValueError('side must be either old or new')
 
@@ -822,8 +763,6 @@ class RevolvedProfile(shells.ClosedShell3D):
         axis = self.frame_mapping_parameters(frame, side)
         return RevolvedProfile(
             self.frame.frame_mapping(frame, side),
-            # self.plane_origin.frame_mapping(frame, side),
-            # x, y,
             self.contour2d,
             self.axis_point.frame_mapping(frame, side),
             axis=axis, angle=self.angle)
@@ -836,7 +775,6 @@ class Cylinder(shells.ClosedShell3D):
 
     def __init__(self,
                  frame: volmdlr.Frame3D,
-                 # position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
@@ -932,8 +870,6 @@ class Cylinder(shells.ClosedShell3D):
         """
         return self.__class__(
             frame=self.frame.rotation(center, axis, angle),
-            # position=self.position.rotation(center, axis, angle),
-            # axis=self.axis.rotation(volmdlr.O3D, axis, angle),
             length=self.length, radius=self.radius)
 
     def translation(self, offset: volmdlr.Vector3D):
@@ -945,8 +881,6 @@ class Cylinder(shells.ClosedShell3D):
         """
         return self.__class__(
             frame=self.frame.translation(offset),
-            # position=self.position.translation(offset),
-            # axis=self.axis,
             length=self.length, radius=self.radius)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -955,17 +889,8 @@ class Cylinder(shells.ClosedShell3D):
 
         side = 'old' or 'new'
         """
-        # basis = frame.basis()
-        # if side == 'old':
-        #     axis = basis.local_to_global_coordinates(self.axis)
-        # elif side == 'new':
-        #     axis = basis.global_to_local_coordinates(self.axis)
-        # else:
-        #     raise ValueError('side must be either old or new')
         return Cylinder(
             frame=self.frame.frame_mapping(frame, side),
-            # self.position.frame_mapping(frame, side),
-            #             axis,
             radius=self.radius,
             length=self.length,
             color=self.color, alpha=self.alpha)
@@ -981,7 +906,6 @@ class Cylinder(shells.ClosedShell3D):
         Creates a copy of Cylinder.
         """
         return Cylinder(
-            # new_position, new_axis,
             self.frame.copy(),
             self.radius, self.length,
             color=self.color, alpha=self.alpha, name=self.name)
@@ -1229,7 +1153,6 @@ class Cylinder(shells.ClosedShell3D):
                 len(
                     [
                         point
-                        # for point in (smallest_cylinder.random_point_inside() for _ in range(n_points))
                         for point in smallest_cylinder.lhs_points_inside(n_points)
                         if other_cylinder.point_belongs(point)
                     ]
@@ -1244,14 +1167,11 @@ class Cone(RevolvedProfile):
     """
 
     def __init__(self, frame: volmdlr.Frame3D,
-                 # position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1.,
                  name: str = ''):
 
         self.position = frame.origin
-        # axis.normalize()
-        # self.axis = axis
         self.axis = frame.w
         self.radius = radius
         self.length = length
@@ -1265,21 +1185,9 @@ class Cone(RevolvedProfile):
         contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(point1, point2),
                                            volmdlr.edges.LineSegment2D(point2, point3),
                                            volmdlr.edges.LineSegment2D(point3, point1)])
-        # y = self.axis.random_unit_normal_vector()
-        # RevolvedProfile.__init__(self, self.position, selfaxis, y, contour, self.position,
-        #                          self.axis, color=color, alpha=alpha, name=name)
-        # RevolvedProfile.__init__(self, volmdlr.Frame3D(frame.origin, frame.w, -frame.v, frame.u),
-        #                          contour, self.position, frame.w, color=color, alpha=alpha, name=name)
-        RevolvedProfile.__init__(self, frame,
+        RevolvedProfile.__init__(self, volmdlr.Frame3D(frame.origin, frame.w, -frame.v, frame.u),
                                  contour, self.position, frame.w, color=color, alpha=alpha, name=name)
         self.frame = frame
-
-    # def shells_faces(self):
-        # circle = curves.Circle2D(self.position.to_2d(self.position, self.frame.u, self.frame.v), self.radius)
-        # semi_angle = math.atan(self.length / self.radius)
-        # surface = surfaces.ConicalSurface3D(self.frame, semi_angle)
-        # z1 = self.frame.origin
-        # conical_face = volmdlr.faces.ConicalFace3D.from_surface_rectangular_cut(surface, 0, math.pi * 2, 0, )
 
     def _bounding_box(self):
         """
@@ -1335,8 +1243,8 @@ class Cone(RevolvedProfile):
         :return: a new rotated Cone
         """
         return self.__class__(frame=self.frame.rotation(center, axis, angle),
-            radius=self.radius, length=self.length, color=self.color,
-            alpha=self.alpha)
+                              radius=self.radius, length=self.length, color=self.color,
+                              alpha=self.alpha)
 
     def volume(self):
         """
@@ -1354,34 +1262,16 @@ class HollowCylinder(shells.ClosedShell3D):
 
     def __init__(self,
                  frame: volmdlr.Frame3D,
-                 # position: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  inner_radius: float, outer_radius: float, length: float,
                  color: Tuple[float, float, float] = None, alpha: float = 1,
                  name: str = ''):
         self.frame = frame
-        # self.position = position
         self.position = frame.origin
-        # axis.normalize()
-        # self.axis = axis
         self.axis = frame.w
         self.inner_radius = inner_radius
         self.outer_radius = outer_radius
         self.length = length
 
-        # # Revolved Profile
-        # point1 = volmdlr.Point2D(-0.5 * self.length, self.inner_radius)
-        # point2 = volmdlr.Point2D(0.5 * self.length, self.inner_radius)
-        # point3 = volmdlr.Point2D(0.5 * self.length, self.outer_radius)
-        # point4 = volmdlr.Point2D(-0.5 * self.length, self.outer_radius)
-        # line_seg1 = volmdlr.edges.LineSegment2D(point1, point2)
-        # line_seg2 = volmdlr.edges.LineSegment2D(point2, point3)
-        # line_seg3 = volmdlr.edges.LineSegment2D(point3, point4)
-        # line_seg4 = volmdlr.edges.LineSegment2D(point4, point1)
-        # contour = volmdlr.wires.Contour2D([line_seg1, line_seg2, line_seg3, line_seg4])
-        # y = axis.random_unit_normal_vector()
-        # # contour.plot()
-        # RevolvedProfile.__init__(self, position, axis, y, contour, position,
-        #                          axis, color=color, alpha=alpha, name=name)
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
@@ -1463,7 +1353,6 @@ class HollowCylinder(shells.ClosedShell3D):
         frame = volmdlr.Frame3D(position, u_vector, v_vector, axis)
         return cls(
             frame,
-            # position, axis,
             inner_radius=inner_radius, outer_radius=outer_radius, length=length,
                    color=color, alpha=alpha, name=name)
 
@@ -1483,8 +1372,6 @@ class HollowCylinder(shells.ClosedShell3D):
         """
         return self.__class__(
             frame=self.frame.rotation(center, axis, angle),
-            # position=self.position.rotation(center, axis, angle),
-            # axis=self.axis.rotation(volmdlr.O3D, axis, angle),
             length=self.length, inner_radius=self.inner_radius,
             outer_radius=self.outer_radius)
 
@@ -1497,7 +1384,6 @@ class HollowCylinder(shells.ClosedShell3D):
         """
         return self.__class__(
             frame=self.frame.translation(offset),
-            # position=self.position.translation(offset), axis=self.axis,
             length=self.length, inner_radius=self.inner_radius,
             outer_radius=self.outer_radius)
 
@@ -1507,17 +1393,7 @@ class HollowCylinder(shells.ClosedShell3D):
 
         side = 'old' or 'new'.
         """
-        # basis = frame.basis()
-        # if side == 'old':
-        #     axis = basis.local_to_global_coordinates(self.axis)
-        # elif side == 'new':
-        #     axis = basis.global_to_local_coordinates(self.axis)
-        # else:
-        #     raise ValueError('side must be either old or new')
-
         return HollowCylinder(
-            # position=self.position.frame_mapping(frame, side),
-            # axis=axis,
             frame=self.frame.frame_mapping(frame, side),
             inner_radius=self.inner_radius,
             outer_radius=self.outer_radius, length=self.length)
