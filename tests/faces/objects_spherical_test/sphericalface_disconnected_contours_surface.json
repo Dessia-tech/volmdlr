@@ -1,0 +1,34 @@
+{
+  "object_class": "volmdlr.surfaces.SphericalSurface3D",
+  "name": "",
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.174039695616,
+      "y": 0.582313006769,
+      "z": 0.603318945162
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 1.0,
+      "y": 0.0,
+      "z": -0.0
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.0,
+      "y": 1.0,
+      "z": 0.0
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 1.0
+    }
+  },
+  "radius": 0.0098653606096,
+  "_references": {}
+}
