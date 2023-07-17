@@ -1528,7 +1528,8 @@ class Sweep(shells.ClosedShell3D):
                 cutting_face = volmdlr.faces.PlaneFace3D(plane, surfaces.Surface2D(cutting_face_contour, []))
                 contour3d = get_sweep_profile_section(cutting_face, new_faces)
             new_faces = []
-            if wire_primitive.__class__ is volmdlr.edges.LineSegment3D:
+            # if wire_primitive.__class__ is volmdlr.edges.LineSegment3D:
+            if wire_primitive.__class__.__name__ is 'LineSegment3D':
                 for contour_primitive in contour3d.primitives:
                     new_faces.extend(contour_primitive.extrusion(wire_primitive.length()
                                                                  * wire_primitive.unit_direction_vector()))
@@ -1541,8 +1542,9 @@ class Sweep(shells.ClosedShell3D):
                     new_faces.extend(contour_primitive.revolution(
                         wire_primitive.center, wire_primitive.normal, volmdlr.TWO_PI))
 
-            elif wire_primitive.__class__ is volmdlr.edges.BSplineCurve3D or \
-                    wire_primitive.__class__ is volmdlr.edges.BezierCurve3D:
+            # elif wire_primitive.__class__ is volmdlr.edges.BSplineCurve3D or \
+            #         wire_primitive.__class__ is volmdlr.edges.BezierCurve3D:
+            elif wire_primitive.__class__.__name__ in ['BSplineCurve3D', 'BezierCurve3D']:
 
                 tangents = []
                 for k, _ in enumerate(wire_primitive.points):
