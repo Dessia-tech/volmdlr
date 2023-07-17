@@ -643,6 +643,7 @@ class Line3D(Line):
         return intersection
 
     def plot(self, ax=None, color='k', alpha=1, dashed=True):
+        """Plot method for Line 3D using Matplotlib."""
         if ax is None:
             ax = Axes3D(plt.figure())
 
