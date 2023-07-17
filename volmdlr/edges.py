@@ -5439,7 +5439,7 @@ class FullArc3D(FullArcMixin, Arc3D):
         Arc3D.__init__(self, circle=circle, start=start_end, end=start_end)
 
     def __hash__(self):
-        return hash('Fullarc3D', self.circle, self.start_end)
+        return hash(('Fullarc3D', self.circle, self.start_end))
 
     def __eq__(self, other_arc):
         return (self.circle == other_arc.circle) \
