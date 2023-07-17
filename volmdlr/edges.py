@@ -479,6 +479,7 @@ class LineSegment(Edge):
         Edge.__init__(self, start, end, name)
 
     def length(self):
+        """Gets the length of a Line Segment."""
         if not self._length:
             self._length = self.end.point_distance(self.start)
         return self._length
