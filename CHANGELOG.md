@@ -9,15 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.13.0 [future]
 
 ### New Features
-- 
+- Line: reverse.
 
 ### Fixed
 - Sweep with non smoth path
 - plot of vector3D.
 - BSplineSurface3D: point3d_to_2d, improve inital condition.
+- EdgeCollection3D: babylon_meshes.
+- FullArc3D: hash
+- SphericalSurface3D: enhance repair_periodicity_method
 
 ### Refactor
--
+- refator some classes' init in primitives3D. 
+- Shells: refactor.
+- 
 
 ### Changed
 -
@@ -97,7 +102,6 @@ All adequations have been done for all tests and existing scripts.
 - Delete inplace methods: rotation, translation and frame_mapping
 - OpenShell3D: faces_graph.
 - RevolutionSurface3D: Improve init and methods
-
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
