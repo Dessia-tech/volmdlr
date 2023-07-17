@@ -36,6 +36,9 @@ class TestBSplineFace3D(unittest.TestCase):
         neutral_fiber = face.neutral_fiber()
         self.assertAlmostEqual(neutral_fiber.length(), 0.030801389245691566, 2)
 
+        face = faces.BSplineFace3D.load_from_file("faces/objects_bspline_test/test_neutral_fiber_2.json")
+        neutral_fiber = face.neutral_fiber()
+        self.assertAlmostEqual(neutral_fiber.length(), 0.5327006535550406, 2)
 
 if __name__ == '__main__':
     unittest.main()

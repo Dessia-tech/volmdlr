@@ -1,5 +1,5 @@
 """
-volmdlr to babylonjs template.
+volmdlr to babylonjs templates.
 """
 
 import os

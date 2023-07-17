@@ -390,15 +390,29 @@ class WireMixin:
 
     def primitive_over_wire(self, primitive, tol: float = 1e-6):
         """
-        Verifies if point is over wire.
+        Verifies if primitive is over wire.
 
-        :param primitive: point to be verified.
+        :param primitive: primitive to be verified.
         :param tol: tolerance to be considered.
         :return: True or False
         """
         points = primitive.discretization_points(number_points=10)
         if all(self.point_over_wire(point, tol) for point in points):
             return True
+        return False
+
+    def is_primitive_section_over_wire(self, primitive, tol:float = 1e-6):
+        """
+        Verifies if primitive's section is over wire.
+
+        :param primitive: primitive to be verified.
+        :param tol: tolerance to be considered.
+        :return: True or False
+        """
+        for edge in self.primitives:
+            shared_section = edge.get_shared_section(primitive, tol)
+            if shared_section:
+                return True
         return False
 
     @classmethod
@@ -1275,6 +1289,12 @@ class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
         return min(distance)
 
     def point_distance(self, point):
+        """
+        Gets the distance from a point a Wire 3D object.
+
+        :param point: other point.
+        :return: the distance to wire and corresponding point.
+        """
         distance, distance_point = math.inf, None
         for prim in self.primitives:
             prim_distance, prim_point = prim.point_distance(point)
@@ -1284,6 +1304,12 @@ class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
         return distance, distance_point
 
     def extrusion(self, extrusion_vector):
+        """
+        Extrudes a Wire 3D in a given direction.
+
+        :param extrusion_vector: extrusion vector used.
+        :return: A list of extruded faces.
+        """
         faces = []
         for primitive in self.primitives:
             faces.extend(primitive.extrusion(extrusion_vector))
@@ -1301,6 +1327,7 @@ class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
         return bspline_curve
 
     def triangulation(self):
+        """Triangulation method for a Wire3D."""
         return None
 
     def get_primitives_2d(self, plane_origin, x, y):
@@ -1322,6 +1349,10 @@ class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
         return primitives2d
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Transforms a Wire 3D into a Wire 2D, given a plane origin and an x and y vector.
+
+        """
         primitives2d = self.get_primitives_2d(plane_origin, x, y)
         return Wire2D(primitives=primitives2d)
 
@@ -2128,23 +2159,24 @@ class Contour2D(ContourMixin, Wire2D):
         """
         Verifies if given edge is inside self contour perimeter, including its edges.
 
-        :param edge: othe edge to verify if inside contour.
-        :returns: True or False
+        :param edge: other edge to verify if inside contour.
+        :returns: True or False.
         """
         for point in edge.discretization_points(number_points=5):
             if not self.point_belongs(point, include_edge_points=True):
                 return False
         return True
 
-    def is_inside(self, contour2):
+    def is_inside(self, other_contour):
         """
         Verifies if given contour is inside self contour perimeter, including its edges.
 
+        :param other_contour: other contour.
         :returns: True or False
         """
-        if contour2.area() > self.area() and not math.isclose(contour2.area(), self.area(), rel_tol=0.01):
+        if other_contour.area() > self.area() and not math.isclose(other_contour.area(), self.area(), rel_tol=0.01):
             return False
-        for edge in contour2.primitives:
+        for edge in other_contour.primitives:
             if not self.is_edge_inside(edge):
                 return False
         return True
@@ -2493,7 +2525,7 @@ class Contour2D(ContourMixin, Wire2D):
         Cut a contour 2d with bspline_curve 2d to define two different contours.
 
         """
-        # TODO: BsplineCurve is descretized and defined with a wire. To be improved!
+        # TODO: BsplineCurve is discretized and defined with a wire. To be improved!
 
         contours = self.cut_by_wire(Wire2D.from_edge(bspline_curve2d, 20))
 
@@ -4123,6 +4155,9 @@ class Contour3D(ContourMixin, Wire3D):
                 # Case of a circle, ellipse...
                 return raw_edges[0]
             return cls(raw_edges, name=name)
+        contour = cls(raw_edges, name=name)
+        if contour.is_ordered():
+            return contour
         list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         if list_edges:
             return cls(list_edges, name=name)

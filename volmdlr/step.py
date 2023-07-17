@@ -485,7 +485,7 @@ def faceted_brep_shape_representation(arguments, object_dict):
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
-                      vmshells.OpenShell3D):
+                      vmshells.Shell3D):
             shell = object_dict[int(arg[1:])]
             shells.append(shell)
     return volmdlr.core.Compound(shells)
@@ -533,7 +533,7 @@ def shape_representation(arguments, object_dict):
             shells.append(*object_dict[int(arg[1:])])
         elif int(arg[1:]) in object_dict and \
                 isinstance(object_dict[int(arg[1:])],
-                           vmshells.OpenShell3D):
+                           vmshells.Shell3D):
             shells.append(object_dict[int(arg[1:])])
         elif int(arg[1:]) in object_dict and isinstance(object_dict[int(arg[1:])], volmdlr.Frame3D):
             # TODO: Is there something to read here ?
@@ -570,7 +570,7 @@ def advanced_brep_shape_representation(arguments, object_dict):
     primitives = []
     for arg in arguments[1]:
         primitive = object_dict[int(arg[1:])]
-        if isinstance(primitive, vmshells.OpenShell3D):
+        if isinstance(primitive, vmshells.Shell3D):
             primitives.append(primitive)
         if isinstance(primitive, volmdlr.core.Compound):
             counter = 0
@@ -723,16 +723,7 @@ def b_spline_curve_b_spline_curve_with_knots_rational_b_spline_curve_bounded_cur
     """
     Bounded b spline with knots curve geometric representation item. To clarify.
     """
-    modified_arguments = [''] + arguments
-    if modified_arguments[-1] == "''":
-        modified_arguments.pop()
-    return STEP_TO_VOLMDLR['BOUNDED_CURVE, '
-                           'B_SPLINE_CURVE, '
-                           'B_SPLINE_CURVE_WITH_KNOTS, '
-                           'CURVE, GEOMETRIC_REPRESENTATION_ITEM, '
-                           'RATIONAL_B_SPLINE_CURVE, '
-                           'REPRESENTATION_ITEM'].from_step(
-        modified_arguments, object_dict)
+    return bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(arguments, object_dict)
 
 
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
@@ -756,16 +747,16 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometr
     """
     Bounded b spline surface with knots curve geometric representation item. To clarify.
     """
-    modified_arguments = [''] + arguments
-    if modified_arguments[-1] == "''":
-        modified_arguments.pop()
-    return STEP_TO_VOLMDLR['BOUNDED_SURFACE, B_SPLINE_SURFACE, '
-                           'B_SPLINE_SURFACE_WITH_KNOTS, '
-                           'GEOMETRIC_REPRESENTATION_ITEM, '
-                           'RATIONAL_B_SPLINE_SURFACE, '
-                           'REPRESENTATION_ITEM, SURFACE'].from_step(
-        modified_arguments, object_dict)
+    return bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
+        arguments, object_dict)
 
+
+def b_spline_surface_b_spline_surface_with_knots_rational_b_spline_surface_bounded_surface_representation_item_geometric_representation_item_surface(arguments, object_dict):
+    """
+    Bounded b spline surface with knots curve geometric representation item. To clarify.
+    """
+    return bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
+        arguments, object_dict)
 
 def product_definition_shape(arguments, object_dict):
     """
