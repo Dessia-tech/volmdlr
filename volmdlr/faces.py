@@ -78,7 +78,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return hash(self.surface3d) + hash(self.surface2d)
 
     def __eq__(self, other_):
-        """Computes the equality to anoter face."""
+        """Computes the equality to another face."""
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
         equal = (self.surface3d == other_.surface3d
