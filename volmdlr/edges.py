@@ -479,6 +479,7 @@ class LineSegment(Edge):
         Edge.__init__(self, start, end, name)
 
     def length(self):
+        """Gets the length of a Line Segment."""
         if not self._length:
             self._length = self.end.point_distance(self.start)
         return self._length
@@ -4530,7 +4531,7 @@ class BSplineCurve3D(BSplineCurve):
         """
         Trims a bspline curve between two points.
 
-        :param point1: point 1 used to trime.
+        :param point1: point 1 used to trim.
         :param point2: point2 used to trim.
         :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
