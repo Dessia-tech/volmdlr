@@ -464,7 +464,7 @@ def faceted_brep_shape_representation(arguments, object_dict):
     shells = []
     for arg in arguments[1]:
         if isinstance(object_dict[int(arg[1:])],
-                      vmshells.OpenShell3D):
+                      vmshells.Shell3D):
             shell = object_dict[int(arg[1:])]
             shells.append(shell)
     return volmdlr.core.Compound(shells)
@@ -511,7 +511,7 @@ def shape_representation(arguments, object_dict):
             shells.append(*object_dict[int(arg[1:])])
         elif int(arg[1:]) in object_dict and \
                 isinstance(object_dict[int(arg[1:])],
-                           vmshells.OpenShell3D):
+                           vmshells.Shell3D):
             shells.append(object_dict[int(arg[1:])])
         elif int(arg[1:]) in object_dict and isinstance(object_dict[int(arg[1:])], volmdlr.Frame3D):
             # TODO: Is there something to read here ?
@@ -548,7 +548,7 @@ def advanced_brep_shape_representation(arguments, object_dict):
     primitives = []
     for arg in arguments[1]:
         primitive = object_dict[int(arg[1:])]
-        if isinstance(primitive, vmshells.OpenShell3D):
+        if isinstance(primitive, vmshells.Shell3D):
             primitives.append(primitive)
         if isinstance(primitive, volmdlr.core.Compound):
             counter = 0

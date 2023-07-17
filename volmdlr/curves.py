@@ -203,6 +203,10 @@ class Line(Curve):
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
         return content, current_id
 
+    def reverse(self):
+        """Gets a line in the reverse direction."""
+        return self.__class__(self.point2, self.point1, name=self.name+'_reverse')
+
 
 class Line2D(Line):
     """
@@ -548,15 +552,18 @@ class Line3D(Line):
 
     @property
     def bounding_box(self):
+        """Bounding Box getter."""
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
+        """Bounding Box setter."""
         self._bbox = new_bounding_box
 
     def _bounding_box(self):
+        """Calculates the Bouding box."""
         xmin = min([self.point1[0], self.point2[0]])
         xmax = max([self.point1[0], self.point2[0]])
         ymin = min([self.point1[1], self.point2[1]])
@@ -643,6 +650,7 @@ class Line3D(Line):
         return intersection
 
     def plot(self, ax=None, color='k', alpha=1, dashed=True):
+        """Plot method for Line 3D using Matplotlib."""
         if ax is None:
             ax = Axes3D(plt.figure())
 
@@ -1197,6 +1205,7 @@ class Circle3D(CircleMixin, Curve):
                  name: str = ''):
         self.radius = radius
         self.frame = frame
+        self._bbox = None
         Curve.__init__(self, name=name)
 
     @property
@@ -1361,6 +1370,13 @@ class Circle3D(CircleMixin, Curve):
 
         return content, current_id
 
+    @property
+    def bounding_box(self):
+        """Bounding box for Arc 3D."""
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
     def _bounding_box(self):
         """
         Computes the bounding box.
@@ -1517,6 +1533,19 @@ class Circle3D(CircleMixin, Curve):
         """
         return [volmdlr.edges.Arc3D(self, split_start, split_end),
                 volmdlr.edges.Arc3D(self, split_end, split_start)]
+
+    def sweep(self, *args):
+        """
+        Circle 3D is used as path for sweeping given section through it.
+
+        :return:
+        """
+        _, section_contour = args
+        new_faces = []
+        for contour_primitive in section_contour.primitives:
+            new_faces.extend(contour_primitive.revolution(
+                self.center, self.normal, volmdlr.TWO_PI))
+        return new_faces
 
 
 class Ellipse2D(Curve):
