@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.13.0 [future]
 
 ### New Features
-- 
+- Line: reverse.
 
 ### Fixed
 - Sweep with non smoth path
@@ -18,8 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve3D: trim
 
 ### Refactor
-
-- Shells: refactor. 
+- refator some classes' init in primitives3D. 
+- Shells: refactor.
+- 
 
 ### Changed
 -
