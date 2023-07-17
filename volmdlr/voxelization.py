@@ -310,7 +310,7 @@ class Voxelization(PhysicalObject):
         :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
         """
         triangles = []
-        for primitive in volume_model.primitives:
+        for primitive in volume_model.get_shells():
             triangulation = primitive.triangulation()
             triangles += list(
                 tuple(
