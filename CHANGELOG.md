@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sweep with non smoth path
 - plot of vector3D.
 - EdgeCollection3D: babylon_meshes.
+- FullArc3D: hash
 
 ### Refactor
 - refator some classes' init in primitives3D. 
