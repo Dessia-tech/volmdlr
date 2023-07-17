@@ -7,7 +7,7 @@ import math
 from pylint import __version__
 from pylint.lint import Run
 
-MIN_NOTE = 9.3
+MIN_NOTE = 9.6
 
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
@@ -17,28 +17,27 @@ WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 199,
-                     "wrong-spelling-in-docstring": 143,
-                     'invalid-name': 184,
-                     'no-member': 3,
+                     "wrong-spelling-in-docstring": 135,
+                     'invalid-name': 170,
+                     'no-member': 2,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
-                     'arguments-differ': 67,
+                     'arguments-differ': 62,
                      'too-many-locals': 74,
-                     'unused-argument': 29,
-                     'too-many-arguments': 25,
+                     'unused-argument': 32,
+                     'too-many-arguments': 26,
                      'line-too-long': 12,
                      'too-many-branches': 26,
-                     'too-many-statements': 13,
-                     'super-init-not-called': 13,
-                     'no-name-in-module': 1,
+                     'too-many-statements': 14,
+                     'super-init-not-called': 15,
+                     'no-name-in-module': 11,
                      'abstract-method': 32,
                      'duplicate-code': 10,
                      'arguments-renamed': 52,
                      'too-many-ancestors': 24,
-                     'too-few-public-methods': 3,
-                     'non-parent-init-called': 3,
-                     'too-many-public-methods': 10,
-                     'too-many-instance-attributes': 16,
+                     'too-few-public-methods': 2,
+                     'too-many-public-methods': 11,
+                     'too-many-instance-attributes': 15,
                      'protected-access': 4,
                      'undefined-loop-variable': 2,
                      'unspecified-encoding': 1,
@@ -46,17 +45,14 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-nested-blocks': 7,
                      'too-many-return-statements': 3,
                      'cyclic-import': 1,
-                     'raise-missing-from': 2,
                      'undefined-variable': 0,  # 2 when gmsh is fixed
                      'broad-except': 1,
                      "broad-exception-caught": 2,
                      'too-many-boolean-expressions': 2,
                      'too-many-lines': 4,
-                     'redundant-keyword-arg': 3,
                      'consider-using-with': 1,
                      'unnecessary-dunder-call': 2,
                      'chained-comparison': 2,
-                     'missing-module-docstring': 2,
                      'consider-using-generator': 1,
                      'import-outside-toplevel': 5,
                      'unsubscriptable-object': 1,

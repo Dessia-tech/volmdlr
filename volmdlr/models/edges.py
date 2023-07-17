@@ -3,11 +3,11 @@ from geomdl import utilities
 import volmdlr
 from volmdlr import edges, curves
 
-degree = 3
+DEGREE = 3
 points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
-knotvector = utilities.generate_knot_vector(degree, len(points))
+knotvector = utilities.generate_knot_vector(DEGREE, len(points))
 knot_multiplicity = [1] * len(knotvector)
-bspline1 = edges.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
+bspline1 = edges.BSplineCurve2D(DEGREE, points, knot_multiplicity, knotvector, None, False)
 
 lineseg = edges.LineSegment2D(volmdlr.Point2D(0, 0.2), volmdlr.Point2D(3, -0.2))
 

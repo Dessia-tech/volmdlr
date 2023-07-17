@@ -1,5 +1,5 @@
 """
-Some conical surfaces models to perfom unittest.
+Some conical surfaces models to perform unittest.
 """
 import math
 
