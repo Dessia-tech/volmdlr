@@ -3615,7 +3615,6 @@ class Frame3D(Basis3D):
         v_vector = normal.cross(u_vector)
         return cls(origin, u_vector, v_vector, normal)
 
-
     # def babylonjs(self, size=0.1, parent=None):
     #     """
     #     # TODO: to be deleted ?
