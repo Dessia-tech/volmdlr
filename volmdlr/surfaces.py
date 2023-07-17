@@ -14,7 +14,7 @@ from geomdl.fitting import approximate_surface, interpolate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 from scipy.optimize import least_squares, minimize
 
-from dessia_common.core import DessiaObject
+from dessia_common.core import DessiaObject, PhysicalObject
 from volmdlr.bspline_evaluators import evaluate_single
 import volmdlr.bspline_compiled
 import volmdlr.core
@@ -39,7 +39,7 @@ def knots_vector_inv(knots_vector):
     return knots, multiplicities
 
 
-class Surface2D(volmdlr.core.Primitive2D):
+class Surface2D(PhysicalObject):
     """
     A surface bounded by an outer contour.
 
@@ -52,7 +52,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         self.inner_contours = inner_contours
         self._area = None
 
-        volmdlr.core.Primitive2D.__init__(self, name=name)
+        PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
         return hash((self.outer_contour, tuple(self.inner_contours)))

@@ -20,6 +20,7 @@ import plot_data.core as plot_data
 from scipy.spatial.qhull import ConvexHull, Delaunay
 from triangle import triangulate
 
+from dessia_common.core import PhysicalObject
 import volmdlr
 import volmdlr.core
 import volmdlr.display as vmd
@@ -704,20 +705,24 @@ class EdgeCollection3D(WireMixin):
         return [babylon_mesh]
 
 
-class Wire2D(WireMixin, volmdlr.core.CompositePrimitive2D):
+class Wire2D(WireMixin, PhysicalObject):
     """
     A collection of simple primitives, following each other making a wire.
 
     """
 
-    def __init__(self, primitives: List[volmdlr.core.Primitive2D],
-                 name: str = ''):
+    def __init__(self, primitives, name: str = ''):
         self._bounding_rectangle = None
         self._length = None
-        volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
+        self.primitives = primitives
+        PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
         return hash(('wire2d', tuple(self.primitives)))
+
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        return PhysicalObject.to_dict(self, use_pointers=False)
 
     def length(self):
         """ Gets the length for a Wire2D."""
@@ -1225,6 +1230,52 @@ class Wire2D(WireMixin, volmdlr.core.CompositePrimitive2D):
         """
         return False
 
+    def rotation(self, center: volmdlr.Point2D, angle: float):
+        """
+        Rotates the wire 2D.
+
+        :param center: rotation center.
+        :param angle: angle rotation.
+        :return: a new rotated Wire 2D.
+        """
+        return self.__class__([point.rotation(center, angle)
+                               for point in self.primitives])
+
+    def translation(self, offset: volmdlr.Vector2D):
+        """
+        Translates the Wire 2D.
+
+        :param offset: translation vector
+        :return: A new translated Wire 2D.
+        """
+        return self.__class__([primitive.translation(offset)
+                               for primitive in self.primitives])
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and return a new Wire 2D.
+
+        side = 'old' or 'new'
+        """
+        return self.__class__([primitive.frame_mapping(frame, side)
+                               for primitive in self.primitives])
+
+    def plot(self, ax=None, edge_style=EdgeStyle()):
+        """Wire 2D plot using Matplotlib."""
+        if ax is None:
+            _, ax = plt.subplots()
+
+        if edge_style.equal_aspect:
+            ax.set_aspect('equal')
+
+        for element in self.primitives:
+            element.plot(ax=ax, edge_style=edge_style)
+
+        ax.margins(0.1)
+        plt.show()
+
+        return ax
+
 
 class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
     """
@@ -1681,7 +1732,7 @@ class ContourMixin(WireMixin):
                         if list_p and point.point_distance(point.nearest_point(list_p)) > 1e-4:
                             list_p.append(point)
                         try:
-                            self.primitive_to_index(edge1)
+                            # self.primitive_to_index(edge1)
                             edges1.add(edge1)
                         except KeyError:
                             edges1.add(edge2)
