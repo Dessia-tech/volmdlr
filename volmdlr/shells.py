@@ -1,7 +1,6 @@
 """volmdlr shells module."""
 import math
 import random
-import sys
 import traceback
 import warnings
 from itertools import chain, product
