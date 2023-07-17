@@ -479,6 +479,7 @@ class LineSegment(Edge):
         Edge.__init__(self, start, end, name)
 
     def length(self):
+        """Gets the length of a Line Segment."""
         if not self._length:
             self._length = self.end.point_distance(self.start)
         return self._length
@@ -3046,8 +3047,8 @@ class FullArc2D(FullArcMixin, Arc2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """Rotation of a full arc 2D."""
-        new_circle = self.circle.rotation(center, angle, True)
-        new_start_end = self.start.rotation(center, angle, True)
+        new_circle = self.circle.rotation(center, angle)
+        new_start_end = self.start.rotation(center, angle)
         return FullArc2D(new_circle, new_start_end)
 
     def translation(self, offset: volmdlr.Vector2D):
@@ -4530,7 +4531,7 @@ class BSplineCurve3D(BSplineCurve):
         """
         Trims a bspline curve between two points.
 
-        :param point1: point 1 used to trime.
+        :param point1: point 1 used to trim.
         :param point2: point2 used to trim.
         :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
@@ -5248,7 +5249,7 @@ class Arc3D(ArcMixin, Edge):
         return point1, point2
 
     def minimum_distance(self, element, return_points=False):
-        """Gets the mininum distace between an Arc 3D and another edge."""
+        """Gets the minimum distance between an Arc 3D and another edge."""
         if element.__class__.__name__ in ['Arc3D', 'Circle3D', 'FullArc3D']:
             p1, p2 = self.minimum_distance_points_arc(element)
             if return_points:
