@@ -44,6 +44,7 @@ isort
 JSON
 jsonschema
 kwargs
+args
 len
 LHS
 linesegment
@@ -96,3 +97,5 @@ bendjebla
 vmc
 WireMixin
 BoundingRectangle
+EdgeStyle
+args

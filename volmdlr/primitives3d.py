@@ -1518,77 +1518,26 @@ class Sweep(shells.ClosedShell3D):
                      volmdlr.Point2D(max_brectangle, -max_brectangle),
                      volmdlr.Point2D(max_brectangle, max_brectangle),
                      volmdlr.Point2D(-max_brectangle, max_brectangle)])
-        new_faces = None
-
+        new_faces = []
+        last_end_tangent = self.wire3d.primitives[0].unit_direction_vector(0.)
         for i, wire_primitive in enumerate(self.wire3d.primitives):
-            # tangent, normal = wire_primitive.frenet(0.)
-            tangent = wire_primitive.unit_direction_vector(0.)
+            start_tangent = wire_primitive.unit_direction_vector(0.)
             normal = wire_primitive.unit_normal_vector(0.)
             if normal is None:
-                normal = tangent.deterministic_unit_normal_vector()
-            tangent_normal_orthonormal = tangent.cross(normal)
-            if i == 0:
-                contour3d = self.contour2d.to_3d(wire_primitive.start, normal, tangent_normal_orthonormal)
+                normal = start_tangent.deterministic_unit_normal_vector()
+            tangent_normal_orthonormal = start_tangent.cross(normal)
+
+            if i == 0 or not start_tangent.is_close(last_end_tangent):
+                new_faces = wire_primitive.sweep(self.contour2d, None)
             else:
                 plane = surfaces.Plane3D(volmdlr.Frame3D(wire_primitive.start, normal,
-                                                         tangent_normal_orthonormal, tangent))
+                                                         tangent_normal_orthonormal, start_tangent))
                 cutting_face = volmdlr.faces.PlaneFace3D(plane, surfaces.Surface2D(cutting_face_contour, []))
-                contour3d = get_sweep_profile_section(cutting_face, new_faces)
-            new_faces = []
-            if wire_primitive.__class__ is volmdlr.edges.LineSegment3D:
-                for contour_primitive in contour3d.primitives:
-                    new_faces.extend(contour_primitive.extrusion(wire_primitive.length()
-                                                                 * wire_primitive.unit_direction_vector()))
-            elif wire_primitive.__class__ is volmdlr.edges.Arc3D:
-                for contour_primitive in contour3d.primitives:
-                    new_faces.extend(contour_primitive.revolution(
-                        wire_primitive.circle.center, wire_primitive.circle.normal, wire_primitive.angle))
-            elif wire_primitive.__class__ is curves.Circle3D:
-                for contour_primitive in contour3d.primitives:
-                    new_faces.extend(contour_primitive.revolution(
-                        wire_primitive.center, wire_primitive.normal, volmdlr.TWO_PI))
+                section_contour = get_sweep_profile_section(cutting_face, new_faces)
+                new_faces = wire_primitive.sweep(self.contour2d, section_contour)
 
-            elif wire_primitive.__class__ is volmdlr.edges.BSplineCurve3D or \
-                    wire_primitive.__class__ is volmdlr.edges.BezierCurve3D:
-
-                tangents = []
-                for k, _ in enumerate(wire_primitive.points):
-                    position = k / (len(wire_primitive.points) - 1)
-                    tangents.append(wire_primitive.unit_direction_vector(position * wire_primitive.length()))
-
-                circles = []
-                for point, tan in zip(wire_primitive.points, tangents):
-                    # TODO: replace circle by real contour!
-                    normal = tan.deterministic_unit_normal_vector()
-                    v_vector = tan.cross(normal)
-                    circles.append(self.contour2d.to_3d(point, normal, v_vector))
-
-                polys = [volmdlr.wires.ClosedPolygon3D(c.discretization_points(number_points=36)) for c in circles]
-
-                size_v, size_u = len(polys[0].points) + 1, len(polys)
-                degree_u, degree_v = 3, 3
-
-                points_3d = []
-                for poly in polys:
-                    points_3d.extend(poly.points)
-                    points_3d.append(poly.points[0])
-
-                bezier_surface3d = surfaces.BezierSurface3D(degree_u, degree_v, points_3d, size_u, size_v)
-
-                outer_contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D),
-                                                         volmdlr.edges.LineSegment2D(
-                                                             volmdlr.X2D, volmdlr.X2D + volmdlr.Y2D),
-                                                         volmdlr.edges.LineSegment2D(
-                                                             volmdlr.X2D + volmdlr.Y2D, volmdlr.Y2D),
-                                                         volmdlr.edges.LineSegment2D(volmdlr.Y2D, volmdlr.O2D)])
-                surf2d = surfaces.Surface2D(outer_contour, [])
-
-                bsface3d = volmdlr.faces.BSplineFace3D(bezier_surface3d, surf2d)
-                new_faces.append(bsface3d)
-
-            else:
-                raise NotImplementedError(f'Unimplemented primitive for sweep: {wire_primitive.__class__.__name__}')
             faces.extend(new_faces)
+            last_end_tangent = wire_primitive.unit_direction_vector(wire_primitive.length())
         cutting_face = volmdlr.faces.PlaneFace3D(end_plane, surfaces.Surface2D(cutting_face_contour, []))
         contour3d = get_sweep_profile_section(cutting_face, new_faces)
         contour2d = cutting_face.surface3d.contour3d_to_2d(contour3d)

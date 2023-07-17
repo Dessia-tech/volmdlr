@@ -12,11 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 
 
 ### Fixed
+- Sweep with non smoth path
 - plot of vector3D.
+- EdgeCollection3D: babylon_meshes.
 - SphericalSurface3D: enhance repair_periodicity_method
 
 ### Refactor
--
+- Shells: refactor. 
 
 ### Changed
 -
@@ -99,7 +101,6 @@ All adequations have been done for all tests and existing scripts.
 - Delete inplace methods: rotation, translation and frame_mapping
 - OpenShell3D: faces_graph.
 - RevolutionSurface3D: Improve init and methods
-
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.

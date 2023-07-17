@@ -26,7 +26,7 @@ import volmdlr.wires
 
 
 def octree_decomposition(bbox, faces):
-    """Decomposes a list of faces into eight BoundingBox subdivided boxes."""
+    """Decomposes a list of faces into eight Bounding boxes subdivided boxes."""
     decomposition = {octant: [] for octant in bbox.octree()}
     for face in faces:
         center = face.bounding_box.center

@@ -478,6 +478,7 @@ class LineSegment(Edge):
         Edge.__init__(self, start, end, name)
 
     def length(self):
+        """Gets the length of a Line Segment."""
         if not self._length:
             self._length = self.end.point_distance(self.start)
         return self._length
@@ -3710,6 +3711,7 @@ class FullArcEllipse(Edge):
 
     @classmethod
     def from_curve(cls, ellipse):
+        """Creates a fullarc ellipse from a ellipse curve."""
         return cls(ellipse, ellipse.center + ellipse.frame.u * ellipse.major_axis)
 
 
@@ -3865,10 +3867,11 @@ class LineSegment3D(LineSegment):
                 }
 
     def normal_vector(self, abscissa=0.):
-        return None
+        direction_vector = self.direction_vector()
+        return direction_vector.deterministic_normal_vector()
 
     def unit_normal_vector(self, abscissa=0.):
-        return None
+        return self.normal_vector().unit_vector()
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
@@ -4065,7 +4068,7 @@ class LineSegment3D(LineSegment):
         return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
-        """Calculates the paralell distance between two Line Segments 3D."""
+        """Calculates the parallel distance between two Line Segments 3D."""
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
@@ -4281,6 +4284,26 @@ class LineSegment3D(LineSegment):
             raise ValueError('Point not on curve')
 
         return LineSegment3D(point1, point2)
+
+    def sweep(self, *args):
+        """
+        Line Segment 3D is used as path for sweeping given section through it.
+
+        :return:
+        """
+        section_contour2d, section_contour3d = args
+        if section_contour3d is None:
+            start_tangent = self.unit_direction_vector(0.)
+            normal = self.unit_normal_vector(0.)
+            if normal is None:
+                normal = start_tangent.deterministic_unit_normal_vector()
+            tangent_normal_orthonormal = start_tangent.cross(normal)
+            section_contour3d = section_contour2d.to_3d(self.start, normal, tangent_normal_orthonormal)
+        new_faces = []
+        for contour_primitive in section_contour3d.primitives:
+            new_faces.extend(contour_primitive.extrusion(self.length()
+                                                         * self.unit_direction_vector()))
+        return new_faces
 
 
 class BSplineCurve3D(BSplineCurve):
@@ -4512,7 +4535,7 @@ class BSplineCurve3D(BSplineCurve):
         """
         Trims a bspline curve between two points.
 
-        :param point1: point 1 used to trime.
+        :param point1: point 1 used to trim.
         :param point2: point2 used to trim.
         :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
@@ -4679,14 +4702,10 @@ class BSplineCurve3D(BSplineCurve):
                               self.knot_multiplicities, self.knots,
                               self.weights, self.periodic, self.name)
 
-    def polygon_points(self, discretization_resolution: int):
-        warnings.warn('polygon_points is deprecated,\
-                please use discretization_points instead',
-                      DeprecationWarning)
-        return self.discretization_points(angle_resolution=discretization_resolution)
-
     def curvature(self, u: float, point_in_curve: bool = False):
-        # u should be in the interval [0,1]
+        """
+        Returns the curvature of a curve and the point where it is located.
+        """
         ders = self.derivatives(u, 3)  # 3 first derivative
         c1, c2 = ders[1], ders[2]
         denom = c1.cross(c2)
@@ -4701,6 +4720,9 @@ class BSplineCurve3D(BSplineCurve):
         return 1 / r_c
 
     def global_maximum_curvature(self, nb_eval: int = 21, point_in_curve: bool = False):
+        """
+        Returns the global maximum curvature of a curve and the point where it is located.
+        """
         check = [i / (nb_eval - 1) for i in range(nb_eval)]
         curvatures = []
         for u in check:
@@ -4805,6 +4827,50 @@ class BSplineCurve3D(BSplineCurve):
             return False
         return True
 
+    def sweep(self, *args):
+        """
+        Bspline 3D is used as path for sweeping given section through it.
+
+        :return:
+        """
+        new_faces = []
+        tangents = []
+        section_contour2d, _ = args
+        for k, _ in enumerate(self.points):
+            position = k / (len(self.points) - 1)
+            tangents.append(self.unit_direction_vector(position * self.length()))
+
+        contours = []
+        for point, tan in zip(self.points, tangents):
+            normal = tan.deterministic_unit_normal_vector()
+            v_vector = tan.cross(normal)
+            section_contour3d = section_contour2d.to_3d(point, normal, v_vector)
+            contours.append(section_contour3d)
+
+        polys = [volmdlr.wires.ClosedPolygon3D(c.discretization_points(number_points=36)) for c in contours]
+
+        size_v, size_u = len(polys[0].points) + 1, len(polys)
+        degree_u, degree_v = 3, 3
+
+        points_3d = []
+        for poly in polys:
+            points_3d.extend(poly.points)
+            points_3d.append(poly.points[0])
+
+        bezier_surface3d = volmdlr.surfaces.BezierSurface3D(degree_u, degree_v, points_3d, size_u, size_v)
+
+        outer_contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D),
+                                                 volmdlr.edges.LineSegment2D(
+                                                     volmdlr.X2D, volmdlr.X2D + volmdlr.Y2D),
+                                                 volmdlr.edges.LineSegment2D(
+                                                     volmdlr.X2D + volmdlr.Y2D, volmdlr.Y2D),
+                                                 volmdlr.edges.LineSegment2D(volmdlr.Y2D, volmdlr.O2D)])
+        surf2d = volmdlr.surfaces.Surface2D(outer_contour, [])
+
+        bsface3d = volmdlr.faces.BSplineFace3D(bezier_surface3d, surf2d)
+        new_faces.append(bsface3d)
+        return new_faces
+
 
 class BezierCurve3D(BSplineCurve3D):
     """
@@ -4853,7 +4919,7 @@ class Arc3D(ArcMixin, Edge):
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
-        """Saves the object parameters into a dictionnary."""
+        """Saves the object parameters into a dictionary."""
         dict_ = self.base_dict()
         dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
                                               id_method=id_method, id_memo=id_memo, path=path + '/circle')
@@ -5108,7 +5174,7 @@ class Arc3D(ArcMixin, Edge):
         return arc
 
     def minimum_distance_points_arc(self, other_arc):
-        """Calculates the minimum distance points betweeen two arcs."""
+        """Calculates the minimum distance points between two arcs."""
         u1 = self.start - self.circle.center
         u1.normalize()
         u2 = self.circle.normal.cross(u1)
@@ -5354,6 +5420,19 @@ class Arc3D(ArcMixin, Edge):
 
     def complementary(self):
         return Arc3D(self.circle, self.end, self.start)
+
+    def sweep(self, *args):
+        """
+        Arc 3D is used as path for sweeping given section through it.
+
+        :return:
+        """
+        new_faces = []
+        _, section_contour_3d = args
+        for contour_primitive in section_contour_3d.primitives:
+            new_faces.extend(contour_primitive.revolution(
+                self.circle.center, self.circle.normal, self.angle))
+        return new_faces
 
 
 class FullArc3D(FullArcMixin, Arc3D):
