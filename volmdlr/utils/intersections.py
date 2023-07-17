@@ -30,23 +30,27 @@ def circle_3d_line_intersections(circle_3d, line):
         return []
     direction_vector = line.direction_vector()
     if line.point1.z == line.point2.z == circle_3d.frame.origin.z:
-        quadratic_equation_a = 1 + (direction_vector.y ** 2 / direction_vector.x ** 2)
-        quadratic_equation_b = -2 * (direction_vector.y ** 2 / direction_vector.x ** 2) * line.point1.x + \
-                               2 * (direction_vector.y / direction_vector.x) * line.point1.y
-        quadratic_equation_c = (line.point1.y - (direction_vector.y / direction_vector.x) *
-                                line.point1.x) ** 2 - circle_3d.radius ** 2
+        if line.point1.is_close(circle_3d.center):
+            point1 = line.point2
+            vec = line.point1 - line.point2
+        else:
+            point1 = line.point1
+            vec = line.point2 - line.point1
+        quadratic_equation_a = vec.dot(vec)
+        quadratic_equation_b = 2 * vec.dot(point1 - circle_3d.center)
+        quadratic_equation_c = point1.dot(point1) + circle_3d.center.dot(circle_3d.center) - 2 * point1.dot(
+            circle_3d.center) - circle_3d.radius ** 2
+
         delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c
         if delta < 0:  # No real solutions, no intersection
             return []
         if delta == 0:  # One real solution, tangent intersection
-            x = -quadratic_equation_b / (2 * quadratic_equation_a)
-            y = (direction_vector.y / direction_vector.x) * (x - line.point1.x) + line.point1.y
-            return [volmdlr.Point3D(x, y, circle_3d.frame.origin.z)]
-        x1 = (- quadratic_equation_b + math.sqrt(delta)) / (2 * quadratic_equation_a)
-        x2 = (- quadratic_equation_b - math.sqrt(delta)) / (2 * quadratic_equation_a)
-        y1 = (direction_vector.y / direction_vector.x) * (x1 - line.point1.x) + line.point1.y
-        y2 = (direction_vector.y / direction_vector.x) * (x2 - line.point1.x) + line.point1.y
-        return [volmdlr.Point3D(x1, y1, circle_3d.frame.origin.z), volmdlr.Point3D(x2, y2, circle_3d.frame.origin.z)]
+            t_param = -quadratic_equation_b / (2 * quadratic_equation_a)
+            return [point1 + t_param * vec]
+        sqrt_delta = math.sqrt(delta)
+        t_param = (-quadratic_equation_b + sqrt_delta) / (2 * quadratic_equation_a)
+        s_param = (-quadratic_equation_b - sqrt_delta) / (2 * quadratic_equation_a)
+        return [point1 + t_param * vec, point1 + s_param * vec]
     z_constant = circle_3d.frame.origin.z
     constant = (z_constant - line.point1.z) / direction_vector.z
     x_coordinate = constant * direction_vector.x + line.point1.x

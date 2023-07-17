@@ -161,31 +161,6 @@ def sin_cos_angle(u1, u2):
     return theta
 
 
-def posangle_arc(start, end, radius, frame=None):
-    """
-    Seems unused.
-
-    """
-    if frame is None:
-        p1_new, p2_new = start, end
-    else:
-        p1_new, p2_new = frame.global_to_local_coordinates(start), frame.global_to_local_coordinates(end)
-    # Angle pour le p1
-    u1, u2 = p1_new.x / radius, p1_new.y / radius
-    theta1 = sin_cos_angle(u1, u2)
-    # Angle pour le p2
-    u3, u4 = p2_new.x / radius, p2_new.y / radius
-    theta2 = sin_cos_angle(u3, u4)
-
-    if math.isclose(theta1, theta2, abs_tol=1e-6):
-        if math.isclose(theta2, 0, abs_tol=1e-6):
-            theta2 += vm.TWO_PI
-        elif math.isclose(theta1, vm.TWO_PI, abs_tol=1e-6):
-            theta1 -= vm.TWO_PI
-
-    return theta1, theta2
-
-
 def clockwise_interior_from_circle3d(start, end, circle):
     """
     Returns the clockwise interior point between start and end on the circle.

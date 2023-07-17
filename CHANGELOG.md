@@ -6,7 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## v0.12.0 [future]
+## v0.13.0 [future]
+
+### New Features
+- 
+
+### Fixed
+- Sweep with non smoth path
+- plot of vector3D.
+- EdgeCollection3D: babylon_meshes.
+
+### Refactor
+
+- Shells: refactor. 
+
+### Changed
+-
+
+### Unittests
+-
+
+## v0.12.0 [unreleased]
+
 
 ### New Features
 - New module: cad_simplification - OctreeBlockSimplify, TrippleExtrusionSimplify
@@ -23,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 - Sweep with muitiform profile contour.
 - New module: Voxelization
+- minimum_distance: face-to-face, shell-to-shell
 - OpenShell3D: from_faces (using faces graph)
 - SphericalFace3D: from_contours3d_and_rectangular_cut
 
@@ -42,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Step import
 - Edge: fix orientation of edges commig from step.
 - Sphere: point_belongs, inherits from ClosedShell3D instead of RevolvedProfile
+- Step import.
 - PeriodicalSurface: linesegment3d_to_2d, takes into account small 3D line segments that should be actually 3D arcs
 - babylondata: removes empty objects.
 - ClosedPolygon2D: point_belongs.
@@ -49,9 +72,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: point_belongs
 - ArcEllipse2D: point_at_abscissa
 - Frame3D: import/export step.
+- BSplineFace3D: neutral_fiber.
+- Step: read_lines, take into account the space character in step entity names
+- Circle3D: fix trim.
 - Edge: from_step trim of periodic curves with different orientation of original edge
 - Arc3D: fix abscissa, fix get_arc_point_angle
 - add missing toleraces to some methods.
+- Arc3D: line_intersections
+- Line3D: minimum_distance_points
+- remove arcellipse handleling for bspline2d_3d.
 
 
 ### Refactor
@@ -69,7 +98,7 @@ All adequations have been done for all tests and existing scripts.
 - Improve step translator.
 - Delete inplace methods: rotation, translation and frame_mapping
 - OpenShell3D: faces_graph.
-
+- RevolutionSurface3D: Improve init and methods
 
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
@@ -82,7 +111,7 @@ All adequations have been done for all tests and existing scripts.
 - common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 
-## v0.11.0 [unreleased]
+## v0.11.0
 
 
 ### New Features
@@ -172,7 +201,8 @@ All adequations have been done for all tests and existing scripts.
 - PlaneFace3D: merge_faces
 - Contour2D: divide
 - Step: raise NotimplementedError when it's not possible to instatiate assembly object.
-
+- STL: handle mutiple space as separator
+- fix: protect gmsh import
 
 ### Refactor
 - Contour2D: cut_by_wire
@@ -207,6 +237,7 @@ All adequations have been done for all tests and existing scripts.
 - Change python suport version from >=3.7 to >= 3.9
 - LICENSE changed from GPL to Lesser GPL 
 - Readme logo updated
+- CI: do not check quality on tag
 
 ### Unittests
 - Arc2D: test_arc_intersections

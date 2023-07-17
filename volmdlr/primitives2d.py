@@ -127,17 +127,17 @@ class RoundedLineSegments2D(RoundedLineSegments):
         for i in range((not self.closed), number_points - (not self.closed)):
 
             check = False
-            vector_i = vectors[2 * i - 1] + vectors[2 * i]
-            if vector_i.is_close(volmdlr.Vector2D(0, 0)):
-                vector_i = vectors[2 * i]
-                vector_i = vector_i.normalVector()
-                offset_vectors.append(vector_i)
+            normal_i = vectors[2 * i - 1] + vectors[2 * i]
+            if normal_i.is_close(volmdlr.Vector2D(0, 0)):
+                normal_i = vectors[2 * i]
+                normal_i = normal_i.normal_vector()
+                offset_vectors.append(normal_i)
             else:
-                vector_i.normalize()
-                if vector_i.dot(vectors[2 * i - 1].normal_vector()) > 0:
-                    vector_i = - vector_i
+                normal_i.normalize()
+                if normal_i.dot(vectors[2 * i - 1].normal_vector()) > 0:
+                    normal_i = - normal_i
                     check = True
-                offset_vectors.append(vector_i)
+                offset_vectors.append(normal_i)
 
             if i in self.radius:
                 if (check and offset > 0) or (not check and offset < 0):
@@ -161,8 +161,8 @@ class RoundedLineSegments2D(RoundedLineSegments):
             offset_points.append(offset_point)
 
         if not self.closed:
-            n1 = vectors[0].normal_vector()
-            offset_vectors.insert(0, n1)
+            normal_1 = vectors[0].normal_vector()
+            offset_vectors.insert(0, normal_1)
             offset_points.insert(0,
                                  self.points[0] + offset * offset_vectors[0])
 
@@ -180,7 +180,7 @@ class RoundedLineSegments2D(RoundedLineSegments):
 
         :param line_index: 0 being the 1st line
         """
-        new_linesegment2D_points = []
+        new_linesegment2d_points = []
         dont_add_last_point = False
 
         for i, point in enumerate(
@@ -246,8 +246,8 @@ class RoundedLineSegments2D(RoundedLineSegments):
                 else:
                     new_point2 = self.points[i + 1] + distance_dir2 * dir_vec_2
 
-                new_linesegment2D_points.append(new_point1)
-                new_linesegment2D_points.append(new_point2)
+                new_linesegment2d_points.append(new_point1)
+                new_linesegment2d_points.append(new_point2)
 
             elif i == line_index + 1:
                 pass
@@ -255,12 +255,12 @@ class RoundedLineSegments2D(RoundedLineSegments):
             elif line_index == len(self.points) - 1 and i == 0:
                 pass
             else:
-                new_linesegment2D_points.append(point)
+                new_linesegment2d_points.append(point)
 
         if not dont_add_last_point and not self.closed:
-            new_linesegment2D_points.append(self.points[-1])
+            new_linesegment2d_points.append(self.points[-1])
 
-        rls_2d = self.__class__(new_linesegment2D_points, self.radius,
+        rls_2d = self.__class__(new_linesegment2d_points, self.radius,
                                 adapt_radius=self.adapt_radius)
 
         return rls_2d
@@ -274,7 +274,7 @@ class RoundedLineSegments2D(RoundedLineSegments):
         if self.close last line_index can be len(self.points)-1
         if not, last line_index can be len(self.points)-2
         """
-        new_linesegment2D_points = []
+        new_linesegment2d_points = []
 
         # =============================================================================
         # COMPUTES THE DIRECTIVE VECTORS BETWEEN WHICH THE OFFSET WILL BE DRAWN
@@ -384,11 +384,11 @@ class RoundedLineSegments2D(RoundedLineSegments):
         # =============================================================================
         for i, point in enumerate(self.points):
             if i in new_points:
-                new_linesegment2D_points.append(new_points[i])
+                new_linesegment2d_points.append(new_points[i])
             else:
-                new_linesegment2D_points.append(point)
+                new_linesegment2d_points.append(point)
 
-        rls_2d = self.__class__(new_linesegment2D_points, self.radius,
+        rls_2d = self.__class__(new_linesegment2d_points, self.radius,
                                 adapt_radius=self.adapt_radius)
 
         return rls_2d
@@ -428,6 +428,7 @@ class ClosedRoundedLineSegments2D(RoundedLineSegments2D, wires.Contour2D):
         wires.Contour2D.__init__(self, self._primitives(), name)
 
     def copy(self, deep=True, memo=None):
+        """Returns a copy of the object."""
         return self.__class__([point.copy(deep, memo) for point in self.points], self.radius.copy(),
                               self.adapt_radius, name='copy_' + self.name)
 
@@ -451,10 +452,11 @@ class Measure2D(edges.LineSegment2D):
         self.type_ = type_
 
     def plot(self, ax, edge_style: EdgeStyle()):
+        """Plots the Measure2D."""
         ndigits = 6
         x1, y1 = self.start
         x2, y2 = self.end
-        xm, ym = 0.5 * (self.start + self.end)
+        x_middle, y_middle = 0.5 * (self.start + self.end)
         distance = self.end.point_distance(self.start)
 
         if self.label != '':
@@ -482,4 +484,4 @@ class Measure2D(edges.LineSegment2D):
             theta = 90.
         else:
             theta = math.degrees(math.atan((y2 - y1) / (x2 - x1)))
-        ax.text(xm, ym, label, va='bottom', ha='center', rotation=theta)
+        ax.text(x_middle, y_middle, label, va='bottom', ha='center', rotation=theta)

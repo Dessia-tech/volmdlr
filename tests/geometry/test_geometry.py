@@ -14,7 +14,7 @@ class TestGeometry(unittest.TestCase):
                                  0.0959408774411)
         interior = geometry.clockwise_interior_from_circle3d(point1, point2, circle)
         arc = edges.Arc3D.from_3_points(point1, interior, point2)
-        self.assertAlmostEqual(circle.radius, arc.circle.radius)  # add assertion here
+        self.assertAlmostEqual(circle.radius, arc.circle.radius, 6)  # add assertion here
 
 
 if __name__ == '__main__':

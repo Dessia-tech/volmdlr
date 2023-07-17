@@ -304,20 +304,146 @@ cdef (double, (double, double, double)) CLineSegment3DPointDistance((double, dou
 def LineSegment3DPointDistance(points, point):
     return CLineSegment3DPointDistance(tuple(points[0]), tuple(points[1]), tuple(point))
 
+
+cdef (double, double) CLineSegment3DDistance((double, double, double) u,
+                                             (double, double, double) v,
+                                             (double, double, double) w):
+    cdef double a = CVector3DDot(u[0], u[1], u[2], u[0], u[1], u[2])
+    cdef double b = CVector3DDot(u[0], u[1], u[2], v[0], v[1], v[2])
+    cdef double c = CVector3DDot(v[0], v[1], v[2], v[0], v[1], v[2])
+    cdef double d = CVector3DDot(u[0], u[1], u[2], w[0], w[1], w[2])
+    cdef double e = CVector3DDot(v[0], v[1], v[2], w[0], w[1], w[2])
+    cdef double determinant = a * c - b * c
+    cdef double s_parameter
+    cdef double t_parameter
+    if determinant > - 1e-6:
+        b_times_e = b * e
+        c_times_d = c * d
+        if b_times_e <= c_times_d:
+            s_parameter = 0.0
+            if e <= 0.0:
+                t_parameter = 0.0
+                negative_d = -d
+                if negative_d >= a:
+                    s_parameter = 1.0
+                elif negative_d > 0.0:
+                    s_parameter = negative_d / a
+            elif e < c:
+                t_parameter = e / c
+            else:
+                t_parameter = 1.0
+                b_minus_d = b - d
+                if b_minus_d >= a:
+                    s_parameter = 1.0
+                elif b_minus_d > 0.0:
+                    s_parameter = b_minus_d / a
+        else:
+            s_parameter = b_times_e - c_times_d
+            if s_parameter >= determinant:
+                s_parameter = 1.0
+                b_plus_e = b + e
+                if b_plus_e <= 0.0:
+                    t_parameter = 0.0
+                    negative_d = -d
+                    if negative_d <= 0.0:
+                        s_parameter = 0.0
+                    elif negative_d < a:
+                        s_parameter = negative_d / a
+                elif b_plus_e < c:
+                    t_parameter = b_plus_e / c
+                else:
+                    t_parameter = 1.0
+                    b_minus_d = b - d
+                    if b_minus_d <= 0.0:
+                        s_parameter = 0.0
+                    elif b_minus_d < a:
+                        s_parameter = b_minus_d / a
+            else:
+                a_times_e = a * e
+                b_times_d = a * d
+                if a_times_e <= b_times_d:
+                    t_parameter = 0.0
+                    negative_d = -d
+                    if negative_d <= 0.0:
+                        s_parameter = 0.0
+                    elif negative_d >= a:
+                        s_parameter = 1.0
+                    else:
+                        s_parameter = negative_d / a
+                else:
+                    t_parameter = a_times_e - b_times_d
+                    if t_parameter >= determinant:
+                        t_parameter = 1.0
+                        b_minus_d = b - d
+                        if b_minus_d <= 0.0:
+                            s_parameter = 0.0
+                        elif b_minus_d >= a:
+                            s_parameter = 1.0
+                        else:
+                            s_parameter = b_minus_d / a
+                    else:
+                        s_parameter /= determinant
+                        t_parameter /= determinant
+    else:
+        if e <= 0.0:
+            t_parameter = 0.0
+            negative_d = -d
+            if negative_d <= 0.0:
+                s_parameter = 0.0
+            elif negative_d >= a:
+                s_parameter = 1.0
+            else:
+                s_parameter = negative_d / a
+        elif e >= c:
+            t_parameter = 1.0
+            b_minus_d = b - d
+            if b_minus_d <= 0.0:
+                s_parameter = 0.0
+            elif b_minus_d >= a:
+                s_parameter = 1.0
+            else:
+                s_parameter = b_minus_d / a
+        else:
+            s_parameter = 0.0
+            t_parameter = e / c
+    return s_parameter, t_parameter
+
+
+def LineSegment3DDistance(points_linesegment1, points_linesegment2):
+    u = Csub3D(points_linesegment1[1].x, points_linesegment1[1].y, points_linesegment1[1].z,
+               points_linesegment1[0].x, points_linesegment1[0].y, points_linesegment1[0].z)
+    v = Csub3D(points_linesegment2[1].x, points_linesegment2[1].y, points_linesegment2[1].z,
+               points_linesegment2[0].x, points_linesegment2[0].y, points_linesegment2[0].z)
+    w = Csub3D(points_linesegment1[0].x, points_linesegment1[0].y, points_linesegment1[0].z,
+               points_linesegment2[0].x, points_linesegment2[0].y, points_linesegment2[0].z)
+    s_parameter, t_parameter = CLineSegment3DDistance(u, v, w)
+    point1 = points_linesegment1[0] + Vector3D(*u) * s_parameter
+    point2 = points_linesegment2[0] + Vector3D(*v) * t_parameter
+    return point1, point2
 # =============================================================================
 #  Points, Vectors
 # =============================================================================
 
 
 class Arrow3D(FancyArrowPatch):
-    def __init__(self, xs, ys, zs, *args, **kwargs):
+    def __init__(self, x, y, z, starting_point=None, *args, **kwargs):
         FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
-        self._verts3d = xs, ys, zs
+        if starting_point is None:
+            starting_point = (0., 0., 0.)
 
-    def plot2d(self, renderer):
-        xs3d, ys3d, zs3d = self._verts3d
-        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
-        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        self.starting_point = starting_point
+        self._xyz = x, y, z
+
+    def draw(self, renderer):
+        """
+        Draw the arrow by overloading a Matplotlib method. Do not rename this method!
+
+        """
+        x1, y1, z1 = self.starting_point
+        dx, dy, dz = self._xyz
+        x2, y2, z2 = (dx + x1, dy + y1, dz + z1)
+        xn, yn, zn = proj3d.proj_transform((x1, x2), (y1, y2), (z1, z2), self.axes.M)
+        self.set_positions((xn[0], yn[0]), (xn[1], yn[1]))
         FancyArrowPatch.draw(self, renderer)
 
     def plot(self, ax=None, color="b"):
@@ -653,8 +779,8 @@ class Vector2D(Vector):
         :rtype: tuple
         """
         u = self - center
-        v2x = math.cos(angle) * u[0] - math.sin(angle) * u[1] + center[0]
-        v2y = math.sin(angle) * u[0] + math.cos(angle) * u[1] + center[1]
+        v2x = math.cos(angle) * u.x - math.sin(angle) * u.y + center.x
+        v2y = math.sin(angle) * u.x + math.cos(angle) * u.y + center.y
         return v2x, v2y
 
     def rotation(self, center: "Point2D", angle: float):
@@ -680,8 +806,8 @@ class Vector2D(Vector):
         :return: A translated Vector2D-like object
         :rtype: :class:`volmdlr.Vector2D`
         """
-        v2x = self.x + offset[0]
-        v2y = self.y + offset[1]
+        v2x = self.x + offset.x
+        v2y = self.y + offset.y
         return self.__class__(v2x, v2y)
 
     def frame_mapping(self, frame: "Frame2D", side: str):
@@ -836,7 +962,7 @@ class Vector2D(Vector):
             head_width = 0.3 * amplitude
 
         if not normalize:
-            ax.add_patch(FancyArrow(origin[0], origin[1],
+            ax.add_patch(FancyArrow(origin.x, origin.y,
                                     self.x * amplitude, self.y * amplitude,
                                     width=width,
                                     head_width=head_width,
@@ -845,7 +971,7 @@ class Vector2D(Vector):
         else:
             normalized_vector = self.copy()
             normalized_vector.normalize()
-            ax.add_patch(FancyArrow(origin[0], origin[1],
+            ax.add_patch(FancyArrow(origin.x, origin.y,
                                     normalized_vector.x * amplitude,
                                     normalized_vector.y * amplitude,
                                     width=width,
@@ -861,7 +987,7 @@ class Vector2D(Vector):
             u = p2 - p1
             p3 = p1 - 3 * u
             p4 = p2 + 4 * u
-            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
+            ax.plot([p3.x, p4.x], [p3.y, p4.y], style, linestyle=linestyle)
 
         if label is not None:
             ax.text(*(origin + self * amplitude), label)
@@ -1780,7 +1906,7 @@ class Vector3D(Vector):
             current_id += 1
         return content, current_id
 
-    def plot(self, ax=None, starting_point=None, color=""):
+    def plot(self, ax=None, starting_point=None, color="k"):
         """
         Plots the 3-dimensional vector.
 
@@ -1801,13 +1927,9 @@ class Vector3D(Vector):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
-        xs = [starting_point[0], self.x + starting_point[0]]
-        ys = [starting_point[1], self.y + starting_point[1]]
-        zs = [starting_point[2], self.z + starting_point[2]]
-        if color:
-            a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>", color=color)
-        else:
-            a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>")
+        a = Arrow3D(self.x, self.y, self.z, starting_point=starting_point, mutation_scale=20,  # Change for head length
+                    arrowstyle="-|>", color=color)
+
         ax.add_artist(a)
         return ax
 
