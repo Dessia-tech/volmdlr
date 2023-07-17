@@ -454,11 +454,16 @@ def manifold_surface_shape_representation(arguments, object_dict):
     Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
     """
     primitives = []
+    shell_primitives = []
+    only_open_shells = True
     for arg in arguments[1]:
         primitive = object_dict[int(arg[1:])]
         if isinstance(primitive, vmshells.OpenShell3D):
             primitives.append(primitive)
+            if only_open_shells:
+                shell_primitives.extend(primitive.primitives)
         if isinstance(primitive, volmdlr.core.Compound):
+            only_open_shells = False
             counter = 0
             for sub_prim in primitive.primitives:
                 sub_prim.name = arguments[0][1:-1] + str(counter)
@@ -466,6 +471,8 @@ def manifold_surface_shape_representation(arguments, object_dict):
             primitives.append(primitive)
     if len(primitives) == 1:
         return primitives[0]
+    if only_open_shells:
+        return vmshells.OpenShell3D(shell_primitives, name=arguments[0][1:-1])
     return volmdlr.core.Compound(primitives)
 
 
@@ -1326,10 +1333,7 @@ class Step(dc.DessiaObject):
         shapes = set()
         for node in root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             function = self.functions[node]
-            try:
-                assembly_product_definition = int(function.arg[3][1:])
-            except Exception:
-                print(True)
+            assembly_product_definition = int(function.arg[3][1:])
             assembly_node = int(self.functions[assembly_product_definition].arg[4][1:])
             assemblies.add(assembly_node)
             id_product_definition = int(function.arg[4][1:])
