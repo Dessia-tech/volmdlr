@@ -655,7 +655,9 @@ class RevolvedProfile(shells.ClosedShell3D):
                  angle: float = 2 * math.pi, *,
                  color: Tuple[float, float, float] = None, alpha: float = 1,
                  name: str = ''):
-
+        if frame.w.cross(axis).is_close(volmdlr.Vector3D(0.0, 0.0, 0.0)):
+            raise ValueError(f"The normal vector of the Revolution's contour frame should not be parallel \n"
+                             f"to revolution axis. frame.w: {frame.w}; revolution_axis: {axis}")
         self.contour2d = contour2d
         self.axis_point = axis_point
         self.axis = axis
@@ -1266,7 +1268,9 @@ class Cone(RevolvedProfile):
         # y = self.axis.random_unit_normal_vector()
         # RevolvedProfile.__init__(self, self.position, selfaxis, y, contour, self.position,
         #                          self.axis, color=color, alpha=alpha, name=name)
-        RevolvedProfile.__init__(self, volmdlr.Frame3D(frame.origin, frame.w, -frame.v, frame.u),
+        # RevolvedProfile.__init__(self, volmdlr.Frame3D(frame.origin, frame.w, -frame.v, frame.u),
+        #                          contour, self.position, frame.w, color=color, alpha=alpha, name=name)
+        RevolvedProfile.__init__(self, frame,
                                  contour, self.position, frame.w, color=color, alpha=alpha, name=name)
         self.frame = frame
 
