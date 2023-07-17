@@ -3,6 +3,7 @@ Class for voxel representation of volmdlr models
 """
 import math
 import warnings
+from collections import deque
 from typing import Dict, Iterable, List, Set, Tuple
 
 import numpy as np
@@ -1531,22 +1532,31 @@ class Voxelization(PhysicalObject):
         """
         directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
         start = self._point_to_local_grid_index(start_point)
-        stack = [start]
         matrix = self.to_voxel_matrix()
         old_value = matrix[start[0]][start[1]][start[2]]
 
+        if old_value == fill_with:
+            return self
+
+        stack = deque([start])
+        visited = {start}
+
         while stack:
             x, y, z = stack.pop()
-            if (
-                (0 <= x < len(matrix))
-                and (0 <= y < len(matrix[0]))
-                and (0 <= z < len(matrix[0][0]))
-                and matrix[x][y][z] == old_value
-            ):
-                matrix[x][y][z] = fill_with
-                for dx, dy, dz in directions:
-                    nx, ny, nz = x + dx, y + dy, z + dz
+
+            matrix[x][y][z] = fill_with
+
+            for dx, dy, dz in directions:
+                nx, ny, nz = x + dx, y + dy, z + dz
+                if (
+                        0 <= nx < len(matrix)
+                        and 0 <= ny < len(matrix[0])
+                        and 0 <= nz < len(matrix[0][0])
+                        and matrix[nx][ny][nz] == old_value
+                        and (nx, ny, nz) not in visited
+                ):
                     stack.append((nx, ny, nz))
+                    visited.add((nx, ny, nz))
 
         return self.from_voxel_matrix(matrix, self.voxel_size, self.get_min_voxel_grid_center())
 
