@@ -2,6 +2,7 @@ import unittest
 
 import volmdlr
 from volmdlr import edges
+import volmdlr.step
 from volmdlr.models.edges import bspline1, lineseg, arc, arc_ellipse2d
 
 
@@ -27,6 +28,11 @@ class TestEdge(unittest.TestCase):
         self.assertTrue(new_arc3d)
         self.assertTrue(new_arc3d.start.is_close(point2))
         self.assertTrue(new_arc3d.end.is_close(point1))
+
+    def test_from_step(self):
+        step = volmdlr.step.Step.from_file(filepath='edges/test_edge_from_step.stp')
+        model = step.to_volume_model()
+        self.assertTrue(model.primitives[0].faces[0].outer_contour3d.is_ordered())
 
 
 if __name__ == '__main__':
