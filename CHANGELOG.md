@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
-- 
+- BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
 
 ### Changed
 -

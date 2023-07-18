@@ -1122,8 +1122,7 @@ class BSplineCurve(Edge):
             points.extend(primitive.discretization_points(n))
         points.pop(n + 1)
 
-        return self.__class__.from_points_interpolation(
-            points, min(self.degree, bspline_curve.degree))
+        return self.__class__.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
 
     @classmethod
     def from_bsplines(cls, bsplines: List['BSplineCurve'],
@@ -1199,7 +1198,7 @@ class BSplineCurve(Edge):
 
     @classmethod
     def from_points_interpolation(cls, points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                                  degree: int, periodic: bool = False, name: str = " "):
+                                  degree: int, name: str = " "):
         """
         Creates a B-spline curve interpolation through the data points.
 
@@ -1211,9 +1210,6 @@ class BSplineCurve(Edge):
             List[:class:`volmdlr.Point3D`]]
         :param degree: The degree of the output parametric curve
         :type degree: int
-        :param periodic: `True` if the curve should be periodic. Default value
-            is `False`
-        :type periodic: bool, optional
         :param name: curve name.
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
@@ -1221,7 +1217,7 @@ class BSplineCurve(Edge):
         curve = volmdlr.interpolate_curve([[*point] for point in points], degree, centripetal=True)
 
         bsplinecurve = cls.from_geomdl_curve(curve, name=name)
-        if not periodic:
+        if not points[0].is_close(points[-1]):
             return bsplinecurve
         bsplinecurve.periodic = True
         return bsplinecurve
@@ -1810,8 +1806,7 @@ class BSplineCurve2D(BSplineCurve):
             self.abscissa(point)) for point in self.points]
         offseted_points = [point.translation(normal_vector * offset_length) for point, normal_vector
                            in zip(self.points, unit_normal_vectors)]
-        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree,
-                                                                    self.periodic)
+        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree)
         return offseted_bspline
 
     def is_shared_section_possible(self, other_bspline2, tol):
@@ -4027,8 +4022,7 @@ class LineSegment3D(LineSegment):
         degree = 1
         points = [self.point_at_abscissa(abscissa / self.length())
                   for abscissa in range(resolution + 1)]
-        bspline_curve = BSplineCurve3D.from_points_interpolation(points,
-                                                                 degree)
+        bspline_curve = BSplineCurve3D.from_points_interpolation(points, degree)
         return bspline_curve
 
     def get_reverse(self):
@@ -4581,8 +4575,7 @@ class BSplineCurve3D(BSplineCurve):
             bspline_curve = self.reverse()
         n = len(bspline_curve.control_points)
         local_discretization = bspline_curve.local_discretization(point1, point2, n)
-        return bspline_curve.__class__.from_points_interpolation(
-            local_discretization, bspline_curve.degree, bspline_curve.periodic)
+        return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         warnings.warn('Use BSplineCurve3D.trim instead of trim_between_evaluation')
