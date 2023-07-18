@@ -240,7 +240,7 @@ class Face3D(volmdlr.core.Primitive3D):
         #                   "face contour from step file.")
         #     return None
             # outer_contour2d = contour2d_healing(outer_contour2d)
-        if (not outer_contour2d) or (not outer_contour2d.primitives):
+        if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-3)):
             warnings.warn("Impossible to instatiate face because of topology inconsistency in the "
                           "face's contour from step file.")
             return None

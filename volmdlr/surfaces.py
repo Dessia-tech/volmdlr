@@ -181,8 +181,8 @@ class Surface2D(volmdlr.core.Primitive2D):
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
-        if area == 0.0:
-            return display.DisplayMesh2D([], triangles=[])
+        if area == 0.0 or (not self.outer_contour.is_ordered(1e-2)):
+            return None
 
         triangulates_with_grid = number_points_x > 0 and number_points_y > 0
         discretize_line = number_points_x > 0 or number_points_y > 0
