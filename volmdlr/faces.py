@@ -3129,11 +3129,13 @@ class BSplineFace3D(Face3D):
             return v_centers
         if u_radius and not v_radius:
             return u_centers
-        u_var = npy.var(u_radius)
-        v_var = npy.var(v_radius)
-        if u_var > v_var:
+        # u_var = npy.var(u_radius)
+        # v_var = npy.var(v_radius)
+        u_mean = npy.mean(u_radius)
+        v_mean = npy.mean(v_radius)
+        if u_mean > v_mean:
             return v_centers
-        if u_var < v_var:
+        if u_mean < v_mean:
             return u_centers
         return None
 
@@ -3142,13 +3144,11 @@ class BSplineFace3D(Face3D):
         Returns the faces' neutral fiber.
         """
         neutral_fiber_points = self.neutral_fiber_points()
-        is_line = True
+        is_line = False
         if not neutral_fiber_points[0].is_close(neutral_fiber_points[-1]):
             neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
             is_line = all(neutral_fiber.point_belongs(point) for point in neutral_fiber_points)
-        if len(neutral_fiber_points) == 2 or is_line:
-            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
-        else:
+        if not is_line:
             neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
                                                                          min(self.surface3d.degree_u,
                                                                              self.surface3d.degree_v))
