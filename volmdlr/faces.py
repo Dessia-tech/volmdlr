@@ -26,7 +26,7 @@ import volmdlr.wires
 
 
 def octree_decomposition(bbox, faces):
-    """Decomposes a list of faces into eight BoundingBox subdivided boxes."""
+    """Decomposes a list of faces into eight Bounding boxes subdivided boxes."""
     decomposition = {octant: [] for octant in bbox.octree()}
     for face in faces:
         center = face.bounding_box.center
@@ -168,6 +168,8 @@ class Face3D(volmdlr.core.Primitive3D):
         step_name = kwargs.get("name", "ADVANCED_FACE")
         name = arguments[0][1:-1]
         contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
+        if step_id == 2653:
+            print("debug point faces.py")
         if any(contour is None for contour in contours):
             warnings.warn(f"Could not instantiate #{step_id} = {step_name}({arguments})"
                           f" because some of the contours are NoneType."
@@ -238,7 +240,7 @@ class Face3D(volmdlr.core.Primitive3D):
         #                   "face contour from step file.")
         #     return None
             # outer_contour2d = contour2d_healing(outer_contour2d)
-        if (not outer_contour2d) or (not outer_contour2d.primitives):
+        if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-3)):
             warnings.warn("Impossible to instatiate face because of topology inconsistency in the "
                           "face's contour from step file.")
             return None
