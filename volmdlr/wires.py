@@ -190,10 +190,12 @@ class WireMixin:
         return sum(hash(e) for e in self.primitives) + len(self.primitives)
 
     def length(self):
-        length = 0.
-        for primitive in self.primitives:
-            length += primitive.length()
-        return length
+        if not self._length:
+            length = 0.
+            for primitive in self.primitives:
+                length += primitive.length()
+            self._length = length
+        return self._length
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
@@ -368,6 +370,10 @@ class WireMixin:
         for prim in self.primitives[::-1]:
             new_primitives.append(prim.reverse())
         return new_primitives
+
+    def invert(self):
+        """Gets the wire in the inverted direction."""
+        return self.__class__(self.inverted_primitives())
 
     def is_followed_by(self, wire_2, tol=1e-6):
         """
@@ -724,12 +730,6 @@ class Wire2D(WireMixin, PhysicalObject):
         """Avoids storing points in memo that makes serialization slow."""
         return PhysicalObject.to_dict(self, use_pointers=False)
 
-    def length(self):
-        """ Gets the length for a Wire2D."""
-        if not self._length:
-            self._length = WireMixin.length(self)
-        return self._length
-
     def area(self):
         """ Gets the area for a Wire2D."""
         return 0.0
@@ -1075,9 +1075,6 @@ class Wire2D(WireMixin, PhysicalObject):
                         crossings_points.append(crossing)
         return crossings_points
 
-    def invert(self):
-        return Wire2D(self.inverted_primitives())
-
     def extend(self, point):
         """
         Extend a wire by adding a line segment connecting the given point to the nearest wire's extremities.
@@ -1286,6 +1283,7 @@ class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
                  name: str = ''):
         self._bbox = None
+        self._length = None
         volmdlr.core.CompositePrimitive3D.__init__(self, primitives=primitives, name=name)
 
     def _bounding_box(self):
