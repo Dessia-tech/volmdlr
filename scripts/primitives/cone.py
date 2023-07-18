@@ -8,7 +8,12 @@ import volmdlr as vm
 # from volmdlr.primitives2d import ClosedRoundedLineSegments2D, OpenedRoundedLineSegments2D
 from volmdlr.primitives3d import Cone
 
-cone = Cone(position=vm.O3D, axis=vm.Z3D, radius = 0.02, length=0.05)
+cone = Cone(frame=vm.OXYZ, radius = 0.02, length=0.05)
+ax = cone.plot()
+cone.frame.plot(ax)
+bbox = cone.bounding_box
+bbox.plot(ax, 'r')
+
 cone.babylonjs()
 
 cone2 = cone.translation(vm.X3D)

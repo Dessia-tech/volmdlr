@@ -25,7 +25,7 @@ bezier = vme.BezierCurve3D(degree = 3, control_points = points)
 ax = bezier.plot()
 
 
-circle = vmw.Circle2D(vm.Point2D(0,0), 5e-3)
+circle = vmw.Contour2D([vme.FullArc2D.from_curve(vm.curves.Circle2D(vm.Point2D(0,0), 5e-3))])
 primi_wire = vmw.Wire3D([bezier])
 sweepy = p3d.Sweep(circle, primi_wire)
 sweepy.babylonjs()

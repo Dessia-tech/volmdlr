@@ -436,7 +436,7 @@ class Edge(dc.DessiaObject):
         """
         Gets the minimum distance two methods.
 
-        This is a generlalized method in a case an analytical method has not yet been defined.
+        This is a generalized method in a case an analytical method has not yet been defined.
 
         :param element: another edge.
         :param return_points: weather also to return the corresponding points.
@@ -3047,8 +3047,8 @@ class FullArc2D(FullArcMixin, Arc2D):
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
         """Rotation of a full arc 2D."""
-        new_circle = self.circle.rotation(center, angle, True)
-        new_start_end = self.start.rotation(center, angle, True)
+        new_circle = self.circle.rotation(center, angle)
+        new_start_end = self.start.rotation(center, angle)
         return FullArc2D(new_circle, new_start_end)
 
     def translation(self, offset: volmdlr.Vector2D):
@@ -4064,7 +4064,7 @@ class LineSegment3D(LineSegment):
         return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
-        """Calculates the parallel distance between two Line Segments 3D."""
+        """Calculates the paralell distance between two Line Segments 3D."""
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
@@ -4751,7 +4751,7 @@ class BSplineCurve3D(BSplineCurve):
     #     return radius
 
     def triangulation(self):
-        """Triangulatio method for a BSplineCurve3D."""
+        """Triangulation method for a BSplineCurve3D."""
         return None
 
     def linesegment_intersections(self, linesegment3d: LineSegment3D):
@@ -5439,7 +5439,7 @@ class FullArc3D(FullArcMixin, Arc3D):
         Arc3D.__init__(self, circle=circle, start=start_end, end=start_end)
 
     def __hash__(self):
-        return hash('Fullarc3D', self.circle, self.start_end)
+        return hash(('Fullarc3D', self.circle, self.start_end))
 
     def __eq__(self, other_arc):
         return (self.circle == other_arc.circle) \
