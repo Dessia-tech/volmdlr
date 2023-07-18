@@ -1559,6 +1559,82 @@ class Voxelization(PhysicalObject):
 
         return self.from_voxel_matrix(matrix, self.voxel_size, self.get_min_voxel_grid_center())
 
+    def flood_fill(self, start_point: Point, fill_with: bool) -> "Voxelization":
+        """
+        Perform a flood fill operation within the voxelization starting from the given point.
+
+        :param start_point: The starting point of the flood fill operation.
+        :type start_point: Point
+        :param fill_with: The value to fill the voxels during the flood fill operation.
+        :type fill_with: bool
+
+        :return: A new Voxelization object with the filled voxels.
+        :rtype: Voxelization
+        """
+        start = self._point_to_local_grid_index(start_point)
+        matrix = self.to_voxel_matrix()
+        filled_matrix = self._flood_fill_matrix(matrix, start, fill_with)
+
+        return self.from_voxel_matrix(filled_matrix, self.voxel_size, self.get_min_voxel_grid_center())
+
+    @staticmethod
+    def _flood_fill_matrix(matrix, start, fill_with):
+        directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
+        old_value = matrix[start[0]][start[1]][start[2]]
+
+        if old_value == fill_with:
+            return matrix
+
+        stack = deque([start])
+        visited = {start}
+
+        while stack:
+            x, y, z = stack.pop()
+
+            matrix[x][y][z] = fill_with
+
+            for dx, dy, dz in directions:
+                nx, ny, nz = x + dx, y + dy, z + dz
+                if (
+                        0 <= nx < len(matrix)
+                        and 0 <= ny < len(matrix[0])
+                        and 0 <= nz < len(matrix[0][0])
+                        and matrix[nx][ny][nz] == old_value
+                        and (nx, ny, nz) not in visited
+                ):
+                    stack.append((nx, ny, nz))
+                    visited.add((nx, ny, nz))
+
+        return matrix
+
+    def auto_fill(self):
+        def expand_3d_matrix(matrix):
+            matrix = np.array(matrix)
+            current_shape = matrix.shape
+            new_shape = tuple(dim + 2 for dim in current_shape)
+            new_matrix = np.zeros(new_shape)
+            slices = tuple(slice(1, -1) for _ in current_shape)
+            new_matrix[slices] = matrix
+
+            return new_matrix.tolist()
+
+        def reduce_3d_matrix(matrix):
+            matrix = np.array(matrix)
+            current_shape = matrix.shape
+            slices = tuple(slice(1, -1) for _ in current_shape)
+            reduced_matrix = matrix[slices]
+
+            return reduced_matrix.tolist()
+
+        matrix = self.to_voxel_matrix()
+        expanded_matrix = expand_3d_matrix(matrix)
+        outer_filled_expanded_matrix = self._flood_fill_matrix(expanded_matrix, (0, 0, 0), True)
+        outer_filled_matrix = reduce_3d_matrix(outer_filled_expanded_matrix)
+        outer_filled_voxelization = self.from_voxel_matrix(outer_filled_matrix, self.voxel_size, self.get_min_voxel_grid_center())
+        inner_filled_voxelization = self + outer_filled_voxelization.inverse()
+
+        return inner_filled_voxelization
+
 
 class OctreeNode:
     """Class representing an octree node for octree voxelization purpose."""
