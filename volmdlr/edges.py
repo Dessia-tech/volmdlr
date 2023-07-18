@@ -198,9 +198,9 @@ class Edge(dc.DessiaObject):
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
             if not same_sense:
-                point1, point2 = point2, point1
+                obj = obj.reverse()
             if not point1.is_close(point2):
-                return LineSegment3D(point1, point2, name=arguments[0][1:-1])
+                return LineSegment3D(point1, point2, obj, name=arguments[0][1:-1])
             return None
 
         if hasattr(obj, 'trim'):
@@ -4539,25 +4539,27 @@ class BSplineCurve3D(BSplineCurve):
         """
         if self.periodic and not point1.is_close(point2):
             return self.trim_with_interpolation(point1, point2, same_sense)
+        bsplinecurve = self
+        if not same_sense:
+            bsplinecurve = self.reverse()
+        if (point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end)) \
+                or (point1.is_close(bsplinecurve.end) and point2.is_close(bsplinecurve.start)):
+            return bsplinecurve
 
-        if (point1.is_close(self.start) and point2.is_close(self.end)) \
-                or (point1.is_close(self.end) and point2.is_close(self.start)):
-            return self
+        if point1.is_close(bsplinecurve.start) and not point2.is_close(bsplinecurve.end):
+            return bsplinecurve.cut_after(bsplinecurve.point3d_to_parameter(point2))
 
-        if point1.is_close(self.start) and not point2.is_close(self.end):
-            return self.cut_after(self.point3d_to_parameter(point2))
+        if point2.is_close(bsplinecurve.start) and not point1.is_close(bsplinecurve.end):
+            return bsplinecurve.cut_after(bsplinecurve.point3d_to_parameter(point1))
 
-        if point2.is_close(self.start) and not point1.is_close(self.end):
-            return self.cut_after(self.point3d_to_parameter(point1))
+        if not point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end):
+            return bsplinecurve.cut_before(bsplinecurve.point3d_to_parameter(point1))
 
-        if not point1.is_close(self.start) and point2.is_close(self.end):
-            return self.cut_before(self.point3d_to_parameter(point1))
+        if not point2.is_close(bsplinecurve.start) and point1.is_close(bsplinecurve.end):
+            return bsplinecurve.cut_before(bsplinecurve.point3d_to_parameter(point2))
 
-        if not point2.is_close(self.start) and point1.is_close(self.end):
-            return self.cut_before(self.point3d_to_parameter(point2))
-
-        parameter1 = self.point3d_to_parameter(point1)
-        parameter2 = self.point3d_to_parameter(point2)
+        parameter1 = bsplinecurve.point3d_to_parameter(point1)
+        parameter2 = bsplinecurve.point3d_to_parameter(point2)
         if parameter1 is None or parameter2 is None:
             raise ValueError('Point not on BSplineCurve for trim method')
 
@@ -4565,7 +4567,7 @@ class BSplineCurve3D(BSplineCurve):
             parameter1, parameter2 = parameter2, parameter1
             point1, point2 = point2, point1
 
-        bspline_curve = self.cut_before(parameter1)
+        bspline_curve = bsplinecurve.cut_before(parameter1)
         new_param2 = bspline_curve.point3d_to_parameter(point2)
         trimmed_bspline_cruve = bspline_curve.cut_after(new_param2)
         return trimmed_bspline_cruve
