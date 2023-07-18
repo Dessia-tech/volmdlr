@@ -918,9 +918,14 @@ class Surface3D(DessiaObject):
         primitives2d = self.primitives3d_to_2d(contour3d.primitives)
 
         wire2d = wires.Wire2D(primitives2d)
-        delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
-        if math.isclose(delta_x, volmdlr.TWO_PI, abs_tol=1e-3) and wire2d.is_ordered():
-            return wires.Contour2D(primitives2d)
+        if self.x_periodicity:
+            delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
+            if math.isclose(delta_x, self.x_periodicity, rel_tol=0.01) and wire2d.is_ordered(1e-3):
+                return wires.Contour2D(primitives2d)
+        if self.y_periodicity:
+            delta_y = abs(wire2d.primitives[0].start.y - wire2d.primitives[-1].end.y)
+            if math.isclose(delta_y, self.y_periodicity, rel_tol=0.01) and wire2d.is_ordered(1e-3):
+                return wires.Contour2D(primitives2d)
         # Fix contour
         if self.x_periodicity or self.y_periodicity:
             primitives2d = self.repair_primitives_periodicity(primitives2d)
@@ -1787,12 +1792,19 @@ class PeriodicalSurface(Surface3D):
     def linesegment3d_to_2d(self, linesegment3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+
+        For cylindrical or conical surfaces, a line segment in 3D space is typically projected onto
+        the 2D parametric space as a vertical line segment. This is because a 3D line that lies on a
+        cylindrical or conical surface corresponds to a generatrix of the surface, and it extends along
+        the height of the surface without bending or deviating in the other directions.
+        Therefore, the BREP of a line segment on cylindrical or conical surface is a vertical line segment.
         """
         start = self.point3d_to_2d(linesegment3d.start)
         end = self.point3d_to_2d(linesegment3d.end)
         _, _, z1 = self.frame.global_to_local_coordinates(linesegment3d.start)
         _, _, z2 = self.frame.global_to_local_coordinates(linesegment3d.end)
         if math.isclose(z1, z2, rel_tol=0.005):
+            # special case when there is a small line segment that should be a small arc of circle instead
             return [edges.LineSegment2D(start, end)]
         if start.x != end.x:
             end = volmdlr.Point2D(start.x, end.y)
@@ -1803,6 +1815,8 @@ class PeriodicalSurface(Surface3D):
     def arc3d_to_2d(self, arc3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+
+        The BREP of an arc of circle on a cylindrical or a conical surface is a horizontal line segment.
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
@@ -1817,32 +1831,17 @@ class PeriodicalSurface(Surface3D):
     def fullarc3d_to_2d(self, fullarc3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+
+        The BREP of a circle on a cylindrical or a conical surface is a horizontal line segment with length of two pi.
         """
         start = self.point3d_to_2d(fullarc3d.start)
         end = self.point3d_to_2d(fullarc3d.end)
 
-        point_after_start, point_before_end = self._reference_points(fullarc3d)
-
-        discontinuity, undefined_start_theta, undefined_end_theta = self._helper_arc3d_to_2d_periodicity_verifications(
-            fullarc3d, start)
-        start, end = vm_parametric.arc3d_to_cylindrical_coordinates_verification(
-            [start, end], [undefined_start_theta, undefined_end_theta],
-            [point_after_start.x, point_before_end.x], discontinuity)
-        theta1, z1 = start
-        theta3, z3 = point_after_start
-
         if self.frame.w.is_colinear_to(fullarc3d.circle.normal):
-            if start.is_close(end):
-                start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, theta3)
+            normal_dot_product = self.frame.w.dot(fullarc3d.circle.normal)
+            start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, normal_dot_product)
             return [edges.LineSegment2D(start, end, name="parametric.fullarc")]
-        # Treating one case from Revolution Surface
-        if z1 > z3:
-            point1 = volmdlr.Point2D(theta1, 1)
-            point2 = volmdlr.Point2D(theta1, 0)
-        else:
-            point1 = volmdlr.Point2D(theta1, 0)
-            point2 = volmdlr.Point2D(theta1, 1)
-        return [edges.LineSegment2D(point1, point2, name="parametric.fullarc")]
+        raise NotImplementedError("This case must be treated in child class.")
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
@@ -1904,19 +1903,19 @@ class PeriodicalSurface(Surface3D):
 
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree=2, name="parametric.arcellipse")]
 
-    def fullarcellipse3d_to_2d(self, arcellipse3d):
+    def fullarcellipse3d_to_2d(self, fullarcellipse3d):
         """
         Transformation of a 3D arc ellipse to 2D, in a cylindrical surface.
 
         """
         points = [self.point3d_to_2d(p)
-                  for p in arcellipse3d.discretization_points(number_points=100)]
+                  for p in fullarcellipse3d.discretization_points(number_points=100)]
         start, end = points[0], points[-1]
-        if start.is_close(end, 1e-4):
-            start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, points[2])
+        normal_dot_product = self.frame.w.dot(fullarcellipse3d.ellipse.normal)
+        start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, normal_dot_product)
         theta1, z1 = start
         theta2, z2 = end
-        theta1, theta2 = self._verify_start_end_angles(arcellipse3d, theta1, theta2)
+        theta1, theta2 = self._verify_start_end_angles(fullarcellipse3d, theta1, theta2)
         points[0] = volmdlr.Point2D(theta1, z1)
         points[-1] = volmdlr.Point2D(theta2, z2)
 
@@ -4339,8 +4338,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         theta3, z3 = point_after_start
 
         if self.frame.w.is_colinear_to(fullarc3d.circle.normal):
-            if start.is_close(end):
-                start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, theta3)
+            normal_dot_product = self.frame.w.dot(fullarc3d.ellipse.normal)
+            start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, normal_dot_product)
             return [edges.LineSegment2D(start, end, name="parametric.fullarc")]
         if math.isclose(theta1, theta2, abs_tol=1e-3):
             # Treating one case from Revolution Surface
@@ -4572,7 +4571,7 @@ class BSplineSurface3D(Surface3D):
             point_at_a = u0.evaluate_single(a)
             point_at_b = u0.evaluate_single(b)
             if npy.linalg.norm(npy.array(point_at_b) - npy.array(point_at_a)) < 1e-6:
-                self._x_periodicity = self.surface.range[0]
+                self._x_periodicity = b - a
             else:
                 self._x_periodicity = None
         return self._x_periodicity
@@ -4589,7 +4588,7 @@ class BSplineSurface3D(Surface3D):
             point_at_c = v0.evaluate_single(c)
             point_at_d = v0.evaluate_single(d)
             if npy.linalg.norm(npy.array(point_at_d) - npy.array(point_at_c)) < 1e-6:
-                self._y_periodicity = self.surface.range[1]
+                self._y_periodicity = d - c
             else:
                 self._y_periodicity = None
         return self._y_periodicity
@@ -4908,8 +4907,8 @@ class BSplineSurface3D(Surface3D):
         start = points_2d[0]
         end = points_2d[-1]
         points = points_2d
-        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.1 * lth))
-        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.9 * lth))
+        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.15 * lth))
+        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.85 * lth))
         # pt_after_start = points[1]
         # pt_before_end = points[-2]
 
@@ -5030,7 +5029,7 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                n = min(len(bspline_curve3d.control_points), 20) # limit points to avoid uncovergence
+                n = min(len(bspline_curve3d.control_points), 20) # limit points to avoid non covergence
                 points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
 
                 if self.x_periodicity:
@@ -5076,11 +5075,11 @@ class BSplineSurface3D(Surface3D):
                     if flag_line:
                         return [linesegment]
 
-                if self.x_periodicity:
-                    points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
-
-                if self.y_periodicity:
-                    points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
+                # if self.x_periodicity:
+                #     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
+                #
+                # if self.y_periodicity:
+                #     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
 
                 return [edges.BSplineCurve2D.from_points_interpolation(
                     points=points, degree=bspline_curve3d.degree, periodic=bspline_curve3d.periodic)]
@@ -6764,7 +6763,7 @@ class BSplineSurface3D(Surface3D):
                                           points[2])
         return surface3d
 
-    def is_singularity_point(self, point):
+    def is_singularity_point(self, point, *args):
         """Returns True if the point belongs to the surface singularity and False otherwise."""
         if not self.x_periodicity and not self.y_periodicity:
             return False
