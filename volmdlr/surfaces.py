@@ -6765,14 +6765,14 @@ class BSplineSurface3D(Surface3D):
         return surface3d
 
     def is_singularity_point(self, point):
+        """Returns True if the point belongs to the surface singularity and False otherwise."""
         if not self.x_periodicity and not self.y_periodicity:
             return False
         u_min, u_max = self.surface.domain[0]
         v_min, v_max = self.surface.domain[1]
         test_points = [self.point2d_to_3d(volmdlr.Point2D(u_min, v_min)),
                        self.point2d_to_3d(volmdlr.Point2D(u_max, v_max))]
-        if self.x_periodicity or self.y_periodicity:
-            return any(point.is_close(test_point) for test_point in test_points)
+        return any(point.is_close(test_point) for test_point in test_points)
 
 class BezierSurface3D(BSplineSurface3D):
     """
