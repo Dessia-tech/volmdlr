@@ -1063,11 +1063,12 @@ class Surface3D(DessiaObject):
                     outer_contour_intersections_with_plane.append(primitive_plane_intersection)
         return outer_contour_intersections_with_plane
 
-    def is_singularity_point(self, point):
+    def is_singularity_point(self, *args, **kwargs):
         """Verifies if point is on the surface singularity."""
         return False
 
-    def is_undefined_brep(self, edge):
+    @staticmethod
+    def is_undefined_brep(*args, **kwargs):
         """Verifies if the edge is contained within the periodicity boundary."""
         return False
 
