@@ -1927,8 +1927,9 @@ class Vector3D(Vector):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
-        arrow = Arrow3D(self.x, self.y, self.z, starting_point=starting_point, mutation_scale=20,  # Change for head length
-                    arrowstyle="-|>", color=color)
+        # Change for head length
+        arrow = Arrow3D(self.x, self.y, self.z, starting_point=starting_point, mutation_scale=20,
+                        arrowstyle="-|>", color=color)
 
         ax.add_artist(arrow)
         return ax
