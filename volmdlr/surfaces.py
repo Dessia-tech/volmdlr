@@ -6774,6 +6774,7 @@ class BSplineSurface3D(Surface3D):
                        self.point2d_to_3d(volmdlr.Point2D(u_max, v_max))]
         return any(point.is_close(test_point) for test_point in test_points)
 
+
 class BezierSurface3D(BSplineSurface3D):
     """
     A 3D Bezier surface.
