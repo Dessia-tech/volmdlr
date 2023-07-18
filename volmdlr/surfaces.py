@@ -501,7 +501,7 @@ class Surface2D(volmdlr.core.Primitive2D):
                 surface2d_inner_contours.append(inner_contour)
         return cls(surface2d_outer_contour, surface2d_inner_contours)
 
-    def plot(self, ax=None, color='k', alpha=1, equal_aspect=False):
+    def plot(self, ax=None, color='k', alpha=1, equal_aspect=False, **kwargs):
         """Plot surface 2d using Matplotlib."""
 
         if ax is None:
@@ -1425,7 +1425,7 @@ class Plane3D(Surface3D):
         new_frame = self.frame.copy(deep, memo)
         return Plane3D(new_frame, self.name)
 
-    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey'), length: float = 1.):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey'), length: float = 1., **kwargs):
         """
         Plot the cylindrical surface in the local frame normal direction.
 
@@ -1992,7 +1992,7 @@ class PeriodicalSurface(Surface3D):
         return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
 
     @staticmethod
-    def is_undefined_brep(edge, *args):
+    def is_undefined_brep(edge):
         """Returns True if the edge is contained within the periodicity boundary."""
         if isinstance(edge.simplify, edges.LineSegment2D) and \
                 edge.simplify.line.unit_direction_vector().is_colinear_to(volmdlr.Y2D) \
@@ -2032,7 +2032,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5),
-             length: float = 1):
+             length: float = 1, **kwargs):
         """
         Plot the cylindrical surface in the local frame normal direction.
 
@@ -2685,7 +2685,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                                         angle=angle)
         return self.__class__(new_frame, self.tore_radius, self.small_radius)
 
-    def plot(self, ax=None, color='grey', alpha=0.5):
+    def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
         """Plot torus arcs."""
         if ax is None:
             fig = plt.figure()
@@ -3649,7 +3649,7 @@ class SphericalSurface3D(PeriodicalSurface):
 
         return [edges.BSplineCurve2D.from_points_interpolation(points, 2)]
 
-    def plot(self, ax=None, color='grey', alpha=0.5):
+    def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
         """Plot sphere arcs."""
         if ax is None:
             fig = plt.figure()
@@ -3998,7 +3998,7 @@ class ExtrusionSurface3D(Surface3D):
         """Deprecated method, Use ExtrusionFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use ExtrusionFace3D from_surface_rectangular_cut method')
 
-    def plot(self, ax=None, color='grey', alpha=0.5, z: float = 0.5):
+    def plot(self, ax=None, color='grey', alpha=0.5, z: float = 0.5, **kwargs):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4220,7 +4220,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         """Deprecated method, Use RevolutionFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use RevolutionFace3D from_surface_rectangular_cut method')
 
-    def plot(self, ax=None, color='grey', alpha=0.5, number_curves: int = 20):
+    def plot(self, ax=None, color='grey', alpha=0.5, number_curves: int = 20, **kwargs):
         """
         Plot rotated Revolution surface generatrix.
 
@@ -4447,7 +4447,7 @@ class RevolutionSurface3D(PeriodicalSurface):
                 return CylindricalSurface3D(self.frame, radius, self.name)
         return self
 
-    def is_singularity_point(self, point, *args):
+    def is_singularity_point(self, point):
         """Verifies if point is on the surface singularity."""
         if self.wire.__class__.__name__ == "Line3D":
             return False
@@ -5277,7 +5277,7 @@ class BSplineSurface3D(Surface3D):
                                                 self.weights, self.name)
         return new_bsplinesurface3d
 
-    def plot(self, ax=None, color='grey', alpha=0.5):
+    def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
         u_curves = [edges.BSplineCurve3D.from_geomdl_curve(u) for u in self.curves['u']]
         v_curves = [edges.BSplineCurve3D.from_geomdl_curve(v) for v in self.curves['v']]
         if ax is None:
@@ -6764,6 +6764,15 @@ class BSplineSurface3D(Surface3D):
                                           points[2])
         return surface3d
 
+    def is_singularity_point(self, point):
+        if not self.x_periodicity and not self.y_periodicity:
+            return False
+        u_min, u_max = self.surface.domain[0]
+        v_min, v_max = self.surface.domain[1]
+        test_points = [self.point2d_to_3d(volmdlr.Point2D(u_min, v_min)),
+                       self.point2d_to_3d(volmdlr.Point2D(u_max, v_max))]
+        if self.x_periodicity or self.y_periodicity:
+            return any(point.is_close(test_point) for test_point in test_points)
 
 class BezierSurface3D(BSplineSurface3D):
     """
