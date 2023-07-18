@@ -557,6 +557,9 @@ class Vector(DessiaObject):
         dict_ = {p.approx_hash(): p for p in points}
         return list(dict_.values())
 
+    def to_vector(self):
+        return self
+
 
 class Vector2D(Vector):
     """
