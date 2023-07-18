@@ -4338,7 +4338,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         theta3, z3 = point_after_start
 
         if self.frame.w.is_colinear_to(fullarc3d.circle.normal):
-            normal_dot_product = self.frame.w.dot(fullarc3d.ellipse.normal)
+            normal_dot_product = self.frame.w.dot(fullarc3d.circle.normal)
             start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, normal_dot_product)
             return [edges.LineSegment2D(start, end, name="parametric.fullarc")]
         if math.isclose(theta1, theta2, abs_tol=1e-3):
