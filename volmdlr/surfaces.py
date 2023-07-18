@@ -1065,12 +1065,12 @@ class Surface3D(DessiaObject):
                     outer_contour_intersections_with_plane.append(primitive_plane_intersection)
         return outer_contour_intersections_with_plane
 
-    def is_singularity_point(self, *args, **kwargs):
+    def is_singularity_point(self, *args):
         """Verifies if point is on the surface singularity."""
         return False
 
     @staticmethod
-    def is_undefined_brep(*args, **kwargs):
+    def is_undefined_brep(*args):
         """Verifies if the edge is contained within the periodicity boundary."""
         return False
 
@@ -1992,7 +1992,7 @@ class PeriodicalSurface(Surface3D):
         return [edges.BSplineCurve3D.from_points_interpolation(points, 3, periodic)]
 
     @staticmethod
-    def is_undefined_brep(edge):
+    def is_undefined_brep(edge, *args):
         """Returns True if the edge is contained within the periodicity boundary."""
         if isinstance(edge.simplify, edges.LineSegment2D) and \
                 edge.simplify.line.unit_direction_vector().is_colinear_to(volmdlr.Y2D) \
@@ -4447,7 +4447,7 @@ class RevolutionSurface3D(PeriodicalSurface):
                 return CylindricalSurface3D(self.frame, radius, self.name)
         return self
 
-    def is_singularity_point(self, point):
+    def is_singularity_point(self, point, *args):
         """Verifies if point is on the surface singularity."""
         if self.wire.__class__.__name__ == "Line3D":
             return False
