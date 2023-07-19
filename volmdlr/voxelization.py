@@ -1602,7 +1602,10 @@ class VoxelMatrix:
     def __init__(self, numpy_voxel_matrix: np.ndarray[np.bool_, np.ndim == 3]):
         self.matrix = numpy_voxel_matrix
 
-    def __add__(self, other_voxel_matrix: "VoxelMatrix"):
+    def __eq__(self, other_voxel_matrix: "VoxelMatrix") -> bool:
+        return np.array_equal(self.matrix, other_voxel_matrix.matrix)
+
+    def __add__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
         return VoxelMatrix(self.matrix + other_voxel_matrix.matrix)
 
     def inverse(self) -> "VoxelMatrix":
@@ -1665,6 +1668,9 @@ class VoxelMatrix:
     def fill_enclosed_voxels(self) -> "VoxelMatrix":
         outer_filled_voxel_matrix = self.fill_outer_voxels()
         inner_filled_voxel_matrix = self + outer_filled_voxel_matrix.inverse()
+
+        if inner_filled_voxel_matrix == self:
+            warnings.warn("This voxelization doesn't have any enclosed voxels.")
 
         return inner_filled_voxel_matrix
 
