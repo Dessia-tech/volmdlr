@@ -7,7 +7,6 @@ from cython.view cimport array as cvarray
 from cython.operator cimport dereference as deref
 from typing import List, Tuple
 
-
 # C TYPES DEFINITION
 
 cdef struct Point:
@@ -323,3 +322,47 @@ def aabb_intersecting_boxes(
     free(c_centers)
 
     return centers
+
+
+# TEST
+
+from libc.stdlib cimport malloc, free
+from cpython cimport bool
+import numpy as np
+
+cdef void flood_fill_c(int[:, :, :] matrix, int[::1] start, int fill_with, int old_value, int[:, :, :] result):
+    cdef Py_ssize_t dx[6]
+    cdef Py_ssize_t dy[6]
+    cdef Py_ssize_t dz[6]
+    dx[:] = [0, 0, -1, 1, 0, 0]
+    dy[:] = [-1, 1, 0, 0, 0, 0]
+    dz[:] = [0, 0, 0, 0, -1, 1]
+    cdef Py_ssize_t nx, ny, nz
+    cdef Py_ssize_t x, y, z
+    cdef list stack = list()
+
+    stack.append(start)
+
+    while stack:
+        x, y, z = stack.pop()
+
+        result[x, y, z] = fill_with
+
+        for i in range(6):
+            nx, ny, nz = x + dx[i], y + dy[i], z + dz[i]
+
+            if (0 <= nx < matrix.shape[0] and 0 <= ny < matrix.shape[1] and 0 <= nz < matrix.shape[2]
+                and result[nx, ny, nz] == old_value):
+                stack.append((nx, ny, nz))
+
+
+def flood_fill_py(matrix: List[List[List[int]]], start: List[int], fill_with: int) -> List[List[List[int]]]:
+    cdef int[:, :, :] c_matrix = np.array(matrix, dtype=np.int32)
+    cdef int[::1] c_start = np.array(start, dtype=np.int32)
+    cdef int c_fill_with = fill_with
+    cdef int c_old_value = c_matrix[start[0]][start[1]][start[2]]
+    cdef int[:, :, :] result = c_matrix.copy()
+
+    flood_fill_c(c_matrix, c_start, c_fill_with, c_old_value, result)
+
+    return np.array(result)

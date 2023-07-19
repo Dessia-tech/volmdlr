@@ -16,7 +16,7 @@ from volmdlr.core import BoundingBox, VolumeModel
 from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
-from volmdlr.voxelization_compiled import aabb_intersecting_boxes, triangle_intersects_voxel
+from volmdlr.voxelization_compiled import aabb_intersecting_boxes, triangle_intersects_voxel, flood_fill_py
 from volmdlr.wires import ClosedPolygon2D
 
 # Custom types
@@ -1548,6 +1548,8 @@ class VoxelMatrix:
         return VoxelMatrix(inverted_matrix)
 
     def flood_fill(self, start, fill_with) -> "VoxelMatrix":
+        return VoxelMatrix(flood_fill_py(self.matrix.tolist(), list(start), fill_with))
+
         directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
         old_value = self.matrix[start[0]][start[1]][start[2]]
 
