@@ -1554,11 +1554,11 @@ class Voxelization(PhysicalObject):
             for dx, dy, dz in directions:
                 nx, ny, nz = x + dx, y + dy, z + dz
                 if (
-                        0 <= nx < len(matrix)
-                        and 0 <= ny < len(matrix[0])
-                        and 0 <= nz < len(matrix[0][0])
-                        and matrix[nx][ny][nz] == old_value
-                        and (nx, ny, nz) not in visited
+                    0 <= nx < len(matrix)
+                    and 0 <= ny < len(matrix[0])
+                    and 0 <= nz < len(matrix[0][0])
+                    and matrix[nx][ny][nz] == old_value
+                    and (nx, ny, nz) not in visited
                 ):
                     stack.append((nx, ny, nz))
                     visited.add((nx, ny, nz))
@@ -1588,10 +1588,85 @@ class Voxelization(PhysicalObject):
         expanded_matrix = expand_3d_matrix(matrix)
         outer_filled_expanded_matrix = self._flood_fill_matrix(expanded_matrix, (0, 0, 0), True)
         outer_filled_matrix = reduce_3d_matrix(outer_filled_expanded_matrix)
-        outer_filled_voxelization = self.from_voxel_matrix(outer_filled_matrix, self.voxel_size, self.get_min_voxel_grid_center())
+        outer_filled_voxelization = self.from_voxel_matrix(
+            outer_filled_matrix, self.voxel_size, self.get_min_voxel_grid_center()
+        )
         inner_filled_voxelization = self + outer_filled_voxelization.inverse()
 
         return inner_filled_voxelization
+
+
+class VoxelMatrix:
+    """Class to manipulate voxel matrix."""
+
+    def __init__(self, numpy_voxel_matrix: np.ndarray[np.bool_, np.ndim == 3]):
+        self.matrix = numpy_voxel_matrix
+
+    def __add__(self, other_voxel_matrix: "VoxelMatrix"):
+        return VoxelMatrix(self.matrix + other_voxel_matrix.matrix)
+
+    def inverse(self) -> "VoxelMatrix":
+        inverted_matrix = np.logical_not(self.matrix)
+        return VoxelMatrix(inverted_matrix)
+
+    def flood_fill(self, start, fill_with) -> "VoxelMatrix":
+        directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
+        old_value = self.matrix[start[0]][start[1]][start[2]]
+
+        if old_value == fill_with:
+            return self
+
+        matrix = self.matrix.copy()
+        stack = deque([start])
+        visited = {start}
+
+        while stack:
+            x, y, z = stack.pop()
+
+            matrix[x][y][z] = fill_with
+
+            for dx, dy, dz in directions:
+                nx, ny, nz = x + dx, y + dy, z + dz
+                if (
+                    0 <= nx < len(matrix)
+                    and 0 <= ny < len(matrix[0])
+                    and 0 <= nz < len(matrix[0][0])
+                    and matrix[nx][ny][nz] == old_value
+                    and (nx, ny, nz) not in visited
+                ):
+                    stack.append((nx, ny, nz))
+                    visited.add((nx, ny, nz))
+
+        return VoxelMatrix(matrix)
+
+    def _expand(self) -> "VoxelMatrix":
+        current_shape = self.matrix.shape
+        new_shape = tuple(dim + 2 for dim in current_shape)
+        expanded_voxel_matrix = np.zeros(new_shape, dtype="bool")
+        slices = tuple(slice(1, -1) for _ in current_shape)
+        expanded_voxel_matrix[slices] = self.voxel_matrix.copy()
+
+        return VoxelMatrix(expanded_voxel_matrix)
+
+    def _reduce(self) -> "VoxelMatrix":
+        current_shape = self.matrix.shape
+        slices = tuple(slice(1, -1) for _ in current_shape)
+        reduced_matrix = self.matrix.copy()[slices]
+
+        return VoxelMatrix(reduced_matrix)
+
+    def fill_outer_voxels(self) -> "VoxelMatrix":
+        expanded_voxel_matrix = self._expand()
+        outer_filled_expanded_voxel_matrix = expanded_voxel_matrix.flood_fill((0, 0, 0), True)
+        outer_filled_voxel_matrix = outer_filled_expanded_voxel_matrix._reduce()
+
+        return outer_filled_voxel_matrix
+
+    def fill_enclosed_voxels(self) -> "VoxelMatrix":
+        outer_filled_voxel_matrix = self.fill_outer_voxels()
+        inner_filled_voxel_matrix = self + outer_filled_voxel_matrix.inverse()
+
+        return inner_filled_voxel_matrix
 
 
 class OctreeNode:
