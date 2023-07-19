@@ -1444,9 +1444,9 @@ class Voxelization(PhysicalObject):
         dim_y = round((max_center[1] - min_center[1]) / self.voxel_size + 1)
         dim_z = round((max_center[2] - min_center[2]) / self.voxel_size + 1)
 
-        matrix = np.zeros((dim_x, dim_y, dim_z), dtype=np.bool_)
-
         indices = np.round((np.array(list(self.voxels_centers)) - min_center) / self.voxel_size).astype(int)
+
+        matrix = np.zeros((dim_x, dim_y, dim_z), dtype=np.bool_)
         matrix[indices[:, 0], indices[:, 1], indices[:, 2]] = True
 
         return VoxelMatrix(matrix)
