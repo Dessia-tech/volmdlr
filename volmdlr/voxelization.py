@@ -1479,7 +1479,7 @@ class Voxelization(PhysicalObject):
 
         return Voxelization.from_voxel_matrix(inverted_matrix, self.voxel_size, min_voxel_center)
 
-    def bounding_box(self):
+    def _bounding_box(self):
         """
         Get the bounding box of the voxelization.
 
@@ -1495,25 +1495,26 @@ class Voxelization(PhysicalObject):
 
         return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
 
+    bounding_box = property(_bounding_box)
+
     def _point_to_local_grid_index(self, point: Point) -> Tuple[int, ...]:
         """
         Convert a point to the local grid index within the voxelization.
 
         :param point: The point to convert.
         :type point: Point
-        :return: The local grid index of the point.
 
+        :return: The local grid index of the point.
         :rtype: Tuple[int, ...]
+
         :raises ValueError: If the point is not within the voxelization's bounding box.
         """
-        if not self.bounding_box().point_belongs(Point3D(*point)):
+        if not self.bounding_box.point_belongs(Point3D(*point)):
             raise ValueError("Point not in local voxel grid.")
 
-        bb = self.bounding_box()
-
-        x_index = int((point[0] - bb.xmin) // self.voxel_size)
-        y_index = int((point[1] - bb.ymin) // self.voxel_size)
-        z_index = int((point[2] - bb.zmin) // self.voxel_size)
+        x_index = int((point[0] - self.bounding_box.xmin) // self.voxel_size)
+        y_index = int((point[1] - self.bounding_box.ymin) // self.voxel_size)
+        z_index = int((point[2] - self.bounding_box.zmin) // self.voxel_size)
 
         return x_index, y_index, z_index
 
