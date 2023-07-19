@@ -1566,11 +1566,11 @@ class VoxelMatrix:
             for dx, dy, dz in directions:
                 nx, ny, nz = x + dx, y + dy, z + dz
                 if (
-                    0 <= nx < len(matrix)
+                    (nx, ny, nz) not in visited
+                    and 0 <= nx < len(matrix)
                     and 0 <= ny < len(matrix[0])
                     and 0 <= nz < len(matrix[0][0])
                     and matrix[nx][ny][nz] == old_value
-                    and (nx, ny, nz) not in visited
                 ):
                     stack.append((nx, ny, nz))
                     visited.add((nx, ny, nz))
