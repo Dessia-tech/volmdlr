@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Sweep with non smoth path
 - plot of vector3D.
+- BSplineSurface3D: point3d_to_2d, improve inital condition.
 - EdgeCollection3D: babylon_meshes.
 - BSplineCurve3D: trim
 - FullArc3D: hash
@@ -22,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
-- 
+- Surface3D: enhance repair_primitives_periodicity method.
 
 ### Changed
 -
