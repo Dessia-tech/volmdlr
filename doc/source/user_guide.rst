@@ -31,7 +31,13 @@ The volmdlr library is structured using a modular approach as follows:
 * **display**: provides tools for rendering and visualizing 3D models;
 * **cloud**: provides algorithms to work with a cloud of points;
 
+Fundamentals and usage
+----------------------
+.. toctree::
+   :caption: Volmdlr
+   :maxdepth: 2
 
+   volmdlr
 
 Q&A
 ---

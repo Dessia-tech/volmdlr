@@ -2,8 +2,9 @@ Volmdlr: the absolute basics for beginners
 ------------------
 Welcome to the absolute beginner’s guide to volmdlr! If you have comments or suggestions, please don’t hesitate to reach out!
 
-Welcome to voldmdlr!
--------------------
+Welcome to volmdlr!
+^^^^^^^^^^^^^^^^^^^
+
 The volmdlr library is an open-source Python library primarily developed by Dessia Technologies,
 aimed at providing 3D modeling capabilities based on Boundary Representation (B-Rep) purely in Python.
 The library is designed to be easy to use, efficient, and customizable.
@@ -14,7 +15,7 @@ and curves. B-Rep is widely used in CAD and CAM due to its ability to accurately
 shapes and to provide a rich set of operations for manipulating and analyzing these shapes.
 
 Installing volmdlr through pip (Windows and Linux users)
---------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^
 
 This package requires Python 3.9 or above. Please follow the instructions
 below to install the package. Depending on your needs, you can choose between
@@ -35,7 +36,7 @@ command::
   pip3 install volmdlr==0.1.0
 
 Developer installation
-----------------------
+^^^^^^^^^^^^^^^^^^^
 
 First, clone the package. Then, enter the newly created volmdlr repository. Finally, develop the setup.py file, and you are good to go ! ::
 
@@ -48,7 +49,7 @@ First, clone the package. Then, enter the newly created volmdlr repository. Fina
   python3.x setup.py develop --user
 
 Requirements
-------------
+^^^^^^^^^^^^^^^^^^^
 
 The installation of volmdlr requires the installation of other packages listed
 in the file setup.py and in the table below. These libraries will be
@@ -76,7 +77,7 @@ gmsh               latest       computation
 =============  ===============  ===========
 
 Troubleshooting
----------------
+^^^^^^^^^^^^^^^^^^^
 
 If the installation is successful but your IDE don't recognize the package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

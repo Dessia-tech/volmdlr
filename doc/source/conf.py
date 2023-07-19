@@ -12,15 +12,16 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../../volmdlr'))
 
 
 # -- Project information -----------------------------------------------------
+import datetime
 
 project = 'Volmdlr'
-copyright = '2018-2023 DessIA Technologies'
+copyright = f'2018-{datetime.datetime.now().year} DessIA Technologies'
 author = 'DessIA Technologies'
 
 import volmdlr
@@ -81,6 +82,7 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+# html_theme = "pydata_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
