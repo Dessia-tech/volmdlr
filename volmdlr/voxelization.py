@@ -1397,19 +1397,10 @@ class Voxelization(PhysicalObject):
             Some methods like boolean operation or interference computing may not work as expected."""
             )
 
-        voxels_centers = set()
-        for i, row in enumerate(voxel_matrix.matrix):
-            for j, col in enumerate(row):
-                for k, voxel in enumerate(col):
-                    if voxel:
-                        center = (
-                            round(voxel_matrix_origin_center[0] + i * voxel_size, 6),
-                            round(voxel_matrix_origin_center[1] + j * voxel_size, 6),
-                            round(voxel_matrix_origin_center[2] + k * voxel_size, 6),
-                        )
-                        voxels_centers.add(center)
+        indices = np.argwhere(voxel_matrix.matrix)
+        voxel_centers = voxel_matrix_origin_center + indices * voxel_size
 
-        return cls(voxels_centers, voxel_size)
+        return cls(set(map(tuple, np.round(voxel_centers, 6))), voxel_size)
 
     def get_min_voxel_grid_center(self) -> Point:
         """
@@ -1453,16 +1444,12 @@ class Voxelization(PhysicalObject):
         dim_y = round((max_center[1] - min_center[1]) / self.voxel_size + 1)
         dim_z = round((max_center[2] - min_center[2]) / self.voxel_size + 1)
 
-        matrix = [[[False for _ in range(dim_z)] for _ in range(dim_y)] for _ in range(dim_x)]
+        matrix = np.zeros((dim_x, dim_y, dim_z), dtype=np.bool_)
 
-        for voxel_center in self.voxels_centers:
-            x = round((voxel_center[0] - min_center[0]) / self.voxel_size)
-            y = round((voxel_center[1] - min_center[1]) / self.voxel_size)
-            z = round((voxel_center[2] - min_center[2]) / self.voxel_size)
+        indices = np.round((np.array(list(self.voxels_centers)) - min_center) / self.voxel_size).astype(int)
+        matrix[indices[:, 0], indices[:, 1], indices[:, 2]] = True
 
-            matrix[x][y][z] = True
-
-        return VoxelMatrix(np.array(matrix))
+        return VoxelMatrix(matrix)
 
     def inverse(self) -> "Voxelization":
         """
