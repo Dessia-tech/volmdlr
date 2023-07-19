@@ -1642,11 +1642,11 @@ class VoxelMatrix:
     def _expand(self) -> "VoxelMatrix":
         current_shape = self.matrix.shape
         new_shape = tuple(dim + 2 for dim in current_shape)
-        expanded_voxel_matrix = np.zeros(new_shape, dtype="bool")
+        expanded_matrix = np.zeros(new_shape, dtype="bool")
         slices = tuple(slice(1, -1) for _ in current_shape)
-        expanded_voxel_matrix[slices] = self.voxel_matrix.copy()
+        expanded_matrix[slices] = self.matrix.copy()
 
-        return VoxelMatrix(expanded_voxel_matrix)
+        return VoxelMatrix(expanded_matrix)
 
     def _reduce(self) -> "VoxelMatrix":
         current_shape = self.matrix.shape
