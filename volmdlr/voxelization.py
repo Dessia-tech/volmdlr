@@ -1529,48 +1529,6 @@ class Voxelization(PhysicalObject):
         :return: A new Voxelization object with the filled voxels.
         :rtype: Voxelization
         """
-        directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
-        start = self._point_to_local_grid_index(start_point)
-        matrix = self.to_voxel_matrix()
-        old_value = matrix[start[0]][start[1]][start[2]]
-
-        if old_value == fill_with:
-            return self
-
-        stack = deque([start])
-        visited = {start}
-
-        while stack:
-            x, y, z = stack.pop()
-
-            matrix[x][y][z] = fill_with
-
-            for dx, dy, dz in directions:
-                nx, ny, nz = x + dx, y + dy, z + dz
-                if (
-                    0 <= nx < len(matrix)
-                    and 0 <= ny < len(matrix[0])
-                    and 0 <= nz < len(matrix[0][0])
-                    and matrix[nx][ny][nz] == old_value
-                    and (nx, ny, nz) not in visited
-                ):
-                    stack.append((nx, ny, nz))
-                    visited.add((nx, ny, nz))
-
-        return self.from_voxel_matrix(matrix, self.voxel_size, self.get_min_voxel_grid_center())
-
-    def flood_fill(self, start_point: Point, fill_with: bool) -> "Voxelization":
-        """
-        Perform a flood fill operation within the voxelization starting from the given point.
-
-        :param start_point: The starting point of the flood fill operation.
-        :type start_point: Point
-        :param fill_with: The value to fill the voxels during the flood fill operation.
-        :type fill_with: bool
-
-        :return: A new Voxelization object with the filled voxels.
-        :rtype: Voxelization
-        """
         start = self._point_to_local_grid_index(start_point)
         matrix = self.to_voxel_matrix()
         filled_matrix = self._flood_fill_matrix(matrix, start, fill_with)
