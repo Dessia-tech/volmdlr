@@ -1410,9 +1410,12 @@ class Voxelization(PhysicalObject):
         :return: The minimum center point.
         :rtype: tuple[float, float, float]
         """
-        min_x = min(point[0] for point in self.voxels_centers)
-        min_y = min(point[1] for point in self.voxels_centers)
-        min_z = min(point[2] for point in self.voxels_centers)
+        min_x = min_y = min_z = float('inf')
+
+        for point in self.voxels_centers:
+            min_x = min(min_x, point[0])
+            min_y = min(min_y, point[1])
+            min_z = min(min_z, point[2])
 
         return min_x, min_y, min_z
 
@@ -1426,9 +1429,12 @@ class Voxelization(PhysicalObject):
         :return: The maximum center point.
         :rtype: tuple[float, float, float]
         """
-        max_x = max(point[0] for point in self.voxels_centers)
-        max_y = max(point[1] for point in self.voxels_centers)
-        max_z = max(point[2] for point in self.voxels_centers)
+        max_x = max_y = max_z = -float('inf')
+
+        for point in self.voxels_centers:
+            max_x = max(max_x, point[0])
+            max_y = max(max_y, point[1])
+            max_z = max(max_z, point[2])
 
         return max_x, max_y, max_z
 
