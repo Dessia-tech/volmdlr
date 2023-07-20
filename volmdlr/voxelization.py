@@ -594,14 +594,20 @@ class Voxelization(PhysicalObject):
         voxel_centers = set()
 
         for i in range(3):
+            # Check if the triangle is defined in the XY, XZ or YZ plane
             if round(triangle[0][i], 6) == round(triangle[1][i], 6) == round(triangle[2][i], 6):
                 abscissa = round(triangle[0][i], 6)
+
+                # Check if this plane is defined is at the interface between voxels
                 if round(abscissa / voxel_size, 6).is_integer():
+                    # Define the 3D  triangle in 2D
+
                     v0 = triangle[0][:i] + triangle[0][i + 1 :]
                     v1 = triangle[1][:i] + triangle[1][i + 1 :]
                     v2 = triangle[2][:i] + triangle[2][i + 1 :]
 
                     triangle_2d = np.array([v0, v1, v2])
+                    print(triangle_2d)
 
                     for center in Voxelization._rasterize_triangle_2d(triangle_2d, voxel_size):
                         center_left = copy(center)
