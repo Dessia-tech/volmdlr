@@ -4567,15 +4567,11 @@ class BSplineSurface3D(Surface3D):
         Evaluates the periodicity of the surface in u direction.
         """
         if self._x_periodicity is False:
-            # # u = self.curves['u']
-            # a, b = self.surface.domain[0]
-            # c, d = self.surface.domain[1]
-            # # u0 = u[0]
-            # point_at_a = self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (d - c)))
-            # point_at_b = self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (d - c)))
-            # if point_at_b.is_close(point_at_a):
-            if self.u_closed():
-                a, b = self.surface.domain[0]
+            a, b = self.surface.domain[0]
+            c, d = self.surface.domain[1]
+            point_at_a = self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (d - c)))
+            point_at_b = self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (d - c)))
+            if point_at_b.is_close(point_at_a) or self.u_closed():
                 self._x_periodicity = b - a
             else:
                 self._x_periodicity = None
@@ -4587,15 +4583,11 @@ class BSplineSurface3D(Surface3D):
         Evaluates the periodicity of the surface in v direction.
         """
         if self._y_periodicity is False:
-            # v = self.curves['v']
-            # a, b = self.surface.domain[0]
-            # c, d = self.surface.domain[1]
-            # # v0 = v[0]
-            # point_at_c = self.point2d_to_3d(volmdlr.Point2D(0.5 * (b - a), c))
-            # point_at_d = self.point2d_to_3d(volmdlr.Point2D(0.5* (b - a), d))
-            # if point_at_d.is_close(point_at_c):
-            if self.v_closed():
-                c, d = self.surface.domain[1]
+            a, b = self.surface.domain[0]
+            c, d = self.surface.domain[1]
+            point_at_c = self.point2d_to_3d(volmdlr.Point2D(0.5 * (b - a), c))
+            point_at_d = self.point2d_to_3d(volmdlr.Point2D(0.5 * (b - a), d))
+            if point_at_d.is_close(point_at_c) or self.v_closed():
                 self._y_periodicity = d - c
             else:
                 self._y_periodicity = None
