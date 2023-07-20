@@ -32,12 +32,14 @@ The volmdlr library is structured using a modular approach as follows:
 * **cloud**: provides algorithms to work with a cloud of points;
 
 Fundamentals and usage
-----------------------
+---------------------
+
 .. toctree::
-   :caption: Volmdlr
+   :caption: Volmdlr Basics
    :maxdepth: 2
 
-   volmdlr
+   volmdlr.utils
+   modules
 
 Q&A
 ---

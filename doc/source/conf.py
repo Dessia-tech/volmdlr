@@ -41,6 +41,7 @@ release = volmdlr.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx_design',
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
@@ -81,19 +82,40 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
-# html_theme = "pydata_sphinx_theme"
+# html_theme = 'sphinx_rtd_theme'
+html_theme = "pydata_sphinx_theme"
+# html_theme = "furo"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#
-# html_theme_options = {}
+
+html_theme_options = {
+  "logo": {
+      "image_light": "volmdlr.svg",
+      "image_dark": "volmdlr-dark.svg",
+  },
+  "github_url": "https://github.com/Dessia-tech/volmdlr",
+  # "twitter_url": "https://twitter.com/numpy_team",
+  "collapse_navigation": True,
+  # "external_links": [
+  #     {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"},
+  #     {"name": "NEPs", "url": "https://numpy.org/neps"}
+  #     ],
+  "header_links_before_dropdown": 6,
+  # Add light/dark mode and documentation version switcher:
+  "navbar_end": ["theme-switcher", "navbar-icon-links"],
+  # "switcher": {
+  #     "version_match": switcher_version,
+  #     "json_url": "https://numpy.org/doc/_static/versions.json",
+  # },
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_css_files = ["volmdlr.css"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
