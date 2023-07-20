@@ -6,6 +6,8 @@ from libc.math cimport fabs, sqrt
 from cython.view cimport array as cvarray
 from cython.operator cimport dereference as deref
 from typing import List, Tuple
+import numpy as np
+
 
 # C TYPES DEFINITION
 
@@ -28,7 +30,7 @@ cdef struct VoxelExtents:
     double z
 
 
-# C FUNCTIONS DEFINTIONS
+# FUNCTION: triangle_intersects_voxel
 
 cdef bint triangle_intersects_voxel_c(Triangle triangle, VoxelCenter voxel_center, VoxelExtents voxel_extents):
     # Method ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
@@ -212,37 +214,6 @@ cdef bint triangle_intersects_voxel_c(Triangle triangle, VoxelCenter voxel_cente
     return True
 
 
-cdef int aabb_intersecting_boxes_c(Point min_point, Point max_point, double voxel_size, Point** centers):
-    cdef int x_start, x_end, y_start, y_end, z_start, z_end, x, y, z, num_centers
-    cdef Point* c_centers
-    cdef Point center
-
-    x_start = int(min_point.x / voxel_size) - 1
-    x_end = int(max_point.x / voxel_size) + 1
-    y_start = int(min_point.y / voxel_size) - 1
-    y_end = int(max_point.y / voxel_size) + 1
-    z_start = int(min_point.z / voxel_size) - 1
-    z_end = int(max_point.z / voxel_size) + 1
-
-    num_centers = (x_end - x_start) * (y_end - y_start) * (z_end - z_start)
-    c_centers = <Point*>malloc(num_centers * sizeof(Point))
-
-    num_centers = 0
-    for x in range(x_start, x_end):
-        for y in range(y_start, y_end):
-            for z in range(z_start, z_end):
-                center.x = round((x + 0.5) * voxel_size, 6)
-                center.y = round((y + 0.5) * voxel_size, 6)
-                center.z = round((z + 0.5) * voxel_size, 6)
-                c_centers[num_centers] = center
-                num_centers += 1
-
-    centers[0] = c_centers
-    return num_centers
-
-
-# DEFINITION OF PYTHON FUNCTION THAT INTERFACE WITH THE CYTHON FUNCTION
-
 def triangle_intersects_voxel(
     triangle: Tuple[Tuple[float, ...]], voxel_center: Tuple[float, ...], voxel_extents: List[float]
 ) -> bool:
@@ -287,6 +258,37 @@ def triangle_intersects_voxel(
     return triangle_intersects_voxel_c(tri, center, extents)
 
 
+# FUNCTION: aabb_intersecting_boxes
+
+cdef int aabb_intersecting_boxes_c(Point min_point, Point max_point, double voxel_size, Point** centers):
+    cdef int x_start, x_end, y_start, y_end, z_start, z_end, x, y, z, num_centers
+    cdef Point* c_centers
+    cdef Point center
+
+    x_start = int(min_point.x / voxel_size) - 1
+    x_end = int(max_point.x / voxel_size) + 1
+    y_start = int(min_point.y / voxel_size) - 1
+    y_end = int(max_point.y / voxel_size) + 1
+    z_start = int(min_point.z / voxel_size) - 1
+    z_end = int(max_point.z / voxel_size) + 1
+
+    num_centers = (x_end - x_start) * (y_end - y_start) * (z_end - z_start)
+    c_centers = <Point*>malloc(num_centers * sizeof(Point))
+
+    num_centers = 0
+    for x in range(x_start, x_end):
+        for y in range(y_start, y_end):
+            for z in range(z_start, z_end):
+                center.x = round((x + 0.5) * voxel_size, 6)
+                center.y = round((y + 0.5) * voxel_size, 6)
+                center.z = round((z + 0.5) * voxel_size, 6)
+                c_centers[num_centers] = center
+                num_centers += 1
+
+    centers[0] = c_centers
+    return num_centers
+
+
 def aabb_intersecting_boxes(
     min_point: Tuple[float, ...], max_point: Tuple[float, ...], voxel_size: float
 ) -> List[Tuple[float, ...]]:
@@ -324,13 +326,9 @@ def aabb_intersecting_boxes(
     return centers
 
 
-# TEST
+# FUNCTION: flood_fill_matrix
 
-from libc.stdlib cimport malloc, free
-from cpython cimport bool
-import numpy as np
-
-cdef void flood_fill_c(int[:, :, :] matrix, int[::1] start, int fill_with, int old_value, int[:, :, :] result):
+cdef void flood_fill_matrix_c(int[:, :, :] matrix, int[::1] start, int fill_with, int old_value, int[:, :, :] result):
     cdef Py_ssize_t dx[6]
     cdef Py_ssize_t dy[6]
     cdef Py_ssize_t dz[6]
@@ -356,13 +354,13 @@ cdef void flood_fill_c(int[:, :, :] matrix, int[::1] start, int fill_with, int o
                 stack.append((nx, ny, nz))
 
 
-def flood_fill_py(matrix: List[List[List[int]]], start: List[int], fill_with: int) -> List[List[List[int]]]:
-    cdef int[:, :, :] c_matrix = np.array(matrix, dtype=np.int32)
+def flood_fill_matrix(matrix, start: List[int], fill_with: int) -> List[List[List[int]]]:
+    cdef int[:, :, :] c_matrix = matrix.astype(np.int32)
     cdef int[::1] c_start = np.array(start, dtype=np.int32)
     cdef int c_fill_with = fill_with
     cdef int c_old_value = c_matrix[start[0]][start[1]][start[2]]
     cdef int[:, :, :] result = c_matrix.copy()
 
-    flood_fill_c(c_matrix, c_start, c_fill_with, c_old_value, result)
+    flood_fill_matrix_c(c_matrix, c_start, c_fill_with, c_old_value, result)
 
-    return np.array(result)
+    return np.array(result).astype(bool)
