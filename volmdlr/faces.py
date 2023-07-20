@@ -2684,15 +2684,15 @@ class BSplineFace3D(Face3D):
             discretize_line_direction = "y"
         outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True,
                                                       discretize_line_direction=discretize_line_direction)
-        points = [vmd.Node2D(*point) for point in outer_polygon.points]
+        points = []
+        points.extend(points)
         points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
                                                                                     number_points_y=number_points_y)
         if self.surface2d.inner_contours:
             for inner_contour in self.surface2d.inner_contours:
                 inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True,
                                                          discretize_line_direction=discretize_line_direction)
-                inner_polygon_nodes = [vmd.Node2D.from_point(p) for p in inner_polygon.points]
-                points.extend(inner_polygon_nodes)
+                points.extend(inner_polygon.points)
                 # removes with a region search the grid points that are in the inner contour
                 xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
                 x_grid_range = array_range_search(x, xmin, xmax)
