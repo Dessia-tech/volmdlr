@@ -1402,7 +1402,7 @@ class Voxelization(PhysicalObject):
 
         return cls(set(map(tuple, np.round(voxel_centers, 6))), voxel_size)
 
-    def get_min_voxel_grid_center(self) -> Point:
+    def _get_min_voxel_grid_center(self) -> Point:
         """
         Get the minimum center point from the set of voxel centers, in the voxel 3D grid.
         This point may not be a voxel of the voxelization, because it is the minimum center in each direction (X, Y, Z).
@@ -1416,7 +1416,9 @@ class Voxelization(PhysicalObject):
 
         return min_x, min_y, min_z
 
-    def get_max_voxel_grid_center(self) -> Point:
+    min_voxel_grid_center = property(_get_min_voxel_grid_center)
+
+    def _get_max_voxel_grid_center(self) -> Point:
         """
         Get the maximum center point from the set of voxel centers, in the voxel 3D grid.
         This point may not be a voxel of the voxelization, because it is the maximum center in each direction (X, Y, Z).
@@ -1430,6 +1432,8 @@ class Voxelization(PhysicalObject):
 
         return max_x, max_y, max_z
 
+    max_voxel_grid_center = property(_get_max_voxel_grid_center)
+
     def to_voxel_matrix(self) -> "VoxelMatrix":
         """
         Convert the voxelization to a voxel matrix object.
@@ -1437,8 +1441,8 @@ class Voxelization(PhysicalObject):
         :return: The voxel matrix representing the voxelization.
         :rtype: VoxelMatrix
         """
-        min_center = self.get_min_voxel_grid_center()
-        max_center = self.get_max_voxel_grid_center()
+        min_center = self.min_voxel_grid_center
+        max_center = self.max_voxel_grid_center
 
         dim_x = round((max_center[0] - min_center[0]) / self.voxel_size + 1)
         dim_y = round((max_center[1] - min_center[1]) / self.voxel_size + 1)
@@ -1459,11 +1463,11 @@ class Voxelization(PhysicalObject):
         :rtype: Voxelization
         """
         inverted_voxel_matrix = self.to_voxel_matrix().inverse()
-        min_voxel_center = self.get_min_voxel_grid_center()
+        min_voxel_center = self.min_voxel_grid_center
 
         return Voxelization.from_voxel_matrix(inverted_voxel_matrix, self.voxel_size, min_voxel_center)
 
-    def _bounding_box(self):
+    def _get_bounding_box(self):
         """
         Get the bounding box of the voxelization.
 
@@ -1471,15 +1475,15 @@ class Voxelization(PhysicalObject):
         :rtype: BoundingBox
         """
         min_point = (
-            np.array([self.get_min_voxel_grid_center()]) - np.array([self.voxel_size, self.voxel_size, self.voxel_size])
+            np.array([self.min_voxel_grid_center]) - np.array([self.voxel_size, self.voxel_size, self.voxel_size])
         )[0]
         max_point = (
-            np.array([self.get_max_voxel_grid_center()]) + np.array([self.voxel_size, self.voxel_size, self.voxel_size])
+            np.array([self.max_voxel_grid_center]) + np.array([self.voxel_size, self.voxel_size, self.voxel_size])
         )[0]
 
         return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
 
-    bounding_box = property(_bounding_box)
+    bounding_box = property(_get_bounding_box)
 
     def _point_to_local_grid_index(self, point: Point) -> Tuple[int, ...]:
         """
@@ -1518,16 +1522,16 @@ class Voxelization(PhysicalObject):
         voxel_matrix = self.to_voxel_matrix()
         filled_voxel_matrix = voxel_matrix.flood_fill(start, fill_with)
 
-        return self.from_voxel_matrix(filled_voxel_matrix, self.voxel_size, self.get_min_voxel_grid_center())
+        return self.from_voxel_matrix(filled_voxel_matrix, self.voxel_size, self.min_voxel_grid_center)
 
     def fill_outer_voxels(self) -> "Voxelization":
         return self.from_voxel_matrix(
-            self.to_voxel_matrix().fill_outer_voxels(), self.voxel_size, self.get_min_voxel_grid_center()
+            self.to_voxel_matrix().fill_outer_voxels(), self.voxel_size, self.min_voxel_grid_center
         )
 
     def fill_enclosed_voxels(self) -> "Voxelization":
         return self.from_voxel_matrix(
-            self.to_voxel_matrix().fill_enclosed_voxels(), self.voxel_size, self.get_min_voxel_grid_center()
+            self.to_voxel_matrix().fill_enclosed_voxels(), self.voxel_size, self.min_voxel_grid_center
         )
 
 
