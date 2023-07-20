@@ -35,10 +35,16 @@ MAX_ERROR_BY_TYPE = {
                      'duplicate-code': 10,
                      'arguments-renamed': 52,
                      'too-many-ancestors': 25,
+<<<<<<< HEAD
                      'too-few-public-methods': 3,
                      'non-parent-init-called': 3,
                      'too-many-public-methods': 11,
                      'too-many-instance-attributes': 16,
+=======
+                     'too-few-public-methods': 2,
+                     'too-many-public-methods': 11,
+                     'too-many-instance-attributes': 15,
+>>>>>>> bsplineface_bbox
                      'protected-access': 4,
                      'undefined-loop-variable': 2,
                      'unspecified-encoding': 1,

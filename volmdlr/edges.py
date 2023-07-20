@@ -1220,7 +1220,7 @@ class BSplineCurve(Edge):
         curve = volmdlr.interpolate_curve([[*point] for point in points], degree, centripetal=True)
 
         bsplinecurve = cls.from_geomdl_curve(curve, name=name)
-        if not periodic:
+        if not points[0].is_close(points[-1]):
             return bsplinecurve
         bsplinecurve.periodic = True
         return bsplinecurve

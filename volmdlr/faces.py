@@ -22,6 +22,7 @@ import volmdlr.curves as volmdlr_curves
 import volmdlr.geometry
 import volmdlr.grid
 from volmdlr import surfaces
+from volmdlr.utils.parametric import array_range_search
 import volmdlr.wires
 
 
@@ -2683,6 +2684,42 @@ class BSplineFace3D(Face3D):
     def bounding_box(self, new_bounding_box):
         self._bbox = new_bounding_box
 
+    def get_bounding_box(self):
+        """Creates a bounding box from the face mesh"""
+        # mesh = self.triangulation(self.grid_size())
+        number_points_x, number_points_y = self.grid_size()
+        discretize_line_direction = "xy"
+        if number_points_y == 0 or number_points_x > 20 * number_points_y:
+            discretize_line_direction = "x"
+        elif number_points_y > 20 * number_points_x:
+            discretize_line_direction = "y"
+        outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True,
+                                                      discretize_line_direction=discretize_line_direction)
+        points = [vmd.Node2D(*point) for point in outer_polygon.points]
+        points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
+                                                                                    number_points_y=number_points_y)
+        if self.surface2d.inner_contours:
+            for inner_contour in self.surface2d.inner_contours:
+                inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True,
+                                                         discretize_line_direction=discretize_line_direction)
+                inner_polygon_nodes = [vmd.Node2D.from_point(p) for p in inner_polygon.points]
+                points.extend(inner_polygon_nodes)
+                # removes with a region search the grid points that are in the inner contour
+                xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
+                x_grid_range = array_range_search(x, xmin, xmax)
+                y_grid_range = array_range_search(y, ymin, ymax)
+                for i in x_grid_range:
+                    for j in y_grid_range:
+                        point = grid_point_index.get((i, j))
+                        if not point:
+                            continue
+                        if inner_polygon.point_belongs(point):
+                            points_grid.remove(point)
+                            grid_point_index.pop((i, j))
+        points.extend(points_grid)
+        points3d = [self.surface3d.point2d_to_3d(point) for point in points]
+        return volmdlr.core.BoundingBox.from_points(points3d)
+
     def triangulation_lines(self, resolution=25):
         """
         Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
@@ -2709,18 +2746,16 @@ class BSplineFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        # if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
-        #     resolution = 25
-        # else:
-        #     resolution = 15
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
-        # number_points_x = int(delta_u * resolution)
-        #
+        resolution_u = self.surface3d.nb_u
+        resolution_v = self.surface3d.nb_v
+        if self.surface2d.inner_contours:
+            resolution_u = max(15, resolution_u)
+            resolution_v = max(15, resolution_v)
         delta_v = v_max - v_min
-        # number_points_y = int(delta_v * resolution)
-        number_points_x = int(delta_u * self.surface3d.nb_u)
-        number_points_y = int(delta_v * self.surface3d.nb_v)
+        number_points_x = int(delta_u * resolution_u)
+        number_points_y = int(delta_v * resolution_v)
 
         return number_points_x, number_points_y
 
