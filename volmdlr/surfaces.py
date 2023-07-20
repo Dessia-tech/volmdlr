@@ -192,7 +192,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         discretize_line_direction = "xy"
         if number_points_y == 0 or number_points_x > 25 * number_points_y:
             discretize_line_direction = "x"
-        elif number_points_y > 25 * number_points_x:
+        elif number_points_y > 20 * number_points_x:
             discretize_line_direction = "y"
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
                                                       discretize_line_direction=discretize_line_direction)

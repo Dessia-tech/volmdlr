@@ -8,6 +8,11 @@ from volmdlr.models.bspline_surfaces import bspline_surface_1
 class TestBSplineFace3D(unittest.TestCase):
     bspline_face = faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surface_1, 0, 1, 0, 1)
 
+    def test_bounding_box(self):
+        face = faces.BSplineFace3D.load_from_file("faces/objects_bspline_test/bsplineface_bbox_test.json")
+        bbox = face.bounding_box
+        self.assertAlmostEqual(bbox.volume(), 0.00018, 5)
+
     def test_is_linesegment_crossing(self):
         linesegment = edges.LineSegment3D(volmdlr.Point3D(4, 0, 0), volmdlr.Point3D(4, 2, 2))
         self.assertTrue(self.bspline_face.is_linesegment_crossing(linesegment=linesegment))
