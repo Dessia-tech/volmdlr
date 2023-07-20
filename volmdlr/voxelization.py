@@ -1188,8 +1188,7 @@ class Voxelization(PhysicalObject):
         It uses the simplified representation of the voxelization given by the "to_closed_shell" method.
         """
         if len(self.voxels_centers) == 0:
-            warnings.warn("Empty voxelization.")
-            return []
+            raise ValueError("Empty voxelization.")
 
         return [self.to_closed_triangle_shell()]
 
