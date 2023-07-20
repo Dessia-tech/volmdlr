@@ -198,16 +198,14 @@ class Face3D(volmdlr.core.Primitive3D):
         :param contours3d: List of 3D contours representing the face's BREP.
         :param name: the name to inject in the new face
         """
-
-        lc3d = len(contours3d)
         outer_contour2d = None
         outer_contour3d, inner_contours3d = None, None
-        if lc3d == 1:
+        if len(contours3d) == 1:
             outer_contour2d = surface.contour3d_to_2d(contours3d[0])
             outer_contour3d = contours3d[0]
             inner_contours2d = []
 
-        elif lc3d > 1:
+        elif len(contours3d) > 1:
             area = -1
             inner_contours2d = []
             inner_contours3d = []
@@ -238,9 +236,9 @@ class Face3D(volmdlr.core.Primitive3D):
         #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
         if (not outer_contour2d) or (not outer_contour2d.primitives):
             return None
-        surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
-                                       inner_contours=inner_contours2d)
-        face = cls(surface, surface2d=surface2d, name=name)
+        face = cls(surface,
+                   surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),
+                   name=name)
         # To improve performance while reading from step file
         face.outer_contour3d = outer_contour3d
         face.inner_contours3d = inner_contours3d
