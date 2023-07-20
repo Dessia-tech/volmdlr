@@ -4180,7 +4180,7 @@ class LineSegment3D(LineSegment):
             surface, 0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
-        axis, u, p1_proj, dist1, dist2, angle = params
+        axis, u, p1_proj, dist1, _, angle = params
         v = axis.cross(u)
         surface = volmdlr.surfaces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), dist1)
         return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(

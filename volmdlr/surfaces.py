@@ -4335,7 +4335,7 @@ class RevolutionSurface3D(PeriodicalSurface):
             [point_after_start.x, point_before_end.x], discontinuity)
         theta1, z1 = start
         theta2, _ = end
-        theta3, z3 = point_after_start
+        _, z3 = point_after_start
 
         if self.frame.w.is_colinear_to(fullarc3d.circle.normal):
             normal_dot_product = self.frame.w.dot(fullarc3d.circle.normal)
@@ -5336,25 +5336,25 @@ class BSplineSurface3D(Surface3D):
             nb_v = len(points)
             control_points.extend(points)
         nb_u = int(len(control_points) / nb_v)
-        surface_form = arguments[4]
-        if arguments[5] == '.F.':
-            u_closed = False
-        elif arguments[5] == '.T.':
-            u_closed = True
-        else:
-            raise ValueError
-        if arguments[6] == '.F.':
-            v_closed = False
-        elif arguments[6] == '.T.':
-            v_closed = True
-        else:
-            raise ValueError
-        self_intersect = arguments[7]
+        # surface_form = arguments[4]
+        # if arguments[5] == '.F.':
+        #     u_closed = False
+        # elif arguments[5] == '.T.':
+        #     u_closed = True
+        # else:
+        #     raise ValueError
+        # if arguments[6] == '.F.':
+        #     v_closed = False
+        # elif arguments[6] == '.T.':
+        #     v_closed = True
+        # else:
+        #     raise ValueError
+        # self_intersect = arguments[7]
         u_multiplicities = [int(i) for i in arguments[8][1:-1].split(",")]
         v_multiplicities = [int(i) for i in arguments[9][1:-1].split(",")]
         u_knots = [float(i) for i in arguments[10][1:-1].split(",")]
         v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
-        knot_spec = arguments[12]
+        # knot_spec = arguments[12]
 
         if 13 in range(len(arguments)):
             weight_data = [
