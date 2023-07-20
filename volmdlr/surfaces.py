@@ -2251,36 +2251,44 @@ class CylindricalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
+        if not math.isclose(abs(self.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=1e-6):
+            frame_mapped_cyl_surface = self.frame_mapping(self.frame, 'new')
+            frame_mapped_plane = plane3d.frame_mapping(self.frame, 'new')
+            cyl_plane_inters = frame_mapped_cyl_surface.concurrent_plane_intersection(frame_mapped_plane)
+            final_coord_solution = cyl_plane_inters[0].frame_mapping(self.frame, 'old')
+            return [final_coord_solution]
         line = curves.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
         center3d_plane = plane3d.line_intersections(line)[0]
         plane_coefficient_a, plane_coefficient_b, plane_coefficient_c, plane_coefficient_d = \
             plane3d.equation_coefficients()
-        ellipse_0 = volmdlr.Point3D(
-            self.radius * math.cos(0),
-            self.radius * math.sin(0),
-            - (1 / plane_coefficient_c) * (plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(0) +
-                                           plane_coefficient_b * self.radius * math.sin(0)))
-        ellipse_pi_by_2 = volmdlr.Point3D(
-            self.radius * math.cos(math.pi / 2),
-            self.radius * math.sin(math.pi / 2),
-            - (1 / plane_coefficient_c) * (
-                    plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(math.pi / 2)
-                    + plane_coefficient_b * self.radius * math.sin(math.pi / 2)))
-        axis_1 = center3d_plane.point_distance(ellipse_0)
-        axis_2 = center3d_plane.point_distance(ellipse_pi_by_2)
-        if axis_1 > axis_2:
-            major_axis = axis_1
-            minor_axis = axis_2
-            major_dir = ellipse_0 - center3d_plane
-            u_vector = major_dir.unit_vector()
-        else:
-            major_axis = axis_2
-            minor_axis = axis_1
-            major_dir = ellipse_pi_by_2 - center3d_plane
+        points = [
+            volmdlr.Point3D(self.radius * math.cos(angle),
+                            self.radius * math.sin(angle),  - (1 / plane_coefficient_c) * (
+                            plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(angle) +
+                            plane_coefficient_b * self.radius * math.sin(angle)))
+            for angle in npy.linspace(0, 2 * math.pi, 36)
+        ]
+        max_dist, max_dist_point = center3d_plane.point_distance(points[0]), \
+            points[0]
+        min_dist, min_dist_point = max_dist, max_dist_point
+        for point in points:
+            dist = point.point_distance(center3d_plane)
+            if dist > max_dist:
+                max_dist = dist
+                max_dist_point = point
+        for point in points:
+            dist = point.point_distance(center3d_plane)
+            if dist < min_dist:
+                min_dist = dist
+        major_axis = max_dist
+        minor_axis = min_dist
+        major_dir = max_dist_point - center3d_plane
         u_vector = major_dir.unit_vector()
         ellipse = curves.Ellipse3D(major_axis, minor_axis,
                                    volmdlr.Frame3D(center3d_plane, u_vector,
-                                                         plane3d.frame.w.cross(u_vector), plane3d.frame.w))
+                                                   plane3d.frame.w.cross(u_vector), plane3d.frame.w))
+        if not all(ellipse.point_belongs(point) for point in points):
+            return [edges.BSplineCurve3D.from_points_interpolation(points, 5)]
         return [ellipse]
 
     def plane_intersection(self, plane3d):

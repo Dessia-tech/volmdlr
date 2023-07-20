@@ -142,6 +142,13 @@ class TestCylindricalFace3D(unittest.TestCase):
             for point, expected_point in zip(points, list_expected_points[i]):
                 self.assertTrue(point.is_close(expected_point))
 
+    def test_plane_intersections(self):
+        face, plane = DessiaObject.load_from_file(
+            'faces/objects_cylindrical_tests/test_buggy_split_by_plane12_07_2023.json').primitives
+        plane_intersections = face.plane_intersections(plane)
+        self.assertTrue(isinstance(plane_intersections[0], edges.BSplineCurve3D))
+        self.assertAlmostEqual(plane_intersections[0].length(), 0.1048349331003085)
+
 
 if __name__ == '__main__':
     unittest.main()
