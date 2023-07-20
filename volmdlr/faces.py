@@ -2678,7 +2678,7 @@ class BSplineFace3D(Face3D):
         # mesh = self.triangulation(self.grid_size())
         number_points_x, number_points_y = self.grid_size()
         discretize_line_direction = "xy"
-        if number_points_y == 0 or number_points_x > 25 * number_points_y:
+        if number_points_y == 0 or number_points_x > 20 * number_points_y:
             discretize_line_direction = "x"
         elif number_points_y > 20 * number_points_x:
             discretize_line_direction = "y"
