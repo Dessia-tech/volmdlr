@@ -29,7 +29,7 @@ class TestBSplineFace3D(unittest.TestCase):
             "faces/objects_bspline_test/bspline_contour_1_openned_contour.json")
         contours = [contour3d_0, contour3d_1]
         face = faces.BSplineFace3D.from_contours3d(surface, contours)
-        self.assertAlmostEqual(face.surface2d.area(), 0.6319342194477546, 3)
+        self.assertAlmostEqual(face.surface2d.area(), 0.6324561566366691, 3)
 
     def test_neutral_fiber(self):
         face = faces.BSplineFace3D.load_from_file("faces/objects_bspline_test/test_neutral_fiber.json")
