@@ -1397,11 +1397,6 @@ class BSplineCurve(Edge):
             return []
         if not self.is_shared_section_possible(other_bspline2, 1e-7):
             return []
-        # if self.__class__.__name__[-2:] == '3D':
-        #     if self.bounding_box.distance_to_bbox(other_bspline2.bounding_box) > 1e-7:
-        #         return []
-        # elif self.bounding_rectangle.distance_to_b_rectangle(other_bspline2.bounding_rectangle) > 1e-7:
-        #     return []
         if not any(self.point_belongs(point, abs_tol=abs_tol)
                    for point in other_bspline2.discretization_points(number_points=10)):
             return []
