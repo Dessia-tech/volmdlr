@@ -611,7 +611,6 @@ class Voxelization(PhysicalObject):
 
                     pixelization = Pixelization.from_polygon(triangle_2d, voxel_size).fill_enclosed_pixels()
 
-                    # for center in Voxelization._rasterize_triangle_2d(triangle_2d, voxel_size):
                     for center in pixelization.pixel_centers:
                         center_left = list(copy(center))
                         center_left.insert(i, round(abscissa - voxel_size / 2, 6))
@@ -622,106 +621,6 @@ class Voxelization(PhysicalObject):
                         voxel_centers.add(tuple(center_right))
 
         return voxel_centers
-
-    @staticmethod
-    def _rasterize_triangle_2d(triangle_2d, cell_size):
-        """
-        Rasterize a 2D triangle and return a list of center points of intersecting cells.
-
-        :param triangle_2d: The 2D triangle to rasterize.
-        :type triangle_2d: np.ndarray
-        :param cell_size: The size of each cell in the grid.
-        :type cell_size: float
-
-        :return: A list of center points of intersecting cells.
-        :rtype: List[Point]
-        """
-        # Get the bounding box of the triangle
-        min_x = np.floor(min(triangle_2d[:, 0])) - 1
-        max_x = np.ceil(max(triangle_2d[:, 0]))
-        min_y = np.floor(min(triangle_2d[:, 1])) - 1
-        max_y = np.ceil(max(triangle_2d[:, 1]))
-
-        # Calculate the dimensions of the grid
-        grid_width = int((max_x - min_x) / cell_size) + 2
-        grid_height = int((max_y - min_y) / cell_size) + 2
-
-        # Create an empty grid
-        grid = np.zeros((grid_height, grid_width))
-
-        # Create a list to store the center points
-        center_points = []
-
-        # Iterate over each cell in the grid
-        for y in range(grid_height):
-            for x in range(grid_width):
-                # Calculate the coordinates of the current cell
-                cell_x = min_x + x * cell_size
-                cell_y = min_y + y * cell_size
-
-                # Check if the cell intersects with the triangle
-                # if Voxelization._point_in_triangle_2d(cell_x, cell_y, triangle_2d):
-                if Voxelization._cell_intersects_triangle_2d((cell_x, cell_y), cell_size, triangle_2d):
-                    grid[y, x] = 1
-                    center_points.append([round(cell_x + cell_size / 2, 6), round(cell_y + cell_size / 2, 6)])
-
-        return center_points
-
-    @staticmethod
-    def _cell_intersects_triangle_2d(cell_center, cell_size, triangle_2d) -> bool:
-        triangles = Voxelization._cell_to_triangles_2d(cell_center, cell_size)
-
-        return Voxelization._triangle_intersects_triangle_2d(
-            triangles[0], triangle_2d
-        ) or Voxelization._triangle_intersects_triangle_2d(triangles[1], triangle_2d)
-
-    @staticmethod
-    def _cell_to_triangles_2d(cell_center, cell_size):
-        cell_vertices = [
-            (round(cell_center[0] - 0.5 * cell_size, 6), round(cell_center[1] + 0.5 * cell_size, 6)),
-            (round(cell_center[0] + 0.5 * cell_size, 6), round(cell_center[1] + 0.5 * cell_size, 6)),
-            (round(cell_center[0] + 0.5 * cell_size, 6), round(cell_center[1] - 0.5 * cell_size, 6)),
-            (round(cell_center[0] - 0.5 * cell_size, 6), round(cell_center[1] - 0.5 * cell_size, 6)),
-        ]
-
-        triangle_1 = np.array([cell_vertices[0], cell_vertices[1], cell_vertices[3]])
-        triangle_2 = np.array([cell_vertices[1], cell_vertices[2], cell_vertices[3]])
-
-        return [triangle_1, triangle_2]
-
-    @staticmethod
-    def _triangle_intersects_triangle_2d(triangle_1, triangle_2) -> bool:
-        for vertex in triangle_1:
-            if Voxelization._point_in_triangle_2d(vertex[0], vertex[1], triangle_2):
-                return True
-
-        for vertex in triangle_2:
-            if Voxelization._point_in_triangle_2d(vertex[0], vertex[1], triangle_1):
-                return True
-
-        return False
-
-    @staticmethod
-    def _point_in_triangle_2d(x, y, triangle2d):
-        """
-        Check if a 2D point is inside a triangle using the barycentric coordinate method.
-
-        :param x: The x-coordinate of the point.
-        :type x: float
-        :param y: The y-coordinate of the point.
-        :type y: float
-        :param triangle2d: The 2D triangle defined by its three vertices.
-        :type triangle2d: np.ndarray
-
-        :return: True if the point is inside the triangle, False otherwise.
-        :rtype: bool
-        """
-        # Barycentric coordinate method
-        v0, v1, v2 = triangle2d
-        area = 0.5 * (-v1[1] * v2[0] + v0[1] * (-v1[0] + v2[0]) + v0[0] * (v1[1] - v2[1]) + v1[0] * v2[1])
-        s = 1 / (2 * area) * (v0[1] * v2[0] - v0[0] * v2[1] + (v2[1] - v0[1]) * x + (v0[0] - v2[0]) * y)
-        t = 1 / (2 * area) * (v0[0] * v1[1] - v0[1] * v1[0] + (v0[1] - v1[1]) * x + (v1[0] - v0[0]) * y)
-        return s >= 0 and t >= 0 and 1 - s - t >= 0
 
     @staticmethod
     def _voxel_triangular_faces(voxel_center: Point, voxel_size: float) -> List[Triangle]:
