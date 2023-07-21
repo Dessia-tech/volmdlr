@@ -218,27 +218,125 @@
         ]
       },
       {
-        "object_class": "volmdlr.wires.Circle2D",
+  "object_class": "volmdlr.wires.Contour2D",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.edges.Arc2D",
+      "name": "",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle2D",
         "name": "",
         "center": {
           "object_class": "volmdlr.Point2D",
           "x": 1.125,
           "y": 0.875
         },
-        "radius": 0.041666666666666664,
-        "angle": 6.283185307179586
+        "radius": 0.041666666666666664
       },
-      {
-        "object_class": "volmdlr.wires.Circle2D",
+      "is_trigo": true,
+      "start": {
+        "object_class": "volmdlr.Point2D",
+        "x": 1.1666666666666667,
+        "y": 0.875
+      },
+      "end": {
+        "object_class": "volmdlr.Point2D",
+        "x": 1.0833333333333333,
+        "y": 0.875
+      },
+      "angle1": 0.0,
+      "angle2": 3.141592653589793
+    },
+    {
+      "object_class": "volmdlr.edges.Arc2D",
+      "name": "",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle2D",
+        "name": "",
+        "center": {
+          "object_class": "volmdlr.Point2D",
+          "x": 1.125,
+          "y": 0.875
+        },
+        "radius": 0.041666666666666664
+      },
+      "is_trigo": true,
+      "start": {
+        "object_class": "volmdlr.Point2D",
+        "x": 1.0833333333333333,
+        "y": 0.875
+      },
+      "end": {
+        "object_class": "volmdlr.Point2D",
+        "x": 1.1666666666666667,
+        "y": 0.875
+      },
+      "angle1": 3.141592653589793,
+      "angle2": 6.283185307179586
+    }
+  ]
+},
+    {
+  "object_class": "volmdlr.wires.Contour2D",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.edges.Arc2D",
+      "name": "",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle2D",
         "name": "",
         "center": {
           "object_class": "volmdlr.Point2D",
           "x": 1.875,
           "y": 0.125
         },
-        "radius": 0.041666666666666664,
-        "angle": 6.283185307179586
-      }
+        "radius": 0.041666666666666664
+      },
+      "is_trigo": true,
+      "start": {
+        "object_class": "volmdlr.Point2D",
+        "x": 1.9166666666666667,
+        "y": 0.125
+      },
+      "end": {
+        "object_class": "volmdlr.Point2D",
+        "x": 1.8333333333333333,
+        "y": 0.125
+      },
+      "angle1": 0.0,
+      "angle2": 3.141592653589793
+    },
+    {
+      "object_class": "volmdlr.edges.Arc2D",
+      "name": "",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle2D",
+        "name": "",
+        "center": {
+          "object_class": "volmdlr.Point2D",
+          "x": 1.875,
+          "y": 0.125
+        },
+        "radius": 0.041666666666666664
+      },
+      "is_trigo": true,
+      "start": {
+        "object_class": "volmdlr.Point2D",
+        "x": 1.8333333333333333,
+        "y": 0.125
+      },
+      "end": {
+        "object_class": "volmdlr.Point2D",
+        "x": 1.9166666666666667,
+        "y": 0.125
+      },
+      "angle1": 3.141592653589793,
+      "angle2": 6.283185307179586
+    }
+  ]
+}
     ]
   },
   "color": null,

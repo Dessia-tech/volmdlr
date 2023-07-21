@@ -119,7 +119,6 @@ setup(
     packages=[
         "volmdlr",
         "volmdlr.models",
-        "volmdlr.models.workflows",
         "volmdlr.utils",
     ],  # ,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
     package_dir={},
@@ -129,7 +128,7 @@ setup(
         "dessia_common>=0.10.0",
         "Cython",
         "numpy<=1.24.0",
-        "matplotlib",
+        "matplotlib<=3.4.3",  # remove when https://github.com/DanPorter/Dans_Diffraction/pull/11 available
         "scipy",
         "geomdl",
         "networkx",

@@ -1,0 +1,73 @@
+{
+  "name": "",
+  "object_class": "volmdlr.edges.FullArcEllipse2D",
+  "package_version": "0.11.2.dev357+g912e16e0",
+  "start_end": {
+    "object_class": "volmdlr.Point2D",
+    "x": 0.2749999999999999,
+    "y": 0.0
+  },
+  "ellipse": {
+    "name": "",
+    "object_class": "volmdlr.curves.Ellipse2D",
+    "package_version": "0.11.2.dev357+g912e16e0",
+    "major_axis": 0.275,
+    "minor_axis": 0.225,
+    "center": {
+      "object_class": "volmdlr.Point2D",
+      "x": 0.0,
+      "y": 0.0
+    },
+    "major_dir": {
+      "object_class": "volmdlr.Vector2D",
+      "x": 1.0,
+      "y": 0.0,
+      "name": ""
+    },
+    "minor_dir": {
+      "object_class": "volmdlr.Vector2D",
+      "x": 0.0,
+      "y": 1.0,
+      "name": ""
+    },
+    "frame": {
+      "object_class": "volmdlr.Frame2D",
+      "name": "",
+      "origin": {
+        "object_class": "volmdlr.Point2D",
+        "x": 0.0,
+        "y": 0.0
+      },
+      "u": {
+        "object_class": "volmdlr.Vector2D",
+        "x": 1.0,
+        "y": 0.0,
+        "name": ""
+      },
+      "v": {
+        "object_class": "volmdlr.Vector2D",
+        "x": 0.0,
+        "y": 1.0,
+        "name": ""
+      }
+    },
+    "angle_start": 0.0,
+    "angle_end": 6.283185307179586,
+    "is_trigo": true,
+    "theta": 0.0
+  },
+  "is_trigo": true,
+  "angle_start": 2.9802322387695312e-08,
+  "center": {
+    "$ref": "#/ellipse/center"
+  },
+  "angle_end": 2.9802322387695312e-08,
+  "start": {
+    "$ref": "#/start_end"
+  },
+  "end": {
+    "$ref": "#/start_end"
+  },
+  "angle": 0.0,
+  "theta": 0.0
+}

@@ -21,34 +21,18 @@ import matplotlib.pyplot as plt
 import numpy as npy
 
 import dessia_common.core as dc
+from dessia_common.errors import ConsistencyError
 import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
+from volmdlr.core_compiled import bbox_is_intersecting
+from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer,\
+    STEP_HEADER, STEP_FOOTER, step_ids_to_str
+
 
 npy.seterr(divide='raise')
 
 DEFAULT_COLOR = (0.8, 0.8, 0.8)
-
-# TODO: put volmdlr metadata in this freecad header
-STEP_HEADER = '''ISO-10303-21;
-HEADER;
-FILE_DESCRIPTION(('{name}'),'2;1');
-FILE_NAME('{filename}','{timestamp}',('Author'),(''),'Volmdlr v{version}','','Unknown');
-FILE_SCHEMA(('AUTOMOTIVE_DESIGN {{ 1 0 10303 214 1 1 1 1 }}'));
-ENDSEC;
-DATA;
-#1 = APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000,#2);
-#2 = APPLICATION_CONTEXT('core data for automotive mechanical design processes');
-#3 = ( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) );
-#4 = ( NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.) );
-#5 = ( NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT() );
-#6 = UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-07),#3,'distance_accuracy_value','confusion accuracy');
-#7 = ( GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#6)) GLOBAL_UNIT_ASSIGNED_CONTEXT ((#3,#4,#5)) REPRESENTATION_CONTEXT('Context #1','3D Context with UNIT and UNCERTAINTY') );
-'''
-
-STEP_FOOTER = '''ENDSEC;
-END-ISO-10303-21;
-'''
 
 
 def element_in_list(element, list_elements, tol: float = 1e-6):
@@ -164,18 +148,6 @@ def delete_double_point(list_point):
     return points
 
 
-def step_ids_to_str(ids):
-    """
-    Returns a string with a '#' in front of each ID and a comma separating each-one.
-
-    :param ids: A list of step primitives IDs
-    :type ids: List[int]
-    :return: A string containing all the IDs
-    :rtype: str
-    """
-    return ','.join([f"#{i}" for i in ids])
-
-
 @dataclass
 class EdgeStyle:
     """
@@ -278,21 +250,6 @@ class CompositePrimitive2D(CompositePrimitive):
         return self.__class__([point.rotation(center, angle)
                                for point in self.primitives])
 
-    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
-        """
-        Rotates the CompositePrimitive2D. Object is updated in-place.
-
-        :param center: rotation center.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.rotation(center, angle))
-        self.primitives = primitives
-        self.update_basis_primitives()
-
     def translation(self, offset: volmdlr.Vector2D):
         """
         Translates the CompositePrimitive2D.
@@ -303,20 +260,6 @@ class CompositePrimitive2D(CompositePrimitive):
         return self.__class__([primitive.translation(offset)
                                for primitive in self.primitives])
 
-    def translation_inplace(self, offset: volmdlr.Vector2D):
-        """
-        Translates the CompositePrimitive2D. Object is updated in-place.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.translation(offset))
-        self.primitives = primitives
-        self.update_basis_primitives()
-
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new CompositePrimitive2D.
@@ -325,20 +268,6 @@ class CompositePrimitive2D(CompositePrimitive):
         """
         return self.__class__([primitive.frame_mapping(frame, side)
                                for primitive in self.primitives])
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        primitives = []
-        for primitive in self.primitives:
-            primitives.append(primitive.frame_mapping(frame, side))
-        self.primitives = primitives
-        self.update_basis_primitives()
 
     def plot(self, ax=None, edge_style=EdgeStyle()):
 
@@ -404,11 +333,11 @@ class Primitive3D(dc.PhysicalObject):
 
         return babylon_param
 
-    def triangulation(self):
+    def triangulation(self, *args, **kwargs):
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
-    def babylon_meshes(self, **kwargs):
+    def babylon_meshes(self, *args, **kwargs):
         """
         Returns the babylonjs mesh.
         """
@@ -482,8 +411,10 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
 
     def babylon_curves(self):
         points = self.babylon_points()
-        babylon_curves = self.babylon_lines(points)[0]
-        return babylon_curves
+        if points:
+            babylon_curves = self.babylon_lines(points)[0]
+            return babylon_curves
+        return None
 
 
 class BoundingRectangle(dc.DessiaObject):
@@ -704,7 +635,8 @@ class BoundingBox(dc.DessiaObject):
         self.ymax = ymax
         self.zmin = zmin
         self.zmax = zmax
-
+        self._size = None
+        self._octree = None
         # disabling super init call for efficiency, put back when dc disable kwargs
         # dc.DessiaObject.__init__(self, name=name)
         self.name = name
@@ -866,6 +798,39 @@ class BoundingBox(dc.DessiaObject):
         z = volmdlr.Vector3D(0, 0, (self.zmax - self.zmin))
         return volmdlr.Frame3D(self.center, x, y, z)
 
+    def get_points_inside_bbox(self, points_x, points_y, points_z):
+        """
+        Gets points inside the BoudingBox.
+
+        :param points_x: Number of points in x direction.
+        :param points_y: Number of points in y direction.
+        :param points_z: Number of points in z direction.
+        :return: list of points inside bounding box.
+        """
+        _size = [self.size[0] / points_x, self.size[1] / points_y,
+                 self.size[2] / points_z]
+        initial_center = self.center.translation(
+            -volmdlr.Vector3D(self.size[0] / 2 - _size[0] / 2,
+                              self.size[1] / 2 - _size[1] / 2,
+                              self.size[2] / 2 - _size[2] / 2))
+        points = []
+        for z_box in range(points_z):
+            for y_box in range(points_y):
+                for x_box in range(points_x):
+                    translation_vector = volmdlr.Vector3D(x_box * _size[0], y_box * _size[1],
+                                                          z_box * _size[2])
+                    point = initial_center.translation(translation_vector)
+                    points.append(point)
+        return points
+
+    @property
+    def size(self):
+        """Gets the Size of the Bounding Box."""
+
+        if not self._size:
+            self._size = [self.xmax - self.xmin, self.ymax - self.ymin, self.zmax - self.zmin]
+        return self._size
+
     def volume(self) -> float:
         """
         Calculates the volume of a bounding box.
@@ -876,24 +841,39 @@ class BoundingBox(dc.DessiaObject):
         return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
                 self.zmax - self.zmin)
 
-    def bbox_intersection(self, bbox2: "BoundingBox") -> bool:
+    def bbox_intersection(self, bbox2: "BoundingBox", tol: float = 1e-6) -> bool:
         """
         Calculates if there is an intersection between two bounding boxes.
 
         :param bbox2: The second bounding box to compare with the current bounding box (self).
         :type bbox2: BoundingBox
+        :param tol: tolerance to be considered.
         :return: A boolean value indicating whether the two bounding boxes intersect (True) or not (False).
         :rtype: bool
         """
-        if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
-            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                    and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-                return True
-        if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
-            if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-                    and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-                return True
-        return False
+        # if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
+        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
+        #         return True
+        # if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
+        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
+        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
+        #         return True
+        # return False
+        warnings.warn('bbox_intersection is deprecated, please use is_intersecting instead')
+        return self.is_intersecting(bbox2, tol)
+
+    def is_intersecting(self, bbox2, tol: float = 1e-6):
+        """
+        Checks if two bounding boxes are intersecting or touching.
+
+        :param self: BoundingBox object representing the first bounding box.
+        :param bbox2: BoundingBox object representing the second bounding box.
+        :param tol: tolerance to be considered.
+
+        :return: True if the bounding boxes are intersecting or touching, False otherwise.
+        """
+        return bbox_is_intersecting(self, bbox2, tol)
 
     def is_inside_bbox(self, bbox2: "BoundingBox") -> bool:
         """
@@ -961,7 +941,7 @@ class BoundingBox(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def point_belongs(self, point: volmdlr.Point3D, tol = 1e-6) -> bool:
+    def point_belongs(self, point: volmdlr.Point3D, tol=1e-6) -> bool:
         """
         Determines if a point belongs to the bounding box.
 
@@ -1013,6 +993,23 @@ class BoundingBox(dc.DessiaObject):
             dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
+    def octree(self):
+        """Creates a simple octree structure for a bounding box."""
+        if not self._octree:
+            octants = []
+            points_x, points_y, points_z = 2, 2, 2
+            _size = [self.size[0] / points_x, self.size[1] / points_y,
+                     self.size[2] / points_z]
+            octants_center = self.get_points_inside_bbox(points_x, points_y, points_z)
+            for octant_center in octants_center:
+                mins_maxs = []
+                for i, size_component in enumerate(_size):
+                    mins_maxs.extend([octant_center[i] - size_component / 2, octant_center[i] + size_component / 2])
+                octants.append(self.__class__(mins_maxs[0], mins_maxs[1], mins_maxs[2], mins_maxs[3],
+                                              mins_maxs[4], mins_maxs[5]))
+            self._octree = octants
+        return self._octree
+
 
 class Assembly(dc.PhysicalObject):
     """
@@ -1038,7 +1035,7 @@ class Assembly(dc.PhysicalObject):
         self.frame = frame
         self.positions = positions
         self.primitives = [self.map_primitive(primitive, frame, frame_primitive)
-                                      for primitive, frame_primitive in zip(components, positions)]
+                           for primitive, frame_primitive in zip(components, positions)]
         self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)
 
@@ -1069,17 +1066,19 @@ class Assembly(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        meshes = []
-        lines = []
+        babylon_data = {'meshes': [],
+                        'lines': []}
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+                    curves = primitive.babylon_curves()
+                    if curves:
+                        babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1087,10 +1086,8 @@ class Assembly(dc.PhysicalObject):
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
 
-        babylon_data = {'meshes': meshes,
-                        'lines': lines,
-                        'max_length': max_length,
-                        'center': list(center)}
+        babylon_data['max_length'] = max_length
+        babylon_data['center'] = list(center)
 
         return babylon_data
 
@@ -1101,7 +1098,7 @@ class Assembly(dc.PhysicalObject):
         side = 'old' or 'new'
         """
         new_positions = [position.frame_mapping(frame, side)
-                          for position in self.positions]
+                         for position in self.positions]
         return Assembly(self.components, new_positions, self.frame, self.name)
 
     @staticmethod
@@ -1122,11 +1119,11 @@ class Assembly(dc.PhysicalObject):
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
         matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
-                       [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
-                       [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+                              [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                              [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
         matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
-                       [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
-                       [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+                              [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                              [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
         transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
@@ -1144,85 +1141,32 @@ class Assembly(dc.PhysicalObject):
         """
         Creates step file entities from volmdlr objects.
         """
-        step_content = []
-        for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'OpenShell3D':
-                primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
-            else:
-                primitive_content, primitive_id = primitive.to_step(current_id)
+        step_content = ''
 
+        product_content, current_id, assembly_data = self.to_step_product(current_id)
+        step_content += product_content
+        assembly_frames = assembly_data[-1]
+        for i, primitive in enumerate(self.components):
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                primitive_content, current_id, primitive_data = primitive.to_step_product(current_id)
+                assembly_frame_id = assembly_frames[0]
+                component_frame_id = assembly_frames[i + 1]
+                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
+                                                                              primitive_data, assembly_frame_id,
+                                                                              component_frame_id)
+
+            else:
+                primitive_content, current_id, primitive_data = primitive.to_step(current_id)
+                step_content += primitive_content
+                assembly_frame_id = assembly_frames[0]
+                component_frame_id = assembly_frames[i + 1]
+                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
+                                                                              primitive_data, assembly_frame_id,
+                                                                              component_frame_id)
             step_content += primitive_content
+            step_content += assembly_content
 
-            product_definition_context_id = primitive_id + 1
-            step_content += (f"#{product_definition_context_id} = "
-                             + "PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n")
-
-            product_context_id = product_definition_context_id + 1
-            step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
-            product_id = product_context_id + 1
-            step_content += f"#{product_id} = PRODUCT('{primitive.name}'," \
-                            f"'{primitive.name}','',(#{product_context_id}));\n"
-            product_definition_formation_id = product_id + 1
-            step_content += f"#{product_definition_formation_id} = " \
-                            f"PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
-            product_definition_id = product_definition_formation_id + 1
-            step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
-                            f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
-            product_definition_shape_id = product_definition_id + 1
-            step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
-                            f"'',#{product_definition_id});\n"
-            shape_definition_repr_id = product_definition_shape_id + 1
-            step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
-                            f"#{product_definition_shape_id},#{primitive_id});\n"
-            product_related_category = shape_definition_repr_id + 1
-            step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
-                            f"'part',$,(#{product_id}));\n"
-            draughting_id = product_related_category + 1
-            step_content += f"#{draughting_id} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n"
-            color_id = draughting_id + 1
-            primitive_color = (1, 1, 1)
-            if hasattr(primitive, 'color') and primitive.color is not None:
-                primitive_color = primitive.color
-            step_content += f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)}," \
-                            f"{round(float(primitive_color[1]), 4)}, {round(float(primitive_color[2]), 4)});\n"
-
-            curve_style_id = color_id + 1
-            step_content += f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," \
-                            f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
-
-            fill_area_color_id = curve_style_id + 1
-            step_content += f"#{fill_area_color_id} = FILL_AREA_STYLE_COLOUR('',#{color_id});\n"
-
-            fill_area_id = fill_area_color_id + 1
-            step_content += f"#{fill_area_id} = FILL_AREA_STYLE('',#{fill_area_color_id});\n"
-
-            suface_fill_area_id = fill_area_id + 1
-            step_content += f"#{suface_fill_area_id} = SURFACE_STYLE_FILL_AREA(#{fill_area_id});\n"
-
-            suface_side_style_id = suface_fill_area_id + 1
-            step_content += f"#{suface_side_style_id} = SURFACE_SIDE_STYLE('',(#{suface_fill_area_id}));\n"
-
-            suface_style_usage_id = suface_side_style_id + 1
-            step_content += f"#{suface_style_usage_id} = SURFACE_STYLE_USAGE(.BOTH.,#{suface_side_style_id});\n"
-
-            presentation_style_id = suface_style_usage_id + 1
-
-            step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
-                            f"#{curve_style_id}));\n"
-
-            styled_item_id = presentation_style_id + 1
-            if primitive.__class__.__name__ == 'OpenShell3D':
-                for face_id in face_ids:
-                    step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
-                                    f"#{face_id});\n"
-                    styled_item_id += 1
-                styled_item_id -= 1
-            else:
-                step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
-                                f"#{primitive_id});\n"
-
-            current_id = styled_item_id + 1
-        return step_content, current_id
+        return step_content, current_id, assembly_data[:-1]
 
     def plot(self, ax=None, equal_aspect=True):
         """
@@ -1240,6 +1184,142 @@ class Assembly(dc.PhysicalObject):
             ax.set_aspect('auto')
         ax.margins(0.1)
         return ax
+
+    def to_step_product(self, current_id):
+        """
+        Returns step product entities from volmdlr objects.
+        """
+        step_content = ''
+        product_content, shape_definition_repr_id = product_writer(current_id, self.name)
+        product_definition_id = shape_definition_repr_id - 2
+        step_content += product_content
+        shape_representation_id = shape_definition_repr_id + 1
+        current_id = shape_representation_id
+        assembly_position_content = ''
+        frame_ids = []
+        for frame in [self.frame] + self.positions:
+            frame_content, current_id = frame.to_step(current_id + 1)
+            assembly_position_content += frame_content
+            frame_ids.append(current_id)
+
+        geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
+
+        step_content += f"#{shape_representation_id} = SHAPE_REPRESENTATION('',({step_ids_to_str(frame_ids)})," \
+                        f"#{geometric_representation_context_id});\n"
+
+        step_content += assembly_position_content
+
+        step_content += geometric_context_content
+
+        return step_content, geometric_representation_context_id, \
+            [shape_representation_id, product_definition_id, frame_ids]
+
+
+class Compound(dc.PhysicalObject):
+    """
+    A class that can be a collection of any volmdlr primitives.
+    """
+
+    def __init__(self, primitives, name: str = ""):
+        self.primitives = primitives
+        self._bbox = None
+        dc.PhysicalObject.__init__(self, name=name)
+
+    @property
+    def bounding_box(self):
+        """
+        Returns the bounding box.
+
+        """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        """Bounding box setter."""
+        self._bbox = new_bounding_box
+
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model.
+        """
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Compound.
+
+        side = 'old' or 'new'
+        """
+        new_primitives = [primitive.frame_mapping(frame, side)
+                          for primitive in self.primitives]
+        return Compound(new_primitives, self.name)
+
+    def babylon_data(self, merge_meshes=True):
+        """
+        Get babylonjs data.
+
+        :return: Dictionary with babylon data.
+        """
+
+        babylon_data = {'meshes': [],
+                        'lines': []}
+        for primitive in self.primitives:
+            if hasattr(primitive, 'babylon_meshes'):
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                if hasattr(primitive, 'babylon_curves'):
+                    curves = primitive.babylon_curves()
+                    if curves:
+                        babylon_data['lines'].append(curves)
+            elif hasattr(primitive, 'babylon_data'):
+                data = primitive.babylon_data(merge_meshes=merge_meshes)
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
+
+        bbox = self.bounding_box
+        center = bbox.center
+        max_length = max([bbox.xmax - bbox.xmin,
+                          bbox.ymax - bbox.ymin,
+                          bbox.zmax - bbox.zmin])
+
+        babylon_data['max_length'] = max_length
+        babylon_data['center'] = list(center)
+
+        return babylon_data
+
+    def volmdlr_primitives(self):
+        """Return primitives."""
+        return [self]
+
+    def to_step(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
+        step_content = ''
+        primitives_content = ''
+        manifold_ids = []
+        product_content, current_id = product_writer(current_id, self.name)
+        product_definition_id = current_id - 2
+        step_content += product_content
+        brep_id = current_id + 1
+        frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
+        current_id = frame_id
+
+        for primitive in self.primitives:
+            primitive_content, current_id = primitive.to_step(current_id)
+            primitives_content += primitive_content
+            manifold_ids.append(current_id)
+
+        geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
+        step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION(''," \
+                        f"({step_ids_to_str(manifold_ids)})," \
+                        f"#{geometric_representation_context_id});\n"
+        step_content += frame_content
+        step_content += primitives_content
+        step_content += geometric_context_content
+
+        return step_content, geometric_representation_context_id, [brep_id, product_definition_id]
 
 
 class VolumeModel(dc.PhysicalObject):
@@ -1305,7 +1385,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Return the sum of volumes of the primitives.
 
-        It does not make any boolean operation in case of overlapping.
+        It does not make any Boolean operation in case of overlapping.
 
         """
         volume = 0
@@ -1328,21 +1408,6 @@ class VolumeModel(dc.PhysicalObject):
             primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Rotates the VolumeModel. Object is updated inplace.
-
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: rotation angle
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitive in self.primitives:
-            primitive.rotation_inplace(center, axis, angle)
-        self.bounding_box = self._bounding_box()
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Translates the VolumeModel.
@@ -1354,18 +1419,6 @@ class VolumeModel(dc.PhysicalObject):
                           primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Translates the VolumeModel. Object is updated inplace.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitives in self.primitives:
-            primitives.translation_inplace(offset)
-        self.bounding_box = self._bounding_box()
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new VolumeModel.
@@ -1375,18 +1428,6 @@ class VolumeModel(dc.PhysicalObject):
         new_primitives = [primitive.frame_mapping(frame, side)
                           for primitive in self.primitives]
         return VolumeModel(new_primitives, self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'.
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for primitives in self.primitives:
-            primitives.frame_mapping_inplace(frame, side)
-        self.bounding_box = self._bounding_box()
 
     def copy(self, deep=True, memo=None):
         """
@@ -1429,17 +1470,19 @@ class VolumeModel(dc.PhysicalObject):
         :return: Dictionary with babylon data.
         """
 
-        meshes = []
-        lines = []
+        babylon_data = {'meshes': [],
+                        'lines': []}
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 if hasattr(primitive, 'babylon_curves'):
-                    lines.append(primitive.babylon_curves())
+                    curves = primitive.babylon_curves()
+                    if curves:
+                        babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
-                meshes.extend(mesh for mesh in data["meshes"])
-                lines.extend(line for line in data["lines"])
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
 
         bbox = self.bounding_box
         center = bbox.center
@@ -1447,10 +1490,8 @@ class VolumeModel(dc.PhysicalObject):
                           bbox.ymax - bbox.ymin,
                           bbox.zmax - bbox.zmin])
 
-        babylon_data = {'meshes': meshes,
-                        'lines': lines,
-                        'max_length': max_length,
-                        'center': list(center)}
+        babylon_data['max_length'] = max_length
+        babylon_data['center'] = list(center)
 
         return babylon_data
 
@@ -1516,6 +1557,7 @@ class VolumeModel(dc.PhysicalObject):
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
             mesh.merge_mesh(primitive.triangulation())
+        # from volmdlr import stl
         stl = volmdlr.stl.Stl.from_display_mesh(mesh)
         return stl
 
@@ -1545,91 +1587,25 @@ class VolumeModel(dc.PhysicalObject):
                                           filename='',
                                           timestamp=datetime.now().isoformat(),
                                           version=volmdlr.__version__)
-        current_id = 8
+        current_id = 2
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'OpenShell3D':
-                primitive_content, primitive_id, face_ids = primitive.to_step_face_ids(current_id)
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
+                primitive_content, primitive_id, _ = primitive.to_step_product(current_id)
             else:
-                primitive_content, primitive_id = primitive.to_step(current_id)
+                primitive_content, primitive_id, _ = primitive.to_step(current_id)
 
             step_content += primitive_content
-
-            product_definition_context_id = primitive_id + 1
-            step_content += (f"#{product_definition_context_id} = "
-                             + "PRODUCT_DEFINITION_CONTEXT('part definition',#2,'design');\n")
-
-            product_context_id = product_definition_context_id + 1
-            step_content += f"#{product_context_id} = PRODUCT_CONTEXT('',#2,'mechanical');\n"
-            product_id = product_context_id + 1
-            step_content += f"#{product_id} = PRODUCT('{primitive.name}'," \
-                            f"'{primitive.name}','',(#{product_context_id}));\n"
-            product_definition_formation_id = product_id + 1
-            step_content += f"#{product_definition_formation_id} = " \
-                            f"PRODUCT_DEFINITION_FORMATION('','',#{product_id});\n"
-            product_definition_id = product_definition_formation_id + 1
-            step_content += f"#{product_definition_id} = PRODUCT_DEFINITION('design'," \
-                            f"'',#{product_definition_formation_id},#{product_definition_context_id});\n"
-            product_definition_shape_id = product_definition_id + 1
-            step_content += f"#{product_definition_shape_id} = PRODUCT_DEFINITION_SHAPE(''," \
-                            f"'',#{product_definition_id});\n"
-            shape_definition_repr_id = product_definition_shape_id + 1
-            step_content += f"#{shape_definition_repr_id} = SHAPE_DEFINITION_REPRESENTATION(" \
-                            f"#{product_definition_shape_id},#{primitive_id});\n"
-            product_related_category = shape_definition_repr_id + 1
-            step_content += f"#{product_related_category} = PRODUCT_RELATED_PRODUCT_CATEGORY(" \
-                            f"'part',$,(#{product_id}));\n"
-            draughting_id = product_related_category + 1
-            step_content += f"#{draughting_id} = DRAUGHTING_PRE_DEFINED_CURVE_FONT('continuous');\n"
-            color_id = draughting_id + 1
-            primitive_color = (1, 1, 1)
-            if hasattr(primitive, 'color') and primitive.color is not None:
-                primitive_color = primitive.color
-            step_content += f"#{color_id} = COLOUR_RGB('',{round(float(primitive_color[0]), 4)}," \
-                            f"{round(float(primitive_color[1]), 4)}, {round(float(primitive_color[2]), 4)});\n"
-
-            curve_style_id = color_id + 1
-            step_content += f"#{curve_style_id} = CURVE_STYLE('',#{draughting_id}," \
-                            f"POSITIVE_LENGTH_MEASURE(0.1),#{color_id});\n"
-
-            fill_area_color_id = curve_style_id + 1
-            step_content += f"#{fill_area_color_id} = FILL_AREA_STYLE_COLOUR('',#{color_id});\n"
-
-            fill_area_id = fill_area_color_id + 1
-            step_content += f"#{fill_area_id} = FILL_AREA_STYLE('',#{fill_area_color_id});\n"
-
-            suface_fill_area_id = fill_area_id + 1
-            step_content += f"#{suface_fill_area_id} = SURFACE_STYLE_FILL_AREA(#{fill_area_id});\n"
-
-            suface_side_style_id = suface_fill_area_id + 1
-            step_content += f"#{suface_side_style_id} = SURFACE_SIDE_STYLE('',(#{suface_fill_area_id}));\n"
-
-            suface_style_usage_id = suface_side_style_id + 1
-            step_content += f"#{suface_style_usage_id} = SURFACE_STYLE_USAGE(.BOTH.,#{suface_side_style_id});\n"
-
-            presentation_style_id = suface_style_usage_id + 1
-
-            step_content += f"#{presentation_style_id} = PRESENTATION_STYLE_ASSIGNMENT((#{suface_style_usage_id}," \
-                            f"#{curve_style_id}));\n"
-
-            styled_item_id = presentation_style_id + 1
-            if primitive.__class__.__name__ == 'OpenShell3D':
-                for face_id in face_ids:
-                    step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
-                                    f"#{face_id});\n"
-                    styled_item_id += 1
-                styled_item_id -= 1
-            else:
-                step_content += f"#{styled_item_id} = STYLED_ITEM('color',(#{presentation_style_id})," \
-                                f"#{primitive_id});\n"
-
-            current_id = styled_item_id + 1
+            current_id = primitive_id
 
         step_content += STEP_FOOTER
 
         stream.write(step_content)
 
     def volmdlr_volume_model(self):
+        """
+        Method needed due to PhysicalObject inheritance.
+        """
         return self
 
     def get_geo_lines(self):
@@ -2168,14 +2144,14 @@ class VolumeModel(dc.PhysicalObject):
         list_shells = []
 
         def unpack_assembly(assembly):
-            for primitive in assembly.primitives:
-                if primitive.__class__.__name__ == 'Assembly':
-                    unpack_assembly(primitive)
+            for prim in assembly.primitives:
+                if primitive.__class__.__name__ in ('Assembly', "Compound"):
+                    unpack_assembly(prim)
                 elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-                    list_shells.append(primitive)
+                    list_shells.append(prim)
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ == 'Assembly':
+            if primitive.__class__.__name__ in ('Assembly', "Compound"):
                 unpack_assembly(primitive)
             elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
                 list_shells.append(primitive)
@@ -2194,7 +2170,7 @@ class MovingVolumeModel(VolumeModel):
         self.step_frames = step_frames
 
         if not self.is_consistent():
-            raise dc.ConsistencyError
+            raise ConsistencyError
 
     def is_consistent(self):
         n_primitives = len(self.primitives)

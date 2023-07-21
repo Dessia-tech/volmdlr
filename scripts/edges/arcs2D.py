@@ -15,7 +15,7 @@ e = volmdlr.Point2D.random(-1,1,-1,1)
 s = volmdlr.Point2D.random(-1,1,-1,1)
 
 
-a = volmdlr.edges.Arc2D(s, i, e)
+a = volmdlr.edges.Arc2D.from_3_points(s, i, e)
 ax = a.plot()
 
 for p in a.discretization_points(number_points=10):

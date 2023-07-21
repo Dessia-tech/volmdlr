@@ -78,7 +78,8 @@ scripts = [
             # 'mesh/geo_file_1.py',
             # 'mesh/geo_file_2.py',
             # 'mesh/geo_file_3.py',
-
+            # cad_simplification
+            'cad_simplifier/test_cad_simplifier.py',
             # Others
             'grid.py'
             ]

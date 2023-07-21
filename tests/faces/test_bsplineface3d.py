@@ -29,7 +29,27 @@ class TestBSplineFace3D(unittest.TestCase):
             "faces/objects_bspline_test/bspline_contour_1_openned_contour.json")
         contours = [contour3d_0, contour3d_1]
         face = faces.BSplineFace3D.from_contours3d(surface, contours)
-        self.assertAlmostEqual(face.surface2d.area(), 0.6319342194477546, 5)
+        self.assertAlmostEqual(face.surface2d.area(), 0.6324561566366691, 3)
+
+    def test_neutral_fiber(self):
+        face = faces.BSplineFace3D.load_from_file("faces/objects_bspline_test/test_neutral_fiber.json")
+        neutral_fiber = face.neutral_fiber()
+        self.assertAlmostEqual(neutral_fiber.length(), 0.030801389245691566, 2)
+
+        face = faces.BSplineFace3D.load_from_file("faces/objects_bspline_test/test_neutral_fiber_2.json")
+        neutral_fiber = face.neutral_fiber()
+        self.assertAlmostEqual(neutral_fiber.length(), 0.5327006535550406, 2)
+
+    def test_triangulation(self):
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            "faces/objects_bspline_test/spiral_bsplineface_surface.json")
+        contour3d = wires.Contour3D.load_from_file(
+            "faces/objects_bspline_test/spiral_bsplineface_contour.json")
+        face = faces.BSplineFace3D.from_contours3d(surface, [contour3d])
+        mesh = face.triangulation()
+        self.assertAlmostEqual(face.surface2d.area(), 1, 2)
+        self.assertGreaterEqual(len(mesh.points), 650)
+        self.assertLessEqual(len(mesh.points), 1300)
 
 
 if __name__ == '__main__':

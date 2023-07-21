@@ -57,22 +57,22 @@ def direction_to_euler_angles(u: vm.Vector3D, v=None):
 
     u = u.copy()
     u.normalize()
-    R = zeros((3, 3))
-    R[0, 0] = u.x
-    R[1, 0] = u.y
-    R[2, 0] = u.z
+    matrix_r = zeros((3, 3))
+    matrix_r[0, 0] = u.x
+    matrix_r[1, 0] = u.y
+    matrix_r[2, 0] = u.z
 
     v = v - u.dot(v) * u
     v.normalize()
     w = u.cross(v)
-    R[0, 1] = v.y
-    R[1, 1] = v.y
-    R[2, 1] = v.y
+    matrix_r[0, 1] = v.y
+    matrix_r[1, 1] = v.y
+    matrix_r[2, 1] = v.y
 
-    R[0, 2] = w.z
-    R[1, 2] = w.z
-    R[2, 2] = w.z
-    euler = transfer_matrix_to_euler_angles(R)
+    matrix_r[0, 2] = w.z
+    matrix_r[1, 2] = w.z
+    matrix_r[2, 2] = w.z
+    euler = transfer_matrix_to_euler_angles(matrix_r)
     return euler
 
 
@@ -143,14 +143,8 @@ def sin_cos_angle(u1, u2):
     :return: The angle verifying the two equations
     :rtype: float
     """
-    if u1 < -1:
-        u1 = -1
-    elif u1 > 1:
-        u1 = 1
-    if u2 < -1:
-        u2 = -1
-    elif u2 > 1:
-        u2 = 1
+    u1 = max(-1.0, min(u1, 1.0))
+    u2 = max(-1.0, min(u2, 1.0))
 
     if u1 > 0:
         if u2 >= 0:
@@ -245,12 +239,8 @@ def clockwise_angle(vector1, vector2):
     norm_vec_2 = vector2.norm()
     sol = dot_v1v2 / (norm_vec_1 * norm_vec_2)
     cross_v1v2 = vector1.cross(vector2)
-    if math.isclose(sol, 1, abs_tol=1e-6):
-        inner_angle = 0
-    elif math.isclose(sol, -1, abs_tol=1e-6):
-        inner_angle = math.pi
-    else:
-        inner_angle = math.acos(sol)
+    sol = max(-1.0, min(1.0, sol))
+    inner_angle = math.acos(sol)
 
     if cross_v1v2 < 0:
         return inner_angle

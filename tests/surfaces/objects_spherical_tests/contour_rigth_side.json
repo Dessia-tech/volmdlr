@@ -4,97 +4,217 @@
   "package_version": "0.10.1.dev658+gfad49fd5",
   "primitives": [
     {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 1.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.6234898018587334,
+    "y": 0.0,
+    "z": 0.7818314824680299
+  },
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 1.0,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
       "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.10.1.dev658+gfad49fd5",
-      "start": {
+      "origin": {
         "object_class": "volmdlr.Point3D",
-        "x": 1.0,
+        "x": 4.163336342344337e-17,
         "y": 0.0,
-        "z": 0.0
+        "z": -1.1102230246251565e-16
       },
-      "end": {
+      "u": {
         "object_class": "volmdlr.Point3D",
-        "x": 0.6234898018587334,
+        "x": -0.9749279121818235,
         "y": 0.0,
-        "z": 0.7818314824680299
+        "z": -0.22252093395631445
       },
-      "interior": {
+      "v": {
         "object_class": "volmdlr.Point3D",
-        "x": -0.900968867902419,
+        "x": -0.22252093395631445,
         "y": 0.0,
-        "z": -0.43388373911755823
-      }
-    },
-    {
-      "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.10.1.dev658+gfad49fd5",
-      "start": {
-        "object_class": "volmdlr.Point3D",
-        "x": 0.6234898018587334,
-        "y": 0.0,
-        "z": 0.7818314824680299
+        "z": 0.9749279121818235
       },
-      "end": {
-        "object_class": "volmdlr.Point3D",
-        "x": 1.0,
-        "y": 0.0,
-        "z": 0.0
-      },
-      "interior": {
-        "object_class": "volmdlr.Point3D",
-        "x": 0.900968867902419,
-        "y": 0.0,
-        "z": 0.43388373911755834
-      }
-    },
-    {
-      "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.10.1.dev658+gfad49fd5",
-      "start": {
-        "object_class": "volmdlr.Point3D",
-        "x": 1.0,
-        "y": 0.0,
-        "z": 0.0
-      },
-      "end": {
+      "w": {
         "object_class": "volmdlr.Point3D",
         "x": 0.0,
         "y": 1.0,
-        "z": 0.0
-      },
-      "interior": {
-        "object_class": "volmdlr.Point3D",
-        "x": 0.7071067811865476,
-        "y": 0.7071067811865476,
-        "z": 0.0
-      }
-    },
-    {
-      "name": "",
-      "object_class": "volmdlr.edges.Arc3D",
-      "package_version": "0.10.1.dev658+gfad49fd5",
-      "start": {
-        "object_class": "volmdlr.Point3D",
-        "x": 0.0,
-        "y": 1.0,
-        "z": 0.0
-      },
-      "end": {
-        "object_class": "volmdlr.Point3D",
-        "x": 1.0,
-        "y": 0.0,
-        "z": 0.0
-      },
-      "interior": {
-        "object_class": "volmdlr.Point3D",
-        "x": 0.7071067811865476,
-        "y": 0.7071067811865476,
         "z": 0.0
       }
     }
+  },
+  "is_trigo": true,
+  "angle_start": 3.365992128846206,
+  "angle_end": 8.751579535000138,
+  "_references": {}
+},
+    {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.6234898018587334,
+    "y": 0.0,
+    "z": 0.7818314824680299
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 1.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.9999999999999992,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
+      "name": "",
+      "origin": {
+        "object_class": "volmdlr.Point3D",
+        "x": 6.661338147750939e-16,
+        "y": 0.0,
+        "z": 4.440892098500626e-16
+      },
+      "u": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.6234898018587337,
+        "y": 0.0,
+        "z": -0.7818314824680296
+      },
+      "v": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.7818314824680296,
+        "y": -0.0,
+        "z": -0.6234898018587337
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.0,
+        "y": 1.0,
+        "z": -0.0
+      }
+    }
+  },
+  "is_trigo": true,
+  "angle_start": 4.487989505128276,
+  "angle_end": 5.385587406153931,
+  "_references": {}
+},
+    {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 1.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.0,
+    "y": 1.0,
+    "z": 0.0
+  },
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.9999999999999997,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
+      "name": "",
+      "origin": {
+        "object_class": "volmdlr.Point3D",
+        "x": 3.3306690738754696e-16,
+        "y": 2.220446049250313e-16,
+        "z": 0.0
+      },
+      "u": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.38268343236508967,
+        "y": 0.9238795325112866,
+        "z": 0.0
+      },
+      "v": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.9238795325112866,
+        "y": -0.38268343236508967,
+        "z": -0.0
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.0,
+        "y": -0.0,
+        "z": 1.0
+      }
+    }
+  },
+  "is_trigo": true,
+  "angle_start": 4.319689898685965,
+  "angle_end": 5.8904862254808625,
+  "_references": {}
+},
+{
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.0,
+    "y": 1.0,
+    "z": 0.0
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 1.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
+    "name": "",
+    "radius": 0.9999999999999997,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
+      "name": "",
+      "origin": {
+        "object_class": "volmdlr.Point3D",
+        "x": 2.220446049250313e-16,
+        "y": 3.3306690738754696e-16,
+        "z": 0.0
+      },
+      "u": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.9238795325112866,
+        "y": -0.38268343236508967,
+        "z": 0.0
+      },
+      "v": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.38268343236508967,
+        "y": -0.9238795325112866,
+        "z": -0.0
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.0,
+        "y": 0.0,
+        "z": -1.0
+      }
+    }
+  },
+  "is_trigo": true,
+  "angle_start": 4.319689898685965,
+  "angle_end": 5.8904862254808625,
+  "_references": {}
+}
   ],
   "basis_primitives": [],
   "color": null,

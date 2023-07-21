@@ -1,0 +1,35 @@
+{
+  "name": "",
+  "object_class": "volmdlr.surfaces.ToroidalSurface3D",
+  "package_version": "0.10.1.dev658+gfad49fd5",
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": -1.094764425254e-50,
+      "y": -0.009000000000000001,
+      "z": 0.025
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -1.0,
+      "y": -1.676329423595e-31,
+      "z": 7.549516567451e-16
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 7.549516567451e-16,
+      "y": -2.22044604925e-16,
+      "z": 1.0
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -1.094764425254e-47,
+      "y": 1.0,
+      "z": 2.22044604925e-16
+    }
+  },
+  "tore_radius": 0.006,
+  "small_radius": 0.001
+}

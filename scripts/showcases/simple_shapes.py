@@ -27,8 +27,8 @@ p0=vm.Point2D(-1,0)
 p1=vm.Point2D(-npy.cos(npy.pi/4),npy.sin(npy.pi/4))
 p2=vm.Point2D(0,1)
 
-a = vme.Arc2D(p2,p1,p0)
-l = vme.LineSegment2D(p2,a.center)
+a = vme.Arc2D.from_3_points(p2,p1,p0)
+l = vme.LineSegment2D(p2, a.circle.center)
 #list_node = a.Discretise()
 
 c = vmw.Contour2D([a, l])

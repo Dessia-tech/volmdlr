@@ -4,7 +4,7 @@ import unittest
 import dessia_common.core
 import volmdlr
 import volmdlr.edges as vme
-from volmdlr import surfaces, faces
+from volmdlr import curves
 import volmdlr.wires as vmw
 from volmdlr import O3D, X3D, Y3D, Z3D, Point2D, Point3D
 from volmdlr.models import conical_surfaces
@@ -15,10 +15,10 @@ class TestConicalSurface3D(unittest.TestCase):
     conical_surface2 = conical_surfaces.conical_surface2
 
     def test_arc3d_to_2d(self):
-        arc1 = vme.Arc3D(volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 1 / math.sqrt(3)),
+        arc1 = vme.Arc3D.from_3_points(volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 1 / math.sqrt(3)),
                          volmdlr.Point3D(-1, 0, 1 / math.sqrt(3)),
                          volmdlr.Point3D(-1 / math.sqrt(2), -1 / math.sqrt(2), 1 / math.sqrt(3)))
-        arc2 = vme.Arc3D(volmdlr.Point3D(0, -1, 1 / math.sqrt(3)),
+        arc2 = vme.Arc3D.from_3_points(volmdlr.Point3D(0, -1, 1 / math.sqrt(3)),
                          volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 1 / math.sqrt(3)),
                          volmdlr.Point3D(1, 0, 1 / math.sqrt(3)))
         test1 = self.conical_surface.arc3d_to_2d(arc3d=arc1)[0]
@@ -29,18 +29,23 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertIsInstance(test2, vme.LineSegment2D)
 
         # Assert that the returned object is right on the parametric domain (take into account periodicity)
-        self.assertEqual(test1.start, volmdlr.Point2D(0.75 * math.pi, 0.5773502691896258))
-        self.assertEqual(test1.end, volmdlr.Point2D(1.25 * math.pi, 0.5773502691896258))
-        self.assertEqual(test2.start, volmdlr.Point2D(-0.5 * math.pi, 0.5773502691896258))
-        self.assertEqual(test2.end, volmdlr.Point2D(-2 * math.pi, 0.5773502691896258))
+        self.assertTrue(test1.start.is_close(volmdlr.Point2D(0.75 * math.pi, 0.5773502691896258)))
+        self.assertTrue(test1.end.is_close(volmdlr.Point2D(1.25 * math.pi, 0.5773502691896258)))
+        self.assertTrue(test2.start.is_close(volmdlr.Point2D(-0.5 * math.pi, 0.5773502691896258)))
+        self.assertTrue(test2.end.is_close(volmdlr.Point2D(-2 * math.pi, 0.5773502691896258)))
 
     def test_contour3d_to_2d(self):
+        center1 = O3D
+        start_end1 = Point3D(0.035, 0, 0)
+        circle1 = curves.Circle3D(volmdlr.Frame3D(center1, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D),
+                                  center1.point_distance(start_end1))
         primitives_cone = [vme.LineSegment3D(Point3D(0, 0, 0.1), Point3D(0.035, 0, 0.0)),
-                           vme.FullArc3D(O3D, Point3D(0.035, 0, 0), Z3D),
+                           vme.FullArc3D(circle1, start_end1),
                            vme.LineSegment3D(Point3D(0.035, 0, 0.0), Point3D(0, 0, 0.1))]
 
         primitives_demi_cone = [primitives_cone[0],
-                                vme.Arc3D(Point3D(0.035, 0, 0), Point3D(0, 0.035, 0), Point3D(-0.035, 0, 0)),
+                                vme.Arc3D.from_3_points(Point3D(0.035, 0, 0),
+                                                        Point3D(0, 0.035, 0), Point3D(-0.035, 0, 0)),
                                 primitives_cone[2]
                                 ]
 

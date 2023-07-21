@@ -16,6 +16,7 @@ from typing import List, Text, Tuple
 import matplotlib.pyplot as plt
 import numpy as npy
 import plot_data
+import volmdlr
 from dessia_common.core import DessiaObject
 from matplotlib.patches import FancyArrow, FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
@@ -197,8 +198,7 @@ cdef(double, double, double,
 
 # =============================================================================
 
-def polygon_point_belongs(point, points, include_edge_points: bool = False):
-
+def polygon_point_belongs(point, points, include_edge_points: bool = False, tol: float = 1e-6):
     cdef int i
     cdef int n = len(points)
     cdef bint inside = False
@@ -207,6 +207,19 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False):
     for i in range(n):
         p1x, p1y = points[i]
         p2x, p2y = points[(i + 1) % n]
+        v = (p2x - p1x, p2y - p1y)
+        u = (x - p1x, y - p1y)
+        dot_product = u[0] * v[0] + u[1] * v[1]
+        length_squared = v[0] ** 2 + v[1] ** 2
+        t = (dot_product / length_squared)
+        if 0.0 <= t <= 1.0:
+            projection_vector = (v[0] * t, v[1] * t)
+            projection_point = (p1x + projection_vector[0], p1y + projection_vector[1])
+            distance_projection_to_point = math.sqrt((projection_point[0] - x) ** 2 + (projection_point[1] - y) ** 2)
+            if distance_projection_to_point <= tol:
+                if include_edge_points:
+                    return True
+                return False
         xints = math.inf
         if min(p1y, p2y) <= y <= max(p1y, p2y) and min(p1x, p2x) <= x <= max(p1x, p2x):
             if p1y != p2y:
@@ -221,6 +234,34 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False):
             if p1x == p2x or x < xints:
                 inside = not inside
     return inside
+
+
+# =============================================================================
+def bbox_is_intersecting(bbox1, bbox2, tol):
+    """Verifies if the two bouding boxes are intersecting, or touching."""
+    cdef float x1_min, x1_max, y1_min, y1_max, z1_min, z1_max, x2_min, x2_max, y2_min, y2_max, z2_min, z2_max
+    x1_min = bbox1.xmin - tol
+    x1_max = bbox1.xmax + tol
+    y1_min = bbox1.ymin - tol
+    y1_max = bbox1.ymax + tol
+    z1_min = bbox1.zmin - tol
+    z1_max = bbox1.zmax + tol
+
+    x2_min = bbox2.xmin - tol
+    x2_max = bbox2.xmax + tol
+    y2_min = bbox2.ymin - tol
+    y2_max = bbox2.ymax + tol
+    z2_min = bbox2.zmin - tol
+    z2_max = bbox2.zmax + tol
+
+    # Check for non-intersection cases
+    if (x1_max < x2_min or x1_min > x2_max or
+            y1_max < y2_min or y1_min > y2_max or
+            z1_max < z2_min or z1_min > z2_max):
+        return False
+
+    return True
+
 
 # =============================================================================
 
@@ -263,20 +304,146 @@ cdef (double, (double, double, double)) CLineSegment3DPointDistance((double, dou
 def LineSegment3DPointDistance(points, point):
     return CLineSegment3DPointDistance(tuple(points[0]), tuple(points[1]), tuple(point))
 
+
+cdef (double, double) CLineSegment3DDistance((double, double, double) u,
+                                             (double, double, double) v,
+                                             (double, double, double) w):
+    cdef double a = CVector3DDot(u[0], u[1], u[2], u[0], u[1], u[2])
+    cdef double b = CVector3DDot(u[0], u[1], u[2], v[0], v[1], v[2])
+    cdef double c = CVector3DDot(v[0], v[1], v[2], v[0], v[1], v[2])
+    cdef double d = CVector3DDot(u[0], u[1], u[2], w[0], w[1], w[2])
+    cdef double e = CVector3DDot(v[0], v[1], v[2], w[0], w[1], w[2])
+    cdef double determinant = a * c - b * c
+    cdef double s_parameter
+    cdef double t_parameter
+    if determinant > - 1e-6:
+        b_times_e = b * e
+        c_times_d = c * d
+        if b_times_e <= c_times_d:
+            s_parameter = 0.0
+            if e <= 0.0:
+                t_parameter = 0.0
+                negative_d = -d
+                if negative_d >= a:
+                    s_parameter = 1.0
+                elif negative_d > 0.0:
+                    s_parameter = negative_d / a
+            elif e < c:
+                t_parameter = e / c
+            else:
+                t_parameter = 1.0
+                b_minus_d = b - d
+                if b_minus_d >= a:
+                    s_parameter = 1.0
+                elif b_minus_d > 0.0:
+                    s_parameter = b_minus_d / a
+        else:
+            s_parameter = b_times_e - c_times_d
+            if s_parameter >= determinant:
+                s_parameter = 1.0
+                b_plus_e = b + e
+                if b_plus_e <= 0.0:
+                    t_parameter = 0.0
+                    negative_d = -d
+                    if negative_d <= 0.0:
+                        s_parameter = 0.0
+                    elif negative_d < a:
+                        s_parameter = negative_d / a
+                elif b_plus_e < c:
+                    t_parameter = b_plus_e / c
+                else:
+                    t_parameter = 1.0
+                    b_minus_d = b - d
+                    if b_minus_d <= 0.0:
+                        s_parameter = 0.0
+                    elif b_minus_d < a:
+                        s_parameter = b_minus_d / a
+            else:
+                a_times_e = a * e
+                b_times_d = a * d
+                if a_times_e <= b_times_d:
+                    t_parameter = 0.0
+                    negative_d = -d
+                    if negative_d <= 0.0:
+                        s_parameter = 0.0
+                    elif negative_d >= a:
+                        s_parameter = 1.0
+                    else:
+                        s_parameter = negative_d / a
+                else:
+                    t_parameter = a_times_e - b_times_d
+                    if t_parameter >= determinant:
+                        t_parameter = 1.0
+                        b_minus_d = b - d
+                        if b_minus_d <= 0.0:
+                            s_parameter = 0.0
+                        elif b_minus_d >= a:
+                            s_parameter = 1.0
+                        else:
+                            s_parameter = b_minus_d / a
+                    else:
+                        s_parameter /= determinant
+                        t_parameter /= determinant
+    else:
+        if e <= 0.0:
+            t_parameter = 0.0
+            negative_d = -d
+            if negative_d <= 0.0:
+                s_parameter = 0.0
+            elif negative_d >= a:
+                s_parameter = 1.0
+            else:
+                s_parameter = negative_d / a
+        elif e >= c:
+            t_parameter = 1.0
+            b_minus_d = b - d
+            if b_minus_d <= 0.0:
+                s_parameter = 0.0
+            elif b_minus_d >= a:
+                s_parameter = 1.0
+            else:
+                s_parameter = b_minus_d / a
+        else:
+            s_parameter = 0.0
+            t_parameter = e / c
+    return s_parameter, t_parameter
+
+
+def LineSegment3DDistance(points_linesegment1, points_linesegment2):
+    u = Csub3D(points_linesegment1[1].x, points_linesegment1[1].y, points_linesegment1[1].z,
+               points_linesegment1[0].x, points_linesegment1[0].y, points_linesegment1[0].z)
+    v = Csub3D(points_linesegment2[1].x, points_linesegment2[1].y, points_linesegment2[1].z,
+               points_linesegment2[0].x, points_linesegment2[0].y, points_linesegment2[0].z)
+    w = Csub3D(points_linesegment1[0].x, points_linesegment1[0].y, points_linesegment1[0].z,
+               points_linesegment2[0].x, points_linesegment2[0].y, points_linesegment2[0].z)
+    s_parameter, t_parameter = CLineSegment3DDistance(u, v, w)
+    point1 = points_linesegment1[0] + Vector3D(*u) * s_parameter
+    point2 = points_linesegment2[0] + Vector3D(*v) * t_parameter
+    return point1, point2
 # =============================================================================
 #  Points, Vectors
 # =============================================================================
 
 
 class Arrow3D(FancyArrowPatch):
-    def __init__(self, xs, ys, zs, *args, **kwargs):
+    def __init__(self, x, y, z, starting_point=None, *args, **kwargs):
         FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
-        self._verts3d = xs, ys, zs
+        if starting_point is None:
+            starting_point = (0., 0., 0.)
 
-    def plot2d(self, renderer):
-        xs3d, ys3d, zs3d = self._verts3d
-        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
-        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        self.starting_point = starting_point
+        self._xyz = x, y, z
+
+    def draw(self, renderer):
+        """
+        Draw the arrow by overloading a Matplotlib method. Do not rename this method!
+
+        """
+        x1, y1, z1 = self.starting_point
+        dx, dy, dz = self._xyz
+        x2, y2, z2 = (dx + x1, dy + y1, dz + z1)
+        xn, yn, zn = proj3d.proj_transform((x1, x2), (y1, y2), (z1, z2), self.axes.M)
+        self.set_positions((xn[0], yn[0]), (xn[1], yn[1]))
         FancyArrowPatch.draw(self, renderer)
 
     def plot(self, ax=None, color="b"):
@@ -315,7 +482,7 @@ class Vector(DessiaObject):
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
+    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-6):
         """
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.
@@ -393,7 +560,7 @@ class Vector(DessiaObject):
 
 class Vector2D(Vector):
     """
-    Class representing a 2 dimensional vector.
+    Class representing a 2-dimensional vector.
 
     :param x: The vector's abscissa
     :type x: float
@@ -489,7 +656,7 @@ class Vector2D(Vector):
 
     def to_dict(self, *args, **kwargs):
         """
-        Serializes a 2 dimensional vector into a dictionary.
+        Serializes a 2-dimensional vector into a dictionary.
 
         :return: A serialized version of the Vector2D
         :rtype: dict
@@ -507,7 +674,7 @@ class Vector2D(Vector):
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
         """
-        Deserializes a dictionary to a 3 dimensional point.
+        Deserializes a dictionary to a 3-dimensional point.
 
         :param dict_: The dictionary of a serialized Point3D
         :type dict_: dict
@@ -524,7 +691,7 @@ class Vector2D(Vector):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of a 2 dimensional vector.
+        Creates a copy of a 2-dimensional vector.
 
         :param deep: *not used*
         :param memo: *not used*
@@ -535,7 +702,7 @@ class Vector2D(Vector):
 
     def norm(self):
         """
-        Computes the euclidiean norm of a 2 dimensional vector.
+        Computes the euclidiean norm of a 2-dimensional vector.
 
         :return: Norm of the Vector2D-like object
         :rtype: float
@@ -544,7 +711,7 @@ class Vector2D(Vector):
 
     def normalize(self):
         """
-        In place operation, normalizing the coordinates of the 2 dimensional
+        In place operation, normalizing the coordinates of the 2-dimensional
         vector.
 
         :return: None
@@ -557,9 +724,16 @@ class Vector2D(Vector):
         self.x /= n
         self.y /= n
 
+    def unit_vector(self):
+        """Calculates the unit vector."""
+        n = self.norm()
+        if n == 0:
+            raise ZeroDivisionError
+        return Vector2D(self.x / n, self.y / n)
+
     def dot(self, other_vector: "Vector2D"):
         """
-        Computes the dot product (scalar product) of two 2 dimensional vectors.
+        Computes the dot product (scalar product) of two 2-dimensional vectors.
 
         :param other_vector: A Vector2D-like object
         :type other_vector: :class:`volmdlr.Vector2D`
@@ -573,7 +747,7 @@ class Vector2D(Vector):
 
     def cross(self, other_vector: "Vector2D"):
         """
-        Computes the cross product of two 2 dimensional vectors.
+        Computes the cross product of two 2-dimensional vectors.
 
         :param other_vector: A Vector2D-like object
         :type other_vector: :class:`volmdlr.Vector2D`
@@ -605,13 +779,13 @@ class Vector2D(Vector):
         :rtype: tuple
         """
         u = self - center
-        v2x = math.cos(angle) * u[0] - math.sin(angle) * u[1] + center[0]
-        v2y = math.sin(angle) * u[0] + math.cos(angle) * u[1] + center[1]
+        v2x = math.cos(angle) * u.x - math.sin(angle) * u.y + center.x
+        v2y = math.sin(angle) * u.x + math.cos(angle) * u.y + center.y
         return v2x, v2y
 
     def rotation(self, center: "Point2D", angle: float):
         """
-        Rotates the 2 dimensional vector and returns a new rotated vector
+        Rotates the 2-dimensional vector and returns a new rotated vector
 
         :param center: The center of rotation
         :type center: :class:`volmdlr.Point2D`
@@ -623,56 +797,23 @@ class Vector2D(Vector):
         v2x, v2y = self.rotation_parameters(center, angle)
         return self.__class__(v2x, v2y)
 
-    def rotation_inplace(self, center: "Point2D", angle: float):
-        """
-        Rotates the 2 dimensional vector and changes its values inplace
-
-        :param center: The center of rotation
-        :type center: :class:`volmdlr.Point2D`
-        :param angle: The angle of the rotation in radian
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        v2x, v2y = self.rotation_parameters(center, angle)
-        self.x = v2x
-        self.y = v2y
-
     def translation(self, offset: "Vector2D"):
         """
-        Translates the 2 dimensional vector and returns a new translated vector
+        Translates the 2-dimensional vector and returns a new translated vector
 
         :param offset: The offset vector of the translation
         :type offset: :class:`volmdlr.Vector2D`
         :return: A translated Vector2D-like object
         :rtype: :class:`volmdlr.Vector2D`
         """
-        v2x = self.x + offset[0]
-        v2y = self.y + offset[1]
+        v2x = self.x + offset.x
+        v2y = self.y + offset.y
         return self.__class__(v2x, v2y)
-
-    def translation_inplace(self, offset: "Vector2D"):
-        """
-        Translates the vector and changes its values inplace
-
-        :param offset: The offset vector of the translation
-        :type offset: :class:`volmdlr.Vector2D`
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        v2x = self.x + offset[0]
-        v2y = self.y + offset[1]
-        self.x = v2x
-        self.y = v2y
 
     def frame_mapping(self, frame: "Frame2D", side: str):
         """
         # TODO: Needs correction. Add an example ?
-        Transforms a 2 dimensional vector from the current reference frame to a
+        Transforms a 2-dimensional vector from the current reference frame to a
         new one. Choose side equals to 'old' if the current reference frame is
         the old one ; choose side equals to 'new' if the input reference frame
         is the new one. This way, choosing 'old' will return the frame mapped
@@ -691,30 +832,10 @@ class Vector2D(Vector):
             new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
-    def frame_mapping_inplace(self, frame: "Frame2D", side: str):
-        """
-        # TODO: To be completed
-
-        :param frame: The input reference frame
-        :type frame: :class:`volmdlr.Frame2D`
-        :param side: Choose between 'old' and 'new'
-        :type side: str
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        if side == "old":
-            new_vector = frame.local_to_global_coordinates(self)
-        if side == "new":
-            new_vector = frame.global_to_local_coordinates(self)
-        self.x = new_vector.x
-        self.y = new_vector.y
-
     def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
         """
-        Returns the 3 dimensional vector corresponding to the 2 dimensional
-        vector placed on the 3 dimensional plane (XY) of the 3 dimensional
+        Returns the 3-dimensional vector corresponding to the 2-dimensional
+        vector placed on the 3-dimensional plane (XY) of the 3-dimensional
         frame (centered on `plane_origin`, having for basis (`vx`, `vy`, vz),
         vz being the cross product of `vx` and `vy`).
 
@@ -725,7 +846,7 @@ class Vector2D(Vector):
         :type vx: :class:`volmdlr.Vector3D`
         :param vy: The second direction of the plane
         :type vy: :class:`volmdlr.Vector3D`
-        :return: The Vector3D from the Vector2D set in the 3 dimensional space
+        :return: The Vector3D from the Vector2D set in the 3-dimensional space
         :rtype: :class:`volmdlr.Vector3D`
         """
         return Vector3D(plane_origin.x + vx.x * self.x + vy.x * self.y,
@@ -744,7 +865,7 @@ class Vector2D(Vector):
     def normal_vector(self):
         """
         Returns the normal vector located pi/2 (counterclockwise) to the
-        2 dimensional vector.
+        2-dimensional vector.
 
         :return: A normal Vector2D
         :rtype: :class:`volmdlr.Vector2D`
@@ -754,7 +875,7 @@ class Vector2D(Vector):
     def unit_normal_vector(self):
         """
         Returns the unit normal vector located pi/2 (counterclockwise) to the
-        2 dimensional vector.
+        2-dimensional vector.
 
         :return: A unit normal Vector2D
         :rtype: :class:`volmdlr.Vector2D`
@@ -773,7 +894,7 @@ class Vector2D(Vector):
     @classmethod
     def random(cls, xmin: float, xmax: float, ymin: float, ymax: float):
         """
-        Returns a random 2 dimensional point.
+        Returns a random 2-dimensional point.
 
         :param xmin: The minimal abscissa
         :type xmin: float
@@ -795,7 +916,7 @@ class Vector2D(Vector):
              color: str = "k", line: bool = False, label: str = None,
              normalize: bool = False):
         """
-        Plots the 2 dimensional vector. If the vector has a norm greater than
+        Plots the 2-dimensional vector. If the vector has a norm greater than
         1e-9, it will be plotted with an arrow, else it will be plotted with
         a point.
 
@@ -841,7 +962,7 @@ class Vector2D(Vector):
             head_width = 0.3 * amplitude
 
         if not normalize:
-            ax.add_patch(FancyArrow(origin[0], origin[1],
+            ax.add_patch(FancyArrow(origin.x, origin.y,
                                     self.x * amplitude, self.y * amplitude,
                                     width=width,
                                     head_width=head_width,
@@ -850,7 +971,7 @@ class Vector2D(Vector):
         else:
             normalized_vector = self.copy()
             normalized_vector.normalize()
-            ax.add_patch(FancyArrow(origin[0], origin[1],
+            ax.add_patch(FancyArrow(origin.x, origin.y,
                                     normalized_vector.x * amplitude,
                                     normalized_vector.y * amplitude,
                                     width=width,
@@ -866,7 +987,7 @@ class Vector2D(Vector):
             u = p2 - p1
             p3 = p1 - 3 * u
             p4 = p2 + 4 * u
-            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
+            ax.plot([p3.x, p4.x], [p3.y, p4.y], style, linestyle=linestyle)
 
         if label is not None:
             ax.text(*(origin + self * amplitude), label)
@@ -875,7 +996,7 @@ class Vector2D(Vector):
 
     def to_step(self, current_id, vector=False, vertex=False):
         """
-        Write a step primitive from a 2 dimensional vector.
+        Write a step primitive from a 2-dimensional vector.
 
         :param current_id: The id of the last written primitive
         :type current_id: int
@@ -905,7 +1026,7 @@ Y2D = Vector2D(0, 1)
 
 class Point2D(Vector2D):
     """
-    Class representing a 2 dimensional point.
+    Class representing a 2-dimensional point.
 
     :param x: The vector's abscissa
     :type x: float
@@ -916,6 +1037,8 @@ class Point2D(Vector2D):
     """
 
     def __init__(self, x: float, y: float, name: Text = ""):
+        self.x = x
+        self.y = y
         Vector2D.__init__(self, x=x, y=y, name=name)
 
     def __add__(self, other_vector):
@@ -943,7 +1066,7 @@ class Point2D(Vector2D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Serializes a 2 dimensional point into a dictionary.
+        Serializes a 2-dimensional point into a dictionary.
 
         :return: A serialized version of the Point2D
         :rtype: dict
@@ -962,8 +1085,8 @@ class Point2D(Vector2D):
 
     def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
         """
-        Returns the 3 dimensional point corresponding to the 2 dimensional
-        point placed on the 3 dimensional plane (XY) of the 3 dimensional
+        Returns the 3-dimensional point corresponding to the 2-dimensional
+        point placed on the 3-dimensional plane (XY) of the 3-dimensional
         frame (centered on `plane_origin`, having for basis (`vx`, `vy`, vz),
         vz being the cross product of `vx` and `vy`).
 
@@ -974,7 +1097,7 @@ class Point2D(Vector2D):
         :type vx: :class:`volmdlr.Vector3D`
         :param vy: The second direction of the plane
         :type vy: :class:`volmdlr.Vector3D`
-        :return: The Point3D from the Point2D set in the 3 dimensional space
+        :return: The Point3D from the Point2D set in the 3-dimensional space
         :rtype: :class:`volmdlr.Point3D`
         """
         return Point3D(round(plane_origin.x + vx.x * self.x + vy.x * self.y, 12),
@@ -1005,7 +1128,7 @@ class Point2D(Vector2D):
 
     def plot(self, ax=None, color="k", alpha=1, plot_points=True):
         """
-        Plots the 2 dimensional point as a dot.
+        Plots the 2-dimensional point as a dot.
 
         :param ax: The Axes on which the Vector2D will be drawn
         :type ax: :class:`matplotlib.axes.Axes`, optional
@@ -1201,7 +1324,7 @@ class Point2D(Vector2D):
                 min_distance, min_point = pd, point
         return min_point
 
-    def axial_symmetry(self, line: "volmdlr.edges.Line2D"):
+    def axial_symmetry(self, line: "volmdlr.curves.Line2D"):
         """
         Returns the symmetric two-dimensional point according to a line.
 
@@ -1247,7 +1370,7 @@ O2D = Point2D(0, 0)
 
 class Vector3D(Vector):
     """
-    Class representing a 3 dimensional vector.
+    Class representing a 3-dimensional vector.
 
     :param x: The vector's abscissa
     :type x: float
@@ -1361,7 +1484,7 @@ class Vector3D(Vector):
 
     def to_dict(self, *args, **kwargs):
         """
-        Serializes a 3 dimensional vector into a dictionary.
+        Serializes a 3-dimensional vector into a dictionary.
 
         :return: A serialized version of the Vector3D
         :rtype: dict
@@ -1382,7 +1505,7 @@ class Vector3D(Vector):
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
         """
-        Deserializes a dictionary to a 3 dimensional vector.
+        Deserializes a dictionary to a 3-dimensional vector.
 
         :param dict_: The dictionary of a serialized Vector3D
         :type dict_: dict
@@ -1409,7 +1532,7 @@ class Vector3D(Vector):
 
     def dot(self, other_vector):
         """
-        Computes the dot product between two 3 dimensional vectors.
+        Computes the dot product between two 3-dimensional vectors.
 
         :param other_vector: A Vector3D-like object
         :type other_vector: :class:`volmdlr.Vector3D`
@@ -1421,7 +1544,7 @@ class Vector3D(Vector):
 
     def cross(self, other_vector: "Vector3D") -> "Vector3D":
         """
-        Computes the cross product between two 3 dimensional vectors.
+        Computes the cross product between two 3-dimensional vectors.
 
         :param other_vector: A Vector3D-like object
         :type other_vector: :class:`volmdlr.Vector3D`
@@ -1435,7 +1558,7 @@ class Vector3D(Vector):
 
     def norm(self) -> float:
         """
-        Computes the euclidiean norm of a 3 dimensional vector.
+        Computes the euclidiean norm of a 3-dimensional vector.
 
         :return: Norm of the Vector3D-like object
         :rtype: float
@@ -1444,7 +1567,7 @@ class Vector3D(Vector):
 
     def normalize(self) -> None:
         """
-        In place operation, normalizing the coordinates of the 2 dimensional
+        In place operation, normalizing the coordinates of the 2-dimensional
         vector.
 
         :return: None
@@ -1457,6 +1580,13 @@ class Vector3D(Vector):
         self.x /= n
         self.y /= n
         self.z /= n
+
+    def unit_vector(self):
+        """Calculates the unit vector."""
+        n = self.norm()
+        if n == 0:
+            raise ZeroDivisionError
+        return Vector3D(self.x / n, self.y / n, self.z / n)
 
     def point_distance(self, point2: "Vector3D") -> float:
         """
@@ -1471,7 +1601,7 @@ class Vector3D(Vector):
 
     def rotation(self, center: "Point3D", axis: "Vector3D", angle: float):
         """
-        Rotates of angle around axis the 2 dimensional vector and returns
+        Rotates of angle around axis the 2-dimensional vector and returns
         a new rotated vector.
         Using Rodrigues Formula:
             https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula.
@@ -1487,30 +1617,6 @@ class Vector3D(Vector):
         """
         vector2 = vector3D_rotation(self, center, axis, angle)
         return self.__class__(*vector2)
-
-    def rotation_inplace(self, center: "Point3D", axis: "Vector3D",
-                         angle: float):
-        """
-        Rotates of angle around axis the 2 dimensional vector and changes
-        its values inplace.
-        Using Rodrigues Formula:
-            https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula.
-
-        :param center: The center of rotation
-        :type center: :class:`volmdlr.Point3D`
-        :param axis: The axis of rotation
-        :type axis: :class:`volmdlr.Vector3D`
-        :param angle: The angle of the rotation in radian
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        vector2 = vector3D_rotation(self, center, axis, angle)
-        self.x = vector2[0]
-        self.y = vector2[1]
-        self.z = vector2[2]
 
     @staticmethod
     def axis_rotation_parameters(axis1_value, axis2_value, angle):
@@ -1540,28 +1646,12 @@ class Vector3D(Vector):
 
         :param angle: Value of the angle
         :type angle: float
-        :return: A 3 dimensional point
+        :return: A 3-dimensional point
         :rtype: :class:`volmdlr.Point3D`
         """
         y1, z1 = self.axis_rotation_parameters(self.y, self.z, angle)
 
         return Point3D(self.x, y1, z1)
-
-    def x_rotation_inplace(self, angle: float):
-        """
-        Rotation of angle around X axis and changes the vector parameters
-        inplace.
-
-        :param angle: Value of the angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        y1, z1 = self.axis_rotation_parameters(self.y, self.z, angle)
-        self.y = y1
-        self.z = z1
 
     def y_rotation(self, angle: float):
         """
@@ -1569,27 +1659,11 @@ class Vector3D(Vector):
 
         :param angle: Value of the angle
         :type angle: float
-        :return: A 3 dimensional point
+        :return: A 3-dimensional point
         :rtype: :class:`volmdlr.Point3D`
         """
         z1, x1 = self.axis_rotation_parameters(self.z, self.x, angle)
         return Point3D(x1, self.y, z1)
-
-    def y_rotation_inplace(self, angle):
-        """
-        Rotation of vector around the Y axis and changes its parameters
-        inplace.
-
-        :param angle: Value of the angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        z1, x1 = self.axis_rotation_parameters(self.z, self.x, angle)
-        self.x = x1
-        self.z = z1
 
     def z_rotation(self, angle: float):
         """
@@ -1597,27 +1671,11 @@ class Vector3D(Vector):
 
         :param angle: Value of the angle
         :type angle: float
-        :return: A 3 dimensional point
+        :return: A 3-dimensional point
         :rtype: :class:`volmdlr.Point3D`
         """
         x1, y1 = self.axis_rotation_parameters(self.x, self.y, angle)
         return Point3D(x1, y1, self.z)
-
-    def z_rotation_inplace(self, angle: float):
-        """
-        Rotation of vector around the Z axis and changes its parameters
-        inplace
-
-        :param angle: Value of the angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        x1, y1 = self.axis_rotation_parameters(self.x, self.y, angle)
-        self.x = x1
-        self.y = y1
 
     def translation(self, offset: "Vector3D"):
         """
@@ -1630,25 +1688,10 @@ class Vector3D(Vector):
         """
         return self + offset
 
-    def translation_inplace(self, offset: "Vector3D"):
-        """
-        Translates the vector and changes its values inplace.
-
-        :param offset: A Vector3D-like object used for offsetting
-        :type offset: :class:`volmdlr.Vector3D`
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.x += offset[0]
-        self.y += offset[1]
-        self.z += offset[2]
-
     def frame_mapping(self, frame: "Frame3D", side: str):
         """
         # TODO: Needs correction. Add an example ?
-        Transforms a 3 dimensional vector from the current reference frame to a
+        Transforms a 3-dimensional vector from the current reference frame to a
         new one. Choose side equals to 'old' if the current reference frame is
         the old one ; choose side equals to 'new' if the input reference frame
         is the new one. This way, choosing 'old' will return the frame mapped
@@ -1667,28 +1710,6 @@ class Vector3D(Vector):
         if side == "new":
             new_vector = frame.global_to_local_coordinates(self)
         return new_vector
-
-    def frame_mapping_inplace(self, frame: "Frame3D", side: str):
-        """
-        # TODO: To be completed
-
-        :param frame: The input reference frame
-        :type frame: :class:`volmdlr.Frame3D`
-        :param side: Choose between 'old' and 'new'
-        :type side: str
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        if side == "old":
-            new_vector = frame.local_to_global_coordinates(self)
-
-        if side == "new":
-            new_vector = frame.global_to_local_coordinates(self)
-        self.x = new_vector.x
-        self.y = new_vector.y
-        self.z = new_vector.z
 
     def plane_projection3d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
         """
@@ -1749,7 +1770,7 @@ class Vector3D(Vector):
 
     def random_unit_normal_vector(self):
         """
-        Returns a random normal 3 dimensional vector.
+        Returns a random normal 3-dimensional vector.
 
         :return: A normal Vector3D
         :rtype: :class:`volmdlr.Vector3D`
@@ -1760,9 +1781,9 @@ class Vector3D(Vector):
         v.normalize()
         return v
 
-    def deterministic_unit_normal_vector(self):
+    def deterministic_normal_vector(self):
         """
-        Returns a deterministic normal 3 dimensional vector.
+        Returns a deterministic normal 3-dimensional vector.
 
         :return: A normal Vector3D
         :rtype: :class:`volmdlr.Vector3D`
@@ -1773,12 +1794,21 @@ class Vector3D(Vector):
         else:
             v = Y3D
         v = v - v.dot(self) * self / (self.norm()**2)
-        v.normalize()
         return v
+
+    def deterministic_unit_normal_vector(self):
+        """
+        Returns a deterministic unit normal 3-dimensional vector.
+
+        :return: A normal Vector3D
+        :rtype: :class:`volmdlr.Vector3D`
+        """
+        normal_vector = self.deterministic_normal_vector()
+        return normal_vector.unit_vector()
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of a 2 dimensional vector.
+        Creates a copy of a 2-dimensional vector.
 
         :param deep: *not used*
         :param memo: *not used*
@@ -1790,7 +1820,7 @@ class Vector3D(Vector):
     @classmethod
     def random(cls, xmin: float, xmax: float, ymin: float, ymax: float, zmin: float, zmax: float):
         """
-        Returns a random 2 dimensional point.
+        Returns a random 2-dimensional point.
 
         :param xmin: The minimal abscissa
         :type xmin: float
@@ -1823,7 +1853,7 @@ class Vector3D(Vector):
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
         """
-        Converts a step primitive from a 3 dimensional vector to a Vector3D.
+        Converts a step primitive from a 3-dimensional vector to a Vector3D.
 
         :param arguments: The arguments of the step primitive.
         :type arguments: list
@@ -1849,7 +1879,7 @@ class Vector3D(Vector):
 
     def to_step(self, current_id, vector=False, vertex=False):
         """
-        Write a step primitive from a 3 dimensional vector.
+        Write a step primitive from a 3-dimensional vector.
 
         :param current_id: The id of the last written primitive
         :type current_id: int
@@ -1876,9 +1906,9 @@ class Vector3D(Vector):
             current_id += 1
         return content, current_id
 
-    def plot(self, ax=None, starting_point=None, color=""):
+    def plot(self, ax=None, starting_point=None, color="k"):
         """
-        Plots the 3 dimensional vector.
+        Plots the 3-dimensional vector.
 
         :param ax: The Axes on which the Vector2D will be drawn
         :type ax: :class:`matplotlib.axes.Axes`, optional
@@ -1897,13 +1927,9 @@ class Vector3D(Vector):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
-        xs = [starting_point[0], self.x + starting_point[0]]
-        ys = [starting_point[1], self.y + starting_point[1]]
-        zs = [starting_point[2], self.z + starting_point[2]]
-        if color:
-            a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>", color=color)
-        else:
-            a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>")
+        a = Arrow3D(self.x, self.y, self.z, starting_point=starting_point, mutation_scale=20,  # Change for head length
+                    arrowstyle="-|>", color=color)
+
         ax.add_artist(a)
         return ax
 
@@ -1915,7 +1941,7 @@ Z3D = Vector3D(0, 0, 1)
 
 class Point3D(Vector3D):
     """
-    Class representing a 3 dimensional point.
+    Class representing a 3-dimensional point.
 
     :param x: The vector's abscissa
     :type x: float
@@ -1930,6 +1956,9 @@ class Point3D(Vector3D):
     _standalone_in_db = False
 
     def __init__(self, x: float, y: float, z: float, name: Text = ""):
+        self.x = x
+        self.y = y
+        self.z = z
         Vector3D.__init__(self, x, y, z, name)
 
     def __add__(self, other_vector):
@@ -1961,7 +1990,7 @@ class Point3D(Vector3D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Serializes a 3 dimensional point into a dictionary.
+        Serializes a 3-dimensional point into a dictionary.
 
         :return: A serialized version of the Point3D
         :rtype: dict
@@ -1980,7 +2009,7 @@ class Point3D(Vector3D):
 
     def plot(self, ax=None, color="k", alpha=1, marker="o"):
         """
-        Plots the 3 dimensional point.
+        Plots the 3-dimensional point.
 
         :param ax: The Axes on which the Point3D will be drawn. Default value
             is None, creating a new drawing figure
@@ -2016,7 +2045,7 @@ class Point3D(Vector3D):
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
         """
-        Converts a step primitive from a 3 dimensional point to a Point3D.
+        Converts a step primitive from a 3-dimensional point to a Point3D.
 
         :param arguments: The arguments of the step primitive
         :type arguments: list
@@ -2042,9 +2071,9 @@ class Point3D(Vector3D):
 
     def point_distance(self, point2: "Point3D") -> float:
         """
-        Computes the euclidean distance between two 3 dimensional points.
+        Computes the euclidean distance between two 3-dimensional points.
 
-        :param point2: The other 3 dimensional point
+        :param point2: The other 3-dimensional point
         :type point2: :class:`volmdlr.Point3D`
         :return: The euclidean distance
         :rtype: float
@@ -2054,11 +2083,11 @@ class Point3D(Vector3D):
     @classmethod
     def middle_point(cls, point1: "Point3D", point2: "Point3D"):
         """
-        Computes the middle point between two 3 dimensional points.
+        Computes the middle point between two 3-dimensional points.
 
-        :param point1: The first 3 dimensional point
+        :param point1: The first 3-dimensional point
         :type point1: :class:`volmdlr.Point3D`
-        :param point2: The second 3 dimensional point
+        :param point2: The second 3-dimensional point
         :type point2: :class:`volmdlr.Point3D`
         :return: The middle point
         :rtype: :class:`volmdlr.Point3D`
@@ -2067,7 +2096,7 @@ class Point3D(Vector3D):
 
     def to_step(self, current_id, vertex=False):
         """
-        Writes a step primitive from a 3 dimensional point.
+        Writes a step primitive from a 3-dimensional point.
 
         :param current_id: The id of the last written primitive
         :type current_id: int
@@ -2078,6 +2107,7 @@ class Point3D(Vector3D):
             and the new current id
         :rtype: tuple
         """
+        current_id += 1
         content = "#{} = CARTESIAN_POINT('{}',({:.6f},{:.6f},{:.6f}));\n".format(current_id, self.name,
                                                                                  1000. * self.x,
                                                                                  1000. * self.y,
@@ -2107,9 +2137,9 @@ class Point3D(Vector3D):
 
     def nearest_point(self, points: List["Point3D"]):
         """
-        Returns the nearest 3 dimensional point out of the list.
+        Returns the nearest 3-dimensional point out of the list.
 
-        :param points: A list of 3 dimensional points
+        :param points: A list of 3-dimensional points
         :type points: List[:class:`volmdlr.Point3D`]
         :return: The closest point
         :rtype: :class:`volmdlr.Point3D`
@@ -2193,7 +2223,7 @@ class Matrix22:
 
     def vector_multiplication(self, vector):
         """
-        Multiplies the matrix by a 2 dimensional vector.
+        Multiplies the matrix by a 2-dimensional vector.
 
         :param vector: A Vector2D-like object
         :type vector: :class:`volmdlr.Vector2D`
@@ -2316,7 +2346,7 @@ class Matrix33:
 
     def vector_multiplication(self, vector):
         """
-       Multiplies the matrix by a 3 dimensional vector.
+       Multiplies the matrix by a 3-dimensional vector.
 
        :param vector: A Vector3D-like object
        :type vector: :class:`volmdlr.Vector3D`
@@ -2455,7 +2485,7 @@ class Basis2D(Basis):
 
     def to_dict(self, *args, **kwargs):
         """
-        Serializes a 2 dimensional basis into a dictionary.
+        Serializes a 2-dimensional basis into a dictionary.
 
         :return: A serialized version of the Basis2D
         :rtype: dict
@@ -2474,19 +2504,19 @@ class Basis2D(Basis):
 
     def to_frame(self, origin: Point2D) -> "Frame2D":
         """
-        Returns the 2 dimensional frame oriented the same way as the Basis2D
-        and having for origin the given 2 dimensional point.
+        Returns the 2-dimensional frame oriented the same way as the Basis2D
+        and having for origin the given 2-dimensional point.
 
-        :param origin: The origin of the 2 dimensional frame
+        :param origin: The origin of the 2-dimensional frame
         :type origin: :class:`volmdlr.Point2D`
-        :return: A 2 dimensional frame
+        :return: A 2-dimensional frame
         :rtype: :class:`volmdlr.Frame2D`
         """
         return Frame2D(origin, self.u, self.v)
 
     def transfer_matrix(self):
         """
-        Computes the transfer matrix of the 2 dimensional basis.
+        Computes the transfer matrix of the 2-dimensional basis.
 
         :return: The 2x2 transfer matrix
         :rtype: :class:`volmdlr.Matrix22`
@@ -2496,7 +2526,7 @@ class Basis2D(Basis):
 
     def inverse_transfer_matrix(self):
         """
-        Computes the inverse transfer matrix of the 2 dimensional basis.
+        Computes the inverse transfer matrix of the 2-dimensional basis.
 
         :return: The 2x2 inverse transfer matrix
         :rtype: :class:`volmdlr.Matrix22`
@@ -2563,7 +2593,7 @@ class Basis2D(Basis):
 
     def rotation(self, angle: float):
         """
-        Rotates the 2 dimensional basis and returns a new rotated one.
+        Rotates the 2-dimensional basis and returns a new rotated one.
 
         :param angle: The angle of rotation in rad
         :type angle: float
@@ -2575,26 +2605,9 @@ class Basis2D(Basis):
         new_v = self.v.rotation(center, angle)
         return Basis2D(new_u, new_v)
 
-    def roation_inplace(self, angle: float):
-        """
-        Rotates the basis and changes its parameters inplace.
-
-        :param angle: The angle of rotation in rad
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        center = O2D
-        new_u = self.u.rotation(center, angle)
-        new_v = self.v.rotation(center, angle)
-        self.u = new_u
-        self.v = new_v
-
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of a 2 dimensional basis.
+        Creates a copy of a 2-dimensional basis.
 
         :param deep: *not used*
         :param memo: *not used*
@@ -2688,7 +2701,7 @@ class Basis3D(Basis):
 
     def to_dict(self, *args, **kwargs):
         """
-        Serializes a 3 dimensional basis into a dictionary.
+        Serializes a 3-dimensional basis into a dictionary.
 
         :return: A serialized version of the Basis3D
         :rtype: dict
@@ -2729,19 +2742,19 @@ class Basis3D(Basis):
 
     def to_frame(self, origin):
         """
-        Returns the 3 dimensional frame oriented the same way as the Basis3D
-        and having for origin the given 3 dimensional point.
+        Returns the 3-dimensional frame oriented the same way as the Basis3D
+        and having for origin the given 3-dimensional point.
 
-        :param origin: The origin of the 3 dimensional frame
+        :param origin: The origin of the 3-dimensional frame
         :type origin: :class:`volmdlr.Point3D`
-        :return: A 3 dimensional frame
+        :return: A 3-dimensional frame
         :rtype: :class:`volmdlr.Frame3D`
         """
         return Frame3D(origin, self.u, self.v, self.w)
 
     def rotation(self, axis: Vector3D, angle: float):
         """
-        Rotates the 3 dimensional basis and returns a new rotated one.
+        Rotates the 3-dimensional basis and returns a new rotated one.
 
         :param axis: The axis around which the rotation is made
         :type axis: :class:`volmdlr.Vector3D`
@@ -2755,27 +2768,6 @@ class Basis3D(Basis):
         new_v = self.v.rotation(center, axis, angle)
         new_w = self.w.rotation(center, axis, angle)
         return Basis3D(new_u, new_v, new_w, self.name)
-
-    def rotation_inplace(self, axis: Vector3D, angle: float):
-        """
-        Rotates the basis and changes its parameters inplace.
-
-        :param axis: The axis around which the rotation is made
-        :type axis: :class:`volmdlr.Vector3D`
-        :param angle: The angle of rotation in rad
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        center = O3D
-        new_u = self.u.rotation(center, axis, angle)
-        new_v = self.v.rotation(center, axis, angle)
-        new_w = self.w.rotation(center, axis, angle)
-        self.u = new_u
-        self.v = new_v
-        self.w = new_w
 
     def x_rotation(self, angle: float):
         """
@@ -2792,22 +2784,6 @@ class Basis3D(Basis):
         new_w = self.w.x_rotation(angle)
         return Basis3D(new_u, new_v, new_w, self.name)
 
-    def x_rotation_inplace(self, angle: float):
-        """
-        Rotates the basis around the X axis and its parameters are
-        changed inplace.
-
-        :param angle: The rotation angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.u = self.u.x_rotation(angle)
-        self.v = self.v.x_rotation(angle)
-        self.w = self.w.x_rotation(angle)
-
     def y_rotation(self, angle: float):
         """
         Rotates the basis around the Y axis and a new basis is returned
@@ -2822,22 +2798,6 @@ class Basis3D(Basis):
         new_v = self.v.y_rotation(angle)
         new_w = self.w.y_rotation(angle)
         return Basis3D(new_u, new_v, new_w, self.name)
-
-    def y_rotation_inplace(self, angle: float):
-        """
-        Rotates the basis around the Y axis and its parameters are
-        changed inplace.
-
-        :param angle: The rotation angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.u = self.u.y_rotation(angle)
-        self.v = self.v.y_rotation(angle)
-        self.w = self.w.y_rotation(angle)
 
     def z_rotation(self, angle: float):
         """
@@ -2854,48 +2814,6 @@ class Basis3D(Basis):
         new_w = self.w.z_rotation(angle)
         return Basis3D(new_u, new_v, new_w, self.name)
 
-    def z_rotation_inplace(self, angle: float):
-        """
-        Rotates the basis around the Z axis and its parameters are
-        changed inplace.
-
-        :param angle: The rotation angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.u = self.u.z_rotation(angle)
-        self.v = self.v.z_rotation(angle)
-        self.w = self.w.z_rotation(angle)
-
-    # def Eulerrotation(self, angles:Tuple[float, float, float], copy:bool=True):
-    #     psi, theta, phi = angles
-    #     center = O3D
-    #
-    #     vect_u = self.u.copy()
-    #     vect_v = self.v.copy()
-    #     vect_w = self.w.copy()
-    #
-    #     # rotation around w
-    #     vect_u.rotation(center, vect_w, psi, False)
-    #     vect_v.rotation(center, vect_w, psi, False)
-    #
-    #     # rotation around v
-    #     vect_v.rotation(center, vect_u, theta, False)
-    #     vect_w.rotation(center, vect_u, theta, False)
-    #
-    #     # rotation around w
-    #     vect_u.rotation(center, vect_w, phi, False)
-    #     vect_v.rotation(center, vect_w, phi, False)
-    #
-    #     if copy:
-    #         return Basis3D(vect_u, vect_v, vect_w)
-    #     self.u = vect_u
-    #     self.v = vect_v
-    #     self.w = vect_w
-
     def euler_rotation_parameters(self, angles: Tuple[float, float, float]):
         """
         Computes the new basis' parameter after rotation of the basis using
@@ -2910,26 +2828,22 @@ class Basis3D(Basis):
         psi, theta, phi = angles
         center = O3D
 
-        vect_u = self.u.copy()
-        vect_v = self.v.copy()
-        vect_w = self.w.copy()
-
         # rotation around w
-        vect_u.rotation_inplace(center, vect_w, psi)
-        vect_v.rotation_inplace(center, vect_w, psi)
+        vect_u = self.u.rotation(center, self.w, psi)
+        vect_v = self.v.rotation(center, self.w, psi)
 
         # rotation around v
-        vect_v.rotation_inplace(center, vect_u, theta)
-        vect_w.rotation_inplace(center, vect_u, theta)
+        vect_v = vect_v.rotation(center, vect_u, theta)
+        vect_w = self.w.rotation(center, vect_u, theta)
 
         # rotation around w
-        vect_u.rotation_inplace(center, vect_w, phi)
-        vect_v.rotation_inplace(center, vect_w, phi)
+        vect_u = vect_u.rotation(center, vect_w, phi)
+        vect_v = vect_v.rotation(center, vect_w, phi)
         return vect_u, vect_v, vect_w
 
     def euler_rotation(self, angles: Tuple[float, float, float]):
         """
-        Rotates the 3 dimensional basis using euler rotation and
+        Rotates the 3-dimensional basis using euler rotation and
         returns a new basis as a result.
 
         :param angles: Three angles corresponding to psi, theta, phi in rad
@@ -2940,26 +2854,9 @@ class Basis3D(Basis):
         vect_u, vect_v, vect_w = self.euler_rotation_parameters(angles)
         return Basis3D(vect_u, vect_v, vect_w)
 
-    def euler_rotation_inplace(self, angles: Tuple[float, float, float]):
-        """
-        Rotates the 3 dimensional basis using euler rotation and
-        its parameters are changed in place.
-
-        :param angles: Three angles corresponding to psi, theta, phi in rad
-        :type angles: tuple
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        vect_u, vect_v, vect_w = self.euler_rotation_parameters(angles)
-        self.u = vect_u
-        self.v = vect_v
-        self.w = vect_w
-
     def transfer_matrix(self):
         """
-        Computes the transfer matrix of the 3 dimensional basis.
+        Computes the transfer matrix of the 3-dimensional basis.
 
         :return: The 3x3 transfer matrix
         :rtype: :class:`volmdlr.Matrix33`
@@ -2970,7 +2867,7 @@ class Basis3D(Basis):
 
     def inverse_transfer_matrix(self):
         """
-        Computes the inverse transfer matrix of the 3 dimensional basis.
+        Computes the inverse transfer matrix of the 3-dimensional basis.
 
         :return: The 3x3 inverse transfer matrix
         :rtype: :class:`volmdlr.Matrix33`
@@ -3037,7 +2934,7 @@ class Basis3D(Basis):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of a 3 dimensional basis.
+        Creates a copy of a 3-dimensional basis.
 
         :param deep: *not used*
         :param memo: *not used*
@@ -3114,7 +3011,7 @@ class Frame2D(Basis2D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Serializes a 2 dimensional frame into a dictionary.
+        Serializes a 2-dimensional frame into a dictionary.
 
         :return: A serialized version of the Frame2D
         :rtype: dict
@@ -3134,9 +3031,9 @@ class Frame2D(Basis2D):
 
     def basis(self):
         """
-        Returns the 2 dimensional basis oriented the same way as the Frame2D.
+        Returns the 2-dimensional basis oriented the same way as the Frame2D.
 
-        :return: A 2 dimensional basis
+        :return: A 2-dimensional basis
         :rtype: :class:`volmdlr.Basis2D`
         """
         return Basis2D(self.u, self.v)
@@ -3213,32 +3110,19 @@ class Frame2D(Basis2D):
 
     def translation(self, vector):
         """
-        Returns a translated 2 dimensional frame.
+        Returns a translated 2-dimensional frame.
 
         :param vector: The translation vector
         :type vector: :class:`volmdlr.Vector2D`
-        :return: A new translated 2 dimensional frame
+        :return: A new translated 2-dimensional frame
         :rtype: :class:`volmdlr.Frame2D`
         """
         new_origin = self.origin.translation(vector)
         return Frame2D(new_origin, self.u, self.v)
 
-    def translation_inplace(self, vector):
-        """
-        Translates the 2 dimensional frame and changes its parameters inplace.
-
-        :param vector: The translation vector
-        :type vector: :class:`volmdlr.Vector2D`
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.origin = self.origin.translation(vector)
-
     def rotation(self, angle):
         """
-        Returns a rotated 2 dimensional frame.
+        Returns a rotated 2-dimensional frame.
 
         :param angle: The rotation angle
         :type angle: float
@@ -3247,21 +3131,6 @@ class Frame2D(Basis2D):
         """
         new_base = Basis2D.rotation(self, angle)
         return Frame2D(self.origin, new_base.u, new_base.v)
-
-    def rotation_inplace(self, angle: float):
-        """
-        Rotates the 2 dimensional frame and changes its parameters inplace.
-
-        :param angle: The rotation angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        new_base = Basis2D.rotation(self, angle)
-        self.u = new_base.u
-        self.v = new_base.v
 
     def Draw(self, ax=None, style="ok"):
         """
@@ -3281,7 +3150,7 @@ class Frame2D(Basis2D):
 
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of a 2 dimensional frame.
+        Creates a copy of a 2-dimensional frame.
 
         :param deep: *not used*
         :param memo: *not used*
@@ -3289,6 +3158,39 @@ class Frame2D(Basis2D):
         :rtype: :class:`volmdlr.Frame2D`
         """
         return Frame2D(self.origin, self.u, self.v)
+
+    def plot(self, ax=None, color="b", alpha=1., plot_points=True,
+             ratio=1.):
+        """
+        Plots the 2-dimensional frame.
+
+        :param ax: The Axes on which the Point2D will be drawn. Default value
+            is None, creating a new drawing figure
+        :type ax: :class:`matplotlib.axes.Axes`, optional
+        :param color: *not used*
+        :type color: str, optional
+        :param alpha: *not used*
+        :type alpha: float, optional
+        :param plot_points: *not used*
+        :type plot_points: bool, optional
+        :param ratio: A ratio for controlling the size of the 2-dimensional
+            frame. Default value is 1
+        :type ratio: float, optional
+        :return: A matplotlib Axes object on which the Point2D have been
+            plotted
+        :rtype: :class:`matplotlib.axes.Axes`
+        """
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        x1 = [p.x for p in (self.origin, self.origin + self.u * ratio)]
+        y1 = [p.y for p in (self.origin, self.origin + self.u * ratio)]
+        ax.plot(x1, y1, "r")
+
+        x2 = [p.x for p in (self.origin, self.origin + self.v * ratio)]
+        y2 = [p.y for p in (self.origin, self.origin + self.v * ratio)]
+        ax.plot(x2, y2, "g")
+        return ax
 
 
 OXY = Frame2D(O2D, X2D, Y2D)
@@ -3367,7 +3269,7 @@ class Frame3D(Basis3D):
 
     def to_dict(self, *args, **kwargs):
         """
-        Serializes a 3 dimensional frame into a dictionary.
+        Serializes a 3-dimensional frame into a dictionary.
 
         :return: A serialized version of the Frame3D
         :rtype: dict
@@ -3388,9 +3290,9 @@ class Frame3D(Basis3D):
 
     def basis(self):
         """
-        Returns the 3 dimensional basis oriented the same way as the Frame3D.
+        Returns the 3-dimensional basis oriented the same way as the Frame3D.
 
-        :return: A 3 dimensional basis
+        :return: A 3-dimensional basis
         :rtype: :class:`volmdlr.Basis3D`
         """
         return Basis3D(self.u, self.v, self.w)
@@ -3472,7 +3374,7 @@ class Frame3D(Basis3D):
     def rotation(self, center: Point3D, axis: Vector3D, angle: float):
         """
         Rotates the center as a point and vectors as directions
-        (calling Basis), and returns a new 3 dimensional frame.
+        (calling Basis), and returns a new 3-dimensional frame.
 
         :param center: The center of rotation
         :type center: :class:`volmdlr.Point3D`
@@ -3489,32 +3391,9 @@ class Frame3D(Basis3D):
                        new_base.u, new_base.v, new_base.w,
                        self.name)
 
-    def rotation_inplace(self, center: Point3D,  axis: Vector3D, angle: float):
-        """
-        Rotates the center as a point and vectors as directions
-        (calling Basis). Object is updated inplace.
-
-        :param center: The center of rotation
-        :type center: :class:`volmdlr.Point3D`
-        :param axis: The axis around which the rotation will be made
-        :type axis: :class:`volmdlr.Vector3D`
-        :param angle: The rotation angle
-        :type angle: float
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        new_base = Basis3D.rotation(self, axis, angle)
-        new_origin = self.origin.rotation(center, axis, angle)
-        self.origin = new_origin
-        self.u = new_base.u
-        self.v = new_base.v
-        self.w = new_base.w
-
     def translation(self, offset: Vector3D):
         """
-        Translates a 3 dimensional frame.
+        Translates a 3-dimensional frame.
 
         :param offset: The translation vector
         :type offset: :class:`volmdlr.Vector3D`
@@ -3524,22 +3403,9 @@ class Frame3D(Basis3D):
         return Frame3D(self.origin.translation(offset),
                        self.u, self.v, self.w, self.name)
 
-    def translation_inplace(self, offset: Vector3D):
-        """
-        Translates the 3 dimensional frame and changes its parameters inplace.
-
-        :param vector: The translation vector
-        :type vector: :class:`volmdlr.Vector3D`
-        :return: None
-        :rtype: None
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        self.origin.translation_inplace(offset)
-
     def copy(self, deep=True, memo=None):
         """
-        Creates a copy of a 3 dimensional frame.
+        Creates a copy of a 3-dimensional frame.
 
         :param deep: *not used*
         :param memo: *not used*
@@ -3551,7 +3417,7 @@ class Frame3D(Basis3D):
 
     def to_step(self, current_id):
         """
-        Writes a step primitive from a 3 dimensional frame.
+        Writes a step primitive from a 3-dimensional frame.
 
         :param current_id: The id of the last written primitive
         :type current_id: int
@@ -3561,24 +3427,23 @@ class Frame3D(Basis3D):
         """
         content, origin_id = self.origin.to_point().to_step(current_id)
         current_id = origin_id + 1
+        w_content, w_id = Vector3D.to_step(self.w, current_id)
+        current_id = w_id + 1
         u_content, u_id = Vector3D.to_step(self.u, current_id)
         current_id = u_id + 1
-        v_content, v_id = Vector3D.to_step(self.v, current_id)
-        current_id = v_id + 1
-        content += u_content + v_content
-        content += "#{} = AXIS2_PLACEMENT_3D('{}',#{},#{},#{});\n"\
-            .format(current_id, self.name, origin_id, u_id, v_id)
+        content += w_content + u_content
+        content += f"#{current_id} = AXIS2_PLACEMENT_3D('{self.name}',#{origin_id},#{w_id},#{u_id});\n"
         return content, current_id
 
     def plot2d(self, x=X3D, y=Y3D, ax=None, color="k"):
         """
-        Plots the 3 dimensional frame on a 2 dimensional surface given
+        Plots the 3-dimensional frame on a 2-dimensional surface given
         by (x, y).
 
-        :param x: The first 3 dimensional vector of the 2 dimensional surface.
+        :param x: The first 3-dimensional vector of the 2-dimensional surface.
             Default value is X3D, the vector (1, 0, 0)
         :type x: :class:`volmdlr.Vector3D`, optional
-        :param y: The second 3 dimensional vector of the 2 dimensional surface.
+        :param y: The second 3-dimensional vector of the 2-dimensional surface.
             Default value is Y3D, the vector (0, 1, 0)
         :type y: :class:`volmdlr.Vector3D`, optional
         :param ax: The Axes on which the Frame3D will be drawn. Default value
@@ -3586,7 +3451,7 @@ class Frame3D(Basis3D):
         :type ax: :class:`matplotlib.axes.Axes`, optional
         :param color: The color of the frame. Default value is 'k', for black
         :type color: str, optional
-        :return: A matplotlib Axes object on which the 2 dimensional
+        :return: A matplotlib Axes object on which the 2-dimensional
             representation of the Frame3D have been plotted
         :rtype: :class:`matplotlib.axes.Axes`
         """
@@ -3607,7 +3472,7 @@ class Frame3D(Basis3D):
     def plot(self, ax=None, color="b", alpha=1., plot_points=True,
              ratio=1.):
         """
-        Plots the 3 dimensional frame.
+        Plots the 3-dimensional frame.
 
         :param ax: The Axes on which the Point3D will be drawn. Default value
             is None, creating a new drawing figure
@@ -3618,7 +3483,7 @@ class Frame3D(Basis3D):
         :type alpha: float, optional
         :param plot_points: *not used*
         :type plot_points: bool, optional
-        :param ratio: A ratio for controlling the size of the 3 dimensional
+        :param ratio: A ratio for controlling the size of the 3-dimensional
             frame. Default value is 1
         :type ratio: float, optional
         :return: A matplotlib Axes object on which the Point3D have been
@@ -3648,7 +3513,7 @@ class Frame3D(Basis3D):
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
         """
-        Converts a step primitive from a 3 dimensional point to a Frame3D.
+        Converts a step primitive from a 3-dimensional point to a Frame3D.
 
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
@@ -3659,24 +3524,24 @@ class Frame3D(Basis3D):
         :rtype: :class:`volmdlr.Frame3D`
         """
         origin = object_dict[arguments[1]]
+        if arguments[2] == "$" and arguments[3] == "$":
+            return cls(origin, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D, arguments[0][1:-1])
         if arguments[2] == "$":
-            u = None
-        else:
-            u = object_dict[arguments[2]]
+            return cls.from_point_and_vector(origin, object_dict[arguments[3]], main_axis=X3D,
+                                             name= arguments[0][1:-1])
         if arguments[3] == "$":
-            v = None
-        else:
-            v = object_dict[arguments[3]]
-        if u is None or v is None:
-            w = None
-        else:
-            w = u.cross(v)
-
+            return cls.from_point_and_vector(origin, object_dict[arguments[2]], main_axis=Z3D,
+                                             name= arguments[0][1:-1])
+        w = object_dict[arguments[2]]
+        u = object_dict[arguments[3]]
+        u = u - u.dot(w) * w
+        u = u.unit_vector()
+        v = w.cross(u)
         return cls(origin, u, v, w, arguments[0][1:-1])
 
     @classmethod
     def from_point_and_vector(cls, point: Point3D, vector: Vector3D,
-                              main_axis: Vector3D = X3D):
+                              main_axis: Vector3D = X3D, name: str = ""):
         """
         Creates a new frame from a point and vector by rotating the global
         frame. Global frame rotates in order to have 'vector' and 'main_axis'
@@ -3692,6 +3557,8 @@ class Frame3D(Basis3D):
             (can be X3D, Y3D or Z3D). Default value is X3D,
             the vector (1, 0, 0)
         :type main_axis: :class:`volmdlr.Vector3D`, optional
+        :param name: Frame's name.
+        :type name: str
         :return: The created local frame
         :rtype: :class:`volmdlr.Frame3D`
         """
@@ -3721,14 +3588,39 @@ class Frame3D(Basis3D):
         v = Y3D.rotation(O3D, rot_axis, rot_angle)
         w = Z3D.rotation(O3D, rot_axis, rot_angle)
 
-        return cls(point, u, v, w)
+        return cls(point, u, v, w, name=name)
+
+    @classmethod
+    def from_3_points(cls, point1, point2, point3):
+        """
+        Creates a frame 3d from 3 points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :param point3: point 3.
+        :return: a frame 3d.
+        """
+        vector1 = point2 - point1
+        vector2 = point3 - point1
+        vector1 = vector1.to_vector().unit_vector()
+        vector2 = vector2.to_vector().unit_vector()
+        normal = vector1.cross(vector2)
+        normal.normalize()
+        return cls(point1, vector1, normal.cross(vector1), normal)
+
+    @classmethod
+    def from_point_and_normal(cls, origin, normal):
+        """Creates a frame 3D from a point and a normal vector."""
+        u_vector = normal.deterministic_unit_normal_vector()
+        v_vector = normal.cross(u_vector)
+        return cls(origin, u_vector, v_vector, normal)
 
     # def babylonjs(self, size=0.1, parent=None):
     #     """
     #     # TODO: to be deleted ?
     #     Returns the babylonjs script for 3D display in browser.
 
-    #     :param size: The adjustable size of the 3 dimensional frame. Default
+    #     :param size: The adjustable size of the 3-dimensional frame. Default
     #         value is 0.1
     #     :type size: float, optional
     #     :param parent:
