@@ -2715,8 +2715,8 @@ class BSplineFace3D(Face3D):
                     if inner_polygon.point_belongs(point):
                         points_grid.remove(point)
                         grid_point_index.pop((i, j))
-            points.extend(points_grid)
-            return points
+        points.extend(points_grid)
+        return points
 
     def triangulation_lines(self, resolution=25):
         """
