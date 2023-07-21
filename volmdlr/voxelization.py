@@ -1569,6 +1569,188 @@ class Pixelization:
         self.pixel_centers = pixel_centers
         self.pixel_size = pixel_size
 
+    def __eq__(self, other_pixelization: "Pixelization") -> bool:
+        """
+        Check if the current pixelization is equal to another pixelization.
+
+        :param other_pixelization: The pixelization to compare.
+        :type other_pixelization: Pixelization
+
+        :return: True if the pixelizations are equal, False otherwise.
+        :rtype: bool
+        """
+        return (
+            self.pixel_centers == other_pixelization.pixel_centers and self.pixel_size == other_pixelization.pixel_size
+        )
+
+    def __add__(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Return the union of the current pixelization with another pixelization.
+
+        :param other_pixelization: The pixelization to union with.
+        :type other_pixelization: Pixelization
+
+        :return: The union of the pixelizations.
+        :rtype: Pixelization
+        """
+        return self.union(other_pixelization)
+
+    def __sub__(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Return the difference between the current pixelization and another pixelization.
+
+        :param other_pixelization: The pixelization to subtract.
+        :type other_pixelization: Pixelization
+
+        :return: The difference between the pixelizations.
+        :rtype: Pixelization
+        """
+        return self.difference(other_pixelization)
+
+    def __and__(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Return the intersection of the current pixelization with another pixelization.
+
+        :param other_pixelization: The pixelization to intersect with.
+        :type other_pixelization: Pixelization
+
+        :return: The intersection of the pixelizations.
+        :rtype: Pixelization
+        """
+        return self.intersection(other_pixelization)
+
+    def __or__(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Return the union of the current pixelization with another pixelization.
+
+        :param other_pixelization: The pixelization to union with.
+        :type other_pixelization: Pixelization
+
+        :return: The union of the pixelizations.
+        :rtype: Pixelization
+        """
+        return self.union(other_pixelization)
+
+    def __xor__(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Return the symmetric difference between the current pixelization and another pixelization.
+
+        :param other_pixelization: The pixelization to calculate the symmetric difference with.
+        :type other_pixelization: Pixelization
+        :return: The symmetric difference between the pixelizations.
+        :rtype: Pixelization
+        """
+        return self.symmetric_difference(other_pixelization)
+
+    def __invert__(self) -> "Pixelization":
+        """
+        Return the inverse of the current pixelization.
+
+        :return: The inverse Pixelization object.
+        :rtype: Pixelization
+        """
+        return self.inverse()
+
+    def __len__(self):
+        """
+        Return the number of pixels in the pixelization.
+
+        :return: The number of pixels.
+        :rtype: int
+        """
+        return len(self.pixel_centers)
+
+    def intersection(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Create a pixelization that is the Boolean intersection of two pixelizations.
+        Both pixelizations must have the same pixel size.
+
+        :param other_pixelization: The other pixelization to compute the Boolean intersection with.
+        :type other_pixelization: Pixelization
+
+        :return: The created pixelization resulting from the Boolean intersection.
+        :rtype: Pixelization
+        """
+        if self.pixel_size != other_pixelization.pixel_size:
+            raise ValueError("Both pixelizations must have the same pixel_size to perform intersection.")
+
+        return Pixelization(self.pixel_centers.intersection(other_pixelization.pixel_centers), self.pixel_size)
+
+    def is_intersecting(self, other_pixelization: "Pixelization") -> bool:
+        """
+        Check if two pixelizations are intersecting.
+        Both pixelizations must have the same pixel size.
+
+        :param other_pixelization: The other pixelization to check if there is an intersection with.
+        :type other_pixelization: Pixelization
+
+        :return: True if the pixelizations are intersecting, False otherwise.
+        :rtype: bool
+        """
+        intersection = self.intersection(other_pixelization)
+
+        return len(intersection) > 0
+
+    def union(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Create a pixelization that is the Boolean union of two pixelizations.
+        Both pixelizations must have the same pixel size.
+
+        :param other_pixelization: The other pixelization to compute the Boolean union with.
+        :type other_pixelization: Pixelization
+
+        :return: The created pixelization resulting from the Boolean union.
+        :rtype: Pixelization
+        """
+        if self.pixel_size != other_pixelization.pixel_size:
+            raise ValueError("Both pixelizations must have the same pixel_size to perform union.")
+
+        return Pixelization(self.pixel_centers.union(other_pixelization.pixel_centers), self.pixel_size)
+
+    def difference(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Create a pixelization that is the Boolean difference of two pixelizations.
+        Both pixelizations must have the same pixel size.
+
+        :param other_pixelization: The other pixelization to compute the Boolean difference with.
+        :type other_pixelization: Pixelization
+
+        :return: The created pixelization resulting from the Boolean difference.
+        :rtype: Pixelization
+        """
+        if self.pixel_size != other_pixelization.pixel_size:
+            raise ValueError("Both pixelizations must have the same pixel_size to perform difference.")
+
+        return Pixelization(self.pixel_centers.difference(other_pixelization.pixel_centers), self.pixel_size)
+
+    def symmetric_difference(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Create a pixelization that is the Boolean symmetric difference (XOR) of two pixelizations.
+        Both pixelizations must have the same pixel size.
+
+        :param other_pixelization: The other pixelization to compute the Boolean symmetric difference with.
+        :type other_pixelization: Pixelization
+
+        :return: The created pixelization resulting from the Boolean symmetric difference.
+        :rtype: Pixelization
+        """
+        if self.pixel_size != other_pixelization.pixel_size:
+            raise ValueError("Both pixelizations must have the same pixel_size to perform symmetric difference.")
+
+        return Pixelization(self.pixel_centers.symmetric_difference(other_pixelization.pixel_centers), self.pixel_size)
+
+    def interference(self, other_pixelization: "Pixelization") -> float:
+        """
+        Compute the percentage of interference between two pixelizations.
+
+        :param other_pixelization: The other pixelization to compute the percentage of interference with.
+        :type other_pixelization: Pixelization
+
+        :return: The percentage of interference between the two pixelizations.
+        :rtype: float
+        """
+        return len(self.intersection(other_pixelization)) / len(self.union(other_pixelization))
+
     def plot(self):
         """Plots the pixels on a 2D plane"""
         fig, ax = plt.subplots()
@@ -1731,6 +1913,18 @@ class Pixelization:
         matrix[indices[:, 0], indices[:, 1]] = True
 
         return PixelMatrix(matrix)
+
+    def inverse(self) -> "Pixelization":
+        """
+        Create a new Pixelization object that is the inverse of the current pixelization.
+
+        :return: The inverse Pixelization object.
+        :rtype: Pixelization
+        """
+        inverted_pixel_matrix = self.to_pixel_matrix().inverse()
+        min_pixel_center = self.min_pixel_grid_center
+
+        return Pixelization.from_pixel_matrix(inverted_pixel_matrix, self.pixel_size, min_pixel_center)
 
     def _get_bounding_rectangle(self):
         min_point = np.array([self.min_pixel_grid_center]) - np.array([self.pixel_size, self.pixel_size])
