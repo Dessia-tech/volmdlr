@@ -13,7 +13,7 @@ from geomdl.fitting import approximate_surface, interpolate_surface
 from geomdl.operations import split_surface_u, split_surface_v
 from scipy.optimize import least_squares, minimize
 
-from dessia_common.core import DessiaObject
+from dessia_common.core import DessiaObject, PhysicalObject
 from volmdlr.bspline_evaluators import evaluate_single
 import volmdlr.bspline_compiled
 import volmdlr.core
@@ -38,7 +38,7 @@ def knots_vector_inv(knots_vector):
     return knots, multiplicities
 
 
-class Surface2D(volmdlr.core.Primitive2D):
+class Surface2D(PhysicalObject):
     """
     A surface bounded by an outer contour.
 
@@ -51,7 +51,7 @@ class Surface2D(volmdlr.core.Primitive2D):
         self.inner_contours = inner_contours
         self._area = None
 
-        volmdlr.core.Primitive2D.__init__(self, name=name)
+        PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
         return hash((self.outer_contour, tuple(self.inner_contours)))
@@ -4257,8 +4257,6 @@ class RevolutionSurface3D(PeriodicalSurface):
             wire = edges.FullArc3D(wire, start_end, wire.name)
             y_periodicity = wire.length()
 
-        # if hasattr(wire, "simplify"):
-        #     wire = wire.simplify
         axis_point, axis = object_dict[arguments[2]]
         surface = cls(wire=wire, axis_point=axis_point, axis=axis, name=name)
         surface.y_periodicity = y_periodicity
@@ -4335,7 +4333,7 @@ class RevolutionSurface3D(PeriodicalSurface):
             [point_after_start.x, point_before_end.x], discontinuity)
         theta1, z1 = start
         theta2, _ = end
-        theta3, z3 = point_after_start
+        _, z3 = point_after_start
 
         if self.frame.w.is_colinear_to(fullarc3d.circle.normal):
             normal_dot_product = self.frame.w.dot(fullarc3d.circle.normal)
@@ -5340,25 +5338,25 @@ class BSplineSurface3D(Surface3D):
             nb_v = len(points)
             control_points.extend(points)
         nb_u = int(len(control_points) / nb_v)
-        surface_form = arguments[4]
-        if arguments[5] == '.F.':
-            u_closed = False
-        elif arguments[5] == '.T.':
-            u_closed = True
-        else:
-            raise ValueError
-        if arguments[6] == '.F.':
-            v_closed = False
-        elif arguments[6] == '.T.':
-            v_closed = True
-        else:
-            raise ValueError
-        self_intersect = arguments[7]
+        # surface_form = arguments[4]
+        # if arguments[5] == '.F.':
+        #     u_closed = False
+        # elif arguments[5] == '.T.':
+        #     u_closed = True
+        # else:
+        #     raise ValueError
+        # if arguments[6] == '.F.':
+        #     v_closed = False
+        # elif arguments[6] == '.T.':
+        #     v_closed = True
+        # else:
+        #     raise ValueError
+        # self_intersect = arguments[7]
         u_multiplicities = [int(i) for i in arguments[8][1:-1].split(",")]
         v_multiplicities = [int(i) for i in arguments[9][1:-1].split(",")]
         u_knots = [float(i) for i in arguments[10][1:-1].split(",")]
         v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
-        knot_spec = arguments[12]
+        # knot_spec = arguments[12]
 
         if 13 in range(len(arguments)):
             weight_data = [
