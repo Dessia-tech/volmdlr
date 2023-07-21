@@ -45,12 +45,12 @@ class Voxelization(PhysicalObject):
     useful to perform very fast Boolean operations.
     """
 
-    def __init__(self, voxels_centers: Set[Point], voxel_size: float, octree_root: "OctreeNode" = None, name: str = ""):
+    def __init__(self, voxel_centers: Set[Point], voxel_size: float, octree_root: "OctreeNode" = None, name: str = ""):
         """
         Initialize the Voxelization.
 
-        :param voxels_centers: The set of points representing voxel centers.
-        :type voxels_centers: set[tuple[float, float, float]]
+        :param voxel_centers: The set of points representing voxel centers.
+        :type voxel_centers: set[tuple[float, float, float]]
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
         :param octree_root: The octree root used to create the voxelization, if so.
@@ -58,7 +58,7 @@ class Voxelization(PhysicalObject):
         :param name: The name of the Voxelization.
         :type name: str, optional
         """
-        self.voxels_centers = voxels_centers
+        self.voxel_centers = voxel_centers
         self.voxel_size = voxel_size
         self.octree_root = octree_root
 
@@ -75,8 +75,8 @@ class Voxelization(PhysicalObject):
         :rtype: bool
         """
         return (
-            self.voxels_centers == other_voxelization.voxels_centers
-            and self.voxel_size == other_voxelization.voxel_size
+                self.voxel_centers == other_voxelization.voxel_centers
+                and self.voxel_size == other_voxelization.voxel_size
         )
 
     def __add__(self, other_voxelization: "Voxelization") -> "Voxelization":
@@ -154,7 +154,7 @@ class Voxelization(PhysicalObject):
         :return: The number of voxels.
         :rtype: int
         """
-        return len(self.voxels_centers)
+        return len(self.voxel_centers)
 
     @classmethod
     def from_closed_triangle_shell(
@@ -188,7 +188,7 @@ class Voxelization(PhysicalObject):
         else:
             raise ValueError("Invalid 'method' argument: must be 'iterative' or 'octree'")
 
-        return cls(voxels_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
+        return cls(voxel_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
 
     @classmethod
     def from_closed_shell(
@@ -222,7 +222,7 @@ class Voxelization(PhysicalObject):
         else:
             raise ValueError("Invalid 'method' argument: must be 'iterative' or 'octree'")
 
-        return cls(voxels_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
+        return cls(voxel_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
 
     @classmethod
     def from_volume_model(
@@ -256,7 +256,7 @@ class Voxelization(PhysicalObject):
         else:
             raise ValueError("Invalid 'method' argument: must be 'iterative' or 'octree'")
 
-        return cls(voxels_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
+        return cls(voxel_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
 
     @staticmethod
     def _closed_triangle_shell_to_triangles(closed_triangle_shell: ClosedTriangleShell3D) -> List[Triangle]:
@@ -1140,7 +1140,7 @@ class Voxelization(PhysicalObject):
         """
         triangles = set()
 
-        for voxel in self.voxels_centers:
+        for voxel in self.voxel_centers:
             for triangle in self._voxel_triangular_faces(voxel, self.voxel_size):
                 if triangle not in triangles:
                     triangles.add(triangle)
@@ -1229,7 +1229,7 @@ class Voxelization(PhysicalObject):
         Return a list of volmdlr primitives to build up volume model.
         It uses the simplified representation of the voxelization given by the "to_closed_shell" method.
         """
-        if len(self.voxels_centers) == 0:
+        if len(self.voxel_centers) == 0:
             raise ValueError("Empty voxelization.")
 
         return [self.to_closed_triangle_shell()]
@@ -1248,7 +1248,7 @@ class Voxelization(PhysicalObject):
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform intersection.")
 
-        return Voxelization(self.voxels_centers.intersection(other_voxelization.voxels_centers), self.voxel_size)
+        return Voxelization(self.voxel_centers.intersection(other_voxelization.voxel_centers), self.voxel_size)
 
     def is_intersecting(self, other_voxelization: "Voxelization") -> bool:
         """
@@ -1279,7 +1279,7 @@ class Voxelization(PhysicalObject):
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform union.")
 
-        return Voxelization(self.voxels_centers.union(other_voxelization.voxels_centers), self.voxel_size)
+        return Voxelization(self.voxel_centers.union(other_voxelization.voxel_centers), self.voxel_size)
 
     def difference(self, other_voxelization: "Voxelization") -> "Voxelization":
         """
@@ -1295,7 +1295,7 @@ class Voxelization(PhysicalObject):
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform difference.")
 
-        return Voxelization(self.voxels_centers.difference(other_voxelization.voxels_centers), self.voxel_size)
+        return Voxelization(self.voxel_centers.difference(other_voxelization.voxel_centers), self.voxel_size)
 
     def symmetric_difference(self, other_voxelization: "Voxelization") -> "Voxelization":
         """
@@ -1312,7 +1312,7 @@ class Voxelization(PhysicalObject):
             raise ValueError("Both voxelizations must have same voxel_size to perform symmetric difference.")
 
         return Voxelization(
-            self.voxels_centers.symmetric_difference(other_voxelization.voxels_centers), self.voxel_size
+            self.voxel_centers.symmetric_difference(other_voxelization.voxel_centers), self.voxel_size
         )
 
     def interference(self, other_voxelization: "Voxelization") -> float:
@@ -1373,7 +1373,7 @@ class Voxelization(PhysicalObject):
         :rtype: Voxelization
         """
         rotation_matrix = self._rotation_matrix(axis, angle)
-        voxel_array = np.array(list(self.voxels_centers)) - np.array([center.x, center.y, center.z])
+        voxel_array = np.array(list(self.voxel_centers)) - np.array([center.x, center.y, center.z])
         rotated_voxels = np.dot(voxel_array, rotation_matrix.T)
         rotated_voxels += np.array([center.x, center.y, center.z])
 
@@ -1391,7 +1391,7 @@ class Voxelization(PhysicalObject):
         :return: A new Voxelization object resulting from the translation.
         :rtype: Voxelization
         """
-        voxel_array = np.array(list(self.voxels_centers))
+        voxel_array = np.array(list(self.voxel_centers))
         translated_voxels = voxel_array + np.array([offset.x, offset.y, offset.z])
 
         intersecting_voxels = self._voxels_intersecting_voxels(translated_voxels, self.voxel_size)
@@ -1453,7 +1453,7 @@ class Voxelization(PhysicalObject):
         """
         min_x = min_y = min_z = float("inf")
 
-        for point in self.voxels_centers:
+        for point in self.voxel_centers:
             min_x = min(min_x, point[0])
             min_y = min(min_y, point[1])
             min_z = min(min_z, point[2])
@@ -1472,7 +1472,7 @@ class Voxelization(PhysicalObject):
         """
         max_x = max_y = max_z = -float("inf")
 
-        for point in self.voxels_centers:
+        for point in self.voxel_centers:
             max_x = max(max_x, point[0])
             max_y = max(max_y, point[1])
             max_z = max(max_z, point[2])
@@ -1495,7 +1495,7 @@ class Voxelization(PhysicalObject):
         dim_y = round((max_center[1] - min_center[1]) / self.voxel_size + 1)
         dim_z = round((max_center[2] - min_center[2]) / self.voxel_size + 1)
 
-        indices = np.round((np.array(list(self.voxels_centers)) - min_center) / self.voxel_size).astype(int)
+        indices = np.round((np.array(list(self.voxel_centers)) - min_center) / self.voxel_size).astype(int)
 
         matrix = np.zeros((dim_x, dim_y, dim_z), dtype=np.bool_)
         matrix[indices[:, 0], indices[:, 1], indices[:, 2]] = True
