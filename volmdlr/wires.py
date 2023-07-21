@@ -20,6 +20,7 @@ import plot_data.core as plot_data
 from scipy.spatial.qhull import ConvexHull, Delaunay
 from triangle import triangulate
 
+from dessia_common.core import PhysicalObject
 import volmdlr
 import volmdlr.core
 import volmdlr.display as vmd
@@ -189,10 +190,12 @@ class WireMixin:
         return sum(hash(e) for e in self.primitives) + len(self.primitives)
 
     def length(self):
-        length = 0.
-        for primitive in self.primitives:
-            length += primitive.length()
-        return length
+        if not self._length:
+            length = 0.
+            for primitive in self.primitives:
+                length += primitive.length()
+            self._length = length
+        return self._length
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
@@ -367,6 +370,10 @@ class WireMixin:
         for prim in self.primitives[::-1]:
             new_primitives.append(prim.reverse())
         return new_primitives
+
+    def invert(self):
+        """Gets the wire in the inverted direction."""
+        return self.__class__(self.inverted_primitives())
 
     def is_followed_by(self, wire_2, tol=1e-6):
         """
@@ -704,26 +711,24 @@ class EdgeCollection3D(WireMixin):
         return [babylon_mesh]
 
 
-class Wire2D(WireMixin, volmdlr.core.CompositePrimitive2D):
+class Wire2D(WireMixin, PhysicalObject):
     """
     A collection of simple primitives, following each other making a wire.
 
     """
 
-    def __init__(self, primitives: List[volmdlr.core.Primitive2D],
-                 name: str = ''):
+    def __init__(self, primitives, name: str = ''):
         self._bounding_rectangle = None
         self._length = None
-        volmdlr.core.CompositePrimitive2D.__init__(self, primitives, name)
+        self.primitives = primitives
+        PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
         return hash(('wire2d', tuple(self.primitives)))
 
-    def length(self):
-        """ Gets the length for a Wire2D."""
-        if not self._length:
-            self._length = WireMixin.length(self)
-        return self._length
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        return PhysicalObject.to_dict(self, use_pointers=False)
 
     def area(self):
         """ Gets the area for a Wire2D."""
@@ -1070,9 +1075,6 @@ class Wire2D(WireMixin, volmdlr.core.CompositePrimitive2D):
                         crossings_points.append(crossing)
         return crossings_points
 
-    def invert(self):
-        return Wire2D(self.inverted_primitives())
-
     def extend(self, point):
         """
         Extend a wire by adding a line segment connecting the given point to the nearest wire's extremities.
@@ -1225,6 +1227,52 @@ class Wire2D(WireMixin, volmdlr.core.CompositePrimitive2D):
         """
         return False
 
+    def rotation(self, center: volmdlr.Point2D, angle: float):
+        """
+        Rotates the wire 2D.
+
+        :param center: rotation center.
+        :param angle: angle rotation.
+        :return: a new rotated Wire 2D.
+        """
+        return self.__class__([point.rotation(center, angle)
+                               for point in self.primitives])
+
+    def translation(self, offset: volmdlr.Vector2D):
+        """
+        Translates the Wire 2D.
+
+        :param offset: translation vector
+        :return: A new translated Wire 2D.
+        """
+        return self.__class__([primitive.translation(offset)
+                               for primitive in self.primitives])
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and return a new Wire 2D.
+
+        side = 'old' or 'new'
+        """
+        return self.__class__([primitive.frame_mapping(frame, side)
+                               for primitive in self.primitives])
+
+    def plot(self, ax=None, edge_style=EdgeStyle()):
+        """Wire 2D plot using Matplotlib."""
+        if ax is None:
+            _, ax = plt.subplots()
+
+        if edge_style.equal_aspect:
+            ax.set_aspect('equal')
+
+        for element in self.primitives:
+            element.plot(ax=ax, edge_style=edge_style)
+
+        ax.margins(0.1)
+        plt.show()
+
+        return ax
+
 
 class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
     """
@@ -1235,6 +1283,7 @@ class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
     def __init__(self, primitives: List[volmdlr.core.Primitive3D],
                  name: str = ''):
         self._bbox = None
+        self._length = None
         volmdlr.core.CompositePrimitive3D.__init__(self, primitives=primitives, name=name)
 
     def _bounding_box(self):
@@ -1321,7 +1370,7 @@ class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
         """
 
         discretized_points = self.discretization_points(number_points=discretization_parameter)
-        bspline_curve = volmdlr.edges.BSplineCurve3D.from_points_interpolation(discretized_points, degree)
+        bspline_curve = volmdlr.edges.BSplineCurve3D.from_points_interpolation(discretized_points, degree, self.name)
 
         return bspline_curve
 
@@ -1681,7 +1730,7 @@ class ContourMixin(WireMixin):
                         if list_p and point.point_distance(point.nearest_point(list_p)) > 1e-4:
                             list_p.append(point)
                         try:
-                            self.primitive_to_index(edge1)
+                            # self.primitive_to_index(edge1)
                             edges1.add(edge1)
                         except KeyError:
                             edges1.add(edge2)
