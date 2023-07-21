@@ -1663,6 +1663,277 @@ class VoxelMatrix:
         return inner_filled_voxel_matrix
 
 
+class Pixelization:
+    """Voxelization but in 2D"""
+
+    def __init__(self, pixel_centers, pixel_size):
+        self.pixel_centers = pixel_centers
+        self.pixel_size = pixel_size
+
+    def plot(self):
+        """Plots the pixels on a 2D plane"""
+        fig, ax = plt.subplots()
+
+        for center in self.pixel_centers:
+            x, y = center
+            ax.add_patch(
+                patches.Rectangle(
+                    (x - self.pixel_size / 2, y - self.pixel_size / 2),  # Bottom left corner
+                    self.pixel_size,  # Width
+                    self.pixel_size,  # Height
+                    color="black",
+                )
+            )
+
+        # Setting the x and y limits to contain all the pixels
+        ax.set_xlim(
+            min(x[0] for x in self.pixel_centers) - self.pixel_size,
+            max(x[0] for x in self.pixel_centers) + self.pixel_size,
+        )
+        ax.set_ylim(
+            min(x[1] for x in self.pixel_centers) - self.pixel_size,
+            max(x[1] for x in self.pixel_centers) + self.pixel_size,
+        )
+
+        ax.set_aspect("equal")  # Ensuring equal scaling for both axes
+        plt.show()
+
+    @classmethod
+    def from_line_segment(cls, line_segment, pixel_size):
+        return cls(cls._line_segments_to_pixels([line_segment], pixel_size), pixel_size)
+
+    @classmethod
+    def from_polygon(cls, polygon, pixel_size):
+        return cls(cls._line_segments_to_pixels(polygon, pixel_size), pixel_size)
+
+    @staticmethod
+    def _line_segments_to_pixels(line_segments, pixel_size):
+        centers = set()
+
+        for line_segment in line_segments:
+            start = line_segment[0]
+            end = line_segment[1]
+
+            x1, y1 = start
+            x2, y2 = end
+
+            # Calculate the bounding box of the line segment
+            xmin = min(x1, x2)
+            ymin = min(y1, y2)
+            xmax = max(x1, x2)
+            ymax = max(y1, y2)
+
+            # Calculate the indices of the box that intersect with the bounding box of the line segment
+            x_indices = range(int(xmin / pixel_size) - 1, int(xmax / pixel_size) + 1)
+            y_indices = range(int(ymin / pixel_size) - 1, int(ymax / pixel_size) + 1)
+
+            # Create a list of the centers of all the intersecting voxels
+            for x in x_indices:
+                for y in y_indices:
+                    center = tuple(round((_ + 1 / 2) * pixel_size, 6) for _ in [x, y])
+                    centers.add(center)
+
+            # Initialize the list to store the center coordinates of supercovered boxes
+            pixels_centers = []
+
+            for center in centers:
+                if center not in pixels_centers and Pixelization._line_segment_intersects_pixel(
+                    line_segment, center, pixel_size
+                ):
+                    pixels_centers.append(center)
+
+            return pixels_centers
+
+    @staticmethod
+    def _line_segment_intersects_pixel(line_segment, pixel_center, pixel_size):
+        """
+        Check if a line segment intersects with a box.
+
+        :param tuple line_segment: The coordinates of the line segment in the format ((x1, y1), (x2, y2)).
+        :param tuple pixel_center: The coordinates of the pixel's center (box_center_x, box_center_y).
+        :param float pixel_size: The size of the pixel (considering it as a square).
+
+        :return: A boolean indicating whether the line intersects with the pixel.
+        :rtype: bool
+        """
+        start = line_segment[0]
+        end = line_segment[1]
+
+        x1, y1 = start
+        x2, y2 = end
+
+        pixel_center_x, pixel_center_y = pixel_center
+
+        # Determine the coordinates of lower-left and upper-right of rectangle
+        xmin, xmax = pixel_center_x - pixel_size / 2, pixel_center_x + pixel_size / 2
+        ymin, ymax = pixel_center_y - pixel_size / 2, pixel_center_y + pixel_size / 2
+
+        # Helper function to compute the line equation for a point
+        def line_equation(xcorner, ycorner):
+            return (y2 - y1) * xcorner + (x1 - x2) * ycorner + (x2 * y1 - x1 * y2)
+
+        # Create list of corners
+        corners = [(xmin, ymin), (xmin, ymax), (xmax, ymin), (xmax, ymax)]
+
+        line_equations = [line_equation(x, y) for x, y in corners]
+
+        # Check if all corners are on the same side of the line
+        miss = (
+            len(set(line_equation >= 0 for line_equation in line_equations)) == 1
+            and len(set(line_equation > 0 for line_equation in line_equations)) == 1
+        )
+
+        # Does it miss based on the shadow intersection test?
+        shadow_miss = (
+            (x1 > xmax and x2 > xmax)
+            or (x1 < xmin and x2 < xmin)
+            or (y1 > ymax and y2 > ymax)
+            or (y1 < ymin and y2 < ymin)
+        )
+
+        # A hit is if it doesn't miss on both tests!
+        return not (miss or shadow_miss)
+
+    @classmethod
+    def from_pixel_matrix(cls, pixel_matrix: "PixelMatrix", pixel_size: float, pixel_matrix_origin_center: Tuple[float, float]):
+        indices = np.argwhere(pixel_matrix.matrix)
+        pixel_centers = pixel_matrix_origin_center + indices * pixel_size
+        return cls(set(map(tuple, np.round(pixel_centers, 6))), pixel_size)
+
+    def _get_min_pixel_grid_center(self) -> Tuple[float, float]:
+        min_x = min_y = float("inf")
+        for point in self.pixel_centers:
+            min_x = min(min_x, point[0])
+            min_y = min(min_y, point[1])
+        return min_x, min_y
+
+    min_pixel_grid_center = property(_get_min_pixel_grid_center)
+
+    def _get_max_pixel_grid_center(self) -> Tuple[float, float]:
+        max_x = max_y = -float("inf")
+        for point in self.pixel_centers:
+            max_x = max(max_x, point[0])
+            max_y = max(max_y, point[1])
+        return max_x, max_y
+
+    max_pixel_grid_center = property(_get_max_pixel_grid_center)
+
+    def to_pixel_matrix(self) -> "PixelMatrix":
+        min_center = self.min_pixel_grid_center
+        max_center = self.max_pixel_grid_center
+
+        dim_x = round((max_center[0] - min_center[0]) / self.pixel_size + 1)
+        dim_y = round((max_center[1] - min_center[1]) / self.pixel_size + 1)
+
+        indices = np.round((np.array(list(self.pixel_centers)) - min_center) / self.pixel_size).astype(int)
+
+        matrix = np.zeros((dim_x, dim_y), dtype=np.bool_)
+        matrix[indices[:, 0], indices[:, 1]] = True
+
+        return PixelMatrix(matrix)
+
+    def _get_bounding_rectangle(self):
+        min_point = np.array([self.min_pixel_grid_center]) - np.array([self.pixel_size, self.pixel_size])
+        max_point = np.array([self.max_pixel_grid_center]) + np.array([self.pixel_size, self.pixel_size])
+
+        return BoundingRectangle(min_point[0], max_point[0], min_point[1], max_point[1])
+
+    bounding_rectangle = property(_get_bounding_rectangle)
+
+    def _point_to_local_grid_index(self, point: Tuple[float, float]) -> Tuple[int, int]:
+        if not self.bounding_rectangle.point_belongs(Point2D(*point)):
+            raise ValueError("Point not in local pixel grid.")
+
+        x_index = int((point[0] - self.bounding_rectangle.xmin) // self.pixel_size)
+        y_index = int((point[1] - self.bounding_rectangle.ymin) // self.pixel_size)
+
+        return x_index, y_index
+
+    def flood_fill(self, start_point: Tuple[float, float], fill_with: bool) -> "Pixelization":
+        start = self._point_to_local_grid_index(start_point)
+        pixel_matrix = self.to_pixel_matrix()
+        filled_pixel_matrix = pixel_matrix.flood_fill(start, fill_with)
+
+        return self.from_pixel_matrix(filled_pixel_matrix, self.pixel_size, self.min_pixel_grid_center)
+
+
+class PixelMatrix:
+    """Class to manipulate pixel matrix."""
+
+    def __init__(self, numpy_pixel_matrix: np.ndarray[np.bool_, np.ndim == 2]):
+        self.matrix = numpy_pixel_matrix
+
+    def __eq__(self, other_pixel_matrix: "PixelMatrix") -> bool:
+        return np.array_equal(self.matrix, other_pixel_matrix.matrix)
+
+    def __add__(self, other_pixel_matrix: "PixelMatrix") -> "PixelMatrix":
+        return PixelMatrix(self.matrix + other_pixel_matrix.matrix)
+
+    def inverse(self) -> "PixelMatrix":
+        inverted_matrix = np.logical_not(self.matrix)
+        return PixelMatrix(inverted_matrix)
+
+    def flood_fill(self, start, fill_with) -> "PixelMatrix":
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+        old_value = self.matrix[start[0]][start[1]]
+
+        if old_value == fill_with:
+            return self
+
+        matrix = self.matrix.copy()
+        stack = deque([start])
+        visited = {start}
+
+        while stack:
+            x, y = stack.pop()
+
+            matrix[x][y] = fill_with
+
+            for dx, dy in directions:
+                nx, ny = x + dx, y + dy
+                if (
+                        (nx, ny) not in visited
+                        and 0 <= nx < len(matrix)
+                        and 0 <= ny < len(matrix[0])
+                        and matrix[nx][ny] == old_value
+                ):
+                    stack.append((nx, ny))
+                    visited.add((nx, ny))
+
+        return PixelMatrix(matrix)
+    def _expand(self) -> "PixelMatrix":
+        current_shape = self.matrix.shape
+        new_shape = tuple(dim + 2 for dim in current_shape)
+        expanded_matrix = np.zeros(new_shape, dtype="bool")
+        slices = tuple(slice(1, -1) for _ in current_shape)
+        expanded_matrix[slices] = self.matrix.copy()
+
+        return PixelMatrix(expanded_matrix)
+
+    def _reduce(self) -> "PixelMatrix":
+        current_shape = self.matrix.shape
+        slices = tuple(slice(1, -1) for _ in current_shape)
+        reduced_matrix = self.matrix.copy()[slices]
+
+        return PixelMatrix(reduced_matrix)
+
+    def fill_outer_pixels(self) -> "PixelMatrix":
+        expanded_pixel_matrix = self._expand()
+        outer_filled_expanded_pixel_matrix = expanded_pixel_matrix.flood_fill((0, 0), True)
+        outer_filled_pixel_matrix = outer_filled_expanded_pixel_matrix._reduce()
+
+        return outer_filled_pixel_matrix
+
+    def fill_enclosed_pixels(self) -> "PixelMatrix":
+        outer_filled_pixel_matrix = self.fill_outer_pixels()
+        inner_filled_pixel_matrix = self + outer_filled_pixel_matrix.inverse()
+
+        if inner_filled_pixel_matrix == self:
+            warnings.warn("This pixel matrix doesn't have any enclosed pixels.")
+
+        return inner_filled_pixel_matrix
+
+
 class OctreeNode:
     """Class representing an octree node for octree voxelization purpose."""
 
