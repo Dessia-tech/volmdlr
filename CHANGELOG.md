@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shells: refactor.
 - Composite_primitives
 - Surface3D: enhance repair_primitives_periodicity method.
+- BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
