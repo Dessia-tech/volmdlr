@@ -1523,7 +1523,6 @@ class Circle3D(CircleMixin, Curve):
             return volmdlr.edges.FullArc3D(circle, point1)
         return volmdlr.edges.Arc3D(circle, point1, point2)
 
-
     def split(self, split_start, split_end):
         """
         Splits a circle into two arcs, at two given points.
@@ -1714,7 +1713,6 @@ class Ellipse2D(Curve):
 
             res, _ = scipy_integrate.quad(arc_length, 0, angle_abscissa)
             return res
-        print(True)
         raise ValueError(f'point {point} does not belong to ellipse')
 
     def point_at_abscissa(self, abscissa):

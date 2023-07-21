@@ -3268,8 +3268,6 @@ class ArcEllipse2D(Edge):
 
     def point_at_abscissa(self, abscissa):
         """Get a point at given abscissa."""
-        if abscissa < 0:
-            return self.start
         if math.isclose(abscissa, 0.0, abs_tol=1e-6):
             return self.start
         if math.isclose(abscissa, self.length(), abs_tol=1e-6):
@@ -3781,7 +3779,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         """
         return FullArcEllipse2D(self.ellipse.translation(offset), self.start_end.translation(offset), self.name)
 
-    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], tol: float = 1e-3):
+    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], tol: float = 1e-6):
         """
         Calculates the abscissa of a given point.
 
@@ -3818,8 +3816,6 @@ class LineSegment3D(LineSegment):
         self.line = line
         if not line:
             self.line = volmdlr_curves.Line3D(start, end)
-        else:
-            self.line = line
         LineSegment.__init__(self, start=start, end=end, line=self.line, name=name)
         self._bbox = None
 
@@ -4068,7 +4064,7 @@ class LineSegment3D(LineSegment):
         return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
-        """Calculates the parallel distance between two Line Segments 3D."""
+        """Calculates the paralell distance between two Line Segments 3D."""
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
@@ -4933,9 +4929,7 @@ class Arc3D(ArcMixin, Edge):
         """Helper function to calculate the angle of point on a trigonometric arc."""
         local_start_point = self.circle.frame.global_to_local_coordinates(point)
         u1, u2 = local_start_point.x / self.circle.radius, local_start_point.y / self.circle.radius
-        u1 = max(-1.0, min(1.0, u1))
-        u2 = max(-1.0, min(1.0, u2))
-        point_angle = math.atan2(u2, u1)
+        point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         return point_angle
 
     def get_arc_point_angle(self, point):
@@ -4958,8 +4952,6 @@ class Arc3D(ArcMixin, Edge):
         """Bounding box for Arc 3D."""
         if not self._bbox:
             self._bbox = self.get_bounding_box()
-        if isinstance(self._bbox, str):
-            raise ValueError
         return self._bbox
 
     @bounding_box.setter
