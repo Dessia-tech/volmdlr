@@ -2689,25 +2689,34 @@ class BSplineFace3D(Face3D):
         points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
                                                                                     number_points_y=number_points_y)
         if self.surface2d.inner_contours:
-            for inner_contour in self.surface2d.inner_contours:
-                inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True,
-                                                         discretize_line_direction=discretize_line_direction)
-                points.extend(inner_polygon.points)
-                # removes with a region search the grid points that are in the inner contour
-                xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
-                x_grid_range = array_range_search(x, xmin, xmax)
-                y_grid_range = array_range_search(y, ymin, ymax)
-                for i in x_grid_range:
-                    for j in y_grid_range:
-                        point = grid_point_index.get((i, j))
-                        if not point:
-                            continue
-                        if inner_polygon.point_belongs(point):
-                            points_grid.remove(point)
-                            grid_point_index.pop((i, j))
-        points.extend(points_grid)
+            points = self._get_bbox_inner_contours_points(points, discretize_line_direction,
+                                                          [points_grid, x, y, grid_point_index])
+        else:
+            points.extend(points_grid)
         points3d = [self.surface3d.point2d_to_3d(point) for point in points]
         return volmdlr.core.BoundingBox.from_points(points3d)
+
+    def _get_bbox_inner_contours_points(self, points, discretize_line_direction, grid_triangulation_points_params):
+        """Helper function to get_bounding_box."""
+        points_grid, x, y, grid_point_index = grid_triangulation_points_params
+        for inner_contour in self.surface2d.inner_contours:
+            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True,
+                                                     discretize_line_direction=discretize_line_direction)
+            points.extend(inner_polygon.points)
+            # removes with a region search the grid points that are in the inner contour
+            xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
+            x_grid_range = array_range_search(x, xmin, xmax)
+            y_grid_range = array_range_search(y, ymin, ymax)
+            for i in x_grid_range:
+                for j in y_grid_range:
+                    point = grid_point_index.get((i, j))
+                    if not point:
+                        continue
+                    if inner_polygon.point_belongs(point):
+                        points_grid.remove(point)
+                        grid_point_index.pop((i, j))
+            points.extend(points_grid)
+            return points
 
     def triangulation_lines(self, resolution=25):
         """
