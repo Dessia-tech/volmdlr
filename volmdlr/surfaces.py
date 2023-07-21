@@ -4883,8 +4883,6 @@ class BSplineSurface3D(Surface3D):
 
         delta_bound_x = max_bound_x - min_bound_x
         delta_bound_y = max_bound_y - min_bound_y
-        x0s = []
-        # if self.x_periodicity or self.y_periodicity:
         x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
                ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
                ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
@@ -4914,7 +4912,6 @@ class BSplineSurface3D(Surface3D):
             x0s.insert(1, self.surface.vertices[index].uv)
         else:
             x0s.insert(0, self.surface.vertices[index].uv)
-
         results = []
         for x0 in x0s:
             res = minimize(fun, x0=npy.array(x0), jac=True,

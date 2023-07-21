@@ -47,6 +47,10 @@ class TestFullArcEllipse3D(unittest.TestCase):
         self.assertAlmostEqual(self.ellipse.abscissa(point1), 0.75*self.ellipse.length())
         self.assertAlmostEqual(self.ellipse.abscissa(point2), 0.0)
 
+        ellipse = vme.FullArcEllipse3D.load_from_file("fullarcellipse_point_over_ellipse_bug.json")
+        point = volmdlr.Point3D(-0.1322515585788849, -0.14157776310991646, 0.0)
+        self.assertAlmostEqual(ellipse.abscissa(point), 0.8082617614489124, 3)
+
     def test_translation(self):
         translated_ellipse = self.ellipse.translation(volmdlr.X3D)
         self.assertEqual(translated_ellipse.ellipse.center, volmdlr.Point3D(1, 0, 0))

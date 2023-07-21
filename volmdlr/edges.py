@@ -3779,7 +3779,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         """
         return FullArcEllipse2D(self.ellipse.translation(offset), self.start_end.translation(offset), self.name)
 
-    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], tol: float = 1e-6):
+    def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], tol: float = 1e-3):
         """
         Calculates the abscissa of a given point.
 
