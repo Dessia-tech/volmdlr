@@ -609,12 +609,15 @@ class Voxelization(PhysicalObject):
 
                     triangle_2d = np.array([v0, v1, v2])
 
-                    for center in Voxelization._rasterize_triangle_2d(triangle_2d, voxel_size):
-                        center_left = copy(center)
+                    pixelization = Pixelization.from_polygon(triangle_2d, voxel_size).fill_enclosed_pixels()
+
+                    # for center in Voxelization._rasterize_triangle_2d(triangle_2d, voxel_size):
+                    for center in pixelization.pixel_centers:
+                        center_left = list(copy(center))
                         center_left.insert(i, round(abscissa - voxel_size / 2, 6))
                         voxel_centers.add(tuple(center_left))
 
-                        center_right = copy(center)
+                        center_right = list(copy(center))
                         center_right.insert(i, round(abscissa + voxel_size / 2, 6))
                         voxel_centers.add(tuple(center_right))
 
@@ -1701,11 +1704,12 @@ class Pixelization:
 
     @classmethod
     def from_polygon(cls, polygon, pixel_size):
-        return cls(cls._line_segments_to_pixels(polygon, pixel_size), pixel_size)
+        line_segments = [(polygon[i - 1], polygon[i]) for i in range(len(polygon))]
+        return cls(cls._line_segments_to_pixels(line_segments, pixel_size), pixel_size)
 
     @staticmethod
     def _line_segments_to_pixels(line_segments, pixel_size):
-        centers = set()
+        pixel_centers = set()
 
         for line_segment in line_segments:
             start = line_segment[0]
@@ -1725,21 +1729,19 @@ class Pixelization:
             y_indices = range(int(ymin / pixel_size) - 1, int(ymax / pixel_size) + 1)
 
             # Create a list of the centers of all the intersecting voxels
+            centers = []
             for x in x_indices:
                 for y in y_indices:
                     center = tuple(round((_ + 1 / 2) * pixel_size, 6) for _ in [x, y])
-                    centers.add(center)
-
-            # Initialize the list to store the center coordinates of supercovered boxes
-            pixels_centers = []
+                    centers.append(center)
 
             for center in centers:
-                if center not in pixels_centers and Pixelization._line_segment_intersects_pixel(
+                if center not in pixel_centers and Pixelization._line_segment_intersects_pixel(
                     line_segment, center, pixel_size
                 ):
-                    pixels_centers.append(center)
+                    pixel_centers.add(center)
 
-            return pixels_centers
+        return pixel_centers
 
     @staticmethod
     def _line_segment_intersects_pixel(line_segment, pixel_center, pixel_size):
@@ -1854,6 +1856,16 @@ class Pixelization:
         filled_pixel_matrix = pixel_matrix.flood_fill(start, fill_with)
 
         return self.from_pixel_matrix(filled_pixel_matrix, self.pixel_size, self.min_pixel_grid_center)
+
+    def fill_outer_pixels(self) -> "Pixelization":
+        return self.from_pixel_matrix(
+            self.to_pixel_matrix().fill_outer_pixels(), self.pixel_size, self.min_pixel_grid_center
+        )
+
+    def fill_enclosed_pixels(self) -> "Pixelization":
+        return self.from_pixel_matrix(
+            self.to_pixel_matrix().fill_enclosed_pixels(), self.pixel_size, self.min_pixel_grid_center
+        )
 
 
 class PixelMatrix:
