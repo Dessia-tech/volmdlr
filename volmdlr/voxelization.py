@@ -3,9 +3,9 @@ Class for voxel representation of volmdlr models
 """
 import math
 import warnings
+from collections import deque
 from copy import copy
 from typing import Dict, Iterable, List, Set, Tuple
-from collections import deque
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -14,7 +14,7 @@ from dessia_common.core import PhysicalObject
 from tqdm import tqdm
 
 from volmdlr import Point2D, Point3D, Vector3D
-from volmdlr.core import BoundingBox, VolumeModel, BoundingRectangle
+from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
@@ -75,8 +75,7 @@ class Voxelization(PhysicalObject):
         :rtype: bool
         """
         return (
-                self.voxel_centers == other_voxelization.voxel_centers
-                and self.voxel_size == other_voxelization.voxel_size
+            self.voxel_centers == other_voxelization.voxel_centers and self.voxel_size == other_voxelization.voxel_size
         )
 
     def __add__(self, other_voxelization: "Voxelization") -> "Voxelization":
@@ -1311,9 +1310,7 @@ class Voxelization(PhysicalObject):
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform symmetric difference.")
 
-        return Voxelization(
-            self.voxel_centers.symmetric_difference(other_voxelization.voxel_centers), self.voxel_size
-        )
+        return Voxelization(self.voxel_centers.symmetric_difference(other_voxelization.voxel_centers), self.voxel_size)
 
     def interference(self, other_voxelization: "Voxelization") -> float:
         """
@@ -1795,7 +1792,9 @@ class Pixelization:
         return not (miss or shadow_miss)
 
     @classmethod
-    def from_pixel_matrix(cls, pixel_matrix: "PixelMatrix", pixel_size: float, pixel_matrix_origin_center: Tuple[float, float]):
+    def from_pixel_matrix(
+        cls, pixel_matrix: "PixelMatrix", pixel_size: float, pixel_matrix_origin_center: Tuple[float, float]
+    ):
         indices = np.argwhere(pixel_matrix.matrix)
         pixel_centers = pixel_matrix_origin_center + indices * pixel_size
         return cls(set(map(tuple, np.round(pixel_centers, 6))), pixel_size)
@@ -1892,15 +1891,16 @@ class PixelMatrix:
             for dx, dy in directions:
                 nx, ny = x + dx, y + dy
                 if (
-                        (nx, ny) not in visited
-                        and 0 <= nx < len(matrix)
-                        and 0 <= ny < len(matrix[0])
-                        and matrix[nx][ny] == old_value
+                    (nx, ny) not in visited
+                    and 0 <= nx < len(matrix)
+                    and 0 <= ny < len(matrix[0])
+                    and matrix[nx][ny] == old_value
                 ):
                     stack.append((nx, ny))
                     visited.add((nx, ny))
 
         return PixelMatrix(matrix)
+
     def _expand(self) -> "PixelMatrix":
         current_shape = self.matrix.shape
         new_shape = tuple(dim + 2 for dim in current_shape)
