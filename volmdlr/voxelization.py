@@ -1556,8 +1556,8 @@ class VoxelMatrix:
         outer_filled_voxel_matrix = self.fill_outer_voxels()
         inner_filled_voxel_matrix = self + outer_filled_voxel_matrix.inverse()
 
-        if inner_filled_voxel_matrix == self:
-            warnings.warn("This voxelization doesn't have any enclosed voxels.")
+        # if inner_filled_voxel_matrix == self:
+        #     warnings.warn("This voxelization doesn't have any enclosed voxels.")
 
         return inner_filled_voxel_matrix
 
@@ -2033,8 +2033,8 @@ class PixelMatrix:
         outer_filled_pixel_matrix = self.fill_outer_pixels()
         inner_filled_pixel_matrix = self + outer_filled_pixel_matrix.inverse()
 
-        if inner_filled_pixel_matrix == self:
-            warnings.warn("This pixel matrix doesn't have any enclosed pixels.")
+        # if inner_filled_pixel_matrix == self:
+        #     warnings.warn("This pixel matrix doesn't have any enclosed pixels.")
 
         return inner_filled_pixel_matrix
 
