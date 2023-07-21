@@ -3988,7 +3988,8 @@ class ExtrusionSurface3D(Surface3D):
         v = z
         point_at_curve_local = volmdlr.Point3D(x, y, 0)
         point_at_curve_global = self.frame.local_to_global_coordinates(point_at_curve_local)
-        u = self.edge.abscissa(point_at_curve_global) / self.edge.length()
+
+        u = self.edge.abscissa(point_at_curve_global, tol=1e-3) / self.edge.length()
         u = min(u, 1.0)
         return volmdlr.Point2D(u, v)
 
@@ -4051,6 +4052,8 @@ class ExtrusionSurface3D(Surface3D):
         # todo: needs detailed investigation
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
+        if self.x_periodicity:
+            start, end = self._verify_start_end_parametric_points(start, end, arc3d)
         return [edges.LineSegment2D(start, end, name="arc")]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
@@ -4064,7 +4067,10 @@ class ExtrusionSurface3D(Surface3D):
             return [edges.LineSegment2D(start2d, end2d)]
         points = [self.point3d_to_2d(p)
                   for p in arcellipse3d.discretization_points(number_points=15)]
-
+        if self.x_periodicity:
+            start, end = self._verify_start_end_parametric_points(points[0], points[-1], arcellipse3d)
+            points[0] = start
+            points[-1] = end
         bsplinecurve2d = edges.BSplineCurve2D.from_points_interpolation(points, degree=2)
         return [bsplinecurve2d]
 
@@ -4133,6 +4139,10 @@ class ExtrusionSurface3D(Surface3D):
         n = len(bspline_curve3d.control_points)
         points = [self.point3d_to_2d(point)
                   for point in bspline_curve3d.discretization_points(number_points=n)]
+        if self.x_periodicity:
+            start, end = self._verify_start_end_parametric_points(points[0], points[-1], bspline_curve3d)
+            points[0] = start
+            points[-1] = end
         return [edges.BSplineCurve2D.from_points_interpolation(
             points, bspline_curve3d.degree, bspline_curve3d.periodic).simplify]
 
@@ -4148,6 +4158,36 @@ class ExtrusionSurface3D(Surface3D):
         direction = new_frame.w
         new_edge = self.edge.frame_mapping(frame, side)
         return ExtrusionSurface3D(new_edge, direction, name=self.name)
+
+    def _verify_start_end_parametric_points(self, start, end, edge3d):
+        """
+        When the generatrix of the surface is periodic we need to verify if the u parameter should be 0 or 1.
+        """
+        start_ref1 = self.point3d_to_2d(edge3d.point_at_abscissa(0.01 * edge3d.length()))
+        start_ref2 = self.point3d_to_2d(edge3d.point_at_abscissa(0.02 * edge3d.length()))
+        end_ref1 = self.point3d_to_2d(edge3d.point_at_abscissa(0.99 * edge3d.length()))
+        end_ref2 = self.point3d_to_2d(edge3d.point_at_abscissa(0.98 * edge3d.length()))
+        if math.isclose(start.x, self.x_periodicity, abs_tol=1e-4):
+            vec1 = start_ref1 - start
+            vec2 = start_ref2 - start_ref1
+            if vec2.dot(vec1) < 0:
+                start.x = 0
+        if math.isclose(end.x, self.x_periodicity, abs_tol=1e-4):
+            vec1 = end - end_ref1
+            vec2 = end_ref1 - end_ref2
+            if vec2.dot(vec1) < 0:
+                end.x = 0
+        if math.isclose(start.x, 0, abs_tol=1e-4):
+            vec1 = start_ref1 - start
+            vec2 = start_ref2 - start_ref1
+            if vec2.dot(vec1) < 0:
+                start.x = self.x_periodicity
+        if math.isclose(end.x, 0, abs_tol=1e-4):
+            vec1 = end - end_ref1
+            vec2 = end_ref1 - end_ref2
+            if vec2.dot(vec1) < 0:
+                end.x = self.x_periodicity
+        return start, end
 
 
 class RevolutionSurface3D(PeriodicalSurface):

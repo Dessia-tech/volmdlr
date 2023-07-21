@@ -1696,7 +1696,7 @@ class Ellipse2D(Curve):
             for theta in npy.linspace(self.angle_start, self.angle_end, angle_resolution + 1)]
         return discretization_points
 
-    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-3):
+    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-6):
         """
         Calculates the abscissa for a given point.
 

@@ -1,0 +1,107 @@
+{
+  "object_class": "volmdlr.surfaces.ExtrusionSurface3D",
+  "name": "",
+  "edge": {
+    "object_class": "volmdlr.edges.FullArcEllipse3D",
+    "name": "",
+    "ellipse": {
+      "object_class": "volmdlr.curves.Ellipse3D",
+      "name": "",
+      "frame": {
+        "object_class": "volmdlr.Frame3D",
+        "name": "",
+        "origin": {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "u": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 1.0,
+          "y": 0.0,
+          "z": -0.0
+        },
+        "v": {
+          "object_class": "volmdlr.Vector3D",
+          "x": -0.0,
+          "y": 1.0,
+          "z": 0.0
+        },
+        "w": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 1.0
+        }
+      },
+      "major_axis": 0.225,
+      "minor_axis": 0.17500000000000002,
+      "center": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "normal": {
+        "object_class": "volmdlr.Vector3D",
+        "x": 0.0,
+        "y": 0.0,
+        "z": 1.0
+      },
+      "major_dir": {
+        "object_class": "volmdlr.Vector3D",
+        "x": 1.0,
+        "y": 0.0,
+        "z": -0.0
+      },
+      "minor_dir": {
+        "object_class": "volmdlr.Vector3D",
+        "x": -0.0,
+        "y": 1.0,
+        "z": 0.0
+      }
+    },
+    "start_end": {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.225,
+      "y": 0.0,
+      "z": 0.0
+    }
+  },
+  "direction": {
+    "object_class": "volmdlr.Vector3D",
+    "x": -0.0,
+    "y": -0.0,
+    "z": -1.0
+  },
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -1.0,
+      "y": -0.0,
+      "z": -0.0
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.0,
+      "y": -1.0,
+      "z": -0.0
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.0,
+      "y": -0.0,
+      "z": -1.0
+    }
+  },
+  "_references": {}
+}
