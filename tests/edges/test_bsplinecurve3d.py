@@ -4,6 +4,19 @@ import volmdlr.edges as vme
 
 
 class TestBSplineCurve3D(unittest.TestCase):
+
+    def test_bounding_box(self):
+        bspline = vme.BSplineCurve3D.from_points_interpolation([
+            volmdlr.Point3D(1.0, 1.0, 0.0),
+            volmdlr.Point3D(0.8090169943749475, 0.8090169943749475, 0.587785252292473),
+            volmdlr.Point3D(0.30901699437494745, 0.30901699437494745, 0.9510565162951533),
+            volmdlr.Point3D(0.0, 0.0, 1.0),
+            volmdlr.Point3D(-0.30901699437494734, -0.30901699437494734, 0.9510565162951533),
+            volmdlr.Point3D(-0.8090169943749473, -0.8090169943749473, 0.587785252292473),
+            volmdlr.Point3D(-1.0, -1.0, 0.0)], 2)
+        bbox = bspline.bounding_box
+        self.assertAlmostEqual(bbox.volume(), 4.0, 3)
+
     def test_trim(self):
         obj = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_objects/bspline_buggy_trim.json")
         point1 = volmdlr.Point3D(1.20555954308, -0.879118549155, 0.938030639643)

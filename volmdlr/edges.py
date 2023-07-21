@@ -4357,10 +4357,8 @@ class BSplineCurve3D(BSplineCurve):
         self._bbox = new_bounding_box
 
     def _bounding_box(self):
-        bbox = self.curve.bbox
-        return volmdlr.core.BoundingBox(bbox[0][0], bbox[1][0],
-                                        bbox[0][1], bbox[1][1],
-                                        bbox[0][2], bbox[1][2])
+        """Creates a bounding box from the bspline points."""
+        return volmdlr.core.BoundingBox.from_points(self.discretization_points())
 
     def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):
