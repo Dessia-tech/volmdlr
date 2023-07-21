@@ -1544,6 +1544,29 @@ class BSplineCurve(Edge):
                 discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
 
+    def abscissa_discretization(self, abscissa1, abscissa2, max_number_points: int = 10,
+                                return_abscissas: bool = True):
+        """
+        Gets n discretization points between two given points of the edge.
+
+        :param abscissa1: Initial abscissa.
+        :param abscissa2: Final abscissa.
+        :param max_number_points: Expected number of points to discretize locally.
+        :param return_abscissas: By default, returns also a list of abscissas correspoding to the
+            discretization points
+        :return: list of locally discretized point and a list containing the abscissas' values.
+        """
+        discretized_points_between_1_2 = []
+        points_abscissas = []
+        for abscissa in npy.linspace(abscissa1, abscissa2, num=max_number_points):
+            abscissa_point = self.point_at_abscissa(abscissa)
+            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+                discretized_points_between_1_2.append(abscissa_point)
+                points_abscissas.append(abscissa)
+        if return_abscissas:
+            return discretized_points_between_1_2, points_abscissas
+        return discretized_points_between_1_2
+
     def is_close(self, other_edge, tol: float = 1e-6):
         """
         Checks if two bsplines are the same considering the Euclidean distance.
