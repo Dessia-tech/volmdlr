@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Surface3D: enhance repair_primitives_periodicity method.
 
 ### Changed
--
+- Moves functions from step.py to volmdlr.utils.step_reader
 
 ### Unittests
 -
