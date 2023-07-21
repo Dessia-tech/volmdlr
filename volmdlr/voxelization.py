@@ -607,7 +607,6 @@ class Voxelization(PhysicalObject):
                     v2 = triangle[2][:i] + triangle[2][i + 1 :]
 
                     triangle_2d = np.array([v0, v1, v2])
-                    print(triangle_2d)
 
                     for center in Voxelization._rasterize_triangle_2d(triangle_2d, voxel_size):
                         center_left = copy(center)
@@ -634,14 +633,14 @@ class Voxelization(PhysicalObject):
         :rtype: List[Point]
         """
         # Get the bounding box of the triangle
-        min_x = np.floor(min(triangle_2d[:, 0]))
+        min_x = np.floor(min(triangle_2d[:, 0])) - 1
         max_x = np.ceil(max(triangle_2d[:, 0]))
-        min_y = np.floor(min(triangle_2d[:, 1]))
+        min_y = np.floor(min(triangle_2d[:, 1])) - 1
         max_y = np.ceil(max(triangle_2d[:, 1]))
 
         # Calculate the dimensions of the grid
-        grid_width = int((max_x - min_x) / cell_size) + 1
-        grid_height = int((max_y - min_y) / cell_size) + 1
+        grid_width = int((max_x - min_x) / cell_size) + 2
+        grid_height = int((max_y - min_y) / cell_size) + 2
 
         # Create an empty grid
         grid = np.zeros((grid_height, grid_width))
@@ -657,11 +656,46 @@ class Voxelization(PhysicalObject):
                 cell_y = min_y + y * cell_size
 
                 # Check if the cell intersects with the triangle
-                if Voxelization._point_in_triangle_2d(cell_x, cell_y, triangle_2d):
+                # if Voxelization._point_in_triangle_2d(cell_x, cell_y, triangle_2d):
+                if Voxelization._cell_intersects_triangle_2d((cell_x, cell_y), cell_size, triangle_2d):
                     grid[y, x] = 1
                     center_points.append([round(cell_x + cell_size / 2, 6), round(cell_y + cell_size / 2, 6)])
 
         return center_points
+
+    @staticmethod
+    def _cell_intersects_triangle_2d(cell_center, cell_size, triangle_2d) -> bool:
+        triangles = Voxelization._cell_to_triangles_2d(cell_center, cell_size)
+
+        return Voxelization._triangle_intersects_triangle_2d(
+            triangles[0], triangle_2d
+        ) or Voxelization._triangle_intersects_triangle_2d(triangles[1], triangle_2d)
+
+    @staticmethod
+    def _cell_to_triangles_2d(cell_center, cell_size):
+        cell_vertices = [
+            (round(cell_center[0] - 0.5 * cell_size, 6), round(cell_center[1] + 0.5 * cell_size, 6)),
+            (round(cell_center[0] + 0.5 * cell_size, 6), round(cell_center[1] + 0.5 * cell_size, 6)),
+            (round(cell_center[0] + 0.5 * cell_size, 6), round(cell_center[1] - 0.5 * cell_size, 6)),
+            (round(cell_center[0] - 0.5 * cell_size, 6), round(cell_center[1] - 0.5 * cell_size, 6)),
+        ]
+
+        triangle_1 = np.array([cell_vertices[0], cell_vertices[1], cell_vertices[3]])
+        triangle_2 = np.array([cell_vertices[1], cell_vertices[2], cell_vertices[3]])
+
+        return [triangle_1, triangle_2]
+
+    @staticmethod
+    def _triangle_intersects_triangle_2d(triangle_1, triangle_2) -> bool:
+        for vertex in triangle_1:
+            if Voxelization._point_in_triangle_2d(vertex[0], vertex[1], triangle_2):
+                return True
+
+        for vertex in triangle_2:
+            if Voxelization._point_in_triangle_2d(vertex[0], vertex[1], triangle_1):
+                return True
+
+        return False
 
     @staticmethod
     def _point_in_triangle_2d(x, y, triangle2d):
@@ -1415,7 +1449,7 @@ class Voxelization(PhysicalObject):
         :return: The minimum center point.
         :rtype: tuple[float, float, float]
         """
-        min_x = min_y = min_z = float('inf')
+        min_x = min_y = min_z = float("inf")
 
         for point in self.voxels_centers:
             min_x = min(min_x, point[0])
@@ -1434,7 +1468,7 @@ class Voxelization(PhysicalObject):
         :return: The maximum center point.
         :rtype: tuple[float, float, float]
         """
-        max_x = max_y = max_z = -float('inf')
+        max_x = max_y = max_z = -float("inf")
 
         for point in self.voxels_centers:
             max_x = max(max_x, point[0])
