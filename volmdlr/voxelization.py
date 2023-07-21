@@ -3,20 +3,22 @@ Class for voxel representation of volmdlr models
 """
 import math
 import warnings
-from collections import deque
 from copy import copy
 from typing import Dict, Iterable, List, Set, Tuple
+from collections import deque
 
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 import numpy as np
 from dessia_common.core import PhysicalObject
 from tqdm import tqdm
 
 from volmdlr import Point2D, Point3D, Vector3D
-from volmdlr.core import BoundingBox, VolumeModel
+from volmdlr.core import BoundingBox, VolumeModel, BoundingRectangle
 from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
-from volmdlr.voxelization_compiled import aabb_intersecting_boxes, triangle_intersects_voxel, flood_fill_matrix
+from volmdlr.voxelization_compiled import aabb_intersecting_boxes, flood_fill_matrix, triangle_intersects_voxel
 from volmdlr.wires import ClosedPolygon2D
 
 # Custom types
