@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
+- Composite_primitives
 - Surface3D: enhance repair_primitives_periodicity method.
 - volmdlr.utils.intersections:
 
