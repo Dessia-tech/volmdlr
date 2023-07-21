@@ -23,11 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 - Shells: refactor.
-<<<<<<< HEAD
 - refator some classes' init in primitives3D.
-=======
 - Surface3D: enhance repair_primitives_periodicity method.
->>>>>>> bsplineface_bbox
+- BSplineCurve3D: bounding_box
 
 ### Changed
 -
