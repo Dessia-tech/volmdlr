@@ -457,7 +457,7 @@ def manifold_surface_shape_representation(arguments, object_dict):
     only_open_shells = True
     for arg in arguments[1]:
         primitive = object_dict[int(arg[1:])]
-        if isinstance(primitive, vmshells.OpenShell3D):
+        if isinstance(primitive, vmshells.Shell3D):
             primitives.append(primitive)
             if only_open_shells:
                 shell_primitives.extend(primitive.primitives)
@@ -607,7 +607,7 @@ def geometrically_bounded_surface_shape_representation(arguments, object_dict):
                   if not isinstance(primi, volmdlr.Point3D)]
     if len(primitives) > 1:
         return volmdlr.core.Compound(primitives, name=arguments[0])
-    return primitives
+    return primitives[0]
 
 
 def map_primitive(primitive, global_frame, transformed_frame):
@@ -1325,7 +1325,7 @@ class Step(dc.DessiaObject):
                 "GEOMETRIC_REPRESENTATION_CONTEXT": geometric_representation_context,
                 "SHELLS": shell_nodes}
 
-    def get_assembly_structure(self):
+    def get_assembly_struct(self):
         assemblies_structure = {}
         assemblies = set()
         shapes = set()
@@ -1422,11 +1422,8 @@ class Step(dc.DessiaObject):
             self.functions[next_assembly_usage_occurrence].arg.append(f'#{node}')
 
     def instatiate_assembly(self, object_dict):
-        assemblies_structure, valid_entities = self.get_assembly_structure()
+        assemblies_structure, valid_entities = self.get_assembly_struct()
 
-        # instanciate_ids = list(assemblies_shapes.keys())
-
-        # assembly_data = self.get_assembly_data()
         instanciate_ids = list(assemblies_structure.keys())
         error = True
         last_error = None
@@ -1445,9 +1442,7 @@ class Step(dc.DessiaObject):
                     ids_frames = self.functions[id_shape_representation].arg[1]
                     self.parse_arguments(ids_frames)
                     assembly_frame = object_dict[ids_frames[0]]
-                    # id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
-                    # ids_frames = self.functions[id_shape_representation].arg[1]
-                    # self.parse_arguments(ids_frames)
+
                     assembly_shape_ids, assembly_position_ids = self.get_assembly_data(
                         assemblies_structure[instanciate_id], valid_entities, assembly_frame, object_dict)
                     assembly_positions = [object_dict[id_frame] for id_frame in assembly_position_ids]
@@ -1457,9 +1452,9 @@ class Step(dc.DessiaObject):
                         none_primitives.add(instanciate_id)
                         instanciate_ids.pop()
                         continue
-                    # list_primitives = [primi for primi in list_primitives
-                    #                    if primi is not None]
-                    volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_positions, assembly_frame, name=name)
+
+                    volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_positions, assembly_frame,
+                                                           name=name)
                     object_dict[instanciate_id] = volmdlr_object
 
                 error = False

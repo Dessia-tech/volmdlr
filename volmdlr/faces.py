@@ -22,7 +22,7 @@ import volmdlr.curves as volmdlr_curves
 import volmdlr.geometry
 import volmdlr.grid
 from volmdlr import surfaces
-from volmdlr.utils.parametric import array_range_search
+from volmdlr.utils.parametric import array_range_search, contour2d_healing
 import volmdlr.wires
 
 
@@ -220,28 +220,29 @@ class Face3D(volmdlr.core.Primitive3D):
             if any(check_contours):
                 # Not implemented yet, but connect_contours should also return outer_contour3d and inner_contours3d
                 outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
+                outer_contour3d = surface.contour2d_to_3d(outer_contour2d)
             else:
                 for contour2d, contour3d in zip(contours2d, contours3d):
                     # if not contour2d.is_ordered(1e-4):
                     #     contour2d = vm_parametric.contour2d_healing(contour2d)
                     inner_contours2d.append(contour2d)
-                    inner_contours3d.append(contour3d)
+                    # inner_contours3d.append(contour3d)
                     contour_area = contour2d.area()
                     if contour_area > area:
                         area = contour_area
                         outer_contour2d = contour2d
                         outer_contour3d = contour3d
                 inner_contours2d.remove(outer_contour2d)
-                inner_contours3d.remove(outer_contour3d)
+                # inner_contours3d.remove(outer_contour3d)
         else:
             raise ValueError('Must have at least one contour')
 
-        # if outer_contour3d and not outer_contour3d.is_ordered() and not outer_contour2d.is_ordered():
+        # if outer_contour3d and not outer_contour3d.is_ordered():
         #     warnings.warn("Impossible to instatiate face because of topology inconsistency in the "
         #                   "face contour from step file.")
         #     return None
-            # outer_contour2d = contour2d_healing(outer_contour2d)
-        if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-3)):
+        #     outer_contour2d = contour2d_healing(outer_contour2d, outer_contour3d)
+        if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-2)):
             warnings.warn("Impossible to instatiate face because of topology inconsistency in the "
                           "face's contour from step file.")
             return None

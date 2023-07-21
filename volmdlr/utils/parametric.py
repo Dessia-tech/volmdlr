@@ -300,24 +300,25 @@ def array_range_search(x, xmin, xmax):
     return range(left, right)
 
 
-def contour2d_healing(contour2d):
+def contour2d_healing(contour2d, contour3d):
     """
     Heals topologies incoherencies on the boundary representation.
     """
     contour2d = contour2d_healing_self_intersection(contour2d)
-    contour2d = contour2d_healing_close_gaps(contour2d)
+    contour2d = contour2d_healing_close_gaps(contour2d, contour3d)
     return contour2d
 
 
-def contour2d_healing_close_gaps(contour2d):
+def contour2d_healing_close_gaps(contour2d, contour3d):
     """
     Heals topologies incoherencies on the boundary representation.
     """
     new_primitives = [contour2d.primitives[0]]
-    for i, (prim1, prim2) in enumerate(
-            zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
+    for i, (prim1_3d, prim2_3d, prim1, prim2) in enumerate(
+            zip(contour3d.primitives, contour3d.primitives[1:] + [contour3d.primitives[0]],
+                contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
         if prim1 and prim2:
-            if not prim1.end.is_close(prim2.start):
+            if not prim1_3d.end.is_close(prim2_3d.start) and not prim1.end.is_close(prim2.start):
                 new_primitives.append(vme.LineSegment2D(prim1.end, prim2.start))
             if i < len(contour2d.primitives) - 1:
                 new_primitives.append(prim2)

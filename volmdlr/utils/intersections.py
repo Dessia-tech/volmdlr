@@ -158,12 +158,16 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
     bspline_discretized_points = bsplinecurve.discretization_points(number_points=resolution)
     param_intersections = []
     for point1, point2 in zip(bspline_discretized_points[:-1], bspline_discretized_points[1:]):
+        if point1.is_close(point2):
+            continue
         line_seg = line_seg_class_(point1, point2)
         intersection = primitive.linesegment_intersections(line_seg)
         if intersection:
             abscissa1 = bsplinecurve.abscissa(point1)
             abscissa2 = bsplinecurve.abscissa(point2)
             param_intersections.append((abscissa1, abscissa2))
+    if not param_intersections:
+        param_intersections.append((0, bsplinecurve.length()))
     return param_intersections
 
 
