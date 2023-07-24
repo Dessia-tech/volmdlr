@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SphericalSurface3D: enhance repair_periodicity_method
 - ExtrusionSurface3D: point3d_to_2d.
 - ExtrusionSurface3D: enhance parametric operations when the surface is periodic.
+- BSplineFace3D: fix neutral_fiber
 
 ### Refactor
 - refator some classes' init in primitives3D. 
