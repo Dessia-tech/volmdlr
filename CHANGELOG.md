@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
 
 ### Changed
--
+- Moves functions from step.py to volmdlr.utils.step_reader
 
 ### Unittests
 -
