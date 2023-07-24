@@ -5,6 +5,7 @@ from typing import List, Union
 import traceback
 
 import matplotlib.pyplot as plt
+import numpy as np
 import numpy as npy
 import triangle as triangle_lib
 from geomdl import NURBS, BSpline, utilities
@@ -2266,10 +2267,8 @@ class CylindricalSurface3D(PeriodicalSurface):
                             self.radius * math.sin(angle),  - (1 / plane_coefficient_c) * (
                             plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(angle) +
                             plane_coefficient_b * self.radius * math.sin(angle)))
-            for angle in npy.linspace(0, 2 * math.pi, 36)
-        ]
-        max_dist, max_dist_point = center3d_plane.point_distance(points[0]), \
-            points[0]
+            for angle in npy.linspace(0, 2 * math.pi, 36)]
+        max_dist, max_dist_point = center3d_plane.point_distance(points[0]),  points[0]
         min_dist, min_dist_point = max_dist, max_dist_point
         for point in points:
             dist = point.point_distance(center3d_plane)
