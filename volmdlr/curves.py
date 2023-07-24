@@ -210,7 +210,7 @@ class Line(Curve):
 
 class Line2D(Line):
     """
-    Define an infinite line given by two points.
+    Define an infinite line given by two points in 2D.
 
     """
 
