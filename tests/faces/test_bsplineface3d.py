@@ -56,6 +56,10 @@ class TestBSplineFace3D(unittest.TestCase):
         neutral_fiber = face.neutral_fiber()
         self.assertAlmostEqual(neutral_fiber.length(), 0.5327006535550406, 2)
 
+        face = faces.BSplineFace3D.load_from_file("faces/objects_bspline_test/test_neutral_fiber_3.json")
+        neutral_fiber = face.neutral_fiber()
+        self.assertAlmostEqual(neutral_fiber.length(), 0.1464370131293568, 2)
+
     def test_triangulation(self):
         surface = surfaces.BSplineSurface3D.load_from_file(
             "faces/objects_bspline_test/spiral_bsplineface_surface.json")
