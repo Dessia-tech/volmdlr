@@ -1018,7 +1018,7 @@ class Assembly(dc.PhysicalObject):
         step_content += product_content
         assembly_frames = assembly_data[-1]
         for i, primitive in enumerate(self.components):
-            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
                 primitive_content, current_id, primitive_data = primitive.to_step_product(current_id)
                 assembly_frame_id = assembly_frames[0]
                 component_frame_id = assembly_frames[i + 1]
@@ -1094,6 +1094,7 @@ class Compound(dc.PhysicalObject):
     def __init__(self, primitives, name: str = ""):
         self.primitives = primitives
         self._bbox = None
+        self._type = None
         dc.PhysicalObject.__init__(self, name=name)
 
     @property
@@ -1110,6 +1111,28 @@ class Compound(dc.PhysicalObject):
     def bounding_box(self, new_bounding_box):
         """Bounding box setter."""
         self._bbox = new_bounding_box
+
+    @property
+    def compound_type(self):
+        """
+        Returns the bounding box.
+
+        """
+        if not self._type:
+            if all(primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or
+                   hasattr(primitive, "shell_faces") for primitive in self.primitives):
+                self._type = "manifold_solid_brep"
+            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edges, volmdlr.Point3D)) or
+                   hasattr(primitive, "shell_faces") for primitive in self.primitives):
+                self._type = "geometric_curve_set"
+            else:
+                self._type = "shell_based_surface_model"
+        return self._type
+
+    @compound_type.setter
+    def compound_type(self, value):
+        """Bounding box setter."""
+        self._type = value
 
     def _bounding_box(self) -> BoundingBox:
         """
