@@ -1484,7 +1484,7 @@ class Voxelization(PhysicalObject):
 class VoxelMatrix:
     """Class to manipulate voxel matrix."""
 
-    def __init__(self, numpy_voxel_matrix: np.ndarray[np.bool_, np.ndim == 3]):
+    def __init__(self, numpy_voxel_matrix: np.ndarray):  # np.ndarray[np.bool_, np.ndim == 3]
         self.matrix = numpy_voxel_matrix
 
     def __eq__(self, other_voxel_matrix: "VoxelMatrix") -> bool:
@@ -1964,7 +1964,7 @@ class Pixelization:
 class PixelMatrix:
     """Class to manipulate pixel matrix."""
 
-    def __init__(self, numpy_pixel_matrix: np.ndarray[np.bool_, np.ndim == 2]):
+    def __init__(self, numpy_pixel_matrix: np.ndarray):  # np.ndarray[np.bool_, np.ndim == 2]
         self.matrix = numpy_pixel_matrix
 
     def __eq__(self, other_pixel_matrix: "PixelMatrix") -> bool:
