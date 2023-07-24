@@ -20,11 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FullArc3D: hash
 - SphericalSurface3D: enhance repair_periodicity_method
 - CylindricalSurface3D: concurrent_plane_intersection
-- 
+- BSplineFace3D: fix neutral_fiber
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
+- Composite_primitives
 - Surface3D: enhance repair_primitives_periodicity method.
+- BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
 
 ### Changed
 -
