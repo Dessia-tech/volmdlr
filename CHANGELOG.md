@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineFace3D: fix bounding_box
 - Step: assembly import
 - BSplineFace3D: fix neutral_fiber
+- Step.py: enhance step import/export
 
 ### Refactor
 - Shells: refactor.

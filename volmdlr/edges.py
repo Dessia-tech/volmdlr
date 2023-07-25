@@ -5332,7 +5332,7 @@ class Arc3D(ArcMixin, Edge):
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}', #{frame_id}, {self.circle.radius * 1000});\n"
 
-        current_id = curve_id + 1
+        current_id = curve_id
         start_content, start_id = self.start.to_step(current_id, vertex=True)
         end_content, end_id = self.end.to_step(start_id + 1, vertex=True)
         content += start_content + end_content

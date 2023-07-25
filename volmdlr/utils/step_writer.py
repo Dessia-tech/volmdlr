@@ -34,7 +34,7 @@ def product_writer(current_id, product_name):
     return step_content, shape_definition_repr_id
 
 
-def geometric_context_writer(current_id, uncertainty: float = 1e-4):
+def geometric_context_writer(current_id, uncertainty: float = 1e-7):
     """
     Helper function to write the step definitions of a product.
     """
