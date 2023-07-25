@@ -1077,7 +1077,7 @@ class Face3D(volmdlr.core.Primitive3D):
         while True:
             for i, intersection2d in enumerate(intersections_with_plane2d):
                 if not self.surface2d.outer_contour.is_inside(intersection2d):
-                    for translation in [volmdlr.Vector2D(-2*math.pi, 0), volmdlr.Vector2D(2*math.pi, 0)]:
+                    for translation in [volmdlr.Vector2D(-2 * math.pi, 0), volmdlr.Vector2D(2 * math.pi, 0)]:
                         translated_contour = intersection2d.translation(translation)
                         if not self.surface2d.outer_contour.is_inside(translated_contour):
                             continue
@@ -1221,7 +1221,7 @@ class PlaneFace3D(Face3D):
             return []
         points_intersections = []
         for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d + \
-                planeface.inner_contours3d:
+                       planeface.inner_contours3d:
             for intersection in contour.line_intersections(face2_plane_interections[0]):
                 if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
                     points_intersections.append(intersection)
@@ -2681,11 +2681,11 @@ class BSplineFace3D(Face3D):
         elif number_points_y > 20 * number_points_x:
             discretize_line_direction = "y"
         outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True,
-                                                      discretize_line_direction=discretize_line_direction)
+                                                                discretize_line_direction=discretize_line_direction)
         points = []
         points.extend(points)
         points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
-                                                                                    number_points_y=number_points_y)
+                                                                                      number_points_y=number_points_y)
         if self.surface2d.inner_contours:
             points = self._get_bbox_inner_contours_points(points, discretize_line_direction,
                                                           [points_grid, x, y, grid_point_index])
