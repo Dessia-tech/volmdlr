@@ -1931,21 +1931,6 @@ class PeriodicalSurface(Surface3D):
         """
         Is this right?.
         """
-        # if bspline_curve2d.name in ("parametric.arcellipse", "parametric.fullarcellipse"):
-        #     start = self.point2d_to_3d(bspline_curve2d.start)
-        #     middle_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.5 * bspline_curve2d.length()))
-        #     extra_point = self.point2d_to_3d(bspline_curve2d.point_at_abscissa(0.75 * bspline_curve2d.length()))
-        #     if bspline_curve2d.name == "parametric.arcellipse":
-        #         end = self.point2d_to_3d(bspline_curve2d.end)
-        #         plane3d = Plane3D.from_3_points(start, middle_point, end)
-        #         ellipse = self.concurrent_plane_intersection(plane3d)[0]
-        #         arcellipse = edges.ArcEllipse3D(ellipse, start, end)
-        #         if not arcellipse.point_belongs(middle_point):
-        #             raise NotImplementedError
-        #         return [arcellipse]
-        #     plane3d = Plane3D.from_3_points(start, middle_point, extra_point)
-        #     ellipse = self.concurrent_plane_intersection(plane3d)[0]
-        #     return [edges.FullArcEllipse3D(ellipse, start)]
         n = len(bspline_curve2d.control_points)
         points = [self.point2d_to_3d(p)
                   for p in bspline_curve2d.discretization_points(number_points=n)]
@@ -4815,7 +4800,6 @@ class BSplineSurface3D(Surface3D):
         # Find the minimal index
         index = npy.argmin(distances)
         # Find the parametric coordinates of the point
-        # indexes = int(npy.argmin(distances))
         if self.x_periodicity or self.y_periodicity:
             x0s.insert(1, self.surface.vertices[index].uv)
         else:
