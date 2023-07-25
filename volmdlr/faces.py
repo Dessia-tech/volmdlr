@@ -198,16 +198,14 @@ class Face3D(volmdlr.core.Primitive3D):
         :param contours3d: List of 3D contours representing the face's BREP.
         :param name: the name to inject in the new face
         """
-
-        lc3d = len(contours3d)
         outer_contour2d = None
         outer_contour3d, inner_contours3d = None, None
-        if lc3d == 1:
+        if len(contours3d) == 1:
             outer_contour2d = surface.contour3d_to_2d(contours3d[0])
             outer_contour3d = contours3d[0]
             inner_contours2d = []
 
-        elif lc3d > 1:
+        elif len(contours3d) > 1:
             area = -1
             inner_contours2d = []
             inner_contours3d = []
@@ -244,9 +242,9 @@ class Face3D(volmdlr.core.Primitive3D):
             warnings.warn("Impossible to instatiate face because of topology inconsistency in the "
                           "face's contour from step file.")
             return None
-        surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
-                                       inner_contours=inner_contours2d)
-        face = cls(surface, surface2d=surface2d, name=name)
+        face = cls(surface,
+                   surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),
+                   name=name)
         # To improve performance while reading from step file
         # face.outer_contour3d = outer_contour3d
         # face.inner_contours3d = inner_contours3d
@@ -3163,8 +3161,6 @@ class BSplineFace3D(Face3D):
             return v_centers
         if u_radius and not v_radius:
             return u_centers
-        # u_var = npy.var(u_radius)
-        # v_var = npy.var(v_radius)
         u_mean = npy.mean(u_radius)
         v_mean = npy.mean(v_radius)
         if u_mean > v_mean:
@@ -3179,6 +3175,7 @@ class BSplineFace3D(Face3D):
         """
         neutral_fiber_points = self.neutral_fiber_points()
         is_line = False
+        neutral_fiber = None
         if not neutral_fiber_points[0].is_close(neutral_fiber_points[-1]):
             neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
             is_line = all(neutral_fiber.point_belongs(point) for point in neutral_fiber_points)

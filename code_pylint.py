@@ -42,7 +42,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-instance-attributes': 16,
 =======
                      'too-few-public-methods': 2,
-                     'too-many-public-methods': 11,
+                     'too-many-public-methods': 12,
                      'too-many-instance-attributes': 15,
 >>>>>>> bsplineface_bbox
                      'protected-access': 4,

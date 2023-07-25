@@ -268,28 +268,6 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         :return: return a networkx graph for a shell faces.
         """
         if not self._faces_graph:
-            # graph = nx.Graph()
-            # vertice_faces = {}
-            # face_vertices = {}
-            # for face_index, face in enumerate(self.faces):
-            #     face_contour_primitives = face.outer_contour3d.primitives
-            #     for inner_contour in face.inner_contours3d:
-            #         face_contour_primitives.extend(inner_contour.primitives)
-            #     for edge in face_contour_primitives:
-            #         start_index = volmdlr.core.get_point_index_in_list(edge.start, self.vertices_points)
-            #         vertice_faces.setdefault(start_index, set()).add(face_index)
-            #         face_vertices.setdefault(face_index, set()).add(start_index)
-            # for i, _ in enumerate(self.faces):
-            #     face_i_vertices = face_vertices[i]
-            #     for vertice in face_i_vertices:
-            #         connected_faces = vertice_faces[vertice]
-            #         connected_faces.discard(i)
-            #         for j in connected_faces:
-            #             graph.add_edge(i, j)
-            # if verify_connected_components:
-            #     components = list(nx.connected_components(graph))
-            #     if len(components) > 1:
-            #         graph = self._faces_graph_search_bridges(graph, components, face_vertices)
             self._faces_graph = self._helper_create_faces_graph(
                 self.faces, self.vertices_points, verify_connected_components)
         return self._faces_graph

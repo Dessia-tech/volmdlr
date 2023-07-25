@@ -170,10 +170,10 @@ def clockwise_interior_from_circle3d(start, end, circle):
     end2d = end.to_2d(plane_origin=circle.frame.origin,
                       x=circle.frame.u, y=circle.frame.v)
 
-    # Angle pour le p1
+    # p1 angle
     u1, u2 = start2d.x / circle.radius, start2d.y / circle.radius
     theta1 = sin_cos_angle(u1, u2)
-    # Angle pour le p2
+    # p2 angle
     u3, u4 = end2d.x / circle.radius, end2d.y / circle.radius
     theta2 = sin_cos_angle(u3, u4)
 
