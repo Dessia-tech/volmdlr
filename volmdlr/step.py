@@ -642,6 +642,7 @@ class Step(dc.DessiaObject):
         error = True
         last_error = None
         none_primitives = set()
+        assembly_shape_ids = []
         while error:
             try:
                 # here we invert instantiate_ids because if the code enter inside the except
