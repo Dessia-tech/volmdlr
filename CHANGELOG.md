@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SphericalSurface3D: enhance repair_periodicity_method
 - CylindricalSurface3D: concurrent_plane_intersection
 - BSplineFace3D: fix neutral_fiber
+- Step: assembly import
+- BSplineFace3D: fix neutral_fiber
+- BSplineSurface3D: improve bsplinecurve3d_to_3d.
+
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
