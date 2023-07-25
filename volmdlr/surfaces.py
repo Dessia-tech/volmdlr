@@ -2247,42 +2247,92 @@ class CylindricalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        if not math.isclose(abs(self.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=1e-6):
-            frame_mapped_cyl_surface = self.frame_mapping(self.frame, 'new')
-            frame_mapped_plane = plane3d.frame_mapping(self.frame, 'new')
-            cyl_plane_inters = frame_mapped_cyl_surface.concurrent_plane_intersection(frame_mapped_plane)
-            final_coord_solution = cyl_plane_inters[0].frame_mapping(self.frame, 'old')
-            return [final_coord_solution]
-        line = curves.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
-        center3d_plane = plane3d.line_intersections(line)[0]
-        plane_coefficient_a, plane_coefficient_b, plane_coefficient_c, plane_coefficient_d = \
-            plane3d.equation_coefficients()
-        points = [
-            volmdlr.Point3D(self.radius * math.cos(angle),
-                            self.radius * math.sin(angle),  - (1 / plane_coefficient_c) * (
-                            plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(angle) +
-                            plane_coefficient_b * self.radius * math.sin(angle)))
-            for angle in npy.linspace(0, 2 * math.pi, 36)]
-        max_dist, max_dist_point = center3d_plane.point_distance(points[0]),  points[0]
-        min_dist, min_dist_point = max_dist, max_dist_point
-        for point in points:
-            dist = point.point_distance(center3d_plane)
-            if dist > max_dist:
-                max_dist = dist
-                max_dist_point = point
-        for point in points:
-            dist = point.point_distance(center3d_plane)
-            if dist < min_dist:
-                min_dist = dist
-        major_axis = max_dist
-        minor_axis = min_dist
-        major_dir = max_dist_point - center3d_plane
-        u_vector = major_dir.unit_vector()
+        # if not math.isclose(abs(self.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=1e-6):
+        #     frame_mapped_cyl_surface = self.frame_mapping(self.frame, 'new')
+        #     frame_mapped_plane = plane3d.frame_mapping(self.frame, 'new')
+        #     cyl_plane_inters = frame_mapped_cyl_surface.concurrent_plane_intersection(frame_mapped_plane)
+        #     final_coord_solution = cyl_plane_inters[0].frame_mapping(self.frame, 'old')
+        #     return [final_coord_solution]
+        a_plane_vector = np.array([[plane3d.frame.u.x],
+                                   [plane3d.frame.u.y],
+                                   [plane3d.frame.u.z]])
+        b_plane_vector = np.array([[plane3d.frame.v.x],
+                                   [plane3d.frame.v.y],
+                                   [plane3d.frame.v.z]])
+        c_point = np.array([[self.frame.origin.x],
+                            [self.frame.origin.y],
+                            [self.frame.origin.z]])
+        i_matrix = np.identity(3)
+        w_vector = np.array([[self.frame.w.x],
+                             [self.frame.w.y],
+                             [self.frame.w.z]])
+        point_on_plane = np.array([[plane3d.frame.origin.x],
+                                   [plane3d.frame.origin.y],
+                                   [plane3d.frame.origin.z]])
+        delta = point_on_plane - c_point
+        m_matrix = i_matrix - np.dot(w_vector, w_vector.T)
+        # xi = np.array([[1],
+        #                [1]])
+        q2 = np.array([[np.dot(np.dot(a_plane_vector.T, m_matrix), a_plane_vector)[0][0],
+                        np.dot(np.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0]],
+                       [np.dot(np.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0],
+                        np.dot(np.dot(b_plane_vector.T, m_matrix), b_plane_vector)[0][0]]])
+        q1 = 2 * np.array([[np.dot(np.dot(a_plane_vector.T, m_matrix), delta)[0][0]],
+                           [np.dot(np.dot(b_plane_vector.T, m_matrix), delta)[0][0]]])
+        k = - np.dot(np.linalg.inv(q2), q1)
+        q0 = np.dot(np.dot(delta.T, m_matrix), delta) - self.radius ** 2
+        s = q2 / (np.dot(np.dot(k.T, q2), k) - q0)
+        eigenvalues, eigenvectors = np.linalg.eig(s)
+        k0, k1 = k[0][0], k[1][0]
+        ellipse_center = point_on_plane + k0 * a_plane_vector + k1 * b_plane_vector
+        ellipse_center = volmdlr.Point3D(ellipse_center[0][0], ellipse_center[1][0], ellipse_center[2][0])
+        major_dir = eigenvectors[0][0] * a_plane_vector + eigenvectors[1][0] * b_plane_vector
+        major_dir = volmdlr.Point3D(major_dir[0][0], major_dir[1][0], major_dir[2][0]).unit_vector()
+        minor_dir = eigenvectors[0][1] * a_plane_vector + eigenvectors[1][1] * b_plane_vector
+        minor_dir = volmdlr.Point3D(minor_dir[0][0], minor_dir[1][0], minor_dir[2][0]).unit_vector()
+        lineseg1 = edges.LineSegment3D(ellipse_center, ellipse_center + major_dir * 10 * self.radius)
+        lineseg2 = edges.LineSegment3D(ellipse_center, ellipse_center + minor_dir * 10 * self.radius)
+        inters_lineseg1 = self.linesegment_intersections(lineseg1)
+        inters_lineseg2 = self.linesegment_intersections(lineseg2)
+        major_axis = ellipse_center.point_distance(inters_lineseg1[0])
+        minor_axis = ellipse_center.point_distance(inters_lineseg2[0])
+        if minor_axis > major_axis:
+            major_axis, minor_axis = minor_axis, major_axis
+            major_dir, minor_dir = minor_dir, major_dir
+        # major_axis, minor_axis = eigenvalues
         ellipse = curves.Ellipse3D(major_axis, minor_axis,
-                                   volmdlr.Frame3D(center3d_plane, u_vector,
-                                                   plane3d.frame.w.cross(u_vector), plane3d.frame.w))
-        if not all(ellipse.point_belongs(point) for point in points):
-            return [edges.BSplineCurve3D.from_points_interpolation(points, 5)]
+                                   volmdlr.Frame3D(ellipse_center, major_dir,
+                                                   minor_dir, plane3d.frame.w))
+        # line = curves.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
+        # center3d_plane = plane3d.line_intersections(line)[0]
+        # plane_coefficient_a, plane_coefficient_b, plane_coefficient_c, plane_coefficient_d = \
+        #     plane3d.equation_coefficients()
+        # points = [
+        #     volmdlr.Point3D(self.radius * math.cos(angle),
+        #                     self.radius * math.sin(angle),  - (1 / plane_coefficient_c) * (
+        #                     plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(angle) +
+        #                     plane_coefficient_b * self.radius * math.sin(angle)))
+        #     for angle in npy.linspace(0, 2 * math.pi, 36)]
+        # max_dist, max_dist_point = center3d_plane.point_distance(points[0]),  points[0]
+        # min_dist, min_dist_point = max_dist, max_dist_point
+        # for point in points:
+        #     dist = point.point_distance(center3d_plane)
+        #     if dist > max_dist:
+        #         max_dist = dist
+        #         max_dist_point = point
+        # for point in points:
+        #     dist = point.point_distance(center3d_plane)
+        #     if dist < min_dist:
+        #         min_dist = dist
+        # major_axis = max_dist
+        # minor_axis = min_dist
+        # major_dir = max_dist_point - center3d_plane
+        # u_vector = major_dir.unit_vector()
+        # ellipse = curves.Ellipse3D(major_axis, minor_axis,
+        #                            volmdlr.Frame3D(center3d_plane, u_vector,
+        #                                            plane3d.frame.w.cross(u_vector), plane3d.frame.w))
+        # if not all(ellipse.point_belongs(point) for point in points):
+        #     return [edges.BSplineCurve3D.from_points_interpolation(points, 5)]
         return [ellipse]
 
     def plane_intersection(self, plane3d):

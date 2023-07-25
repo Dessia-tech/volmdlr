@@ -146,8 +146,7 @@ class TestCylindricalFace3D(unittest.TestCase):
         face, plane = DessiaObject.load_from_file(
             'faces/objects_cylindrical_tests/test_buggy_split_by_plane12_07_2023.json').primitives
         plane_intersections = face.plane_intersections(plane)
-        self.assertTrue(isinstance(plane_intersections[0], edges.BSplineCurve3D))
-        self.assertAlmostEqual(plane_intersections[0].length(), 0.1048349331003085)
+        self.assertAlmostEqual(plane_intersections[0].length(), 0.10485331158773475)
 
 
 if __name__ == '__main__':
