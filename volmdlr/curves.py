@@ -467,9 +467,6 @@ class Line2D(Line):
         """
         Computes the two circles that are tangent to 2 lines and intersect a point located on one of the two lines.
         """
-        # point will be called I(x_I, y_I)
-        # self will be (AB)
-        # line will be (CD)
         vector_i, vector_a, vector_b, vector_c, vector_d = self._compute_data_create_tangent_circle(
             self, point, other_line)
         # Basis change
@@ -650,7 +647,10 @@ class Line3D(Line):
         return intersection
 
     def plot(self, ax=None, color='k', alpha=1, dashed=True):
-        """Plot method for Line 3D using Matplotlib."""
+        """
+        Plot method for Line 3D using Matplotlib.
+
+        """
         if ax is None:
             ax = Axes3D(plt.figure())
 
@@ -672,6 +672,18 @@ class Line3D(Line):
         return ax
 
     def plane_projection2d(self, center, x, y):
+        """
+        Project the 3D line onto a 2D plane defined by the center point and two
+        orthogonal vectors, x and y.
+
+        Parameters:
+            center (tuple): The center point of the plane as a tuple (x, y, z).
+            x (tuple): A tuple representing the first orthogonal vector (x-component, y-component, z-component).
+            y (tuple): A tuple representing the second orthogonal vector (x-component, y-component, z-component).
+
+        Returns:
+            Line2D: A new 2D line resulting from the projection of the current 3D line onto the specified plane.
+        """
         return Line2D(self.point1.plane_projection2d(center, x, y),
                       self.point2.plane_projection2d(center, x, y))
 
