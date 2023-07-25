@@ -5061,7 +5061,11 @@ class BSplineSurface3D(Surface3D):
             start = self.point2d_to_3d(bspline_curve2d.start)
             interior = self.point2d_to_3d(bspline_curve2d.evaluate_single(0.5))
             end = self.point2d_to_3d(bspline_curve2d.end)
-            return [edges.Arc3D.from_3_points(start, interior, end)]
+            vector_u1 = interior - start
+            vector_u2 = interior - end
+            dot_product = vector_u2.dot(vector_u1)
+            if dot_product and abs(dot_product) != 1.0:
+                return [edges.Arc3D.from_3_points(start, interior, end)]
 
         number_points = len(bspline_curve2d.control_points)
         points = []
