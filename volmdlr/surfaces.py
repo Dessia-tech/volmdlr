@@ -2267,10 +2267,10 @@ class CylindricalSurface3D(PeriodicalSurface):
                            [npy.dot(npy.dot(b_plane_vector.T, m_matrix), delta)[0][0]]])
         k_vector = - npy.dot(npy.linalg.inv(q_2), q_1)
         q_0 = npy.dot(npy.dot(delta.T, m_matrix), delta) - self.radius ** 2
-        s = q_2 / (npy.dot(npy.dot(k_vector.T, q_2), k_vector) - q_0)
-        eigenvalues, eigenvectors = npy.linalg.eig(s)
-        k0, k1 = k_vector[0][0], k_vector[1][0]
-        ellipse_center = point_on_plane + k0 * a_plane_vector + k1 * b_plane_vector
+        s_matrix = q_2 / (npy.dot(npy.dot(k_vector.T, q_2), k_vector) - q_0)
+        eigenvalues, eigenvectors = npy.linalg.eig(s_matrix)
+        k_0, k_1 = k_vector[0][0], k_vector[1][0]
+        ellipse_center = point_on_plane + k_0 * a_plane_vector + k_1 * b_plane_vector
         ellipse_center = volmdlr.Point3D(ellipse_center[0][0], ellipse_center[1][0], ellipse_center[2][0])
         major_dir = eigenvectors[0][0] * a_plane_vector + eigenvectors[1][0] * b_plane_vector
         major_dir = volmdlr.Point3D(major_dir[0][0], major_dir[1][0], major_dir[2][0]).unit_vector()
