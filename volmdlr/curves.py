@@ -649,7 +649,6 @@ class Line3D(Line):
     def plot(self, ax=None, color='k', alpha=1, dashed=True):
         """
         Plot method for Line 3D using Matplotlib.
-
         """
         if ax is None:
             ax = Axes3D(plt.figure())
@@ -763,6 +762,7 @@ class Line3D(Line):
         return volmdlr.edges.LineSegment3D(point1, point2)
 
     def copy(self, *args, **kwargs):
+        """Creates a Copy of Line3D and returns it."""
         return Line3D(*[point.copy() for point in [self.point1, self.point2]])
 
     @classmethod
