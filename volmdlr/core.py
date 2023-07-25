@@ -26,9 +26,8 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
-from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer,\
+from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
-
 
 npy.seterr(divide='raise')
 
@@ -1023,8 +1022,8 @@ class Assembly(dc.PhysicalObject):
                 assembly_frame_id = assembly_frames[0]
                 component_frame_id = assembly_frames[i + 1]
                 assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
-                                                                              primitive_data, assembly_frame_id,
-                                                                              component_frame_id)
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
 
             else:
                 primitive_content, current_id, primitive_data = primitive.to_step(current_id)
@@ -1032,8 +1031,8 @@ class Assembly(dc.PhysicalObject):
                 assembly_frame_id = assembly_frames[0]
                 component_frame_id = assembly_frames[i + 1]
                 assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
-                                                                              primitive_data, assembly_frame_id,
-                                                                              component_frame_id)
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
             step_content += primitive_content
             step_content += assembly_content
 
@@ -1115,7 +1114,7 @@ class Compound(dc.PhysicalObject):
     @property
     def compound_type(self):
         """
-        Returns the bounding box.
+        Returns the compound type.
 
         """
         if not self._type:
@@ -1123,7 +1122,7 @@ class Compound(dc.PhysicalObject):
                    hasattr(primitive, "shell_faces") for primitive in self.primitives):
                 self._type = "manifold_solid_brep"
             elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edges, volmdlr.Point3D)) or
-                   hasattr(primitive, "shell_faces") for primitive in self.primitives):
+                     hasattr(primitive, "shell_faces") for primitive in self.primitives):
                 self._type = "geometric_curve_set"
             else:
                 self._type = "shell_based_surface_model"
@@ -1131,7 +1130,7 @@ class Compound(dc.PhysicalObject):
 
     @compound_type.setter
     def compound_type(self, value):
-        """Bounding box setter."""
+        """Compound type setter."""
         self._type = value
 
     def _bounding_box(self) -> BoundingBox:
@@ -1201,9 +1200,10 @@ class Compound(dc.PhysicalObject):
         current_id = frame_id
 
         for primitive in self.primitives:
-            primitive_content, current_id = primitive.to_step(current_id)
-            primitives_content += primitive_content
-            manifold_ids.append(current_id)
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                primitive_content, current_id = primitive.to_step(current_id)
+                primitives_content += primitive_content
+                manifold_ids.append(current_id)
 
         geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
         step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION(''," \
@@ -1580,7 +1580,6 @@ class VolumeModel(dc.PhysicalObject):
                 if kwargs['min_points']:
                     lines.extend(primitive.get_mesh_lines_with_transfinite_curves(min_points=kwargs['min_points'],
                                                                                   size=size))
-
 
                 lines.append('Field[' + str(field_num) + '] = MathEval;')
                 lines.append('Field[' + str(field_num) + '].F = "' + str(size) + '";')

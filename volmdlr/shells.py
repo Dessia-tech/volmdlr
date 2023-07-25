@@ -329,10 +329,6 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         faces_content = ''
         face_ids = []
 
-        manifold_id = current_id + 1
-        shell_id = manifold_id + 1
-
-        current_id = shell_id + 1
         for face in self.faces:
             if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
                 face_content, face_sub_ids = face.to_step(current_id)
@@ -342,15 +338,17 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             faces_content += face_content
             face_ids.extend(face_sub_ids)
             current_id = max(face_sub_ids)
+        step_content += faces_content
 
+        shell_id = current_id + 1
+
+        step_content += f"#{shell_id} = {self.STEP_FUNCTION}('{self.name}'," \
+                        f"({step_ids_to_str(face_ids)}));\n"
+        manifold_id = shell_id + 1
         if self.STEP_FUNCTION == "CLOSED_SHELL":
             step_content += f"#{manifold_id} = MANIFOLD_SOLID_BREP('{self.name}',#{shell_id});\n"
         else:
             step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
-
-        step_content += f"#{shell_id} = {self.STEP_FUNCTION}('{self.name}'," \
-                        f"({step_ids_to_str(face_ids)}));\n"
-        step_content += faces_content
 
         return step_content, manifold_id
 
@@ -369,8 +367,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         step_content += product_content
 
         brep_id = shape_representation_id
-        # frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
-        frame_content, frame_id = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.Y3D, volmdlr.X3D).to_step(brep_id)
+        frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
         manifold_id = frame_id + 1
         shell_id = manifold_id + 1
         current_id = shell_id + 1
