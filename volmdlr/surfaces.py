@@ -5,7 +5,6 @@ from typing import List, Union
 import traceback
 
 import matplotlib.pyplot as plt
-import numpy as np
 import numpy as npy
 import triangle as triangle_lib
 from geomdl import NURBS, BSpline, utilities
@@ -2238,37 +2237,37 @@ class CylindricalSurface3D(PeriodicalSurface):
         #     cyl_plane_inters = frame_mapped_cyl_surface.concurrent_plane_intersection(frame_mapped_plane)
         #     final_coord_solution = cyl_plane_inters[0].frame_mapping(self.frame, 'old')
         #     return [final_coord_solution]
-        a_plane_vector = np.array([[plane3d.frame.u.x],
+        a_plane_vector = npy.array([[plane3d.frame.u.x],
                                    [plane3d.frame.u.y],
                                    [plane3d.frame.u.z]])
-        b_plane_vector = np.array([[plane3d.frame.v.x],
+        b_plane_vector = npy.array([[plane3d.frame.v.x],
                                    [plane3d.frame.v.y],
                                    [plane3d.frame.v.z]])
-        c_point = np.array([[self.frame.origin.x],
+        c_point = npy.array([[self.frame.origin.x],
                             [self.frame.origin.y],
                             [self.frame.origin.z]])
-        i_matrix = np.identity(3)
-        w_vector = np.array([[self.frame.w.x],
+        i_matrix = npy.identity(3)
+        w_vector = npy.array([[self.frame.w.x],
                              [self.frame.w.y],
                              [self.frame.w.z]])
-        point_on_plane = np.array([[plane3d.frame.origin.x],
+        point_on_plane = npy.array([[plane3d.frame.origin.x],
                                    [plane3d.frame.origin.y],
                                    [plane3d.frame.origin.z]])
         delta = point_on_plane - c_point
-        m_matrix = i_matrix - np.dot(w_vector, w_vector.T)
+        m_matrix = i_matrix - npy.dot(w_vector, w_vector.T)
         # xi = np.array([[1],
         #                [1]])
-        q2 = np.array([[np.dot(np.dot(a_plane_vector.T, m_matrix), a_plane_vector)[0][0],
-                        np.dot(np.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0]],
-                       [np.dot(np.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0],
-                        np.dot(np.dot(b_plane_vector.T, m_matrix), b_plane_vector)[0][0]]])
-        q1 = 2 * np.array([[np.dot(np.dot(a_plane_vector.T, m_matrix), delta)[0][0]],
-                           [np.dot(np.dot(b_plane_vector.T, m_matrix), delta)[0][0]]])
-        k = - np.dot(np.linalg.inv(q2), q1)
-        q0 = np.dot(np.dot(delta.T, m_matrix), delta) - self.radius ** 2
-        s = q2 / (np.dot(np.dot(k.T, q2), k) - q0)
-        eigenvalues, eigenvectors = np.linalg.eig(s)
-        k0, k1 = k[0][0], k[1][0]
+        q_2 = npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), a_plane_vector)[0][0],
+                        npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0]],
+                       [npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0],
+                        npy.dot(npy.dot(b_plane_vector.T, m_matrix), b_plane_vector)[0][0]]])
+        q_1 = 2 * npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), delta)[0][0]],
+                           [npy.dot(npy.dot(b_plane_vector.T, m_matrix), delta)[0][0]]])
+        k_vector = - npy.dot(npy.linalg.inv(q_2), q_1)
+        q_0 = npy.dot(npy.dot(delta.T, m_matrix), delta) - self.radius ** 2
+        s = q_2 / (npy.dot(npy.dot(k_vector.T, q_2), k_vector) - q_0)
+        eigenvalues, eigenvectors = npy.linalg.eig(s)
+        k0, k1 = k_vector[0][0], k_vector[1][0]
         ellipse_center = point_on_plane + k0 * a_plane_vector + k1 * b_plane_vector
         ellipse_center = volmdlr.Point3D(ellipse_center[0][0], ellipse_center[1][0], ellipse_center[2][0])
         major_dir = eigenvectors[0][0] * a_plane_vector + eigenvectors[1][0] * b_plane_vector
