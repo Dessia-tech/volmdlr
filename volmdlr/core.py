@@ -1404,12 +1404,10 @@ class VolumeModel(dc.PhysicalObject):
 
         return page_name
 
-    def save_babylonjs_to_file(self, filename: str = None,
-                               use_cdn=True, debug=False):
+    def save_babylonjs_to_file(self, filename: str = None, use_cdn=True, debug=False):
         """Export a html file of the model."""
         babylon_data = self.babylon_data()
-        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                       debug=debug)
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn, debug=debug)
         if filename is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
                                              delete=False) as file:
@@ -1419,9 +1417,9 @@ class VolumeModel(dc.PhysicalObject):
         if not filename.endswith('.html'):
             filename += '.html'
 
-            with open(filename, 'w', encoding='utf-8') as file:
-                file.write(script)
-            return filename
+        with open(filename, 'w', encoding='utf-8') as file:
+            file.write(script)
+        return filename
 
     def to_stl_model(self):
         """Converts the model into a stl object."""
