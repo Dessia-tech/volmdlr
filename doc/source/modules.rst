@@ -1,9 +1,9 @@
 Volmdlr Modules
------------
+---------------
 
 
 volmdlr.bspline\_compiled
---------------------------------
+-------------------------
 
 .. automodule:: volmdlr.bspline_compiled
    :members:
@@ -11,7 +11,7 @@ volmdlr.bspline\_compiled
    :show-inheritance:
 
 volmdlr.bspline\_evaluators
-----------------------------------
+---------------------------
 
 .. automodule:: volmdlr.bspline_evaluators
    :members:
@@ -19,7 +19,7 @@ volmdlr.bspline\_evaluators
    :show-inheritance:
 
 volmdlr.bspline\_fitting
--------------------------------
+------------------------
 
 .. automodule:: volmdlr.bspline_fitting
    :members:
@@ -27,7 +27,7 @@ volmdlr.bspline\_fitting
    :show-inheritance:
 
 volmdlr.cad\_simplification
-----------------------------------
+---------------------------
 
 .. automodule:: volmdlr.cad_simplification
    :members:
@@ -35,7 +35,7 @@ volmdlr.cad\_simplification
    :show-inheritance:
 
 volmdlr.cloud
---------------------
+-------------
 
 .. automodule:: volmdlr.cloud
    :members:
@@ -43,7 +43,7 @@ volmdlr.cloud
    :show-inheritance:
 
 volmdlr.core
--------------------
+------------
 
 .. automodule:: volmdlr.core
    :members:
@@ -51,7 +51,7 @@ volmdlr.core
    :show-inheritance:
 
 volmdlr.core\_compiled
------------------------------
+----------------------
 
 .. automodule:: volmdlr.core_compiled
    :members:
@@ -59,7 +59,7 @@ volmdlr.core\_compiled
    :show-inheritance:
 
 volmdlr.curves
----------------------
+--------------
 
 .. automodule:: volmdlr.curves
    :members:
@@ -67,7 +67,7 @@ volmdlr.curves
    :show-inheritance:
 
 volmdlr.display
-----------------------
+---------------
 
 .. automodule:: volmdlr.display
    :members:
@@ -75,7 +75,7 @@ volmdlr.display
    :show-inheritance:
 
 volmdlr.edges
---------------------
+-------------
 
 .. automodule:: volmdlr.edges
    :members:
@@ -83,7 +83,7 @@ volmdlr.edges
    :show-inheritance:
 
 volmdlr.faces
---------------------
+-------------
 
 .. automodule:: volmdlr.faces
    :members:
@@ -91,7 +91,7 @@ volmdlr.faces
    :show-inheritance:
 
 volmdlr.geometry
------------------------
+----------------
 
 .. automodule:: volmdlr.geometry
    :members:
@@ -99,7 +99,7 @@ volmdlr.geometry
    :show-inheritance:
 
 volmdlr.gmsh\_vm
------------------------
+----------------
 
 .. automodule:: volmdlr.gmsh_vm
    :members:
@@ -107,7 +107,7 @@ volmdlr.gmsh\_vm
    :show-inheritance:
 
 volmdlr.grid
--------------------
+------------
 
 .. automodule:: volmdlr.grid
    :members:
@@ -115,7 +115,7 @@ volmdlr.grid
    :show-inheritance:
 
 volmdlr.mesh
--------------------
+------------
 
 .. automodule:: volmdlr.mesh
    :members:
@@ -123,7 +123,7 @@ volmdlr.mesh
    :show-inheritance:
 
 volmdlr.primitives
--------------------------
+------------------
 
 .. automodule:: volmdlr.primitives
    :members:
@@ -131,7 +131,7 @@ volmdlr.primitives
    :show-inheritance:
 
 volmdlr.primitives2d
----------------------------
+--------------------
 
 .. automodule:: volmdlr.primitives2d
    :members:
@@ -139,7 +139,7 @@ volmdlr.primitives2d
    :show-inheritance:
 
 volmdlr.primitives3d
----------------------------
+--------------------
 
 .. automodule:: volmdlr.primitives3d
    :members:
@@ -147,7 +147,7 @@ volmdlr.primitives3d
    :show-inheritance:
 
 volmdlr.shells
----------------------
+--------------
 
 .. automodule:: volmdlr.shells
    :members:
@@ -155,7 +155,7 @@ volmdlr.shells
    :show-inheritance:
 
 volmdlr.step
--------------------
+------------
 
 .. automodule:: volmdlr.step
    :members:
@@ -163,7 +163,7 @@ volmdlr.step
    :show-inheritance:
 
 volmdlr.stl
-------------------
+-----------
 
 .. automodule:: volmdlr.stl
    :members:
@@ -171,7 +171,7 @@ volmdlr.stl
    :show-inheritance:
 
 volmdlr.surfaces
------------------------
+----------------
 
 .. automodule:: volmdlr.surfaces
    :members:
@@ -179,7 +179,7 @@ volmdlr.surfaces
    :show-inheritance:
 
 volmdlr.templates
-------------------------
+-----------------
 
 .. automodule:: volmdlr.templates
    :members:
@@ -187,7 +187,7 @@ volmdlr.templates
    :show-inheritance:
 
 volmdlr.voxelization\_compiled
--------------------------------------
+------------------------------
 
 .. automodule:: volmdlr.voxelization_compiled
    :members:
@@ -195,7 +195,7 @@ volmdlr.voxelization\_compiled
    :show-inheritance:
 
 volmdlr.wires
---------------------
+-------------
 
 .. automodule:: volmdlr.wires
    :members:
