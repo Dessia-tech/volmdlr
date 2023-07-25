@@ -822,7 +822,8 @@ STEP_TO_VOLMDLR = {
     'CONNECTED_FACE_SET': vmshells.OpenShell3D,
     'GEOMETRIC_CURVE_SET': None,
 
-    # step subfunctions
+    # step sub-functions
+
     'UNCERTAINTY_MEASURE_WITH_UNIT': None,
     'CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT': None,
     'LENGTH_MEASURE_WITH_UNIT': None,

@@ -1,0 +1,112 @@
+{
+  "object_class": "volmdlr.surfaces.BSplineSurface3D",
+  "name": "",
+  "degree_u": 3,
+  "degree_v": 2,
+  "nb_u": 4,
+  "nb_v": 3,
+  "frame": null,
+  "control_points": [
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.15209758530700002,
+      "y": -0.287550015079,
+      "z": 0.324770761377
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.15198752817400002,
+      "y": -0.287453520936,
+      "z": 0.325033711491
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.15205018460400002,
+      "y": -0.287359047909,
+      "z": 0.325312486442
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.151967990439,
+      "y": -0.28967135636400004,
+      "z": 0.325606492327
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.151924040324,
+      "y": -0.289606801833,
+      "z": 0.325787223957
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.15193593597000002,
+      "y": -0.289542215847,
+      "z": 0.325972830978
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.151862548916,
+      "y": -0.291886674809,
+      "z": 0.3264818626
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.151854534822,
+      "y": -0.291854384119,
+      "z": 0.326573452703
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.151846520531,
+      "y": -0.291822099915,
+      "z": 0.32666504507500005
+    },
+    {
+      "$ref": "#/_references/1a76b49a-26da-11ee-a987-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/1a76b49a-26da-11ee-a987-68545aefcc97"
+    },
+    {
+      "$ref": "#/_references/1a76b49a-26da-11ee-a987-68545aefcc97"
+    }
+  ],
+  "u_knots": [
+    0.0,
+    1.0
+  ],
+  "v_knots": [
+    0.0,
+    1.0
+  ],
+  "u_multiplicities": [
+    4,
+    4
+  ],
+  "v_multiplicities": [
+    3,
+    3
+  ],
+  "weights": [
+    1.0,
+    0.957577499198,
+    1.0,
+    1.0,
+    0.957577499198,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "_references": {
+    "1a76b49a-26da-11ee-a987-68545aefcc97": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.151785724198,
+      "y": -0.294102311344,
+      "z": 0.327359863847
+    }
+  }
+}
