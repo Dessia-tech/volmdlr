@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Composite_primitives
 - Surface3D: enhance repair_primitives_periodicity method.
 - BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
+- Wire3D: removes heritage from volmdlr.core.CompositePrimitive3D
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
