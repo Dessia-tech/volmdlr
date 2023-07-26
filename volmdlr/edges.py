@@ -198,9 +198,9 @@ class Edge(dc.DessiaObject):
             return object_dict[arguments[3]]
         if obj.__class__.__name__ == 'Line3D':
             if not same_sense:
-                point1, point2 = point2, point1
+                obj = obj.reverse()
             if not point1.is_close(point2):
-                return LineSegment3D(point1, point2, name=arguments[0][1:-1])
+                return LineSegment3D(point1, point2, obj, name=arguments[0][1:-1])
             return None
 
         if hasattr(obj, 'trim'):
@@ -1122,8 +1122,7 @@ class BSplineCurve(Edge):
             points.extend(primitive.discretization_points(n))
         points.pop(n + 1)
 
-        return self.__class__.from_points_interpolation(
-            points, min(self.degree, bspline_curve.degree))
+        return self.__class__.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
 
     @classmethod
     def from_bsplines(cls, bsplines: List['BSplineCurve'],
@@ -1199,7 +1198,7 @@ class BSplineCurve(Edge):
 
     @classmethod
     def from_points_interpolation(cls, points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                                  degree: int, periodic: bool = False, name: str = " "):
+                                  degree: int, name: str = " "):
         """
         Creates a B-spline curve interpolation through the data points.
 
@@ -1211,9 +1210,6 @@ class BSplineCurve(Edge):
             List[:class:`volmdlr.Point3D`]]
         :param degree: The degree of the output parametric curve
         :type degree: int
-        :param periodic: `True` if the curve should be periodic. Default value
-            is `False`
-        :type periodic: bool, optional
         :param name: curve name.
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
@@ -1221,7 +1217,7 @@ class BSplineCurve(Edge):
         curve = volmdlr.interpolate_curve([[*point] for point in points], degree, centripetal=True)
 
         bsplinecurve = cls.from_geomdl_curve(curve, name=name)
-        if not periodic:
+        if not points[0].is_close(points[-1]):
             return bsplinecurve
         bsplinecurve.periodic = True
         return bsplinecurve
@@ -1397,11 +1393,6 @@ class BSplineCurve(Edge):
             return []
         if not self.is_shared_section_possible(other_bspline2, 1e-7):
             return []
-        # if self.__class__.__name__[-2:] == '3D':
-        #     if self.bounding_box.distance_to_bbox(other_bspline2.bounding_box) > 1e-7:
-        #         return []
-        # elif self.bounding_rectangle.distance_to_b_rectangle(other_bspline2.bounding_rectangle) > 1e-7:
-        #     return []
         if not any(self.point_belongs(point, abs_tol=abs_tol)
                    for point in other_bspline2.discretization_points(number_points=10)):
             return []
@@ -1810,8 +1801,7 @@ class BSplineCurve2D(BSplineCurve):
             self.abscissa(point)) for point in self.points]
         offseted_points = [point.translation(normal_vector * offset_length) for point, normal_vector
                            in zip(self.points, unit_normal_vectors)]
-        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree,
-                                                                    self.periodic)
+        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree)
         return offseted_bspline
 
     def is_shared_section_possible(self, other_bspline2, tol):
@@ -4027,8 +4017,7 @@ class LineSegment3D(LineSegment):
         degree = 1
         points = [self.point_at_abscissa(abscissa / self.length())
                   for abscissa in range(resolution + 1)]
-        bspline_curve = BSplineCurve3D.from_points_interpolation(points,
-                                                                 degree)
+        bspline_curve = BSplineCurve3D.from_points_interpolation(points, degree)
         return bspline_curve
 
     def get_reverse(self):
@@ -4185,7 +4174,7 @@ class LineSegment3D(LineSegment):
             surface, 0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
-        axis, u, p1_proj, dist1, dist2, angle = params
+        axis, u, p1_proj, dist1, _, angle = params
         v = axis.cross(u)
         surface = volmdlr.surfaces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), dist1)
         return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
@@ -4539,25 +4528,27 @@ class BSplineCurve3D(BSplineCurve):
         """
         if self.periodic and not point1.is_close(point2):
             return self.trim_with_interpolation(point1, point2, same_sense)
+        bsplinecurve = self
+        if not same_sense:
+            bsplinecurve = self.reverse()
+        if (point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end)) \
+                or (point1.is_close(bsplinecurve.end) and point2.is_close(bsplinecurve.start)):
+            return bsplinecurve
 
-        if (point1.is_close(self.start) and point2.is_close(self.end)) \
-                or (point1.is_close(self.end) and point2.is_close(self.start)):
-            return self
+        if point1.is_close(bsplinecurve.start) and not point2.is_close(bsplinecurve.end):
+            return bsplinecurve.cut_after(bsplinecurve.point3d_to_parameter(point2))
 
-        if point1.is_close(self.start) and not point2.is_close(self.end):
-            return self.cut_after(self.point3d_to_parameter(point2))
+        if point2.is_close(bsplinecurve.start) and not point1.is_close(bsplinecurve.end):
+            return bsplinecurve.cut_after(bsplinecurve.point3d_to_parameter(point1))
 
-        if point2.is_close(self.start) and not point1.is_close(self.end):
-            return self.cut_after(self.point3d_to_parameter(point1))
+        if not point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end):
+            return bsplinecurve.cut_before(bsplinecurve.point3d_to_parameter(point1))
 
-        if not point1.is_close(self.start) and point2.is_close(self.end):
-            return self.cut_before(self.point3d_to_parameter(point1))
+        if not point2.is_close(bsplinecurve.start) and point1.is_close(bsplinecurve.end):
+            return bsplinecurve.cut_before(bsplinecurve.point3d_to_parameter(point2))
 
-        if not point2.is_close(self.start) and point1.is_close(self.end):
-            return self.cut_before(self.point3d_to_parameter(point2))
-
-        parameter1 = self.point3d_to_parameter(point1)
-        parameter2 = self.point3d_to_parameter(point2)
+        parameter1 = bsplinecurve.point3d_to_parameter(point1)
+        parameter2 = bsplinecurve.point3d_to_parameter(point2)
         if parameter1 is None or parameter2 is None:
             raise ValueError('Point not on BSplineCurve for trim method')
 
@@ -4565,7 +4556,7 @@ class BSplineCurve3D(BSplineCurve):
             parameter1, parameter2 = parameter2, parameter1
             point1, point2 = point2, point1
 
-        bspline_curve = self.cut_before(parameter1)
+        bspline_curve = bsplinecurve.cut_before(parameter1)
         new_param2 = bspline_curve.point3d_to_parameter(point2)
         trimmed_bspline_cruve = bspline_curve.cut_after(new_param2)
         return trimmed_bspline_cruve
@@ -4579,8 +4570,7 @@ class BSplineCurve3D(BSplineCurve):
             bspline_curve = self.reverse()
         n = len(bspline_curve.control_points)
         local_discretization = bspline_curve.local_discretization(point1, point2, n)
-        return bspline_curve.__class__.from_points_interpolation(
-            local_discretization, bspline_curve.degree, bspline_curve.periodic)
+        return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         warnings.warn('Use BSplineCurve3D.trim instead of trim_between_evaluation')
