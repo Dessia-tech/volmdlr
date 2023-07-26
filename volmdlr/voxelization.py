@@ -1501,11 +1501,64 @@ class VoxelMatrix:
         )
 
     def __add__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
-        return VoxelMatrix(self.matrix + other_voxel_matrix.matrix, self.matrix_origin_center, self.voxel_size)
+        return self.union(other_voxel_matrix)
 
     def inverse(self) -> "VoxelMatrix":
         inverted_matrix = np.logical_not(self.matrix)
         return VoxelMatrix(inverted_matrix, self.matrix_origin_center, self.voxel_size)
+
+    def _get_extents(self):
+        voxel_size_3d = np.array([self.voxel_size for _ in range(3)])
+
+        extents_min = np.round(np.array(self.matrix_origin_center), 6)
+        extents_max = np.round(self.matrix_origin_center + self.matrix.shape * voxel_size_3d, 6)
+        return extents_min, extents_max
+
+    def _voxel_operation(self, other: "VoxelMatrix", operation):
+        if self.voxel_size != other.voxel_size:
+            raise ValueError("Voxel sizes must be the same.")
+
+        self_min, self_max = self._get_extents()
+        other_min, other_max = other._get_extents()
+
+        global_min = np.min([self_min, other_min], axis=0)
+        global_max = np.max([self_max, other_max], axis=0)
+
+        new_shape = np.ceil((global_max - global_min) / self.voxel_size).astype(int)
+
+        new_self = np.zeros(new_shape, dtype=bool)
+        new_other = np.zeros(new_shape, dtype=bool)
+
+        self_start = np.floor((self_min - global_min) / self.voxel_size).astype(int)
+        other_start = np.floor((other_min - global_min) / self.voxel_size).astype(int)
+
+        new_self[
+            self_start[0] : self_start[0] + self.matrix.shape[0],
+            self_start[1] : self_start[1] + self.matrix.shape[1],
+            self_start[2] : self_start[2] + self.matrix.shape[2],
+        ] = self.matrix
+
+        new_other[
+            other_start[0] : other_start[0] + other.matrix.shape[0],
+            other_start[1] : other_start[1] + other.matrix.shape[1],
+            other_start[2] : other_start[2] + other.matrix.shape[2],
+        ] = other.matrix
+
+        result_matrix = operation(new_self, new_other)
+
+        return VoxelMatrix(result_matrix, tuple(global_min), self.voxel_size)
+
+    def intersection(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, np.logical_and)
+
+    def union(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, np.logical_or)
+
+    def difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, lambda a, b: np.logical_and(a, np.logical_not(b)))
+
+    def symmetric_difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, np.logical_xor)
 
     def flood_fill(self, start, fill_with) -> "VoxelMatrix":
         return VoxelMatrix(
@@ -1580,6 +1633,13 @@ class VoxelMatrix:
         #     warnings.warn("This voxelization doesn't have any enclosed voxels.")
 
         return inner_filled_voxel_matrix
+
+    @classmethod
+    def from_voxelization(cls, voxelization: "Voxelization") -> "VoxelMatrix":
+        return voxelization.to_voxel_matrix()
+
+    def to_voxelization(self) -> "Voxelization":
+        return Voxelization.from_voxel_matrix(self)
 
 
 class Pixelization:
