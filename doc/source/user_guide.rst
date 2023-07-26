@@ -31,6 +31,58 @@ The volmdlr library is structured using a modular approach as follows:
 * **display**: provides tools for rendering and visualizing 3D models;
 * **cloud**: provides algorithms to work with a cloud of points;
 
+.. grid:: 3
+
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/point-vector.png
+
+        ^^^^^^^^^^^^^^
+
+        How tos
+
+        +++
+
+        .. button-ref:: how-tos
+            :expand:
+            :color: primary
+            :click-parent:
+
+            To How tos
+
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/user_guide.svg
+
+
+        ^^^^^^^^^^^^^^
+
+        description
+
+        +++
+
+        .. button-ref:: user_guide
+            :expand:
+            :color: primary
+            :click-parent:
+
+            To (to be added)
+
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/user_guide.svg
+
+
+        ^^^^^^^^^^^^^^
+
+        description
+
+        +++
+
+        .. button-ref:: user_guide
+            :expand:
+            :color: primary
+            :click-parent:
+
+            To (to be added)
+
 Fundamentals and usage
 ----------------------
 
