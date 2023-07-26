@@ -167,145 +167,12 @@ class EdgeStyle:
     equal_aspect: bool = True
 
 
-class CompositePrimitive(dc.PhysicalObject):
-    """
-    A collection of simple primitives.
-
-    :param name: The name of the collection of primitives.
-    :type name: str
-    """
-
-    def __init__(self, primitives, name: str = ''):
-        self.primitives = primitives
-        self.name = name
-        self._primitives_to_index = None
-        self._utd_primitives_to_index = False
-        self.basis_primitives = []
-
-        dc.PhysicalObject.__init__(self, name=name)
-
-    def to_dict(self, *args, **kwargs):
-        """Avoids storing points in memo that makes serialization slow."""
-        return dc.PhysicalObject.to_dict(self, use_pointers=False)
-
-    def primitive_to_index(self, primitive):
-        """Constructs a dictionary associating primitive to its index."""
-        if not self._utd_primitives_to_index:
-            self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
-            self._utd_primitives_to_index = True
-        return self._primitives_to_index[primitive]
-
-    def update_basis_primitives(self):
-        basis_primitives = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'basis_primitives'):
-                basis_primitives.extend(primitive.basis_primitives)
-            else:
-                basis_primitives.append(primitive)
-
-        self.basis_primitives = basis_primitives
-
-
-class Primitive2D(dc.PhysicalObject):
-    """
-    Abstract class for 2D primitives.
-
-    :param name: The name of the 2D primitive.
-    :type name: str
-    """
-
-    def __init__(self, name: str = ''):
-        self.name = name
-
-        dc.PhysicalObject.__init__(self, name=name)
-
-
-class CompositePrimitive2D(CompositePrimitive):
-    """
-    A collection of simple 2D primitives.
-
-    :param name: The name of the collection of 2D primitives.
-    :type name: str
-
-    """
-    _non_serializable_attributes = ['name', '_utd_primitives_to_index',
-                                    '_primitives_to_index']
-    _non_data_hash_attributes = ['name', '_utd_primitives_to_index',
-                                 '_primitives_to_index']
-
-    def __init__(self, primitives: List[Primitive2D], name: str = ''):
-        CompositePrimitive.__init__(self, primitives, name=name)
-        self.update_basis_primitives()
-
-        self._utd_primitives_to_index = False
-
-    def rotation(self, center: volmdlr.Point2D, angle: float):
-        """
-        Rotates the CompositePrimitive2D.
-
-        :param center: rotation center.
-        :param angle: angle rotation.
-        :return: a new rotated CompositePrimitive2D.
-        """
-        return self.__class__([point.rotation(center, angle)
-                               for point in self.primitives])
-
-    def translation(self, offset: volmdlr.Vector2D):
-        """
-        Translates the CompositePrimitive2D.
-
-        :param offset: translation vector
-        :return: A new translated CompositePrimitive2D
-        """
-        return self.__class__([primitive.translation(offset)
-                               for primitive in self.primitives])
-
-    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
-        """
-        Changes frame_mapping and return a new CompositePrimitive2D.
-
-        side = 'old' or 'new'
-        """
-        return self.__class__([primitive.frame_mapping(frame, side)
-                               for primitive in self.primitives])
-
-    def plot(self, ax=None, edge_style=EdgeStyle()):
-
-        if ax is None:
-            _, ax = plt.subplots()
-
-        if edge_style.equal_aspect:
-            ax.set_aspect('equal')
-
-        for element in self.primitives:
-            element.plot(ax=ax, edge_style=edge_style)
-
-        ax.margins(0.1)
-        plt.show()
-
-        return ax
-
-    def plot_data(self, name, fill=None, color='black', stroke_width=0.2,
-                  opacity=1):
-        # TODO: not working on 0.8.0
-        plot_data = {}
-        plot_data['fill'] = fill
-        plot_data['name'] = name
-        plot_data['type'] = 'wire'
-        plot_data['plot_data'] = []
-        for item in self.primitives:
-            plot_data['plot_data'].append(item.plot_data(color=color,
-                                                         stroke_width=stroke_width,
-                                                         opacity=opacity))
-        return plot_data
-
-
 class Primitive3D(dc.PhysicalObject):
     """
     Defines a Primitive3D.
     """
 
-    def __init__(self, color: Tuple[float, float, float] = None, alpha: int = 1, name: str = ''):
+    def __init__(self, color: Tuple[float, float, float] = None, alpha: float = 1.0, name: str = ''):
         self.color = color
         self.alpha = alpha
 
@@ -353,21 +220,25 @@ class Primitive3D(dc.PhysicalObject):
         return [babylon_mesh]
 
 
-class CompositePrimitive3D(CompositePrimitive, Primitive3D):
+class CompositePrimitive3D(Primitive3D):
     """
     A collection of simple primitives3D.
     """
     _standalone_in_db = True
     _eq_is_data_eq = True
-    _non_serializable_attributes = ['basis_primitives']
-    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_serializable_attributes = []
+    _non_data_eq_attributes = ['name']
     _non_data_hash_attributes = []
 
     def __init__(self, primitives: List[Primitive3D], color: Tuple[float, float, float] = None, alpha: float = 1,
                  name: str = ''):
-        CompositePrimitive.__init__(self, primitives=primitives, name=name)
+        self.primitives = primitives
         Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
         self._utd_primitives_to_index = False
+
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        return dc.PhysicalObject.to_dict(self, use_pointers=False)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
@@ -1533,12 +1404,10 @@ class VolumeModel(dc.PhysicalObject):
 
         return page_name
 
-    def save_babylonjs_to_file(self, filename: str = None,
-                               use_cdn=True, debug=False):
+    def save_babylonjs_to_file(self, filename: str = None, use_cdn=True, debug=False):
         """Export a html file of the model."""
         babylon_data = self.babylon_data()
-        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                       debug=debug)
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn, debug=debug)
         if filename is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
                                              delete=False) as file:
@@ -1548,9 +1417,9 @@ class VolumeModel(dc.PhysicalObject):
         if not filename.endswith('.html'):
             filename += '.html'
 
-            with open(filename, 'w', encoding='utf-8') as file:
-                file.write(script)
-            return filename
+        with open(filename, 'w', encoding='utf-8') as file:
+            file.write(script)
+        return filename
 
     def to_stl_model(self):
         """Converts the model into a stl object."""

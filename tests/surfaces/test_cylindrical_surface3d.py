@@ -128,7 +128,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
     def test_contour3d_to_2d(self):
         center1 = Point3D(0, 0, 0.013)
         start_end1 = Point3D(0.03, 0, 0.013)
-        circle1 = curves.Circle3D(volmdlr.Frame3D(center1, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D),
+        circle1 = curves.Circle3D(volmdlr.Frame3D(center1, volmdlr.X3D, -volmdlr.Y3D, -volmdlr.Z3D),
                                   center1.point_distance(start_end1))
         center2 = Point3D(0, 0, 0.003)
         start_end2 = Point3D(0.03, 0, 0.003)
@@ -144,11 +144,11 @@ class TestCylindricalSurface3D(unittest.TestCase):
         # ax = contour2d_cylinder.plot()
         # ax.set_aspect("auto")
         area = contour2d_cylinder.area()
-        linesegment2d = contour2d_cylinder.primitives[3]
-        fullarc2d = contour2d_cylinder.primitives[2]
+        fullarc2d = contour2d_cylinder.primitives[3]
+        linesegment2d = contour2d_cylinder.primitives[0]
 
         self.assertEqual(area, 0.02 * math.pi)
-        self.assertEqual(fullarc2d.start, Point2D(volmdlr.TWO_PI, 0.003))
+        self.assertEqual(fullarc2d.start, Point2D(-volmdlr.TWO_PI, 0.003))
         self.assertEqual(fullarc2d.end, Point2D(0, 0.003))
         self.assertEqual(linesegment2d.start, Point2D(0, 0.003))
         self.assertEqual(linesegment2d.end, Point2D(0, 0.013))
