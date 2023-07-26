@@ -1996,7 +1996,8 @@ class Ellipse3D(Curve):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 
-        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
+        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True,
+                                                                    number_points=100)
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
