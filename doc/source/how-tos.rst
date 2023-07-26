@@ -17,6 +17,18 @@ Additionally, there is an optional argument name, which is a string representing
 
 Here's how you can instantiate the Vector2D class:
 
+.. plot::
+   :include-source:
+   :align: center
+
+   import volmdlr
+   import matplotlib.pyplot as plt
+   import mplcyberpunk
+   plt.style.use("cyberpunk")
+
+   vector = volmdlr.Vector2D(1.0, 1.0)
+   vector.plot(color='r')
+
 .. code-block:: python
 
    import volmdlr
