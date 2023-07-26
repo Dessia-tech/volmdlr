@@ -14,13 +14,15 @@ Vector 2D
 To instantiate the Vector2D class, you need to provide the required arguments. In this case, the constructor
 expects two mandatory arguments x and y, which are both floats representing the vector's coordinates.
 Additionally, there is an optional argument name, which is a string representing the vector's name.
+
 Here's how you can instantiate the Vector2D class:
 
-.. code-block::
-  import volmdlr
+.. code-block:: python
 
-  vector = volmdlr.Vector2D(1.0, 1.0)
-  vector.plot(color='r')
+   import volmdlr
+
+   vector = volmdlr.Vector2D(1.0, 1.0)
+   vector.plot(color='r')
 
 Vector 3D
 ---------
