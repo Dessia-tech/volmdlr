@@ -1317,30 +1317,26 @@ class Voxelization(PhysicalObject):
         return True
 
     @classmethod
-    def from_voxel_matrix(cls, voxel_matrix: "VoxelMatrix", voxel_size: float, voxel_matrix_origin_center: Point):
+    def from_voxel_matrix(cls, voxel_matrix: "VoxelMatrix"):
         """
         Create a Voxelization object from a voxel matrix.
 
         :param voxel_matrix: The voxel matrix object representing the voxelization.
         :type voxel_matrix: VoxelMatrix
-        :param voxel_size: The size of the voxel edges.
-        :type voxel_size: float
-        :param voxel_matrix_origin_center: Voxel center of the origin of the voxel matrix, i.e 'matrix[0][0][0]'.
-        :type voxel_matrix_origin_center: tuple[float, float, float]
 
         :return: A Voxelization object created from the voxel matrix.
         :rtype: Voxelization
         """
-        if not cls.voxel_center_in_implicit_grid(voxel_matrix_origin_center, voxel_size):
+        if not cls.voxel_center_in_implicit_grid(voxel_matrix.matrix_origin_center, voxel_matrix.voxel_size):
             warnings.warn(
                 """This voxel matrix is not defined in the implicit grid defined by the voxel_size. 
             Some methods like boolean operation or interference computing may not work as expected."""
             )
 
         indices = np.argwhere(voxel_matrix.matrix)
-        voxel_centers = voxel_matrix_origin_center + indices * voxel_size
+        voxel_centers = voxel_matrix.matrix_origin_center + indices * voxel_matrix.voxel_size
 
-        return cls(set(map(tuple, np.round(voxel_centers, 6))), voxel_size)
+        return cls(set(map(tuple, np.round(voxel_centers, 6))), voxel_matrix.voxel_size)
 
     def _get_min_voxel_grid_center(self) -> Point:
         """
@@ -1409,9 +1405,8 @@ class Voxelization(PhysicalObject):
         :rtype: Voxelization
         """
         inverted_voxel_matrix = self.to_voxel_matrix().inverse()
-        min_voxel_center = self.min_voxel_grid_center
 
-        return Voxelization.from_voxel_matrix(inverted_voxel_matrix, self.voxel_size, min_voxel_center)
+        return Voxelization.from_voxel_matrix(inverted_voxel_matrix)
 
     def _get_bounding_box(self):
         """
@@ -1468,17 +1463,13 @@ class Voxelization(PhysicalObject):
         voxel_matrix = self.to_voxel_matrix()
         filled_voxel_matrix = voxel_matrix.flood_fill(start, fill_with)
 
-        return self.from_voxel_matrix(filled_voxel_matrix, self.voxel_size, self.min_voxel_grid_center)
+        return self.from_voxel_matrix(filled_voxel_matrix)
 
     def fill_outer_voxels(self) -> "Voxelization":
-        return self.from_voxel_matrix(
-            self.to_voxel_matrix().fill_outer_voxels(), self.voxel_size, self.min_voxel_grid_center
-        )
+        return self.from_voxel_matrix(self.to_voxel_matrix().fill_outer_voxels())
 
     def fill_enclosed_voxels(self) -> "Voxelization":
-        return self.from_voxel_matrix(
-            self.to_voxel_matrix().fill_enclosed_voxels(), self.voxel_size, self.min_voxel_grid_center
-        )
+        return self.from_voxel_matrix(self.to_voxel_matrix().fill_enclosed_voxels())
 
 
 class VoxelMatrix:
@@ -1490,6 +1481,14 @@ class VoxelMatrix:
         voxel_matrix_origin_center: Point,
         voxel_size: float,
     ):
+        """
+        :param voxel_matrix: The voxel numpy matrix object representing the voxelization.
+        :type voxel_matrix: np.ndarray[np.bool_, np.ndim == 3]
+        :param voxel_size: The size of the voxel edges.
+        :type voxel_size: float
+        :param voxel_matrix_origin_center: Voxel center of the origin of the voxel matrix, i.e 'matrix[0][0][0]'.
+        :type voxel_matrix_origin_center: tuple[float, float, float]
+        """
         self.matrix = voxel_matrix
         self.matrix_origin_center = voxel_matrix_origin_center
         self.voxel_size = voxel_size
