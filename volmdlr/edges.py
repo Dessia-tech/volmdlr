@@ -1554,6 +1554,15 @@ class BSplineCurve(Edge):
                     return True
         return False
 
+    def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
+        """
+        Sort point along a curve.
+
+        :param points: list of points to be sorted.
+        :return: sorted points.
+        """
+        return sorted(points, key=self.abscissa)
+
 
 class BSplineCurve2D(BSplineCurve):
     """
