@@ -1495,23 +1495,89 @@ class VoxelMatrix:
 
     def __eq__(self, other_voxel_matrix: "VoxelMatrix") -> bool:
         return (
-            self.matrix_origin_center == other_voxel_matrix.matrix_origin_center
-            and self.voxel_size == other_voxel_matrix.voxel_size
+            self.voxel_size == other_voxel_matrix.voxel_size
+            and self.matrix_origin_center == other_voxel_matrix.matrix_origin_center
             and np.array_equal(self.matrix, other_voxel_matrix.matrix)
         )
 
     def __add__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the union of the current voxel matrix with another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to union with.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The union of the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        # return VoxelMatrix(self.matrix + other_voxel_matrix.matrix, self.matrix_origin_center, self.voxel_size)
         return self.union(other_voxel_matrix)
+
+    def __sub__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the difference between the current voxel matrix and another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to subtract.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The difference between the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.difference(other_voxel_matrix)
+
+    def __and__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the intersection of the current voxel matrix with another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to intersect with.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The intersection of the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.intersection(other_voxel_matrix)
+
+    def __or__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the union of the current voxel matrix with another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to union with.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The union of the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.union(other_voxel_matrix)
+
+    def __xor__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the symmetric difference between the current voxel matrix and another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to calculate the symmetric difference with.
+        :type other_voxel_matrix: VoxelMatrix
+        :return: The symmetric difference between the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.symmetric_difference(other_voxel_matrix)
+
+    def __invert__(self) -> "VoxelMatrix":
+        """
+        Return the inverse of the current voxel matrix.
+
+        :return: The inverse VoxelMatrix object.
+        :rtype: VoxelMatrix
+        """
+        return self.inverse()
 
     def inverse(self) -> "VoxelMatrix":
         inverted_matrix = np.logical_not(self.matrix)
         return VoxelMatrix(inverted_matrix, self.matrix_origin_center, self.voxel_size)
 
     def _get_extents(self):
-        voxel_size_3d = np.array([self.voxel_size for _ in range(3)])
-
         extents_min = np.round(np.array(self.matrix_origin_center), 6)
-        extents_max = np.round(self.matrix_origin_center + self.matrix.shape * voxel_size_3d, 6)
+        extents_max = np.round(
+            self.matrix_origin_center + self.matrix.shape * np.array([self.voxel_size for _ in range(3)]), 6
+        )
         return extents_min, extents_max
 
     def _voxel_operation(self, other: "VoxelMatrix", operation):
@@ -1521,16 +1587,16 @@ class VoxelMatrix:
         self_min, self_max = self._get_extents()
         other_min, other_max = other._get_extents()
 
-        global_min = np.min([self_min, other_min], axis=0)
+        global_min = np.min([self_min, other_min], axis=0)  # - 1
         global_max = np.max([self_max, other_max], axis=0)
 
-        new_shape = np.ceil((global_max - global_min) / self.voxel_size).astype(int)
+        new_shape = np.round((global_max - global_min) / self.voxel_size, 6).astype(int)  # - 1
 
         new_self = np.zeros(new_shape, dtype=bool)
         new_other = np.zeros(new_shape, dtype=bool)
 
-        self_start = np.floor((self_min - global_min) / self.voxel_size).astype(int)
-        other_start = np.floor((other_min - global_min) / self.voxel_size).astype(int)
+        self_start = np.round((self_min - global_min) / self.voxel_size, 6).astype(int)
+        other_start = np.round((other_min - global_min) / self.voxel_size, 6).astype(int)
 
         new_self[
             self_start[0] : self_start[0] + self.matrix.shape[0],
