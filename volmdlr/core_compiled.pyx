@@ -18,7 +18,7 @@ import numpy as npy
 import plot_data
 import volmdlr
 from dessia_common.core import DessiaObject
-from matplotlib.patches import FancyArrow, FancyArrowPatch
+from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
 # =============================================================================
