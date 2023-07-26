@@ -19,11 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve3D: trim
 - FullArc3D: hash
 - SphericalSurface3D: enhance repair_periodicity_method
+- CylindricalSurface3D: concurrent_plane_intersection
+- BSplineFace3D: fix neutral_fiber
 - Step: assembly import
 - Ellipse3D: from_step
 - BSplineFace3D: fix neutral_fiber
 - BSplineSurface3D: improve bsplinecurve3d_to_3d.
-
 
 ### Refactor
 - refator some classes' init in primitives3D. 
