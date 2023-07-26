@@ -27,17 +27,27 @@ Here's how you can instantiate the Vector2D class:
    plt.style.use("cyberpunk")
 
    vector = volmdlr.Vector2D(1.0, 1.0)
-   vector.plot(color='r')
-
-.. code-block:: python
-
-   import volmdlr
-
-   vector = volmdlr.Vector2D(1.0, 1.0)
-   vector.plot(color='r')
+   vector.plot(color='orange')
 
 Vector 3D
 ---------
+
+Similar to a Vector2D, Vector3D will also have an x and y component, plus the z component , which are both floats
+representing the vector's coordinates. It also has an optional name argument.
+
+Here's how you can instantiate the Vector3D class:
+
+.. plot::
+   :include-source:
+   :align: center
+
+   import volmdlr
+   import matplotlib.pyplot as plt
+   import mplcyberpunk
+   plt.style.use("cyberpunk")
+
+   vector = volmdlr.Vector3D(1.0, 1.0, 1.0)
+   vector.plot(color='orange')
 
 How to create a Vector
 ======================
