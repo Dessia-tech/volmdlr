@@ -4139,35 +4139,7 @@ class ExtrusionSurface3D(Surface3D):
         n = len(bspline_curve3d.control_points)
         points = [self.point3d_to_2d(point)
                   for point in bspline_curve3d.discretization_points(number_points=n)]
-<<<<<<< HEAD
-        if self.x_periodicity:
-            # if self.x_periodicity in points_x:
-            # for i, x in enumerate(points_x[:-1]):
-            if math.isclose(points[0].x, self.x_periodicity, abs_tol=1e-4):
-                vec1 = points[1] - points[0]
-                vec2 = points[2] - points[1]
-                if vec2.dot(vec1) < 0:
-                    points[0].x = 0
-            if math.isclose(points[-1].x, self.x_periodicity, abs_tol=1e-4):
-                vec1 = points[-1] - points[-2]
-                vec2 = points[-2] - points[-3]
-                if vec2.dot(vec1) < 0:
-                    points[-1].x = 0
-            if math.isclose(points[0].x, 0, abs_tol=1e-4):
-                vec1 = points[1] - points[0]
-                vec2 = points[2] - points[1]
-                if vec2.dot(vec1) < 0:
-                    points[0].x = self.x_periodicity
-            if math.isclose(points[-1].x, 0, abs_tol=1e-4):
-                vec1 = points[-1] - points[-2]
-                vec2 = points[-2] - points[-3]
-                if vec2.dot(vec1) < 0:
-                    points[-1].x = self.x_periodicity
-        return [edges.BSplineCurve2D.from_points_interpolation(
-            points, bspline_curve3d.degree, bspline_curve3d.periodic).simplify]
-=======
         return [edges.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree).simplify]
->>>>>>> dev_voxelization
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -4862,15 +4834,10 @@ class BSplineSurface3D(Surface3D):
         # Find the minimal index
         index = npy.argmin(distances)
         # Find the parametric coordinates of the point
-<<<<<<< HEAD
-        # indexes = int(npy.argmin(distances))
-        x0s.insert(0, self.surface.vertices[index].uv)
-=======
         if self.x_periodicity or self.y_periodicity:
             x0s.insert(1, self.surface.vertices[index].uv)
         else:
             x0s.insert(0, self.surface.vertices[index].uv)
->>>>>>> dev_voxelization
         results = []
         for x0 in x0s:
             res = minimize(fun, x0=npy.array(x0), jac=True,
@@ -5059,16 +5026,11 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-<<<<<<< HEAD
-                n = min(len(bspline_curve3d.control_points), 20)
-                points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
-=======
                 n = min(len(bspline_curve3d.control_points), 20) # limit points to avoid non covergence
                 points3d = bspline_curve3d.discretization_points(number_points=n)
                 points = [self.point3d_to_2d(p) for p in points3d]
                 if self.u_closed() or self.v_closed():
                     points = self.check_start_end_parametric_points(bspline_curve3d, points, points3d)
->>>>>>> dev_voxelization
 
                 if self.x_periodicity:
                     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
@@ -5113,22 +5075,7 @@ class BSplineSurface3D(Surface3D):
                     if flag_line:
                         return [linesegment]
 
-<<<<<<< HEAD
-                if self.x_periodicity:
-                    points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
-
-                if self.y_periodicity:
-                    points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
-                try:
-                    bspline = [edges.BSplineCurve2D.from_points_interpolation(
-                        points=points, degree=bspline_curve3d.degree, periodic=bspline_curve3d.periodic)]
-                except:
-                    bspline = []
-                    print("surfaces.py line 5121")
-                return bspline
-=======
                 return [edges.BSplineCurve2D.from_points_interpolation(points=points, degree=bspline_curve3d.degree)]
->>>>>>> dev_voxelization
 
             if 1e-6 < lth <= 1e-5:
                 linesegments = [edges.LineSegment2D(
@@ -6812,17 +6759,6 @@ class BSplineSurface3D(Surface3D):
                                           points[2])
         return surface3d
 
-<<<<<<< HEAD
-    def is_singularity_point(self, point):
-        if not self.x_periodicity and not self.y_periodicity:
-            return False
-        u_min, u_max = self.surface.domain[0]
-        v_min, v_max = self.surface.domain[1]
-        test_points = [self.point2d_to_3d(volmdlr.Point2D(u_min, v_min)),
-                       self.point2d_to_3d(volmdlr.Point2D(u_max, v_max))]
-        if self.x_periodicity or self.y_periodicity:
-            return any(point.is_close(test_point) for test_point in test_points)
-=======
     def u_closed_lower(self):
         """
         Returns True if the surface is close in any of the u boundaries.
@@ -6988,7 +6924,6 @@ class BSplineSurface3D(Surface3D):
         direction_line = curves.Line2D(reference_point, reference_point + direction_vector)
         return direction_line.line_intersections(singularity_line)[0]
 
->>>>>>> dev_voxelization
 
 class BezierSurface3D(BSplineSurface3D):
     """
