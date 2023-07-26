@@ -1399,7 +1399,7 @@ class Voxelization(PhysicalObject):
         matrix = np.zeros((dim_x, dim_y, dim_z), dtype=np.bool_)
         matrix[indices[:, 0], indices[:, 1], indices[:, 2]] = True
 
-        return VoxelMatrix(matrix)
+        return VoxelMatrix(matrix, min_center, self.voxel_size)
 
     def inverse(self) -> "Voxelization":
         """
@@ -1484,21 +1484,34 @@ class Voxelization(PhysicalObject):
 class VoxelMatrix:
     """Class to manipulate voxel matrix."""
 
-    def __init__(self, numpy_voxel_matrix: np.ndarray):  # np.ndarray[np.bool_, np.ndim == 3]
-        self.matrix = numpy_voxel_matrix
+    def __init__(
+        self,
+        voxel_matrix: np.ndarray,  # np.ndarray[np.bool_, np.ndim == 3]
+        voxel_matrix_origin_center: Point,
+        voxel_size: float,
+    ):
+        self.matrix = voxel_matrix
+        self.matrix_origin_center = voxel_matrix_origin_center
+        self.voxel_size = voxel_size
 
     def __eq__(self, other_voxel_matrix: "VoxelMatrix") -> bool:
-        return np.array_equal(self.matrix, other_voxel_matrix.matrix)
+        return (
+            self.matrix_origin_center == other_voxel_matrix.matrix_origin_center
+            and self.voxel_size == other_voxel_matrix.voxel_size
+            and np.array_equal(self.matrix, other_voxel_matrix.matrix)
+        )
 
     def __add__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
-        return VoxelMatrix(self.matrix + other_voxel_matrix.matrix)
+        return VoxelMatrix(self.matrix + other_voxel_matrix.matrix, self.matrix_origin_center, self.voxel_size)
 
     def inverse(self) -> "VoxelMatrix":
         inverted_matrix = np.logical_not(self.matrix)
-        return VoxelMatrix(inverted_matrix)
+        return VoxelMatrix(inverted_matrix, self.matrix_origin_center, self.voxel_size)
 
     def flood_fill(self, start, fill_with) -> "VoxelMatrix":
-        return VoxelMatrix(flood_fill_matrix(self.matrix, list(start), fill_with))
+        return VoxelMatrix(
+            flood_fill_matrix(self.matrix, list(start), fill_with), self.matrix_origin_center, self.voxel_size
+        )
 
         # directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
         # old_value = self.matrix[start[0]][start[1]][start[2]]
@@ -1536,14 +1549,22 @@ class VoxelMatrix:
         slices = tuple(slice(1, -1) for _ in current_shape)
         expanded_matrix[slices] = self.matrix.copy()
 
-        return VoxelMatrix(expanded_matrix)
+        return VoxelMatrix(
+            expanded_matrix,
+            tuple(round(coord - self.voxel_size, 6) for coord in self.matrix_origin_center),
+            self.voxel_size,
+        )
 
     def _reduce(self) -> "VoxelMatrix":
         current_shape = self.matrix.shape
         slices = tuple(slice(1, -1) for _ in current_shape)
         reduced_matrix = self.matrix.copy()[slices]
 
-        return VoxelMatrix(reduced_matrix)
+        return VoxelMatrix(
+            reduced_matrix,
+            tuple(round(coord + self.voxel_size, 6) for coord in self.matrix_origin_center),
+            self.voxel_size,
+        )
 
     def fill_outer_voxels(self) -> "VoxelMatrix":
         expanded_voxel_matrix = self._expand()
