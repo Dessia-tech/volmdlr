@@ -5287,6 +5287,13 @@ class Arc3D(ArcMixin, Edge):
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
                    angle: float):
+        """
+        Revolution of Arc 3D around an axis.
+
+        :param axis_point: revolution axis point.
+        :param axis: revolution axis.
+        :param angle: revolution angle.
+        """
         line3d = volmdlr_curves.Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.circle.center)
 
@@ -5411,6 +5418,10 @@ class Arc3D(ArcMixin, Edge):
         return linesegment_intersections
 
     def complementary(self):
+        """
+        Gets the complementary arc 3d.
+
+        """
         return Arc3D(self.circle, self.end, self.start)
 
     def sweep(self, *args):
@@ -5494,6 +5505,9 @@ class FullArc3D(FullArcMixin, Arc3D):
         return content, edge_curve
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), show_frame=False):
+        """
+        Plot fullarc3d using matplotlib.
+        """
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         if show_frame:

@@ -675,13 +675,11 @@ class Line3D(Line):
         Project the 3D line onto a 2D plane defined by the center point and two
         orthogonal vectors, x and y.
 
-        Parameters:
-            center (tuple): The center point of the plane as a tuple (x, y, z).
-            x (tuple): A tuple representing the first orthogonal vector (x-component, y-component, z-component).
-            y (tuple): A tuple representing the second orthogonal vector (x-component, y-component, z-component).
+        :param center: The center point of the plane.
+        :param x: A tuple representing the first orthogonal vector (x-component, y-component, z-component).
+        :param y: A tuple representing the second orthogonal vector (x-component, y-component, z-component).
 
-        Returns:
-            Line2D: A new 2D line resulting from the projection of the current 3D line onto the specified plane.
+        :return: A new 2D line resulting from the projection of the current 3D line onto the specified plane.
         """
         return Line2D(self.point1.plane_projection2d(center, x, y),
                       self.point2.plane_projection2d(center, x, y))
@@ -994,7 +992,11 @@ class Circle2D(CircleMixin, Curve):
         return self._bounding_rectangle
 
     def get_bounding_rectangle(self):
+        """
+        Calculates the circle's bounding rectangle.
 
+        :return: returns a Bounding Rectangle object.
+        """
         x_min = self.center.x - self.radius
         x_max = self.center.x + self.radius
         y_min = self.center.y - self.radius
@@ -1119,6 +1121,9 @@ class Circle2D(CircleMixin, Curve):
 
     def plot_data(self, edge_style: plot_data.EdgeStyle = None,
                   surface_style: plot_data.SurfaceStyle = None):
+        """
+        Plots the circle 2d using dessia's plot_data package.
+        """
         return plot_data.Circle2D(cx=self.center.x, cy=self.center.y,
                                   r=self.radius,
                                   edge_style=edge_style,
@@ -1178,6 +1183,18 @@ class Circle2D(CircleMixin, Curve):
         return self.split(split_points[0], split_points[1])
 
     def split(self, split_start, split_end):
+        """
+        Splits the current object into two Arc2D edges.
+
+        This method creates two Arc2D edges by splitting the current object between the specified start and end points.
+        The new Arc2D edges will connect the split_start and split_end points, and split_end and split_start points
+        respectively.
+
+        :param (Point2D) split_start: The starting point of the split.
+        :param (Point2D) split_end: The ending point of the split.
+
+        :return: A list containing the two newly created Arc2D edges resulting from the split.
+        """
         return [volmdlr.edges.Arc2D(self, split_start, split_end),
                 volmdlr.edges.Arc2D(self, split_end, split_start)]
 
@@ -1197,6 +1214,9 @@ class Circle2D(CircleMixin, Curve):
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def get_geo_points(self):
+        """
+        Represents the circle in 3D space.
+        """
         return [volmdlr.Point3D(self.radius, self.center.y, 0),
                 volmdlr.Point3D(self.center.x, self.center.y, 0),
                 volmdlr.Point3D(-self.radius, self.center.y, 0)]
@@ -1222,10 +1242,16 @@ class Circle3D(CircleMixin, Curve):
 
     @property
     def center(self):
+        """
+        Gets the circle's center.
+        """
         return self.frame.origin
 
     @property
     def normal(self):
+        """
+        Gets the circle's normal.
+        """
         return self.frame.w
 
     def __hash__(self):
@@ -1352,6 +1378,14 @@ class Circle3D(CircleMixin, Curve):
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
+        """
+        Exports the circle 3d to STEP.
+
+        :param current_id: the id of the current object.
+        :param surface_id: id of the corresponding surface.
+        :param surface3d: the surface 3d.
+        :return:
+        """
         content, frame_id = self.frame.to_step(current_id)
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{round(self.radius * 1000, 3)});\n"
@@ -1423,6 +1457,26 @@ class Circle3D(CircleMixin, Curve):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
+        """
+        Create a Circle3D object from three points.
+
+        This class method constructs a Circle3D object given three 3D points (Point3D objects).
+        The three points are used to uniquely define a circle in 3D space.
+
+        :param (Point3D) point1: The first point on the circumference of the circle.
+        :param (Point3D) point2: The second point on the circumference of the circle.
+        :param (Point3D) point3: The third point on the circumference of the circle.
+
+        return: A Circle3D object that represents the circle uniquely defined by the three input points.
+
+        :raise ZeroDivisionError: If the three input points are not distinct, a ZeroDivisionError is raised.
+        :raise ZeroDivisionError: If the start, end, and interior points of the arc are not distinct, a ZeroDivisionError is raised.
+        """
+        # The implementation details are not described in the docstring as they are quite involved.
+        # The method calculates the center, radius, and frame of the circle from the three input points in 3D space.
+        # The frame represents the orientation of the circle in 3D space.
+        # The method uses various geometric calculations to find these properties.
+
         vector_u1 = point2 - point1
         vector_u2 = point2 - point3
         try:
@@ -1859,6 +1913,9 @@ class Ellipse3D(Curve):
 
     @property
     def self_2d(self):
+        """
+        Gets the version of the ellipse in 2D.
+        """
         if not self._self_2d:
             self._self_2d = self.to_2d(self.center, self.frame.u, self.frame.v)
         return self._self_2d
