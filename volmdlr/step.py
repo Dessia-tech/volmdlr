@@ -806,6 +806,9 @@ def product_context(arguments, *args, **kwargs):
     """
     return arguments
 
+from volmdlr.utils import step_reader
+from volmdlr.utils.step_reader import STEP_TO_VOLMDLR, STEP_REPRESENTATION_ENTITIES
+
 
 class StepFunction(dc.DessiaObject):
     """
@@ -944,7 +947,7 @@ class Step(dc.DessiaObject):
 
             # FUNCTION ARGUMENTS
             function_arg = function_name_arg[1]
-            arguments = step_split_arguments(function_arg)
+            arguments = step_reader.step_split_arguments(function_arg)
             new_name = ''
             new_arguments = []
             if function_name == "":
@@ -962,7 +965,7 @@ class Step(dc.DessiaObject):
 
             for i, argument in enumerate(arguments):
                 if argument[:2] == '(#' and argument[-1] == ')':
-                    arg_list = set_to_list(argument)
+                    arg_list = step_reader.set_to_list(argument)
                     arguments[i] = arg_list
 
             function = StepFunction(function_id, function_name, arguments)
@@ -1097,7 +1100,7 @@ class Step(dc.DessiaObject):
             else:
                 subfunction_arg += char
         return [
-            (subfunction_names[i], step_split_arguments(subfunction_args[i]))
+            (subfunction_names[i], step_reader.step_split_arguments(subfunction_args[i]))
             for i in range(len(subfunction_names))]
 
     def parse_arguments(self, arguments):
@@ -1126,8 +1129,8 @@ class Step(dc.DessiaObject):
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
         try:
-            if hasattr(volmdlr.step, fun_name):
-                volmdlr_object = getattr(volmdlr.step, fun_name)(arguments, object_dict)
+            if hasattr(step_reader, fun_name):
+                volmdlr_object = getattr(step_reader, fun_name)(arguments, object_dict)
 
             elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
                 volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
@@ -1259,6 +1262,7 @@ class Step(dc.DessiaObject):
             return self.get_shell_node_from_representation_entity(int(id_representation_entity[1:]))
         if function_name == "SHAPE_REPRESENTATION":
             return self.get_shell_node_from_shape_representation(int(id_representation_entity[1:]))
+        raise NotImplementedError("This shape representation has not yet been recognized by volmdlr step translator.")
 
     def product_definition_to_product(self, id_product_definition):
         """Returns the ID of the product entity related to the given product_definition ID."""
@@ -1318,46 +1322,50 @@ class Step(dc.DessiaObject):
                 "GEOMETRIC_REPRESENTATION_CONTEXT": geometric_representation_context,
                 "SHELLS": shell_nodes}
 
-    def get_assembly_data(self):
-        root_nodes = self.root_nodes
-        assemblies_shapes = {}
-        assemblies_positions = {}
+    def get_assembly_struct(self):
+        assemblies_structure = {}
         assemblies = set()
         shapes = set()
-        for node in root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
+        for node in self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             function = self.functions[node]
             try:
                 assembly_product_definition = int(function.arg[3][1:])
             except Exception:
                 print(True)
             assembly_node = int(self.functions[assembly_product_definition].arg[4][1:])
+            assemblies_structure.setdefault(assembly_node, []).append(node)
             assemblies.add(assembly_node)
             id_product_definition = int(function.arg[4][1:])
             if len(self.functions[id_product_definition].arg) > 5:
                 for arg in self.functions[id_product_definition].arg[5:]:
                     shapes.add(int(arg[1:]))
         valid_entities = assemblies.union(shapes)
-        for node in root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
+        return assemblies_structure, valid_entities
+
+    def get_assembly_data(self, assembly_usage_occurence, valid_entities, assembly_frame, object_dict):
+        assembly_shapes = []
+        assembly_positions = []
+        for node in assembly_usage_occurence:
             function = self.functions[node]
-            assembly_product_definition = int(function.arg[3][1:])
-            assembly_node = int(self.functions[assembly_product_definition].arg[4][1:])
             id_product_definition = int(function.arg[4][1:])
-            # if len(self.functions[id_product_definition].arg) == 5:
-            #     ids_shape_definition_representation = [int(self.functions[id_product_definition].arg[4][1:])]
-            # else:
             ids_shape_definition_representation = [int(arg[1:]) for
                                                    arg in self.functions[id_product_definition].arg[4:]
                                                    if int(arg[1:]) in valid_entities]
-            assemblies_shapes.setdefault(assembly_node, []).extend(ids_shape_definition_representation)
+            assembly_shapes.extend(ids_shape_definition_representation)
             id_context_dependent_shape_representation = int(function.arg[-1][1:])
             id_transformation = int(self.functions[id_context_dependent_shape_representation].arg[0][1:])
             id_item_defined_transformation = int(self.functions[id_transformation].arg[4][1:])
-            assembly_frame = int(self.functions[id_item_defined_transformation].arg[2][1:])
-            component_frame = int(self.functions[id_item_defined_transformation].arg[3][1:])
-            assemblies_positions.setdefault(assembly_node, {assembly_node: assembly_frame}).update(
-                {shape_definition_representation: component_frame for shape_definition_representation
-                 in ids_shape_definition_representation})
-        return assemblies_shapes, assemblies_positions
+            id_frame1 = int(self.functions[id_item_defined_transformation].arg[2][1:])
+            id_frame2 = int(self.functions[id_item_defined_transformation].arg[3][1:])
+            frame1 = object_dict[id_frame1]
+            # frame2 = object_dict[id_frame2]
+            if frame1 == assembly_frame:
+                component_frame = id_frame2
+            else:
+                component_frame = id_frame1
+            positions = [component_frame] * len(ids_shape_definition_representation)
+            assembly_positions.extend(positions)
+        return assembly_shapes, assembly_positions
 
     def context_dependent_shape_representation_to_next_assembly_usage_occurrence(self, node):
         """
@@ -1410,14 +1418,13 @@ class Step(dc.DessiaObject):
             self.functions[next_assembly_usage_occurrence].arg.append(f'#{node}')
 
     def instatiate_assembly(self, object_dict):
-        assembly_data, assemblies_positions = self.get_assembly_data()
-        # instanciate_ids = list(assemblies_shapes.keys())
+        assemblies_structure, valid_entities = self.get_assembly_struct()
 
-        # assembly_data = self.get_assembly_data()
-        instanciate_ids = list(assembly_data.keys())
+        instanciate_ids = list(assemblies_structure.keys())
         error = True
         last_error = None
         none_primitives = set()
+        assembly_shape_ids = []
         while error:
             try:
                 # here we invert instantiate_ids because if the code enter inside the except
@@ -1428,33 +1435,23 @@ class Step(dc.DessiaObject):
                         continue
                     product_id = self.shape_definition_representation_to_product_node(instanciate_id)
                     name = self.functions[product_id].arg[0]
-                    # id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
-                    # ids_frames = self.functions[id_shape_representation].arg[1]
-                    # self.parse_arguments(ids_frames)
+                    id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
+                    ids_frames = self.functions[id_shape_representation].arg[1]
+                    self.parse_arguments(ids_frames)
+                    assembly_frame = object_dict[ids_frames[0]]
 
-                    frames_dict = assemblies_positions[instanciate_id]
-                    list_primitives = []
-                    frames = [object_dict[frames_dict[instanciate_id]]]
-                    for node in assembly_data[instanciate_id]:
-                        if node in none_primitives:
-                            assembly_data[instanciate_id].remove(node)
-                            continue
-                        primitives = object_dict[node]
-                        frame = object_dict[frames_dict[node]]
+                    assembly_shape_ids, assembly_position_ids = self.get_assembly_data(
+                        assemblies_structure[instanciate_id], valid_entities, assembly_frame, object_dict)
+                    assembly_positions = [object_dict[id_frame] for id_frame in assembly_position_ids]
+                    list_primitives = [object_dict[id_shape] for id_shape in assembly_shape_ids]
 
-                        if isinstance(primitives, list):
-                            list_primitives.extend(primitives)
-                            frames.extend([frame] * len(primitives))
-                        else:
-                            list_primitives.append(primitives)
-                            frames.append(frame)
                     if not list_primitives:
                         none_primitives.add(instanciate_id)
                         instanciate_ids.pop()
                         continue
-                    # list_primitives = [primi for primi in list_primitives
-                    #                    if primi is not None]
-                    volmdlr_object = volmdlr.core.Assembly(list_primitives, frames[1:], frames[0], name=name)
+
+                    volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_positions, assembly_frame,
+                                                           name=name)
                     object_dict[instanciate_id] = volmdlr_object
 
                 error = False
@@ -1463,12 +1460,9 @@ class Step(dc.DessiaObject):
                 # depth in the right order, leading to error
                 if last_error == key.args[0]:
                     raise NotImplementedError('Error instantiating assembly') from key
-                print('step reading keyerror', key.args[0])
-                if key.args[0] in assembly_data:
+                if key.args[0] in assembly_shape_ids:
                     instanciate_ids.append(key.args[0])
-                    instanciate_ids.extend(assembly_data[key.args[0]])
-                else:
-                    instanciate_ids.append(key.args[0])
+
                 last_error = key.args[0]
         return volmdlr_object
 

@@ -14,16 +14,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Sweep with non smoth path
 - plot of vector3D.
+- BSplineSurface3D: point3d_to_2d, improve inital condition.
 - EdgeCollection3D: babylon_meshes.
+- BSplineCurve3D: trim
+- FullArc3D: hash
 - SphericalSurface3D: enhance repair_periodicity_method
+- Step: assembly import
+- BSplineFace3D: fix neutral_fiber
+- BSplineSurface3D: improve bsplinecurve3d_to_3d.
+
 
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
-- 
+- Composite_primitives
+- Surface3D: enhance repair_primitives_periodicity method.
+- BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
 
 ### Changed
--
+- Moves functions from step.py to volmdlr.utils.step_reader
 
 ### Unittests
 -
@@ -46,8 +55,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 - Sweep with muitiform profile contour.
 <<<<<<< HEAD
+<<<<<<< HEAD
 - New module: Voxelization
 
+=======
+- New module: Voxelization
+>>>>>>> dev_voxelization
 - minimum_distance: face-to-face, shell-to-shell
 - OpenShell3D: from_faces (using faces graph)
 - SphericalFace3D: from_contours3d_and_rectangular_cut

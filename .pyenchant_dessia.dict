@@ -8,6 +8,7 @@ Bezier
 Bézier
 bool
 BoundingBox
+BREP
 bspline
 bsplinecurve
 bsplinesurface
