@@ -1317,30 +1317,26 @@ class Voxelization(PhysicalObject):
         return True
 
     @classmethod
-    def from_voxel_matrix(cls, voxel_matrix: "VoxelMatrix", voxel_size: float, voxel_matrix_origin_center: Point):
+    def from_voxel_matrix(cls, voxel_matrix: "VoxelMatrix"):
         """
         Create a Voxelization object from a voxel matrix.
 
         :param voxel_matrix: The voxel matrix object representing the voxelization.
         :type voxel_matrix: VoxelMatrix
-        :param voxel_size: The size of the voxel edges.
-        :type voxel_size: float
-        :param voxel_matrix_origin_center: Voxel center of the origin of the voxel matrix, i.e 'matrix[0][0][0]'.
-        :type voxel_matrix_origin_center: tuple[float, float, float]
 
         :return: A Voxelization object created from the voxel matrix.
         :rtype: Voxelization
         """
-        if not cls.voxel_center_in_implicit_grid(voxel_matrix_origin_center, voxel_size):
+        if not cls.voxel_center_in_implicit_grid(voxel_matrix.matrix_origin_center, voxel_matrix.voxel_size):
             warnings.warn(
                 """This voxel matrix is not defined in the implicit grid defined by the voxel_size. 
             Some methods like boolean operation or interference computing may not work as expected."""
             )
 
         indices = np.argwhere(voxel_matrix.matrix)
-        voxel_centers = voxel_matrix_origin_center + indices * voxel_size
+        voxel_centers = voxel_matrix.matrix_origin_center + indices * voxel_matrix.voxel_size
 
-        return cls(set(map(tuple, np.round(voxel_centers, 6))), voxel_size)
+        return cls(set(map(tuple, np.round(voxel_centers, 6))), voxel_matrix.voxel_size)
 
     def _get_min_voxel_grid_center(self) -> Point:
         """
@@ -1399,7 +1395,7 @@ class Voxelization(PhysicalObject):
         matrix = np.zeros((dim_x, dim_y, dim_z), dtype=np.bool_)
         matrix[indices[:, 0], indices[:, 1], indices[:, 2]] = True
 
-        return VoxelMatrix(matrix)
+        return VoxelMatrix(matrix, min_center, self.voxel_size)
 
     def inverse(self) -> "Voxelization":
         """
@@ -1409,9 +1405,8 @@ class Voxelization(PhysicalObject):
         :rtype: Voxelization
         """
         inverted_voxel_matrix = self.to_voxel_matrix().inverse()
-        min_voxel_center = self.min_voxel_grid_center
 
-        return Voxelization.from_voxel_matrix(inverted_voxel_matrix, self.voxel_size, min_voxel_center)
+        return Voxelization.from_voxel_matrix(inverted_voxel_matrix)
 
     def _get_bounding_box(self):
         """
@@ -1468,37 +1463,173 @@ class Voxelization(PhysicalObject):
         voxel_matrix = self.to_voxel_matrix()
         filled_voxel_matrix = voxel_matrix.flood_fill(start, fill_with)
 
-        return self.from_voxel_matrix(filled_voxel_matrix, self.voxel_size, self.min_voxel_grid_center)
+        return self.from_voxel_matrix(filled_voxel_matrix)
 
     def fill_outer_voxels(self) -> "Voxelization":
-        return self.from_voxel_matrix(
-            self.to_voxel_matrix().fill_outer_voxels(), self.voxel_size, self.min_voxel_grid_center
-        )
+        return self.from_voxel_matrix(self.to_voxel_matrix().fill_outer_voxels())
 
     def fill_enclosed_voxels(self) -> "Voxelization":
-        return self.from_voxel_matrix(
-            self.to_voxel_matrix().fill_enclosed_voxels(), self.voxel_size, self.min_voxel_grid_center
-        )
+        return self.from_voxel_matrix(self.to_voxel_matrix().fill_enclosed_voxels())
 
 
 class VoxelMatrix:
     """Class to manipulate voxel matrix."""
 
-    def __init__(self, numpy_voxel_matrix: np.ndarray):  # np.ndarray[np.bool_, np.ndim == 3]
-        self.matrix = numpy_voxel_matrix
+    def __init__(
+        self,
+        voxel_matrix: np.ndarray,  # np.ndarray[np.bool_, np.ndim == 3]
+        voxel_matrix_origin_center: Point,
+        voxel_size: float,
+    ):
+        """
+        :param voxel_matrix: The voxel numpy matrix object representing the voxelization.
+        :type voxel_matrix: np.ndarray[np.bool_, np.ndim == 3]
+        :param voxel_size: The size of the voxel edges.
+        :type voxel_size: float
+        :param voxel_matrix_origin_center: Voxel center of the origin of the voxel matrix, i.e 'matrix[0][0][0]'.
+        :type voxel_matrix_origin_center: tuple[float, float, float]
+        """
+        self.matrix = voxel_matrix
+        self.matrix_origin_center = voxel_matrix_origin_center
+        self.voxel_size = voxel_size
 
     def __eq__(self, other_voxel_matrix: "VoxelMatrix") -> bool:
-        return np.array_equal(self.matrix, other_voxel_matrix.matrix)
+        return (
+            self.voxel_size == other_voxel_matrix.voxel_size
+            and self.matrix_origin_center == other_voxel_matrix.matrix_origin_center
+            and np.array_equal(self.matrix, other_voxel_matrix.matrix)
+        )
 
     def __add__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
-        return VoxelMatrix(self.matrix + other_voxel_matrix.matrix)
+        """
+        Return the union of the current voxel matrix with another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to union with.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The union of the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        # return VoxelMatrix(self.matrix + other_voxel_matrix.matrix, self.matrix_origin_center, self.voxel_size)
+        return self.union(other_voxel_matrix)
+
+    def __sub__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the difference between the current voxel matrix and another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to subtract.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The difference between the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.difference(other_voxel_matrix)
+
+    def __and__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the intersection of the current voxel matrix with another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to intersect with.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The intersection of the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.intersection(other_voxel_matrix)
+
+    def __or__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the union of the current voxel matrix with another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to union with.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The union of the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.union(other_voxel_matrix)
+
+    def __xor__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the symmetric difference between the current voxel matrix and another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to calculate the symmetric difference with.
+        :type other_voxel_matrix: VoxelMatrix
+        :return: The symmetric difference between the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.symmetric_difference(other_voxel_matrix)
+
+    def __invert__(self) -> "VoxelMatrix":
+        """
+        Return the inverse of the current voxel matrix.
+
+        :return: The inverse VoxelMatrix object.
+        :rtype: VoxelMatrix
+        """
+        return self.inverse()
 
     def inverse(self) -> "VoxelMatrix":
         inverted_matrix = np.logical_not(self.matrix)
-        return VoxelMatrix(inverted_matrix)
+        return VoxelMatrix(inverted_matrix, self.matrix_origin_center, self.voxel_size)
+
+    def _get_extents(self):
+        extents_min = np.round(np.array(self.matrix_origin_center), 6)
+        extents_max = np.round(
+            self.matrix_origin_center + self.matrix.shape * np.array([self.voxel_size for _ in range(3)]), 6
+        )
+        return extents_min, extents_max
+
+    def _voxel_operation(self, other: "VoxelMatrix", operation):
+        if self.voxel_size != other.voxel_size:
+            raise ValueError("Voxel sizes must be the same.")
+
+        self_min, self_max = self._get_extents()
+        other_min, other_max = other._get_extents()
+
+        global_min = np.min([self_min, other_min], axis=0)  # - 1
+        global_max = np.max([self_max, other_max], axis=0)
+
+        new_shape = np.round((global_max - global_min) / self.voxel_size, 6).astype(int)  # - 1
+
+        new_self = np.zeros(new_shape, dtype=bool)
+        new_other = np.zeros(new_shape, dtype=bool)
+
+        self_start = np.round((self_min - global_min) / self.voxel_size, 6).astype(int)
+        other_start = np.round((other_min - global_min) / self.voxel_size, 6).astype(int)
+
+        new_self[
+            self_start[0] : self_start[0] + self.matrix.shape[0],
+            self_start[1] : self_start[1] + self.matrix.shape[1],
+            self_start[2] : self_start[2] + self.matrix.shape[2],
+        ] = self.matrix
+
+        new_other[
+            other_start[0] : other_start[0] + other.matrix.shape[0],
+            other_start[1] : other_start[1] + other.matrix.shape[1],
+            other_start[2] : other_start[2] + other.matrix.shape[2],
+        ] = other.matrix
+
+        result_matrix = operation(new_self, new_other)
+
+        return VoxelMatrix(result_matrix, tuple(global_min), self.voxel_size)
+
+    def intersection(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, np.logical_and)
+
+    def union(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, np.logical_or)
+
+    def difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, lambda a, b: np.logical_and(a, np.logical_not(b)))
+
+    def symmetric_difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, np.logical_xor)
 
     def flood_fill(self, start, fill_with) -> "VoxelMatrix":
-        return VoxelMatrix(flood_fill_matrix(self.matrix, list(start), fill_with))
+        return VoxelMatrix(
+            flood_fill_matrix(self.matrix, list(start), fill_with), self.matrix_origin_center, self.voxel_size
+        )
 
         # directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
         # old_value = self.matrix[start[0]][start[1]][start[2]]
@@ -1536,14 +1667,22 @@ class VoxelMatrix:
         slices = tuple(slice(1, -1) for _ in current_shape)
         expanded_matrix[slices] = self.matrix.copy()
 
-        return VoxelMatrix(expanded_matrix)
+        return VoxelMatrix(
+            expanded_matrix,
+            tuple(round(coord - self.voxel_size, 6) for coord in self.matrix_origin_center),
+            self.voxel_size,
+        )
 
     def _reduce(self) -> "VoxelMatrix":
         current_shape = self.matrix.shape
         slices = tuple(slice(1, -1) for _ in current_shape)
         reduced_matrix = self.matrix.copy()[slices]
 
-        return VoxelMatrix(reduced_matrix)
+        return VoxelMatrix(
+            reduced_matrix,
+            tuple(round(coord + self.voxel_size, 6) for coord in self.matrix_origin_center),
+            self.voxel_size,
+        )
 
     def fill_outer_voxels(self) -> "VoxelMatrix":
         expanded_voxel_matrix = self._expand()
@@ -1560,6 +1699,13 @@ class VoxelMatrix:
         #     warnings.warn("This voxelization doesn't have any enclosed voxels.")
 
         return inner_filled_voxel_matrix
+
+    @classmethod
+    def from_voxelization(cls, voxelization: "Voxelization") -> "VoxelMatrix":
+        return voxelization.to_voxel_matrix()
+
+    def to_voxelization(self) -> "Voxelization":
+        return Voxelization.from_voxel_matrix(self)
 
 
 class Pixelization:
