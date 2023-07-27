@@ -366,7 +366,7 @@ def geometric_set(arguments, object_dict):
     """
     # TODO: IS THIS RIGHT?
     primitives = [object_dict[int(node[1:])]
-                  for node in arguments[1] if not isinstance(object_dict[int(node[1:])], volmdlr.Point3D)]
+                  for node in arguments[1]] # if not isinstance(object_dict[int(node[1:])], volmdlr.Point3D)]
     return primitives
 
 
@@ -376,7 +376,7 @@ def shell_based_surface_model(arguments, object_dict):
     """
     if len(arguments[1]) == 1:
         return object_dict[int(arguments[1][0][1:])]
-    primitives = [object_dict[int(arg[1:])] for arg in arguments[1]]
+    primitives = [object_dict[int(arg[1:])] for arg in arguments[1] if object_dict[int(arg[1:])]]
     compound = volmdlr.core.Compound(primitives)
     compound.compound_type = "manifold_solid_brep"
     return compound
@@ -417,14 +417,15 @@ def manifold_surface_shape_representation(arguments, object_dict):
     primitives = []
     for arg in arguments[1]:
         primitive = object_dict[int(arg[1:])]
-        if isinstance(primitive, vmshells.Shell3D):
-            primitives.append(primitive)
-        if isinstance(primitive, volmdlr.core.Compound):
-            counter = 0
-            for sub_prim in primitive.primitives:
-                sub_prim.name = arguments[0][1:-1] + str(counter)
-                counter += 1
-            primitives.append(primitive)
+        if primitive:
+            if isinstance(primitive, vmshells.Shell3D):
+                primitives.append(primitive)
+            if isinstance(primitive, volmdlr.core.Compound):
+                counter = 0
+                for sub_prim in primitive.primitives:
+                    sub_prim.name = arguments[0][1:-1] + str(counter)
+                    counter += 1
+                primitives.append(primitive)
     if len(primitives) == 1:
         return primitives[0]
     compound = volmdlr.core.Compound(primitives)
@@ -450,7 +451,8 @@ def faceted_brep_shape_representation(arguments, object_dict):
         if isinstance(object_dict[int(arg[1:])],
                       vmshells.Shell3D):
             shell = object_dict[int(arg[1:])]
-            shells.append(shell)
+            if shell:
+                shells.append(shell)
     return volmdlr.core.Compound(shells)
 
 
@@ -532,14 +534,15 @@ def advanced_brep_shape_representation(arguments, object_dict):
     primitives = []
     for arg in arguments[1]:
         primitive = object_dict[int(arg[1:])]
-        if isinstance(primitive, vmshells.Shell3D):
-            primitives.append(primitive)
-        if isinstance(primitive, volmdlr.core.Compound):
-            counter = 0
-            for sub_prim in primitive.primitives:
-                sub_prim.name = arguments[0][1:-1] + str(counter)
-                counter += 1
-            primitives.append(primitive)
+        if primitive:
+            if isinstance(primitive, vmshells.Shell3D):
+                primitives.append(primitive)
+            if isinstance(primitive, volmdlr.core.Compound):
+                counter = 0
+                for sub_prim in primitive.primitives:
+                    sub_prim.name = arguments[0][1:-1] + str(counter)
+                    counter += 1
+                primitives.append(primitive)
     if len(primitives) == 1:
         return primitives[0]
     compound = volmdlr.core.Compound(primitives)
