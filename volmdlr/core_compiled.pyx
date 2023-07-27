@@ -18,7 +18,7 @@ import numpy as npy
 import plot_data
 import volmdlr
 from dessia_common.core import DessiaObject
-from matplotlib.patches import FancyArrow, FancyArrowPatch
+from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
 # =============================================================================
@@ -944,7 +944,7 @@ class Vector2D(Vector):
             point.plot(ax=ax, color=color)
             return ax
 
-        ax.quiver(origin[0], origin[1], self[0], self[1], angles='xy', scale_units='xy',
+        ax.quiver(origin[0], origin[1], self[0], self[1], angles="xy", scale_units="xy",
                   scale=1, color=color)
 
         ax.set(xlim=sorted([self.x, origin.x]), ylim=sorted([self.y, origin.y]))
