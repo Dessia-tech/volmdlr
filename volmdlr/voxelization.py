@@ -1612,7 +1612,25 @@ class VoxelMatrix:
 
         result_matrix = operation(new_self, new_other)
 
-        return VoxelMatrix(result_matrix, tuple(global_min), self.voxel_size)
+        # Find the indices of the True voxels
+        true_voxels = np.argwhere(result_matrix)
+
+        # Find the minimum and maximum indices along each axis
+        min_voxel_coords, max_voxel_coords = np.round(np.min(true_voxels, axis=0), 6), np.round(
+            np.max(true_voxels, axis=0), 6
+        )
+
+        # Crop the matrix to the smallest possible size
+        result_matrix = result_matrix[
+            min_voxel_coords[0] : max_voxel_coords[0] + 1,
+            min_voxel_coords[1] : max_voxel_coords[1] + 1,
+            min_voxel_coords[2] : max_voxel_coords[2] + 1,
+        ]
+
+        # Calculate new matrix_origin_center
+        new_origin_center = np.round(global_min + min_voxel_coords * self.voxel_size, 6)
+
+        return VoxelMatrix(result_matrix, tuple(new_origin_center), self.voxel_size)
 
     def intersection(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
         return self._voxel_operation(other_voxel_matrix, np.logical_and)
