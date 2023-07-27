@@ -34,7 +34,7 @@ The volmdlr library is structured using a modular approach as follows:
 .. grid:: 3
 
     .. grid-item-card::
-        :img-top: ../source/_static/index-images/point-vector.png
+        :img-top: ../source/_static/index-images/geometric-svgrepo-com.svg
 
         ^^^^^^^^^^^^^^
 
