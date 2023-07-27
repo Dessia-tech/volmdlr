@@ -480,6 +480,7 @@ class Step(dc.DessiaObject):
             return self.get_shell_node_from_representation_entity(int(id_representation_entity[1:]))
         if function_name == "SHAPE_REPRESENTATION":
             return self.get_shell_node_from_shape_representation(int(id_representation_entity[1:]))
+        raise NotImplementedError("This shape representation has not yet been recognized by volmdlr step translator.")
 
     def product_definition_to_product(self, id_product_definition):
         """Returns the ID of the product entity related to the given product_definition ID."""
