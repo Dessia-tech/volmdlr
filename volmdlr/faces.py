@@ -2685,11 +2685,11 @@ class BSplineFace3D(Face3D):
         """Creates a bounding box from the face mesh"""
         try:
             number_points_x, number_points_y = self.grid_size()
+            if number_points_x >= number_points_y:
+                number_points_x, number_points_y = 5, 3
+            else:
+                number_points_x, number_points_y = 3, 5
             discretize_line_direction = "xy"
-            if number_points_y == 0 or number_points_x > 20 * number_points_y:
-                discretize_line_direction = "x"
-            elif number_points_y > 20 * number_points_x:
-                discretize_line_direction = "y"
             outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True,
                                                           discretize_line_direction=discretize_line_direction)
             points = [vmd.Node2D(*point) for point in outer_polygon.points]
