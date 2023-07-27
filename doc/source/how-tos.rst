@@ -129,7 +129,7 @@ and providing the required arguments. Here's how you can do it:
            point1 = volmdlr.Point2D(1.0, 1.0)
            point2 = volmdlr.Point2D(-2.0, -3.0)
            line2d = curves.Line2D(point1, point2, name='line2d_name_is_optional')
-           line2d.plot(edge_style=EdgeStyle('r'))
+           line2d.plot(edge_style=EdgeStyle('orange'))
 
     .. grid-item-card::  Line3D
 
@@ -147,7 +147,7 @@ and providing the required arguments. Here's how you can do it:
            point1 = volmdlr.Point3D(1.0, 1.0, 1.0)
            point2 = volmdlr.Point3D(-2.0, -3.0, -1.0)
            line3d = curves.Line3D(point1, point2, name='line3d_name_is_optional')
-           line3d.plot(color='r')
+           line3d.plot(edge_style=EdgeStyle('orange'))
 
 
 

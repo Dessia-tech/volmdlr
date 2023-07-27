@@ -645,7 +645,7 @@ class Line3D(Line):
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
 
-    def plot(self, ax=None, color='k', alpha=1, dashed=True):
+    def plot(self, ax=None, edge_style=EdgeStyle()):
         """
         Plot method for Line 3D using Matplotlib.
         """
