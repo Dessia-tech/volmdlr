@@ -1582,15 +1582,15 @@ class VoxelMatrix:
 
     def _voxel_operation(self, other: "VoxelMatrix", operation):
         if self.voxel_size != other.voxel_size:
-            raise ValueError("Voxel sizes must be the same.")
+            raise ValueError("Voxel sizes must be the same to perform boolean operations.")
 
         self_min, self_max = self._get_extents()
         other_min, other_max = other._get_extents()
 
-        global_min = np.min([self_min, other_min], axis=0)  # - 1
+        global_min = np.min([self_min, other_min], axis=0)
         global_max = np.max([self_max, other_max], axis=0)
 
-        new_shape = np.round((global_max - global_min) / self.voxel_size, 6).astype(int)  # - 1
+        new_shape = np.round((global_max - global_min) / self.voxel_size, 6).astype(int)
 
         new_self = np.zeros(new_shape, dtype=bool)
         new_other = np.zeros(new_shape, dtype=bool)
