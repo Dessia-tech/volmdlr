@@ -153,7 +153,7 @@ setup(
             "volmdlr/bspline_compiled.pyx",
             "volmdlr/bspline_fitting.pyx",
             "volmdlr/bspline_evaluators.pyx",
-            "volmdlr/voxelization_compiled.pyx",
+            "volmdlr/voxelization_compiled.py",
         ]
     ),
     python_requires=">=3.9",
