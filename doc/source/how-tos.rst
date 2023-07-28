@@ -149,57 +149,105 @@ and providing the required arguments. Here's how you can do it:
            line3d = curves.Line3D(point1, point2, name='line3d_name_is_optional')
            line3d.plot(edge_style=EdgeStyle('orange'))
 
-
-
 How to create a Circle
 =====================
 
-Todo: describe how to create circle
+Circle2D
+--------
 
-.. grid:: 2
+The circle2d  is defined by its center point (Point2D) and a radius (float),
+and it also accepts an optional name for identification.
 
-    .. grid-item-card::  Circle2D
+.. grid-item-card::
 
-        .. plot::
-           :include-source:
-           :align: center
+    .. plot::
+       :include-source:
+       :align: center
 
-           import volmdlr
-           from volmdlr import curves
-           from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
+       import volmdlr
+       from volmdlr import curves
+       from volmdlr.core import EdgeStyle
+       import matplotlib.pyplot as plt
+       import mplcyberpunk
+       plt.style.use("cyberpunk")
 
-           center2d = volmdlr.Point2D(0.0, 0.0)
-           circle2d = curves.Circle2D(center=center2d, radius=1, name='optional_circle_name')
-           circle2d.plot(edge_style=EdgeStyle('orange'))
+       center2d = volmdlr.Point2D(0.0, 0.0)
+       circle2d = curves.Circle2D(center=center2d, radius=1, name='optional_circle_name')
+       circle2d.plot(edge_style=EdgeStyle('orange'))
 
+Circle3D
+--------
 
-    .. grid-item-card::  Circle3D
+The circle is defined by a Frame3D object that includes information about the center and orientation of the
+circle in 3D space, along with a radius (float). The frame's u and v vectors define the plane in which the
+circle lies, and w represents the normal vector to the plane.
 
-        .. plot::
-           :include-source:
-           :align: center
+.. grid-item-card::
 
-           import volmdlr
-           from volmdlr import curves
-           from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
+    .. plot::
+       :include-source:
+       :align: center
 
-           center3D = volmdlr.Point3D(0.0, 0.0, 0.0)
-           u_vector = volmdlr.Vector3D(1.0, 0.0, 0.0)
-           v_vector = volmdlr.Vector3D(0.0, 1.0, 0.0)
-           w_vector = volmdlr.Vector3D(0.0, 0.0, 1.0)
-           frame3d = volmdlr.Frame3D(center3D, u_vector, v_vector, w_vector)
-           circle3d = curves.Circle3D(frame=frame3d, radius=1, name='optional_circle_name')
-           circle3d.plot(edge_style=EdgeStyle('orange'))
+       import volmdlr
+       from volmdlr import curves
+       from volmdlr.core import EdgeStyle
+       import matplotlib.pyplot as plt
+       import mplcyberpunk
+       plt.style.use("cyberpunk")
+
+       center3D = volmdlr.Point3D(0.0, 0.0, 0.0)
+       u_vector = volmdlr.Vector3D(1.0, 0.0, 0.0)
+       v_vector = volmdlr.Vector3D(0.0, 1.0, 0.0)
+       w_vector = volmdlr.Vector3D(0.0, 0.0, 1.0)
+       frame3d = volmdlr.Frame3D(center3D, u_vector, v_vector, w_vector)
+       circle3d = curves.Circle3D(frame=frame3d, radius=1, name='optional_circle_name')
+       circle3d.plot(edge_style=EdgeStyle('orange'))
 
 How to create an Ellipse
 ========================
 
+An ellipse in defined by three arguments: a major axis (A), e minor axis (B) and a Frame (2D or 3D).
+
+.. grid:: 1
+
+    .. grid-item-card::  Ellipse2D
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import curves
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           u_vector = volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475)
+           v_vector = volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)
+           ellipse2d = curves.Ellipse2D(major_axis=2, minor_axis=1, frame=volmdlr.Frame2D(volmdlr.O2D, u_vector, v_vector))
+           ellipse2d.plot(edge_style=EdgeStyle(color='orange'))
+
+    .. grid-item-card::  Ellipse3D
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import curves
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           vector1 = volmdlr.Vector3D(1, 1, 1)
+           vector1 = vector1.unit_vector()
+           vector2 = vector1.deterministic_unit_normal_vector()
+           vector3 = vector1.cross(vector2)
+           frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+           ellipse3d = curves.Ellipse3D(major_axis=2, minor_axis=1, frame=frame)
+           ellipse3d.plot(edge_style=EdgeStyle('orange'))
 
 Edges
 *****
@@ -207,41 +255,483 @@ Edges
 How to create a LineSegment
 ===========================
 
+To instanciate a LineSegment in 2D or 3D, you will need to provide two mandatory arguments, the start and end points.
+Additionally you will have two optional arguments: an infinite line which the line segment lies on and a name argument.
+
 LineSegment2D
 -------------
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           start_point = volmdlr.Point2D(1.0, 1.0)
+           end_point = volmdlr.Point2D(3.0, 4.0)
+           linesegment2d = edges.LineSegment2D(start=start_point, end=end_point, line=None, name='linesegment\'s name')
+           linesegment2d.plot(edge_style=EdgeStyle(color='orange'))
 
 LineSegment3D
 -------------
 
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           start_point = volmdlr.Point3D(1.0, 1.0, 1.0)
+           end_point = volmdlr.Point3D(3.0, 4.0, 6.0)
+           linesegment3d = edges.LineSegment3D(start=start_point, end=end_point, line=None, name='linesegment\'s name')
+           linesegment3d.plot(edge_style=EdgeStyle(color='orange'))
+
+
 How to create an Arc
 ====================
+
 Arc2D
 -----
+
+An Arc2D is defined by the base circle curve along with a start and end points.
+There is also a boolean is_trigo argument that defines if the arc is in the trigo-wise direction or not and a last and optional name argument.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges, curves
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           circle2d = curves.Circle2D(volmdlr.O2D, 1)
+           arc2d = edges.Arc2D(circle2d, volmdlr.Point2D(-1, 0), volmdlr.Point2D(1, 0), True)
+           ax = arc2d.plot(edge_style=EdgeStyle('orange'))
+           ax.set_aspect('equal')
+
+
 Arc3D
 -----
 
+Just as the Arc2D, Arc3D is defined by the base circle curve along with a start and end points. There is also an optional name argument.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges, curves
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           vector1 = volmdlr.Vector3D(1, 1, 1)
+           vector1 = vector1.unit_vector()
+           vector2 = vector1.deterministic_unit_normal_vector()
+           vector3 = vector1.cross(vector2)
+           frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+           circle3d = curves.Circle3D(frame, 1)
+           arc3d = edges.Arc3D(circle3d, start=volmdlr.Point3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+                       end=volmdlr.Point3D(-0.9855985596534886, -0.11957315586905026, -0.11957315586905026))
+           ax = arc3d.plot(edge_style=EdgeStyle('orange'))
+
+
 How to create an ArcEllipse
 ===========================
+
+Both ArcEllipse2D and ArcEllipse3D require a base Ellipse curve along with a start end end points.
+There also an optional name argument.
+
 ArcEllipse2D
 ------------
+
+Object's descrition
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges, curves
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           u_vector = volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475)
+           v_vector = volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)
+           ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, u_vector, v_vector))
+           u_vector = volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475)
+           v_vector = volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)
+           ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, u_vector, v_vector))
+           arc_ellipse2d = edges.ArcEllipse2D(ellipse2d, start=volmdlr.Point2D(0.5, 1.5), end=volmdlr.Point2D(1.5, 0.5))
+           arc_ellipse2d.plot(edge_style=EdgeStyle('orange'))
+
+
+
 ArcEllipse3D
 ------------
 
+Object's descrition
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges, curves
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           vector1 = volmdlr.Vector3D(1, 1, 1)
+           vector1 = vector1.unit_vector()
+           vector2 = vector1.deterministic_unit_normal_vector()
+           vector3 = vector1.cross(vector2)
+           frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+           start_point = volmdlr.Point3D(0.2391463117381003, 1.1051717155225391, 1.1051717155225391)
+           end_point = volmdlr.Point3D(-1.393846850117352, -0.5278214463329132, -0.5278214463329132)
+           ellipse3d = curves.Ellipse3D(2, 1, frame)
+           arc_ellipse3d = edges.ArcEllipse3D(ellipse3d, start=start_point, end=end_point)
+           arc_ellipse3d.plot(edge_style=EdgeStyle('orange'))
+
+
+
 How to create a BSplineCurve
 ============================
+
+To instanciate a BsplineCurve 2D or 3D, we must provide the necessary parameters, such as the degree, control points,
+knot multiplicities, knot vector, and optional weights and name.
+
 BSplineCurve2D
 --------------
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges
+           from volmdlr.core import EdgeStyle
+           from geomdl import utilities
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           DEGREE = 3
+           points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
+           knotvector = utilities.generate_knot_vector(DEGREE, len(points))
+           knot_multiplicity = [1] * len(knotvector)
+           bspline1 = edges.BSplineCurve2D(DEGREE, points, knot_multiplicity, knotvector, None, False)
+           bspline1.plot(edge_style=EdgeStyle('orange'))
+
+
 BSplineCurve3D
 --------------
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           degree = 5
+           control_points = [volmdlr.Point3D(0, 3, 0),
+                             volmdlr.Point3D(3, 2, 1),
+                             volmdlr.Point3D(5, -1, 4),
+                             volmdlr.Point3D(5, -4, 0),
+                             volmdlr.Point3D(-1, -2, -3),
+                             volmdlr.Point3D(-3, 4, 1)]
+           knots = [0.0, 1.0]
+           knot_multiplicities = [6, 6]
+           weights = None  # [1, 2, 1, 2, 1, 2]
+           bspline_curve3d = edges.BSplineCurve3D(degree=degree, control_points=control_points,
+                                           knot_multiplicities=knot_multiplicities,
+                                           knots=knots,
+                                           weights=weights,
+                                           periodic=False,
+                                           name='B Spline Curve 3D 1')
+           bspline_curve3d.plot(edge_style=EdgeStyle('orange'))
+
 
 Wires
 *****
 
-Surfaces
-********
+How to create a Wire
+====================
+
+A wire is an object composed of a list of primitives that does not form a closed and an optional name. This primitives list can contain any set of edges following each other.
+
+Wire2D
+------
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import wires, edges
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           line_segment1 = edges.LineSegment2D(volmdlr.Point2D(1, -1), volmdlr.Point2D(1.5, 1))
+           arc = edges.Arc2D.from_3_points(volmdlr.Point2D(1.5, 1), volmdlr.Point2D(1.3, 1.5), volmdlr.Point2D(0.5, 1.5))
+           points2d = [volmdlr.Point2D(-1, 1), volmdlr.Point2D(2, 2), volmdlr.Point2D(-2, -2), volmdlr.Point2D(1, -1)]
+           bspline = edges.BSplineCurve2D(3, points2d, knot_multiplicities=[4, 4], knots=[0.0, 1.0])
+           wire2d = wires.Wire2D([bspline, line_segment1, arc])
+           wire2d.plot(edge_style=EdgeStyle('orange'))
+
+
+Wire3D
+------
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges, wires
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           degree = 5
+           control_points = [volmdlr.Point3D(0, 3, 0),
+                            volmdlr.Point3D(3, 2, 1),
+                            volmdlr.Point3D(5, -1, 4),
+                            volmdlr.Point3D(5, -4, 0),
+                            volmdlr.Point3D(-1, -2, -3),
+                            volmdlr.Point3D(-3, 4, 1)]
+           knots = [0.0, 1.0]
+           knot_multiplicities = [6, 6]
+           weights = None  # [1, 2, 1, 2, 1, 2]
+           bspline_curve3d = edges.BSplineCurve3D(degree=degree, control_points=control_points,
+                                          knot_multiplicities=knot_multiplicities,
+                                          knots=knots,
+                                          weights=weights,
+                                          periodic=False,
+                                          name='B Spline Curve 3D 1')
+           lineseg1 = edges.LineSegment3D(volmdlr.Point3D(3, 3, 2), bspline_curve3d.start)
+           lineseg2 = edges.LineSegment3D(bspline_curve3d.end, volmdlr.Point3D(-3, -3, 0))
+           wire3d = wires.Wire3D([lineseg1, bspline_curve3d, lineseg2])
+           wire3d.plot(edge_style=EdgeStyle('orange'))
+
+How to create a Contour
+=======================
+
+As a  wire, A contour is also an object composed of a list of primitives but now it forms a closed loop.
+The optional name argument is always present. The primitives list can contain any set of edges following each other.
+
+Contour2D
+---------
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges, wires
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           line_segment1 = edges.LineSegment2D(volmdlr.Point2D(1, -1), volmdlr.Point2D(1.5, 1))
+           line_segment2 = edges.LineSegment2D(volmdlr.Point2D(0.5, 1.5), volmdlr.Point2D(-2, 1))
+           line_segment3 = edges.LineSegment2D(volmdlr.Point2D(-2, 1), volmdlr.Point2D(-2, 0.7))
+           line_segment4 = edges.LineSegment2D(volmdlr.Point2D(-2, 0.7), volmdlr.Point2D(-1, 1))
+           arc = edges.Arc2D.from_3_points(volmdlr.Point2D(1.5, 1), volmdlr.Point2D(1.3, 1.5), volmdlr.Point2D(0.5, 1.5))
+           points2d = [volmdlr.Point2D(-1, 1), volmdlr.Point2D(2, 2), volmdlr.Point2D(-2, -2), volmdlr.Point2D(1, -1)]
+           bspline = edges.BSplineCurve2D(3, points2d, knot_multiplicities=[4, 4], knots=[0.0, 1.0])
+           wire2d = wires.Wire2D([bspline, line_segment1, arc, line_segment2, line_segment3, line_segment4])
+           wire2d.plot(edge_style=EdgeStyle('orange'))
+
+Contour3D
+---------
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges, wires
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+           degree = 5
+           control_points = [volmdlr.Point3D(0, 3, 0),
+                            volmdlr.Point3D(3, 2, 1),
+                            volmdlr.Point3D(5, -1, 4),
+                            volmdlr.Point3D(5, -4, 0),
+                            volmdlr.Point3D(-1, -2, -3),
+                            volmdlr.Point3D(-3, 4, 1)]
+           knots = [0.0, 1.0]
+           knot_multiplicities = [6, 6]
+           weights = None  # [1, 2, 1, 2, 1, 2]
+           bspline_curve3d = edges.BSplineCurve3D(degree=degree, control_points=control_points,
+                                          knot_multiplicities=knot_multiplicities,
+                                          knots=knots,
+                                          weights=weights,
+                                          periodic=False,
+                                          name='B Spline Curve 3D 1')
+           lineseg1 = edges.LineSegment3D(volmdlr.Point3D(3, 3, 2), bspline_curve3d.start)
+           lineseg2 = edges.LineSegment3D(bspline_curve3d.end, volmdlr.Point3D(-3, -3, 0))
+           arc = edges.Arc3D.from_3_points(volmdlr.Point3D(-3, -3, 0), volmdlr.Point3D(6.324555320336761, -5.692099788303083, -0.8973665961010275), volmdlr.Point3D(3, 3, 2))
+           wire3d = wires.Wire3D([lineseg1, bspline_curve3d, lineseg2, arc])
+           wire3d.plot(edge_style=EdgeStyle('orange'))
+
+
+object2D
+-----
+
+Object's descrition
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges, curves
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+
+
+object3D
+-----
+
+Object's descrition
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges, curves
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
 
 Faces
 *****
+
+PlaneFace3D
+===========
+
+
+Triangle3D
+==========
+
+CylindricalFace3D
+=================
+
+ToroidalFace3D
+==============
+
+ConicalFace3D
+=============
+
+SphericalFace3D
+===============
+
+RuledFace3D
+===========
+
+ExtrusionFace3D
+===============
+
+RevolutionFace3D
+================
+
+BSplineFace3D
+=============
+
+
+
+
 
 Shells
 *****

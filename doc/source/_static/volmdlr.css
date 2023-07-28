@@ -63,6 +63,10 @@ h3 {
   text-align: center;
 }
 
+.sd-card .sd-card-text{
+  text-align: justify;
+}
+
 .sd-card .sd-card-header .sd-card-text {
   margin: 0px;
 }

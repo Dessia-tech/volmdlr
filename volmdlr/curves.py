@@ -1618,8 +1618,8 @@ class Ellipse2D(Curve):
     """
     Defines an Ellipse in two-dimensions.
 
-    Ellipse2D defined by a major axis (A), minor axis (B), a center and a vector
-    representing the direction of the major axis.
+    Ellipse2D defined by a major axis (A), minor axis (B), a center and a frame 2d where its u-component
+    represents the direction of the major axis.
 
     :param major_axis: ellipse's major axis (A)
     :type major_axis: float
@@ -1629,7 +1629,7 @@ class Ellipse2D(Curve):
     :type frame: volmdlr.Frame2D.
 
     :Example:
-    >>> ellipse2d = Ellipse2D(4, 2, volmdlr.O2D, volmdlr.Vector2D(1, 1))
+    >>> ellipse2d = Ellipse2D(4, 2, volmdlr.O2D, volmdlr.OXY)
     """
 
     def __init__(self, major_axis, minor_axis, frame, name=''):

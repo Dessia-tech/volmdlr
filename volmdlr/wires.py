@@ -1269,6 +1269,9 @@ class Wire2D(WireMixin, PhysicalObject):
             element.plot(ax=ax, edge_style=edge_style)
 
         ax.margins(0.1)
+        b_rectangle = self.bounding_rectangle
+        xlim, ylim = (b_rectangle[0] - 0.1, b_rectangle[1] + 0.1), (b_rectangle[2] - 0.1, b_rectangle[3] + 0.1)
+        ax.set(xlim=xlim, ylim=ylim)
         plt.show()
 
         return ax
