@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - Line: reverse.
+- babylon dark mode option.
 
 ### Fixed
 - Sweep with non smoth path
