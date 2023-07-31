@@ -1883,7 +1883,7 @@ class ContourMixin(WireMixin):
         Return extremities points of a list of points on a contour.
 
         """
-        # TODO: rewrite this awfull code!
+        # TODO: rewrite this awful code!
         points = []
         primitives = self.primitives
         for prim in primitives:
