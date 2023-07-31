@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle2D: plot
 - Line3D: fix Line3D plot()
 - Vector2D: plot()
+- fix RevolutionFace3D init parameter wire to edge.
 - Update documentation
 
 ### Refactor

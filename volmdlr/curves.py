@@ -128,10 +128,10 @@ class Line(Curve):
         """
         vector = self.point2 - self.point1
         norm_u = vector.norm()
-        t = (point - self.point1).dot(vector) / norm_u ** 2
-        projection = self.point1 + t * vector
+        projection_param_t = (point - self.point1).dot(vector) / norm_u ** 2
+        projection = self.point1 + projection_param_t * vector
         projection = projection.to_point()
-        return projection, t * norm_u
+        return projection, projection_param_t * norm_u
 
     def abscissa(self, point):
         """
