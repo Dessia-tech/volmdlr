@@ -4402,6 +4402,10 @@ class BSplineCurve3D(BSplineCurve):
         return normal
 
     def get_direction_vector(self, abscissa=0.0):
+        """
+        Calculates direction vector at given abscissa value (value between o and bspline length).
+
+        """
         length = self.length()
         if abscissa >= length:
             abscissa2 = length
@@ -4415,6 +4419,10 @@ class BSplineCurve3D(BSplineCurve):
         return tangent
 
     def direction_vector(self, abscissa=0.):
+        """
+        Gets direction vector at given abscissa value (value between o and bspline length).
+
+        """
         if not self._direction_vector_memo:
             self._direction_vector_memo = {}
         if abscissa not in self._direction_vector_memo:
@@ -5906,6 +5914,7 @@ class ArcEllipse3D(Edge):
                 self.__class__(self.ellipse, split_point, self.end)]
 
     def get_reverse(self):
+        """Gets the same ellipse but in the reverse direction."""
         new_frame = volmdlr.Frame3D(self.ellipse.frame.origin, self.ellipse.frame.u, -self.ellipse.frame.v,
                                     self.ellipse.frame.u.cross(-self.ellipse.frame.v))
         ellipse3d = volmdlr_curves.Ellipse3D(self.ellipse.major_axis, self.ellipse.minor_axis, new_frame)
