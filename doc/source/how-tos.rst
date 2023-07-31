@@ -1035,4 +1035,39 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
 
 
 Shells
-*****
+******
+
+A shell is defined as a collection of connected faces. A Shell can a `ClosedShell3D` or an `OpenShell3D`.
+it receives as parameters a list of faces (instances of Face3D), optional color, alpha (transparency), name, and a bounding box.
+
+OpenShell3D
+___________
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+ClosedShell3D
+_____________
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
