@@ -1040,8 +1040,7 @@ Shells
 A shell is defined as a collection of connected faces. A Shell can a `ClosedShell3D` or an `OpenShell3D`.
 it receives as parameters a list of faces (instances of Face3D), optional color, alpha (transparency), name, and a bounding box.
 
-OpenShell3D
-___________
+In the example bellow, it is shown the definition of the shell's lateral faces.
 
 .. grid:: 1
 
@@ -1050,24 +1049,64 @@ ___________
         .. code-block:: python
 
            import volmdlr
-           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr import edges, curves, surfaces, wires, faces, shells
            from volmdlr.core import EdgeStyle
            import matplotlib.pyplot as plt
+           import math
            import mplcyberpunk
            plt.style.use("cyberpunk")
+
+           polygon1_vol1 = wires.ClosedPolygon3D([volmdlr.Point3D(-0.1, -0.05, 0), volmdlr.Point3D(-0.15, 0.1, 0),
+                               volmdlr.Point3D(0.05, 0.2, 0), volmdlr.Point3D(0.12, 0.15, 0), volmdlr.Point3D(0.1, -0.02, 0)])
+
+           polygon2_vol1 = polygon1_vol1.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi).translation(0.2*volmdlr.Z3D)
+           polygon3_vol1 = polygon2_vol1.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi/8).translation(0.1*(volmdlr.Z3D+volmdlr.X3D+volmdlr.Y3D))
+           faces_ = [faces.Triangle3D(*points)
+                   for points in polygon1_vol1.sewing(polygon2_vol1, volmdlr.X3D, volmdlr.Y3D)] + \
+                   [faces.Triangle3D(*points)
+                   for points in polygon2_vol1.sewing(polygon3_vol1, volmdlr.X3D, volmdlr.Y3D)]
+
+
+OpenShell3D
+===========
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        With these faces we can instantiate an OpenShell3D:
+
+        .. code-block:: python
+
+           shell1 = shells.OpenShell3D(faces_)
+           shell1.babylonjs(dark_mode=True)
+
+        .. figure:: ../source/_static/index-images/openshell3d.png
+
 
 ClosedShell3D
-_____________
+=============
+
 
 .. grid:: 1
 
     .. grid-item-card::
 
+        Then the bottom and top faces can be created so a closedshell3d can be instantiated:
+
         .. code-block:: python
 
-           import volmdlr
-           from volmdlr import edges, curves, surfaces, wires, faces
-           from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
+           bottom_surface3d = surfaces.Plane3D.from_plane_vectors(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+           bottom_surface2d = surfaces.Surface2D(polygon1_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D),[])
+
+           top_surface3d = surfaces.Plane3D.from_plane_vectors(0.3*volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
+           top_surface2d = surfaces.Surface2D(polygon3_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D),[])
+
+           bottom_face = faces.PlaneFace3D(bottom_surface3d, bottom_surface2d)
+           top_face = faces.PlaneFace3D(top_surface3d, top_surface2d)
+           faces_ += [bottom_face, top_face]
+
+           shell1 = shells.ClosedShell3D(faces_)
+           shell1.babylonjs(dark_mode=True)
+
+    .. figure:: ../source/_static/index-images/closedshell3d.png

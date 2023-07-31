@@ -47,7 +47,7 @@ The volmdlr library is structured using a modular approach as follows:
             :color: primary
             :click-parent:
 
-            To How tos
+            How tos
 
     .. grid-item-card::
         :img-top: ../source/_static/index-images/user_guide.svg
