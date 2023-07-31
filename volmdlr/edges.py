@@ -1554,6 +1554,15 @@ class BSplineCurve(Edge):
                     return True
         return False
 
+    def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
+        """
+        Sort point along a curve.
+
+        :param points: list of points to be sorted.
+        :return: sorted points.
+        """
+        return sorted(points, key=self.abscissa)
+
 
 class BSplineCurve2D(BSplineCurve):
     """
@@ -4021,6 +4030,9 @@ class LineSegment3D(LineSegment):
         return bspline_curve
 
     def get_reverse(self):
+        """
+        Gets the reverse of the Line Segment.
+        """
         return LineSegment3D(self.end.copy(), self.start.copy())
 
     def minimum_distance_points(self, other_line):
@@ -4573,6 +4585,12 @@ class BSplineCurve3D(BSplineCurve):
         return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
+        """
+        Trims the Bspline between two eval parameters.
+
+        :param parameter1: eval parameter 1, bigger than 0 and smaller than its length.
+        :param parameter2: eval parameter 2, bigger than 0 and smaller than its length.
+        """
         warnings.warn('Use BSplineCurve3D.trim instead of trim_between_evaluation')
         parameter1, parameter2 = min([parameter1, parameter2]), \
             max([parameter1, parameter2])
