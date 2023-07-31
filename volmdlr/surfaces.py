@@ -5009,7 +5009,7 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                n = min(len(bspline_curve3d.control_points), 20) # limit points to avoid non covergence
+                n = min(len(bspline_curve3d.control_points), 20) # limit points to avoid non convergence
                 points3d = bspline_curve3d.discretization_points(number_points=n)
                 points = [self.point3d_to_2d(p) for p in points3d]
                 if self.u_closed() or self.v_closed():

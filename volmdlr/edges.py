@@ -5183,7 +5183,7 @@ class Arc3D(ArcMixin, Edge):
         u3.normalize()
         u4 = other_arc.circle.normal.cross(u3)
 
-        r1, r2 = self.circle.radius, other_arc.circle.radius
+        radius1, radius2 = self.circle.radius, other_arc.circle.radius
 
         a, b, c, d = u1.dot(u1), u1.dot(u2), u1.dot(u3), u1.dot(u4)
         e, f, g = u2.dot(u2), u2.dot(u3), u2.dot(u4)
@@ -5192,27 +5192,27 @@ class Arc3D(ArcMixin, Edge):
         k, l, m, n, o = w.dot(u1), w.dot(u2), w.dot(u3), w.dot(u4), w.dot(w)
 
         def distance_squared(x):
-            return (a * ((math.cos(x[0])) ** 2) * r1 ** 2 + e * (
-                    (math.sin(x[0])) ** 2) * r1 ** 2
-                    + o + h * ((math.cos(x[1])) ** 2) * r2 ** 2 + j * (
-                            (math.sin(x[1])) ** 2) * r2 ** 2
-                    + b * math.sin(2 * x[0]) * r1 ** 2 - 2 * r1 * math.cos(
+            return (a * ((math.cos(x[0])) ** 2) * radius1 ** 2 + e * (
+                    (math.sin(x[0])) ** 2) * radius1 ** 2
+                    + o + h * ((math.cos(x[1])) ** 2) * radius2 ** 2 + j * (
+                            (math.sin(x[1])) ** 2) * radius2 ** 2
+                    + b * math.sin(2 * x[0]) * radius1 ** 2 - 2 * radius1 * math.cos(
                         x[0]) * k
-                    - 2 * r1 * r2 * math.cos(x[0]) * math.cos(x[1]) * c
-                    - 2 * r1 * r2 * math.cos(x[0]) * math.sin(
-                        x[1]) * d - 2 * r1 * math.sin(x[0]) * l
-                    - 2 * r1 * r2 * math.sin(x[0]) * math.cos(x[1]) * f
-                    - 2 * r1 * r2 * math.sin(x[0]) * math.sin(
-                        x[1]) * g + 2 * r2 * math.cos(x[1]) * m
-                    + 2 * r2 * math.sin(x[1]) * n + i * math.sin(
-                        2 * x[1]) * r2 ** 2)
+                    - 2 * radius1 * radius2 * math.cos(x[0]) * math.cos(x[1]) * c
+                    - 2 * radius1 * radius2 * math.cos(x[0]) * math.sin(
+                        x[1]) * d - 2 * radius1 * math.sin(x[0]) * l
+                    - 2 * radius1 * radius2 * math.sin(x[0]) * math.cos(x[1]) * f
+                    - 2 * radius1 * radius2 * math.sin(x[0]) * math.sin(
+                        x[1]) * g + 2 * radius2 * math.cos(x[1]) * m
+                    + 2 * radius2 * math.sin(x[1]) * n + i * math.sin(
+                        2 * x[1]) * radius2 ** 2)
 
         x01 = npy.array([self.angle / 2, other_arc.angle / 2])
 
         res1 = least_squares(distance_squared, x01, bounds=[(0, 0), (self.angle, other_arc.angle)])
 
-        point1 = self.point_at_abscissa(res1.x[0] * r1)
-        point2 = other_arc.point_at_abscissa(res1.x[1] * r2)
+        point1 = self.point_at_abscissa(res1.x[0] * radius1)
+        point2 = other_arc.point_at_abscissa(res1.x[1] * radius2)
 
         return point1, point2
 
