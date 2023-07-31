@@ -651,71 +651,236 @@ Contour3D
            wire3d = wires.Wire3D([lineseg1, bspline_curve3d, lineseg2, arc])
            wire3d.plot(edge_style=EdgeStyle('orange'))
 
-
-object2D
------
-
-Object's descrition
-
-.. grid:: 1
-
-    .. grid-item-card::
-
-        .. plot::
-           :include-source:
-           :align: center
-
-           import volmdlr
-           from volmdlr import edges, curves
-           from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
-
-
-
-object3D
------
-
-Object's descrition
-
-.. grid:: 1
-
-    .. grid-item-card::
-
-        .. plot::
-           :include-source:
-           :align: center
-
-           import volmdlr
-           from volmdlr import edges, curves
-           from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
-
-
 Faces
 *****
 
 PlaneFace3D
 ===========
 
+To create a `PlaneFace3D`, you need to provide two arguments: a `surface3d` and a `surface2d`.
+
+1. For the `surface3d`, you must create a `Plane3D`, which is constructed using a `Frame3D` and an optional `name` parameter.
+
+2. For the `surface2d`, you instantiate it by providing an outer contour in 2D, which will serve as the outer border of the face. Additionally, you need to provide a list of inner contours in 2D, representing any holes within the face, if applicable. The `surface2d` can also have an optional `name` argument.
+
+Ensure to provide the necessary information for both `surface3d` and `surface2d` to successfully create the `PlaneFace3D`.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           surface3d = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0.0, 0.0, 0.0), volmdlr.Vector3D(1.0, 0.0, 0.0),
+                                                        volmdlr.Vector3D(0.0, 1.0, 0.0), volmdlr.Vector3D(0.0, 0.0, 1.0))
+
+           outer_contour2d = wires.Contour2D.from_points(points=[volmdlr.Point2D(0., 0.), volmdlr.Point2D(2, 0),
+                                                                 volmdlr.Point2D(2, 2), volmdlr.Point2D(1, 2),
+                                                                 volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)])
+           inner_contours2d = []
+           surface2d = surfaces.Surface2D(outer_contour2d=outer_contour2d, inner_contours2d=inner_contours2d)
+
+           plane_face = faces.PlaneFace3D(surface3d=surface3d, surface2d=surface2d)
+
+           plane_face.babylonjs(dark_mode=True)
+
+        .. figure:: ../source/_static/index-images/planeface3d.png
+
 
 Triangle3D
 ==========
 
+A Triangle3D receives three mandatory arguments: The three vertices points of the triaangle, along with a last optional name argument.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           triangle3d = faces.Triangle3D(volmdlr.Point3D(0., 0., 1.0), volmdlr.Point3D(2, 0, 0.2), volmdlr.Point3D(2, 2, 3.0))
+           triangle3d.babylonjs(dark_mode=True)
+
+        .. figure:: ../source/_static/index-images/triangle3d.png
+
 CylindricalFace3D
 =================
+
+To create a `CylindricalFace3D`, you need to provide two arguments: a `surface3d` and a `surface2d`.
+
+1. For the `surface3d`, you must create a `CylindricalSurface3D`, which is constructed using a `Frame3D`, a float value for the cylinder radius and an optional `name` parameter.
+
+2. For the `surface2d`, you instantiate it by providing an outer contour in 2D, which will serve as the outer border of the face. Additionally, you need to provide a list of inner contours in 2D, representing any holes within the face, if applicable. The `surface2d` can also have an optional `name` argument.
+
+Ensure to provide the necessary information for both `surface3d` and `surface2d` to successfully create the `CylindricalFace3D`.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           vector1 = volmdlr.Vector3D(1, 1, 1)
+           vector1 = vector1.unit_vector()
+           vector2 = vector1.deterministic_unit_normal_vector()
+           vector3 = vector1.cross(vector2)
+           frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+
+           surface3d = surfaces.CylindricalSurface3D(frame, 1)
+
+           outer_contour2d = wires.Contour2D.from_points(points=[volmdlr.Point2D(0., 0.), volmdlr.Point2D(4, 0),
+                                                                            volmdlr.Point2D(4, 4), volmdlr.Point2D(2, 4),
+                                                                            volmdlr.Point2D(2, 2), volmdlr.Point2D(0, 2)])
+           surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=[])
+
+           face3d = faces.CylindricalFace3D(surface3d, surface2d)
+
+           face3d.babylonjs(dark_mode=True)
+
+        .. figure:: ../source/_static/index-images/cylindricalface3d.png
 
 ToroidalFace3D
 ==============
 
+To create a `ToroidalFace3D`, you need to provide two arguments: a `surface3d` and a `surface2d`.
+
+1. For the `surface3d`, you must create a `ToroidalSurface3D`, which is constructed using three main arguments:
+
+    - `Frame3D`: the three dimensional frame where the toroidal face is at.
+    - tore_radius: The distance from the center of the torus to the center of the tube (the larger radius).
+    - small_radius: The radius of the tube (the smaller radius).
+
+2. For the `surface2d`, you instantiate it by providing an outer contour in 2D, which will serve as the outer border of the face. Additionally, you need to provide a list of inner contours in 2D, representing any holes within the face, if applicable. The `surface2d` can also have an optional `name` argument.
+
+Ensure to provide the necessary information for both `surface3d` and `surface2d` to successfully create the `ToroidalFace3D`.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+
+           surface3d = surfaces.ToroidalSurface3D(vm.OXYZ, tore_radius=0.2, small_radius=0.03, name='optional_toroidalsurface3d\'s_name')
+
+           points = [volmdlr.Point2D(-1.0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 3.5), volmdlr.Point2D(-1, 3.5)]
+           outer_contour2d = wires.Contour2D.from_points(points=points)
+           surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=[])
+
+           toroidal_face3d = faces.ToroidalFace3D(surface3d, surface2d)
+
+           toroidal_face3d.babylonjs(dark_mode=True)
+
+        .. figure:: ../source/_static/index-images/toroidalface3d.png
+
 ConicalFace3D
 =============
 
+To create a `ConicalFace3D`, you need to provide two arguments: a `surface3d` and a `surface2d`.
+
+1. For the `surface3d`, you must create a `ConicalSurface3D`, which is constructed using two main arguments:
+
+    - `Frame3D`: the three dimensional frame where the conical face is at. The frame.w is the cone's axis
+    - semi_angle: The semi-angle of a cone refers to the angle between the central axis of the cone and a line connecting the apex (top) of the cone to a point on the base.
+
+2. For the `surface2d`, you instantiate it by providing an outer contour in 2D, which will serve as the outer border of the face. Additionally, you need to provide a list of inner contours in 2D, representing any holes within the face, if applicable. The `surface2d` can also have an optional `name` argument.
+
+Ensure to provide the necessary information for both `surface3d` and `surface2d` to successfully create the `ConicalFace3D`.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+
+           surface3d = surfaces.ConicalSurface3D(vm.OXYZ, semi_angle=0.2, name='optional_conicalsurface3d\'s_name')
+
+           points = [volmdlr.Point2D(-1.0, 0.0), volmdlr.Point2D(3.0, 0.0), volmdlr.Point2D(3.0, 4.0), volmdlr.Point2D(-1.0, 4.0)]
+           outer_contour2d = wires.Contour2D.from_points(points=points)
+           surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=[])
+
+           toroidal_face3d = faces.ConicalFace3D(surface3d, surface2d)
+
+           toroidal_face3d.babylonjs(dark_mode=True)
+
+        .. figure:: ../source/_static/index-images/conicalface3d.png
+
 SphericalFace3D
 ===============
+
+To create a `SphericalFace3D`, you need to provide two arguments: a `surface3d` and a `surface2d`.
+
+1. For the `surface3d`, you must create a `SphericalSurface3D`, which is constructed using two main arguments:
+
+    * `Frame3D`: the three dimensional frame where the spherical face is at. The frame.origin is the spheres' center.
+    * radius: the radius of the sphere.
+
+2. For the `surface2d`, you instantiate it by providing an outer contour in 2D, which will serve as the outer border of the face. Additionally, you need to provide a list of inner contours in 2D, representing any holes within the face, if applicable. The `surface2d` can also have an optional `name` argument.
+
+Ensure to provide the necessary information for both `surface3d` and `surface2d` to successfully create the `ConicalFace3D`.
+
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+
+           surface3d = surfaces.SphericalSurface3D(vm.OXYZ, radius=0.2, name='optional_sphericalsurface3d\'s_name')
+
+           points = [volmdlr.Point2D(0.0, 0.0), volmdlr.Point2D(2.5, 0.0), volmdlr.Point2D(2.5, 1.5), volmdlr.Point2D(0.0, 1.5)]
+           outer_contour2d = wires.Contour2D.from_points(points=points)
+           surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=[])
+
+           spherical_face3d = faces.SphericalFace3D(surface3d, surface2d)
+
+           spherical_face3d.babylonjs(dark_mode=True)
+
+        .. figure:: ../source/_static/index-images/sphericalface3d.png
 
 RuledFace3D
 ===========
@@ -723,8 +888,101 @@ RuledFace3D
 ExtrusionFace3D
 ===============
 
+To create a `ExtrusionFace3D`, you need to provide two arguments: a `surface3d` and a `surface2d`.
+
+1. For the `surface3d`, you must create a `ExtrusionSurface3D`, which is constructed using two main arguments:
+
+    * `edge`: the edge to be estruded.
+    * direction: The extrusion direction vector.
+
+2. For the `surface2d`, you instantiate it by providing an outer contour in 2D, which will serve as the outer border of the face. Additionally, you need to provide a list of inner contours in 2D, representing any holes within the face, if applicable. The `surface2d` can also have an optional `name` argument.
+
+Ensure to provide the necessary information for both `surface3d` and `surface2d` to successfully create the `ExtrusionFace3D`.
+
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+
+           arc2 = volmdlr.edges.Arc3D(curves.Circle3D(volmdlr.OXYZ, 1), volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(0, 1, 0))
+           surface3d = surfaces.ExtrusionSurface3D(edge=arc2, direction=volmdlr.Z3D)
+
+           outer_contour2d = wires.Contour2D.from_points(points=[volmdlr.Point2D(0., 0.), volmdlr.Point2D(1, 0),
+                                                                            volmdlr.Point2D(1, 1), volmdlr.Point2D(0.5, 1),
+                                                                            volmdlr.Point2D(0.5, 0.5), volmdlr.Point2D(0, 0.5)])
+           inner_contours2d = []
+           surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d)
+
+           face = faces.ExtrusionFace3D(surface3d, surface2d)
+
+           face.babylonjs(dark_mode=True)
+
+        .. figure:: ../source/_static/index-images/extrusionface3d.png
+
 RevolutionFace3D
 ================
+
+To create a `RevolutionFace3D`, you need to provide two arguments: a `surface3d` and a `surface2d`.
+
+1. For the `surface3d`, you must create a `RevolutionSurface3D`, which is constructed using three main arguments:
+
+    * `wire`: the revolution wire.
+    * `axis_point`: revolution's axis point.
+    * `axis`: The axis of revolution.
+
+2. For the `surface2d`, you instantiate it by providing an outer contour in 2D, which will serve as the outer border of the face. Additionally, you need to provide a list of inner contours in 2D, representing any holes within the face, if applicable. The `surface2d` can also have an optional `name` argument.
+
+Ensure to provide the necessary information for both `surface3d` and `surface2d` to successfully create the `RevolutionFace3D`.
+
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           fullarc = edges.FullArc3D(circle=curves.Circle3D(
+                        volmdlr.Frame3D(
+                            volmdlr.Point3D(0.003516498393599, -0.01267818173491, 0.0), volmdlr.Vector3D(1.0, 0.0, 0.0),
+                            volmdlr.Vector3D(0.0, 1.0, 0.0), volmdlr.Vector3D(0.0, 0.0, 1.0)), radius=0.024102542625267),
+                            start_end=volmdlr.Point3D(0.027619041018866, -0.01267818173491, 0.0))
+
+           surface3d = surfaces.RevolutionSurface3D(
+                wire=fullarc, axis_point=volmdlr.Point3D(0, 0, 0), axis=volmdlr.Vector3D(0, 1, 0))
+
+
+           outer_contour2d = wires.Contour2D(primitives=[edges.LineSegment2D(volmdlr.Point2D(0.0, 0.023550776716126855),
+                                                                  volmdlr.Point2D(6.283185307179586, 0.023550776716126855)),
+                                              edges.LineSegment2D(volmdlr.Point2D(6.283185307179586, 0.023550776716126855),
+                                                                  volmdlr.Point2D(6.283185307179586, 0.016162537035284696)),
+                                              edges.LineSegment2D(volmdlr.Point2D(6.283185307179586, 0.016162537035284696),
+                                                                  volmdlr.Point2D(0.0, 0.016162537035284696)),
+                                              edges.LineSegment2D(volmdlr.Point2D(0.0, 0.016162537035284696),
+                                                                  volmdlr.Point2D(0.0, 0.023550776716126855))])
+           inner_contours2d = []
+           surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d)
+           face = faces.RevolutionFace3D(surface3d, surface2d)
+
+           face.babylonjs(dark_mode=True)
+
+        .. figure:: ../source/_static/index-images/revolutionface3d.png
 
 BSplineFace3D
 =============
