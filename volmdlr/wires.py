@@ -4246,11 +4246,13 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
         contour = cls(raw_edges, name=name)
-        if contour.is_ordered(1e-5):
+        if contour.is_ordered(1e-6):
             return contour
-        list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
-        if list_edges:
-            return cls(list_edges, name=name)
+        list_contours = cls.contours_from_edges(raw_edges)
+        for contour in list_contours:
+        # list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
+            if contour.is_ordered():
+                return contour
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
