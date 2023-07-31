@@ -129,7 +129,7 @@ setup(
         "Cython",
         "numpy<=1.24.0",
         "matplotlib<=3.4.3",  # remove when https://github.com/DanPorter/Dans_Diffraction/pull/11 available
-        "scipy",
+        "scipy<1.10.1",
         "geomdl",
         "networkx",
         "triangle",
