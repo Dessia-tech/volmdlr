@@ -789,7 +789,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            plt.style.use("cyberpunk")
 
 
-           surface3d = surfaces.ToroidalSurface3D(vm.OXYZ, tore_radius=0.2, small_radius=0.03, name='optional_toroidalsurface3d\'s_name')
+           surface3d = surfaces.ToroidalSurface3D(volmdlr.OXYZ, tore_radius=0.2, small_radius=0.03, name='optional_toroidalsurface3d\'s_name')
 
            points = [volmdlr.Point2D(-1.0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 3.5), volmdlr.Point2D(-1, 3.5)]
            outer_contour2d = wires.Contour2D.from_points(points=points)
@@ -829,7 +829,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            plt.style.use("cyberpunk")
 
 
-           surface3d = surfaces.ConicalSurface3D(vm.OXYZ, semi_angle=0.2, name='optional_conicalsurface3d\'s_name')
+           surface3d = surfaces.ConicalSurface3D(volmdlr.OXYZ, semi_angle=0.2, name='optional_conicalsurface3d\'s_name')
 
            points = [volmdlr.Point2D(-1.0, 0.0), volmdlr.Point2D(3.0, 0.0), volmdlr.Point2D(3.0, 4.0), volmdlr.Point2D(-1.0, 4.0)]
            outer_contour2d = wires.Contour2D.from_points(points=points)
@@ -870,7 +870,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            plt.style.use("cyberpunk")
 
 
-           surface3d = surfaces.SphericalSurface3D(vm.OXYZ, radius=0.2, name='optional_sphericalsurface3d\'s_name')
+           surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, radius=0.2, name='optional_sphericalsurface3d\'s_name')
 
            points = [volmdlr.Point2D(0.0, 0.0), volmdlr.Point2D(2.5, 0.0), volmdlr.Point2D(2.5, 1.5), volmdlr.Point2D(0.0, 1.5)]
            outer_contour2d = wires.Contour2D.from_points(points=points)
@@ -936,7 +936,7 @@ To create a `RevolutionFace3D`, you need to provide two arguments: a `surface3d`
 
 1. For the `surface3d`, you must create a `RevolutionSurface3D`, which is constructed using three main arguments:
 
-    * `wire`: the revolution wire.
+    * `edge`: the revolution edge.
     * `axis_point`: revolution's axis point.
     * `axis`: The axis of revolution.
 
@@ -965,7 +965,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
                             start_end=volmdlr.Point3D(0.027619041018866, -0.01267818173491, 0.0))
 
            surface3d = surfaces.RevolutionSurface3D(
-                wire=fullarc, axis_point=volmdlr.Point3D(0, 0, 0), axis=volmdlr.Vector3D(0, 1, 0))
+                edge=fullarc, axis_point=volmdlr.Point3D(0, 0, 0), axis=volmdlr.Vector3D(0, 1, 0))
 
 
            outer_contour2d = wires.Contour2D(primitives=[edges.LineSegment2D(volmdlr.Point2D(0.0, 0.023550776716126855),
@@ -987,6 +987,49 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
 BSplineFace3D
 =============
 
+To create a `RevolutionFace3D`, you need to provide two arguments: a `surface3d` and a `surface2d`.
+
+1. For the `surface3d`, you must create a `BSplineSurface3D`, for which we have to provide the necessary parameters,
+such as the degrees (degree_u and degree_v), control points (instances of Point3D), number of control points
+in u and v directions (nb_u and nb_v), knot multiplicities, knot vectors (u_knots and v_knots), optional weights, and name.
+
+2. For the `surface2d`, you instantiate it by providing an outer contour in 2D, which will serve as the outer border of the face. Additionally, you need to provide a list of inner contours in 2D, representing any holes within the face, if applicable. The `surface2d` can also have an optional `name` argument.
+
+Ensure to provide the necessary information for both `surface3d` and `surface2d` to successfully create the `RevolutionFace3D`.
+
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+           import matplotlib.pyplot as plt
+           import mplcyberpunk
+           plt.style.use("cyberpunk")
+
+           control_points = [volmdlr.Point3D(0, 0, 0), volmdlr.Point3D(0.1, 0.02, 0), volmdlr.Point3D(0.2, 0.02, 0),
+                             volmdlr.Point3D(0, 0, 0.15), volmdlr.Point3D(0.1, 0.02, 0.15), volmdlr.Point3D(0.2, 0.02, 0.15),
+                             volmdlr.Point3D(0, 0, 0.3), volmdlr.Point3D(0.1, 0.021, 0.3), volmdlr.Point3D(0.2, 0.022, 0.3)
+                  ]
+
+           surface3d = surfaces.BSplineSurface3D(degree_u=2, degree_v=2, control_points=control_points, nb_u=3, nb_v=3,
+                                               u_multiplicities=[1, 2, 2, 1], v_multiplicities=[1, 2, 2, 1],
+                                               u_knots=[0.1, 0.3, 0.5, 0.7], v_knots=[0.1, 0.3, 0.5, 0.7])
+
+           outer_contour2d = wires.Contour2D.from_points(points=[volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0),
+                                                                 volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)])
+           inner_contours2d = []
+           surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d)
+
+           face = faces.RevolutionFace3D(surface3d, surface2d)
+
+           face.babylonjs(dark_mode=True)
+
+        .. figure:: ../source/_static/index-images/bsplineface3d.png
 
 
 
