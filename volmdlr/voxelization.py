@@ -19,7 +19,7 @@ from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
 # from volmdlr.voxelization_compiled import aabb_intersecting_boxes, flood_fill_matrix, triangle_intersects_voxel
-from volmdlr.voxelization_compiled import triangles_to_voxels
+from volmdlr.voxelization_compiled import triangles_to_voxels, flood_fill_matrix
 from volmdlr.wires import ClosedPolygon2D
 
 # Custom types

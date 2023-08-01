@@ -1,13 +1,17 @@
 # cython: language_level=3
+# distutils: language = c++
 """
 Pure python module to define cython function.
 This module needs to be compiled!
 """
 import cython
 import cython.cimports.libc.math as math_c
-from typing import List, Tuple, Set
+from cython.cimports.libcpp.vector import vector
 
-# C STRUCTS DEFINITION
+from typing import List, Tuple, Set
+import numpy as np
+
+# CUSTOM PYTHON TYPES
 
 Point = Tuple[float, ...]
 Triangle = Tuple[Point, ...]
@@ -15,7 +19,7 @@ Triangle = Tuple[Point, ...]
 
 @cython.cfunc
 @cython.cdivision(True)
-def round_to_digits(num: cython.double, digits: cython.int):
+def round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
     multiplier: cython.double = math_c.pow(10.0, digits)
     return math_c.round(num * multiplier) / multiplier
 
@@ -191,6 +195,7 @@ def triangle_intersects_voxel(
 @cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.exceptval(check=False)
 def calculate_axis_values(
     v0: cython.double[3],
     v1: cython.double[3],
@@ -238,7 +243,7 @@ def aabb_intersecting_boxes(
     z_end = cython.cast(cython.int, (max_point[2] / voxel_size) + 1)
 
     num_centers = (x_end - x_start) * (y_end - y_start) * (z_end - z_start)
-    centers: list = num_centers * [center]
+    centers: list = num_centers * [center]  # TODO: use cpp vector
 
     num_centers = 0
     for x in range(x_start, x_end):
@@ -293,3 +298,45 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
                     voxel_centers.add(bbox_center)
 
     return voxel_centers
+
+
+@cython.cfunc
+def flood_fill_matrix(matrix: vector[vector[vector[cython.int]]], start: cython.int[0], fill_with: cython.int) -> vector[vector[vector[cython.int]]]:
+    dx: cython.int[6] = [0, 0, -1, 1, 0, 0]
+    dy: cython.int[6] = [-1, 1, 0, 0, 0, 0]
+    dz: cython.int[6] = [0, 0, 0, 0, -1, 1]
+    nx: cython.int
+    ny: cython.int
+    nz: cython.int
+    x: cython.int
+    y: cython.int
+    z: cython.int
+    sx: cython.int = matrix.size()
+    sy: cython.int = matrix[0].size()
+    sz: cython.int = matrix[0][0].size()
+
+    old_value = matrix[start[0]][start[1]][start[2]]
+
+    if old_value == fill_with:
+        return matrix
+
+    stack: vector[cython.pint]
+    stack.push_back(start)
+
+    while stack.size() > 0:
+        x, y, z = stack.pop_back()
+
+        matrix[x][y][z] = fill_with
+
+        for i in range(6):
+            nx, ny, nz = x + dx[i], y + dy[i], z + dz[i]
+
+            if (
+                0 <= nx < sx
+                and 0 <= ny < sy
+                and 0 <= nz < sz
+                and matrix[nx][ny][nz] == old_value
+            ):
+                stack.push_back([nx, ny, nz])
+
+    return matrix
