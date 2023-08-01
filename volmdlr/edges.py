@@ -4288,7 +4288,14 @@ class LineSegment3D(LineSegment):
 
         :return:
         """
-        _, section_contour3d = args
+        section_contour2d, section_contour3d = args
+        if section_contour3d is None:
+            start_tangent = self.unit_direction_vector(0.)
+            normal = self.unit_normal_vector(0.)
+            if normal is None:
+                normal = start_tangent.deterministic_unit_normal_vector()
+            tangent_normal_orthonormal = start_tangent.cross(normal)
+            section_contour3d = section_contour2d.to_3d(self.start, normal, tangent_normal_orthonormal)
         new_faces = []
         for contour_primitive in section_contour3d.primitives:
             new_faces.extend(contour_primitive.extrusion(self.length()
@@ -5427,8 +5434,13 @@ class Arc3D(ArcMixin, Edge):
         :return:
         """
         new_faces = []
-        _, section_contour_3d = args
-        for contour_primitive in section_contour_3d.primitives:
+        section_contour2d, section_contour3d = args
+        if section_contour3d is None:
+            start_tangent = self.unit_direction_vector(0.)
+            normal = self.unit_normal_vector(0.)
+            tangent_normal_orthonormal = start_tangent.cross(normal)
+            section_contour3d = section_contour2d.to_3d(self.start, normal, tangent_normal_orthonormal)
+        for contour_primitive in section_contour3d.primitives:
             new_faces.extend(contour_primitive.revolution(
                 self.circle.center, self.circle.normal, self.angle))
         return new_faces
