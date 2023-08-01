@@ -100,11 +100,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Line3D: minimum_distance_points
 - remove arcellipse handleling for bspline2d_3d.
 
-<<<<<<< HEAD
->>>>>>> dev_voxelization
-=======
->>>>>>> dev
-
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
 - BoundingBox: bbox_intersection
@@ -249,10 +244,7 @@ All adequations have been done for all tests and existing scripts.
 - CompositePrimitive3D: babylon_points
 - WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
 - ContourMixin: contours_from_edges
-<<<<<<< HEAD
 - Improve step translator.
-=======
->>>>>>> step_reader_renault
 - ExtrusionSurface3D: simplify bsplinecurve3d_to_2d method
 
 ### Changed
