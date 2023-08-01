@@ -4359,7 +4359,7 @@ class BSplineCurve3D(BSplineCurve):
     def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):
         """
-        Creates a table of equivalence between the parameter t (evaluation of the BSplineCurve) and the cumulative distance.
+        Creates a table of equivalence between parameter t (evaluation of BSplineCurve) and the cumulative distance.
 
         :param resolution: The precision of the table. Auto-adjusted by the
             algorithm. Default value set to 20
