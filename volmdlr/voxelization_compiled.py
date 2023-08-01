@@ -1,25 +1,23 @@
+# cython: language_level=3
 """
 Pure python module to define cython function.
 This module needs to be compiled!
 """
 import cython
-from cython.cimports.libc.math import fabs, sqrt
-from typing import List
+import cython.cimports.libc.math as math_c
+from typing import List, Tuple, Set
 
 # C STRUCTS DEFINITION
 
-# Vector3D = cython.double[3]
-# Triangle3D = Vector3D[3]
+Point = Tuple[float, ...]
+Triangle = Tuple[Point, ...]
 
-# Vector3D = cython.struct(
-#     x=cython.double,
-#     y=cython.double,
-#     z=cython.double,
-# )
 
-# Triangle3D = cython.struct(
-#     points=Vector3D[3],
-# )
+@cython.cfunc
+@cython.cdivision(True)
+def round_to_digits(num: cython.double, digits: cython.int):
+    multiplier: cython.double = math_c.pow(10.0, digits)
+    return math_c.round(num * multiplier) / multiplier
 
 
 @cython.cfunc
@@ -105,13 +103,13 @@ def triangle_intersects_voxel(
     plane_normal[1] = f0[2] * f1[0] - f0[0] * f1[2]
     plane_normal[2] = f0[0] * f1[1] - f0[1] * f1[0]
 
-    plane_distance = fabs(plane_normal[0] * v0[0] + plane_normal[1] * v0[1] + plane_normal[2] * v0[2])
+    plane_distance = math_c.fabs(plane_normal[0] * v0[0] + plane_normal[1] * v0[1] + plane_normal[2] * v0[2])
 
     # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
     r = (
-        voxel_extents[0] * fabs(plane_normal[0])
-        + voxel_extents[1] * fabs(plane_normal[1])
-        + voxel_extents[2] * fabs(plane_normal[2])
+        voxel_extents[0] * math_c.fabs(plane_normal[0])
+        + voxel_extents[1] * math_c.fabs(plane_normal[1])
+        + voxel_extents[2] * math_c.fabs(plane_normal[2])
     )
 
     # Intersection occurs when plane distance falls within [-r,+r] interval
@@ -204,7 +202,11 @@ def calculate_axis_values(
     p0 = v0[0] * ax[0] + v0[1] * ax[1] + v0[2] * ax[2]
     p1 = v1[0] * ax[0] + v1[1] * ax[1] + v1[2] * ax[2]
     p2 = v2[0] * ax[0] + v2[1] * ax[1] + v2[2] * ax[2]
-    r = voxel_extents[0] * fabs(f[2]) + voxel_extents[1] * fabs(f[0]) + voxel_extents[2] * fabs(f[1])
+    r = (
+        voxel_extents[0] * math_c.fabs(f[2])
+        + voxel_extents[1] * math_c.fabs(f[0])
+        + voxel_extents[2] * math_c.fabs(f[1])
+    )
 
     return max(-max(p0, p1, p2), min(p0, p1, p2)) > r
 
@@ -212,6 +214,7 @@ def calculate_axis_values(
 @cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.cdivision(True)
 def aabb_intersecting_boxes(
     min_point: cython.double[3], max_point: cython.double[3], voxel_size: cython.double
 ) -> List[cython.double[3]]:
@@ -241,43 +244,52 @@ def aabb_intersecting_boxes(
     for x in range(x_start, x_end):
         for y in range(y_start, y_end):
             for z in range(z_start, z_end):
-                center[0] = round((x + 0.5) * voxel_size, 6)
-                center[1] = round((y + 0.5) * voxel_size, 6)
-                center[2] = round((z + 0.5) * voxel_size, 6)
+                center[0] = round_to_digits((x + 0.5) * voxel_size, 6)
+                center[1] = round_to_digits((y + 0.5) * voxel_size, 6)
+                center[2] = round_to_digits((z + 0.5) * voxel_size, 6)
                 centers[num_centers] = center
                 num_centers += 1
 
     return centers
 
 
-# def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
-#     """
-#     Helper method to compute all the voxels intersecting with a given list of triangles.
-#
-#     :param triangles: The triangles to compute the intersecting voxels.
-#     :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
-#     :param voxel_size: The voxel edges size.
-#     :type voxel_size: float
-#
-#     :return: The centers of the voxels that intersect with the triangles.
-#     :rtype: set[tuple[float, float, float]]
-#     """
-#     voxel_centers = set()
-#
-#     for triangle in tqdm(triangles):
-#         # Check if the triangle is at the interface of two voxels, and add them
-#         voxel_centers = voxel_centers.union(Voxelization._triangle_interface_voxels(triangle, voxel_size))
-#
-#         min_point = tuple(min(p[i] for p in triangle) for i in range(3))
-#         max_point = tuple(max(p[i] for p in triangle) for i in range(3))
-#
-#         for bbox_center in aabb_intersecting_boxes(min_point, max_point, voxel_size):
-#             if bbox_center not in voxel_centers:
-#                 if triangle_intersects_voxel(
-#                     triangle,
-#                     bbox_center,
-#                     [0.5 * voxel_size for _ in range(3)],
-#                 ):
-#                     voxel_centers.add(bbox_center)
-#
-#     return voxel_centers
+def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
+    """
+    Helper method to compute all the voxels intersecting with a given list of triangles.
+
+    :param triangles: The triangles to compute the intersecting voxels.
+    :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+    :param voxel_size: The voxel edges size.
+    :type voxel_size: float
+
+    :return: The centers of the voxels that intersect with the triangles.
+    :rtype: set[tuple[float, float, float]]
+    """
+    voxel_centers = set()
+
+    for triangle in triangles:
+        # Check if the triangle is at the interface of two voxels, and add them
+        # voxel_centers = voxel_centers.union(Voxelization._triangle_interface_voxels(triangle, voxel_size))
+
+        min_point = tuple(min(p[i] for p in triangle) for i in range(3))
+        max_point = tuple(max(p[i] for p in triangle) for i in range(3))
+
+        for bbox_center in aabb_intersecting_boxes(
+            [min_point[0], min_point[1], min_point[2]],
+            [max_point[0], max_point[1], max_point[2]],
+            voxel_size,
+        ):
+            bbox_center = tuple(bbox_center)
+            if bbox_center not in voxel_centers:
+                if triangle_intersects_voxel(
+                    [
+                        [triangle[0][0], triangle[0][1], triangle[0][2]],
+                        [triangle[1][0], triangle[1][1], triangle[1][2]],
+                        [triangle[2][0], triangle[2][1], triangle[2][2]],
+                    ],
+                    [bbox_center[0], bbox_center[1], bbox_center[2]],
+                    [0.5 * voxel_size, 0.5 * voxel_size, 0.5 * voxel_size],
+                ):
+                    voxel_centers.add(bbox_center)
+
+    return voxel_centers

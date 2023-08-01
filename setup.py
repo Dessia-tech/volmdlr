@@ -154,6 +154,7 @@ setup(
             "volmdlr/bspline_fitting.pyx",
             "volmdlr/bspline_evaluators.pyx",
             "volmdlr/voxelization_compiled.py",
+            "volmdlr/voxelization_compiled_old.pyx",
         ]
     ),
     python_requires=">=3.9",
