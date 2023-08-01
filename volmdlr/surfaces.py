@@ -2227,7 +2227,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
         Cylinder plane intersections when plane's normal is concurrent with the cylinder axis, but not orthogonal.
 
-        Heavely based on the implemetation available in this link:
+        Heavily based on the implementation available in this link:
         https://www.geometrictools.com/Documentation/IntersectionCylinderPlane.pdf
 
         :param plane3d: intersecting plane.
@@ -4778,14 +4778,14 @@ class BSplineSurface3D(Surface3D):
         :rtype: :class:`volmdlr.Point2D`
         """
 
-        def f(x):
+        def sort_func(x):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
 
         def fun(x):
             derivatives = self.derivatives(x[0], x[1], 1)
-            r = derivatives[0][0] - point3d
-            f_value = r.norm() + 1e-32
-            jacobian = npy.array([r.dot(derivatives[1][0]) / f_value, r.dot(derivatives[0][1]) / f_value])
+            vector = derivatives[0][0] - point3d
+            f_value = vector.norm() + 1e-32
+            jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value, vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
 
         min_bound_x, max_bound_x = self.surface.domain[0]
@@ -4807,7 +4807,7 @@ class BSplineSurface3D(Surface3D):
                (0.33333333, 0.009), (0.5555555, 0.0099)]
 
             # Sort the initial conditions
-        x0s.sort(key=f)
+        x0s.sort(key=sort_func)
         matrix = npy.array(self.surface.evalpts)
         point3d_array = npy.array([point3d[0], point3d[1], point3d[2]])
 

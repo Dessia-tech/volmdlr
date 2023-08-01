@@ -4065,7 +4065,7 @@ class LineSegment3D(LineSegment):
         return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
-        """Calculates the paralell distance between two Line Segments 3D."""
+        """Calculates the parallel distance between two Line Segments 3D."""
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
@@ -4359,7 +4359,7 @@ class BSplineCurve3D(BSplineCurve):
     def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):
         """
-        Creates a table of equivalence between the parameter t (eval. of the BSplineCurve) and the cumulative distance.
+        Creates a table of equivalence between the parameter t (evaluation of the BSplineCurve) and the cumulative distance.
 
         :param resolution: The precision of the table. Auto-adjusted by the
             algorithm. Default value set to 20
@@ -4587,10 +4587,10 @@ class BSplineCurve3D(BSplineCurve):
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         """
-        Trims the Bspline between two eval parameters.
+        Trims the Bspline between two abscissa evaluation parameters.
 
-        :param parameter1: eval parameter 1, bigger than 0 and smaller than its length.
-        :param parameter2: eval parameter 2, bigger than 0 and smaller than its length.
+        :param parameter1: evaluation parameter 1, bigger than 0 and smaller than its length.
+        :param parameter2: evaluation parameter 2, bigger than 0 and smaller than its length.
         """
         warnings.warn('Use BSplineCurve3D.trim instead of trim_between_evaluation')
         parameter1, parameter2 = min([parameter1, parameter2]), \
