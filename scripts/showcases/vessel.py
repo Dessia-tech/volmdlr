@@ -1,16 +1,12 @@
-import math
-import time
-from itertools import product
 
-import matplotlib.pyplot as plt
-import mplcyberpunk
+# import matplotlib.pyplot as plt
+# import mplcyberpunk
+# plt.style.use("cyberpunk")
 
-import dessia_common.core
 import volmdlr
-from volmdlr import edges, curves, primitives3d, surfaces, faces, wires, shells
+from volmdlr import edges, curves, surfaces, faces, wires, shells
 from volmdlr.core import EdgeStyle
 
-# plt.style.use("cyberpunk")
 
 ellipse = curves.Ellipse3D(4, 3, frame=volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D))
 
@@ -55,9 +51,3 @@ cylindrial_face = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindria
 closedshell3d = shells.ClosedShell3D([revolution_face_left, cylindrial_face, revolution_face_right,
                                       connector1, connector2, closing_face_left, closing_face_right])
 closedshell3d.babylonjs()
-
-
-
-# point = ellipse.point_at_abscissa(0.0)
-# wire = wires.Contour3D([ellipse.trim(point, point)])
-# wire.babylonjs()
