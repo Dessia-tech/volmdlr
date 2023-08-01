@@ -1473,6 +1473,12 @@ class Sweep(shells.ClosedShell3D):
                      volmdlr.Point2D(-max_brectangle, max_brectangle)])
         new_faces = []
         last_end_tangent = self.wire3d.primitives[0].unit_direction_vector(0.)
+        start_tangent = self.wire3d.primitives[0].unit_direction_vector(0.)
+        normal = self.wire3d.primitives[0].unit_normal_vector(0.)
+        if normal is None:
+            normal = start_tangent.deterministic_unit_normal_vector()
+        tangent_normal_orthonormal = start_tangent.cross(normal)
+        section_contour = self.contour2d.to_3d(self.wire3d.primitives[0].start, normal, tangent_normal_orthonormal)
         for i, wire_primitive in enumerate(self.wire3d.primitives):
             start_tangent = wire_primitive.unit_direction_vector(0.)
             normal = wire_primitive.unit_normal_vector(0.)
@@ -1481,7 +1487,7 @@ class Sweep(shells.ClosedShell3D):
             tangent_normal_orthonormal = start_tangent.cross(normal)
 
             if i == 0 or not start_tangent.is_close(last_end_tangent):
-                new_faces = wire_primitive.sweep(self.contour2d, None)
+                new_faces = wire_primitive.sweep(self.contour2d, section_contour)
             else:
                 plane = surfaces.Plane3D(volmdlr.Frame3D(wire_primitive.start, normal,
                                                          tangent_normal_orthonormal, start_tangent))
