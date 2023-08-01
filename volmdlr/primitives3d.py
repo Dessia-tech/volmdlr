@@ -1472,6 +1472,7 @@ class Sweep(shells.ClosedShell3D):
                      volmdlr.Point2D(max_brectangle, max_brectangle),
                      volmdlr.Point2D(-max_brectangle, max_brectangle)])
         new_faces = []
+        last_end_tangent = self.wire3d.primitives[0].unit_direction_vector(0.)
         for i, wire_primitive in enumerate(self.wire3d.primitives):
             start_tangent = wire_primitive.unit_direction_vector(0.)
             normal = wire_primitive.unit_normal_vector(0.)
