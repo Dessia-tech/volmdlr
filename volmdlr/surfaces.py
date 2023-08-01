@@ -4400,6 +4400,16 @@ class RevolutionSurface3D(PeriodicalSurface):
         new_edge = self.edge.frame_mapping(frame, side)
         return RevolutionSurface3D(new_edge, axis_point, axis, name=self.name)
 
+    def translation(self, offset):
+        """
+        Returns a new translated Revolution Surface.
+
+        :param offset: translation vector.
+        """
+        new_edge = self.edge.translation(offset)
+        new_axis_point = self.axis_point.translation(offset)
+        return RevolutionSurface3D(new_edge, new_axis_point, self.axis)
+
     def simplify(self):
         line3d = curves.Line3D(self.axis_point, self.axis_point + self.axis)
         if isinstance(self.edge, edges.Arc3D):
