@@ -1554,6 +1554,15 @@ class BSplineCurve(Edge):
                     return True
         return False
 
+    def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
+        """
+        Sort point along a curve.
+
+        :param points: list of points to be sorted.
+        :return: sorted points.
+        """
+        return sorted(points, key=self.abscissa)
+
 
 class BSplineCurve2D(BSplineCurve):
     """
@@ -2386,7 +2395,7 @@ class FullArcMixin(ArcMixin):
     """
 
     def __init__(self, circle: Union[volmdlr.curves.Circle2D, volmdlr.curves.Circle3D],
-                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
+                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D]):
         self.circle = circle
         self.start_end = start_end
         ArcMixin.__init__(self, circle=circle, start=start_end, end=start_end)  # !!! this is dangerous
@@ -2945,8 +2954,8 @@ class FullArc2D(FullArcMixin, Arc2D):
                  name: str = ''):
         # self.interior = start_end.rotation(center, math.pi)
         self._bounding_rectangle = None
-        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
-        Arc2D.__init__(self, circle=circle, start=start_end, end=start_end)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end)
+        Arc2D.__init__(self, circle=circle, start=start_end, end=start_end, name=name)
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
 
@@ -4021,6 +4030,9 @@ class LineSegment3D(LineSegment):
         return bspline_curve
 
     def get_reverse(self):
+        """
+        Gets the reverse of the Line Segment.
+        """
         return LineSegment3D(self.end.copy(), self.start.copy())
 
     def minimum_distance_points(self, other_line):
@@ -4053,7 +4065,7 @@ class LineSegment3D(LineSegment):
         return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
-        """Calculates the paralell distance between two Line Segments 3D."""
+        """Calculates the parallel distance between two Line Segments 3D."""
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
@@ -4354,7 +4366,7 @@ class BSplineCurve3D(BSplineCurve):
     def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):
         """
-        Creates a table of equivalence between the parameter t (eval. of the BSplineCurve) and the cumulative distance.
+        Creates a table of equivalence between parameter t (evaluation of BSplineCurve) and the cumulative distance.
 
         :param resolution: The precision of the table. Auto-adjusted by the
             algorithm. Default value set to 20
@@ -4390,6 +4402,10 @@ class BSplineCurve3D(BSplineCurve):
         return normal
 
     def get_direction_vector(self, abscissa=0.0):
+        """
+        Calculates direction vector at given abscissa value (value between o and bspline length).
+
+        """
         length = self.length()
         if abscissa >= length:
             abscissa2 = length
@@ -4403,6 +4419,10 @@ class BSplineCurve3D(BSplineCurve):
         return tangent
 
     def direction_vector(self, abscissa=0.):
+        """
+        Gets direction vector at given abscissa value (value between o and bspline length).
+
+        """
         if not self._direction_vector_memo:
             self._direction_vector_memo = {}
         if abscissa not in self._direction_vector_memo:
@@ -4573,6 +4593,12 @@ class BSplineCurve3D(BSplineCurve):
         return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
+        """
+        Trims the Bspline between two abscissa evaluation parameters.
+
+        :param parameter1: evaluation parameter 1, bigger than 0 and smaller than its length.
+        :param parameter2: evaluation parameter 2, bigger than 0 and smaller than its length.
+        """
         warnings.warn('Use BSplineCurve3D.trim instead of trim_between_evaluation')
         parameter1, parameter2 = min([parameter1, parameter2]), \
             max([parameter1, parameter2])
@@ -5165,7 +5191,7 @@ class Arc3D(ArcMixin, Edge):
         u3.normalize()
         u4 = other_arc.circle.normal.cross(u3)
 
-        r1, r2 = self.circle.radius, other_arc.circle.radius
+        radius1, radius2 = self.circle.radius, other_arc.circle.radius
 
         a, b, c, d = u1.dot(u1), u1.dot(u2), u1.dot(u3), u1.dot(u4)
         e, f, g = u2.dot(u2), u2.dot(u3), u2.dot(u4)
@@ -5174,27 +5200,27 @@ class Arc3D(ArcMixin, Edge):
         k, l, m, n, o = w.dot(u1), w.dot(u2), w.dot(u3), w.dot(u4), w.dot(w)
 
         def distance_squared(x):
-            return (a * ((math.cos(x[0])) ** 2) * r1 ** 2 + e * (
-                    (math.sin(x[0])) ** 2) * r1 ** 2
-                    + o + h * ((math.cos(x[1])) ** 2) * r2 ** 2 + j * (
-                            (math.sin(x[1])) ** 2) * r2 ** 2
-                    + b * math.sin(2 * x[0]) * r1 ** 2 - 2 * r1 * math.cos(
+            return (a * ((math.cos(x[0])) ** 2) * radius1 ** 2 + e * (
+                    (math.sin(x[0])) ** 2) * radius1 ** 2
+                    + o + h * ((math.cos(x[1])) ** 2) * radius2 ** 2 + j * (
+                            (math.sin(x[1])) ** 2) * radius2 ** 2
+                    + b * math.sin(2 * x[0]) * radius1 ** 2 - 2 * radius1 * math.cos(
                         x[0]) * k
-                    - 2 * r1 * r2 * math.cos(x[0]) * math.cos(x[1]) * c
-                    - 2 * r1 * r2 * math.cos(x[0]) * math.sin(
-                        x[1]) * d - 2 * r1 * math.sin(x[0]) * l
-                    - 2 * r1 * r2 * math.sin(x[0]) * math.cos(x[1]) * f
-                    - 2 * r1 * r2 * math.sin(x[0]) * math.sin(
-                        x[1]) * g + 2 * r2 * math.cos(x[1]) * m
-                    + 2 * r2 * math.sin(x[1]) * n + i * math.sin(
-                        2 * x[1]) * r2 ** 2)
+                    - 2 * radius1 * radius2 * math.cos(x[0]) * math.cos(x[1]) * c
+                    - 2 * radius1 * radius2 * math.cos(x[0]) * math.sin(
+                        x[1]) * d - 2 * radius1 * math.sin(x[0]) * l
+                    - 2 * radius1 * radius2 * math.sin(x[0]) * math.cos(x[1]) * f
+                    - 2 * radius1 * radius2 * math.sin(x[0]) * math.sin(
+                        x[1]) * g + 2 * radius2 * math.cos(x[1]) * m
+                    + 2 * radius2 * math.sin(x[1]) * n + i * math.sin(
+                        2 * x[1]) * radius2 ** 2)
 
         x01 = npy.array([self.angle / 2, other_arc.angle / 2])
 
         res1 = least_squares(distance_squared, x01, bounds=[(0, 0), (self.angle, other_arc.angle)])
 
-        point1 = self.point_at_abscissa(res1.x[0] * r1)
-        point2 = other_arc.point_at_abscissa(res1.x[1] * r2)
+        point1 = self.point_at_abscissa(res1.x[0] * radius1)
+        point2 = other_arc.point_at_abscissa(res1.x[1] * radius2)
 
         return point1, point2
 
@@ -5408,8 +5434,13 @@ class Arc3D(ArcMixin, Edge):
         :return:
         """
         new_faces = []
-        _, section_contour_3d = args
-        for contour_primitive in section_contour_3d.primitives:
+        section_contour2d, section_contour3d = args
+        if section_contour3d is None:
+            start_tangent = self.unit_direction_vector(0.)
+            normal = self.unit_normal_vector(0.)
+            tangent_normal_orthonormal = start_tangent.cross(normal)
+            section_contour3d = section_contour2d.to_3d(self.start, normal, tangent_normal_orthonormal)
+        for contour_primitive in section_contour3d.primitives:
             new_faces.extend(contour_primitive.revolution(
                 self.circle.center, self.circle.normal, self.angle))
         return new_faces
@@ -5425,8 +5456,8 @@ class FullArc3D(FullArcMixin, Arc3D):
                  name: str = ''):
         self._utd_frame = None
         self._bbox = None
-        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
-        Arc3D.__init__(self, circle=circle, start=start_end, end=start_end)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end)
+        Arc3D.__init__(self, circle=circle, start=start_end, end=start_end, name=name)
 
     def __hash__(self):
         return hash(('Fullarc3D', self.circle, self.start_end))
@@ -5888,6 +5919,7 @@ class ArcEllipse3D(Edge):
                 self.__class__(self.ellipse, split_point, self.end)]
 
     def get_reverse(self):
+        """Gets the same ellipse but in the reverse direction."""
         new_frame = volmdlr.Frame3D(self.ellipse.frame.origin, self.ellipse.frame.u, -self.ellipse.frame.v,
                                     self.ellipse.frame.u.cross(-self.ellipse.frame.v))
         ellipse3d = volmdlr_curves.Ellipse3D(self.ellipse.major_axis, self.ellipse.minor_axis, new_frame)

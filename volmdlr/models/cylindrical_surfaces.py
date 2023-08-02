@@ -1,5 +1,5 @@
 """
-Some cylindrical surfaces models to perform unittest.
+Some cylindrical surfaces models to perform unit test.
 """
 
 import volmdlr

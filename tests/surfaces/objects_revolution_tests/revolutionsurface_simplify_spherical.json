@@ -2,7 +2,7 @@
   "name": "",
   "object_class": "volmdlr.surfaces.RevolutionSurface3D",
   "package_version": "0.9.2.dev1050+g45192f1d",
-  "wire": {
+  "edge": {
   "object_class": "volmdlr.edges.Arc3D",
   "name": "",
   "start": {
