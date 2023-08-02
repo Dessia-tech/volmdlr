@@ -2395,7 +2395,7 @@ class FullArcMixin(ArcMixin):
     """
 
     def __init__(self, circle: Union[volmdlr.curves.Circle2D, volmdlr.curves.Circle3D],
-                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
+                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D]):
         self.circle = circle
         self.start_end = start_end
         ArcMixin.__init__(self, circle=circle, start=start_end, end=start_end)  # !!! this is dangerous
@@ -2954,8 +2954,8 @@ class FullArc2D(FullArcMixin, Arc2D):
                  name: str = ''):
         # self.interior = start_end.rotation(center, math.pi)
         self._bounding_rectangle = None
-        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
-        Arc2D.__init__(self, circle=circle, start=start_end, end=start_end)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end)
+        Arc2D.__init__(self, circle=circle, start=start_end, end=start_end, name=name)
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
 
@@ -5456,8 +5456,8 @@ class FullArc3D(FullArcMixin, Arc3D):
                  name: str = ''):
         self._utd_frame = None
         self._bbox = None
-        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
-        Arc3D.__init__(self, circle=circle, start=start_end, end=start_end)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end)
+        Arc3D.__init__(self, circle=circle, start=start_end, end=start_end, name=name)
 
     def __hash__(self):
         return hash(('Fullarc3D', self.circle, self.start_end))
