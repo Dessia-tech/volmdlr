@@ -299,8 +299,10 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
     return voxel_centers
 
 
-@cython.cfunc
-def flood_fill_matrix(matrix: vector[vector[vector[cython.int]]], start: cython.int[0], fill_with: cython.int) -> vector[vector[vector[cython.int]]]:
+@cython.ccall
+def flood_fill_matrix(
+    matrix: vector[vector[vector[cython.int]]], start: vector[cython.int], fill_with: cython.int
+) -> vector[vector[vector[cython.int]]]:
     dx: cython.int[6] = [0, 0, -1, 1, 0, 0]
     dy: cython.int[6] = [-1, 1, 0, 0, 0, 0]
     dz: cython.int[6] = [0, 0, 0, 0, -1, 1]
@@ -319,7 +321,7 @@ def flood_fill_matrix(matrix: vector[vector[vector[cython.int]]], start: cython.
     if old_value == fill_with:
         return matrix
 
-    stack: vector[cython.pint]
+    stack: vector[vector[cython.int]]
     stack.push_back(start)
 
     while stack.size() > 0:
@@ -330,12 +332,7 @@ def flood_fill_matrix(matrix: vector[vector[vector[cython.int]]], start: cython.
         for i in range(6):
             nx, ny, nz = x + dx[i], y + dy[i], z + dz[i]
 
-            if (
-                0 <= nx < sx
-                and 0 <= ny < sy
-                and 0 <= nz < sz
-                and matrix[nx][ny][nz] == old_value
-            ):
+            if 0 <= nx < sx and 0 <= ny < sy and 0 <= nz < sz and matrix[nx][ny][nz] == old_value:
                 stack.push_back([nx, ny, nz])
 
     return matrix
