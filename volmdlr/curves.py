@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as npy
 import scipy.integrate as scipy_integrate
 from matplotlib import __version__ as _mpl_version
-from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
 
 from dessia_common.core import DessiaObject
@@ -129,10 +128,10 @@ class Line(Curve):
         """
         vector = self.point2 - self.point1
         norm_u = vector.norm()
-        t = (point - self.point1).dot(vector) / norm_u ** 2
-        projection = self.point1 + t * vector
+        projection_param_t = (point - self.point1).dot(vector) / norm_u ** 2
+        projection = self.point1 + projection_param_t * vector
         projection = projection.to_point()
-        return projection, t * norm_u
+        return projection, projection_param_t * norm_u
 
     def abscissa(self, point):
         """
@@ -649,14 +648,15 @@ class Line3D(Line):
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
 
-    def plot(self, ax=None, color='k', alpha=1, dashed=True):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plot method for Line 3D using Matplotlib."""
         if ax is None:
-            ax = Axes3D(plt.figure())
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
 
         # Line segment
         ax.plot([self.point1.x, self.point2.x], [self.point1.y, self.point2.y],
-                [self.point1.z, self.point2.z], color=color, alpha=alpha)
+                [self.point1.z, self.point2.z], color=edge_style.color, alpha=edge_style.alpha)
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
@@ -664,11 +664,11 @@ class Line3D(Line):
         x1, y1, z1 = v1.x, v1.y, v1.z
         v2 = self.point2 - u * 3
         x2, y2, z2 = v2.x, v2.y, v2.z
-        if dashed:
-            ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
+        if edge_style.dashed:
+            ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color,
                     dashes=[30, 5, 10, 5])
         else:
-            ax.plot([x1, x2], [y1, y2], [z1, z2], color=color)
+            ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color)
         return ax
 
     def plane_projection2d(self, center, x, y):
@@ -1214,6 +1214,7 @@ class Circle3D(CircleMixin, Curve):
 
     @property
     def normal(self):
+        """Gets circle's normal."""
         return self.frame.w
 
     def __hash__(self):
