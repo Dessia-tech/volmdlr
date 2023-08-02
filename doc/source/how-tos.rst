@@ -71,9 +71,9 @@ which is a string representing the vector's name.
 
    import volmdlr
 
-   point2d = volmdlr.Point3D(x=1.0, y=2.0, name='vector name')
-   print('point2d:', point2d)
-   >>> point2d: Point2D: [1.0, 2.0]
+   point3d = volmdlr.Point3D(x=1.0, y=2.0, z=3.0, name='vector name')
+   print('point3d:', point3d)
+   >>> point2d: Point3D: [1.0, 2.0, 3.0]
 
 How to create a Frame3D
 =======================

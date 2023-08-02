@@ -64,7 +64,7 @@ h3 {
 }
 
 .sd-card .sd-card-text{
-  text-align: justify;
+  text-align: center;
 }
 
 .sd-card .sd-card-header .sd-card-text {
@@ -72,8 +72,8 @@ h3 {
 }
 
 .sd-card .sd-card-img-top {
-  height: 52px;
-  width: 52px;
+  height: 60px;
+  width: 60px;
   margin-left: auto;
   margin-right: auto;
 }

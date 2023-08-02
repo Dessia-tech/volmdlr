@@ -1,17 +1,6 @@
 User guide
 ==========
 
-General description
--------------------
-The volmdlr library is an open-source Python library primarily developed by Dessia Technologies,
-aimed at providing 3D modeling capabilities based on Boundary Representation (B-Rep) purely in Python.
-The library is designed to be easy to use, efficient, and customizable.
-
-Boundary Representation is a technique used in computer-aided design (CAD) and computer-aided
-manufacturing (CAM) systems to represent the geometry of a solid object as a collection of surfaces
-and curves. B-Rep is widely used in CAD and CAM due to its ability to accurately represent complex
-shapes and to provide a rich set of operations for manipulating and analyzing these shapes.
-
 The volmdlr library is structured using a modular approach as follows:
 
 
@@ -38,7 +27,7 @@ The volmdlr library is structured using a modular approach as follows:
 
         ^^^^^^^^^^^^^^
 
-        How tos
+        How to
 
         +++
 
@@ -47,41 +36,58 @@ The volmdlr library is structured using a modular approach as follows:
             :color: primary
             :click-parent:
 
-            How tos
+            How to
 
     .. grid-item-card::
-        :img-top: ../source/_static/index-images/user_guide.svg
+        :img-top: ../source/_static/index-images/distance.svg
 
 
         ^^^^^^^^^^^^^^
 
-        description
+        Distances operations
 
         +++
 
-        .. button-ref:: user_guide
+        .. button-ref:: distances
             :expand:
             :color: primary
             :click-parent:
 
-            To (to be added)
+            To distances
 
     .. grid-item-card::
-        :img-top: ../source/_static/index-images/user_guide.svg
+        :img-top: ../source/_static/index-images/intersection-svgrepo-com.svg
 
 
         ^^^^^^^^^^^^^^
 
-        description
+        Intersections
 
         +++
 
-        .. button-ref:: user_guide
+        .. button-ref:: intersections
             :expand:
             :color: primary
             :click-parent:
 
-            To (to be added)
+            To intersections
+
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/union-svgrepo-com.svg
+
+
+        ^^^^^^^^^^^^^^
+
+        Boolean Operations
+
+        +++
+
+        .. button-ref:: intersections
+            :expand:
+            :color: primary
+            :click-parent:
+
+            To Boolean ops
 
 Fundamentals and usage
 ----------------------
