@@ -189,6 +189,10 @@ class WireMixin:
     def _data_hash(self):
         return sum(hash(e) for e in self.primitives) + len(self.primitives)
 
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        return PhysicalObject.to_dict(self, use_pointers=False)
+
     def length(self):
         if not self._length:
             length = 0.
@@ -642,6 +646,22 @@ class WireMixin:
         point = circle.point_at_abscissa(0.0)
         return cls([circle.trim(point, point)])
 
+    def plot(self, ax=None, edge_style=EdgeStyle()):
+        """Wire 2D plot using Matplotlib."""
+        if ax is None:
+            ax = self._get_plot_ax()
+
+        if edge_style.equal_aspect:
+            ax.set_aspect('equal')
+
+        for element in self.primitives:
+            element.plot(ax=ax, edge_style=edge_style)
+
+        ax.margins(0.1)
+        plt.show()
+
+        return ax
+
 
 class EdgeCollection3D(WireMixin):
     """
@@ -736,10 +756,6 @@ class Wire2D(WireMixin, PhysicalObject):
 
     def __hash__(self):
         return hash(('wire2d', tuple(self.primitives)))
-
-    def to_dict(self, *args, **kwargs):
-        """Avoids storing points in memo that makes serialization slow."""
-        return PhysicalObject.to_dict(self, use_pointers=False)
 
     def area(self):
         """ Gets the area for a Wire2D."""
@@ -1268,34 +1284,25 @@ class Wire2D(WireMixin, PhysicalObject):
         return self.__class__([primitive.frame_mapping(frame, side)
                                for primitive in self.primitives])
 
-    def plot(self, ax=None, edge_style=EdgeStyle()):
-        """Wire 2D plot using Matplotlib."""
-        if ax is None:
-            _, ax = plt.subplots()
-
-        if edge_style.equal_aspect:
-            ax.set_aspect('equal')
-
-        for element in self.primitives:
-            element.plot(ax=ax, edge_style=edge_style)
-
-        ax.margins(0.1)
-        plt.show()
-
+    def _get_plot_ax(self):
+        _, ax = plt.subplots()
         return ax
 
 
-class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
+class Wire3D(WireMixin, PhysicalObject):
     """
     A collection of simple primitives, following each other making a wire.
 
     """
 
-    def __init__(self, primitives: List[volmdlr.core.Primitive3D],
+    def __init__(self, primitives: List[volmdlr.core.Primitive3D], color=None, alpha: float = 1.0,
                  name: str = ''):
         self._bbox = None
         self._length = None
-        volmdlr.core.CompositePrimitive3D.__init__(self, primitives=primitives, name=name)
+        self.primitives = primitives
+        self.color = color
+        self.alpha = alpha
+        PhysicalObject.__init__(self, name=name)
 
     def _bounding_box(self):
         """
@@ -1429,8 +1436,40 @@ class Wire3D(WireMixin, volmdlr.core.CompositePrimitive3D):
                      in self.primitives]
         return Wire3D(new_edges, self.name)
 
+    def _get_plot_ax(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        return ax
 
-# TODO: define an edge as an opened polygon and allow to compute area from this reference
+    def babylon_points(self):
+        """
+        Returns a list of discretization points from the 3D primitive.
+        """
+        points = []
+        if hasattr(self, 'primitives') and hasattr(self.primitives[0], "discretization_points"):
+            for primitive in self.primitives:
+                points.extend([*point] for point in primitive.discretization_points())
+        elif hasattr(self, "discretization_points"):
+            points.extend([*point] for point in self.discretization_points())
+        return points
+
+    def babylon_lines(self, points=None):
+        if points is None:
+            points = self.babylon_points()
+        babylon_lines = {'points': points,
+                         'alpha': self.alpha,
+                         'name': self.name,
+                         'color': list(self.color) if self.color is not None else [0.8, 0.8, 0.8]
+                         }
+        return [babylon_lines]
+
+    def babylon_curves(self):
+        points = self.babylon_points()
+        if points:
+            babylon_curves = self.babylon_lines(points)[0]
+            return babylon_curves
+        return None
+
 
 class ContourMixin(WireMixin):
     """
