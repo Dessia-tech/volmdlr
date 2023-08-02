@@ -1042,6 +1042,7 @@ class Voxelization(PhysicalObject):
         triangles = set()
 
         for voxel in self.voxel_centers:
+
             for triangle in self._voxel_triangular_faces(voxel, self.voxel_size):
                 if triangle not in triangles:
                     triangles.add(triangle)
