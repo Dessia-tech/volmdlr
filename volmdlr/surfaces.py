@@ -2227,42 +2227,59 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
         Cylinder plane intersections when plane's normal is concurrent with the cylinder axis, but not orthogonal.
 
-        Ellipse vector equation : < r*cos(t), r*sin(t), -(1 / c)*(d + a*r*cos(t) +
-        b*r*sin(t)); d = - (ax_0 + by_0 + cz_0).
+        Heavily based on the implementation available in this link:
+        https://www.geometrictools.com/Documentation/IntersectionCylinderPlane.pdf
 
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        line = curves.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
-        center3d_plane = plane3d.line_intersections(line)[0]
-        plane_coefficient_a, plane_coefficient_b, plane_coefficient_c, plane_coefficient_d = \
-            plane3d.equation_coefficients()
-        ellipse_0 = volmdlr.Point3D(
-            self.radius * math.cos(0),
-            self.radius * math.sin(0),
-            - (1 / plane_coefficient_c) * (plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(0) +
-                                           plane_coefficient_b * self.radius * math.sin(0)))
-        ellipse_pi_by_2 = volmdlr.Point3D(
-            self.radius * math.cos(math.pi / 2),
-            self.radius * math.sin(math.pi / 2),
-            - (1 / plane_coefficient_c) * (
-                    plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(math.pi / 2)
-                    + plane_coefficient_b * self.radius * math.sin(math.pi / 2)))
-        axis_1 = center3d_plane.point_distance(ellipse_0)
-        axis_2 = center3d_plane.point_distance(ellipse_pi_by_2)
-        if axis_1 > axis_2:
-            major_axis = axis_1
-            minor_axis = axis_2
-            major_dir = ellipse_0 - center3d_plane
-            u_vector = major_dir.unit_vector()
-        else:
-            major_axis = axis_2
-            minor_axis = axis_1
-            major_dir = ellipse_pi_by_2 - center3d_plane
-        u_vector = major_dir.unit_vector()
+        a_plane_vector = npy.array([[plane3d.frame.u.x],
+                                   [plane3d.frame.u.y],
+                                   [plane3d.frame.u.z]])
+        b_plane_vector = npy.array([[plane3d.frame.v.x],
+                                   [plane3d.frame.v.y],
+                                   [plane3d.frame.v.z]])
+        c_point = npy.array([[self.frame.origin.x],
+                            [self.frame.origin.y],
+                            [self.frame.origin.z]])
+        i_matrix = npy.identity(3)
+        w_vector = npy.array([[self.frame.w.x],
+                             [self.frame.w.y],
+                             [self.frame.w.z]])
+        point_on_plane = npy.array([[plane3d.frame.origin.x],
+                                   [plane3d.frame.origin.y],
+                                   [plane3d.frame.origin.z]])
+        delta = point_on_plane - c_point
+        m_matrix = i_matrix - npy.dot(w_vector, w_vector.T)
+        q_2 = npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), a_plane_vector)[0][0],
+                        npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0]],
+                       [npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0],
+                        npy.dot(npy.dot(b_plane_vector.T, m_matrix), b_plane_vector)[0][0]]])
+        q_1 = 2 * npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), delta)[0][0]],
+                           [npy.dot(npy.dot(b_plane_vector.T, m_matrix), delta)[0][0]]])
+        k_vector = - npy.dot(npy.linalg.inv(q_2), q_1)
+        q_0 = npy.dot(npy.dot(delta.T, m_matrix), delta) - self.radius ** 2
+        s_matrix = q_2 / (npy.dot(npy.dot(k_vector.T, q_2), k_vector) - q_0)
+        eigenvalues, eigenvectors = npy.linalg.eig(s_matrix)
+        k_0, k_1 = k_vector[0][0], k_vector[1][0]
+        ellipse_center = point_on_plane + k_0 * a_plane_vector + k_1 * b_plane_vector
+        ellipse_center = volmdlr.Point3D(ellipse_center[0][0], ellipse_center[1][0], ellipse_center[2][0])
+        major_dir = eigenvectors[0][0] * a_plane_vector + eigenvectors[1][0] * b_plane_vector
+        major_dir = volmdlr.Point3D(major_dir[0][0], major_dir[1][0], major_dir[2][0]).unit_vector()
+        minor_dir = eigenvectors[0][1] * a_plane_vector + eigenvectors[1][1] * b_plane_vector
+        minor_dir = volmdlr.Point3D(minor_dir[0][0], minor_dir[1][0], minor_dir[2][0]).unit_vector()
+        lineseg1 = edges.LineSegment3D(ellipse_center, ellipse_center + major_dir * 10 * self.radius)
+        lineseg2 = edges.LineSegment3D(ellipse_center, ellipse_center + minor_dir * 10 * self.radius)
+        inters_lineseg1 = self.linesegment_intersections(lineseg1)
+        inters_lineseg2 = self.linesegment_intersections(lineseg2)
+        major_axis = ellipse_center.point_distance(inters_lineseg1[0])
+        minor_axis = ellipse_center.point_distance(inters_lineseg2[0])
+        if minor_axis > major_axis:
+            major_axis, minor_axis = minor_axis, major_axis
+            major_dir, minor_dir = minor_dir, major_dir
         ellipse = curves.Ellipse3D(major_axis, minor_axis,
-                                   volmdlr.Frame3D(center3d_plane, u_vector,
-                                                         plane3d.frame.w.cross(u_vector), plane3d.frame.w))
+                                   volmdlr.Frame3D(ellipse_center, major_dir,
+                                                   minor_dir, plane3d.frame.w))
         return [ellipse]
 
     def plane_intersection(self, plane3d):
@@ -4138,21 +4155,21 @@ class RevolutionSurface3D(PeriodicalSurface):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = None
 
-    def __init__(self, wire: Union[wires.Wire3D, wires.Contour3D],
+    def __init__(self, edge,
                  axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D, name: str = ''):
-        self.wire = wire
+        self.edge = edge
         self.axis_point = axis_point
         self.axis = axis
 
-        point1 = wire.point_at_abscissa(0)
+        point1 = edge.point_at_abscissa(0)
         vector1 = point1 - axis_point
         w_vector = axis
         w_vector = w_vector.unit_vector()
         if point1.is_close(axis_point) or w_vector.is_colinear_to(vector1):
-            if wire.__class__.__name__ != "Line3D":
-                point1 = wire.point_at_abscissa(0.5 * wire.length())
+            if edge.__class__.__name__ != "Line3D":
+                point1 = edge.point_at_abscissa(0.5 * edge.length())
             else:
-                point1 = wire.point_at_abscissa(0.05)
+                point1 = edge.point_at_abscissa(0.05)
             vector1 = point1 - axis_point
         u_vector = vector1 - vector1.vector_projection(w_vector)
         u_vector = u_vector.unit_vector()
@@ -4168,7 +4185,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         u = [0, 2pi] and v = [0, 1] into a
         """
         u, v = point2d
-        point_at_curve = self.wire.point_at_abscissa(v)
+        point_at_curve = self.edge.point_at_abscissa(v)
         point = point_at_curve.rotation(self.axis_point, self.axis, u)
         return point
 
@@ -4184,7 +4201,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         u = math.atan2(y, x)
 
         point_at_curve = point3d.rotation(self.axis_point, self.axis, -u)
-        v = self.wire.abscissa(point_at_curve)
+        v = self.edge.abscissa(point_at_curve)
         return volmdlr.Point2D(u, v)
 
     def rectangular_cut(self, x1: float, x2: float,
@@ -4204,7 +4221,7 @@ class RevolutionSurface3D(PeriodicalSurface):
             ax = fig.add_subplot(111, projection='3d')
         for i in range(number_curves + 1):
             theta = i / number_curves * volmdlr.TWO_PI
-            wire = self.wire.rotation(self.axis_point, self.axis, theta)
+            wire = self.edge.rotation(self.axis_point, self.axis, theta)
             wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
 
         return ax
@@ -4224,14 +4241,14 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         y_periodicity = None
         name = arguments[0][1:-1]
-        wire = object_dict[arguments[1]]
-        if wire.__class__ is curves.Circle3D:
-            start_end = wire.center + wire.frame.u * wire.radius
-            wire = edges.FullArc3D(wire, start_end, wire.name)
-            y_periodicity = wire.length()
+        edge = object_dict[arguments[1]]
+        if edge.__class__ is curves.Circle3D:
+            start_end = edge.center + edge.frame.u * edge.radius
+            edge = edges.FullArc3D(edge, start_end, edge.name)
+            y_periodicity = edge.length()
 
         axis_point, axis = object_dict[arguments[2]]
-        surface = cls(wire=wire, axis_point=axis_point, axis=axis, name=name)
+        surface = cls(edge=edge, axis_point=axis_point, axis=axis, name=name)
         surface.y_periodicity = y_periodicity
         return surface.simplify()
 
@@ -4239,7 +4256,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         Translate volmdlr primitive to step syntax.
         """
-        content_wire, wire_id = self.wire.to_step(current_id)
+        content_wire, wire_id = self.edge.to_step(current_id)
         current_id = wire_id + 1
         content_axis_point, axis_point_id = self.axis_point.to_step(current_id)
         current_id = axis_point_id + 1
@@ -4257,14 +4274,14 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        if self.wire.__class__.__name__ != "Line3D" and hasattr(self.wire.simplify, "circle") and\
-                math.isclose(self.wire.simplify.circle.radius, arc3d.circle.radius, rel_tol=0.01):
-            if self.wire.is_point_edge_extremity(arc3d.start):
+        if self.edge.__class__.__name__ != "Line3D" and hasattr(self.edge.simplify, "circle") and\
+                math.isclose(self.edge.simplify.circle.radius, arc3d.circle.radius, rel_tol=0.01):
+            if self.edge.is_point_edge_extremity(arc3d.start):
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
                 if middle_point.x == math.pi:
                     middle_point.x = -math.pi
                 start = volmdlr.Point2D(middle_point.x, start.y)
-            if self.wire.is_point_edge_extremity(arc3d.end):
+            if self.edge.is_point_edge_extremity(arc3d.end):
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
                 if middle_point.x == math.pi:
                     middle_point.x = -math.pi
@@ -4347,17 +4364,17 @@ class RevolutionSurface3D(PeriodicalSurface):
         theta1, abscissa1 = linesegment2d.start
         theta2, abscissa2 = linesegment2d.end
 
-        if self.wire.point_at_abscissa(abscissa1).is_close(self.wire.point_at_abscissa(abscissa2)):
+        if self.edge.point_at_abscissa(abscissa1).is_close(self.edge.point_at_abscissa(abscissa2)):
             theta_i = 0.5 * (theta1 + theta2)
             interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
             return [edges.Arc3D.from_3_points(start3d, interior, end3d)]
 
         if math.isclose(theta1, theta2, abs_tol=1e-3):
-            primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
+            primitive = self.edge.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if isinstance(self.wire, curves.Line3D):
+                if isinstance(self.edge, curves.Line3D):
                     return [edges.LineSegment3D(start3d, end3d)]
-                if self.wire.is_point_edge_extremity(start3d) and self.wire.is_point_edge_extremity(end3d):
+                if self.edge.is_point_edge_extremity(start3d) and self.wire.is_point_edge_extremity(end3d):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
                         return [primitive]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
@@ -4380,21 +4397,21 @@ class RevolutionSurface3D(PeriodicalSurface):
         new_frame = self.frame.frame_mapping(frame, side)
         axis = new_frame.w
         axis_point = new_frame.origin
-        new_wire = self.wire.frame_mapping(frame, side)
-        return RevolutionSurface3D(new_wire, axis_point, axis, name=self.name)
+        new_edge = self.edge.frame_mapping(frame, side)
+        return RevolutionSurface3D(new_edge, axis_point, axis, name=self.name)
 
     def simplify(self):
         line3d = curves.Line3D(self.axis_point, self.axis_point + self.axis)
-        if isinstance(self.wire, edges.Arc3D):
-            tore_center, _ = line3d.point_projection(self.wire.center)
+        if isinstance(self.edge, edges.Arc3D):
+            tore_center, _ = line3d.point_projection(self.edge.center)
             # Sphere
-            if math.isclose(tore_center.point_distance(self.wire.center), 0., abs_tol=1e-6):
-                return SphericalSurface3D(self.frame, self.wire.circle.radius, self.name)
-        if isinstance(self.wire, (edges.LineSegment3D, curves.Line3D)):
-            if isinstance(self.wire, edges.LineSegment3D):
-                generatrix_line = self.wire.line
+            if math.isclose(tore_center.point_distance(self.edge.center), 0., abs_tol=1e-6):
+                return SphericalSurface3D(self.frame, self.edge.circle.radius, self.name)
+        if isinstance(self.edge, (edges.LineSegment3D, curves.Line3D)):
+            if isinstance(self.edge, edges.LineSegment3D):
+                generatrix_line = self.edge.line
             else:
-                generatrix_line = self.wire
+                generatrix_line = self.edge
             intersections = line3d.intersection(generatrix_line)
             if intersections:
                 generatrix_line_direction = generatrix_line.unit_direction_vector()
@@ -4411,15 +4428,15 @@ class RevolutionSurface3D(PeriodicalSurface):
                 return ConicalSurface3D(new_frame, semi_angle, self.name)
             generatrix_line_direction = generatrix_line.unit_direction_vector()
             if self.axis.is_colinear_to(generatrix_line_direction):
-                radius = self.wire.point_distance(self.axis_point)
+                radius = self.edge.point_distance(self.axis_point)
                 return CylindricalSurface3D(self.frame, radius, self.name)
         return self
 
     def is_singularity_point(self, point):
         """Verifies if point is on the surface singularity."""
-        if self.wire.__class__.__name__ == "Line3D":
+        if self.edge.__class__.__name__ == "Line3D":
             return False
-        return self.wire.is_point_edge_extremity(point)
+        return self.edge.is_point_edge_extremity(point)
 
 
 class BSplineSurface3D(Surface3D):
@@ -4761,14 +4778,14 @@ class BSplineSurface3D(Surface3D):
         :rtype: :class:`volmdlr.Point2D`
         """
 
-        def f(x):
+        def sort_func(x):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
 
         def fun(x):
             derivatives = self.derivatives(x[0], x[1], 1)
-            r = derivatives[0][0] - point3d
-            f_value = r.norm() + 1e-32
-            jacobian = npy.array([r.dot(derivatives[1][0]) / f_value, r.dot(derivatives[0][1]) / f_value])
+            vector = derivatives[0][0] - point3d
+            f_value = vector.norm() + 1e-32
+            jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value, vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
 
         min_bound_x, max_bound_x = self.surface.domain[0]
@@ -4790,7 +4807,7 @@ class BSplineSurface3D(Surface3D):
                (0.33333333, 0.009), (0.5555555, 0.0099)]
 
             # Sort the initial conditions
-        x0s.sort(key=f)
+        x0s.sort(key=sort_func)
         matrix = npy.array(self.surface.evalpts)
         point3d_array = npy.array([point3d[0], point3d[1], point3d[2]])
 
@@ -4992,7 +5009,7 @@ class BSplineSurface3D(Surface3D):
         else:
             lth = bspline_curve3d.length()
             if lth > 1e-5:
-                n = min(len(bspline_curve3d.control_points), 20) # limit points to avoid non covergence
+                n = min(len(bspline_curve3d.control_points), 20) # limit points to avoid non convergence
                 points3d = bspline_curve3d.discretization_points(number_points=n)
                 points = [self.point3d_to_2d(p) for p in points3d]
                 if self.u_closed() or self.v_closed():

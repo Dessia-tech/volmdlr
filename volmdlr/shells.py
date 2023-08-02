@@ -1021,7 +1021,7 @@ class OpenShell3D(Shell3D):
     """
     A 3D Open shell composed of multiple faces.
 
-    This class represents a 3D oepn shell, which is a collection of connected
+    This class represents a 3D open shell, which is a collection of connected
     faces with no volume. It is a subclass of the `Shell3D` class and
     inherits all of its attributes and methods.
 

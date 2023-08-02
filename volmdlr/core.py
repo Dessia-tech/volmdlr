@@ -186,16 +186,13 @@ class Primitive3D(dc.PhysicalObject):
 
         :return: babylonjs parameters (alpha, name, color)
         :rtype: dict
-
         """
 
-        babylon_param = {'alpha': self.alpha,
-                         'name': self.name,
-                         }
-        if self.color is None:
-            babylon_param['color'] = [0.8, 0.8, 0.8]
-        else:
-            babylon_param['color'] = list(self.color)
+        babylon_param = {
+            'alpha': self.alpha,
+            'name': self.name,
+            'color': list(self.color) if self.color is not None else [0.8, 0.8, 0.8]
+        }
 
         return babylon_param
 
@@ -259,32 +256,6 @@ class CompositePrimitive3D(Primitive3D):
         for primitive in self.primitives:
             primitive.plot(ax=ax, edge_style=edge_style)
         return ax
-
-    def babylon_points(self):
-        """
-        Returns a list of discretization points from the 3D primitive.
-        """
-        points = []
-        if hasattr(self, 'primitives') and hasattr(self.primitives[0], "discretization_points"):
-            for primitive in self.primitives:
-                points.extend([*point] for point in primitive.discretization_points())
-        elif hasattr(self, "discretization_points"):
-            points.extend([*point] for point in self.discretization_points())
-        return points
-
-    def babylon_lines(self, points=None):
-        if points is None:
-            points = self.babylon_points()
-        babylon_lines = {'points': points}
-        babylon_lines.update(self.babylon_param())
-        return [babylon_lines]
-
-    def babylon_curves(self):
-        points = self.babylon_points()
-        if points:
-            babylon_curves = self.babylon_lines(points)[0]
-            return babylon_curves
-        return None
 
 
 class BoundingRectangle(dc.DessiaObject):
@@ -941,10 +912,10 @@ class Assembly(dc.PhysicalObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
-                if hasattr(primitive, 'babylon_curves'):
-                    curves = primitive.babylon_curves()
-                    if curves:
-                        babylon_data['lines'].append(curves)
+            elif hasattr(primitive, 'babylon_curves'):
+                curves = primitive.babylon_curves()
+                if curves:
+                    babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
@@ -1161,10 +1132,10 @@ class Compound(dc.PhysicalObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
-                if hasattr(primitive, 'babylon_curves'):
-                    curves = primitive.babylon_curves()
-                    if curves:
-                        babylon_data['lines'].append(curves)
+            elif hasattr(primitive, 'babylon_curves'):
+                curves = primitive.babylon_curves()
+                if curves:
+                    babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
@@ -1369,10 +1340,10 @@ class VolumeModel(dc.PhysicalObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
-                if hasattr(primitive, 'babylon_curves'):
-                    curves = primitive.babylon_curves()
-                    if curves:
-                        babylon_data['lines'].append(curves)
+            elif hasattr(primitive, 'babylon_curves'):
+                curves = primitive.babylon_curves()
+                if curves:
+                    babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
