@@ -19,7 +19,8 @@ from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
 # from volmdlr.voxelization_compiled import aabb_intersecting_boxes, flood_fill_matrix, triangle_intersects_voxel
-from volmdlr.voxelization_compiled import triangles_to_voxels, flood_fill_matrix
+from volmdlr.voxelization_compiled import triangles_to_voxels
+from volmdlr.voxelization_compiled import flood_fill_matrix
 from volmdlr.wires import ClosedPolygon2D
 
 # Custom types
@@ -1505,6 +1506,9 @@ class VoxelMatrix:
             and np.array_equal(self.matrix, other_voxel_matrix.matrix)
         )
 
+    def __len__(self):
+        return len(np.argwhere(self.matrix))
+
     def __add__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
         """
         Return the union of the current voxel matrix with another voxel matrix.
@@ -1651,7 +1655,7 @@ class VoxelMatrix:
 
     def flood_fill(self, start, fill_with) -> "VoxelMatrix":
         return VoxelMatrix(
-            flood_fill_matrix(self.matrix, list(start), fill_with), self.matrix_origin_center, self.voxel_size
+            flood_fill_matrix(self.matrix, start, fill_with), self.matrix_origin_center, self.voxel_size
         )
 
         # directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]

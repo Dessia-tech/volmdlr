@@ -354,7 +354,7 @@ cdef void flood_fill_matrix_c(int[:, :, :] matrix, int[::1] start, int fill_with
                 stack.append((nx, ny, nz))
 
 
-def flood_fill_matrix(matrix, start: List[int], fill_with: bool) -> np.ndarray:
+def flood_fill_matrix(matrix, start: Tuple[int, int, int], fill_with: bool) -> np.ndarray:
     cdef int[:, :, :] c_matrix = matrix.astype(np.int32)
     cdef int[::1] c_start = np.array(start, dtype=np.int32)
     cdef int c_fill_with = int(fill_with)
