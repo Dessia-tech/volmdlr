@@ -1214,6 +1214,7 @@ class Circle3D(CircleMixin, Curve):
 
     @property
     def normal(self):
+        """Gets circle's normal."""
         return self.frame.w
 
     def __hash__(self):

@@ -98,7 +98,7 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
 
     :param ax: Matplotlib plot.
     :param edge_style: edge_style to be applied to plot.
-    :param element: volmdlr element to be ploted (either 2D or 3D).
+    :param element: volmdlr element to be plotted (either 2D or 3D).
     :param number_points: number of points to be used in the plot.
     :param close_plot: specifies if plot is to be closed or not.
     :return: Matplolib plot axis.

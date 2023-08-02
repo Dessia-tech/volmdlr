@@ -2395,7 +2395,7 @@ class FullArcMixin(ArcMixin):
     """
 
     def __init__(self, circle: Union[volmdlr.curves.Circle2D, volmdlr.curves.Circle3D],
-                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
+                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D]):
         self.circle = circle
         self.start_end = start_end
         ArcMixin.__init__(self, circle=circle, start=start_end, end=start_end)  # !!! this is dangerous
@@ -2954,8 +2954,8 @@ class FullArc2D(FullArcMixin, Arc2D):
                  name: str = ''):
         # self.interior = start_end.rotation(center, math.pi)
         self._bounding_rectangle = None
-        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
-        Arc2D.__init__(self, circle=circle, start=start_end, end=start_end)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end)
+        Arc2D.__init__(self, circle=circle, start=start_end, end=start_end, name=name)
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
 
@@ -4065,7 +4065,7 @@ class LineSegment3D(LineSegment):
         return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
-        """Calculates the paralell distance between two Line Segments 3D."""
+        """Calculates the parallel distance between two Line Segments 3D."""
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
         vector.normalize()
@@ -4366,7 +4366,7 @@ class BSplineCurve3D(BSplineCurve):
     def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):
         """
-        Creates a table of equivalence between the parameter t (eval. of the BSplineCurve) and the cumulative distance.
+        Creates a table of equivalence between parameter t (evaluation of BSplineCurve) and the cumulative distance.
 
         :param resolution: The precision of the table. Auto-adjusted by the
             algorithm. Default value set to 20
@@ -4594,10 +4594,10 @@ class BSplineCurve3D(BSplineCurve):
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         """
-        Trims the Bspline between two eval parameters.
+        Trims the Bspline between two abscissa evaluation parameters.
 
-        :param parameter1: eval parameter 1, bigger than 0 and smaller than its length.
-        :param parameter2: eval parameter 2, bigger than 0 and smaller than its length.
+        :param parameter1: evaluation parameter 1, bigger than 0 and smaller than its length.
+        :param parameter2: evaluation parameter 2, bigger than 0 and smaller than its length.
         """
         warnings.warn('Use BSplineCurve3D.trim instead of trim_between_evaluation')
         parameter1, parameter2 = min([parameter1, parameter2]), \
@@ -5434,8 +5434,13 @@ class Arc3D(ArcMixin, Edge):
         :return:
         """
         new_faces = []
-        _, section_contour_3d = args
-        for contour_primitive in section_contour_3d.primitives:
+        section_contour2d, section_contour3d = args
+        if section_contour3d is None:
+            start_tangent = self.unit_direction_vector(0.)
+            normal = self.unit_normal_vector(0.)
+            tangent_normal_orthonormal = start_tangent.cross(normal)
+            section_contour3d = section_contour2d.to_3d(self.start, normal, tangent_normal_orthonormal)
+        for contour_primitive in section_contour3d.primitives:
             new_faces.extend(contour_primitive.revolution(
                 self.circle.center, self.circle.normal, self.angle))
         return new_faces
@@ -5451,8 +5456,8 @@ class FullArc3D(FullArcMixin, Arc3D):
                  name: str = ''):
         self._utd_frame = None
         self._bbox = None
-        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
-        Arc3D.__init__(self, circle=circle, start=start_end, end=start_end)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end)
+        Arc3D.__init__(self, circle=circle, start=start_end, end=start_end, name=name)
 
     def __hash__(self):
         return hash(('Fullarc3D', self.circle, self.start_end))
