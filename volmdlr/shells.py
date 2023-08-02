@@ -1092,7 +1092,7 @@ class ClosedShell3D(Shell3D):
                 v132 = point1[0] * point3[1] * point2[2]
                 v213 = point2[0] * point1[1] * point3[2]
                 v123 = point1[0] * point2[1] * point3[2]
-                volume_tetraedre = 1 / 6 * (-v321 + v231 + v312 - v132 - v213 + v123)
+                volume_tetraedre = 1 / 6 * abs(-v321 + v231 + v312 - v132 - v213 + v123)
 
                 volume += volume_tetraedre
 
