@@ -9,7 +9,6 @@ import cython.cimports.libc.math as math_c
 from cython.cimports.libcpp.vector import vector
 
 from typing import List, Tuple, Set
-import numpy as np
 
 # CUSTOM PYTHON TYPES
 
