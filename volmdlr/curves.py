@@ -1898,7 +1898,7 @@ class Ellipse3D(Curve):
                                           teta) * self.major_dir.cross(
                                           self.normal) for teta in
                                       npy.linspace(0, volmdlr.TWO_PI,
-                                                   angle_resolution + 1)]
+                                                   angle_resolution + 1)][:-1]
         return discretization_points_3d
 
     def to_2d(self, plane_origin, x, y):

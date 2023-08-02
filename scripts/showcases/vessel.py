@@ -11,7 +11,7 @@ from volmdlr.core import EdgeStyle
 ellipse = curves.Ellipse3D(4, 3, frame=volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D))
 
 ellipse_points = ellipse.discretization_points(number_points=36)
-bspline_ellipse = edges.BSplineCurve3D.from_points_interpolation(ellipse_points, 5)
+bspline_ellipse = edges.BSplineCurve3D.from_points_interpolation(ellipse_points + [ellipse_points[0]], 5)
 
 #half ellipsoides
 revolution_surface_left = surfaces.RevolutionSurface3D(bspline_ellipse, volmdlr.O3D, volmdlr.X3D)
