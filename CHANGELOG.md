@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vector2D: plot()
 - fix RevolutionFace3D init parameter wire to edge.
 - fix Sweep: bug when first primitive is an arc.
+- fix closedshell3d volume
 
 ### Refactor
 - refator some classes' init in primitives3D. 
