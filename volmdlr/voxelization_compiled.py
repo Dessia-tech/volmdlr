@@ -11,6 +11,7 @@ import cython.cimports.libc.math as math_c
 import numpy as np
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
+from cython.cimports.libcpp.unordered_set import unordered_set
 
 # CUSTOM PYTHON TYPES
 
@@ -360,12 +361,13 @@ def flood_fill_matrix(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def line_segment_intersects_pixel_c(
-    start: cython.double[2], end: cython.double[2], pixel_center: cython.double[2], pixel_size: cython.double
+    x1: cython.double,
+    y1: cython.double,
+    x2: cython.double,
+    y2: cython.double,
+    pixel_center: cython.double[2],
+    pixel_size: cython.double,
 ) -> cython.bint:
-    x1 = start[0]
-    y1 = start[1]
-    x2 = end[0]
-    y2 = end[1]
     pixel_center_x = pixel_center[0]
     pixel_center_y = pixel_center[1]
 
@@ -381,9 +383,8 @@ def line_segment_intersects_pixel_c(
     line_eq4 = (y2 - y1) * xmax + (x1 - x2) * ymax + (x2 * y1 - x1 * y2)
 
     # Check if all corners are on the same side of the line
-    miss: cython.bint = (
-            (line_eq1 <= 0 and line_eq2 <= 0 and line_eq3 <= 0 and line_eq4 <= 0)
-            or (line_eq1 >= 0 and line_eq2 >= 0 and line_eq3 >= 0 and line_eq4 >= 0)
+    miss: cython.bint = (line_eq1 <= 0 and line_eq2 <= 0 and line_eq3 <= 0 and line_eq4 <= 0) or (
+        line_eq1 >= 0 and line_eq2 >= 0 and line_eq3 >= 0 and line_eq4 >= 0
     )
 
     # Does it miss based on the shadow intersection test?
@@ -395,20 +396,106 @@ def line_segment_intersects_pixel_c(
     return not (miss or shadow_miss)
 
 
-def line_segment_intersects_pixel(line_segment, pixel_center, pixel_size):
-    """
-    Check if a line segment intersects with a box.
+# def line_segment_intersects_pixel(line_segment, pixel_center, pixel_size):
+#     """
+#     Check if a line segment intersects with a box.
+#
+#     :param tuple line_segment: The coordinates of the line segment in the format ((x1, y1), (x2, y2)).
+#     :param tuple pixel_center: The coordinates of the pixel's center (box_center_x, box_center_y).
+#     :param float pixel_size: The size of the pixel (considering it as a square).
+#
+#     :return: A boolean indicating whether the line intersects with the pixel.
+#     :rtype: bool
+#     """
+#     return line_segment_intersects_pixel_c(
+#         [line_segment[0][0], line_segment[0][1]],
+#         [line_segment[1][0], line_segment[1][1]],
+#         [pixel_center[0], pixel_center[1]],
+#         pixel_size,
+#     )
 
-    :param tuple line_segment: The coordinates of the line segment in the format ((x1, y1), (x2, y2)).
-    :param tuple pixel_center: The coordinates of the pixel's center (box_center_x, box_center_y).
-    :param float pixel_size: The size of the pixel (considering it as a square).
 
-    :return: A boolean indicating whether the line intersects with the pixel.
-    :rtype: bool
-    """
-    return line_segment_intersects_pixel_c(
-        [line_segment[0][0], line_segment[0][1]],
-        [line_segment[1][0], line_segment[1][1]],
-        [pixel_center[0], pixel_center[1]],
-        pixel_size,
-    )
+@cython.cfunc
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def line_segments_to_pixels_c(
+    line_segments: vector[vector[cython.double[2]]], pixel_size: cython.double
+) -> unordered_set[Tuple[cython.double, cython.double]]:
+    pixel_centers: unordered_set[Tuple[cython.double, cython.double]]
+
+    for i in range(line_segments.size()):
+        line_segment = line_segments[i]
+        start: Tuple[cython.double, cython.double] = (line_segment[0][0], line_segment[0][1])
+        end: Tuple[cython.double, cython.double] = (line_segment[1][0], line_segment[1][1])
+
+        x1 = start[0]
+        y1 = start[1]
+        x2 = end[0]
+        y2 = end[1]
+
+        # Calculate the bounding box of the line segment
+        xmin = min(x1, x2)
+        ymin = min(y1, y2)
+        xmax = max(x1, x2)
+        ymax = max(y1, y2)
+
+        # Calculate the indices of the box that intersect with the bounding box of the line segment
+        x_start = cython.cast(cython.int, (xmin / pixel_size) - 1)
+        x_end = cython.cast(cython.int, (xmax / pixel_size) + 1)
+        y_start = cython.cast(cython.int, (ymin / pixel_size) - 1)
+        y_end = cython.cast(cython.int, (ymax / pixel_size) + 1)
+
+        # Create a list of the centers of all the intersecting voxels
+        centers: vector[Tuple[cython.double, cython.double]]
+        for x in range(x_start, x_end):
+            for y in range(y_start, y_end):
+                x_coord: cython.double = (cython.cast(cython.double, x) + 0.5) * pixel_size
+                y_coord: cython.double = (cython.cast(cython.double, y) + 0.5) * pixel_size
+                center: Tuple[cython.double, cython.double] = (
+                    round_to_digits(x_coord, 6),
+                    round_to_digits(y_coord, 6),
+                )
+                centers.push_back(center)
+
+        for j in range(centers.size()):
+            if pixel_centers.count(centers[j]) == 0 and line_segment_intersects_pixel_c(
+                x1, y1, x2, y2, [centers[j][0], centers[j][1]], pixel_size
+            ):
+                pixel_centers.insert(centers[j])
+
+    return pixel_centers
+
+
+# def line_segments_to_pixels(line_segments, pixel_size):
+#     pixel_centers = set()
+#
+#     for line_segment in line_segments:
+#         start = line_segment[0]
+#         end = line_segment[1]
+#
+#         x1, y1 = start
+#         x2, y2 = end
+#
+#         # Calculate the bounding box of the line segment
+#         xmin = min(x1, x2)
+#         ymin = min(y1, y2)
+#         xmax = max(x1, x2)
+#         ymax = max(y1, y2)
+#
+#         # Calculate the indices of the box that intersect with the bounding box of the line segment
+#         x_indices = range(int(xmin / pixel_size) - 1, int(xmax / pixel_size) + 1)
+#         y_indices = range(int(ymin / pixel_size) - 1, int(ymax / pixel_size) + 1)
+#
+#         # Create a list of the centers of all the intersecting voxels
+#         centers = []
+#         for x in x_indices:
+#             for y in y_indices:
+#                 center = tuple(round((_ + 1 / 2) * pixel_size, 6) for _ in [x, y])
+#                 centers.append(center)
+#
+#         for center in centers:
+#             if center not in pixel_centers and line_segment_intersects_pixel(line_segment, center, pixel_size):
+#                 pixel_centers.add(center)
+#
+#     return pixel_centers
