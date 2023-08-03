@@ -300,50 +300,6 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
     return voxel_centers
 
 
-@cython.ccall
-def flood_fill_matrix(matrix: vector[vector[vector[cython.bint]]], start: vector[cython.int], fill_with: cython.bint):
-    dx: cython.int[6] = [0, 0, -1, 1, 0, 0]
-    dy: cython.int[6] = [-1, 1, 0, 0, 0, 0]
-    dz: cython.int[6] = [0, 0, 0, 0, -1, 1]
-    nx: cython.int
-    ny: cython.int
-    nz: cython.int
-    x: cython.int
-    y: cython.int
-    z: cython.int
-    sx: cython.int = matrix.size()
-    sy: cython.int = matrix[0].size()
-    sz: cython.int = matrix[0][0].size()
-
-    old_value = matrix[start[0]][start[1]][start[2]]
-
-    if old_value == fill_with:
-        # return np.zeros((400, 400, 400), dtype=np.bool_)
-        return np.asarray(matrix, dtype=np.bool_)
-
-    stack: vector[vector[cython.int]]
-    stack.push_back(start)
-
-    while stack.size() > 0:
-        point = stack[stack.size() - 1]
-        stack.pop_back()
-
-        x = point[0]
-        y = point[1]
-        z = point[2]
-
-        matrix[x][y][z] = fill_with
-
-        for i in range(6):
-            nx, ny, nz = x + dx[i], y + dy[i], z + dz[i]
-
-            if 0 <= nx < sx and 0 <= ny < sy and 0 <= nz < sz and matrix[nx][ny][nz] == old_value:
-                stack.push_back([nx, ny, nz])
-
-    return np.asarray(matrix, dtype=np.bool_)
-    # return np.zeros((10, 10, 10), dtype=np.bool_)
-
-
 @cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -391,10 +347,16 @@ def flood_fill_matrix_c(
     return matrix
 
 
-def flood_fill_test(matrix: np.ndarray[np.bool_, np.ndim == 3], start: Tuple[int, int, int], fill_with: bool) -> np.ndarray[np.bool_, np.ndim == 3]:
-    matrix_c: cython.bint[:, :, :] = matrix.astype(np.int32)
-    shape: cython.int[3] = [matrix.shape[0], matrix.shape[1], matrix.shape[2]]
-    start_c: cython.int[3] = [start[0], start[1], start[2]]
-    fill_with_c: cython.bint = fill_with
-
-    return np.asarray(flood_fill_matrix_c(matrix_c, start_c, fill_with_c, shape), dtype=np.bool_)
+def flood_fill_matrix(
+    matrix: np.ndarray[np.bool_, np.ndim == 3], start: Tuple[int, int, int], fill_with: bool
+) -> np.ndarray[np.bool_, np.ndim == 3]:
+    # TODO: add docstrings
+    return np.asarray(
+        flood_fill_matrix_c(
+            matrix.astype(np.int32),
+            [start[0], start[1], start[2]],
+            fill_with,
+            [matrix.shape[0], matrix.shape[1], matrix.shape[2]],
+        ),
+        dtype=np.bool_,
+    )
