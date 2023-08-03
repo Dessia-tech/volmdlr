@@ -635,6 +635,17 @@ class WireMixin:
                 return False
         return True
 
+    @classmethod
+    def from_circle(cls, circle):
+        """
+        Creates a Contour from a circle.
+
+        :param circle: Circle
+        :return:
+        """
+        point = circle.point_at_abscissa(0.0)
+        return cls([circle.trim(point, point)])
+
     def plot(self, ax=None, edge_style=EdgeStyle()):
         """Wire 2D plot using Matplotlib."""
         if ax is None:
