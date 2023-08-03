@@ -223,7 +223,7 @@ def calculate_axis_values(
 @cython.cdivision(True)
 def aabb_intersecting_boxes(
     min_point: cython.double[3], max_point: cython.double[3], voxel_size: cython.double
-) -> List[cython.double[3]]:
+) -> vector[Tuple[cython.double, cython.double, cython.double]]:
     x_start: cython.int
     x_end: cython.int
     y_start: cython.int
@@ -234,7 +234,6 @@ def aabb_intersecting_boxes(
     y: cython.int
     z: cython.int
     num_centers: cython.int
-    center: cython.double[3]
 
     x_start = cython.cast(cython.int, (min_point[0] / voxel_size) - 1)
     x_end = cython.cast(cython.int, (max_point[0] / voxel_size) + 1)
@@ -244,16 +243,18 @@ def aabb_intersecting_boxes(
     z_end = cython.cast(cython.int, (max_point[2] / voxel_size) + 1)
 
     num_centers = (x_end - x_start) * (y_end - y_start) * (z_end - z_start)
-    centers: list = num_centers * [center]  # TODO: use cpp vector
+    centers: vector[Tuple[cython.double, cython.double, cython.double]]
+    centers.resize(num_centers)
 
     num_centers = 0
     for x in range(x_start, x_end):
         for y in range(y_start, y_end):
             for z in range(z_start, z_end):
-                center[0] = round_to_digits((x + 0.5) * voxel_size, 6)
-                center[1] = round_to_digits((y + 0.5) * voxel_size, 6)
-                center[2] = round_to_digits((z + 0.5) * voxel_size, 6)
-                centers[num_centers] = center
+                centers[num_centers] = (
+                    round_to_digits((x + 0.5) * voxel_size, 6),
+                    round_to_digits((y + 0.5) * voxel_size, 6),
+                    round_to_digits((z + 0.5) * voxel_size, 6),
+                )
                 num_centers += 1
 
     return centers
