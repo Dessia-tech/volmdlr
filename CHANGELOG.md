@@ -64,6 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - minimum_distance: face-to-face, shell-to-shell
 - OpenShell3D: from_faces (using faces graph)
 - SphericalFace3D: from_contours3d_and_rectangular_cut
+- RevolutionSurface3D: Translation
+- wires.WireMixin: from_circle
+- curves.CircleMixin: trim
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
@@ -98,7 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: line_intersections
 - Line3D: minimum_distance_points
 - remove arcellipse handleling for bspline2d_3d.
-
+- Ellipse3D: discretization_points.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
