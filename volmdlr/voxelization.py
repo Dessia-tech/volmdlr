@@ -18,6 +18,7 @@ from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
+
 # from volmdlr.voxelization_compiled import aabb_intersecting_boxes, flood_fill_matrix, triangle_intersects_voxel
 from volmdlr.voxelization_compiled import triangles_to_voxels
 from volmdlr.voxelization_compiled import flood_fill_matrix
@@ -562,27 +563,37 @@ class Voxelization(PhysicalObject):
         :return: The centers of the voxels that intersect with the triangles.
         :rtype: set[tuple[float, float, float]]
         """
-        return triangles_to_voxels(triangles, voxel_size)
+        return triangles_to_voxels(triangles, voxel_size).union(
+            Voxelization._triangles_to_voxels_at_interface(triangles, voxel_size)
+        )
 
-        from volmdlr.voxelization_compiled_old import triangle_intersects_voxel, aabb_intersecting_boxes
+        # from volmdlr.voxelization_compiled_old import triangle_intersects_voxel, aabb_intersecting_boxes
+        #
+        # voxel_centers = set()
+        #
+        # for triangle in tqdm(triangles):
+        #     # Check if the triangle is at the interface of two voxels, and add them
+        #     voxel_centers = voxel_centers.union(Voxelization._triangle_interface_voxels(triangle, voxel_size))
+        #
+        #     min_point = tuple(min(p[i] for p in triangle) for i in range(3))
+        #     max_point = tuple(max(p[i] for p in triangle) for i in range(3))
+        #
+        #     for bbox_center in aabb_intersecting_boxes(min_point, max_point, voxel_size):
+        #         if bbox_center not in voxel_centers:
+        #             if triangle_intersects_voxel(
+        #                 triangle,
+        #                 bbox_center,
+        #                 [0.5 * voxel_size for _ in range(3)],
+        #             ):
+        #                 voxel_centers.add(bbox_center)
+        #
+        # return voxel_centers
 
+    @staticmethod
+    def _triangles_to_voxels_at_interface(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
         voxel_centers = set()
-
         for triangle in tqdm(triangles):
-            # Check if the triangle is at the interface of two voxels, and add them
             voxel_centers = voxel_centers.union(Voxelization._triangle_interface_voxels(triangle, voxel_size))
-
-            min_point = tuple(min(p[i] for p in triangle) for i in range(3))
-            max_point = tuple(max(p[i] for p in triangle) for i in range(3))
-
-            for bbox_center in aabb_intersecting_boxes(min_point, max_point, voxel_size):
-                if bbox_center not in voxel_centers:
-                    if triangle_intersects_voxel(
-                        triangle,
-                        bbox_center,
-                        [0.5 * voxel_size for _ in range(3)],
-                    ):
-                        voxel_centers.add(bbox_center)
 
         return voxel_centers
 
@@ -1654,9 +1665,7 @@ class VoxelMatrix:
         return self._voxel_operation(other_voxel_matrix, np.logical_xor)
 
     def flood_fill(self, start, fill_with) -> "VoxelMatrix":
-        return VoxelMatrix(
-            flood_fill_matrix(self.matrix, start, fill_with), self.matrix_origin_center, self.voxel_size
-        )
+        return VoxelMatrix(flood_fill_matrix(self.matrix, start, fill_with), self.matrix_origin_center, self.voxel_size)
 
         # directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
         # old_value = self.matrix[start[0]][start[1]][start[2]]

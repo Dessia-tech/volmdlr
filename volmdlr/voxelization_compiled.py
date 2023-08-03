@@ -9,8 +9,8 @@ from typing import List, Set, Tuple
 import cython
 import cython.cimports.libc.math as math_c
 import numpy as np
-from cython.cimports.libcpp.vector import vector
 from cython.cimports.libcpp.stack import stack
+from cython.cimports.libcpp.vector import vector
 
 # CUSTOM PYTHON TYPES
 
@@ -275,9 +275,6 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
     voxel_centers = set()
 
     for triangle in triangles:
-        # Check if the triangle is at the interface of two voxels, and add them
-        # voxel_centers = voxel_centers.union(Voxelization._triangle_interface_voxels(triangle, voxel_size))
-
         min_point = tuple(min(p[i] for p in triangle) for i in range(3))
         max_point = tuple(max(p[i] for p in triangle) for i in range(3))
 
