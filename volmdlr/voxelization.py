@@ -18,7 +18,7 @@ from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
-from volmdlr.voxelization_compiled import triangles_to_voxels, flood_fill_matrix, _line_segment_intersects_pixel
+from volmdlr.voxelization_compiled import triangles_to_voxels, flood_fill_matrix, line_segments_to_pixels
 from volmdlr.wires import ClosedPolygon2D
 
 # Custom types
@@ -1969,6 +1969,8 @@ class Pixelization:
 
     @staticmethod
     def _line_segments_to_pixels(line_segments, pixel_size):
+        return line_segments_to_pixels(line_segments, pixel_size)
+
         pixel_centers = set()
 
         for line_segment in line_segments:
