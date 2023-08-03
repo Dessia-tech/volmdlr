@@ -28,9 +28,9 @@ def round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def triangle_intersects_voxel(
-        triangle: cython.double[3][3],
-        voxel_center: cython.double[3],
-        voxel_extents: cython.double[3],
+    triangle: cython.double[3][3],
+    voxel_center: cython.double[3],
+    voxel_extents: cython.double[3],
 ) -> cython.bint:
     # Ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
 
@@ -111,9 +111,9 @@ def triangle_intersects_voxel(
 
     # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
     r = (
-            voxel_extents[0] * math_c.fabs(plane_normal[0])
-            + voxel_extents[1] * math_c.fabs(plane_normal[1])
-            + voxel_extents[2] * math_c.fabs(plane_normal[2])
+        voxel_extents[0] * math_c.fabs(plane_normal[0])
+        + voxel_extents[1] * math_c.fabs(plane_normal[1])
+        + voxel_extents[2] * math_c.fabs(plane_normal[2])
     )
 
     # Intersection occurs when plane distance falls within [-r,+r] interval
@@ -197,20 +197,20 @@ def triangle_intersects_voxel(
 @cython.wraparound(False)
 @cython.exceptval(check=False)
 def calculate_axis_values(
-        v0: cython.double[3],
-        v1: cython.double[3],
-        v2: cython.double[3],
-        ax: cython.double[3],
-        f: cython.double[3],
-        voxel_extents: cython.double[3],
+    v0: cython.double[3],
+    v1: cython.double[3],
+    v2: cython.double[3],
+    ax: cython.double[3],
+    f: cython.double[3],
+    voxel_extents: cython.double[3],
 ) -> cython.bint:
     p0 = v0[0] * ax[0] + v0[1] * ax[1] + v0[2] * ax[2]
     p1 = v1[0] * ax[0] + v1[1] * ax[1] + v1[2] * ax[2]
     p2 = v2[0] * ax[0] + v2[1] * ax[1] + v2[2] * ax[2]
     r = (
-            voxel_extents[0] * math_c.fabs(f[2])
-            + voxel_extents[1] * math_c.fabs(f[0])
-            + voxel_extents[2] * math_c.fabs(f[1])
+        voxel_extents[0] * math_c.fabs(f[2])
+        + voxel_extents[1] * math_c.fabs(f[0])
+        + voxel_extents[2] * math_c.fabs(f[1])
     )
 
     return max(-max(p0, p1, p2), min(p0, p1, p2)) > r
@@ -221,7 +221,7 @@ def calculate_axis_values(
 @cython.wraparound(False)
 @cython.cdivision(True)
 def aabb_intersecting_boxes(
-        min_point: cython.double[3], max_point: cython.double[3], voxel_size: cython.double
+    min_point: cython.double[3], max_point: cython.double[3], voxel_size: cython.double
 ) -> List[cython.double[3]]:
     x_start: cython.int
     x_end: cython.int
@@ -280,20 +280,20 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
         max_point = tuple(max(p[i] for p in triangle) for i in range(3))
 
         for bbox_center in aabb_intersecting_boxes(
-                [min_point[0], min_point[1], min_point[2]],
-                [max_point[0], max_point[1], max_point[2]],
-                voxel_size,
+            [min_point[0], min_point[1], min_point[2]],
+            [max_point[0], max_point[1], max_point[2]],
+            voxel_size,
         ):
             bbox_center = tuple(bbox_center)
             if bbox_center not in voxel_centers:
                 if triangle_intersects_voxel(
-                        [
-                            [triangle[0][0], triangle[0][1], triangle[0][2]],
-                            [triangle[1][0], triangle[1][1], triangle[1][2]],
-                            [triangle[2][0], triangle[2][1], triangle[2][2]],
-                        ],
-                        [bbox_center[0], bbox_center[1], bbox_center[2]],
-                        [0.5 * voxel_size, 0.5 * voxel_size, 0.5 * voxel_size],
+                    [
+                        [triangle[0][0], triangle[0][1], triangle[0][2]],
+                        [triangle[1][0], triangle[1][1], triangle[1][2]],
+                        [triangle[2][0], triangle[2][1], triangle[2][2]],
+                    ],
+                    [bbox_center[0], bbox_center[1], bbox_center[2]],
+                    [0.5 * voxel_size, 0.5 * voxel_size, 0.5 * voxel_size],
                 ):
                     voxel_centers.add(bbox_center)
 
@@ -341,4 +341,60 @@ def flood_fill_matrix(matrix: vector[vector[vector[cython.bint]]], start: vector
                 stack.push_back([nx, ny, nz])
 
     return np.asarray(matrix, dtype=np.bool_)
-    # return np.zeros((400, 400, 400), dtype=np.bool_)
+    # return np.zeros((10, 10, 10), dtype=np.bool_)
+
+
+@cython.cfunc
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def flood_fill_matrix_c(
+    matrix: cython.bint[:, :, :], start: cython.int[3], fill_with: cython.bint, shape: cython.int[3]
+) -> cython.bint[:, :, :]:
+    dx: cython.int[6] = [0, 0, -1, 1, 0, 0]
+    dy: cython.int[6] = [-1, 1, 0, 0, 0, 0]
+    dz: cython.int[6] = [0, 0, 0, 0, -1, 1]
+    nx: cython.int
+    ny: cython.int
+    nz: cython.int
+    x: cython.int
+    y: cython.int
+    z: cython.int
+    sx: cython.int = shape[0]
+    sy: cython.int = shape[1]
+    sz: cython.int = shape[2]
+
+    old_value = matrix[start[0]][start[1]][start[2]]
+
+    if old_value == fill_with:
+        return matrix
+
+    stack: vector[cython.pint]
+    stack.push_back(start)
+
+    while stack.size() > 0:
+        point = stack[stack.size() - 1]
+        stack.pop_back()
+
+        # x, y, z = point
+        x = point[0]
+        y = point[1]
+        z = point[2]
+
+        matrix[x][y][z] = fill_with
+
+        for i in range(6):
+            nx, ny, nz = x + dx[i], y + dy[i], z + dz[i]
+
+            if 0 <= nx < sx and 0 <= ny < sy and 0 <= nz < sz and matrix[nx][ny][nz] == old_value:
+                stack.push_back([nx, ny, nz])
+
+    return matrix
+
+
+def flood_fill_test(matrix: np.ndarray[np.bool_, np.ndim == 3], start: Tuple[int, int, int], fill_with: bool) -> np.ndarray[np.bool_, np.ndim == 3]:
+    matrix_c: cython.bint[:, :, :] = matrix.astype(np.int32)
+    shape: cython.int[3] = [matrix.shape[0], matrix.shape[1], matrix.shape[2]]
+    start_c: cython.int[3] = [start[0], start[1], start[2]]
+    fill_with_c: cython.bint = fill_with
+
+    return np.asarray(flood_fill_matrix_c(matrix_c, start_c, fill_with_c, shape), dtype=np.bool_)
