@@ -11,7 +11,6 @@ import cython.cimports.libc.math as math_c
 import numpy as np
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
-from cython.cimports.libcpp.unordered_set import unordered_set
 
 # CUSTOM PYTHON TYPES
 
@@ -21,7 +20,7 @@ Triangle = Tuple[Point, ...]
 
 @cython.cfunc
 @cython.cdivision(True)
-def round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
+def _round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
     multiplier: cython.double = math_c.pow(10.0, digits)
     return math_c.round(num * multiplier) / multiplier
 
@@ -29,7 +28,7 @@ def round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
 @cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def triangle_intersects_voxel(
+def _triangle_intersects_voxel(
     triangle: cython.double[3][3],
     voxel_center: cython.double[3],
     voxel_extents: cython.double[3],
@@ -130,63 +129,63 @@ def triangle_intersects_voxel(
     a00[0] = 0
     a00[1] = -f0[2]
     a00[2] = f0[1]
-    if calculate_axis_values(v0, v1, v2, a00, f0, voxel_extents):
+    if _calculate_axis_values(v0, v1, v2, a00, f0, voxel_extents):
         return False
 
     # Test axis a01
     a01[0] = 0
     a01[1] = -f1[2]
     a01[2] = f1[1]
-    if calculate_axis_values(v0, v1, v2, a01, f1, voxel_extents):
+    if _calculate_axis_values(v0, v1, v2, a01, f1, voxel_extents):
         return False
 
     # Test axis a02
     a02[0] = 0
     a02[1] = -f2[2]
     a02[2] = f2[1]
-    if calculate_axis_values(v0, v1, v2, a02, f2, voxel_extents):
+    if _calculate_axis_values(v0, v1, v2, a02, f2, voxel_extents):
         return False
 
     # Test axis a10
     a10[0] = f0[2]
     a10[1] = 0
     a10[2] = -f0[0]
-    if calculate_axis_values(v0, v1, v2, a10, f0, voxel_extents):
+    if _calculate_axis_values(v0, v1, v2, a10, f0, voxel_extents):
         return False
 
     # Test axis a11
     a11[0] = f1[2]
     a11[1] = 0
     a11[2] = -f1[0]
-    if calculate_axis_values(v0, v1, v2, a11, f1, voxel_extents):
+    if _calculate_axis_values(v0, v1, v2, a11, f1, voxel_extents):
         return False
 
     # Test axis a12
     a12[0] = f2[2]
     a12[1] = 0
     a12[2] = -f2[0]
-    if calculate_axis_values(v0, v1, v2, a12, f2, voxel_extents):
+    if _calculate_axis_values(v0, v1, v2, a12, f2, voxel_extents):
         return False
 
     # Test axis a20
     a20[0] = -f0[1]
     a20[1] = f0[0]
     a20[2] = 0
-    if calculate_axis_values(v0, v1, v2, a20, f0, voxel_extents):
+    if _calculate_axis_values(v0, v1, v2, a20, f0, voxel_extents):
         return False
 
     # Test axis a21
     a21[0] = -f1[1]
     a21[1] = f1[0]
     a21[2] = 0
-    if calculate_axis_values(v0, v1, v2, a21, f1, voxel_extents):
+    if _calculate_axis_values(v0, v1, v2, a21, f1, voxel_extents):
         return False
 
     # Test axis a22
     a22[0] = -f2[1]
     a22[1] = f2[0]
     a22[2] = 0
-    if calculate_axis_values(v0, v1, v2, a22, f2, voxel_extents):
+    if _calculate_axis_values(v0, v1, v2, a22, f2, voxel_extents):
         return False
 
     # ENDREGION
@@ -198,7 +197,7 @@ def triangle_intersects_voxel(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.exceptval(check=False)
-def calculate_axis_values(
+def _calculate_axis_values(
     v0: cython.double[3],
     v1: cython.double[3],
     v2: cython.double[3],
@@ -222,7 +221,7 @@ def calculate_axis_values(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def aabb_intersecting_boxes(
+def _aabb_intersecting_boxes(
     min_point: cython.double[3], max_point: cython.double[3], voxel_size: cython.double
 ) -> vector[Tuple[cython.double, cython.double, cython.double]]:
     x_start: cython.int
@@ -252,9 +251,9 @@ def aabb_intersecting_boxes(
         for y in range(y_start, y_end):
             for z in range(z_start, z_end):
                 centers[num_centers] = (
-                    round_to_digits((x + 0.5) * voxel_size, 6),
-                    round_to_digits((y + 0.5) * voxel_size, 6),
-                    round_to_digits((z + 0.5) * voxel_size, 6),
+                    _round_to_digits((x + 0.5) * voxel_size, 6),
+                    _round_to_digits((y + 0.5) * voxel_size, 6),
+                    _round_to_digits((z + 0.5) * voxel_size, 6),
                 )
                 num_centers += 1
 
@@ -279,14 +278,14 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
         min_point = tuple(min(p[i] for p in triangle) for i in range(3))
         max_point = tuple(max(p[i] for p in triangle) for i in range(3))
 
-        for bbox_center in aabb_intersecting_boxes(
+        for bbox_center in _aabb_intersecting_boxes(
             [min_point[0], min_point[1], min_point[2]],
             [max_point[0], max_point[1], max_point[2]],
             voxel_size,
         ):
             bbox_center = tuple(bbox_center)
             if bbox_center not in voxel_centers:
-                if triangle_intersects_voxel(
+                if _triangle_intersects_voxel(
                     [
                         [triangle[0][0], triangle[0][1], triangle[0][2]],
                         [triangle[1][0], triangle[1][1], triangle[1][2]],
@@ -303,7 +302,7 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
 @cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def flood_fill_matrix_c(
+def _flood_fill_matrix(
     matrix: cython.int[:, :, :], start: cython.int[3], fill_with: cython.int, shape: cython.int[3]
 ) -> cython.int[:, :, :]:
     dx: cython.int[6] = [0, 0, -1, 1, 0, 0]
@@ -346,7 +345,7 @@ def flood_fill_matrix(
 ) -> np.ndarray[np.bool_, np.ndim == 3]:
     # TODO: add docstrings
     return np.asarray(
-        flood_fill_matrix_c(
+        _flood_fill_matrix(
             matrix.astype(np.int32),
             [start[0], start[1], start[2]],
             fill_with,
@@ -360,16 +359,15 @@ def flood_fill_matrix(
 @cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def line_segment_intersects_pixel_c(
+def _line_segment_intersects_pixel(
     x1: cython.double,
     y1: cython.double,
     x2: cython.double,
     y2: cython.double,
-    pixel_center: cython.double[2],
+    pixel_center_x: cython.double,
+    pixel_center_y: cython.double,
     pixel_size: cython.double,
 ) -> cython.bint:
-    pixel_center_x = pixel_center[0]
-    pixel_center_y = pixel_center[1]
 
     # Determine the coordinates of lower-left and upper-right of rectangle
     xmin, xmax = pixel_center_x - pixel_size / 2, pixel_center_x + pixel_size / 2
@@ -396,43 +394,20 @@ def line_segment_intersects_pixel_c(
     return not (miss or shadow_miss)
 
 
-# def line_segment_intersects_pixel(line_segment, pixel_center, pixel_size):
-#     """
-#     Check if a line segment intersects with a box.
-#
-#     :param tuple line_segment: The coordinates of the line segment in the format ((x1, y1), (x2, y2)).
-#     :param tuple pixel_center: The coordinates of the pixel's center (box_center_x, box_center_y).
-#     :param float pixel_size: The size of the pixel (considering it as a square).
-#
-#     :return: A boolean indicating whether the line intersects with the pixel.
-#     :rtype: bool
-#     """
-#     return line_segment_intersects_pixel_c(
-#         [line_segment[0][0], line_segment[0][1]],
-#         [line_segment[1][0], line_segment[1][1]],
-#         [pixel_center[0], pixel_center[1]],
-#         pixel_size,
-#     )
-
-
 @cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def line_segments_to_pixels_c(
-    line_segments: vector[vector[cython.double[2]]], pixel_size: cython.double
-) -> unordered_set[Tuple[cython.double, cython.double]]:
-    pixel_centers: unordered_set[Tuple[cython.double, cython.double]]
+def _line_segments_to_pixels(
+    line_segments: vector[vector[Tuple[cython.double, cython.double]]], pixel_size: cython.double
+) -> vector[Tuple[cython.double, cython.double]]:
+    pixel_centers: vector[Tuple[cython.double, cython.double]]
 
     for i in range(line_segments.size()):
-        line_segment = line_segments[i]
-        start: Tuple[cython.double, cython.double] = (line_segment[0][0], line_segment[0][1])
-        end: Tuple[cython.double, cython.double] = (line_segment[1][0], line_segment[1][1])
-
-        x1 = start[0]
-        y1 = start[1]
-        x2 = end[0]
-        y2 = end[1]
+        x1: cython.double = line_segments[i][0][0]
+        y1: cython.double = line_segments[i][0][1]
+        x2: cython.double = line_segments[i][1][0]
+        y2: cython.double = line_segments[i][1][1]
 
         # Calculate the bounding box of the line segment
         xmin = min(x1, x2)
@@ -447,55 +422,24 @@ def line_segments_to_pixels_c(
         y_end = cython.cast(cython.int, (ymax / pixel_size) + 1)
 
         # Create a list of the centers of all the intersecting voxels
-        centers: vector[Tuple[cython.double, cython.double]]
         for x in range(x_start, x_end):
             for y in range(y_start, y_end):
                 x_coord: cython.double = (cython.cast(cython.double, x) + 0.5) * pixel_size
                 y_coord: cython.double = (cython.cast(cython.double, y) + 0.5) * pixel_size
                 center: Tuple[cython.double, cython.double] = (
-                    round_to_digits(x_coord, 6),
-                    round_to_digits(y_coord, 6),
+                    _round_to_digits(x_coord, 6),
+                    _round_to_digits(y_coord, 6),
                 )
-                centers.push_back(center)
 
-        for j in range(centers.size()):
-            if pixel_centers.count(centers[j]) == 0 and line_segment_intersects_pixel_c(
-                x1, y1, x2, y2, [centers[j][0], centers[j][1]], pixel_size
-            ):
-                pixel_centers.insert(centers[j])
+                if _line_segment_intersects_pixel(
+                    x1, y1, x2, y2, center[0], center[1], pixel_size
+                ):
+                    pixel_centers.push_back(center)
 
     return pixel_centers
 
 
-# def line_segments_to_pixels(line_segments, pixel_size):
-#     pixel_centers = set()
-#
-#     for line_segment in line_segments:
-#         start = line_segment[0]
-#         end = line_segment[1]
-#
-#         x1, y1 = start
-#         x2, y2 = end
-#
-#         # Calculate the bounding box of the line segment
-#         xmin = min(x1, x2)
-#         ymin = min(y1, y2)
-#         xmax = max(x1, x2)
-#         ymax = max(y1, y2)
-#
-#         # Calculate the indices of the box that intersect with the bounding box of the line segment
-#         x_indices = range(int(xmin / pixel_size) - 1, int(xmax / pixel_size) + 1)
-#         y_indices = range(int(ymin / pixel_size) - 1, int(ymax / pixel_size) + 1)
-#
-#         # Create a list of the centers of all the intersecting voxels
-#         centers = []
-#         for x in x_indices:
-#             for y in y_indices:
-#                 center = tuple(round((_ + 1 / 2) * pixel_size, 6) for _ in [x, y])
-#                 centers.append(center)
-#
-#         for center in centers:
-#             if center not in pixel_centers and line_segment_intersects_pixel(line_segment, center, pixel_size):
-#                 pixel_centers.add(center)
-#
-#     return pixel_centers
+def line_segments_to_pixels(
+    line_segments: List[Tuple[Tuple[float, float], Tuple[float, float]]], pixel_size: float
+) -> Set[Tuple[float, float]]:
+    return set(_line_segments_to_pixels(line_segments, pixel_size))

@@ -18,7 +18,7 @@ from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
-from volmdlr.voxelization_compiled import triangles_to_voxels, flood_fill_matrix, line_segment_intersects_pixel
+from volmdlr.voxelization_compiled import triangles_to_voxels, flood_fill_matrix, _line_segment_intersects_pixel
 from volmdlr.wires import ClosedPolygon2D
 
 # Custom types
@@ -2015,7 +2015,7 @@ class Pixelization:
         :return: A boolean indicating whether the line intersects with the pixel.
         :rtype: bool
         """
-        return line_segment_intersects_pixel(line_segment, pixel_center, pixel_size)
+        return _line_segment_intersects_pixel(line_segment, pixel_center, pixel_size)
 
         # start = line_segment[0]
         # end = line_segment[1]
