@@ -353,3 +353,62 @@ def flood_fill_matrix(
         ),
         dtype=np.bool_,
     )
+
+
+@cython.cfunc
+@cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def line_segment_intersects_pixel_c(
+    start: cython.double[2], end: cython.double[2], pixel_center: cython.double[2], pixel_size: cython.double
+) -> cython.bint:
+    x1 = start[0]
+    y1 = start[1]
+    x2 = end[0]
+    y2 = end[1]
+    pixel_center_x = pixel_center[0]
+    pixel_center_y = pixel_center[1]
+
+    # Determine the coordinates of lower-left and upper-right of rectangle
+    xmin, xmax = pixel_center_x - pixel_size / 2, pixel_center_x + pixel_size / 2
+    ymin, ymax = pixel_center_y - pixel_size / 2, pixel_center_y + pixel_size / 2
+
+    # Compute the line equation for a point
+
+    line_eq1 = (y2 - y1) * xmin + (x1 - x2) * ymin + (x2 * y1 - x1 * y2)
+    line_eq2 = (y2 - y1) * xmin + (x1 - x2) * ymax + (x2 * y1 - x1 * y2)
+    line_eq3 = (y2 - y1) * xmax + (x1 - x2) * ymin + (x2 * y1 - x1 * y2)
+    line_eq4 = (y2 - y1) * xmax + (x1 - x2) * ymax + (x2 * y1 - x1 * y2)
+
+    # Check if all corners are on the same side of the line
+    miss: cython.bint = (
+            (line_eq1 <= 0 and line_eq2 <= 0 and line_eq3 <= 0 and line_eq4 <= 0)
+            or (line_eq1 >= 0 and line_eq2 >= 0 and line_eq3 >= 0 and line_eq4 >= 0)
+    )
+
+    # Does it miss based on the shadow intersection test?
+    shadow_miss: cython.bint = (
+        (x1 > xmax and x2 > xmax) or (x1 < xmin and x2 < xmin) or (y1 > ymax and y2 > ymax) or (y1 < ymin and y2 < ymin)
+    )
+
+    # A hit is if it doesn't miss on both tests!
+    return not (miss or shadow_miss)
+
+
+def line_segment_intersects_pixel(line_segment, pixel_center, pixel_size):
+    """
+    Check if a line segment intersects with a box.
+
+    :param tuple line_segment: The coordinates of the line segment in the format ((x1, y1), (x2, y2)).
+    :param tuple pixel_center: The coordinates of the pixel's center (box_center_x, box_center_y).
+    :param float pixel_size: The size of the pixel (considering it as a square).
+
+    :return: A boolean indicating whether the line intersects with the pixel.
+    :rtype: bool
+    """
+    return line_segment_intersects_pixel_c(
+        [line_segment[0][0], line_segment[0][1]],
+        [line_segment[1][0], line_segment[1][1]],
+        [pixel_center[0], pixel_center[1]],
+        pixel_size,
+    )
