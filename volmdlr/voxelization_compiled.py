@@ -345,7 +345,6 @@ def flood_fill_matrix_c(
 def flood_fill_matrix(
     matrix: np.ndarray[np.bool_, np.ndim == 3], start: Tuple[int, int, int], fill_with: bool
 ) -> np.ndarray[np.bool_, np.ndim == 3]:
-    start_c = np.array(start, dtype=np.int32)
     # TODO: add docstrings
     return np.asarray(
         flood_fill_matrix_c(
