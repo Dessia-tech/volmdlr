@@ -809,6 +809,31 @@ class CircleMixin:
         point_at_absccissa = self.point_at_abscissa(abscissa)
         return self.split(start, point_at_absccissa)
 
+    def trim(self, point1: Union[volmdlr.Point2D, volmdlr.Point3D], point2: Union[volmdlr.Point2D, volmdlr.Point3D],
+             same_sense: bool = True):
+        """
+        Trims a circle between two points.
+
+        :param point1: point 1 used to trim circle.
+        :param point2: point2 used to trim circle.
+        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :return: arc between these two points.
+        """
+        fullar_arc_class_ = getattr(volmdlr.edges, 'FullArc'+self.__class__.__name__[-2:])
+        arc_class_ = getattr(volmdlr.edges, 'Arc'+self.__class__.__name__[-2:])
+        circle = self
+        if not same_sense:
+            circle = self.reverse()
+        if not self.point_belongs(point1, 1e-4) or not self.point_belongs(point2, 1e-4):
+            ax = self.plot()
+            point1.plot(ax=ax, color='r')
+            point2.plot(ax=ax, color='b')
+            raise ValueError('Point not on circle for trim method')
+        if point1.is_close(point2):
+            return fullar_arc_class_(circle, point1)
+        return arc_class_(circle, point1, point2)
+
 
 class Circle2D(CircleMixin, Curve):
     """
@@ -982,7 +1007,7 @@ class Circle2D(CircleMixin, Curve):
         return self._bounding_rectangle
 
     def get_bounding_rectangle(self):
-
+        """Calculates the bounding rectangle of the circle 2d."""
         x_min = self.center.x - self.radius
         x_max = self.center.x + self.radius
         y_min = self.center.y - self.radius
@@ -1501,28 +1526,6 @@ class Circle3D(CircleMixin, Curve):
         """
         frame = volmdlr.Frame3D(self.center, self.frame.u, -self.frame.v, self.frame.u.cross(-self.frame.v))
         return Circle3D(frame, self.radius)
-
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
-        """
-        Trims a circle between two points.
-
-        :param point1: point 1 used to trim circle.
-        :param point2: point2 used to trim circle.
-        :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
-            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
-        :return: arc between these two points.
-        """
-        circle = self
-        if not same_sense:
-            circle = self.reverse()
-        if not self.point_belongs(point1, 1e-4) or not self.point_belongs(point2, 1e-4):
-            ax = self.plot()
-            point1.plot(ax=ax, color='r')
-            point2.plot(ax=ax, color='b')
-            raise ValueError('Point not on circle for trim method')
-        if point1.is_close(point2):
-            return volmdlr.edges.FullArc3D(circle, point1)
-        return volmdlr.edges.Arc3D(circle, point1, point2)
 
     def split(self, split_start, split_end):
         """
