@@ -493,3 +493,21 @@ def line_segments_to_pixels(
     line_segments: List[Tuple[Tuple[float, float], Tuple[float, float]]], pixel_size: float
 ) -> Set[Tuple[float, float]]:
     return set(_line_segments_to_pixels(line_segments, pixel_size))
+
+
+def triangles_to_voxel_matrix(
+    triangles: List[Tuple[Tuple[float, float, float]], Tuple[float, float, float], Tuple[float, float, float]],
+    voxel_size: float
+) -> Tuple[np.ndarray[np.bool_, np.ndim == 3], Tuple[float, float, float]]:
+    # compute the size of the matrix and min matrix origin center
+    # crete the numpy matrix
+    pass
+
+
+@cython.cfunc
+def _triangles_to_voxel_matrix(
+    matrix: cython.bint[:, :, :],
+    triangles: vector[Tuple[Tuple[cython.double, cython.double, cython.double]]],
+    matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
+):
+    pass
