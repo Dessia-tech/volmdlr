@@ -2517,15 +2517,12 @@ class ToroidalSurface3D(PeriodicalSurface):
                 frame = volmdlr.Frame3D(center, self.frame.u, self.frame.v, self.frame.w)
             start3d = self.point2d_to_3d(linesegment2d.start)
             circle = curves.Circle3D(frame, start3d.point_distance(center))
-            start3d = self.point2d_to_3d(linesegment2d.start)
             if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
                 start_end = center + self.frame.u * (self.small_radius + self.tore_radius)
                 return [edges.FullArc3D(circle=circle, start_end=start_end)]
             return [edges.Arc3D(circle, start3d, self.point2d_to_3d(linesegment2d.end))]
-        n = 10
-        degree = 3
-        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, degree).simplify]
+        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=10)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree=3).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
