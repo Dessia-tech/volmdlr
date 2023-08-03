@@ -745,8 +745,8 @@ class Line3D(Line):
         :param point2: line segment end.
         :return: line segment.
         """
-        if not self.point_belongs(point1) or not self.point_belongs(point2):
-            raise ValueError('Point not on curve')
+        # if not self.point_belongs(point1) or not self.point_belongs(point2):
+        #     raise ValueError('Point not on curve')
 
         return volmdlr.edges.LineSegment3D(point1, point2)
 
@@ -1501,20 +1501,21 @@ class Circle3D(CircleMixin, Curve):
         frame = volmdlr.Frame3D(self.center, self.frame.u, -self.frame.v, self.frame.u.cross(-self.frame.v))
         return Circle3D(frame, self.radius)
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, tol: float = 1e-4):
         """
         Trims a circle between two points.
 
         :param point1: point 1 used to trim circle.
         :param point2: point2 used to trim circle.
-        :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :param tol: floating point tolerance
         :return: arc between these two points.
         """
         circle = self
         if not same_sense:
             circle = self.reverse()
-        if not self.point_belongs(point1, 1e-4) or not self.point_belongs(point2, 1e-4):
+        if not self.point_belongs(point1, tol) or not self.point_belongs(point2, tol):
             ax = self.plot()
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')
@@ -1945,13 +1946,13 @@ class Ellipse3D(Curve):
         point2d = self.self_2d.point_at_abscissa(abscissa)
         return point2d.to_3d(self.center, self.frame.u, self.frame.v)
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, **kwargs):
         """
         Trims an ellipse between two points.
 
         :param point1: point1 used to trim ellipse.
         :param point2: point2 used to trim ellipse.
-        :same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
+        :param same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
             direction (False) to the edge direction. By default, it's assumed True
         :return: arc of ellipse between these two points.
         """

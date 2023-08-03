@@ -4264,9 +4264,10 @@ class LineSegment3D(LineSegment):
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        if not self.point_belongs(point1) or not self.point_belongs(point2):
-            raise ValueError('Point not on curve')
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, **kwargs):
+        tol = kwargs.get("tol", 1e-6)
+        if not self.point_belongs(point1, tol) or not self.point_belongs(point2, tol):
+            return self
 
         return LineSegment3D(point1, point2)
 
@@ -4514,17 +4515,18 @@ class BSplineCurve3D(BSplineCurve):
                                             self.periodic, self.name)
         return new_bsplinecurve3d
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, tol:  float = 1e-6):
         """
         Trims a bspline curve between two points.
 
         :param point1: point 1 used to trim.
         :param point2: point2 used to trim.
-        :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :param tol: floating point tolerance.
         :return: New BSpline curve between these two points.
         """
-        if self.periodic and not point1.is_close(point2):
+        if self.periodic and not point1.is_close(point2, tol):
             return self.trim_with_interpolation(point1, point2, same_sense)
         bsplinecurve = self
         if not same_sense:

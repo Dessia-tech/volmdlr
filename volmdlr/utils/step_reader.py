@@ -286,9 +286,14 @@ def trimmed_curve(arguments, object_dict):
     """
 
     curve = object_dict[arguments[1]]
+    # if arguments[5] == ".CARTESIAN.":
+    #     point1 = object_dict[int(arguments[2][0][1:])]
+    #     point2 = object_dict[int(arguments[3][0][1:])]
+    # else:
     point1 = object_dict[int(arguments[2][0][1:])]
     point2 = object_dict[int(arguments[3][0][1:])]
-    return curve.trim(point1=point1, point2=point2)
+    same_sense = bool(arguments[4] == ".T.")
+    return curve.trim(point1=point1, point2=point2, same_sense=same_sense, tol=1e-4)
 
 
 def vertex_loop(arguments, object_dict):

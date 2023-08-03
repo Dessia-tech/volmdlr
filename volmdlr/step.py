@@ -732,8 +732,16 @@ class Step(dc.DessiaObject):
         if self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             return volmdlr.core.VolumeModel([self.instatiate_assembly(object_dict)])
         primitives = []
-        shapes = [object_dict[shape] for shape in shape_representations
-                  if self.functions[shape].name != "SHAPE_REPRESENTATION"]
+        shapes = []
+        for shape in shape_representations:
+            if self.functions[shape].name != "SHAPE_REPRESENTATION":
+                shapes.append(object_dict[shape])
+            else:
+                sub_shapes = self.functions[shape].arg[1]
+                self.parse_arguments(sub_shapes)
+                for sub_shape in sub_shapes:
+                    if not isinstance(object_dict[sub_shape], (volmdlr.Frame3D, volmdlr.Point3D, list)):
+                        shapes.append(object_dict[sub_shape])
         for shape in shapes:
             if isinstance(shape, list):
                 primitives.extend(shape)
