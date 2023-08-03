@@ -3,7 +3,6 @@ Class for voxel representation of volmdlr models
 """
 import math
 import warnings
-from collections import deque
 from copy import copy
 from typing import Dict, Iterable, List, Set, Tuple
 
@@ -18,7 +17,12 @@ from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
-from volmdlr.voxelization_compiled import triangles_to_voxels, flood_fill_matrix, line_segments_to_pixels
+from volmdlr.voxelization_compiled import (
+    flood_fill_matrix_2d,
+    flood_fill_matrix_3d,
+    line_segments_to_pixels,
+    triangles_to_voxels,
+)
 from volmdlr.wires import ClosedPolygon2D
 
 # Custom types
@@ -1662,7 +1666,9 @@ class VoxelMatrix:
         return self._voxel_operation(other_voxel_matrix, np.logical_xor)
 
     def flood_fill(self, start, fill_with) -> "VoxelMatrix":
-        return VoxelMatrix(flood_fill_matrix(self.matrix, start, fill_with), self.matrix_origin_center, self.voxel_size)
+        return VoxelMatrix(
+            flood_fill_matrix_3d(self.matrix, start, fill_with), self.matrix_origin_center, self.voxel_size
+        )
 
         # directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
         # old_value = self.matrix[start[0]][start[1]][start[2]]
@@ -2160,34 +2166,36 @@ class PixelMatrix:
         inverted_matrix = np.logical_not(self.matrix)
         return PixelMatrix(inverted_matrix)
 
-    def flood_fill(self, start, fill_with) -> "PixelMatrix":
-        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
-        old_value = self.matrix[start[0]][start[1]]
+    def flood_fill(self, start: Tuple[int, int], fill_with: bool) -> "PixelMatrix":
+        return PixelMatrix(flood_fill_matrix_2d(self.matrix, start, fill_with))
 
-        if old_value == fill_with:
-            return self
-
-        matrix = self.matrix.copy()
-        stack = deque([start])
-        visited = {start}
-
-        while stack:
-            x, y = stack.pop()
-
-            matrix[x][y] = fill_with
-
-            for dx, dy in directions:
-                nx, ny = x + dx, y + dy
-                if (
-                    (nx, ny) not in visited
-                    and 0 <= nx < len(matrix)
-                    and 0 <= ny < len(matrix[0])
-                    and matrix[nx][ny] == old_value
-                ):
-                    stack.append((nx, ny))
-                    visited.add((nx, ny))
-
-        return PixelMatrix(matrix)
+        # directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+        # old_value = self.matrix[start[0]][start[1]]
+        #
+        # if old_value == fill_with:
+        #     return self
+        #
+        # matrix = self.matrix.copy()
+        # stack = deque([start])
+        # visited = {start}
+        #
+        # while stack:
+        #     x, y = stack.pop()
+        #
+        #     matrix[x][y] = fill_with
+        #
+        #     for dx, dy in directions:
+        #         nx, ny = x + dx, y + dy
+        #         if (
+        #             (nx, ny) not in visited
+        #             and 0 <= nx < len(matrix)
+        #             and 0 <= ny < len(matrix[0])
+        #             and matrix[nx][ny] == old_value
+        #         ):
+        #             stack.append((nx, ny))
+        #             visited.add((nx, ny))
+        #
+        # return PixelMatrix(matrix)
 
     def _expand(self) -> "PixelMatrix":
         current_shape = self.matrix.shape

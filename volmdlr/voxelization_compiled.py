@@ -18,6 +18,9 @@ Point = Tuple[float, ...]
 Triangle = Tuple[Point, ...]
 
 
+# TODO: refactor, add docstrings
+
+
 @cython.cfunc
 @cython.cdivision(True)
 def _round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
@@ -302,9 +305,9 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
 @cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _flood_fill_matrix(
-    matrix: cython.int[:, :, :], start: cython.int[3], fill_with: cython.int, shape: cython.int[3]
-) -> cython.int[:, :, :]:
+def _flood_fill_matrix_3d(
+    matrix: cython.bint[:, :, :], start: cython.int[3], fill_with: cython.bint, shape: cython.int[3]
+) -> cython.bint[:, :, :]:
     dx: cython.int[6] = [0, 0, -1, 1, 0, 0]
     dy: cython.int[6] = [-1, 1, 0, 0, 0, 0]
     dz: cython.int[6] = [0, 0, 0, 0, -1, 1]
@@ -340,16 +343,66 @@ def _flood_fill_matrix(
     return matrix
 
 
-def flood_fill_matrix(
+def flood_fill_matrix_3d(
     matrix: np.ndarray[np.bool_, np.ndim == 3], start: Tuple[int, int, int], fill_with: bool
 ) -> np.ndarray[np.bool_, np.ndim == 3]:
-    # TODO: add docstrings
     return np.asarray(
-        _flood_fill_matrix(
+        _flood_fill_matrix_3d(
             matrix.astype(np.int32),
             [start[0], start[1], start[2]],
             fill_with,
             [matrix.shape[0], matrix.shape[1], matrix.shape[2]],
+        ),
+        dtype=np.bool_,
+    )
+
+
+@cython.cfunc
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def _flood_fill_matrix_2d(
+    matrix: cython.bint[:, :], start: cython.int[2], fill_with: cython.bint, shape: cython.int[2]
+) -> cython.bint[:, :]:
+    dx: cython.int[4] = [0, 0, -1, 1]
+    dy: cython.int[4] = [-1, 1, 0, 0]
+    nx: cython.int
+    ny: cython.int
+    x: cython.int
+    y: cython.int
+    sx: cython.int = shape[0]
+    sy: cython.int = shape[1]
+
+    old_value: cython.int = matrix[start[0], start[1]]
+
+    if old_value == fill_with:
+        return matrix
+
+    fill_stack: stack[Tuple[cython.int, cython.int]]
+    fill_stack.push((start[0], start[1]))
+
+    while not fill_stack.empty():
+        x, y = fill_stack.top()
+        fill_stack.pop()
+        matrix[x, y] = fill_with
+
+        for i in range(4):
+            nx, ny = x + dx[i], y + dy[i]
+
+            if 0 <= nx < sx and 0 <= ny < sy and matrix[nx, ny] == old_value:
+                fill_stack.push((nx, ny))
+
+    return matrix
+
+
+def flood_fill_matrix_2d(
+    matrix: np.ndarray[np.bool_, np.ndim == 2], start: Tuple[int, int], fill_with: bool
+) -> np.ndarray[np.bool_, np.ndim == 2]:
+    return np.asarray(
+        _flood_fill_matrix_2d(
+            matrix.astype(np.int32),
+            [start[0], start[1]],
+            fill_with,
+            [matrix.shape[0], matrix.shape[1]],
         ),
         dtype=np.bool_,
     )
@@ -368,7 +421,6 @@ def _line_segment_intersects_pixel(
     pixel_center_y: cython.double,
     pixel_size: cython.double,
 ) -> cython.bint:
-
     # Determine the coordinates of lower-left and upper-right of rectangle
     xmin, xmax = pixel_center_x - pixel_size / 2, pixel_center_x + pixel_size / 2
     ymin, ymax = pixel_center_y - pixel_size / 2, pixel_center_y + pixel_size / 2
@@ -431,9 +483,7 @@ def _line_segments_to_pixels(
                     _round_to_digits(y_coord, 6),
                 )
 
-                if _line_segment_intersects_pixel(
-                    x1, y1, x2, y2, center[0], center[1], pixel_size
-                ):
+                if _line_segment_intersects_pixel(x1, y1, x2, y2, center[0], center[1], pixel_size):
                     pixel_centers.push_back(center)
 
     return pixel_centers
