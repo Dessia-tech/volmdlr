@@ -4144,8 +4144,8 @@ class RevolutionSurface3D(PeriodicalSurface):
     """
     Defines a surface of revolution.
 
-    :param wire: Wire.
-    :type wire: Union[:class:`vmw.Wire3D`, :class:`vmw.Contour3D`]
+    :param edge: Edge.
+    :type edge: edges.Edge
     :param axis_point: Axis placement
     :type axis_point: :class:`volmdlr.Point3D`
     :param axis: Axis of revolution
@@ -4409,6 +4409,20 @@ class RevolutionSurface3D(PeriodicalSurface):
         new_edge = self.edge.translation(offset)
         new_axis_point = self.axis_point.translation(offset)
         return RevolutionSurface3D(new_edge, new_axis_point, self.axis)
+
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
+        """
+        Revolution Surface 3D rotation.
+
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated Revolution Surface 3D
+        """
+        new_edge = self.edge.rotation(center, axis, angle)
+        new_axis_point = self.axis_point.rotation(center, axis, angle)
+        new_axis = self.axis.rotation(center, axis, angle)
+        return RevolutionSurface3D(new_edge, new_axis_point, new_axis)
 
     def simplify(self):
         line3d = curves.Line3D(self.axis_point, self.axis_point + self.axis)
