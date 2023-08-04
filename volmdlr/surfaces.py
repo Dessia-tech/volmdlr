@@ -192,7 +192,7 @@ class Surface2D(PhysicalObject):
         discretize_line_direction = "xy"
         if number_points_y == 0 or number_points_x > 25 * number_points_y:
             discretize_line_direction = "x"
-        elif number_points_y > 25 * number_points_x:
+        elif number_points_y > 20 * number_points_x:
             discretize_line_direction = "y"
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
                                                       discretize_line_direction=discretize_line_direction)
@@ -5376,20 +5376,7 @@ class BSplineSurface3D(Surface3D):
             nb_v = len(points)
             control_points.extend(points)
         nb_u = int(len(control_points) / nb_v)
-        # surface_form = arguments[4]
-        # if arguments[5] == '.F.':
-        #     u_closed = False
-        # elif arguments[5] == '.T.':
-        #     u_closed = True
-        # else:
-        #     raise ValueError
-        # if arguments[6] == '.F.':
-        #     v_closed = False
-        # elif arguments[6] == '.T.':
-        #     v_closed = True
-        # else:
-        #     raise ValueError
-        # self_intersect = arguments[7]
+
         u_multiplicities = [int(i) for i in arguments[8][1:-1].split(",")]
         v_multiplicities = [int(i) for i in arguments[9][1:-1].split(",")]
         u_knots = [float(i) for i in arguments[10][1:-1].split(",")]
@@ -5409,10 +5396,7 @@ class BSplineSurface3D(Surface3D):
                              v_knots, weight_data, name)
         if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
             bsplinesurface = bsplinesurface.simplify_surface()
-        # if u_closed:
-        #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
-        # if v_closed:
-        #     bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
+
         return bsplinesurface
 
     def to_step(self, current_id):
