@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CylindricalSurface3D: concurrent_plane_intersection
 - BSplineFace3D: fix neutral_fiber
 - Step: assembly import
+- BSplineFace3D: fix bounding_box
 - Ellipse3D: from_step
 - edges.py: general improvements.
 - BSplineFace3D: fix neutral_fiber
