@@ -509,5 +509,13 @@ def _triangles_to_voxel_matrix(
     matrix: cython.bint[:, :, :],
     triangles: vector[Tuple[Tuple[cython.double, cython.double, cython.double]]],
     matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
-):
+) -> cython.bint[:, :, :]:
+
+    # for triangle in triangles
+        # check interface voxels
+
+
+        # computing intersectings boxes
+        # for these which are false
+            # triangle intersects voxel
     pass
