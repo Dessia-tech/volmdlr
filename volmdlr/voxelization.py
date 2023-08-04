@@ -619,7 +619,7 @@ class Voxelization(PhysicalObject):
 
                 # Check if this plane is defined is at the interface between voxels
                 if round(abscissa / voxel_size, 6).is_integer():
-                    # Define the 3D  triangle in 2D
+                    # Define the 3D triangle in 2D
 
                     v0 = triangle[0][:i] + triangle[0][i + 1 :]
                     v1 = triangle[1][:i] + triangle[1][i + 1 :]

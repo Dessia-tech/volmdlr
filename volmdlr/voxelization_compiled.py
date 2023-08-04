@@ -25,6 +25,7 @@ Triangle = Tuple[Point, ...]
 
 @cython.cfunc
 @cython.cdivision(True)
+@cython.exceptval(check=False)
 def _round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
     multiplier: cython.double = math_c.pow(10.0, digits)
     return math_c.round(num * multiplier) / multiplier
@@ -414,6 +415,7 @@ def flood_fill_matrix_2d(
 @cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.exceptval(check=False)
 def _line_segment_intersects_pixel(
     x1: cython.double,
     y1: cython.double,
@@ -453,7 +455,7 @@ def _line_segment_intersects_pixel(
 @cython.wraparound(False)
 @cython.cdivision(True)
 def _line_segments_to_pixels(
-    line_segments: vector[vector[Tuple[cython.double, cython.double]]], pixel_size: cython.double
+    line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]], pixel_size: cython.double
 ) -> vector[Tuple[cython.double, cython.double]]:
     pixel_centers: vector[Tuple[cython.double, cython.double]]
 
@@ -516,14 +518,14 @@ def triangles_to_voxel_matrix(
     )
 
     # compute the intersecting voxel
-    matrix = np.asarray(_triangles_to_voxel_matrix(matrix, triangles, matrix_origin_center), dtype=np.bool_)
+    matrix = np.asarray(_triangles_to_voxel_matrix(triangles, voxel_size, matrix, matrix_origin_center), dtype=np.bool_)
 
     return matrix, matrix_origin_center
 
 
 @cython.cfunc
+@cython.cdivision(True)
 def _triangles_to_voxel_matrix(
-    matrix: cython.bint[:, :, :],
     triangles: vector[
         Tuple[
             Tuple[cython.double, cython.double, cython.double],
@@ -531,31 +533,53 @@ def _triangles_to_voxel_matrix(
             Tuple[cython.double, cython.double, cython.double],
         ]
     ],
+    voxel_size: cython.double,
+    matrix: cython.bint[:, :, :],
     matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
 ) -> cython.bint[:, :, :]:
-    # check interface voxels
+    # Check interface voxels
     for i in range(triangles.size()):
-        # check for YZ plane
+        # Check if the triangle is in the YZ plane
         if (
             _round_to_digits(triangles[i][0][0], 6)
             == _round_to_digits(triangles[i][1][0], 6)
             == _round_to_digits(triangles[i][2][0], 6)
         ):
-            abscissa = _round_to_digits(triangles[i][0][i], 6)
+            # Check if this plane is defined is at the interface between voxels
+            abscissa = _round_to_digits(triangles[i][0][0], 6)
+            if _is_integer(_round_to_digits(abscissa / voxel_size, 6)):
+                # Define the 3D triangle in 2D
+                p0: Tuple[cython.double, cython.double] = (triangles[i][0][1], triangles[i][0][2])
+                p1: Tuple[cython.double, cython.double] = (triangles[i][1][1], triangles[i][1][2])
+                p2: Tuple[cython.double, cython.double] = (triangles[i][2][1], triangles[i][2][2])
 
-        pass
+                line_segments: vector[
+                    Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]
+                ]
+                line_segments.push_back((p0, p1))
+                line_segments.push_back((p1, p2))
+                line_segments.push_back((p2, p0))
 
-    # check intersecting voxels
-    for i in range(triangles.size()):
-        # computing intersectings boxes
-        # for these which are false
-        # triangle intersects voxel
-        pass
+                pixels = _line_segments_to_pixels(line_segments, voxel_size)
+
+                pass
+
+        # Check if the triangle is in the XZ plane
+
+        # Check if the triangle is in the XY plane
+
+        # Check intersecting voxels
+        else:
+            # Compute intersectings voxel
+            # for these which are false
+            # triangle intersects voxel
+            pass
 
     return matrix
 
 
 @cython.cfunc
+@cython.exceptval(check=False)
 def _is_integer(value: cython.double) -> cython.bint:
     return cython.cast(cython.int, value) == value
 
