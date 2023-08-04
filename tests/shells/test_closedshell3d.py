@@ -1,6 +1,8 @@
 import math
 import unittest
 
+import numpy
+
 import dessia_common.core
 import volmdlr
 from volmdlr import edges, faces, primitives3d, wires, surfaces, shells
@@ -187,6 +189,12 @@ class TestClosedShell3D(unittest.TestCase):
         fm_shell = closed_shell.frame_mapping(frame, 'new')
         min_distance, point1, point2 = closed_shell.minimum_distance(fm_shell, True)
         self.assertEqual(min_distance, 0.0)
+
+    def test_volume(self):
+        closed_shell = dessia_common.core.DessiaObject.load_from_file('shells/test_shell_volume.json')
+        closed_shell2 = closed_shell.rotation(volmdlr.O3D - 0.95 * volmdlr.X3D, volmdlr.Z3D, numpy.pi / 2)
+        closed_shell2 = closed_shell2.translation(-0.95 * volmdlr.X3D + 0.45 * volmdlr.Z3D + 0.2 * volmdlr.Y3D)
+        self.assertAlmostEqual(closed_shell.volume(), closed_shell2.volume())
 
 
 if __name__ == '__main__':

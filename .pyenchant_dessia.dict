@@ -100,3 +100,10 @@ WireMixin
 BoundingRectangle
 EdgeStyle
 args
+Guldin
+nx
+VolumeModel
+discretizing
+argmax
+pre
+scipy

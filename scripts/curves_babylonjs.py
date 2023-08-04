@@ -163,6 +163,7 @@ volum.babylonjs()
 
 """"BSpline"""
 bezier = edges.BezierCurve3D(3, wire_points)
-bezier.color = [0,0,1]
-volum = vm.core.VolumeModel([bezier])
+wire3d = wires.Wire3D([bezier])
+wire3d.color = [0,0,1]
+volum = vm.core.VolumeModel([wire3d])
 volum.babylonjs()
