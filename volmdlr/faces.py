@@ -2673,33 +2673,29 @@ class BSplineFace3D(Face3D):
 
     def get_bounding_box(self):
         """Creates a bounding box from the face mesh"""
-        # mesh = self.triangulation(self.grid_size())
         number_points_x, number_points_y = self.grid_size()
-        discretize_line_direction = "xy"
-        if number_points_y == 0 or number_points_x > 20 * number_points_y:
-            discretize_line_direction = "x"
-        elif number_points_y > 20 * number_points_x:
-            discretize_line_direction = "y"
-        outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True,
-                                                                discretize_line_direction=discretize_line_direction)
+        if number_points_x >= number_points_y:
+            number_points_x, number_points_y = 5, 3
+        else:
+            number_points_x, number_points_y = 3, 5
+        outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
         points = []
         points.extend(points)
         points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
                                                                                       number_points_y=number_points_y)
         if self.surface2d.inner_contours:
-            points = self._get_bbox_inner_contours_points(points, discretize_line_direction,
+            points = self._get_bbox_inner_contours_points(points,
                                                           [points_grid, x, y, grid_point_index])
         else:
             points.extend(points_grid)
         points3d = [self.surface3d.point2d_to_3d(point) for point in points]
         return volmdlr.core.BoundingBox.from_points(points3d)
 
-    def _get_bbox_inner_contours_points(self, points, discretize_line_direction, grid_triangulation_points_params):
+    def _get_bbox_inner_contours_points(self, points, grid_triangulation_points_params):
         """Helper function to get_bounding_box."""
         points_grid, x, y, grid_point_index = grid_triangulation_points_params
         for inner_contour in self.surface2d.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True,
-                                                     discretize_line_direction=discretize_line_direction)
+            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True)
             points.extend(inner_polygon.points)
             # removes with a region search the grid points that are in the inner contour
             xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
