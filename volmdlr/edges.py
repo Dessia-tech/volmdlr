@@ -434,7 +434,7 @@ class Edge(dc.DessiaObject):
 
     def minimum_distance(self, element, return_points=False):
         """
-        Gets the minimum distance two methods.
+        Gets the minimum distance two edges.
 
         This is a generalized method in a case an analytical method has not yet been defined.
 

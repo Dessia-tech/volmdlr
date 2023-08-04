@@ -23,9 +23,6 @@ Additionally, there is an optional argument name, which is a string representing
            :align: center
 
            import volmdlr
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            vector = volmdlr.Vector2D(1.0, 1.0)
            vector.plot(color='orange')
@@ -37,9 +34,6 @@ Additionally, there is an optional argument name, which is a string representing
            :align: center
 
            import volmdlr
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            vector = volmdlr.Vector3D(1.0, 1.0, 1.0)
            vector.plot(color='orange')
@@ -87,9 +81,6 @@ Exmaple:
    :align: center
 
    import volmdlr
-   import matplotlib.pyplot as plt
-   import mplcyberpunk
-   plt.style.use("cyberpunk")
 
    origin = volmdlr.Point3D(0, 0, 0)
    u = volmdlr.Vector3D(1, 0, 0)
@@ -122,9 +113,6 @@ and providing the required arguments. Here's how you can do it:
            import volmdlr
            from volmdlr import curves
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            point1 = volmdlr.Point2D(1.0, 1.0)
            point2 = volmdlr.Point2D(-2.0, -3.0)
@@ -140,9 +128,6 @@ and providing the required arguments. Here's how you can do it:
            import volmdlr
            from volmdlr import curves
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            point1 = volmdlr.Point3D(1.0, 1.0, 1.0)
            point2 = volmdlr.Point3D(-2.0, -3.0, -1.0)
@@ -167,9 +152,6 @@ and it also accepts an optional name for identification.
        import volmdlr
        from volmdlr import curves
        from volmdlr.core import EdgeStyle
-       import matplotlib.pyplot as plt
-       import mplcyberpunk
-       plt.style.use("cyberpunk")
 
        center2d = volmdlr.Point2D(0.0, 0.0)
        circle2d = curves.Circle2D(center=center2d, radius=1, name='optional_circle_name')
@@ -191,9 +173,6 @@ circle lies, and w represents the normal vector to the plane.
        import volmdlr
        from volmdlr import curves
        from volmdlr.core import EdgeStyle
-       import matplotlib.pyplot as plt
-       import mplcyberpunk
-       plt.style.use("cyberpunk")
 
        center3D = volmdlr.Point3D(0.0, 0.0, 0.0)
        u_vector = volmdlr.Vector3D(1.0, 0.0, 0.0)
@@ -219,9 +198,6 @@ An ellipse in defined by three arguments: a major axis (A), e minor axis (B) and
            import volmdlr
            from volmdlr import curves
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            u_vector = volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475)
            v_vector = volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)
@@ -237,9 +213,6 @@ An ellipse in defined by three arguments: a major axis (A), e minor axis (B) and
            import volmdlr
            from volmdlr import curves
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            vector1 = volmdlr.Vector3D(1, 1, 1)
            vector1 = vector1.unit_vector()
@@ -271,9 +244,6 @@ LineSegment2D
            import volmdlr
            from volmdlr import edges
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            start_point = volmdlr.Point2D(1.0, 1.0)
            end_point = volmdlr.Point2D(3.0, 4.0)
@@ -294,9 +264,6 @@ LineSegment3D
            import volmdlr
            from volmdlr import edges
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            start_point = volmdlr.Point3D(1.0, 1.0, 1.0)
            end_point = volmdlr.Point3D(3.0, 4.0, 6.0)
@@ -324,9 +291,6 @@ There is also a boolean is_trigo argument that defines if the arc is in the trig
            import volmdlr
            from volmdlr import edges, curves
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            circle2d = curves.Circle2D(volmdlr.O2D, 1)
            arc2d = edges.Arc2D(circle2d, volmdlr.Point2D(-1, 0), volmdlr.Point2D(1, 0), True)
@@ -350,9 +314,6 @@ Just as the Arc2D, Arc3D is defined by the base circle curve along with a start 
            import volmdlr
            from volmdlr import edges, curves
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            vector1 = volmdlr.Vector3D(1, 1, 1)
            vector1 = vector1.unit_vector()
@@ -387,9 +348,6 @@ Object's descrition
            import volmdlr
            from volmdlr import edges, curves
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            u_vector = volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475)
            v_vector = volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)
@@ -418,9 +376,6 @@ Object's descrition
            import volmdlr
            from volmdlr import edges, curves
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            vector1 = volmdlr.Vector3D(1, 1, 1)
            vector1 = vector1.unit_vector()
@@ -456,9 +411,6 @@ BSplineCurve2D
            from volmdlr import edges
            from volmdlr.core import EdgeStyle
            from geomdl import utilities
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            DEGREE = 3
            points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
@@ -482,9 +434,6 @@ BSplineCurve3D
            import volmdlr
            from volmdlr import edges
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            degree = 5
            control_points = [volmdlr.Point3D(0, 3, 0),
@@ -527,9 +476,6 @@ Wire2D
            import volmdlr
            from volmdlr import wires, edges
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            line_segment1 = edges.LineSegment2D(volmdlr.Point2D(1, -1), volmdlr.Point2D(1.5, 1))
            arc = edges.Arc2D.from_3_points(volmdlr.Point2D(1.5, 1), volmdlr.Point2D(1.3, 1.5), volmdlr.Point2D(0.5, 1.5))
@@ -553,9 +499,6 @@ Wire3D
            import volmdlr
            from volmdlr import edges, wires
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            degree = 5
            control_points = [volmdlr.Point3D(0, 3, 0),
@@ -598,9 +541,6 @@ Contour2D
            import volmdlr
            from volmdlr import edges, wires
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            line_segment1 = edges.LineSegment2D(volmdlr.Point2D(1, -1), volmdlr.Point2D(1.5, 1))
            line_segment2 = edges.LineSegment2D(volmdlr.Point2D(0.5, 1.5), volmdlr.Point2D(-2, 1))
@@ -626,9 +566,7 @@ Contour3D
            import volmdlr
            from volmdlr import edges, wires
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
+
            degree = 5
            control_points = [volmdlr.Point3D(0, 3, 0),
                             volmdlr.Point3D(3, 2, 1),
@@ -674,9 +612,6 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            import volmdlr
            from volmdlr import edges, curves, surfaces, wires, faces
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            surface3d = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0.0, 0.0, 0.0), volmdlr.Vector3D(1.0, 0.0, 0.0),
                                                         volmdlr.Vector3D(0.0, 1.0, 0.0), volmdlr.Vector3D(0.0, 0.0, 1.0))
@@ -708,9 +643,6 @@ A Triangle3D receives three mandatory arguments: The three vertices points of th
            import volmdlr
            from volmdlr import edges, curves, surfaces, wires, faces
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            triangle3d = faces.Triangle3D(volmdlr.Point3D(0., 0., 1.0), volmdlr.Point3D(2, 0, 0.2), volmdlr.Point3D(2, 2, 3.0))
            triangle3d.babylonjs(dark_mode=True)
@@ -737,9 +669,6 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            import volmdlr
            from volmdlr import edges, curves, surfaces, wires, faces
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            vector1 = volmdlr.Vector3D(1, 1, 1)
            vector1 = vector1.unit_vector()
@@ -784,9 +713,6 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            import volmdlr
            from volmdlr import edges, curves, surfaces, wires, faces
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
 
            surface3d = surfaces.ToroidalSurface3D(volmdlr.OXYZ, tore_radius=0.2, small_radius=0.03, name='optional_toroidalsurface3d\'s_name')
@@ -824,9 +750,6 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            import volmdlr
            from volmdlr import edges, curves, surfaces, wires, faces
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
 
            surface3d = surfaces.ConicalSurface3D(volmdlr.OXYZ, semi_angle=0.2, name='optional_conicalsurface3d\'s_name')
@@ -865,9 +788,6 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            import volmdlr
            from volmdlr import edges, curves, surfaces, wires, faces
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
 
            surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, radius=0.2, name='optional_sphericalsurface3d\'s_name')
@@ -909,9 +829,6 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            import volmdlr
            from volmdlr import edges, curves, surfaces, wires, faces
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
 
            arc2 = volmdlr.edges.Arc3D(curves.Circle3D(volmdlr.OXYZ, 1), volmdlr.Point3D(1, 0, 0), volmdlr.Point3D(0, 1, 0))
@@ -954,9 +871,6 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            import volmdlr
            from volmdlr import edges, curves, surfaces, wires, faces
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            fullarc = edges.FullArc3D(circle=curves.Circle3D(
                         volmdlr.Frame3D(
@@ -1007,9 +921,6 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            import volmdlr
            from volmdlr import edges, curves, surfaces, wires, faces
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            control_points = [volmdlr.Point3D(0, 0, 0), volmdlr.Point3D(0.1, 0.02, 0), volmdlr.Point3D(0.2, 0.02, 0),
                              volmdlr.Point3D(0, 0, 0.15), volmdlr.Point3D(0.1, 0.02, 0.15), volmdlr.Point3D(0.2, 0.02, 0.15),
@@ -1051,10 +962,7 @@ In the example bellow, it is shown the definition of the shell's lateral faces.
            import volmdlr
            from volmdlr import edges, curves, surfaces, wires, faces, shells
            from volmdlr.core import EdgeStyle
-           import matplotlib.pyplot as plt
            import math
-           import mplcyberpunk
-           plt.style.use("cyberpunk")
 
            polygon1_vol1 = wires.ClosedPolygon3D([volmdlr.Point3D(-0.1, -0.05, 0), volmdlr.Point3D(-0.15, 0.1, 0),
                                volmdlr.Point3D(0.05, 0.2, 0), volmdlr.Point3D(0.12, 0.15, 0), volmdlr.Point3D(0.1, -0.02, 0)])

@@ -10,9 +10,7 @@ Distance between two points
     :align: center
 
     import volmdlr
-    import matplotlib.pyplot as plt
-    import mplcyberpunk
-    plt.style.use("cyberpunk")
+
 
     point1 = volmdlr.Point2D(0.0, 0.0)
     point2 = volmdlr.Point2D(1.0, 1.0)
@@ -27,17 +25,82 @@ Distance between two points
 Distance between point and edge
 *******************************
 
-Distance LineSegment-Point
-==========================
+2-Dimensional
+=============
 
-Distance Arc-Point
-==================
 
-Distance ArcEllipse-Point
-=========================
+Distance LineSegment2D-Point2D
+------------------------------
 
-Distance BSplineCurve-Point
-==========================
+
+
+Distance Arc2D-Point2D
+----------------------
+
+Distance ArcEllipse2D-Point2D
+-----------------------------
+
+Distance BSplineCurve2D-Point2D
+-------------------------------
+
+
+3-Dimensional
+=============
+
+
+Distance LineSegment3D-Point3D
+------------------------------
+
+Distance Arc3D-Point3D
+----------------------
+
+Distance ArcEllipse3D-Point3D
+-----------------------------
+
+BSplineCurve3D-Point3D
+----------------------
+
+Distance between edge to edge
+*****************************
+
+2-Dimensional
+=============
+
+Distance LineSegment2D-LineSegment2D
+------------------------------------
+
+Distance LineSegment2D-LineSegment2D
+------------------------------------
+
+Distance LineSegment2D-Arc2D
+----------------------------
+
+Distance LineSegment2D-ArcEllipse2D
+-----------------------------------
+
+Distance LineSegment2D-BSplineCurve2D
+-------------------------------------
+
+Distance Arc2D-Arc2D
+--------------------
+
+Distance Arc2D-ArcEllipse2D
+---------------------------
+
+Distance Arc3D-BSplineCurve2D
+-----------------------------
+
+Distance ArcEllipse2D-ArcEllipse2D
+----------------------------------
+
+Distance ArcEllipse2D-ArcEllipse2D
+----------------------------------
+
+
+
+Distance
+
+
 
 Distance between point and face
 *******************************
