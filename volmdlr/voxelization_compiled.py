@@ -8,6 +8,8 @@ from typing import List, Set, Tuple
 
 import cython
 import cython.cimports.libc.math as math_c
+import numpy
+
 import numpy as np
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
@@ -497,25 +499,107 @@ def line_segments_to_pixels(
 
 def triangles_to_voxel_matrix(
     triangles: List[Tuple[Tuple[float, float, float]], Tuple[float, float, float], Tuple[float, float, float]],
-    voxel_size: float
+    voxel_size: float,
 ) -> Tuple[np.ndarray[np.bool_, np.ndim == 3], Tuple[float, float, float]]:
     # compute the size of the matrix and min matrix origin center
-    # crete the numpy matrix
-    pass
+    min_point, max_point = _triangles_min_max_points(triangles)
+    shape = (
+        int(max_point[0] // voxel_size + 1) - int(min_point[0] // voxel_size) + 2,
+        int(max_point[1] // voxel_size + 1) - int(min_point[1] // voxel_size) + 2,
+        int(max_point[2] // voxel_size + 1) - int(min_point[2] // voxel_size) + 2,
+    )
+    matrix = numpy.zeros(shape, dtype=np.bool_)
+    matrix_origin_center = (
+        round((min_point[0] // voxel_size - 0.5) * voxel_size, 6),
+        round((min_point[1] // voxel_size - 0.5) * voxel_size, 6),
+        round((min_point[2] // voxel_size - 0.5) * voxel_size, 6),
+    )
+
+    # compute the intersecting voxel
+    matrix = np.asarray(_triangles_to_voxel_matrix(matrix, triangles, matrix_origin_center), dtype=np.bool_)
+
+    return matrix, matrix_origin_center
 
 
 @cython.cfunc
 def _triangles_to_voxel_matrix(
     matrix: cython.bint[:, :, :],
-    triangles: vector[Tuple[Tuple[cython.double, cython.double, cython.double]]],
+    triangles: vector[
+        Tuple[
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+        ]
+    ],
     matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
 ) -> cython.bint[:, :, :]:
+    # check interface voxels
+    for i in range(triangles.size()):
+        # check for YZ plane
+        if (
+            _round_to_digits(triangles[i][0][0], 6)
+            == _round_to_digits(triangles[i][1][0], 6)
+            == _round_to_digits(triangles[i][2][0], 6)
+        ):
+            abscissa = _round_to_digits(triangles[i][0][i], 6)
 
-    # for triangle in triangles
-        # check interface voxels
+        pass
 
-
+    # check intersecting voxels
+    for i in range(triangles.size()):
         # computing intersectings boxes
         # for these which are false
-            # triangle intersects voxel
-    pass
+        # triangle intersects voxel
+        pass
+
+    return matrix
+
+
+@cython.cfunc
+def _is_integer(value: cython.double) -> cython.bint:
+    return cython.cast(cython.int, value) == value
+
+
+@cython.cfunc
+def _triangles_min_max_points(
+    triangles: vector[
+        Tuple[
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+        ]
+    ]
+) -> Tuple[Tuple[cython.double, cython.double, cython.double], Tuple[cython.double, cython.double, cython.double]]:
+    min_x: cython.double = math_c.INFINITY
+    min_y: cython.double = math_c.INFINITY
+    min_z: cython.double = math_c.INFINITY
+    max_x: cython.double = -math_c.INFINITY
+    max_y: cython.double = -math_c.INFINITY
+    max_z: cython.double = -math_c.INFINITY
+
+    for i in range(triangles.size()):
+        min_x = min(min_x, triangles[i][0][0])
+        min_x = min(min_x, triangles[i][1][0])
+        min_x = min(min_x, triangles[i][2][0])
+
+        min_y = min(min_y, triangles[i][0][1])
+        min_y = min(min_y, triangles[i][1][1])
+        min_y = min(min_y, triangles[i][2][1])
+
+        min_z = min(min_z, triangles[i][0][2])
+        min_z = min(min_z, triangles[i][1][2])
+        min_z = min(min_z, triangles[i][2][2])
+
+        max_x = max(max_x, triangles[i][0][0])
+        max_x = max(max_x, triangles[i][1][0])
+        max_x = max(max_x, triangles[i][2][0])
+
+        max_y = max(max_y, triangles[i][0][1])
+        max_y = max(max_y, triangles[i][1][1])
+        max_y = max(max_y, triangles[i][2][1])
+
+        max_z = max(max_z, triangles[i][0][2])
+        max_z = max(max_z, triangles[i][1][2])
+        max_z = max(max_z, triangles[i][2][2])
+
+    return (min_x, min_y, min_z), (max_x, max_y, max_z)
