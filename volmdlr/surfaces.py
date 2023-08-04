@@ -2517,15 +2517,12 @@ class ToroidalSurface3D(PeriodicalSurface):
                 frame = volmdlr.Frame3D(center, self.frame.u, self.frame.v, self.frame.w)
             start3d = self.point2d_to_3d(linesegment2d.start)
             circle = curves.Circle3D(frame, start3d.point_distance(center))
-            start3d = self.point2d_to_3d(linesegment2d.start)
             if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
                 start_end = center + self.frame.u * (self.small_radius + self.tore_radius)
                 return [edges.FullArc3D(circle=circle, start_end=start_end)]
             return [edges.Arc3D(circle, start3d, self.point2d_to_3d(linesegment2d.end))]
-        n = 10
-        degree = 3
-        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, degree).simplify]
+        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=10)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree=3).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -4184,8 +4181,8 @@ class RevolutionSurface3D(PeriodicalSurface):
     """
     Defines a surface of revolution.
 
-    :param wire: Wire.
-    :type wire: Union[:class:`vmw.Wire3D`, :class:`vmw.Contour3D`]
+    :param edge: Edge.
+    :type edge: edges.Edge
     :param axis_point: Axis placement
     :type axis_point: :class:`volmdlr.Point3D`
     :param axis: Axis of revolution
@@ -4439,6 +4436,30 @@ class RevolutionSurface3D(PeriodicalSurface):
         axis_point = new_frame.origin
         new_edge = self.edge.frame_mapping(frame, side)
         return RevolutionSurface3D(new_edge, axis_point, axis, name=self.name)
+
+    def translation(self, offset):
+        """
+        Returns a new translated Revolution Surface.
+
+        :param offset: translation vector.
+        """
+        new_edge = self.edge.translation(offset)
+        new_axis_point = self.axis_point.translation(offset)
+        return RevolutionSurface3D(new_edge, new_axis_point, self.axis)
+
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
+        """
+        Revolution Surface 3D rotation.
+
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated Revolution Surface 3D
+        """
+        new_edge = self.edge.rotation(center, axis, angle)
+        new_axis_point = self.axis_point.rotation(center, axis, angle)
+        new_axis = self.axis.rotation(center, axis, angle)
+        return RevolutionSurface3D(new_edge, new_axis_point, new_axis)
 
     def simplify(self):
         line3d = curves.Line3D(self.axis_point, self.axis_point + self.axis)
