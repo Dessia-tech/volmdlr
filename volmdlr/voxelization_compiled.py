@@ -437,8 +437,12 @@ def _line_segment_intersects_pixel(
     line_eq4 = (y2 - y1) * xmax + (x1 - x2) * ymax + (x2 * y1 - x1 * y2)
 
     # Check if all corners are on the same side of the line
-    miss: cython.bint = (line_eq1 <= 0 and line_eq2 <= 0 and line_eq3 <= 0 and line_eq4 <= 0) or (
-        line_eq1 >= 0 and line_eq2 >= 0 and line_eq3 >= 0 and line_eq4 >= 0
+    miss: cython.bint = (
+        (line_eq1 >= 0 and line_eq2 >= 0 and line_eq3 >= 0 and line_eq4 >= 0)
+        or (line_eq1 < 0 and line_eq2 < 0 and line_eq3 < 0 and line_eq4 < 0)
+    ) and (
+        (line_eq1 > 0 and line_eq2 > 0 and line_eq3 > 0 and line_eq4 > 0)
+        or (line_eq1 <= 0 and line_eq2 <= 0 and line_eq3 <= 0 and line_eq4 <= 0)
     )
 
     # Does it miss based on the shadow intersection test?
@@ -455,7 +459,9 @@ def _line_segment_intersects_pixel(
 @cython.wraparound(False)
 @cython.cdivision(True)
 def _line_segments_to_pixels(
-    line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]], pixel_size: cython.double
+    line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]],
+    # line_segments: vector[vector[Tuple[cython.double, cython.double]]],
+    pixel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double]]:
     pixel_centers: vector[Tuple[cython.double, cython.double]]
 
@@ -510,7 +516,7 @@ def triangles_to_voxel_matrix(
         int(max_point[1] // voxel_size + 1) - int(min_point[1] // voxel_size) + 2,
         int(max_point[2] // voxel_size + 1) - int(min_point[2] // voxel_size) + 2,
     )
-    matrix = numpy.zeros(shape, dtype=np.bool_)
+    matrix = numpy.zeros(shape, dtype=np.int32)
     matrix_origin_center = (
         round((min_point[0] // voxel_size - 0.5) * voxel_size, 6),
         round((min_point[1] // voxel_size - 0.5) * voxel_size, 6),
@@ -525,6 +531,8 @@ def triangles_to_voxel_matrix(
 
 @cython.cfunc
 @cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def _triangles_to_voxel_matrix(
     triangles: vector[
         Tuple[
@@ -553,16 +561,30 @@ def _triangles_to_voxel_matrix(
                 p1: Tuple[cython.double, cython.double] = (triangles[i][1][1], triangles[i][1][2])
                 p2: Tuple[cython.double, cython.double] = (triangles[i][2][1], triangles[i][2][2])
 
-                line_segments: vector[
-                    Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]
-                ]
+                line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]]
                 line_segments.push_back((p0, p1))
                 line_segments.push_back((p1, p2))
                 line_segments.push_back((p2, p0))
 
+                # Compute intersecting pixels
                 pixels = _line_segments_to_pixels(line_segments, voxel_size)
 
-                pass
+                # Put the corresponding voxels at True, using the indices
+                ix1 = cython.cast(
+                    cython.int, _round_to_digits(abscissa - matrix_origin_center[0] - voxel_size / 2, 6) / voxel_size
+                )
+                ix2 = cython.cast(
+                    cython.int, _round_to_digits(abscissa - matrix_origin_center[0] + voxel_size / 2, 6) / voxel_size
+                )
+                for j in range(pixels.size()):
+                    iy = cython.cast(
+                        cython.int, _round_to_digits(pixels[j][0] - matrix_origin_center[1], 6) / voxel_size
+                    )
+                    iz = cython.cast(
+                        cython.int, _round_to_digits(pixels[j][1] - matrix_origin_center[2], 6) / voxel_size
+                    )
+                    matrix[ix1, iy, iz] = True
+                    matrix[ix2, iy, iz] = True
 
         # Check if the triangle is in the XZ plane
 
