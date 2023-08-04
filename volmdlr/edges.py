@@ -200,7 +200,7 @@ class Edge(dc.DessiaObject):
             if not same_sense:
                 obj = obj.reverse()
             if not point1.is_close(point2):
-                return LineSegment3D(point1, point2, obj, name=arguments[0][1:-1])
+                return LineSegment3D(point1, point2, obj, arguments[0][1:-1])
             return None
 
         if hasattr(obj, 'trim'):
@@ -996,7 +996,7 @@ class BSplineCurve(Edge):
         func, func_first_derivative, curve_derivatives, distance_vector = self._point_inversion_funcs(u0, point)
         if self._check_convergence(curve_derivatives, distance_vector, tol1=tol1, tol2=tol2):
             return u0, True
-        new_u = u0 - func / func_first_derivative
+        new_u = u0 - func / (func_first_derivative + 1e-18)
         new_u = self._check_bounds(new_u)
         residual = (new_u - u0) * curve_derivatives[1]
         if residual.norm() <= 1e-6:
@@ -1401,9 +1401,9 @@ class BSplineCurve(Edge):
         if all(other_bspline2.point_belongs(point, abs_tol=abs_tol) for point in self.points):
             return [self]
         if self.point_belongs(other_bspline2.start, abs_tol=abs_tol):
-            bspline1_, bspline2_ = self.split(other_bspline2.start)
+            bspline1_, bspline2_ = self.split(other_bspline2.start, tol=abs_tol)
         elif self.point_belongs(other_bspline2.end, abs_tol=abs_tol):
-            bspline1_, bspline2_ = self.split(other_bspline2.end)
+            bspline1_, bspline2_ = self.split(other_bspline2.end, tol=abs_tol)
         else:
             return []
             # raise NotImplementedError
@@ -1526,7 +1526,7 @@ class BSplineCurve(Edge):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         # special case periodical bsplinecurve
-        if self.periodic and abscissa2 == 0.0:
+        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=1e-6):
             abscissa2 = self.length()
         discretized_points_between_1_2 = []
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
@@ -2255,7 +2255,7 @@ class ArcMixin:
             if not angle_resolution:
                 number_points = 2
             else:
-                number_points = math.ceil(self.angle * angle_resolution) + 1
+                number_points = max(math.ceil(self.angle * angle_resolution) + 1, 2)
 
         step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step)
@@ -3300,9 +3300,9 @@ class ArcEllipse2D(Edge):
                 abscissa_angle = initial_angle
                 break
             if res > abscissa:
-                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(2 * res)
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(2 * abs(res))
             else:
-                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/res
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/abs(res)
             initial_angle += increment_factor
             iter_counter += 1
         x = self.ellipse.major_axis * math.cos(abscissa_angle)
@@ -4358,10 +4358,8 @@ class BSplineCurve3D(BSplineCurve):
         self._bbox = new_bounding_box
 
     def _bounding_box(self):
-        bbox = self.curve.bbox
-        return volmdlr.core.BoundingBox(bbox[0][0], bbox[1][0],
-                                        bbox[0][1], bbox[1][1],
-                                        bbox[0][2], bbox[1][2])
+        """Creates a bounding box from the bspline points."""
+        return volmdlr.core.BoundingBox.from_points(self.discretization_points())
 
     def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):
@@ -5558,8 +5556,8 @@ class FullArc3D(FullArcMixin, Arc3D):
         :return: A new FullArc3D object that is the result of the translation.
         :rtype: FullArc3D.
         """
-        new_start_end = self.start.translation(offset, True)
-        new_circle = self.circle.translation(offset, True)
+        new_start_end = self.start.translation(offset)
+        new_circle = self.circle.translation(offset)
         return FullArc3D(new_circle, new_start_end, name=self.name)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -6032,7 +6030,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: list of two Arc of ellipse.
         """
         if split_point.is_close(self.start, tol) or split_point.is_close(self.end, tol):
-            raise ValueError("Point should be different of start and end.")
+            return [self, None]
         if not self.point_belongs(split_point, 1e-5):
             raise ValueError("Point not on the ellipse.")
         return [ArcEllipse3D(self.ellipse, self.start_end, split_point),

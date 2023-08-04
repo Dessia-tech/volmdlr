@@ -2,7 +2,7 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import curves
+from volmdlr import curves, edges
 
 
 class TestEllipse3D(unittest.TestCase):
@@ -97,6 +97,15 @@ class TestEllipse3D(unittest.TestCase):
                            volmdlr.Point3D(0.9999999999999983, 0.8660254037844388, 0.0)]
         for point, expected_point in zip(frame_mapped_ellipse3d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
+
+    def test_from_step(self):
+        arguments = ["''", 85, '5.', '3.']
+        object_dict = {85: volmdlr.OXYZ}
+        ellipse = curves.Ellipse3D.from_step(arguments, object_dict)
+        self.assertEqual(ellipse.major_dir, volmdlr.X3D)
+        self.assertEqual(ellipse.normal, volmdlr.Z3D)
+        self.assertEqual(ellipse.major_axis, 5.0)
+        self.assertEqual(ellipse.minor_axis, 3.0)
 
 
 if __name__ == '__main__':
