@@ -364,7 +364,10 @@ def flood_fill_matrix_3d(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _flood_fill_matrix_2d(
-    matrix: cython.bint[:, :], start: cython.int[2], fill_with: cython.bint, shape: cython.int[2]
+    matrix: cython.bint[:, :],
+    start: Tuple[cython.int, cython.int],
+    fill_with: cython.bint,
+    shape: Tuple[cython.int, cython.int],
 ) -> cython.bint[:, :]:
     dx: cython.int[4] = [0, 0, -1, 1]
     dy: cython.int[4] = [-1, 1, 0, 0]
@@ -460,7 +463,6 @@ def _line_segment_intersects_pixel(
 @cython.cdivision(True)
 def _line_segments_to_pixels(
     line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]],
-    # line_segments: vector[vector[Tuple[cython.double, cython.double]]],
     pixel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double]]:
     pixel_centers: vector[Tuple[cython.double, cython.double]]
@@ -531,8 +533,8 @@ def triangles_to_voxel_matrix(
 
 @cython.cfunc
 @cython.cdivision(True)
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def _triangles_to_voxel_matrix(
     triangles: vector[
         Tuple[
@@ -571,20 +573,43 @@ def _triangles_to_voxel_matrix(
 
                 # Put the corresponding voxels at True, using the indices
                 ix1 = cython.cast(
-                    cython.int, _round_to_digits(abscissa - matrix_origin_center[0] - voxel_size / 2, 6) / voxel_size
+                    cython.int, _round_to_digits((abscissa - matrix_origin_center[0] - voxel_size / 2) / voxel_size, 6)
                 )
                 ix2 = cython.cast(
-                    cython.int, _round_to_digits(abscissa - matrix_origin_center[0] + voxel_size / 2, 6) / voxel_size
+                    cython.int, _round_to_digits((abscissa - matrix_origin_center[0] + voxel_size / 2) / voxel_size, 6)
                 )
-                for j in range(pixels.size()):
-                    iy = cython.cast(
-                        cython.int, _round_to_digits(pixels[j][0] - matrix_origin_center[1], 6) / voxel_size
-                    )
-                    iz = cython.cast(
-                        cython.int, _round_to_digits(pixels[j][1] - matrix_origin_center[2], 6) / voxel_size
-                    )
-                    matrix[ix1, iy, iz] = True
-                    matrix[ix2, iy, iz] = True
+
+                min_center: Tuple[cython.double, cython.double] = _get_min_pixel_grid_center(pixels)
+                max_center: Tuple[cython.double, cython.double] = _get_max_pixel_grid_center(pixels)
+
+                dim_x = cython.cast(cython.int, math_c.round((max_center[0] - min_center[0]) / voxel_size + 1))
+                dim_y = cython.cast(cython.int, math_c.round((max_center[1] - min_center[1]) / voxel_size + 1))
+
+                pixel_matrix = _pixel_centers_to_outer_filled_pixel_matrix(
+                    pixels, voxel_size, (dim_x, dim_y), min_center
+                )
+
+                dx: cython.int
+                dy: cython.int
+                for dx in range(dim_x):
+                    for dy in range(dim_y):
+                        if pixel_matrix[dx + 1, dy + 1]:
+                            iy = cython.cast(
+                                cython.int,
+                                _round_to_digits(
+                                    ((min_center[0] + dx * voxel_size) - matrix_origin_center[1]) / voxel_size, 6
+                                ),
+                            )
+                            iz = cython.cast(
+                                cython.int,
+                                _round_to_digits(
+                                    ((min_center[1] + dy * voxel_size) - matrix_origin_center[2]) / voxel_size, 6
+                                ),
+                            )
+
+                            matrix[ix1, iy, iz] = True
+                            matrix[ix2, iy, iz] = True
+
 
         # Check if the triangle is in the XZ plane
 
@@ -596,6 +621,59 @@ def _triangles_to_voxel_matrix(
             # for these which are false
             # triangle intersects voxel
             pass
+
+    return matrix
+
+
+@cython.cfunc
+@cython.exceptval(check=False)
+def _get_min_pixel_grid_center(
+    pixel_centers: vector[Tuple[cython.double, cython.double]]
+) -> Tuple[cython.double, cython.double]:
+    min_x = min_y = math_c.INFINITY
+    for i in range(pixel_centers.size()):
+        min_x = min(min_x, pixel_centers[i][0])
+        min_y = min(min_y, pixel_centers[i][1])
+
+    return min_x, min_y
+
+
+@cython.cfunc
+@cython.exceptval(check=False)
+def _get_max_pixel_grid_center(
+    pixel_centers: vector[Tuple[cython.double, cython.double]]
+) -> Tuple[cython.double, cython.double]:
+    max_x = max_y = -math_c.INFINITY
+    for i in range(pixel_centers.size()):
+        max_x = max(max_x, pixel_centers[i][0])
+        max_y = max(max_y, pixel_centers[i][1])
+
+    return max_x, max_y
+
+
+@cython.cfunc
+@cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def _pixel_centers_to_outer_filled_pixel_matrix(
+    pixel_centers: vector[Tuple[cython.double, cython.double]],
+    pixel_size: cython.double,
+    shape: Tuple[cython.int, cython.int],
+    min_center: Tuple[cython.double, cython.double],
+) -> cython.bint[:, :]:
+    matrix: cython.bint[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.int32)
+
+    for i in range(pixel_centers.size()):
+        ix = cython.cast(cython.int, _round_to_digits((pixel_centers[i][0] - min_center[0]) / pixel_size, 6)) + 1
+        iy = cython.cast(cython.int, _round_to_digits((pixel_centers[i][1] - min_center[1]) / pixel_size, 6)) + 1
+        matrix[ix, iy] = True
+
+    matrix_outer_filled = _flood_fill_matrix_2d(matrix, (0, 0), True, shape)
+
+    for ix in range(shape[0]):
+        for iy in range(shape[1]):
+            if not matrix_outer_filled[ix, iy]:
+                matrix[ix, iy] = True
 
     return matrix
 
