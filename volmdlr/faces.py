@@ -22,6 +22,7 @@ import volmdlr.curves as volmdlr_curves
 import volmdlr.geometry
 import volmdlr.grid
 from volmdlr import surfaces
+from volmdlr.utils.parametric import array_range_search
 import volmdlr.wires
 
 
@@ -1077,7 +1078,7 @@ class Face3D(volmdlr.core.Primitive3D):
         while True:
             for i, intersection2d in enumerate(intersections_with_plane2d):
                 if not self.surface2d.outer_contour.is_inside(intersection2d):
-                    for translation in [volmdlr.Vector2D(-2*math.pi, 0), volmdlr.Vector2D(2*math.pi, 0)]:
+                    for translation in [volmdlr.Vector2D(-2 * math.pi, 0), volmdlr.Vector2D(2 * math.pi, 0)]:
                         translated_contour = intersection2d.translation(translation)
                         if not self.surface2d.outer_contour.is_inside(translated_contour):
                             continue
@@ -1221,7 +1222,7 @@ class PlaneFace3D(Face3D):
             return []
         points_intersections = []
         for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d + \
-                planeface.inner_contours3d:
+                       planeface.inner_contours3d:
             for intersection in contour.line_intersections(face2_plane_interections[0]):
                 if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
                     points_intersections.append(intersection)
@@ -2670,6 +2671,47 @@ class BSplineFace3D(Face3D):
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
         self._bbox = new_bounding_box
+
+    def get_bounding_box(self):
+        """Creates a bounding box from the face mesh."""
+        number_points_x, number_points_y = self.grid_size()
+        if number_points_x >= number_points_y:
+            number_points_x, number_points_y = 5, 3
+        else:
+            number_points_x, number_points_y = 3, 5
+        outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
+        points = []
+        points.extend(points)
+        points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
+                                                                                      number_points_y=number_points_y)
+        if self.surface2d.inner_contours:
+            points = self._get_bbox_inner_contours_points(points,
+                                                          [points_grid, x, y, grid_point_index])
+        else:
+            points.extend(points_grid)
+        points3d = [self.surface3d.point2d_to_3d(point) for point in points]
+        return volmdlr.core.BoundingBox.from_points(points3d)
+
+    def _get_bbox_inner_contours_points(self, points, grid_triangulation_points_params):
+        """Helper function to get_bounding_box."""
+        points_grid, x, y, grid_point_index = grid_triangulation_points_params
+        for inner_contour in self.surface2d.inner_contours:
+            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True)
+            points.extend(inner_polygon.points)
+            # removes with a region search the grid points that are in the inner contour
+            xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
+            x_grid_range = array_range_search(x, xmin, xmax)
+            y_grid_range = array_range_search(y, ymin, ymax)
+            for i in x_grid_range:
+                for j in y_grid_range:
+                    point = grid_point_index.get((i, j))
+                    if not point:
+                        continue
+                    if inner_polygon.point_belongs(point):
+                        points_grid.remove(point)
+                        grid_point_index.pop((i, j))
+        points.extend(points_grid)
+        return points
 
     def triangulation_lines(self, resolution=25):
         """
