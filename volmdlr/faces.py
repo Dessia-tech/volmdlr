@@ -2673,7 +2673,7 @@ class BSplineFace3D(Face3D):
         self._bbox = new_bounding_box
 
     def get_bounding_box(self):
-        """Creates a bounding box from the face mesh"""
+        """Creates a bounding box from the face mesh."""
         number_points_x, number_points_y = self.grid_size()
         if number_points_x >= number_points_y:
             number_points_x, number_points_y = 5, 3
