@@ -10,8 +10,7 @@
 import matplotlib.pyplot as plt
 
 import volmdlr as vm
-import volmdlr.edges
-import volmdlr.wires
+import volmdlr.curves
 
 # %% Initial Data
 
@@ -19,7 +18,7 @@ points = [vm.Point2D(0, 1),
           vm.Point2D(0.1, 0.8),
           vm.Point2D(0.2, 1.5)]
 
-line = vm.edges.Line2D(vm.Point2D(-0.5, 1), vm.Point2D(-0.5, 8))
+line = vm.curves.Line2D(vm.Point2D(-0.5, 1), vm.Point2D(-0.5, 8))
 
 # %% Symmetry
 

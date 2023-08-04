@@ -32,6 +32,7 @@ class PointCloud3D(dc.DessiaObject):
 
     def __init__(self, points: List[vm.Point3D], name: str = ''):
         self.points = points
+        self.__bounding_box = None
         dc.DessiaObject.__init__(self, name=name)
 
     @classmethod
@@ -49,6 +50,12 @@ class PointCloud3D(dc.DessiaObject):
     def _bounding_box(self):
         return vm.core.BoundingBox.from_points(self.points)
 
+    @property
+    def bounding_box(self):
+        if not self.__bounding_box:
+            self.__bounding_box = self._bounding_box()
+        return self.__bounding_box
+
     def to_2d(self, plane_origin, x, y):
         list_points2d = [pt3d.to_2d(plane_origin, x, y) for pt3d in self.points]
         return PointCloud2D(list_points2d, name='3d_to_2d')
@@ -57,7 +64,7 @@ class PointCloud3D(dc.DessiaObject):
         extracted_points = []
         for points in self.points:
             dist_to_plane = points.dot(u)
-            if dist_to_plane > umin and dist_to_plane < umax:
+            if umin < dist_to_plane < umax:
                 extracted_points.append(points)
         return PointCloud3D(extracted_points)
 
@@ -245,7 +252,7 @@ class PointCloud3D(dc.DessiaObject):
         Plot the cloud 3d.
 
         """
-        
+
         if self.points:
             ax = self.points[0].plot(ax=ax)
             if len(self.points) > 1000:
@@ -262,11 +269,10 @@ class PointCloud3D(dc.DessiaObject):
         spheres, extended_points = [], []
         for point in self.points:
             extended_zone = p3d.Sphere(point, distance_extended)
-            sphere_primitive = extended_zone.shell_faces[0]
 
-            spheres.append(vmshells.ClosedShell3D([sphere_primitive]))
+            spheres.append(extended_zone)
 
-            extended_points.extend(sphere_primitive.triangulation().points)
+            extended_points.extend(extended_zone.triangulation().points)
 
         for sphere in spheres:
             clean_extended_zone = []
@@ -288,7 +294,6 @@ class PointCloud3D(dc.DessiaObject):
         new_poly = [poly.offset(offset) for poly in polyconvexe]
 
         return new_position_plane, new_poly
-
 
 
 class PointCloud2D(dc.DessiaObject):
@@ -322,10 +327,10 @@ class PointCloud2D(dc.DessiaObject):
 
         # polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         if convex:
-            polygon = vmw.ClosedPolygon2D.points_convex_hull(self.points)
+            polygon = vmw.ClosedPolygon2D.convex_hull_points(self.points)
         else:
             polygon = vmw.ClosedPolygon2D.concave_hull(self.points, -0.2, 0.000005)
-
+        polygon = polygon.simplify(min_distance=0.002)
         if polygon is None or math.isclose(polygon.area(), 0, abs_tol=1e-6):
             return None
         return polygon

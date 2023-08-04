@@ -81,6 +81,14 @@ class TestExtrusionSurface3D(unittest.TestCase):
         self.assertEqual(new_surface.edge.start.z, 1)
         self.assertTrue(new_surface.frame.origin.is_close(volmdlr.Point3D(-0.025917292, 0.002544355, 1.0)))
 
+    def test_contour3d_to_2d(self):
+        surface = surfaces.SphericalSurface3D.load_from_file(
+            "surfaces/objects_extrusion_tests/extrusionsurface_contour3d_to_2d_surface.json")
+        contour = vmw.Contour3D.load_from_file(
+            "surfaces/objects_extrusion_tests/extrusionsurface_contour3d_to_2d_contour.json")
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 0.0036995357929908313, 2)
 
 
 if __name__ == '__main__':

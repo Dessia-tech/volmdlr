@@ -6,14 +6,12 @@ Common abstract primitives.
 """
 
 import math
-import warnings
 from typing import Dict, List
 
 from numpy import zeros
 from scipy.optimize import linprog
 
 # import dessia_common as dc
-import volmdlr
 import volmdlr.edges
 
 
@@ -25,7 +23,7 @@ class RoundedLineSegments:
     _non_serializable_attributes = ['line_class', 'arc_class', 'basis_primitives', 'primitives']
 
     line_class = volmdlr.edges.LineSegment
-    arc_class = volmdlr.edges.Arc
+    arc_class = volmdlr.edges.ArcMixin
 
     def __init__(self, points: List[volmdlr.Point3D], radius: Dict[str, float],
                  closed: bool = False, adapt_radius: bool = False, name: str = ''):
@@ -38,7 +36,9 @@ class RoundedLineSegments:
         self.npoints = len(points)
 
     def get_points(self, point_index):
-        """Gets points to calculate the arc features."""
+        """
+        Gets points to calculate the arc features.
+        """
         if self.closed:
             if point_index == 0:
                 pt1 = self.points[-1]
@@ -65,17 +65,6 @@ class RoundedLineSegments:
                                for point in self.points], radius=self.radius,
                               adapt_radius=self.adapt_radius,
                               name=self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated inplace.
-
-        side = 'old' or 'new'
-        """
-        warnings.warn("'inplace' methods are deprecated. Use a not inplace method instead.", DeprecationWarning)
-
-        for point in self.points:
-            point.frame_mapping_inplace(frame, side)
 
     def arc_features(self, point_index: int):
         raise NotImplementedError('The method arc_features should be overloaded.')
@@ -203,7 +192,7 @@ class RoundedLineSegments:
             # Creating arcs
             for ipoint, radius in self.radius.items():
                 p_start, p_iterior, p_end, _, _ = self.arc_features(ipoint)
-                arcs[ipoint] = self.arc_class(p_start, p_iterior, p_end)
+                arcs[ipoint] = self.arc_class.from_3_points(p_start, p_iterior, p_end)
 
         return self.primitives_from_arcs(arcs)
 

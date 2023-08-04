@@ -119,7 +119,6 @@ setup(
     packages=[
         "volmdlr",
         "volmdlr.models",
-        "volmdlr.models.workflows",
         "volmdlr.utils",
     ],  # ,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
     package_dir={},
@@ -130,7 +129,7 @@ setup(
         "Cython",
         "numpy<=1.24.0",
         "matplotlib",
-        "scipy",
+        "scipy<1.10.1",
         "geomdl",
         "networkx",
         "triangle",

@@ -4,17 +4,17 @@ import volmdlr as vm
 import volmdlr.edges as vme
 import volmdlr.wires as vmw
 
-for iarc, arc in enumerate([vme.Arc2D(vm.Point2D(0.3, 0.4),
+for iarc, arc in enumerate([vme.Arc2D.from_3_points(vm.Point2D(0.3, 0.4),
                       vm.Point2D(0.35, 0.3),
                       vm.Point2D(0.37, 0.22)),
-            vme.Arc2D(vm.Point2D(0.3, 0.4),
+            vme.Arc2D.from_3_points(vm.Point2D(0.3, 0.4),
                       vm.Point2D(-0.35, 0.3),
                       vm.Point2D(0.37, 0.22))]):
 
-    arc_triangle = vmw.ClosedPolygon2D([arc.start,arc.end, arc.center])
+    arc_triangle = vmw.ClosedPolygon2D([arc.start,arc.end, arc.circle.center])
 
     ax = arc.plot()
-    arc.center.plot(ax=ax)
+    arc.circle.center.plot(ax=ax)
     arc_triangle.plot(ax=ax)
     ax.set_aspect('equal')
 
@@ -52,10 +52,10 @@ for iarc, arc in enumerate([vme.Arc2D(vm.Point2D(0.3, 0.4),
 
 
     # Second moment area
-    arc_sma = arc.second_moment_area(arc.center)
-    triangle_sma = arc_triangle.second_moment_area(arc.center)
+    arc_sma = arc.second_moment_area(arc.circle.center)
+    triangle_sma = arc_triangle.second_moment_area(arc.circle.center)
 
-    arc_slsma = arc.straight_line_second_moment_area(arc.center)
+    arc_slsma = arc.straight_line_second_moment_area(arc.circle.center)
 
     if iarc == 0:
         Ix_diff = arc_sma[0] - triangle_sma[0] - abs(arc_slsma[0])

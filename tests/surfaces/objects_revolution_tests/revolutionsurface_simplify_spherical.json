@@ -3,28 +3,58 @@
   "object_class": "volmdlr.surfaces.RevolutionSurface3D",
   "package_version": "0.9.2.dev1050+g45192f1d",
   "wire": {
+  "object_class": "volmdlr.edges.Arc3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.606019165039,
+    "y": 0.63764672659,
+    "z": -0.00937814702988
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.606019165039,
+    "y": 0.63764672659,
+    "z": 0.0109218529701
+  },
+  "circle": {
+    "object_class": "volmdlr.curves.Circle3D",
     "name": "",
-    "object_class": "volmdlr.edges.Arc3D",
-    "package_version": "0.9.2.dev1050+g45192f1d",
-    "start": {
-      "object_class": "volmdlr.Point3D",
-      "x": 0.606019165039,
-      "y": 0.63764672659,
-      "z": -0.00937814702988
-    },
-    "end": {
-      "object_class": "volmdlr.Point3D",
-      "x": 0.606019165039,
-      "y": 0.63764672659,
-      "z": 0.0109218529701
-    },
-    "interior": {
-      "object_class": "volmdlr.Point3D",
-      "x": 0.5958704426670879,
-      "y": 0.6376467265900003,
-      "z": 0.0009328924945519294
+    "radius": 0.01014999999999,
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
+      "name": "",
+      "origin": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.6060191650631023,
+        "y": 0.6376467265899999,
+        "z": 0.0007718529701100001
+      },
+      "u": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.7014748871579323,
+        "y": 2.3021427004678366e-14,
+        "z": 0.7126941719186192
+      },
+      "v": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.7126941719186192,
+        "y": -2.338962827587328e-14,
+        "z": 0.7014748871579323
+      },
+      "w": {
+        "object_class": "volmdlr.Point3D",
+        "x": 3.2818604665879154e-14,
+        "y": 1.0,
+        "z": 3.1554436208840472e-30
+      }
     }
   },
+  "is_trigo": true,
+  "angle_start": 3.9190575038105986,
+  "angle_end": 7.060650152651174,
+  "_references": {}
+},
   "axis_point": {
     "object_class": "volmdlr.Point3D",
     "x": 0.606019165039,

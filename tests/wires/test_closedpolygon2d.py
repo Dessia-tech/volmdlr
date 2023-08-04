@@ -56,6 +56,15 @@ class TestClosedPolygon2D(unittest.TestCase):
         point = volmdlr.Point2D(4, 0)
         self.assertFalse(polygon.point_belongs(point))
         self.assertFalse(polygon.point_belongs(point, include_edge_points=True))
+        polygon = vmw.ClosedPolygon2D([volmdlr.Point2D(0.025066533673536538, 0.0257663365438965),
+                                       volmdlr.Point2D(0.02895747485348258, 0.026481373525337516),
+                                       volmdlr.Point2D(0.03197047286753098, 0.03014226404424863),
+                                       volmdlr.Point2D(0.031092529701331955, 0.03308811758234674),
+                                       volmdlr.Point2D(0.027201595008037212, 0.03237308848256351),
+                                       volmdlr.Point2D(0.0241885905068443, 0.028712190081863796)])
+        point = volmdlr.Point2D(0.027822689953649605, 0.02627283447706946)
+        self.assertTrue(polygon.point_belongs(point, True))
+        self.assertFalse(polygon.point_belongs(point, False))
 
 
 if __name__ == '__main__':

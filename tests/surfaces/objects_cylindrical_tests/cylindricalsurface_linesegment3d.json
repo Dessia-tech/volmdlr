@@ -1,0 +1,16 @@
+{
+  "object_class": "volmdlr.edges.LineSegment3D",
+  "name": "",
+  "start": {
+    "object_class": "volmdlr.Point3D",
+    "x": 2.58884431275,
+    "y": 0.410735373891,
+    "z": 0.114070767118
+  },
+  "end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 2.5888140588699997,
+    "y": 0.40989030233900003,
+    "z": 0.114697556571
+  }
+}

@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import volmdlr as vm
 import volmdlr.edges as vme
 import volmdlr.wires as vmw
-from volmdlr import primitives3d
+from volmdlr import primitives3d, curves
 from volmdlr.core import EdgeStyle
 
 degree = 5
@@ -30,8 +30,8 @@ bspline_curve3d = vme.BSplineCurve3D(degree=degree,
                                      periodic=False,
                                      name='B Spline Curve 3D 1')
 
-
-contour = vmw.Circle2D(vm.O2D, 0.015)
+circle = curves.Circle2D(vm.O2D, 0.015)
+contour = vmw.Contour2D(circle.split_at_abscissa(circle.length()*.5))
 
 # rl = primitives3d.OpenRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
 

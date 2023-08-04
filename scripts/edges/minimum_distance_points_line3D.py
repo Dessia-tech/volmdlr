@@ -6,7 +6,7 @@ Minimum distance line between two lines
 
 import volmdlr as vm
 import volmdlr.primitives3d as primitives3d
-
+from volmdlr import curves
 #import numpy as npy
 
 p11 = vm.Point3D.random(-1,1,-1,1,-1,1)
@@ -14,8 +14,8 @@ p12 = vm.Point3D.random(-1,1,-1,1,-1,1)
 p21 = vm.Point3D.random(-1,1,-1,1,-1,1)
 p22 = vm.Point3D.random(-1,1,-1,1,-1,1)
 
-l1 = vm.edges.Line3D(p11, p12)
-l2 = vm.edges.Line3D(p21, p22)
+l1 = curves.Line3D(p11, p12)
+l2 = curves.Line3D(p21, p22)
 
 pmd1, pmd2 = l1.minimum_distance_points(l2)
 
