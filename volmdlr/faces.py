@@ -1940,9 +1940,9 @@ class CylindricalFace3D(Face3D):
         :param arc: Arc3D to be verified.
         :return: True if it is inside, False otherwise.
         """
-        if not math.isclose(abs(arc.frame.w.dot(self.surface3d.frame.w)), 1.0, abs_tol=1e-6):
+        if not math.isclose(abs(arc.circle.frame.w.dot(self.surface3d.frame.w)), 1.0, abs_tol=1e-6):
             return False
-        if not math.isclose(self.radius, arc.radius, abs_tol=1e-6):
+        if not math.isclose(self.radius, arc.circle.radius, abs_tol=1e-6):
             return False
         return self.arcellipse_inside(arc)
 
