@@ -355,7 +355,7 @@ def flood_fill_matrix_3d(
 ) -> np.ndarray[np.bool_, np.ndim == 3]:
     return np.asarray(
         _flood_fill_matrix_3d(
-            matrix.astype(np.int32),
+            matrix.astype(np.bool_),
             [start[0], start[1], start[2]],
             fill_with,
             [matrix.shape[0], matrix.shape[1], matrix.shape[2]],
@@ -409,7 +409,7 @@ def flood_fill_matrix_2d(
 ) -> np.ndarray[np.bool_, np.ndim == 2]:
     return np.asarray(
         _flood_fill_matrix_2d(
-            matrix.astype(np.int32),
+            matrix.astype(np.bool_),
             [start[0], start[1]],
             fill_with,
             [matrix.shape[0], matrix.shape[1]],
@@ -522,7 +522,7 @@ def triangles_to_voxel_matrix(
         int(max_point[1] // voxel_size + 1) - int(min_point[1] // voxel_size) + 2,
         int(max_point[2] // voxel_size + 1) - int(min_point[2] // voxel_size) + 2,
     )
-    matrix = numpy.zeros(shape, dtype=bool)
+    matrix = numpy.zeros(shape, dtype=np.bool_)
     matrix_origin_center = (
         round((min_point[0] // voxel_size - 0.5) * voxel_size, 6),
         round((min_point[1] // voxel_size - 0.5) * voxel_size, 6),
@@ -803,7 +803,7 @@ def _pixel_centers_to_outer_filled_pixel_matrix(
     shape: Tuple[cython.int, cython.int],
     min_center: Tuple[cython.double, cython.double],
 ) -> bool_c[:, :]:
-    matrix: bool_c[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.int32)
+    matrix: bool_c[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.bool_)
 
     for i in range(pixel_centers.size()):
         ix = cython.cast(cython.int, _round_to_digits((pixel_centers[i][0] - min_center[0]) / pixel_size, 6)) + 1
