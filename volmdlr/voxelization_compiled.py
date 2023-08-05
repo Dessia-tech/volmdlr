@@ -11,6 +11,7 @@ import cython.cimports.libc.math as math_c
 import numpy
 
 import numpy as np
+from cython.cimports.libcpp import bool as bool_c
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
 
@@ -43,7 +44,7 @@ def _triangle_intersects_voxel(
     ],
     voxel_center: Tuple[cython.double, cython.double, cython.double],
     voxel_extents: Tuple[cython.double, cython.double, cython.double],
-) -> cython.bint:
+) -> bool_c:
     # Ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
 
     v0: cython.double[3]
@@ -215,7 +216,7 @@ def _calculate_axis_values(
     ax: cython.double[3],
     f: cython.double[3],
     voxel_extents: Tuple[cython.double, cython.double, cython.double],
-) -> cython.bint:
+) -> bool_c:
     p0 = v0[0] * ax[0] + v0[1] * ax[1] + v0[2] * ax[2]
     p1 = v1[0] * ax[0] + v1[1] * ax[1] + v1[2] * ax[2]
     p2 = v2[0] * ax[0] + v2[1] * ax[1] + v2[2] * ax[2]
@@ -312,8 +313,8 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _flood_fill_matrix_3d(
-    matrix: cython.bint[:, :, :], start: cython.int[3], fill_with: cython.bint, shape: cython.int[3]
-) -> cython.bint[:, :, :]:
+    matrix: bool_c[:, :, :], start: cython.int[3], fill_with: bool_c, shape: cython.int[3]
+) -> bool_c[:, :, :]:
     dx: cython.int[6] = [0, 0, -1, 1, 0, 0]
     dy: cython.int[6] = [-1, 1, 0, 0, 0, 0]
     dz: cython.int[6] = [0, 0, 0, 0, -1, 1]
@@ -367,11 +368,11 @@ def flood_fill_matrix_3d(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _flood_fill_matrix_2d(
-    matrix: cython.bint[:, :],
+    matrix: bool_c[:, :],
     start: Tuple[cython.int, cython.int],
-    fill_with: cython.bint,
+    fill_with: bool_c,
     shape: Tuple[cython.int, cython.int],
-) -> cython.bint[:, :]:
+) -> bool_c[:, :]:
     dx: cython.int[4] = [0, 0, -1, 1]
     dy: cython.int[4] = [-1, 1, 0, 0]
     nx: cython.int
@@ -430,7 +431,7 @@ def _line_segment_intersects_pixel(
     pixel_center_x: cython.double,
     pixel_center_y: cython.double,
     pixel_size: cython.double,
-) -> cython.bint:
+) -> bool_c:
     # Determine the coordinates of lower-left and upper-right of rectangle
     xmin, xmax = pixel_center_x - pixel_size / 2, pixel_center_x + pixel_size / 2
     ymin, ymax = pixel_center_y - pixel_size / 2, pixel_center_y + pixel_size / 2
@@ -443,7 +444,7 @@ def _line_segment_intersects_pixel(
     line_eq4 = (y2 - y1) * xmax + (x1 - x2) * ymax + (x2 * y1 - x1 * y2)
 
     # Check if all corners are on the same side of the line
-    miss: cython.bint = (
+    miss: bool_c = (
         (line_eq1 >= 0 and line_eq2 >= 0 and line_eq3 >= 0 and line_eq4 >= 0)
         or (line_eq1 < 0 and line_eq2 < 0 and line_eq3 < 0 and line_eq4 < 0)
     ) and (
@@ -452,7 +453,7 @@ def _line_segment_intersects_pixel(
     )
 
     # Does it miss based on the shadow intersection test?
-    shadow_miss: cython.bint = (
+    shadow_miss: bool_c = (
         (x1 > xmax and x2 > xmax) or (x1 < xmin and x2 < xmin) or (y1 > ymax and y2 > ymax) or (y1 < ymin and y2 < ymin)
     )
 
@@ -521,7 +522,7 @@ def triangles_to_voxel_matrix(
         int(max_point[1] // voxel_size + 1) - int(min_point[1] // voxel_size) + 2,
         int(max_point[2] // voxel_size + 1) - int(min_point[2] // voxel_size) + 2,
     )
-    matrix = numpy.zeros(shape, dtype=np.int32)
+    matrix = numpy.zeros(shape, dtype=bool)
     matrix_origin_center = (
         round((min_point[0] // voxel_size - 0.5) * voxel_size, 6),
         round((min_point[1] // voxel_size - 0.5) * voxel_size, 6),
@@ -547,9 +548,9 @@ def _triangles_to_voxel_matrix(
         ]
     ],
     voxel_size: cython.double,
-    matrix: cython.bint[:, :, :],
+    matrix: bool_c[:, :, :],
     matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
-) -> cython.bint[:, :, :]:
+) -> bool_c[:, :, :]:
     # Check interface voxels
     for i in range(triangles.size()):
         x_abscissa = _round_to_digits(triangles[i][0][0], 6)
@@ -801,8 +802,8 @@ def _pixel_centers_to_outer_filled_pixel_matrix(
     pixel_size: cython.double,
     shape: Tuple[cython.int, cython.int],
     min_center: Tuple[cython.double, cython.double],
-) -> cython.bint[:, :]:
-    matrix: cython.bint[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.int32)
+) -> bool_c[:, :]:
+    matrix: bool_c[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.int32)
 
     for i in range(pixel_centers.size()):
         ix = cython.cast(cython.int, _round_to_digits((pixel_centers[i][0] - min_center[0]) / pixel_size, 6)) + 1
@@ -821,7 +822,7 @@ def _pixel_centers_to_outer_filled_pixel_matrix(
 
 @cython.cfunc
 @cython.exceptval(check=False)
-def _is_integer(value: cython.double) -> cython.bint:
+def _is_integer(value: cython.double) -> bool_c:
     return cython.cast(cython.int, value) == value
 
 
@@ -833,7 +834,7 @@ def _check_triangle_equal_point(
         Tuple[cython.double, cython.double, cython.double],
         Tuple[cython.double, cython.double, cython.double],
     ]
-) -> cython.bint:
+) -> bool_c:
     return (
         (triangle[0][0] == triangle[1][0] and triangle[0][1] == triangle[1][1] and triangle[0][2] == triangle[1][2])
         or (triangle[0][0] == triangle[2][0] and triangle[0][1] == triangle[2][1] and triangle[0][2] == triangle[2][2])
