@@ -536,8 +536,8 @@ def triangles_to_voxel_matrix(
 
 @cython.cfunc
 @cython.cdivision(True)
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def _triangles_to_voxel_matrix(
     triangles: vector[
         Tuple[
@@ -552,12 +552,16 @@ def _triangles_to_voxel_matrix(
 ) -> cython.bint[:, :, :]:
     # Check interface voxels
     for i in range(triangles.size()):
-        # Check if the triangle is in the YZ plane at the interface between voxels
         x_abscissa = _round_to_digits(triangles[i][0][0], 6)
         y_abscissa = _round_to_digits(triangles[i][0][1], 6)
         z_abscissa = _round_to_digits(triangles[i][0][2], 6)
 
-        if (
+        # Check if two points of the triangle are equal
+        if _check_triangle_equal_point(triangles[i]):
+            pass
+
+        # Check if the triangle is in the YZ plane at the interface between voxels
+        elif (
             _round_to_digits(triangles[i][0][0], 6)
             == _round_to_digits(triangles[i][1][0], 6)
             == _round_to_digits(triangles[i][2][0], 6)
@@ -740,15 +744,15 @@ def _triangles_to_voxel_matrix(
             for j in range(voxel_centers.size()):
                 ix = cython.cast(
                     cython.int,
-                    _round_to_digits((voxel_centers[j][0] - matrix_origin_center[0] - voxel_size / 2) / voxel_size, 6),
+                    _round_to_digits((voxel_centers[j][0] - matrix_origin_center[0]) / voxel_size, 6),
                 )
                 iy = cython.cast(
                     cython.int,
-                    _round_to_digits((voxel_centers[j][1] - matrix_origin_center[1] - voxel_size / 2) / voxel_size, 6),
+                    _round_to_digits((voxel_centers[j][1] - matrix_origin_center[1]) / voxel_size, 6),
                 )
                 iz = cython.cast(
                     cython.int,
-                    _round_to_digits((voxel_centers[j][2] - matrix_origin_center[2] - voxel_size / 2) / voxel_size, 6),
+                    _round_to_digits((voxel_centers[j][2] - matrix_origin_center[2]) / voxel_size, 6),
                 )
 
                 if not matrix[ix, iy, iz]:
@@ -819,6 +823,22 @@ def _pixel_centers_to_outer_filled_pixel_matrix(
 @cython.exceptval(check=False)
 def _is_integer(value: cython.double) -> cython.bint:
     return cython.cast(cython.int, value) == value
+
+
+@cython.cfunc
+@cython.exceptval(check=False)
+def _check_triangle_equal_point(
+    triangle: Tuple[
+        Tuple[cython.double, cython.double, cython.double],
+        Tuple[cython.double, cython.double, cython.double],
+        Tuple[cython.double, cython.double, cython.double],
+    ]
+) -> cython.bint:
+    return (
+        (triangle[0][0] == triangle[1][0] and triangle[0][1] == triangle[1][1] and triangle[0][2] == triangle[1][2])
+        or (triangle[0][0] == triangle[2][0] and triangle[0][1] == triangle[2][1] and triangle[0][2] == triangle[2][2])
+        or (triangle[1][0] == triangle[2][0] and triangle[1][1] == triangle[2][1] and triangle[1][2] == triangle[2][2])
+    )
 
 
 @cython.cfunc
