@@ -48,12 +48,10 @@ class GmshParser(DessiaObject):
         self.elements = elements
         self.partitioned_entities = partitioned_entities
         self.periodic = periodic
-        # self.ghost_elements = ghost_elements,
         self.parametrizations = parametrizations
         self.node_data = node_data
         self.element_data = element_data
         self.element_node_data = element_node_data
-        # self.interpolation_scheme = interpolation_scheme,
         self.name = name
 
         DessiaObject.__init__(self, name=name)
@@ -72,12 +70,10 @@ class GmshParser(DessiaObject):
         elements = GmshParser.from_file_elements(file_data['Elements'])
         partitioned_entities = GmshParser.from_file_partitioned_entities(file_data['PartitionedEntities'])
         periodic = GmshParser.from_file_periodic(file_data['Periodic'])
-        # ghost_elements = GmshParser.from_file_ghost_elements(file_data['GhostElements'])
         parametrizations = GmshParser.from_file_parametrizations(file_data['Parametrizations'])
         node_data = GmshParser.from_file_node_data(file_data['NodeData'])
         element_data = GmshParser.from_file_element_data(file_data['ElementData'])
         element_node_data = GmshParser.from_file_element_node_data(file_data['ElementNodeData'])
-        # interpolation_scheme = GmshParser.from_file_interpolation_scheme(file_data['InterpolationScheme'])
 
         return cls(mesh_format=mesh_format,
                    entities=entities,
@@ -86,12 +82,10 @@ class GmshParser(DessiaObject):
                    physical_names=physical_names,
                    partitioned_entities=partitioned_entities,
                    periodic=periodic,
-                   # ghost_elements=ghost_elements,
                    parametrizations=parametrizations,
                    node_data=node_data,
                    element_data=element_data,
                    element_node_data=element_node_data,
-                   # interpolation_scheme=interpolation_scheme
                    name='')
 
     @staticmethod
@@ -123,7 +117,6 @@ class GmshParser(DessiaObject):
                 for i in range(step, step + num_elements_in_block):
                     line = lines[i].split()
                     element = [int(index) - 1 for index in line[1::]]
-                    # elements['elements_type_'+ element_type].append(element)
                     elements_list.append(element)
                     elements_type.append(element)
                 elements['elements_type_' + element_type].append(elements_list)
@@ -364,14 +357,6 @@ class GmshParser(DessiaObject):
                                                       float(line[1]),
                                                       float(line[2])))
 
-                    # nodes['nodes_dim_'+ entity_dim].append(
-                    #     volmdlr.Point3D(float(line[0]),
-                    #                     float(line[1]),
-                    #                     float(line[2])))
-                    # nodes_points.append(volmdlr.Point3D(float(line[0]),
-                    #                                     float(line[1]),
-                    #                                     float(line[2])))
-
                 nodes['nodes_dim_' + entity_dim].append(points)
                 nodes_points.extend(points)
 
@@ -592,8 +577,6 @@ class GmshParser(DessiaObject):
             element_groups.append(volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name=''))
 
         mesh = volmdlr.mesh.Mesh(element_groups)
-        # mesh.nodes = points #gmsh points are duplicated > not needed
-        # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
         mesh.gmsh = self
 
         return mesh
@@ -620,8 +603,6 @@ class GmshParser(DessiaObject):
             element_groups.append(volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name=''))
 
         mesh = volmdlr.mesh.Mesh(element_groups)
-        # mesh.nodes = points #gmsh points are duplicated > not needed
-        # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
         mesh.gmsh = self
 
         return mesh
@@ -651,8 +632,6 @@ class GmshParser(DessiaObject):
             element_groups.append(volmdlr.mesh.ElementsGroup(triangles_mesh, name=''))
 
         mesh = volmdlr.mesh.Mesh(element_groups)
-        # mesh.nodes = points #gmsh points are duplicated > not needed
-        # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
         mesh.gmsh = self
 
         return mesh
