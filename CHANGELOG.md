@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
 - Wire3D: removes heritage from volmdlr.core.CompositePrimitive3D
 - BSplineCurve3D: bounding_box
+- edges: minimum_distance.
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader

@@ -1231,6 +1231,7 @@ class Circle3D(CircleMixin, Curve):
         self.radius = radius
         self.frame = frame
         self._bbox = None
+        self.angle = 2*math.pi
         Curve.__init__(self, name=name)
 
     @property
@@ -1550,6 +1551,19 @@ class Circle3D(CircleMixin, Curve):
             new_faces.extend(contour_primitive.revolution(
                 self.center, self.normal, volmdlr.TWO_PI))
         return new_faces
+
+    def distance_linesegment(self, linesegment3d, return_points=False):
+        """
+        Gets the minimum distance between an Arc 3D and Line Segment 3D.
+
+        :param linesegment3d: other line segment 3d.
+        :param return_points: boolean to decide weather to return the corresponding minimal distance points or not.
+        :return: minimum distance / minimal distance with corresponding points.
+        """
+        point1, point2 = vm_common_operations.minimum_distance_points_circle3d_linesegment3d(self, linesegment3d)
+        if return_points:
+            return point1.point_distance(point2), point1, point2
+        return point1.point_distance(point2)
 
 
 class Ellipse2D(Curve):

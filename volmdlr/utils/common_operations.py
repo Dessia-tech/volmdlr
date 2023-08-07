@@ -2,10 +2,13 @@
 Concatenate common operation for two or more objects.
 
 """
+import math
 import random
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy.optimize import least_squares
 
 import volmdlr.core
 from volmdlr.core import EdgeStyle
@@ -115,3 +118,45 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
             valid_components.append(list_components)
     ax.plot(*valid_components, color=edge_style.color, alpha=edge_style.alpha)
     return ax
+
+
+def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
+    """
+    Gets the points from the arc and the line that gives the minimal distance between them.
+
+    :param circle3d: Circle 3d or Arc 3d.
+    :param linesegment3d: Other line segment 3d.
+    :return: Minimum distance points.
+    """
+    def distance_squared(x, u_, v_, k_, w_):
+        """Calculates the squared distance."""
+        return (u_.dot(u_) * x[0] ** 2 + w_.dot(w_) + v_.dot(v_) * (
+                (math.sin(x[1])) ** 2) * radius ** 2 + k_.dot(k_) * ((math.cos(x[1])) ** 2) * radius ** 2
+                - 2 * x[0] * w_.dot(u_) - 2 * x[0] * radius * math.sin(x[1]) * u_.dot(v_) - 2 * x[
+                    0] * radius * math.cos(x[1]) * u_.dot(k_)
+                + 2 * radius * math.sin(x[1]) * w_.dot(v_) + 2 * radius * math.cos(x[1]) * w_.dot(k)
+                + math.sin(2 * x[1]) * v_.dot(k_) * radius ** 2)
+    circle_point = circle3d.point_at_abcissa(0.0)
+    radius = circle3d.radius
+    u = linesegment3d.direction_vector()
+    k = circle_point - circle3d.frame3d.origin
+    k.normalize()
+    w = circle3d.frame3d.origin - linesegment3d.start
+    v = circle3d.frame3d.w.cross(k)
+
+    results = []
+    for initial_value in [np.array([0.5, circle3d.angle / 2]), np.array([0.5, 0]), np.array([0.5, circle3d.angle])]:
+        results.append(least_squares(distance_squared, initial_value,
+                                     bounds=[(0, 0), (1, circle3d.angle)], args=(u, v, k, w)))
+
+    point1 = linesegment3d.point_at_abscissa(results[0].x[0] * linesegment3d.length())
+    point2 = circle3d.point_at_abscissa(results[1].x[1] * circle3d.radius)
+
+    for couple in results[1:]:
+        ptest1 = linesegment3d.point_at_abscissa(couple.x[0] * linesegment3d.length())
+        ptest2 = circle3d.point_at_abscissa(couple.x[1] * circle3d.radius)
+        dtest = ptest1.point_distance(ptest2)
+        if dtest < v.dot(v):
+            point1, point2 = ptest1, ptest2
+
+    return point1, point2
