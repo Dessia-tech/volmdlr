@@ -4,8 +4,6 @@ volmdlr utils for calculating curves intersections.
 """
 import math
 
-import numpy as npy
-
 import volmdlr
 
 
@@ -155,15 +153,19 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
     :return: a list with all initial sections where there may exist an intersection.
     """
     line_seg_class_ = getattr(volmdlr.edges, 'LineSegment'+bsplinecurve.__class__.__name__[-2:])
-    bspline_discretized_points = bsplinecurve.discretization_points(number_points=resolution)
+    abscissa1 = 0
+    abscissa2 = bsplinecurve.length()
+    bspline_discretized_points, points_abscissas = bsplinecurve.abscissa_discretization(abscissa1, abscissa2,
+                                                                                        max_number_points=resolution)
     param_intersections = []
-    for point1, point2 in zip(bspline_discretized_points[:-1], bspline_discretized_points[1:]):
+    for point1, point2, abscissa1, abscissa2 in zip(bspline_discretized_points[:-1], bspline_discretized_points[1:],
+                                                    points_abscissas[:-1], points_abscissas[1:]):
         line_seg = line_seg_class_(point1, point2)
         intersection = primitive.linesegment_intersections(line_seg)
         if intersection:
-            abscissa1 = bsplinecurve.abscissa(point1)
-            abscissa2 = bsplinecurve.abscissa(point2)
             param_intersections.append((abscissa1, abscissa2))
+    if not param_intersections:
+        param_intersections.append((0.0, bsplinecurve.length()))
     return param_intersections
 
 
@@ -194,19 +196,18 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
         if not param_intersections:
             break
         abscissa1, abscissa2 = param_intersections[0]
-        discretized_points_between_1_2 = []
-        for abscissa in npy.linspace(abscissa1, abscissa2, num=10):
-            abscissa_point = bsplinecurve.point_at_abscissa(abscissa)
-            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
-                discretized_points_between_1_2.append(abscissa_point)
-        for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
+        discretized_points_between_1_2, points_abscissas = bsplinecurve.abscissa_discretization(abscissa1, abscissa2,
+                                                                                                max_number_points=10)
+        for point1, point2, abscissa_point1, abscissa_point2 in zip(
+                discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:],
+                points_abscissas[:-1], points_abscissas[1:]):
             line_seg = line_seg_class_(point1, point2)
             intersection = primitive.linesegment_intersections(line_seg, 1e-6)
             if not intersection:
                 continue
             if bsplinecurve.point_distance(intersection[0]) > abs_tol:
-                param_intersections.insert(0, (bsplinecurve.abscissa(point1),
-                                               bsplinecurve.abscissa(point2)))
+                param_intersections.insert(0, (abscissa_point1,
+                                               abscissa_point2))
             elif not volmdlr.core.point_in_list(intersection[0], intersections):
                 intersections.append(intersection[0])
         param_intersections.remove((abscissa1, abscissa2))

@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CylindricalSurface3D: concurrent_plane_intersection
 - BSplineFace3D: fix neutral_fiber
 - Step: assembly import
+- BSplineFace3D: fix bounding_box
 - Ellipse3D: from_step
 - edges.py: general improvements.
 - BSplineFace3D: fix neutral_fiber
@@ -40,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shells: refactor.
 - Composite_primitives
 - Surface3D: enhance repair_primitives_periodicity method.
+- volmdlr.utils.intersections:
 - BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
 - Wire3D: removes heritage from volmdlr.core.CompositePrimitive3D
 - BSplineCurve3D: bounding_box

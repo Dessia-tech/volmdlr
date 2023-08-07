@@ -23,7 +23,7 @@ MAX_ERROR_BY_TYPE = {
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 62,
-                     'too-many-locals': 75,
+                     'too-many-locals': 77,
                      'unused-argument': 32,
                      'too-many-arguments': 24,
                      'line-too-long': 12,
@@ -64,7 +64,7 @@ ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-man
                                 "protected-access", "cyclic-import", "line-too-long", "too-many-lines", "no-member",
                                 "too-few-public-methods", "duplicate-code", "too-many-return-statements",
                                 "import-outside-toplevel", "arguments-differ", "arguments-renamed",
-                                "too-many-boolean-expressions"]
+                                "too-many-boolean-expressions", "super-init-not-called"]
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:

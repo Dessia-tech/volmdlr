@@ -1130,8 +1130,15 @@ class Circle2D(CircleMixin, Curve):
         """Plots the circle using Matplotlib."""
         return vm_common_operations.plot_circle(self, ax, edge_style)
 
-    def plot_data(self, edge_style: plot_data.EdgeStyle = None,
-                  surface_style: plot_data.SurfaceStyle = None):
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None, surface_style: plot_data.SurfaceStyle = None):
+        """
+        Get plot data for the circle 2d.
+
+        :param edge_style: Plotting style for the line.
+        :type edge_style: :class:`plot_data.EdgeStyle`, optional
+        :return: Plot data for the line.
+        :rtype: :class:`plot_data.Circle2D`
+        """
         return plot_data.Circle2D(cx=self.center.x, cy=self.center.y,
                                   r=self.radius,
                                   edge_style=edge_style,
@@ -1437,6 +1444,10 @@ class Circle3D(CircleMixin, Curve):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
+        """
+        Creates a circle from three points.
+
+        """
         vector_u1 = point2 - point1
         vector_u2 = point2 - point3
         try:
@@ -1851,6 +1862,7 @@ class Ellipse3D(Curve):
 
     @property
     def self_2d(self):
+        """Version 2d of the ellipse 3d as a property."""
         if not self._self_2d:
             self._self_2d = self.to_2d(self.center, self.frame.u, self.frame.v)
         return self._self_2d
