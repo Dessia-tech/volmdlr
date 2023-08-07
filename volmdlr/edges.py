@@ -5226,47 +5226,6 @@ class Arc3D(ArcMixin, Edge):
 
         return point1, point2
 
-
-    # def minimum_distance_points_line(self, other_line):
-    #     """
-    #     Gets the points from the arc and the line that gives the minimal distance between them.
-    #
-    #     :param other_line: other line.
-    #     :type other_line: LineSegment3D.
-    #     """
-    #
-    #     def distance_squared(x, u_, v_, k_, w_):
-    #         """Calculates the squared distance."""
-    #         radius = self.radius
-    #         return (u_.dot(u_) * x[0] ** 2 + w_.dot(w_) + v_.dot(v_) * (
-    #                 (math.sin(x[1])) ** 2) * radius ** 2 + k_.dot(k_) * ((math.cos(x[1])) ** 2) * radius ** 2
-    #                 - 2 * x[0] * w_.dot(u_) - 2 * x[0] * radius * math.sin(x[1]) * u_.dot(v_) - 2 * x[
-    #                     0] * radius * math.cos(x[1]) * u_.dot(k_)
-    #                 + 2 * radius * math.sin(x[1]) * w_.dot(v_) + 2 * radius * math.cos(x[1]) * w_.dot(k)
-    #                 + math.sin(2 * x[1]) * v_.dot(k_) * radius ** 2)
-    #     u = other_line.direction_vector()
-    #     k = self.start - self.circle.center
-    #     k.normalize()
-    #     w = self.circle.center - other_line.start
-    #     v = self.circle.normal.cross(k)
-    #
-    #     results = []
-    #     for initial_value in [npy.array([0.5, self.angle / 2]), npy.array([0.5, 0]), npy.array([0.5, self.angle])]:
-    #         results.append(least_squares(distance_squared, initial_value,
-    #                                      bounds=[(0, 0), (1, self.angle)], args=(u, v, k, w)))
-    #
-    #     point1 = other_line.point_at_abscissa(results[0].x[0] * other_line.length())
-    #     point2 = self.point_at_abscissa(results[1].x[1] * self.radius)
-    #
-    #     for couple in results[1:]:
-    #         ptest1 = other_line.point_at_abscissa(couple.x[0] * other_line.length())
-    #         ptest2 = self.point_at_abscissa(couple.x[1] * self.radius)
-    #         dtest = ptest1.point_distance(ptest2)
-    #         if dtest < v.dot(v):
-    #             point1, point2 = ptest1, ptest2
-    #
-    #     return point1, point2
-
     def distance_linesegment(self, linesegment3d, return_points=False):
         """
         Gets the minimum distance between an Arc 3D and Line Segment 3D.
