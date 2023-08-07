@@ -20,6 +20,7 @@ arc_ellipse2d = edges.ArcEllipse2D(ellipse2d, start=volmdlr.Point2D(0.5, 1.5), e
 
 
 def bspline_curve3d():
+    """BSpline curve3d model."""
     degree = 5
     control_points = [volmdlr.Point3D(0, 3, 0),
                       volmdlr.Point3D(3, 2, 1),
@@ -45,12 +46,14 @@ vector3 = vector1.cross(vector2)
 
 
 def arc3d():
+    """Arc 3d model."""
     circle3d = curves.Circle3D(volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3), 1)
     return edges.Arc3D(circle3d, start=volmdlr.Point3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
                        end=volmdlr.Point3D(-0.9855985596534886, -0.11957315586905026, -0.11957315586905026))
 
 
 def arc_ellipse3d():
+    """Arc ellipse 3d model."""
     ellipse3d = curves.Ellipse3D(2, 1, volmdlr.Frame3D(volmdlr.Point3D(1, 2, 1), vector3, vector1, vector2))
     return edges.ArcEllipse3D(ellipse3d,
                               start=volmdlr.Point3D(0.42264973081037405, 1.4226497308103743, 0.42264973081037427),
@@ -58,4 +61,5 @@ def arc_ellipse3d():
 
 
 def linesegment3d():
+    """Linesegment 3d model."""
     return edges.LineSegment3D(volmdlr.Point3D(1, 2, 4), volmdlr.Point3D(-1, 5, -3))
