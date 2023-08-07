@@ -20,7 +20,7 @@ arc_ellipse2d = edges.ArcEllipse2D(ellipse2d, start=volmdlr.Point2D(0.5, 1.5), e
 
 
 def bspline_curve3d():
-    """BSpline curve3d model."""
+    """Bspline curve3d model."""
     degree = 5
     control_points = [volmdlr.Point3D(0, 3, 0),
                       volmdlr.Point3D(3, 2, 1),
