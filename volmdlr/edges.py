@@ -2204,9 +2204,10 @@ class LineSegment2D(LineSegment):
         segment_vector = self.direction_vector()
         p_vector = point - self.start
         p_vector = p_vector.to_vector()
-        t = p_vector.dot(segment_vector) / segment_vector.dot(segment_vector)
-        t = max(0, min(t, 1))
-        closest_point = volmdlr.Point2D(self.start.x + t * segment_vector[0], self.start.y + t * segment_vector[1])
+        t_param = p_vector.dot(segment_vector) / segment_vector.dot(segment_vector)
+        t_param = max(0, min(t_param, 1))
+        closest_point = volmdlr.Point2D(self.start.x + t_param * segment_vector[0],
+                                        self.start.y + t_param * segment_vector[1])
         return closest_point
 
     def distance_linesegment(self, linesegment, return_points=False):

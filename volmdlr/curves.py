@@ -496,8 +496,8 @@ class Line2D(Line):
 
         line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
         line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
-        new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
-        return self.get_concurrent_segments_tangent_circles(vector_i, vector_c, vector_d, new_pt_k, new_basis)
+        return self.get_concurrent_segments_tangent_circles(
+            vector_i, vector_c, vector_d, volmdlr.Point2D.line_intersection(line_ab, line_cd), new_basis)
 
     def cut_between_two_points(self, point1: volmdlr.Point2D,
                                point2: volmdlr.Point2D):
