@@ -128,17 +128,6 @@ class GmshParser(DessiaObject):
 
         return elements
 
-    # $ElementData
-    #   numStringTags(ASCII int)
-    #   stringTag(string) ...
-    #   numRealTags(ASCII int)
-    #   realTag(ASCII double) ...
-    #   numIntegerTags(ASCII int)
-    #   integerTag(ASCII int) ...
-    #   elementTag(int) value(double) ...
-    #   ...
-    # $EndElementData
-
     @staticmethod
     def from_file_element_data(lines):
         """
@@ -151,17 +140,6 @@ class GmshParser(DessiaObject):
         element_data = {}
 
         return element_data
-
-    # $ElementNodeData
-    #   numStringTags(ASCII int)
-    #   stringTag(string) ...
-    #   numRealTags(ASCII int)
-    #   realTag(ASCII double) ...
-    #   numIntegerTags(ASCII int)
-    #   integerTag(ASCII int) ...
-    #   elementTag(int) numNodesPerElement(int) value(double) ...
-    #   ...
-    # $EndElementNodeData
 
     @staticmethod
     def from_file_element_node_data(lines):
@@ -269,13 +247,6 @@ class GmshParser(DessiaObject):
                 'surfaces': surfaces_data,
                 'volumes': volumes_data}
 
-    # $GhostElements
-    #   numGhostElements(size_t)
-    #   elementTag(size_t) partitionTag(int)
-    #     numGhostPartitions(size_t) ghostPartitionTag(int) ...
-    #   ...
-    # $EndGhostElements
-
     @staticmethod
     def from_file_ghost_elements(lines):
         """
@@ -288,14 +259,6 @@ class GmshParser(DessiaObject):
         ghost_elements = {}
 
         return ghost_elements
-
-    # $InterpolationScheme
-    #   name(string)
-    #   numElementTopologies(ASCII int)
-    #   elementTopology
-    #   numInterpolationMatrices(ASCII int)
-    #   numRows(ASCII int) numColumns(ASCII int) value(ASCII double) ...
-    # $EndInterpolationScheme
 
     @staticmethod
     def from_file_interpolation_scheme(lines):
@@ -380,17 +343,6 @@ class GmshParser(DessiaObject):
 
         return nodes
 
-    # $NodeData
-    #   numStringTags(ASCII int)
-    #   stringTag(string) ...
-    #   numRealTags(ASCII int)
-    #   realTag(ASCII double) ...
-    #   numIntegerTags(ASCII int)
-    #   integerTag(ASCII int) ...
-    #   nodeTag(int) value(double) ...
-    #   ...
-    # $EndNodeData
-
     @staticmethod
     def from_file_node_data(lines):
         """
@@ -404,23 +356,6 @@ class GmshParser(DessiaObject):
 
         return node_data
 
-    # $Parametrizations
-    #   numCurveParam(size_t) numSurfaceParam(size_t)
-    #   curveTag(int) numNodes(size_t)
-    #     nodeX(double) nodeY(double) nodeZ(double) nodeU(double)
-    #     ...
-    #   ...
-    #   surfaceTag(int) numNodes(size_t) numTriangles(size_t)
-    #     nodeX(double) nodeY(double) nodeZ(double)
-    #       nodeU(double) nodeV(double)
-    #       curvMaxX(double) curvMaxY(double) curvMaxZ(double)
-    #       curvMinX(double) curvMinY(double) curvMinZ(double)
-    #     ...
-    #     nodeIndex1(int) nodeIndex2(int) nodeIndex3(int)
-    #     ...
-    #   ...
-    # $EndParametrizations
-
     @staticmethod
     def from_file_parametrizations(lines):
         """
@@ -433,41 +368,6 @@ class GmshParser(DessiaObject):
         parametrizations = {}
 
         return parametrizations
-
-    # $PartitionedEntities
-    #   numPartitions(size_t)
-    #   numGhostEntities(size_t)
-    #     ghostEntityTag(int) partition(int)
-    #     ...
-    #   numPoints(size_t) numCurves(size_t)
-    #     numSurfaces(size_t) numVolumes(size_t)
-    #   pointTag(int) parentDim(int) parentTag(int)
-    #     numPartitions(size_t) partitionTag(int) ...
-    #     X(double) Y(double) Z(double)
-    #     numPhysicalTags(size_t) physicalTag(int) ...
-    #   ...
-    #   curveTag(int) parentDim(int) parentTag(int)
-    #     numPartitions(size_t) partitionTag(int) ...
-    #     minX(double) minY(double) minZ(double)
-    #     maxX(double) maxY(double) maxZ(double)
-    #     numPhysicalTags(size_t) physicalTag(int) ...
-    #     numBoundingPoints(size_t) pointTag(int) ...
-    #   ...
-    #   surfaceTag(int) parentDim(int) parentTag(int)
-    #     numPartitions(size_t) partitionTag(int) ...
-    #     minX(double) minY(double) minZ(double)
-    #     maxX(double) maxY(double) maxZ(double)
-    #     numPhysicalTags(size_t) physicalTag(int) ...
-    #     numBoundingCurves(size_t) curveTag(int) ...
-    #   ...
-    #   volumeTag(int) parentDim(int) parentTag(int)
-    #     numPartitions(size_t) partitionTag(int) ...
-    #     minX(double) minY(double) minZ(double)
-    #     maxX(double) maxY(double) maxZ(double)
-    #     numPhysicalTags(size_t) physicalTag(int) ...
-    #     numBoundingSurfaces(size_t) surfaceTag(int) ...
-    #   ...
-    # $EndPartitionedEntities
 
     @staticmethod
     def from_file_partitioned_entities(lines):
