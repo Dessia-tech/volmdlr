@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExtrusionSurface3D: point3d_to_2d.
 - ExtrusionSurface3D: enhance parametric operations when the surface is periodic.
 - BSplineFace3D: fix neutral_fiber
+- BSplineSurface3D: improve bsplinecurve3d_to_2d.
 - BSplineSurface3D: improve bsplinecurve3d_to_3d.
 - Circle2D: plot
 - Line3D: fix Line3D plot()
@@ -35,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix RevolutionFace3D init parameter wire to edge.
 - fix Sweep: bug when first primitive is an arc.
 - fix closedshell3d volume
+- Step.py: enhance step import/export
 
 ### Refactor
 - refator some classes' init in primitives3D. 
