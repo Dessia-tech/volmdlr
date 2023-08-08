@@ -2009,13 +2009,13 @@ class VolumeModel(dc.PhysicalObject):
             for prim in assembly.primitives:
                 if primitive.__class__.__name__ in ('Assembly', "Compound"):
                     unpack_assembly(prim)
-                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                elif hasattr(primitive, "faces") or hasattr(primitive, "shell_faces"):
                     list_shells.append(prim)
 
         for primitive in self.primitives:
             if primitive.__class__.__name__ in ('Assembly', "Compound"):
                 unpack_assembly(primitive)
-            elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+            elif hasattr(primitive, "faces") or hasattr(primitive, "shell_faces"):
                 list_shells.append(primitive)
 
         return list_shells
