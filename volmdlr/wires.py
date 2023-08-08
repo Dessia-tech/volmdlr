@@ -3192,7 +3192,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         # Sort the points along ascending x for the Sweep Line method
         sorted_index = sorted(range(len(self.points)), key=lambda p: (self.points[p][0], self.points[p][1]))
-        nb = len(sorted_index)
+        number = len(sorted_index)
         segments = []
 
         for i, index in enumerate(sorted_index):
@@ -3200,7 +3200,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             # Ex: for the ABCDE polygon, if Sweep Line is on C, the segments
             #   will be (C,B) and (C,D)
             if index - 1 < 0:
-                segments.append((index, nb - 1))
+                segments.append((index, number - 1))
             else:
                 segments.append((index, sorted_index[i - 1]))
             if index >= len(self.points) - 1:
