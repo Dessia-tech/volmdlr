@@ -634,7 +634,7 @@ class Step(dc.DessiaObject):
     def instatiate_assembly(self, object_dict):
         assemblies_structure, valid_entities = self.get_assembly_struct()
 
-        instantiate_ids = deque(list(assemblies_structure.keys()))
+        instantiate_ids = list(assemblies_structure.keys())
         error = True
         last_error = None
         none_primitives = set()
