@@ -4519,8 +4519,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         #     # Sphere
         #     if math.isclose(tore_center.point_distance(self.wire.center), 0., abs_tol=1e-6):
         #         return SphericalSurface3D(self.frame, self.wire.radius, self.name)
-        if isinstance(self.wire, (edges.LineSegment3D, curves.Line3D)):
-            if isinstance(self.wire, edges.LineSegment3D):
+        if isinstance(self.edge, (edges.LineSegment3D, curves.Line3D)):
+            if isinstance(self.edge, edges.LineSegment3D):
                 generatrix_line = self.edge.line
             else:
                 generatrix_line = self.edge
