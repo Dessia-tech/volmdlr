@@ -1372,34 +1372,34 @@ class Circle3D(CircleMixin, Curve):
         normal.normalize()
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
-    def to_step(self, current_id, surface_id=None, surface3d=None):
+    def to_step(self, current_id, *args, **kwargs):
         content, frame_id = self.frame.to_step(current_id)
         curve_id = frame_id + 1
-        content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{round(self.radius * 1000, 3)});\n"
+        content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.radius * 1000});\n"
+        current_id = curve_id
+        # if surface_id:
+        #     content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
+        #     curve_id += 1
 
-        if surface_id:
-            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
-            curve_id += 1
-
-        point1 = self.frame.origin + self.frame.u * self.radius
-        point3 = self.frame.origin - self.frame.u * self.radius
-
-        p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
-        p3_content, p3_id = point3.to_step(p1_id + 1, vertex=True)
-        content += p1_content + p3_content
-
-        arc1_id = p3_id + 1
-        content += f"#{arc1_id} = EDGE_CURVE('{self.name}',#{p1_id},#{p3_id},#{curve_id},.T.);\n"
-        oriented_edge1_id = arc1_id + 1
-        content += f"#{oriented_edge1_id} = ORIENTED_EDGE('',*,*,#{arc1_id},.T.);\n"
-
-        arc2_id = oriented_edge1_id + 1
-        content += f"#{arc2_id} = EDGE_CURVE('{self.name}',#{p3_id},#{p1_id},#{curve_id},.T.);\n"
-        oriented_edge2_id = arc2_id + 1
-        content += f"#{oriented_edge2_id} = ORIENTED_EDGE('',*,*,#{arc2_id},.T.);\n"
-
-        current_id = oriented_edge2_id + 1
-        content += f"#{current_id} = EDGE_LOOP('{self.name}',(#{oriented_edge1_id},#{oriented_edge2_id}));\n"
+        # point1 = self.frame.origin + self.frame.u * self.radius
+        # point3 = self.frame.origin - self.frame.u * self.radius
+        #
+        # p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
+        # p3_content, p3_id = point3.to_step(p1_id + 1, vertex=True)
+        # content += p1_content + p3_content
+        #
+        # arc1_id = p3_id + 1
+        # content += f"#{arc1_id} = EDGE_CURVE('{self.name}',#{p1_id},#{p3_id},#{curve_id},.T.);\n"
+        # oriented_edge1_id = arc1_id + 1
+        # content += f"#{oriented_edge1_id} = ORIENTED_EDGE('',*,*,#{arc1_id},.T.);\n"
+        #
+        # arc2_id = oriented_edge1_id + 1
+        # content += f"#{arc2_id} = EDGE_CURVE('{self.name}',#{p3_id},#{p1_id},#{curve_id},.T.);\n"
+        # oriented_edge2_id = arc2_id + 1
+        # content += f"#{oriented_edge2_id} = ORIENTED_EDGE('',*,*,#{arc2_id},.T.);\n"
+        #
+        # current_id = oriented_edge2_id + 1
+        # content += f"#{current_id} = EDGE_LOOP('{self.name}',(#{oriented_edge1_id},#{oriented_edge2_id}));\n"
 
         return content, current_id
 

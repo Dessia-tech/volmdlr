@@ -248,7 +248,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def to_step(self, current_id):
         content, surface3d_ids = self.surface3d.to_step(current_id)
-        current_id = max(surface3d_ids) + 1
+        current_id = max(surface3d_ids)
 
         if len(surface3d_ids) != 1:
             raise NotImplementedError('What to do with more than 1 id ? with 0 id ?')
