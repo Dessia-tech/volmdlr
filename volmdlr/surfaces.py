@@ -4964,12 +4964,12 @@ class BSplineSurface3D(Surface3D):
         if self.x_periodicity:
             points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
             if bspline_curve3d.periodic:
-                points = self._handle_periodic_curve(bspline_curve3d, points, 'x')
+                points = self._handle_periodic_curve(bspline_curve3d.curve.domain, points, 'x')
 
         if self.y_periodicity:
             points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
             if bspline_curve3d.periodic:
-                points = self._handle_periodic_curve(bspline_curve3d, points, 'y')
+                points = self._handle_periodic_curve(bspline_curve3d.curve.domain, points, 'y')
 
         if self._is_line_segment(points):
             return [edges.LineSegment2D(points[0], points[-1])]
@@ -4977,8 +4977,8 @@ class BSplineSurface3D(Surface3D):
         return [edges.BSplineCurve2D.from_points_interpolation(points=points, degree=bspline_curve3d.degree)]
 
     @staticmethod
-    def _handle_periodic_curve(bspline_curve3d, points, axis):
-        u_min, u_max = bspline_curve3d.curve.domain
+    def _handle_periodic_curve(curve_domain, points, axis):
+        u_min, u_max = curve_domain
         start_param = points[0].x if axis == 'x' else points[0].y
         param_after_start = points[1].x if axis == 'x' else points[1].y
         should_be_umax = (u_max - param_after_start) < (param_after_start - u_min)
