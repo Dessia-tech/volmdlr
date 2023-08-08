@@ -5018,6 +5018,7 @@ class BSplineSurface3D(Surface3D):
 
     @staticmethod
     def _handle_periodic_curve(curve_domain, points, axis):
+        """Helper function to check the consistency of 2D parameters of the 3D discretization points of an edge."""
         u_min, u_max = curve_domain
         start_param = points[0].x if axis == 'x' else points[0].y
         param_after_start = points[1].x if axis == 'x' else points[1].y
@@ -5049,6 +5050,7 @@ class BSplineSurface3D(Surface3D):
 
     @staticmethod
     def _is_line_segment(points):
+        """Helper function to check if the BREP can be a line segment."""
         linesegment = edges.LineSegment2D(points[0], points[-1])
         for point in points:
             if not linesegment.point_belongs(point, abs_tol=1e-4):
