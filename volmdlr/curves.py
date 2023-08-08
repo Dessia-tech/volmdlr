@@ -1372,7 +1372,7 @@ class Circle3D(CircleMixin, Curve):
         normal.normalize()
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
-    def to_step(self, current_id, surface_id=None, surface3d=None):
+    def to_step(self, current_id, *args, **kwargs):
         content, frame_id = self.frame.to_step(current_id)
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.radius * 1000});\n"
