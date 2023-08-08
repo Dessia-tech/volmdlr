@@ -6042,7 +6042,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         :return: abscissa
         """
         point2d = point.to_2d(self.ellipse.center, self.ellipse.major_dir, self.ellipse.minor_dir)
-        return self.self_2d.abscissa(point2d)
+        return self.self_2d.abscissa(point2d, tol=tol)
 
     def split(self, split_point, tol: float = 1e-6):
         """
