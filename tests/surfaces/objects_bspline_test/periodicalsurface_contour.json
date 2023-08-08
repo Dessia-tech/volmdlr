@@ -1,0 +1,220 @@
+{
+  "object_class": "volmdlr.wires.Contour3D",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "name": "",
+      "degree": 5,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.47110491624762507,
+          "y": -0.4453693273948751,
+          "z": 0.46031043054212506
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.47292233093289093,
+          "y": -0.44600791944827495,
+          "z": 0.4588988541416755
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.4736410989153405,
+          "y": -0.4459279136584122,
+          "z": 0.45505310015446615
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.4704575715865735,
+          "y": -0.44437266636275835,
+          "z": 0.45320940283890404
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.46856948924212866,
+          "y": -0.44362561810969814,
+          "z": 0.45384920028027825
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.467257896582,
+          "y": -0.44316727063000005,
+          "z": 0.454892738626
+        }
+      ],
+      "knot_multiplicities": [
+        6,
+        6
+      ],
+      "knots": [
+        0.0,
+        1.0
+      ],
+      "weights": null,
+      "periodic": false
+    },
+    {
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "name": "",
+      "degree": 5,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.467257896582,
+          "y": -0.44316727063000005,
+          "z": 0.454892738626
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.467627588962,
+          "y": -0.442307409336,
+          "z": 0.454979722058
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.467997280839,
+          "y": -0.441447548042,
+          "z": 0.45506670549
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.468366973994,
+          "y": -0.440587687262,
+          "z": 0.455153688981
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.468736666111,
+          "y": -0.439727825488,
+          "z": 0.45524067241300004
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.46910635847800003,
+          "y": -0.43886796421700003,
+          "z": 0.455327655845
+        }
+      ],
+      "knot_multiplicities": [
+        6,
+        6
+      ],
+      "knots": [
+        0.0,
+        1.0
+      ],
+      "weights": null,
+      "periodic": false
+    },
+    {
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "name": "",
+      "degree": 5,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.46910635847800003,
+          "y": -0.43886796421700003,
+          "z": 0.455327655845
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.47041795113801466,
+          "y": -0.43932631169669556,
+          "z": 0.45428411749933734
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.47230603348271955,
+          "y": -0.44007335994992086,
+          "z": 0.45364432005820765
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.4754895608108174,
+          "y": -0.441628607245358,
+          "z": 0.4554880173743579
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.47477079282853346,
+          "y": -0.4417086130352809,
+          "z": 0.45933377136124043
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.47295337814325006,
+          "y": -0.44107002098187503,
+          "z": 0.46074534776175
+        }
+      ],
+      "knot_multiplicities": [
+        6,
+        6
+      ],
+      "knots": [
+        0.0,
+        1.0
+      ],
+      "weights": null,
+      "periodic": false
+    },
+    {
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "name": "",
+      "degree": 5,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.47295337814300004,
+          "y": -0.44107002098200004,
+          "z": 0.460745347762
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.47258368577099996,
+          "y": -0.441929882258,
+          "z": 0.460658364337
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.47221399350000004,
+          "y": -0.44278974377700003,
+          "z": 0.460571380952
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.471844300801,
+          "y": -0.443649604889,
+          "z": 0.460484397413
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.47147460862600005,
+          "y": -0.444509466103,
+          "z": 0.460397413977
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.471104916248,
+          "y": -0.445369327395,
+          "z": 0.460310430542
+        }
+      ],
+      "knot_multiplicities": [
+        6,
+        6
+      ],
+      "knots": [
+        0.0,
+        1.0
+      ],
+      "weights": null,
+      "periodic": false
+    }
+  ],
+  "color": null,
+  "alpha": 1.0
+}

@@ -38,6 +38,11 @@ def plot_circle(circle, ax=None, edge_style: EdgeStyle = EdgeStyle()):
                 color=edge_style.color, alpha=edge_style.alpha)
     if edge_style.equal_aspect:
         ax.set_aspect('equal')
+    x_min, x_max = circle.center[0] - circle.radius, circle.center[0] + circle.radius
+    y_min, y_max = circle.center[1] - circle.radius, circle.center[1] + circle.radius
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+
     return ax
 
 
@@ -93,7 +98,7 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
 
     :param ax: Matplotlib plot.
     :param edge_style: edge_style to be applied to plot.
-    :param element: volmdlr element to be ploted (either 2D or 3D).
+    :param element: volmdlr element to be plotted (either 2D or 3D).
     :param number_points: number of points to be used in the plot.
     :param close_plot: specifies if plot is to be closed or not.
     :return: Matplolib plot axis.

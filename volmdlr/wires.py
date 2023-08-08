@@ -540,7 +540,7 @@ class WireMixin:
 
             while to_continue:
                 broke = False
-                for p, primitive in enumerate(list_edges):
+                for index_primitive, primitive in enumerate(list_edges):
 
                     if primitive.is_point_edge_extremity(new_primitives[i][-1].end, tol):
                         if new_primitives[i][-1].end.is_close(primitive.start, tol):
@@ -560,7 +560,7 @@ class WireMixin:
                         broke = True
                         break
 
-                if ((not broke) and (len(list_edges) == p + 1)) or len(list_edges) == 0:
+                if ((not broke) and (len(list_edges) == index_primitive + 1)) or len(list_edges) == 0:
                     to_continue = False
 
         wires = [cls(primitives_wire) for primitives_wire in new_primitives]
@@ -634,6 +634,17 @@ class WireMixin:
             if not self.primitive_over_wire(primitive_2):
                 return False
         return True
+
+    @classmethod
+    def from_circle(cls, circle):
+        """
+        Creates a Contour from a circle.
+
+        :param circle: Circle
+        :return:
+        """
+        point = circle.point_at_abscissa(0.0)
+        return cls([circle.trim(point, point)])
 
     def plot(self, ax=None, edge_style=EdgeStyle()):
         """Wire 2D plot using Matplotlib."""
@@ -1739,7 +1750,7 @@ class ContourMixin(WireMixin):
         """
         Check if two contour are adjacent.
 
-        So: are sharing primitives but not supperposing or none is inside the other.
+        So: are sharing primitives but not superposing or none is inside the other.
         """
 
         if (self.is_inside(contour) or contour.is_inside(self)
@@ -1886,7 +1897,7 @@ class ContourMixin(WireMixin):
         Return extremities points of a list of points on a contour.
 
         """
-        # TODO: rewrite this awfull code!
+        # TODO: rewrite this awful code!
         points = []
         primitives = self.primitives
         for prim in primitives:
@@ -1925,7 +1936,7 @@ class ContourMixin(WireMixin):
 
     def primitive_section_over_contour(self, primitive, abs_tol: float = 1e-6):
         """
-        Verifies if at least a small section of a primitive is over a contour, not necessarilly the entire primitive.
+        Verifies if at least a small section of a primitive is over a contour, not necessarily the entire primitive.
 
         """
         for prim in self.primitives:
@@ -2032,7 +2043,7 @@ class ContourMixin(WireMixin):
         """
         Create a new contour from self, but starting at given point.
 
-        :param point: othe point.
+        :param point: other point.
         :return: new contour
         """
         new_primitives_order = []
@@ -2425,13 +2436,12 @@ class Contour2D(ContourMixin, Wire2D):
                                      volmdlr.Point2D(xi, 1))
 
             iteration_contours2 = []
-            for c in iteration_contours:
-                sc = c.cut_by_line(cut_line)
-                lsc = len(sc)
-                if lsc == 1:
-                    cutted_contours.append(c)
+            for contour in iteration_contours:
+                split_contours = contour.cut_by_line(cut_line)
+                if len(split_contours) == 1:
+                    cutted_contours.append(contour)
                 else:
-                    iteration_contours2.extend(sc)
+                    iteration_contours2.extend(split_contours)
 
             iteration_contours = iteration_contours2[:]
         cutted_contours.extend(iteration_contours)
@@ -2590,7 +2600,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def discretized_contour(self, n: float):
         """
-        Discretize each contour's primitive and return a new contour with teses discretized primitives.
+        Discretize each contour's primitive and return a new contour with theses discretized primitives.
         """
         contour = Contour2D((self.discretized_primitives(n)))
 
@@ -2917,12 +2927,12 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                          - sum(i * j for i, j in zip(y, x1)))
 
     def center_of_mass(self):
-        lp = len(self.points)
-        if lp == 0:
+        lngth_points = len(self.points)
+        if lngth_points == 0:
             return volmdlr.O2D
-        if lp == 1:
+        if lngth_points == 1:
             return self.points[0]
-        if lp == 2:
+        if lngth_points == 2:
             return 0.5 * (self.points[0] + self.points[1])
 
         x = [point.x for point in self.points]
@@ -3513,8 +3523,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                 point.plot(ax=ax, color=edge_style.color, alpha=edge_style.alpha)
 
         if point_numbering:
-            for ip, point in enumerate(self.points):
-                ax.text(*point, f'point {ip + 1}', ha='center', va='top')
+            for index_point, point in enumerate(self.points):
+                ax.text(*point, f'point {index_point + 1}', ha='center', va='top')
 
         if edge_style.equal_aspect:
             ax.set_aspect('equal')
@@ -3568,11 +3578,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
 
-        n = number_points_x + 2
-        m = number_points_y + 2
-
-        x = npy.linspace(x_min, x_max, num=n)
-        y = npy.linspace(y_min, y_max, num=m)
+        x = npy.linspace(x_min, x_max, num=number_points_x + 2)
+        y = npy.linspace(y_min, y_max, num=number_points_y + 2)
 
         grid_point_index = {}
 

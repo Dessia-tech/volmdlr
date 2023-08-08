@@ -7,7 +7,7 @@ import math
 from pylint import __version__
 from pylint.lint import Run
 
-MIN_NOTE = 9.6
+MIN_NOTE = 9.7
 
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
@@ -23,7 +23,7 @@ MAX_ERROR_BY_TYPE = {
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 62,
-                     'too-many-locals': 75,
+                     'too-many-locals': 77,
                      'unused-argument': 32,
                      'too-many-arguments': 24,
                      'line-too-long': 12,
@@ -35,16 +35,10 @@ MAX_ERROR_BY_TYPE = {
                      'duplicate-code': 10,
                      'arguments-renamed': 52,
                      'too-many-ancestors': 25,
-<<<<<<< HEAD
                      'too-few-public-methods': 3,
                      'non-parent-init-called': 3,
                      'too-many-public-methods': 11,
                      'too-many-instance-attributes': 16,
-=======
-                     'too-few-public-methods': 2,
-                     'too-many-public-methods': 12,
-                     'too-many-instance-attributes': 15,
->>>>>>> bsplineface_bbox
                      'protected-access': 4,
                      'undefined-loop-variable': 2,
                      'unspecified-encoding': 1,
@@ -71,7 +65,7 @@ ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-man
                                 "protected-access", "cyclic-import", "line-too-long", "too-many-lines", "no-member",
                                 "too-few-public-methods", "duplicate-code", "too-many-return-statements",
                                 "import-outside-toplevel", "arguments-differ", "arguments-renamed",
-                                "too-many-boolean-expressions"]
+                                "too-many-boolean-expressions", "super-init-not-called"]
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:

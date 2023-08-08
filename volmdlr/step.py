@@ -639,7 +639,7 @@ class Step(dc.DessiaObject):
     def instatiate_assembly(self, object_dict):
         assemblies_structure, valid_entities = self.get_assembly_struct()
 
-        instanciate_ids = list(assemblies_structure.keys())
+        instantiate_ids = list(assemblies_structure.keys())
         error = True
         last_error = None
         none_primitives = set()
@@ -648,39 +648,39 @@ class Step(dc.DessiaObject):
             try:
                 # here we invert instantiate_ids because if the code enter inside the except
                 # block, we want to loop from the last KeyError to the first. This avoids an infinite loop
-                for instanciate_id in instanciate_ids[::-1]:
-                    if instanciate_id in object_dict:
-                        instanciate_ids.pop()
+                for instantiate_id in instantiate_ids[::-1]:
+                    if instantiate_id in object_dict:
+                        instantiate_ids.pop()
                         continue
-                    product_id = self.shape_definition_representation_to_product_node(instanciate_id)
+                    product_id = self.shape_definition_representation_to_product_node(instantiate_id)
                     name = self.functions[product_id].arg[0]
-                    id_shape_representation = int(self.functions[instanciate_id].arg[1][1:])
+                    id_shape_representation = int(self.functions[instantiate_id].arg[1][1:])
                     ids_frames = self.functions[id_shape_representation].arg[1]
                     self.parse_arguments(ids_frames)
                     assembly_frame = object_dict[ids_frames[0]]
 
                     assembly_shape_ids, assembly_position_ids = self.get_assembly_data(
-                        assemblies_structure[instanciate_id], valid_entities, assembly_frame, object_dict)
+                        assemblies_structure[instantiate_id], valid_entities, assembly_frame, object_dict)
                     assembly_positions = [object_dict[id_frame] for id_frame in assembly_position_ids]
                     list_primitives = [object_dict[id_shape] for id_shape in assembly_shape_ids]
 
                     if not list_primitives:
-                        none_primitives.add(instanciate_id)
-                        instanciate_ids.pop()
+                        none_primitives.add(instantiate_id)
+                        instantiate_ids.pop()
                         continue
 
                     volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_positions, assembly_frame,
                                                            name=name)
-                    object_dict[instanciate_id] = volmdlr_object
+                    object_dict[instantiate_id] = volmdlr_object
 
                 error = False
             except KeyError as key:
-                # Sometimes the search don't instanciate the nodes of a
+                # Sometimes the search don't instantiate the nodes of a
                 # depth in the right order, leading to error
                 if last_error == key.args[0]:
                     raise NotImplementedError('Error instantiating assembly') from key
                 if key.args[0] in assembly_shape_ids:
-                    instanciate_ids.append(key.args[0])
+                    instantiate_ids.append(key.args[0])
 
                 last_error = key.args[0]
         return volmdlr_object
@@ -755,19 +755,19 @@ class Step(dc.DessiaObject):
         """
         Helper method to translate step entities into volmdlr objects.
         """
-        instanciate_ids = [node]
+        instantiate_ids = [node]
         error = True
         while error:
             try:
                 # here we invert instantiate_ids because if the code enter inside the except
                 # block, we want to loop from the last KeyError to the first. This avoids an infinite loop
-                for instanciate_id in instanciate_ids[::-1]:
+                for instantiate_id in instantiate_ids[::-1]:
                     t = time.time()
                     volmdlr_object = self.instantiate(
-                        self.functions[instanciate_id].name,
-                        self.functions[instanciate_id].arg[:], object_dict, instanciate_id)
+                        self.functions[instantiate_id].name,
+                        self.functions[instantiate_id].arg[:], object_dict, instantiate_id)
                     t = time.time() - t
-                    object_dict[instanciate_id] = volmdlr_object
+                    object_dict[instantiate_id] = volmdlr_object
                     if show_times:
                         if volmdlr_object.__class__ not in times:
                             times[volmdlr_object.__class__] = [1, t]
@@ -778,7 +778,7 @@ class Step(dc.DessiaObject):
             except KeyError as key:
                 # Sometimes the search don't instantiate the nodes of a
                 # depth in the right order, leading to error
-                instanciate_ids.append(key.args[0])
+                instantiate_ids.append(key.args[0])
 
         return object_dict, times
 

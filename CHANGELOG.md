@@ -19,15 +19,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve3D: trim
 - FullArc3D: hash
 - SphericalSurface3D: enhance repair_periodicity_method
+<<<<<<< HEAD
 - BSplineFace3D: fix bounding_box
-- Step: assembly import
+=======
+- CylindricalSurface3D: concurrent_plane_intersection
 - BSplineFace3D: fix neutral_fiber
+>>>>>>> refactor_bsplinesurface_bsplinecurve3s_to_2d
+- Step: assembly import
+- BSplineFace3D: fix bounding_box
+- Ellipse3D: from_step
+- edges.py: general improvements.
+- ExtrusionSurface3D: point3d_to_2d.
+- ExtrusionSurface3D: enhance parametric operations when the surface is periodic.
+- BSplineFace3D: fix neutral_fiber
+<<<<<<< HEAD
 <<<<<<< HEAD
 - Step.py: enhance step import/export
 =======
 - BSplineSurface3D: improve bsplinecurve3d_to_3d.
 
 >>>>>>> origin/refactor_wire
+=======
+- BSplineSurface3D: improve bsplinecurve3d_to_2d.
+- BSplineSurface3D: improve bsplinecurve3d_to_3d.
+- Circle2D: plot
+- Line3D: fix Line3D plot()
+- Vector2D: plot()
+- fix RevolutionFace3D init parameter wire to edge.
+- fix Sweep: bug when first primitive is an arc.
+- fix closedshell3d volume
+- Step.py: enhance step import/export
+>>>>>>> refactor_bsplinesurface_bsplinecurve3s_to_2d
 
 ### Refactor
 - Shells: refactor.
@@ -36,9 +58,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve3D: bounding_box
 - Composite_primitives
 - Surface3D: enhance repair_primitives_periodicity method.
+<<<<<<< HEAD
 - BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
 - Wire3D: removes heritage from volmdlr.core.CompositePrimitive3D
 
+=======
+- volmdlr.utils.intersections:
+- BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
+- Wire3D: removes heritage from volmdlr.core.CompositePrimitive3D
+- BSplineCurve3D: bounding_box
+- BSplineSurface3D: bsplinecurve3d_to_2d
+>>>>>>> refactor_bsplinesurface_bsplinecurve3s_to_2d
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
@@ -66,6 +96,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - minimum_distance: face-to-face, shell-to-shell
 - OpenShell3D: from_faces (using faces graph)
 - SphericalFace3D: from_contours3d_and_rectangular_cut
+- RevolutionSurface3D: Translation
+- wires.WireMixin: from_circle
+- curves.CircleMixin: trim
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
@@ -103,7 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: line_intersections
 - Line3D: minimum_distance_points
 - remove arcellipse handleling for bspline2d_3d.
-
+- Ellipse3D: discretization_points.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces

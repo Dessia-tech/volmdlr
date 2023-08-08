@@ -110,5 +110,11 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(contour2d.area(), 1, 2)
         self.assertTrue(contour2d.is_ordered())
 
+        surface = surfaces.BSplineSurface3D.load_from_file("surfaces/objects_bspline_test/periodicalsurface.json")
+        contour3d = vmw.Contour3D.load_from_file("surfaces/objects_bspline_test/periodicalsurface_contour.json")
+        contour2d = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 1/6, 5)
+
 if __name__ == '__main__':
     unittest.main(verbosity=0)

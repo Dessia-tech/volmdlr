@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as npy
 import scipy.integrate as scipy_integrate
 from matplotlib import __version__ as _mpl_version
-from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
 
 from dessia_common.core import DessiaObject
@@ -129,10 +128,10 @@ class Line(Curve):
         """
         vector = self.point2 - self.point1
         norm_u = vector.norm()
-        t = (point - self.point1).dot(vector) / norm_u ** 2
-        projection = self.point1 + t * vector
+        projection_param_t = (point - self.point1).dot(vector) / norm_u ** 2
+        projection = self.point1 + projection_param_t * vector
         projection = projection.to_point()
-        return projection, t * norm_u
+        return projection, projection_param_t * norm_u
 
     def abscissa(self, point):
         """
@@ -649,14 +648,15 @@ class Line3D(Line):
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
 
-    def plot(self, ax=None, color='k', alpha=1, dashed=True):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plot method for Line 3D using Matplotlib."""
         if ax is None:
-            ax = Axes3D(plt.figure())
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
 
         # Line segment
         ax.plot([self.point1.x, self.point2.x], [self.point1.y, self.point2.y],
-                [self.point1.z, self.point2.z], color=color, alpha=alpha)
+                [self.point1.z, self.point2.z], color=edge_style.color, alpha=edge_style.alpha)
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
@@ -664,11 +664,11 @@ class Line3D(Line):
         x1, y1, z1 = v1.x, v1.y, v1.z
         v2 = self.point2 - u * 3
         x2, y2, z2 = v2.x, v2.y, v2.z
-        if dashed:
-            ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
+        if edge_style.dashed:
+            ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color,
                     dashes=[30, 5, 10, 5])
         else:
-            ax.plot([x1, x2], [y1, y2], [z1, z2], color=color)
+            ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color)
         return ax
 
     def plane_projection2d(self, center, x, y):
@@ -808,6 +808,31 @@ class CircleMixin:
         start = self.point_at_abscissa(0.0)
         point_at_absccissa = self.point_at_abscissa(abscissa)
         return self.split(start, point_at_absccissa)
+
+    def trim(self, point1: Union[volmdlr.Point2D, volmdlr.Point3D], point2: Union[volmdlr.Point2D, volmdlr.Point3D],
+             same_sense: bool = True):
+        """
+        Trims a circle between two points.
+
+        :param point1: point 1 used to trim circle.
+        :param point2: point2 used to trim circle.
+        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :return: arc between these two points.
+        """
+        fullar_arc_class_ = getattr(volmdlr.edges, 'FullArc'+self.__class__.__name__[-2:])
+        arc_class_ = getattr(volmdlr.edges, 'Arc'+self.__class__.__name__[-2:])
+        circle = self
+        if not same_sense:
+            circle = self.reverse()
+        if not self.point_belongs(point1, 1e-4) or not self.point_belongs(point2, 1e-4):
+            ax = self.plot()
+            point1.plot(ax=ax, color='r')
+            point2.plot(ax=ax, color='b')
+            raise ValueError('Point not on circle for trim method')
+        if point1.is_close(point2):
+            return fullar_arc_class_(circle, point1)
+        return arc_class_(circle, point1, point2)
 
 
 class Circle2D(CircleMixin, Curve):
@@ -982,7 +1007,7 @@ class Circle2D(CircleMixin, Curve):
         return self._bounding_rectangle
 
     def get_bounding_rectangle(self):
-
+        """Calculates the bounding rectangle of the circle 2d."""
         x_min = self.center.x - self.radius
         x_max = self.center.x + self.radius
         y_min = self.center.y - self.radius
@@ -1105,8 +1130,15 @@ class Circle2D(CircleMixin, Curve):
         """Plots the circle using Matplotlib."""
         return vm_common_operations.plot_circle(self, ax, edge_style)
 
-    def plot_data(self, edge_style: plot_data.EdgeStyle = None,
-                  surface_style: plot_data.SurfaceStyle = None):
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None, surface_style: plot_data.SurfaceStyle = None):
+        """
+        Get plot data for the circle 2d.
+
+        :param edge_style: Plotting style for the line.
+        :type edge_style: :class:`plot_data.EdgeStyle`, optional
+        :return: Plot data for the line.
+        :rtype: :class:`plot_data.Circle2D`
+        """
         return plot_data.Circle2D(cx=self.center.x, cy=self.center.y,
                                   r=self.radius,
                                   edge_style=edge_style,
@@ -1214,6 +1246,7 @@ class Circle3D(CircleMixin, Curve):
 
     @property
     def normal(self):
+        """Gets circle's normal."""
         return self.frame.w
 
     def __hash__(self):
@@ -1339,7 +1372,7 @@ class Circle3D(CircleMixin, Curve):
         normal.normalize()
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
-    def to_step(self, current_id, surface_id=None, surface3d=None):
+    def to_step(self, current_id, *args, **kwargs):
         content, frame_id = self.frame.to_step(current_id)
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.radius * 1000});\n"
@@ -1411,6 +1444,10 @@ class Circle3D(CircleMixin, Curve):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
+        """
+        Creates a circle from three points.
+
+        """
         vector_u1 = point2 - point1
         vector_u2 = point2 - point3
         try:
@@ -1697,7 +1734,7 @@ class Ellipse2D(Curve):
             for theta in npy.linspace(self.angle_start, self.angle_end, angle_resolution + 1)]
         return discretization_points
 
-    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-3):
+    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-6):
         """
         Calculates the abscissa for a given point.
 
@@ -1849,6 +1886,7 @@ class Ellipse3D(Curve):
 
     @property
     def self_2d(self):
+        """Version 2d of the ellipse 3d as a property."""
         if not self._self_2d:
             self._self_2d = self.to_2d(self.center, self.frame.u, self.frame.v)
         return self._self_2d
@@ -1997,7 +2035,8 @@ class Ellipse3D(Curve):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 
-        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
+        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True,
+                                                                    number_points=100)
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
