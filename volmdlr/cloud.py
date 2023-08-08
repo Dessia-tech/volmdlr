@@ -8,6 +8,8 @@ import math
 from typing import List, Tuple
 import random
 
+import volmdlr
+
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
 from trimesh.proximity import closest_point
@@ -169,10 +171,13 @@ class PointCloud3D(dc.DessiaObject):
             poly1_simplified = cls._helper_simplify_polygon(poly1, position_plane[n], normal, vec1, vec2)
 
             if n in (resolution - 1, 0):
+                vec2_ = vec2
+                if n == 0:
+                    vec2_ = -vec2
                 faces.append(
                     vmf.PlaneFace3D(
-                        surface3d=surfaces.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2),
-                        surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2)))
+                        surface3d=surfaces.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2_),
+                        surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2_)))
 
             if n != resolution - 1:
                 poly2 = polygons_3d[n + 1]

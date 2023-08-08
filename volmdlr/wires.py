@@ -4910,14 +4910,15 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         polygon2_2d = polygon2.to_2d(volmdlr.O2D, x, y)
         polygon1_3d = self
         polygon2_3d = polygon2
+        need_fix_normal = False
         if polygon2_2d.area() < polygon1_2d.area():
             polygon1_2d, polygon2_2d = polygon2_2d, polygon1_2d
             polygon1_3d = polygon2
             polygon2_3d = self
+            need_fix_normal = True
         polygon1_3d = polygon1_3d.get_valid_concave_sewing_polygon(
             polygon1_2d, polygon2_2d)
         polygon1_2d = polygon1_3d.to_2d(volmdlr.O2D, x, y)
-
 
         dict_closing_pairs = {}
         triangles_points = []
@@ -5029,7 +5030,10 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                             list(dict_closing_pairs.values())[0][0])
 
         triangles_points += polygon2_3d.close_sewing(dict_closing_pairs)
-
+        if need_fix_normal:
+            center1, center2 = self.average_center_point(), polygon2.average_center_point()
+            reference_segment = edges.LineSegment3D(center1, center2)
+            triangles_points = self.fix_sewing_normals(triangles_points, reference_segment)
         return triangles_points
 
     def sewing(self, polygon2, x, y):
