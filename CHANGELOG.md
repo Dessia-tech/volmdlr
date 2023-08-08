@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineFace3D: fix bounding_box
 - Ellipse3D: from_step
 - edges.py: general improvements.
+- ExtrusionSurface3D: point3d_to_2d.
+- ExtrusionSurface3D: enhance parametric operations when the surface is periodic.
 - BSplineFace3D: fix neutral_fiber
 - BSplineSurface3D: improve bsplinecurve3d_to_2d.
 - BSplineSurface3D: improve bsplinecurve3d_to_3d.
