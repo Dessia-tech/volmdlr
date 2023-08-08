@@ -843,14 +843,17 @@ class Cylinder(shells.ClosedShell3D):
         return self.length * math.pi * self.radius**2
 
     @classmethod
-    def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
+    def from_extremal_points(cls, point1: volmdlr.Point3D,
+                             point2: volmdlr.Point3D,
                              radius: float,
-                             color: Tuple[float, float, float] = None, alpha: float = 1,
+                             color: Tuple[float, float, float] = None,
+                             alpha: float = 1,
                              name: str = ''):
         position = 0.5 * (point1 + point2)
         length = point1.point_distance(point2)
         axis = point2 - point1
         axis.normalize()
+        axis = axis.to_vector()
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
 
