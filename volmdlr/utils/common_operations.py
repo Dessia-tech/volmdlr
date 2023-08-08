@@ -136,13 +136,13 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
                     0] * radius * math.cos(x[1]) * u_.dot(k_)
                 + 2 * radius * math.sin(x[1]) * w_.dot(v_) + 2 * radius * math.cos(x[1]) * w_.dot(k)
                 + math.sin(2 * x[1]) * v_.dot(k_) * radius ** 2)
-    circle_point = circle3d.point_at_abcissa(0.0)
+    circle_point = circle3d.point_at_abscissa(0.0)
     radius = circle3d.radius
     u = linesegment3d.direction_vector()
-    k = circle_point - circle3d.frame3d.origin
+    k = circle_point - circle3d.frame.origin
     k.normalize()
-    w = circle3d.frame3d.origin - linesegment3d.start
-    v = circle3d.frame3d.w.cross(k)
+    w = circle3d.frame.origin - linesegment3d.start
+    v = circle3d.frame.w.cross(k)
 
     results = []
     for initial_value in [np.array([0.5, circle3d.angle / 2]), np.array([0.5, 0]), np.array([0.5, circle3d.angle])]:

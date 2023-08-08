@@ -469,7 +469,7 @@ class Edge(dc.DessiaObject):
         return minimum_distance
 
     def minimum_distance(self, element, return_points=False):
-        method_name_ = 'distance_to_'+element.__class__.__name__.lower()[:-2]
+        method_name_ = 'distance_'+element.__class__.__name__.lower()[:-2]
         if hasattr(self, method_name_):
             return getattr(self, method_name_)(element, return_points)
         method_name_ = 'distance_to_' + self.__class__.__name__.lower()[:-2]
