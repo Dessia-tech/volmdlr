@@ -2018,21 +2018,18 @@ class VolumeModel(dc.PhysicalObject):
         """
 
         list_shells = []
-        list_assembly = deque()
+        def unpack_assembly(assembly):
+            for prim in assembly.primitives:
+                if primitive.__class__.__name__ in ('Assembly', "Compound"):
+                    unpack_assembly(prim)
+                elif hasattr(primitive, "faces") or hasattr(primitive, "shell_faces"):
+                    list_shells.append(prim)
 
         for primitive in self.primitives:
-            if primitive.__class__.__name__ in ('Assembly', 'Compound'):
-                list_assembly.append(primitive)
-            elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+            if primitive.__class__.__name__ in ('Assembly', "Compound"):
+                unpack_assembly(primitive)
+            elif hasattr(primitive, "faces") or hasattr(primitive, "shell_faces"):
                 list_shells.append(primitive)
-
-        while list_assembly:
-            assembly = list_assembly.popleft()
-            for primitive in assembly.primitives:
-                if primitive.__class__.__name__ in ('Assembly', 'Compound'):
-                    list_assembly.append(primitive)
-                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
-                    list_shells.append(primitive)
 
         return list_shells
 

@@ -6,6 +6,7 @@ ISO STEP reader/writer.
 
 import time
 from typing import List
+from collections import deque
 from dataclasses import dataclass, field
 
 import matplotlib.pyplot as plt
@@ -374,9 +375,9 @@ class Step(dc.DessiaObject):
         list_head = []
         list_nodes = []
         visited_set = set()
-        stack = initial_nodes.copy()
+        stack = deque(initial_nodes)
         while stack:
-            node = stack.pop(0)
+            node = stack.popleft()
             name = self.functions[node].name
             if node not in visited_set and name in STEP_TO_VOLMDLR:
                 visited_set.add(node)
@@ -639,7 +640,7 @@ class Step(dc.DessiaObject):
     def instatiate_assembly(self, object_dict):
         assemblies_structure, valid_entities = self.get_assembly_struct()
 
-        instantiate_ids = list(assemblies_structure.keys())
+        instantiate_ids = deque(list(assemblies_structure.keys()))
         error = True
         last_error = None
         none_primitives = set()
@@ -648,7 +649,7 @@ class Step(dc.DessiaObject):
             try:
                 # here we invert instantiate_ids because if the code enter inside the except
                 # block, we want to loop from the last KeyError to the first. This avoids an infinite loop
-                for instantiate_id in instantiate_ids[::-1]:
+                for instantiate_id in reversed(instantiate_ids):
                     if instantiate_id in object_dict:
                         instantiate_ids.pop()
                         continue

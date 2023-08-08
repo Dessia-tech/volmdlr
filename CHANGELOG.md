@@ -19,12 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve3D: trim
 - FullArc3D: hash
 - SphericalSurface3D: enhance repair_periodicity_method
-<<<<<<< HEAD
-- BSplineFace3D: fix bounding_box
-=======
 - CylindricalSurface3D: concurrent_plane_intersection
 - BSplineFace3D: fix neutral_fiber
->>>>>>> refactor_bsplinesurface_bsplinecurve3s_to_2d
 - Step: assembly import
 - BSplineFace3D: fix bounding_box
 - Ellipse3D: from_step
@@ -32,14 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExtrusionSurface3D: point3d_to_2d.
 - ExtrusionSurface3D: enhance parametric operations when the surface is periodic.
 - BSplineFace3D: fix neutral_fiber
-<<<<<<< HEAD
-<<<<<<< HEAD
-- Step.py: enhance step import/export
-=======
-- BSplineSurface3D: improve bsplinecurve3d_to_3d.
-
->>>>>>> origin/refactor_wire
-=======
 - BSplineSurface3D: improve bsplinecurve3d_to_2d.
 - BSplineSurface3D: improve bsplinecurve3d_to_3d.
 - Circle2D: plot
@@ -49,26 +37,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix Sweep: bug when first primitive is an arc.
 - fix closedshell3d volume
 - Step.py: enhance step import/export
->>>>>>> refactor_bsplinesurface_bsplinecurve3s_to_2d
 
 ### Refactor
+- refator some classes' init in primitives3D. 
 - Shells: refactor.
-- refator some classes' init in primitives3D.
-- Surface3D: enhance repair_primitives_periodicity method.
-- BSplineCurve3D: bounding_box
 - Composite_primitives
 - Surface3D: enhance repair_primitives_periodicity method.
-<<<<<<< HEAD
-- BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
-- Wire3D: removes heritage from volmdlr.core.CompositePrimitive3D
-
-=======
 - volmdlr.utils.intersections:
 - BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
 - Wire3D: removes heritage from volmdlr.core.CompositePrimitive3D
 - BSplineCurve3D: bounding_box
-- BSplineSurface3D: bsplinecurve3d_to_2d
->>>>>>> refactor_bsplinesurface_bsplinecurve3s_to_2d
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
@@ -109,7 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: arc3d_to_2d, removes repeated parametric points if any.
 - surfaces.Plane3D: linesegment_intersections
 - Step export
-- Edge: fix orientation of edges commig from step.
 - Face3D: is_linesegment_crossing.
 - Edge: fix orientation of edges commig from step.
 - BSplineCurve3D: from_step.
@@ -124,8 +101,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fullarc: get_reverse.
 - Arc2D: point_belongs
 - ArcEllipse2D: point_at_abscissa
-- Edge: from_step trim of periodic curves with different orientation of original edge
-- Frame3D: import/export step.
 - Frame3D: import/export step.
 - BSplineFace3D: neutral_fiber.
 - Step: read_lines, take into account the space character in step entity names
@@ -192,7 +167,7 @@ All adequations have been done for all tests and existing scripts.
 - BSplineFace3D: to_planeface3d
 - BSplineCurve, Arc, LineSegment: is_close
 - Core: get_edge_index_in_list, edge_in_list
-- mesh: TetrahedralElementQuadratic
+- mesh: TetrahedralElementQuadratic 
 - GmshParser: define_quadratic_tetrahedron_element_mesh
 - GmshParser: to_vtk (consider quadratic tetrahedron element)
 - VolumeModel: to_msh (consider both order 1 and 2)
@@ -243,7 +218,7 @@ All adequations have been done for all tests and existing scripts.
 - Face3D: add fixes to divide_face.
 - ExtrusionSurface3D: linesegment2d_to_3d.
 - Surface3D: repair_primitive_periodicity
-- BSplineSurface3D: ban useless attr in serialization
+- BSplineSurface3D: ban useless attr in serialization 
 - utils.parametric: fix contour2d_healing
 - BSplineSurface3D: ban useless attr in serialization
 - BSplineCurve: simplify
@@ -269,12 +244,12 @@ All adequations have been done for all tests and existing scripts.
 - Contour2D: ordering_contour
 - WireMixin: order_wire
 - Contour2D: delete cut_by_linesegments
-- split faces.py into surfaces.py, faces.py and shells.py
+- split faces.py into surfaces.py, faces.py and shells.py 
 - ContourMixin: from_points
 - ClosedShell3D: improve performance for boolean operations
 - Face3D: reduce the triangulation discretization resolution of Toroidal and Cylindrical to improve redering performance.
 - Cylinder: inheritance directly from ClosedShell3D
-- Edges: cache middle_points and unit_direction_vector
+- Edges: cache middle_points and unit_direction_vector 
 - Arc: add optional parameter center
 - unittests: find dynamicly the folder for the json
 - Arc: point_distance
@@ -282,15 +257,11 @@ All adequations have been done for all tests and existing scripts.
 - CompositePrimitive3D: babylon_points
 - WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
 - ContourMixin: contours_from_edges
-- Improve step translator.
 - ExtrusionSurface3D: simplify bsplinecurve3d_to_2d method
 
 ### Changed
 - better surface3d plots
 - sphere methods renamed in_points & to_point_skin to inner points & skin_points
-- remove useless attribute in Bspline serialization
-- Improve CylincricalFace3D rendering mesh.
-- Improve CylincricalFace3D rendering mesh.
 - Improve CylincricalFace3D and ToroidalFace3D rendering mesh.
 - remove useless attribute in Bspline serialization
 - Change python suport version from >=3.7 to >= 3.9
@@ -378,7 +349,7 @@ v0.10.0 [Released 20/04/2023]
 
 ### Refactorings
 - ContourMixin: to_polygon (for both 2D and 3D)
-- BSplineCurve2D.point_distance
+- BSplineCurve2D.point_distance 
 - new dataclass EdgeStyle: to be used in several plot methods. simplifying its structure.
 
 
@@ -467,7 +438,7 @@ v0.10.0 [Released 20/04/2023]
 - Contour2D.__eq__(): verify contour length first, when verify if two contours are the same.
 - Contour2D.is_inside(): verify first if the area of the contour2 is not smaller that contour 1.
 - Disabling pointer in to_dict for most primitives
-- Better hash for shells, contours & wires
+- Better hash for shells, contours & wires 
 
 
 ### Refactorings
