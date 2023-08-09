@@ -2705,24 +2705,18 @@ class BSplineFace3D(Face3D):
         else:
             number_points_x, number_points_y = 3, 5
         outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
-        points = []
-        points.extend(points)
         points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
                                                                                       number_points_y=number_points_y)
         if self.surface2d.inner_contours:
-            points = self._get_bbox_inner_contours_points(points,
-                                                          [points_grid, x, y, grid_point_index])
-        else:
-            points.extend(points_grid)
-        points3d = [self.surface3d.point2d_to_3d(point) for point in points]
-        return volmdlr.core.BoundingBox.from_points(points3d)
+            points_grid = self._get_bbox_inner_contours_points(points_grid, x, y, grid_point_index)
+        points3d = [self.surface3d.point2d_to_3d(point) for point in points_grid]
+        return volmdlr.core.BoundingBox.from_bounding_boxes([volmdlr.core.BoundingBox.from_points(points3d),
+                                                            self.outer_contour3d.bounding_box])
 
-    def _get_bbox_inner_contours_points(self, points, grid_triangulation_points_params):
+    def _get_bbox_inner_contours_points(self, points_grid, x, y, grid_point_index):
         """Helper function to get_bounding_box."""
-        points_grid, x, y, grid_point_index = grid_triangulation_points_params
         for inner_contour in self.surface2d.inner_contours:
             inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True)
-            points.extend(inner_polygon.points)
             # removes with a region search the grid points that are in the inner contour
             xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
             x_grid_range = array_range_search(x, xmin, xmax)
@@ -2735,8 +2729,7 @@ class BSplineFace3D(Face3D):
                     if inner_polygon.point_belongs(point):
                         points_grid.remove(point)
                         grid_point_index.pop((i, j))
-        points.extend(points_grid)
-        return points
+        return points_grid
 
     def triangulation_lines(self, resolution=25):
         """
