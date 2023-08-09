@@ -1435,7 +1435,7 @@ class Step(dc.DessiaObject):
                 # here we invert instantiate_ids because if the code enter inside the except
                 # block, we want to loop from the last KeyError to the first. This avoids an infinite loop
                 for instantiate_id in reversed(instantiate_ids):
-                    if instantiate_id in object_dict:
+                    if instantiate_id in object_dict or instantiate_id in none_primitives:
                         instantiate_ids.pop()
                         continue
                     product_id = self.shape_definition_representation_to_product_node(instantiate_id)
@@ -1447,8 +1447,12 @@ class Step(dc.DessiaObject):
 
                     assembly_shape_ids, assembly_position_ids = self.get_assembly_data(
                         assemblies_structure[instantiate_id], valid_entities, assembly_frame, object_dict)
-                    assembly_positions = [object_dict[id_frame] for id_frame in assembly_position_ids]
-                    list_primitives = [object_dict[id_shape] for id_shape in assembly_shape_ids]
+                    list_primitives = []
+                    assembly_positions = []
+                    for id_shape, id_frame in zip(assembly_shape_ids, assembly_position_ids):
+                        if not id_shape in none_primitives:
+                            assembly_positions.append(object_dict[id_frame])
+                            list_primitives.append(object_dict[id_shape])
 
                     if not list_primitives:
                         none_primitives.add(instantiate_id)
@@ -1458,7 +1462,7 @@ class Step(dc.DessiaObject):
                     volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_positions, assembly_frame,
                                                            name=name)
                     object_dict[instantiate_id] = volmdlr_object
-
+                    instantiate_ids.pop()
                 error = False
             except KeyError as key:
                 # Sometimes the search don't instantiate the nodes of a
@@ -1520,8 +1524,16 @@ class Step(dc.DessiaObject):
         if self.root_nodes["NEXT_ASSEMBLY_USAGE_OCCURRENCE"]:
             return volmdlr.core.VolumeModel([self.instatiate_assembly(object_dict)])
         primitives = []
-        shapes = [object_dict[shape] for shape in shape_representations
-                  if self.functions[shape].name != "SHAPE_REPRESENTATION"]
+        shapes = []
+        for shape in shape_representations:
+            if self.functions[shape].name != "SHAPE_REPRESENTATION":
+                shapes.append(object_dict[shape])
+            else:
+                sub_shapes = self.functions[shape].arg[1]
+                self.parse_arguments(sub_shapes)
+                for sub_shape in sub_shapes:
+                    if not isinstance(object_dict[sub_shape], (volmdlr.Frame3D, volmdlr.Point3D, list)):
+                        shapes.append(object_dict[sub_shape])
         for shape in shapes:
             if isinstance(shape, list):
                 primitives.extend(shape)
@@ -1599,142 +1611,3 @@ class StepReaderReport:
     faces_read: int = 0
     sucess_rate: float = 0.0
     errors: list = field(default_factory=list)
-
-
-STEP_TO_VOLMDLR = {
-    # GEOMETRICAL ENTITIES
-    'CARTESIAN_POINT': volmdlr.Point3D,
-    'DIRECTION': volmdlr.Vector3D,
-    'VECTOR': volmdlr.Vector3D,
-
-    'AXIS1_PLACEMENT': None,
-    'AXIS2_PLACEMENT_2D': None,  # ??????????????????
-    'AXIS2_PLACEMENT_3D': volmdlr.Frame3D,
-
-    'LINE': volmdlr.curves.Line3D,  # LineSegment3D,
-    'CIRCLE': volmdlr.curves.Circle3D,
-    'ELLIPSE': volmdlr.curves.Ellipse3D,
-    'PARABOLA': None,
-    'HYPERBOLA': None,
-    # 'PCURVE': None,
-    'CURVE_REPLICA': None,
-    'OFFSET_CURVE_3D': None,
-    'TRIMMED_CURVE': None,  # BSplineCurve3D cannot be trimmed on FreeCAD
-    'B_SPLINE_CURVE': volmdlr.edges.BSplineCurve3D,
-    'B_SPLINE_CURVE_WITH_KNOTS': volmdlr.edges.BSplineCurve3D,
-    'BEZIER_CURVE': volmdlr.edges.BSplineCurve3D,
-    'RATIONAL_B_SPLINE_CURVE': volmdlr.edges.BSplineCurve3D,
-    'UNIFORM_CURVE': volmdlr.edges.BSplineCurve3D,
-    'QUASI_UNIFORM_CURVE': volmdlr.edges.BSplineCurve3D,
-    'SURFACE_CURVE': None,  # TOPOLOGICAL EDGE
-    'SEAM_CURVE': None,
-    # LineSegment3D, # TOPOLOGICAL EDGE ############################
-    'COMPOSITE_CURVE_SEGMENT': None,  # TOPOLOGICAL EDGE
-    'COMPOSITE_CURVE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
-    'COMPOSITE_CURVE_ON_SURFACE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
-    'BOUNDARY_CURVE': volmdlr.wires.Wire3D,  # TOPOLOGICAL WIRE
-
-    'PLANE': surfaces.Plane3D,
-    'CYLINDRICAL_SURFACE': surfaces.CylindricalSurface3D,
-    'CONICAL_SURFACE': surfaces.ConicalSurface3D,
-    'SPHERICAL_SURFACE': surfaces.SphericalSurface3D,
-    'TOROIDAL_SURFACE': surfaces.ToroidalSurface3D,
-    'DEGENERATE_TOROIDAL_SURFACE': surfaces.ToroidalSurface3D,
-    'B_SPLINE_SURFACE_WITH_KNOTS': surfaces.BSplineSurface3D,
-    'B_SPLINE_SURFACE': surfaces.BSplineSurface3D,
-    'BEZIER_SURFACE': surfaces.BSplineSurface3D,
-
-    'OFFSET_SURFACE': None,
-    'SURFACE_REPLICA': None,
-    'RATIONAL_B_SPLINE_SURFACE': surfaces.BSplineSurface3D,
-    'RECTANGULAR_TRIMMED_SURFACE': None,
-    'SURFACE_OF_LINEAR_EXTRUSION': surfaces.ExtrusionSurface3D,
-    # CAN BE A BSplineSurface3D
-    'SURFACE_OF_REVOLUTION': surfaces.RevolutionSurface3D,
-    'UNIFORM_SURFACE': surfaces.BSplineSurface3D,
-    'QUASI_UNIFORM_SURFACE': surfaces.BSplineSurface3D,
-    'RECTANGULAR_COMPOSITE_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACES
-    'CURVE_BOUNDED_SURFACE': volmdlr.faces.PlaneFace3D,  # TOPOLOGICAL FACE
-
-    # Bsplines
-    'BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, GEOMETRIC_REPRESENTATION_ITEM,'
-    ' RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM, SURFACE': surfaces.BSplineSurface3D,
-    "BOUNDED_SURFACE, B_SPLINE_SURFACE, B_SPLINE_SURFACE_WITH_KNOTS, SURFACE, GEOMETRIC_REPRESENTATION_ITEM,"
-    " RATIONAL_B_SPLINE_SURFACE, REPRESENTATION_ITEM": surfaces.BSplineSurface3D,
-    # TOPOLOGICAL ENTITIES
-    'VERTEX_POINT': None,
-
-    'EDGE_CURVE': volmdlr.edges.Edge,  # LineSegment3D, # TOPOLOGICAL EDGE
-    'ORIENTED_EDGE': None,  # TOPOLOGICAL EDGE
-    # The one above can influence the direction with their last argument
-    # TODO : maybe take them into consideration
-
-    'FACE_BOUND': None,  # TOPOLOGICAL WIRE
-    'FACE_OUTER_BOUND': None,  # TOPOLOGICAL WIRE
-    # Both above can influence the direction with their last argument
-    # TODO : maybe take them into consideration
-    'EDGE_LOOP': volmdlr.wires.Contour3D,  # TOPOLOGICAL WIRE
-    'POLY_LOOP': volmdlr.wires.Contour3D,  # TOPOLOGICAL WIRE
-    'VERTEX_LOOP': None,  # TOPOLOGICAL WIRE
-
-    'ADVANCED_FACE': volmdlr.faces.Face3D,
-    'FACE_SURFACE': volmdlr.faces.Face3D,
-
-    'CLOSED_SHELL': vmshells.ClosedShell3D,
-    'OPEN_SHELL': vmshells.OpenShell3D,
-    #        'ORIENTED_CLOSED_SHELL': None,
-    'CONNECTED_FACE_SET': vmshells.OpenShell3D,
-    'GEOMETRIC_CURVE_SET': None,
-    'GEOMETRIC_SET': None,
-
-    # step subfunctions
-    'UNCERTAINTY_MEASURE_WITH_UNIT': None,
-    'CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT': None,
-    'LENGTH_MEASURE_WITH_UNIT': None,
-    'LENGTH_UNIT, NAMED_UNIT, SI_UNIT': None,
-    'PLANE_ANGLE_MEASURE_WITH_UNIT': None,
-    'NAMED_UNIT, PLANE_ANGLE_UNIT, SI_UNIT': None,
-    'CONVERSION_BASED_UNIT, NAMED_UNIT, PLANE_ANGLE_UNIT': None,
-    'GEOMETRIC_REPRESENTATION_CONTEXT, GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT, GLOBAL_UNIT_ASSIGNED_CONTEXT, REPRESENTATION_CONTEXT': None,
-    'REPRESENTATION_RELATIONSHIP, REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION, SHAPE_REPRESENTATION_RELATIONSHIP': vmshells.OpenShell3D.translation,
-    'SHELL_BASED_SURFACE_MODEL': None,
-    'MANIFOLD_SURFACE_SHAPE_REPRESENTATION': None,
-    'MANIFOLD_SOLID_BREP': None,
-    'BREP_WITH_VOIDS': None,
-    'SHAPE_REPRESENTATION': None,
-    'GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION': None,
-    'ADVANCED_BREP_SHAPE_REPRESENTATION': None,
-    "FACETED_BREP_SHAPE_REPRESENTATION": None,
-    "GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION": None,
-    "EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION": None,
-    'ITEM_DEFINED_TRANSFORMATION': None,
-    'SHAPE_REPRESENTATION_RELATIONSHIP': None,
-    "NEXT_ASSEMBLY_USAGE_OCCURRENCE": None,
-
-    'BOUNDED_CURVE, B_SPLINE_CURVE, B_SPLINE_CURVE_WITH_KNOTS, CURVE, GEOMETRIC_REPRESENTATION_ITEM, RATIONAL_B_SPLINE_CURVE, REPRESENTATION_ITEM': volmdlr.edges.BSplineCurve3D,
-    "APPLICATION_CONTEXT": None,
-    "PRODUCT_DEFINITION_SHAPE": None,
-    "PRODUCT_DEFINITION": None,
-    "PRODUCT_DEFINITION_FORMATION": None,
-    "PRODUCT": None,
-}
-
-VOLMDLR_TO_STEP = {}
-for k, v in STEP_TO_VOLMDLR.items():
-    if v:
-        if v in VOLMDLR_TO_STEP:
-            VOLMDLR_TO_STEP[v].append(k)
-        else:
-            VOLMDLR_TO_STEP[v] = [k]
-
-SI_PREFIX = {'.EXA.': 1e18, '.PETA.': 1e15, '.TERA.': 1e12, '.GIGA.': 1e9, '.MEGA.': 1e6, '.KILO.': 1e3,
-             '.HECTO.': 1e2, '.DECA.': 1e1, '$': 1, '.DECI.': 1e-1, '.CENTI.': 1e-2, '.MILLI.': 1e-3, '.MICRO.': 1e-6,
-             '.NANO.': 1e-9, '.PICO.': 1e-12, '.FEMTO.': 1e-15, '.ATTO.': 1e-18}
-
-STEP_REPRESENTATION_ENTITIES = {"ADVANCED_BREP_SHAPE_REPRESENTATION",
-                                "FACETED_BREP_SHAPE_REPRESENTATION",
-                                "MANIFOLD_SURFACE_SHAPE_REPRESENTATION",
-                                "GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION",
-                                "GEOMETRICALLY_BOUNDED_SURFACE_SHAPE_REPRESENTATION",
-                                "EDGE_BASED_WIREFRAME_SHAPE_REPRESENTATION"
-                                }
