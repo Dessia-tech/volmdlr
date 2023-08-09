@@ -496,8 +496,8 @@ class Line2D(Line):
 
         line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
         line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
-        new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
-        return self.get_concurrent_segments_tangent_circles(vector_i, vector_c, vector_d, new_pt_k, new_basis)
+        return self.get_concurrent_segments_tangent_circles(
+            vector_i, vector_c, vector_d, volmdlr.Point2D.line_intersection(line_ab, line_cd), new_basis)
 
     def cut_between_two_points(self, point1: volmdlr.Point2D,
                                point2: volmdlr.Point2D):
@@ -1130,8 +1130,15 @@ class Circle2D(CircleMixin, Curve):
         """Plots the circle using Matplotlib."""
         return vm_common_operations.plot_circle(self, ax, edge_style)
 
-    def plot_data(self, edge_style: plot_data.EdgeStyle = None,
-                  surface_style: plot_data.SurfaceStyle = None):
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None, surface_style: plot_data.SurfaceStyle = None):
+        """
+        Get plot data for the circle 2d.
+
+        :param edge_style: Plotting style for the line.
+        :type edge_style: :class:`plot_data.EdgeStyle`, optional
+        :return: Plot data for the line.
+        :rtype: :class:`plot_data.Circle2D`
+        """
         return plot_data.Circle2D(cx=self.center.x, cy=self.center.y,
                                   r=self.radius,
                                   edge_style=edge_style,
@@ -1231,6 +1238,7 @@ class Circle3D(CircleMixin, Curve):
         self.radius = radius
         self.frame = frame
         self._bbox = None
+        self.angle = 2*math.pi
         Curve.__init__(self, name=name)
 
     @property
@@ -1365,34 +1373,34 @@ class Circle3D(CircleMixin, Curve):
         normal.normalize()
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
-    def to_step(self, current_id, surface_id=None, surface3d=None):
+    def to_step(self, current_id, *args, **kwargs):
         content, frame_id = self.frame.to_step(current_id)
         curve_id = frame_id + 1
-        content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{round(self.radius * 1000, 3)});\n"
+        content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.radius * 1000});\n"
+        current_id = curve_id
+        # if surface_id:
+        #     content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
+        #     curve_id += 1
 
-        if surface_id:
-            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
-            curve_id += 1
-
-        point1 = self.frame.origin + self.frame.u * self.radius
-        point3 = self.frame.origin - self.frame.u * self.radius
-
-        p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
-        p3_content, p3_id = point3.to_step(p1_id + 1, vertex=True)
-        content += p1_content + p3_content
-
-        arc1_id = p3_id + 1
-        content += f"#{arc1_id} = EDGE_CURVE('{self.name}',#{p1_id},#{p3_id},#{curve_id},.T.);\n"
-        oriented_edge1_id = arc1_id + 1
-        content += f"#{oriented_edge1_id} = ORIENTED_EDGE('',*,*,#{arc1_id},.T.);\n"
-
-        arc2_id = oriented_edge1_id + 1
-        content += f"#{arc2_id} = EDGE_CURVE('{self.name}',#{p3_id},#{p1_id},#{curve_id},.T.);\n"
-        oriented_edge2_id = arc2_id + 1
-        content += f"#{oriented_edge2_id} = ORIENTED_EDGE('',*,*,#{arc2_id},.T.);\n"
-
-        current_id = oriented_edge2_id + 1
-        content += f"#{current_id} = EDGE_LOOP('{self.name}',(#{oriented_edge1_id},#{oriented_edge2_id}));\n"
+        # point1 = self.frame.origin + self.frame.u * self.radius
+        # point3 = self.frame.origin - self.frame.u * self.radius
+        #
+        # p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
+        # p3_content, p3_id = point3.to_step(p1_id + 1, vertex=True)
+        # content += p1_content + p3_content
+        #
+        # arc1_id = p3_id + 1
+        # content += f"#{arc1_id} = EDGE_CURVE('{self.name}',#{p1_id},#{p3_id},#{curve_id},.T.);\n"
+        # oriented_edge1_id = arc1_id + 1
+        # content += f"#{oriented_edge1_id} = ORIENTED_EDGE('',*,*,#{arc1_id},.T.);\n"
+        #
+        # arc2_id = oriented_edge1_id + 1
+        # content += f"#{arc2_id} = EDGE_CURVE('{self.name}',#{p3_id},#{p1_id},#{curve_id},.T.);\n"
+        # oriented_edge2_id = arc2_id + 1
+        # content += f"#{oriented_edge2_id} = ORIENTED_EDGE('',*,*,#{arc2_id},.T.);\n"
+        #
+        # current_id = oriented_edge2_id + 1
+        # content += f"#{current_id} = EDGE_LOOP('{self.name}',(#{oriented_edge1_id},#{oriented_edge2_id}));\n"
 
         return content, current_id
 
@@ -1437,6 +1445,10 @@ class Circle3D(CircleMixin, Curve):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
+        """
+        Creates a circle from three points.
+
+        """
         vector_u1 = point2 - point1
         vector_u2 = point2 - point3
         try:
@@ -1550,6 +1562,19 @@ class Circle3D(CircleMixin, Curve):
             new_faces.extend(contour_primitive.revolution(
                 self.center, self.normal, volmdlr.TWO_PI))
         return new_faces
+
+    def distance_linesegment(self, linesegment3d, return_points=False):
+        """
+        Gets the minimum distance between an Arc 3D and Line Segment 3D.
+
+        :param linesegment3d: other line segment 3d.
+        :param return_points: boolean to decide weather to return the corresponding minimal distance points or not.
+        :return: minimum distance / minimal distance with corresponding points.
+        """
+        point1, point2 = vm_common_operations.minimum_distance_points_circle3d_linesegment3d(self, linesegment3d)
+        if return_points:
+            return point1.point_distance(point2), point1, point2
+        return point1.point_distance(point2)
 
 
 class Ellipse2D(Curve):
@@ -1700,7 +1725,7 @@ class Ellipse2D(Curve):
             for theta in npy.linspace(self.angle_start, self.angle_end, angle_resolution + 1)]
         return discretization_points
 
-    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-3):
+    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-6):
         """
         Calculates the abscissa for a given point.
 
@@ -1851,6 +1876,7 @@ class Ellipse3D(Curve):
 
     @property
     def self_2d(self):
+        """Version 2d of the ellipse 3d as a property."""
         if not self._self_2d:
             self._self_2d = self.to_2d(self.center, self.frame.u, self.frame.v)
         return self._self_2d

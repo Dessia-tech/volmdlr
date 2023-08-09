@@ -145,10 +145,10 @@ class TestArc3D(unittest.TestCase):
 
     def test_minimum_distance_points_line(self):
         lineseg = edges.LineSegment3D(volmdlr.Point3D(0, 1.5, -1), volmdlr.Point3D(0, -.3, 0.5))
-        test_minimum_distance_points_line = self.arc3d.minimum_distance_points_line(lineseg)
-        self.assertTrue(test_minimum_distance_points_line[0].is_close(
-            volmdlr.Point3D(0.0, 0.17973768284826552, 0.10021859762644536)))
+        test_minimum_distance_points_line = self.arc3d.minimum_distance(lineseg, True)
         self.assertTrue(test_minimum_distance_points_line[1].is_close(
+            volmdlr.Point3D(0.0, 0.17973768284826552, 0.10021859762644536)))
+        self.assertTrue(test_minimum_distance_points_line[2].is_close(
             volmdlr.Point3D(0.577350269233884, 0.5773502691674968, 0.5773502691674968)))
 
     def test_minimum_distance(self):

@@ -248,7 +248,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def to_step(self, current_id):
         content, surface3d_ids = self.surface3d.to_step(current_id)
-        current_id = max(surface3d_ids) + 1
+        current_id = max(surface3d_ids)
 
         if len(surface3d_ids) != 1:
             raise NotImplementedError('What to do with more than 1 id ? with 0 id ?')
@@ -297,6 +297,7 @@ class Face3D(volmdlr.core.Primitive3D):
                                  mesh2d.triangles)
 
     def plot2d(self, ax=None, color='k', alpha=1):
+        """Plot 2D of the face using matplotlib."""
         if ax is None:
             _, ax = plt.subplots()
         self.surface2d.plot(ax=ax, color=color, alpha=alpha)
@@ -366,6 +367,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return False
 
     def edge_intersections(self, edge):
+        """Gets the intersections of an edge and a 3D face."""
         intersections = []
         method_name = f'{edge.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(self, method_name):
@@ -377,9 +379,13 @@ class Face3D(volmdlr.core.Primitive3D):
                         intersections.append(point)
         return intersections
 
-    def line_intersections(self,
-                           line: volmdlr_curves.Line3D,
-                           ) -> List[volmdlr.Point3D]:
+    def line_intersections(self, line: volmdlr_curves.Line3D) -> List[volmdlr.Point3D]:
+        """
+        Get intersections between a face 3d and a Line 3D.
+
+        :param line: other line.
+        :return: a list of intersections.
+        """
         intersections = []
         for intersection in self.surface3d.line_intersections(line):
             if self.point_belongs(intersection):
@@ -394,6 +400,12 @@ class Face3D(volmdlr.core.Primitive3D):
         return intersections
 
     def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+        """
+        Get intersections between a face 3d and a Line Segment 3D.
+
+        :param linesegment: other linesegment.
+        :return: a list of intersections.
+        """
         linesegment_intersections = []
         if not self.bounding_box.is_intersecting(linesegment.bounding_box):
             return []
@@ -405,6 +417,12 @@ class Face3D(volmdlr.core.Primitive3D):
         return linesegment_intersections
 
     def fullarc_intersections(self, fullarc: vme.FullArc3D) -> List[volmdlr.Point3D]:
+        """
+        Get intersections between a face 3d and a Full Arc 3D.
+
+        :param fullarc: other fullarc.
+        :return: a list of intersections.
+        """
         intersections = []
         for intersection in self.surface3d.fullarc_intersections(fullarc):
             if self.point_belongs(intersection):
@@ -424,10 +442,17 @@ class Face3D(volmdlr.core.Primitive3D):
         return ax
 
     def random_point_inside(self):
+        """Gets a random point on the face."""
         point_inside2d = self.surface2d.random_point_inside()
         return self.surface3d.point2d_to_3d(point_inside2d)
 
     def is_adjacent(self, face2: 'Face3D'):
+        """
+        Verifies if two faces are adjacent or not.
+
+        :param face2: other face.
+        :return: True or False.
+        """
         contour1 = self.outer_contour3d.to_2d(
             self.surface3d.frame.origin,
             self.surface3d.frame.u,
