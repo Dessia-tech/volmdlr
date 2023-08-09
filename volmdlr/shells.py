@@ -329,10 +329,6 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         faces_content = ''
         face_ids = []
 
-        manifold_id = current_id + 1
-        shell_id = manifold_id + 1
-
-        current_id = shell_id + 1
         for face in self.faces:
             if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
                 face_content, face_sub_ids = face.to_step(current_id)
@@ -342,15 +338,17 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             faces_content += face_content
             face_ids.extend(face_sub_ids)
             current_id = max(face_sub_ids)
+        step_content += faces_content
 
+        shell_id = current_id + 1
+
+        step_content += f"#{shell_id} = {self.STEP_FUNCTION}('{self.name}'," \
+                        f"({step_ids_to_str(face_ids)}));\n"
+        manifold_id = shell_id + 1
         if self.STEP_FUNCTION == "CLOSED_SHELL":
             step_content += f"#{manifold_id} = MANIFOLD_SOLID_BREP('{self.name}',#{shell_id});\n"
         else:
             step_content += f"#{manifold_id} = SHELL_BASED_SURFACE_MODEL('{self.name}',(#{shell_id}));\n"
-
-        step_content += f"#{shell_id} = {self.STEP_FUNCTION}('{self.name}'," \
-                        f"({step_ids_to_str(face_ids)}));\n"
-        step_content += faces_content
 
         return step_content, manifold_id
 
@@ -369,8 +367,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         step_content += product_content
 
         brep_id = shape_representation_id
-        # frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
-        frame_content, frame_id = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.Y3D, volmdlr.X3D).to_step(brep_id)
+        frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
         manifold_id = frame_id + 1
         shell_id = manifold_id + 1
         current_id = shell_id + 1
@@ -1043,7 +1040,7 @@ class OpenShell3D(Shell3D):
     """
     A 3D Open shell composed of multiple faces.
 
-    This class represents a 3D oepn shell, which is a collection of connected
+    This class represents a 3D open shell, which is a collection of connected
     faces with no volume. It is a subclass of the `Shell3D` class and
     inherits all of its attributes and methods.
 
@@ -1098,6 +1095,8 @@ class ClosedShell3D(Shell3D):
 
         """
         volume = 0
+        center = self.bounding_box.center
+        center_x, center_y, center_z = center
         for face in self.faces:
             display3d = face.triangulation()
             for triangle_index in display3d.triangles:
@@ -1105,13 +1104,16 @@ class ClosedShell3D(Shell3D):
                 point2 = display3d.points[triangle_index[1]]
                 point3 = display3d.points[triangle_index[2]]
 
-                v321 = point3[0] * point2[1] * point1[2]
-                v231 = point2[0] * point3[1] * point1[2]
-                v312 = point3[0] * point1[1] * point2[2]
-                v132 = point1[0] * point3[1] * point2[2]
-                v213 = point2[0] * point1[1] * point3[2]
-                v123 = point1[0] * point2[1] * point3[2]
-                volume_tetraedre = 1 / 6 * (-v321 + v231 + v312 - v132 - v213 + v123)
+                point1_adj = (point1[0] - center_x, point1[1] - center_y, point1[2] - center_z)
+                point2_adj = (point2[0] - center_x, point2[1] - center_y, point2[2] - center_z)
+                point3_adj = (point3[0] - center_x, point3[1] - center_y, point3[2] - center_z)
+
+                volume_tetraedre = 1 / 6 * abs(-point3_adj[0] * point2_adj[1] * point1_adj[2] +
+                                               point2_adj[0] * point3_adj[1] * point1_adj[2] +
+                                               point3_adj[0] * point1_adj[1] * point2_adj[2] -
+                                               point1_adj[0] * point3_adj[1] * point2_adj[2] -
+                                               point2_adj[0] * point1_adj[1] * point3_adj[2] +
+                                               point1_adj[0] * point2_adj[1] * point3_adj[2])
 
                 volume += volume_tetraedre
 
@@ -1122,7 +1124,7 @@ class ClosedShell3D(Shell3D):
         Verifies if a face is inside the closed shell 3D.
 
         :param face: other face.
-        :return: returns True if face is inside, and False otherwise
+        :return: returns True if face is inside, and False otherwise.
         """
         if not face.bounding_box.is_inside_bbox(self.bounding_box):
             return False

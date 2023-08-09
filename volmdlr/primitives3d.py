@@ -1408,7 +1408,7 @@ class Sweep(shells.ClosedShell3D):
 
     """
 
-    def __init__(self, contour2d: List[volmdlr.wires.Contour2D],
+    def __init__(self, contour2d: volmdlr.wires.Contour2D,
                  wire3d: volmdlr.wires.Wire3D, *,
                  color: Tuple[float, float, float] = None, alpha: float = 1,
                  name: str = ''):

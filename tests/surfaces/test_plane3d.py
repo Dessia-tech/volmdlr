@@ -174,7 +174,7 @@ class TestPlane3D(unittest.TestCase):
 
     def test_bspline_intersections(self):
         plane = Plane3D(volmdlr.OZXY)
-        intersections = plane.bsplinecurve_intersections(bspline_curve=bspline_curve3d)
+        intersections = plane.bsplinecurve_intersections(bspline_curve=bspline_curve3d())
         self.assertTrue(len(intersections), 2)
         self.assertTrue(intersections[0].is_close(volmdlr.Point3D(3.4032921805712286, 0.0, 1.5267489712255913)))
         self.assertTrue(intersections[1].is_close(volmdlr.Point3D(-0.49607254405814866, 0.0, -0.6842127097914265)))

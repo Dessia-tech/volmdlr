@@ -102,6 +102,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         # self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
     def test_contour3d_to_2d(self):
+<<<<<<< HEAD
         surface = surfaces.BSplineSurface3D.load_from_file(
             "surfaces/objects_bspline_test/bsplinesurface_buggy_face_surface.json")
         contour = vmw.Contour3D.load_from_file(
@@ -109,6 +110,14 @@ class TestBSplineSurface3D(unittest.TestCase):
         contour2d = surface.contour3d_to_2d(contour)
         self.assertAlmostEqual(contour2d.area(), 1, 2)
         self.assertTrue(contour2d.is_ordered())
+=======
+        surface = surfaces.BSplineSurface3D.load_from_file("surfaces/objects_bspline_test/periodicalsurface.json")
+        contour3d = vmw.Contour3D.load_from_file("surfaces/objects_bspline_test/periodicalsurface_contour.json")
+        contour2d = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 1/6, 5)
+
+>>>>>>> dev
 
 if __name__ == '__main__':
     unittest.main(verbosity=0)
