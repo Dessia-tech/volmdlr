@@ -4,21 +4,22 @@ Class for voxel representation of volmdlr models
 import math
 import warnings
 from collections import deque
+from copy import copy
 from typing import Dict, Iterable, List, Set, Tuple
 
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 import numpy as np
-
 from dessia_common.core import PhysicalObject
 from tqdm import tqdm
-from copy import copy
 
 from volmdlr import Point2D, Point3D, Vector3D
-from volmdlr.core import VolumeModel, BoundingBox
+from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
+from volmdlr.voxelization_compiled import aabb_intersecting_boxes, flood_fill_matrix, triangle_intersects_voxel
 from volmdlr.wires import ClosedPolygon2D
-from volmdlr.voxelization_compiled import triangle_intersects_voxel, aabb_intersecting_boxes
 
 # Custom types
 Point = Tuple[float, ...]
@@ -44,12 +45,12 @@ class Voxelization(PhysicalObject):
     useful to perform very fast Boolean operations.
     """
 
-    def __init__(self, voxels_centers: Set[Point], voxel_size: float, octree_root: "OctreeNode" = None, name: str = ""):
+    def __init__(self, voxel_centers: Set[Point], voxel_size: float, octree_root: "OctreeNode" = None, name: str = ""):
         """
         Initialize the Voxelization.
 
-        :param voxels_centers: The set of points representing voxel centers.
-        :type voxels_centers: set[tuple[float, float, float]]
+        :param voxel_centers: The set of points representing voxel centers.
+        :type voxel_centers: set[tuple[float, float, float]]
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
         :param octree_root: The octree root used to create the voxelization, if so.
@@ -57,7 +58,7 @@ class Voxelization(PhysicalObject):
         :param name: The name of the Voxelization.
         :type name: str, optional
         """
-        self.voxels_centers = voxels_centers
+        self.voxel_centers = voxel_centers
         self.voxel_size = voxel_size
         self.octree_root = octree_root
 
@@ -74,8 +75,7 @@ class Voxelization(PhysicalObject):
         :rtype: bool
         """
         return (
-            self.voxels_centers == other_voxelization.voxels_centers
-            and self.voxel_size == other_voxelization.voxel_size
+            self.voxel_centers == other_voxelization.voxel_centers and self.voxel_size == other_voxelization.voxel_size
         )
 
     def __add__(self, other_voxelization: "Voxelization") -> "Voxelization":
@@ -153,7 +153,7 @@ class Voxelization(PhysicalObject):
         :return: The number of voxels.
         :rtype: int
         """
-        return len(self.voxels_centers)
+        return len(self.voxel_centers)
 
     @classmethod
     def from_closed_triangle_shell(
@@ -187,7 +187,7 @@ class Voxelization(PhysicalObject):
         else:
             raise ValueError("Invalid 'method' argument: must be 'iterative' or 'octree'")
 
-        return cls(voxels_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
+        return cls(voxel_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
 
     @classmethod
     def from_closed_shell(
@@ -221,7 +221,7 @@ class Voxelization(PhysicalObject):
         else:
             raise ValueError("Invalid 'method' argument: must be 'iterative' or 'octree'")
 
-        return cls(voxels_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
+        return cls(voxel_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
 
     @classmethod
     def from_volume_model(
@@ -255,7 +255,7 @@ class Voxelization(PhysicalObject):
         else:
             raise ValueError("Invalid 'method' argument: must be 'iterative' or 'octree'")
 
-        return cls(voxels_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
+        return cls(voxel_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
 
     @staticmethod
     def _closed_triangle_shell_to_triangles(closed_triangle_shell: ClosedTriangleShell3D) -> List[Triangle]:
@@ -595,90 +595,32 @@ class Voxelization(PhysicalObject):
         voxel_centers = set()
 
         for i in range(3):
+            # Check if the triangle is defined in the XY, XZ or YZ plane
             if round(triangle[0][i], 6) == round(triangle[1][i], 6) == round(triangle[2][i], 6):
                 abscissa = round(triangle[0][i], 6)
+
+                # Check if this plane is defined is at the interface between voxels
                 if round(abscissa / voxel_size, 6).is_integer():
+                    # Define the 3D  triangle in 2D
+
                     v0 = triangle[0][:i] + triangle[0][i + 1 :]
                     v1 = triangle[1][:i] + triangle[1][i + 1 :]
                     v2 = triangle[2][:i] + triangle[2][i + 1 :]
 
                     triangle_2d = np.array([v0, v1, v2])
 
-                    for center in Voxelization._rasterize_triangle_2d(triangle_2d, voxel_size):
-                        center_left = copy(center)
+                    pixelization = Pixelization.from_polygon(triangle_2d, voxel_size).fill_enclosed_pixels()
+
+                    for center in pixelization.pixel_centers:
+                        center_left = list(copy(center))
                         center_left.insert(i, round(abscissa - voxel_size / 2, 6))
                         voxel_centers.add(tuple(center_left))
 
-                        center_right = copy(center)
+                        center_right = list(copy(center))
                         center_right.insert(i, round(abscissa + voxel_size / 2, 6))
                         voxel_centers.add(tuple(center_right))
 
         return voxel_centers
-
-    @staticmethod
-    def _rasterize_triangle_2d(triangle_2d, cell_size):
-        """
-        Rasterize a 2D triangle and return a list of center points of intersecting cells.
-
-        :param triangle_2d: The 2D triangle to rasterize.
-        :type triangle_2d: np.ndarray
-        :param cell_size: The size of each cell in the grid.
-        :type cell_size: float
-
-        :return: A list of center points of intersecting cells.
-        :rtype: List[Point]
-        """
-        # Get the bounding box of the triangle
-        min_x = np.floor(min(triangle_2d[:, 0]))
-        max_x = np.ceil(max(triangle_2d[:, 0]))
-        min_y = np.floor(min(triangle_2d[:, 1]))
-        max_y = np.ceil(max(triangle_2d[:, 1]))
-
-        # Calculate the dimensions of the grid
-        grid_width = int((max_x - min_x) / cell_size) + 1
-        grid_height = int((max_y - min_y) / cell_size) + 1
-
-        # Create an empty grid
-        grid = np.zeros((grid_height, grid_width))
-
-        # Create a list to store the center points
-        center_points = []
-
-        # Iterate over each cell in the grid
-        for y in range(grid_height):
-            for x in range(grid_width):
-                # Calculate the coordinates of the current cell
-                cell_x = min_x + x * cell_size
-                cell_y = min_y + y * cell_size
-
-                # Check if the cell intersects with the triangle
-                if Voxelization._point_in_triangle_2d(cell_x, cell_y, triangle_2d):
-                    grid[y, x] = 1
-                    center_points.append([round(cell_x + cell_size / 2, 6), round(cell_y + cell_size / 2, 6)])
-
-        return center_points
-
-    @staticmethod
-    def _point_in_triangle_2d(x, y, triangle2d):
-        """
-        Check if a 2D point is inside a triangle using the barycentric coordinate method.
-
-        :param x: The x-coordinate of the point.
-        :type x: float
-        :param y: The y-coordinate of the point.
-        :type y: float
-        :param triangle2d: The 2D triangle defined by its three vertices.
-        :type triangle2d: np.ndarray
-
-        :return: True if the point is inside the triangle, False otherwise.
-        :rtype: bool
-        """
-        # Barycentric coordinate method
-        v0, v1, v2 = triangle2d
-        area = 0.5 * (-v1[1] * v2[0] + v0[1] * (-v1[0] + v2[0]) + v0[0] * (v1[1] - v2[1]) + v1[0] * v2[1])
-        s = 1 / (2 * area) * (v0[1] * v2[0] - v0[0] * v2[1] + (v2[1] - v0[1]) * x + (v0[0] - v2[0]) * y)
-        t = 1 / (2 * area) * (v0[0] * v1[1] - v0[1] * v1[0] + (v0[1] - v1[1]) * x + (v1[0] - v0[0]) * y)
-        return s >= 0 and t >= 0 and 1 - s - t >= 0
 
     @staticmethod
     def _voxel_triangular_faces(voxel_center: Point, voxel_size: float) -> List[Triangle]:
@@ -1099,7 +1041,7 @@ class Voxelization(PhysicalObject):
         """
         triangles = set()
 
-        for voxel in self.voxels_centers:
+        for voxel in self.voxel_centers:
             for triangle in self._voxel_triangular_faces(voxel, self.voxel_size):
                 if triangle not in triangles:
                     triangles.add(triangle)
@@ -1188,9 +1130,8 @@ class Voxelization(PhysicalObject):
         Return a list of volmdlr primitives to build up volume model.
         It uses the simplified representation of the voxelization given by the "to_closed_shell" method.
         """
-        if len(self.voxels_centers) == 0:
-            warnings.warn("Empty voxelization.")
-            return []
+        if len(self.voxel_centers) == 0:
+            raise ValueError("Empty voxelization.")
 
         return [self.to_closed_triangle_shell()]
 
@@ -1208,7 +1149,7 @@ class Voxelization(PhysicalObject):
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform intersection.")
 
-        return Voxelization(self.voxels_centers.intersection(other_voxelization.voxels_centers), self.voxel_size)
+        return Voxelization(self.voxel_centers.intersection(other_voxelization.voxel_centers), self.voxel_size)
 
     def is_intersecting(self, other_voxelization: "Voxelization") -> bool:
         """
@@ -1239,7 +1180,7 @@ class Voxelization(PhysicalObject):
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform union.")
 
-        return Voxelization(self.voxels_centers.union(other_voxelization.voxels_centers), self.voxel_size)
+        return Voxelization(self.voxel_centers.union(other_voxelization.voxel_centers), self.voxel_size)
 
     def difference(self, other_voxelization: "Voxelization") -> "Voxelization":
         """
@@ -1255,7 +1196,7 @@ class Voxelization(PhysicalObject):
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform difference.")
 
-        return Voxelization(self.voxels_centers.difference(other_voxelization.voxels_centers), self.voxel_size)
+        return Voxelization(self.voxel_centers.difference(other_voxelization.voxel_centers), self.voxel_size)
 
     def symmetric_difference(self, other_voxelization: "Voxelization") -> "Voxelization":
         """
@@ -1271,9 +1212,7 @@ class Voxelization(PhysicalObject):
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform symmetric difference.")
 
-        return Voxelization(
-            self.voxels_centers.symmetric_difference(other_voxelization.voxels_centers), self.voxel_size
-        )
+        return Voxelization(self.voxel_centers.symmetric_difference(other_voxelization.voxel_centers), self.voxel_size)
 
     def interference(self, other_voxelization: "Voxelization") -> float:
         """
@@ -1333,7 +1272,7 @@ class Voxelization(PhysicalObject):
         :rtype: Voxelization
         """
         rotation_matrix = self._rotation_matrix(axis, angle)
-        voxel_array = np.array(list(self.voxels_centers)) - np.array([center.x, center.y, center.z])
+        voxel_array = np.array(list(self.voxel_centers)) - np.array([center.x, center.y, center.z])
         rotated_voxels = np.dot(voxel_array, rotation_matrix.T)
         rotated_voxels += np.array([center.x, center.y, center.z])
 
@@ -1351,7 +1290,7 @@ class Voxelization(PhysicalObject):
         :return: A new Voxelization object resulting from the translation.
         :rtype: Voxelization
         """
-        voxel_array = np.array(list(self.voxels_centers))
+        voxel_array = np.array(list(self.voxel_centers))
         translated_voxels = voxel_array + np.array([offset.x, offset.y, offset.z])
 
         intersecting_voxels = self._voxels_intersecting_voxels(translated_voxels, self.voxel_size)
@@ -1378,43 +1317,28 @@ class Voxelization(PhysicalObject):
         return True
 
     @classmethod
-    def from_voxel_matrix(
-        cls, voxel_matrix: List[List[List[bool]]], voxel_size: float, voxel_matrix_origin_center: Point
-    ):
+    def from_voxel_matrix(cls, voxel_matrix: "VoxelMatrix"):
         """
         Create a Voxelization object from a voxel matrix.
 
-        :param voxel_matrix: The voxel matrix representing the voxelization.
-        :type voxel_matrix: list[list[list[bool]]]
-        :param voxel_size: The size of the voxel edges.
-        :type voxel_size: float
-        :param voxel_matrix_origin_center: Voxel center of the origin of the voxel matrix, i.e 'voxel_matrix[0][0][0]'.
-        :type voxel_matrix_origin_center: tuple[float, float, float]
+        :param voxel_matrix: The voxel matrix object representing the voxelization.
+        :type voxel_matrix: VoxelMatrix
 
         :return: A Voxelization object created from the voxel matrix.
         :rtype: Voxelization
         """
-        if not cls.voxel_center_in_implicit_grid(voxel_matrix_origin_center, voxel_size):
+        if not cls.voxel_center_in_implicit_grid(voxel_matrix.matrix_origin_center, voxel_matrix.voxel_size):
             warnings.warn(
                 """This voxel matrix is not defined in the implicit grid defined by the voxel_size. 
             Some methods like boolean operation or interference computing may not work as expected."""
             )
 
-        voxels_centers = set()
-        for i, row in enumerate(voxel_matrix):
-            for j, col in enumerate(row):
-                for k, voxel in enumerate(col):
-                    if voxel:
-                        center = (
-                            round(voxel_matrix_origin_center[0] + i * voxel_size, 6),
-                            round(voxel_matrix_origin_center[1] + j * voxel_size, 6),
-                            round(voxel_matrix_origin_center[2] + k * voxel_size, 6),
-                        )
-                        voxels_centers.add(center)
+        indices = np.argwhere(voxel_matrix.matrix)
+        voxel_centers = voxel_matrix.matrix_origin_center + indices * voxel_matrix.voxel_size
 
-        return cls(voxels_centers, voxel_size)
+        return cls(set(map(tuple, np.round(voxel_centers, 6))), voxel_matrix.voxel_size)
 
-    def get_min_voxel_grid_center(self) -> Point:
+    def _get_min_voxel_grid_center(self) -> Point:
         """
         Get the minimum center point from the set of voxel centers, in the voxel 3D grid.
         This point may not be a voxel of the voxelization, because it is the minimum center in each direction (X, Y, Z).
@@ -1422,13 +1346,18 @@ class Voxelization(PhysicalObject):
         :return: The minimum center point.
         :rtype: tuple[float, float, float]
         """
-        min_x = min(point[0] for point in self.voxels_centers)
-        min_y = min(point[1] for point in self.voxels_centers)
-        min_z = min(point[2] for point in self.voxels_centers)
+        min_x = min_y = min_z = float("inf")
+
+        for point in self.voxel_centers:
+            min_x = min(min_x, point[0])
+            min_y = min(min_y, point[1])
+            min_z = min(min_z, point[2])
 
         return min_x, min_y, min_z
 
-    def get_max_voxel_grid_center(self) -> Point:
+    min_voxel_grid_center = property(_get_min_voxel_grid_center)
+
+    def _get_max_voxel_grid_center(self) -> Point:
         """
         Get the maximum center point from the set of voxel centers, in the voxel 3D grid.
         This point may not be a voxel of the voxelization, because it is the maximum center in each direction (X, Y, Z).
@@ -1436,36 +1365,37 @@ class Voxelization(PhysicalObject):
         :return: The maximum center point.
         :rtype: tuple[float, float, float]
         """
-        max_x = max(point[0] for point in self.voxels_centers)
-        max_y = max(point[1] for point in self.voxels_centers)
-        max_z = max(point[2] for point in self.voxels_centers)
+        max_x = max_y = max_z = -float("inf")
+
+        for point in self.voxel_centers:
+            max_x = max(max_x, point[0])
+            max_y = max(max_y, point[1])
+            max_z = max(max_z, point[2])
 
         return max_x, max_y, max_z
 
-    def to_voxel_matrix(self) -> List[List[List[bool]]]:
+    max_voxel_grid_center = property(_get_max_voxel_grid_center)
+
+    def to_voxel_matrix(self) -> "VoxelMatrix":
         """
-        Convert the voxelization to a voxel matrix.
+        Convert the voxelization to a voxel matrix object.
 
         :return: The voxel matrix representing the voxelization.
-        :rtype: list[list[list[bool]]]
+        :rtype: VoxelMatrix
         """
-        min_center = self.get_min_voxel_grid_center()
-        max_center = self.get_max_voxel_grid_center()
+        min_center = self.min_voxel_grid_center
+        max_center = self.max_voxel_grid_center
 
         dim_x = round((max_center[0] - min_center[0]) / self.voxel_size + 1)
         dim_y = round((max_center[1] - min_center[1]) / self.voxel_size + 1)
         dim_z = round((max_center[2] - min_center[2]) / self.voxel_size + 1)
 
-        matrix = [[[False for _ in range(dim_z)] for _ in range(dim_y)] for _ in range(dim_x)]
+        indices = np.round((np.array(list(self.voxel_centers)) - min_center) / self.voxel_size).astype(int)
 
-        for voxel_center in self.voxels_centers:
-            x = round((voxel_center[0] - min_center[0]) / self.voxel_size)
-            y = round((voxel_center[1] - min_center[1]) / self.voxel_size)
-            z = round((voxel_center[2] - min_center[2]) / self.voxel_size)
+        matrix = np.zeros((dim_x, dim_y, dim_z), dtype=np.bool_)
+        matrix[indices[:, 0], indices[:, 1], indices[:, 2]] = True
 
-            matrix[x][y][z] = True
-
-        return matrix
+        return VoxelMatrix(matrix, min_center, self.voxel_size)
 
     def inverse(self) -> "Voxelization":
         """
@@ -1474,13 +1404,11 @@ class Voxelization(PhysicalObject):
         :return: The inverse Voxelization object.
         :rtype: Voxelization
         """
-        voxel_matrix = self.to_voxel_matrix()
-        inverted_matrix = np.logical_not(np.array(voxel_matrix)).tolist()
-        min_voxel_center = self.get_min_voxel_grid_center()
+        inverted_voxel_matrix = self.to_voxel_matrix().inverse()
 
-        return Voxelization.from_voxel_matrix(inverted_matrix, self.voxel_size, min_voxel_center)
+        return Voxelization.from_voxel_matrix(inverted_voxel_matrix)
 
-    def bounding_box(self):
+    def _get_bounding_box(self):
         """
         Get the bounding box of the voxelization.
 
@@ -1488,13 +1416,15 @@ class Voxelization(PhysicalObject):
         :rtype: BoundingBox
         """
         min_point = (
-            np.array([self.get_min_voxel_grid_center()]) - np.array([self.voxel_size, self.voxel_size, self.voxel_size])
+            np.array([self.min_voxel_grid_center]) - np.array([self.voxel_size, self.voxel_size, self.voxel_size])
         )[0]
         max_point = (
-            np.array([self.get_max_voxel_grid_center()]) + np.array([self.voxel_size, self.voxel_size, self.voxel_size])
+            np.array([self.max_voxel_grid_center]) + np.array([self.voxel_size, self.voxel_size, self.voxel_size])
         )[0]
 
         return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
+
+    bounding_box = property(_get_bounding_box)
 
     def _point_to_local_grid_index(self, point: Point) -> Tuple[int, ...]:
         """
@@ -1502,19 +1432,18 @@ class Voxelization(PhysicalObject):
 
         :param point: The point to convert.
         :type point: Point
-        :return: The local grid index of the point.
 
+        :return: The local grid index of the point.
         :rtype: Tuple[int, ...]
+
         :raises ValueError: If the point is not within the voxelization's bounding box.
         """
-        if not self.bounding_box().point_belongs(Point3D(*point)):
+        if not self.bounding_box.point_belongs(Point3D(*point)):
             raise ValueError("Point not in local voxel grid.")
 
-        bb = self.bounding_box()
-
-        x_index = int((point[0] - bb.xmin) // self.voxel_size)
-        y_index = int((point[1] - bb.ymin) // self.voxel_size)
-        z_index = int((point[2] - bb.zmin) // self.voxel_size)
+        x_index = int((point[0] - self.bounding_box.xmin) // self.voxel_size)
+        y_index = int((point[1] - self.bounding_box.ymin) // self.voxel_size)
+        z_index = int((point[2] - self.bounding_box.zmin) // self.voxel_size)
 
         return x_index, y_index, z_index
 
@@ -1530,35 +1459,736 @@ class Voxelization(PhysicalObject):
         :return: A new Voxelization object with the filled voxels.
         :rtype: Voxelization
         """
-        directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
         start = self._point_to_local_grid_index(start_point)
-        matrix = self.to_voxel_matrix()
-        old_value = matrix[start[0]][start[1]][start[2]]
+        voxel_matrix = self.to_voxel_matrix()
+        filled_voxel_matrix = voxel_matrix.flood_fill(start, fill_with)
+
+        return self.from_voxel_matrix(filled_voxel_matrix)
+
+    def fill_outer_voxels(self) -> "Voxelization":
+        return self.from_voxel_matrix(self.to_voxel_matrix().fill_outer_voxels())
+
+    def fill_enclosed_voxels(self) -> "Voxelization":
+        return self.from_voxel_matrix(self.to_voxel_matrix().fill_enclosed_voxels())
+
+
+class VoxelMatrix:
+    """Class to manipulate voxel matrix."""
+
+    def __init__(
+        self,
+        voxel_matrix: np.ndarray,  # np.ndarray[np.bool_, np.ndim == 3]
+        voxel_matrix_origin_center: Point,
+        voxel_size: float,
+    ):
+        """
+        :param voxel_matrix: The voxel numpy matrix object representing the voxelization.
+        :type voxel_matrix: np.ndarray[np.bool_, np.ndim == 3]
+        :param voxel_size: The size of the voxel edges.
+        :type voxel_size: float
+        :param voxel_matrix_origin_center: Voxel center of the origin of the voxel matrix, i.e 'matrix[0][0][0]'.
+        :type voxel_matrix_origin_center: tuple[float, float, float]
+        """
+        self.matrix = voxel_matrix
+        self.matrix_origin_center = voxel_matrix_origin_center
+        self.voxel_size = voxel_size
+
+    def __eq__(self, other_voxel_matrix: "VoxelMatrix") -> bool:
+        return (
+            self.voxel_size == other_voxel_matrix.voxel_size
+            and self.matrix_origin_center == other_voxel_matrix.matrix_origin_center
+            and np.array_equal(self.matrix, other_voxel_matrix.matrix)
+        )
+
+    def __add__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the union of the current voxel matrix with another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to union with.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The union of the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        # return VoxelMatrix(self.matrix + other_voxel_matrix.matrix, self.matrix_origin_center, self.voxel_size)
+        return self.union(other_voxel_matrix)
+
+    def __sub__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the difference between the current voxel matrix and another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to subtract.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The difference between the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.difference(other_voxel_matrix)
+
+    def __and__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the intersection of the current voxel matrix with another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to intersect with.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The intersection of the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.intersection(other_voxel_matrix)
+
+    def __or__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the union of the current voxel matrix with another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to union with.
+        :type other_voxel_matrix: VoxelMatrix
+
+        :return: The union of the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.union(other_voxel_matrix)
+
+    def __xor__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        """
+        Return the symmetric difference between the current voxel matrix and another voxel matrix.
+
+        :param other_voxel_matrix: The voxel matrix to calculate the symmetric difference with.
+        :type other_voxel_matrix: VoxelMatrix
+        :return: The symmetric difference between the voxel matrices.
+        :rtype: VoxelMatrix
+        """
+        return self.symmetric_difference(other_voxel_matrix)
+
+    def __invert__(self) -> "VoxelMatrix":
+        """
+        Return the inverse of the current voxel matrix.
+
+        :return: The inverse VoxelMatrix object.
+        :rtype: VoxelMatrix
+        """
+        return self.inverse()
+
+    def inverse(self) -> "VoxelMatrix":
+        inverted_matrix = np.logical_not(self.matrix)
+        return VoxelMatrix(inverted_matrix, self.matrix_origin_center, self.voxel_size)
+
+    def _get_extents(self):
+        extents_min = np.round(np.array(self.matrix_origin_center), 6)
+        extents_max = np.round(
+            self.matrix_origin_center + self.matrix.shape * np.array([self.voxel_size for _ in range(3)]), 6
+        )
+        return extents_min, extents_max
+
+    def _voxel_operation(self, other: "VoxelMatrix", operation):
+        if self.voxel_size != other.voxel_size:
+            raise ValueError("Voxel sizes must be the same.")
+
+        self_min, self_max = self._get_extents()
+        other_min, other_max = other._get_extents()
+
+        global_min = np.min([self_min, other_min], axis=0)  # - 1
+        global_max = np.max([self_max, other_max], axis=0)
+
+        new_shape = np.round((global_max - global_min) / self.voxel_size, 6).astype(int)  # - 1
+
+        new_self = np.zeros(new_shape, dtype=bool)
+        new_other = np.zeros(new_shape, dtype=bool)
+
+        self_start = np.round((self_min - global_min) / self.voxel_size, 6).astype(int)
+        other_start = np.round((other_min - global_min) / self.voxel_size, 6).astype(int)
+
+        new_self[
+            self_start[0] : self_start[0] + self.matrix.shape[0],
+            self_start[1] : self_start[1] + self.matrix.shape[1],
+            self_start[2] : self_start[2] + self.matrix.shape[2],
+        ] = self.matrix
+
+        new_other[
+            other_start[0] : other_start[0] + other.matrix.shape[0],
+            other_start[1] : other_start[1] + other.matrix.shape[1],
+            other_start[2] : other_start[2] + other.matrix.shape[2],
+        ] = other.matrix
+
+        result_matrix = operation(new_self, new_other)
+
+        return VoxelMatrix(result_matrix, tuple(global_min), self.voxel_size)
+
+    def intersection(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, np.logical_and)
+
+    def union(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, np.logical_or)
+
+    def difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, lambda a, b: np.logical_and(a, np.logical_not(b)))
+
+    def symmetric_difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._voxel_operation(other_voxel_matrix, np.logical_xor)
+
+    def flood_fill(self, start, fill_with) -> "VoxelMatrix":
+        return VoxelMatrix(
+            flood_fill_matrix(self.matrix, list(start), fill_with), self.matrix_origin_center, self.voxel_size
+        )
+
+        # directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
+        # old_value = self.matrix[start[0]][start[1]][start[2]]
+        #
+        # if old_value == fill_with:
+        #     return self
+        #
+        # matrix = self.matrix.copy()
+        # stack = deque([start])
+        # visited = {start}
+        #
+        # while stack:
+        #     x, y, z = stack.pop()
+        #
+        #     matrix[x][y][z] = fill_with
+        #
+        #     for dx, dy, dz in directions:
+        #         nx, ny, nz = x + dx, y + dy, z + dz
+        #         if (
+        #             (nx, ny, nz) not in visited
+        #             and 0 <= nx < len(matrix)
+        #             and 0 <= ny < len(matrix[0])
+        #             and 0 <= nz < len(matrix[0][0])
+        #             and matrix[nx][ny][nz] == old_value
+        #         ):
+        #             stack.append((nx, ny, nz))
+        #             visited.add((nx, ny, nz))
+        #
+        # return VoxelMatrix(matrix)
+
+    def _expand(self) -> "VoxelMatrix":
+        current_shape = self.matrix.shape
+        new_shape = tuple(dim + 2 for dim in current_shape)
+        expanded_matrix = np.zeros(new_shape, dtype="bool")
+        slices = tuple(slice(1, -1) for _ in current_shape)
+        expanded_matrix[slices] = self.matrix.copy()
+
+        return VoxelMatrix(
+            expanded_matrix,
+            tuple(round(coord - self.voxel_size, 6) for coord in self.matrix_origin_center),
+            self.voxel_size,
+        )
+
+    def _reduce(self) -> "VoxelMatrix":
+        current_shape = self.matrix.shape
+        slices = tuple(slice(1, -1) for _ in current_shape)
+        reduced_matrix = self.matrix.copy()[slices]
+
+        return VoxelMatrix(
+            reduced_matrix,
+            tuple(round(coord + self.voxel_size, 6) for coord in self.matrix_origin_center),
+            self.voxel_size,
+        )
+
+    def fill_outer_voxels(self) -> "VoxelMatrix":
+        expanded_voxel_matrix = self._expand()
+        outer_filled_expanded_voxel_matrix = expanded_voxel_matrix.flood_fill((0, 0, 0), True)
+        outer_filled_voxel_matrix = outer_filled_expanded_voxel_matrix._reduce()
+
+        return outer_filled_voxel_matrix
+
+    def fill_enclosed_voxels(self) -> "VoxelMatrix":
+        outer_filled_voxel_matrix = self.fill_outer_voxels()
+        inner_filled_voxel_matrix = self + outer_filled_voxel_matrix.inverse()
+
+        # if inner_filled_voxel_matrix == self:
+        #     warnings.warn("This voxelization doesn't have any enclosed voxels.")
+
+        return inner_filled_voxel_matrix
+
+    @classmethod
+    def from_voxelization(cls, voxelization: "Voxelization") -> "VoxelMatrix":
+        return voxelization.to_voxel_matrix()
+
+    def to_voxelization(self) -> "Voxelization":
+        return Voxelization.from_voxel_matrix(self)
+
+
+class Pixelization:
+    """Voxelization but in 2D"""
+
+    def __init__(self, pixel_centers, pixel_size):
+        self.pixel_centers = pixel_centers
+        self.pixel_size = pixel_size
+
+    def __eq__(self, other_pixelization: "Pixelization") -> bool:
+        """
+        Check if the current pixelization is equal to another pixelization.
+
+        :param other_pixelization: The pixelization to compare.
+        :type other_pixelization: Pixelization
+
+        :return: True if the pixelizations are equal, False otherwise.
+        :rtype: bool
+        """
+        return (
+            self.pixel_centers == other_pixelization.pixel_centers and self.pixel_size == other_pixelization.pixel_size
+        )
+
+    def __add__(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Return the union of the current pixelization with another pixelization.
+
+        :param other_pixelization: The pixelization to union with.
+        :type other_pixelization: Pixelization
+
+        :return: The union of the pixelizations.
+        :rtype: Pixelization
+        """
+        return self.union(other_pixelization)
+
+    def __sub__(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Return the difference between the current pixelization and another pixelization.
+
+        :param other_pixelization: The pixelization to subtract.
+        :type other_pixelization: Pixelization
+
+        :return: The difference between the pixelizations.
+        :rtype: Pixelization
+        """
+        return self.difference(other_pixelization)
+
+    def __and__(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Return the intersection of the current pixelization with another pixelization.
+
+        :param other_pixelization: The pixelization to intersect with.
+        :type other_pixelization: Pixelization
+
+        :return: The intersection of the pixelizations.
+        :rtype: Pixelization
+        """
+        return self.intersection(other_pixelization)
+
+    def __or__(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Return the union of the current pixelization with another pixelization.
+
+        :param other_pixelization: The pixelization to union with.
+        :type other_pixelization: Pixelization
+
+        :return: The union of the pixelizations.
+        :rtype: Pixelization
+        """
+        return self.union(other_pixelization)
+
+    def __xor__(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Return the symmetric difference between the current pixelization and another pixelization.
+
+        :param other_pixelization: The pixelization to calculate the symmetric difference with.
+        :type other_pixelization: Pixelization
+        :return: The symmetric difference between the pixelizations.
+        :rtype: Pixelization
+        """
+        return self.symmetric_difference(other_pixelization)
+
+    def __invert__(self) -> "Pixelization":
+        """
+        Return the inverse of the current pixelization.
+
+        :return: The inverse Pixelization object.
+        :rtype: Pixelization
+        """
+        return self.inverse()
+
+    def __len__(self):
+        """
+        Return the number of pixels in the pixelization.
+
+        :return: The number of pixels.
+        :rtype: int
+        """
+        return len(self.pixel_centers)
+
+    def intersection(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Create a pixelization that is the Boolean intersection of two pixelizations.
+        Both pixelizations must have the same pixel size.
+
+        :param other_pixelization: The other pixelization to compute the Boolean intersection with.
+        :type other_pixelization: Pixelization
+
+        :return: The created pixelization resulting from the Boolean intersection.
+        :rtype: Pixelization
+        """
+        if self.pixel_size != other_pixelization.pixel_size:
+            raise ValueError("Both pixelizations must have the same pixel_size to perform intersection.")
+
+        return Pixelization(self.pixel_centers.intersection(other_pixelization.pixel_centers), self.pixel_size)
+
+    def is_intersecting(self, other_pixelization: "Pixelization") -> bool:
+        """
+        Check if two pixelizations are intersecting.
+        Both pixelizations must have the same pixel size.
+
+        :param other_pixelization: The other pixelization to check if there is an intersection with.
+        :type other_pixelization: Pixelization
+
+        :return: True if the pixelizations are intersecting, False otherwise.
+        :rtype: bool
+        """
+        intersection = self.intersection(other_pixelization)
+
+        return len(intersection) > 0
+
+    def union(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Create a pixelization that is the Boolean union of two pixelizations.
+        Both pixelizations must have the same pixel size.
+
+        :param other_pixelization: The other pixelization to compute the Boolean union with.
+        :type other_pixelization: Pixelization
+
+        :return: The created pixelization resulting from the Boolean union.
+        :rtype: Pixelization
+        """
+        if self.pixel_size != other_pixelization.pixel_size:
+            raise ValueError("Both pixelizations must have the same pixel_size to perform union.")
+
+        return Pixelization(self.pixel_centers.union(other_pixelization.pixel_centers), self.pixel_size)
+
+    def difference(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Create a pixelization that is the Boolean difference of two pixelizations.
+        Both pixelizations must have the same pixel size.
+
+        :param other_pixelization: The other pixelization to compute the Boolean difference with.
+        :type other_pixelization: Pixelization
+
+        :return: The created pixelization resulting from the Boolean difference.
+        :rtype: Pixelization
+        """
+        if self.pixel_size != other_pixelization.pixel_size:
+            raise ValueError("Both pixelizations must have the same pixel_size to perform difference.")
+
+        return Pixelization(self.pixel_centers.difference(other_pixelization.pixel_centers), self.pixel_size)
+
+    def symmetric_difference(self, other_pixelization: "Pixelization") -> "Pixelization":
+        """
+        Create a pixelization that is the Boolean symmetric difference (XOR) of two pixelizations.
+        Both pixelizations must have the same pixel size.
+
+        :param other_pixelization: The other pixelization to compute the Boolean symmetric difference with.
+        :type other_pixelization: Pixelization
+
+        :return: The created pixelization resulting from the Boolean symmetric difference.
+        :rtype: Pixelization
+        """
+        if self.pixel_size != other_pixelization.pixel_size:
+            raise ValueError("Both pixelizations must have the same pixel_size to perform symmetric difference.")
+
+        return Pixelization(self.pixel_centers.symmetric_difference(other_pixelization.pixel_centers), self.pixel_size)
+
+    def interference(self, other_pixelization: "Pixelization") -> float:
+        """
+        Compute the percentage of interference between two pixelizations.
+
+        :param other_pixelization: The other pixelization to compute the percentage of interference with.
+        :type other_pixelization: Pixelization
+
+        :return: The percentage of interference between the two pixelizations.
+        :rtype: float
+        """
+        return len(self.intersection(other_pixelization)) / len(self.union(other_pixelization))
+
+    def plot(self):
+        """Plots the pixels on a 2D plane"""
+        fig, ax = plt.subplots()
+
+        for center in self.pixel_centers:
+            x, y = center
+            ax.add_patch(
+                patches.Rectangle(
+                    (x - self.pixel_size / 2, y - self.pixel_size / 2),  # Bottom left corner
+                    self.pixel_size,  # Width
+                    self.pixel_size,  # Height
+                    color="black",
+                )
+            )
+
+        # Setting the x and y limits to contain all the pixels
+        ax.set_xlim(
+            min(x[0] for x in self.pixel_centers) - self.pixel_size,
+            max(x[0] for x in self.pixel_centers) + self.pixel_size,
+        )
+        ax.set_ylim(
+            min(x[1] for x in self.pixel_centers) - self.pixel_size,
+            max(x[1] for x in self.pixel_centers) + self.pixel_size,
+        )
+
+        ax.set_aspect("equal")  # Ensuring equal scaling for both axes
+        plt.show()
+
+    @classmethod
+    def from_line_segment(cls, line_segment, pixel_size):
+        return cls(cls._line_segments_to_pixels([line_segment], pixel_size), pixel_size)
+
+    @classmethod
+    def from_polygon(cls, polygon, pixel_size):
+        line_segments = [(polygon[i - 1], polygon[i]) for i in range(len(polygon))]
+        return cls(cls._line_segments_to_pixels(line_segments, pixel_size), pixel_size)
+
+    @staticmethod
+    def _line_segments_to_pixels(line_segments, pixel_size):
+        pixel_centers = set()
+
+        for line_segment in line_segments:
+            start = line_segment[0]
+            end = line_segment[1]
+
+            x1, y1 = start
+            x2, y2 = end
+
+            # Calculate the bounding box of the line segment
+            xmin = min(x1, x2)
+            ymin = min(y1, y2)
+            xmax = max(x1, x2)
+            ymax = max(y1, y2)
+
+            # Calculate the indices of the box that intersect with the bounding box of the line segment
+            x_indices = range(int(xmin / pixel_size) - 1, int(xmax / pixel_size) + 1)
+            y_indices = range(int(ymin / pixel_size) - 1, int(ymax / pixel_size) + 1)
+
+            # Create a list of the centers of all the intersecting voxels
+            centers = []
+            for x in x_indices:
+                for y in y_indices:
+                    center = tuple(round((_ + 1 / 2) * pixel_size, 6) for _ in [x, y])
+                    centers.append(center)
+
+            for center in centers:
+                if center not in pixel_centers and Pixelization._line_segment_intersects_pixel(
+                    line_segment, center, pixel_size
+                ):
+                    pixel_centers.add(center)
+
+        return pixel_centers
+
+    @staticmethod
+    def _line_segment_intersects_pixel(line_segment, pixel_center, pixel_size):
+        """
+        Check if a line segment intersects with a box.
+
+        :param tuple line_segment: The coordinates of the line segment in the format ((x1, y1), (x2, y2)).
+        :param tuple pixel_center: The coordinates of the pixel's center (box_center_x, box_center_y).
+        :param float pixel_size: The size of the pixel (considering it as a square).
+
+        :return: A boolean indicating whether the line intersects with the pixel.
+        :rtype: bool
+        """
+        start = line_segment[0]
+        end = line_segment[1]
+
+        x1, y1 = start
+        x2, y2 = end
+
+        pixel_center_x, pixel_center_y = pixel_center
+
+        # Determine the coordinates of lower-left and upper-right of rectangle
+        xmin, xmax = pixel_center_x - pixel_size / 2, pixel_center_x + pixel_size / 2
+        ymin, ymax = pixel_center_y - pixel_size / 2, pixel_center_y + pixel_size / 2
+
+        # Helper function to compute the line equation for a point
+        def line_equation(xcorner, ycorner):
+            return (y2 - y1) * xcorner + (x1 - x2) * ycorner + (x2 * y1 - x1 * y2)
+
+        # Create list of corners
+        corners = [(xmin, ymin), (xmin, ymax), (xmax, ymin), (xmax, ymax)]
+
+        line_equations = [line_equation(x, y) for x, y in corners]
+
+        # Check if all corners are on the same side of the line
+        miss = (
+            len(set(line_equation >= 0 for line_equation in line_equations)) == 1
+            and len(set(line_equation > 0 for line_equation in line_equations)) == 1
+        )
+
+        # Does it miss based on the shadow intersection test?
+        shadow_miss = (
+            (x1 > xmax and x2 > xmax)
+            or (x1 < xmin and x2 < xmin)
+            or (y1 > ymax and y2 > ymax)
+            or (y1 < ymin and y2 < ymin)
+        )
+
+        # A hit is if it doesn't miss on both tests!
+        return not (miss or shadow_miss)
+
+    @classmethod
+    def from_pixel_matrix(
+        cls, pixel_matrix: "PixelMatrix", pixel_size: float, pixel_matrix_origin_center: Tuple[float, float]
+    ):
+        indices = np.argwhere(pixel_matrix.matrix)
+        pixel_centers = pixel_matrix_origin_center + indices * pixel_size
+        return cls(set(map(tuple, np.round(pixel_centers, 6))), pixel_size)
+
+    def _get_min_pixel_grid_center(self) -> Tuple[float, float]:
+        min_x = min_y = float("inf")
+        for point in self.pixel_centers:
+            min_x = min(min_x, point[0])
+            min_y = min(min_y, point[1])
+        return min_x, min_y
+
+    min_pixel_grid_center = property(_get_min_pixel_grid_center)
+
+    def _get_max_pixel_grid_center(self) -> Tuple[float, float]:
+        max_x = max_y = -float("inf")
+        for point in self.pixel_centers:
+            max_x = max(max_x, point[0])
+            max_y = max(max_y, point[1])
+        return max_x, max_y
+
+    max_pixel_grid_center = property(_get_max_pixel_grid_center)
+
+    def to_pixel_matrix(self) -> "PixelMatrix":
+        min_center = self.min_pixel_grid_center
+        max_center = self.max_pixel_grid_center
+
+        dim_x = round((max_center[0] - min_center[0]) / self.pixel_size + 1)
+        dim_y = round((max_center[1] - min_center[1]) / self.pixel_size + 1)
+
+        indices = np.round((np.array(list(self.pixel_centers)) - min_center) / self.pixel_size).astype(int)
+
+        matrix = np.zeros((dim_x, dim_y), dtype=np.bool_)
+        matrix[indices[:, 0], indices[:, 1]] = True
+
+        return PixelMatrix(matrix)
+
+    def inverse(self) -> "Pixelization":
+        """
+        Create a new Pixelization object that is the inverse of the current pixelization.
+
+        :return: The inverse Pixelization object.
+        :rtype: Pixelization
+        """
+        inverted_pixel_matrix = self.to_pixel_matrix().inverse()
+        min_pixel_center = self.min_pixel_grid_center
+
+        return Pixelization.from_pixel_matrix(inverted_pixel_matrix, self.pixel_size, min_pixel_center)
+
+    def _get_bounding_rectangle(self):
+        min_point = np.array([self.min_pixel_grid_center]) - np.array([self.pixel_size, self.pixel_size])
+        max_point = np.array([self.max_pixel_grid_center]) + np.array([self.pixel_size, self.pixel_size])
+
+        return BoundingRectangle(min_point[0], max_point[0], min_point[1], max_point[1])
+
+    bounding_rectangle = property(_get_bounding_rectangle)
+
+    def _point_to_local_grid_index(self, point: Tuple[float, float]) -> Tuple[int, int]:
+        if not self.bounding_rectangle.point_belongs(Point2D(*point)):
+            raise ValueError("Point not in local pixel grid.")
+
+        x_index = int((point[0] - self.bounding_rectangle.xmin) // self.pixel_size)
+        y_index = int((point[1] - self.bounding_rectangle.ymin) // self.pixel_size)
+
+        return x_index, y_index
+
+    def flood_fill(self, start_point: Tuple[float, float], fill_with: bool) -> "Pixelization":
+        start = self._point_to_local_grid_index(start_point)
+        pixel_matrix = self.to_pixel_matrix()
+        filled_pixel_matrix = pixel_matrix.flood_fill(start, fill_with)
+
+        return self.from_pixel_matrix(filled_pixel_matrix, self.pixel_size, self.min_pixel_grid_center)
+
+    def fill_outer_pixels(self) -> "Pixelization":
+        return self.from_pixel_matrix(
+            self.to_pixel_matrix().fill_outer_pixels(), self.pixel_size, self.min_pixel_grid_center
+        )
+
+    def fill_enclosed_pixels(self) -> "Pixelization":
+        return self.from_pixel_matrix(
+            self.to_pixel_matrix().fill_enclosed_pixels(), self.pixel_size, self.min_pixel_grid_center
+        )
+
+
+class PixelMatrix:
+    """Class to manipulate pixel matrix."""
+
+    def __init__(self, numpy_pixel_matrix: np.ndarray):  # np.ndarray[np.bool_, np.ndim == 2]
+        self.matrix = numpy_pixel_matrix
+
+    def __eq__(self, other_pixel_matrix: "PixelMatrix") -> bool:
+        return np.array_equal(self.matrix, other_pixel_matrix.matrix)
+
+    def __add__(self, other_pixel_matrix: "PixelMatrix") -> "PixelMatrix":
+        return PixelMatrix(self.matrix + other_pixel_matrix.matrix)
+
+    def inverse(self) -> "PixelMatrix":
+        inverted_matrix = np.logical_not(self.matrix)
+        return PixelMatrix(inverted_matrix)
+
+    def flood_fill(self, start, fill_with) -> "PixelMatrix":
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+        old_value = self.matrix[start[0]][start[1]]
 
         if old_value == fill_with:
             return self
+
+        matrix = self.matrix.copy()
+        stack = deque([start])
+        visited = {start}
+
+        if old_value == fill_with:
+            return matrix
 
         stack = deque([start])
         visited = {start}
 
         while stack:
-            x, y, z = stack.pop()
+            x, y = stack.pop()
 
-            matrix[x][y][z] = fill_with
+            matrix[x][y] = fill_with
 
-            for dx, dy, dz in directions:
-                nx, ny, nz = x + dx, y + dy, z + dz
+            for dx, dy in directions:
+                nx, ny = x + dx, y + dy
                 if (
-                        0 <= nx < len(matrix)
-                        and 0 <= ny < len(matrix[0])
-                        and 0 <= nz < len(matrix[0][0])
-                        and matrix[nx][ny][nz] == old_value
-                        and (nx, ny, nz) not in visited
+                    (nx, ny) not in visited
+                    and 0 <= nx < len(matrix)
+                    and 0 <= ny < len(matrix[0])
+                    and matrix[nx][ny] == old_value
                 ):
-                    stack.append((nx, ny, nz))
-                    visited.add((nx, ny, nz))
+                    stack.append((nx, ny))
+                    visited.add((nx, ny))
 
-        return self.from_voxel_matrix(matrix, self.voxel_size, self.get_min_voxel_grid_center())
+        return PixelMatrix(matrix)
+
+    def _expand(self) -> "PixelMatrix":
+        current_shape = self.matrix.shape
+        new_shape = tuple(dim + 2 for dim in current_shape)
+        expanded_matrix = np.zeros(new_shape, dtype="bool")
+        slices = tuple(slice(1, -1) for _ in current_shape)
+        expanded_matrix[slices] = self.matrix.copy()
+
+        return PixelMatrix(expanded_matrix)
+
+    def _reduce(self) -> "PixelMatrix":
+        current_shape = self.matrix.shape
+        slices = tuple(slice(1, -1) for _ in current_shape)
+        reduced_matrix = self.matrix.copy()[slices]
+
+        return PixelMatrix(reduced_matrix)
+
+    def fill_outer_pixels(self) -> "PixelMatrix":
+        expanded_pixel_matrix = self._expand()
+        outer_filled_expanded_pixel_matrix = expanded_pixel_matrix.flood_fill((0, 0), True)
+        outer_filled_pixel_matrix = outer_filled_expanded_pixel_matrix._reduce()
+
+        return outer_filled_pixel_matrix
+
+    def fill_enclosed_pixels(self) -> "PixelMatrix":
+        outer_filled_pixel_matrix = self.fill_outer_pixels()
+        inner_filled_pixel_matrix = self + outer_filled_pixel_matrix.inverse()
+
+        # if inner_filled_pixel_matrix == self:
+        #     warnings.warn("This pixel matrix doesn't have any enclosed pixels.")
+
+        return inner_filled_pixel_matrix
 
 
 class OctreeNode:

@@ -203,6 +203,10 @@ class Line(Curve):
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
         return content, current_id
 
+    def reverse(self):
+        """Gets a line in the reverse direction."""
+        return self.__class__(self.point2, self.point1, name=self.name+'_reverse')
+
 
 class Line2D(Line):
     """
@@ -548,15 +552,18 @@ class Line3D(Line):
 
     @property
     def bounding_box(self):
+        """Bounding Box getter."""
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
+        """Bounding Box setter."""
         self._bbox = new_bounding_box
 
     def _bounding_box(self):
+        """Calculates the Bouding box."""
         xmin = min([self.point1[0], self.point2[0]])
         xmax = max([self.point1[0], self.point2[0]])
         ymin = min([self.point1[1], self.point2[1]])
@@ -1989,7 +1996,8 @@ class Ellipse3D(Curve):
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
 
-        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
+        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True,
+                                                                    number_points=100)
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
@@ -2006,8 +2014,8 @@ class Ellipse3D(Curve):
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
         center = object_dict[arguments[1]].origin
-        normal = object_dict[arguments[1]].w  # ancien w
-        major_dir = object_dict[arguments[1]].u  # ancien u
+        normal = object_dict[arguments[1]].u
+        major_dir = object_dict[arguments[1]].v
         major_axis = float(arguments[2]) * length_conversion_factor
         minor_axis = float(arguments[3]) * length_conversion_factor
         return cls(major_axis, minor_axis, volmdlr.Frame3D(center, major_dir, normal.cross(major_dir), normal),

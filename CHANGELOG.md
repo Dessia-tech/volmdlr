@@ -9,19 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.13.0 [future]
 
 ### New Features
-- 
+- Line: reverse.
 
 ### Fixed
 - Sweep with non smoth path
 - plot of vector3D.
+- BSplineSurface3D: point3d_to_2d, improve inital condition.
 - EdgeCollection3D: babylon_meshes.
+- BSplineCurve3D: trim
+- FullArc3D: hash
+- SphericalSurface3D: enhance repair_periodicity_method
+- CylindricalSurface3D: concurrent_plane_intersection
+- BSplineFace3D: fix neutral_fiber
+- Step: assembly import
+- BSplineFace3D: fix neutral_fiber
+- BSplineSurface3D: improve bsplinecurve3d_to_3d.
+- Circle2D: plot
+- Line3D: fix Line3D plot()
+- Vector2D: plot()
+- fix RevolutionFace3D init parameter wire to edge.
+- fix Sweep: bug when first primitive is an arc.
 
 ### Refactor
-
-- Shells: refactor. 
+- refator some classes' init in primitives3D. 
+- Shells: refactor.
+- Composite_primitives
+- Surface3D: enhance repair_primitives_periodicity method.
+- BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
 
 ### Changed
--
+- Moves functions from step.py to volmdlr.utils.step_reader
 
 ### Unittests
 -
@@ -43,9 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 - Sweep with muitiform profile contour.
-<<<<<<< HEAD
 - New module: Voxelization
-
 - minimum_distance: face-to-face, shell-to-shell
 - OpenShell3D: from_faces (using faces graph)
 - SphericalFace3D: from_contours3d_and_rectangular_cut
@@ -74,12 +89,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fullarc: get_reverse.
 - Arc2D: point_belongs
 - ArcEllipse2D: point_at_abscissa
-<<<<<<< HEAD
-- Edge: from_step trim of periodic curves with different orientation of original edge
-- Step: read_lines, take into account the space character in step entity names
-- Frame3D: import/export step.
-=======
->>>>>>> dev
 - Frame3D: import/export step.
 - BSplineFace3D: neutral_fiber.
 - Step: read_lines, take into account the space character in step entity names
@@ -90,11 +99,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: line_intersections
 - Line3D: minimum_distance_points
 - remove arcellipse handleling for bspline2d_3d.
-
-<<<<<<< HEAD
->>>>>>> dev_voxelization
-=======
->>>>>>> dev
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
@@ -240,10 +244,7 @@ All adequations have been done for all tests and existing scripts.
 - CompositePrimitive3D: babylon_points
 - WireMixin: split_with_sorted_points -> if a wire, and given points are start and end, return self directly.
 - ContourMixin: contours_from_edges
-<<<<<<< HEAD
 - Improve step translator.
-=======
->>>>>>> step_reader_renault
 - ExtrusionSurface3D: simplify bsplinecurve3d_to_2d method
 
 ### Changed

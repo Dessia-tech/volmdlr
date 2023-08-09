@@ -78,7 +78,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return hash(self.surface3d) + hash(self.surface2d)
 
     def __eq__(self, other_):
-        """Computes the equality to anoter face."""
+        """Computes the equality to another face."""
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
         equal = (self.surface3d == other_.surface3d
@@ -197,16 +197,14 @@ class Face3D(volmdlr.core.Primitive3D):
         :param contours3d: List of 3D contours representing the face's BREP.
         :param name: the name to inject in the new face
         """
-
-        lc3d = len(contours3d)
         outer_contour2d = None
         outer_contour3d, inner_contours3d = None, None
-        if lc3d == 1:
+        if len(contours3d) == 1:
             outer_contour2d = surface.contour3d_to_2d(contours3d[0])
             outer_contour3d = contours3d[0]
             inner_contours2d = []
 
-        elif lc3d > 1:
+        elif len(contours3d) > 1:
             area = -1
             inner_contours2d = []
             inner_contours3d = []
@@ -235,14 +233,11 @@ class Face3D(volmdlr.core.Primitive3D):
 
         # if outer_contour3d and not outer_contour3d.is_ordered():
         #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
-        if (not outer_contour2d) or (not outer_contour2d.primitives):
+        if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-3)):
             return None
-        surface2d = surfaces.Surface2D(outer_contour=outer_contour2d,
-                                       inner_contours=inner_contours2d)
-        face = cls(surface, surface2d=surface2d, name=name)
-        # if isinstance(face, ExtrusionFace3D):
-        #     ax = surface2d.plot()
-        #     ax.set_aspect("auto")
+        face = cls(surface,
+                   surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),
+                   name=name)
         # To improve performance while reading from step file
         # face.outer_contour3d = outer_contour3d
         # face.inner_contours3d = inner_contours3d
@@ -2701,18 +2696,16 @@ class BSplineFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        # if self.surface3d.x_periodicity or self.surface3d.y_periodicity:
-        #     resolution = 25
-        # else:
-        #     resolution = 15
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
-        # number_points_x = int(delta_u * resolution)
-        #
+        resolution_u = self.surface3d.nb_u
+        resolution_v = self.surface3d.nb_v
+        if self.surface2d.inner_contours:
+            resolution_u = max(15, resolution_u)
+            resolution_v = max(15, resolution_v)
         delta_v = v_max - v_min
-        # number_points_y = int(delta_v * resolution)
-        number_points_x = int(delta_u * self.surface3d.nb_u)
-        number_points_y = int(delta_v * self.surface3d.nb_v)
+        number_points_x = int(delta_u * resolution_u)
+        number_points_y = int(delta_v * resolution_v)
 
         return number_points_x, number_points_y
 
@@ -3121,11 +3114,11 @@ class BSplineFace3D(Face3D):
             return v_centers
         if u_radius and not v_radius:
             return u_centers
-        u_var = npy.var(u_radius)
-        v_var = npy.var(v_radius)
-        if u_var > v_var:
+        u_mean = npy.mean(u_radius)
+        v_mean = npy.mean(v_radius)
+        if u_mean > v_mean:
             return v_centers
-        if u_var < v_var:
+        if u_mean < v_mean:
             return u_centers
         return None
 
@@ -3134,20 +3127,27 @@ class BSplineFace3D(Face3D):
         Returns the faces' neutral fiber.
         """
         neutral_fiber_points = self.neutral_fiber_points()
-        is_line = True
+        is_line = False
+        neutral_fiber = None
         if not neutral_fiber_points[0].is_close(neutral_fiber_points[-1]):
             neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
             is_line = all(neutral_fiber.point_belongs(point) for point in neutral_fiber_points)
-        if len(neutral_fiber_points) == 2 or is_line:
-            neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
-        else:
+        if not is_line:
             neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
                                                                          min(self.surface3d.degree_u,
                                                                              self.surface3d.degree_v))
         umin, umax, vmin, vmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
-        point3d_min = self.surface3d.point2d_to_3d(volmdlr.Point2D(umin, vmin))
-        point3d_max = self.surface3d.point2d_to_3d(volmdlr.Point2D(umax, vmax))
-        point1 = neutral_fiber.point_projection(point3d_min)[0]
-        point2 = neutral_fiber.point_projection(point3d_max)[0]
+        min_bound_u, max_bound_u = self.surface3d.surface.domain[0]
+        min_bound_v, max_bound_v = self.surface3d.surface.domain[1]
+        if not math.isclose(umin, min_bound_u, rel_tol=0.01) or not math.isclose(vmin, min_bound_v, rel_tol=0.01):
+            point3d_min = self.surface3d.point2d_to_3d(volmdlr.Point2D(umin, vmin))
+            point1 = neutral_fiber.point_projection(point3d_min)[0]
+        else:
+            point1 = neutral_fiber.start
+        if not math.isclose(umax, max_bound_u, rel_tol=0.01) or not math.isclose(vmax, max_bound_v, rel_tol=0.01):
+            point3d_max = self.surface3d.point2d_to_3d(volmdlr.Point2D(umax, vmax))
+            point2 = neutral_fiber.point_projection(point3d_max)[0]
+        else:
+            point2 = neutral_fiber.end
         neutral_fiber = neutral_fiber.trim(point1, point2)
         return volmdlr.wires.Wire3D([neutral_fiber])
