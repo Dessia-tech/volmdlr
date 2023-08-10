@@ -4598,14 +4598,13 @@ class BSplineSurface3D(Surface3D):
         if not self._surface:
             if self.weights is None:
                 surface = BSpline.Surface()
-                points = [(self.control_points[i][0], self.control_points[i][1],
-                           self.control_points[i][2]) for i in range(len(self.control_points))]
+                points = self._control_points.tolist()
 
             else:
                 surface = NURBS.Surface()
-                points = [(self.control_points[i][0] * self.weights[i], self.control_points[i][1] * self.weights[i],
-                           self.control_points[i][2] * self.weights[i], self.weights[i])
-                          for i in range(len(self.control_points))]
+                points = [(control_point[0] * self.weights[i], control_point[1] * self.weights[i],
+                           control_point[2] * self.weights[i], self.weights[i])
+                          for i, control_point in enumerate(self.control_points)]
             surface.degree_u = self.degree_u
             surface.degree_v = self.degree_v
             surface.set_ctrlpts(points, self.nb_u, self.nb_v)
