@@ -20,6 +20,7 @@ import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
 from geomdl import NURBS, BSpline, fitting, operations, utilities
 from geomdl.operations import length_curve, split_curve
+from nurbs.core import evaluate_curve, derivatives_curve
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -817,8 +818,10 @@ class BSplineCurve(Edge):
         knot_vector = []
         for i, knot in enumerate(knots):
             knot_vector.extend([knot] * knot_multiplicities[i])
+        self.knot_vector = knot_vector
         curve.knotvector = knot_vector
         curve.delta = 0.01
+        self.delta = 0.01
         curve_points = curve.evalpts
         self.curve = curve
 
@@ -839,6 +842,28 @@ class BSplineCurve(Edge):
         dict_['weights'] = self.weights
         dict_['periodic'] = self.periodic
         return dict_
+
+    @property
+    def sample_size(self):
+        """Sample size.
+
+        Sample size defines the number of evaluated points to generate. It also sets the ``delta`` property.
+
+        The following figure illustrates the working principles of sample size property:
+
+        .. math::
+
+            \\underbrace {\\left[ {{u_{start}}, \\ldots ,{u_{end}}} \\right]}_{{n_{sample}}}
+
+        Please refer to the `wiki <https://github.com/orbingol/NURBS-Python/wiki/Using-Python-Properties>`_ for details
+        on using this class member.
+
+        :getter: Gets sample size
+        :setter: Sets sample size
+        :type: int
+        """
+        ss = math.floor((1.0 / self.delta) + 0.5)
+        return int(ss)
 
     def __hash__(self):
         """
@@ -1498,7 +1523,18 @@ class BSplineCurve(Edge):
         :rtype: Union[volmdlr.Point2D, Union[volmdlr.Point3D]
         """
         point_name = 'Point' + self.__class__.__name__[-2:]
-        return getattr(volmdlr, point_name)(*self.curve.evaluate_single(u))
+        datadict = {
+            "degree": self.degree,
+            "knotvector": self.knot_vector,
+            "control_points": [[*point] for point in self.control_points],
+            "size": len(self.control_points),
+            "sample_size": self.sample_size,
+            "rational": bool(self.weights),
+            "dimension": 3 if point_name == "Point3D" else 2,
+            "precision": 2
+        }
+        point_name = 'Point' + self.__class__.__name__[-2:]
+        return getattr(volmdlr, point_name)(*evaluate_curve(datadict, u, u))
 
     def straight_line_point_belongs(self, point):
         """
