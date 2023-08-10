@@ -4703,13 +4703,13 @@ class BSplineSurface3D(Surface3D):
         """
         # v-direction
         crvlist_v = []
-        curves = self.curves
-        v_curves = curves["v"]
+        surf_curves = self.curves
+        v_curves = surf_curves["v"]
         for curve in v_curves:
             crvlist_v.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
         # u-direction
         crvlist_u = []
-        u_curves = curves["u"]
+        u_curves = surf_curves["u"]
         for curve in u_curves:
             crvlist_u.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
 
