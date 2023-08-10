@@ -20,7 +20,7 @@ import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
 from geomdl import NURBS, BSpline, fitting, operations, utilities
 from geomdl.operations import length_curve, split_curve
-from nurbs.core import evaluate_curve, derivatives_curve
+from volmdlr.nurbs.core import evaluate_curve, derivatives_curve
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -805,13 +805,37 @@ class BSplineCurve(Edge):
         Edge.__init__(self, self.control_points[0], self.control_points[-1], name=name)
         self._simplified = None
         knot_vector = []
-        for i, knot in enumerate(knots):
-            knot_vector.extend([knot] * knot_multiplicities[i])
+        for knot, knot_mut in zip(knots, knot_multiplicities):
+            knot_vector.extend([knot] * knot_mut)
         self.knot_vector = knot_vector
         self.delta = 0.01
         self._length = None
         self._points = None
         self._curve = None
+        self._ctrlptsw = None
+        if self.weights:
+            ctrlptsw = []
+            for pt, w in zip(self.control_points, weights):
+                temp = [float(c * w) for c in pt]
+                temp.append(float(w))
+                ctrlptsw.append(temp)
+            self._ctrlptsw = ctrlptsw
+
+    def __hash__(self):
+        """
+        Return a hash value for the B-spline curve.
+        """
+        return hash((tuple(self.control_points), self.degree, tuple(self.knots)))
+
+    def __eq__(self, other):
+        """
+        Return True if the other B-spline curve has the same control points, degree, and knot vector, False otherwise.
+        """
+        if isinstance(other, self.__class__):
+            return (self.control_points == other.control_points
+                    and self.degree == other.degree
+                    and self.knots == other.knots)
+        return False
 
 
     @property
@@ -873,21 +897,31 @@ class BSplineCurve(Edge):
         ss = math.floor((1.0 / self.delta) + 0.5)
         return int(ss)
 
-    def __hash__(self):
+    def evaluate_single(self, u):
         """
-        Return a hash value for the B-spline curve.
-        """
-        return hash((tuple(self.control_points), self.degree, tuple(self.knots)))
+        Calculates a point in the BSplineCurve at a given parameter u.
 
-    def __eq__(self, other):
+        :param u: Curve parameter. Must be a value between 0 and 1.
+        :type u: float
+        :return: Corresponding point.
+        :rtype: Union[volmdlr.Point2D, Union[volmdlr.Point3D]
         """
-        Return True if the other B-spline curve has the same control points, degree, and knot vector, False otherwise.
-        """
-        if isinstance(other, self.__class__):
-            return (self.control_points == other.control_points
-                    and self.degree == other.degree
-                    and self.knots == other.knots)
-        return False
+        point_name = 'Point' + self.__class__.__name__[-2:]
+        datadict = {
+            "degree": self.degree,
+            "knotvector": self.knot_vector,
+            "size": len(self.control_points),
+            "sample_size": self.sample_size,
+            "rational": bool(self.weights),
+            "dimension": 3 if point_name == "Point3D" else 2,
+            "precision": 18
+        }
+        if self.weights:
+            datadict["control_points"] = tuple(self._ctrlptsw)
+        else:
+            datadict["control_points"] = tuple([[*point] for point in self.control_points])
+        point_name = 'Point' + self.__class__.__name__[-2:]
+        return getattr(volmdlr, point_name)(*evaluate_curve(datadict, u, u)[0])
 
     def get_reverse(self):
         """
@@ -1520,29 +1554,6 @@ class BSplineCurve(Edge):
             if arc and not arc.point_belongs(shared_section_middle_point, abs_tol=abs_tol):
                 new_arcs.append(arc)
         return new_arcs
-
-    def evaluate_single(self, u):
-        """
-        Calculates a point in the BSplineCurve at a given parameter u.
-
-        :param u: Curve parameter. Must be a value between 0 and 1.
-        :type u: float
-        :return: Corresponding point.
-        :rtype: Union[volmdlr.Point2D, Union[volmdlr.Point3D]
-        """
-        point_name = 'Point' + self.__class__.__name__[-2:]
-        datadict = {
-            "degree": self.degree,
-            "knotvector": self.knot_vector,
-            "control_points": [[*point] for point in self.control_points],
-            "size": len(self.control_points),
-            "sample_size": self.sample_size,
-            "rational": bool(self.weights),
-            "dimension": 3 if point_name == "Point3D" else 2,
-            "precision": 2
-        }
-        point_name = 'Point' + self.__class__.__name__[-2:]
-        return getattr(volmdlr, point_name)(*evaluate_curve(datadict, u, u))
 
     def straight_line_point_belongs(self, point):
         """

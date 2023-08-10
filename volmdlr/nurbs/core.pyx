@@ -20,7 +20,7 @@ from cython cimport boundscheck, wraparound
 from libcpp.vector cimport vector
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
-import helpers
+import volmdlr.nurbs.helpers as helpers
 
 
 cnp.import_array()
@@ -646,11 +646,12 @@ def evaluate_curve(dict datadict, double start: float = 0.0, double stop: float 
     if rational:
         return evaluate_curve_rational(degree, knotvector, ctrlpts, size, sample_size,
                                        dimension, precision, start, stop)
-    return evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size, dimension, precision, start, stop)
+    return evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size,
+                            dimension, precision, start, stop)
 
 
-cdef list evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts, int size, int sample_size,
-                            int dimension, int precision, double start, double stop):
+cdef list evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts, int size,
+                           int sample_size, int dimension, int precision, double start, double stop):
     """Evaluates the curve.
 
     Keyword Arguments:
@@ -662,7 +663,6 @@ cdef list evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[
     :return: evaluated points
     :rtype: list
     """
-
     # Algorithm A3.1
     cdef list knots = helpers.linspace(start, stop, sample_size, decimals=precision)
     cdef list spans = find_spans(degree, knotvector, size, knots)
@@ -718,8 +718,8 @@ def derivatives_curve(int degree, vector[double] knotvector, vector[vector[doubl
     return CK
 
 
-cdef evaluate_curve_rational(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts, int size, int sample_size,
-                            int dimension, int precision, double start, double stop):
+cdef evaluate_curve_rational(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts, int size,
+                             int sample_size, int dimension, int precision, double start, double stop):
     """Evaluates the rational curve.
 
     Keyword Arguments:
@@ -732,8 +732,8 @@ cdef evaluate_curve_rational(int degree, vector[double] knotvector, vector[vecto
     :rtype: list
     """
     # Algorithm A4.1
-    cdef list crvptw = evaluate_curve(degree, knotvector, ctrlpts, size, sample_size,
-                                      dimension, precision, start, stop)
+    cdef list crvptw = evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size,
+                                       dimension, precision, start, stop)
 
     # Divide by weight
     cdef list eval_points = []

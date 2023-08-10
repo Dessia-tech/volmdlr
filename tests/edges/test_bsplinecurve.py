@@ -12,6 +12,9 @@ from volmdlr import curves
 from volmdlr.models import bspline_curves
 
 
+GEOMDL_DELTA = 0.001
+
+
 class TestBSplineCurve2D(unittest.TestCase):
     degree = 3
     points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
@@ -22,6 +25,48 @@ class TestBSplineCurve2D(unittest.TestCase):
     bspline4, bspline5 = bspline2.split(bspline2.point_at_abscissa(0.3 * bspline2.length()))
     bspline6 = bspline1.split(bspline1.point_at_abscissa(0.7 * bspline1.length()))[0]
     bspline7 = bspline1.split(bspline1.point_at_abscissa(0.3 * bspline1.length()))[1]
+    degree = 3
+    ctrlpts = [
+        volmdlr.Point2D(5.0, 5.0),
+        volmdlr.Point2D(10.0, 10.0),
+        volmdlr.Point2D(20.0, 15.0),
+        volmdlr.Point2D(35.0, 15.0),
+        volmdlr.Point2D(45.0, 10.0),
+        volmdlr.Point2D(50.0, 5.0),
+    ]
+    knot_multiplicities = [4, 1, 1, 4]
+    knots = [0.0, 0.33, 0.66, 1.0]
+
+    bspline2d = vme.BSplineCurve2D(degree, ctrlpts, knot_multiplicities, knots)
+    weights = [0.5, 1.0, 0.75, 1.0, 0.25, 1.0]
+    bspline2d_rational = vme.BSplineCurve2D(degree, ctrlpts, knot_multiplicities, knots, weights=weights)
+
+    def test_evaluate_single(self):
+        test_cases = [
+            (0.0, (5.0, 5.0)),
+            (0.3, (18.617, 13.377)),
+            (0.5, (27.645, 14.691)),
+            (0.6, (32.143, 14.328)),
+            (1.0, (50.0, 5.0)),
+        ]
+        for param, res in test_cases:
+            with self.subTest(param=param):
+                evalpt = self.bspline2d.evaluate_single(param)
+                self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
+                self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
+
+        test_cases = [
+            (0.0, (5.0, 5.0)),
+            (0.2, (13.8181, 11.5103)),
+            (0.5, (28.1775, 14.7858)),
+            (0.95, (48.7837, 6.0022)),
+        ]
+        for param, res in test_cases:
+            with self.subTest(param=param):
+                evalpt = self.bspline2d_rational.evaluate_single(param)
+
+                self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
+                self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
 
     def test_abscissa(self):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
