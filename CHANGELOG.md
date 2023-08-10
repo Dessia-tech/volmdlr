@@ -51,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve3D: bounding_box
 - edges: minimum_distance.
 - BSplineSurface3D: bsplinecurve3d_to_2d
+- BSplineCurve: transform some attributs into lazy evaluation and Caching
+- BSplineSurface3D: transform some attributs into lazy evaluation and Caching
+- BSplineSurface3D: store control_points as numpy array for memory efficiency
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
