@@ -904,7 +904,6 @@ class Assembly(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        print('==', self.primitives)
         return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
 
     def babylon_data(self, merge_meshes=True):
@@ -1117,7 +1116,6 @@ class Compound(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        print('compound primitives', self.primitives)
         return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -2017,9 +2015,9 @@ class VolumeModel(dc.PhysicalObject):
 
         def unpack_assembly(assembly):
             for prim in assembly.primitives:
-                if primitive.__class__.__name__ in ('Assembly', "Compound"):
+                if prim.__class__.__name__ in ('Assembly', "Compound"):
                     unpack_assembly(prim)
-                elif hasattr(primitive, "faces") or hasattr(primitive, "shell_faces"):
+                elif hasattr(prim, "faces") or hasattr(prim, "shell_faces"):
                     list_shells.append(prim)
 
         for primitive in self.primitives:

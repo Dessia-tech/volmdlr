@@ -389,7 +389,6 @@ def geometric_set(arguments, object_dict):
     for argument in arguments[1]:
         sub_obj = object_dict[int(argument[1:])]
         sub_objects.append(sub_obj)
-        print('GEOMETRIC_SET', sub_obj)
     return sub_objects
 
 
@@ -533,7 +532,6 @@ def shape_representation(arguments, object_dict):
         return shells
     shells = []
     frames = []
-    print('shape_representation', arguments)
     for arg in arguments[1]:
         if int(arg[1:]) in object_dict and \
                 isinstance(object_dict[int(arg[1:])], list) and \
@@ -1489,7 +1487,6 @@ class Step(dc.DessiaObject):
         object_dict = {}
         times = {}
         self.create_connections()
-        print('step - graph created')
         root_nodes = self.root_nodes
         # ------------------------------------------------------
         # TODO: This isn't a 100% right. Each SHAPE_REPRESENTATION has its own geometric context
@@ -1505,7 +1502,6 @@ class Step(dc.DessiaObject):
         shape_representations = root_nodes["SHAPE_REPRESENTATION"]
         nodes = self.create_node_list(shape_representations)
         errors = set()
-        print('step - instanciating')
         for node in nodes:
 
             if node is None:
