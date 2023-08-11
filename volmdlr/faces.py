@@ -2648,7 +2648,7 @@ class RevolutionFace3D(Face3D):
         delta_x = xmax - xmin
         number_points_x = int(delta_x * angle_resolution)
 
-        if self.surface3d.wire.__class__.__name__ == "Line3D":
+        if self.surface3d.edge.__class__.__name__ == "Line3D":
             number_points_y = 0
         else:
             delta_y = ymax - ymin
