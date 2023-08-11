@@ -870,13 +870,11 @@ class Assembly(dc.PhysicalObject):
     _non_data_eq_attributes = ['name', 'bounding_box']
     _non_data_hash_attributes = ['name', 'bounding_box']
 
-    def __init__(self, components: List[Primitive3D], positions: List[volmdlr.Frame3D],
+    def __init__(self, primitives: List[Primitive3D],
                  frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
-        self.components = components
-        self.frame = frame
-        self.positions = positions
         self.primitives = [self.map_primitive(primitive, frame, frame_primitive)
                            for primitive, frame_primitive in zip(components, positions)]
+        self.frame = frame
         self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)
 
