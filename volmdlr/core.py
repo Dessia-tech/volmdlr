@@ -992,8 +992,8 @@ class Assembly(Compound):
 
     :param primitives: A list of volmdlr objects representing sub-shapes.
     :type primitives: List[:class:`volmdlr.core.Primitive3D`]
-    :param frame: The associated frame for the assembly. It's the frame where all the first level shape
-     of the assembly where defined. Default is volmdlr.OXYZ.
+    :param frame: The associated frame for the assembly. It's the frame where all the first level assembly's shapes
+     where defined. Default is volmdlr.OXYZ.
     :type frame: :class:`volmdlr.core.Frame3D`
     :param name: The name of the Assembly. Default is an empty string.
     :type name: str
