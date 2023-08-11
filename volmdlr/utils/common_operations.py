@@ -128,26 +128,27 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
     :param linesegment3d: Other line segment 3d.
     :return: Minimum distance points.
     """
-    def distance_squared(x, u_, v_, k_, w_):
+    def distance_squared(x, u_param, v_param, k_param, w_param):
         """Calculates the squared distance."""
-        return (u_.dot(u_) * x[0] ** 2 + w_.dot(w_) + v_.dot(v_) * (
-                (math.sin(x[1])) ** 2) * radius ** 2 + k_.dot(k_) * ((math.cos(x[1])) ** 2) * radius ** 2
-                - 2 * x[0] * w_.dot(u_) - 2 * x[0] * radius * math.sin(x[1]) * u_.dot(v_) - 2 * x[
-                    0] * radius * math.cos(x[1]) * u_.dot(k_)
-                + 2 * radius * math.sin(x[1]) * w_.dot(v_) + 2 * radius * math.cos(x[1]) * w_.dot(k)
-                + math.sin(2 * x[1]) * v_.dot(k_) * radius ** 2)
+        return (u_param.dot(u_param) * x[0] ** 2 + w_param.dot(w_param) + v_param.dot(v_param) * (
+                (math.sin(x[1])) ** 2) * radius ** 2 + k_param.dot(k_param) * ((math.cos(x[1])) ** 2) * radius ** 2
+                - 2 * x[0] * w_param.dot(u_param) - 2 * x[0] * radius * math.sin(x[1]) * u_param.dot(v_param) - 2 * x[
+                    0] * radius * math.cos(x[1]) * u_param.dot(k_param)
+                + 2 * radius * math.sin(x[1]) * w_param.dot(v_param) + 2 * radius * math.cos(x[1]) * w_param.dot(k)
+                + math.sin(2 * x[1]) * v_param.dot(k_param) * radius ** 2)
     circle_point = circle3d.point_at_abscissa(0.0)
     radius = circle3d.radius
-    u = linesegment3d.direction_vector()
-    k = circle_point - circle3d.frame.origin
-    k.normalize()
+    linseg_direction_vector = linesegment3d.direction_vector()
+    vector_point_origin = circle_point - circle3d.frame.origin
+    vector_point_origin.normalize()
     w = circle3d.frame.origin - linesegment3d.start
-    v = circle3d.frame.w.cross(k)
+    v = circle3d.frame.w.cross(vector_point_origin)
 
     results = []
     for initial_value in [np.array([0.5, circle3d.angle / 2]), np.array([0.5, 0]), np.array([0.5, circle3d.angle])]:
         results.append(least_squares(distance_squared, initial_value,
-                                     bounds=[(0, 0), (1, circle3d.angle)], args=(u, v, k, w)))
+                                     bounds=[(0, 0), (1, circle3d.angle)],
+                                     args=(linseg_direction_vector, v, vector_point_origin, w)))
 
     point1 = linesegment3d.point_at_abscissa(results[0].x[0] * linesegment3d.length())
     point2 = circle3d.point_at_abscissa(results[1].x[1] * circle3d.radius)
