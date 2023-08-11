@@ -3549,8 +3549,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             return None
         triangulate_result = triangulate(tri, tri_opt)
         triangles = triangulate_result['triangles'].tolist()
-        np = triangulate_result['vertices'].shape[0]
-        points = [vmd.Node2D(*triangulate_result['vertices'][i, :]) for i in range(np)]
+        number_points = triangulate_result['vertices'].shape[0]
+        points = [vmd.Node2D(*triangulate_result['vertices'][i, :]) for i in range(number_points)]
         return vmd.DisplayMesh2D(points, triangles=triangles)
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
