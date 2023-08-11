@@ -192,7 +192,7 @@ class Surface2D(PhysicalObject):
         discretize_line_direction = "xy"
         if number_points_y == 0 or number_points_x > 25 * number_points_y:
             discretize_line_direction = "x"
-        elif number_points_y > 25 * number_points_x:
+        elif number_points_y > 20 * number_points_x:
             discretize_line_direction = "y"
         outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
                                                       discretize_line_direction=discretize_line_direction)
@@ -918,11 +918,13 @@ class Surface3D(DessiaObject):
         primitives2d = self.primitives3d_to_2d(contour3d.primitives)
 
         wire2d = wires.Wire2D(primitives2d)
-        if self.x_periodicity:
+        if self.x_periodicity and not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[0].start)) and \
+                not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[-1].end)):
             delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
             if math.isclose(delta_x, self.x_periodicity, rel_tol=0.01) and wire2d.is_ordered(1e-3):
                 return wires.Contour2D(primitives2d)
-        if self.y_periodicity:
+        if self.y_periodicity and not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[0].start)) and \
+                not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[-1].end)):
             delta_y = abs(wire2d.primitives[0].start.y - wire2d.primitives[-1].end.y)
             if math.isclose(delta_y, self.y_periodicity, rel_tol=0.01) and wire2d.is_ordered(1e-3):
                 return wires.Contour2D(primitives2d)
@@ -2225,42 +2227,59 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
         Cylinder plane intersections when plane's normal is concurrent with the cylinder axis, but not orthogonal.
 
-        Ellipse vector equation : < r*cos(t), r*sin(t), -(1 / c)*(d + a*r*cos(t) +
-        b*r*sin(t)); d = - (ax_0 + by_0 + cz_0).
+        Heavily based on the implementation available in this link:
+        https://www.geometrictools.com/Documentation/IntersectionCylinderPlane.pdf
 
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        line = curves.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
-        center3d_plane = plane3d.line_intersections(line)[0]
-        plane_coefficient_a, plane_coefficient_b, plane_coefficient_c, plane_coefficient_d = \
-            plane3d.equation_coefficients()
-        ellipse_0 = volmdlr.Point3D(
-            self.radius * math.cos(0),
-            self.radius * math.sin(0),
-            - (1 / plane_coefficient_c) * (plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(0) +
-                                           plane_coefficient_b * self.radius * math.sin(0)))
-        ellipse_pi_by_2 = volmdlr.Point3D(
-            self.radius * math.cos(math.pi / 2),
-            self.radius * math.sin(math.pi / 2),
-            - (1 / plane_coefficient_c) * (
-                    plane_coefficient_d + plane_coefficient_a * self.radius * math.cos(math.pi / 2)
-                    + plane_coefficient_b * self.radius * math.sin(math.pi / 2)))
-        axis_1 = center3d_plane.point_distance(ellipse_0)
-        axis_2 = center3d_plane.point_distance(ellipse_pi_by_2)
-        if axis_1 > axis_2:
-            major_axis = axis_1
-            minor_axis = axis_2
-            major_dir = ellipse_0 - center3d_plane
-            u_vector = major_dir.unit_vector()
-        else:
-            major_axis = axis_2
-            minor_axis = axis_1
-            major_dir = ellipse_pi_by_2 - center3d_plane
-        u_vector = major_dir.unit_vector()
+        a_plane_vector = npy.array([[plane3d.frame.u.x],
+                                   [plane3d.frame.u.y],
+                                   [plane3d.frame.u.z]])
+        b_plane_vector = npy.array([[plane3d.frame.v.x],
+                                   [plane3d.frame.v.y],
+                                   [plane3d.frame.v.z]])
+        c_point = npy.array([[self.frame.origin.x],
+                            [self.frame.origin.y],
+                            [self.frame.origin.z]])
+        i_matrix = npy.identity(3)
+        w_vector = npy.array([[self.frame.w.x],
+                             [self.frame.w.y],
+                             [self.frame.w.z]])
+        point_on_plane = npy.array([[plane3d.frame.origin.x],
+                                   [plane3d.frame.origin.y],
+                                   [plane3d.frame.origin.z]])
+        delta = point_on_plane - c_point
+        m_matrix = i_matrix - npy.dot(w_vector, w_vector.T)
+        q_2 = npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), a_plane_vector)[0][0],
+                        npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0]],
+                       [npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0],
+                        npy.dot(npy.dot(b_plane_vector.T, m_matrix), b_plane_vector)[0][0]]])
+        q_1 = 2 * npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), delta)[0][0]],
+                           [npy.dot(npy.dot(b_plane_vector.T, m_matrix), delta)[0][0]]])
+        k_vector = - npy.dot(npy.linalg.inv(q_2), q_1)
+        q_0 = npy.dot(npy.dot(delta.T, m_matrix), delta) - self.radius ** 2
+        s_matrix = q_2 / (npy.dot(npy.dot(k_vector.T, q_2), k_vector) - q_0)
+        eigenvalues, eigenvectors = npy.linalg.eig(s_matrix)
+        k_0, k_1 = k_vector[0][0], k_vector[1][0]
+        ellipse_center = point_on_plane + k_0 * a_plane_vector + k_1 * b_plane_vector
+        ellipse_center = volmdlr.Point3D(ellipse_center[0][0], ellipse_center[1][0], ellipse_center[2][0])
+        major_dir = eigenvectors[0][0] * a_plane_vector + eigenvectors[1][0] * b_plane_vector
+        major_dir = volmdlr.Point3D(major_dir[0][0], major_dir[1][0], major_dir[2][0]).unit_vector()
+        minor_dir = eigenvectors[0][1] * a_plane_vector + eigenvectors[1][1] * b_plane_vector
+        minor_dir = volmdlr.Point3D(minor_dir[0][0], minor_dir[1][0], minor_dir[2][0]).unit_vector()
+        lineseg1 = edges.LineSegment3D(ellipse_center, ellipse_center + major_dir * 10 * self.radius)
+        lineseg2 = edges.LineSegment3D(ellipse_center, ellipse_center + minor_dir * 10 * self.radius)
+        inters_lineseg1 = self.linesegment_intersections(lineseg1)
+        inters_lineseg2 = self.linesegment_intersections(lineseg2)
+        major_axis = ellipse_center.point_distance(inters_lineseg1[0])
+        minor_axis = ellipse_center.point_distance(inters_lineseg2[0])
+        if minor_axis > major_axis:
+            major_axis, minor_axis = minor_axis, major_axis
+            major_dir, minor_dir = minor_dir, major_dir
         ellipse = curves.Ellipse3D(major_axis, minor_axis,
-                                   volmdlr.Frame3D(center3d_plane, u_vector,
-                                                         plane3d.frame.w.cross(u_vector), plane3d.frame.w))
+                                   volmdlr.Frame3D(ellipse_center, major_dir,
+                                                   minor_dir, plane3d.frame.w))
         return [ellipse]
 
     def plane_intersection(self, plane3d):
@@ -2498,15 +2517,12 @@ class ToroidalSurface3D(PeriodicalSurface):
                 frame = volmdlr.Frame3D(center, self.frame.u, self.frame.v, self.frame.w)
             start3d = self.point2d_to_3d(linesegment2d.start)
             circle = curves.Circle3D(frame, start3d.point_distance(center))
-            start3d = self.point2d_to_3d(linesegment2d.start)
             if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-4):
                 start_end = center + self.frame.u * (self.small_radius + self.tore_radius)
                 return [edges.FullArc3D(circle=circle, start_end=start_end)]
             return [edges.Arc3D(circle, start3d, self.point2d_to_3d(linesegment2d.end))]
-        n = 10
-        degree = 3
-        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, degree).simplify]
+        points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=10)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree=3).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -2799,7 +2815,7 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         content, frame_id = self.frame.to_step(current_id)
         current_id = frame_id + 1
-        content += f"#{current_id} = CONICAL_SURFACE('{self.name}',#{frame_id},{0.},{round(self.semi_angle, 4)});\n"
+        content += f"#{current_id} = CONICAL_SURFACE('{self.name}',#{frame_id},{0.},{self.semi_angle});\n"
         return content, [current_id]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -3961,7 +3977,8 @@ class ExtrusionSurface3D(Surface3D):
         v = z
         point_at_curve_local = volmdlr.Point3D(x, y, 0)
         point_at_curve_global = self.frame.local_to_global_coordinates(point_at_curve_local)
-        u = self.edge.abscissa(point_at_curve_global) / self.edge.length()
+
+        u = self.edge.abscissa(point_at_curve_global, tol=1e-3) / self.edge.length()
         u = min(u, 1.0)
         return volmdlr.Point2D(u, v)
 
@@ -4024,6 +4041,8 @@ class ExtrusionSurface3D(Surface3D):
         # todo: needs detailed investigation
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
+        if self.x_periodicity:
+            start, end = self._verify_start_end_parametric_points(start, end, arc3d)
         return [edges.LineSegment2D(start, end, name="arc")]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
@@ -4037,7 +4056,10 @@ class ExtrusionSurface3D(Surface3D):
             return [edges.LineSegment2D(start2d, end2d)]
         points = [self.point3d_to_2d(p)
                   for p in arcellipse3d.discretization_points(number_points=15)]
-
+        if self.x_periodicity:
+            start, end = self._verify_start_end_parametric_points(points[0], points[-1], arcellipse3d)
+            points[0] = start
+            points[-1] = end
         bsplinecurve2d = edges.BSplineCurve2D.from_points_interpolation(points, degree=2)
         return [bsplinecurve2d]
 
@@ -4105,6 +4127,10 @@ class ExtrusionSurface3D(Surface3D):
         n = len(bspline_curve3d.control_points)
         points = [self.point3d_to_2d(point)
                   for point in bspline_curve3d.discretization_points(number_points=n)]
+        if self.x_periodicity:
+            start, end = self._verify_start_end_parametric_points(points[0], points[-1], bspline_curve3d)
+            points[0] = start
+            points[-1] = end
         return [edges.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree).simplify]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -4120,13 +4146,43 @@ class ExtrusionSurface3D(Surface3D):
         new_edge = self.edge.frame_mapping(frame, side)
         return ExtrusionSurface3D(new_edge, direction, name=self.name)
 
+    def _verify_start_end_parametric_points(self, start, end, edge3d):
+        """
+        When the generatrix of the surface is periodic we need to verify if the u parameter should be 0 or 1.
+        """
+        start_ref1 = self.point3d_to_2d(edge3d.point_at_abscissa(0.01 * edge3d.length()))
+        start_ref2 = self.point3d_to_2d(edge3d.point_at_abscissa(0.02 * edge3d.length()))
+        end_ref1 = self.point3d_to_2d(edge3d.point_at_abscissa(0.99 * edge3d.length()))
+        end_ref2 = self.point3d_to_2d(edge3d.point_at_abscissa(0.98 * edge3d.length()))
+        if math.isclose(start.x, self.x_periodicity, abs_tol=1e-4):
+            vec1 = start_ref1 - start
+            vec2 = start_ref2 - start_ref1
+            if vec2.dot(vec1) < 0:
+                start.x = 0
+        if math.isclose(end.x, self.x_periodicity, abs_tol=1e-4):
+            vec1 = end - end_ref1
+            vec2 = end_ref1 - end_ref2
+            if vec2.dot(vec1) < 0:
+                end.x = 0
+        if math.isclose(start.x, 0, abs_tol=1e-4):
+            vec1 = start_ref1 - start
+            vec2 = start_ref2 - start_ref1
+            if vec2.dot(vec1) < 0:
+                start.x = self.x_periodicity
+        if math.isclose(end.x, 0, abs_tol=1e-4):
+            vec1 = end - end_ref1
+            vec2 = end_ref1 - end_ref2
+            if vec2.dot(vec1) < 0:
+                end.x = self.x_periodicity
+        return start, end
+
 
 class RevolutionSurface3D(PeriodicalSurface):
     """
     Defines a surface of revolution.
 
-    :param wire: Wire.
-    :type wire: Union[:class:`vmw.Wire3D`, :class:`vmw.Contour3D`]
+    :param edge: Edge.
+    :type edge: edges.Edge
     :param axis_point: Axis placement
     :type axis_point: :class:`volmdlr.Point3D`
     :param axis: Axis of revolution
@@ -4136,21 +4192,21 @@ class RevolutionSurface3D(PeriodicalSurface):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = None
 
-    def __init__(self, wire: Union[wires.Wire3D, wires.Contour3D],
+    def __init__(self, edge,
                  axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D, name: str = ''):
-        self.wire = wire
+        self.edge = edge
         self.axis_point = axis_point
         self.axis = axis
 
-        point1 = wire.point_at_abscissa(0)
+        point1 = edge.point_at_abscissa(0)
         vector1 = point1 - axis_point
         w_vector = axis
         w_vector = w_vector.unit_vector()
         if point1.is_close(axis_point) or w_vector.is_colinear_to(vector1):
-            if wire.__class__.__name__ != "Line3D":
-                point1 = wire.point_at_abscissa(0.5 * wire.length())
+            if edge.__class__.__name__ != "Line3D":
+                point1 = edge.point_at_abscissa(0.5 * edge.length())
             else:
-                point1 = wire.point_at_abscissa(0.05)
+                point1 = edge.point_at_abscissa(0.05)
             vector1 = point1 - axis_point
         u_vector = vector1 - vector1.vector_projection(w_vector)
         u_vector = u_vector.unit_vector()
@@ -4166,7 +4222,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         u = [0, 2pi] and v = [0, 1] into a
         """
         u, v = point2d
-        point_at_curve = self.wire.point_at_abscissa(v)
+        point_at_curve = self.edge.point_at_abscissa(v)
         point = point_at_curve.rotation(self.axis_point, self.axis, u)
         return point
 
@@ -4182,7 +4238,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         u = math.atan2(y, x)
 
         point_at_curve = point3d.rotation(self.axis_point, self.axis, -u)
-        v = self.wire.abscissa(point_at_curve)
+        v = self.edge.abscissa(point_at_curve)
         return volmdlr.Point2D(u, v)
 
     def rectangular_cut(self, x1: float, x2: float,
@@ -4202,7 +4258,7 @@ class RevolutionSurface3D(PeriodicalSurface):
             ax = fig.add_subplot(111, projection='3d')
         for i in range(number_curves + 1):
             theta = i / number_curves * volmdlr.TWO_PI
-            wire = self.wire.rotation(self.axis_point, self.axis, theta)
+            wire = self.edge.rotation(self.axis_point, self.axis, theta)
             wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
 
         return ax
@@ -4222,14 +4278,14 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         y_periodicity = None
         name = arguments[0][1:-1]
-        wire = object_dict[arguments[1]]
-        if wire.__class__ is curves.Circle3D:
-            start_end = wire.center + wire.frame.u * wire.radius
-            wire = edges.FullArc3D(wire, start_end, wire.name)
-            y_periodicity = wire.length()
+        edge = object_dict[arguments[1]]
+        if edge.__class__ is curves.Circle3D:
+            start_end = edge.center + edge.frame.u * edge.radius
+            edge = edges.FullArc3D(edge, start_end, edge.name)
+            y_periodicity = edge.length()
 
         axis_point, axis = object_dict[arguments[2]]
-        surface = cls(wire=wire, axis_point=axis_point, axis=axis, name=name)
+        surface = cls(edge=edge, axis_point=axis_point, axis=axis, name=name)
         surface.y_periodicity = y_periodicity
         return surface.simplify()
 
@@ -4237,7 +4293,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         Translate volmdlr primitive to step syntax.
         """
-        content_wire, wire_id = self.wire.to_step(current_id)
+        content_wire, wire_id = self.edge.to_step(current_id)
         current_id = wire_id + 1
         content_axis_point, axis_point_id = self.axis_point.to_step(current_id)
         current_id = axis_point_id + 1
@@ -4255,14 +4311,14 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        if self.wire.__class__.__name__ != "Line3D" and hasattr(self.wire.simplify, "circle") and\
-                math.isclose(self.wire.simplify.circle.radius, arc3d.circle.radius, rel_tol=0.01):
-            if self.wire.is_point_edge_extremity(arc3d.start):
+        if self.edge.__class__.__name__ != "Line3D" and hasattr(self.edge.simplify, "circle") and\
+                math.isclose(self.edge.simplify.circle.radius, arc3d.circle.radius, rel_tol=0.01):
+            if self.edge.is_point_edge_extremity(arc3d.start):
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
                 if middle_point.x == math.pi:
                     middle_point.x = -math.pi
                 start = volmdlr.Point2D(middle_point.x, start.y)
-            if self.wire.is_point_edge_extremity(arc3d.end):
+            if self.edge.is_point_edge_extremity(arc3d.end):
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
                 if middle_point.x == math.pi:
                     middle_point.x = -math.pi
@@ -4345,17 +4401,17 @@ class RevolutionSurface3D(PeriodicalSurface):
         theta1, abscissa1 = linesegment2d.start
         theta2, abscissa2 = linesegment2d.end
 
-        if self.wire.point_at_abscissa(abscissa1).is_close(self.wire.point_at_abscissa(abscissa2)):
+        if self.edge.point_at_abscissa(abscissa1).is_close(self.edge.point_at_abscissa(abscissa2)):
             theta_i = 0.5 * (theta1 + theta2)
             interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
             return [edges.Arc3D.from_3_points(start3d, interior, end3d)]
 
         if math.isclose(theta1, theta2, abs_tol=1e-3):
-            primitive = self.wire.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
+            primitive = self.edge.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if isinstance(self.wire, curves.Line3D):
+                if isinstance(self.edge, curves.Line3D):
                     return [edges.LineSegment3D(start3d, end3d)]
-                if self.wire.is_point_edge_extremity(start3d) and self.wire.is_point_edge_extremity(end3d):
+                if self.edge.is_point_edge_extremity(start3d) and self.wire.is_point_edge_extremity(end3d):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
                         return [primitive]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
@@ -4378,21 +4434,45 @@ class RevolutionSurface3D(PeriodicalSurface):
         new_frame = self.frame.frame_mapping(frame, side)
         axis = new_frame.w
         axis_point = new_frame.origin
-        new_wire = self.wire.frame_mapping(frame, side)
-        return RevolutionSurface3D(new_wire, axis_point, axis, name=self.name)
+        new_edge = self.edge.frame_mapping(frame, side)
+        return RevolutionSurface3D(new_edge, axis_point, axis, name=self.name)
+
+    def translation(self, offset):
+        """
+        Returns a new translated Revolution Surface.
+
+        :param offset: translation vector.
+        """
+        new_edge = self.edge.translation(offset)
+        new_axis_point = self.axis_point.translation(offset)
+        return RevolutionSurface3D(new_edge, new_axis_point, self.axis)
+
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
+        """
+        Revolution Surface 3D rotation.
+
+        :param center: rotation center
+        :param axis: rotation axis
+        :param angle: angle rotation
+        :return: a new rotated Revolution Surface 3D
+        """
+        new_edge = self.edge.rotation(center, axis, angle)
+        new_axis_point = self.axis_point.rotation(center, axis, angle)
+        new_axis = self.axis.rotation(center, axis, angle)
+        return RevolutionSurface3D(new_edge, new_axis_point, new_axis)
 
     def simplify(self):
         line3d = curves.Line3D(self.axis_point, self.axis_point + self.axis)
-        if isinstance(self.wire, edges.Arc3D):
-            tore_center, _ = line3d.point_projection(self.wire.center)
+        if isinstance(self.edge, edges.Arc3D):
+            tore_center, _ = line3d.point_projection(self.edge.center)
             # Sphere
-            if math.isclose(tore_center.point_distance(self.wire.center), 0., abs_tol=1e-6):
-                return SphericalSurface3D(self.frame, self.wire.circle.radius, self.name)
-        if isinstance(self.wire, (edges.LineSegment3D, curves.Line3D)):
-            if isinstance(self.wire, edges.LineSegment3D):
-                generatrix_line = self.wire.line
+            if math.isclose(tore_center.point_distance(self.edge.center), 0., abs_tol=1e-6):
+                return SphericalSurface3D(self.frame, self.edge.circle.radius, self.name)
+        if isinstance(self.edge, (edges.LineSegment3D, curves.Line3D)):
+            if isinstance(self.edge, edges.LineSegment3D):
+                generatrix_line = self.edge.line
             else:
-                generatrix_line = self.wire
+                generatrix_line = self.edge
             intersections = line3d.intersection(generatrix_line)
             if intersections:
                 generatrix_line_direction = generatrix_line.unit_direction_vector()
@@ -4409,15 +4489,15 @@ class RevolutionSurface3D(PeriodicalSurface):
                 return ConicalSurface3D(new_frame, semi_angle, self.name)
             generatrix_line_direction = generatrix_line.unit_direction_vector()
             if self.axis.is_colinear_to(generatrix_line_direction):
-                radius = self.wire.point_distance(self.axis_point)
+                radius = self.edge.point_distance(self.axis_point)
                 return CylindricalSurface3D(self.frame, radius, self.name)
         return self
 
     def is_singularity_point(self, point):
         """Verifies if point is on the surface singularity."""
-        if self.wire.__class__.__name__ == "Line3D":
+        if self.edge.__class__.__name__ == "Line3D":
             return False
-        return self.wire.is_point_edge_extremity(point)
+        return self.edge.is_point_edge_extremity(point)
 
 
 class BSplineSurface3D(Surface3D):
@@ -4532,12 +4612,11 @@ class BSplineSurface3D(Surface3D):
         Evaluates the periodicity of the surface in u direction.
         """
         if self._x_periodicity is False:
-            u = self.curves['u']
             a, b = self.surface.domain[0]
-            u0 = u[0]
-            point_at_a = u0.evaluate_single(a)
-            point_at_b = u0.evaluate_single(b)
-            if npy.linalg.norm(npy.array(point_at_b) - npy.array(point_at_a)) < 1e-6:
+            c, d = self.surface.domain[1]
+            point_at_a = self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (d - c)))
+            point_at_b = self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (d - c)))
+            if point_at_b.is_close(point_at_a) or self.u_closed():
                 self._x_periodicity = b - a
             else:
                 self._x_periodicity = None
@@ -4549,12 +4628,11 @@ class BSplineSurface3D(Surface3D):
         Evaluates the periodicity of the surface in v direction.
         """
         if self._y_periodicity is False:
-            v = self.curves['v']
+            a, b = self.surface.domain[0]
             c, d = self.surface.domain[1]
-            v0 = v[0]
-            point_at_c = v0.evaluate_single(c)
-            point_at_d = v0.evaluate_single(d)
-            if npy.linalg.norm(npy.array(point_at_d) - npy.array(point_at_c)) < 1e-6:
+            point_at_c = self.point2d_to_3d(volmdlr.Point2D(0.5 * (b - a), c))
+            point_at_d = self.point2d_to_3d(volmdlr.Point2D(0.5 * (b - a), d))
+            if point_at_d.is_close(point_at_c) or self.v_closed():
                 self._y_periodicity = d - c
             else:
                 self._y_periodicity = None
@@ -4761,14 +4839,14 @@ class BSplineSurface3D(Surface3D):
         :rtype: :class:`volmdlr.Point2D`
         """
 
-        def f(x):
+        def sort_func(x):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
 
         def fun(x):
             derivatives = self.derivatives(x[0], x[1], 1)
-            r = derivatives[0][0] - point3d
-            f_value = r.norm() + 1e-32
-            jacobian = npy.array([r.dot(derivatives[1][0]) / f_value, r.dot(derivatives[0][1]) / f_value])
+            vector = derivatives[0][0] - point3d
+            f_value = vector.norm() + 1e-32
+            jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value, vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
 
         min_bound_x, max_bound_x = self.surface.domain[0]
@@ -4790,7 +4868,7 @@ class BSplineSurface3D(Surface3D):
                (0.33333333, 0.009), (0.5555555, 0.0099)]
 
             # Sort the initial conditions
-        x0s.sort(key=f)
+        x0s.sort(key=sort_func)
         matrix = npy.array(self.surface.evalpts)
         point3d_array = npy.array([point3d[0], point3d[1], point3d[2]])
 
@@ -4910,151 +4988,75 @@ class BSplineSurface3D(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        # TODO: enhance this, it is a non exact method!
-        # TODO: bsplinecurve can be periodic but not around the bsplinesurface
-        flag = False
-        if not bspline_curve3d.points[0].is_close(bspline_curve3d.points[-1]):
-            bsc_linesegment = edges.LineSegment3D(bspline_curve3d.points[0],
-                                                  bspline_curve3d.points[-1])
-            flag = True
-            for point in bspline_curve3d.points:
-                if not bsc_linesegment.point_belongs(point):
-                    flag = False
-                    break
+        lth = bspline_curve3d.length()
 
-        if self.x_periodicity and not self.y_periodicity \
-                and bspline_curve3d.periodic:
-            point1 = self.point3d_to_2d(bspline_curve3d.points[0])
-            p1_sup = self.point3d_to_2d(bspline_curve3d.points[0])
-            new_x = point1.x - p1_sup.x + self.x_periodicity
-            new_x = new_x if 0 <= new_x else 0
-            reverse = False
-            if new_x < 0:
-                new_x = 0
-            elif math.isclose(new_x, self.x_periodicity, abs_tol=1e-5):
-                new_x = 0
-                reverse = True
+        if lth <= 1e-6:
+            print('BSplineCurve3D skipped because it is too small')
+            return []
 
-            linesegments = [
-                edges.LineSegment2D(
-                    volmdlr.Point2D(new_x, point1.y),
-                    volmdlr.Point2D(self.x_periodicity, point1.y))]
-            if reverse:
-                linesegments[0] = linesegments[0].reverse()
+        n = min(len(bspline_curve3d.control_points), 20)  # Limit points to avoid non-convergence
+        points3d = bspline_curve3d.discretization_points(number_points=n)
+        points = [self.point3d_to_2d(p) for p in points3d]
 
-        elif self.y_periodicity and not self.x_periodicity \
-                and bspline_curve3d.periodic:
-            point1 = self.point3d_to_2d(bspline_curve3d.points[0])
-            p1_sup = self.point3d_to_2d(bspline_curve3d.points[0])
-            new_y = point1.y - p1_sup.y + self.y_periodicity
-            new_y = new_y if 0 <= new_y else 0
-            reverse = False
-            if new_y < 0:
-                new_y = 0
-            elif math.isclose(new_y, self.y_periodicity, abs_tol=1e-5):
-                new_y = 0
-                reverse = True
+        if self.u_closed() or self.v_closed():
+            points = self.check_start_end_parametric_points(bspline_curve3d, points, points3d)
 
-            linesegments = [
-                edges.LineSegment2D(
-                    volmdlr.Point2D(point1.x, new_y),
-                    volmdlr.Point2D(point1.x, self.y_periodicity))]
-            if reverse:
-                linesegments[0] = linesegments[0].reverse()
+        if self.x_periodicity:
+            points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
+            if bspline_curve3d.periodic:
+                points = self._handle_periodic_curve(bspline_curve3d.curve.domain, points, 'x')
 
-        elif self.x_periodicity and self.y_periodicity \
-                and bspline_curve3d.periodic:
-            raise NotImplementedError
+        if self.y_periodicity:
+            points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
+            if bspline_curve3d.periodic:
+                points = self._handle_periodic_curve(bspline_curve3d.curve.domain, points, 'y')
 
-        if flag:
-            x_perio = self.x_periodicity if self.x_periodicity is not None \
-                else 1.
-            y_perio = self.y_periodicity if self.y_periodicity is not None \
-                else 1.
+        if self._is_line_segment(points):
+            return [edges.LineSegment2D(points[0], points[-1])]
 
-            point1 = self.point3d_to_2d(bspline_curve3d.points[0])
-            point2 = self.point3d_to_2d(bspline_curve3d.points[-1])
+        return [edges.BSplineCurve2D.from_points_interpolation(points=points, degree=bspline_curve3d.degree)]
 
-            if point1.is_close(point2):
-                print('BSplineCruve3D skipped because it is too small')
-                linesegments = None
+    @staticmethod
+    def _handle_periodic_curve(curve_domain, points, axis):
+        """Helper function to check the consistency of 2D parameters of the 3D discretization points of an edge."""
+        u_min, u_max = curve_domain
+        start_param = points[0].x if axis == 'x' else points[0].y
+        param_after_start = points[1].x if axis == 'x' else points[1].y
+        should_be_umax = (u_max - param_after_start) < (param_after_start - u_min)
+        if math.isclose(start_param, u_min, abs_tol=1e-6):
+            if axis == 'x':
+                if should_be_umax:
+                    points[0] = volmdlr.Point2D(u_max, points[0].y)
+                else:
+                    points[-1] = volmdlr.Point2D(u_max, points[-1].y)
             else:
-                p1_sup = self.point3d_to_2d(bspline_curve3d.points[0])
-                p2_sup = self.point3d_to_2d(bspline_curve3d.points[-1])
-                if self.x_periodicity and point1.point_distance(p1_sup) > 1e-5:
-                    point1.x -= p1_sup.x - x_perio
-                    point2.x -= p2_sup.x - x_perio
-                if self.y_periodicity and point1.point_distance(p1_sup) > 1e-5:
-                    point1.y -= p1_sup.y - y_perio
-                    point2.y -= p2_sup.y - y_perio
-                linesegments = [edges.LineSegment2D(point1, point2)]
-            # How to check if end of surface overlaps start or the opposite ?
-        else:
-            lth = bspline_curve3d.length()
-            if lth > 1e-5:
-                n = min(len(bspline_curve3d.control_points), 20) # limit points to avoid non convergence
-                points = [self.point3d_to_2d(p) for p in bspline_curve3d.discretization_points(number_points=n)]
-
-                if self.x_periodicity:
-                    points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
-                    if bspline_curve3d.periodic and points[0].is_close(points[-1]):
-                        u_min, u_max = bspline_curve3d.curve.domain
-                        if math.isclose(points[0].x, u_min, abs_tol=1e-6):
-                            should_be_umax = (u_max - points[1].x) < (points[1].x - u_min)
-                            if should_be_umax:
-                                points[0] = volmdlr.Point2D(u_max, points[0].y)
-                            else:
-                                points[-1] = volmdlr.Point2D(u_max, points[-1].y)
-                        elif math.isclose(points[0].x, u_max, abs_tol=1e-6):
-                            should_be_umin = (u_max - points[1].x) > (points[1].x - u_min)
-                            if should_be_umin:
-                                points[0] = volmdlr.Point2D(u_min, points[0].y)
-                            else:
-                                points[-1] = volmdlr.Point2D(u_min, points[-1].y)
-                if self.y_periodicity:
-                    points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
-                    if bspline_curve3d.periodic and points[0].is_close(points[-1]):
-                        u_min, u_max = bspline_curve3d.curve.domain
-                        if math.isclose(points[0].y, u_min, abs_tol=1e-6):
-                            should_be_umax = (u_max - points[1].y) < (points[1].y - u_min)
-                            if should_be_umax:
-                                points[0] = volmdlr.Point2D(points[0].x, u_max)
-                            else:
-                                points[-1] = volmdlr.Point2D(points[-1].x, u_max)
-                        elif math.isclose(points[0].y, u_max, abs_tol=1e-6):
-                            should_be_umin = (u_max - points[1].y) > (points[1].y - u_min)
-                            if should_be_umin:
-                                points[0] = volmdlr.Point2D(points[0].x, u_min)
-                            else:
-                                points[-1] = volmdlr.Point2D(points[-1].x, u_min)
-
-                if not points[0].is_close(points[-1]) and not bspline_curve3d.periodic:
-                    linesegment = edges.LineSegment2D(points[0], points[-1])
-                    flag_line = True
-                    for point in points:
-                        if not linesegment.point_belongs(point, abs_tol=1e-4):
-                            flag_line = False
-                            break
-                    if flag_line:
-                        return [linesegment]
-
-                # if self.x_periodicity:
-                #     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
-                #
-                # if self.y_periodicity:
-                #     points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
-
-                return [edges.BSplineCurve2D.from_points_interpolation(points=points, degree=bspline_curve3d.degree)]
-
-            if 1e-6 < lth <= 1e-5:
-                linesegments = [edges.LineSegment2D(
-                    self.point3d_to_2d(bspline_curve3d.start),
-                    self.point3d_to_2d(bspline_curve3d.end))]
+                if should_be_umax:
+                    points[0] = volmdlr.Point2D(points[0].x, u_max)
+                else:
+                    points[-1] = volmdlr.Point2D(points[-1].x, u_max)
+        elif math.isclose(start_param, u_max, abs_tol=1e-6):
+            should_be_umin = (u_max - param_after_start) > (param_after_start - u_min)
+            if axis == 'x':
+                if should_be_umin:
+                    points[0] = volmdlr.Point2D(u_min, points[0].y)
+                else:
+                    points[-1] = volmdlr.Point2D(u_min, points[-1].y)
             else:
-                print('BSplineCruve3D skipped because it is too small')
-                linesegments = None
+                if should_be_umin:
+                    points[0] = volmdlr.Point2D(points[0].x, u_min)
+                else:
+                    points[-1] = volmdlr.Point2D(points[-1].x, u_min)
+        return points
 
-        return linesegments
+    @staticmethod
+    def _is_line_segment(points):
+        """Helper function to check if the BREP can be a line segment."""
+        linesegment = edges.LineSegment2D(points[0], points[-1])
+        for point in points:
+            if not linesegment.point_belongs(point, abs_tol=1e-4):
+                return False
+        return True
+
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -5064,7 +5066,11 @@ class BSplineSurface3D(Surface3D):
             start = self.point2d_to_3d(bspline_curve2d.start)
             interior = self.point2d_to_3d(bspline_curve2d.evaluate_single(0.5))
             end = self.point2d_to_3d(bspline_curve2d.end)
-            return [edges.Arc3D.from_3_points(start, interior, end)]
+            vector_u1 = interior - start
+            vector_u2 = interior - end
+            dot_product = vector_u2.dot(vector_u1)
+            if dot_product and abs(dot_product) != 1.0:
+                return [edges.Arc3D.from_3_points(start, interior, end)]
 
         number_points = len(bspline_curve2d.control_points)
         points = []
@@ -5297,20 +5303,7 @@ class BSplineSurface3D(Surface3D):
             nb_v = len(points)
             control_points.extend(points)
         nb_u = int(len(control_points) / nb_v)
-        # surface_form = arguments[4]
-        # if arguments[5] == '.F.':
-        #     u_closed = False
-        # elif arguments[5] == '.T.':
-        #     u_closed = True
-        # else:
-        #     raise ValueError
-        # if arguments[6] == '.F.':
-        #     v_closed = False
-        # elif arguments[6] == '.T.':
-        #     v_closed = True
-        # else:
-        #     raise ValueError
-        # self_intersect = arguments[7]
+
         u_multiplicities = [int(i) for i in arguments[8][1:-1].split(",")]
         v_multiplicities = [int(i) for i in arguments[9][1:-1].split(",")]
         u_knots = [float(i) for i in arguments[10][1:-1].split(",")]
@@ -5330,10 +5323,7 @@ class BSplineSurface3D(Surface3D):
                              v_knots, weight_data, name)
         if not bsplinesurface.x_periodicity and not bsplinesurface.y_periodicity:
             bsplinesurface = bsplinesurface.simplify_surface()
-        # if u_closed:
-        #     bsplinesurface.x_periodicity = bsplinesurface.get_x_periodicity()
-        # if v_closed:
-        #     bsplinesurface.y_periodicity = bsplinesurface.get_y_periodicity()
+
         return bsplinesurface
 
     def to_step(self, current_id):
@@ -6666,7 +6656,7 @@ class BSplineSurface3D(Surface3D):
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
                     inner_contour.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
-                new_outer_contour.order_contour(tol=1e-4)
+                new_outer_contour.order_contour(tol=1e-3)
             else:
                 new_inner_contours.append(inner_contour)
         return new_outer_contour, new_inner_contours
@@ -6724,15 +6714,170 @@ class BSplineSurface3D(Surface3D):
                                           points[2])
         return surface3d
 
+    def u_closed_lower(self):
+        """
+        Returns True if the surface is close in any of the u boundaries.
+        """
+        a, b = self.surface.domain[0]
+        c, _ = self.surface.domain[1]
+        point_at_a_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
+        point_at_b_lower = self.point2d_to_3d(volmdlr.Point2D(b, c))
+        if point_at_b_lower.is_close(point_at_a_lower):
+            return True
+        return False
+
+    def u_closed_upper(self):
+        """
+        Returns True if the surface is close in any of the u boundaries.
+        """
+        a, b = self.surface.domain[0]
+        _, d = self.surface.domain[1]
+        point_at_a_upper = self.point2d_to_3d(volmdlr.Point2D(a, d))
+        point_at_b_upper = self.point2d_to_3d(volmdlr.Point2D(b, d))
+        if point_at_b_upper.is_close(point_at_a_upper):
+            return True
+        return False
+
+    def v_closed_lower(self):
+        """
+        Returns True if the surface is close in any of the u boundaries.
+        """
+        a, _ = self.surface.domain[0]
+        c, d = self.surface.domain[1]
+        point_at_c_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
+        point_at_d_lower = self.point2d_to_3d(volmdlr.Point2D(a, d))
+        if point_at_d_lower.is_close(point_at_c_lower):
+            return True
+        return False
+
+    def v_closed_upper(self):
+        """
+        Returns True if the surface is close in any of the u boundaries.
+        """
+        _, b = self.surface.domain[0]
+        c, d = self.surface.domain[1]
+        point_at_c_upper = self.point2d_to_3d(volmdlr.Point2D(b, c))
+        point_at_d_upper = self.point2d_to_3d(volmdlr.Point2D(b, d))
+        if point_at_d_upper.is_close(point_at_c_upper):
+            return True
+        return False
+
+    def u_closed(self):
+        """
+        Returns True if the surface is close in any of the u boundaries.
+        """
+        return bool(self.u_closed_lower() or self.u_closed_upper())
+
+    def v_closed(self):
+        """
+        Returns True if the surface is close in any of the u boundaries.
+        """
+        return bool(self.v_closed_lower() or self.v_closed_upper())
+
     def is_singularity_point(self, point, *args):
         """Returns True if the point belongs to the surface singularity and False otherwise."""
-        if not self.x_periodicity and not self.y_periodicity:
+        if not self.u_closed() and not self.v_closed():
             return False
         u_min, u_max = self.surface.domain[0]
         v_min, v_max = self.surface.domain[1]
-        test_points = [self.point2d_to_3d(volmdlr.Point2D(u_min, v_min)),
-                       self.point2d_to_3d(volmdlr.Point2D(u_max, v_max))]
-        return any(point.is_close(test_point) for test_point in test_points)
+        delta_u = u_max - u_min
+        delta_v = v_max - v_min
+
+        test_u_lower = [self.point2d_to_3d(volmdlr.Point2D(u_min, v_min)),
+                        self.point2d_to_3d(volmdlr.Point2D(0.5 * delta_u, v_min))]
+        test_u_upper = [self.point2d_to_3d(volmdlr.Point2D(u_min, v_max)),
+                        self.point2d_to_3d(volmdlr.Point2D(0.5 * delta_u, v_max))]
+        test_v_lower = [self.point2d_to_3d(volmdlr.Point2D(u_min, v_min)),
+                        self.point2d_to_3d(volmdlr.Point2D(u_min, 0.5 * delta_v))]
+        test_v_upper = [self.point2d_to_3d(volmdlr.Point2D(u_max, v_min)),
+                        self.point2d_to_3d(volmdlr.Point2D(u_max, 0.5 * delta_v))]
+        if all(test_point.is_close(point) for test_point in test_u_lower) and self.u_closed_lower():
+            return True
+        if all(test_point.is_close(point) for test_point in test_u_upper) and self.u_closed_upper():
+            return True
+        if all(test_point.is_close(point) for test_point in test_v_lower) and self.v_closed_lower():
+            return True
+        if all(test_point.is_close(point) for test_point in test_v_upper) and self.v_closed_upper():
+            return True
+        return False
+
+    def check_start_end_parametric_points(self, edge3d, points, points3d):
+        """
+        Helper function.
+
+        Uses local discretization and line intersection with the tangent line at the point just before the undefined
+        point on the BREP of the 3D edge to find the real values on parametric domain.
+        """
+        def get_local_discretization_points(start_point, end_points):
+            distance = start_point.point_distance(end_points)
+            maximum_linear_distance_reference_point = 1e-5
+            if distance < maximum_linear_distance_reference_point:
+                return []
+            number_points = max(int(distance / maximum_linear_distance_reference_point), 2)
+
+            local_discretization = [self.point3d_to_2d(point)
+                                    for point in edge3d.local_discretization(
+                    start_point, end_points, number_points)]
+            return local_discretization
+
+        def get_singularity_line(a, b, c, d, test_point):
+            lines = []
+            if self.u_closed():
+                if self.u_closed_lower():
+                    lines.append(curves.Line2D(volmdlr.Point2D(a, c), volmdlr.Point2D(b, c)))
+                if self.u_closed_upper():
+                    lines.append(curves.Line2D(volmdlr.Point2D(a, d), volmdlr.Point2D(b, d)))
+            else:
+                if self.v_closed_lower():
+                    lines.append(curves.Line2D(volmdlr.Point2D(a, c), volmdlr.Point2D(a, d)))
+                if self.v_closed_upper():
+                    lines.append(curves.Line2D(volmdlr.Point2D(b, c), volmdlr.Point2D(b, d)))
+            if len(lines) == 1:
+                return lines[0]
+            return min(lines, key=lambda x: x.point_distance(test_point))
+
+        def get_temp_edge2d(_points):
+            if len(_points) == 2:
+                edge2d = edges.LineSegment2D(_points[0], _points[1])
+            else:
+                edge2d = edges.BSplineCurve2D.from_points_interpolation(_points, 2)
+            return edge2d
+
+        umin, umax = self.surface.domain[0]
+        vmin, vmax = self.surface.domain[1]
+        if self.is_singularity_point(points3d[0]):
+            local_discretization_points = get_local_discretization_points(start_point=points3d[0],
+                                                                          end_points=points3d[1])
+            if local_discretization_points:
+                temp_points = local_discretization_points[1:] + points[2:]
+            else:
+                temp_points = points
+            temp_edge2d = get_temp_edge2d(temp_points)
+            singularity_line = get_singularity_line(umin, umax, vmin, vmax, temp_points[0])
+            points[0] = self.fix_start_end_singularity_point_at_parametric_domain(temp_edge2d,
+                                                                                  reference_point=temp_points[1],
+                                                                                  singularity_line=singularity_line)
+        if self.is_singularity_point(points3d[-1]):
+            local_discretization_points = get_local_discretization_points(start_point=points3d[-2],
+                                                                          end_points=points3d[-1])
+            if local_discretization_points:
+                temp_points = points[:-2] + local_discretization_points[:-1]
+            else:
+                temp_points = points
+            temp_edge2d = get_temp_edge2d(temp_points)
+            singularity_line = get_singularity_line(umin, umax, vmin, vmax, temp_points[-1])
+            points[-1] = self.fix_start_end_singularity_point_at_parametric_domain(temp_edge2d,
+                                                                                   reference_point=temp_points[-2],
+                                                                                   singularity_line=singularity_line)
+        return points
+
+    @staticmethod
+    def fix_start_end_singularity_point_at_parametric_domain(edge, reference_point, singularity_line):
+        """Uses tangent line to find real theta angle of the singularity point on parametric domain."""
+        abscissa_before_singularity = edge.abscissa(reference_point)
+        direction_vector = edge.direction_vector(abscissa_before_singularity)
+        direction_line = curves.Line2D(reference_point, reference_point + direction_vector)
+        return direction_line.line_intersections(singularity_line)[0]
 
 
 class BezierSurface3D(BSplineSurface3D):

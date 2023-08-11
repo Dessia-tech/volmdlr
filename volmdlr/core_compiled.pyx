@@ -18,7 +18,7 @@ import numpy as npy
 import plot_data
 import volmdlr
 from dessia_common.core import DessiaObject
-from matplotlib.patches import FancyArrow, FancyArrowPatch
+from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
 # =============================================================================
@@ -910,21 +910,15 @@ class Vector2D(Vector):
         return cls(random.uniform(xmin, xmax),
                    random.uniform(ymin, ymax))
 
-    def plot(self, amplitude: float = 0.5, width: float = None,
-             head_width: float = None, origin: "Vector2D" = None,
+    def plot(self,
+             head_width: float = 3, origin: "Vector2D" = None,
              ax: "matplotlib.axes.Axes" = None,
-             color: str = "k", line: bool = False, label: str = None,
-             normalize: bool = False):
+             color: str = "k", label: str = None):
         """
         Plots the 2-dimensional vector. If the vector has a norm greater than
         1e-9, it will be plotted with an arrow, else it will be plotted with
         a point.
 
-        :param amplitude: A general parameter to quickly change the aspect of
-            the arrow
-        :type amplitude: float, optional
-        :param width: The width of the tail of the arrow
-        :type width: float, optional
         :param head_width: The width of the head of the arrow
         :type head_width: float, optional
         :param origin: The starting point of the tail of the arrow
@@ -933,12 +927,8 @@ class Vector2D(Vector):
         :type ax: :class:`matplotlib.axes.Axes`, optional
         :param color: The color of the arrow
         :type color: str, optional
-        :param line: #TODO: delete this attribute ?
-        :type line: bool, optional
         :param label: The text you want to display
         :type label: str, optional
-        :param normalize: `True` if the Vector2D should be normalized,
-        :type normalize: bool, optional
         :return: A matplotlib Axes object on which the Vector2D have been
             plotted
         :rtype: :class:`matplotlib.axes.Axes`
@@ -948,49 +938,19 @@ class Vector2D(Vector):
 
         if ax is None:
             fig, ax = plt.subplots()
-        else:
-            fig = ax.figure
 
         if math.isclose(self.norm(), 0, abs_tol=1e-9):
             point = origin.copy()
             point.plot(ax=ax, color=color)
             return ax
 
-        if width is None:
-            width = 0.001 * 5 * amplitude
-        if head_width is None:
-            head_width = 0.3 * amplitude
+        ax.quiver(origin[0], origin[1], self[0], self[1], angles="xy", scale_units="xy",
+                  scale=1, color=color)
 
-        if not normalize:
-            ax.add_patch(FancyArrow(origin.x, origin.y,
-                                    self.x * amplitude, self.y * amplitude,
-                                    width=width,
-                                    head_width=head_width,
-                                    length_includes_head=True,
-                                    color=color))
-        else:
-            normalized_vector = self.copy()
-            normalized_vector.normalize()
-            ax.add_patch(FancyArrow(origin.x, origin.y,
-                                    normalized_vector.x * amplitude,
-                                    normalized_vector.y * amplitude,
-                                    width=width,
-                                    head_width=head_width,
-                                    length_includes_head=True,
-                                    color=color))
-
-        if line:
-            style = "-" + color
-            linestyle = "-."
-            origin = Point2D(*origin)
-            p1, p2 = origin, origin + self
-            u = p2 - p1
-            p3 = p1 - 3 * u
-            p4 = p2 + 4 * u
-            ax.plot([p3.x, p4.x], [p3.y, p4.y], style, linestyle=linestyle)
+        ax.set(xlim=sorted([self.x, origin.x]), ylim=sorted([self.y, origin.y]))
 
         if label is not None:
-            ax.text(*(origin + self * amplitude), label)
+            ax.text(*(origin + self * 0.5), label)
 
         return ax
 

@@ -73,6 +73,7 @@ scripts = [
             # Showcases
             'showcases/simple_shapes.py',
             'showcases/casing.py',
+            'showcases/vessel.py',
             # Mesh
             'mesh/read_msh_file.py',
             # 'mesh/geo_file_1.py',
