@@ -3065,7 +3065,6 @@ class FullArc2D(FullArcMixin, Arc2D):
         return FullArc2D(self.circle.copy(), self.start.copy())
 
     @classmethod
-
     def dict_to_object(cls, dict_, *args, **kwargs):
         circle = volmdlr_curves.Circle2D.dict_to_object(dict_['circle'])
         start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
