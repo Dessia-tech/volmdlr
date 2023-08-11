@@ -852,208 +852,6 @@ class BoundingBox(dc.DessiaObject):
         return self._octree
 
 
-class Assembly(dc.PhysicalObject):
-    """
-    Defines an assembly.
-
-    :param components: A list of volmdlr objects
-    :type components: List[:class:`volmdlr.core.Primitive3D`]
-    :param positions: A list of volmdlr.Frame3D representing the positions of each component in the assembly absolute
-        frame.
-    :type positions: List[:class:`volmdlr.Frame3D`]
-    :param name: The Assembly's name
-    :type name: str
-    """
-    _standalone_in_db = True
-    _eq_is_data_eq = True
-    _non_serializable_attributes = ['bounding_box', "primitives"]
-    _non_data_eq_attributes = ['name', 'bounding_box']
-    _non_data_hash_attributes = ['name', 'bounding_box']
-
-    def __init__(self, primitives: List[Primitive3D],
-                 frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
-        self.primitives = [self.map_primitive(primitive, frame, frame_primitive)
-                           for primitive, frame_primitive in zip(components, positions)]
-        self.frame = frame
-        self._bbox = None
-        dc.PhysicalObject.__init__(self, name=name)
-
-    @property
-    def bounding_box(self):
-        """
-        Returns the bounding box.
-
-        """
-        if not self._bbox:
-            self._bbox = self._bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bounding_box):
-        self._bbox = new_bounding_box
-
-    def _bounding_box(self) -> BoundingBox:
-        """
-        Computes the bounding box of the model.
-        """
-        return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
-
-    def babylon_data(self, merge_meshes=True):
-        """
-        Get babylonjs data.
-
-        :return: Dictionary with babylon data.
-        """
-
-        babylon_data = {'meshes': [],
-                        'lines': []}
-        for primitive in self.primitives:
-            if hasattr(primitive, 'babylon_meshes'):
-                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
-            elif hasattr(primitive, 'babylon_curves'):
-                curves = primitive.babylon_curves()
-                if curves:
-                    babylon_data['lines'].append(curves)
-            elif hasattr(primitive, 'babylon_data'):
-                data = primitive.babylon_data(merge_meshes=merge_meshes)
-                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
-                babylon_data['lines'].extend(line for line in data.get("lines"))
-
-        bbox = self.bounding_box
-        center = bbox.center
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
-
-        babylon_data['max_length'] = max_length
-        babylon_data['center'] = list(center)
-
-        return babylon_data
-
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and return a new Assembly.
-
-        side = 'old' or 'new'
-        """
-        new_positions = [position.frame_mapping(frame, side)
-                         for position in self.positions]
-        return Assembly(self.components, new_positions, self.frame, self.name)
-
-    @staticmethod
-    def map_primitive(primitive, global_frame, transformed_frame):
-        """
-        Frame maps a primitive in an assembly to its good position.
-
-        :param primitive: primitive to map
-        :type primitive: Primitive3D
-        :param global_frame: Assembly frame
-        :type global_frame: volmdlr.Frame3D
-        :param transformed_frame: position of the primitive on the assembly
-        :type transformed_frame: volmdlr.Frame3D
-        :return: A new positioned primitive
-        :rtype: Primitive3D
-
-        """
-        basis_a = global_frame.basis()
-        basis_b = transformed_frame.basis()
-        matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
-                              [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
-                              [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
-        matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
-                              [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
-                              [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
-        transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
-        u_vector = volmdlr.Vector3D(*transfer_matrix[0])
-        v_vector = volmdlr.Vector3D(*transfer_matrix[1])
-        w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
-        if new_frame == volmdlr.OXYZ:
-            return primitive
-        new_primitive = primitive.frame_mapping(new_frame, 'old')
-        return new_primitive
-
-    def volmdlr_primitives(self):
-        return [self]
-
-    def to_step(self, current_id):
-        """
-        Creates step file entities from volmdlr objects.
-        """
-        step_content = ''
-
-        product_content, current_id, assembly_data = self.to_step_product(current_id)
-        step_content += product_content
-        assembly_frames = assembly_data[-1]
-        for i, primitive in enumerate(self.components):
-            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
-                primitive_content, current_id, primitive_data = primitive.to_step_product(current_id)
-                assembly_frame_id = assembly_frames[0]
-                component_frame_id = assembly_frames[i + 1]
-                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
-                                                                          primitive_data, assembly_frame_id,
-                                                                          component_frame_id)
-
-            else:
-                primitive_content, current_id, primitive_data = primitive.to_step(current_id)
-                step_content += primitive_content
-                assembly_frame_id = assembly_frames[0]
-                component_frame_id = assembly_frames[i + 1]
-                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
-                                                                          primitive_data, assembly_frame_id,
-                                                                          component_frame_id)
-            step_content += primitive_content
-            step_content += assembly_content
-
-        return step_content, current_id, assembly_data[:-1]
-
-    def plot(self, ax=None, equal_aspect=True):
-        """
-        Matplotlib plot of model.
-
-        To use for debug.
-        """
-        if ax is None:
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d', adjustable='box')
-        for primitive in self.primitives:
-            primitive.plot(ax)
-        if not equal_aspect:
-            # ax.set_aspect('equal')
-            ax.set_aspect('auto')
-        ax.margins(0.1)
-        return ax
-
-    def to_step_product(self, current_id):
-        """
-        Returns step product entities from volmdlr objects.
-        """
-        step_content = ''
-        product_content, shape_definition_repr_id = product_writer(current_id, self.name)
-        product_definition_id = shape_definition_repr_id - 2
-        step_content += product_content
-        shape_representation_id = shape_definition_repr_id + 1
-        current_id = shape_representation_id
-        assembly_position_content = ''
-        frame_ids = []
-        for frame in [self.frame] + self.positions:
-            frame_content, current_id = frame.to_step(current_id + 1)
-            assembly_position_content += frame_content
-            frame_ids.append(current_id)
-
-        geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
-
-        step_content += f"#{shape_representation_id} = SHAPE_REPRESENTATION('',({step_ids_to_str(frame_ids)})," \
-                        f"#{geometric_representation_context_id});\n"
-
-        step_content += assembly_position_content
-
-        step_content += geometric_context_content
-
-        return step_content, geometric_representation_context_id, \
-            [shape_representation_id, product_definition_id, frame_ids]
-
-
 class Compound(dc.PhysicalObject):
     """
     A class that can be a collection of any volmdlr primitives.
@@ -1183,6 +981,103 @@ class Compound(dc.PhysicalObject):
         step_content += geometric_context_content
 
         return step_content, geometric_representation_context_id, [brep_id, product_definition_id]
+
+
+class Assembly(Compound):
+    """
+    Represents the structure of an assembly.
+
+    This class is similar to a Compound, capable of containing multiple sub-shapes. The key distinction is the
+    association of a frame with the Assembly. This frame is utilized for exporting into a STEP file.
+
+    :param primitives: A list of volmdlr objects representing sub-shapes.
+    :type primitives: List[:class:`volmdlr.core.Primitive3D`]
+    :param frame: The associated frame for the assembly. It's the frame where all the first level shape
+     of the assembly where defined. Default is volmdlr.OXYZ.
+    :type frame: :class:`volmdlr.core.Frame3D`
+    :param name: The name of the Assembly. Default is an empty string.
+    :type name: str
+    """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['bounding_box', "primitives"]
+    _non_data_eq_attributes = ['name', 'bounding_box']
+    _non_data_hash_attributes = ['name', 'bounding_box']
+
+    def __init__(self, primitives: List[Primitive3D],
+                 frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
+        self.frame = frame
+        self._bbox = None
+        Compound.__init__(self, primitives=primitives, name=name)
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Compound.
+
+        side = 'old' or 'new'
+        """
+        new_primitives = [primitive.frame_mapping(frame, side)
+                          for primitive in self.primitives]
+        new_frame = self.frame.frame_mapping(frame, side)
+        return Assembly(new_primitives, new_frame, self.name)
+
+    def to_step(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
+        step_content = ''
+
+        product_content, current_id, assembly_data = self.to_step_product(current_id)
+        step_content += product_content
+        assembly_frames = assembly_data[-1]
+        for i, primitive in enumerate(self.primitives):
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
+                primitive_content, current_id, primitive_data = primitive.to_step_product(current_id)
+                assembly_frame_id = assembly_frames[0]
+                component_frame_id = assembly_frames[i + 1]
+                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
+
+            else:
+                primitive_content, current_id, primitive_data = primitive.to_step(current_id)
+                step_content += primitive_content
+                assembly_frame_id = assembly_frames[0]
+                component_frame_id = assembly_frames[i + 1]
+                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
+            step_content += primitive_content
+            step_content += assembly_content
+
+        return step_content, current_id, assembly_data[:-1]
+
+
+    def to_step_product(self, current_id):
+        """
+        Returns step product entities from volmdlr objects.
+        """
+        step_content = ''
+        product_content, shape_definition_repr_id = product_writer(current_id, self.name)
+        product_definition_id = shape_definition_repr_id - 2
+        step_content += product_content
+        shape_representation_id = shape_definition_repr_id + 1
+        current_id = shape_representation_id
+
+        frame_content, current_id = self.frame.to_step(current_id + 1)
+        frame_ids = [current_id] * (len(self.primitives) + 1)
+
+        geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
+
+        step_content += f"#{shape_representation_id} = SHAPE_REPRESENTATION('',({step_ids_to_str(frame_ids)})," \
+                        f"#{geometric_representation_context_id});\n"
+
+        step_content += frame_content
+
+        step_content += geometric_context_content
+
+        return step_content, geometric_representation_context_id, \
+            [shape_representation_id, product_definition_id, frame_ids]
 
 
 class VolumeModel(dc.PhysicalObject):
@@ -2005,9 +1900,9 @@ class VolumeModel(dc.PhysicalObject):
 
         def unpack_assembly(assembly):
             for prim in assembly.primitives:
-                if primitive.__class__.__name__ in ('Assembly', "Compound"):
+                if prim.__class__.__name__ in ('Assembly', "Compound"):
                     unpack_assembly(prim)
-                elif hasattr(primitive, "faces") or hasattr(primitive, "shell_faces"):
+                elif hasattr(prim, "faces") or hasattr(prim, "shell_faces"):
                     list_shells.append(prim)
 
         for primitive in self.primitives:

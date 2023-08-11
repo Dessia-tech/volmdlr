@@ -59,6 +59,7 @@ networkx.DiGraph
 ndarray
 numpy
 numpy
+OXYZ
 octree
 plt
 Rapshon
