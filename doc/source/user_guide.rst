@@ -89,6 +89,58 @@ The volmdlr library is structured using a modular approach as follows:
 
             To Boolean ops
 
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/document-lock-svgrepo-com.svg
+
+
+        ^^^^^^^^^^^^^^
+
+        Dealing with STEP files
+
+        +++
+
+        .. button-ref:: dealing_with_step
+            :expand:
+            :color: primary
+            :click-parent:
+
+            STEP files
+
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/file-chart-column-svgrepo-com.svg
+
+
+        ^^^^^^^^^^^^^^
+
+        Dealing with STL files
+
+        +++
+
+        .. button-ref:: dealing_with_stl
+            :expand:
+            :color: primary
+            :click-parent:
+
+            STL files
+
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/tools-folder-svgrepo-com.svg
+
+
+        ^^^^^^^^^^^^^^
+
+        Very useful Operations
+
+        +++
+
+        .. button-ref:: useful_operations
+            :expand:
+            :color: primary
+            :click-parent:
+
+            Useful
+
+
 Fundamentals and usage
 ----------------------
 

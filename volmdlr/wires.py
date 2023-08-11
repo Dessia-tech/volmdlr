@@ -651,8 +651,8 @@ class WireMixin:
         if ax is None:
             ax = self._get_plot_ax()
 
-        if edge_style.equal_aspect:
-            ax.set_aspect('equal')
+        # if edge_style.equal_aspect:
+        #     ax.set_aspect('equal')
 
         for element in self.primitives:
             element.plot(ax=ax, edge_style=edge_style)

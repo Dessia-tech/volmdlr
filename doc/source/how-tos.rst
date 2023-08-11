@@ -39,7 +39,7 @@ Additionally, there is an optional argument name, which is a string representing
            vector.plot(color='orange')
 
 How to create a Point
-======================
+=====================
 
 Point 2D
 --------
@@ -135,7 +135,7 @@ and providing the required arguments. Here's how you can do it:
            line3d.plot(edge_style=EdgeStyle('orange'))
 
 How to create a Circle
-=====================
+======================
 
 Circle2D
 --------
@@ -609,22 +609,22 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
 
         .. code-block:: python
 
-           import volmdlr
-           from volmdlr import edges, curves, surfaces, wires, faces
-           from volmdlr.core import EdgeStyle
+            import volmdlr
+            from volmdlr import edges, curves, surfaces, wires, faces
+            from volmdlr.core import EdgeStyle
 
-           surface3d = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0.0, 0.0, 0.0), volmdlr.Vector3D(1.0, 0.0, 0.0),
-                                                        volmdlr.Vector3D(0.0, 1.0, 0.0), volmdlr.Vector3D(0.0, 0.0, 1.0))
+            surface3d = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0.0, 0.0, 0.0), volmdlr.Vector3D(1.0, 0.0, 0.0),
+                                                        volmdlr.Vector3D(0.0, 1.0, 0.0), volmdlr.Vector3D(0.0, 0.0, 1.0)))
 
-           outer_contour2d = wires.Contour2D.from_points(points=[volmdlr.Point2D(0., 0.), volmdlr.Point2D(2, 0),
+            outer_contour2d = wires.Contour2D.from_points(points=[volmdlr.Point2D(0., 0.), volmdlr.Point2D(2, 0),
                                                                  volmdlr.Point2D(2, 2), volmdlr.Point2D(1, 2),
                                                                  volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)])
-           inner_contours2d = []
-           surface2d = surfaces.Surface2D(outer_contour2d=outer_contour2d, inner_contours2d=inner_contours2d)
+            inner_contours2d = []
+            surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d)
 
-           plane_face = faces.PlaneFace3D(surface3d=surface3d, surface2d=surface2d)
+            plane_face = faces.PlaneFace3D(surface3d=surface3d, surface2d=surface2d)
 
-           plane_face.babylonjs(dark_mode=True)
+            plane_face.babylonjs()
 
         .. figure:: ../source/_static/index-images/planeface3d.png
 

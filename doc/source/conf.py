@@ -48,7 +48,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_design',
     'matplotlib.sphinxext.plot_directive',
-    'sphinx_copybutton'
+    'sphinx_copybutton',
+    'nbsphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

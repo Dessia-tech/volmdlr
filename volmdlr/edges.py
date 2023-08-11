@@ -3996,15 +3996,17 @@ class LineSegment3D(LineSegment):
             return [intersection]
         return []
 
-    def linesegment_intersections(self, linesegment):
+    def linesegment_intersections(self, linesegment, abs_tol=1e-6):
         """
         Gets the intersection between a line segment 3d and another line segment 3D.
 
         :param linesegment: other line segment.
+        :param abs_tol: tolerance.
         :return: a list with the intersection points.
         """
         intersection = self.line.intersection(linesegment.line)
-        if intersection and self.point_belongs(intersection) and linesegment.point_belongs(intersection):
+        if intersection and self.point_belongs(intersection, abs_tol) and\
+                linesegment.point_belongs(intersection, abs_tol):
             return [intersection]
         return []
 
@@ -4843,14 +4845,15 @@ class BSplineCurve3D(BSplineCurve):
         """Triangulation method for a BSplineCurve3D."""
         return None
 
-    def linesegment_intersections(self, linesegment3d: LineSegment3D):
+    def linesegment_intersections(self, linesegment3d: LineSegment3D, abs_tol=1e-6):
         """
         Calculates intersections between a BSplineCurve3D and a LineSegment3D.
 
         :param linesegment3d: linesegment to verify intersections.
+        :param abs_tol: tolerance.
         :return: list with the intersections points.
         """
-        if not self.bounding_box.bbox_intersection(linesegment3d.bounding_box):
+        if not self.bounding_box.bbox_intersection(linesegment3d.bounding_box, abs_tol):
             return []
         intersections_points = self.get_linesegment_intersections(linesegment3d)
         return intersections_points
@@ -5420,17 +5423,18 @@ class Arc3D(ArcMixin, Edge):
                 linesegment_intersections.append(intersection)
         return linesegment_intersections
 
-    def linesegment_intersections(self, linesegment3d: LineSegment3D):
+    def linesegment_intersections(self, linesegment3d: LineSegment3D, abs_tol=1e-6):
         """
         Calculates intersections between an Arc3D and a LineSegment3D.
 
         :param linesegment3d: linesegment to verify intersections.
+        :param abs_tol: tolerance.
         :return: list with intersections points between linesegment and Arc3D.
         """
         linesegment_intersections = []
         intersections = self.line_intersections(linesegment3d.line)
         for intersection in intersections:
-            if linesegment3d.point_belongs(intersection):
+            if linesegment3d.point_belongs(intersection, abs_tol):
                 linesegment_intersections.append(intersection)
         return linesegment_intersections
 
@@ -5589,11 +5593,12 @@ class FullArc3D(FullArcMixin, Arc3D):
         new_start_end = self.start_end.frame_mapping(frame, side)
         return FullArc3D(new_circle, new_start_end, name=self.name)
 
-    def linesegment_intersections(self, linesegment3d: LineSegment3D):
+    def linesegment_intersections(self, linesegment3d: LineSegment3D, abs_tol=1e-6):
         """
         Calculates the intersections between a full arc 3d and a line segment 3d.
 
         :param linesegment3d: linesegment 3d to verify intersections.
+        :param abs_tol: tolerance.
         :return: list of points 3d, if there are any intersections, an empty list if otherwise.
         """
         distance_center_lineseg = linesegment3d.point_distance(self.circle.frame.origin)
