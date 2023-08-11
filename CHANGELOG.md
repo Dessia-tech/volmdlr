@@ -39,7 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Step.py: enhance step import/export
 - VolumeModel: get_shells
 - step.py uses deque in stack based algorithms
-
+- VolumeModel: get_shells
+- 
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
