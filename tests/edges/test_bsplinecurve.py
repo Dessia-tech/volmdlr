@@ -68,6 +68,26 @@ class TestBSplineCurve2D(unittest.TestCase):
                 self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
                 self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
 
+    def test_derivatives(self):
+        derivatives = self.bspline2d.derivatives(u=0.35, order=2)
+        expected_result = [[20.879272837543425, 13.96350686701158], [45.20015428165102, 9.987462558623653], [-1.334434093851499, -68.74685708529317]]
+        for der, res in zip(derivatives, expected_result):
+            self.assertAlmostEqual(der[0], res[0], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(der[1], res[1], delta=GEOMDL_DELTA)
+
+        test_cases = [
+            (0.0, 1, ((5.0, 5.0), (90.9090, 90.9090))),
+            (0.2, 2, ((13.8181, 11.5103), (40.0602, 17.3878), (104.4062, -29.3672))),
+            (0.5, 3, ((28.1775, 14.7858), (39.7272, 2.2562), (-116.9254, -49.7367), (125.5276, 196.8865))),
+            (0.95, 1, ((48.7837, 6.0022), (39.5178, -29.9962))),
+        ]
+        for param, order, res in test_cases:
+            deriv = self.bspline2d_rational.derivatives(u=param, order=order)
+
+            for computed, expected in zip(deriv, res):
+                for c, e in zip(computed, expected):
+                    self.assertAlmostEqual(c, e, delta=GEOMDL_DELTA)
+
     def test_abscissa(self):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
         point = volmdlr.Point2D(-0.31240117104573617, -2.8555856978321796)

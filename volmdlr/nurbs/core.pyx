@@ -684,9 +684,24 @@ cdef list evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[
     return eval_points
 
 
+def derivatives_curve(dict datadict, double parpos, int deriv_order):
+    cdef int degree = datadict["degree"]
+    cdef list knotvector = datadict["knotvector"]
+    cdef tuple ctrlpts = datadict["control_points"]
+    cdef int size = datadict["size"]
+    cdef bint rational = datadict["rational"]
+    cdef int dimension = datadict["dimension"] + 1 if rational else datadict["dimension"]
+
+    if rational:
+        return derivatives_curve_rational(degree, knotvector, ctrlpts, size,
+                                       dimension, parpos, deriv_order)
+    return derivatives_curve_c(degree, knotvector, ctrlpts, size,
+                                       dimension, parpos, deriv_order)
+
+
 @boundscheck(False)
 @wraparound(False)
-def derivatives_curve(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts,
+cdef vector[vector[double]] derivatives_curve_c(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts,
                       int size, int dimension, double parpos, int deriv_order):
     """Evaluates the n-th order derivatives at the input parametric position.
 
@@ -748,8 +763,9 @@ cdef evaluate_curve_rational(int degree, vector[double] knotvector, vector[vecto
 @boundscheck(False)
 @wraparound(False)
 @cdivision(True)
-def derivatives_curve_rational(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts,
-                               int size, int dimension, double parpos, int deriv_order):
+cdef vector[vector[double]] derivatives_curve_rational(int degree, vector[double] knotvector,
+                                                       vector[vector[double]] ctrlpts,
+                                                       int size, int dimension, double parpos, int deriv_order):
     """Evaluates the n-th order derivatives at the input parametric position.
 
     :param datadict: data dictionary containing the necessary variables
@@ -763,7 +779,7 @@ def derivatives_curve_rational(int degree, vector[double] knotvector, vector[vec
     """
 
     # Call the parent function to evaluate A(u) and w(u) derivatives
-    cdef vector[vector[double]] CKw = derivatives_curve(degree, knotvector, ctrlpts,
+    cdef vector[vector[double]] CKw = derivatives_curve_c(degree, knotvector, ctrlpts,
                                                           size, dimension, parpos,
                                                           deriv_order)
     # Algorithm A4.2

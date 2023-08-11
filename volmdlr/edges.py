@@ -923,6 +923,47 @@ class BSplineCurve(Edge):
         point_name = 'Point' + self.__class__.__name__[-2:]
         return getattr(volmdlr, point_name)(*evaluate_curve(datadict, u, u)[0])
 
+    def derivatives(self, u, order):
+        """
+        Evaluates n-th order curve derivatives at the given parameter value.
+
+        The output of this method is list of n-th order derivatives. If ``order`` is ``0``, then it will only output
+        the evaluated point. Similarly, if ``order`` is ``2``, then it will output the evaluated point, 1st derivative
+        and the 2nd derivative.
+
+        :Example:
+
+        Assuming a curve self is defined on a parametric domain [0.0, 1.0].
+        Let's take the curve derivative at the parametric position u = 0.35.
+
+        >>> derivatives = self.derivatives(u=0.35, order=2)
+        >>> derivatives[0]  # evaluated point, equal to crv.evaluate_single(0.35)
+        >>> derivatives[1]  # 1st derivative at u = 0.35
+        >>> derivatives[2]  # 2nd derivative at u = 0.35
+
+        :param u: parameter value
+        :type u: float
+        :param order: derivative order
+        :type order: int
+        :return: a list containing up to {order}-th derivative of the curve
+        :rtype: Union[List[`volmdlr.Vector2D`], List[`volmdlr.Vector3D`]]
+        """
+        vector_name = 'Point' + self.__class__.__name__[-2:]
+        datadict = {
+            "degree": self.degree,
+            "knotvector": self.knot_vector,
+            "size": len(self.control_points),
+            "sample_size": self.sample_size,
+            "rational": bool(self.weights),
+            "dimension": 3 if vector_name == "Vector3D" else 2,
+        }
+        if self.weights:
+            datadict["control_points"] = tuple(self._ctrlptsw)
+        else:
+            datadict["control_points"] = tuple([[*point] for point in self.control_points])
+        return [getattr(volmdlr, vector_name)(*point)
+                for point in derivatives_curve(datadict, u, order)]
+
     def get_reverse(self):
         """
         Reverses the BSpline's direction by reversing its control points.
@@ -1346,35 +1387,6 @@ class BSplineCurve(Edge):
 
         point_dimension = f'Point{self.__class__.__name__[-2::]}'
         return [getattr(volmdlr, point_dimension)(*point) for point in curve_points]
-
-    def derivatives(self, u, order):
-        """
-        Evaluates n-th order curve derivatives at the given parameter value.
-
-        The output of this method is list of n-th order derivatives. If ``order`` is ``0``, then it will only output
-        the evaluated point. Similarly, if ``order`` is ``2``, then it will output the evaluated point, 1st derivative
-        and the 2nd derivative.
-
-        :Example:
-
-        Assuming a curve self is defined on a parametric domain [0.0, 1.0].
-        Let's take the curve derivative at the parametric position u = 0.35.
-
-        >>> derivatives = self.derivatives(u=0.35, order=2)
-        >>> derivatives[0]  # evaluated point, equal to crv.evaluate_single(0.35)
-        >>> derivatives[1]  # 1st derivative at u = 0.35
-        >>> derivatives[2]  # 2nd derivative at u = 0.35
-
-        :param u: parameter value
-        :type u: float
-        :param order: derivative order
-        :type order: int
-        :return: a list containing up to {order}-th derivative of the curve
-        :rtype: Union[List[`volmdlr.Vector2D`], List[`volmdlr.Vector3D`]]
-        """
-
-        return [getattr(volmdlr, f'Vector{self.__class__.__name__[-2::]}')(*point)
-                for point in self.curve.derivatives(u, order)]
 
     def get_geo_lines(self, tag: int, control_points_tags: List[int]):
         """
