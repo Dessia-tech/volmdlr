@@ -117,6 +117,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: line_intersections
 - Line3D: minimum_distance_points
 - remove arcellipse handleling for bspline2d_3d.
+- plot of vector3D
+- Ellipse3D: discretization_points.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
