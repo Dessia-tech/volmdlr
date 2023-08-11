@@ -134,7 +134,7 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
                 (math.sin(x[1])) ** 2) * radius ** 2 + k_param.dot(k_param) * ((math.cos(x[1])) ** 2) * radius ** 2
                 - 2 * x[0] * w_param.dot(u_param) - 2 * x[0] * radius * math.sin(x[1]) * u_param.dot(v_param) - 2 * x[
                     0] * radius * math.cos(x[1]) * u_param.dot(k_param)
-                + 2 * radius * math.sin(x[1]) * w_param.dot(v_param) + 2 * radius * math.cos(x[1]) * w_param.dot(k)
+                + 2 * radius * math.sin(x[1]) * w_param.dot(v_param) + 2 * radius * math.cos(x[1]) * w_param.dot(k_param)
                 + math.sin(2 * x[1]) * v_param.dot(k_param) * radius ** 2)
     circle_point = circle3d.point_at_abscissa(0.0)
     radius = circle3d.radius
