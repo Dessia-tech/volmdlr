@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CylindricalSurface3D: concurrent_plane_intersection
 - BSplineFace3D: fix neutral_fiber
 - Step: assembly import
-- BSplineFace3D: fix bounding_box
+- BSplineFace3D: fix bounding_box.
 - Ellipse3D: from_step
 - edges.py: general improvements.
 - ExtrusionSurface3D: point3d_to_2d.
@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - VolumeModel: get_shells
 - step.py uses deque in stack based algorithms
 - VolumeModel: get_shells
+- add error protection stl
 - 
 ### Refactor
 - refator some classes' init in primitives3D. 
@@ -62,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 -
 
-## v0.12.0 [unreleased]
+## v0.12.0
 
 
 ### New Features
@@ -119,6 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: line_intersections
 - Line3D: minimum_distance_points
 - remove arcellipse handleling for bspline2d_3d.
+- plot of vector3D
 - Ellipse3D: discretization_points.
 
 ### Refactor
