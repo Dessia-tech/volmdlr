@@ -6,7 +6,8 @@ from volmdlr.nurbs import core
 
 
 def knot_insertion(degree, knotvector, ctrlpts, u, **kwargs):
-    """ Computes the control points of the rational/non-rational spline after knot insertion.
+    """
+    Computes the control points of the rational/non-rational spline after knot insertion.
 
     Part of Algorithm A5.1 of The NURBS Book by Piegl & Tiller, 2nd Edition.
 
@@ -25,6 +26,7 @@ def knot_insertion(degree, knotvector, ctrlpts, u, **kwargs):
     :type u: float
     :return: updated control points
     :rtype: list
+
     """
     # Get keyword arguments
     num = kwargs.get('num', 1)  # number of knot insertions
@@ -76,7 +78,8 @@ def knot_insertion(degree, knotvector, ctrlpts, u, **kwargs):
 
 @lru_cache(maxsize=128)
 def knot_insertion_alpha(u, knotvector, span, idx, leg):
-    """ Computes :math:`\\alpha` coefficient for knot insertion algorithm.
+    """
+    Computes :math:`\\alpha` coefficient for knot insertion algorithm.
 
     :param u: knot
     :type u: float
@@ -95,7 +98,8 @@ def knot_insertion_alpha(u, knotvector, span, idx, leg):
 
 
 def knot_insertion_kv(knotvector, u, span, r):
-    """ Computes the knot vector of the rational/non-rational spline after knot insertion.
+    """
+    Computes the knot vector of the rational/non-rational spline after knot insertion.
 
     Part of Algorithm A5.1 of The NURBS Book by Piegl & Tiller, 2nd Edition.
 
@@ -127,7 +131,8 @@ def knot_insertion_kv(knotvector, u, span, r):
 
 
 def insert_knot_curve(obj, param, num, **kwargs):
-    """ Inserts knots n-times to a spline geometry.
+    """
+    Inserts knots n-times to a spline geometry.
 
     The following code snippet illustrates the usage of this function:
 
@@ -157,6 +162,7 @@ def insert_knot_curve(obj, param, num, **kwargs):
     :param num: number of knot insertions in [num_u, num_v, num_w] format
     :type num: list, tuple
     :return: updated spline geometry
+
     """
     # Get keyword arguments
     check_num = kwargs.get('check_num', True)  # can be set to False when the caller checks number of insertions
@@ -207,7 +213,8 @@ def insert_knot_curve(obj, param, num, **kwargs):
     return obj
 
 def split_curve(obj, param, **kwargs):
-    """ Splits the curve at the input parametric coordinate.
+    """
+    Splits the curve at the input parametric coordinate.
 
     This method splits the curve into two pieces at the given parametric coordinate, generates two different
     curve objects and returns them. It does not modify the input curve.
@@ -222,6 +229,7 @@ def split_curve(obj, param, **kwargs):
     :type param: float
     :return: a list of curve segments
     :rtype: list
+
     """
     # # Validate input
     # if not isinstance(obj, abstract.Curve):
@@ -283,7 +291,8 @@ def split_curve(obj, param, **kwargs):
 
 
 def separate_ctrlpts_weights(ctrlptsw):
-    """Divides weighted control points by weights to generate unweighted control points and weights vector.
+    """
+    Divides weighted control points by weights to generate unweighted control points and weights vector.
 
     This function is dimension agnostic, i.e. control points can be in any dimension but the last element of the array
     should indicate the weight.

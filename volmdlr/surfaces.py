@@ -5040,12 +5040,12 @@ class BSplineSurface3D(Surface3D):
         if self.x_periodicity:
             points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
             if bspline_curve3d.periodic:
-                points = self._handle_periodic_curve(bspline_curve3d.curve.domain, points, 'x')
+                points = self._handle_periodic_curve(bspline_curve3d.domain, points, 'x')
 
         if self.y_periodicity:
             points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
             if bspline_curve3d.periodic:
-                points = self._handle_periodic_curve(bspline_curve3d.curve.domain, points, 'y')
+                points = self._handle_periodic_curve(bspline_curve3d.domain, points, 'y')
 
         if self._is_line_segment(points):
             return [edges.LineSegment2D(points[0], points[-1])]

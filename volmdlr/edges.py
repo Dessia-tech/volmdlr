@@ -437,6 +437,16 @@ class Edge(dc.DessiaObject):
         return minimum_distance
 
     def minimum_distance(self, element, return_points=False):
+        """
+        Evaluates the minimal distance between the edge and another specified primitive.
+
+        :param element: Another primitive object to compute the distance to.
+        :param return_points: (optional) If True, return the closest points on both primitives.
+        :type return_points: bool
+
+        :return: The minimum distance between the edge and the specified primitive.
+            tuple, optional: A tuple containing the closest points if return_points is True.
+        """
         method_name_ = 'distance_'+element.__class__.__name__.lower()[:-2]
         if hasattr(self, method_name_):
             return getattr(self, method_name_)(element, return_points)
@@ -803,11 +813,13 @@ class BSplineCurve(Edge):
 
     @property
     def control_points(self):
+        """Return the control points of the bspline curve."""
         point_name = "Point" + self.__class__.__name__[-2:]
         return [getattr(volmdlr, point_name)(*point) for point in self.ctrlpts]
 
     @property
     def knotvector(self):
+        """Return the knot vector."""
         knot_vector = []
         for knot, knot_mut in zip(self.knots, self.knot_multiplicities):
             knot_vector.extend([knot] * knot_mut)
@@ -815,29 +827,15 @@ class BSplineCurve(Edge):
 
     @property
     def periodic(self):
+        """Return True if the BSpline is periodic."""
         control_points = self.control_points
         return control_points[0].is_close(control_points[-1])
 
     @property
-    def curve(self):
-        if not self._curve:
-            points = [[*point] for point in self.control_points]
-            if self.weights is None:
-                curve = BSpline.Curve()
-                curve.degree = self.degree
-                curve.ctrlpts = points
-            else:
-                curve = NURBS.Curve()
-                curve.degree = self.degree
-                curve.ctrlpts = points
-                curve.weights = self.weights
-            curve.knotvector = self.knotvector
-            curve.delta = self.delta
-            self._curve = curve
-        return self._curve
-
-    @property
     def points(self):
+        """
+        Evaluate the BSpline points based on the set delta value of the curve.
+        """
         if self._points is None:
             if self._eval_points is None:
                 self.evaluate()
@@ -848,6 +846,9 @@ class BSplineCurve(Edge):
 
     @property
     def data(self):
+        """
+        Returns a dicitonnary of the BSpline data.
+        """
         datadict = {
             "degree": self.degree,
             "knotvector": self.knotvector,
@@ -865,7 +866,8 @@ class BSplineCurve(Edge):
 
     @property
     def sample_size(self):
-        """Sample size.
+        """
+        Sample size.
 
         Sample size defines the number of evaluated points to generate. It also sets the ``delta`` property.
 
@@ -890,11 +892,12 @@ class BSplineCurve(Edge):
 
     @property
     def delta(self):
-        """Evaluation delta.
+        """
+        Evaluation delta.
 
         Evaluation delta corresponds to the *step size* while ``evaluate`` function iterates on the knot vector to
         generate curve points. Decreasing step size results in generation of more curve points.
-        Therefore; smaller the delta value, smoother the curve.
+        Therefore, smaller the delta value, smoother the curve.
 
         :getter: Gets the delta value
         :setter: Sets the delta value
@@ -918,13 +921,30 @@ class BSplineCurve(Edge):
 
     @property
     def domain(self):
-        """ Domain.
+        """
+        Domain.
 
         Domain is determined using the knot vector(s).
 
         :getter: Gets the domain
         """
         return self.knotvector[self.degree], self.knotvector[-(self.degree + 1)]
+
+    def to_geomdl(self):
+        """Converts the BSpline curve into a geomdl curve."""
+        points = [[*point] for point in self.control_points]
+        if self.weights is None:
+            curve = BSpline.Curve()
+            curve.degree = self.degree
+            curve.ctrlpts = points
+        else:
+            curve = NURBS.Curve()
+            curve.degree = self.degree
+            curve.ctrlpts = points
+            curve.weights = self.weights
+        curve.knotvector = self.knotvector
+        curve.delta = self.delta
+        return curve
 
     def to_dict(self, *args, **kwargs):
         """Avoids storing points in memo that makes serialization slow."""
@@ -938,11 +958,13 @@ class BSplineCurve(Edge):
 
 
     def evaluate(self, **kwargs):
-        """ Evaluates the curve.
+        """
+        Evaluates the curve.
 
         The evaluated points are stored in :py:attr:`evalpts` property.
 
-        Keyword arguments:
+        Keyword Arguments:
+
             * ``start``: start parameter
             * ``stop``: stop parameter
 
@@ -964,6 +986,7 @@ class BSplineCurve(Edge):
 
             # Get the evaluated points
             curve_points = curve.evalpts
+
         """
 
         # Find evaluation start and stop parameter values
@@ -4083,6 +4106,9 @@ class LineSegment3D(LineSegment):
                 }
 
     def normal_vector(self, abscissa=0.):
+        """
+        Returns the normal vector to the curve at the specified abscissa.
+        """
         direction_vector = self.direction_vector()
         return direction_vector.deterministic_normal_vector()
 
@@ -4191,6 +4217,7 @@ class LineSegment3D(LineSegment):
         return LineSegment3D(self.start.copy(), self.end.copy())
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Plot."""
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4212,6 +4239,7 @@ class LineSegment3D(LineSegment):
         return ax
 
     def plot2d(self, x_3d, y_3d, ax=None, color='k', width=None):
+        """2D Plot."""
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')

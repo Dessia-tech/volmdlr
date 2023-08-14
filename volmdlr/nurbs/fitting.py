@@ -23,7 +23,8 @@ from volmdlr.nurbs import core
 
 
 def interpolate_curve(points: cython.list, degree: cython.int, centripetal: cython.bint) -> BSpline:
-    """Curve interpolation through the data points.
+    """
+    Curve interpolation through the data points.
 
     Please refer to Algorithm A9.1 on The NURBS Book (2nd Edition), pp.369-370 for details.
 
@@ -36,6 +37,7 @@ def interpolate_curve(points: cython.list, degree: cython.int, centripetal: cyth
     :type degree: int
     :return: interpolated B-Spline curve
     :rtype: BSpline.Curve
+
     """
     # Number of control points
     num_points: cython.Py_ssize_t = len(points)
@@ -66,7 +68,8 @@ def interpolate_curve(points: cython.list, degree: cython.int, centripetal: cyth
 
 @export
 def interpolate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
-    """Surface interpolation through the data points.
+    """
+    Surface interpolation through the data points.
 
     Please refer to the Algorithm A9.4 on The NURBS Book (2nd Edition), pp.380 for details.
 
@@ -85,6 +88,7 @@ def interpolate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
     :type degree_v: int
     :return: interpolated B-Spline surface
     :rtype: BSpline.Surface
+
     """
     # Keyword arguments
     use_centripetal = kwargs.get("centripetal", False)
@@ -125,7 +129,8 @@ def interpolate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
 
 @export
 def approximate_curve(points, degree, **kwargs):
-    """Curve approximation using least squares method with fixed number of control points.
+    """
+    Curve approximation using least squares method with fixed number of control points.
 
     Please refer to The NURBS Book (2nd Edition), pp.410-413 for details.
 
@@ -139,6 +144,7 @@ def approximate_curve(points, degree, **kwargs):
     :type degree: int
     :return: approximated B-Spline curve
     :rtype: BSpline.Curve
+
     """
     # Number of data points
     num_dpts = len(points)  # corresponds to variable "r" in the algorithm
@@ -221,10 +227,11 @@ def approximate_curve(points, degree, **kwargs):
 
 @export
 def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
-    """Surface approximation using least squares method with fixed number of control points.
+    """
+    Surface approximation using least squares method with fixed number of control points.
 
-    This algorithm interpolates the corner control points and approximates the remaining control points. Please refer to
-    Algorithm A9.7 of The NURBS Book (2nd Edition), pp.422-423 for details.
+    This algorithm interpolates the corner control points and approximates the remaining control points.
+    Please refer to Algorithm A9.7 of The NURBS Book (2nd Edition), pp.422-423 for details.
 
     Keyword Arguments:
         * ``centripetal``: activates centripetal parametrization method. *Default: False*
@@ -243,6 +250,7 @@ def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
     :type degree_v: int
     :return: approximated B-Spline surface
     :rtype: BSpline.Surface
+
     """
     # Keyword arguments
     use_centripetal = kwargs.get("centripetal", False)
@@ -373,7 +381,8 @@ def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
 def compute_knot_vector(
     degree: cython.int, num_points: cython.size_t, params: cython.double[:]
 ) -> vector[cython.double]:
-    """Computes a knot vector from the parameter list using averaging method.
+    """
+    Computes a knot vector from the parameter list using averaging method.
 
     Please refer to the Equation 9.8 on The NURBS Book (2nd Edition), pp.365 for details.
 
@@ -404,7 +413,8 @@ def compute_knot_vector(
 
 
 def compute_knot_vector2(degree, num_dpts, num_cpts, params):
-    """Computes a knot vector ensuring that every knot span has at least one :math:`\\overline{u}_{k}`.
+    """
+    Computes a knot vector ensuring that every knot span has at least one :math:`\\overline{u}_{k}`.
 
     Please refer to the Equations 9.68 and 9.69 on The NURBS Book (2nd Edition), p.412 for details.
 
@@ -440,7 +450,8 @@ def compute_knot_vector2(degree, num_dpts, num_cpts, params):
 @cython.cfunc
 @cython.cdivision
 def compute_params_curve(points: np.ndarray[np.double_t, ndim == 2], centripetal: cython.bint = False):
-    """Computes ū_k for curves.
+    """
+    Computes ū_k for curves.
 
     Please refer to the Equations 9.4 and 9.5 for chord length parametrization, and Equation 9.6 for centripetal method
     on The NURBS Book (2nd Edition), pp.364-365.
@@ -475,7 +486,8 @@ def compute_params_curve(points: np.ndarray[np.double_t, ndim == 2], centripetal
 
 
 def compute_params_surface(points, size_u, size_v, centripetal=False):
-    """Computes :math:`\\overline{u}_{k}` and :math:`\\overline{u}_{l}` for surfaces.
+    """
+    Computes :math:`\\overline{u}_{k}` and :math:`\\overline{u}_{l}` for surfaces.
 
     The data points array has a row size of ``size_v`` and column size of ``size_u`` and it is 1-dimensional. Please
     refer to The NURBS Book (2nd Edition), pp.366-367 for details on how to compute :math:`\\overline{u}_{k}` and
@@ -530,7 +542,8 @@ def compute_params_surface(points, size_u, size_v, centripetal=False):
 def _build_coeff_matrix(
     degree: cython.int, knotvector: vector[cython.double], params: cython.double[:], num_points: cython.size_t
 ) -> cython.double[:, :]:
-    """Builds the coefficient matrix for global interpolation.
+    """
+    Builds the coefficient matrix for global interpolation.
 
     This function only uses data points to build the coefficient matrix. Please refer to The NURBS Book (2nd Edition),
     pp364-370 for details.
@@ -565,10 +578,11 @@ def _build_coeff_matrix(
 
 
 def _build_coeff_matrix_ders(degree, knotvector, params, points):
-    """Builds the coefficient matrix for global interpolation.
+    """
+    Builds the coefficient matrix for global interpolation.
 
-    This function uses data points and first derivatives to build the coefficient matrix. Please refer to The NURBS Book
-    (2nd Edition), pp373-376 for details.
+    This function uses data points and first derivatives to build the coefficient matrix.
+    Please refer to The NURBS Book (2nd Edition), pp373-376 for details.
 
     :param degree: degree
     :type degree: int
