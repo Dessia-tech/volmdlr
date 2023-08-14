@@ -8,7 +8,6 @@ import re
 from os.path import dirname, isdir, join
 from subprocess import CalledProcessError, check_output
 
-import numpy as np
 from setuptools import setup
 
 from Cython.Build import cythonize  # isort: skip This prevent a build bug
@@ -154,6 +153,5 @@ setup(
                            "volmdlr/nurbs/core.pyx",
                            "volmdlr/nurbs/helpers.pyx",
                            "volmdlr/nurbs/fitting.py"]),
-    include_dirs=[np.get_include()],
     python_requires=">=3.9",
 )

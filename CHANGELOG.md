@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - Line: reverse.
-- BSplineCurve: remove depency from geomdl library
+- BSplineCurve: Remove dependencies from the geomdl library.
 
 ### Fixed
 - Sweep with non smoth path
