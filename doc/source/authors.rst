@@ -17,26 +17,26 @@ maintenance:
 |pierre gibertini| Pierre Gibertini
 
 
-.. |axel ringhausen| image:: images/axel_ringhausen.jpeg
+.. |axel ringhausen| figure:: ../source/images/axel_ringhausen.jpeg
   :width: 100
   :target: https://github.com/AxelRinghausen
 
-.. |steven masfaraud| image:: images/steven_masfaraud.jpeg
+.. |steven masfaraud| figure:: ../source/images/steven_masfaraud.jpeg
   :width: 100
   :target: https://github.com/masfaraud
 
-.. |wirajan da silva| image:: images/WirajanDASILVA.png
+.. |wirajan da silva| figure:: ../source/images/WirajanDASILVA.png
   :width: 100
   :target: https://github.com/WirajanDASILVA
 
-.. |gabriel jesus| image:: images/GabrielJMS .png
+.. |gabriel jesus| figure:: ../source/images/GabrielJMS .png
   :width: 100
   :target: https://github.com/GabrielJMS 
 
-.. |pierre gibertini| image:: images/pgibertini.png
+.. |pierre gibertini| figure:: ../source/images/pgibertini.png
     :width: 100
     :target: https://github.com/pgibertini
 
-.. |soumiya bendjebla| image:: images/sbendjebla.png
+.. |soumiya bendjebla| figure:: ../source/images/sbendjebla.png
     :width: 100
     :target: https://github.com/sbendjebla

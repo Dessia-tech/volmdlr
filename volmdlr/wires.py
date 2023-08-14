@@ -1300,6 +1300,7 @@ class Wire2D(WireMixin, PhysicalObject):
         xlim, ylim = (b_rectangle[0] - 0.1, b_rectangle[1] + 0.1), (b_rectangle[2] - 0.1, b_rectangle[3] + 0.1)
         ax.set(xlim=xlim, ylim=ylim)
         plt.show()
+        return ax
 
     def _get_plot_ax(self):
         _, ax = plt.subplots()
@@ -2704,7 +2705,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def cut_by_wire(self, wire: Wire2D):
         """
-        Cut a contour2d with a wire2d and return a list of contours 2d.
+        Cut a contour 2d with a wire 2d and return a list of contours 2d.
 
         :param wire: volmdlr.wires.Wire2D
         :rtype: list[volmdlr.wires.Contour2D]

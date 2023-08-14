@@ -82,7 +82,7 @@ The volmdlr library is structured using a modular approach as follows:
 
         +++
 
-        .. button-ref:: intersections
+        .. button-ref:: boolean_operations
             :expand:
             :color: primary
             :click-parent:
@@ -90,7 +90,7 @@ The volmdlr library is structured using a modular approach as follows:
             To Boolean ops
 
     .. grid-item-card::
-        :img-top: ../source/_static/index-images/document-lock-svgrepo-com.svg
+        :img-top: ../source/_static/index-images/step_file.svg
 
 
         ^^^^^^^^^^^^^^
