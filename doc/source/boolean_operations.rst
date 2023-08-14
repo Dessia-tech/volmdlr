@@ -52,7 +52,7 @@ Union
     union[0].babylonjs()
 
 Here, as the subtitle indicates, it is basically done the union of the two closed shells.
-To do so, it will first verify if the two closed shells intersect some how. if it does not intersect, it will return a list with the exact two given closed shells.
+To do so, it will first verify if the two closed shells intersect some how. If it does not intersect, it will return a list with the exact two given closed shells.
 If one of the given shells is completely inside the other, it'll simply return a list the bigger shell.
 Otherwise, it will return a list with the resulting union closed shell 3d.
 
@@ -70,7 +70,10 @@ Substraction
     subtract[0].alpha = 0.6
     subtract[0].babylonjs()
 
-Here it is done the extraction of shell2 from shell1
+Here it is done the extraction of shell2 from shell1. If the two shells do not intersect in any way, a list containing only the shell 1 is returned.
+If shell2 is inside shell1, a closed shell with a void interior shell is returned.
+Otherwise, the shell2 is subtracted from shell1 and the result is a list containing an OpenShell3D.
+
 .. figure:: ../source/_static/index-images/subtract.png
 
 Substraction to CloseShell3D
@@ -87,6 +90,9 @@ Substraction to CloseShell3D
 
 .. figure:: ../source/_static/index-images/subtract_to_closedshell.png
 
+The method ``subtract_to_closed_shell`` will do exactly as the previous subtract do, but it will return a list with the closed shell shell instead of a open shell.
+
+
 Intersection
 ************
 
@@ -98,5 +104,7 @@ Intersection
     intersection[0].color = (1, 0.1, 0.1)
     intersection[0].alpha = 0.6
     intersection[0].babylonjs()
+
+The intersection method will calculate the closed shell resulting from the intersection of the two shells.
 
 .. figure:: ../source/_static/index-images/intersection.png

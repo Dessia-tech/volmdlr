@@ -188,8 +188,17 @@ Example:
     :align: center
 
     import volmdlr
-    from volmdlr import faces, surfaces, edges
+    from volmdlr import surfaces, faces
     from volmdlr.core import EdgeStyle
+
+    face1 = faces.PlaneFace3D.from_surface_rectangular_cut(surfaces.Plane3D(volmdlr.OXYZ), -1, 1, -1, 1)
+    face2 = faces.PlaneFace3D.from_surface_rectangular_cut(surfaces.Plane3D(volmdlr.OYZX), -1, 1, -1, 1)
+    face_intersections = face1.face_intersections(face2)
+    ax = face1.plot()
+    face2.plot(ax, 'r')
+    for intersection in face_intersections:
+        intersection.plot(ax, EdgeStyle('b'))
+
 
 
 Intersection between a face and an edge
@@ -206,6 +215,16 @@ Example:
     import volmdlr
     from volmdlr import faces, surfaces, edges
     from volmdlr.core import EdgeStyle
+
+    face1 = faces.PlaneFace3D.from_surface_rectangular_cut(surfaces.Plane3D(volmdlr.OXYZ), -1, 1, -1, 1)
+    lineseg = edges.LineSegment3D(volmdlr.Point3D(-.5, -.5, -.5), volmdlr.Point3D(.5, .5, .5))
+    linseg_intersections = face1.linesegment_intersections(lineseg)
+
+    ax = face1.plot()
+    lineseg.plot(ax, EdgeStyle('g'))
+    for ls in linseg_intersections:
+        ls.plot(ax, 'y')
+
 
 Intersections between two shells
 ********************************
