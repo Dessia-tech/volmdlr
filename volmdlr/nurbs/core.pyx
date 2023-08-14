@@ -633,6 +633,35 @@ def build_coeff_matrix(int degree, vector[double] knotvector, double[:] params, 
     # Return coefficient matrix
     return matrix_a
 
+
+cpdef list knot_insertion_kv(list[float] knotvector, float u, int span, int r):
+    """ Computes the knot vector of the rational/non-rational spline after knot insertion.
+
+    Part of Algorithm A5.1 of The NURBS Book by Piegl & Tiller, 2nd Edition.
+
+    :param knotvector: knot vector
+    :param u: knot
+    :param span: knot span
+    :param r: number of knot insertions
+    :return: updated knot vector
+    """
+    # Initialize variables
+    cdef int kv_size = len(knotvector)
+    cdef list[float] kv_updated = [0.0 for _ in range(kv_size + r)]
+
+    # Compute new knot vector
+    cdef int i
+    for i in range(0, span + 1):
+        kv_updated[i] = knotvector[i]
+    for i in range(1, r + 1):
+        kv_updated[span + i] = u
+    for i in range(span + 1, kv_size):
+        kv_updated[i + r] = knotvector[i]
+
+    # Return the new knot vector
+    return kv_updated
+
+
 def evaluate_curve(dict datadict, double start: float = 0.0, double stop: float = 1.0):
     cdef int degree = datadict["degree"]
     cdef list knotvector = datadict["knotvector"]

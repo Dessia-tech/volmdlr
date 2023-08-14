@@ -152,7 +152,8 @@ setup(
                            "volmdlr/bspline_fitting.pyx",
                            "volmdlr/bspline_evaluators.pyx",
                            "volmdlr/nurbs/core.pyx",
-                           "volmdlr/nurbs/helpers.pyx"]),
+                           "volmdlr/nurbs/helpers.pyx",
+                           "volmdlr/nurbs/fitting.py"]),
     include_dirs=[np.get_include()],
     python_requires=">=3.9",
 )

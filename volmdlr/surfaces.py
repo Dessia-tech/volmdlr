@@ -22,6 +22,7 @@ import volmdlr.geometry
 import volmdlr.utils.parametric as vm_parametric
 from volmdlr.core import EdgeStyle
 from volmdlr.core import point_in_list
+import volmdlr.nurbs.helpers as nurbs_helpers
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
 import volmdlr.utils.intersections as vm_utils_intersections
 
@@ -4551,8 +4552,8 @@ class BSplineSurface3D(Surface3D):
         self.nb_u = nb_u
         self.nb_v = nb_v
 
-        u_knots = edges.standardize_knot_vector(u_knots)
-        v_knots = edges.standardize_knot_vector(v_knots)
+        u_knots = nurbs_helpers.standardize_knot_vector(u_knots)
+        v_knots = nurbs_helpers.standardize_knot_vector(v_knots)
         self.u_knots = u_knots
         self.v_knots = v_knots
         self.u_multiplicities = u_multiplicities

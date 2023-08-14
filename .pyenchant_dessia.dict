@@ -38,12 +38,14 @@ getter
 gmsh
 html
 huygens
+idx
 init
 inplace
 isinstance
 isort
 JSON
 jsonschema
+knotvector
 kwargs
 args
 len
@@ -60,6 +62,7 @@ ndarray
 numpy
 numpy
 octree
+Piegl
 plt
 Rapshon
 rtype
