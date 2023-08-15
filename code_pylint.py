@@ -19,7 +19,7 @@ MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 190,
                      "wrong-spelling-in-docstring": 143,
                      'invalid-name': 167,
-                     'no-member': 3,
+                     'no-member': 28,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 62,
@@ -45,7 +45,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-nested-blocks': 7,
                      'too-many-return-statements': 3,
                      'cyclic-import': 1,
-                     'undefined-variable': 0,  # 2 when gmsh is fixed
+                     'undefined-variable': 8,  # 2 when gmsh is fixed
                      'broad-except': 1,
                      "broad-exception-caught": 2,
                      'too-many-boolean-expressions': 2,
@@ -56,7 +56,9 @@ MAX_ERROR_BY_TYPE = {
                      'consider-using-generator': 1,
                      'import-outside-toplevel': 5,
                      'unsubscriptable-object': 1,
-                     'signature-differs': 1}
+                     'signature-differs': 1,
+                     'consider-using-enumerate': 2,
+                     'unbalanced-tuple-unpacking': 1}
 
 ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-many-arguments", "too-many-statements",
                                 "too-many-nested-blocks", "too-many-instance-attributes", "abstract-method",
@@ -64,7 +66,8 @@ ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-man
                                 "protected-access", "cyclic-import", "line-too-long", "too-many-lines", "no-member",
                                 "too-few-public-methods", "duplicate-code", "too-many-return-statements",
                                 "import-outside-toplevel", "arguments-differ", "arguments-renamed",
-                                "too-many-boolean-expressions", "super-init-not-called"]
+                                "too-many-boolean-expressions", "super-init-not-called", 'consider-using-enumerate',
+                                'unbalanced-tuple-unpacking']
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:

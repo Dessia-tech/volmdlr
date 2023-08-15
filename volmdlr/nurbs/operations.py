@@ -1,4 +1,7 @@
-import os
+"""
+Nurbs main operations algorithms.
+"""
+
 from copy import deepcopy
 from functools import lru_cache
 import volmdlr
@@ -29,48 +32,49 @@ def knot_insertion(degree, knotvector, ctrlpts, u, **kwargs):
 
     """
     # Get keyword arguments
-    num = kwargs.get('num', 1)  # number of knot insertions
-    s = kwargs.get('s', core.find_multiplicity(u, knotvector))  # multiplicity
-    k = kwargs.get('span', core.find_span_linear(degree, knotvector, len(ctrlpts), u))  # knot span
+    num_insertions = kwargs.get('num', 1)
+    knot_multiplicity = kwargs.get('s', core.find_multiplicity(u, knotvector))
+    knot_span = kwargs.get('span', core.find_span_linear(degree, knotvector, len(ctrlpts), u))
 
     # Initialize variables
-    np = len(ctrlpts)
-    nq = np + num
+    num_ctrlpts_orig = len(ctrlpts)
+    num_ctrlpts_new = num_ctrlpts_orig + num_insertions
 
     # Initialize new control points array (control points may be weighted or not)
-    ctrlpts_new = [[] for _ in range(nq)]
+    ctrlpts_new = [[] for _ in range(num_ctrlpts_new)]
 
     # Initialize a local array of length p + 1
     temp = [[] for _ in range(degree + 1)]
 
     # Save unaltered control points
-    for i in range(0, k - degree + 1):
+    for i in range(0, knot_span - degree + 1):
         ctrlpts_new[i] = ctrlpts[i]
-    for i in range(k - s, np):
-        ctrlpts_new[i + num] = ctrlpts[i]
+    for i in range(knot_span - knot_multiplicity, num_ctrlpts_orig):
+        ctrlpts_new[i + num_insertions] = ctrlpts[i]
 
     # Start filling the temporary local array which will be used to update control points during knot insertion
-    for i in range(0, degree - s + 1):
-        temp[i] = deepcopy(ctrlpts[k - degree + i])
+    for i in range(0, degree - knot_multiplicity + 1):
+        temp[i] = deepcopy(ctrlpts[knot_span - degree + i])
 
     # Insert knot "num" times
-    for j in range(1, num + 1):
-        L = k - degree + j
-        for i in range(0, degree - j - s + 1):
-            alpha = knot_insertion_alpha(u, tuple(knotvector), k, i, L)
+    for j in range(1, num_insertions + 1):
+        new_knot_index = knot_span - degree + j
+        for i in range(0, degree - j - knot_multiplicity + 1):
+            alpha = knot_insertion_alpha(u, tuple(knotvector), knot_span, i, new_knot_index)
             if isinstance(temp[i][0], float):
                 temp[i][:] = [alpha * elem2 + (1.0 - alpha) * elem1 for elem1, elem2 in zip(temp[i], temp[i + 1])]
             else:
                 for idx in range(len(temp[i])):
                     temp[i][idx][:] = [alpha * elem2 + (1.0 - alpha) * elem1 for elem1, elem2 in
                                        zip(temp[i][idx], temp[i + 1][idx])]
-        ctrlpts_new[L] = deepcopy(temp[0])
-        ctrlpts_new[k + num - j - s] = deepcopy(temp[degree - j - s])
+        ctrlpts_new[new_knot_index] = deepcopy(temp[0])
+        ctrlpts_new[knot_span + num_insertions - j - knot_multiplicity] =\
+            deepcopy(temp[degree - j - knot_multiplicity])
 
     # Load remaining control points
-    L = k - degree + num
-    for i in range(L + 1, k - s):
-        ctrlpts_new[i] = deepcopy(temp[i - L])
+    new_knot_index = knot_span - degree + num_insertions
+    for i in range(new_knot_index + 1, knot_span - knot_multiplicity):
+        ctrlpts_new[i] = deepcopy(temp[i - new_knot_index])
 
     # Return control points after knot insertion
     return ctrlpts_new
@@ -235,7 +239,7 @@ def split_curve(obj, param, **kwargs):
     # if not isinstance(obj, abstract.Curve):
     #     raise GeomdlException("Input shape must be an instance of abstract.Curve class")
 
-    if param == obj.domain[0] or param == obj.domain[1]:
+    if param in set(obj.domain):
         raise ValueError("Cannot split from the domain edge")
 
     # Find multiplicity of the knot and define how many times we need to add the knot

@@ -3,7 +3,6 @@
 """
 Edges related classes.
 """
-import copy
 import math
 import sys
 import warnings
@@ -789,8 +788,8 @@ class BSplineCurve(Edge):
         if self.weights:
             self.rational = True
             ctrlptsw = []
-            for pt, w in zip(self.control_points, weights):
-                temp = [float(c * w) for c in pt]
+            for point, w in zip(self.control_points, weights):
+                temp = [float(c * w) for c in point]
                 temp.append(float(w))
                 ctrlptsw.append(temp)
             self.ctrlptsw = ctrlptsw
