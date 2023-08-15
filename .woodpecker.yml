@@ -37,7 +37,7 @@ pipeline:
     image: python:3.9
     commands:
       - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert
-      - pip install numpy
+      - pip install -r requirements.txt
       - python setup.py build_ext --inplace
       - python setup.py install
       - cd doc
