@@ -126,6 +126,23 @@ class TestBSplineCurve2D(unittest.TestCase):
             self.assertAlmostEqual(point[0], expected_point[0], delta=GEOMDL_DELTA)
             self.assertAlmostEqual(point[1], expected_point[1], delta=GEOMDL_DELTA)
 
+        points2d = [volmdlr.Point2D(0, 0.1),
+                    volmdlr.Point2D(0.2, 0.3),
+                    volmdlr.Point2D(0.4, 0.4),
+                    volmdlr.Point2D(0.5, 0.6),
+                    volmdlr.Point2D(0.6, 0.7),
+                    volmdlr.Point2D(0.8, 0.8),
+                    volmdlr.Point2D(1, 0.9)]
+
+        # %%% Approximation
+        bspline_curve2d_approximated = vme.BSplineCurve2D.from_points_approximation(points2d, 3, ctrlpts_size=5)
+        expected_ctrlpts = [volmdlr.Point2D(0.0, 0.1), volmdlr.Point2D(0.1686778402310228, 0.2366540266279785),
+                            volmdlr.Point2D(0.466545895266623, 0.5077440536607246),
+                            volmdlr.Point2D(0.7432185866086097, 0.852531277025759), volmdlr.Point2D(1.0, 0.9)]
+        for point, expected_point in zip(bspline_curve2d_approximated.control_points, expected_ctrlpts):
+            self.assertAlmostEqual(point[0], expected_point[0], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(point[1], expected_point[1], delta=GEOMDL_DELTA)
+
     def test_length(self):
         total_length = self.bspline2d.length()
         self.assertAlmostEqual(total_length, 50.33433959792692, delta=GEOMDL_DELTA)
