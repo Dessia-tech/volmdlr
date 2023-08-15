@@ -857,13 +857,13 @@ cdef vector[vector[double]] evaluate_surface_c(int[2] degree, vector[double] kno
     Evaluates surface.
     """
     # Algorithm A3.5
-    cdef vector[double] knots_u = linalg.linspace(start[0], stop[0], sample_size[0], decimals=precision)
-    cdef vector[int] spans_u = helpers.find_spans(degree[0], knotvector[0], size[0], knots_u, self._span_func)
-    cdef vector[vector[double]] basis_u = helpers.basis_functions(degree[0], knotvector[0], spans_u, knots_u)
+    cdef vector[double] knots_u = helpers.linspace(start[0], stop[0], sample_size[0], decimals=precision)
+    cdef vector[int] spans_u = find_spans(degree[0], knotvector[0], size[0], knots_u)
+    cdef vector[vector[double]] basis_u = basis_functions(degree[0], knotvector[0], spans_u, knots_u)
 
-    cdef vector[double] knots_v = linalg.linspace(start[1], stop[1], sample_size[1], decimals=precision)
-    cdef vector[int] spans_v = helpers.find_spans(degree[1], knotvector[1], size[1], knots_v, self._span_func)
-    cdef vector[vector[double]] basis_v = helpers.basis_functions(degree[1], knotvector[1], spans_v, knots_v)
+    cdef vector[double] knots_v = helpers.linspace(start[1], stop[1], sample_size[1], decimals=precision)
+    cdef vector[int] spans_v = find_spans(degree[1], knotvector[1], size[1], knots_v)
+    cdef vector[vector[double]] basis_v = basis_functions(degree[1], knotvector[1], spans_v, knots_v)
 
     cdef list eval_points = []
     cdef int i, j, k, m
