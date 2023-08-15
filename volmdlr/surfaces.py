@@ -1499,8 +1499,7 @@ class Plane3D(Surface3D):
             control_points=control_points,
             knot_multiplicities=bspline_curve3d.knot_multiplicities,
             knots=bspline_curve3d.knots,
-            weights=bspline_curve3d.weights,
-            periodic=bspline_curve3d.periodic)]
+            weights=bspline_curve3d.weights)]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -1518,8 +1517,7 @@ class Plane3D(Surface3D):
             control_points=control_points,
             knot_multiplicities=bspline_curve2d.knot_multiplicities,
             knots=bspline_curve2d.knots,
-            weights=bspline_curve2d.weights,
-            periodic=bspline_curve2d.periodic)]
+            weights=bspline_curve2d.weights)]
 
     def rectangular_cut(self, x1: float, x2: float,
                         y1: float, y2: float, name: str = ''):
@@ -4044,6 +4042,8 @@ class ExtrusionSurface3D(Surface3D):
         end = self.point3d_to_2d(arc3d.end)
         if self.x_periodicity:
             start, end = self._verify_start_end_parametric_points(start, end, arc3d)
+        if start.is_close(end):
+            print("surfaces")
         return [edges.LineSegment2D(start, end, name="arc")]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
@@ -4132,7 +4132,7 @@ class ExtrusionSurface3D(Surface3D):
             start, end = self._verify_start_end_parametric_points(points[0], points[-1], bspline_curve3d)
             points[0] = start
             points[-1] = end
-        return [edges.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree).simplify]
+        return [edges.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree)]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """

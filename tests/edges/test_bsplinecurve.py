@@ -108,9 +108,27 @@ class TestBSplineCurve2D(unittest.TestCase):
             self.assertAlmostEqual(point[0], expected_point[0], delta=GEOMDL_DELTA)
             self.assertAlmostEqual(point[1], expected_point[1], delta=GEOMDL_DELTA)
 
+    def test_approximate_curve(self):
+        # The NURBS Book Ex9.1
+        points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(3, 4), volmdlr.Point2D(-1, 4),
+                  volmdlr.Point2D(-4, 0), volmdlr.Point2D(-4, -3)]
+        degree = 3  # cubic curve
+
+        # Do global curve interpolation
+        curve = vme.BSplineCurve2D.from_points_approximation(points, degree, centripetal=False)
+        expected_ctrlpts = [
+            [0.0, 0.0],
+            [9.610024470158852, 8.200277881464892],
+            [-8.160625855418692, 3.3820642030608417],
+            [-4.0, -3.0],
+        ]
+        for point, expected_point in zip(curve.control_points, expected_ctrlpts):
+            self.assertAlmostEqual(point[0], expected_point[0], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(point[1], expected_point[1], delta=GEOMDL_DELTA)
+
     def test_length(self):
         total_length = self.bspline2d.length()
-        self.assertAlmostEqual(total_length, 50.33433959792692 , delta=GEOMDL_DELTA)
+        self.assertAlmostEqual(total_length, 50.33433959792692, delta=GEOMDL_DELTA)
 
     def test_abscissa(self):
         bspline_curve2d = bspline_curves.bspline_curve2d_1

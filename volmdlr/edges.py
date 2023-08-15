@@ -18,7 +18,7 @@ import plot_data.core as plot_data
 import plot_data.colors
 import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
-from geomdl import NURBS, BSpline, utilities
+from geomdl import NURBS, BSpline
 
 from volmdlr.nurbs.operations import split_curve
 from volmdlr.nurbs.core import evaluate_curve, derivatives_curve
@@ -1391,7 +1391,7 @@ class BSplineCurve(Edge):
 
     @classmethod
     def from_points_approximation(cls, points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                                  degree: int, **kwargs):
+                                  degree: int, name: str = "", **kwargs):
         """
         Creates a B-spline curve approximation using least squares method with fixed number of control points.
 
@@ -1404,6 +1404,7 @@ class BSplineCurve(Edge):
             List[:class:`volmdlr.Point3D`]]
         :param degree: The degree of the output parametric curve
         :type degree: int
+        :param name: (optional) Curve name.
         :param kwargs: See below
         :return: A B-spline curve from points approximation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
@@ -1412,9 +1413,12 @@ class BSplineCurve(Edge):
         :keyword ctrlpts_size: Number of control points. Default value is
             len(points) - 1
         """
-        curve = fitting.approximate_curve([[*point] for point in points],
-                                          degree, **kwargs)
-        return cls.from_geomdl_curve(curve)
+        point_name = 'Point' + points[0].__class__.__name__[-2:]
+        control_points, knots, knot_multiplicities = fitting.approximate_curve(
+            npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points], dtype=npy.float64),
+            degree, **kwargs)
+        control_points = [getattr(volmdlr, point_name)(*point) for point in control_points]
+        return cls(degree, control_points, knot_multiplicities, knots, name=name)
 
     def tangent(self, position: float = 0.0, normalize: bool = True):
         """
@@ -1445,14 +1449,17 @@ class BSplineCurve(Edge):
             List[:class:`volmdlr.Point3D`]]
         :param degree: The degree of the output parametric curve
         :type degree: int
+        :param centripetal: Please refer to Algorithm A9.1 on The NURBS Book (2nd Edition),
+        pp.369-370 for details.
+        :type centripetal: bool
         :param name: curve name.
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
         point_name = 'Point' + points[0].__class__.__name__[-2:]
-        ctrlpts, knots, knot_multiplicities = fitting.interpolate_curve([[*point]
-                                                                               for point in points],
-                                                                              degree, centripetal=centripetal)
+        ctrlpts, knots, knot_multiplicities = fitting.interpolate_curve(
+            npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points], dtype=npy.float64),
+            degree, centripetal=centripetal)
         ctrlpts = [getattr(volmdlr, point_name)(*point) for point in ctrlpts]
         return cls(degree, ctrlpts, knot_multiplicities, knots, name=name)
 
@@ -1865,7 +1872,7 @@ class BSplineCurve2D(BSplineCurve):
                             self.control_points]
         return BSplineCurve3D(self.degree, control_points3d,
                               self.knot_multiplicities, self.knots,
-                              self.weights, self.periodic)
+                              self.weights)
 
     def to_step(self, current_id, surface_id=None):
         """Exports to STEP format."""
@@ -1994,8 +2001,7 @@ class BSplineCurve2D(BSplineCurve):
                               control_points=points_symmetry,
                               knot_multiplicities=self.knot_multiplicities[::-1],
                               knots=self.knots[::-1],
-                              weights=self.weights,
-                              periodic=self.periodic)
+                              weights=self.weights)
 
     def offset(self, offset_length: float):
         """
@@ -4774,8 +4780,7 @@ class BSplineCurve3D(BSplineCurve):
                               self.control_points]
         new_bsplinecurve3d = BSplineCurve3D(self.degree, new_control_points,
                                             self.knot_multiplicities,
-                                            self.knots, self.weights,
-                                            self.periodic, self.name)
+                                            self.knots, self.weights, self.name)
         return new_bsplinecurve3d
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
@@ -4878,7 +4883,6 @@ class BSplineCurve3D(BSplineCurve):
                               knot_multiplicities=new_multiplicities,
                               knots=new_knots,
                               weights=None,
-                              periodic=bspline_curve.periodic,
                               name=bspline_curve.name)
 
     def cut_before(self, parameter: float):
@@ -4950,7 +4954,7 @@ class BSplineCurve3D(BSplineCurve):
                             self.control_points]
         return BSplineCurve2D(self.degree, control_points2d,
                               self.knot_multiplicities, self.knots,
-                              self.weights, self.periodic, self.name)
+                              self.weights, self.name)
 
     def curvature(self, u: float, point_in_curve: bool = False):
         """
