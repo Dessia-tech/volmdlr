@@ -676,8 +676,7 @@ def evaluate_curve(dict datadict, double start: float = 0.0, double stop: float 
     if rational:
         return evaluate_curve_rational(degree, knotvector, ctrlpts, size, sample_size,
                                        dimension, precision, start, stop)
-    return evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size,
-                            dimension, precision, start, stop)
+    return evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size, dimension, precision, start, stop)
 
 
 cdef list evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts, int size,
@@ -830,3 +829,89 @@ cdef vector[vector[double]] derivatives_curve_rational(int degree, vector[double
 
     # Return C(u) derivatives
     return CK
+
+
+def evaluate_surface(dict datadict, **kwargs):
+    cdef int[2] degree = datadict["degree"]
+    cdef list knotvector = datadict["knotvector"]
+    cdef tuple ctrlpts = datadict["control_points"]
+    cdef int[2] size = datadict["size"]
+    cdef int[2] sample_size = datadict["sample_size"]
+    cdef bint rational = datadict["rational"]
+    cdef int dimension = datadict["dimension"] + 1 if rational else datadict["dimension"]
+    cdef int precision = datadict["precision"]
+
+    # Keyword arguments
+    cdef double[2] start = kwargs.get("start", [0.0, 0.0])
+    cdef double[2] stop = kwargs.get("stop", [1.0, 1.0])
+
+    if rational:
+        return evaluate_surface_rational(degree, knotvector, ctrlpts, size, sample_size,
+                                       dimension, precision, start, stop)
+    return evaluate_surface_c(degree, knotvector, ctrlpts, size, sample_size, dimension, precision, start, stop)
+
+
+cdef vector[vector[double]] evaluate_surface_c(int[2] degree, vector[double] knotvector, tuple ctrlpts, int[2] size,
+                                int[2] sample_size, int dimension, int precision, double[2] start, double[2] stop):
+    """
+    Evaluates surface.
+    """
+    # Algorithm A3.5
+    cdef vector[double] knots_u = linalg.linspace(start[0], stop[0], sample_size[0], decimals=precision)
+    cdef vector[int] spans_u = helpers.find_spans(degree[0], knotvector[0], size[0], knots_u, self._span_func)
+    cdef vector[vector[double]] basis_u = helpers.basis_functions(degree[0], knotvector[0], spans_u, knots_u)
+
+    cdef vector[double] knots_v = linalg.linspace(start[1], stop[1], sample_size[1], decimals=precision)
+    cdef vector[int] spans_v = helpers.find_spans(degree[1], knotvector[1], size[1], knots_v, self._span_func)
+    cdef vector[vector[double]] basis_v = helpers.basis_functions(degree[1], knotvector[1], spans_v, knots_v)
+
+    cdef list eval_points = []
+    cdef int i, j, k, m
+    cdef int idx_u, idx_v
+    cdef list spt, temp
+    cdef double pt, tmp
+    for i in range(len(spans_u)):
+        idx_u = spans_u[i] - degree[0]
+        for j in range(len(spans_v)):
+            idx_v = spans_v[j] - degree[1]
+            spt = [0.0 for _ in range(dimension)]
+            for k in range(0, degree[0] + 1):
+                temp = [0.0 for _ in range(dimension)]
+                for m in range(0, degree[1] + 1):
+                    temp[:] = [tmp + (basis_v[j][m] * cp) for tmp, cp in
+                               zip(temp, ctrlpts[idx_v + m + (size[1] * (idx_u + k))])]
+                spt[:] = [pt + (basis_u[i][k] * tmp) for pt, tmp in zip(spt, temp)]
+
+            eval_points.append(spt)
+    return eval_points
+
+
+cdef vector[vector[double]] evaluate_surface_rational(int[2] degree, vector[double] knotvector, tuple ctrlpts,
+                                                      int[2] size, int[2] sample_size, int dimension, int precision,
+                                                      double[2] start, double[2] stop):
+
+
+    """Evaluates the rational surface.
+    
+    Keyword Arguments:
+        * ``start``: starting parametric position for evaluation
+        * ``stop``: ending parametric position for evaluation
+    
+    :param datadict: data dictionary containing the necessary variables
+    :type datadict: dict
+    :return: evaluated points
+    :rtype: list
+    """
+    # Algorithm A4.3
+    cdef vector[vector[double]] cptw = evaluate_surface_c(degree, knotvector, ctrlpts, size, sample_size, dimension,
+                                                          precision, start, stop)
+
+    # Divide by weight
+    cdef list eval_points = []
+    cdef double c
+    cdef list pt, cpt
+    for pt in cptw:
+        cpt = [float(c / pt[-1]) for c in pt[0: (dimension - 1)]]
+        eval_points.append(cpt)
+
+    return eval_points
