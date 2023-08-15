@@ -2,8 +2,9 @@
 Nurbs main operations algorithms.
 """
 
-from copy import deepcopy
 from functools import lru_cache
+import numpy as np
+
 import volmdlr
 from volmdlr.nurbs import core
 
@@ -32,49 +33,42 @@ def knot_insertion(degree, knotvector, ctrlpts, u, **kwargs):
 
     """
     # Get keyword arguments
-    num_insertions = kwargs.get('num', 1)
-    knot_multiplicity = kwargs.get('s', core.find_multiplicity(u, knotvector))
-    knot_span = kwargs.get('span', core.find_span_linear(degree, knotvector, len(ctrlpts), u))
+    num_insertions = kwargs.get('num', 1)  # number of knot insertions
+    knot_multiplicity = kwargs.get('s', core.find_multiplicity(u, knotvector))  # multiplicity
+    knot_span = kwargs.get('span', core.find_span_linear(degree, knotvector, len(ctrlpts), u))  # knot span
 
     # Initialize variables
     num_ctrlpts_orig = len(ctrlpts)
     num_ctrlpts_new = num_ctrlpts_orig + num_insertions
 
     # Initialize new control points array (control points may be weighted or not)
-    ctrlpts_new = [[] for _ in range(num_ctrlpts_new)]
+    ctrlpts_new = [np.empty_like(ctrlpts[0]) for _ in range(num_ctrlpts_new)]
 
     # Initialize a local array of length p + 1
-    temp = [[] for _ in range(degree + 1)]
+    temp = [np.empty_like(ctrlpts[0]) for _ in range(degree + 1)]
 
     # Save unaltered control points
-    for i in range(0, knot_span - degree + 1):
-        ctrlpts_new[i] = ctrlpts[i]
-    for i in range(knot_span - knot_multiplicity, num_ctrlpts_orig):
-        ctrlpts_new[i + num_insertions] = ctrlpts[i]
+    ctrlpts_new[:knot_span - degree + 1] = ctrlpts[:knot_span - degree + 1]
+    ctrlpts_new[knot_span - knot_multiplicity + num_insertions:] = ctrlpts[knot_span - knot_multiplicity:]
 
     # Start filling the temporary local array which will be used to update control points during knot insertion
-    for i in range(0, degree - knot_multiplicity + 1):
-        temp[i] = deepcopy(ctrlpts[knot_span - degree + i])
+    for i in range(degree - knot_multiplicity + 1):
+        temp[i] = np.array(ctrlpts[knot_span - degree + i])
 
-    # Insert knot "num" times
+    # Insert knot "num_insertions" times
     for j in range(1, num_insertions + 1):
         new_knot_index = knot_span - degree + j
-        for i in range(0, degree - j - knot_multiplicity + 1):
+        for i in range(degree - j - knot_multiplicity + 1):
             alpha = knot_insertion_alpha(u, tuple(knotvector), knot_span, i, new_knot_index)
-            if isinstance(temp[i][0], float):
-                temp[i][:] = [alpha * elem2 + (1.0 - alpha) * elem1 for elem1, elem2 in zip(temp[i], temp[i + 1])]
-            else:
-                for idx in range(len(temp[i])):
-                    temp[i][idx][:] = [alpha * elem2 + (1.0 - alpha) * elem1 for elem1, elem2 in
-                                       zip(temp[i][idx], temp[i + 1][idx])]
-        ctrlpts_new[new_knot_index] = deepcopy(temp[0])
-        ctrlpts_new[knot_span + num_insertions - j - knot_multiplicity] =\
-            deepcopy(temp[degree - j - knot_multiplicity])
+            temp[i] = alpha * temp[i + 1] + (1.0 - alpha) * temp[i]
+        ctrlpts_new[new_knot_index] = temp[0]
+        ctrlpts_new[knot_span + num_insertions - j - knot_multiplicity] = \
+            temp[degree - j - knot_multiplicity]
 
     # Load remaining control points
     new_knot_index = knot_span - degree + num_insertions
-    for i in range(new_knot_index + 1, knot_span - knot_multiplicity):
-        ctrlpts_new[i] = deepcopy(temp[i - new_knot_index])
+    ctrlpts_new[new_knot_index + 1:knot_span - knot_multiplicity] = \
+        temp[1:knot_span - knot_multiplicity - new_knot_index + 1]
 
     # Return control points after knot insertion
     return ctrlpts_new
@@ -101,7 +95,7 @@ def knot_insertion_alpha(u, knotvector, span, idx, leg):
     return (u - knotvector[leg + idx]) / (knotvector[idx + span + 1] - knotvector[leg + idx])
 
 
-def knot_insertion_kv(knotvector, u, span, r):
+def knot_insertion_kv(knotvector, u, span, num_insertions):
     """
     Computes the knot vector of the rational/non-rational spline after knot insertion.
 
@@ -113,22 +107,19 @@ def knot_insertion_kv(knotvector, u, span, r):
     :type u: float
     :param span: knot span
     :type span: int
-    :param r: number of knot insertions
-    :type r: int
+    :param num_insertions: number of knot insertions
+    :type num_insertions: int
     :return: updated knot vector
     :rtype: list
     """
     # Initialize variables
     kv_size = len(knotvector)
-    kv_updated = [0.0 for _ in range(kv_size + r)]
+    kv_updated = np.zeros(kv_size + num_insertions)
 
     # Compute new knot vector
-    for i in range(0, span + 1):
-        kv_updated[i] = knotvector[i]
-    for i in range(1, r + 1):
-        kv_updated[span + i] = u
-    for i in range(span + 1, kv_size):
-        kv_updated[i + r] = knotvector[i]
+    kv_updated[:span + 1] = knotvector[:span + 1]
+    kv_updated[span + 1:span + num_insertions + 1] = u
+    kv_updated[span + num_insertions + 1:] = knotvector[span + 1:]
 
     # Return the new knot vector
     return kv_updated
@@ -185,10 +176,10 @@ def insert_knot_curve(obj, param, num, **kwargs):
 
     if param[0] is not None and num[0] > 0:
         # Find knot multiplicity
-        s = core.find_multiplicity(param[0], obj.knotvector)
+        knot_multiplicity = core.find_multiplicity(param[0], obj.knotvector)
 
         # Check if it is possible add that many number of knots
-        if check_num and num[0] > obj.degree - s:
+        if check_num and num[0] > obj.degree - knot_multiplicity:
             raise ValueError("Knot " + str(param[0]) + " cannot be inserted " + str(num[0]) + " times")
 
         # Find knot span
@@ -200,7 +191,7 @@ def insert_knot_curve(obj, param, num, **kwargs):
         # Compute new control points
         cpts = obj.ctrlptsw if obj.rational else obj.ctrlpts
         cpts_tmp = knot_insertion(obj.degree, obj.knotvector, cpts, param[0],
-                                          num=num[0], s=s, span=span)
+                                          num=num[0], s=knot_multiplicity, span=span)
         weights = None
         if obj.rational:
             cpts_tmp, weights = separate_ctrlpts_weights(cpts_tmp)
@@ -243,32 +234,29 @@ def split_curve(obj, param, **kwargs):
         raise ValueError("Cannot split from the domain edge")
 
     # Find multiplicity of the knot and define how many times we need to add the knot
-    ks = core.find_span_linear(obj.degree, obj.knotvector, len(obj.ctrlpts), param) - obj.degree + 1
-    s = core.find_multiplicity(param, obj.knotvector)
-    r = obj.degree - s
-
-    # Create backups of the original curve
-    # temp_obj = deepcopy(obj)
+    knot_span = core.find_span_linear(obj.degree, obj.knotvector, len(obj.ctrlpts), param) - obj.degree + 1
+    knot_multiplicity = core.find_multiplicity(param, obj.knotvector)
+    insertion_count = obj.degree - knot_multiplicity
 
     # Insert knot
-    temp_obj = insert_knot_curve(obj, [param], num=[r], check_num=False)
+    temp_obj = insert_knot_curve(obj, [param], num=[insertion_count], check_num=False)
 
     # Knot vectors
-    knot_span = core.find_span_linear(temp_obj.degree, temp_obj.knotvector, len(temp_obj.ctrlpts), param) + 1
-    curve1_kv = list(temp_obj.knotvector[0:knot_span])
+    knot_span_new = core.find_span_linear(temp_obj.degree, temp_obj.knotvector, len(temp_obj.ctrlpts), param) + 1
+    curve1_kv = list(temp_obj.knotvector[0:knot_span_new])
     curve1_kv.append(param)
-    curve2_kv = list(temp_obj.knotvector[knot_span:])
+    curve2_kv = list(temp_obj.knotvector[knot_span_new:])
     for _ in range(0, temp_obj.degree + 1):
         curve2_kv.insert(0, param)
 
     # Control points (use Pw if rational)
     # cpts = temp_obj.ctrlptsw if obj.rational else temp_obj.ctrlpts
     control_points = temp_obj.control_points
-    curve1_ctrlpts = control_points[0:ks + r]
-    curve2_ctrlpts = control_points[ks + r - 1:]
+    curve1_ctrlpts = control_points[0:knot_span + insertion_count]
+    curve2_ctrlpts = control_points[knot_span + insertion_count - 1:]
     if obj.rational:
-        curve1_weights = temp_obj.weights[0:ks + r]
-        curve2_weights = temp_obj.weights[ks + r - 1:]
+        curve1_weights = temp_obj.weights[0:knot_span + insertion_count]
+        curve2_weights = temp_obj.weights[knot_span + insertion_count - 1:]
     else:
         curve1_weights = None
         curve2_weights = None
@@ -277,17 +265,11 @@ def split_curve(obj, param, **kwargs):
     knot_multiplicities_1 = [core.find_multiplicity(knot, curve1_kv) for knot in knots_1]
     # Create a new curve for the first half
     curve1 = temp_obj.__class__(temp_obj.degree, curve1_ctrlpts, knot_multiplicities_1, knots_1, curve1_weights)
-    # curve1.degree = temp_obj.degree
-    # curve1.set_ctrlpts(curve1_ctrlpts)
-    # curve1.knotvector = curve1_kv
 
     knots_2 = list(sorted(set(curve2_kv)))
     knot_multiplicities_2 = [core.find_multiplicity(knot, curve2_kv) for knot in knots_2]
     # Create another curve fot the second half
     curve2 = temp_obj.__class__(temp_obj.degree, curve2_ctrlpts, knot_multiplicities_2, knots_2, curve2_weights)
-    # curve2.degree = temp_obj.degree
-    # curve2.set_ctrlpts(curve2_ctrlpts)
-    # curve2.knotvector = curve2_kv
 
     # Return the split curves
     ret_val = [curve1, curve2]

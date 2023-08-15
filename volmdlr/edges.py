@@ -462,7 +462,7 @@ class Edge(dc.DessiaObject):
         :param abscissa1: Initial abscissa.
         :param abscissa2: Final abscissa.
         :param max_number_points: Expected number of points to discretize locally.
-        :param return_abscissas: By default, returns also a list of abscissas correspoding to the
+        :param return_abscissas: By default, returns also a list of abscissas corresponding to the
             discretization points
         :return: list of locally discretized point and a list containing the abscissas' values.
         """
@@ -780,7 +780,7 @@ class BSplineCurve(Edge):
         self._simplified = None
         self._delta = 0.01
         self._length = None
-        self._points = None # remove points chache ?
+        self._points = None
         self._eval_points = None
         self._curve = None
         self.ctrlptsw = None
@@ -846,7 +846,7 @@ class BSplineCurve(Edge):
     @property
     def data(self):
         """
-        Returns a dicitonnary of the BSpline data.
+        Returns a dictionary of the BSpline data.
         """
         datadict = {
             "degree": self.degree,
@@ -971,20 +971,6 @@ class BSplineCurve(Edge):
         the curve will also be evaluated at the ``stop`` parameter value.
 
         The following examples illustrate the usage of the keyword arguments.
-
-        .. code-block:: python
-
-            # Start evaluating from u=0.2 to u=1.0
-            curve.evaluate(start=0.2)
-
-            # Start evaluating from u=0.0 to u=0.7
-            curve.evaluate(stop=0.7)
-
-            # Start evaluating from u=0.1 to u=0.5
-            curve.evaluate(start=0.1, stop=0.5)
-
-            # Get the evaluated points
-            curve_points = curve.evalpts
 
         """
 
@@ -1425,7 +1411,7 @@ class BSplineCurve(Edge):
 
         :param position: Value of the parameter, between 0 and 1
         :type position: float
-        :param normalize: By defalut return a normilized tagent vector.
+        :param normalize: By default return a normilized tangent vector.
         :return: The tangent vector
         :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
         """
