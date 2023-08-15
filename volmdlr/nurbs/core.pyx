@@ -237,7 +237,7 @@ cpdef vector[double] basis_function(int degree, vector[double] knot_vector, int 
     return result_list
 
 
-cdef double* basis_function_one_c(int degree, vector[double] knot_vector, int span, double knot):
+cdef vector[double] basis_function_one_c(int degree, vector[double] knot_vector, int span, double knot):
     # Special case at boundaries
     if (
         (span == 0 and knot == knot_vector[0])
@@ -253,10 +253,8 @@ cdef double* basis_function_one_c(int degree, vector[double] knot_vector, int sp
     cdef int j, k
     cdef double Uleft, Uright
     cdef double saved, temp
-    cdef double *N = <double *>PyMem_Malloc((degree + span + 1) * sizeof(double))
+    cdef vector[double] N = vector[double](degree + span + 1, 0.0)
 
-    for j in range(degree + span + 1):
-        N[j] = 0.0
     # Initialize the zero th degree basis functions
     for j in range(degree + 1):
         if knot_vector[span + j] <= knot < knot_vector[span + j + 1]:
@@ -285,7 +283,7 @@ cdef double* basis_function_one_c(int degree, vector[double] knot_vector, int sp
     return N
 
 
-cpdef double basis_function_one(int degree, list knot_vector, int span, double knot):
+def basis_function_one(int degree, list knot_vector, int span, double knot):
     """Computes the value of a basis function for a single parameter.
 
     Implementation of Algorithm 2.4 from The NURBS Book by Piegl & Tiller.
@@ -301,9 +299,8 @@ cpdef double basis_function_one(int degree, list knot_vector, int span, double k
     :return: basis function, :math:`N_{i,p}`
     :rtype: float
     """
-    cdef double *result_list = basis_function_one_c(degree, np.array(knot_vector, dtype=np.float64), span, knot)
-    cdef double result = result_list[0]
-    PyMem_Free(result_list)  # Free the dynamically allocated memory
+    cdef double result = basis_function_one_c(degree, knot_vector, span, knot)[0]
+
     return result
 
 
