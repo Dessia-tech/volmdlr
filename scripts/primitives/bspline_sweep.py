@@ -27,7 +27,6 @@ bspline_curve3d = vme.BSplineCurve3D(degree=degree,
                                      knot_multiplicities=knot_multiplicities,
                                      knots=knots,
                                      weights=weights,
-                                     periodic=False,
                                      name='B Spline Curve 3D 1')
 
 circle = curves.Circle2D(vm.O2D, 0.015)
