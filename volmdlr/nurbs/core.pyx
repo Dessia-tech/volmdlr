@@ -25,6 +25,7 @@ import volmdlr.nurbs.helpers as helpers
 
 cnp.import_array()
 
+
 @cdivision(True)
 cdef double binomial_coefficient_c(int k, int i):
     """
@@ -722,16 +723,14 @@ def derivatives_curve(dict datadict, double parpos, int deriv_order):
     cdef int dimension = datadict["dimension"] + 1 if rational else datadict["dimension"]
 
     if rational:
-        return derivatives_curve_rational(degree, knotvector, ctrlpts, size,
-                                       dimension, parpos, deriv_order)
-    return derivatives_curve_c(degree, knotvector, ctrlpts, size,
-                                       dimension, parpos, deriv_order)
+        return derivatives_curve_rational(degree, knotvector, ctrlpts, size, dimension, parpos, deriv_order)
+    return derivatives_curve_c(degree, knotvector, ctrlpts, size, dimension, parpos, deriv_order)
 
 
 @boundscheck(False)
 @wraparound(False)
 cdef vector[vector[double]] derivatives_curve_c(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts,
-                      int size, int dimension, double parpos, int deriv_order):
+                                                int size, int dimension, double parpos, int deriv_order):
     """Evaluates the n-th order derivatives at the input parametric position.
 
     :param datadict: data dictionary containing the necessary variables
@@ -777,7 +776,7 @@ cdef evaluate_curve_rational(int degree, vector[double] knotvector, vector[vecto
     """
     # Algorithm A4.1
     cdef list crvptw = evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size,
-                                       dimension, precision, start, stop)
+                                        dimension, precision, start, stop)
 
     # Divide by weight
     cdef list eval_points = []
@@ -831,4 +830,3 @@ cdef vector[vector[double]] derivatives_curve_rational(int degree, vector[double
 
     # Return C(u) derivatives
     return CK
-

@@ -12,6 +12,7 @@ cpdef double round_c(double num, int digits=0):
     cdef double multiplier = math_c.pow(10.0, digits)
     return float(math_c.round(num * multiplier)) / multiplier
 
+
 def linspace(double start, double stop, int num, int decimals=18):
     """Returns a list of evenly spaced numbers over a specified interval.
 
