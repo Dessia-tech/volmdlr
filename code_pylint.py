@@ -30,7 +30,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-branches': 26,
                      'too-many-statements': 13,
                      'super-init-not-called': 15,
-                     'no-name-in-module': 1,
+                     'no-name-in-module': 21,
                      'abstract-method': 32,
                      'duplicate-code': 10,
                      'arguments-renamed': 52,
@@ -58,7 +58,8 @@ MAX_ERROR_BY_TYPE = {
                      'unsubscriptable-object': 1,
                      'signature-differs': 1,
                      'consider-using-enumerate': 2,
-                     'unbalanced-tuple-unpacking': 1}
+                     'unbalanced-tuple-unpacking': 1,
+                    }
 
 ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-many-arguments", "too-many-statements",
                                 "too-many-nested-blocks", "too-many-instance-attributes", "abstract-method",

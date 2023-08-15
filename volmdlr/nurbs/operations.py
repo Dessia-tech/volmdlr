@@ -250,7 +250,6 @@ def split_curve(obj, param, **kwargs):
         curve2_kv.insert(0, param)
 
     # Control points (use Pw if rational)
-    # cpts = temp_obj.ctrlptsw if obj.rational else temp_obj.ctrlpts
     control_points = temp_obj.control_points
     curve1_ctrlpts = control_points[0:knot_span + insertion_count]
     curve2_ctrlpts = control_points[knot_span + insertion_count - 1:]
@@ -268,7 +267,7 @@ def split_curve(obj, param, **kwargs):
 
     knots_2 = list(sorted(set(curve2_kv)))
     knot_multiplicities_2 = [core.find_multiplicity(knot, curve2_kv) for knot in knots_2]
-    # Create another curve fot the second half
+    # Create another curve for the second half
     curve2 = temp_obj.__class__(temp_obj.degree, curve2_ctrlpts, knot_multiplicities_2, knots_2, curve2_weights)
 
     # Return the split curves

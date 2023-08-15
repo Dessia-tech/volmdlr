@@ -32,6 +32,7 @@ distutils
 dof
 EdgeStyle
 euler
+facecolor
 filepath
 freecad
 .geo
@@ -55,6 +56,8 @@ args
 len
 LHS
 linesegment
+linspace
+linewidth
 Matplotlib
 matplotlib
 maxiter
