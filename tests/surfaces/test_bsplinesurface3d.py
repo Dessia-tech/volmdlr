@@ -11,7 +11,64 @@ from volmdlr.models import bspline_surfaces
 from volmdlr import surfaces
 
 
+GEOMDL_DELTA = 0.001
+
+
 class TestBSplineSurface3D(unittest.TestCase):
+
+    def setUp(self):
+        """Create a B-spline surface instance as a fixture"""
+        # Set degrees
+        degree_u = 3
+        degree_v = 3
+
+        ctrlpts = [
+            [-25.0, -25.0, -10.0], [-25.0, -15.0, -5.0], [-25.0, -5.0, 0.0], [-25.0, 5.0, 0.0],
+            [-25.0, 15.0, -5.0], [-25.0, 25.0, -10.0], [-15.0, -25.0, -8.0], [-15.0, -15.0, -4.0],
+            [-15.0, -5.0, -4.0], [-15.0, 5.0, -4.0], [-15.0, 15.0, -4.0], [-15.0, 25.0, -8.0],
+            [-5.0, -25.0, -5.0], [-5.0, -15.0, -3.0], [-5.0, -5.0, -8.0], [-5.0, 5.0, -8.0],
+            [-5.0, 15.0, -3.0], [-5.0, 25.0, -5.0], [5.0, -25.0, -3.0], [5.0, -15.0, -2.0],
+            [5.0, -5.0, -8.0], [5.0, 5.0, -8.0], [5.0, 15.0, -2.0], [5.0, 25.0, -3.0],
+            [15.0, -25.0, -8.0], [15.0, -15.0, -4.0], [15.0, -5.0, -4.0], [15.0, 5.0, -4.0],
+            [15.0, 15.0, -4.0], [15.0, 25.0, -8.0], [25.0, -25.0, -10.0], [25.0, -15.0, -5.0],
+            [25.0, -5.0, 2.0], [25.0, 5.0, 2.0], [25.0, 15.0, -5.0], [25.0, 25.0, -10.0],
+        ]
+
+        nb_u, nb_v = 6, 6
+
+        # Set knot vectors
+        knots_u = [0.0, 0.33, 0.66, 1.0]
+        u_multiplicities = [4, 1, 1, 4]
+        knots_v = [0.0, 0.33, 0.66, 1.0]
+        v_multiplicities = [4, 1, 1, 4]
+        # knotvector_u = [0.0, 0.0, 0.0, 0.0, 0.33, 0.66, 1.0, 1.0, 1.0, 1.0]
+        # knotvector_v = [0.0, 0.0, 0.0, 0.0, 0.33, 0.66, 1.0, 1.0, 1.0, 1.0]
+
+        self.spline_surf = surfaces.BSplineSurface3D(degree_u, degree_v, ctrlpts, nb_u, nb_v,
+                                                     u_multiplicities, v_multiplicities, knots_u, knots_v)
+
+    def test_bspline_surface_eval(self):
+        test_cases = [
+            (volmdlr.Point2D(0.0, 0.0), (-25.0, -25.0, -10.0)),
+            (volmdlr.Point2D(0.0, 0.2), (-25.0, -11.403, -3.385)),
+            (volmdlr.Point2D(0.0, 1.0), (-25.0, 25.0, -10.0)),
+            (volmdlr.Point2D(0.3, 0.0), (-7.006, -25.0, -5.725)),
+            (volmdlr.Point2D(0.3, 0.4), [-7.006, -3.308, -6.265]),
+            (volmdlr.Point2D(0.3, 1.0), [-7.006, 25.0, -5.725]),
+            (volmdlr.Point2D(0.6, 0.0), (3.533, -25.0, -4.224)),
+            (volmdlr.Point2D(0.6, 0.6), (3.533, 3.533, -6.801)),
+            (volmdlr.Point2D(0.6, 1.0), (3.533, 25.0, -4.224)),
+            (volmdlr.Point2D(1.0, 0.0), (25.0, -25.0, -10.0)),
+            (volmdlr.Point2D(1.0, 0.8), (25.0, 11.636, -2.751)),
+            (volmdlr.Point2D(1.0, 1.0), (25.0, 25.0, -10.0)),
+        ]
+
+        for param, res in test_cases:
+            evalpt = self.spline_surf.point2d_to_3d(param)
+            self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(evalpt[2], res[2], delta=GEOMDL_DELTA)
+
     def test_contour2d_parametric_to_dimension(self):
         bspline_face = vmf.BSplineFace3D.from_surface_rectangular_cut(bspline_surfaces.bspline_surface_2, 0, 1, 0, 1)
         contour2d = bspline_surfaces.bspline_surface_2.contour3d_to_2d(bspline_face.outer_contour3d)
