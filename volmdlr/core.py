@@ -2020,9 +2020,9 @@ class VolumeModel(dc.PhysicalObject):
         list_shells = []
         def unpack_assembly(assembly):
             for prim in assembly.primitives:
-                if primitive.__class__.__name__ in ('Assembly', "Compound"):
+                if prim.__class__.__name__ in ('Assembly', "Compound"):
                     unpack_assembly(prim)
-                elif hasattr(primitive, "faces") or hasattr(primitive, "shell_faces"):
+                elif hasattr(prim, "faces") or hasattr(prim, "shell_faces"):
                     list_shells.append(prim)
 
         for primitive in self.primitives:
