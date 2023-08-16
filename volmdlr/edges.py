@@ -784,7 +784,6 @@ class BSplineCurve(Edge):
     :param name: The name of the B-spline curve. Default value is ''
     :type name: str, optional
     """
-    _non_serializable_attributes = ['curve']
 
     def __init__(self,
                  degree: int,
@@ -801,33 +800,43 @@ class BSplineCurve(Edge):
         self.knot_multiplicities = knot_multiplicities
         self.weights = weights
         self.periodic = periodic
+
+        Edge.__init__(self, self.control_points[0], self.control_points[-1], name=name)
         self._simplified = None
-
-        points = [[*point] for point in control_points]
-        if weights is None:
-            curve = BSpline.Curve()
-            curve.degree = degree
-            curve.ctrlpts = points
-        else:
-            curve = NURBS.Curve()
-            curve.degree = degree
-            curve.ctrlpts = points
-            curve.weights = weights
-
-        knot_vector = []
-        for i, knot in enumerate(knots):
-            knot_vector.extend([knot] * knot_multiplicities[i])
-        curve.knotvector = knot_vector
-        curve.delta = 0.01
-        curve_points = curve.evalpts
-        self.curve = curve
-
         self._length = None
-        self.points = [getattr(volmdlr,
-                               f'Point{self.__class__.__name__[-2::]}')(*point)
-                       for point in curve_points]
+        self._points = None
+        self._curve = None
 
-        Edge.__init__(self, self.points[0], self.points[-1], name=name)
+
+    @property
+    def curve(self):
+        if not self._curve:
+            points = [[*point] for point in self.control_points]
+            if self.weights is None:
+                curve = BSpline.Curve()
+                curve.degree = self.degree
+                curve.ctrlpts = points
+            else:
+                curve = NURBS.Curve()
+                curve.degree = self.degree
+                curve.ctrlpts = points
+                curve.weights = self.weights
+
+            knot_vector = []
+            for i, knot in enumerate(self.knots):
+                knot_vector.extend([knot] * self.knot_multiplicities[i])
+            curve.knotvector = knot_vector
+            curve.delta = 0.01
+            self._curve = curve
+        return self._curve
+
+    @property
+    def points(self):
+        if not self._points:
+            self._points = [getattr(volmdlr,
+                               f'Point{self.__class__.__name__[-2::]}')(*point)
+                       for point in self.curve.evalpts]
+        return self._points
 
     def to_dict(self, *args, **kwargs):
         """Avoids storing points in memo that makes serialization slow."""
@@ -1634,8 +1643,6 @@ class BSplineCurve2D(BSplineCurve):
     :param name: The name of the B-spline curve. Default value is ''
     :type name: str, optional
     """
-
-    _non_serializable_attributes = ['curve']
 
     def __init__(self,
                  degree: int,
@@ -4402,7 +4409,6 @@ class BSplineCurve3D(BSplineCurve):
     :param name: The name of the B-spline curve. Default value is ''
     :type name: str, optional
     """
-    _non_serializable_attributes = ['curve']
 
     def __init__(self,
                  degree: int,
