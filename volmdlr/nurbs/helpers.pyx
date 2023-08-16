@@ -135,3 +135,104 @@ def insert_knots_and_mutiplicity(knots, knot_mutiplicities, knot_to_add, num):
         new_knots.append(knot)
         new_knot_mutiplicities.append(knot_mutiplicities[i])
     return new_knots, new_knot_mutiplicities, i
+
+
+def doolittle(matrix_a):
+    """Doolittle's Method for LU-factorization.
+
+    :param matrix_a: Input matrix (must be a square matrix)
+    :type matrix_a: list, tuple
+    :return: a tuple containing matrices (L,U)
+    :rtype: tuple
+    """
+    # Initialize L and U matrices
+    matrix_u = [[0.0 for _ in range(len(matrix_a))] for _ in range(len(matrix_a))]
+    matrix_l = [[0.0 for _ in range(len(matrix_a))] for _ in range(len(matrix_a))]
+
+    # Doolittle Method
+    for i in range(0, len(matrix_a)):
+        for k in range(i, len(matrix_a)):
+            # Upper triangular (U) matrix
+            matrix_u[i][k] = float(matrix_a[i][k] - sum([matrix_l[i][j] * matrix_u[j][k] for j in range(0, i)]))
+            # Lower triangular (L) matrix
+            if i == k:
+                matrix_l[i][i] = 1.0
+            else:
+                matrix_l[k][i] = float(matrix_a[k][i] - sum([matrix_l[k][j] * matrix_u[j][i] for j in range(0, i)]))
+                # Handle zero division error
+                if matrix_u[i][i] != 0.0:
+                    matrix_l[k][i] /= float(matrix_u[i][i])
+                else:
+                    matrix_l[k][i] = 0.0
+
+    return matrix_l, matrix_u
+
+
+def lu_decomposition(matrix_a):
+    """
+    LU-Factorization method using Doolittle's Method for solution of linear systems.
+
+    Decomposes the matrix :math:`A` such that :math:`A = LU`.
+
+    The input matrix is represented by a list or a tuple. The input matrix is **2-dimensional**, i.e. list of lists of
+    integers and/or floats.
+
+    :param matrix_a: Input matrix (must be a square matrix)
+    :type matrix_a: list, tuple
+    :return: a tuple containing matrices L and U
+    :rtype: tuple
+    """
+    # Check if the 2-dimensional input matrix is a square matrix
+    q = len(matrix_a)
+    for idx, m_a in enumerate(matrix_a):
+        if len(m_a) != q:
+            raise ValueError(
+                "The input must be a square matrix. " + "Row " + str(idx + 1) + " has a size of " + str(len(m_a)) + "."
+            )
+
+    # Return L and U matrices
+    return doolittle(matrix_a)
+
+
+def forward_substitution(matrix_l, matrix_b):
+    """Forward substitution method for the solution of linear systems.
+
+    Solves the equation :math:`Ly = b` using forward substitution method
+    where :math:`L` is a lower triangular matrix and :math:`b` is a column matrix.
+
+    :param matrix_l: L, lower triangular matrix
+    :type matrix_l: list, tuple
+    :param matrix_b: b, column matrix
+    :type matrix_b: list, tuple
+    :return: y, column matrix
+    :rtype: list
+    """
+    q = len(matrix_b)
+    matrix_y = [0.0 for _ in range(q)]
+    matrix_y[0] = float(matrix_b[0]) / float(matrix_l[0][0])
+    for i in range(1, q):
+        matrix_y[i] = float(matrix_b[i]) - sum(matrix_l[i][j] * matrix_y[j] for j in range(0, i))
+        matrix_y[i] /= float(matrix_l[i][i])
+    return matrix_y
+
+
+def backward_substitution(matrix_u, matrix_y):
+    """Backward substitution method for the solution of linear systems.
+
+    Solves the equation :math:`Ux = y` using backward substitution method
+    where :math:`U` is a upper triangular matrix and :math:`y` is a column matrix.
+
+    :param matrix_u: U, upper triangular matrix
+    :type matrix_u: list, tuple
+    :param matrix_y: y, column matrix
+    :type matrix_y: list, tuple
+    :return: x, column matrix
+    :rtype: list
+    """
+    q = len(matrix_y)
+    matrix_x = [0.0 for _ in range(q)]
+    matrix_x[q - 1] = float(matrix_y[q - 1]) / float(matrix_u[q - 1][q - 1])
+    for i in range(q - 2, -1, -1):
+        matrix_x[i] = float(matrix_y[i]) - sum([matrix_u[i][j] * matrix_x[j] for j in range(i, q)])
+        matrix_x[i] /= float(matrix_u[i][i])
+    return matrix_x

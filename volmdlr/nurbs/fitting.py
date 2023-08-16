@@ -18,12 +18,12 @@ code for any particular purpose.
 import cython.cimports.libc.math as math_c
 import cython
 import numpy as np
-from scipy.linalg import lu_factor, lu_solve, lu, solve_triangular
+from scipy.linalg import lu_factor, lu_solve
 
 from geomdl import BSpline, linalg
 from cython.cimports.libcpp.vector import vector
 
-from volmdlr.nurbs import core
+from volmdlr.nurbs import core, helpers
 
 
 def interpolate_curve(points: np.ndarray[np.double_t, ndim == 2], degree: cython.int,
@@ -163,20 +163,17 @@ def approximate_curve(points, degree, **kwargs):
         for j in range(1, num_cpts - 1):
             matrix_n[i - 1, j - 1] = core.basis_function_one(degree, knotvector, j, u_k[i])
 
-    # Compute NT
     matrix_nt = matrix_n.T
 
-    # Compute NTN matrix
-    matrix_ntn = matrix_nt.dot(matrix_n)
+    matrix_ntn = np.dot(matrix_nt, matrix_n)
 
-    # LU-factorization
-    _, matrix_l, matrix_u = lu(matrix_ntn)
+    matrix_l, matrix_u = helpers.lu_decomposition(matrix_ntn.tolist())
     # Initialize control points array
-    ctrlpts = np.zeros((num_cpts, dim), dtype=np.float64)
+    ctrlpts = [[0.0 for _ in range(dim)] for _ in range(num_cpts)]
 
     # Fix start and end points
-    ctrlpts[0] = points[0]
-    ctrlpts[-1] = points[-1]
+    ctrlpts[0] = list(points[0])
+    ctrlpts[-1] = list(points[-1])
 
     # Compute - Eq 9.63
     pt0 = points[0]
@@ -200,15 +197,16 @@ def approximate_curve(points, degree, **kwargs):
 
     # Compute control points
     for i in range(dim):
-        b = vector_r[:, i]
-        y = solve_triangular(matrix_l, b, lower=True)
-        x = solve_triangular(matrix_u, y)
-        ctrlpts[1:-1, i] = x
+        b = [pt[i] for pt in vector_r]
+        y = helpers.forward_substitution(matrix_l, b)
+        x = helpers.backward_substitution(matrix_u, y)
+        for j in range(1, num_cpts - 1):
+            ctrlpts[j][i] = x[j - 1]
 
     knots = np.unique(knotvector)
     knot_multiplicities = [core.find_multiplicity(knot, knotvector) for knot in knots]
 
-    return ctrlpts, knots, knot_multiplicities
+    return ctrlpts, knots.tolist(), knot_multiplicities
 
 
 def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):

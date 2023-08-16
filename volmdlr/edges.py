@@ -771,8 +771,7 @@ class BSplineCurve(Edge):
                  name: str = ''):
         self.ctrlpts = [[*point] for point in control_points]
         self.degree = degree
-        knots = nurbs_helpers.standardize_knot_vector(knots)
-        self.knots = knots
+        self.knots = nurbs_helpers.standardize_knot_vector(knots)
         self.knot_multiplicities = knot_multiplicities
         self.weights = weights
 
@@ -782,7 +781,6 @@ class BSplineCurve(Edge):
         self._length = None
         self._points = None
         self._eval_points = None
-        self._curve = None
         self.ctrlptsw = None
         self.rational = False
         if self.weights:
@@ -931,15 +929,14 @@ class BSplineCurve(Edge):
 
     def to_geomdl(self):
         """Converts the BSpline curve into a geomdl curve."""
-        points = [[*point] for point in self.control_points]
         if self.weights is None:
             curve = BSpline.Curve()
             curve.degree = self.degree
-            curve.ctrlpts = points
+            curve.ctrlpts = self.ctrlpts
         else:
             curve = NURBS.Curve()
             curve.degree = self.degree
-            curve.ctrlpts = points
+            curve.ctrlpts = self.ctrlpts
             curve.weights = self.weights
         curve.knotvector = self.knotvector
         curve.delta = self.delta
@@ -954,7 +951,6 @@ class BSplineCurve(Edge):
         dict_['knots'] = self.knots
         dict_['weights'] = self.weights
         return dict_
-
 
     def evaluate(self, **kwargs):
         """
@@ -1142,8 +1138,8 @@ class BSplineCurve(Edge):
         :rtype: float
         """
         if not self._length:
-            # if self.delta != 0.01:
-            #     self.delta = 0.01
+            if self.delta != 0.01:
+                self.delta = 0.01
             if self._eval_points is None:
                 self.evaluate()
             differences = npy.diff(self._eval_points, axis=0)
@@ -4610,8 +4606,8 @@ class BSplineCurve3D(BSplineCurve):
             else:
                 param1 = start_parameter + (i - 1) * delta_param
                 param2 = start_parameter + i * delta_param
-                point1 = volmdlr.Point3D(*self.curve.evaluate_single(param1))
-                point2 = volmdlr.Point3D(*self.curve.evaluate_single(param2))
+                point1 = self.evaluate_single(param1)
+                point2 = self.evaluate_single(param2)
                 distance += point1.point_distance(point2)
                 yield param2, distance
 

@@ -167,7 +167,7 @@ def insert_knot_curve(obj, param, num, **kwargs):
         if not isinstance(num, (list, tuple)):
             raise ValueError("The number of insertions must be a list or a tuple")
 
-        if len(num) != obj.pdimension:
+        if len(num) != 1:
             raise ValueError("The length of the num array must be equal to the number of parametric dimensions")
 
         for val in num:
