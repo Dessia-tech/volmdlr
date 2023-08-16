@@ -139,6 +139,8 @@ class Stl(dc.DessiaObject):
                 triangles[i] = vmf.Triangle3D(p1, p2, p3)
             except ZeroDivisionError:
                 invalid_triangles.append(i)
+            except NotImplementedError:
+                invalid_triangles.append(i)
 
             stream.read_u2le()
             # print(abr)
