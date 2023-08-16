@@ -929,15 +929,14 @@ class BSplineCurve(Edge):
 
     def to_geomdl(self):
         """Converts the BSpline curve into a geomdl curve."""
-        points = [[*point] for point in self.control_points]
         if self.weights is None:
             curve = BSpline.Curve()
             curve.degree = self.degree
-            curve.ctrlpts = points
+            curve.ctrlpts = self.ctrlpts
         else:
             curve = NURBS.Curve()
             curve.degree = self.degree
-            curve.ctrlpts = points
+            curve.ctrlpts = self.ctrlpts
             curve.weights = self.weights
         curve.knotvector = self.knotvector
         curve.delta = self.delta
