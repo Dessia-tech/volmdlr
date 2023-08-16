@@ -25,17 +25,17 @@ Triangle = Tuple[Point, ...]
 
 
 @cython.cfunc
-@cython.cdivision(True)
-@cython.exceptval(check=False)
+# @cython.cdivision(True)
+# @cython.exceptval(check=False)
 def _round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
     multiplier: cython.double = math_c.pow(10.0, digits)
     return math_c.round(num * multiplier) / multiplier
 
 
 @cython.cfunc
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.exceptval(check=False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.exceptval(check=False)
 def _triangle_intersects_voxel(
     triangle: Tuple[
         Tuple[cython.double, cython.double, cython.double],
@@ -206,9 +206,9 @@ def _triangle_intersects_voxel(
 
 
 @cython.cfunc
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.exceptval(check=False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.exceptval(check=False)
 def _calculate_axis_values(
     v0: cython.double[3],
     v1: cython.double[3],
@@ -230,9 +230,9 @@ def _calculate_axis_values(
 
 
 @cython.cfunc
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
 def _aabb_intersecting_boxes(
     min_point: Tuple[cython.double, cython.double, cython.double],
     max_point: Tuple[cython.double, cython.double, cython.double],
@@ -310,8 +310,8 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
 
 
 @cython.cfunc
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def _flood_fill_matrix_3d(
     matrix: bool_c[:, :, :], start: cython.int[3], fill_with: bool_c, shape: cython.int[3]
 ) -> bool_c[:, :, :]:
@@ -365,8 +365,8 @@ def flood_fill_matrix_3d(
 
 
 @cython.cfunc
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def _flood_fill_matrix_2d(
     matrix: bool_c[:, :],
     start: Tuple[cython.int, cython.int],
@@ -419,10 +419,10 @@ def flood_fill_matrix_2d(
 
 
 @cython.cfunc
-@cython.cdivision(True)
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.exceptval(check=False)
+# @cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.exceptval(check=False)
 def _line_segment_intersects_pixel(
     x1: cython.double,
     y1: cython.double,
@@ -462,9 +462,9 @@ def _line_segment_intersects_pixel(
 
 
 @cython.cfunc
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
 def _line_segments_to_pixels(
     line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]],
     pixel_size: cython.double,
@@ -530,29 +530,33 @@ def triangles_to_voxel_matrix(
     )
 
     # compute the intersecting voxel
-    matrix = np.asarray(_triangles_to_voxel_matrix(triangles, voxel_size, matrix, matrix_origin_center), dtype=np.bool_)
-
-    return matrix, matrix_origin_center
+    return _triangles_to_voxel_matrix(np.array(triangles), len(triangles), voxel_size, matrix, matrix_origin_center), matrix_origin_center
 
 
 @cython.cfunc
-@cython.cdivision(True)
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def _triangles_to_voxel_matrix(
-    triangles: vector[
-        Tuple[
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-        ]
-    ],
+    # triangles: vector[
+    #     Tuple[
+    #         Tuple[cython.double, cython.double, cython.double],
+    #         Tuple[cython.double, cython.double, cython.double],
+    #         Tuple[cython.double, cython.double, cython.double],
+    #     ]
+    # ],
+    triangles: Tuple[
+                   Tuple[cython.double, cython.double, cython.double],
+                   Tuple[cython.double, cython.double, cython.double],
+                   Tuple[cython.double, cython.double, cython.double],
+               ][:],
+    n_triangles: cython.int,
     voxel_size: cython.double,
     matrix: bool_c[:, :, :],
     matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_c[:, :, :]:
     # Check interface voxels
-    for i in range(triangles.size()):
+    for i in range(n_triangles):
         x_abscissa = _round_to_digits(triangles[i][0][0], 6)
         y_abscissa = _round_to_digits(triangles[i][0][1], 6)
         z_abscissa = _round_to_digits(triangles[i][0][2], 6)
@@ -768,7 +772,7 @@ def _triangles_to_voxel_matrix(
 
 
 @cython.cfunc
-@cython.exceptval(check=False)
+# @cython.exceptval(check=False)
 def _get_min_pixel_grid_center(
     pixel_centers: vector[Tuple[cython.double, cython.double]]
 ) -> Tuple[cython.double, cython.double]:
@@ -781,7 +785,7 @@ def _get_min_pixel_grid_center(
 
 
 @cython.cfunc
-@cython.exceptval(check=False)
+# @cython.exceptval(check=False)
 def _get_max_pixel_grid_center(
     pixel_centers: vector[Tuple[cython.double, cython.double]]
 ) -> Tuple[cython.double, cython.double]:
@@ -794,9 +798,9 @@ def _get_max_pixel_grid_center(
 
 
 @cython.cfunc
-@cython.cdivision(True)
-@cython.boundscheck(False)
-@cython.wraparound(False)
+# @cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
 def _pixel_centers_to_outer_filled_pixel_matrix(
     pixel_centers: vector[Tuple[cython.double, cython.double]],
     pixel_size: cython.double,
@@ -821,13 +825,13 @@ def _pixel_centers_to_outer_filled_pixel_matrix(
 
 
 @cython.cfunc
-@cython.exceptval(check=False)
+# @cython.exceptval(check=False)
 def _is_integer(value: cython.double) -> bool_c:
     return cython.cast(cython.int, value) == value
 
 
 @cython.cfunc
-@cython.exceptval(check=False)
+# @cython.exceptval(check=False)
 def _check_triangle_equal_point(
     triangle: Tuple[
         Tuple[cython.double, cython.double, cython.double],
@@ -843,7 +847,7 @@ def _check_triangle_equal_point(
 
 
 @cython.cfunc
-@cython.exceptval(check=False)
+# @cython.exceptval(check=False)
 def _triangle_min_max_points(
     triangle: Tuple[
         Tuple[cython.double, cython.double, cython.double],
