@@ -4544,7 +4544,7 @@ class BSplineSurface3D(Surface3D):
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
                  weights: List[float] = None, name: str = ''):
-        self._control_points = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in control_points],
+        self.ctrlpts = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in control_points],
                                            dtype=npy.float64)
         self.degree_u = degree_u
         self.degree_v = degree_v
@@ -4568,13 +4568,33 @@ class BSplineSurface3D(Surface3D):
         self._grids2d_deformed = None
         self._bbox = None
         self._surface_curves = None
+        self.ctrlptsw = None
 
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
 
     @property
+    def data(self):
+        """
+        Returns a dictionary of the BSpline data.
+        """
+        datadict = {
+            "degree": (self.degree_u, self.degree_v),
+            "knotvector": self.knotvector,
+            "size": self.ctrlpts.shape,
+            "sample_size": self.sample_size,
+            "rational": bool(self.weights),
+            "precision": 18
+        }
+        if self.weights:
+            datadict["control_points"] = tuple(self.ctrlptsw)
+        else:
+            datadict["control_points"] = tuple(self.ctrlpts.tolist())
+        return datadict
+
+    @property
     def control_points(self):
-        return [volmdlr.Point3D(*point) for point in self._control_points]
+        return [volmdlr.Point3D(*point) for point in self.ctrlpts]
 
     @property
     def control_points_table(self):
@@ -4593,12 +4613,22 @@ class BSplineSurface3D(Surface3D):
         return control_points_table
 
     @property
+    def knotvector(self):
+        knot_vector_u = []
+        for u_knot, u_knot_mult in zip(self.u_knots, self.u_multiplicities):
+            knot_vector_u.extend([u_knot] * u_knot_mult)
+        knot_vector_v = []
+        for v_knot, v_knot_mult in zip(self.v_knots, self.v_multiplicities):
+            knot_vector_v.extend([v_knot] * v_knot_mult)
+        return knot_vector_u, knot_vector_v
+
+    @property
     def surface(self):
         """Create nurbs surface for special evaluations."""
         if not self._surface:
             if self.weights is None:
                 surface = BSpline.Surface()
-                points = self._control_points.tolist()
+                points = self.ctrlpts.tolist()
 
             else:
                 surface = NURBS.Surface()
@@ -4608,14 +4638,9 @@ class BSplineSurface3D(Surface3D):
             surface.degree_u = self.degree_u
             surface.degree_v = self.degree_v
             surface.set_ctrlpts(points, self.nb_u, self.nb_v)
-            knot_vector_u = []
-            for i, u_knot in enumerate(self.u_knots):
-                knot_vector_u.extend([u_knot] * self.u_multiplicities[i])
-            knot_vector_v = []
-            for i, v_knot in enumerate(self.v_knots):
-                knot_vector_v.extend([v_knot] * self.v_multiplicities[i])
-            surface.knotvector_u = knot_vector_u
-            surface.knotvector_v = knot_vector_v
+            knot_vector = self.knotvector
+            surface.knotvector_u = knot_vector[0]
+            surface.knotvector_v = knot_vector[1]
             surface.delta = 0.05
             self._surface = surface
         return self._surface
