@@ -138,6 +138,7 @@ volmdlr.primitives2d
    :undoc-members:
    :show-inheritance:
 
+.. _primitives3d:
 volmdlr.primitives3d
 --------------------
 

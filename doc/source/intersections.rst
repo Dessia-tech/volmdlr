@@ -16,7 +16,7 @@ Intersection between curves:
 Intersections betweeen edges
 ****************************
 
-Edges Are generally objects having a curve as its base tragectoty and a start and end points on that curve.
+Edges are generally objects having a curve as its base tragectoty and a start and end points on that curve.
 We Have edges like LineSegment, Arc, FullArc, ArcEllipse, FullArcEllipse, BSplineCurve, both in 2-D and in 3-D.
 
 To calculate the intersections between any two edges, you can call the `intersections` methods.

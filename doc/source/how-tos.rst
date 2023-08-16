@@ -102,7 +102,7 @@ as inputs to define the line and an optional name for identification.
 To instantiate then, you need to create an object of of the corresponding class by calling its constructor (__init__)
 and providing the required arguments. Here's how you can do it:
 
-.. grid:: 2
+.. grid:: 1
 
     .. grid-item-card::  Line2D
 
@@ -1018,3 +1018,277 @@ ClosedShell3D
            shell1.babylonjs(dark_mode=True)
 
     .. figure:: ../source/_static/index-images/closedshell3d.png
+
+
+Primitives3D
+************
+
+Block
+=====
+
+This class creates a block-shaped 3D object, by specifying its center, dimensions, color and other attributes.
+The constructor takes a frame, which represents the 3D frame for the block. This frame includes the origin (center of the block) and three vectors that define the edges of the block.
+The optional keyword arguments include color (RGB tuple representing the color of the block), alpha (opacity), and name (name of the block).
+
+.. code-block:: python
+
+    import volmdlr  # Import the necessary module
+    from volmdlr import primitives3d
+
+    # Define the 3D frame for the block
+    frame = volmdlr.Frame3D(
+        origin=volmdlr.Point3D(0, 0, 0),  # Center of the block
+        u=volmdlr.Vector3D(1, 0, 0),  # Vector defining one edge
+        v=volmdlr.Vector3D(0, 1, 0),  # Vector defining another edge
+        w=volmdlr.Vector3D(0, 0, 1)   # Vector defining the third edge
+    )
+
+    # Create a block instance
+    block = primitives3d.Block(frame, color=(0.5, 0.5, 0.5), alpha=0.8, name='MyBlock')
+    block.babylonjs()
+
+    # Now you have a block object with the specified attributes
+    # You can perform various operations with the block
+
+more about the Block class in :ref:`primitives3d`
+
+.. image:: ../source/_static/index-images/block.png
+
+Cylinder
+========
+
+The Cylinder class creates a Cylinder object using the following arguments:
+
+    - frame: A 3D frame representing the orientation of the cylinder.
+    - radius: The radius of the cylinder.
+    - length: The length of the cylinder.
+    - Optional keyword arguments include color, alpha, and name.
+
+Here is how you can instantiate it:
+
+.. code-block:: python
+
+    import volmdlr
+    from volmdlr import primitives3d
+
+
+    # Define the 3D frame for the cylinder
+    frame = volmdlr.OXYZ
+
+    # Define cylinder parameters
+    radius = 1.0
+    length = 3.0
+
+    # Create a cylinder instance
+    cylinder = Cylinder(frame, radius, length, color=(0.5, 0.5, 0.5), alpha=0.8, name='MyCylinder')
+    cone.babylonjs()
+
+.. image:: ../source/_static/index-images/cylinder.png
+
+HollowCylinder
+===============
+
+The Hollow Cylinder class, as its name indicates, creates a HollowCylinder object using the following arguments:
+
+    - frame: A 3D frame representing the orientation of the hollow cylinder.
+    - inner_radius: The inner radius of the cylinder.
+    - outer_radius: The outer radius of the cylinder.
+    - length: The length of the cylinder.
+    - Optional keyword arguments include color, alpha, and name.
+
+Here is how you can instantiate it:
+
+.. code-block:: python
+
+    import volmdlr
+    from volmdlr import primitives3d
+
+    frame = volmdlr.OXYZ
+    inner_radius = 1.0
+    outer_radius = 1.5
+    length = 4.0
+
+    # Create a hollow cylinder instance
+    hollow_cylinder = primitives3d.HollowCylinder(frame, inner_radius, outer_radius, length,
+                                                  color=(0.5, 0.5, 0.5), alpha=0.8, name='MyHollowCylinder')
+    hollow_cylinder.babylonjs()
+
+.. image:: ../source/_static/index-images/hollowcylinder.png
+
+Cone
+====
+
+The Clone class, as its name indicates, creates a Cone object using the following arguments:
+
+    - frame: A 3D frame representing the orientation of the cone.
+    - radius: The radius of the cone's base.
+    - length: The height of the cone.
+    - Optional keyword arguments include color, alpha, and name.
+
+Here is how you can instantiate it:
+
+.. code-block:: python
+
+    import volmdlr
+    from volmdlr import primitives3d
+
+    frame = volmdlr.OXYZ
+    radius = 0.2
+    length = 0.5
+    cone = Cone(frame=frame, radius = radius, length=length, color=(0.5, 0.5, 0.5), alpha=0.8, name='MyCone')
+    cone.babylonjs()
+
+.. image:: ../source/_static/index-images/cone.png
+
+Sphere
+======
+
+The Sphere class, as its name indicates, creates a Sphere centered at a given position with a specified radius. object using the following arguments:
+
+    - center: A 3D point representing the center of the sphere.
+    - radius: The radius of the sphere.
+
+Here is how you can instantiate it:
+
+.. code-block:: python
+
+    import volmdlr
+    from volmdlr import primitives3d
+
+    # Define the center point of the sphere
+    center = volmdlr.Point3D(0, 0, 0)
+
+    # Define the radius of the sphere
+    radius = 2.0
+
+    # Create a sphere instance
+    sphere = primitives3d.Sphere(center, radius, color=(0.5, 0.5, 0.5), alpha=0.8, name='MySphere')
+    sphere.babylonjs()
+
+.. image:: ../source/_static/index-images/sphere.png
+
+RevolvedProfile
+==============
+
+RevolvedProfile class is used for creating a 3D object by revolving a 2D profile around an axis.
+To do so, you must provide the following attributes:
+
+The constructor takes several parameters:
+    - frame: A 3D frame representing the orientation of the revolved profile.
+    - contour2d: A 2D contour that defines the shape of the profile in the plane perpendicular to the axis.
+    - axis_point: A point on the axis of revolution.
+    - axis: The axis of revolution.
+    - angle: The angle by which the profile should be revolved around the axis (default: 2 * π radians).
+    - Optional keyword arguments include color, alpha, and name.
+
+.. code-block:: python
+
+    import volmdlr
+    from volmdlr import primitives3d
+    import math
+    # Define the 3D frame for the revolved profile
+    frame = volmdlr.OYZX
+
+    # Define the 2D contour to be revolved
+    contour2d = volmdlr.wires.Contour2D.from_points([volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1)])
+
+    # Define the axis of revolution
+    axis_point = volmdlr.Point3D(0, 0, 0)
+    axis = volmdlr.Vector3D(0, 0, 1)
+
+    # Create a revolved profile instance
+    revolved_profile = primitives3d.RevolvedProfile(frame, contour2d, axis_point, axis, angle=math.pi / 2,
+                                                    color=(0.5, 0.5, 0.5), alpha=0.8, name='MyRevolution')
+    revolved_profile.babylonjs()
+
+    # Now you have a revolved profile object with the specified attributes
+    # You can perform various operations with the revolved profile
+
+.. image:: ../source/_static/index-images/revolvedprofile.png
+
+ExtrutedProfile
+==============
+
+The ExtrudedProfile class represents an extrudred profille with an outer and inner contours.
+
+Here's an explanation of the class and an example of how it could be used:
+
+    The constructor takes several parameters:
+        - frame: A 3D frame representing the orientation of the extruded profile.
+        - outer_contour2d: A 2D contour that defines the outer shape of the profile in the XY plane.
+        - inner_contours2d: A list of 2D contours representing possible inner holes in the profile.
+        - extrusion_length: The length by which the profile should be extruded along the specified axis.
+        - Optional keyword arguments include color, alpha, and name.
+
+    Usage Example:
+
+.. code-block:: python
+
+    import volmdlr  # Import the necessary module
+    from volmdlr import primitives3d
+
+    # Define the 3D frame for the extruded profile
+    frame = volmdlr.Frame3D(
+        origin=volmdlr.Point3D(0, 0, 0),
+        u=volmdlr.Vector3D(1, 0, 0),
+        v=volmdlr.Vector3D(0, 1, 0),
+        w=volmdlr.Vector3D(0, 0, 1)
+    )
+
+    # Define the outer and inner 2D contours
+    outer_contour2d = volmdlr.wires.Contour2D.from_points([volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1)])
+    inner_contours2d = [volmdlr.wires.Contour2D.from_points([volmdlr.Point2D(0.3, 0.2), volmdlr.Point2D(0.8, 0.2), volmdlr.Point2D(0.8, 0.7)])]
+
+    # Create an extruded profile instance
+    extruded_profile = primitives3d.ExtrudedProfile(frame, outer_contour2d, inner_contours2d, extrusion_length=2.0, color=(0.5, 0.5, 0.5), alpha=0.8, name='MyExtrusion')
+    extruded_profile.babylonjs()
+
+    # Now you have an extruded profile object with the specified attributes
+    # You can perform various operations with the extruded profile
+
+.. image:: ../source/_static/index-images/extrudedprofile.png
+
+Sweep
+=====
+
+The Sweep class is used to create a 3D object by sweeping a 2D contour along a 3D wire.
+
+The constructor takes several parameters:
+
+    - contour2d: A 2D contour that defines the shape to be swept.
+    - wire3d: A 3D wire along which the contour2d is swept.
+    - Optional keyword arguments include color, alpha, and name.
+
+.. code-block:: python
+
+    import random
+
+    import volmdlr
+    from volmdlr import primitives3d
+
+    random.seed(2)
+
+    p1 = volmdlr.Point3D(0, 0, 0)
+    p2 = volmdlr.Point3D(-0.150, 0, 0)
+    p3 = volmdlr.Point3D(-0.150, 0.215, 0)
+    p4 = volmdlr.Point3D(-0.150, 0.215, -0.058)
+    p5 = volmdlr.Point3D(-0.220, 0.186, -0.042)
+
+    points = [p1, p2, p3, p4, p5]
+    radius = {1: 0.015, 2: 0.020, 3: 0.03}
+
+    current_point = p5
+
+    for i in range(6):
+        current_point += volmdlr.Point3D.random(-0.1, 0.3, -0.1, 0.3, -0.1, 0.3)
+        points.append(current_point)
+        radius[4 + i] = 0.01 + 0.03 * random.random()
+
+
+    open_rounded_line_segements = primitives3d.OpenRoundedLineSegments3D(points, radius, adapt_radius=True, name='wire')
+    contour = wires.ClosedPolygon2D([volmdlr.Point2D(-0.004, -0.004), volmdlr.Point2D(0.004, -0.004),
+                                     volmdlr.Point2D(0.004, 0.004), volmdlr.Point2D(-0.004, 0.004)])
+    sweep = primitives3d.Sweep(contour, open_rounded_line_segements, color=(0.5, 0.5, 0.5), alpha=0.8, name='MySweep')
+    sweep.babylonjs()
+
+.. image:: ../source/_static/index-images/sweep.png
