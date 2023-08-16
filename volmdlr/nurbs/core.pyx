@@ -851,7 +851,7 @@ def evaluate_surface(dict datadict, **kwargs):
     return evaluate_surface_c(degree, knotvector, ctrlpts, size, sample_size, dimension, precision, start, stop)
 
 
-cdef vector[vector[double]] evaluate_surface_c(int[2] degree, vector[double] knotvector, tuple ctrlpts, int[2] size,
+cdef vector[vector[double]] evaluate_surface_c(int[2] degree, vector[vector[double]] knotvector, tuple ctrlpts, int[2] size,
                                 int[2] sample_size, int dimension, int precision, double[2] start, double[2] stop):
     """
     Evaluates surface.
@@ -886,7 +886,7 @@ cdef vector[vector[double]] evaluate_surface_c(int[2] degree, vector[double] kno
     return eval_points
 
 
-cdef vector[vector[double]] evaluate_surface_rational(int[2] degree, vector[double] knotvector, tuple ctrlpts,
+cdef vector[vector[double]] evaluate_surface_rational(int[2] degree, vector[vector[double]] knotvector, tuple ctrlpts,
                                                       int[2] size, int[2] sample_size, int dimension, int precision,
                                                       double[2] start, double[2] stop):
 
