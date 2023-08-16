@@ -2,8 +2,6 @@
 """
 Helpers.
 """
-from copy import deepcopy
-from functools import lru_cache
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from cython cimport cdivision
 import cython.cimports.libc.math as math_c
@@ -168,6 +166,7 @@ def doolittle(matrix_a):
                     matrix_l[k][i] = 0.0
 
     return matrix_l, matrix_u
+
 
 def lu_decomposition(matrix_a):
     """LU-Factorization method using Doolittle's Method for solution of linear systems.
