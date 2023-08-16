@@ -1,16 +1,20 @@
 
-Subpackages
+.. _modules:
+ALL MODULES
 ===========
 
+Subpackages
+-----------
+
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    volmdlr.utils
 
 Submodules
-==========
+----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
 
    modules
