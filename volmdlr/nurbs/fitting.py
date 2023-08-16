@@ -18,7 +18,7 @@ code for any particular purpose.
 import cython.cimports.libc.math as math_c
 import cython
 import numpy as np
-from scipy.linalg import lu_factor, lu_solve, lu, solve_triangular
+from scipy.linalg import lu_factor, lu_solve
 
 from geomdl import BSpline, linalg
 from cython.cimports.libcpp.vector import vector
