@@ -160,16 +160,17 @@ def doolittle(matrix_a):
             else:
                 matrix_l[k][i] = float(matrix_a[k][i] - sum([matrix_l[k][j] * matrix_u[j][i] for j in range(0, i)]))
                 # Handle zero division error
-                try:
+                if matrix_u[i][i] != 0.0:
                     matrix_l[k][i] /= float(matrix_u[i][i])
-                except ZeroDivisionError:
+                else:
                     matrix_l[k][i] = 0.0
 
     return matrix_l, matrix_u
 
 
 def lu_decomposition(matrix_a):
-    """LU-Factorization method using Doolittle's Method for solution of linear systems.
+    """
+    LU-Factorization method using Doolittle's Method for solution of linear systems.
 
     Decomposes the matrix :math:`A` such that :math:`A = LU`.
 
@@ -210,7 +211,7 @@ def forward_substitution(matrix_l, matrix_b):
     matrix_y = [0.0 for _ in range(q)]
     matrix_y[0] = float(matrix_b[0]) / float(matrix_l[0][0])
     for i in range(1, q):
-        matrix_y[i] = float(matrix_b[i]) - sum([matrix_l[i][j] * matrix_y[j] for j in range(0, i)])
+        matrix_y[i] = float(matrix_b[i]) - sum(matrix_l[i][j] * matrix_y[j] for j in range(0, i))
         matrix_y[i] /= float(matrix_l[i][i])
     return matrix_y
 

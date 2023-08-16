@@ -566,8 +566,6 @@ def geometrically_bounded_surface_shape_representation(arguments, object_dict):
         compound = volmdlr.core.Compound(primitives, name=arguments[0])
         compound.compound_type = "geometric_curve_set"
         return compound
-    if not primitives:
-        print("step_reader")
     return primitives[0]
 
 
