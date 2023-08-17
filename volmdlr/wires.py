@@ -3559,8 +3559,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             return None
         triangulate_result = triangulate(tri, tri_opt)
         triangles = triangulate_result['triangles'].tolist()
-        np = triangulate_result['vertices'].shape[0]
-        points = [vmd.Node2D(*triangulate_result['vertices'][i, :]) for i in range(np)]
+        number_points = triangulate_result['vertices'].shape[0]
+        points = [vmd.Node2D(*triangulate_result['vertices'][i, :]) for i in range(number_points)]
         return vmd.DisplayMesh2D(points, triangles=triangles)
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
@@ -4652,6 +4652,19 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return ClosedPolygon3D(self.simplify_polygon(
             min_distance=min_distance, max_distance=max_distance).points)
 
+    @staticmethod
+    def fix_sewing_normals(triangles, reference_linesegment):
+        """ Fixes sewing triangle normal so it faces always outwards."""
+        first_triangles_points = triangles[0]
+        frame = volmdlr.Frame3D.from_3_points(*first_triangles_points)
+        normal = frame.w
+        middle_point = (first_triangles_points[0] + first_triangles_points[1] + first_triangles_points[2]) / 3
+        point1 = middle_point + 0.05 * normal
+        point2 = middle_point - 0.05 * normal
+        if reference_linesegment.line.point_distance(point1) < reference_linesegment.line.point_distance(point2):
+            return [points[::-1] for points in triangles]
+        return triangles
+
     def convex_sewing(self, polygon2, x, y):
         """
         Sew to Convex Polygon.
@@ -4706,7 +4719,11 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
                 list_closing_point_indexes.append(closing_point_index)
                 previous_closing_point_index = closing_point_index
-        triangles += polygon2.close_sewing(dict_closing_pairs)
+        reference_linesegment = edges.LineSegment3D(center1, center2)
+        triangles = self.fix_sewing_normals(triangles, reference_linesegment)
+        closing_triangles = polygon2.close_sewing(dict_closing_pairs)
+        closing_triangles = self.fix_sewing_normals(closing_triangles, reference_linesegment)
+        triangles += closing_triangles
 
         return triangles
 
@@ -4736,14 +4753,14 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                         face_points = [self.points[i - 1],
                                        point_polygon2,
                                        list(dict_closing_pairs.keys())[j]]
-                        triangles_points.append(face_points)
+                        triangles_points.append(face_points[::-1])
                     elif index[0] > index[1]:
                         if (i - 1 <= index[0] and i <= index[1]) or (
                                 (i - 1 >= index[0]) and i >= index[1]):
                             face_points = [self.points[i - 1],
                                            point_polygon2,
                                            list(dict_closing_pairs.keys())[j]]
-                            triangles_points.append(face_points)
+                            triangles_points.append(face_points[::-1])
         return triangles_points
 
     def check_sewing(self, polygon2, sewing_faces):
@@ -4904,16 +4921,15 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         polygon2_2d = polygon2.to_2d(volmdlr.O2D, x, y)
         polygon1_3d = self
         polygon2_3d = polygon2
+        need_fix_normal = False
         if polygon2_2d.area() < polygon1_2d.area():
             polygon1_2d, polygon2_2d = polygon2_2d, polygon1_2d
             polygon1_3d = polygon2
             polygon2_3d = self
+            need_fix_normal = True
         polygon1_3d = polygon1_3d.get_valid_concave_sewing_polygon(
             polygon1_2d, polygon2_2d)
         polygon1_2d = polygon1_3d.to_2d(volmdlr.O2D, x, y)
-
-        # ax=polygon1_2d.plot()
-        # polygon2_2d.plot(ax=ax, color='r')
 
         dict_closing_pairs = {}
         triangles_points = []
@@ -4950,36 +4966,31 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                 new_list_remove_closing_indexes = list(
                     dict.fromkeys(list_remove_closing_points))
                 if len(list_remove_closing_points) == len(triangles_points):
-                    triangles_points = \
-                        polygon2_3d.redefine_sewing_triangles_points(
-                            triangles_points, passed_by_zero_index,
-                            closing_point_index, previous_closing_point_index)
+                    triangles_points = polygon2_3d.redefine_sewing_triangles_points(triangles_points,
+                                                                                    passed_by_zero_index,
+                                                                                    closing_point_index,
+                                                                                    previous_closing_point_index)
                     if dict_closing_pairs:
                         dict_closing_pairs, lower_bounddary_closing_point = \
-                            self.clean_sewing_closing_pairs_dictionary(
-                                dict_closing_pairs,
-                                closing_point_index,
-                                passed_by_zero_index)
+                            self.clean_sewing_closing_pairs_dictionary(dict_closing_pairs,
+                                                                       closing_point_index,
+                                                                       passed_by_zero_index)
 
-                        if len(new_list_remove_closing_indexes) < \
-                                len(new_list_closing_point_indexes):
-                            dict_closing_pairs[
-                                lower_bounddary_closing_point] = (
-                                new_list_closing_point_indexes[
-                                    -(len(new_list_remove_closing_indexes) + 1)],
+                        if len(new_list_remove_closing_indexes) < len(new_list_closing_point_indexes):
+                            dict_closing_pairs[lower_bounddary_closing_point] = (
+                                new_list_closing_point_indexes[-(len(new_list_remove_closing_indexes) + 1)],
                                 closing_point_index)
                     for pt_index in list_remove_closing_points:
                         list_closing_point_indexes.remove(pt_index)
                     list_closing_point_indexes.append(closing_point_index)
 
-                elif (not passed_by_zero_index and
-                      closing_point_index > polygon2_3d.points.index(
+                elif (not passed_by_zero_index and closing_point_index > polygon2_3d.points.index(
                             triangles_points[-len(list_remove_closing_points) - 1][2])) or \
                         (passed_by_zero_index and closing_point_index >= 0):
-                    triangles_points = \
-                        polygon2_3d.redefine_sewing_triangles_points(
-                            triangles_points, passed_by_zero_index,
-                            closing_point_index, previous_closing_point_index)
+                    triangles_points = polygon2_3d.redefine_sewing_triangles_points(triangles_points,
+                                                                                    passed_by_zero_index,
+                                                                                    closing_point_index,
+                                                                                    previous_closing_point_index)
                     dict_closing_pairs, lower_bounddary_closing_point = \
                         self.clean_sewing_closing_pairs_dictionary(
                             dict_closing_pairs, closing_point_index, passed_by_zero_index)
@@ -5030,10 +5041,19 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
                             list(dict_closing_pairs.values())[0][0])
 
         triangles_points += polygon2_3d.close_sewing(dict_closing_pairs)
-
+        if need_fix_normal:
+            center1, center2 = self.average_center_point(), polygon2.average_center_point()
+            reference_segment = edges.LineSegment3D(center1, center2)
+            triangles_points = self.fix_sewing_normals(triangles_points, reference_segment)
         return triangles_points
 
     def sewing(self, polygon2, x, y):
+        """
+        Sew two polygon3D together.
+
+        :param x: The vector representing first direction to project polygons in
+        :param y: The vector representing second direction to project polygons in
+        """
         polygon1_2d = self.to_2d(volmdlr.O2D, x, y)
         polygon2_2d = polygon2.to_2d(volmdlr.O2D, x, y)
         if polygon1_2d.is_convex() and polygon2_2d.is_convex():
