@@ -1939,9 +1939,7 @@ class Pixelization:
     def plot(self, ax=None):
         """Plots the pixels on a 2D plane"""
         if ax is None:
-            fig, ax = plt.subplots()
-        else:
-            fig, _ = plt.subplots()
+            _, ax = plt.subplots()
 
         for center in self.pixel_centers:
             x, y = center
@@ -1966,6 +1964,8 @@ class Pixelization:
 
         ax.set_aspect("equal")  # Ensuring equal scaling for both axes
         plt.show()
+
+        return ax
 
     @classmethod
     def from_line_segment(cls, line_segment, pixel_size):
