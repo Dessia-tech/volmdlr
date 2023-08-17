@@ -127,6 +127,7 @@ steps:
   image: python:3.9
   commands:
   - git fetch --tags
+  - pip install 'numpy<1.24.0'
   - pip install Cython
   - python setup.py sdist
 

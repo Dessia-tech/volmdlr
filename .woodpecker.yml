@@ -58,4 +58,5 @@ pipeline:
     commands:
       - git fetch --tags
       - pip install Cython
+      - pip install 'numpy<1.24.0'
       - python setup.py sdist
