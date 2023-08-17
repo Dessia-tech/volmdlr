@@ -319,6 +319,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             name = step_product[1:-1]
         # ----------------------------------
         faces = [object_dict[int(face[1:])] for face in arguments[1] if object_dict[int(face[1:])]]
+        if not faces:
+            return None
         return cls(faces, name=name)
 
     def to_step(self, current_id):

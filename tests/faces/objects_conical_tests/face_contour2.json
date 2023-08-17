@@ -11,7 +11,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": -0.00235270234694772,
@@ -766,7 +766,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/0/end"
       },
@@ -1517,7 +1517,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/1/end"
       },
@@ -2268,7 +2268,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/2/end"
       },
@@ -3019,7 +3019,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/3/end"
       },
@@ -3770,7 +3770,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/4/end"
       },

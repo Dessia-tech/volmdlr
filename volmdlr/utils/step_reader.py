@@ -366,7 +366,7 @@ def geometric_set(arguments, object_dict):
     """
     # TODO: IS THIS RIGHT?
     primitives = [object_dict[int(node[1:])]
-                  for node in arguments[1] if not isinstance(object_dict[int(node[1:])], volmdlr.Point3D)]
+                  for node in arguments[1]]
     return primitives
 
 
