@@ -517,40 +517,13 @@ def _triangle_2d_to_pixels(
     ],
     pixel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double]]:
-    pixel_centers: vector[Tuple[cython.double, cython.double]]
 
-    for i in range(3):
-        x1: cython.double = triangle_2d[i][0][0]
-        y1: cython.double = triangle_2d[i][0][1]
-        x2: cython.double = triangle_2d[i][1][0]
-        y2: cython.double = triangle_2d[i][1][1]
+    line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]]
+    line_segments.push_back(triangle_2d[0])
+    line_segments.push_back(triangle_2d[1])
+    line_segments.push_back(triangle_2d[2])
 
-        # Calculate the bounding box of the line segment
-        xmin = min(x1, x2)
-        ymin = min(y1, y2)
-        xmax = max(x1, x2)
-        ymax = max(y1, y2)
-
-        # Calculate the indices of the box that intersect with the bounding box of the line segment
-        x_start = cython.cast(cython.int, (xmin / pixel_size) - 2)
-        x_end = cython.cast(cython.int, (xmax / pixel_size) + 2)
-        y_start = cython.cast(cython.int, (ymin / pixel_size) - 2)
-        y_end = cython.cast(cython.int, (ymax / pixel_size) + 2)
-
-        # Create a list of the centers of all the intersecting voxels
-        for x in range(x_start, x_end):
-            for y in range(y_start, y_end):
-                x_coord: cython.double = (cython.cast(cython.double, x) + 0.5) * pixel_size
-                y_coord: cython.double = (cython.cast(cython.double, y) + 0.5) * pixel_size
-                center: Tuple[cython.double, cython.double] = (
-                    _round_to_digits(x_coord, 6),
-                    _round_to_digits(y_coord, 6),
-                )
-
-                if _line_segment_intersects_pixel(x1, y1, x2, y2, center[0], center[1], pixel_size):
-                    pixel_centers.push_back(center)
-
-    return pixel_centers
+    return _line_segments_to_pixels(line_segments, pixel_size)
 
 
 def line_segments_to_pixels(
