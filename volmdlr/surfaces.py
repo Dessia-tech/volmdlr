@@ -3,7 +3,6 @@ import math
 from itertools import chain
 from typing import List, Union
 import traceback
-import warnings
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -12,11 +11,10 @@ from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
 from geomdl.fitting import approximate_surface, interpolate_surface
 from geomdl.operations import split_surface_u, split_surface_v
-from scipy.optimize import least_squares, minimize
+from scipy.optimize import least_squares
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_invertion
-from volmdlr.bspline_evaluators import evaluate_single
 import volmdlr.bspline_compiled
 import volmdlr.core
 from volmdlr import display, edges, grid, wires, curves
@@ -4583,9 +4581,10 @@ class BSplineSurface3D(Surface3D):
                 ctrlptsw.append(temp)
             self.ctrlptsw = npy.asarray(ctrlptsw, dtype=npy.float64)
 
-        self._delta = [0.01, 0.05]
+        self._delta = [0.05, 0.05]
         self._eval_points = None
         self._vertices = None
+        self._domain = None
 
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
@@ -4687,9 +4686,6 @@ class BSplineSurface3D(Surface3D):
         if not isinstance(value, int):
             raise ValueError("Sample size must be an integer value")
         knotvector_u = self.knots_vector_u
-        if (knotvector_u is None or len(knotvector_u) == 0) or self.degree_u == 0:
-            warnings.warn("Cannot determine 'delta_u' value. Please set knot vectors and degrees before sample size.")
-            return
 
         # To make it operate like linspace, we have to know the starting and ending points.
         start_u = knotvector_u[self.degree_u]
@@ -4715,9 +4711,6 @@ class BSplineSurface3D(Surface3D):
         if not isinstance(value, int):
             raise ValueError("Sample size must be an integer value")
         knotvector_v = self.knots_vector_v
-        if (knotvector_v is None or len(knotvector_v) == 0) or self.degree_v == 0:
-            warnings.warn("Cannot determine 'delta_v' value. Please set knot vectors and degrees before sample size.")
-            return
 
         # To make it operate like linspace, we have to know the starting and ending points.
         start_v = knotvector_v[self.degree_v]
@@ -4743,13 +4736,6 @@ class BSplineSurface3D(Surface3D):
     def sample_size(self, value):
         knotvector_u = self.knots_vector_u
         knotvector_v = self.knots_vector_v
-        if (
-            (knotvector_u is None or len(knotvector_u) == 0)
-            or self.degree_u == 0
-            or (knotvector_v is None or len(knotvector_v) == 0 or self.degree_v == 0)
-        ):
-            warnings.warn("Cannot determine 'delta' value. Please set knot vectors and degrees before sample size.")
-            return
 
         # To make it operate like linspace, we have to know the starting and ending points.
         start_u = knotvector_u[self.degree_u]
@@ -5004,15 +4990,16 @@ class BSplineSurface3D(Surface3D):
 
         :getter: Gets the domain
         """
-        knotvector_u = self.knots_vector_u
-        knotvector_v = self.knots_vector_v
-        # Find evaluation start and stop parameter values
-        start_u = knotvector_u[self.degree_u]
-        stop_u = knotvector_u[-(self.degree_u + 1)]
-        start_v = knotvector_v[self.degree_v]
-        stop_v = knotvector_v[-(self.degree_v + 1)]
-
-        return start_u, stop_u, start_v, stop_v
+        if not self._domain:
+            knotvector_u = self.knots_vector_u
+            knotvector_v = self.knots_vector_v
+            # Find evaluation start and stop parameter values
+            start_u = knotvector_u[self.degree_u]
+            stop_u = knotvector_u[-(self.degree_u + 1)]
+            start_v = knotvector_v[self.degree_v]
+            stop_v = knotvector_v[-(self.degree_v + 1)]
+            self._domain = start_u, stop_u, start_v, stop_v
+        return self._domain
 
     @property
     def vertices(self):
@@ -5229,10 +5216,10 @@ class BSplineSurface3D(Surface3D):
                (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
                (0.33333333, 0.009), (0.5555555, 0.0099)]
 
-            # Sort the initial conditions
+        # Sort the initial conditions
         x0s.sort(key=sort_func)
         matrix = self.evalpts
-        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]])
+        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
 
         # Calculate distances
         distances = npy.linalg.norm(matrix - point3d_array, axis=1)
@@ -5254,12 +5241,11 @@ class BSplineSurface3D(Surface3D):
             control_points = self.ctrlptsw
         else:
             control_points = self.ctrlpts
-        bounds = [(min_bound_x, max_bound_x),
-         (min_bound_y, max_bound_y)]
+        bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
         results = []
         for x0 in x0s:
-            res = point_invertion(point3d_array, x0, bounds, [self.degree_u, self.degree_v], self.knotvector, control_points,
-            [self.nb_u, self.nb_v], self.rational)
+            res = point_invertion(point3d_array, x0, bounds, [self.degree_u, self.degree_v],
+                                  self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational)
             if res.fun <= tol:
                 return volmdlr.Point2D(*res.x)
 
