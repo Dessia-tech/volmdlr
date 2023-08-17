@@ -18,15 +18,15 @@ from cython.cimports.libcpp.vector import vector
 
 # CUSTOM PYTHON TYPES
 
-Point = Tuple[float, ...]
-Triangle = Tuple[Point, ...]
+Point = Tuple[float, float, float]
+Triangle = Tuple[Point, Point, Point]
 
 # PYTHON FUNCTIONS
 
 
 def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
     """
-    Helper functions to compute all the voxels intersecting with a given list of triangles.
+    Helper function to compute all the voxels intersecting with a given list of triangles.
 
     :param triangles: The triangles to compute the intersecting voxels.
     :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
@@ -36,6 +36,7 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
     :return: The centers of the voxels that intersect with the triangles.
     :rtype: set[tuple[float, float, float]]
     """
+    # TODO: replace this method with triangles_to_voxel_matrix
     voxel_centers = set()
 
     for triangle in triangles:
@@ -63,6 +64,17 @@ def triangles_to_voxel_matrix(
     triangles: List[Tuple[Tuple[float, float, float]], Tuple[float, float, float], Tuple[float, float, float]],
     voxel_size: float,
 ) -> Tuple[np.ndarray[np.bool_, np.ndim == 3], Tuple[float, float, float]]:
+    """
+    Helper function to compute the voxel matrix of all the voxels intersecting with a given list of triangles.
+
+    :param triangles: The triangles to compute the intersecting voxels.
+    :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+    :param voxel_size: The voxel edges size.
+    :type voxel_size: float
+
+    :return: The voxel matrix and the origin center of the matrix.
+    :rtype: tuple[np.ndarray[np.bool_, np.ndim == 3], tuple[float, float, float]]
+    """
     # compute the size of the matrix and min matrix origin center
     min_point, max_point = _triangles_min_max_points(triangles)
     shape = (
@@ -96,12 +108,25 @@ def triangles_to_voxel_matrix(
 def flood_fill_matrix_2d(
     matrix: np.ndarray[np.bool_, np.ndim == 2], start: Tuple[int, int], fill_with: bool
 ) -> np.ndarray[np.bool_, np.ndim == 2]:
+    """
+    Perform 2D flood fill on the given matrix starting from the specified position.
+
+    :param matrix: The matrix to perform flood fill on.
+    :type matrix: np.ndarray[np.bool_, np.ndim == 2]
+    :param start: The starting position for flood fill.
+    :type start: Tuple[int, int]
+    :param fill_with: The value to fill the connected component with.
+    :type fill_with: bool
+
+    :return: The matrix after performing flood fill.
+    :rtype: np.ndarray[np.bool_, np.ndim == 2]
+    """
     return np.asarray(
         _flood_fill_matrix_2d(
             matrix.astype(np.bool_),
-            [start[0], start[1]],
+            (start[0], start[1]),
             fill_with,
-            [matrix.shape[0], matrix.shape[1]],
+            (matrix.shape[0], matrix.shape[1]),
         ),
         dtype=np.bool_,
     )
@@ -110,12 +135,25 @@ def flood_fill_matrix_2d(
 def flood_fill_matrix_3d(
     matrix: np.ndarray[np.bool_, np.ndim == 3], start: Tuple[int, int, int], fill_with: bool
 ) -> np.ndarray[np.bool_, np.ndim == 3]:
+    """
+    Perform 3D flood fill on the given matrix starting from the specified position.
+
+    :param matrix: The matrix to perform flood fill on.
+    :type matrix: np.ndarray[np.bool_, np.ndim == 3]
+    :param start: The starting position for flood fill.
+    :type start: tuple[int, int, int]
+    :param fill_with: The value to fill the connected component with.
+    :type fill_with: bool
+
+    :return: The matrix after performing flood fill.
+    :rtype: np.ndarray[np.bool_, np.ndim == 3]
+    """
     return np.asarray(
         _flood_fill_matrix_3d(
             matrix.astype(np.bool_),
-            [start[0], start[1], start[2]],
+            (start[0], start[1], start[2]),
             fill_with,
-            [matrix.shape[0], matrix.shape[1], matrix.shape[2]],
+            (matrix.shape[0], matrix.shape[1], matrix.shape[2]),
         ),
         dtype=np.bool_,
     )
@@ -124,6 +162,21 @@ def flood_fill_matrix_3d(
 def line_segments_to_pixels(
     line_segments: List[Tuple[Tuple[float, float], Tuple[float, float]]], pixel_size: float
 ) -> Set[Tuple[float, float]]:
+    """
+    Convert a list of line segments to a set of pixel coordinates.
+
+    This function takes a list of line segments, each defined by two endpoints, and converts them into a set of pixel
+    coordinates based on the specified pixel size. The pixel coordinates represent the pixels that the line segments
+    intersect with.
+
+    :param line_segments: List of line segments to convert.
+    :type line_segments: list[tuple[tuple[float, float], tuple[float, float]]]
+    :param pixel_size: The size of each pixel.
+    :type pixel_size: float
+
+    :return: A set of pixel coordinates representing the intersection points of the line segments.
+    :rtype: set[tuple[float, float]]
+    """
     return set(_line_segments_to_pixels(line_segments, pixel_size))
 
 
@@ -134,6 +187,7 @@ def line_segments_to_pixels(
 @cython.cdivision(True)
 @cython.exceptval(check=False)
 def _round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
+    """Round the given number to the specified number of digits after the decimal point."""
     multiplier: cython.double = math_c.pow(10.0, digits)
     return math_c.round(num * multiplier) / multiplier
 
@@ -141,6 +195,7 @@ def _round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
 @cython.cfunc
 @cython.exceptval(check=False)
 def _is_integer(value: cython.double) -> bool_C:
+    """Check if the given value is an integer (has no fractional part)."""
     return cython.cast(cython.int, value) == value
 
 
@@ -157,6 +212,8 @@ def _triangle_intersects_voxel(
     voxel_center: Tuple[cython.double, cython.double, cython.double],
     voxel_extents: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C:
+    """Check if a 3D triangle intersects with a voxel defined by its center and extents."""
+
     # Ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
 
     v0: cython.double[3]
@@ -329,6 +386,8 @@ def _calculate_axis_values(
     f: cython.double[3],
     voxel_extents: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C:
+    """Calculate axis values used in triangle intersection tests with an axis-aligned box."""
+
     p0 = v0[0] * ax[0] + v0[1] * ax[1] + v0[2] * ax[2]
     p1 = v1[0] * ax[0] + v1[1] * ax[1] + v1[2] * ax[2]
     p2 = v2[0] * ax[0] + v2[1] * ax[1] + v2[2] * ax[2]
@@ -350,6 +409,8 @@ def _aabb_intersecting_boxes(
     max_point: Tuple[cython.double, cython.double, cython.double],
     voxel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double, cython.double]]:
+    """Calculate the voxel centers that intestects with a given axis-aligned boxes."""
+
     x_start: cython.int
     x_end: cython.int
     y_start: cython.int
@@ -389,12 +450,56 @@ def _aabb_intersecting_boxes(
 @cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
+def _flood_fill_matrix_2d(
+        matrix: bool_C[:, :],
+        start: Tuple[cython.int, cython.int],
+        fill_with: bool_C,
+        shape: Tuple[cython.int, cython.int],
+) -> bool_C[:, :]:
+    """Apply a flood fill algorithm to a 2D boolean matrix from a given starting point."""
+
+    dx: cython.int[4] = [0, 0, -1, 1]
+    dy: cython.int[4] = [-1, 1, 0, 0]
+    nx: cython.int
+    ny: cython.int
+    x: cython.int
+    y: cython.int
+    sx: cython.int = shape[0]
+    sy: cython.int = shape[1]
+
+    old_value: cython.int = matrix[start[0], start[1]]
+
+    if old_value == fill_with:
+        return matrix
+
+    fill_stack: stack[Tuple[cython.int, cython.int]]
+    fill_stack.push((start[0], start[1]))
+
+    while not fill_stack.empty():
+        x, y = fill_stack.top()
+        fill_stack.pop()
+        matrix[x, y] = fill_with
+
+        for i in range(4):
+            nx, ny = x + dx[i], y + dy[i]
+
+            if 0 <= nx < sx and 0 <= ny < sy and matrix[nx, ny] == old_value:
+                fill_stack.push((nx, ny))
+
+    return matrix
+
+
+@cython.cfunc
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def _flood_fill_matrix_3d(
     matrix: bool_C[:, :, :],
     start: Tuple[cython.int, cython.int, cython.int],
     fill_with: bool_C,
     shape: Tuple[cython.int, cython.int, cython.int],
 ) -> bool_C[:, :, :]:
+    """Apply a flood fill algorithm to a 3D boolean matrix from a given starting point."""
+
     dx: cython.int[6] = [0, 0, -1, 1, 0, 0]
     dy: cython.int[6] = [-1, 1, 0, 0, 0, 0]
     dz: cython.int[6] = [0, 0, 0, 0, -1, 1]
@@ -431,46 +536,6 @@ def _flood_fill_matrix_3d(
 
 
 @cython.cfunc
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def _flood_fill_matrix_2d(
-    matrix: bool_C[:, :],
-    start: Tuple[cython.int, cython.int],
-    fill_with: bool_C,
-    shape: Tuple[cython.int, cython.int],
-) -> bool_C[:, :]:
-    dx: cython.int[4] = [0, 0, -1, 1]
-    dy: cython.int[4] = [-1, 1, 0, 0]
-    nx: cython.int
-    ny: cython.int
-    x: cython.int
-    y: cython.int
-    sx: cython.int = shape[0]
-    sy: cython.int = shape[1]
-
-    old_value: cython.int = matrix[start[0], start[1]]
-
-    if old_value == fill_with:
-        return matrix
-
-    fill_stack: stack[Tuple[cython.int, cython.int]]
-    fill_stack.push((start[0], start[1]))
-
-    while not fill_stack.empty():
-        x, y = fill_stack.top()
-        fill_stack.pop()
-        matrix[x, y] = fill_with
-
-        for i in range(4):
-            nx, ny = x + dx[i], y + dy[i]
-
-            if 0 <= nx < sx and 0 <= ny < sy and matrix[nx, ny] == old_value:
-                fill_stack.push((nx, ny))
-
-    return matrix
-
-
-@cython.cfunc
 @cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -484,6 +549,8 @@ def _line_segment_intersects_pixel(
     pixel_center_y: cython.double,
     pixel_size: cython.double,
 ) -> bool_C:
+    """Check if a line segment intersects with a pixel defined by its center and size."""
+
     # Determine the coordinates of lower-left and upper-right of rectangle
     xmin, xmax = pixel_center_x - pixel_size / 2, pixel_center_x + pixel_size / 2
     ymin, ymax = pixel_center_y - pixel_size / 2, pixel_center_y + pixel_size / 2
@@ -521,6 +588,8 @@ def _line_segments_to_pixels(
     line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]],
     pixel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double]]:
+    """Convert line segments to a list of pixel centers they intersect with."""
+
     pixel_centers: vector[Tuple[cython.double, cython.double]]
 
     for i in range(line_segments.size()):
@@ -567,6 +636,8 @@ def _triangle_2d_to_pixels(
     ],
     pixel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double]]:
+    """Convert line segments to a list of pixel centers they intersect with."""
+
     line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]]
     line_segments.push_back((triangle_2d[0], triangle_2d[1]))
     line_segments.push_back((triangle_2d[1], triangle_2d[2]))
@@ -592,6 +663,8 @@ def _triangles_to_voxel_matrix(
     matrix: bool_C[:, :, :],
     matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C[:, :, :]:
+    """Convert 3D triangles to a voxel matrix representation using intersection tests."""
+
     # Check interface voxels
     for i in range(n_triangles):
         x_abscissa = _round_to_digits(triangles[i][0][0], 6)
@@ -815,6 +888,8 @@ def _triangles_to_voxel_matrix(
 def _get_min_pixel_grid_center(
     pixel_centers: vector[Tuple[cython.double, cython.double]]
 ) -> Tuple[cython.double, cython.double]:
+    """Calculate and return the minimum x and y coordinates among a collection of pixel centers."""
+
     min_x = min_y = math_c.INFINITY
     for i in range(pixel_centers.size()):
         min_x = min(min_x, pixel_centers[i][0])
@@ -828,6 +903,8 @@ def _get_min_pixel_grid_center(
 def _get_max_pixel_grid_center(
     pixel_centers: vector[Tuple[cython.double, cython.double]]
 ) -> Tuple[cython.double, cython.double]:
+    """Calculate and return the maximum x and y coordinates among a collection of pixel centers."""
+
     max_x = max_y = -math_c.INFINITY
     for i in range(pixel_centers.size()):
         max_x = max(max_x, pixel_centers[i][0])
@@ -846,6 +923,10 @@ def _pixel_centers_to_outer_filled_pixel_matrix(
     shape: Tuple[cython.int, cython.int],
     min_center: Tuple[cython.double, cython.double],
 ) -> bool_C[:, :]:
+    """
+    Convert pixel centers to a boolean matrix where pixels are marked as filled and their outer boundary is identified.
+    """
+
     matrix: bool_C[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.bool_)
 
     for i in range(pixel_centers.size()):
@@ -872,6 +953,8 @@ def _check_triangle_equal_point(
         Tuple[cython.double, cython.double, cython.double],
     ]
 ) -> bool_C:
+    """Check if any two points of a triangle are equal, implying degeneracy."""
+
     return (
         (triangle[0][0] == triangle[1][0] and triangle[0][1] == triangle[1][1] and triangle[0][2] == triangle[1][2])
         or (triangle[0][0] == triangle[2][0] and triangle[0][1] == triangle[2][1] and triangle[0][2] == triangle[2][2])
@@ -888,6 +971,8 @@ def _triangle_min_max_points(
         Tuple[cython.double, cython.double, cython.double],
     ]
 ) -> Tuple[Tuple[cython.double, cython.double, cython.double], Tuple[cython.double, cython.double, cython.double]]:
+    """Calculate and return the minimum and maximum coordinates of a 3D triangle."""
+
     min_x: cython.double = math_c.INFINITY
     min_y: cython.double = math_c.INFINITY
     min_z: cython.double = math_c.INFINITY
@@ -932,6 +1017,8 @@ def _triangles_min_max_points(
         ]
     ]
 ) -> Tuple[Tuple[cython.double, cython.double, cython.double], Tuple[cython.double, cython.double, cython.double]]:
+    """Calculate and return the minimum and maximum coordinates across a collection of 3D triangles."""
+
     min_x: cython.double = math_c.INFINITY
     min_y: cython.double = math_c.INFINITY
     min_z: cython.double = math_c.INFINITY
