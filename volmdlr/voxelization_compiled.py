@@ -9,19 +9,125 @@ from typing import List, Set, Tuple
 import cython
 import cython.cimports.libc.math as math_c
 import numpy
-
 import numpy as np
-from cython.cimports.libcpp import bool as bool_c
+from cython.cimports.libcpp import bool as bool_C
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
+
+# TODO: refactor, add docstrings
 
 # CUSTOM PYTHON TYPES
 
 Point = Tuple[float, ...]
 Triangle = Tuple[Point, ...]
 
+# PYTHON FUNCTIONS
 
-# TODO: refactor, add docstrings
+
+def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
+    """
+    Helper method to compute all the voxels intersecting with a given list of triangles.
+
+    :param triangles: The triangles to compute the intersecting voxels.
+    :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+    :param voxel_size: The voxel edges size.
+    :type voxel_size: float
+
+    :return: The centers of the voxels that intersect with the triangles.
+    :rtype: set[tuple[float, float, float]]
+    """
+    voxel_centers = set()
+
+    for triangle in triangles:
+        min_point = tuple(min(p[i] for p in triangle) for i in range(3))
+        max_point = tuple(max(p[i] for p in triangle) for i in range(3))
+
+        for bbox_center in _aabb_intersecting_boxes(
+            min_point,
+            max_point,
+            voxel_size,
+        ):
+            bbox_center = tuple(bbox_center)
+            if bbox_center not in voxel_centers:
+                if _triangle_intersects_voxel(
+                    triangle,
+                    bbox_center,
+                    (0.5 * voxel_size, 0.5 * voxel_size, 0.5 * voxel_size),
+                ):
+                    voxel_centers.add(bbox_center)
+
+    return voxel_centers
+
+
+def flood_fill_matrix_2d(
+    matrix: np.ndarray[np.bool_, np.ndim == 2], start: Tuple[int, int], fill_with: bool
+) -> np.ndarray[np.bool_, np.ndim == 2]:
+    return np.asarray(
+        _flood_fill_matrix_2d(
+            matrix.astype(np.bool_),
+            [start[0], start[1]],
+            fill_with,
+            [matrix.shape[0], matrix.shape[1]],
+        ),
+        dtype=np.bool_,
+    )
+
+
+def flood_fill_matrix_3d(
+    matrix: np.ndarray[np.bool_, np.ndim == 3], start: Tuple[int, int, int], fill_with: bool
+) -> np.ndarray[np.bool_, np.ndim == 3]:
+    return np.asarray(
+        _flood_fill_matrix_3d(
+            matrix.astype(np.bool_),
+            [start[0], start[1], start[2]],
+            fill_with,
+            [matrix.shape[0], matrix.shape[1], matrix.shape[2]],
+        ),
+        dtype=np.bool_,
+    )
+
+
+def triangles_to_voxel_matrix(
+    triangles: List[Tuple[Tuple[float, float, float]], Tuple[float, float, float], Tuple[float, float, float]],
+    voxel_size: float,
+) -> Tuple[np.ndarray[np.bool_, np.ndim == 3], Tuple[float, float, float]]:
+    # compute the size of the matrix and min matrix origin center
+    min_point, max_point = _triangles_min_max_points(triangles)
+    shape = (
+        int(max_point[0] // voxel_size + 1) - int(min_point[0] // voxel_size) + 2,
+        int(max_point[1] // voxel_size + 1) - int(min_point[1] // voxel_size) + 2,
+        int(max_point[2] // voxel_size + 1) - int(min_point[2] // voxel_size) + 2,
+    )
+    matrix = numpy.zeros(shape, dtype=np.bool_)
+    matrix_origin_center = (
+        round((min_point[0] // voxel_size - 0.5) * voxel_size, 6),
+        round((min_point[1] // voxel_size - 0.5) * voxel_size, 6),
+        round((min_point[2] // voxel_size - 0.5) * voxel_size, 6),
+    )
+
+    # compute the intersecting voxel
+    return (
+        np.asarray(
+            _triangles_to_voxel_matrix(
+                np.array(triangles),
+                len(triangles),
+                voxel_size,
+                matrix,
+                matrix_origin_center,
+            ),
+            np.bool_,
+        ),
+        matrix_origin_center,
+    )
+
+
+def line_segments_to_pixels(
+    line_segments: List[Tuple[Tuple[float, float], Tuple[float, float]]], pixel_size: float
+) -> Set[Tuple[float, float]]:
+    return set(_line_segments_to_pixels(line_segments, pixel_size))
+
+
+# CYTHON FUNCTIONS
 
 
 @cython.cfunc
@@ -30,6 +136,12 @@ Triangle = Tuple[Point, ...]
 def _round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
     multiplier: cython.double = math_c.pow(10.0, digits)
     return math_c.round(num * multiplier) / multiplier
+
+
+@cython.cfunc
+@cython.exceptval(check=False)
+def _is_integer(value: cython.double) -> bool_C:
+    return cython.cast(cython.int, value) == value
 
 
 @cython.cfunc
@@ -44,7 +156,7 @@ def _triangle_intersects_voxel(
     ],
     voxel_center: Tuple[cython.double, cython.double, cython.double],
     voxel_extents: Tuple[cython.double, cython.double, cython.double],
-) -> bool_c:
+) -> bool_C:
     # Ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
 
     v0: cython.double[3]
@@ -216,7 +328,7 @@ def _calculate_axis_values(
     ax: cython.double[3],
     f: cython.double[3],
     voxel_extents: Tuple[cython.double, cython.double, cython.double],
-) -> bool_c:
+) -> bool_C:
     p0 = v0[0] * ax[0] + v0[1] * ax[1] + v0[2] * ax[2]
     p1 = v1[0] * ax[0] + v1[1] * ax[1] + v1[2] * ax[2]
     p2 = v2[0] * ax[0] + v2[1] * ax[1] + v2[2] * ax[2]
@@ -274,47 +386,15 @@ def _aabb_intersecting_boxes(
     return centers
 
 
-def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
-    """
-    Helper method to compute all the voxels intersecting with a given list of triangles.
-
-    :param triangles: The triangles to compute the intersecting voxels.
-    :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
-    :param voxel_size: The voxel edges size.
-    :type voxel_size: float
-
-    :return: The centers of the voxels that intersect with the triangles.
-    :rtype: set[tuple[float, float, float]]
-    """
-    voxel_centers = set()
-
-    for triangle in triangles:
-        min_point = tuple(min(p[i] for p in triangle) for i in range(3))
-        max_point = tuple(max(p[i] for p in triangle) for i in range(3))
-
-        for bbox_center in _aabb_intersecting_boxes(
-            min_point,
-            max_point,
-            voxel_size,
-        ):
-            bbox_center = tuple(bbox_center)
-            if bbox_center not in voxel_centers:
-                if _triangle_intersects_voxel(
-                    triangle,
-                    bbox_center,
-                    (0.5 * voxel_size, 0.5 * voxel_size, 0.5 * voxel_size),
-                ):
-                    voxel_centers.add(bbox_center)
-
-    return voxel_centers
-
-
 @cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _flood_fill_matrix_3d(
-    matrix: bool_c[:, :, :], start: cython.int[3], fill_with: bool_c, shape: cython.int[3]
-) -> bool_c[:, :, :]:
+    matrix: bool_C[:, :, :],
+    start: Tuple[cython.int, cython.int, cython.int],
+    fill_with: bool_C,
+    shape: Tuple[cython.int, cython.int, cython.int],
+) -> bool_C[:, :, :]:
     dx: cython.int[6] = [0, 0, -1, 1, 0, 0]
     dy: cython.int[6] = [-1, 1, 0, 0, 0, 0]
     dz: cython.int[6] = [0, 0, 0, 0, -1, 1]
@@ -350,29 +430,15 @@ def _flood_fill_matrix_3d(
     return matrix
 
 
-def flood_fill_matrix_3d(
-    matrix: np.ndarray[np.bool_, np.ndim == 3], start: Tuple[int, int, int], fill_with: bool
-) -> np.ndarray[np.bool_, np.ndim == 3]:
-    return np.asarray(
-        _flood_fill_matrix_3d(
-            matrix.astype(np.bool_),
-            [start[0], start[1], start[2]],
-            fill_with,
-            [matrix.shape[0], matrix.shape[1], matrix.shape[2]],
-        ),
-        dtype=np.bool_,
-    )
-
-
 @cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _flood_fill_matrix_2d(
-    matrix: bool_c[:, :],
+    matrix: bool_C[:, :],
     start: Tuple[cython.int, cython.int],
-    fill_with: bool_c,
+    fill_with: bool_C,
     shape: Tuple[cython.int, cython.int],
-) -> bool_c[:, :]:
+) -> bool_C[:, :]:
     dx: cython.int[4] = [0, 0, -1, 1]
     dy: cython.int[4] = [-1, 1, 0, 0]
     nx: cython.int
@@ -404,20 +470,6 @@ def _flood_fill_matrix_2d(
     return matrix
 
 
-def flood_fill_matrix_2d(
-    matrix: np.ndarray[np.bool_, np.ndim == 2], start: Tuple[int, int], fill_with: bool
-) -> np.ndarray[np.bool_, np.ndim == 2]:
-    return np.asarray(
-        _flood_fill_matrix_2d(
-            matrix.astype(np.bool_),
-            [start[0], start[1]],
-            fill_with,
-            [matrix.shape[0], matrix.shape[1]],
-        ),
-        dtype=np.bool_,
-    )
-
-
 @cython.cfunc
 @cython.cdivision(True)
 @cython.boundscheck(False)
@@ -431,7 +483,7 @@ def _line_segment_intersects_pixel(
     pixel_center_x: cython.double,
     pixel_center_y: cython.double,
     pixel_size: cython.double,
-) -> bool_c:
+) -> bool_C:
     # Determine the coordinates of lower-left and upper-right of rectangle
     xmin, xmax = pixel_center_x - pixel_size / 2, pixel_center_x + pixel_size / 2
     ymin, ymax = pixel_center_y - pixel_size / 2, pixel_center_y + pixel_size / 2
@@ -444,7 +496,7 @@ def _line_segment_intersects_pixel(
     line_eq4 = _round_to_digits((y2 - y1) * xmax + (x1 - x2) * ymax + (x2 * y1 - x1 * y2), 6)
 
     # Check if all corners are on the same side of the line
-    miss: bool_c = (
+    miss: bool_C = (
         (line_eq1 >= 0 and line_eq2 >= 0 and line_eq3 >= 0 and line_eq4 >= 0)
         or (line_eq1 < 0 and line_eq2 < 0 and line_eq3 < 0 and line_eq4 < 0)
     ) and (
@@ -453,7 +505,7 @@ def _line_segment_intersects_pixel(
     )
 
     # Does it miss based on the shadow intersection test?
-    shadow_miss: bool_c = (
+    shadow_miss: bool_C = (
         (x1 > xmax and x2 > xmax) or (x1 < xmin and x2 < xmin) or (y1 > ymax and y2 > ymax) or (y1 < ymin and y2 < ymin)
     )
 
@@ -511,47 +563,16 @@ def _line_segments_to_pixels(
 @cython.cdivision(True)
 def _triangle_2d_to_pixels(
     triangle_2d: Tuple[
-        Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
-        Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
-        Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+        Tuple[cython.double, cython.double], Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]
     ],
     pixel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double]]:
-
     line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]]
-    line_segments.push_back(triangle_2d[0])
-    line_segments.push_back(triangle_2d[1])
-    line_segments.push_back(triangle_2d[2])
+    line_segments.push_back((triangle_2d[0], triangle_2d[1]))
+    line_segments.push_back((triangle_2d[1], triangle_2d[2]))
+    line_segments.push_back((triangle_2d[2], triangle_2d[0]))
 
     return _line_segments_to_pixels(line_segments, pixel_size)
-
-
-def line_segments_to_pixels(
-    line_segments: List[Tuple[Tuple[float, float], Tuple[float, float]]], pixel_size: float
-) -> Set[Tuple[float, float]]:
-    return set(_line_segments_to_pixels(line_segments, pixel_size))
-
-
-def triangles_to_voxel_matrix(
-    triangles: List[Tuple[Tuple[float, float, float]], Tuple[float, float, float], Tuple[float, float, float]],
-    voxel_size: float,
-) -> Tuple[np.ndarray[np.bool_, np.ndim == 3], Tuple[float, float, float]]:
-    # compute the size of the matrix and min matrix origin center
-    min_point, max_point = _triangles_min_max_points(triangles)
-    shape = (
-        int(max_point[0] // voxel_size + 1) - int(min_point[0] // voxel_size) + 2,
-        int(max_point[1] // voxel_size + 1) - int(min_point[1] // voxel_size) + 2,
-        int(max_point[2] // voxel_size + 1) - int(min_point[2] // voxel_size) + 2,
-    )
-    matrix = numpy.zeros(shape, dtype=np.bool_)
-    matrix_origin_center = (
-        round((min_point[0] // voxel_size - 0.5) * voxel_size, 6),
-        round((min_point[1] // voxel_size - 0.5) * voxel_size, 6),
-        round((min_point[2] // voxel_size - 0.5) * voxel_size, 6),
-    )
-
-    # compute the intersecting voxel
-    return _triangles_to_voxel_matrix(np.array(triangles), len(triangles), voxel_size, matrix, matrix_origin_center), matrix_origin_center  # as np array?
 
 
 @cython.cfunc
@@ -568,9 +589,9 @@ def _triangles_to_voxel_matrix(
     ],
     n_triangles: cython.int,
     voxel_size: cython.double,
-    matrix: bool_c[:, :, :],
+    matrix: bool_C[:, :, :],
     matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
-) -> bool_c[:, :, :]:
+) -> bool_C[:, :, :]:
     # Check interface voxels
     for i in range(n_triangles):
         x_abscissa = _round_to_digits(triangles[i][0][0], 6)
@@ -593,10 +614,10 @@ def _triangles_to_voxel_matrix(
             p2: Tuple[cython.double, cython.double] = (triangles[i][2][1], triangles[i][2][2])
 
             triangle_2d: Tuple[
-                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
-                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
-                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
-            ] = ((p0, p1), (p1, p2), (p2, p0))
+                Tuple[cython.double, cython.double],
+                Tuple[cython.double, cython.double],
+                Tuple[cython.double, cython.double],
+            ] = (p0, p1, p2)
 
             # Compute intersecting pixels
             pixels = _triangle_2d_to_pixels(triangle_2d, voxel_size)
@@ -650,10 +671,10 @@ def _triangles_to_voxel_matrix(
             p2: Tuple[cython.double, cython.double] = (triangles[i][2][0], triangles[i][2][2])
 
             triangle_2d: Tuple[
-                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
-                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
-                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
-            ] = ((p0, p1), (p1, p2), (p2, p0))
+                Tuple[cython.double, cython.double],
+                Tuple[cython.double, cython.double],
+                Tuple[cython.double, cython.double],
+            ] = (p0, p1, p2)
 
             # Compute intersecting pixels
             pixels = _triangle_2d_to_pixels(triangle_2d, voxel_size)
@@ -707,10 +728,10 @@ def _triangles_to_voxel_matrix(
             p2: Tuple[cython.double, cython.double] = (triangles[i][2][0], triangles[i][2][1])
 
             triangle_2d: Tuple[
-                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
-                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
-                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
-            ] = ((p0, p1), (p1, p2), (p2, p0))
+                Tuple[cython.double, cython.double],
+                Tuple[cython.double, cython.double],
+                Tuple[cython.double, cython.double],
+            ] = (p0, p1, p2)
 
             # Compute intersecting pixels
             pixels = _triangle_2d_to_pixels(triangle_2d, voxel_size)
@@ -824,8 +845,8 @@ def _pixel_centers_to_outer_filled_pixel_matrix(
     pixel_size: cython.double,
     shape: Tuple[cython.int, cython.int],
     min_center: Tuple[cython.double, cython.double],
-) -> bool_c[:, :]:
-    matrix: bool_c[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.bool_)
+) -> bool_C[:, :]:
+    matrix: bool_C[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.bool_)
 
     for i in range(pixel_centers.size()):
         ix = cython.cast(cython.int, _round_to_digits((pixel_centers[i][0] - min_center[0]) / pixel_size, 6)) + 1
@@ -844,19 +865,13 @@ def _pixel_centers_to_outer_filled_pixel_matrix(
 
 @cython.cfunc
 @cython.exceptval(check=False)
-def _is_integer(value: cython.double) -> bool_c:
-    return cython.cast(cython.int, value) == value
-
-
-@cython.cfunc
-@cython.exceptval(check=False)
 def _check_triangle_equal_point(
     triangle: Tuple[
         Tuple[cython.double, cython.double, cython.double],
         Tuple[cython.double, cython.double, cython.double],
         Tuple[cython.double, cython.double, cython.double],
     ]
-) -> bool_c:
+) -> bool_C:
     return (
         (triangle[0][0] == triangle[1][0] and triangle[0][1] == triangle[1][1] and triangle[0][2] == triangle[1][2])
         or (triangle[0][0] == triangle[2][0] and triangle[0][1] == triangle[2][1] and triangle[0][2] == triangle[2][2])
