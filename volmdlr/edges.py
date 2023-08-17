@@ -2516,6 +2516,7 @@ class FullArcMixin(ArcMixin):
 
     @classmethod
     def from_curve(cls, circle):
+        """Creates A full arc, 2d or 3d, from circle."""
         return cls(circle, circle.center + circle.frame.u * circle.radius)
 
 
@@ -3913,12 +3914,14 @@ class LineSegment3D(LineSegment):
 
     @property
     def bounding_box(self):
+        """Gets bounding box for Line Segment 3D. """
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
+        """Sets new value to Line Segment's Bounding box."""
         self._bbox = new_bounding_box
 
     def __hash__(self):
@@ -3955,10 +3958,12 @@ class LineSegment3D(LineSegment):
                 }
 
     def normal_vector(self, abscissa=0.):
+        """Calculates the Line segment's normal vector."""
         direction_vector = self.direction_vector()
         return direction_vector.deterministic_normal_vector()
 
     def unit_normal_vector(self, abscissa=0.):
+        """Calculates the Line segment's unit normal vector."""
         return self.normal_vector().unit_vector()
 
     def point_distance(self, point):
@@ -4063,6 +4068,7 @@ class LineSegment3D(LineSegment):
         return LineSegment3D(self.start.copy(), self.end.copy())
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Plots the Line segment 3d using matplotlib."""
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4084,6 +4090,7 @@ class LineSegment3D(LineSegment):
         return ax
 
     def plot2d(self, x_3d, y_3d, ax=None, color='k', width=None):
+        """Creates a 2d plot of the Line segment 3d using matplotlib."""
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4242,6 +4249,7 @@ class LineSegment3D(LineSegment):
         return [volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(plane, 0, length_1, 0, length_2)]
 
     def _conical_revolution(self, params):
+        """Creates a conical revolution of a Line Segment 3D."""
         axis, u, p1_proj, dist1, dist2, angle = params
         v = axis.cross(u)
         direction_vector = self.direction_vector()
@@ -4263,6 +4271,7 @@ class LineSegment3D(LineSegment):
             surface, 0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
+        """Creates a cylindrical revolution of a Line Segment 3D."""
         axis, u, p1_proj, dist1, _, angle = params
         v = axis.cross(u)
         surface = volmdlr.surfaces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), dist1)
@@ -4353,6 +4362,7 @@ class LineSegment3D(LineSegment):
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        """Trims a Line Segment at two given points."""
         if not self.point_belongs(point1) or not self.point_belongs(point2):
             raise ValueError('Point not on curve')
 
