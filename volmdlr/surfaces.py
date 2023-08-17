@@ -3,6 +3,7 @@ import math
 from itertools import chain
 from typing import List, Union
 import traceback
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -14,7 +15,7 @@ from geomdl.operations import split_surface_u, split_surface_v
 from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
-from volmdlr.nurbs.core import evaluate_surface
+from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_invertion
 from volmdlr.bspline_evaluators import evaluate_single
 import volmdlr.bspline_compiled
 import volmdlr.core
@@ -4546,10 +4547,10 @@ class BSplineSurface3D(Surface3D):
                  weights: List[float] = None, name: str = ''):
         self.ctrlpts = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in control_points],
                                            dtype=npy.float64)
-        self.degree_u = degree_u
-        self.degree_v = degree_v
-        self.nb_u = nb_u
-        self.nb_v = nb_v
+        self.degree_u = int(degree_u)
+        self.degree_v = int(degree_v)
+        self.nb_u = int(nb_u)
+        self.nb_v = int(nb_v)
 
         u_knots = nurbs_helpers.standardize_knot_vector(u_knots)
         v_knots = nurbs_helpers.standardize_knot_vector(v_knots)
@@ -4558,6 +4559,10 @@ class BSplineSurface3D(Surface3D):
         self.u_multiplicities = u_multiplicities
         self.v_multiplicities = v_multiplicities
         self.weights = weights
+        self.rational = False
+        if weights is not None:
+            self.rational = True
+            self.weights = npy.asarray(weights, dtype=npy.float64)
 
         self._surface = None
         Surface3D.__init__(self, name=name)
@@ -4568,7 +4573,19 @@ class BSplineSurface3D(Surface3D):
         self._grids2d_deformed = None
         self._bbox = None
         self._surface_curves = None
+        self._knotvector = None
         self.ctrlptsw = None
+        if self.weights is not None:
+            ctrlptsw = []
+            for point, w in zip(self.ctrlpts, self.weights):
+                temp = [float(c * w) for c in point]
+                temp.append(float(w))
+                ctrlptsw.append(temp)
+            self.ctrlptsw = npy.asarray(ctrlptsw, dtype=npy.float64)
+
+        self._delta = [0.01, 0.05]
+        self._eval_points = None
+        self._vertices = None
 
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
@@ -4581,15 +4598,15 @@ class BSplineSurface3D(Surface3D):
         datadict = {
             "degree": (self.degree_u, self.degree_v),
             "knotvector": self.knotvector,
-            "size": self.ctrlpts.shape,
+            "size": (self.nb_u, self.nb_v),
             "sample_size": self.sample_size,
-            "rational": bool(self.weights),
+            "rational": not (self.weights is None),
             "precision": 18
         }
-        if self.weights:
-            datadict["control_points"] = tuple(self.ctrlptsw)
+        if self.weights is not None:
+            datadict["control_points"] = self.ctrlptsw
         else:
-            datadict["control_points"] = tuple(self.ctrlpts.tolist())
+            datadict["control_points"] = self.ctrlpts
         return datadict
 
     @property
@@ -4613,14 +4630,201 @@ class BSplineSurface3D(Surface3D):
         return control_points_table
 
     @property
+    def knots_vector_u(self):
+        """
+        Compute the global knot vector (u direction) based on knot elements and multiplicities.
+
+        """
+
+        knots = self.u_knots
+        multiplicities = self.u_multiplicities
+
+        knots_vec = []
+        for i, knot in enumerate(knots):
+            for _ in range(0, multiplicities[i]):
+                knots_vec.append(knot)
+        return knots_vec
+
+    @property
+    def knots_vector_v(self):
+        """
+        Compute the global knot vector (v direction) based on knot elements and multiplicities.
+
+        """
+
+        knots = self.v_knots
+        multiplicities = self.v_multiplicities
+
+        knots_vec = []
+        for i, knot in enumerate(knots):
+            for _ in range(0, multiplicities[i]):
+                knots_vec.append(knot)
+        return knots_vec
+
+    @property
     def knotvector(self):
-        knot_vector_u = []
-        for u_knot, u_knot_mult in zip(self.u_knots, self.u_multiplicities):
-            knot_vector_u.extend([u_knot] * u_knot_mult)
-        knot_vector_v = []
-        for v_knot, v_knot_mult in zip(self.v_knots, self.v_multiplicities):
-            knot_vector_v.extend([v_knot] * v_knot_mult)
-        return knot_vector_u, knot_vector_v
+        """
+        Knot vector in u and v direction respectively.
+        """
+        if not self._knotvector:
+            self._knotvector = [self.knots_vector_u, self.knots_vector_v]
+        return self._knotvector
+
+    @property
+    def sample_size_u(self):
+        """
+        Sample size for the u-direction.
+
+        :getter: Gets sample size for the u-direction
+        :setter: Sets sample size for the u-direction
+        :type: int
+        """
+        s_size = math.floor((1.0 / self.delta_u) + 0.5)
+        return int(s_size)
+
+    @sample_size_u.setter
+    def sample_size_u(self, value):
+        if not isinstance(value, int):
+            raise ValueError("Sample size must be an integer value")
+        knotvector_u = self.knots_vector_u
+        if (knotvector_u is None or len(knotvector_u) == 0) or self.degree_u == 0:
+            warnings.warn("Cannot determine 'delta_u' value. Please set knot vectors and degrees before sample size.")
+            return
+
+        # To make it operate like linspace, we have to know the starting and ending points.
+        start_u = knotvector_u[self.degree_u]
+        stop_u = knotvector_u[-(self.degree_u + 1)]
+
+        # Set delta values
+        self.delta_u = (stop_u - start_u) / float(value)
+
+    @property
+    def sample_size_v(self):
+        """
+        Sample size for the v-direction.
+
+        :getter: Gets sample size for the v-direction
+        :setter: Sets sample size for the v-direction
+        :type: int
+        """
+        s_size = math.floor((1.0 / self.delta_v) + 0.5)
+        return int(s_size)
+
+    @sample_size_v.setter
+    def sample_size_v(self, value):
+        if not isinstance(value, int):
+            raise ValueError("Sample size must be an integer value")
+        knotvector_v = self.knots_vector_v
+        if (knotvector_v is None or len(knotvector_v) == 0) or self.degree_v == 0:
+            warnings.warn("Cannot determine 'delta_v' value. Please set knot vectors and degrees before sample size.")
+            return
+
+        # To make it operate like linspace, we have to know the starting and ending points.
+        start_v = knotvector_v[self.degree_v]
+        stop_v = knotvector_v[-(self.degree_v + 1)]
+
+        # Set delta values
+        self.delta_v = (stop_v - start_v) / float(value)
+
+    @property
+    def sample_size(self):
+        """
+        Sample size for both u- and v-directions.
+
+        :getter: Gets sample size as a tuple of values corresponding to u- and v-directions
+        :setter: Sets sample size for both u- and v-directions
+        :type: int
+        """
+        sample_size_u = math.floor((1.0 / self.delta_u) + 0.5)
+        sample_size_v = math.floor((1.0 / self.delta_v) + 0.5)
+        return int(sample_size_u), int(sample_size_v)
+
+    @sample_size.setter
+    def sample_size(self, value):
+        knotvector_u = self.knots_vector_u
+        knotvector_v = self.knots_vector_v
+        if (
+            (knotvector_u is None or len(knotvector_u) == 0)
+            or self.degree_u == 0
+            or (knotvector_v is None or len(knotvector_v) == 0 or self.degree_v == 0)
+        ):
+            warnings.warn("Cannot determine 'delta' value. Please set knot vectors and degrees before sample size.")
+            return
+
+        # To make it operate like linspace, we have to know the starting and ending points.
+        start_u = knotvector_u[self.degree_u]
+        stop_u = knotvector_u[-(self.degree_u + 1)]
+        start_v = knotvector_v[self.degree_v]
+        stop_v = knotvector_v[-(self.degree_v + 1)]
+
+        # Set delta values
+        self.delta_u = (stop_u - start_u) / float(value)
+        self.delta_v = (stop_v - start_v) / float(value)
+
+    @property
+    def delta_u(self):
+        """
+        Evaluation delta for the u-direction.
+
+        :getter: Gets evaluation delta for the u-direction
+        :setter: Sets evaluation delta for the u-direction
+        :type: float
+        """
+        return self._delta[0]
+
+    @delta_u.setter
+    def delta_u(self, value):
+        # Delta value for surface evaluation should be between 0 and 1
+        if float(value) <= 0 or float(value) >= 1:
+            raise ValueError("Surface evaluation delta (u-direction) must be between 0.0 and 1.0")
+
+        # Set new delta value
+        self._delta[0] = float(value)
+
+    @property
+    def delta_v(self):
+        """
+        Evaluation delta for the v-direction.
+
+        :getter: Gets evaluation delta for the v-direction
+        :setter: Sets evaluation delta for the v-direction
+        :type: float
+        """
+        return self._delta[1]
+
+    @delta_v.setter
+    def delta_v(self, value):
+        # Delta value for surface evaluation should be between 0 and 1
+        if float(value) <= 0 or float(value) >= 1:
+            raise ValueError("Surface evaluation delta (v-direction) should be between 0.0 and 1.0")
+
+        # Set new delta value
+        self._delta[1] = float(value)
+
+    @property
+    def delta(self):
+        """
+        Evaluation delta for both u- and v-directions.
+
+        :getter: Gets evaluation delta as a tuple of values corresponding to u- and v-directions
+        :setter: Sets evaluation delta for both u- and v-directions
+        :type: float
+        """
+        return self.delta_u, self.delta_v
+
+    @delta.setter
+    def delta(self, value):
+        if isinstance(value, (int, float)):
+            self.delta_u = value
+            self.delta_v = value
+        elif isinstance(value, (list, tuple)):
+            if len(value) == 2:
+                self.delta_u = value[0]
+                self.delta_v = value[1]
+            else:
+                raise ValueError("Surface requires 2 delta values")
+        else:
+            raise ValueError("Cannot set delta. Please input a numeric value or a list or tuple with 2 numeric values")
 
     @property
     def surface(self):
@@ -4662,7 +4866,10 @@ class BSplineSurface3D(Surface3D):
         dict_['v_multiplicities'] = self.v_multiplicities
         dict_['u_knots'] = self.u_knots
         dict_['v_knots'] = self.v_knots
-        dict_['weights'] = self.weights
+        if self.weights is None:
+            dict_['weights'] = self.weights
+        else:
+            dict_['weights'] = self.weights.tolist()
         return dict_
 
     @property
@@ -4741,6 +4948,97 @@ class BSplineSurface3D(Surface3D):
         # Return shapes as a dict object
         return {"u": crvlist_u, "v": crvlist_v}
 
+    def evaluate(self, **kwargs):
+        """ Evaluates the surface.
+
+        The evaluated points are stored in :py:attr:`evalpts` property.
+
+        Keyword arguments:
+            * ``start_u``: start parameter on the u-direction
+            * ``stop_u``: stop parameter on the u-direction
+            * ``start_v``: start parameter on the v-direction
+            * ``stop_v``: stop parameter on the v-direction
+
+        The ``start_u``, ``start_v`` and ``stop_u`` and ``stop_v`` parameters allow evaluation of a surface segment
+        in the range  *[start_u, stop_u][start_v, stop_v]* i.e. the surface will also be evaluated at the ``stop_u``
+        and ``stop_v`` parameter values.
+
+        """
+        knotvector_u = self.knots_vector_u
+        knotvector_v = self.knots_vector_v
+        # Find evaluation start and stop parameter values
+        start_u = kwargs.get('start_u', knotvector_u[self.degree_u])
+        stop_u = kwargs.get('stop_u', knotvector_u[-(self.degree_u + 1)])
+        start_v = kwargs.get('start_v', knotvector_v[self.degree_v])
+        stop_v = kwargs.get('stop_v', knotvector_v[-(self.degree_v + 1)])
+
+        # # Check parameters
+        # if self._kv_normalize:
+        #     if not utilities.check_params([start_u, stop_u, start_v, stop_v]):
+        #         raise GeomdlException("Parameters should be between 0 and 1")
+
+
+        # Evaluate and cache
+        self._eval_points = npy.asarray(evaluate_surface(self.data,
+                                                     start=(start_u, start_v),
+                                                     stop=(stop_u, stop_v)), dtype=npy.float64)
+
+    @property
+    def evalpts(self):
+        """
+        Evaluated points.
+
+        :getter: Gets the coordinates of the evaluated points
+        :type: list
+        """
+        if self._eval_points is None or len(self._eval_points) == 0:
+            self.evaluate()
+        return self._eval_points
+
+    @property
+    def domain(self):
+        """
+        Domain.
+
+        Domain is determined using the knot vector(s).
+
+        :getter: Gets the domain
+        """
+        knotvector_u = self.knots_vector_u
+        knotvector_v = self.knots_vector_v
+        # Find evaluation start and stop parameter values
+        start_u = knotvector_u[self.degree_u]
+        stop_u = knotvector_u[-(self.degree_u + 1)]
+        start_v = knotvector_v[self.degree_v]
+        stop_v = knotvector_v[-(self.degree_v + 1)]
+
+        return start_u, stop_u, start_v, stop_v
+
+    @property
+    def vertices(self):
+        """
+        Evaluated points.
+
+        :getter: Gets the coordinates of the evaluated points
+        :type: list
+        """
+        u_min, u_max, v_min, v_max = self.domain
+        if self._vertices is None or len(self._vertices) == 0:
+            vertices = []
+            u_vector = npy.linspace(u_min, u_max, self.sample_size_u, dtype=npy.float64)
+            v_vector = npy.linspace(v_min, v_max, self.sample_size_v, dtype=npy.float64)
+            for u in u_vector:
+                for v in v_vector:
+                    vertices.append((u, v))
+            self._vertices = vertices
+            # u_vector = npy.linspace(u_min, u_max, self.sample_size_u, dtype=npy.float64)
+            # v_vector = npy.linspace(v_min, v_max, self.sample_size_v, dtype=npy.float64)
+            #
+            # u_mesh, v_mesh = npy.meshgrid(u_vector, v_vector)
+            # self._vertices = npy.column_stack((u_mesh.ravel(), v_mesh.ravel()))
+
+        return self._vertices
+
     def control_points_matrix(self, coordinates):
         """
         Define control points like a matrix, for each coordinate: x:0, y:1, z:2.
@@ -4753,37 +5051,6 @@ class BSplineSurface3D(Surface3D):
                 points[i][j] = self.control_points_table[i][j][coordinates]
         return points
 
-    # Knots_vector
-    def knots_vector_u(self):
-        """
-        Compute the global knot vector (u direction) based on knot elements and multiplicities.
-
-        """
-
-        knots = self.u_knots
-        multiplicities = self.u_multiplicities
-
-        knots_vec = []
-        for i, knot in enumerate(knots):
-            for _ in range(0, multiplicities[i]):
-                knots_vec.append(knot)
-        return knots_vec
-
-    def knots_vector_v(self):
-        """
-        Compute the global knot vector (v direction) based on knot elements and multiplicities.
-
-        """
-
-        knots = self.v_knots
-        multiplicities = self.v_multiplicities
-
-        knots_vec = []
-        for i, knot in enumerate(knots):
-            for _ in range(0, multiplicities[i]):
-                knots_vec.append(knot)
-        return knots_vec
-
     def basis_functions_u(self, u, k, i):
         """
         Compute basis functions Bi in u direction for u=u and degree=k.
@@ -4791,7 +5058,7 @@ class BSplineSurface3D(Surface3D):
         """
 
         # k = self.degree_u
-        knots_vector_u = self.knots_vector_u()
+        knots_vector_u = self.knots_vector_u
 
         if k == 0:
             return 1.0 if knots_vector_u[i] <= u < knots_vector_u[i + 1] else 0.0
@@ -4814,7 +5081,7 @@ class BSplineSurface3D(Surface3D):
         """
 
         # k = self.degree_u
-        knots = self.knots_vector_v()
+        knots = self.knots_vector_v
 
         if k == 0:
             return 1.0 if knots[i] <= v < knots[i + 1] else 0.0
@@ -4828,6 +5095,37 @@ class BSplineSurface3D(Surface3D):
             param_c2 = (knots[i + k + 1] - v) / (knots[i + k + 1] - knots[i + 1]) * self.basis_functions_v(v, k - 1,
                                                                                                            i + 1)
         return param_c1 + param_c2
+
+    def derivatives(self, u, v, order):
+        """
+        Evaluates n-th order surface derivatives at the given (u, v) parameter pair.
+
+        :param u: Point's u coordinate.
+        :type u: float
+        :param v: Point's v coordinate.
+        :type v: float
+        :param order: Order of the derivatives.
+        :type order: int
+        :return: A list SKL, where SKL[k][l] is the derivative of the surface S(u,v) with respect
+        to u k times and v l times
+        :rtype: List[`volmdlr.Vector3D`]
+        """
+        # if self.surface.rational:
+        #     # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
+        #     derivatives = volmdlr.rational_derivatives(self.surface.data, (u, v), order)
+        # else:
+        #     # derivatives = self._derivatives(self.surface.data, (u, v), order)
+        #     derivatives = volmdlr.derivatives(self.surface.data, (u, v), order)
+        if self.weights is not None:
+            control_points = self.ctrlptsw
+        else:
+            control_points = self.ctrlpts
+        derivatives = derivatives_surface([self.degree_u, self.degree_v], self.knotvector, control_points,
+                                          [self.nb_u, self.nb_v], self.rational, [u, v], order)
+        for i in range(order + 1):
+            for j in range(order + 1):
+                derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])
+        return derivatives
 
     def blending_vector_u(self, u):
         """
@@ -4878,11 +5176,10 @@ class BSplineSurface3D(Surface3D):
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         u, v = point2d
-        u = min(max(u, 0), 1)
-        v = min(max(v, 0), 1)
-        return volmdlr.Point3D(*evaluate_single((u, v), self.surface.data,
-                                                      self.surface.rational,
-                                                      self.surface.evaluator._span_func))
+        u = float(min(max(u, 0.0), 1.0))
+        v = float(min(max(v, 0.0), 1.0))
+        point_array = evaluate_surface(self.data, start=(u, v), stop=(u, v))[0]
+        return volmdlr.Point3D(*point_array)
         # uses derivatives for performance because it's already compiled
         # return volmdlr.Point3D(*self.derivatives(u, v, 0)[0][0])
         # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
@@ -4905,12 +5202,17 @@ class BSplineSurface3D(Surface3D):
         def fun(x):
             derivatives = self.derivatives(x[0], x[1], 1)
             vector = derivatives[0][0] - point3d
-            f_value = vector.norm() + 1e-32
-            jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value, vector.dot(derivatives[0][1]) / f_value])
+            f_value = vector.norm()
+            if f_value == 0.0:
+                jacobian = npy.array([0.0, 0.0])
+            else:
+                jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
+                                      vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
-
-        min_bound_x, max_bound_x = self.surface.domain[0]
-        min_bound_y, max_bound_y = self.surface.domain[1]
+        #
+        # min_bound_x, max_bound_x = self.surface.domain[0]
+        # min_bound_y, max_bound_y = self.surface.domain[1]
+        min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
 
         delta_bound_x = max_bound_x - min_bound_x
         delta_bound_y = max_bound_y - min_bound_y
@@ -4929,7 +5231,7 @@ class BSplineSurface3D(Surface3D):
 
             # Sort the initial conditions
         x0s.sort(key=sort_func)
-        matrix = npy.array(self.surface.evalpts)
+        matrix = self.evalpts
         point3d_array = npy.array([point3d[0], point3d[1], point3d[2]])
 
         # Calculate distances
@@ -4938,15 +5240,26 @@ class BSplineSurface3D(Surface3D):
         # Find the minimal index
         index = npy.argmin(distances)
         # Find the parametric coordinates of the point
+
+        # if self.x_periodicity or self.y_periodicity:
+        #     x0s.insert(1, self.surface.vertices[index].uv)
+        # else:
+        #     x0s.insert(0, self.surface.vertices[index].uv)
         if self.x_periodicity or self.y_periodicity:
-            x0s.insert(1, self.surface.vertices[index].uv)
+            x0s.insert(1, self.vertices[index])
         else:
-            x0s.insert(0, self.surface.vertices[index].uv)
+            x0s.insert(0, self.vertices[index])
+
+        if self.weights is not None:
+            control_points = self.ctrlptsw
+        else:
+            control_points = self.ctrlpts
+        bounds = [(min_bound_x, max_bound_x),
+         (min_bound_y, max_bound_y)]
         results = []
         for x0 in x0s:
-            res = minimize(fun, x0=npy.array(x0), jac=True,
-                           bounds=[(min_bound_x, max_bound_x),
-                                   (min_bound_y, max_bound_y)])
+            res = point_invertion(point3d_array, x0, bounds, [self.degree_u, self.degree_v], self.knotvector, control_points,
+            [self.nb_u, self.nb_v], self.rational)
             if res.fun <= tol:
                 return volmdlr.Point2D(*res.x)
 
@@ -5155,8 +5468,9 @@ class BSplineSurface3D(Surface3D):
                 points.append(point2d)
         start = points[0]
         end = points[-1]
-        min_bound_x, max_bound_x = self.surface.domain[0]
-        min_bound_y, max_bound_y = self.surface.domain[1]
+        # min_bound_x, max_bound_x = self.surface.domain[0]
+        # min_bound_y, max_bound_y = self.surface.domain[1]
+        min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         if self.x_periodicity:
             points = self._repair_periodic_boundary_points(arc3d, points, 'x')
             start = points[0]
@@ -6639,31 +6953,6 @@ class BSplineSurface3D(Surface3D):
         ymax.append(1)
 
         return xmin, xmax, ymin, ymax
-
-    def derivatives(self, u, v, order):
-        """
-        Evaluates n-th order surface derivatives at the given (u, v) parameter pair.
-
-        :param u: Point's u coordinate.
-        :type u: float
-        :param v: Point's v coordinate.
-        :type v: float
-        :param order: Order of the derivatives.
-        :type order: int
-        :return: A list SKL, where SKL[k][l] is the derivative of the surface S(u,v) with respect
-        to u k times and v l times
-        :rtype: List[`volmdlr.Vector3D`]
-        """
-        if self.surface.rational:
-            # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
-            derivatives = volmdlr.rational_derivatives(self.surface.data, (u, v), order)
-        else:
-            # derivatives = self._derivatives(self.surface.data, (u, v), order)
-            derivatives = volmdlr.derivatives(self.surface.data, (u, v), order)
-        for i in range(order + 1):
-            for j in range(order + 1):
-                derivatives[i][j] = volmdlr.Vector3D(*derivatives[i][j])
-        return derivatives
 
     def _determine_contour_params(self, outer_contour_start, outer_contour_end, inner_contour_start, inner_contour_end):
         """
