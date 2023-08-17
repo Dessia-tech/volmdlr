@@ -1936,9 +1936,12 @@ class Pixelization:
         """
         return len(self.intersection(other_pixelization)) / len(self.union(other_pixelization))
 
-    def plot(self):
+    def plot(self, ax=None):
         """Plots the pixels on a 2D plane"""
-        fig, ax = plt.subplots()
+        if ax is None:
+            fig, ax = plt.subplots()
+        else:
+            fig, _ = plt.subplots()
 
         for center in self.pixel_centers:
             x, y = center
