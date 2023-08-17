@@ -1412,7 +1412,10 @@ class Sweep(shells.ClosedShell3D):
         self.contour2d = contour2d
         self.wire3d = wire3d
         self.frames = []
-
+        arc_radius = [prim.circle.radius for prim in self.wire3d.primitives if isinstance(prim, volmdlr.edges.Arc3D)]
+        if min(arc_radius) <= max(self.contour2d.bounding_rectangle.bounds()) / 2:
+            raise ValueError(f'Section too big in comparison to path curvature radiuses. All radiuses should be > '
+                             f'{max(self.contour2d.bounding_rectangle.bounds()) / 2}')
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces, color=color,
                                       alpha=alpha, name=name)
@@ -1474,8 +1477,6 @@ class Sweep(shells.ClosedShell3D):
         new_faces = []
         last_end_tangent = self.wire3d.primitives[0].unit_direction_vector(0.)
         for i, wire_primitive in enumerate(self.wire3d.primitives):
-            # if isinstance(wire_primitive, volmdlr.edges.Arc3D):
-            #     continue
             start_tangent = wire_primitive.unit_direction_vector(0.)
             normal = wire_primitive.unit_normal_vector(0.)
             if normal is None:

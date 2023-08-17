@@ -5448,16 +5448,9 @@ class Arc3D(ArcMixin, Edge):
             normal = self.unit_normal_vector(0.)
             tangent_normal_orthonormal = start_tangent.cross(normal)
             section_contour3d = section_contour2d.to_3d(self.start, normal, tangent_normal_orthonormal)
-        lineseg = LineSegment3D(self.start, self.start + 10 * (self.circle.center - self.start))
-        intersections = section_contour3d.linesegment_intersections(lineseg)
-        revolution_axis = self.circle.center
-        if intersections:
-            if self.start.point_distance(intersections[0]) > self.circle.radius:
-                revolution_axis = intersections[0]
         for contour_primitive in section_contour3d.primitives:
             new_faces.extend(contour_primitive.revolution(
-                revolution_axis, self.circle.normal, self.angle))
-            print(True)
+                self.circle.center, self.circle.normal, self.angle))
         return new_faces
 
 
