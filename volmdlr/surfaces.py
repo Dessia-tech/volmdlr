@@ -4935,11 +4935,12 @@ class BSplineSurface3D(Surface3D):
         return {"u": crvlist_u, "v": crvlist_v}
 
     def evaluate(self, **kwargs):
-        """ Evaluates the surface.
+        """
+        Evaluates the surface.
 
         The evaluated points are stored in :py:attr:`evalpts` property.
 
-        Keyword arguments:
+        Keyword Arguments:
             * ``start_u``: start parameter on the u-direction
             * ``stop_u``: stop parameter on the u-direction
             * ``start_v``: start parameter on the v-direction
