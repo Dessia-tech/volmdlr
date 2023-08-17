@@ -451,10 +451,10 @@ def _aabb_intersecting_boxes(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _flood_fill_matrix_2d(
-        matrix: bool_C[:, :],
-        start: Tuple[cython.int, cython.int],
-        fill_with: bool_C,
-        shape: Tuple[cython.int, cython.int],
+    matrix: bool_C[:, :],
+    start: Tuple[cython.int, cython.int],
+    fill_with: bool_C,
+    shape: Tuple[cython.int, cython.int],
 ) -> bool_C[:, :]:
     """Apply a flood fill algorithm to a 2D boolean matrix from a given starting point."""
 
