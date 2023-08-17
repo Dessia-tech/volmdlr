@@ -562,7 +562,7 @@ class Voxelization(PhysicalObject):
         """
         voxel_centers = set()
 
-        for triangle in tqdm(triangles):
+        for triangle in tqdm(triangles, disable=True):
             # Check if the triangle is at the interface of two voxels, and add them
             voxel_centers = voxel_centers.union(Voxelization._triangle_interface_voxels(triangle, voxel_size))
 
