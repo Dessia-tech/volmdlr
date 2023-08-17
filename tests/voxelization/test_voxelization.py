@@ -17,3 +17,8 @@ class TestVoxelization(unittest.TestCase):
     def test_voxelize_block(self):
         voxelized_block = Voxelization.from_closed_shell(self.block, 0.2)
         self.assertEqual(len(voxelized_block), 152)
+
+    def test_voxelize_translated_block(self):
+        translated_block = self.block.translation(volmdlr.Vector3D(11, 1.8, 4.8))
+        voxelized_translated_block = Voxelization.from_closed_shell(translated_block, 0.1)
+        self.assertEqual(len(voxelized_translated_block), 1216)

@@ -505,6 +505,54 @@ def _line_segments_to_pixels(
     return pixel_centers
 
 
+@cython.cfunc
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
+def _triangle_2d_to_pixels(
+    triangle_2d: Tuple[
+        Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+        Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+        Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+    ],
+    pixel_size: cython.double,
+) -> vector[Tuple[cython.double, cython.double]]:
+    pixel_centers: vector[Tuple[cython.double, cython.double]]
+
+    for i in range(3):
+        x1: cython.double = triangle_2d[i][0][0]
+        y1: cython.double = triangle_2d[i][0][1]
+        x2: cython.double = triangle_2d[i][1][0]
+        y2: cython.double = triangle_2d[i][1][1]
+
+        # Calculate the bounding box of the line segment
+        xmin = min(x1, x2)
+        ymin = min(y1, y2)
+        xmax = max(x1, x2)
+        ymax = max(y1, y2)
+
+        # Calculate the indices of the box that intersect with the bounding box of the line segment
+        x_start = cython.cast(cython.int, (xmin / pixel_size) - 2)
+        x_end = cython.cast(cython.int, (xmax / pixel_size) + 2)
+        y_start = cython.cast(cython.int, (ymin / pixel_size) - 2)
+        y_end = cython.cast(cython.int, (ymax / pixel_size) + 2)
+
+        # Create a list of the centers of all the intersecting voxels
+        for x in range(x_start, x_end):
+            for y in range(y_start, y_end):
+                x_coord: cython.double = (cython.cast(cython.double, x) + 0.5) * pixel_size
+                y_coord: cython.double = (cython.cast(cython.double, y) + 0.5) * pixel_size
+                center: Tuple[cython.double, cython.double] = (
+                    _round_to_digits(x_coord, 6),
+                    _round_to_digits(y_coord, 6),
+                )
+
+                if _line_segment_intersects_pixel(x1, y1, x2, y2, center[0], center[1], pixel_size):
+                    pixel_centers.push_back(center)
+
+    return pixel_centers
+
+
 def line_segments_to_pixels(
     line_segments: List[Tuple[Tuple[float, float], Tuple[float, float]]], pixel_size: float
 ) -> Set[Tuple[float, float]]:
@@ -545,11 +593,6 @@ def _triangles_to_voxel_matrix(
             Tuple[cython.double, cython.double, cython.double],
         ]
     ],
-    # triangles: Tuple[
-    #                Tuple[cython.double, cython.double, cython.double],
-    #                Tuple[cython.double, cython.double, cython.double],
-    #                Tuple[cython.double, cython.double, cython.double],
-    #            ][:],
     n_triangles: cython.int,
     voxel_size: cython.double,
     matrix: bool_c[:, :, :],
@@ -576,13 +619,14 @@ def _triangles_to_voxel_matrix(
             p1: Tuple[cython.double, cython.double] = (triangles[i][1][1], triangles[i][1][2])
             p2: Tuple[cython.double, cython.double] = (triangles[i][2][1], triangles[i][2][2])
 
-            line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]]
-            line_segments.push_back((p0, p1))
-            line_segments.push_back((p1, p2))
-            line_segments.push_back((p2, p0))
+            triangle_2d: Tuple[
+                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+            ] = ((p0, p1), (p1, p2), (p2, p0))
 
             # Compute intersecting pixels
-            pixels = _line_segments_to_pixels(line_segments, voxel_size)
+            pixels = _triangle_2d_to_pixels(triangle_2d, voxel_size)
 
             min_center: Tuple[cython.double, cython.double] = _get_min_pixel_grid_center(pixels)
             max_center: Tuple[cython.double, cython.double] = _get_max_pixel_grid_center(pixels)
@@ -618,6 +662,8 @@ def _triangles_to_voxel_matrix(
                             ),
                         )
 
+                        print(min_center[0], dx, matrix_origin_center[1])
+
                         matrix[ix1, iy, iz] = True
                         matrix[ix2, iy, iz] = True
 
@@ -627,64 +673,56 @@ def _triangles_to_voxel_matrix(
             == _round_to_digits(triangles[i][1][1], 6)
             == _round_to_digits(triangles[i][2][1], 6)
         ) and _is_integer(_round_to_digits(y_abscissa / voxel_size, 6)):
-            try:
-                # Define the 3D triangle in 2D
-                p0: Tuple[cython.double, cython.double] = (triangles[i][0][0], triangles[i][0][2])
-                p1: Tuple[cython.double, cython.double] = (triangles[i][1][0], triangles[i][1][2])
-                p2: Tuple[cython.double, cython.double] = (triangles[i][2][0], triangles[i][2][2])
+            # Define the 3D triangle in 2D
+            p0: Tuple[cython.double, cython.double] = (triangles[i][0][0], triangles[i][0][2])
+            p1: Tuple[cython.double, cython.double] = (triangles[i][1][0], triangles[i][1][2])
+            p2: Tuple[cython.double, cython.double] = (triangles[i][2][0], triangles[i][2][2])
 
-                line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]]
-                line_segments.push_back((p0, p1))
-                line_segments.push_back((p1, p2))
-                line_segments.push_back((p2, p0))
+            triangle_2d: Tuple[
+                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+            ] = ((p0, p1), (p1, p2), (p2, p0))
 
-                # Compute intersecting pixels
-                pixels = _line_segments_to_pixels(line_segments, voxel_size)
+            # Compute intersecting pixels
+            pixels = _triangle_2d_to_pixels(triangle_2d, voxel_size)
 
-                min_center: Tuple[cython.double, cython.double] = _get_min_pixel_grid_center(pixels)
-                max_center: Tuple[cython.double, cython.double] = _get_max_pixel_grid_center(pixels)
+            min_center: Tuple[cython.double, cython.double] = _get_min_pixel_grid_center(pixels)
+            max_center: Tuple[cython.double, cython.double] = _get_max_pixel_grid_center(pixels)
 
-                dim_x = cython.cast(cython.int, math_c.round((max_center[0] - min_center[0]) / voxel_size + 1))
-                dim_y = cython.cast(cython.int, math_c.round((max_center[1] - min_center[1]) / voxel_size + 1))
+            dim_x = cython.cast(cython.int, math_c.round((max_center[0] - min_center[0]) / voxel_size + 1))
+            dim_y = cython.cast(cython.int, math_c.round((max_center[1] - min_center[1]) / voxel_size + 1))
 
-                pixel_matrix = _pixel_centers_to_outer_filled_pixel_matrix(pixels, voxel_size, (dim_x, dim_y), min_center)
+            pixel_matrix = _pixel_centers_to_outer_filled_pixel_matrix(pixels, voxel_size, (dim_x, dim_y), min_center)
 
-                # Put the corresponding voxels at True, using the indices
-                iy1 = cython.cast(
-                    cython.int, _round_to_digits((y_abscissa - matrix_origin_center[1] - voxel_size / 2) / voxel_size, 6)
-                )
-                iy2 = cython.cast(
-                    cython.int, _round_to_digits((y_abscissa - matrix_origin_center[1] + voxel_size / 2) / voxel_size, 6)
-                )
+            # Put the corresponding voxels at True, using the indices
+            iy1 = cython.cast(
+                cython.int, _round_to_digits((y_abscissa - matrix_origin_center[1] - voxel_size / 2) / voxel_size, 6)
+            )
+            iy2 = cython.cast(
+                cython.int, _round_to_digits((y_abscissa - matrix_origin_center[1] + voxel_size / 2) / voxel_size, 6)
+            )
 
-                dx: cython.int
-                dy: cython.int
-                for dx in range(dim_x):
-                    for dy in range(dim_y):
-                        if pixel_matrix[dx + 1, dy + 1]:
-                            ix = cython.cast(
-                                cython.int,
-                                _round_to_digits(
-                                    ((min_center[0] + dx * voxel_size) - matrix_origin_center[0]) / voxel_size, 6
-                                ),
-                            )
-                            iz = cython.cast(
-                                cython.int,
-                                _round_to_digits(
-                                    ((min_center[1] + dy * voxel_size) - matrix_origin_center[2]) / voxel_size, 6
-                                ),
-                            )
+            dx: cython.int
+            dy: cython.int
+            for dx in range(dim_x):
+                for dy in range(dim_y):
+                    if pixel_matrix[dx + 1, dy + 1]:
+                        ix = cython.cast(
+                            cython.int,
+                            _round_to_digits(
+                                ((min_center[0] + dx * voxel_size) - matrix_origin_center[0]) / voxel_size, 6
+                            ),
+                        )
+                        iz = cython.cast(
+                            cython.int,
+                            _round_to_digits(
+                                ((min_center[1] + dy * voxel_size) - matrix_origin_center[2]) / voxel_size, 6
+                            ),
+                        )
 
-                            # print(ix, iy1, iz)
-                            # print(ix, iy2, iz)
-                            print(ix, dx, min_center[0], matrix_origin_center[0])
-
-                            matrix[ix, iy1, iz] = True
-                            matrix[ix, iy2, iz] = True
-
-            except IndexError:
-                print(i, n_triangles)
-                print(triangles[i])
+                        matrix[ix, iy1, iz] = True
+                        matrix[ix, iy2, iz] = True
 
         # Check if the triangle is in the XY plane at the interface between voxels
         elif (
@@ -697,13 +735,14 @@ def _triangles_to_voxel_matrix(
             p1: Tuple[cython.double, cython.double] = (triangles[i][1][0], triangles[i][1][1])
             p2: Tuple[cython.double, cython.double] = (triangles[i][2][0], triangles[i][2][1])
 
-            line_segments: vector[Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]]]
-            line_segments.push_back((p0, p1))
-            line_segments.push_back((p1, p2))
-            line_segments.push_back((p2, p0))
+            triangle_2d: Tuple[
+                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+                Tuple[Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]],
+            ] = ((p0, p1), (p1, p2), (p2, p0))
 
             # Compute intersecting pixels
-            pixels = _line_segments_to_pixels(line_segments, voxel_size)
+            pixels = _triangle_2d_to_pixels(triangle_2d, voxel_size)
 
             min_center: Tuple[cython.double, cython.double] = _get_min_pixel_grid_center(pixels)
             max_center: Tuple[cython.double, cython.double] = _get_max_pixel_grid_center(pixels)
