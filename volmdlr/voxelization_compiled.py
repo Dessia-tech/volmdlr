@@ -26,7 +26,7 @@ Triangle = Tuple[Point, ...]
 
 def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
     """
-    Helper method to compute all the voxels intersecting with a given list of triangles.
+    Helper functions to compute all the voxels intersecting with a given list of triangles.
 
     :param triangles: The triangles to compute the intersecting voxels.
     :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
@@ -57,34 +57,6 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
                     voxel_centers.add(bbox_center)
 
     return voxel_centers
-
-
-def flood_fill_matrix_2d(
-    matrix: np.ndarray[np.bool_, np.ndim == 2], start: Tuple[int, int], fill_with: bool
-) -> np.ndarray[np.bool_, np.ndim == 2]:
-    return np.asarray(
-        _flood_fill_matrix_2d(
-            matrix.astype(np.bool_),
-            [start[0], start[1]],
-            fill_with,
-            [matrix.shape[0], matrix.shape[1]],
-        ),
-        dtype=np.bool_,
-    )
-
-
-def flood_fill_matrix_3d(
-    matrix: np.ndarray[np.bool_, np.ndim == 3], start: Tuple[int, int, int], fill_with: bool
-) -> np.ndarray[np.bool_, np.ndim == 3]:
-    return np.asarray(
-        _flood_fill_matrix_3d(
-            matrix.astype(np.bool_),
-            [start[0], start[1], start[2]],
-            fill_with,
-            [matrix.shape[0], matrix.shape[1], matrix.shape[2]],
-        ),
-        dtype=np.bool_,
-    )
 
 
 def triangles_to_voxel_matrix(
@@ -118,6 +90,34 @@ def triangles_to_voxel_matrix(
             np.bool_,
         ),
         matrix_origin_center,
+    )
+
+
+def flood_fill_matrix_2d(
+    matrix: np.ndarray[np.bool_, np.ndim == 2], start: Tuple[int, int], fill_with: bool
+) -> np.ndarray[np.bool_, np.ndim == 2]:
+    return np.asarray(
+        _flood_fill_matrix_2d(
+            matrix.astype(np.bool_),
+            [start[0], start[1]],
+            fill_with,
+            [matrix.shape[0], matrix.shape[1]],
+        ),
+        dtype=np.bool_,
+    )
+
+
+def flood_fill_matrix_3d(
+    matrix: np.ndarray[np.bool_, np.ndim == 3], start: Tuple[int, int, int], fill_with: bool
+) -> np.ndarray[np.bool_, np.ndim == 3]:
+    return np.asarray(
+        _flood_fill_matrix_3d(
+            matrix.astype(np.bool_),
+            [start[0], start[1], start[2]],
+            fill_with,
+            [matrix.shape[0], matrix.shape[1], matrix.shape[2]],
+        ),
+        dtype=np.bool_,
     )
 
 
