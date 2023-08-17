@@ -5657,12 +5657,11 @@ class FullArc3D(FullArcMixin, Arc3D):
 
         point1 = (self.circle.center + u * self.radius).to_point()
 
-        p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
+        p1_content, p1_id = point1.to_step(curve_id, vertex=True)
         content += p1_content
 
         edge_curve = p1_id + 1
         content += f"#{edge_curve} = EDGE_CURVE('{self.name}',#{p1_id},#{p1_id},#{curve_id},.T.);\n"
-        curve_id += 1
 
         return content, edge_curve
 
