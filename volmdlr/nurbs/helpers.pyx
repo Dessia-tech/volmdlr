@@ -3,7 +3,6 @@
 """
 Helpers.
 """
-from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from cython cimport cdivision
 from libcpp.vector cimport vector
 import cython.cimports.libc.math as math_c

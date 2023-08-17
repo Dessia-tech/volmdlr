@@ -800,12 +800,13 @@ def evaluate_surface(dict datadict, **kwargs):
 
     if rational:
         return evaluate_surface_rational(degree, knotvector, ctrlpts, size, sample_size,
-                                       dimension, precision, start, stop)
+                                         dimension, precision, start, stop)
     return evaluate_surface_c(degree, knotvector, ctrlpts, size, sample_size, dimension, precision, start, stop)
 
 
-cdef vector[vector[double]] evaluate_surface_c(int[2] degree, vector[vector[double]] knotvector, double[:, :] ctrlpts, int[2] size,
-                                int[2] sample_size, int dimension, int precision, double[2] start, double[2] stop):
+cdef vector[vector[double]] evaluate_surface_c(int[2] degree, vector[vector[double]] knotvector, double[:, :] ctrlpts,
+                                               int[2] size, int[2] sample_size, int dimension, int precision,
+                                               double[2] start, double[2] stop):
     """
     Evaluates surface.
     """
@@ -841,15 +842,15 @@ cdef vector[vector[double]] evaluate_surface_c(int[2] degree, vector[vector[doub
 
 
 @cdivision(True)
-cdef vector[vector[double]] evaluate_surface_rational(int[2] degree, vector[vector[double]] knotvector, double[:, :] ctrlpts,
-                                                      int[2] size, int[2] sample_size, int dimension, int precision,
-                                                      double[2] start, double[2] stop):
+cdef vector[vector[double]] evaluate_surface_rational(int[2] degree, vector[vector[double]] knotvector,
+                                                      double[:, :] ctrlpts, int[2] size, int[2] sample_size,
+                                                      int dimension, int precision, double[2] start, double[2] stop):
     """Evaluates the rational surface.
-    
+
     Keyword Arguments:
         * ``start``: starting parametric position for evaluation
         * ``stop``: ending parametric position for evaluation
-    
+
     :param datadict: data dictionary containing the necessary variables
     :type datadict: dict
     :return: evaluated points
@@ -861,7 +862,6 @@ cdef vector[vector[double]] evaluate_surface_rational(int[2] degree, vector[vect
 
     # Divide by weight
     cdef vector[vector[double]] eval_points
-    cdef double c
     cdef vector[double] cpt = vector[double](dimension - 1, 0.0)
     for i in range(cptw.size()):
         for j in range(dimension - 1):
@@ -917,7 +917,9 @@ cdef vector[vector[vector[double]]] derivatives_surface_c(int[2] degree, vector[
 
     cdef vector[vector[vector[double]]] SKL = vector[vector[vector[double]]](deriv_order + 1,
                                                                              vector[vector[double]](deriv_order + 1,
-                                                                                    vector[double](dimension, 0.0)))
+                                                                                                    vector[double](
+                                                                                                        dimension,
+                                                                                                        0.0)))
 
     cdef int span_u = find_span_linear_c(degree_u, knotvector_u, size_u, u)
     cdef int span_v = find_span_linear_c(degree_v, knotvector_v, size_v, v)
@@ -951,8 +953,8 @@ cdef vector[vector[vector[double]]] derivatives_surface_c(int[2] degree, vector[
 @boundscheck(False)
 @wraparound(False)
 cdef vector[vector[vector[double]]] derivatives_surface_rational(int[2] degree, vector[vector[double]] knotvector,
-                                                          double[:, :] ctrlpts, int[2] size, int dimension,
-                                                          double[2] parpos, int deriv_order):
+                                                                 double[:, :] ctrlpts, int[2] size, int dimension,
+                                                                 double[2] parpos, int deriv_order):
     """Evaluates the n-th order derivatives at the input parametric position.
 
     :param datadict: data dictionary containing the necessary variables
@@ -966,11 +968,13 @@ cdef vector[vector[vector[double]]] derivatives_surface_rational(int[2] degree, 
     """
     # Call the parent function to evaluate A(u) and w(u) derivatives
     cdef vector[vector[vector[double]]] SKLw = derivatives_surface_c(degree, knotvector, ctrlpts, size,
-                                                                       dimension, parpos, deriv_order)
+                                                                     dimension, parpos, deriv_order)
     # Generate an empty list of derivatives
     cdef vector[vector[vector[double]]] SKL = vector[vector[vector[double]]](deriv_order + 1,
-                                     vector[vector[double]](deriv_order + 1,
-                                                            vector[double](dimension - 1, 0.0)))
+                                                                             vector[vector[double]](deriv_order + 1,
+                                                                                                    vector[double](
+                                                                                                        dimension - 1,
+                                                                                                        0.0)))
 
     # Algorithm A4.4
     cdef int i, j, k, li, ii
@@ -1020,8 +1024,8 @@ def fun(x, point3d, degree, knotvector, ctrlpts, size, rational):
     derivatives = np.asarray(derivatives_surface(degree, knotvector, ctrlpts, size, rational, x.tolist(), 1),
                              dtype=np.float64)
     # print(derivatives)
-    vector = derivatives[0][0] - point3d
-    f_value = np.linalg.norm(vector)
+    f_vector = derivatives[0][0] - point3d
+    f_value = np.linalg.norm(f_vector)
     if f_value == 0.0:
         jacobian = np.array([0.0, 0.0])
     else:
@@ -1031,8 +1035,8 @@ def fun(x, point3d, degree, knotvector, ctrlpts, size, rational):
         #                      (vector[0] * derivatives[0][1][0] +
         #                       vector[1] * derivatives[0][1][1] +
         #                       vector[2] * derivatives[0][1][2]) / f_value])
-        jacobian = np.array([np.dot(vector, derivatives[1][0]) / f_value,
-                             np.dot(vector, derivatives[0][1]) / f_value])
+        jacobian = np.array([np.dot(f_vector, derivatives[1][0]) / f_value,
+                             np.dot(f_vector, derivatives[0][1]) / f_value])
     return f_value, jacobian
 
 
