@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - Line: reverse.
 - BSplineCurve: Remove dependencies from the geomdl library.
-- BSplineSurface3D: partial removal of dependencies on geomdl objects.
+- BSplineSurface3D: partial removal of dependencies on geomdl objects
 
 ### Fixed
 - Sweep with non smoth path
