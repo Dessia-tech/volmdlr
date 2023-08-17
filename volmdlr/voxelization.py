@@ -1996,8 +1996,8 @@ class Pixelization:
             ymax = max(y1, y2)
 
             # Calculate the indices of the box that intersect with the bounding box of the line segment
-            x_indices = range(int(xmin / pixel_size) - 1, int(xmax / pixel_size) + 1)
-            y_indices = range(int(ymin / pixel_size) - 1, int(ymax / pixel_size) + 1)
+            x_indices = range(int(xmin / pixel_size) - 2, int(xmax / pixel_size) + 2)
+            y_indices = range(int(ymin / pixel_size) - 2, int(ymax / pixel_size) + 2)
 
             # Create a list of the centers of all the intersecting voxels
             centers = []
@@ -2026,45 +2026,45 @@ class Pixelization:
         :return: A boolean indicating whether the line intersects with the pixel.
         :rtype: bool
         """
-        return _line_segment_intersects_pixel(line_segment, pixel_center, pixel_size)
+        # return _line_segment_intersects_pixel(line_segment, pixel_center, pixel_size)
 
-        # start = line_segment[0]
-        # end = line_segment[1]
-        #
-        # x1, y1 = start
-        # x2, y2 = end
-        #
-        # pixel_center_x, pixel_center_y = pixel_center
-        #
-        # # Determine the coordinates of lower-left and upper-right of rectangle
-        # xmin, xmax = pixel_center_x - pixel_size / 2, pixel_center_x + pixel_size / 2
-        # ymin, ymax = pixel_center_y - pixel_size / 2, pixel_center_y + pixel_size / 2
-        #
-        # # Helper function to compute the line equation for a point
-        # def line_equation(xcorner, ycorner):
-        #     return (y2 - y1) * xcorner + (x1 - x2) * ycorner + (x2 * y1 - x1 * y2)
-        #
-        # # Create list of corners
-        # corners = [(xmin, ymin), (xmin, ymax), (xmax, ymin), (xmax, ymax)]
-        #
-        # line_equations = [line_equation(x, y) for x, y in corners]
-        #
-        # # Check if all corners are on the same side of the line
-        # miss = (
-        #     len(set(line_equation >= 0 for line_equation in line_equations)) == 1
-        #     and len(set(line_equation > 0 for line_equation in line_equations)) == 1
-        # )
-        #
-        # # Does it miss based on the shadow intersection test?
-        # shadow_miss = (
-        #     (x1 > xmax and x2 > xmax)
-        #     or (x1 < xmin and x2 < xmin)
-        #     or (y1 > ymax and y2 > ymax)
-        #     or (y1 < ymin and y2 < ymin)
-        # )
-        #
-        # # A hit is if it doesn't miss on both tests!
-        # return not (miss or shadow_miss)
+        start = line_segment[0]
+        end = line_segment[1]
+
+        x1, y1 = start
+        x2, y2 = end
+
+        pixel_center_x, pixel_center_y = pixel_center
+
+        # Determine the coordinates of lower-left and upper-right of rectangle
+        xmin, xmax = pixel_center_x - pixel_size / 2, pixel_center_x + pixel_size / 2
+        ymin, ymax = pixel_center_y - pixel_size / 2, pixel_center_y + pixel_size / 2
+
+        # Helper function to compute the line equation for a point
+        def line_equation(xcorner, ycorner):
+            return (y2 - y1) * xcorner + (x1 - x2) * ycorner + (x2 * y1 - x1 * y2)
+
+        # Create list of corners
+        corners = [(xmin, ymin), (xmin, ymax), (xmax, ymin), (xmax, ymax)]
+
+        line_equations = [round(line_equation(x, y), 6) for x, y in corners]
+
+        # Check if all corners are on the same side of the line
+        miss = (
+            len(set(line_equation >= 0 for line_equation in line_equations)) == 1
+            and len(set(line_equation > 0 for line_equation in line_equations)) == 1
+        )
+
+        # Does it miss based on the shadow intersection test?
+        shadow_miss = (
+            (x1 > xmax and x2 > xmax)
+            or (x1 < xmin and x2 < xmin)
+            or (y1 > ymax and y2 > ymax)
+            or (y1 < ymin and y2 < ymin)
+        )
+
+        # A hit is if it doesn't miss on both tests!
+        return not (miss or shadow_miss)
 
     @classmethod
     def from_pixel_matrix(
@@ -2170,35 +2170,37 @@ class PixelMatrix:
         return PixelMatrix(inverted_matrix)
 
     def flood_fill(self, start: Tuple[int, int], fill_with: bool) -> "PixelMatrix":
-        return PixelMatrix(flood_fill_matrix_2d(self.matrix, start, fill_with))
+        # return PixelMatrix(flood_fill_matrix_2d(self.matrix, start, fill_with))
 
-        # directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
-        # old_value = self.matrix[start[0]][start[1]]
-        #
-        # if old_value == fill_with:
-        #     return self
-        #
-        # matrix = self.matrix.copy()
-        # stack = deque([start])
-        # visited = {start}
-        #
-        # while stack:
-        #     x, y = stack.pop()
-        #
-        #     matrix[x][y] = fill_with
-        #
-        #     for dx, dy in directions:
-        #         nx, ny = x + dx, y + dy
-        #         if (
-        #             (nx, ny) not in visited
-        #             and 0 <= nx < len(matrix)
-        #             and 0 <= ny < len(matrix[0])
-        #             and matrix[nx][ny] == old_value
-        #         ):
-        #             stack.append((nx, ny))
-        #             visited.add((nx, ny))
-        #
-        # return PixelMatrix(matrix)
+        from collections import deque
+
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+        old_value = self.matrix[start[0]][start[1]]
+
+        if old_value == fill_with:
+            return self
+
+        matrix = self.matrix.copy()
+        stack = deque([start])
+        visited = {start}
+
+        while stack:
+            x, y = stack.pop()
+
+            matrix[x][y] = fill_with
+
+            for dx, dy in directions:
+                nx, ny = x + dx, y + dy
+                if (
+                    (nx, ny) not in visited
+                    and 0 <= nx < len(matrix)
+                    and 0 <= ny < len(matrix[0])
+                    and matrix[nx][ny] == old_value
+                ):
+                    stack.append((nx, ny))
+                    visited.add((nx, ny))
+
+        return PixelMatrix(matrix)
 
     def _expand(self) -> "PixelMatrix":
         current_shape = self.matrix.shape
