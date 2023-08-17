@@ -15,8 +15,8 @@ from volmdlr import curves
 from volmdlr.models.open_rounded_line_segments import open_rounded_line_segements
 
 # contour = wires.Circle2D(vm.O2D, 0.008)
-contour = wires.ClosedPolygon2D([volmdlr.Point2D(-0.004, -0.004), volmdlr.Point2D(0.004, -0.004),
-                                 volmdlr.Point2D(0.004, 0.004), volmdlr.Point2D(-0.004, 0.004)])
+contour = wires.ClosedPolygon2D([volmdlr.Point2D(-0.04, -0.04), volmdlr.Point2D(0.04, -0.04),
+                                 volmdlr.Point2D(0.04, 0.04), volmdlr.Point2D(-0.04, 0.04)])
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')

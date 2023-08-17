@@ -1474,6 +1474,8 @@ class Sweep(shells.ClosedShell3D):
         new_faces = []
         last_end_tangent = self.wire3d.primitives[0].unit_direction_vector(0.)
         for i, wire_primitive in enumerate(self.wire3d.primitives):
+            # if isinstance(wire_primitive, volmdlr.edges.Arc3D):
+            #     continue
             start_tangent = wire_primitive.unit_direction_vector(0.)
             normal = wire_primitive.unit_normal_vector(0.)
             if normal is None:
