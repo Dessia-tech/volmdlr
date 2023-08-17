@@ -18,7 +18,7 @@
             "name": "",
             "object_class": "volmdlr.surfaces.RevolutionSurface3D",
             "package_version": "0.10.1.dev1106+gab56340c",
-            "wire": {
+            "edge": {
   "object_class": "volmdlr.edges.FullArc3D",
   "name": "",
   "circle": {

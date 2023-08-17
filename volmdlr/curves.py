@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as npy
 import scipy.integrate as scipy_integrate
 from matplotlib import __version__ as _mpl_version
-from mpl_toolkits.mplot3d import Axes3D
 from packaging import version
 
 from dessia_common.core import DessiaObject
@@ -129,10 +128,10 @@ class Line(Curve):
         """
         vector = self.point2 - self.point1
         norm_u = vector.norm()
-        t = (point - self.point1).dot(vector) / norm_u ** 2
-        projection = self.point1 + t * vector
+        projection_param_t = (point - self.point1).dot(vector) / norm_u ** 2
+        projection = self.point1 + projection_param_t * vector
         projection = projection.to_point()
-        return projection, t * norm_u
+        return projection, projection_param_t * norm_u
 
     def abscissa(self, point):
         """
@@ -497,8 +496,8 @@ class Line2D(Line):
 
         line_ab = Line2D(volmdlr.Point2D(new_a), volmdlr.Point2D(new_b))
         line_cd = Line2D(volmdlr.Point2D(new_c), volmdlr.Point2D(new_d))
-        new_pt_k = volmdlr.Point2D.line_intersection(line_ab, line_cd)
-        return self.get_concurrent_segments_tangent_circles(vector_i, vector_c, vector_d, new_pt_k, new_basis)
+        return self.get_concurrent_segments_tangent_circles(
+            vector_i, vector_c, vector_d, volmdlr.Point2D.line_intersection(line_ab, line_cd), new_basis)
 
     def cut_between_two_points(self, point1: volmdlr.Point2D,
                                point2: volmdlr.Point2D):
@@ -649,14 +648,15 @@ class Line3D(Line):
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
 
-    def plot(self, ax=None, color='k', alpha=1, dashed=True):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plot method for Line 3D using Matplotlib."""
         if ax is None:
-            ax = Axes3D(plt.figure())
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
 
         # Line segment
         ax.plot([self.point1.x, self.point2.x], [self.point1.y, self.point2.y],
-                [self.point1.z, self.point2.z], color=color, alpha=alpha)
+                [self.point1.z, self.point2.z], color=edge_style.color, alpha=edge_style.alpha)
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
@@ -664,11 +664,11 @@ class Line3D(Line):
         x1, y1, z1 = v1.x, v1.y, v1.z
         v2 = self.point2 - u * 3
         x2, y2, z2 = v2.x, v2.y, v2.z
-        if dashed:
-            ax.plot([x1, x2], [y1, y2], [z1, z2], color=color,
+        if edge_style.dashed:
+            ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color,
                     dashes=[30, 5, 10, 5])
         else:
-            ax.plot([x1, x2], [y1, y2], [z1, z2], color=color)
+            ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color)
         return ax
 
     def plane_projection2d(self, center, x, y):
@@ -808,6 +808,31 @@ class CircleMixin:
         start = self.point_at_abscissa(0.0)
         point_at_absccissa = self.point_at_abscissa(abscissa)
         return self.split(start, point_at_absccissa)
+
+    def trim(self, point1: Union[volmdlr.Point2D, volmdlr.Point3D], point2: Union[volmdlr.Point2D, volmdlr.Point3D],
+             same_sense: bool = True):
+        """
+        Trims a circle between two points.
+
+        :param point1: point 1 used to trim circle.
+        :param point2: point2 used to trim circle.
+        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :return: arc between these two points.
+        """
+        fullar_arc_class_ = getattr(volmdlr.edges, 'FullArc'+self.__class__.__name__[-2:])
+        arc_class_ = getattr(volmdlr.edges, 'Arc'+self.__class__.__name__[-2:])
+        circle = self
+        if not same_sense:
+            circle = self.reverse()
+        if not self.point_belongs(point1, 1e-4) or not self.point_belongs(point2, 1e-4):
+            ax = self.plot()
+            point1.plot(ax=ax, color='r')
+            point2.plot(ax=ax, color='b')
+            raise ValueError('Point not on circle for trim method')
+        if point1.is_close(point2):
+            return fullar_arc_class_(circle, point1)
+        return arc_class_(circle, point1, point2)
 
 
 class Circle2D(CircleMixin, Curve):
@@ -982,7 +1007,7 @@ class Circle2D(CircleMixin, Curve):
         return self._bounding_rectangle
 
     def get_bounding_rectangle(self):
-
+        """Calculates the bounding rectangle of the circle 2d."""
         x_min = self.center.x - self.radius
         x_max = self.center.x + self.radius
         y_min = self.center.y - self.radius
@@ -1105,8 +1130,15 @@ class Circle2D(CircleMixin, Curve):
         """Plots the circle using Matplotlib."""
         return vm_common_operations.plot_circle(self, ax, edge_style)
 
-    def plot_data(self, edge_style: plot_data.EdgeStyle = None,
-                  surface_style: plot_data.SurfaceStyle = None):
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None, surface_style: plot_data.SurfaceStyle = None):
+        """
+        Get plot data for the circle 2d.
+
+        :param edge_style: Plotting style for the line.
+        :type edge_style: :class:`plot_data.EdgeStyle`, optional
+        :return: Plot data for the line.
+        :rtype: :class:`plot_data.Circle2D`
+        """
         return plot_data.Circle2D(cx=self.center.x, cy=self.center.y,
                                   r=self.radius,
                                   edge_style=edge_style,
@@ -1206,6 +1238,7 @@ class Circle3D(CircleMixin, Curve):
         self.radius = radius
         self.frame = frame
         self._bbox = None
+        self.angle = 2*math.pi
         Curve.__init__(self, name=name)
 
     @property
@@ -1214,6 +1247,7 @@ class Circle3D(CircleMixin, Curve):
 
     @property
     def normal(self):
+        """Gets circle's normal."""
         return self.frame.w
 
     def __hash__(self):
@@ -1339,34 +1373,34 @@ class Circle3D(CircleMixin, Curve):
         normal.normalize()
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
-    def to_step(self, current_id, surface_id=None, surface3d=None):
+    def to_step(self, current_id, *args, **kwargs):
         content, frame_id = self.frame.to_step(current_id)
         curve_id = frame_id + 1
-        content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{round(self.radius * 1000, 3)});\n"
+        content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.radius * 1000});\n"
+        current_id = curve_id
+        # if surface_id:
+        #     content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
+        #     curve_id += 1
 
-        if surface_id:
-            content += f"#{curve_id + 1} = SURFACE_CURVE('',#{curve_id},(#{surface_id}),.PCURVE_S1.);\n"
-            curve_id += 1
-
-        point1 = self.frame.origin + self.frame.u * self.radius
-        point3 = self.frame.origin - self.frame.u * self.radius
-
-        p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
-        p3_content, p3_id = point3.to_step(p1_id + 1, vertex=True)
-        content += p1_content + p3_content
-
-        arc1_id = p3_id + 1
-        content += f"#{arc1_id} = EDGE_CURVE('{self.name}',#{p1_id},#{p3_id},#{curve_id},.T.);\n"
-        oriented_edge1_id = arc1_id + 1
-        content += f"#{oriented_edge1_id} = ORIENTED_EDGE('',*,*,#{arc1_id},.T.);\n"
-
-        arc2_id = oriented_edge1_id + 1
-        content += f"#{arc2_id} = EDGE_CURVE('{self.name}',#{p3_id},#{p1_id},#{curve_id},.T.);\n"
-        oriented_edge2_id = arc2_id + 1
-        content += f"#{oriented_edge2_id} = ORIENTED_EDGE('',*,*,#{arc2_id},.T.);\n"
-
-        current_id = oriented_edge2_id + 1
-        content += f"#{current_id} = EDGE_LOOP('{self.name}',(#{oriented_edge1_id},#{oriented_edge2_id}));\n"
+        # point1 = self.frame.origin + self.frame.u * self.radius
+        # point3 = self.frame.origin - self.frame.u * self.radius
+        #
+        # p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
+        # p3_content, p3_id = point3.to_step(p1_id + 1, vertex=True)
+        # content += p1_content + p3_content
+        #
+        # arc1_id = p3_id + 1
+        # content += f"#{arc1_id} = EDGE_CURVE('{self.name}',#{p1_id},#{p3_id},#{curve_id},.T.);\n"
+        # oriented_edge1_id = arc1_id + 1
+        # content += f"#{oriented_edge1_id} = ORIENTED_EDGE('',*,*,#{arc1_id},.T.);\n"
+        #
+        # arc2_id = oriented_edge1_id + 1
+        # content += f"#{arc2_id} = EDGE_CURVE('{self.name}',#{p3_id},#{p1_id},#{curve_id},.T.);\n"
+        # oriented_edge2_id = arc2_id + 1
+        # content += f"#{oriented_edge2_id} = ORIENTED_EDGE('',*,*,#{arc2_id},.T.);\n"
+        #
+        # current_id = oriented_edge2_id + 1
+        # content += f"#{current_id} = EDGE_LOOP('{self.name}',(#{oriented_edge1_id},#{oriented_edge2_id}));\n"
 
         return content, current_id
 
@@ -1411,6 +1445,10 @@ class Circle3D(CircleMixin, Curve):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3):
+        """
+        Creates a circle from three points.
+
+        """
         vector_u1 = point2 - point1
         vector_u2 = point2 - point3
         try:
@@ -1501,28 +1539,6 @@ class Circle3D(CircleMixin, Curve):
         frame = volmdlr.Frame3D(self.center, self.frame.u, -self.frame.v, self.frame.u.cross(-self.frame.v))
         return Circle3D(frame, self.radius)
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
-        """
-        Trims a circle between two points.
-
-        :param point1: point 1 used to trim circle.
-        :param point2: point2 used to trim circle.
-        :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
-            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
-        :return: arc between these two points.
-        """
-        circle = self
-        if not same_sense:
-            circle = self.reverse()
-        if not self.point_belongs(point1, 1e-4) or not self.point_belongs(point2, 1e-4):
-            ax = self.plot()
-            point1.plot(ax=ax, color='r')
-            point2.plot(ax=ax, color='b')
-            raise ValueError('Point not on circle for trim method')
-        if point1.is_close(point2):
-            return volmdlr.edges.FullArc3D(circle, point1)
-        return volmdlr.edges.Arc3D(circle, point1, point2)
-
     def split(self, split_start, split_end):
         """
         Splits a circle into two arcs, at two given points.
@@ -1546,6 +1562,19 @@ class Circle3D(CircleMixin, Curve):
             new_faces.extend(contour_primitive.revolution(
                 self.center, self.normal, volmdlr.TWO_PI))
         return new_faces
+
+    def distance_linesegment(self, linesegment3d, return_points=False):
+        """
+        Gets the minimum distance between an Arc 3D and Line Segment 3D.
+
+        :param linesegment3d: other line segment 3d.
+        :param return_points: boolean to decide weather to return the corresponding minimal distance points or not.
+        :return: minimum distance / minimal distance with corresponding points.
+        """
+        point1, point2 = vm_common_operations.minimum_distance_points_circle3d_linesegment3d(self, linesegment3d)
+        if return_points:
+            return point1.point_distance(point2), point1, point2
+        return point1.point_distance(point2)
 
 
 class Ellipse2D(Curve):
@@ -1696,7 +1725,7 @@ class Ellipse2D(Curve):
             for theta in npy.linspace(self.angle_start, self.angle_end, angle_resolution + 1)]
         return discretization_points
 
-    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-3):
+    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-6):
         """
         Calculates the abscissa for a given point.
 
@@ -1847,6 +1876,7 @@ class Ellipse3D(Curve):
 
     @property
     def self_2d(self):
+        """Version 2d of the ellipse 3d as a property."""
         if not self._self_2d:
             self._self_2d = self.to_2d(self.center, self.frame.u, self.frame.v)
         return self._self_2d
@@ -2013,8 +2043,8 @@ class Ellipse3D(Curve):
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
         center = object_dict[arguments[1]].origin
-        normal = object_dict[arguments[1]].u
-        major_dir = object_dict[arguments[1]].v
+        normal = object_dict[arguments[1]].w
+        major_dir = object_dict[arguments[1]].u
         major_axis = float(arguments[2]) * length_conversion_factor
         minor_axis = float(arguments[3]) * length_conversion_factor
         return cls(major_axis, minor_axis, volmdlr.Frame3D(center, major_dir, normal.cross(major_dir), normal),
