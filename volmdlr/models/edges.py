@@ -7,7 +7,7 @@ DEGREE = 3
 points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
 knotvector = utilities.generate_knot_vector(DEGREE, len(points))
 knot_multiplicity = [1] * len(knotvector)
-bspline1 = edges.BSplineCurve2D(DEGREE, points, knot_multiplicity, knotvector, None, False)
+bspline1 = edges.BSplineCurve2D(DEGREE, points, knot_multiplicity, knotvector, None)
 
 lineseg = edges.LineSegment2D(volmdlr.Point2D(0, 0.2), volmdlr.Point2D(3, -0.2))
 
@@ -35,7 +35,6 @@ def bspline_curve3d():
                                 knot_multiplicities=knot_multiplicities,
                                 knots=knots,
                                 weights=weights,
-                                periodic=False,
                                 name='B Spline Curve 3D 1')
 
 

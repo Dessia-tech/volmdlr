@@ -3,15 +3,11 @@
 # cython: language_level=3
 
 """
-This module contains functions for working with Non-Uniform Rational B-Splines (NURBs).
-Some of the functions in this module are either partially or totally copied from the geomdl open
-source library, which is distributed under the MIT license.
-The original source code is credited to the geomdl authors, and their work can be found at
-https://github.com/orbingol/NURBS-Python.
+This module provides functions for working with Non-Uniform Rational B-Splines (NURBS) geometries.
+Some functions are based on the geomdl open-source library (MIT license),
+originally created by the geomdl authors: https://github.com/orbingol/NURBS-Python.
 
-Note that this module is also distributed under the MIT license.
-Any modifications made to the original geomdl code will be clearly marked in the source code and
-will be subject to the same license terms.
+We also use as main reference Les Piegl and Wayne Tiller. The NURBS Book. Springer Science & Business Media, 1997
 
 For more information on NURBs and their use in geometric modeling, please refer to the literature
 in the field.
