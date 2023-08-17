@@ -31,3 +31,8 @@ Example:
 
     volmdlr_object = dessia_common.core.DessiaObject.load_from_file('path/to/your/file.json')
 
+Matplotlib plots
+****************
+
+Model Visualization
+*******************
