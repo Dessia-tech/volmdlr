@@ -662,8 +662,6 @@ def _triangles_to_voxel_matrix(
                             ),
                         )
 
-                        print(min_center[0], dx, matrix_origin_center[1])
-
                         matrix[ix1, iy, iz] = True
                         matrix[ix2, iy, iz] = True
 
