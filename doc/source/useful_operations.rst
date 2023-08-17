@@ -33,6 +33,9 @@ Example:
 
 Matplotlib plots
 ****************
+To have a matplotlib visualization of a volmdlr, you can call the plot method in any object. See the following example
 
 Model Visualization
 *******************
+
+To Have a 3D visulaization of your model, You can use the babylonjs() method in any 3D object.
