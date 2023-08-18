@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: transform some attributs into lazy evaluation and Caching
 - BSplineSurface3D: transform some attributs into lazy evaluation and Caching
 - BSplineSurface3D: store control_points as numpy array for memory efficiency
+- PlaneFace3D: distance_to_point -> point_distance
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
