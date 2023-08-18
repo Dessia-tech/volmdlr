@@ -4607,8 +4607,7 @@ class BSplineSurface3D(Surface3D):
         """
         Defines the BSpline surface equality operation.
         """
-        if not hasattr(other, "degree_u") or not hasattr(other, "rational") or not hasattr(other, "nb_u") \
-                or not hasattr(other, "knotvector"):
+        if not isinstance(other, self.__class__):
             return False
         if self.rational != other.rational:
             return False
@@ -4619,7 +4618,7 @@ class BSplineSurface3D(Surface3D):
         for s_k, o_k in zip(self.knotvector, other.knotvector):
             if len(s_k) != len(o_k):
                 return False
-            if any(not math.isclose(s, o, abs_tol=1e-6) for s, o in zip(s_k, o_k)):
+            if any(not math.isclose(s, o, abs_tol=1e-8) for s, o in zip(s_k, o_k)):
                 return False
         self_control_points = self.control_points
         other_control_points = other.control_points
@@ -4629,7 +4628,7 @@ class BSplineSurface3D(Surface3D):
             return False
         if self.rational and other.rational:
             if len(self.weights) != len(other.weights) or \
-                    any(not math.isclose(s_w, o_w, abs_tol=1e-6) for s_w, o_w in zip(self.weights, other.weights)):
+                    any(not math.isclose(s_w, o_w, abs_tol=1e-8) for s_w, o_w in zip(self.weights, other.weights)):
                 return False
         return True
 
