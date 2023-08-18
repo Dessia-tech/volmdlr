@@ -4556,11 +4556,11 @@ class BSplineSurface3D(Surface3D):
         self.v_knots = v_knots
         self.u_multiplicities = u_multiplicities
         self.v_multiplicities = v_multiplicities
-        self.weights = weights
+        self._weights = weights
         self.rational = False
         if weights is not None:
             self.rational = True
-            self.weights = npy.asarray(weights, dtype=npy.float64)
+            self._weights = npy.asarray(weights, dtype=npy.float64)
 
         self._surface = None
         Surface3D.__init__(self, name=name)
@@ -4573,9 +4573,9 @@ class BSplineSurface3D(Surface3D):
         self._surface_curves = None
         self._knotvector = None
         self.ctrlptsw = None
-        if self.weights is not None:
+        if self._weights is not None:
             ctrlptsw = []
-            for point, w in zip(self.ctrlpts, self.weights):
+            for point, w in zip(self.ctrlpts, self._weights):
                 temp = [float(c * w) for c in point]
                 temp.append(float(w))
                 ctrlptsw.append(temp)
@@ -4598,7 +4598,7 @@ class BSplineSurface3D(Surface3D):
         if weights is None:
             weights = tuple(1.0 for _ in range(len(control_points)))
         else:
-            weights = tuple(self.weights)
+            weights = tuple(weights)
         return hash((tuple(control_points),
                      self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
                      self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v, weights))
@@ -4645,10 +4645,10 @@ class BSplineSurface3D(Surface3D):
             "knotvector": self.knotvector,
             "size": (self.nb_u, self.nb_v),
             "sample_size": self.sample_size,
-            "rational": not (self.weights is None),
+            "rational": not (self._weights is None),
             "precision": 18
         }
-        if self.weights is not None:
+        if self._weights is not None:
             datadict["control_points"] = self.ctrlptsw
         else:
             datadict["control_points"] = self.ctrlpts
@@ -4862,14 +4862,14 @@ class BSplineSurface3D(Surface3D):
     def surface(self):
         """Create nurbs surface for special evaluations."""
         if not self._surface:
-            if self.weights is None:
+            if self._weights is None:
                 surface = BSpline.Surface()
                 points = self.ctrlpts.tolist()
 
             else:
                 surface = NURBS.Surface()
-                points = [(control_point[0] * self.weights[i], control_point[1] * self.weights[i],
-                           control_point[2] * self.weights[i], self.weights[i])
+                points = [(control_point[0] * self._weights[i], control_point[1] * self._weights[i],
+                           control_point[2] * self._weights[i], self._weights[i])
                           for i, control_point in enumerate(self.control_points)]
             surface.degree_u = self.degree_u
             surface.degree_v = self.degree_v
@@ -4898,11 +4898,14 @@ class BSplineSurface3D(Surface3D):
         dict_['v_multiplicities'] = self.v_multiplicities
         dict_['u_knots'] = self.u_knots
         dict_['v_knots'] = self.v_knots
-        if self.weights is None:
-            dict_['weights'] = self.weights
-        else:
-            dict_['weights'] = self.weights.tolist()
+        dict_['weights'] = self.weights
         return dict_
+
+    @property
+    def weights(self):
+        if self._weights is None:
+            return self._weights
+        return self._weights.tolist()
 
     @property
     def x_periodicity(self):
@@ -5149,7 +5152,7 @@ class BSplineSurface3D(Surface3D):
         # else:
         #     # derivatives = self._derivatives(self.surface.data, (u, v), order)
         #     derivatives = volmdlr.derivatives(self.surface.data, (u, v), order)
-        if self.weights is not None:
+        if self._weights is not None:
             control_points = self.ctrlptsw
         else:
             control_points = self.ctrlpts
@@ -5217,6 +5220,127 @@ class BSplineSurface3D(Surface3D):
         # return volmdlr.Point3D(*self.derivatives(u, v, 0)[0][0])
         # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
+    def initial_condition(self, point3d):
+        sample_size_u = 10
+        sample_size_v = 10
+        datadict = {
+            "degree": (self.degree_u, self.degree_v),
+            "knotvector": self.knotvector,
+            "size": (self.nb_u, self.nb_v),
+            "sample_size": [sample_size_u, sample_size_v],
+            "rational": not (self._weights is None),
+            "precision": 18
+        }
+        if self._weights is not None:
+            datadict["control_points"] = self.ctrlptsw
+        else:
+            datadict["control_points"] = self.ctrlpts
+        matrix = self.evalpts
+        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
+
+        def find_index_min(matrix_points, point):
+            # Calculate distances
+            distances = npy.linalg.norm(matrix_points - point, axis=1)
+
+             # Find the minimal index
+            return npy.argmin(distances), distances.min()
+
+        initial_index, minimal_distance = find_index_min(matrix, point3d_array)
+        u_start, u_stop, v_start, v_stop = self.domain
+        if initial_index == 0:
+            u_idx, v_idx = 0, 0
+        else:
+            u_idx = int(initial_index / self.sample_size_v)
+            v_idx = initial_index % self.sample_size_v
+        delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
+        delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
+        u = u_start + u_idx * delta_u
+        v = v_start + v_idx * delta_v
+        # u, v = self.vertices[initial_index]
+        # minimal_distance = math.inf
+        acceptable_distance = 1e-6
+        count = 0
+        if u == u_start:
+            u_stop = u + delta_u
+            sample_size_u = 2
+        elif u == u_stop:
+            u_start = u - delta_u
+            sample_size_u = 2
+        else:
+            u_start = max(u - delta_u, self.domain[0])
+            u_stop = min(u + delta_u, self.domain[1])
+
+        if v == v_start:
+            v_stop = v + delta_v
+            sample_size_v = 2
+        elif v == v_stop:
+            v_start = v - delta_v
+            sample_size_v = 2
+        else:
+            v_start = max(v - delta_v, self.domain[2])
+            v_stop = min(v + delta_v, self.domain[3])
+
+        while minimal_distance > acceptable_distance and count < 15:
+            if count > 0:
+                if u == self.domain[0]:
+                    u_start = self.domain[0]
+                    u_stop = self.domain[0]
+                    sample_size_u = 1
+
+                elif u == self.domain[1]:
+                    u_start = self.domain[1]
+                    u_stop = self.domain[1]
+                    sample_size_u = 1
+                else:
+                    u_start = max(u - delta_u, self.domain[0])
+                    u_stop = min(u + delta_u, self.domain[1])
+
+                if v == self.domain[2]:
+                    v_start = self.domain[2]
+                    v_stop = self.domain[2]
+                    sample_size_v = 1
+                elif v == self.domain[3]:
+                    v_start = self.domain[3]
+                    v_stop = self.domain[3]
+                    sample_size_v = 1
+                else:
+                    v_start = max(v - delta_v, self.domain[2])
+                    v_stop = min(v + delta_v, self.domain[3])
+
+            if sample_size_u == 1 and sample_size_v == 1:
+                return (u, v), minimal_distance
+            datadict["sample_size"] = [sample_size_u, sample_size_v]
+            matrix = npy.asarray(evaluate_surface(datadict,
+                                         start=(u_start, v_start),
+                                         stop=(u_stop, v_stop)), dtype=npy.float64)
+            index, distance = find_index_min(matrix, point3d_array)
+            if distance < minimal_distance:
+                minimal_distance = distance
+            if sample_size_u == 1:
+                delta_u = 0.0
+                u = u_start
+                delta_v = (v_stop - v_start) / (sample_size_v - 1)
+                v = v_start + index * delta_v
+            elif sample_size_v == 1:
+                delta_u = (u_stop - u_start)/(sample_size_u - 1)
+                u = u_start + index * delta_u
+                delta_v = 0.0
+                v = v_start
+            else:
+                if index == 0:
+                    u_idx, v_idx = 0, 0
+                else:
+                    u_idx = int(index/sample_size_v)
+                    v_idx = index % sample_size_v
+                delta_u = (u_stop - u_start)/(sample_size_u - 1)
+                delta_v = (v_stop - v_start)/(sample_size_v - 1)
+                u = u_start + u_idx * delta_u
+                v = v_start + v_idx * delta_v
+
+            count += 1
+
+        return (u, v), minimal_distance
+
     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-6):
         """
         Evaluates the parametric coordinates (u, v) of a 3D point (x, y, z).
@@ -5229,19 +5353,19 @@ class BSplineSurface3D(Surface3D):
         :rtype: :class:`volmdlr.Point2D`
         """
 
-        def sort_func(x):
-            return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
-
-        def fun(x):
-            derivatives = self.derivatives(x[0], x[1], 1)
-            vector = derivatives[0][0] - point3d
-            f_value = vector.norm()
-            if f_value == 0.0:
-                jacobian = npy.array([0.0, 0.0])
-            else:
-                jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
-                                      vector.dot(derivatives[0][1]) / f_value])
-            return f_value, jacobian
+        # def sort_func(x):
+        #     return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
+        #
+        # def fun(x):
+        #     derivatives = self.derivatives(x[0], x[1], 1)
+        #     vector = derivatives[0][0] - point3d
+        #     f_value = vector.norm()
+        #     if f_value == 0.0:
+        #         jacobian = npy.array([0.0, 0.0])
+        #     else:
+        #         jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
+        #                               vector.dot(derivatives[0][1]) / f_value])
+        #     return f_value, jacobian
 
         #
         # min_bound_x, max_bound_x = self.surface.domain[0]
@@ -5264,26 +5388,29 @@ class BSplineSurface3D(Surface3D):
                (0.33333333, 0.009), (0.5555555, 0.0099)]
 
         # Sort the initial conditions
-        x0s.sort(key=sort_func)
-        matrix = self.evalpts
+        # x0s.sort(key=sort_func)
+        x0, distance = self.initial_condition(point3d)
+        if distance < tol:
+            return volmdlr.Point2D(*x0)
+        # matrix = self.evalpts
         point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
-
-        # Calculate distances
-        distances = npy.linalg.norm(matrix - point3d_array, axis=1)
-
-        # Find the minimal index
-        index = npy.argmin(distances)
+        #
+        # # Calculate distances
+        # distances = npy.linalg.norm(matrix - point3d_array, axis=1)
+        #
+        # # Find the minimal index
+        # index = npy.argmin(distances)
         # Find the parametric coordinates of the point
 
         # if self.x_periodicity or self.y_periodicity:
-        #     x0s.insert(1, self.surface.vertices[index].uv)
+        #     x0s.insert(1, x0)
         # else:
-        #     x0s.insert(0, self.surface.vertices[index].uv)
-        if self.x_periodicity or self.y_periodicity:
-            x0s.insert(1, self.vertices[index])
-        else:
-            x0s.insert(0, self.vertices[index])
-
+        #     x0s.insert(0, x0)
+        # if self.x_periodicity or self.y_periodicity:
+        #     x0s.insert(1, self.vertices[index])
+        # else:
+        #     x0s.insert(0, self.vertices[index])
+        x0s = [x0] + x0s
         if self.weights is not None:
             control_points = self.ctrlptsw
         else:
