@@ -817,7 +817,7 @@ class BSplineCurve(Edge):
         """
         Defines dessia common object equality.
         """
-        return self.__eq__(other)
+        return self == other
 
     @property
     def control_points(self):

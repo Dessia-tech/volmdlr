@@ -4609,16 +4609,13 @@ class BSplineSurface3D(Surface3D):
         """
         if not isinstance(other, self.__class__):
             return False
-        if self.rational != other.rational:
-            return False
-        if (self.degree_u != other.degree_u or self.degree_v != other.degree_v or
-                self.nb_u != other.nb_u or self.nb_v != other.nb_v):
+
+        if (self.rational != other.rational or self.degree_u != other.degree_u or self.degree_v != other.degree_v or
+            self.nb_u != other.nb_u or self.nb_v != other.nb_v):
             return False
 
         for s_k, o_k in zip(self.knotvector, other.knotvector):
-            if len(s_k) != len(o_k):
-                return False
-            if any(not math.isclose(s, o, abs_tol=1e-8) for s, o in zip(s_k, o_k)):
+            if len(s_k) != len(o_k) or any(not math.isclose(s, o, abs_tol=1e-8) for s, o in zip(s_k, o_k)):
                 return False
         self_control_points = self.control_points
         other_control_points = other.control_points
@@ -4636,7 +4633,7 @@ class BSplineSurface3D(Surface3D):
         """
         Defines dessia common object equality.
         """
-        return self.__eq__(other)
+        return self == other
 
     @property
     def data(self):
