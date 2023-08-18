@@ -1114,17 +1114,14 @@ class Face3D(volmdlr.core.Primitive3D):
                 break
         return self.divide_face(intersections_with_plane2d)
 
-    def point_distance(self, point, return_other_point: bool = False):
+    def _get_face_decomposition_set_closest_to_point(self, point):
         """
-        Calculates the distance from a face 3d and a point.
+        Searches for the faces decomposition's set closest to given point.
 
-        :param point: point to verify.
-        :param return_other_point: bool to decide if corresponding point on face should be returned.
-        :return: distance to face3D.
+        :param point: other point.
+        :return: list of triangular faces, corresponding to area of the face closest to point.
         """
-
         face_decomposition1 = self.face_decomposition()
-
         list_set_points1 = [{point for face in faces1 for point in face.points}
                             for _, faces1 in face_decomposition1.items()]
         list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1])
@@ -1139,7 +1136,18 @@ class Face3D(volmdlr.core.Primitive3D):
             if sets_min_dist < minimum_distance:
                 minimum_distance = sets_min_dist
                 index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
-        faces1 = list(face_decomposition1.values())[index1]
+        return list(face_decomposition1.values())[index1]
+
+    def point_distance(self, point, return_other_point: bool = False):
+        """
+        Calculates the distance from a face 3d and a point.
+
+        :param point: point to verify.
+        :param return_other_point: bool to decide if corresponding point on face should be returned.
+        :return: distance to face3D.
+        """
+
+        faces1 = self._get_face_decomposition_set_closest_to_point(point)
         minimum_distance = math.inf
         best_distance_point = None
         for face1 in faces1:
