@@ -802,11 +802,22 @@ class BSplineCurve(Edge):
         """
         Return True if the other B-spline curve has the same control points, degree, and knot vector, False otherwise.
         """
-        if isinstance(other, self.__class__):
-            return (self.control_points == other.control_points
-                    and self.degree == other.degree
-                    and self.knots == other.knots)
+        if isinstance(other, self.__class__) and self.rational == other.rational:
+            common_check = (all(s_point.is_close(o_point)
+                            for s_point, o_point in zip(self.control_points, other.control_points))
+                            and self.degree == other.degree
+                            and all(abs(s_knot - o_knot) < 1e-8) for s_knot, o_knot in zip(self.knots, other.knots))
+            if self.weights is None:
+                return common_check
+            return (common_check and
+                    all(abs(s_w - o_w) < 1e-8) for s_w, o_w in zip(self.weights, other.weights))
         return False
+
+    def _data_eq(self, other):
+        """
+        Defines dessia common object equality.
+        """
+        return self == other
 
     @property
     def control_points(self):
@@ -5663,12 +5674,11 @@ class FullArc3D(FullArcMixin, Arc3D):
 
         point1 = (self.circle.center + u * self.radius).to_point()
 
-        p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
+        p1_content, p1_id = point1.to_step(curve_id, vertex=True)
         content += p1_content
 
         edge_curve = p1_id + 1
         content += f"#{edge_curve} = EDGE_CURVE('{self.name}',#{p1_id},#{p1_id},#{curve_id},.T.);\n"
-        curve_id += 1
 
         return content, edge_curve
 
