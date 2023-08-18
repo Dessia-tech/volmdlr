@@ -88,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: Translation
 - wires.WireMixin: from_circle
 - curves.CircleMixin: trim
+- Face3D: point_distance
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs

@@ -432,7 +432,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         """Plots the face."""
         if not ax:
-            ax = plt.figure().add_subplot(111, projection='3d')
+            _, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
         self.outer_contour3d.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
                                                               edge_ends=edge_details, edge_direction=edge_details))
@@ -1114,6 +1114,43 @@ class Face3D(volmdlr.core.Primitive3D):
                 break
         return self.divide_face(intersections_with_plane2d)
 
+    def point_distance(self, point, return_other_point: bool = False):
+        """
+        Calculates the distance from a face 3d and a point.
+
+        :param point: point to verify.
+        :param return_other_point: bool to decide if corresponding point on face should be returned.
+        :return: distance to face3D.
+        """
+
+        face_decomposition1 = self.face_decomposition()
+
+        list_set_points1 = [{point for face in faces1 for point in face.points}
+                            for _, faces1 in face_decomposition1.items()]
+        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1])
+                            for sets_points1 in list_set_points1]
+        list_set_points2 = [npy.array([(point[0], point[0], point[0])])]
+
+        minimum_distance = math.inf
+        index1 = None
+        for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
+            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
+            sets_min_dist = npy.min(distances)
+            if sets_min_dist < minimum_distance:
+                minimum_distance = sets_min_dist
+                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
+        faces1 = list(face_decomposition1.values())[index1]
+        minimum_distance = math.inf
+        best_distance_point = None
+        for face1 in faces1:
+            distance, point1 = face1.point_distance(point, True)
+            if distance < minimum_distance:
+                minimum_distance = distance
+                best_distance_point = point1
+        if return_other_point:
+            return minimum_distance, best_distance_point
+        return minimum_distance
+
 
 class PlaneFace3D(Face3D):
     """
@@ -1167,9 +1204,7 @@ class PlaneFace3D(Face3D):
         :return: distance to planeface3D.
         """
 
-        projected_pt = point.plane_projection3d(self.surface3d.frame.origin,
-                                                self.surface3d.frame.u,
-                                                self.surface3d.frame.v)
+        projected_pt = self.surface3d.point_projection(point)
         projection_distance = point.point_distance(projected_pt)
 
         if self.point_belongs(projected_pt):
