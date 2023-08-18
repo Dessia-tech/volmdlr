@@ -1040,7 +1040,7 @@ def fun(x, point3d, degree, knotvector, ctrlpts, size, rational):
     return f_value, jacobian
 
 
-def point_invertion(point3d, x0, bounds, degree, knotvector, ctrlpts, size, rational):
+def point_inversion(point3d, x0, bounds, degree, knotvector, ctrlpts, size, rational):
 
     res = minimize(fun, x0=np.array(x0), jac=True, method="L-BFGS-B",
                    bounds=bounds, args=(point3d, degree, knotvector, ctrlpts, size, rational))

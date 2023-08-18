@@ -14,7 +14,7 @@ from geomdl.operations import split_surface_u, split_surface_v
 from scipy.optimize import least_squares
 
 from dessia_common.core import DessiaObject, PhysicalObject
-from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_invertion
+from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
 import volmdlr.bspline_compiled
 import volmdlr.core
 from volmdlr import display, edges, grid, wires, curves
@@ -831,14 +831,15 @@ class Surface3D(DessiaObject):
                     delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
                     if self.is_undefined_brep(primitives2d[i]):
                         primitives2d[i] = self.fix_undefined_brep_with_neighbors(primitives2d[i], previous_primitive,
-                                                                            primitives2d[(i + 1) % len(primitives2d)])
+                                                                                 primitives2d[
+                                                                                     (i + 1) % len(primitives2d)])
                         delta = previous_primitive.end - primitives2d[i].start
                         if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
                             primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
                                                                        name="construction"))
                             i += 1
                     elif self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
-                         self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
+                            self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
                         primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, current_primitive.start,
                                                                    name="construction"))
                         if i < len(primitives2d):
@@ -1677,7 +1678,7 @@ class PeriodicalSurface(Surface3D):
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
-                    old_innner_contour_positioned.primitives + [closing_linesegment2]
+                                               old_innner_contour_positioned.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:
@@ -2055,8 +2056,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
 
         point = volmdlr.Point3D(self.radius * math.cos(point2d.x),
-                                      self.radius * math.sin(point2d.x),
-                                      point2d.y)
+                                self.radius * math.sin(point2d.x),
+                                point2d.y)
         return self.frame.local_to_global_coordinates(point)
 
     def point3d_to_2d(self, point3d):
@@ -2219,7 +2220,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         line = curves.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
         center3d_plane = plane3d.line_intersections(line)[0]
         circle3d = curves.Circle3D(volmdlr.Frame3D(center3d_plane, plane3d.frame.u,
-                                                         plane3d.frame.v, plane3d.frame.w), self.radius)
+                                                   plane3d.frame.v, plane3d.frame.w), self.radius)
         return [circle3d]
 
     def concurrent_plane_intersection(self, plane3d):
@@ -2233,29 +2234,29 @@ class CylindricalSurface3D(PeriodicalSurface):
         :return: list of intersecting curves.
         """
         a_plane_vector = npy.array([[plane3d.frame.u.x],
-                                   [plane3d.frame.u.y],
-                                   [plane3d.frame.u.z]])
+                                    [plane3d.frame.u.y],
+                                    [plane3d.frame.u.z]])
         b_plane_vector = npy.array([[plane3d.frame.v.x],
-                                   [plane3d.frame.v.y],
-                                   [plane3d.frame.v.z]])
+                                    [plane3d.frame.v.y],
+                                    [plane3d.frame.v.z]])
         c_point = npy.array([[self.frame.origin.x],
-                            [self.frame.origin.y],
-                            [self.frame.origin.z]])
+                             [self.frame.origin.y],
+                             [self.frame.origin.z]])
         i_matrix = npy.identity(3)
         w_vector = npy.array([[self.frame.w.x],
-                             [self.frame.w.y],
-                             [self.frame.w.z]])
+                              [self.frame.w.y],
+                              [self.frame.w.z]])
         point_on_plane = npy.array([[plane3d.frame.origin.x],
-                                   [plane3d.frame.origin.y],
-                                   [plane3d.frame.origin.z]])
+                                    [plane3d.frame.origin.y],
+                                    [plane3d.frame.origin.z]])
         delta = point_on_plane - c_point
         m_matrix = i_matrix - npy.dot(w_vector, w_vector.T)
         q_2 = npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), a_plane_vector)[0][0],
-                        npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0]],
-                       [npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0],
-                        npy.dot(npy.dot(b_plane_vector.T, m_matrix), b_plane_vector)[0][0]]])
+                          npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0]],
+                         [npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0],
+                          npy.dot(npy.dot(b_plane_vector.T, m_matrix), b_plane_vector)[0][0]]])
         q_1 = 2 * npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), delta)[0][0]],
-                           [npy.dot(npy.dot(b_plane_vector.T, m_matrix), delta)[0][0]]])
+                             [npy.dot(npy.dot(b_plane_vector.T, m_matrix), delta)[0][0]]])
         k_vector = - npy.dot(npy.linalg.inv(q_2), q_1)
         q_0 = npy.dot(npy.dot(delta.T, m_matrix), delta) - self.radius ** 2
         s_matrix = q_2 / (npy.dot(npy.dot(k_vector.T, q_2), k_vector) - q_0)
@@ -2358,21 +2359,21 @@ class ToroidalSurface3D(PeriodicalSurface):
     def _bounding_box(self):
         distance = self.tore_radius + self.small_radius
         point1 = self.frame.origin + \
-            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point2 = self.frame.origin + \
-            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point3 = self.frame.origin + \
-            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point4 = self.frame.origin + \
-            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
         point5 = self.frame.origin - \
-            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point6 = self.frame.origin - \
-            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point7 = self.frame.origin - \
-            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point8 = self.frame.origin - \
-            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
 
         return volmdlr.core.BoundingBox.from_points(
             [point1, point2, point3, point4, point5, point6, point7, point8])
@@ -2417,7 +2418,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         theta = math.atan2(u2, u1)
 
         vector_to_tube_center = volmdlr.Vector3D(self.tore_radius * math.cos(theta),
-                                                       self.tore_radius * math.sin(theta), 0)
+                                                 self.tore_radius * math.sin(theta), 0)
         vector_from_tube_center_to_point = volmdlr.Vector3D(x, y, z) - vector_to_tube_center
         phi2 = volmdlr.geometry.vectors3d_angle(vector_to_tube_center, vector_from_tube_center_to_point)
 
@@ -2450,7 +2451,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         frame = object_dict[arguments[1]]
         rcenter = float(arguments[2]) * length_conversion_factor
         rcircle = float(arguments[3]) * length_conversion_factor
-        return cls(frame , rcenter, rcircle, arguments[0][1:-1])
+        return cls(frame, rcenter, rcircle, arguments[0][1:-1])
 
     def to_step(self, current_id):
         """
@@ -2539,10 +2540,10 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
         theta_discontinuity = arc3d.point_belongs(point_theta_discontinuity) and \
-            not arc3d.is_point_edge_extremity(point_theta_discontinuity)
+                              not arc3d.is_point_edge_extremity(point_theta_discontinuity)
         point_phi_discontinuity = self.point2d_to_3d(volmdlr.Point2D(start.x, math.pi))
         phi_discontinuity = arc3d.point_belongs(point_phi_discontinuity) and \
-            not arc3d.is_point_edge_extremity(point_phi_discontinuity)
+                            not arc3d.is_point_edge_extremity(point_phi_discontinuity)
         undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
         undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
         undefined_start_phi = arc3d.start.is_close(point_phi_discontinuity)
@@ -2560,7 +2561,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         point_after_start, point_before_end = self._reference_points(fullarc3d)
         theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
             undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(
-                fullarc3d, start)
+            fullarc3d, start)
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(
             [start, end],
             [undefined_start_theta, undefined_end_theta, undefined_start_phi, undefined_end_phi],
@@ -2713,7 +2714,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         theta = math.atan2(y, x)
 
         vector_to_tube_center = volmdlr.Vector3D(self.tore_radius * math.cos(theta),
-                                                       self.tore_radius * math.sin(theta), 0)
+                                                 self.tore_radius * math.sin(theta), 0)
         vector_from_tube_center_to_point = volmdlr.Vector3D(x, y, z) - vector_to_tube_center
         phi = volmdlr.geometry.vectors3d_angle(vector_to_tube_center, vector_from_tube_center_to_point)
         if z < 0:
@@ -2836,8 +2837,8 @@ class ConicalSurface3D(PeriodicalSurface):
         theta, z = point2d
         radius = math.tan(self.semi_angle) * z
         new_point = volmdlr.Point3D(radius * math.cos(theta),
-                                          radius * math.sin(theta),
-                                          z)
+                                    radius * math.sin(theta),
+                                    z)
         return self.frame.local_to_global_coordinates(new_point)
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D):
@@ -3055,11 +3056,11 @@ class SphericalSurface3D(PeriodicalSurface):
 
     def _bounding_box(self):
         points = [self.frame.origin + volmdlr.Point3D(-self.radius,
-                                                            -self.radius,
-                                                            -self.radius),
+                                                      -self.radius,
+                                                      -self.radius),
                   self.frame.origin + volmdlr.Point3D(self.radius,
-                                                            self.radius,
-                                                            self.radius),
+                                                      self.radius,
+                                                      self.radius),
 
                   ]
         return volmdlr.core.BoundingBox.from_points(points)
@@ -3184,7 +3185,6 @@ class SphericalSurface3D(PeriodicalSurface):
         circle = curves.Circle3D(volmdlr.Frame3D(self.frame.origin, u_vector, v_vector, normal),
                                  start.point_distance(self.frame.origin))
         if start.is_close(end) or linesegment2d.length() == 2 * math.pi:
-
             return [edges.FullArc3D(circle, start)]
         arc = edges.Arc3D(circle, start, end)
         if not arc.point_belongs(interior):
@@ -3232,7 +3232,7 @@ class SphericalSurface3D(PeriodicalSurface):
         if self.frame.w.is_colinear_to(arc.circle.normal, abs_tol=1e-4):
             return True
         # Check if curve is a latitude curve (theta is constant)
-        if self.frame.w.is_perpendicular_to(arc.circle.normal, abs_tol=1e-4) and\
+        if self.frame.w.is_perpendicular_to(arc.circle.normal, abs_tol=1e-4) and \
                 arc.circle.center.is_close(self.frame.origin, 1e-4):
             return True
         return False
@@ -3312,9 +3312,9 @@ class SphericalSurface3D(PeriodicalSurface):
                                               volmdlr.Point2D(theta2, half_pi),
                                               name="construction"),
                           edges.LineSegment2D(
-                volmdlr.Point2D(
-                    theta2, half_pi), volmdlr.Point2D(
-                    theta2, phi2))
+                              volmdlr.Point2D(
+                                  theta2, half_pi), volmdlr.Point2D(
+                                  theta2, phi2))
                           ]
             return primitives
         n = 20
@@ -3683,7 +3683,7 @@ class SphericalSurface3D(PeriodicalSurface):
                     primitives2d[i] = primitives2d[i].reverse()
                 elif self.is_undefined_brep(primitives2d[i]):
                     primitives2d[i] = self.fix_undefined_brep_with_neighbors(primitives2d[i], previous_primitive,
-                                                                             primitives2d[(i+1) % len(primitives2d)])
+                                                                             primitives2d[(i + 1) % len(primitives2d)])
                     delta = previous_primitive.end - primitives2d[i].start
                     if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
                         primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
@@ -3774,7 +3774,7 @@ class SphericalSurface3D(PeriodicalSurface):
         circle_center = plane3d.line_intersections(line)[0]
         start_end = circle_center + plane3d.frame.u * circle_radius
         circle = curves.Circle3D(volmdlr.Frame3D(circle_center, plane3d.frame.u,
-                                                       plane3d.frame.v, plane3d.frame.w),
+                                                 plane3d.frame.v, plane3d.frame.w),
                                  circle_radius)
         return [edges.FullArc3D(circle, start_end)]
 
@@ -3802,13 +3802,13 @@ class SphericalSurface3D(PeriodicalSurface):
         line_direction_vector = line3d.direction_vector()
         vector_linept1_center = self.frame.origin - line3d.point1
         vector_linept1_center = vector_linept1_center.to_vector()
-        a_param = line_direction_vector[0]**2 + line_direction_vector[1]**2 + line_direction_vector[2]**2
+        a_param = line_direction_vector[0] ** 2 + line_direction_vector[1] ** 2 + line_direction_vector[2] ** 2
         b_param = -2 * (line_direction_vector[0] * vector_linept1_center[0] +
                         line_direction_vector[1] * vector_linept1_center[1] +
                         line_direction_vector[2] * vector_linept1_center[2])
-        c_param = (vector_linept1_center[0]**2 + vector_linept1_center[1]**2 +
-                   vector_linept1_center[2]**2 - self.radius**2)
-        b2_minus4ac = b_param**2 - 4 * a_param * c_param
+        c_param = (vector_linept1_center[0] ** 2 + vector_linept1_center[1] ** 2 +
+                   vector_linept1_center[2] ** 2 - self.radius ** 2)
+        b2_minus4ac = b_param ** 2 - 4 * a_param * c_param
         if math.isclose(b2_minus4ac, 0, abs_tol=1e-8):
             t_param = -b_param / (2 * a_param)
             return [line3d.point1 + line_direction_vector * t_param]
@@ -4310,7 +4310,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        if self.edge.__class__.__name__ != "Line3D" and hasattr(self.edge.simplify, "circle") and\
+        if self.edge.__class__.__name__ != "Line3D" and hasattr(self.edge.simplify, "circle") and \
                 math.isclose(self.edge.simplify.circle.radius, arc3d.circle.radius, rel_tol=0.01):
             if self.edge.is_point_edge_extremity(arc3d.start):
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
@@ -4539,12 +4539,12 @@ class BSplineSurface3D(Surface3D):
     :type name: str
     """
     face_class = "BSplineFace3D"
-
+    _eq_is_data_eq = False
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
                  weights: List[float] = None, name: str = ''):
         self.ctrlpts = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in control_points],
-                                           dtype=npy.float64)
+                                   dtype=npy.float64)
         self.degree_u = int(degree_u)
         self.degree_v = int(degree_v)
         self.nb_u = int(nb_u)
@@ -4588,6 +4588,56 @@ class BSplineSurface3D(Surface3D):
 
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
+
+    def __hash__(self):
+        """
+        Creates custom hash to the surface.
+        """
+        control_points = self.control_points
+        weights = self.weights
+        if weights is None:
+            weights = tuple(1.0 for _ in range(len(control_points)))
+        else:
+            weights = tuple(self.weights)
+        return hash((tuple(control_points),
+                     self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
+                     self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v, weights))
+
+    def __eq__(self, other):
+        """
+        Defines the BSpline surface equality operation.
+        """
+        if not hasattr(other, "degree_u") or not hasattr(other, "rational") or not hasattr(other, "nb_u") \
+                or not hasattr(other, "knotvector"):
+            return False
+        if self.rational != other.rational:
+            return False
+        if (self.degree_u != other.degree_u or self.degree_v != other.degree_v or
+                self.nb_u != other.nb_u or self.nb_v != other.nb_v):
+            return False
+
+        for s_k, o_k in zip(self.knotvector, other.knotvector):
+            if len(s_k) != len(o_k):
+                return False
+            if any(not math.isclose(s, o, abs_tol=1e-6) for s, o in zip(s_k, o_k)):
+                return False
+        self_control_points = self.control_points
+        other_control_points = other.control_points
+        if len(self_control_points) != len(other_control_points) or \
+                any(not s_point.is_close(o_point) for s_point, o_point in
+                    zip(self_control_points, other_control_points)):
+            return False
+        if self.rational and other.rational:
+            if len(self.weights) != len(other.weights) or \
+                    any(not math.isclose(s_w, o_w, abs_tol=1e-6) for s_w, o_w in zip(self.weights, other.weights)):
+                return False
+        return True
+
+    def _data_eq(self, other):
+        """
+        Defines dessia common object equality.
+        """
+        return self.__eq__(other)
 
     @property
     def data(self):
@@ -4964,11 +5014,10 @@ class BSplineSurface3D(Surface3D):
         #     if not utilities.check_params([start_u, stop_u, start_v, stop_v]):
         #         raise GeomdlException("Parameters should be between 0 and 1")
 
-
         # Evaluate and cache
         self._eval_points = npy.asarray(evaluate_surface(self.data,
-                                                     start=(start_u, start_v),
-                                                     stop=(stop_u, stop_v)), dtype=npy.float64)
+                                                         start=(start_u, start_v),
+                                                         stop=(stop_u, stop_v)), dtype=npy.float64)
 
     @property
     def evalpts(self):
@@ -5197,6 +5246,7 @@ class BSplineSurface3D(Surface3D):
                 jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
                                       vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
+
         #
         # min_bound_x, max_bound_x = self.surface.domain[0]
         # min_bound_y, max_bound_y = self.surface.domain[1]
@@ -5245,7 +5295,7 @@ class BSplineSurface3D(Surface3D):
         bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
         results = []
         for x0 in x0s:
-            res = point_invertion(point3d_array, x0, bounds, [self.degree_u, self.degree_v],
+            res = point_inversion(point3d_array, x0, bounds, [self.degree_u, self.degree_v],
                                   self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational)
             if res.fun <= tol:
                 return volmdlr.Point2D(*res.x)
@@ -5416,7 +5466,6 @@ class BSplineSurface3D(Surface3D):
             if not linesegment.point_belongs(point, abs_tol=1e-4):
                 return False
         return True
-
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -6008,27 +6057,27 @@ class BSplineSurface3D(Surface3D):
         frame_deformed = volmdlr.Frame2D(
             finite_elements[k].center_of_mass(),
             volmdlr.Vector2D(finite_elements[k].primitives[1].middle_point()[0] -
-                                   finite_elements[k].center_of_mass()[0],
-                                   finite_elements[k].primitives[1].middle_point()[1] -
-                                   finite_elements[k].center_of_mass()[1]),
+                             finite_elements[k].center_of_mass()[0],
+                             finite_elements[k].primitives[1].middle_point()[1] -
+                             finite_elements[k].center_of_mass()[1]),
             volmdlr.Vector2D(finite_elements[k].primitives[0].middle_point()[0] -
-                                   finite_elements[k].center_of_mass()[0],
-                                   finite_elements[k].primitives[0].middle_point()[1] -
-                                   finite_elements[k].center_of_mass()[1]))
+                             finite_elements[k].center_of_mass()[0],
+                             finite_elements[k].primitives[0].middle_point()[1] -
+                             finite_elements[k].center_of_mass()[1]))
 
         point2d_frame_deformed = volmdlr.Point2D(point2d.frame_mapping(frame_deformed, 'new')[0],
-                                                       point2d.frame_mapping(frame_deformed, 'new')[1])
+                                                 point2d.frame_mapping(frame_deformed, 'new')[1])
 
         frame_inital = volmdlr.Frame2D(
             finite_elements_initial[k].center_of_mass(),
             volmdlr.Vector2D(finite_elements_initial[k].primitives[1].middle_point()[0] -
-                                   finite_elements_initial[k].center_of_mass()[0],
-                                   finite_elements_initial[k].primitives[1].middle_point()[1] -
-                                   finite_elements_initial[k].center_of_mass()[1]),
+                             finite_elements_initial[k].center_of_mass()[0],
+                             finite_elements_initial[k].primitives[1].middle_point()[1] -
+                             finite_elements_initial[k].center_of_mass()[1]),
             volmdlr.Vector2D(finite_elements_initial[k].primitives[0].middle_point()[0] -
-                                   finite_elements_initial[k].center_of_mass()[0],
-                                   finite_elements_initial[k].primitives[0].middle_point()[1] -
-                                   finite_elements_initial[k].center_of_mass()[1]))
+                             finite_elements_initial[k].center_of_mass()[0],
+                             finite_elements_initial[k].primitives[0].middle_point()[1] -
+                             finite_elements_initial[k].center_of_mass()[1]))
 
         point2d = point2d_frame_deformed.frame_mapping(frame_inital, 'old')
         if point2d.x < 0:
@@ -6941,7 +6990,8 @@ class BSplineSurface3D(Surface3D):
 
         return xmin, xmax, ymin, ymax
 
-    def _determine_contour_params(self, outer_contour_start, outer_contour_end, inner_contour_start, inner_contour_end):
+    def _determine_contour_params(self, outer_contour_start, outer_contour_end, inner_contour_start,
+                                  inner_contour_end):
         """
         Helper function.
         """
@@ -6990,7 +7040,7 @@ class BSplineSurface3D(Surface3D):
                 closing_linesegment2 = edges.LineSegment2D(inner_contour.primitives[-1].end,
                                                            outer_contour.primitives[0].start)
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
-                    inner_contour.primitives + [closing_linesegment2]
+                                               inner_contour.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-3)
             else:
@@ -7144,6 +7194,7 @@ class BSplineSurface3D(Surface3D):
         Uses local discretization and line intersection with the tangent line at the point just before the undefined
         point on the BREP of the 3D edge to find the real values on parametric domain.
         """
+
         def get_local_discretization_points(start_point, end_points):
             distance = start_point.point_distance(end_points)
             maximum_linear_distance_reference_point = 1e-5
