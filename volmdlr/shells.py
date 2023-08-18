@@ -1782,15 +1782,15 @@ class OpenTriangleShell3D(OpenShell3D):
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
                        pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'SerializableObject':
         t_points = dict_['unique_point']
-        t_index = dict_['faces']
+        faces = dict_['faces']
         alpha = dict_['alpha']
         color = dict_['color']
 
         liste_triangles = []
-        for t in t_index:
-            liste_triangles.append(volmdlr.faces.Triangle3D(point1=volmdlr.Point3D.dict_to_object(t_points[t[0]]),
-                                                            point2=volmdlr.Point3D.dict_to_object(t_points[t[1]]),
-                                                            point3=volmdlr.Point3D.dict_to_object(t_points[t[2]])
+        for face in faces:
+            liste_triangles.append(volmdlr.faces.Triangle3D(point1=volmdlr.Point3D.dict_to_object(t_points[face[0]]),
+                                                            point2=volmdlr.Point3D.dict_to_object(t_points[face[1]]),
+                                                            point3=volmdlr.Point3D.dict_to_object(t_points[face[2]])
                                                             ))
 
         return cls(faces=liste_triangles, color=color, alpha=alpha)
