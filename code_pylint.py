@@ -19,7 +19,7 @@ MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 190,
                      "wrong-spelling-in-docstring": 143,
                      'invalid-name': 167,
-                     'no-member': 28,
+                     'no-member': 25,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 62,
@@ -30,7 +30,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-branches': 26,
                      'too-many-statements': 13,
                      'super-init-not-called': 15,
-                     'no-name-in-module': 21,
+                     'no-name-in-module': 2,
                      'abstract-method': 32,
                      'duplicate-code': 10,
                      'arguments-renamed': 52,
@@ -67,8 +67,8 @@ ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-man
                                 "protected-access", "cyclic-import", "line-too-long", "too-many-lines", "no-member",
                                 "too-few-public-methods", "duplicate-code", "too-many-return-statements",
                                 "import-outside-toplevel", "arguments-differ", "arguments-renamed",
-                                "too-many-boolean-expressions", "super-init-not-called", 'consider-using-enumerate',
-                                'unbalanced-tuple-unpacking', 'undefined-variable']
+                                "too-many-boolean-expressions", "super-init-not-called", "unused-argument", 
+                                'consider-using-enumerate', 'unbalanced-tuple-unpacking', 'undefined-variable']
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
