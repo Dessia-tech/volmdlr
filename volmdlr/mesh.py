@@ -173,9 +173,9 @@ class TriangularElement(vmw.Triangle):
         normal1 = vm.Vector2D(-vec1.y, vec1.x)
         normal2 = vm.Vector2D(-vec2.y, vec2.x)
         normal3 = vm.Vector2D(-vec3.y, vec3.x)
-        normal1.normalize()
-        normal2.normalize()
-        normal3.normalize()
+        normal1 = normal1.unit_vector()
+        normal2 = normal2.unit_vector()
+        normal3 = normal3.unit_vector()
         if normal1.dot(vec2) < 0:
             normal1 = - normal1
         if normal2.dot(vec3) < 0:
@@ -316,9 +316,9 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         normal1 = vm.Vector2D(-vec1.y, vec1.x)
         normal2 = vm.Vector2D(-vec2.y, vec2.x)
         normal3 = vm.Vector2D(-vec3.y, vec3.x)
-        normal1.normalize()
-        normal2.normalize()
-        normal3.normalize()
+        normal1 = normal1.unit_vector()
+        normal2 = normal2.unit_vector()
+        normal3 = normal3.unit_vector()
         if normal1.dot(vec2) < 0:
             normal1 = - normal1
         if normal2.dot(vec3) < 0:
@@ -511,9 +511,9 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
     #     normal1 = vm.Vector2D(-vec1.y, vec1.x)
     #     normal2 = vm.Vector2D(-vec2.y, vec2.x)
     #     normal3 = vm.Vector2D(-vec3.y, vec3.x)
-    #     normal1.normalize()
-    #     normal2.normalize()
-    #     normal3.normalize()
+    #     normal1 = normal1.unit_vector()
+    #     normal2 = normal2.unit_vector()
+    #     normal3 = normal3.unit_vector()
     #     if normal1.dot(vec2) < 0:
     #         normal1 = - normal1
     #     if normal2.dot(vec3) < 0:

@@ -76,7 +76,7 @@ list_centers_of_mass = [contour.center_of_mass() for contour in cutted_contours]
 
 u1 = cut_line.point_projection(
     list_centers_of_mass[0])[0] - list_centers_of_mass[0]
-u1.normalize()
+u1 = u1.unit_vector()
 sign = -1
 for contour in cutted_contours:
     r, g, b = np.random.random(), np.random.random(), np.random.random()

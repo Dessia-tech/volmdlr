@@ -141,7 +141,7 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
     radius = circle3d.radius
     linseg_direction_vector = linesegment3d.direction_vector()
     vector_point_origin = circle_point - circle3d.frame.origin
-    vector_point_origin.normalize()
+    vector_point_origin = vector_point_origin.unit_vector()
     w = circle3d.frame.origin - linesegment3d.start
     v = circle3d.frame.w.cross(vector_point_origin)
 

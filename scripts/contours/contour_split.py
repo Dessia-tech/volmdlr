@@ -10,7 +10,7 @@ from volmdlr.utils.common_operations import random_color
 plt, (ax1, ax2, ax3) = plt.subplots(1, 3)
 
 u = vm.Vector2D.random(0, 1, 0, 1)
-u.normalize()
+u = u.unit_vector()
 v = u.normal_vector()
 
 l = 0.05

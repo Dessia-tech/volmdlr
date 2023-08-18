@@ -850,7 +850,7 @@ class Cylinder(shells.ClosedShell3D):
         position = 0.5 * (point1 + point2)
         length = point1.point_distance(point2)
         axis = point2 - point1
-        axis.normalize()
+        axis = axis.unit_vector()
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
 
@@ -1346,7 +1346,7 @@ class HollowCylinder(shells.ClosedShell3D):
         position = 0.5 * (point1 + point2)
         length = point1.point_distance(point2)
         axis = point2 - point1
-        axis.normalize()
+        axis = axis.unit_vector()
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
 
@@ -1646,7 +1646,7 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
     def __init__(self, obj, vectorextru: volmdlr.Vector3D, name: str = ''):
         self.obj = obj
-        vectorextru.normalize()
+        vectorextru = vectorextru.unit_vector()
         self.vectorextru = vectorextru
         if obj.__class__ is curves.Ellipse3D:
             self.points = obj.tessel_points

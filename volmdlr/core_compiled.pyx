@@ -712,21 +712,6 @@ class Vector2D(Vector):
         """
         return CVector2Dnorm(self.x, self.y)
 
-    def normalize(self):
-        """
-        In place operation, normalizing the coordinates of the 2-dimensional
-        vector.
-
-        :return: None
-        :rtype: None
-        """
-        n = self.norm()
-        if math.isclose(n, 0, abs_tol=1e-9):
-            raise ZeroDivisionError
-
-        self.x /= n
-        self.y /= n
-
     def unit_vector(self):
         """Calculates the unit vector."""
         n = self.norm()
@@ -884,8 +869,7 @@ class Vector2D(Vector):
         :rtype: :class:`volmdlr.Vector2D`
         """
         n = self.normal_vector()
-        n.normalize()
-        return n
+        return n.unit_vector()
 
     def deterministic_unit_normal_vector(self):
         """
@@ -1528,22 +1512,6 @@ class Vector3D(Vector):
         """
         return CVector3Dnorm(self.x, self.y, self.z)
 
-    def normalize(self) -> None:
-        """
-        In place operation, normalizing the coordinates of the 2-dimensional
-        vector.
-
-        :return: None
-        :rtype: None
-        """
-        n = self.norm()
-        if n == 0:
-            raise ZeroDivisionError
-
-        self.x /= n
-        self.y /= n
-        self.z /= n
-
     def unit_vector(self):
         """Calculates the unit vector."""
         n = self.norm()
@@ -1688,7 +1656,7 @@ class Vector3D(Vector):
         :rtype: :class:`volmdlr.Vector3D`
         """
         z = x.cross(y)
-        z.normalize()
+        z = z.unit_vector()
         return self - z.dot(self - plane_origin) * z
 
     def plane_projection2d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
@@ -1704,9 +1672,6 @@ class Vector3D(Vector):
         :return: The projection on the 2D plane
         :rtype: :class:`volmdlr.Point2D`
         """
-        # z = x.cross(y)
-        # z.normalize()
-        # p3d = self - (self - plane_origin).dot(z) * z
         p3d = self.plane_projection3d(plane_origin, x, y)
         u1 = p3d.dot(x)
         u2 = p3d.dot(y)
@@ -1741,8 +1706,7 @@ class Vector3D(Vector):
         v = Vector3D.random(0, 1, 0, 1, 0, 1)
 
         v = v - v.dot(self) * self / (self.norm()**2)
-        v.normalize()
-        return v
+        return v.unit_vector()
 
     def deterministic_normal_vector(self):
         """
@@ -2587,8 +2551,8 @@ class Basis2D(Basis):
         :return: None
         :rtype: None
         """
-        self.u.normalize()
-        self.v.normalize()
+        self.u = self.u.unit_vector()
+        self.v = self.v.unit_vector()
 
 
 XY = Basis2D(X2D, Y2D)
@@ -2698,9 +2662,9 @@ class Basis3D(Basis):
         :type vector2: :class:`volmdlr.Vector3D`
         """
         u = vector1.copy()
-        u.normalize()
+        u = u.unit_vector()
         v = vector2 - vector2.dot(vector1) * vector1
-        v.normalize()
+        v = v.unit_vector()
         w = u.cross(v)
         return Basis3D(u, v, w)
 
@@ -2915,11 +2879,11 @@ class Basis3D(Basis):
         :rtype: None
         """
         if not math.isclose(self.u.norm(), 0.0, abs_tol=1e-10):
-            self.u.normalize()
+            self.u = self.u.unit_vector()
         if not math.isclose(self.v.norm(), 0.0, abs_tol=1e-10):
-            self.v.normalize()
+            self.v = self.v.unit_vector()
         if not math.isclose(self.w.norm(), 0.0, abs_tol=1e-10):
-            self.w.normalize()
+            self.w = self.w.unit_vector()
 
 
 class Frame2D(Basis2D):
@@ -3529,7 +3493,7 @@ class Frame3D(Basis3D):
         if main_axis not in [X3D, Y3D, Z3D]:
             raise ValueError("main_axis must be X, Y or Z of the global frame")
 
-        vector.normalize()
+        vector = vector.unit_vector()
 
         if vector == main_axis:
             # The local frame is oriented like the global frame
@@ -3546,7 +3510,7 @@ class Frame3D(Basis3D):
         # Rotation axis
         vector2 = vector - main_axis
         rot_axis = main_axis.cross(vector2)
-        rot_axis.normalize()
+        rot_axis = rot_axis.unit_vector()
 
         u = X3D.rotation(O3D, rot_axis, rot_angle)
         v = Y3D.rotation(O3D, rot_axis, rot_angle)
@@ -3569,7 +3533,7 @@ class Frame3D(Basis3D):
         vector1 = vector1.to_vector().unit_vector()
         vector2 = vector2.to_vector().unit_vector()
         normal = vector1.cross(vector2)
-        normal.normalize()
+        normal = normal.unit_vector()
         return cls(point1, vector1, normal.cross(vector1), normal)
 
     @classmethod
