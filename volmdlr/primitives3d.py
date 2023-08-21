@@ -1571,8 +1571,13 @@ class HollowCylinder(shells.ClosedShell3D):
 
         return [lower_face, cylindrical_face1, cylindrical_face2, upper_face]
 
-    def _bounding_box(self):
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
+        """
+        Computes the bounding box of a hollow cylinder.
 
+        :return: The BoundingBox of the HollowCylinder.
+        :rtype: :class:`volmdlr.core.BoundingBox`
+        """
         radius = self.outer_radius
 
         point_a = self.position - self.length / 2 * self.axis
