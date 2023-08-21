@@ -773,11 +773,35 @@ class Cylinder(shells.ClosedShell3D):
     Creates a full cylinder with the position, the axis of revolution the radius and the length.
     """
 
-    def __init__(self,
-                 frame: volmdlr.Frame3D,
-                 radius: float, length: float,
-                 color: Tuple[float, float, float] = None, alpha: float = 1.,
-                 name: str = ''):
+    def __init__(
+        self,
+        frame: volmdlr.Frame3D,
+        radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1.0,
+        name: str = "",
+    ):
+        """
+        Initializes the Cylinder instance.
+
+        The `Cylinder` class creates a cylinder with the specified radius and length, positioned using the given frame.
+        The axis of revolution of the cylinder corresponds to the local z-axis (w-axis) of the provided frame.
+
+        :param frame: The reference frame defining the position and orientation of the cylinder.
+            The w-axis of the frame corresponds to the axis of revolution of the cylinder.
+        :type frame: volmdlr.Frame3D
+        :param radius: The radius of the cylinder.
+        :type radius: float
+        :param length: The length of the cylinder.
+        :type length: float
+        :param color: The color of the cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the cylinder. Default is an empty string.
+        :type name: str, optional
+        """
         self.frame = frame
         self.position = frame.origin
         self.axis = frame.w
