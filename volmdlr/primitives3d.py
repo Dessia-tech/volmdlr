@@ -1461,7 +1461,7 @@ class Cone(shells.ClosedShell3D):
         """
         Create a cone from a center point, an axis, radius, and length.
 
-        :param center_point: The center point of the cone.
+        :param center_point: The center point of the cone (i.e. the middle point of the axis of the cone).
         :type center_point: volmdlr.Point3D
         :param axis: The axis of revolution for the cone.
         :type axis: volmdlr.Vector3D
