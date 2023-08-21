@@ -808,6 +808,7 @@ class Cylinder(shells.ClosedShell3D):
         self.radius = radius
         self.length = length
         faces = self.shell_faces()
+
         shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
