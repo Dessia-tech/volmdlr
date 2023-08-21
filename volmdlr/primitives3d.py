@@ -1688,12 +1688,15 @@ class HollowCylinder(shells.ClosedShell3D):
             name=self.name,
         )
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D) -> 'HollowCylinder':
         """
         Hollow cylinder translation.
 
-        :param offset: translation vector.
+        :param offset: The translation vector.
+        :type offset: volmdlr.Vector3D
+
         :return: A new translated HollowCylinder.
+        :rtype: HollowCylinder
         """
         return self.__class__(
             frame=self.frame.translation(offset),
