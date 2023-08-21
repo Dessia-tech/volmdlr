@@ -1336,7 +1336,6 @@ class Cone(shells.ClosedShell3D):
         self.axis = frame.w
         self.radius = radius
         self.length = length
-        self.bounding_box = self._bounding_box()
 
         faces = self.shell_faces()
 
@@ -1365,11 +1364,15 @@ class Cone(shells.ClosedShell3D):
 
         return [lower_face, conical_face]
 
-    def _bounding_box(self):
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
         """
-        A is the point at the basis.
+        Compute the boudning box of the cone.
 
+        A is the point at the basis.
         B is the top.
+
+        :return: The BoundingBox of the Cone.
+        :rtype: :class:`volmdlr.core.BoundingBox`
         """
         point_a = self.position - self.length / 2 * self.axis
         point_b = self.position + self.length / 2 * self.axis
