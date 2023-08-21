@@ -905,8 +905,24 @@ class Cylinder(shells.ClosedShell3D):
 
         frame = volmdlr.Frame3D(position, u_vector, v_vector, axis)
 
-        return cls(frame, radius, length=length, color=color, alpha=alpha, name=name)
+        return cls(frame=frame, radius=radius, length=length, color=color, alpha=alpha, name=name)
 
+    @classmethod
+    def from_center_point_and_axis(
+            cls,
+            center_point: volmdlr.Point3D,
+            axis: volmdlr.Vector3D,
+            radius: float,
+            length: float,
+            color: Tuple[float, float, float] = None,
+            alpha: float = 1,
+            name: str = "",
+    ):
+        u_vector = axis.deterministic_unit_normal_vector()
+        v_vector = axis.cross(u_vector)
+        frame = volmdlr.Frame3D(center_point, u_vector, v_vector, axis)
+
+        return cls(frame=frame, radius=radius, length=length, color=color, alpha=alpha, name=name)
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
