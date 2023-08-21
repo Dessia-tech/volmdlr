@@ -5,22 +5,22 @@ from volmdlr.primitives3d import Cylinder
 
 
 class TestCylinder(unittest.TestCase):
-    cylinder1 = Cylinder(frame=volmdlr.Frame3D.from_point_and_normal(
-        volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(1, 0, 0)),
+    cylinder1 = Cylinder(
+        frame=volmdlr.Frame3D.from_point_and_normal(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(1, 0, 0)),
         radius=0.02,
         length=0.1,
         color=(0, 0, 1),
     )
 
-    cylinder2 = Cylinder(frame=volmdlr.Frame3D.from_point_and_normal(
-        volmdlr.Point3D(0.05, 0, 0), volmdlr.Vector3D(0, 1, 0)),
+    cylinder2 = Cylinder(
+        frame=volmdlr.Frame3D.from_point_and_normal(volmdlr.Point3D(0.05, 0, 0), volmdlr.Vector3D(0, 1, 0)),
         radius=0.005,
         length=0.01,
         color=(1, 0, 1),
     )
 
-    cylinder3 = Cylinder(frame=volmdlr.Frame3D.from_point_and_normal(
-        volmdlr.Point3D(0.15, 0, 0), volmdlr.Vector3D(0, 1, 0)),
+    cylinder3 = Cylinder(
+        frame=volmdlr.Frame3D.from_point_and_normal(volmdlr.Point3D(0.15, 0, 0), volmdlr.Vector3D(0, 1, 0)),
         radius=0.005,
         length=0.01,
         color=(1, 0, 1),
@@ -36,9 +36,7 @@ class TestCylinder(unittest.TestCase):
         self.assertTrue(self.cylinder1.point_belongs(point))
 
     def test_interference_volume_with_other_cylinder(self):
-        interference_volume = self.cylinder1.interference_volume_with_other_cylinder(
-            other_cylinder=self.cylinder1
-        )
+        interference_volume = self.cylinder1.interference_volume_with_other_cylinder(other_cylinder=self.cylinder1)
         self.assertEqual(interference_volume, self.cylinder1.volume())
 
     def test_min_distance_to_other_cylinder(self):
