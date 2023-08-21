@@ -1149,11 +1149,18 @@ class BSplineCurve(Edge):
         :rtype: float
         """
         if not self._length:
-            if self.delta != 0.01:
-                self.delta = 0.01
-            if self._eval_points is None:
+            if self._eval_points is None and self.delta == 0.01:
                 self.evaluate()
-            differences = npy.diff(self._eval_points, axis=0)
+                points = self._eval_points
+            elif self.delta == 0.01:
+                points = self._eval_points
+            else:
+                datadict = self.data
+                datadict["sample_size"] = 100
+                start, stop = self.domain
+                points = npy.asarray(evaluate_curve(datadict, start=start, stop=stop), dtype=npy.float64)
+
+            differences = npy.diff(points, axis=0)
 
             squared_distances = npy.sum(differences ** 2, axis=1)
 
@@ -1705,7 +1712,7 @@ class BSplineCurve(Edge):
         """
         return [self.point_at_abscissa(self.abscissa(point))]
 
-    def local_discretization(self, point1, point2, number_points: int = 10):
+    def local_discretization(self, point1, point2, number_points: int = 10, tol: float = 1e-6):
         """
         Gets n discretization points between two given points of the edge.
 
@@ -1717,12 +1724,12 @@ class BSplineCurve(Edge):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         # special case periodical bsplinecurve
-        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=1e-6):
+        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=tol):
             abscissa2 = self.length()
         discretized_points_between_1_2 = []
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
             abscissa_point = self.point_at_abscissa(abscissa)
-            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2, tol=tol):
                 discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
 
@@ -3474,13 +3481,13 @@ class ArcEllipse2D(Edge):
             return True
         point_in_local_coords = self.ellipse.frame.global_to_local_coordinates(point)
         if not math.isclose(
-                (point_in_local_coords.x - self.ellipse.center.x) ** 2 / self.ellipse.major_axis ** 2 +
-                (point_in_local_coords.y - self.ellipse.center.y) ** 2 / self.ellipse.minor_axis ** 2,
-                1, abs_tol=abs_tol) and\
+                round((point_in_local_coords.x - self.ellipse.center.x) ** 2 / self.ellipse.major_axis ** 2 +
+                (point_in_local_coords.y - self.ellipse.center.y) ** 2 / self.ellipse.minor_axis ** 2, 2),
+                1.0, abs_tol=abs_tol) and\
                 not math.isclose(
-                    (point_in_local_coords.x - self.ellipse.center.x) ** 2 / self.ellipse.minor_axis ** 2 +
-                    (point_in_local_coords.y - self.ellipse.center.y) ** 2 / self.ellipse.major_axis ** 2,
-                    1, abs_tol=abs_tol):
+                    round((point_in_local_coords.x - self.ellipse.center.x) ** 2 / self.ellipse.minor_axis ** 2 +
+                    (point_in_local_coords.y - self.ellipse.center.y) ** 2 / self.ellipse.major_axis ** 2, 2),
+                    1.0, abs_tol=abs_tol):
             return False
         clockwise_arcellipse = self.reverse() if self.ellipse.is_trigo else self
         vector_start = clockwise_arcellipse.start - clockwise_arcellipse.ellipse.center
@@ -3914,8 +3921,8 @@ class FullArcEllipse(Edge):
         :return: True is point lies on the ellipse, False otherwise
         """
         new_point = self.ellipse.frame.global_to_local_coordinates(point)
-        return math.isclose(new_point.x ** 2 / self.ellipse.major_axis ** 2 +
-                            new_point.y ** 2 / self.ellipse.minor_axis ** 2, 1.0, abs_tol=abs_tol)
+        return math.isclose(round(new_point.x ** 2 / self.ellipse.major_axis ** 2 +
+                            new_point.y ** 2 / self.ellipse.minor_axis ** 2, 2), 1.0, abs_tol=abs_tol)
 
     def get_reverse(self):
         """
@@ -4834,7 +4841,9 @@ class BSplineCurve3D(BSplineCurve):
         if not same_sense:
             bspline_curve = self.reverse()
         n = len(bspline_curve.control_points)
-        local_discretization = bspline_curve.local_discretization(point1, point2, n)
+        local_discretization = bspline_curve.local_discretization(point1, point2, n, tol=1e-8)
+        if len(local_discretization) <= bspline_curve.degree:
+            return bspline_curve
         return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
