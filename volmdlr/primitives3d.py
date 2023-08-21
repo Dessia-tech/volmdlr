@@ -1614,22 +1614,55 @@ class HollowCylinder(shells.ClosedShell3D):
         return self.length * math.pi * (self.outer_radius**2 - self.inner_radius**2)
 
     @classmethod
-    def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
-                             inner_radius: float, outer_radius: float,
-                             color: Tuple[float, float, float] = None, alpha: float = 1,
-                             name: str = ''):
+    def from_extremal_points(
+        cls,
+        point1: volmdlr.Point3D,
+        point2: volmdlr.Point3D,
+        inner_radius: float,
+        outer_radius: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ):
+        """
+        Create a hollow cylinder from two extremal points.
+
+        :param point1: The first extremal point defining the base of the hollow cylinder.
+        :type point1: volmdlr.Point3D
+        :param point2: The second extremal point defining the top of the hollow cylinder.
+        :type point2: volmdlr.Point3D
+        :param inner_radius: The inner radius of the hollow cylinder.
+        :type inner_radius: float
+        :param outer_radius: The outer radius of the hollow cylinder.
+        :type outer_radius: float
+        :param color: The color of the hollow cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the hollow cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the hollow cylinder. Default is an empty string.
+        :type name: str, optional
+
+        :return: A HollowCylinder instance created from the specified extremal points.
+        :rtype: HollowCylinder
+        """
         position = 0.5 * (point1 + point2)
         length = point1.point_distance(point2)
-        axis = point2 - point1
+        axis = (point2 - point1).to_vector()
         axis.normalize()
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
 
         frame = volmdlr.Frame3D(position, u_vector, v_vector, axis)
+
         return cls(
-            frame,
-            inner_radius=inner_radius, outer_radius=outer_radius, length=length,
-                   color=color, alpha=alpha, name=name)
+            frame=frame,
+            inner_radius=inner_radius,
+            outer_radius=outer_radius,
+            length=length,
+            color=color,
+            alpha=alpha,
+            name=name,
+        )
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
