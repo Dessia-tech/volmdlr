@@ -770,7 +770,7 @@ class RevolvedProfile(shells.ClosedShell3D):
 
 class Cylinder(shells.ClosedShell3D):
     """
-    Creates a full cylinder with the position, the axis of revolution the radius and the length.
+    Represents a 3D cylinder defined by its frame, radius, and length.
     """
 
     def __init__(
