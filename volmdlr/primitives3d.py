@@ -907,8 +907,8 @@ class Cylinder(shells.ClosedShell3D):
 
         return cls(frame, radius, length=length, color=color, alpha=alpha, name=name)
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
+
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Cylinder rotation.
 
@@ -919,7 +919,9 @@ class Cylinder(shells.ClosedShell3D):
         """
         return self.__class__(
             frame=self.frame.rotation(center, axis, angle),
-            length=self.length, radius=self.radius)
+            length=self.length,
+            radius=self.radius,
+        )
 
     def translation(self, offset: volmdlr.Vector3D):
         """
