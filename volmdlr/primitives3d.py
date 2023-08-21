@@ -839,7 +839,7 @@ class Cylinder(shells.ClosedShell3D):
         """
         Computes the bounding box of a cylinder.
 
-        :return: The BoundingBox
+        :return: The BoundingBox of the Cylinder.
         :rtype: :class:`volmdlr.core.BoundingBox`
         """
         # This was copied for HollowCylinder. Inheritance removed to avoid problems
@@ -869,8 +869,13 @@ class Cylinder(shells.ClosedShell3D):
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def volume(self):
-        """Computes the volume of the cylinder."""
+    def volume(self) -> float:
+        """
+        Compute the volume of the cylinder.
+
+        :return: The computed volume of the Cylinder.
+        :rtype: float
+        """
         return self.length * math.pi * self.radius**2
 
     @classmethod
