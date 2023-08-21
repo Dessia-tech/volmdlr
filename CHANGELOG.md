@@ -67,8 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
-- Cylinder / HollowCylinder: `from_end_points` replace the new deprecated `from_extremal_points` because `extremal` does
-not exist.
+- Cylinder / HollowCylinder: `from_extremal_points` is now depracted. Use `from_end_points` instead (for lexical reason)
 
 ### Unittests
 - Cylinder / Cone / HollowCylinder
