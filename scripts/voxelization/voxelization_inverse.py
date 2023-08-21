@@ -9,7 +9,7 @@ from volmdlr.voxelization import Voxelization
 VOXEL_SIZE = 0.01
 
 # Create a volume model
-cylinder = Cylinder(volmdlr.Point3D(0.0, 0.0, 0.1), volmdlr.Z3D, 0.1, 0.2, name="Cylinder")
+cylinder = Cylinder(volmdlr.OXYZ, 0.1, 0.2, name="Cylinder")
 volume_model = VolumeModel([cylinder])
 
 # Voxelize the volume model (it uses the triangulated model to create the voxelization)
