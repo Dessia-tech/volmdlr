@@ -180,6 +180,26 @@ def line_segments_to_pixels(
     return set(_line_segments_to_pixels(line_segments, pixel_size))
 
 
+def triangle_intersects_voxel(
+    triangle: Triangle, voxel_center: Point, voxel_extents: Tuple[float, float, float]
+) -> bool:
+    """
+    Helper function to compute if there is an intersection between a 3D triangle and a voxel.
+    This function uses the "Separating Axis Theorem".
+
+    :param triangle: The triangle to check if it intersects with the voxel.
+    :type: triangle: tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]
+    :param voxel_center: The center point of the voxel.
+    :type voxel_center: tuple[float, float, float]
+    :param voxel_extents: The extents of the voxel in each direction (half-size of the voxel size).
+    :type voxel_extents: list[float, float, float]
+
+    :return: True if there is an intersection, False otherwise.
+    :rtype: bool
+    """
+    return _triangle_intersects_voxel(triangle, voxel_center, voxel_extents)
+
+
 # CYTHON FUNCTIONS
 
 

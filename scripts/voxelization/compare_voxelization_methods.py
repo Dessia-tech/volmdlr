@@ -12,7 +12,7 @@ VOXEL_SIZE = 0.01
 
 # Create a volume model
 sphere = Sphere(volmdlr.O3D, 0.1, name="Sphere")
-cylinder = Cylinder(volmdlr.Point3D(0.0, 0.0, 0.1), volmdlr.Z3D, 0.1, 0.2, name="Cylinder")
+cylinder = Cylinder(volmdlr.OXYZ, 0.1, 0.2, name="Cylinder")
 volume_model = VolumeModel([sphere, cylinder])
 
 # Voxelize the volume model with "iterative" method

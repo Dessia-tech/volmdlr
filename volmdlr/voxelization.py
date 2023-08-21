@@ -22,6 +22,7 @@ from volmdlr.voxelization_compiled import (
     flood_fill_matrix_3d,
     line_segments_to_pixels,
     triangles_to_voxels,
+    triangle_intersects_voxel,
 )
 from volmdlr.wires import ClosedPolygon2D
 
