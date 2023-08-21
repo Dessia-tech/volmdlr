@@ -1700,8 +1700,13 @@ class HollowCylinder(shells.ClosedShell3D):
         """
         return self.__class__(
             frame=self.frame.translation(offset),
-            length=self.length, inner_radius=self.inner_radius,
-            outer_radius=self.outer_radius)
+            length=self.length,
+            inner_radius=self.inner_radius,
+            outer_radius=self.outer_radius,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
