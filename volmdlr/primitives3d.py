@@ -1535,25 +1535,40 @@ class HollowCylinder(shells.ClosedShell3D):
         shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
+        """
+        Computes the shell faces from init data.
+        """
         surface3d_1 = surfaces.CylindricalSurface3D(
-            self.frame.translation(-self.frame.w * (self.length * 0.5)), self.outer_radius)
+            self.frame.translation(-self.frame.w * (self.length * 0.5)), self.outer_radius
+        )
         surface3d_2 = surfaces.CylindricalSurface3D(
-            self.frame.translation(-self.frame.w * (self.length * 0.5)), self.inner_radius)
+            self.frame.translation(-self.frame.w * (self.length * 0.5)), self.inner_radius
+        )
+
         cylindrical_face1 = volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
-            surface3d_1, 0, 2 * math.pi, 0, self.length)
+            surface3d_1, 0, 2 * math.pi, 0, self.length
+        )
         cylindrical_face2 = volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
-            surface3d_2, 0, 2 * math.pi, 0, self.length)
+            surface3d_2, 0, 2 * math.pi, 0, self.length
+        )
+
         lower_plane = surfaces.Plane3D.from_plane_vectors(
-            self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v)
+            self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v
+        )
+
         position_2d = self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         outer_circle = volmdlr.curves.Circle2D(position_2d, self.outer_radius)
         inner_circle = volmdlr.curves.Circle2D(position_2d, self.inner_radius)
+
         lower_face = volmdlr.faces.PlaneFace3D(
-            lower_plane, surfaces.Surface2D(
-                volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(outer_circle)]), [
-                    volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(inner_circle)])
-                ]))
+            lower_plane,
+            surfaces.Surface2D(
+                volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(outer_circle)]),
+                [volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(inner_circle)])],
+            ),
+        )
         upper_face = lower_face.translation(self.frame.w * self.length)
+
         return [lower_face, cylindrical_face1, cylindrical_face2, upper_face]
 
     def _bounding_box(self):
