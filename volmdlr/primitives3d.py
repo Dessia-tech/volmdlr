@@ -954,14 +954,14 @@ class Cylinder(shells.ClosedShell3D):
         """
         Cylinder rotation.
 
-        :param center: rotation center
+        :param center: The rotation center.
         :type center: volmdlr.Point3D
-        :param axis: rotation axis
+        :param axis: The rotation axis.
         :type axis: volmdlr.Vector3D
-        :param angle: angle rotation
+        :param angle: The angle of rotation.
         :type angle: float
 
-        :return: a new rotated Cylinder
+        :return: A new rotated Cylinder.
         :rtype: Cylinder
         """
         return self.__class__(
@@ -977,10 +977,10 @@ class Cylinder(shells.ClosedShell3D):
         """
         Cylinder translation.
 
-        :param offset: translation vector
+        :param offset: The translation vector.
         :type offset: volmdlr.Vector3D
 
-        :return: A new translated Cylinder
+        :return: A new translated Cylinder.
         :rtype: Cylinder
         """
         return self.__class__(
@@ -1010,6 +1010,9 @@ class Cylinder(shells.ClosedShell3D):
     def copy(self, deep=True, memo=None) -> 'Cylinder':
         """
         Creates a copy of Cylinder.
+
+        :return: A copy of a current Cylinder.
+        :rtype: Cylinder
         """
         return Cylinder(
             frame=self.frame.copy(),
@@ -1024,8 +1027,11 @@ class Cylinder(shells.ClosedShell3D):
         """
         Compute the minimal distance between two volmdlr cylinders.
 
-        :param other_cylinder: volmdlr Cylinder
-        :return: minimal distance between two 3D cylinders
+        :param other_cylinder: The other cylinder to compute the distance with.
+        :type other_cylinder: Cylinder
+
+        :return: The minimal distance between the two 3D cylinders.
+        :rtype: float
         """
         # Basic check
         if self.point_belongs(other_cylinder.position) or other_cylinder.point_belongs(self.position):
@@ -1163,8 +1169,11 @@ class Cylinder(shells.ClosedShell3D):
         """
         Verifies if two cylinders are intersecting or not.
 
-        :param other_cylinder: volmdlr Cylinder
-        :return: boolean, True if cylinders are intersecting, False otherwise
+        :param other_cylinder: The other cylinder to compute if there is an intersection with.
+        :type other_cylinder: Cylinder
+
+        :return: True if cylinders are intersecting, False otherwise
+        :rtype: bool
         """
         dist = self.min_distance_to_other_cylinder(other_cylinder)
 
@@ -1175,6 +1184,7 @@ class Cylinder(shells.ClosedShell3D):
         Gets a random point inside a cylinder.
 
         :return: a random point inside the Cylinder
+        :rtype: volmdlr.Point3D
         """
         theta = uniform(0, 2 * math.pi)
         radius = math.sqrt(uniform(0, 1)) * self.radius
@@ -1193,8 +1203,11 @@ class Cylinder(shells.ClosedShell3D):
         """
         Returns some points inside the cylinder from a LHS samplings.
 
-        :param n_points: number of points
-        :return: Latin hypercube sampling points inside the cylinder
+        :param n_points: The number of points to generate.
+        :type n_points: int
+
+        :return: The latin hypercube sampling points inside the cylinder.
+        :rtype: list[volmdlr.Point3D]
         """
         local_frame = volmdlr.Frame3D.from_point_and_vector(
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
@@ -1226,10 +1239,13 @@ class Cylinder(shells.ClosedShell3D):
 
     def point_belongs(self, point3d: volmdlr.Point3D, **kwargs) -> bool:
         """
-        Returns if the point belongs to the cylinder.
+        Check if the point belongs to the cylinder.
 
-        :param point3d: volmdlr Point3D
-        :return: True if the given point is inside the cylinder, False otherwise
+        :param point3d: The point to check if it's the cylinder.
+        :type point3d: volmdlr.Point3D
+
+        :return: True if the given point is inside the cylinder, False otherwise.
+        :rtype: bool
         """
         local_frame = volmdlr.Frame3D.from_point_and_vector(
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
@@ -1241,15 +1257,17 @@ class Cylinder(shells.ClosedShell3D):
                 -self.length / 2 <= local_point.z <= self.length / 2
         )
 
-    def interference_volume_with_other_cylinder(
-            self, other_cylinder: "Cylinder", n_points: int = 1000
-    ) -> float:
+    def interference_volume_with_other_cylinder(self, other_cylinder: "Cylinder", n_points: int = 1000) -> float:
         """
         Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method).
 
-        :param other_cylinder: volmdlr Cylinder
-        :param n_points: optional parameter used for the number of random point used to discretize the cylinder
-        :return: an estimation of the interference volume
+        :param other_cylinder: The other cylinder to compute the interference volume with.
+        :type other_cylinder: Cylinder
+        :param n_points: Optional parameter used for the number of random point used to discretize the cylinder
+        :type n_points: int
+
+        :return: An estimation of the interference volume.
+        :rtype: float
         """
 
         # doing the discretization on the smallest cylinder to have better precision
