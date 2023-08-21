@@ -773,6 +773,7 @@ class Cylinder(shells.ClosedShell3D):
     """
     Represents a 3D cylinder defined by its frame, radius, and length.
     """
+    # pylint: disable=too-many-arguments
 
     def __init__(
         self,
@@ -936,14 +937,14 @@ class Cylinder(shells.ClosedShell3D):
 
     @classmethod
     def from_center_point_and_axis(
-            cls,
-            center_point: volmdlr.Point3D,
-            axis: volmdlr.Vector3D,
-            radius: float,
-            length: float,
-            color: Tuple[float, float, float] = None,
-            alpha: float = 1,
-            name: str = "",
+        cls,
+        center_point: volmdlr.Point3D,
+        axis: volmdlr.Vector3D,
+        radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
     ) -> 'Cylinder':
         """
         Create a cylinder from a center point, an axis, radius, and length.
@@ -1315,6 +1316,7 @@ class Cone(shells.ClosedShell3D):
     """
     Represents a 3D cone defined by its frame, radius, and length.
     """
+    # pylint: disable=too-many-arguments
 
     def __init__(
         self,
@@ -1465,14 +1467,14 @@ class Cone(shells.ClosedShell3D):
 
     @classmethod
     def from_center_point_and_axis(
-            cls,
-            center_point: volmdlr.Point3D,
-            axis: volmdlr.Vector3D,
-            radius: float,
-            length: float,
-            color: Tuple[float, float, float] = None,
-            alpha: float = 1,
-            name: str = "",
+        cls,
+        center_point: volmdlr.Point3D,
+        axis: volmdlr.Vector3D,
+        radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
     ) -> 'Cone':
         """
         Create a cone from a center point, an axis, radius, and length.
@@ -1506,6 +1508,7 @@ class HollowCylinder(shells.ClosedShell3D):
     """
     Represents a 3D hollow cylinder defined by its frame, radii, and length.
     """
+    # pylint: disable=too-many-arguments
 
     def __init__(
         self,
@@ -1698,15 +1701,15 @@ class HollowCylinder(shells.ClosedShell3D):
 
     @classmethod
     def from_center_point_and_axis(
-            cls,
-            center_point: volmdlr.Point3D,
-            axis: volmdlr.Vector3D,
-            inner_radius: float,
-            outer_radius: float,
-            length: float,
-            color: Tuple[float, float, float] = None,
-            alpha: float = 1,
-            name: str = "",
+        cls,
+        center_point: volmdlr.Point3D,
+        axis: volmdlr.Vector3D,
+        inner_radius: float,
+        outer_radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
     ) -> 'HollowCylinder':
         """
         Create a hollow cylinder from a center point, an axis, radius, and length.
