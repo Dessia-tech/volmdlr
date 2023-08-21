@@ -1708,7 +1708,7 @@ class HollowCylinder(shells.ClosedShell3D):
             name=self.name,
         )
 
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str) -> 'HollowCylinder':
         """
         Changes frame_mapping and return a new HollowCylinder.
 
@@ -1717,7 +1717,12 @@ class HollowCylinder(shells.ClosedShell3D):
         return HollowCylinder(
             frame=self.frame.frame_mapping(frame, side),
             inner_radius=self.inner_radius,
-            outer_radius=self.outer_radius, length=self.length)
+            outer_radius=self.outer_radius,
+            length=self.length,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
 
     def copy(self, *args, **kwargs) -> 'HollowCylinder':
         """
