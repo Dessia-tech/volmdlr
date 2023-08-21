@@ -1326,6 +1326,7 @@ class Cone(shells.ClosedShell3D):
         :param name: The name of the cone. Default is an empty string.
         :type name: str, optional
         """
+        self.frame = frame
         self.position = frame.origin
         self.axis = frame.w
         self.radius = radius
