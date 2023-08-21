@@ -1664,6 +1664,56 @@ class HollowCylinder(shells.ClosedShell3D):
             name=name,
         )
 
+    @classmethod
+    def from_center_point_and_axis(
+            cls,
+            center_point: volmdlr.Point3D,
+            axis: volmdlr.Vector3D,
+            inner_radius: float,
+            outer_radius: float,
+            length: float,
+            color: Tuple[float, float, float] = None,
+            alpha: float = 1,
+            name: str = "",
+    ) -> 'HollowCylinder':
+        """
+        Create a hollow cylinder from a center point, an axis, radius, and length.
+
+        :param center_point: The center point of the hollow cylinder
+            (i.e. the middle point of the axis of the hollow cylinder).
+        :type center_point: volmdlr.Point3D
+        :param axis: The axis of revolution for the hollow cylinder.
+        :type axis: volmdlr.Vector3D
+        :param inner_radius: The inner radius of the hollow cylinder.
+        :type inner_radius: float
+        :param outer_radius: The outer radius of the hollow cylinder.
+        :type outer_radius: float
+        :param length: The length of the hollow cylinder.
+        :type length: float
+        :param color: The color of the hollow cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the hollow cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the hollow cylinder. Default is an empty string.
+        :type name: str, optional
+
+        :return: A HollowCylinder instance created from the specified center point, axis, radii, and length.
+        :rtype: HollowCylinder
+        """
+        u_vector = axis.deterministic_unit_normal_vector()
+        v_vector = axis.cross(u_vector)
+        frame = volmdlr.Frame3D(center_point, u_vector, v_vector, axis)
+
+        return cls(
+            frame=frame,
+            inner_radius=inner_radius,
+            outer_radius=outer_radius,
+            length=length,
+            color=color,
+            alpha=alpha,
+            name=name,
+        )
+
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float) -> 'HollowCylinder':
         """
         HollowCylinder rotation.
