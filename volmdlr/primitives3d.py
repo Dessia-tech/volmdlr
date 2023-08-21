@@ -1488,15 +1488,42 @@ class Cone(shells.ClosedShell3D):
 
 class HollowCylinder(shells.ClosedShell3D):
     """
-    Creates a hollow cylinder with the position, the axis of revolution the inner and outer radius and the length.
-
+    Represents a 3D hollow cylinder defined by its frame, radii, and length.
     """
 
-    def __init__(self,
-                 frame: volmdlr.Frame3D,
-                 inner_radius: float, outer_radius: float, length: float,
-                 color: Tuple[float, float, float] = None, alpha: float = 1,
-                 name: str = ''):
+    def __init__(
+        self,
+        frame: volmdlr.Frame3D,
+        inner_radius: float,
+        outer_radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ):
+        """
+        Initializes the HollowCylinder instance.
+
+        The `HollowCylinder` class creates a hollow cylinder with the specified radii and length, positioned using the
+        given frame.
+        The axis of revolution of the hollow cylinder corresponds to the local z-axis (w-axis) of the provided frame.
+
+        :param frame: The reference frame defining the position and orientation of the hollow cylinder.
+            The w-axis of the frame corresponds to the axis of revolution of the hollow cylinder.
+        :type frame: volmdlr.Frame3D
+        :param inner_radius: The inner radius of the hollow cylinder.
+        :type inner_radius: float
+        :param outer_radius: The outer radius of the hollow cylinder.
+        :type outer_radius: float
+        :param length: The length of the hollow cylinder.
+        :type length: float
+        :param color: The color of the hollow cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the hollow cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the hollow cylinder. Default is an empty string.
+        :type name: str, optional
+        """
         self.frame = frame
         self.position = frame.origin
         self.axis = frame.w
