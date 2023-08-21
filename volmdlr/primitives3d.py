@@ -1398,37 +1398,52 @@ class Cone(shells.ClosedShell3D):
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def translation(self, offset: volmdlr.Vector3D):
-        """
-        Cone translation.
-
-        :param offset: translation vector
-        :return: A new translated Cone
-        """
-        return self.__class__(frame=self.frame.translation(offset),
-                              radius=self.radius,
-                              length=self.length,
-                              color=self.color,
-                              alpha=self.alpha)
-
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float) -> 'Cone':
         """
         Cone rotation.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated Cone
-        """
-        return self.__class__(frame=self.frame.rotation(center, axis, angle),
-                              radius=self.radius, length=self.length, color=self.color,
-                              alpha=self.alpha)
+        :param center: The rotation center.
+        :type center: volmdlr.Point3D
+        :param axis: The rotation axis.
+        :type axis: volmdlr.Vector3D
+        :param angle: The angle of rotation.
+        :type angle: float
 
-    def volume(self):
+        :return: A new rotated Cone.
+        :rtype: Cone
         """
-        Returns the volume of the cone.
+        return self.__class__(
+            frame=self.frame.rotation(center, axis, angle),
+            radius=self.radius,
+            length=self.length,
+            color=self.color,
+            alpha=self.alpha,
+        )
 
+    def translation(self, offset: volmdlr.Vector3D) -> 'Cone':
+        """
+        Cone translation.
+
+        :param offset: The translation vector.
+        :type offset: volmdlr.Vector3D
+
+        :return: A new translated Cone.
+        :rtype: Cone
+        """
+        return self.__class__(
+            frame=self.frame.translation(offset),
+            radius=self.radius,
+            length=self.length,
+            color=self.color,
+            alpha=self.alpha,
+        )
+
+    def volume(self) -> float:
+        """
+        Compute the volume of the cone.
+
+        :return: The computed volume of the Cylinder.
+        :rtype: float
         """
         return self.length * math.pi * self.radius**2 / 3
 
