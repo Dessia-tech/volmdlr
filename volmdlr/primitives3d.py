@@ -1181,7 +1181,7 @@ class Cylinder(shells.ClosedShell3D):
 
     def random_point_inside(self) -> volmdlr.Point3D:
         """
-        Gets a random point inside a cylinder.
+        Return a random point inside a cylinder.
 
         :return: a random point inside the Cylinder
         :rtype: volmdlr.Point3D
