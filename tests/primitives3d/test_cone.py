@@ -29,3 +29,11 @@ class TestCone(unittest.TestCase):
         self.assertEqual(cone.axis, volmdlr.Z3D)
         self.assertEqual(cone.length, 1.0)
         self.assertEqual(cone.radius, 0.1)
+
+    def test_rotation(self):
+        rotated_cone = self.cone.rotation(center=volmdlr.O3D, axis=volmdlr.X3D, angle=-math.pi/2)
+        self.assertTrue(rotated_cone.axis.is_close(volmdlr.Y3D))
+
+    def test_translation(self):
+        translated_cone = self.cone.translation(offset=volmdlr.X3D)
+        self.assertTrue(translated_cone.position.is_close(volmdlr.Point3D(1.0, 0.0, 0.0)))
