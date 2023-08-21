@@ -1613,14 +1613,6 @@ class HollowCylinder(shells.ClosedShell3D):
         """
         return self.length * math.pi * (self.outer_radius**2 - self.inner_radius**2)
 
-    def copy(self, *args, **kwargs):
-        """
-        Creates a copy of HollowCylinder.
-
-        """
-        return HollowCylinder(self.frame.copy(), self.inner_radius, self.outer_radius, self.length,
-                              color=self.color, alpha=self.alpha, name=self.name)
-
     @classmethod
     def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
                              inner_radius: float, outer_radius: float,
@@ -1680,6 +1672,23 @@ class HollowCylinder(shells.ClosedShell3D):
             frame=self.frame.frame_mapping(frame, side),
             inner_radius=self.inner_radius,
             outer_radius=self.outer_radius, length=self.length)
+
+    def copy(self, *args, **kwargs) -> 'HollowCylinder':
+        """
+        Creates a copy of HollowCylinder.
+
+        :return: A copy of a current Cylinder.
+        :rtype: Cylinder
+        """
+        return HollowCylinder(
+            frame=self.frame.copy(),
+            inner_radius=self.inner_radius,
+            outer_radius=self.outer_radius,
+            length=self.length,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name
+        )
 
 
 class Sweep(shells.ClosedShell3D):
