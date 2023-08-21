@@ -950,14 +950,19 @@ class Cylinder(shells.ClosedShell3D):
 
         return cls(frame=frame, radius=radius, length=length, color=color, alpha=alpha, name=name)
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float) -> 'Cylinder':
         """
         Cylinder rotation.
 
         :param center: rotation center
+        :type center: volmdlr.Point3D
         :param axis: rotation axis
+        :type axis: volmdlr.Vector3D
         :param angle: angle rotation
+        :type angle: float
+
         :return: a new rotated Cylinder
+        :rtype: Cylinder
         """
         return self.__class__(
             frame=self.frame.rotation(center, axis, angle),
@@ -965,18 +970,23 @@ class Cylinder(shells.ClosedShell3D):
             radius=self.radius,
         )
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D) -> 'Cylinder':
         """
         Cylinder translation.
 
         :param offset: translation vector
+        :type offset: volmdlr.Vector3D
+
         :return: A new translated Cylinder
+        :rtype: Cylinder
         """
         return self.__class__(
             frame=self.frame.translation(offset),
-            length=self.length, radius=self.radius)
+            length=self.length,
+            radius=self.radius,
+        )
 
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str) -> 'Cylinder':
         """
         Changes frame_mapping and return a new Frame3D.
 
@@ -986,16 +996,22 @@ class Cylinder(shells.ClosedShell3D):
             frame=self.frame.frame_mapping(frame, side),
             radius=self.radius,
             length=self.length,
-            color=self.color, alpha=self.alpha)
+            color=self.color,
+            alpha=self.alpha,
+        )
 
-    def copy(self, deep=True, memo=None):
+    def copy(self, deep=True, memo=None) -> 'Cylinder':
         """
         Creates a copy of Cylinder.
         """
         return Cylinder(
             self.frame.copy(),
-            self.radius, self.length,
-            color=self.color, alpha=self.alpha, name=self.name)
+            self.radius,
+            self.length,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
 
     def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder') -> float:
         """
