@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: Remove dependencies from the geomdl library.
 - perf: to_dict/dict_to_obj of OpenTriangleShell3D
 - Cylinder / Cone / HollowCylinder: from_center_point_and_axis
+- Cone: remove inheritance from RevolvedProfile
 
 ### Fixed
 - Sweep with non smoth path
