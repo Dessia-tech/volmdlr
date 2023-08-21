@@ -4,23 +4,25 @@ import random
 import traceback
 import warnings
 from itertools import chain, product
-from typing import List, Tuple, Dict, Any
+from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as npy
+from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
 from trimesh import Trimesh
 
-from dessia_common.core import DessiaObject
 import volmdlr.bspline_compiled
-import volmdlr.core_compiled
 import volmdlr.core
-from volmdlr import display, edges, wires, surfaces, curves
+import volmdlr.core_compiled
 import volmdlr.faces
 import volmdlr.geometry
-from volmdlr.core import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
-from volmdlr.utils.step_writer import product_writer, geometric_context_writer, step_ids_to_str
+from volmdlr import curves, display, edges, surfaces, wires
+from volmdlr.core import (edge_in_list, get_edge_index_in_list,
+                          get_point_index_in_list, point_in_list)
+from volmdlr.utils.step_writer import (geometric_context_writer,
+                                       product_writer, step_ids_to_str)
 
 
 def union_list_of_shells(list_shells):
@@ -1801,15 +1803,15 @@ class OpenTriangleShell3D(OpenShell3D):
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
                        pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'SerializableObject':
         t_points = dict_['unique_point']
-        t_index = dict_['faces']
+        faces = dict_['faces']
         alpha = dict_['alpha']
         color = dict_['color']
 
         liste_triangles = []
-        for t in t_index:
-            liste_triangles.append(volmdlr.faces.Triangle3D(point1=volmdlr.Point3D.dict_to_object(t_points[t[0]]),
-                                                            point2=volmdlr.Point3D.dict_to_object(t_points[t[1]]),
-                                                            point3=volmdlr.Point3D.dict_to_object(t_points[t[2]])
+        for face in faces:
+            liste_triangles.append(volmdlr.faces.Triangle3D(point1=volmdlr.Point3D.dict_to_object(t_points[face[0]]),
+                                                            point2=volmdlr.Point3D.dict_to_object(t_points[face[1]]),
+                                                            point3=volmdlr.Point3D.dict_to_object(t_points[face[2]])
                                                             ))
 
         return cls(faces=liste_triangles, color=color, alpha=alpha)
