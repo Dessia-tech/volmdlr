@@ -984,6 +984,9 @@ class Cylinder(shells.ClosedShell3D):
             frame=self.frame.translation(offset),
             length=self.length,
             radius=self.radius,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
         )
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str) -> 'Cylinder':
@@ -998,6 +1001,7 @@ class Cylinder(shells.ClosedShell3D):
             length=self.length,
             color=self.color,
             alpha=self.alpha,
+            name=self.name,
         )
 
     def copy(self, deep=True, memo=None) -> 'Cylinder':
@@ -1005,9 +1009,9 @@ class Cylinder(shells.ClosedShell3D):
         Creates a copy of Cylinder.
         """
         return Cylinder(
-            self.frame.copy(),
-            self.radius,
-            self.length,
+            frame=self.frame.copy(),
+            radius=self.radius,
+            length=self.length,
             color=self.color,
             alpha=self.alpha,
             name=self.name,
