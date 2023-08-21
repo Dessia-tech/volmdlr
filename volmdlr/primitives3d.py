@@ -1664,24 +1664,29 @@ class HollowCylinder(shells.ClosedShell3D):
             name=name,
         )
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float) -> 'HollowCylinder':
         """
-        Hollow cylinder rotation.
+        HollowCylinder rotation.
 
-        :param center: rotation center.
+        :param center: The rotation center.
         :type center: volmdlr.Point3D
-        :param axis: rotation axis.
+        :param axis: The rotation axis.
         :type axis: volmdlr.Vector3D
-        :param angle: angle rotation.
+        :param angle: The angle of rotation.
         :type angle: float
-        :return: a new rotated HollowCylinder.
+
+        :return: A new rotated HollowCylinder.
         :rtype: HollowCylinder
         """
         return self.__class__(
             frame=self.frame.rotation(center, axis, angle),
-            length=self.length, inner_radius=self.inner_radius,
-            outer_radius=self.outer_radius)
+            length=self.length,
+            inner_radius=self.inner_radius,
+            outer_radius=self.outer_radius,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
 
     def translation(self, offset: volmdlr.Vector3D):
         """
