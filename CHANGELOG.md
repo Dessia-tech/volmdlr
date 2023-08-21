@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - Line: reverse.
 - BSplineCurve: Remove dependencies from the geomdl library.
+- perf: to_dict/dict_to_obj of OpenTriangleShell3D
 
 ### Fixed
 - Sweep with non smoth path
