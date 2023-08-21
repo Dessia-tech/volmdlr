@@ -1128,7 +1128,7 @@ class Cylinder(shells.ClosedShell3D):
             z_local = point[2]
 
             points.append(
-                local_frame.local_to_global_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
+                local_frame.local_to_global_coordinates(volmdlr.Point3D(x_local, y_local, z_local)).to_point()
             )
 
         return points
