@@ -2579,7 +2579,7 @@ class ExtrusionFace3D(Face3D):
         delta_x = xmax - xmin
         number_points_x = int(delta_x * angle_resolution)
 
-        number_points_y = 0
+        number_points_y = number_points_x
 
         return number_points_x, number_points_y
 
@@ -2646,7 +2646,7 @@ class RevolutionFace3D(Face3D):
         delta_x = xmax - xmin
         number_points_x = int(delta_x * angle_resolution)
 
-        number_points_y = 0
+        number_points_y = number_points_x
 
         return number_points_x, number_points_y
 
