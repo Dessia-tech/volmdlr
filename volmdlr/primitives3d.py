@@ -968,6 +968,9 @@ class Cylinder(shells.ClosedShell3D):
             frame=self.frame.rotation(center, axis, angle),
             length=self.length,
             radius=self.radius,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
         )
 
     def translation(self, offset: volmdlr.Vector3D) -> 'Cylinder':
