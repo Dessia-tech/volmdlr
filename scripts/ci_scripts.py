@@ -32,7 +32,7 @@ scripts = [
             'primitives/block3d.py',
             'primitives/sphere.py',
             'primitives/cone.py',
-            'primitives/cylinders.py',
+            'primitives/cylinder.py',
             # Faces
             'faces/triangle3d.py',
             'faces/bspline.py',
