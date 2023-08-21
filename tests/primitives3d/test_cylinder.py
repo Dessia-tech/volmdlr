@@ -66,18 +66,19 @@ class TestCylinder(unittest.TestCase):
 
         cylinder = Cylinder.from_extremal_points(point1, point2, 0.1)
 
-        self.assertEqual(cylinder.frame.origin, volmdlr.O3D)
-        self.assertEqual(cylinder.frame.w, volmdlr.X3D)
+        self.assertEqual(cylinder.position, volmdlr.O3D)
+        self.assertEqual(cylinder.axis, volmdlr.X3D)
         self.assertEqual(cylinder.length, 2.0)
         self.assertEqual(cylinder.radius, 0.1)
 
     def test_from_center_point_and_axis(self):
         cylinder = Cylinder.from_center_point_and_axis(volmdlr.O3D, volmdlr.Z3D, 0.1, 1.0)
 
-        self.assertEqual(cylinder.frame.origin, volmdlr.O3D)
-        self.assertEqual(cylinder.frame.w, volmdlr.Z3D)
+        self.assertEqual(cylinder.position, volmdlr.O3D)
+        self.assertEqual(cylinder.axis, volmdlr.Z3D)
         self.assertEqual(cylinder.length, 1.0)
         self.assertEqual(cylinder.radius, 0.1)
+
 
 if __name__ == "__main__":
     unittest.main()
