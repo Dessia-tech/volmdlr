@@ -920,12 +920,6 @@ class Cylinder(shells.ClosedShell3D):
             length=self.length,
             color=self.color, alpha=self.alpha)
 
-    def to_dict(self, *args, **kwargs):
-        """
-        Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class Revolved Profile.
-        """
-        return dc.DessiaObject.to_dict(self, use_pointers=False)
-
     def copy(self, deep=True, memo=None):
         """
         Creates a copy of Cylinder.
