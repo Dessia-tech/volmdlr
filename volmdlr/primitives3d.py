@@ -918,6 +918,27 @@ class Cylinder(shells.ClosedShell3D):
             alpha: float = 1,
             name: str = "",
     ):
+        """
+        Create a cylinder from a center point, an axis, radius, and length.
+
+        :param center_point: The center point of the cylinder.
+        :type center_point: volmdlr.Point3D
+        :param axis: The axis of revolution for the cylinder.
+        :type axis: volmdlr.Vector3D
+        :param radius: The radius of the cylinder.
+        :type radius: float
+        :param length: The length of the cylinder.
+        :type length: float
+        :param color: The color of the cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the cylinder. Default is an empty string.
+        :type name: str, optional
+
+        :return: A Cylinder instance created from the specified center point, axis, radius, and length.
+        :rtype: Cylinder
+        """
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
         frame = volmdlr.Frame3D(center_point, u_vector, v_vector, axis)
