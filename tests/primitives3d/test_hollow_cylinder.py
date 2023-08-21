@@ -1,3 +1,4 @@
+import math
 import unittest
 
 import volmdlr
@@ -43,6 +44,16 @@ class TestHollowCylinder(unittest.TestCase):
         self.assertEqual(cylinder.axis, volmdlr.Z3D)
         self.assertEqual(cylinder.inner_radius, self.inner_radius)
         self.assertEqual(cylinder.outer_radius, self.outer_radius)
+
+    def test_rotation(self):
+        rotated_hollow_cylinder = self.hollow_cylinder.rotation(
+            center=volmdlr.O3D, axis=volmdlr.X3D, angle=-math.pi / 2
+        )
+        self.assertTrue(rotated_hollow_cylinder.axis.is_close(volmdlr.Y3D))
+
+    def test_translation(self):
+        translated_hollow_cylinder = self.hollow_cylinder.translation(offset=volmdlr.X3D)
+        self.assertTrue(translated_hollow_cylinder.position.is_close(volmdlr.Point3D(1.0, 0.0, 0.0)))
 
 
 if __name__ == "__main__":
