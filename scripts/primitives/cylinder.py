@@ -9,7 +9,7 @@ from volmdlr.primitives3d import Cylinder
 cylinder1 = Cylinder(frame=volmdlr.OXYZ, radius=0.1, length=0.5, color=(1.0, 0.0, 0.0))
 
 # 2. Instantiate a blue Cylinder with `from_extremal_points` classmethod:
-cylinder2 = Cylinder.from_extremal_points(
+cylinder2 = Cylinder.from_end_points(
     point1=volmdlr.Point3D(0.5, 0.2, 0.3), point2=volmdlr.Point3D(0.8, 0.1, 0.1), radius=0.3, color=(0.0, 1.0, 0.0)
 )
 

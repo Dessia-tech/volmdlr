@@ -5,6 +5,7 @@ Common primitives 3D.
 """
 
 import math
+import warnings
 from random import uniform
 from typing import Dict, List, Tuple
 
@@ -879,7 +880,7 @@ class Cylinder(shells.ClosedShell3D):
         return self.length * math.pi * self.radius**2
 
     @classmethod
-    def from_extremal_points(
+    def from_end_points(
         cls,
         point1: volmdlr.Point3D,
         point2: volmdlr.Point3D,
@@ -889,11 +890,11 @@ class Cylinder(shells.ClosedShell3D):
         name: str = "",
     ):
         """
-        Create a cylinder from two extremal points.
+        Create a cylinder from two end points.
 
-        :param point1: The first extremal point defining the base of the cylinder.
+        :param point1: The first end point defining the base of the cylinder.
         :type point1: volmdlr.Point3D
-        :param point2: The second extremal point defining the top of the cylinder.
+        :param point2: The second end point defining the top of the cylinder.
         :type point2: volmdlr.Point3D
         :param radius: The radius of the cylinder.
         :type radius: float
@@ -904,7 +905,7 @@ class Cylinder(shells.ClosedShell3D):
         :param name: The name of the cylinder. Default is an empty string.
         :type name: str, optional
 
-        :return: A Cylinder instance created from the specified extremal points.
+        :return: A Cylinder instance created from the specified end points.
         :rtype: Cylinder
         """
         position = 0.5 * (point1 + point2)
@@ -917,6 +918,21 @@ class Cylinder(shells.ClosedShell3D):
         frame = volmdlr.Frame3D(position, u_vector, v_vector, axis)
 
         return cls(frame=frame, radius=radius, length=length, color=color, alpha=alpha, name=name)
+
+    @classmethod
+    def from_extremal_points(
+        cls,
+        point1: volmdlr.Point3D,
+        point2: volmdlr.Point3D,
+        radius: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ):
+        """Deprecated classmethod. Use 'from_end_points' instead."""
+        warnings.warn("Deprecated classmethod. Use 'from_end_points' instead.", DeprecationWarning)
+
+        return cls.from_end_points(point1, point2, radius, color, alpha, name)
 
     @classmethod
     def from_center_point_and_axis(
@@ -1614,7 +1630,7 @@ class HollowCylinder(shells.ClosedShell3D):
         return self.length * math.pi * (self.outer_radius**2 - self.inner_radius**2)
 
     @classmethod
-    def from_extremal_points(
+    def from_end_points(
         cls,
         point1: volmdlr.Point3D,
         point2: volmdlr.Point3D,
@@ -1625,11 +1641,11 @@ class HollowCylinder(shells.ClosedShell3D):
         name: str = "",
     ):
         """
-        Create a hollow cylinder from two extremal points.
+        Create a hollow cylinder from two end points.
 
-        :param point1: The first extremal point defining the base of the hollow cylinder.
+        :param point1: The first end point defining the base of the hollow cylinder.
         :type point1: volmdlr.Point3D
-        :param point2: The second extremal point defining the top of the hollow cylinder.
+        :param point2: The second end point defining the top of the hollow cylinder.
         :type point2: volmdlr.Point3D
         :param inner_radius: The inner radius of the hollow cylinder.
         :type inner_radius: float
@@ -1642,7 +1658,7 @@ class HollowCylinder(shells.ClosedShell3D):
         :param name: The name of the hollow cylinder. Default is an empty string.
         :type name: str, optional
 
-        :return: A HollowCylinder instance created from the specified extremal points.
+        :return: A HollowCylinder instance created from the specified end points.
         :rtype: HollowCylinder
         """
         position = 0.5 * (point1 + point2)
@@ -1663,6 +1679,22 @@ class HollowCylinder(shells.ClosedShell3D):
             alpha=alpha,
             name=name,
         )
+
+    @classmethod
+    def from_extremal_points(
+        cls,
+        point1: volmdlr.Point3D,
+        point2: volmdlr.Point3D,
+        inner_radius: float,
+        outer_radius: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ):
+        """Deprecated classmethod. Use 'from_end_points' instead."""
+        warnings.warn("Deprecated classmethod. Use 'from_end_points' instead.", DeprecationWarning)
+
+        return cls.from_end_points(point1, point2, inner_radius, outer_radius, color, alpha, name)
 
     @classmethod
     def from_center_point_and_axis(

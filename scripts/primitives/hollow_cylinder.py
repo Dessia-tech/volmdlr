@@ -8,8 +8,8 @@ from volmdlr.primitives3d import HollowCylinder
 # 1. Instantiate a red HollowCylinder directly with the init:
 hollow_cylinder1 = HollowCylinder(frame=volmdlr.OXYZ, inner_radius=0.08, outer_radius=0.1, length=0.5, color=(1.0, 0.0, 0.0))
 
-# 2. Instantiate a blue HollowCylinder with `from_extremal_points` classmethod:
-hollow_cylinder2 = HollowCylinder.from_extremal_points(
+# 2. Instantiate a blue HollowCylinder with `from_end_points` classmethod:
+hollow_cylinder2 = HollowCylinder.from_end_points(
     point1=volmdlr.Point3D(0.5, 0.2, 0.3),
     point2=volmdlr.Point3D(0.8, 0.1, 0.1),
     inner_radius=0.2,

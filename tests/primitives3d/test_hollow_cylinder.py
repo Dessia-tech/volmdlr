@@ -23,11 +23,11 @@ class TestHollowCylinder(unittest.TestCase):
             self.hollow_cylinder.point_belongs(volmdlr.Point3D((self.inner_radius + self.outer_radius) / 2, 0, 0))
         )
 
-    def test_from_extremal_points(self):
+    def test_from_end_points(self):
         point1 = volmdlr.Point3D(-1, 0, 0)
         point2 = volmdlr.Point3D(1, 0, 0)
 
-        cylinder = HollowCylinder.from_extremal_points(point1, point2, self.inner_radius, self.outer_radius)
+        cylinder = HollowCylinder.from_end_points(point1, point2, self.inner_radius, self.outer_radius)
 
         self.assertEqual(cylinder.position, volmdlr.O3D)
         self.assertEqual(cylinder.axis, volmdlr.X3D)
