@@ -1751,7 +1751,7 @@ class HollowCylinder(shells.ClosedShell3D):
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float) -> 'HollowCylinder':
         """
-        HollowCylinder rotation.
+        Hollow cylinder rotation.
 
         :param center: The rotation center.
         :type center: volmdlr.Point3D
