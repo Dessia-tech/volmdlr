@@ -868,20 +868,44 @@ class Cylinder(shells.ClosedShell3D):
         return self.length * math.pi * self.radius**2
 
     @classmethod
-    def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
-                             radius: float,
-                             color: Tuple[float, float, float] = None, alpha: float = 1,
-                             name: str = ''):
+    def from_extremal_points(
+        cls,
+        point1: volmdlr.Point3D,
+        point2: volmdlr.Point3D,
+        radius: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ):
+        """
+        Create a cylinder from two extremal points.
+
+        :param point1: The first extremal point defining the base of the cylinder.
+        :type point1: volmdlr.Point3D
+        :param point2: The second extremal point defining the top of the cylinder.
+        :type point2: volmdlr.Point3D
+        :param radius: The radius of the cylinder.
+        :type radius: float
+        :param color: The color of the cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the cylinder. Default is an empty string.
+        :type name: str, optional
+
+        :return: A Cylinder instance created from the specified extremal points.
+        :rtype: Cylinder
+        """
         position = 0.5 * (point1 + point2)
         length = point1.point_distance(point2)
-        axis = point2 - point1
+        axis = (point2 - point1).to_vector()
         axis.normalize()
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
 
         frame = volmdlr.Frame3D(position, u_vector, v_vector, axis)
-        return cls(frame, radius, length=length,
-                   color=color, alpha=alpha, name=name)
+
+        return cls(frame, radius, length=length, color=color, alpha=alpha, name=name)
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
                  angle: float):
