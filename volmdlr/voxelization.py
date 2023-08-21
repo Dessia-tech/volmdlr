@@ -17,7 +17,7 @@ from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.faces import PlaneFace3D, Triangle3D
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
-from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
+from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OYZ, Surface2D # PLANE3D_OXZ,
 from volmdlr.voxelization_compiled import aabb_intersecting_boxes, flood_fill_matrix, triangle_intersects_voxel
 from volmdlr.wires import ClosedPolygon2D
 
