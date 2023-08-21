@@ -1442,7 +1442,7 @@ class Cone(shells.ClosedShell3D):
         """
         Compute the volume of the cone.
 
-        :return: The computed volume of the Cylinder.
+        :return: The computed volume of the cone.
         :rtype: float
         """
         return self.length * math.pi * self.radius**2 / 3
