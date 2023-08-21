@@ -1447,6 +1447,44 @@ class Cone(shells.ClosedShell3D):
         """
         return self.length * math.pi * self.radius**2 / 3
 
+    @classmethod
+    def from_center_point_and_axis(
+            cls,
+            center_point: volmdlr.Point3D,
+            axis: volmdlr.Vector3D,
+            radius: float,
+            length: float,
+            color: Tuple[float, float, float] = None,
+            alpha: float = 1,
+            name: str = "",
+    ):
+        """
+        Create a cone from a center point, an axis, radius, and length.
+
+        :param center_point: The center point of the cone.
+        :type center_point: volmdlr.Point3D
+        :param axis: The axis of revolution for the cone.
+        :type axis: volmdlr.Vector3D
+        :param radius: The radius of the cone.
+        :type radius: float
+        :param length: The length of the cone.
+        :type length: float
+        :param color: The color of the cone as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the cone (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the cone. Default is an empty string.
+        :type name: str, optional
+
+        :return: A Cone instance created from the specified center point, axis, radius, and length.
+        :rtype: Cone
+        """
+        u_vector = axis.deterministic_unit_normal_vector()
+        v_vector = axis.cross(u_vector)
+        frame = volmdlr.Frame3D(center_point, u_vector, v_vector, axis)
+
+        return cls(frame=frame, radius=radius, length=length, color=color, alpha=alpha, name=name)
+
 
 class HollowCylinder(shells.ClosedShell3D):
     """
