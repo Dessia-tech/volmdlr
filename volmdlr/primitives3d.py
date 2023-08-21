@@ -807,6 +807,7 @@ class Cylinder(shells.ClosedShell3D):
         self.axis = frame.w
         self.radius = radius
         self.length = length
+
         faces = self.shell_faces()
 
         shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
@@ -1289,33 +1290,74 @@ class Cylinder(shells.ClosedShell3D):
         ) * smallest_cylinder.volume()
 
 
-class Cone(RevolvedProfile):
+class Cone(shells.ClosedShell3D):
     """
-    Defines a cone at a given position & axis.
+    Represents a 3D cone defined by its frame, radius, and length.
     """
 
-    def __init__(self, frame: volmdlr.Frame3D,
-                 radius: float, length: float,
-                 color: Tuple[float, float, float] = None, alpha: float = 1.,
-                 name: str = ''):
+    def __init__(
+        self,
+        frame: volmdlr.Frame3D,
+        radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1.0,
+        name: str = "",
+    ):
+        """
+        Initializes the Cone instance.
 
+        The `Cone` class creates a cone with the specified radius and length, positioned using the given frame.
+        The axis of revolution of the cone corresponds to the local z-axis (w-axis) of the provided frame.
+        The top of the cone is oriented according to the local z-axis (w-axis) of the provided frame.
+        The center of the cone axis is positioned at the provided frame origin point.
+
+        :param frame: The reference frame defining the position and orientation of the cone.
+            The w-axis of the frame corresponds to the axis of revolution of the cone.
+        :type frame: volmdlr.Frame3D
+        :param radius: The radius of the cone.
+        :type radius: float
+        :param length: The length of the cone.
+        :type length: float
+        :param color: The color of the cone as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the cone (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the cone. Default is an empty string.
+        :type name: str, optional
+        """
         self.position = frame.origin
         self.axis = frame.w
         self.radius = radius
         self.length = length
         self.bounding_box = self._bounding_box()
 
-        # Revolved Profile
-        point1 = volmdlr.Point2D(0., 0.)
-        point2 = volmdlr.Point2D(0., self.radius)
-        point3 = volmdlr.Point2D(self.length, 0.)
+        faces = self.shell_faces()
 
-        contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(point1, point2),
-                                           volmdlr.edges.LineSegment2D(point2, point3),
-                                           volmdlr.edges.LineSegment2D(point3, point1)])
-        RevolvedProfile.__init__(self, volmdlr.Frame3D(frame.origin, frame.w, -frame.v, frame.u),
-                                 contour, self.position, frame.w, color=color, alpha=alpha, name=name)
-        self.frame = frame
+        shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
+
+    def shell_faces(self):
+        """
+        Computes the shell faces from init data.
+        """
+        conical_surface_frame = self.frame.translation(self.frame.w * (self.length * 0.5))
+        conical_surface_frame.w = -conical_surface_frame.w
+        surface3d = surfaces.ConicalSurface3D(conical_surface_frame, math.atan(self.radius / self.length))
+
+        conical_face = volmdlr.faces.ConicalFace3D.from_surface_rectangular_cut(
+            surface3d, 0, 2 * math.pi, 0, self.length
+        )
+        lower_plane = surfaces.Plane3D.from_plane_vectors(
+            self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v
+        )
+        circle = volmdlr.curves.Circle2D(
+            self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v), self.radius
+        )
+        lower_face = volmdlr.faces.PlaneFace3D(
+            lower_plane, surfaces.Surface2D(volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(circle)]), [])
+        )
+
+        return [lower_face, conical_face]
 
     def _bounding_box(self):
         """
