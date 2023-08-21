@@ -60,6 +60,17 @@ class TestCylinder(unittest.TestCase):
         for point in points:
             self.assertTrue(self.cylinder1.point_belongs(point))
 
+    def test_from_extremal_points(self):
+        point1 = volmdlr.Point3D(-1, 0, 0)
+        point2 = volmdlr.Point3D(1, 0, 0)
+
+        cylinder = Cylinder.from_extremal_points(point1, point2, 0.1)
+
+        self.assertEqual(cylinder.frame.origin, volmdlr.O3D)
+        self.assertEqual(cylinder.frame.w, volmdlr.X3D)
+        self.assertEqual(cylinder.length, 2.0)
+        self.assertEqual(cylinder.radius, 0.1)
+
 
 if __name__ == "__main__":
     unittest.main()
