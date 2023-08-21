@@ -1728,8 +1728,8 @@ class HollowCylinder(shells.ClosedShell3D):
         """
         Creates a copy of HollowCylinder.
 
-        :return: A copy of a current Cylinder.
-        :rtype: Cylinder
+        :return: A copy of a current HollowCylinder.
+        :rtype: HollowCylinder
         """
         return HollowCylinder(
             frame=self.frame.copy(),
@@ -1738,7 +1738,7 @@ class HollowCylinder(shells.ClosedShell3D):
             length=self.length,
             color=self.color,
             alpha=self.alpha,
-            name=self.name
+            name=self.name,
         )
 
 
