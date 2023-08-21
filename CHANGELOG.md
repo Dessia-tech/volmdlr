@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - VolumeModel: get_shells
 - add error protection stl
 - Sweep - add raise ValueError if section too big in comparision to arc radiuses
+- Update cython version requirement in setup.py
+- 
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
