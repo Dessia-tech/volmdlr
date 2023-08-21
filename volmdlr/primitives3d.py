@@ -1212,7 +1212,7 @@ class Cylinder(shells.ClosedShell3D):
         :param n_points: The number of points to generate.
         :type n_points: int
 
-        :return: The latin hypercube sampling points inside the cylinder.
+        :return: The Latin Hypercube Sampling points inside the cylinder.
         :rtype: list[volmdlr.Point3D]
         """
         local_frame = volmdlr.Frame3D.from_point_and_vector(
@@ -1366,7 +1366,7 @@ class Cone(shells.ClosedShell3D):
 
     def get_bounding_box(self) -> volmdlr.core.BoundingBox:
         """
-        Compute the boudning box of the cone.
+        Compute the bounding box of the cone.
 
         A is the point at the basis.
         B is the top.
