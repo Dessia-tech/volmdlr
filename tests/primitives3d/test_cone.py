@@ -1,3 +1,4 @@
+import math
 import unittest
 
 import volmdlr
@@ -17,3 +18,14 @@ class TestCone(unittest.TestCase):
         self.assertTrue(self.cone.point_belongs(volmdlr.Point3D(0.0, -self.radius, -self.length / 2)))
         self.assertFalse(self.cone.point_belongs(volmdlr.Point3D(0.0, 0.0, self.length)))
         self.assertFalse(self.cone.point_belongs(volmdlr.Point3D(0.01, 0.01, self.length / 2)))
+
+    def test_volume(self):
+        self.assertEqual(self.cone.volume(), (math.pi * 0.1 * self.radius**2) / 3)
+
+    def test_from_center_point_and_axis(self):
+        cone = Cone.from_center_point_and_axis(volmdlr.O3D, volmdlr.Z3D, 0.1, 1.0)
+
+        self.assertEqual(cone.position, volmdlr.O3D)
+        self.assertEqual(cone.axis, volmdlr.Z3D)
+        self.assertEqual(cone.length, 1.0)
+        self.assertEqual(cone.radius, 0.1)
