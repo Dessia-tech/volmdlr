@@ -109,9 +109,9 @@ class TestVector3D(unittest.TestCase):
     def test_norm(self):
         self.assertAlmostEqual(self.v1.norm(), 3.7416573867739413)
 
-    def test_normalize(self):
-        self.v1.normalize()
-        self.assertAlmostEqual(self.v1.norm(), 1.0)
+    def test_unit_vector(self):
+        v1 = self.v1.unit_vector()
+        self.assertAlmostEqual(v1.norm(), 1.0)
 
     def test_point_distance(self):
         self.assertAlmostEqual(self.v1.point_distance(self.point1), 1.7320508075688772)
