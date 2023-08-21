@@ -1785,14 +1785,13 @@ class OpenTriangleShell3D(OpenShell3D):
             set_of_points.update(triangle.points)
 
         index_of_points = {point: index for index, point in enumerate(set_of_points)}
-        list_of_unique_points = list(set_of_points)
 
         triangles_with_index = []
         for triangle in list_of_triangles:
             triangle_with_index = [index_of_points[point] for point in triangle.points]
             triangles_with_index.append(triangle_with_index)
 
-        dict_['unique_point'] = [pt.to_dict() for pt in list_of_unique_points]
+        dict_['unique_point'] = [pt.to_dict() for pt in set_of_points]
         dict_['faces'] = triangles_with_index
         dict_['alpha'] = self.alpha
         dict_['color'] = self.color
