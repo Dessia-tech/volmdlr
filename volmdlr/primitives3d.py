@@ -928,7 +928,7 @@ class Cylinder(shells.ClosedShell3D):
             color: Tuple[float, float, float] = None,
             alpha: float = 1,
             name: str = "",
-    ):
+    ) -> 'Cylinder':
         """
         Create a cylinder from a center point, an axis, radius, and length.
 
