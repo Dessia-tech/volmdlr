@@ -835,7 +835,7 @@ class Cylinder(shells.ClosedShell3D):
 
         return [lower_face, cylindrical_face, upper_face]
 
-    def get_bounding_box(self):
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
         """
         Computes the bounding box of a cylinder.
 
