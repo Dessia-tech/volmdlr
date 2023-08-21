@@ -1604,10 +1604,14 @@ class HollowCylinder(shells.ClosedShell3D):
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def volume(self):
-        """Returns the volume of the hollow cylinder."""
-        return self.length * math.pi * (self.outer_radius**2
-                                        - self.inner_radius**2)
+    def volume(self) -> float:
+        """
+        Compute the volume of the hollow cylinder.
+
+        :return: The computed volume of the Cylinder.
+        :rtype: float
+        """
+        return self.length * math.pi * (self.outer_radius**2 - self.inner_radius**2)
 
     def copy(self, *args, **kwargs):
         """
