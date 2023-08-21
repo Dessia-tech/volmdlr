@@ -5,26 +5,27 @@ from volmdlr.primitives3d import Cylinder
 
 
 class TestCylinder(unittest.TestCase):
-    cylinder1 = Cylinder(
-        frame=volmdlr.Frame3D.from_point_and_normal(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(1, 0, 0)),
-        radius=0.02,
-        length=0.1,
-        color=(0, 0, 1),
-    )
+    def setUp(self) -> None:
+        self.cylinder1 = Cylinder(
+            frame=volmdlr.Frame3D.from_point_and_normal(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(1, 0, 0)),
+            radius=0.02,
+            length=0.1,
+            color=(0, 0, 1),
+        )
 
-    cylinder2 = Cylinder(
-        frame=volmdlr.Frame3D.from_point_and_normal(volmdlr.Point3D(0.05, 0, 0), volmdlr.Vector3D(0, 1, 0)),
-        radius=0.005,
-        length=0.01,
-        color=(1, 0, 1),
-    )
+        self.cylinder2 = Cylinder(
+            frame=volmdlr.Frame3D.from_point_and_normal(volmdlr.Point3D(0.05, 0, 0), volmdlr.Vector3D(0, 1, 0)),
+            radius=0.005,
+            length=0.01,
+            color=(1, 0, 1),
+        )
 
-    cylinder3 = Cylinder(
-        frame=volmdlr.Frame3D.from_point_and_normal(volmdlr.Point3D(0.15, 0, 0), volmdlr.Vector3D(0, 1, 0)),
-        radius=0.005,
-        length=0.01,
-        color=(1, 0, 1),
-    )
+        self.cylinder3 = Cylinder(
+            frame=volmdlr.Frame3D.from_point_and_normal(volmdlr.Point3D(0.15, 0, 0), volmdlr.Vector3D(0, 1, 0)),
+            radius=0.005,
+            length=0.01,
+            color=(1, 0, 1),
+        )
 
     def test_point_belongs(self):
         self.assertTrue(self.cylinder1.point_belongs(volmdlr.O3D))
