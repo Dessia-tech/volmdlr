@@ -1158,7 +1158,7 @@ class PlaneFace3D(Face3D):
     def bounding_box(self, new_bounding_box):
         self._bbox = new_bounding_box
 
-    def distance_to_point(self, point, return_other_point=False):
+    def point_distance(self, point, return_other_point=False):
         """
         Calculates the distance from a plane face and a point.
 
@@ -1189,6 +1189,10 @@ class PlaneFace3D(Face3D):
             return (projection_distance ** 2 + border_distance ** 2) ** 0.5, \
                 other_point
         return (projection_distance ** 2 + border_distance ** 2) ** 0.5
+
+    def distance_to_point(self, point, return_other_point=False):
+        warnings.warn('distance_to_point is deprecated, please use point_distance', category=DeprecationWarning)
+        return self.point_distance(point, return_other_point)
 
     def minimum_distance_points_plane(self, other_plane_face, return_points=False):
         """
