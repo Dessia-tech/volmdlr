@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - Line: reverse.
+- BSplineCurve: Remove dependencies from the geomdl library.
 
 ### Fixed
 - Sweep with non smoth path
@@ -41,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - step.py uses deque in stack based algorithms
 - VolumeModel: get_shells
 - add error protection stl
-- 
+- Sweep - add raise ValueError if section too big in comparision to arc radiuses
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
@@ -56,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: transform some attributs into lazy evaluation and Caching
 - BSplineSurface3D: transform some attributs into lazy evaluation and Caching
 - BSplineSurface3D: store control_points as numpy array for memory efficiency
+- PlaneFace3D: distance_to_point -> point_distance
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader

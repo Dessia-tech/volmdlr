@@ -647,12 +647,9 @@ class WireMixin:
         return cls([circle.trim(point, point)])
 
     def plot(self, ax=None, edge_style=EdgeStyle()):
-        """Wire 2D plot using Matplotlib."""
+        """Wire plot using Matplotlib."""
         if ax is None:
             ax = self._get_plot_ax()
-
-        if edge_style.equal_aspect:
-            ax.set_aspect('equal')
 
         for element in self.primitives:
             element.plot(ax=ax, edge_style=edge_style)
@@ -1246,7 +1243,7 @@ class Wire2D(WireMixin, PhysicalObject):
             y_max = max(y_max, ymax_edge)
         return volmdlr.core.BoundingRectangle(x_min, x_max, y_min, y_max)
 
-    def is_inside(self, contour2):
+    def is_inside(self, contour2=None):
         """
         Verifies if a contour is inside another contour perimeter, including the edges.
 
@@ -1438,8 +1435,7 @@ class Wire3D(WireMixin, PhysicalObject):
         return Wire3D(new_edges, self.name)
 
     def _get_plot_ax(self):
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        _, ax = plt.subplots(subplot_kw={"projection": "3d"})
         return ax
 
     def babylon_points(self):

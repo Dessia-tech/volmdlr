@@ -904,7 +904,10 @@ class Assembly(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
+        bbox_list = [prim.bounding_box for prim in self.primitives if hasattr(prim, "bounding_box")]
+        if not bbox_list:
+            return BoundingBox.from_points(self.primitives)
+        return BoundingBox.from_bounding_boxes(bbox_list)
 
     def babylon_data(self, merge_meshes=True):
         """
@@ -1116,7 +1119,10 @@ class Compound(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+        bbox_list = [p.bounding_box for p in self.primitives if hasattr(p, "bounding_box")]
+        if not bbox_list:
+            return BoundingBox.from_points(self.primitives)
+        return BoundingBox.from_bounding_boxes(bbox_list)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1252,7 +1258,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives if hasattr(p, "bounding_box")])
 
     def volume(self) -> float:
         """
