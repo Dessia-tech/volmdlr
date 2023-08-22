@@ -7,7 +7,7 @@ import unittest
 import volmdlr
 from volmdlr.core import VolumeModel
 from volmdlr.primitives3d import Block, Cylinder, Sphere
-from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
+from volmdlr.shells import ClosedTriangleShell3D
 from volmdlr.voxelization import PointVoxelization
 
 SHOW_BABYLONJS = False
