@@ -1,10 +1,9 @@
 """
 Class for voxel representation of volmdlr models
 """
-import math
 import warnings
 from copy import copy
-from typing import Dict, Iterable, List, Set, Tuple
+from typing import List, Set, Tuple
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -13,18 +12,15 @@ from dessia_common.core import PhysicalObject
 
 from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
-from volmdlr.faces import PlaneFace3D, Triangle3D
-from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D, Shell3D
-from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
+from volmdlr.faces import Triangle3D
+from volmdlr.shells import ClosedTriangleShell3D, Shell3D
 from volmdlr.voxelization_compiled import (
     flood_fill_matrix_2d,
     flood_fill_matrix_3d,
     line_segments_to_pixels,
     triangles_to_voxels,
-    triangle_intersects_voxel,
     triangles_to_voxel_matrix,
 )
-from volmdlr.wires import ClosedPolygon2D
 
 # Custom types
 Point = Tuple[float, float, float]
