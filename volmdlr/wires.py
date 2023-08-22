@@ -332,7 +332,7 @@ class WireMixin:
                     primitives.remove(primitive)
                     break
             else:
-                # print(self, primitive)
+                print(self, primitive)
                 # ax = self.plot()
                 # primitive.plot(edge_style=EdgeStyle(color='r'), ax=ax)
                 raise NotImplementedError('There may exist a problem with this'
