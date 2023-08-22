@@ -792,7 +792,7 @@ class PointVoxelization(PhysicalObject):
         return self.from_voxel_matrix(self.to_voxel_matrix().fill_enclosed_voxels())
 
 
-class VoxelMatrix:
+class VoxelMatrix(PhysicalObject):
     """Class to manipulate voxel matrix."""
 
     def __init__(
@@ -800,6 +800,7 @@ class VoxelMatrix:
         voxel_matrix: np.ndarray[np.bool_, np.ndim == 3],
         voxel_matrix_origin_center: Point,
         voxel_size: float,
+        name: str = "",
     ):
         """
         :param voxel_matrix: The voxel numpy matrix object representing the voxelization.
@@ -812,6 +813,8 @@ class VoxelMatrix:
         self.matrix = voxel_matrix
         self.matrix_origin_center = voxel_matrix_origin_center
         self.voxel_size = voxel_size
+
+        PhysicalObject.__init__(self, name=name)
 
     def __eq__(self, other_voxel_matrix: "VoxelMatrix") -> bool:
         return (
@@ -1016,7 +1019,7 @@ class VoxelMatrix:
         )
 
     @classmethod
-    def from_voxelization(cls, voxelization: "PointVoxelization") -> "VoxelMatrix":
+    def from_point_voxelization(cls, voxelization: "PointVoxelization") -> "VoxelMatrix":
         return voxelization.to_voxel_matrix()
 
     @classmethod
@@ -1024,21 +1027,26 @@ class VoxelMatrix:
         triangles = _shell_to_triangles(shell)
         matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
 
-        return cls(matrix, matrix_origin_center, voxel_size)._crop_matrix()
+        return cls(matrix, matrix_origin_center, voxel_size, name)._crop_matrix()
 
     @classmethod
     def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = ""):
         triangles = _volume_model_to_triangles(volume_model)
         matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
 
-        return cls(matrix, matrix_origin_center, voxel_size)._crop_matrix()
+        return cls(matrix, matrix_origin_center, voxel_size, name)._crop_matrix()
 
-
-    def to_voxelization(self) -> "PointVoxelization":
+    def to_point_voxelization(self) -> "PointVoxelization":
         return PointVoxelization.from_voxel_matrix(self)
 
     def to_triangles(self) -> Set[Triangle]:
-        return self.to_voxelization().to_triangles()
+        return self.to_point_voxelization().to_triangles()
+
+    def to_closed_triangle_shell(self):
+        return self.to_point_voxelization().to_closed_triangle_shell()
+
+    def volmdlr_primitives(self, **kwargs):
+        return self.to_point_voxelization().volmdlr_primitives()
 
 
 class Pixelization:
