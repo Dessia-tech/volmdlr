@@ -14,7 +14,7 @@ cylinder = Cylinder(volmdlr.OXYZ.translation(0.1 * volmdlr.Z3D), 0.1, 0.2, name=
 volume_model = VolumeModel([sphere, cylinder])
 
 # Voxelize the volume model (it uses the triangulated model to create the voxelization)
-voxelization = PointVoxelization.from_volume_model(volume_model, VOXEL_SIZE, method="iterative", name="Voxelization")
+voxelization = PointVoxelization.from_volume_model(volume_model, VOXEL_SIZE, name="Voxelization")
 
 # Display the result
 voxelization_primitive = voxelization.to_closed_triangle_shell()

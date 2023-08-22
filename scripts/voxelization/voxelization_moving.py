@@ -23,7 +23,7 @@ moved_volume_model = moved_volume_model.translation(TRANSLATION_VECTOR)
 moved_volume_model.color = (0, 0, 1)
 
 # Define a voxelization from the none-moved volume_model and move it
-voxelization = PointVoxelization.from_volume_model(volume_model, VOXEL_SIZE, method="iterative")
+voxelization = PointVoxelization.from_volume_model(volume_model, VOXEL_SIZE)
 
 start = time.perf_counter()
 moved_voxelization = voxelization.rotation(volmdlr.O3D, volmdlr.X3D, ROTATION_ANGLE)
@@ -35,7 +35,7 @@ print(f"Voxels translation computing time: {(time.perf_counter() - start)*1000}m
 
 # Define a voxelization from the moved volume_model to compare it
 voxelization_from_moved_volume_model = PointVoxelization.from_volume_model(
-    moved_volume_model, VOXEL_SIZE, method="iterative"
+    moved_volume_model, VOXEL_SIZE,
 )
 
 # Display the result

@@ -11,7 +11,7 @@ STL_MODEL_FILE_PATH = "../stl/simple.stl"
 volume_model = Stl.load_from_file(STL_MODEL_FILE_PATH).to_volume_model()
 
 # Voxelize the model
-voxelization = PointVoxelization.from_volume_model(volume_model, VOXEL_SIZE, method="iterative", name="Voxelization")
+voxelization = PointVoxelization.from_volume_model(volume_model, VOXEL_SIZE, name="Voxelization")
 
 # Display the result
 voxelization_primitive = voxelization.to_closed_triangle_shell()
