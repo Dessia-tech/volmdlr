@@ -50,7 +50,7 @@ class PointVoxelization(PhysicalObject):
     useful to perform very fast Boolean operations.
     """
 
-    def __init__(self, voxel_centers: Set[Point], voxel_size: float, octree_root: "OctreeNode" = None, name: str = ""):
+    def __init__(self, voxel_centers: Set[Point], voxel_size: float, name: str = ""):
         """
         Initialize the Voxelization.
 
@@ -58,14 +58,11 @@ class PointVoxelization(PhysicalObject):
         :type voxel_centers: set[tuple[float, float, float]]
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
-        :param octree_root: The octree root used to create the voxelization, if so.
-        :type octree_root: OctreeNode, optional
         :param name: The name of the Voxelization.
         :type name: str, optional
         """
         self.voxel_centers = voxel_centers
         self.voxel_size = voxel_size
-        self.octree_root = octree_root
 
         PhysicalObject.__init__(self, name=name)
 
@@ -161,76 +158,30 @@ class PointVoxelization(PhysicalObject):
         return len(self.voxel_centers)
 
     @classmethod
-    def from_closed_triangle_shell(
-        cls, closed_triangle_shell: ClosedTriangleShell3D, voxel_size: float, method: str = "iterative", name: str = ""
+    def from_shell(
+        cls, shell: Shell3D, voxel_size: float, name: str = ""
     ) -> "PointVoxelization":
         """
         Create a Voxelization from a ClosedTriangleShell3D.
 
-        :param closed_triangle_shell: The ClosedTriangleShell3D to voxelize.
-        :type closed_triangle_shell: ClosedTriangleShell3D
+        :param shell: The Shell3D to voxelize.
+        :type shell: Shell3D
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
-        :param method: The method used to voxelize the geometry ("iterative" or "octree"). Default is "octree".
-        :type method: str, optional
         :param name: The name of the Voxelization.
         :type name: str, optional
 
         :return: The created Voxelization.
         :rtype: PointVoxelization
         """
-        octree_root_node = None
-        if method == "iterative":
-            triangles = cls._closed_triangle_shell_to_triangles(closed_triangle_shell)
-            voxels = cls._triangles_to_voxels(triangles, voxel_size)
+        triangles = _shell_to_triangles(shell)
+        voxels = cls._triangles_to_voxels(triangles, voxel_size)
 
-        elif method == "octree":
-            triangles = cls._closed_triangle_shell_to_triangles(closed_triangle_shell)
-            octree_root_node = OctreeNode.octree_voxelization_size_based(triangles, voxel_size)
-            voxels = set(octree_root_node.get_leaf_centers())
-
-        else:
-            raise ValueError("Invalid 'method' argument: must be 'iterative' or 'octree'")
-
-        return cls(voxel_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
-
-    @classmethod
-    def from_closed_shell(
-        cls, closed_shell: ClosedShell3D, voxel_size: float, method: str = "iterative", name: str = ""
-    ) -> "PointVoxelization":
-        """
-        Create a Voxelization from a ClosedShell3D.
-
-        :param closed_shell: The ClosedShell3D to voxelize.
-        :type closed_shell: ClosedShell3D
-        :param voxel_size: The voxel edges size.
-        :type voxel_size: float
-        :param method: The method used to voxelize the geometry ("iterative" or "octree"). Default is "octree".
-        :type method: str, optional
-        :param name: The name of the Voxelization.
-        :type name: str, optional
-
-        :return: The created Voxelization.
-        :rtype: PointVoxelization
-        """
-        octree_root_node = None
-        if method == "iterative":
-            triangles = cls._closed_shell_to_triangles(closed_shell)
-            voxels = cls._triangles_to_voxels(triangles, voxel_size)
-
-        elif method == "octree":
-            triangles = cls._closed_shell_to_triangles(closed_shell)
-            octree_root_node = OctreeNode.octree_voxelization_size_based(triangles, voxel_size)
-            voxels = set(octree_root_node.get_leaf_centers())
-
-        else:
-            raise ValueError("Invalid 'method' argument: must be 'iterative' or 'octree'")
-
-        return cls(voxel_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
+        return cls(voxel_centers=voxels, voxel_size=voxel_size, name=name)
 
     @classmethod
     def from_volume_model(
-        cls, volume_model: VolumeModel, voxel_size: float, method: str = "iterative", name: str = ""
+        cls, volume_model: VolumeModel, voxel_size: float, name: str = ""
     ) -> "PointVoxelization":
         """
         Create a Voxelization from a VolumeModel.
@@ -239,289 +190,16 @@ class PointVoxelization(PhysicalObject):
         :type volume_model: VolumeModel
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
-        :param method: The method used to voxelize the geometry ("iterative" or "octree"). Default is "octree".
-        :type method: str, optional
         :param name: The name of the Voxelization.
         :type name: str, optional
 
         :return: The created Voxelization.
         :rtype: PointVoxelization
         """
-        octree_root_node = None
-        if method == "iterative":
-            triangles = cls._volume_model_to_triangles(volume_model)
-            voxels = cls._triangles_to_voxels(triangles, voxel_size)
+        triangles = _volume_model_to_triangles(volume_model)
+        voxels = cls._triangles_to_voxels(triangles, voxel_size)
 
-        elif method == "octree":
-            triangles = cls._volume_model_to_triangles(volume_model)
-            octree_root_node = OctreeNode.octree_voxelization_size_based(triangles, voxel_size)
-            voxels = set(octree_root_node.get_leaf_centers())
-
-        else:
-            raise ValueError("Invalid 'method' argument: must be 'iterative' or 'octree'")
-
-        return cls(voxel_centers=voxels, voxel_size=voxel_size, octree_root=octree_root_node, name=name)
-
-    @staticmethod
-    def _closed_triangle_shell_to_triangles(closed_triangle_shell: ClosedTriangleShell3D) -> List[Triangle]:
-        """
-        Helper method to convert a ClosedTriangleShell3D to a list of triangles.
-
-        :param closed_triangle_shell: The ClosedTriangleShell3D to convert to triangles.
-        :type closed_triangle_shell: ClosedTriangleShell3D
-
-        :return: The list of triangles extracted from the ClosedTriangleShell3D.
-        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
-        """
-        return list(
-            tuple(tuple([point.x, point.y, point.z]) for point in [tr.point1, tr.point2, tr.point3])
-            for tr in closed_triangle_shell.primitives
-        )
-
-    @staticmethod
-    def _closed_shell_to_triangles(closed_shell: ClosedShell3D) -> List[Triangle]:
-        """
-        Helper method to convert a ClosedShell3D to a list of triangles.
-        It uses the "triangulation" method to triangulate the ClosedShell3D.
-
-        :param closed_shell: The ClosedShell3D to convert to triangles.
-        :type closed_shell: ClosedShell3D
-
-        :return: The list of triangles extracted from the triangulated ClosedShell3D.
-        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
-        """
-        triangulation = closed_shell.triangulation()
-        return list(
-            tuple(
-                tuple([point.x, point.y, point.z])
-                for point in [
-                    triangulation.points[triangle[0]],
-                    triangulation.points[triangle[1]],
-                    triangulation.points[triangle[2]],
-                ]
-            )
-            for triangle in triangulation.triangles
-        )
-
-    @staticmethod
-    def _volume_model_to_triangles(volume_model: VolumeModel) -> List[Triangle]:
-        """
-        Helper method to convert a VolumeModel to a list of triangles.
-        It uses the "triangulation" method to triangulate the primitives of the VolumeModel.
-
-        :param volume_model: The VolumeModel to convert to triangles.
-        :type volume_model: VolumeModel
-
-        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
-        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
-        """
-        triangles = []
-        for primitive in volume_model.primitives:
-            triangulation = primitive.triangulation()
-            triangles += list(
-                tuple(
-                    tuple([point.x, point.y, point.z])
-                    for point in [
-                        triangulation.points[triangle[0]],
-                        triangulation.points[triangle[1]],
-                        triangulation.points[triangle[2]],
-                    ]
-                )
-                for triangle in triangulation.triangles
-            )
-        return triangles
-
-    @staticmethod
-    def _triangle_intersects_voxel(triangle: Triangle, voxel_center: Point, voxel_extents: List[float]) -> bool:
-        """
-        Helper method to compute if there is an intersection between a 3D triangle and a voxel.
-        This method uses the "Separating Axis Theorem".
-
-        This method has been implemented in Cython in voxelization_compiled.pyx file.
-
-        :param triangle: The triangle to check if it intersects with the voxel.
-        :type: triangle: tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]
-        :param voxel_center: The center point of the voxel.
-        :type voxel_center: tuple[float, float, float]
-        :param voxel_extents: The extents of the voxel in each direction (half-size of the voxel size).
-        :type voxel_extents: list[float, float, float]
-
-        :return: True if there is an intersection, False otherwise.
-        :rtype: bool
-        """
-        # Method ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
-        # pylint: disable=invalid-name,too-many-locals,too-many-return-statements,too-many-statements,too-many-branches
-
-        triangle = np.array(triangle)
-        box_center = np.array(voxel_center)
-        box_extents = np.array(voxel_extents)
-
-        x, y, z = 0, 1, 2
-
-        # Translate triangle as conceptually moving AABB to origin
-        v0 = triangle[0] - box_center
-        v1 = triangle[1] - box_center
-        v2 = triangle[2] - box_center
-
-        # Compute edge vectors for triangle
-        f0 = triangle[1] - triangle[0]
-        f1 = triangle[2] - triangle[1]
-        f2 = triangle[0] - triangle[2]
-
-        # REGION TEST AXES a00..a22 (CATEGORY 3)
-
-        # Test axis a00
-        a00 = np.array([0, -f0[z], f0[y]])
-        p0 = np.dot(v0, a00)
-        p1 = np.dot(v1, a00)
-        p2 = np.dot(v2, a00)
-        r = box_extents[y] * abs(f0[z]) + box_extents[z] * abs(f0[y])
-        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
-            return False
-
-        # Test axis a01
-        a01 = np.array([0, -f1[z], f1[y]])
-        p0 = np.dot(v0, a01)
-        p1 = np.dot(v1, a01)
-        p2 = np.dot(v2, a01)
-        r = box_extents[y] * abs(f1[z]) + box_extents[z] * abs(f1[y])
-        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
-            return False
-
-        # Test axis a02
-        a02 = np.array([0, -f2[z], f2[y]])
-        p0 = np.dot(v0, a02)
-        p1 = np.dot(v1, a02)
-        p2 = np.dot(v2, a02)
-        r = box_extents[y] * abs(f2[z]) + box_extents[z] * abs(f2[y])
-        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
-            return False
-
-        # Test axis a10
-        a10 = np.array([f0[z], 0, -f0[x]])
-        p0 = np.dot(v0, a10)
-        p1 = np.dot(v1, a10)
-        p2 = np.dot(v2, a10)
-        r = box_extents[x] * abs(f0[z]) + box_extents[z] * abs(f0[x])
-        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
-            return False
-
-        # Test axis a11
-        a11 = np.array([f1[z], 0, -f1[x]])
-        p0 = np.dot(v0, a11)
-        p1 = np.dot(v1, a11)
-        p2 = np.dot(v2, a11)
-        r = box_extents[x] * abs(f1[z]) + box_extents[z] * abs(f1[x])
-        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
-            return False
-
-        # Test axis a12
-        a11 = np.array([f2[z], 0, -f2[x]])
-        p0 = np.dot(v0, a11)
-        p1 = np.dot(v1, a11)
-        p2 = np.dot(v2, a11)
-        r = box_extents[x] * abs(f2[z]) + box_extents[z] * abs(f2[x])
-        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
-            return False
-
-        # Test axis a20
-        a20 = np.array([-f0[y], f0[x], 0])
-        p0 = np.dot(v0, a20)
-        p1 = np.dot(v1, a20)
-        p2 = np.dot(v2, a20)
-        r = box_extents[x] * abs(f0[y]) + box_extents[y] * abs(f0[x])
-        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
-            return False
-
-        # Test axis a21
-        a21 = np.array([-f1[y], f1[x], 0])
-        p0 = np.dot(v0, a21)
-        p1 = np.dot(v1, a21)
-        p2 = np.dot(v2, a21)
-        r = box_extents[x] * abs(f1[y]) + box_extents[y] * abs(f1[x])
-        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
-            return False
-
-        # Test axis a22
-        a22 = np.array([-f2[y], f2[x], 0])
-        p0 = np.dot(v0, a22)
-        p1 = np.dot(v1, a22)
-        p2 = np.dot(v2, a22)
-        r = box_extents[x] * abs(f2[y]) + box_extents[y] * abs(f2[x])
-        if (max(-max(p0, p1, p2), min(p0, p1, p2))) > r:
-            return False
-
-        # ENDREGION
-
-        # REGION TEST THE THREE AXES CORRESPONDING TO THE FACE NORMALS OF AABB B (CATEGORY 1)
-
-        # Exit if...
-        # ... [-extents.X, extents.X] and [min(v0.X,v1.X,v2.X), max(v0.X,v1.X,v2.X)] do not overlap
-        if max(v0[x], v1[x], v2[x]) < -box_extents[x] or min(v0[x], v1[x], v2[x]) > box_extents[x]:
-            return False
-
-        # ... [-extents.Y, extents.Y] and [min(v0.Y,v1.Y,v2.Y), max(v0.Y,v1.Y,v2.Y)] do not overlap
-        if max(v0[y], v1[y], v2[y]) < -box_extents[y] or min(v0[y], v1[y], v2[y]) > box_extents[y]:
-            return False
-
-        # ... [-extents.Z, extents.Z] and [min(v0.Z,v1.Z,v2.Z), max(v0.Z,v1.Z,v2.Z)] do not overlap
-        if max(v0[z], v1[z], v2[z]) < -box_extents[z] or min(v0[z], v1[z], v2[z]) > box_extents[z]:
-            return False
-
-        # ENDREGION
-
-        # REGION TEST SEPARATING AXIS CORRESPONDING TO TRIANGLE FACE NORMAL (CATEGORY 2)
-
-        plane_normal = np.cross(f0, f1)
-        plane_distance = abs(np.dot(plane_normal, v0))
-
-        # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
-        r = (
-            box_extents[x] * abs(plane_normal[x])
-            + box_extents[y] * abs(plane_normal[y])
-            + box_extents[z] * abs(plane_normal[z])
-        )
-
-        # Intersection occurs when plane distance falls within [-r,+r] interval
-        if plane_distance > r:
-            return False
-
-        # ENDREGION
-
-        return True
-
-    @staticmethod
-    def _aabb_intersecting_boxes(min_point: Point, max_point: Point, voxel_size: float) -> List[Point]:
-        """
-        Helper method to compute the center of the voxels that intersect with a given axis aligned
-        bounding box (defined by 2 points).
-
-        This method has been implemented in Cython in voxelization_compiled.pyx file.
-
-        :param min_point: The minimum point of the bounding box.
-        :type min_point: tuple[float, float, float]
-        :param max_point: The maximum point of the bounding box.
-        :type max_point: tuple[float, float, float]
-        :param voxel_size: The voxel edges size.
-        :type voxel_size: float
-
-        :return: A list of the centers of the intersecting voxels.
-        :rtype: list[tuple[float, float, float]]
-        """
-        # Calculate the indices of the cubes that intersect with the bounding box
-        x_indices = range(int(min_point[0] / voxel_size) - 1, int(max_point[0] / voxel_size) + 1)
-        y_indices = range(int(min_point[1] / voxel_size) - 1, int(max_point[1] / voxel_size) + 1)
-        z_indices = range(int(min_point[2] / voxel_size) - 1, int(max_point[2] / voxel_size) + 1)
-
-        # Create a list of the centers of all the intersecting voxels
-        centers = []
-        for x in x_indices:
-            for y in y_indices:
-                for z in z_indices:
-                    center = tuple(round((_ + 1 / 2) * voxel_size, 6) for _ in [x, y, z])
-                    centers.append(center)
-
-        return centers
+        return cls(voxel_centers=voxels, voxel_size=voxel_size, name=name)
 
     @staticmethod
     def _voxels_intersecting_voxels(voxel_centers_array: np.ndarray, voxel_size: float) -> Set[Point]:
@@ -732,300 +410,6 @@ class PointVoxelization(PhysicalObject):
         triangular_faces = [tuple(tuple(round(_, 6) for _ in point) for point in face) for face in faces]
         return triangular_faces
 
-    @staticmethod
-    def _triangles_to_segments(
-        triangles: Set[Triangle],
-    ) -> Tuple[Dict[float, Set[Segment]], Dict[float, Set[Segment]], Dict[float, Set[Segment]]]:
-        """
-        Helper method to extract the segments of a given list of triangle representing a voxelization.
-        The segments are sorted by plane: a plane is defined by its normal vector (X, Y or Z) and abscissa.
-
-        Only the segments representing the relevant contours of a faces are returned.
-        These relevant segments are the one that are only present in the list of triangles, because if a segment is
-        present twice, this means that it's inside the face and is not interesting for defining the face contour.
-
-        :param triangles: The triangles defining the voxelization.
-        :type triangles: Set[Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]]
-
-        :return: The extracted relevant segments, sorted by plane.
-        :rtype: tuple[dict[float, set[Segment]], dict[float, set[Segment]], dict[float, set[Segment]]]
-        """
-        segments_x = {}
-        segments_y = {}
-        segments_z = {}
-
-        for triangle in triangles:
-            if triangle[0][0] == triangle[1][0] == triangle[2][0]:
-                segments = segments_x.get(triangle[0][0], set())
-                triangle_segments = [
-                    (tuple(triangle[0][1:]), tuple(triangle[1][1:])),
-                    (tuple(triangle[1][1:]), tuple(triangle[2][1:])),
-                    (tuple(triangle[2][1:]), tuple(triangle[0][1:])),
-                ]
-
-                segments_x[triangle[0][0]] = PointVoxelization._add_triangle_segments_to_segments_set(
-                    triangle_segments, segments
-                )
-
-            elif triangle[0][1] == triangle[1][1] == triangle[2][1]:
-                segments = segments_y.get(triangle[0][1], set())
-                triangle_segments = [
-                    (
-                        tuple([triangle[0][0], triangle[0][2]]),
-                        tuple([triangle[1][0], triangle[1][2]]),
-                    ),
-                    (
-                        tuple([triangle[1][0], triangle[1][2]]),
-                        tuple([triangle[2][0], triangle[2][2]]),
-                    ),
-                    (
-                        tuple([triangle[2][0], triangle[2][2]]),
-                        tuple([triangle[0][0], triangle[0][2]]),
-                    ),
-                ]
-
-                segments_y[triangle[0][1]] = PointVoxelization._add_triangle_segments_to_segments_set(
-                    triangle_segments, segments
-                )
-
-            else:
-                segments = segments_z.get(triangle[0][2], set())
-                triangle_segments = [
-                    (tuple(triangle[0][:2]), tuple(triangle[1][:2])),
-                    (tuple(triangle[1][:2]), tuple(triangle[2][:2])),
-                    (tuple(triangle[2][:2]), tuple(triangle[0][:2])),
-                ]
-
-                segments_z[triangle[0][2]] = PointVoxelization._add_triangle_segments_to_segments_set(
-                    triangle_segments, segments
-                )
-
-        return segments_x, segments_y, segments_z
-
-    @staticmethod
-    def _add_triangle_segments_to_segments_set(
-        triangle_segments: List[Segment], segments_set: Set[Segment]
-    ) -> Set[Segment]:
-        """
-        Helper method to add the segments defining a triangle to a set of segments, avoiding non-relevant segments
-        (i.e. segments that does not represent an inner or outer contour of the face, but that are inside the face).
-
-        :param triangle_segments: The segments defining the triangle.
-        :type triangle_segments: list[tuple[tuple[float, float], tuple[float, float]]]
-        :param segments_set: The set in which the segments are added.
-        :type segments_set: set[tuple[tuple[float, float], tuple[float, float]]]
-
-        :return: The edited set of segments.
-        :rtype: set[tuple[tuple[float, float], tuple[float, float]]]
-        """
-        for segment in triangle_segments:
-            if segment not in segments_set and segment[::-1] not in segments_set:
-                segments_set.add(segment)
-            else:
-                if segment in segments_set:
-                    segments_set.remove(segment)
-                else:
-                    segments_set.remove(segment[::-1])
-
-        return segments_set
-
-    @staticmethod
-    def _order_segments(segments: Iterable[Segment]) -> List[List[Segment]]:
-        """
-        Helper method to order a given set of segments defined in the same plane.
-        The segments may define several contours, so this method define a list of lists of ordered segments,
-        representing the multiple contours with ordered segments.
-
-        :param segments: The segments to order.
-        :type segments: Iterable[tuple[tuple[float, float], tuple[float, float]]]
-
-        :return: The ordered segments lists.
-        :rtype: list[list[tuple[tuple[float, float], tuple[float, float]]]]
-        """
-        segments = list(segments)
-        ordered_segments_list = []
-
-        while segments:
-            # Start a new contour with the first segment
-            ordered_segments = [segments.pop()]
-            ordered_segments_list.append(ordered_segments)
-
-            while True:
-                last_segment = ordered_segments[-1]
-
-                # Find the next segment
-                for i, segment in enumerate(segments):
-                    if segment[0] == last_segment[1]:
-                        ordered_segments.append(segments.pop(i))
-                        break
-
-                    if segment[1] == last_segment[1]:
-                        # If the segment is in the opposite direction, reverse it
-                        ordered_segments.append((segment[1], segment[0]))
-                        segments.pop(i)
-                        break
-                else:
-                    # No more segments connect to this contour, start a new one
-                    break
-
-        return ordered_segments_list
-
-    @staticmethod
-    def _triangles_to_closed_polygons(triangles: Set[Triangle]) -> List[Dict[float, List[ClosedPolygon2D]]]:
-        """
-        Helper method to convert the triangles defined the faces of the voxelization to ClosedPolygon2D, sorted
-        by plane (a plane is defined by its normal vector (X, Y or Z) and its abscissa).
-
-        :param triangles: The triangles defining the voxelization.
-        :type triangles: Set[Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]]
-
-        :return: All the ClosedPolygon2D defining the faces of the voxelization, sorted by plane.
-        :rtype: list[dict[float, list[ClosedPolygon2D]]]
-        """
-        segments_x, segments_y, segments_z = PointVoxelization._triangles_to_segments(triangles)
-        polygons = [{}, {}, {}]
-
-        for i, segments_i in enumerate([segments_x, segments_y, segments_z]):
-            for abscissa, segments in segments_i.items():
-                # Order the segments lists
-                ordered_segments_list = PointVoxelization._order_segments(segments)
-
-                # Split the self-intersecting polygons
-                split_ordered_segments_list = []
-                for ordered_segments in ordered_segments_list:
-                    split_ordered_segments_list.extend(PointVoxelization._split_ordered_segments(ordered_segments))
-
-                polygons[i][abscissa] = [
-                    PointVoxelization._ordered_segments_to_closed_polygon_2d(split_ordered_segments)
-                    for split_ordered_segments in split_ordered_segments_list
-                ]
-
-        return polygons
-
-    @staticmethod
-    def _split_ordered_segments(ordered_segments: List[Segment]) -> List[List[Segment]]:
-        """
-        Helper method to split the self-crossing polygons into multiple polygons to avoid triangulation errors.
-
-        :param ordered_segments: The ordered segments defining the polygon.
-        :type ordered_segments: list[tuple[tuple[float, float], tuple[float, float]]]
-
-        :return: The split polygon into multiple polygons, defined by segment list.
-        :rtype: list[list[tuple[tuple[float, float], tuple[float, float]]]]
-        """
-        # TODO: refactor this method to make it more understandable
-        # pylint: disable=too-many-locals,too-many-branches
-
-        points = [segment[0] for segment in ordered_segments]
-
-        if len(points) == len(set(points)):
-            # If no duplicate points, the polygon is not self-intersecting
-            return [ordered_segments]
-
-        graph = Graph(ordered_segments)
-        ordered_segments_list = []
-
-        for cycle in graph.find_cycles():
-            ordered_segments_list.extend(PointVoxelization._order_segments(cycle))
-            # print(Voxelization._order_segments(cycle))
-
-        polygons = {}
-        for _ordered_segments in ordered_segments_list:
-            polygons[tuple(_ordered_segments)] = PointVoxelization._ordered_segments_to_closed_polygon_2d(_ordered_segments)
-
-        # Check for polygon inclusion
-        children = {}
-        parents = {}
-        for polygon in polygons.values():
-            children[polygon] = []
-            parents[polygon] = []
-
-        for polygon_1 in polygons.values():
-            for polygon_2 in polygons.values():
-                if polygon_1 != polygon_2:
-                    if polygon_1.is_inside(polygon_2):
-                        children[polygon_1].append(polygon_2)
-                        parents[polygon_2].append(polygon_1)
-                    elif polygon_2.is_inside(polygon_1):
-                        children[polygon_2].append(polygon_1)
-                        parents[polygon_1].append(polygon_2)
-
-        # Actual split polygons have no children in the cycle-defined polygons from the self-intersecting polygon
-        candidate_polygons = {}
-        for _ordered_segments, polygon in polygons.items():
-            if len(children[polygon]) == 0:
-                candidate_polygons[_ordered_segments] = polygon
-
-        # If the polygon has all its segments part of the other polygons segments, it is an inner polygon
-        ordered_segments_list = []
-        for _ordered_segments in candidate_polygons:
-            ordered_segments_list.append(list(_ordered_segments))
-
-        ordered_segments_list_valid = []
-        for i, _ordered_segments in enumerate(ordered_segments_list):
-            all_current_polygon_segments = []
-            all_other_polygons_segments = []
-
-            for segments in _ordered_segments:
-                all_current_polygon_segments.append(segments)
-                all_current_polygon_segments.append(segments[::-1])
-
-            for segments in ordered_segments_list[:i] + ordered_segments_list[i + 1 :]:
-                for segment in segments:
-                    all_other_polygons_segments.append(segment)
-                    all_other_polygons_segments.append(segment[::-1])
-
-            for segment in all_current_polygon_segments:
-                if segment not in all_other_polygons_segments:
-                    ordered_segments_list_valid.append(_ordered_segments)
-                    break
-
-        return ordered_segments_list_valid
-
-    @staticmethod
-    def _simplify_polygon_points(points: List[Point]) -> List[Point]:
-        """
-        Helper method to simplify the list of points defining a polygon, by removing the points that are not relevant
-        for the polygon definition, i.e. the points that are not in a corner of the polygon.
-
-        :param points: The points defining the polygon.
-        :type points: list[tuple[float, float, float]]
-
-        :return: The simplified points.
-        :rtype: list[tuple[float, float, float]]
-        """
-        simplified_point = []
-
-        for i in range(len(points) - 1):
-            if not (
-                points[i - 1][0] == points[i][0] == points[i + 1][0]
-                or points[i - 1][1] == points[i][1] == points[i + 1][1]
-            ):
-                simplified_point.append(points[i])
-
-        if not (points[-2][0] == points[-1][0] == points[0][0] or points[-2][1] == points[-1][1] == points[0][1]):
-            simplified_point.append(points[-1])
-
-        return simplified_point
-
-    @staticmethod
-    def _ordered_segments_to_closed_polygon_2d(ordered_segments: Iterable[Segment]) -> ClosedPolygon2D:
-        """
-        Helper method to convert an iterable of ordered segments to a ClosedPolygon2D.
-
-        :param ordered_segments: The segments that compose the ClosedPolygon2D.
-        :type ordered_segments: Iterable[tuple[tuple[float, float], tuple[float, float]]]
-
-        :return: The created ClosedPolygon2D.
-        :rtype: ClosedPolygon2D
-        """
-        return ClosedPolygon2D(
-            points=[
-                Point2D(*point)
-                for point in PointVoxelization._simplify_polygon_points([segment[0] for segment in ordered_segments])
-            ]
-        )
-
     def to_triangles(self) -> Set[Triangle]:
         """
         Convert the voxelization to triangles for display purpose.
@@ -1046,63 +430,6 @@ class PointVoxelization(PhysicalObject):
                     triangles.remove(triangle)
 
         return triangles
-
-    def to_closed_shell(self) -> ClosedShell3D:
-        """
-        Convert the voxelization to a ClosedShell3D for display purpose.
-
-        This ClosedShell3D is only composed of PlaneFace3D that represent the faces of the voxelized geometry, and
-        are made to be the lightest geometrical representation of the voxelization (in terms of number of triangles
-        in the babylonjs model).
-
-        :return: The created ClosedShell3D with only PlaneFace3D.
-        :rtype: ClosedShell3D
-        """
-        # TODO: refactor this method to make it more understandable
-        # pylint: disable=too-many-nested-blocks
-
-        polygons = self._triangles_to_closed_polygons(self.to_triangles())
-        planes = [PLANE3D_OYZ, PLANE3D_OXZ, PLANE3D_OXY]
-        faces = []
-
-        for i, polygons_i in enumerate(polygons):
-            for abscissa, polygons in polygons_i.items():
-                offset = [0, 0, 0]
-                offset[i] = abscissa
-                offset = Vector3D(*offset)
-
-                plane = planes[i].translation(offset)
-
-                if len(polygons) == 1:
-                    faces.append(PlaneFace3D(plane, Surface2D(polygons[0], [])))
-                else:
-                    # Check for polygon inclusion
-                    children = {}
-                    parents = {}
-                    for polygon in polygons:
-                        children[polygon] = []
-                        parents[polygon] = []
-
-                    for polygon_1 in polygons:
-                        for polygon_2 in polygons:
-                            if polygon_1 != polygon_2:
-                                if polygon_1.is_inside(polygon_2):
-                                    children[polygon_1].append(polygon_2)
-                                    parents[polygon_2].append(polygon_1)
-                                elif polygon_2.is_inside(polygon_1):
-                                    children[polygon_2].append(polygon_1)
-                                    parents[polygon_1].append(polygon_2)
-
-                    for polygon in polygons:
-                        if len(parents[polygon]) // 2 == 0:
-                            inner_polygons = [
-                                child
-                                for child in children[polygon]
-                                if set(children[polygon]).intersection(children[child]) == set()
-                            ]
-                            faces.append(PlaneFace3D(plane, Surface2D(polygon, inner_polygons)))
-
-        return ClosedShell3D(faces, name=self.name)
 
     def to_closed_triangle_shell(self) -> ClosedTriangleShell3D:
         """
@@ -1698,60 +1025,18 @@ class VoxelMatrix:
 
     @classmethod
     def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = ""):
-        triangles = cls._shell_to_triangles(shell)
+        triangles = _shell_to_triangles(shell)
         matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
 
         return cls(matrix, matrix_origin_center, voxel_size)._crop_matrix()
-
-    @staticmethod
-    def _shell_to_triangles(shell: Shell3D) -> List[Triangle]:
-        """
-        Helper method to convert a Shell3D to a list of triangles.
-        It uses the "triangulation" method to triangulate the Shell3D.
-
-        :param shell: The Shell3D to convert to triangles.
-        :type shell: Shell3D
-
-        :return: The list of triangles extracted from the triangulated Shell3D.
-        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
-        """
-        triangulation = shell.triangulation()
-        return [
-            tuple(
-                tuple([float(point.x), float(point.y), float(point.z)])
-                for point in [
-                    triangulation.points[triangle[0]],
-                    triangulation.points[triangle[1]],
-                    triangulation.points[triangle[2]],
-                ]
-            )
-            for triangle in triangulation.triangles
-        ]
 
     @classmethod
     def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = ""):
-        triangles = cls._volume_model_to_triangles(volume_model)
+        triangles = _volume_model_to_triangles(volume_model)
         matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
 
         return cls(matrix, matrix_origin_center, voxel_size)._crop_matrix()
 
-    @staticmethod
-    def _volume_model_to_triangles(volume_model: VolumeModel) -> List[Triangle]:
-        """
-        Helper method to convert a VolumeModel to a list of triangles.
-        It uses the "triangulation" method to triangulate the shells of the VolumeModel.
-
-        :param volume_model: The VolumeModel to convert to triangles.
-        :type volume_model: VolumeModel
-
-        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
-        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
-        """
-        triangles = []
-        for shell in volume_model.get_shells():
-            triangles.extend(VoxelMatrix._shell_to_triangles(shell))
-
-        return triangles
 
     def to_voxelization(self) -> "PointVoxelization":
         return PointVoxelization.from_voxel_matrix(self)
@@ -2130,3 +1415,46 @@ class PixelMatrix:
         #     warnings.warn("This pixel matrix doesn't have any enclosed pixels.")
 
         return inner_filled_pixel_matrix
+
+
+def _shell_to_triangles(shell: Shell3D) -> List[Triangle]:
+    """
+    Helper function to convert a Shell3D to a list of triangles.
+    It uses the "triangulation" method to triangulate the Shell3D.
+
+    :param shell: The Shell3D to convert to triangles.
+    :type shell: Shell3D
+
+    :return: The list of triangles extracted from the triangulated Shell3D.
+    :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+    """
+    triangulation = shell.triangulation()
+    return [
+        tuple(
+            tuple([float(point.x), float(point.y), float(point.z)])
+            for point in [
+                triangulation.points[triangle[0]],
+                triangulation.points[triangle[1]],
+                triangulation.points[triangle[2]],
+            ]
+        )
+        for triangle in triangulation.triangles
+    ]
+
+
+def _volume_model_to_triangles(volume_model: VolumeModel) -> List[Triangle]:
+    """
+    Helper function to convert a VolumeModel to a list of triangles.
+    It uses the "triangulation" method to triangulate the shells of the VolumeModel.
+
+    :param volume_model: The VolumeModel to convert to triangles.
+    :type volume_model: VolumeModel
+
+    :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
+    :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+    """
+    triangles = []
+    for shell in volume_model.get_shells():
+        triangles.extend(_shell_to_triangles(shell))
+
+    return triangles
