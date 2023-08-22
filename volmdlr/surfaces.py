@@ -4325,7 +4325,9 @@ class RevolutionSurface3D(PeriodicalSurface):
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
                 if middle_point.x == math.pi:
                     middle_point.x = -math.pi
-                end = volmdlr.Point2D(middle_point.x, end.y)
+                    if start.x == math.pi:
+                        start.x = middle_point.x
+                end.x = middle_point.x
         if math.isclose(start.y, end.y, rel_tol=0.01):
             point_after_start, point_before_end = self._reference_points(arc3d)
             point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
@@ -4410,9 +4412,9 @@ class RevolutionSurface3D(PeriodicalSurface):
             return [edges.Arc3D.from_3_points(start3d, interior, end3d)]
 
         if math.isclose(theta1, theta2, abs_tol=1e-3):
-            primitive = self.edge.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
+            primitive = self.edge.simplify.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if isinstance(self.edge, curves.Line3D):
+                if isinstance(self.edge, curves.Line3D) or isinstance(self.edge, edges.LineSegment3D):
                     return [edges.LineSegment3D(start3d, end3d)]
                 if self.edge.is_point_edge_extremity(start3d) and self.edge.is_point_edge_extremity(end3d):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
@@ -4425,6 +4427,15 @@ class RevolutionSurface3D(PeriodicalSurface):
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
         return [edges.BSplineCurve3D.from_points_interpolation(points, degree).simplify]
+
+    def bsplinecurve2d_to_3d(self, bspline_curve2d):
+        """
+        Is this right?.
+        """
+        n = len(bspline_curve2d.control_points)
+        points = [self.point2d_to_3d(p)
+                  for p in bspline_curve2d.discretization_points(number_points=n)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree)]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -4501,6 +4512,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         if self.edge.__class__.__name__ == "Line3D":
             return False
         return self.edge.is_point_edge_extremity(point)
+
+
 
 
 class BSplineSurface3D(Surface3D):
@@ -5293,8 +5306,7 @@ class BSplineSurface3D(Surface3D):
         """
         sample_size_u = 10
         sample_size_v = 10
-        matrix = self.evalpts
-        initial_index, minimal_distance = self._find_index_min(matrix, point3d_array)
+        initial_index, minimal_distance = self._find_index_min(self.evalpts, point3d_array)
 
         if initial_index == 0:
             u_idx, v_idx = 0, 0
@@ -5364,7 +5376,7 @@ class BSplineSurface3D(Surface3D):
             index, distance = self._find_index_min(matrix, point3d_array)
             if distance < minimal_distance:
                 minimal_distance = distance
-            if abs(distance - last_distance) < acceptable_distance/100:
+            if abs(distance - last_distance) < acceptable_distance * 0.01:
                 return (u, v), minimal_distance
             u, v, delta_u, delta_v = self._update_parameters([u_start, u_stop, v_start, v_stop], sample_size_u,
                                                              sample_size_v, index)
