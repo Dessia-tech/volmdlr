@@ -63,7 +63,8 @@ pipeline:
       - python code_pylint.py
       - python code_pydocstyle.py
       - pre-commit run -a
-
+    volumes:
+      - /tmp/cache/drone/:/root/.cache
 
   check-pep8-formatting:
     image: python:3.9
@@ -71,6 +72,8 @@ pipeline:
       - git fetch --tags
       - pip3 install -U pip autopep8==2.0.0
       - bash code_pep8.sh
+    volumes:
+      - /tmp/cache/drone/:/root/.cache
 
   check-changelog-update:
     image: python:3.9
