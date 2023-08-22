@@ -1496,7 +1496,7 @@ class VoxelMatrix:
 
     def __init__(
         self,
-        voxel_matrix: np.ndarray,  # np.ndarray[np.bool_, np.ndim == 3]
+        voxel_matrix: np.ndarray[np.bool_, np.ndim == 3],
         voxel_matrix_origin_center: Point,
         voxel_size: float,
     ):
@@ -1519,7 +1519,13 @@ class VoxelMatrix:
             and np.array_equal(self.matrix, other_voxel_matrix.matrix)
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """
+        Return the number of True value in the 3D voxel matrix.
+
+        :return: The number of True value in the 3D voxel matrix.
+        :rtype: int
+        """
         return len(np.argwhere(self.matrix))
 
     def __add__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
@@ -1670,35 +1676,6 @@ class VoxelMatrix:
         return VoxelMatrix(
             flood_fill_matrix_3d(self.matrix, start, fill_with), self.matrix_origin_center, self.voxel_size
         )
-
-        # directions = [(0, -1, 0), (0, 1, 0), (-1, 0, 0), (1, 0, 0), (0, 0, -1), (0, 0, 1)]
-        # old_value = self.matrix[start[0]][start[1]][start[2]]
-        #
-        # if old_value == fill_with:
-        #     return self
-        #
-        # matrix = self.matrix.copy()
-        # stack = deque([start])
-        # visited = {start}
-        #
-        # while stack:
-        #     x, y, z = stack.pop()
-        #
-        #     matrix[x][y][z] = fill_with
-        #
-        #     for dx, dy, dz in directions:
-        #         nx, ny, nz = x + dx, y + dy, z + dz
-        #         if (
-        #             (nx, ny, nz) not in visited
-        #             and 0 <= nx < len(matrix)
-        #             and 0 <= ny < len(matrix[0])
-        #             and 0 <= nz < len(matrix[0][0])
-        #             and matrix[nx][ny][nz] == old_value
-        #         ):
-        #             stack.append((nx, ny, nz))
-        #             visited.add((nx, ny, nz))
-        #
-        # return VoxelMatrix(matrix)
 
     def _expand(self) -> "VoxelMatrix":
         current_shape = self.matrix.shape
