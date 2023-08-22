@@ -1,3 +1,7 @@
+"""
+Unit testing of 'Voxelization' class.
+"""
+import math
 import unittest
 
 import volmdlr
@@ -9,6 +13,10 @@ SHOW_BABYLONJS = True
 
 
 class TestVoxelizationCreation(unittest.TestCase):
+    """
+    Unit testing of voxelization creation methods.
+    """
+
     def setUp(self):
         self.block = Block(frame=volmdlr.OXYZ, name="block")
         self.sphere = Sphere(center=volmdlr.Point3D(0.0, 0.0, 0.1), radius=0.1, name="sphere")
@@ -60,6 +68,10 @@ class TestVoxelizationCreation(unittest.TestCase):
 
 
 class TestVoxelizationBooleanOperation(unittest.TestCase):
+    """
+    Unit testing of voxelization boolean operation methods.
+    """
+
     def setUp(self):
         self.sphere = Sphere(center=volmdlr.Point3D(0.0, 0.0, 0.1), radius=0.1, name="sphere")
         self.cylinder = Cylinder(frame=volmdlr.OXYZ, radius=0.1, length=0.2, name="cylinder")
@@ -114,35 +126,83 @@ class TestVoxelizationBooleanOperation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_symmetric_difference(self):
-        intersection_1 = self.sphere_voxelization.intersection(self.cylinder_voxelization)
-        intersection_2 = self.cylinder_voxelization.intersection(self.sphere_voxelization)
+        symmetric_difference_1 = self.sphere_voxelization.symmetric_difference(self.cylinder_voxelization)
+        symmetric_difference_2 = self.cylinder_voxelization.symmetric_difference(self.sphere_voxelization)
 
-        self.assertEqual(len(intersection_1), len(intersection_2))
-        self.assertEqual(400, len(intersection_1))
+        self.assertEqual(len(symmetric_difference_1), len(symmetric_difference_2))
+        self.assertEqual(3896, len(symmetric_difference_1))
 
         if SHOW_BABYLONJS:
-            volume_model = VolumeModel([self.sphere, self.cylinder, intersection_1.to_closed_triangle_shell()])
+            volume_model = VolumeModel([self.sphere, self.cylinder, symmetric_difference_1.to_closed_triangle_shell()])
             volume_model.babylonjs()
 
 
 class TestVoxelizationManipulation(unittest.TestCase):
+    """
+    Unit testing of voxelization manipulation methods.
+    """
+
+    def setUp(self):
+        self.cylinder = Cylinder(frame=volmdlr.OXYZ, radius=0.1, length=0.2, name="cylinder")
+        self.cylinder_voxelization = Voxelization.from_closed_shell(self.cylinder, 0.01, name="cylinder voxelization")
+
     def test_inverse(self):
-        pass
+        inverse_cylinder_voxelization = self.cylinder_voxelization.inverse()
+
+        self.assertEqual(6420, len(inverse_cylinder_voxelization))
+        self.assertEqual(0, len(self.cylinder_voxelization.intersection(inverse_cylinder_voxelization)))
+
+        if SHOW_BABYLONJS:
+            volume_model = VolumeModel([self.cylinder, inverse_cylinder_voxelization.to_closed_triangle_shell()])
+            volume_model.babylonjs()
 
     def test_rotation(self):
-        pass
+        rotated_cylinder = self.cylinder.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2)
+        rotated_cylinder_voxelization = self.cylinder_voxelization.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2)
+
+        self.assertEqual(2820, len(rotated_cylinder_voxelization))
+
+        if SHOW_BABYLONJS:
+            volume_model = VolumeModel([rotated_cylinder, rotated_cylinder_voxelization.to_closed_triangle_shell()])
+            volume_model.babylonjs()
 
     def test_translation(self):
-        pass
+        translated_cylinder = self.cylinder.translation(volmdlr.X3D)
+        translated_cylinder_voxelization = self.cylinder_voxelization.translation(volmdlr.X3D)
+
+        self.assertEqual(2820, len(translated_cylinder_voxelization))
+        self.assertEqual(translated_cylinder_voxelization, Voxelization.from_closed_shell(translated_cylinder, 0.01))
+
+        if SHOW_BABYLONJS:
+            volume_model = VolumeModel(
+                [translated_cylinder, translated_cylinder_voxelization.to_closed_triangle_shell()]
+            )
+            volume_model.babylonjs()
 
     def test_fill_outer_voxels(self):
-        pass
+        outer_filled_voxelization = self.cylinder_voxelization.fill_outer_voxels()
+
+        self.assertEqual(4416, len(outer_filled_voxelization))
+
+        if SHOW_BABYLONJS:
+            volume_model = VolumeModel([self.cylinder, outer_filled_voxelization.to_closed_triangle_shell()])
+            volume_model.babylonjs()
 
     def test_fill_enclosed_voxels(self):
-        pass
+        inner_filled_voxelization = self.cylinder_voxelization.fill_enclosed_voxels()
+
+        self.assertEqual(7644, len(inner_filled_voxelization))
+
+        if SHOW_BABYLONJS:
+            volume_model = VolumeModel([self.cylinder, inner_filled_voxelization.to_closed_triangle_shell()])
+            volume_model.babylonjs()
 
 
 class TestVoxelizationExport(unittest.TestCase):
+    """
+    Unit testing of voxelization export methods.
+    """
+
     def test_get_min_voxel_grid_center(self):
         pass
 
