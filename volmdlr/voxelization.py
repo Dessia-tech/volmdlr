@@ -2171,37 +2171,7 @@ class PixelMatrix:
         return PixelMatrix(inverted_matrix)
 
     def flood_fill(self, start: Tuple[int, int], fill_with: bool) -> "PixelMatrix":
-        # return PixelMatrix(flood_fill_matrix_2d(self.matrix, start, fill_with))
-
-        from collections import deque
-
-        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
-        old_value = self.matrix[start[0]][start[1]]
-
-        if old_value == fill_with:
-            return self
-
-        matrix = self.matrix.copy()
-        stack = deque([start])
-        visited = {start}
-
-        while stack:
-            x, y = stack.pop()
-
-            matrix[x][y] = fill_with
-
-            for dx, dy in directions:
-                nx, ny = x + dx, y + dy
-                if (
-                    (nx, ny) not in visited
-                    and 0 <= nx < len(matrix)
-                    and 0 <= ny < len(matrix[0])
-                    and matrix[nx][ny] == old_value
-                ):
-                    stack.append((nx, ny))
-                    visited.add((nx, ny))
-
-        return PixelMatrix(matrix)
+        return PixelMatrix(flood_fill_matrix_2d(self.matrix, start, fill_with))
 
     def _expand(self) -> "PixelMatrix":
         current_shape = self.matrix.shape
