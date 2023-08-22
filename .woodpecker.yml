@@ -123,6 +123,3 @@ pipeline:
       username: drone
       password:
         from_secret: ssh_drone_password
-
-
-
