@@ -10,7 +10,6 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 from dessia_common.core import PhysicalObject
-from tqdm import tqdm
 
 from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
@@ -570,32 +569,10 @@ class PointVoxelization(PhysicalObject):
             PointVoxelization._triangles_to_voxels_at_interface(triangles, voxel_size)
         )
 
-        # from volmdlr.voxelization_compiled_old import triangle_intersects_voxel, aabb_intersecting_boxes
-        #
-        # voxel_centers = set()
-        #
-        # for triangle in tqdm(triangles):
-        #     # Check if the triangle is at the interface of two voxels, and add them
-        #     voxel_centers = voxel_centers.union(Voxelization._triangle_interface_voxels(triangle, voxel_size))
-        #
-        #     min_point = tuple(min(p[i] for p in triangle) for i in range(3))
-        #     max_point = tuple(max(p[i] for p in triangle) for i in range(3))
-        #
-        #     for bbox_center in aabb_intersecting_boxes(min_point, max_point, voxel_size):
-        #         if bbox_center not in voxel_centers:
-        #             if triangle_intersects_voxel(
-        #                 triangle,
-        #                 bbox_center,
-        #                 [0.5 * voxel_size for _ in range(3)],
-        #             ):
-        #                 voxel_centers.add(bbox_center)
-        #
-        # return voxel_centers
-
     @staticmethod
     def _triangles_to_voxels_at_interface(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
         voxel_centers = set()
-        for triangle in tqdm(triangles):
+        for triangle in triangles:
             voxel_centers = voxel_centers.union(PointVoxelization._triangle_interface_voxels(triangle, voxel_size))
 
         return voxel_centers
@@ -2240,7 +2217,7 @@ class OctreeNode:
                             children.append(child_node)
 
             if self.depth == 0:
-                for node in tqdm(self.process_node(node, triangles) for node in children):
+                for node in (self.process_node(node, triangles) for node in children):
                     self.children.extend(node)
 
         else:
