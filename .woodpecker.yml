@@ -5,6 +5,52 @@ clone:
       tags: true
 
 pipeline:
+  merge-master-testing:
+    image: alpine/git
+    when:
+      event: push
+      branch: master
+    commands:
+    - cd /tmp
+    - git clone $DRONE_GIT_HTTP_URL
+    - cd volmdlr
+    - git checkout master
+    - git fetch origin testing
+    - git checkout testing
+    - git merge master
+    - git push
+
+  merge-testing-dev:
+    image: alpine/git
+    when:
+      event: push
+      branch: testing
+    commands:
+    - cd /tmp
+    - git clone $DRONE_GIT_HTTP_URL
+    - cd volmdlr
+    - git checkout testing
+    - git fetch origin dev
+    - git checkout dev
+    - git merge testing
+    - git push
+
+  email-notify:
+    when:
+      event: push
+      branch:
+        - master
+        - dev
+      status:
+      - failure
+    image: drillster/drone-email
+    settings:
+      host: mail.dessia.tech
+      username: technical@dessia.tech
+      password:
+        from_secret: email_password
+      from: technical@dessia.tech
+
   check-code-complexity:
     image: dessia/python-ci:3.9
     commands:
