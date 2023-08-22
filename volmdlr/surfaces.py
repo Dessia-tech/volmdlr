@@ -5218,11 +5218,12 @@ class BSplineSurface3D(Surface3D):
         v = float(min(max(v, 0.0), 1.0))
         point_array = evaluate_surface(self.data, start=(u, v), stop=(u, v))[0]
         return volmdlr.Point3D(*point_array)
-        # uses derivatives for performance because it's already compiled
-        # return volmdlr.Point3D(*self.derivatives(u, v, 0)[0][0])
-        # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
-    def _get_grid_bounds(self, u, v, delta_u, delta_v, sample_size_u, sample_size_v):
+    def _get_grid_bounds(self, params, delta_u, delta_v, sample_size_u, sample_size_v):
+        """
+        Update bounds and grid_size at each iteration of point inversion grid search.
+        """
+        u, v = params
         if u == self.domain[0]:
             u_start = self.domain[0]
             u_stop = self.domain[0]
@@ -5251,6 +5252,9 @@ class BSplineSurface3D(Surface3D):
 
     @staticmethod
     def _update_parameters(bounds, sample_size_u, sample_size_v, index):
+        """
+        Helper function to update parameters of point inversion grid search at each iteration.
+        """
         u_start, u_stop, v_start, v_stop = bounds
         if sample_size_u == 1:
             delta_u = 0.0
@@ -5274,44 +5278,34 @@ class BSplineSurface3D(Surface3D):
             v = v_start + v_idx * delta_v
         return u, v, delta_u, delta_v
 
-    def initial_condition(self, point3d, acceptable_distance):
+    @staticmethod
+    def _find_index_min(matrix_points, point):
+        # Calculate distances
+        distances = npy.linalg.norm(matrix_points - point, axis=1)
+
+        return npy.argmin(distances), distances.min()
+
+    def _point_inversion_initialization(self, point3d_array):
+        """
+        Helper function to initialize parameters.
+        """
         sample_size_u = 10
         sample_size_v = 10
-        datadict = {
-            "degree": (self.degree_u, self.degree_v),
-            "knotvector": self.knotvector,
-            "size": (self.nb_u, self.nb_v),
-            "sample_size": [sample_size_u, sample_size_v],
-            "rational": not (self._weights is None),
-            "precision": 18
-        }
-        if self._weights is not None:
-            datadict["control_points"] = self.ctrlptsw
-        else:
-            datadict["control_points"] = self.ctrlpts
         matrix = self.evalpts
-        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
+        initial_index, minimal_distance = self._find_index_min(matrix, point3d_array)
 
-        def find_index_min(matrix_points, point):
-            # Calculate distances
-            distances = npy.linalg.norm(matrix_points - point, axis=1)
-
-            return npy.argmin(distances), distances.min()
-
-        initial_index, minimal_distance = find_index_min(matrix, point3d_array)
-        u_start, u_stop, v_start, v_stop = self.domain
-        last_distance = 0.0
         if initial_index == 0:
             u_idx, v_idx = 0, 0
         else:
             u_idx = int(initial_index / self.sample_size_v)
             v_idx = initial_index % self.sample_size_v
+
+        u_start, u_stop, v_start, v_stop = self.domain
         delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
         delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
         u = u_start + u_idx * delta_u
         v = v_start + v_idx * delta_v
 
-        count = 0
         if u == u_start:
             u_stop = u + delta_u
             sample_size_u = 2
@@ -5331,11 +5325,33 @@ class BSplineSurface3D(Surface3D):
         else:
             v_start = max(v - delta_v, self.domain[2])
             v_stop = min(v + delta_v, self.domain[3])
+        return u, v, u_start, u_stop, v_start, v_stop, delta_u, delta_v, sample_size_u, sample_size_v, minimal_distance
 
+    def point_inversion_grid_search(self, point3d, acceptable_distance):
+        """
+        Find the parameters (u, v) of a 3D point on the BSpline surface using a grid search algorithm.
+        """
+        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
+        u, v, u_start, u_stop, v_start, v_stop, delta_u, delta_v, sample_size_u, sample_size_v, minimal_distance = \
+            self._point_inversion_initialization(point3d_array)
+        datadict = {
+            "degree": (self.degree_u, self.degree_v),
+            "knotvector": self.knotvector,
+            "size": (self.nb_u, self.nb_v),
+            "sample_size": [sample_size_u, sample_size_v],
+            "rational": not (self._weights is None),
+            "precision": 18
+        }
+        if self._weights is not None:
+            datadict["control_points"] = self.ctrlptsw
+        else:
+            datadict["control_points"] = self.ctrlpts
+        last_distance = 0.0
+        count = 0
         while minimal_distance > acceptable_distance and count < 15:
             if count > 0:
                 u_start, u_stop, v_start, v_stop, sample_size_u, sample_size_v = self._get_grid_bounds(
-                    u, v, delta_u, delta_v, sample_size_u, sample_size_v)
+                    (u, v), delta_u, delta_v, sample_size_u, sample_size_v)
 
             if sample_size_u == 1 and sample_size_v == 1:
                 return (u, v), minimal_distance
@@ -5343,7 +5359,7 @@ class BSplineSurface3D(Surface3D):
             matrix = npy.asarray(evaluate_surface(datadict,
                                          start=(u_start, v_start),
                                          stop=(u_stop, v_stop)), dtype=npy.float64)
-            index, distance = find_index_min(matrix, point3d_array)
+            index, distance = self._find_index_min(matrix, point3d_array)
             if distance < minimal_distance:
                 minimal_distance = distance
             if abs(distance - last_distance) < acceptable_distance/100:
@@ -5380,7 +5396,7 @@ class BSplineSurface3D(Surface3D):
                                       vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
 
-        x0, distance = self.initial_condition(point3d, tol)
+        x0, distance = self.point_inversion_grid_search(point3d, tol)
         if distance < tol:
             return volmdlr.Point2D(*x0)
 
@@ -5546,8 +5562,10 @@ class BSplineSurface3D(Surface3D):
 
         if self._is_line_segment(points):
             return [edges.LineSegment2D(points[0], points[-1])]
-
-        return [edges.BSplineCurve2D.from_points_interpolation(points=points, degree=bspline_curve3d.degree)]
+        brep = edges.BSplineCurve2D.from_points_interpolation(points=points, degree=bspline_curve3d.degree)
+        if brep:
+            return [brep]
+        return None
 
     @staticmethod
     def _handle_periodic_curve(curve_domain, points, axis):

@@ -157,6 +157,9 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
+        step_id = kwargs.get("step_id")
+        if step_id == 29122:
+            print("edges.py")
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
@@ -1455,6 +1458,11 @@ class BSplineCurve(Edge):
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
+        set_points = set(points)
+        if len(set_points) < len(points) - 1:
+            warnings.warn("Not able to perform point interpolation."
+                          "There are repeated points not in the edges of the point list.")
+            return None
         point_name = 'Point' + points[0].__class__.__name__[-2:]
         ctrlpts, knots, knot_multiplicities = fitting.interpolate_curve(
             npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points], dtype=npy.float64),
@@ -2761,7 +2769,7 @@ class Arc2D(ArcMixin, Edge):
 
         """
         distance_point_to_center = point.point_distance(self.circle.center)
-        if not math.isclose(distance_point_to_center, self.circle.radius, abs_tol=abs_tol):
+        if not math.isclose(distance_point_to_center, self.circle.radius, rel_tol=0.005):
             return False
         if point.is_close(self.start) or point.is_close(self.end):
             return True

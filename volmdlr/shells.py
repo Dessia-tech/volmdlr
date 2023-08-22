@@ -20,7 +20,7 @@ import volmdlr.faces
 import volmdlr.geometry
 from volmdlr.core import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, step_ids_to_str
-
+c = 0
 
 def union_list_of_shells(list_shells):
     """
@@ -784,6 +784,10 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 print(traceback.format_exc())
                 continue
             if face_mesh:
+                global c
+                c += 1
+                if c in (646, 729, 731, 739, 742):
+                    face_mesh.plot()
                 meshes.append(face_mesh)
         return display.DisplayMesh3D.merge_meshes(meshes)
 
