@@ -721,7 +721,7 @@ def _triangles_to_voxel_matrix(
             dim_x = cython.cast(cython.int, math_c.round((max_center[0] - min_center[0]) / voxel_size + 1))
             dim_y = cython.cast(cython.int, math_c.round((max_center[1] - min_center[1]) / voxel_size + 1))
 
-            pixel_matrix = _pixel_centers_to_outer_filled_pixel_matrix(pixels, voxel_size, (dim_x, dim_y), min_center)
+            pixel_matrix = _pixel_centers_to_filled_pixel_matrix(pixels, voxel_size, (dim_x, dim_y), min_center)
 
             # Put the corresponding voxels at True, using the indices
             ix1 = cython.cast(
@@ -778,7 +778,7 @@ def _triangles_to_voxel_matrix(
             dim_x = cython.cast(cython.int, math_c.round((max_center[0] - min_center[0]) / voxel_size + 1))
             dim_y = cython.cast(cython.int, math_c.round((max_center[1] - min_center[1]) / voxel_size + 1))
 
-            pixel_matrix = _pixel_centers_to_outer_filled_pixel_matrix(pixels, voxel_size, (dim_x, dim_y), min_center)
+            pixel_matrix = _pixel_centers_to_filled_pixel_matrix(pixels, voxel_size, (dim_x, dim_y), min_center)
 
             # Put the corresponding voxels at True, using the indices
             iy1 = cython.cast(
@@ -835,7 +835,7 @@ def _triangles_to_voxel_matrix(
             dim_x = cython.cast(cython.int, math_c.round((max_center[0] - min_center[0]) / voxel_size + 1))
             dim_y = cython.cast(cython.int, math_c.round((max_center[1] - min_center[1]) / voxel_size + 1))
 
-            pixel_matrix = _pixel_centers_to_outer_filled_pixel_matrix(pixels, voxel_size, (dim_x, dim_y), min_center)
+            pixel_matrix = _pixel_centers_to_filled_pixel_matrix(pixels, voxel_size, (dim_x, dim_y), min_center)
 
             # Put the corresponding voxels at True, using the indices
             iz1 = cython.cast(
@@ -935,18 +935,17 @@ def _get_max_pixel_grid_center(
 
 @cython.cfunc
 @cython.cdivision(True)
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def _pixel_centers_to_outer_filled_pixel_matrix(
+@cython.boundscheck(True)
+@cython.wraparound(True)
+def _pixel_centers_to_filled_pixel_matrix(
     pixel_centers: vector[Tuple[cython.double, cython.double]],
     pixel_size: cython.double,
     shape: Tuple[cython.int, cython.int],
     min_center: Tuple[cython.double, cython.double],
 ) -> bool_C[:, :]:
     """
-    Convert pixel centers to a boolean matrix where pixels are marked as filled and their outer boundary is identified.
+    Convert pixel centers to a filled boolean matrix.
     """
-
     matrix: bool_C[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.bool_)
 
     for i in range(pixel_centers.size()):
@@ -954,10 +953,10 @@ def _pixel_centers_to_outer_filled_pixel_matrix(
         iy = cython.cast(cython.int, _round_to_digits((pixel_centers[i][1] - min_center[1]) / pixel_size, 6)) + 1
         matrix[ix, iy] = True
 
-    matrix_outer_filled = _flood_fill_matrix_2d(matrix, (0, 0), True, shape)
+    matrix_outer_filled = _flood_fill_matrix_2d(matrix.copy(), (0, 0), True, (shape[0] + 2, shape[1] + 2))
 
-    for ix in range(shape[0]):
-        for iy in range(shape[1]):
+    for ix in range(shape[0] + 2):
+        for iy in range(shape[1] + 2):
             if not matrix_outer_filled[ix, iy]:
                 matrix[ix, iy] = True
 
