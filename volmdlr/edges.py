@@ -803,14 +803,12 @@ class BSplineCurve(Edge):
         Return True if the other B-spline curve has the same control points, degree, and knot vector, False otherwise.
         """
         if isinstance(other, self.__class__) and self.rational == other.rational:
-            common_check = (all(s_point.is_close(o_point)
-                            for s_point, o_point in zip(self.control_points, other.control_points))
+            common_check = (self.control_points == other.control_points
                             and self.degree == other.degree
-                            and all(abs(s_knot - o_knot) < 1e-8) for s_knot, o_knot in zip(self.knots, other.knots))
+                            and self.knots == other.knots)
             if self.weights is None:
                 return common_check
-            return (common_check and
-                    all(abs(s_w - o_w) < 1e-8) for s_w, o_w in zip(self.weights, other.weights))
+            return common_check and self.weights == other.weights
         return False
 
     def _data_eq(self, other):

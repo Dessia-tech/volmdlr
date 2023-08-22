@@ -4414,13 +4414,13 @@ class RevolutionSurface3D(PeriodicalSurface):
         if math.isclose(theta1, theta2, abs_tol=1e-3):
             primitive = self.edge.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if isinstance(self.edge, curves.Line3D) or isinstance(self.edge, edges.LineSegment3D):
+                if isinstance(self.edge, (curves.Line3D, edges.LineSegment3D)):
                     return [edges.LineSegment3D(start3d, end3d)]
                 if self.edge.is_point_edge_extremity(start3d) and self.edge.is_point_edge_extremity(end3d):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
                         return [primitive.simplify]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
-                        return [primitive.reverse()]
+                        return [primitive.simplify.reverse()]
                 primitive = primitive.split_between_two_points(start3d, end3d)
                 return [primitive.simplify]
         n = 10
