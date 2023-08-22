@@ -6,7 +6,7 @@ import time
 import volmdlr
 from volmdlr.core import VolumeModel
 from volmdlr.primitives3d import Cylinder, Sphere
-from volmdlr.voxelization import Voxelization
+from volmdlr.voxelization import PointVoxelization
 
 VOXEL_SIZE = 0.008
 
@@ -16,7 +16,7 @@ cylinder = Cylinder(volmdlr.OXYZ, 0.1, 0.2, name="Cylinder")
 volume_model = VolumeModel([sphere, cylinder])
 
 # Voxelize the volume model (it uses the triangulated model to create the voxelization)
-voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, name="Voxelization")
+voxelization = PointVoxelization.from_volume_model(volume_model, VOXEL_SIZE, name="Voxelization")
 
 # Display the result -- fully triangulated
 # With this method, each individual voxel is triangulated

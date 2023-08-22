@@ -8,7 +8,7 @@ import volmdlr
 from volmdlr.core import VolumeModel
 from volmdlr.primitives3d import Block, Cylinder, Sphere
 from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
-from volmdlr.voxelization import Voxelization
+from volmdlr.voxelization import PointVoxelization
 
 SHOW_BABYLONJS = False
 
@@ -25,7 +25,7 @@ class TestVoxelizationCreation(unittest.TestCase):
         self.volume_model = VolumeModel(primitives=[self.sphere, self.cylinder], name="volume model")
 
     def test_voxelize_block(self):
-        block_voxelization = Voxelization.from_closed_shell(self.block, 0.2, name="voxelization")
+        block_voxelization = PointVoxelization.from_closed_shell(self.block, 0.2, name="voxelization")
         self.assertEqual(152, len(block_voxelization))
 
         if SHOW_BABYLONJS:
@@ -34,7 +34,7 @@ class TestVoxelizationCreation(unittest.TestCase):
 
     def test_voxelize_translated_block(self):
         translated_block = self.block.translation(volmdlr.Vector3D(11, 1.8, 4.8))
-        translated_block_voxelization = Voxelization.from_closed_shell(translated_block, 0.1, name="voxelization")
+        translated_block_voxelization = PointVoxelization.from_closed_shell(translated_block, 0.1, name="voxelization")
         self.assertEqual(1216, len(translated_block_voxelization))
 
         if SHOW_BABYLONJS:
@@ -42,7 +42,7 @@ class TestVoxelizationCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_voxelize_sphere(self):
-        sphere_voxelization = Voxelization.from_closed_shell(self.sphere, 0.01, name="sphere voxelization")
+        sphere_voxelization = PointVoxelization.from_closed_shell(self.sphere, 0.01, name="sphere voxelization")
         self.assertEqual(1876, len(sphere_voxelization))
 
         if SHOW_BABYLONJS:
@@ -50,7 +50,7 @@ class TestVoxelizationCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_voxelize_cylinder(self):
-        cylinder_voxelization = Voxelization.from_closed_shell(self.cylinder, 0.01, name="cylinder voxelization")
+        cylinder_voxelization = PointVoxelization.from_closed_shell(self.cylinder, 0.01, name="cylinder voxelization")
         self.assertEqual(2820, len(cylinder_voxelization))
 
         if SHOW_BABYLONJS:
@@ -58,7 +58,7 @@ class TestVoxelizationCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_from_volume_model(self):
-        volume_model_voxelization = Voxelization.from_volume_model(self.volume_model, 0.01, name="voxelization")
+        volume_model_voxelization = PointVoxelization.from_volume_model(self.volume_model, 0.01, name="voxelization")
         self.assertEqual(4296, len(volume_model_voxelization))
 
         if SHOW_BABYLONJS:
@@ -78,9 +78,9 @@ class TestVoxelizationBooleanOperation(unittest.TestCase):
         self.cylinder = Cylinder(frame=volmdlr.OXYZ, radius=0.1, length=0.2, name="cylinder")
         self.volume_model = VolumeModel(primitives=[self.sphere, self.cylinder], name="volume model")
 
-        self.sphere_voxelization = Voxelization.from_closed_shell(self.sphere, 0.01, name="sphere voxelization")
-        self.cylinder_voxelization = Voxelization.from_closed_shell(self.cylinder, 0.01, name="cylinder voxelization")
-        self.volume_model_voxelization = Voxelization.from_volume_model(
+        self.sphere_voxelization = PointVoxelization.from_closed_shell(self.sphere, 0.01, name="sphere voxelization")
+        self.cylinder_voxelization = PointVoxelization.from_closed_shell(self.cylinder, 0.01, name="cylinder voxelization")
+        self.volume_model_voxelization = PointVoxelization.from_volume_model(
             self.volume_model, 0.01, name="volume model voxelization"
         )
 
@@ -145,7 +145,7 @@ class TestVoxelizationManipulation(unittest.TestCase):
 
     def setUp(self):
         self.cylinder = Cylinder(frame=volmdlr.OXYZ, radius=0.1, length=0.2, name="cylinder")
-        self.cylinder_voxelization = Voxelization.from_closed_shell(self.cylinder, 0.01, name="cylinder voxelization")
+        self.cylinder_voxelization = PointVoxelization.from_closed_shell(self.cylinder, 0.01, name="cylinder voxelization")
 
     def test_inverse(self):
         inverse_cylinder_voxelization = self.cylinder_voxelization.inverse()
@@ -172,7 +172,7 @@ class TestVoxelizationManipulation(unittest.TestCase):
         translated_cylinder_voxelization = self.cylinder_voxelization.translation(volmdlr.X3D)
 
         self.assertEqual(2820, len(translated_cylinder_voxelization))
-        self.assertEqual(translated_cylinder_voxelization, Voxelization.from_closed_shell(translated_cylinder, 0.01))
+        self.assertEqual(translated_cylinder_voxelization, PointVoxelization.from_closed_shell(translated_cylinder, 0.01))
 
         if SHOW_BABYLONJS:
             volume_model = VolumeModel(
@@ -206,7 +206,7 @@ class TestVoxelizationExport(unittest.TestCase):
 
     def setUp(self):
         self.sphere = Sphere(center=volmdlr.O3D, radius=0.1, name="sphere")
-        self.sphere_voxelization = Voxelization.from_closed_shell(self.sphere, 0.01, name="sphere voxelization")
+        self.sphere_voxelization = PointVoxelization.from_closed_shell(self.sphere, 0.01, name="sphere voxelization")
 
     def test_get_min_voxel_grid_center(self):
         self.assertEqual((-0.095, -0.095, -0.105), self.sphere_voxelization.min_voxel_grid_center)

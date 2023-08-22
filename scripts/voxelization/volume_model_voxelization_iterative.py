@@ -4,7 +4,7 @@ Voxelization of a volume model using "iterative" method.
 import volmdlr
 from volmdlr.core import VolumeModel
 from volmdlr.primitives3d import Cylinder, Sphere
-from volmdlr.voxelization import Voxelization
+from volmdlr.voxelization import PointVoxelization
 
 VOXEL_SIZE = 0.01
 
@@ -14,7 +14,7 @@ cylinder = Cylinder(volmdlr.OXYZ.translation(0.1 * volmdlr.Z3D), 0.1, 0.2, name=
 volume_model = VolumeModel([sphere, cylinder])
 
 # Voxelize the volume model (it uses the triangulated model to create the voxelization)
-voxelization = Voxelization.from_volume_model(volume_model, VOXEL_SIZE, method="iterative", name="Voxelization")
+voxelization = PointVoxelization.from_volume_model(volume_model, VOXEL_SIZE, method="iterative", name="Voxelization")
 
 # Display the result
 voxelization_primitive = voxelization.to_closed_triangle_shell()

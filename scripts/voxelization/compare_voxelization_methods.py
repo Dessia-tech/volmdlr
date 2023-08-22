@@ -6,7 +6,7 @@ import time
 import volmdlr
 from volmdlr.core import VolumeModel
 from volmdlr.primitives3d import Cylinder, Sphere
-from volmdlr.voxelization import Voxelization
+from volmdlr.voxelization import PointVoxelization
 
 VOXEL_SIZE = 0.01
 
@@ -17,14 +17,14 @@ volume_model = VolumeModel([sphere, cylinder])
 
 # Voxelize the volume model with "iterative" method
 start = time.perf_counter()
-voxelization_iterative = Voxelization.from_volume_model(
+voxelization_iterative = PointVoxelization.from_volume_model(
     volume_model, VOXEL_SIZE, method="iterative", name="Iterative voxelization"
 )
 print(f"Iterative voxelization computed in {round((time.perf_counter() - start) * 1000)}ms")
 
 # Voxelize the volume model with "octree" method
 start = time.perf_counter()
-voxelization_octree = Voxelization.from_volume_model(
+voxelization_octree = PointVoxelization.from_volume_model(
     volume_model, VOXEL_SIZE, method="octree", name="Octree voxelization"
 )
 print(f"Octree voxelization computed in {round((time.perf_counter() - start) * 1000)}ms")
