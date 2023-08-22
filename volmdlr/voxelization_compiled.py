@@ -213,6 +213,20 @@ def _round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
 
 
 @cython.cfunc
+@cython.cdivision(True)
+@cython.exceptval(check=False)
+def _round_point_3d_to_digits(
+    point_3d: Tuple[cython.double, cython.double, cython.double], digits: cython.int
+) -> Tuple[cython.double, cython.double, cython.double]:
+    """Round the given point to the specified number of digits after the decimal point."""
+    return (
+        _round_to_digits(point_3d[0], digits),
+        _round_to_digits(point_3d[1], digits),
+        _round_to_digits(point_3d[2], digits),
+    )
+
+
+@cython.cfunc
 @cython.exceptval(check=False)
 def _is_integer(value: cython.double) -> bool_C:
     """Check if the given value is an integer (has no fractional part)."""
@@ -935,8 +949,8 @@ def _get_max_pixel_grid_center(
 
 @cython.cfunc
 @cython.cdivision(True)
-@cython.boundscheck(True)
-@cython.wraparound(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def _pixel_centers_to_filled_pixel_matrix(
     pixel_centers: vector[Tuple[cython.double, cython.double]],
     pixel_size: cython.double,
@@ -1071,3 +1085,126 @@ def _triangles_min_max_points(
         max_z = max(max_z, triangles[i][2][2])
 
     return (min_x, min_y, min_z), (max_x, max_y, max_z)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def _voxel_triangular_faces(
+    x: cython.double, y: cython.double, z: cython.double, voxel_size: float
+) -> vector[
+    Tuple[
+        Tuple[cython.double, cython.double, cython.double],
+        Tuple[cython.double, cython.double, cython.double],
+        Tuple[cython.double, cython.double, cython.double],
+    ]
+]:
+    """Helper method to compute the 12 triangular faces that compose a voxel, for visualization."""
+
+    sx, sy, sz = voxel_size, voxel_size, voxel_size
+    hx, hy, hz = sx / 2, sy / 2, sz / 2
+
+    faces: vector[
+        Tuple[
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+            Tuple[cython.double, cython.double, cython.double],
+        ]
+    ]
+
+    # Front face
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x - hx, y - hy, z + hz), 6),
+            _round_point_3d_to_digits((x - hx, y + hy, z + hz), 6),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 6),
+        )
+    )
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x - hx, y - hy, z + hz), 6),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 6),
+            _round_point_3d_to_digits((x + hx, y - hy, z + hz), 6),
+        )
+    )
+
+    # Back face
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 6),
+            _round_point_3d_to_digits((x - hx, y + hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y + hy, z - hz), 6),
+        )
+    )
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y + hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y - hy, z - hz), 6),
+        )
+    )
+
+    # Left face
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 6),
+            _round_point_3d_to_digits((x - hx, y + hy, z - hz), 6),
+            _round_point_3d_to_digits((x - hx, y + hy, z + hz), 6),
+        )
+    )
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 6),
+            _round_point_3d_to_digits((x - hx, y + hy, z + hz), 6),
+            _round_point_3d_to_digits((x - hx, y - hy, z + hz), 6),
+        )
+    )
+
+    # Right face
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x + hx, y - hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y + hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 6),
+        )
+    )
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x + hx, y - hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 6),
+            _round_point_3d_to_digits((x + hx, y - hy, z + hz), 6),
+        )
+    )
+
+    # Top face
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x - hx, y + hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y + hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 6),
+        )
+    )
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x - hx, y + hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 6),
+            _round_point_3d_to_digits((x - hx, y + hy, z + hz), 6),
+        )
+    )
+
+    # Bottom face
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y - hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y - hy, z + hz), 6),
+        )
+    )
+    faces.push_back(
+        (
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 6),
+            _round_point_3d_to_digits((x + hx, y - hy, z + hz), 6),
+            _round_point_3d_to_digits((x - hx, y - hy, z + hz), 6),
+        )
+    )
+
+    return faces
