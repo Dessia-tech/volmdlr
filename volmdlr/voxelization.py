@@ -1522,11 +1522,14 @@ class VoxelMatrix:
     def __len__(self) -> int:
         """
         Return the number of True value in the 3D voxel matrix.
-
+        
         :return: The number of True value in the 3D voxel matrix.
         :rtype: int
         """
         return len(np.argwhere(self.matrix))
+
+    def union(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._logical_operation(other_voxel_matrix, np.logical_or)
 
     def __add__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
         """
@@ -1538,8 +1541,10 @@ class VoxelMatrix:
         :return: The union of the voxel matrices.
         :rtype: VoxelMatrix
         """
-        # return VoxelMatrix(self.matrix + other_voxel_matrix.matrix, self.matrix_origin_center, self.voxel_size)
         return self.union(other_voxel_matrix)
+
+    def difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._logical_operation(other_voxel_matrix, lambda a, b: np.logical_and(a, np.logical_not(b)))
 
     def __sub__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
         """
@@ -1553,6 +1558,9 @@ class VoxelMatrix:
         """
         return self.difference(other_voxel_matrix)
 
+    def intersection(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._logical_operation(other_voxel_matrix, np.logical_and)
+
     def __and__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
         """
         Return the intersection of the current voxel matrix with another voxel matrix.
@@ -1565,17 +1573,8 @@ class VoxelMatrix:
         """
         return self.intersection(other_voxel_matrix)
 
-    def __or__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
-        """
-        Return the union of the current voxel matrix with another voxel matrix.
-
-        :param other_voxel_matrix: The voxel matrix to union with.
-        :type other_voxel_matrix: VoxelMatrix
-
-        :return: The union of the voxel matrices.
-        :rtype: VoxelMatrix
-        """
-        return self.union(other_voxel_matrix)
+    def symmetric_difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+        return self._logical_operation(other_voxel_matrix, np.logical_xor)
 
     def __xor__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
         """
@@ -1588,6 +1587,10 @@ class VoxelMatrix:
         """
         return self.symmetric_difference(other_voxel_matrix)
 
+    def inverse(self) -> "VoxelMatrix":
+        inverted_matrix = np.logical_not(self.matrix)
+        return VoxelMatrix(inverted_matrix, self.matrix_origin_center, self.voxel_size)
+
     def __invert__(self) -> "VoxelMatrix":
         """
         Return the inverse of the current voxel matrix.
@@ -1597,10 +1600,6 @@ class VoxelMatrix:
         """
         return self.inverse()
 
-    def inverse(self) -> "VoxelMatrix":
-        inverted_matrix = np.logical_not(self.matrix)
-        return VoxelMatrix(inverted_matrix, self.matrix_origin_center, self.voxel_size)
-
     def _get_extents(self):
         extents_min = np.round(np.array(self.matrix_origin_center), 6)
         extents_max = np.round(
@@ -1608,7 +1607,7 @@ class VoxelMatrix:
         )
         return extents_min, extents_max
 
-    def _voxel_operation(self, other: "VoxelMatrix", operation):
+    def _logical_operation(self, other: "VoxelMatrix", logical_operation):
         if self.voxel_size != other.voxel_size:
             raise ValueError("Voxel sizes must be the same to perform boolean operations.")
 
@@ -1638,7 +1637,7 @@ class VoxelMatrix:
             other_start[2] : other_start[2] + other.matrix.shape[2],
         ] = other.matrix
 
-        result_matrix = operation(new_self, new_other)
+        result_matrix = logical_operation(new_self, new_other)
 
         # Find the indices of the True voxels
         true_voxels = np.argwhere(result_matrix)
@@ -1660,22 +1659,26 @@ class VoxelMatrix:
 
         return VoxelMatrix(result_matrix, tuple(new_origin_center), self.voxel_size)
 
-    def intersection(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
-        return self._voxel_operation(other_voxel_matrix, np.logical_and)
-
-    def union(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
-        return self._voxel_operation(other_voxel_matrix, np.logical_or)
-
-    def difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
-        return self._voxel_operation(other_voxel_matrix, lambda a, b: np.logical_and(a, np.logical_not(b)))
-
-    def symmetric_difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
-        return self._voxel_operation(other_voxel_matrix, np.logical_xor)
-
     def flood_fill(self, start, fill_with) -> "VoxelMatrix":
         return VoxelMatrix(
             flood_fill_matrix_3d(self.matrix, start, fill_with), self.matrix_origin_center, self.voxel_size
         )
+
+    def fill_outer_voxels(self) -> "VoxelMatrix":
+        expanded_voxel_matrix = self._expand()
+        outer_filled_expanded_voxel_matrix = expanded_voxel_matrix.flood_fill((0, 0, 0), True)
+        outer_filled_voxel_matrix = outer_filled_expanded_voxel_matrix._reduce()
+
+        return outer_filled_voxel_matrix
+
+    def fill_enclosed_voxels(self) -> "VoxelMatrix":
+        outer_filled_voxel_matrix = self.fill_outer_voxels()
+        inner_filled_voxel_matrix = self + outer_filled_voxel_matrix.inverse()
+
+        # if inner_filled_voxel_matrix == self:
+        #     warnings.warn("This voxelization doesn't have any enclosed voxels.")
+
+        return inner_filled_voxel_matrix
 
     def _expand(self) -> "VoxelMatrix":
         current_shape = self.matrix.shape
@@ -1700,22 +1703,6 @@ class VoxelMatrix:
             tuple(round(coord + self.voxel_size, 6) for coord in self.matrix_origin_center),
             self.voxel_size,
         )
-
-    def fill_outer_voxels(self) -> "VoxelMatrix":
-        expanded_voxel_matrix = self._expand()
-        outer_filled_expanded_voxel_matrix = expanded_voxel_matrix.flood_fill((0, 0, 0), True)
-        outer_filled_voxel_matrix = outer_filled_expanded_voxel_matrix._reduce()
-
-        return outer_filled_voxel_matrix
-
-    def fill_enclosed_voxels(self) -> "VoxelMatrix":
-        outer_filled_voxel_matrix = self.fill_outer_voxels()
-        inner_filled_voxel_matrix = self + outer_filled_voxel_matrix.inverse()
-
-        # if inner_filled_voxel_matrix == self:
-        #     warnings.warn("This voxelization doesn't have any enclosed voxels.")
-
-        return inner_filled_voxel_matrix
 
     @classmethod
     def from_voxelization(cls, voxelization: "Voxelization") -> "VoxelMatrix":
