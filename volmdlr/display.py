@@ -17,6 +17,7 @@ class Node2D(volmdlr.Point2D):
     """
     A node is a point with some hash capabilities for performance.
     """
+
     def __init__(self, x: float, y: float, name: str = ""):
         self.x = x
         self.y = y
@@ -30,7 +31,7 @@ class Node2D(volmdlr.Point2D):
                                                  'Node2D']:
             return False
         return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-06)
+               and math.isclose(self.y, other_node.y, abs_tol=1e-06)
 
     @classmethod
     def from_point(cls, point2d):
@@ -41,6 +42,7 @@ class Node3D(volmdlr.Point3D):
     """
     A node is a point with some hash capabilities for performance.
     """
+
     def __init__(self, x: float, y: float, z: float, name: str = ""):
         self.x = x
         self.y = y
@@ -55,8 +57,8 @@ class Node3D(volmdlr.Point3D):
                                                  'Node3D']:
             return False
         return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-06) \
-            and math.isclose(self.z, other_node.z, abs_tol=1e-06)
+               and math.isclose(self.y, other_node.y, abs_tol=1e-06) \
+               and math.isclose(self.z, other_node.z, abs_tol=1e-06)
 
     @classmethod
     def from_point(cls, point3d):
@@ -258,7 +260,8 @@ class DisplayMesh3D(DisplayMesh):
             point1 = self.points[vertex1]
             point2 = self.points[vertex2]
             point3 = self.points[vertex3]
-            if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3):
+            if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3) and\
+                    {point1, point2, point3}.__len__() == 3:
                 face = volmdlr.faces.Triangle3D(point1, point2, point3)
                 if face.area() >= 1e-11:
                     triangular_faces.append(face)
