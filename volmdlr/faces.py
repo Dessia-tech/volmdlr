@@ -167,8 +167,6 @@ class Face3D(volmdlr.core.Primitive3D):
         :rtype: :class:`volmdlr.faces.Face3D`
         """
         step_id = kwargs.get("step_id", "#UNKNOW_ID")
-        if step_id == 38363:
-            print("faces.py")
         step_name = kwargs.get("name", "ADVANCED_FACE")
         name = arguments[0][1:-1]
         contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
@@ -191,7 +189,7 @@ class Face3D(volmdlr.core.Primitive3D):
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
 
-        return face.from_contours3d(surface, contours, step_id)
+        return face.from_contours3d(surface, contours, name)
 
     @classmethod
     def from_contours3d(cls, surface, contours3d: List[volmdlr.wires.Contour3D], name: str = ''):
@@ -244,8 +242,8 @@ class Face3D(volmdlr.core.Primitive3D):
                    surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),
                    name=name)
         # To improve performance while reading from step file
-        face.outer_contour3d = outer_contour3d
-        face.inner_contours3d = inner_contours3d
+        # face.outer_contour3d = outer_contour3d
+        # face.inner_contours3d = inner_contours3d
         return face
 
     def to_step(self, current_id):
@@ -2712,8 +2710,8 @@ class BSplineFace3D(Face3D):
             else:
                 number_points_x, number_points_y = 5, 7
             outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
-            points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
-                                                                                          number_points_y=number_points_y)
+            points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x,
+                                                                                          number_points_y)
             if self.surface2d.inner_contours:
                 points_grid = self._get_bbox_inner_contours_points(points_grid, x, y, grid_point_index)
             points3d = [self.surface3d.point2d_to_3d(point) for point in points_grid]

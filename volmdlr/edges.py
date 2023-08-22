@@ -157,9 +157,6 @@ class Edge(dc.DessiaObject):
         :return: The corresponding Edge object
         :rtype: :class:`volmdlr.edges.Edge`
         """
-        step_id = kwargs.get("step_id")
-        if step_id == 29122:
-            print("edges.py")
         obj = object_dict[arguments[3]]
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]

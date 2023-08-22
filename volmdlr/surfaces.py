@@ -2408,8 +2408,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         if abs(z) < 1e-6:
             z = 0
 
-        zr = z / self.small_radius
-        phi = math.asin(zr)
+        z_r = z / self.small_radius
+        phi = math.asin(z_r)
         if abs(phi) < 1e-9:
             phi = 0
 
@@ -4318,7 +4318,9 @@ class RevolutionSurface3D(PeriodicalSurface):
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
                 if middle_point.x == math.pi:
                     middle_point.x = -math.pi
-                start = volmdlr.Point2D(middle_point.x, start.y)
+                    if end.x == math.pi:
+                        end.x = middle_point.x
+                start.x = middle_point.x
             if self.edge.is_point_edge_extremity(arc3d.end):
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
                 if middle_point.x == math.pi:
