@@ -366,7 +366,7 @@ def geometric_set(arguments, object_dict):
     """
     # TODO: IS THIS RIGHT?
     primitives = [object_dict[int(node[1:])]
-                  for node in arguments[1] if not isinstance(object_dict[int(node[1:])], volmdlr.Point3D)]
+                  for node in arguments[1]]
     return primitives
 
 
@@ -377,7 +377,9 @@ def shell_based_surface_model(arguments, object_dict):
     if len(arguments[1]) == 1:
         return object_dict[int(arguments[1][0][1:])]
     primitives = [object_dict[int(arg[1:])] for arg in arguments[1]]
-    return volmdlr.core.Compound(primitives)
+    compound = volmdlr.core.Compound(primitives)
+    compound.compound_type = "manifold_solid_brep"
+    return compound
 
 
 def oriented_closed_shell(arguments, object_dict):
@@ -415,7 +417,7 @@ def manifold_surface_shape_representation(arguments, object_dict):
     primitives = []
     for arg in arguments[1]:
         primitive = object_dict[int(arg[1:])]
-        if isinstance(primitive, vmshells.OpenShell3D):
+        if isinstance(primitive, vmshells.Shell3D):
             primitives.append(primitive)
         if isinstance(primitive, volmdlr.core.Compound):
             counter = 0
@@ -425,7 +427,9 @@ def manifold_surface_shape_representation(arguments, object_dict):
             primitives.append(primitive)
     if len(primitives) == 1:
         return primitives[0]
-    return volmdlr.core.Compound(primitives)
+    compound = volmdlr.core.Compound(primitives)
+    compound.compound_type = "manifold_solid_brep"
+    return compound
 
 
 def faceted_brep(arguments, object_dict):
@@ -538,7 +542,9 @@ def advanced_brep_shape_representation(arguments, object_dict):
             primitives.append(primitive)
     if len(primitives) == 1:
         return primitives[0]
-    return volmdlr.core.Compound(primitives)
+    compound = volmdlr.core.Compound(primitives)
+    compound.compound_type = "manifold_solid_brep"
+    return compound
 
 
 def geometrically_bounded_surface_shape_representation(arguments, object_dict):
@@ -557,8 +563,10 @@ def geometrically_bounded_surface_shape_representation(arguments, object_dict):
     for arg in arguments[1]:
         primitives.extend(object_dict[int(arg[1:])])
     if len(primitives) > 1:
-        return volmdlr.core.Compound(primitives, name=arguments[0])
-    return primitives
+        compound = volmdlr.core.Compound(primitives, name=arguments[0])
+        compound.compound_type = "geometric_curve_set"
+        return compound
+    return primitives[0]
 
 
 def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, shape_representation_frames):
@@ -587,13 +595,13 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
     for shell3d in closed_shells:
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
-        A = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+        matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
                        [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
                        [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
-        B = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+        matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
                        [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
                        [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
-        transfer_matrix = npy.linalg.solve(A, B)
+        transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
         u_vector = volmdlr.Vector3D(*transfer_matrix[0])
         v_vector = volmdlr.Vector3D(*transfer_matrix[1])
         w_vector = volmdlr.Vector3D(*transfer_matrix[2])
@@ -815,6 +823,7 @@ STEP_TO_VOLMDLR = {
     'GEOMETRIC_CURVE_SET': None,
 
     # step sub-functions
+
     'UNCERTAINTY_MEASURE_WITH_UNIT': None,
     'CONVERSION_BASED_UNIT, LENGTH_UNIT, NAMED_UNIT': None,
     'LENGTH_MEASURE_WITH_UNIT': None,

@@ -2,10 +2,13 @@
 Concatenate common operation for two or more objects.
 
 """
+import math
 import random
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy.optimize import least_squares
 
 import volmdlr.core
 from volmdlr.core import EdgeStyle
@@ -98,7 +101,7 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
 
     :param ax: Matplotlib plot.
     :param edge_style: edge_style to be applied to plot.
-    :param element: volmdlr element to be ploted (either 2D or 3D).
+    :param element: volmdlr element to be plotted (either 2D or 3D).
     :param number_points: number of points to be used in the plot.
     :param close_plot: specifies if plot is to be closed or not.
     :return: Matplolib plot axis.
@@ -115,3 +118,47 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
             valid_components.append(list_components)
     ax.plot(*valid_components, color=edge_style.color, alpha=edge_style.alpha)
     return ax
+
+
+def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
+    """
+    Gets the points from the arc and the line that gives the minimal distance between them.
+
+    :param circle3d: Circle 3d or Arc 3d.
+    :param linesegment3d: Other line segment 3d.
+    :return: Minimum distance points.
+    """
+    def distance_squared(x, u_param, v_param, k_param, w_param):
+        """Calculates the squared distance."""
+        return (u_param.dot(u_param) * x[0] ** 2 + w_param.dot(w_param) + v_param.dot(v_param) * (
+                (math.sin(x[1])) ** 2) * radius ** 2 + k_param.dot(k_param) * ((math.cos(x[1])) ** 2) * radius ** 2
+                - 2 * x[0] * w_param.dot(u_param) - 2 * x[0] * radius * math.sin(x[1]) * u_param.dot(v_param) - 2 * x[
+                    0] * radius * math.cos(x[1]) * u_param.dot(k_param)
+                + 2 * radius * math.sin(x[1]) * w_param.dot(v_param) +
+                2 * radius * math.cos(x[1]) * w_param.dot(k_param)
+                + math.sin(2 * x[1]) * v_param.dot(k_param) * radius ** 2)
+    circle_point = circle3d.point_at_abscissa(0.0)
+    radius = circle3d.radius
+    linseg_direction_vector = linesegment3d.direction_vector()
+    vector_point_origin = circle_point - circle3d.frame.origin
+    vector_point_origin.normalize()
+    w = circle3d.frame.origin - linesegment3d.start
+    v = circle3d.frame.w.cross(vector_point_origin)
+
+    results = []
+    for initial_value in [np.array([0.5, circle3d.angle / 2]), np.array([0.5, 0]), np.array([0.5, circle3d.angle])]:
+        results.append(least_squares(distance_squared, initial_value,
+                                     bounds=[(0, 0), (1, circle3d.angle)],
+                                     args=(linseg_direction_vector, v, vector_point_origin, w)))
+
+    point1 = linesegment3d.point_at_abscissa(results[0].x[0] * linesegment3d.length())
+    point2 = circle3d.point_at_abscissa(results[1].x[1] * circle3d.radius)
+
+    for couple in results[1:]:
+        ptest1 = linesegment3d.point_at_abscissa(couple.x[0] * linesegment3d.length())
+        ptest2 = circle3d.point_at_abscissa(couple.x[1] * circle3d.radius)
+        dtest = ptest1.point_distance(ptest2)
+        if dtest < v.dot(v):
+            point1, point2 = ptest1, ptest2
+
+    return point1, point2

@@ -32,7 +32,8 @@ scripts = [
             'primitives/block3d.py',
             'primitives/sphere.py',
             'primitives/cone.py',
-            'primitives/cylinders.py',
+            'primitives/cylinder.py',
+            'primitives/hollow_cylinder.py',
             # Faces
             'faces/triangle3d.py',
             'faces/bspline.py',
@@ -73,6 +74,7 @@ scripts = [
             # Showcases
             'showcases/simple_shapes.py',
             'showcases/casing.py',
+            'showcases/vessel.py',
             # Mesh
             'mesh/read_msh_file.py',
             # 'mesh/geo_file_1.py',

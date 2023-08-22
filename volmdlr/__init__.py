@@ -16,6 +16,8 @@ from volmdlr.core_compiled import (O2D, O3D, OXY, X2D, X3D, Y2D, Y3D, Z3D,
                                    Vector3D)
 from volmdlr.bspline_fitting import interpolate_curve
 from volmdlr.bspline_compiled import rational_derivatives, derivatives
+
+
 TWO_PI = 2 * math.pi
 
 XYZ = Basis3D(X3D, Y3D, Z3D)

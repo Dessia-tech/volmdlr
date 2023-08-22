@@ -26,9 +26,8 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
-from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer,\
+from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
-
 
 npy.seterr(divide='raise')
 
@@ -899,7 +898,10 @@ class Assembly(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
+        bbox_list = [prim.bounding_box for prim in self.primitives if hasattr(prim, "bounding_box")]
+        if not bbox_list:
+            return BoundingBox.from_points(self.primitives)
+        return BoundingBox.from_bounding_boxes(bbox_list)
 
     def babylon_data(self, merge_meshes=True):
         """
@@ -958,6 +960,8 @@ class Assembly(dc.PhysicalObject):
         :rtype: Primitive3D
 
         """
+        if global_frame == transformed_frame:
+            return primitive
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
         matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
@@ -989,13 +993,13 @@ class Assembly(dc.PhysicalObject):
         step_content += product_content
         assembly_frames = assembly_data[-1]
         for i, primitive in enumerate(self.components):
-            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
                 primitive_content, current_id, primitive_data = primitive.to_step_product(current_id)
                 assembly_frame_id = assembly_frames[0]
                 component_frame_id = assembly_frames[i + 1]
                 assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
-                                                                              primitive_data, assembly_frame_id,
-                                                                              component_frame_id)
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
 
             else:
                 primitive_content, current_id, primitive_data = primitive.to_step(current_id)
@@ -1003,8 +1007,8 @@ class Assembly(dc.PhysicalObject):
                 assembly_frame_id = assembly_frames[0]
                 component_frame_id = assembly_frames[i + 1]
                 assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
-                                                                              primitive_data, assembly_frame_id,
-                                                                              component_frame_id)
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
             step_content += primitive_content
             step_content += assembly_content
 
@@ -1065,6 +1069,7 @@ class Compound(dc.PhysicalObject):
     def __init__(self, primitives, name: str = ""):
         self.primitives = primitives
         self._bbox = None
+        self._type = None
         dc.PhysicalObject.__init__(self, name=name)
 
     @property
@@ -1082,11 +1087,36 @@ class Compound(dc.PhysicalObject):
         """Bounding box setter."""
         self._bbox = new_bounding_box
 
+    @property
+    def compound_type(self):
+        """
+        Returns the compound type.
+
+        """
+        if not self._type:
+            if all(primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or
+                   hasattr(primitive, "shell_faces") for primitive in self.primitives):
+                self._type = "manifold_solid_brep"
+            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edges, volmdlr.Point3D)) or
+                     hasattr(primitive, "shell_faces") for primitive in self.primitives):
+                self._type = "geometric_curve_set"
+            else:
+                self._type = "shell_based_surface_model"
+        return self._type
+
+    @compound_type.setter
+    def compound_type(self, value):
+        """Compound type setter."""
+        self._type = value
+
     def _bounding_box(self) -> BoundingBox:
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+        bbox_list = [p.bounding_box for p in self.primitives if hasattr(p, "bounding_box")]
+        if not bbox_list:
+            return BoundingBox.from_points(self.primitives)
+        return BoundingBox.from_bounding_boxes(bbox_list)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1149,9 +1179,10 @@ class Compound(dc.PhysicalObject):
         current_id = frame_id
 
         for primitive in self.primitives:
-            primitive_content, current_id = primitive.to_step(current_id)
-            primitives_content += primitive_content
-            manifold_ids.append(current_id)
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                primitive_content, current_id = primitive.to_step(current_id)
+                primitives_content += primitive_content
+                manifold_ids.append(current_id)
 
         geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
         step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION(''," \
@@ -1221,7 +1252,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives if hasattr(p, "bounding_box")])
 
     def volume(self) -> float:
         """
@@ -1527,7 +1558,6 @@ class VolumeModel(dc.PhysicalObject):
                 if kwargs['min_points']:
                     lines.extend(primitive.get_mesh_lines_with_transfinite_curves(min_points=kwargs['min_points'],
                                                                                   size=size))
-
 
                 lines.append('Field[' + str(field_num) + '] = MathEval;')
                 lines.append('Field[' + str(field_num) + '].F = "' + str(size) + '";')
@@ -1986,15 +2016,15 @@ class VolumeModel(dc.PhysicalObject):
 
         def unpack_assembly(assembly):
             for prim in assembly.primitives:
-                if primitive.__class__.__name__ in ('Assembly', "Compound"):
+                if prim.__class__.__name__ in ('Assembly', "Compound"):
                     unpack_assembly(prim)
-                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                elif hasattr(prim, "faces") or hasattr(prim, "shell_faces"):
                     list_shells.append(prim)
 
         for primitive in self.primitives:
             if primitive.__class__.__name__ in ('Assembly', "Compound"):
                 unpack_assembly(primitive)
-            elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+            elif hasattr(primitive, "faces") or hasattr(primitive, "shell_faces"):
                 list_shells.append(primitive)
 
         return list_shells

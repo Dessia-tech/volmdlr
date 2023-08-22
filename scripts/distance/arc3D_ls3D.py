@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 import volmdlr as vm
 import volmdlr.edges as vme
-
+from volmdlr.utils.common_operations import minimum_distance_points_circle3d_linesegment3d
 ### Cas arc/LS
 
 mini, maxi = -5, 5
@@ -40,7 +40,7 @@ end.plot(ax=ax,color='y')
 arc.plot(ax=ax)
 ptmid.plot(ax=ax)
 
-pta1, pta2 = arc.minimum_distance_points_line(LS1)
+pta1, pta2 = minimum_distance_points_circle3d_linesegment3d(arc, LS1)
 pta1.plot(ax=ax, color='m')
 pta2.plot(ax=ax, color='m')
 

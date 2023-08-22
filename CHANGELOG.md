@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - Line: reverse.
 - babylon dark mode option.
+- BSplineCurve: Remove dependencies from the geomdl library.
+- perf: to_dict/dict_to_obj of OpenTriangleShell3D
+- Cylinder / Cone / HollowCylinder: from_center_point_and_axis
+- Cone: remove inheritance from RevolvedProfile
 
 ### Fixed
 - Sweep with non smoth path
@@ -23,28 +27,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CylindricalSurface3D: concurrent_plane_intersection
 - BSplineFace3D: fix neutral_fiber
 - Step: assembly import
+- BSplineFace3D: fix bounding_box.
+- Ellipse3D: from_step
+- edges.py: general improvements.
+- ExtrusionSurface3D: point3d_to_2d.
+- ExtrusionSurface3D: enhance parametric operations when the surface is periodic.
 - BSplineFace3D: fix neutral_fiber
+- BSplineSurface3D: improve bsplinecurve3d_to_2d.
 - BSplineSurface3D: improve bsplinecurve3d_to_3d.
 - Circle2D: plot
 - Line3D: fix Line3D plot()
 - Vector2D: plot()
 - fix RevolutionFace3D init parameter wire to edge.
-
+- fix Sweep: bug when first primitive is an arc.
+- fix closedshell3d volume
+- Step.py: enhance step import/export
+- VolumeModel: get_shells
+- step.py uses deque in stack based algorithms
+- VolumeModel: get_shells
+- add error protection stl
+- Sweep - add raise ValueError if section too big in comparision to arc radiuses
+- Update cython version requirement in setup.py
+- 
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
 - Composite_primitives
 - Surface3D: enhance repair_primitives_periodicity method.
+- volmdlr.utils.intersections:
 - BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
 - Wire3D: removes heritage from volmdlr.core.CompositePrimitive3D
+- BSplineCurve3D: bounding_box
+- edges: minimum_distance.
+- BSplineSurface3D: bsplinecurve3d_to_2d
+- BSplineCurve: transform some attributs into lazy evaluation and Caching
+- BSplineSurface3D: transform some attributs into lazy evaluation and Caching
+- BSplineSurface3D: store control_points as numpy array for memory efficiency
+- PlaneFace3D: distance_to_point -> point_distance
+- Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
+- Cylinder / HollowCylinder: `from_extremal_points` is now depracted. Use `from_end_points` instead (for lexical reason)
 
 ### Unittests
--
+- Cylinder / Cone / HollowCylinder
 
-## v0.12.0 [unreleased]
+## v0.12.0
 
 
 ### New Features
@@ -64,6 +93,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - minimum_distance: face-to-face, shell-to-shell
 - OpenShell3D: from_faces (using faces graph)
 - SphericalFace3D: from_contours3d_and_rectangular_cut
+- RevolutionSurface3D: Translation
+- wires.WireMixin: from_circle
+- curves.CircleMixin: trim
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
@@ -98,7 +130,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: line_intersections
 - Line3D: minimum_distance_points
 - remove arcellipse handleling for bspline2d_3d.
-
+- plot of vector3D
+- Ellipse3D: discretization_points.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
