@@ -52,6 +52,8 @@ pipeline:
       - coverage report
       - coverage html
       - python coverage.py
+    volumes:
+      - /tmp/cache/drone/pip/:/root/.cache/pip/
 
   generate-sdist:
     image: python:3.9
@@ -60,3 +62,21 @@ pipeline:
       - pip install Cython
       - pip install 'numpy<1.24.0'
       - python setup.py sdist
+
+
+  upload-coverage:
+    image: appleboy/drone-scp
+    when:
+      event: push
+    failure: ignore
+    settings:
+      host: magenta.dessia.tech
+      target: /var/www/cdn/volmdlr/coverage/${DRONE_BRANCH}
+      source: htmlcov/*
+      strip_components: 1
+      username: drone
+      password:
+        from_secret: ssh_drone_password
+
+
+
