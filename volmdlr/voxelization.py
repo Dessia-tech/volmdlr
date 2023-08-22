@@ -23,13 +23,14 @@ from volmdlr.voxelization_compiled import (
     line_segments_to_pixels,
     triangles_to_voxels,
     triangle_intersects_voxel,
+    triangles_to_voxel_matrix,
 )
 from volmdlr.wires import ClosedPolygon2D
 
 # Custom types
-Point = Tuple[float, ...]
-Triangle = Tuple[Point, ...]
-Segment = Tuple[Point, ...]
+Point = Tuple[float, float, float]
+Triangle = Tuple[Point, Point, Point]
+Segment = Tuple[Point, Point]
 
 
 class Voxelization(PhysicalObject):
@@ -1715,8 +1716,11 @@ class VoxelMatrix:
         return voxelization.to_voxel_matrix()
 
     @classmethod
-    def from_shell(cls, shell: Shell3D):
-        pass
+    def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = ""):
+        triangles = cls._shell_to_triangles(shell)
+        matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
+
+        return cls(matrix, matrix_origin_center, voxel_size)._crop_matrix()
 
     @staticmethod
     def _shell_to_triangles(shell: Shell3D) -> List[Triangle]:
@@ -1731,9 +1735,9 @@ class VoxelMatrix:
         :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
         """
         triangulation = shell.triangulation()
-        return list(
+        return [
             tuple(
-                tuple([point.x, point.y, point.z])
+                tuple([float(point.x), float(point.y), float(point.z)])
                 for point in [
                     triangulation.points[triangle[0]],
                     triangulation.points[triangle[1]],
@@ -1741,11 +1745,14 @@ class VoxelMatrix:
                 ]
             )
             for triangle in triangulation.triangles
-        )
+        ]
 
     @classmethod
-    def from_volume_model(cls, volume_model: Shell3D):
-        pass
+    def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = ""):
+        triangles = cls._volume_model_to_triangles(volume_model)
+        matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
+
+        return cls(matrix, matrix_origin_center, voxel_size)._crop_matrix()
 
     @staticmethod
     def _volume_model_to_triangles(volume_model: VolumeModel) -> List[Triangle]:
