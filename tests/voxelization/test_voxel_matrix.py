@@ -10,7 +10,7 @@ from volmdlr.primitives3d import Block, Cylinder, Sphere
 from volmdlr.shells import ClosedTriangleShell3D
 from volmdlr.voxelization import VoxelMatrix
 
-SHOW_BABYLONJS = True
+SHOW_BABYLONJS = False
 
 
 class TestVoxelMatrixCreation(unittest.TestCase):
