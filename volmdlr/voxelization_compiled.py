@@ -61,7 +61,7 @@ def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Poi
 
 
 def triangles_to_voxel_matrix(
-    triangles: List[Tuple[Tuple[float, float, float]], Tuple[float, float, float], Tuple[float, float, float]],
+    triangles: List[Triangle],
     voxel_size: float,
 ) -> Tuple[np.ndarray[np.bool_, np.ndim == 3], Tuple[float, float, float]]:
     """
