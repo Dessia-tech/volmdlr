@@ -1649,6 +1649,10 @@ class VoxelMatrix:
         # Find the indices of the True voxels
         true_voxels = np.argwhere(self.matrix)
 
+        if len(true_voxels) == 0:
+            # Can't crop a matrix of False values
+            return self
+
         # Find the minimum and maximum indices along each axis
         min_voxel_coords, max_voxel_coords = np.round(np.min(true_voxels, axis=0), 6), np.round(
             np.max(true_voxels, axis=0), 6
