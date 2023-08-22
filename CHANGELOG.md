@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - Line: reverse.
 - BSplineCurve: Remove dependencies from the geomdl library.
+- perf: to_dict/dict_to_obj of OpenTriangleShell3D
+- Cylinder / Cone / HollowCylinder: from_center_point_and_axis
+- Cone: remove inheritance from RevolvedProfile
 
 ### Fixed
 - Sweep with non smoth path
@@ -43,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - VolumeModel: get_shells
 - add error protection stl
 - Sweep - add raise ValueError if section too big in comparision to arc radiuses
+- Update cython version requirement in setup.py
+- 
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
@@ -58,12 +63,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: transform some attributs into lazy evaluation and Caching
 - BSplineSurface3D: store control_points as numpy array for memory efficiency
 - PlaneFace3D: distance_to_point -> point_distance
+- Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
+- Cylinder / HollowCylinder: `from_extremal_points` is now depracted. Use `from_end_points` instead (for lexical reason)
 
 ### Unittests
--
+- Cylinder / Cone / HollowCylinder
 
 ## v0.12.0
 

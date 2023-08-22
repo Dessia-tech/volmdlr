@@ -128,7 +128,7 @@ setup(
     install_requires=[
         "packaging",
         "dessia_common>=0.10.0",
-        "Cython",
+        "Cython>=3.0.0",
         "numpy<1.24.0",
         "matplotlib<=3.4.3",  # remove when https://github.com/DanPorter/Dans_Diffraction/pull/11 available
         "scipy<1.10.1",
