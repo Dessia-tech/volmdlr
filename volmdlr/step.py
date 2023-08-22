@@ -1473,7 +1473,7 @@ class Step(dc.DessiaObject):
                 last_error = key.args[0]
         return volmdlr_object
 
-    def to_volume_model(self, show_times: bool = False):
+    def to_volume_model(self, show_times: bool = False, name: str = ""):
         """
         Translate a step file into a volmdlr object.
 
@@ -1535,7 +1535,7 @@ class Step(dc.DessiaObject):
                 primitives.extend(shape)
             else:
                 primitives.append(shape)
-        volume_model = volmdlr.core.VolumeModel(primitives)
+        volume_model = volmdlr.core.VolumeModel(primitives, name=name)
         # volume_model = volmdlr.core.VolumeModel([object_dict[shell_node] for shell_node in shell_nodes])
         return volume_model
 
