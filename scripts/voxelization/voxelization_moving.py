@@ -35,7 +35,8 @@ print(f"Voxels translation computing time: {(time.perf_counter() - start)*1000}m
 
 # Define a voxelization from the moved volume_model to compare it
 voxelization_from_moved_volume_model = PointVoxelization.from_volume_model(
-    moved_volume_model, VOXEL_SIZE,
+    moved_volume_model,
+    VOXEL_SIZE,
 )
 
 # Display the result
