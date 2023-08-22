@@ -20,6 +20,7 @@ from volmdlr.voxelization_compiled import (
     line_segments_to_pixels,
     triangles_to_voxels,
     triangles_to_voxel_matrix,
+    voxel_triangular_faces,
 )
 
 # Custom types
@@ -289,119 +290,6 @@ class PointVoxelization(PhysicalObject):
 
         return voxel_centers
 
-    @staticmethod
-    def _voxel_triangular_faces(voxel_center: Point, voxel_size: float) -> List[Triangle]:
-        """
-        Helper method to compute the 12 triangular faces that compose a voxel, for visualization.
-
-        :param voxel_center: The voxel center point.
-        :type voxel_center: tuple[float, float, float]
-        :param voxel_size: The voxel edges size.
-        :type voxel_size: float
-
-        :return: The 12 triangles representing the 6 faces of the given voxel.
-        """
-        # pylint: disable=invalid-name
-
-        x, y, z = voxel_center
-        sx, sy, sz = voxel_size, voxel_size, voxel_size
-        hx, hy, hz = sx / 2, sy / 2, sz / 2
-        faces = [
-            # Front face
-            tuple(
-                [
-                    (x - hx, y - hy, z + hz),
-                    (x - hx, y + hy, z + hz),
-                    (x + hx, y + hy, z + hz),
-                ]
-            ),
-            tuple(
-                [
-                    (x - hx, y - hy, z + hz),
-                    (x + hx, y + hy, z + hz),
-                    (x + hx, y - hy, z + hz),
-                ]
-            ),
-            # Back face
-            tuple(
-                [
-                    (x - hx, y - hy, z - hz),
-                    (x - hx, y + hy, z - hz),
-                    (x + hx, y + hy, z - hz),
-                ]
-            ),
-            tuple(
-                [
-                    (x - hx, y - hy, z - hz),
-                    (x + hx, y + hy, z - hz),
-                    (x + hx, y - hy, z - hz),
-                ]
-            ),
-            # Left face
-            tuple(
-                [
-                    (x - hx, y - hy, z - hz),
-                    (x - hx, y + hy, z - hz),
-                    (x - hx, y + hy, z + hz),
-                ]
-            ),
-            tuple(
-                [
-                    (x - hx, y - hy, z - hz),
-                    (x - hx, y + hy, z + hz),
-                    (x - hx, y - hy, z + hz),
-                ]
-            ),
-            # Right face
-            tuple(
-                [
-                    (x + hx, y - hy, z - hz),
-                    (x + hx, y + hy, z - hz),
-                    (x + hx, y + hy, z + hz),
-                ]
-            ),
-            tuple(
-                [
-                    (x + hx, y - hy, z - hz),
-                    (x + hx, y + hy, z + hz),
-                    (x + hx, y - hy, z + hz),
-                ]
-            ),
-            # Top face
-            tuple(
-                [
-                    (x - hx, y + hy, z - hz),
-                    (x + hx, y + hy, z - hz),
-                    (x + hx, y + hy, z + hz),
-                ]
-            ),
-            tuple(
-                [
-                    (x - hx, y + hy, z - hz),
-                    (x + hx, y + hy, z + hz),
-                    (x - hx, y + hy, z + hz),
-                ]
-            ),
-            # Bottom face
-            tuple(
-                [
-                    (x - hx, y - hy, z - hz),
-                    (x + hx, y - hy, z - hz),
-                    (x + hx, y - hy, z + hz),
-                ]
-            ),
-            tuple(
-                [
-                    (x - hx, y - hy, z - hz),
-                    (x + hx, y - hy, z + hz),
-                    (x - hx, y - hy, z + hz),
-                ]
-            ),
-        ]
-
-        triangular_faces = [tuple(tuple(round(_, 6) for _ in point) for point in face) for face in faces]
-        return triangular_faces
-
     def to_triangles(self) -> Set[Triangle]:
         """
         Convert the voxelization to triangles for display purpose.
@@ -415,7 +303,7 @@ class PointVoxelization(PhysicalObject):
         triangles = set()
 
         for voxel in self.voxel_centers:
-            for triangle in self._voxel_triangular_faces(voxel, self.voxel_size):
+            for triangle in voxel_triangular_faces(voxel, self.voxel_size):
                 if triangle not in triangles:
                     triangles.add(triangle)
                 else:
