@@ -15,7 +15,7 @@ from tqdm import tqdm
 from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.faces import PlaneFace3D, Triangle3D
-from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D
+from volmdlr.shells import ClosedShell3D, ClosedTriangleShell3D, Shell3D
 from volmdlr.surfaces import PLANE3D_OXY, PLANE3D_OXZ, PLANE3D_OYZ, Surface2D
 from volmdlr.voxelization_compiled import (
     flood_fill_matrix_2d,
@@ -1639,8 +1639,14 @@ class VoxelMatrix:
 
         result_matrix = logical_operation(new_self, new_other)
 
+        return VoxelMatrix(result_matrix, tuple(global_min), self.voxel_size)._crop_matrix()
+
+    def _crop_matrix(self) -> "VoxelMatrix":
+        """
+        Crop the VoxelMatrix to the smallest possible size.
+        """
         # Find the indices of the True voxels
-        true_voxels = np.argwhere(result_matrix)
+        true_voxels = np.argwhere(self.matrix)
 
         # Find the minimum and maximum indices along each axis
         min_voxel_coords, max_voxel_coords = np.round(np.min(true_voxels, axis=0), 6), np.round(
@@ -1648,16 +1654,16 @@ class VoxelMatrix:
         )
 
         # Crop the matrix to the smallest possible size
-        result_matrix = result_matrix[
+        cropped_matrix = self.matrix[
             min_voxel_coords[0] : max_voxel_coords[0] + 1,
             min_voxel_coords[1] : max_voxel_coords[1] + 1,
             min_voxel_coords[2] : max_voxel_coords[2] + 1,
         ]
 
         # Calculate new matrix_origin_center
-        new_origin_center = np.round(global_min + min_voxel_coords * self.voxel_size, 6)
+        new_origin_center = np.round(self.matrix_origin_center + min_voxel_coords * self.voxel_size, 6)
 
-        return VoxelMatrix(result_matrix, tuple(new_origin_center), self.voxel_size)
+        return self.__class__(cropped_matrix, tuple(new_origin_center), self.voxel_size)
 
     def flood_fill(self, start, fill_with) -> "VoxelMatrix":
         return VoxelMatrix(
@@ -1707,6 +1713,57 @@ class VoxelMatrix:
     @classmethod
     def from_voxelization(cls, voxelization: "Voxelization") -> "VoxelMatrix":
         return voxelization.to_voxel_matrix()
+
+    @classmethod
+    def from_shell(cls, shell: Shell3D):
+        pass
+
+    @staticmethod
+    def _shell_to_triangles(shell: Shell3D) -> List[Triangle]:
+        """
+        Helper method to convert a Shell3D to a list of triangles.
+        It uses the "triangulation" method to triangulate the Shell3D.
+
+        :param shell: The Shell3D to convert to triangles.
+        :type shell: Shell3D
+
+        :return: The list of triangles extracted from the triangulated Shell3D.
+        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        """
+        triangulation = shell.triangulation()
+        return list(
+            tuple(
+                tuple([point.x, point.y, point.z])
+                for point in [
+                    triangulation.points[triangle[0]],
+                    triangulation.points[triangle[1]],
+                    triangulation.points[triangle[2]],
+                ]
+            )
+            for triangle in triangulation.triangles
+        )
+
+    @classmethod
+    def from_volume_model(cls, volume_model: Shell3D):
+        pass
+
+    @staticmethod
+    def _volume_model_to_triangles(volume_model: VolumeModel) -> List[Triangle]:
+        """
+        Helper method to convert a VolumeModel to a list of triangles.
+        It uses the "triangulation" method to triangulate the shells of the VolumeModel.
+
+        :param volume_model: The VolumeModel to convert to triangles.
+        :type volume_model: VolumeModel
+
+        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
+        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        """
+        triangles = []
+        for shell in volume_model.get_shells():
+            triangles.extend(VoxelMatrix._shell_to_triangles(shell))
+
+        return triangles
 
     def to_voxelization(self) -> "Voxelization":
         return Voxelization.from_voxel_matrix(self)
