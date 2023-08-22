@@ -200,6 +200,20 @@ def triangle_intersects_voxel(
     return _triangle_intersects_voxel(triangle, voxel_center, voxel_extents)
 
 
+def voxel_triangular_faces(voxel_center: Point, voxel_size: float) -> List[Triangle]:
+    """
+    Helper function to compute the 12 triangular faces that compose a voxel, for visualization.
+
+    :param voxel_center: The voxel center point.
+    :type voxel_center: tuple[float, float, float]
+    :param voxel_size: The voxel edges size.
+    :type voxel_size: float
+
+    :return: The 12 triangles representing the 6 faces of the given voxel.
+    """
+    return _voxel_triangular_faces(voxel_center[0], voxel_center[1], voxel_center[2], voxel_size)
+
+
 # CYTHON FUNCTIONS
 
 
