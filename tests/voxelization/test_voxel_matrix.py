@@ -54,8 +54,7 @@ class TestVoxelMatrixCreation(unittest.TestCase):
         self.assertEqual(2820, len(cylinder_voxelization))
 
         if SHOW_BABYLONJS:
-            volume_model = VolumeModel(
-                [self.cylinder, cylinder_voxelization.to_closed_triangle_shell()])
+            volume_model = VolumeModel([self.cylinder, cylinder_voxelization.to_closed_triangle_shell()])
             volume_model.babylonjs()
 
     def test_from_volume_model(self):
