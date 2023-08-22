@@ -4412,17 +4412,17 @@ class RevolutionSurface3D(PeriodicalSurface):
             return [edges.Arc3D.from_3_points(start3d, interior, end3d)]
 
         if math.isclose(theta1, theta2, abs_tol=1e-3):
-            primitive = self.edge.simplify.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
+            primitive = self.edge.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
                 if isinstance(self.edge, curves.Line3D) or isinstance(self.edge, edges.LineSegment3D):
                     return [edges.LineSegment3D(start3d, end3d)]
                 if self.edge.is_point_edge_extremity(start3d) and self.edge.is_point_edge_extremity(end3d):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
-                        return [primitive]
+                        return [primitive.simplify]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
                         return [primitive.reverse()]
                 primitive = primitive.split_between_two_points(start3d, end3d)
-                return [primitive]
+                return [primitive.simplify]
         n = 10
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
