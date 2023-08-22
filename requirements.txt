@@ -5,4 +5,3 @@ matplotlib
 numpy
 scipy
 triangle
-tqdm
