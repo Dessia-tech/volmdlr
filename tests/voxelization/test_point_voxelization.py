@@ -13,7 +13,7 @@ from volmdlr.voxelization import PointVoxelization
 SHOW_BABYLONJS = False
 
 
-class TestVoxelizationCreation(unittest.TestCase):
+class TestPointVoxelizationCreation(unittest.TestCase):
     """
     Unit testing of voxelization creation methods.
     """
@@ -68,7 +68,7 @@ class TestVoxelizationCreation(unittest.TestCase):
             volume_model.babylonjs()
 
 
-class TestVoxelizationBooleanOperation(unittest.TestCase):
+class TestPointVoxelizationBooleanOperation(unittest.TestCase):
     """
     Unit testing of voxelization boolean operation methods.
     """
@@ -138,7 +138,7 @@ class TestVoxelizationBooleanOperation(unittest.TestCase):
             volume_model.babylonjs()
 
 
-class TestVoxelizationManipulation(unittest.TestCase):
+class TestPointVoxelizationManipulation(unittest.TestCase):
     """
     Unit testing of voxelization manipulation methods.
     """
@@ -199,7 +199,7 @@ class TestVoxelizationManipulation(unittest.TestCase):
             volume_model.babylonjs()
 
 
-class TestVoxelizationExport(unittest.TestCase):
+class TestPointVoxelizationExport(unittest.TestCase):
     """
     Unit testing of voxelization export methods.
     """
