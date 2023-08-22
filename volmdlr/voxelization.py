@@ -154,9 +154,7 @@ class PointVoxelization(PhysicalObject):
         return len(self.voxel_centers)
 
     @classmethod
-    def from_shell(
-        cls, shell: Shell3D, voxel_size: float, name: str = ""
-    ) -> "PointVoxelization":
+    def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = "") -> "PointVoxelization":
         """
         Create a Voxelization from a ClosedTriangleShell3D.
 
@@ -176,9 +174,7 @@ class PointVoxelization(PhysicalObject):
         return cls(voxel_centers=voxels, voxel_size=voxel_size, name=name)
 
     @classmethod
-    def from_volume_model(
-        cls, volume_model: VolumeModel, voxel_size: float, name: str = ""
-    ) -> "PointVoxelization":
+    def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = "") -> "PointVoxelization":
         """
         Create a Voxelization from a VolumeModel.
 
@@ -532,7 +528,9 @@ class PointVoxelization(PhysicalObject):
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform symmetric difference.")
 
-        return PointVoxelization(self.voxel_centers.symmetric_difference(other_voxelization.voxel_centers), self.voxel_size)
+        return PointVoxelization(
+            self.voxel_centers.symmetric_difference(other_voxelization.voxel_centers), self.voxel_size
+        )
 
     def interference(self, other_voxelization: "PointVoxelization") -> float:
         """
@@ -826,7 +824,7 @@ class VoxelMatrix(PhysicalObject):
     def __len__(self) -> int:
         """
         Return the number of True value in the 3D voxel matrix.
-        
+
         :return: The number of True value in the 3D voxel matrix.
         :rtype: int
         """
@@ -1372,7 +1370,7 @@ class Pixelization:
 class PixelMatrix:
     """Class to manipulate pixel matrix."""
 
-    def __init__(self, numpy_pixel_matrix: np.ndarray):  # np.ndarray[np.bool_, np.ndim == 2]
+    def __init__(self, numpy_pixel_matrix: np.ndarray[np.bool_, np.ndim == 2]):
         self.matrix = numpy_pixel_matrix
 
     def __eq__(self, other_pixel_matrix: "PixelMatrix") -> bool:
