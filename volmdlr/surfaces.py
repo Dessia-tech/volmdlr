@@ -985,9 +985,10 @@ class Surface3D(DessiaObject):
                         continue
                     primitives3d.extend(primitives)
                 except AttributeError:
-                    print(traceback.format_exc())
-                    print(f'Class {self.__class__.__name__} does not implement {method_name}'
-                          f'with {primitive2d.__class__.__name__}')
+                    pass
+                    # print(traceback.format_exc())
+                    # print(f'Class {self.__class__.__name__} does not implement {method_name}'
+                    #       f'with {primitive2d.__class__.__name__}')
             else:
                 raise AttributeError(
                     f'Class {self.__class__.__name__} does not implement {method_name}')
