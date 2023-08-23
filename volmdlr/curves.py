@@ -204,7 +204,7 @@ class Line(Curve):
 
     def reverse(self):
         """Gets a line in the reverse direction."""
-        return self.__class__(self.point2, self.point1, name=self.name+'_reverse')
+        return self.__class__(self.point2, self.point1, name=self.name + '_reverse')
 
 
 class Line2D(Line):
@@ -360,6 +360,7 @@ class Line2D(Line):
         """
         Static helper method to compute some data used in create_tangent_circle method.
         """
+
         def vectors_from_line_and_point(line1, line2, point_):
             vector_i = volmdlr.Vector2D(point_.x, point_.y)
             vector_a = volmdlr.Vector2D(line1.point1.x, line1.point1.y)
@@ -367,6 +368,7 @@ class Line2D(Line):
             vector_c = volmdlr.Vector2D(line2.point1.x, line2.point1.y)
             vector_d = volmdlr.Vector2D(line2.point2.x, line2.point2.y)
             return vector_i, vector_a, vector_b, vector_c, vector_d
+
         if math.isclose(line.point_distance(point), 0, abs_tol=1e-10):
             vectors = vectors_from_line_and_point(line, other_line, point)
         elif math.isclose(other_line.point_distance(point), 0, abs_tol=1e-10):
@@ -641,8 +643,8 @@ class Line3D(Line):
         vector = self.point1 - line2.point1
         t_coefficient = (vector.dot(direction_vector2) * direction_vector2.dot(direction_vector1) -
                          vector.dot(direction_vector1) * direction_vector2.dot(direction_vector2)) / (
-                        direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
-                        direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
+                                direction_vector1.dot(direction_vector1) * direction_vector2.dot(direction_vector2) -
+                                direction_vector1.dot(direction_vector2) * direction_vector2.dot(direction_vector1))
         # u_coefficient = (vector.dot(direction_vector2) + t_coefficient * direction_vector1.dot(
         # direction_vector2)) / direction_vector2.dot(direction_vector2)
         intersection = self.point1 + t_coefficient * direction_vector1
@@ -788,6 +790,7 @@ class Line3D(Line):
 
 class CircleMixin:
     """Circle abstract class."""
+
     def split_at_abscissa(self, abscissa):
         """
         Splits a Circle into two at a given fraction of its length (abscissa parameter).
@@ -820,8 +823,8 @@ class CircleMixin:
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
         :return: arc between these two points.
         """
-        fullar_arc_class_ = getattr(volmdlr.edges, 'FullArc'+self.__class__.__name__[-2:])
-        arc_class_ = getattr(volmdlr.edges, 'Arc'+self.__class__.__name__[-2:])
+        fullar_arc_class_ = getattr(volmdlr.edges, 'FullArc' + self.__class__.__name__[-2:])
+        arc_class_ = getattr(volmdlr.edges, 'Arc' + self.__class__.__name__[-2:])
         circle = self
         if not same_sense:
             circle = self.reverse()
@@ -849,6 +852,7 @@ class Circle2D(CircleMixin, Curve):
     :param name: The name of the circle. Defaults to ''.
     :type name: str, optional
     """
+
     def __init__(self, center: volmdlr.Point2D, radius: float, name: str = ''):
         self.center = center
         self.radius = radius
@@ -1238,7 +1242,7 @@ class Circle3D(CircleMixin, Curve):
         self.radius = radius
         self.frame = frame
         self._bbox = None
-        self.angle = 2*math.pi
+        self.angle = 2 * math.pi
         Curve.__init__(self, name=name)
 
     @property
@@ -1671,10 +1675,11 @@ class Ellipse2D(Curve):
         :return: True or False.
         """
         return math.isclose(
-            ((point.x - self.center.x) * math.cos(self.theta) +
-             (point.y - self.center.y) * math.sin(self.theta)) ** 2 / self.major_axis ** 2 +
-            ((point.x - self.center.x) * math.sin(self.theta) -
-             (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 1, abs_tol=abs_tol)
+            round(((point.x - self.center.x) * math.cos(self.theta) +
+                   (point.y - self.center.y) * math.sin(self.theta)) ** 2 / self.major_axis ** 2 +
+                  ((point.x - self.center.x) * math.sin(self.theta) -
+                   (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 2), 1.0,
+            abs_tol=abs_tol)
 
     def point_over_contour(self, point, abs_tol=1e-6):
         """
@@ -1765,6 +1770,7 @@ class Ellipse2D(Curve):
         def ellipse_arc_length(theta):
             return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
                              (self.minor_axis ** 2) * math.cos(theta) ** 2)
+
         iter_counter = 0
         increment_factor = 1e-5
         while True:
@@ -1918,13 +1924,13 @@ class Ellipse3D(Curve):
         if number_points:
             angle_resolution = number_points
         discretization_points_3d = [
-                                      self.center + self.major_axis * math.cos(
-                                          teta) * self.major_dir
-                                      + self.minor_axis * math.sin(
-                                          teta) * self.major_dir.cross(
-                                          self.normal) for teta in
-                                      npy.linspace(0, volmdlr.TWO_PI,
-                                                   angle_resolution + 1)][:-1]
+                                       self.center + self.major_axis * math.cos(
+                                           teta) * self.major_dir
+                                       + self.minor_axis * math.sin(
+                                           teta) * self.major_dir.cross(
+                                           self.normal) for teta in
+                                       npy.linspace(0, volmdlr.TWO_PI,
+                                                    angle_resolution + 1)][:-1]
         return discretization_points_3d
 
     def to_2d(self, plane_origin, x, y):
@@ -2056,5 +2062,5 @@ class Ellipse3D(Curve):
 
         """
         frame = volmdlr.Frame3D(self.center, self.frame.u, -self.frame.v,
-                                      self.frame.u.cross(-self.frame.v))
+                                self.frame.u.cross(-self.frame.v))
         return Ellipse3D(self.major_axis, self.minor_axis, frame)

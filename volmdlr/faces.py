@@ -2706,12 +2706,13 @@ class BSplineFace3D(Face3D):
         try:
             number_points_x, number_points_y = self.grid_size()
             if number_points_x >= number_points_y:
-                number_points_x, number_points_y = 7, 5
+                number_points_x, number_points_y = 5, 3
             else:
-                number_points_x, number_points_y = 5, 7
+                number_points_x, number_points_y = 3, 5
             outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
             points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x,
-                                                                                          number_points_y)
+                                                                                          number_points_y,
+                                                                                          include_edge_points=False)
             if self.surface2d.inner_contours:
                 points_grid = self._get_bbox_inner_contours_points(points_grid, x, y, grid_point_index)
             points3d = [self.surface3d.point2d_to_3d(point) for point in points_grid]

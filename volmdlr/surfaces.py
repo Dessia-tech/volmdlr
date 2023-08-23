@@ -4409,6 +4409,14 @@ class RevolutionSurface3D(PeriodicalSurface):
         if self.edge.point_at_abscissa(abscissa1).is_close(self.edge.point_at_abscissa(abscissa2)):
             theta_i = 0.5 * (theta1 + theta2)
             interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
+            if start3d.is_close(end3d):
+                theta_e = 0.25 * (theta1 + theta2)
+                extra_point = self.point2d_to_3d(volmdlr.Point2D(theta_e, abscissa1))
+                temp_arc = edges.Arc3D.from_3_points(start3d, extra_point, interior)
+                circle = temp_arc.circle
+                if theta1 > theta2:
+                    circle = temp_arc.circle.reverse()
+                return [edges.FullArc3D.from_curve(circle, start3d)]
             return [edges.Arc3D.from_3_points(start3d, interior, end3d)]
 
         if math.isclose(theta1, theta2, abs_tol=1e-3):
@@ -4422,7 +4430,9 @@ class RevolutionSurface3D(PeriodicalSurface):
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
                         return [primitive.simplify.reverse()]
                 primitive = primitive.split_between_two_points(start3d, end3d)
-                return [primitive.simplify]
+                if abscissa1 > abscissa2:
+                    primitive = primitive.reverse()
+                return [primitive]
         n = 10
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
@@ -7355,7 +7365,7 @@ class BSplineSurface3D(Surface3D):
 
         def get_local_discretization_points(start_point, end_points):
             distance = start_point.point_distance(end_points)
-            maximum_linear_distance_reference_point = 1e-3
+            maximum_linear_distance_reference_point = 1e-4
             if distance < maximum_linear_distance_reference_point:
                 return []
             number_points = max(int(distance / maximum_linear_distance_reference_point), 2)

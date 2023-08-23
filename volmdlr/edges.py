@@ -2564,8 +2564,11 @@ class ArcMixin:
             return [None, self.copy()]
         if split_point.is_close(self.end, tol):
             return [self.copy(), None]
-        return [self.__class__(self.circle, self.start, split_point, self.is_trigo),
-                self.__class__(self.circle, split_point, self.end, self.is_trigo)]
+        if self.__class__.__name__[-2:] == "2D":
+            return [self.__class__(self.circle, self.start, split_point, self.is_trigo),
+                    self.__class__(self.circle, split_point, self.end, self.is_trigo)]
+        return [self.__class__(self.circle, self.start, split_point),
+                self.__class__(self.circle, split_point, self.end)]
 
     def get_shared_section(self, other_arc2, abs_tol: float = 1e-6):
         """
@@ -5813,8 +5816,13 @@ class FullArc3D(FullArcMixin, Arc3D):
         return cls(circle, start_end)
 
     @classmethod
-    def from_curve(cls, circle):
-        return cls(circle, circle.center + circle.frame.u * circle.radius)
+    def from_curve(cls, circle, start_end=None):
+        """
+        Initialize a full arc from a circle.
+        """
+        if start_end is None:
+            start_end = circle.center + circle.frame.u * circle.radius
+        return cls(circle, start_end)
 
 
 class ArcEllipse3D(Edge):
