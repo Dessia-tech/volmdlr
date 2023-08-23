@@ -1158,7 +1158,7 @@ class PlaneFace3D(Face3D):
     def bounding_box(self, new_bounding_box):
         self._bbox = new_bounding_box
 
-    def distance_to_point(self, point, return_other_point=False):
+    def point_distance(self, point, return_other_point=False):
         """
         Calculates the distance from a plane face and a point.
 
@@ -1189,6 +1189,10 @@ class PlaneFace3D(Face3D):
             return (projection_distance ** 2 + border_distance ** 2) ** 0.5, \
                 other_point
         return (projection_distance ** 2 + border_distance ** 2) ** 0.5
+
+    def distance_to_point(self, point, return_other_point=False):
+        warnings.warn('distance_to_point is deprecated, please use point_distance', category=DeprecationWarning)
+        return self.point_distance(point, return_other_point)
 
     def minimum_distance_points_plane(self, other_plane_face, return_points=False):
         """
@@ -2705,24 +2709,18 @@ class BSplineFace3D(Face3D):
         else:
             number_points_x, number_points_y = 3, 5
         outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
-        points = []
-        points.extend(points)
         points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
                                                                                       number_points_y=number_points_y)
         if self.surface2d.inner_contours:
-            points = self._get_bbox_inner_contours_points(points,
-                                                          [points_grid, x, y, grid_point_index])
-        else:
-            points.extend(points_grid)
-        points3d = [self.surface3d.point2d_to_3d(point) for point in points]
-        return volmdlr.core.BoundingBox.from_points(points3d)
+            points_grid = self._get_bbox_inner_contours_points(points_grid, x, y, grid_point_index)
+        points3d = [self.surface3d.point2d_to_3d(point) for point in points_grid]
+        return volmdlr.core.BoundingBox.from_bounding_boxes([volmdlr.core.BoundingBox.from_points(points3d),
+                                                            self.outer_contour3d.bounding_box])
 
-    def _get_bbox_inner_contours_points(self, points, grid_triangulation_points_params):
+    def _get_bbox_inner_contours_points(self, points_grid, x, y, grid_point_index):
         """Helper function to get_bounding_box."""
-        points_grid, x, y, grid_point_index = grid_triangulation_points_params
         for inner_contour in self.surface2d.inner_contours:
             inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True)
-            points.extend(inner_polygon.points)
             # removes with a region search the grid points that are in the inner contour
             xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
             x_grid_range = array_range_search(x, xmin, xmax)
@@ -2735,8 +2733,7 @@ class BSplineFace3D(Face3D):
                     if inner_polygon.point_belongs(point):
                         points_grid.remove(point)
                         grid_point_index.pop((i, j))
-        points.extend(points_grid)
-        return points
+        return points_grid
 
     def triangulation_lines(self, resolution=25):
         """

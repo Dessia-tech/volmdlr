@@ -22,6 +22,7 @@ import volmdlr.geometry
 import volmdlr.utils.parametric as vm_parametric
 from volmdlr.core import EdgeStyle
 from volmdlr.core import point_in_list
+import volmdlr.nurbs.helpers as nurbs_helpers
 from volmdlr.utils.parametric import array_range_search, repair_start_end_angle_periodicity, angle_discontinuity
 import volmdlr.utils.intersections as vm_utils_intersections
 
@@ -1140,8 +1141,8 @@ class Plane3D(Surface3D):
         """
         point1, point2, point3 = args
         vector1 = point2 - point1
-        vector2 = point3 - point1
         vector1 = vector1.to_vector()
+        vector2 = point3 - point1
         vector2 = vector2.to_vector()
         vector1.normalize()
         vector2.normalize()
@@ -1498,8 +1499,7 @@ class Plane3D(Surface3D):
             control_points=control_points,
             knot_multiplicities=bspline_curve3d.knot_multiplicities,
             knots=bspline_curve3d.knots,
-            weights=bspline_curve3d.weights,
-            periodic=bspline_curve3d.periodic)]
+            weights=bspline_curve3d.weights)]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -1517,8 +1517,7 @@ class Plane3D(Surface3D):
             control_points=control_points,
             knot_multiplicities=bspline_curve2d.knot_multiplicities,
             knots=bspline_curve2d.knots,
-            weights=bspline_curve2d.weights,
-            periodic=bspline_curve2d.periodic)]
+            weights=bspline_curve2d.weights)]
 
     def rectangular_cut(self, x1: float, x2: float,
                         y1: float, y2: float, name: str = ''):
@@ -4131,7 +4130,7 @@ class ExtrusionSurface3D(Surface3D):
             start, end = self._verify_start_end_parametric_points(points[0], points[-1], bspline_curve3d)
             points[0] = start
             points[-1] = end
-        return [edges.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree).simplify]
+        return [edges.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree)]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -4540,60 +4539,26 @@ class BSplineSurface3D(Surface3D):
     :type name: str
     """
     face_class = "BSplineFace3D"
-    _non_serializable_attributes = ["surface", "curves", "control_points_table"]
 
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
                  weights: List[float] = None, name: str = ''):
-        self.control_points = control_points
+        self._control_points = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in control_points],
+                                           dtype=npy.float64)
         self.degree_u = degree_u
         self.degree_v = degree_v
         self.nb_u = nb_u
         self.nb_v = nb_v
 
-        u_knots = edges.standardize_knot_vector(u_knots)
-        v_knots = edges.standardize_knot_vector(v_knots)
+        u_knots = nurbs_helpers.standardize_knot_vector(u_knots)
+        v_knots = nurbs_helpers.standardize_knot_vector(v_knots)
         self.u_knots = u_knots
         self.v_knots = v_knots
         self.u_multiplicities = u_multiplicities
         self.v_multiplicities = v_multiplicities
         self.weights = weights
 
-        self.control_points_table = []
-        points_row = []
-        i = 1
-        for point in control_points:
-            points_row.append(point)
-            if i == nb_v:
-                self.control_points_table.append(points_row)
-                points_row = []
-                i = 1
-            else:
-                i += 1
-        if weights is None:
-            surface = BSpline.Surface()
-            points = [(control_points[i][0], control_points[i][1],
-                       control_points[i][2]) for i in range(len(control_points))]
-
-        else:
-            surface = NURBS.Surface()
-            points = [(control_points[i][0] * weights[i], control_points[i][1] * weights[i],
-                       control_points[i][2] * weights[i], weights[i]) for i in range(len(control_points))]
-        surface.degree_u = degree_u
-        surface.degree_v = degree_v
-        surface.set_ctrlpts(points, nb_u, nb_v)
-        knot_vector_u = []
-        for i, u_knot in enumerate(u_knots):
-            knot_vector_u.extend([u_knot] * u_multiplicities[i])
-        knot_vector_v = []
-        for i, v_knot in enumerate(v_knots):
-            knot_vector_v.extend([v_knot] * v_multiplicities[i])
-        surface.knotvector_u = knot_vector_u
-        surface.knotvector_v = knot_vector_v
-        surface.delta = 0.05
-
-        self.surface = surface
-        self.curves = extract_curves(surface, extract_u=True, extract_v=True)
+        self._surface = None
         Surface3D.__init__(self, name=name)
 
         # Hidden Attributes
@@ -4605,6 +4570,74 @@ class BSplineSurface3D(Surface3D):
 
         self._x_periodicity = False  # Use False instead of None because None is a possible value of x_periodicity
         self._y_periodicity = False
+
+    @property
+    def control_points(self):
+        return [volmdlr.Point3D(*point) for point in self._control_points]
+
+    @property
+    def control_points_table(self):
+        """Creates control points table."""
+        control_points_table = []
+        points_row = []
+        i = 1
+        for point in self.control_points:
+            points_row.append(point)
+            if i == self.nb_v:
+                control_points_table.append(points_row)
+                points_row = []
+                i = 1
+            else:
+                i += 1
+        return control_points_table
+
+    @property
+    def surface(self):
+        """Create nurbs surface for special evaluations."""
+        if not self._surface:
+            if self.weights is None:
+                surface = BSpline.Surface()
+                points = self._control_points.tolist()
+
+            else:
+                surface = NURBS.Surface()
+                points = [(control_point[0] * self.weights[i], control_point[1] * self.weights[i],
+                           control_point[2] * self.weights[i], self.weights[i])
+                          for i, control_point in enumerate(self.control_points)]
+            surface.degree_u = self.degree_u
+            surface.degree_v = self.degree_v
+            surface.set_ctrlpts(points, self.nb_u, self.nb_v)
+            knot_vector_u = []
+            for i, u_knot in enumerate(self.u_knots):
+                knot_vector_u.extend([u_knot] * self.u_multiplicities[i])
+            knot_vector_v = []
+            for i, v_knot in enumerate(self.v_knots):
+                knot_vector_v.extend([v_knot] * self.v_multiplicities[i])
+            surface.knotvector_u = knot_vector_u
+            surface.knotvector_v = knot_vector_v
+            surface.delta = 0.05
+            self._surface = surface
+        return self._surface
+
+    @property
+    def curves(self):
+        """Extract curves from surface."""
+        return extract_curves(self.surface, extract_u=True, extract_v=True)
+
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        dict_ = self.base_dict()
+        dict_['degree_u'] = self.degree_u
+        dict_['degree_v'] = self.degree_v
+        dict_['control_points'] = [point.to_dict() for point in self.control_points]
+        dict_['nb_u'] = self.nb_u
+        dict_['nb_v'] = self.nb_v
+        dict_['u_multiplicities'] = self.u_multiplicities
+        dict_['v_multiplicities'] = self.v_multiplicities
+        dict_['u_knots'] = self.u_knots
+        dict_['v_knots'] = self.v_knots
+        dict_['weights'] = self.weights
+        return dict_
 
     @property
     def x_periodicity(self):
@@ -4669,12 +4702,13 @@ class BSplineSurface3D(Surface3D):
         """
         # v-direction
         crvlist_v = []
-        v_curves = self.curves["v"]
+        surf_curves = self.curves
+        v_curves = surf_curves["v"]
         for curve in v_curves:
             crvlist_v.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
         # u-direction
         crvlist_u = []
-        u_curves = self.curves["u"]
+        u_curves = surf_curves["u"]
         for curve in u_curves:
             crvlist_u.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
 
@@ -5004,12 +5038,12 @@ class BSplineSurface3D(Surface3D):
         if self.x_periodicity:
             points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
             if bspline_curve3d.periodic:
-                points = self._handle_periodic_curve(bspline_curve3d.curve.domain, points, 'x')
+                points = self._handle_periodic_curve(bspline_curve3d.domain, points, 'x')
 
         if self.y_periodicity:
             points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'y')
             if bspline_curve3d.periodic:
-                points = self._handle_periodic_curve(bspline_curve3d.curve.domain, points, 'y')
+                points = self._handle_periodic_curve(bspline_curve3d.domain, points, 'y')
 
         if self._is_line_segment(points):
             return [edges.LineSegment2D(points[0], points[-1])]

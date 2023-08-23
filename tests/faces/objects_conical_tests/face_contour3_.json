@@ -64,7 +64,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/0/end"
       },
@@ -798,7 +798,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": 0.00704420645450533,
@@ -1536,7 +1536,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/2/end"
       },
@@ -2287,7 +2287,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/3/end"
       },
@@ -3038,7 +3038,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/4/end"
       },
@@ -3772,7 +3772,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": 0.00572827203875342,
@@ -4563,7 +4563,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/7/end"
       },
@@ -5297,7 +5297,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": 0.00131280507852576,
@@ -6035,7 +6035,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/9/end"
       },
@@ -6786,7 +6786,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/10/end"
       },
@@ -7537,7 +7537,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/11/end"
       },
@@ -8271,7 +8271,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": -0.00131758135280927,
@@ -9062,7 +9062,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/14/end"
       },
@@ -9796,7 +9796,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": -0.00573140137597958,
@@ -10534,7 +10534,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/16/end"
       },
@@ -11285,7 +11285,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/17/end"
       },
@@ -12036,7 +12036,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/18/end"
       },
@@ -12770,7 +12770,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": -0.0070458533915627,
@@ -13561,7 +13561,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/21/end"
       },
@@ -14295,7 +14295,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": -0.00704420645450533,
@@ -15033,7 +15033,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/23/end"
       },
@@ -15784,7 +15784,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/24/end"
       },
@@ -16535,7 +16535,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/25/end"
       },
@@ -17269,7 +17269,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": -0.00572827203875342,
@@ -18060,7 +18060,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/28/end"
       },
@@ -18794,7 +18794,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": -0.00131280507852576,
@@ -19532,7 +19532,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/30/end"
       },
@@ -20283,7 +20283,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/31/end"
       },
@@ -21034,7 +21034,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/32/end"
       },
@@ -21768,7 +21768,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": 0.00131758135280927,
@@ -22559,7 +22559,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/35/end"
       },
@@ -23293,7 +23293,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": 0.00573140137597958,
@@ -24031,7 +24031,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/37/end"
       },
@@ -24782,7 +24782,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/38/end"
       },
@@ -25533,7 +25533,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "$ref": "#/primitives/39/end"
       },
@@ -26267,7 +26267,7 @@
       "package_version": "0.7.1.dev905+g8a826d99",
       "degree": 3,
       "weights": null,
-      "periodic": false,
+
       "start": {
         "object_class": "volmdlr.Point3D",
         "x": 0.0070458533915627,
