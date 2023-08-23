@@ -345,6 +345,7 @@ class Step(dc.DessiaObject):
         self.parse_arguments(arguments)
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
+
         try:
             if hasattr(step_reader, fun_name):
                 volmdlr_object = getattr(step_reader, fun_name)(arguments, object_dict)
@@ -716,7 +717,6 @@ class Step(dc.DessiaObject):
         nodes = self.create_node_list(shape_representations)
         errors = set()
         for node in nodes:
-
             if node is None:
                 continue
             object_dict, times = self._helper_instantiate(node, object_dict, times, show_times)

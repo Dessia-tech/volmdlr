@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - Line: reverse.
+- BSplineCurve: Remove dependencies from the geomdl library.
+- perf: to_dict/dict_to_obj of OpenTriangleShell3D
+- Cylinder / Cone / HollowCylinder: from_center_point_and_axis
+- Cone: remove inheritance from RevolvedProfile
+- BSplineSurface3D: partial removal of dependencies on geomdl objects
 
 ### Fixed
 - Sweep with non smoth path
@@ -37,6 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix Sweep: bug when first primitive is an arc.
 - fix closedshell3d volume
 - Step.py: enhance step import/export
+- VolumeModel: get_shells
+- step.py uses deque in stack based algorithms
+- VolumeModel: get_shells
+- add error protection stl
+- Sweep - add raise ValueError if section too big in comparision to arc radiuses
+- Update cython version requirement in setup.py
+- 
 
 ### Refactor
 - refator some classes' init in primitives3D. 
@@ -49,14 +61,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve3D: bounding_box
 - edges: minimum_distance.
 - BSplineSurface3D: bsplinecurve3d_to_2d
+- BSplineCurve: transform some attributs into lazy evaluation and Caching
+- BSplineSurface3D: transform some attributs into lazy evaluation and Caching
+- BSplineSurface3D: store control_points as numpy array for memory efficiency
+- PlaneFace3D: distance_to_point -> point_distance
+- Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
+- BSplineSurface3D: point3d_to_2d performance improvements.
+
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
+- Cylinder / HollowCylinder: `from_extremal_points` is now depracted. Use `from_end_points` instead (for lexical reason)
 
 ### Unittests
--
+- Cylinder / Cone / HollowCylinder
 
-## v0.12.0 [unreleased]
+## v0.12.0
 
 
 ### New Features
@@ -113,6 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: line_intersections
 - Line3D: minimum_distance_points
 - remove arcellipse handleling for bspline2d_3d.
+- plot of vector3D
 - Ellipse3D: discretization_points.
 
 ### Refactor

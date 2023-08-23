@@ -3,7 +3,6 @@
 """
 Edges related classes.
 """
-import copy
 import math
 import sys
 import warnings
@@ -18,7 +17,12 @@ import plot_data.core as plot_data
 import plot_data.colors
 import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
-from geomdl import NURBS, BSpline, fitting, operations, utilities
+from geomdl import NURBS, BSpline
+
+from volmdlr.nurbs.operations import split_curve
+from volmdlr.nurbs.core import evaluate_curve, derivatives_curve
+from volmdlr.nurbs import fitting
+import volmdlr.nurbs.helpers as nurbs_helpers
 
 import volmdlr.core
 import volmdlr.core_compiled
@@ -27,42 +31,6 @@ from volmdlr import curves as volmdlr_curves
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
-
-
-def standardize_knot_vector(knot_vector):
-    """
-    Standardize a knot vector to range from 0 to 1.
-    """
-    first_knot = knot_vector[0]
-    last_knot = knot_vector[-1]
-    standard_u_knots = []
-    if first_knot != 0 or last_knot != 1:
-        x = 1 / (last_knot - first_knot)
-        y = first_knot / (first_knot - last_knot)
-        for u in knot_vector:
-            standard_u_knots.append(round(u * x + y, 7))
-        return standard_u_knots
-    return knot_vector
-
-
-def insert_knots_and_mutiplicity(knots, knot_mutiplicities, knot_to_add, num):
-    """
-    Compute knot-elements and multiplicities based on the global knot vector.
-
-    """
-    new_knots = []
-    new_knot_mutiplicities = []
-    i = 0
-    for i, knot in enumerate(knots):
-        if knot > knot_to_add:
-            new_knots.extend([knot_to_add])
-            new_knot_mutiplicities.append(num)
-            new_knots.extend(knots[i:])
-            new_knot_mutiplicities.extend(knot_mutiplicities[i:])
-            break
-        new_knots.append(knot)
-        new_knot_mutiplicities.append(knot_mutiplicities[i])
-    return new_knots, new_knot_mutiplicities, i
 
 
 class Edge(dc.DessiaObject):
@@ -468,6 +436,16 @@ class Edge(dc.DessiaObject):
         return minimum_distance
 
     def minimum_distance(self, element, return_points=False):
+        """
+        Evaluates the minimal distance between the edge and another specified primitive.
+
+        :param element: Another primitive object to compute the distance to.
+        :param return_points: (optional) If True, return the closest points on both primitives.
+        :type return_points: bool
+
+        :return: The minimum distance between the edge and the specified primitive.
+            tuple, optional: A tuple containing the closest points if return_points is True.
+        """
         method_name_ = 'distance_'+element.__class__.__name__.lower()[:-2]
         if hasattr(self, method_name_):
             return getattr(self, method_name_)(element, return_points)
@@ -484,7 +462,7 @@ class Edge(dc.DessiaObject):
         :param abscissa1: Initial abscissa.
         :param abscissa2: Final abscissa.
         :param max_number_points: Expected number of points to discretize locally.
-        :param return_abscissas: By default, returns also a list of abscissas correspoding to the
+        :param return_abscissas: By default, returns also a list of abscissas corresponding to the
             discretization points
         :return: list of locally discretized point and a list containing the abscissas' values.
         """
@@ -783,7 +761,6 @@ class BSplineCurve(Edge):
     :param name: The name of the B-spline curve. Default value is ''
     :type name: str, optional
     """
-    _non_serializable_attributes = ['curve']
 
     def __init__(self,
                  degree: int,
@@ -791,53 +768,29 @@ class BSplineCurve(Edge):
                  knot_multiplicities: List[int],
                  knots: List[float],
                  weights: List[float] = None,
-                 periodic: bool = False,
                  name: str = ''):
-        self.control_points = control_points
+        self.ctrlpts = [[*point] for point in control_points]
         self.degree = degree
-        knots = standardize_knot_vector(knots)
-        self.knots = knots
+        self.knots = nurbs_helpers.standardize_knot_vector(knots)
         self.knot_multiplicities = knot_multiplicities
         self.weights = weights
-        self.periodic = periodic
+
+        Edge.__init__(self, control_points[0], control_points[-1], name=name)
         self._simplified = None
-
-        points = [[*point] for point in control_points]
-        if weights is None:
-            curve = BSpline.Curve()
-            curve.degree = degree
-            curve.ctrlpts = points
-        else:
-            curve = NURBS.Curve()
-            curve.degree = degree
-            curve.ctrlpts = points
-            curve.weights = weights
-
-        knot_vector = []
-        for i, knot in enumerate(knots):
-            knot_vector.extend([knot] * knot_multiplicities[i])
-        curve.knotvector = knot_vector
-        curve.delta = 0.01
-        curve_points = curve.evalpts
-        self.curve = curve
-
+        self._delta = 0.01
         self._length = None
-        self.points = [getattr(volmdlr,
-                               f'Point{self.__class__.__name__[-2::]}')(*point)
-                       for point in curve_points]
-
-        Edge.__init__(self, self.points[0], self.points[-1], name=name)
-
-    def to_dict(self, *args, **kwargs):
-        """Avoids storing points in memo that makes serialization slow."""
-        dict_ = self.base_dict()
-        dict_['degree'] = self.degree
-        dict_['control_points'] = [point.to_dict() for point in self.control_points]
-        dict_['knot_multiplicities'] = self.knot_multiplicities
-        dict_['knots'] = self.knots
-        dict_['weights'] = self.weights
-        dict_['periodic'] = self.periodic
-        return dict_
+        self._points = None
+        self._eval_points = None
+        self.ctrlptsw = None
+        self.rational = False
+        if self.weights:
+            self.rational = True
+            ctrlptsw = []
+            for point, w in zip(self.control_points, weights):
+                temp = [float(c * w) for c in point]
+                temp.append(float(w))
+                ctrlptsw.append(temp)
+            self.ctrlptsw = ctrlptsw
 
     def __hash__(self):
         """
@@ -849,11 +802,270 @@ class BSplineCurve(Edge):
         """
         Return True if the other B-spline curve has the same control points, degree, and knot vector, False otherwise.
         """
-        if isinstance(other, self.__class__):
-            return (self.control_points == other.control_points
-                    and self.degree == other.degree
-                    and self.knots == other.knots)
+        if isinstance(other, self.__class__) and self.rational == other.rational:
+            common_check = (self.control_points == other.control_points
+                            and self.degree == other.degree
+                            and self.knots == other.knots)
+            if self.weights is None:
+                return common_check
+            return common_check and self.weights == other.weights
         return False
+
+    def _data_eq(self, other):
+        """
+        Defines dessia common object equality.
+        """
+        return self == other
+
+    @property
+    def control_points(self):
+        """Return the control points of the bspline curve."""
+        point_name = "Point" + self.__class__.__name__[-2:]
+        return [getattr(volmdlr, point_name)(*point) for point in self.ctrlpts]
+
+    @property
+    def knotvector(self):
+        """Return the knot vector."""
+        knot_vector = []
+        for knot, knot_mut in zip(self.knots, self.knot_multiplicities):
+            knot_vector.extend([knot] * knot_mut)
+        return knot_vector
+
+    @property
+    def periodic(self):
+        """Return True if the BSpline is periodic."""
+        control_points = self.control_points
+        return control_points[0].is_close(control_points[-1])
+
+    @property
+    def points(self):
+        """
+        Evaluate the BSpline points based on the set delta value of the curve.
+        """
+        if self._points is None:
+            if self._eval_points is None:
+                self.evaluate()
+            self._points = [getattr(volmdlr,
+                               f'Point{self.__class__.__name__[-2::]}')(*point)
+                       for point in self._eval_points]
+        return self._points
+
+    @property
+    def data(self):
+        """
+        Returns a dictionary of the BSpline data.
+        """
+        datadict = {
+            "degree": self.degree,
+            "knotvector": self.knotvector,
+            "size": len(self.ctrlpts),
+            "sample_size": self.sample_size,
+            "rational": bool(self.weights),
+            "dimension": 3 if self.__class__.__name__[-2:] == "3D" else 2,
+            "precision": 18
+        }
+        if self.weights:
+            datadict["control_points"] = tuple(self.ctrlptsw)
+        else:
+            datadict["control_points"] = tuple(self.ctrlpts)
+        return datadict
+
+    @property
+    def sample_size(self):
+        """
+        Sample size.
+
+        Sample size defines the number of evaluated points to generate. It also sets the ``delta`` property.
+
+        :getter: Gets sample size
+        :setter: Sets sample size
+        :type: int
+        """
+        s_size = math.floor((1.0 / self.delta) + 0.5)
+        return int(s_size)
+
+    @sample_size.setter
+    def sample_size(self, value):
+        if not isinstance(value, int):
+            raise ValueError("Sample size must be an integer value")
+
+        # To make it operate like linspace, we have to know the starting and ending points.
+        start = self.knotvector[self.degree]
+        stop = self.knotvector[-(self.degree + 1)]
+
+        # Set delta value
+        self.delta = (stop - start) / float(value)
+
+    @property
+    def delta(self):
+        """
+        Evaluation delta.
+
+        Evaluation delta corresponds to the *step size* while ``evaluate`` function iterates on the knot vector to
+        generate curve points. Decreasing step size results in generation of more curve points.
+        Therefore, smaller the delta value, smoother the curve.
+
+        :getter: Gets the delta value
+        :setter: Sets the delta value
+        :type: float
+        """
+        return self._delta
+
+    @delta.setter
+    def delta(self, value):
+        # Delta value for surface evaluation should be between 0 and 1
+        if float(value) <= 0 or float(value) >= 1:
+            print(True)
+            raise ValueError("Curve evaluation delta should be between 0.0 and 1.0")
+
+        # Clean up the curve points list
+        self._points = None
+        self._eval_points = None
+
+        # Set new delta value
+        self._delta = float(value)
+
+    @property
+    def domain(self):
+        """
+        Domain.
+
+        Domain is determined using the knot vector(s).
+
+        :getter: Gets the domain
+        """
+        return self.knotvector[self.degree], self.knotvector[-(self.degree + 1)]
+
+    def to_geomdl(self):
+        """Converts the BSpline curve into a geomdl curve."""
+        if self.weights is None:
+            curve = BSpline.Curve()
+            curve.degree = self.degree
+            curve.ctrlpts = self.ctrlpts
+        else:
+            curve = NURBS.Curve()
+            curve.degree = self.degree
+            curve.ctrlpts = self.ctrlpts
+            curve.weights = self.weights
+        curve.knotvector = self.knotvector
+        curve.delta = self.delta
+        return curve
+
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        dict_ = self.base_dict()
+        dict_['degree'] = self.degree
+        dict_['control_points'] = [point.to_dict() for point in self.control_points]
+        dict_['knot_multiplicities'] = self.knot_multiplicities
+        dict_['knots'] = self.knots
+        dict_['weights'] = self.weights
+        return dict_
+
+    def evaluate(self, **kwargs):
+        """
+        Evaluates the curve.
+
+        The evaluated points are stored in :py:attr:`evalpts` property.
+
+        Keyword Arguments:
+
+            * ``start``: start parameter
+            * ``stop``: stop parameter
+
+        The ``start`` and ``stop`` parameters allow evaluation of a curve segment in the range *[start, stop]*, i.e.
+        the curve will also be evaluated at the ``stop`` parameter value.
+
+        The following examples illustrate the usage of the keyword arguments.
+
+        """
+
+        # Find evaluation start and stop parameter values
+        start = kwargs.get('start', self.knotvector[self.degree])
+        stop = kwargs.get('stop', self.knotvector[-(self.degree + 1)])
+
+        # # Check parameters
+        # if self._kv_normalize:
+        #     if not utilities.check_params([start, stop]):
+        #         raise GeomdlException("Parameters should be between 0 and 1")
+
+        # Clean up the curve points
+        self._points = None
+
+        # Evaluate and cache
+        self._eval_points = npy.asarray(evaluate_curve(self.data, start=start, stop=stop), dtype=npy.float64)
+
+    def evaluate_single(self, u):
+        """
+        Calculates a point in the BSplineCurve at a given parameter u.
+
+        :param u: Curve parameter. Must be a value between 0 and 1.
+        :type u: float
+        :return: Corresponding point.
+        :rtype: Union[volmdlr.Point2D, Union[volmdlr.Point3D]
+        """
+        point_name = 'Point' + self.__class__.__name__[-2:]
+        return getattr(volmdlr, point_name)(*evaluate_curve(self.data, u, u)[0])
+
+    def derivatives(self, u, order):
+        """
+        Evaluates n-th order curve derivatives at the given parameter value.
+
+        The output of this method is list of n-th order derivatives. If ``order`` is ``0``, then it will only output
+        the evaluated point. Similarly, if ``order`` is ``2``, then it will output the evaluated point, 1st derivative
+        and the 2nd derivative.
+
+        :Example:
+
+        Assuming a curve self is defined on a parametric domain [0.0, 1.0].
+        Let's take the curve derivative at the parametric position u = 0.35.
+
+        >>> derivatives = self.derivatives(u=0.35, order=2)
+        >>> derivatives[0]  # evaluated point, equal to crv.evaluate_single(0.35)
+        >>> derivatives[1]  # 1st derivative at u = 0.35
+        >>> derivatives[2]  # 2nd derivative at u = 0.35
+
+        :param u: parameter value
+        :type u: float
+        :param order: derivative order
+        :type order: int
+        :return: a list containing up to {order}-th derivative of the curve
+        :rtype: Union[List[`volmdlr.Vector2D`], List[`volmdlr.Vector3D`]]
+        """
+        vector_name = 'Vector' + self.__class__.__name__[-2:]
+        datadict = {
+            "degree": self.degree,
+            "knotvector": self.knotvector,
+            "size": len(self.ctrlpts),
+            "sample_size": self.sample_size,
+            "rational": bool(self.weights),
+            "dimension": 3 if vector_name == "Vector3D" else 2,
+        }
+        if self.weights:
+            datadict["control_points"] = tuple(self.ctrlptsw)
+        else:
+            datadict["control_points"] = tuple(self.ctrlpts)
+        return [getattr(volmdlr, vector_name)(*point)
+                for point in derivatives_curve(datadict, u, order)]
+
+    def split(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
+              tol: float = 1e-6):
+        """
+        Splits of B-spline curve in two pieces using a 2D or 3D point.
+
+        :param point: The point where the B-spline curve is split
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param tol: The precision in terms of distance. Default value is 1e-4
+        :type tol: float, optional
+        :return: A list containing the first and second split of the B-spline
+            curve
+        :rtype: List[:class:`volmdlr.edges.BSplineCurve`]
+        """
+        if point.is_close(self.start, tol):
+            return [None, self.copy()]
+        if point.is_close(self.end, tol):
+            return [self.copy(), None]
+        adim_abscissa = min(1.0, max(0.0, round(self.abscissa(point) / self.length(), 7)))
+        return split_curve(self, adim_abscissa)
 
     def get_reverse(self):
         """
@@ -868,7 +1080,7 @@ class BSplineCurve(Edge):
             knot_multiplicities=self.knot_multiplicities[::-1],
             knots=self.knots[::-1],
             weights=self.weights,
-            periodic=self.periodic)
+           )
 
     @property
     def simplify(self):
@@ -920,17 +1132,12 @@ class BSplineCurve(Edge):
 
         knots = list(sorted(set(curve.knotvector)))
         knot_multiplicities = [curve.knotvector.count(k) for k in knots]
-        start = curve.ctrlpts[0]
-        end = curve.ctrlpts[-1]
-        periodic = False
-        if npy.linalg.norm(npy.array(start) - npy.array(end)) < 1e-6:
-            periodic = True
         return cls(degree=curve.degree,
                    control_points=[getattr(volmdlr, point_dimension)(*point)
                                    for point in curve.ctrlpts],
                    knots=knots,
                    knot_multiplicities=knot_multiplicities,
-                   weights=curve.weights, periodic=periodic, name=name)
+                   weights=curve.weights, name=name)
 
     def length(self):
         """
@@ -940,7 +1147,23 @@ class BSplineCurve(Edge):
         :rtype: float
         """
         if not self._length:
-            self._length = operations.length_curve(self.curve)
+            if self._eval_points is None and self.delta == 0.01:
+                self.evaluate()
+                points = self._eval_points
+            elif self.delta == 0.01:
+                points = self._eval_points
+            else:
+                datadict = self.data
+                datadict["sample_size"] = 100
+                start, stop = self.domain
+                points = npy.asarray(evaluate_curve(datadict, start=start, stop=stop), dtype=npy.float64)
+
+            differences = npy.diff(points, axis=0)
+
+            squared_distances = npy.sum(differences ** 2, axis=1)
+
+            self._length = npy.sum(npy.sqrt(squared_distances))
+            # self._length = length_curve(self.curve)
         return self._length
 
     def normal_vector(self, abscissa):
@@ -1056,7 +1279,7 @@ class BSplineCurve(Edge):
         """
         Helper function to check if evaluated parameters in point_invertion method are contained in the bspline domain.
         """
-        a, b = self.curve.domain
+        a, b = self.domain
         if self.periodic:
             if u < a:
                 u = b - (a - u)
@@ -1068,29 +1291,6 @@ class BSplineCurve(Edge):
         elif u > b:
             u = b
         return u
-
-    def split(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
-              tol: float = 1e-6):
-        """
-        Splits of B-spline curve in two pieces using a 2D or 3D point.
-
-        :param point: The point where the B-spline curve is split
-        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
-        :param tol: The precision in terms of distance. Default value is 1e-4
-        :type tol: float, optional
-        :return: A list containing the first and second split of the B-spline
-            curve
-        :rtype: List[:class:`volmdlr.edges.BSplineCurve`]
-        """
-        if point.is_close(self.start, tol):
-            return [None, self.copy()]
-        if point.is_close(self.end, tol):
-            return [self.copy(), None]
-        adim_abscissa = min(1.0, max(0.0, round(self.abscissa(point) / self.length(), 7)))
-        curve1, curve2 = operations.split_curve(self.curve, adim_abscissa)
-
-        return [self.__class__.from_geomdl_curve(curve1),
-                self.__class__.from_geomdl_curve(curve2)]
 
     def translation(self, offset: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
         """
@@ -1106,7 +1306,7 @@ class BSplineCurve(Edge):
                           for point in self.control_points]
         return self.__class__(self.degree, control_points,
                               self.knot_multiplicities, self.knots,
-                              self.weights, self.periodic)
+                              self.weights)
 
     def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-6):
         """
@@ -1188,7 +1388,7 @@ class BSplineCurve(Edge):
 
     @classmethod
     def from_points_approximation(cls, points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                                  degree: int, **kwargs):
+                                  degree: int, name: str = "", **kwargs):
         """
         Creates a B-spline curve approximation using least squares method with fixed number of control points.
 
@@ -1201,6 +1401,7 @@ class BSplineCurve(Edge):
             List[:class:`volmdlr.Point3D`]]
         :param degree: The degree of the output parametric curve
         :type degree: int
+        :param name: (optional) Curve name.
         :param kwargs: See below
         :return: A B-spline curve from points approximation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
@@ -1209,29 +1410,31 @@ class BSplineCurve(Edge):
         :keyword ctrlpts_size: Number of control points. Default value is
             len(points) - 1
         """
-        curve = fitting.approximate_curve([[*point] for point in points],
-                                          degree, **kwargs)
-        return cls.from_geomdl_curve(curve)
+        point_name = 'Point' + points[0].__class__.__name__[-2:]
+        control_points, knots, knot_multiplicities = fitting.approximate_curve(
+            npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points], dtype=npy.float64),
+            degree, **kwargs)
+        control_points = [getattr(volmdlr, point_name)(*point) for point in control_points]
+        return cls(degree, control_points, knot_multiplicities, knots, name=name)
 
-    def tangent(self, position: float = 0.0):
+    def tangent(self, position: float = 0.0, normalize: bool = True):
         """
         Evaluates the tangent vector of the B-spline curve at the input parameter value.
 
         :param position: Value of the parameter, between 0 and 1
         :type position: float
+        :param normalize: By default return a normilized tangent vector.
         :return: The tangent vector
         :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
         """
-        _, tangent = operations.tangent(self.curve, position, normalize=True)
-
-        dimension = f'Vector{self.__class__.__name__[-2::]}'
-        tangent = getattr(volmdlr, dimension)(*tangent)
-
+        # 1st derivative of the curve gives the tangent
+        ders = self.derivatives(position, 1)
+        tangent = ders[1].unit_vector() if normalize else ders[1]
         return tangent
 
     @classmethod
     def from_points_interpolation(cls, points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                                  degree: int, name: str = " "):
+                                  degree: int, centripetal: bool = True,  name: str = " "):
         """
         Creates a B-spline curve interpolation through the data points.
 
@@ -1243,17 +1446,24 @@ class BSplineCurve(Edge):
             List[:class:`volmdlr.Point3D`]]
         :param degree: The degree of the output parametric curve
         :type degree: int
+        :param centripetal: Please refer to Algorithm A9.1 on The NURBS Book (2nd Edition),
+        pp.369-370 for details.
+        :type centripetal: bool
         :param name: curve name.
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
-        curve = volmdlr.interpolate_curve([[*point] for point in points], degree, centripetal=True)
-
-        bsplinecurve = cls.from_geomdl_curve(curve, name=name)
-        if not points[0].is_close(points[-1]):
-            return bsplinecurve
-        bsplinecurve.periodic = True
-        return bsplinecurve
+        set_points = set(points)
+        if len(set_points) < len(points) - 1:
+            warnings.warn("Not able to perform point interpolation."
+                          "There are repeated points not in the edges of the point list.")
+            return None
+        point_name = 'Point' + points[0].__class__.__name__[-2:]
+        ctrlpts, knots, knot_multiplicities = fitting.interpolate_curve(
+            npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points], dtype=npy.float64),
+            degree, centripetal=centripetal)
+        ctrlpts = [getattr(volmdlr, point_name)(*point) for point in ctrlpts]
+        return cls(degree, ctrlpts, knot_multiplicities, knots, name=name)
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):
         """
@@ -1271,43 +1481,12 @@ class BSplineCurve(Edge):
             number_points = int(math.pi * angle_resolution)
 
         if len(self.points) == number_points or (not number_points and not angle_resolution):
-            number_points = 20
-            # return self.points
-        curve = self.curve
-        curve.delta = 1 / number_points
-        curve_points = curve.evalpts
+            return self.points
 
-        point_dimension = f'Point{self.__class__.__name__[-2::]}'
-        return [getattr(volmdlr, point_dimension)(*point) for point in curve_points]
+        temp_curve = self.copy(deep=True)
+        temp_curve.sample_size = number_points
 
-    def derivatives(self, u, order):
-        """
-        Evaluates n-th order curve derivatives at the given parameter value.
-
-        The output of this method is list of n-th order derivatives. If ``order`` is ``0``, then it will only output
-        the evaluated point. Similarly, if ``order`` is ``2``, then it will output the evaluated point, 1st derivative
-        and the 2nd derivative.
-
-        :Example:
-
-        Assuming a curve self is defined on a parametric domain [0.0, 1.0].
-        Let's take the curve derivative at the parametric position u = 0.35.
-
-        >>> derivatives = self.derivatives(u=0.35, order=2)
-        >>> derivatives[0]  # evaluated point, equal to crv.evaluate_single(0.35)
-        >>> derivatives[1]  # 1st derivative at u = 0.35
-        >>> derivatives[2]  # 2nd derivative at u = 0.35
-
-        :param u: parameter value
-        :type u: float
-        :param order: derivative order
-        :type order: int
-        :return: a list containing up to {order}-th derivative of the curve
-        :rtype: Union[List[`volmdlr.Vector2D`], List[`volmdlr.Vector3D`]]
-        """
-
-        return [getattr(volmdlr, f'Vector{self.__class__.__name__[-2::]}')(*point)
-                for point in self.curve.derivatives(u, order)]
+        return temp_curve.points
 
     def get_geo_lines(self, tag: int, control_points_tags: List[int]):
         """
@@ -1409,9 +1588,9 @@ class BSplineCurve(Edge):
         :return: Corresponding point.
         """
         length = self.length()
-        adim_abs = max(min(abscissa / length, 1.), 0.)
+        adim_abs = max(min(abscissa / length, 1.), 0.0)
         point_name = 'Point' + self.__class__.__name__[-2:]
-        return getattr(volmdlr, point_name)(*self.curve.evaluate_single(adim_abs))
+        return getattr(volmdlr, point_name)(*self.evaluate_single(adim_abs))
 
     def get_shared_section(self, other_bspline2, abs_tol: float = 1e-6):
         """
@@ -1488,18 +1667,6 @@ class BSplineCurve(Edge):
                 new_arcs.append(arc)
         return new_arcs
 
-    def evaluate_single(self, u):
-        """
-        Calculates a point in the BSplineCurve at a given parameter u.
-
-        :param u: Curve parameter. Must be a value between 0 and 1.
-        :type u: float
-        :return: Corresponding point.
-        :rtype: Union[volmdlr.Point2D, Union[volmdlr.Point3D]
-        """
-        point_name = 'Point' + self.__class__.__name__[-2:]
-        return getattr(volmdlr, point_name)(*self.curve.evaluate_single(u))
-
     def straight_line_point_belongs(self, point):
         """
         Verifies if a point belongs to the surface created by closing the edge.
@@ -1548,7 +1715,7 @@ class BSplineCurve(Edge):
         """
         return [self.point_at_abscissa(self.abscissa(point))]
 
-    def local_discretization(self, point1, point2, number_points: int = 10):
+    def local_discretization(self, point1, point2, number_points: int = 10, tol: float = 1e-6):
         """
         Gets n discretization points between two given points of the edge.
 
@@ -1560,12 +1727,12 @@ class BSplineCurve(Edge):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         # special case periodical bsplinecurve
-        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=1e-6):
+        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=tol):
             abscissa2 = self.length()
         discretized_points_between_1_2 = []
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
             abscissa_point = self.point_at_abscissa(abscissa)
-            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2, tol=tol):
                 discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
 
@@ -1607,7 +1774,7 @@ class BSplineCurve(Edge):
         """
         new_control_points = [control_point.frame_mapping(frame, side) for control_point in self.control_points]
         return self.__class__(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights,
-                              self.periodic, self.name)
+                              self.name)
 
 
 class BSplineCurve2D(BSplineCurve):
@@ -1635,15 +1802,12 @@ class BSplineCurve2D(BSplineCurve):
     :type name: str, optional
     """
 
-    _non_serializable_attributes = ['curve']
-
     def __init__(self,
                  degree: int,
                  control_points: List[volmdlr.Point2D],
                  knot_multiplicities: List[int],
                  knots: List[float],
                  weights: List[float] = None,
-                 periodic: bool = False,
                  name: str = ''):
         self._bounding_rectangle = None
 
@@ -1652,7 +1816,6 @@ class BSplineCurve2D(BSplineCurve):
                               knot_multiplicities,
                               knots,
                               weights,
-                              periodic,
                               name)
         self._bounding_rectangle = None
         self._length = None
@@ -1711,9 +1874,9 @@ class BSplineCurve2D(BSplineCurve):
                             self.control_points]
         return BSplineCurve3D(self.degree, control_points3d,
                               self.knot_multiplicities, self.knots,
-                              self.weights, self.periodic)
+                              self.weights)
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, *args, **kwargs):
         """Exports to STEP format."""
         points_ids = []
         content = ''
@@ -1742,7 +1905,7 @@ class BSplineCurve2D(BSplineCurve):
                           for point in self.control_points]
         return BSplineCurve2D(self.degree, control_points,
                               self.knot_multiplicities, self.knots,
-                              self.weights, self.periodic)
+                              self.weights)
 
     def line_crossings(self, line2d: volmdlr_curves.Line2D):
         """Bspline Curve crossings with a line 2d."""
@@ -1763,8 +1926,7 @@ class BSplineCurve2D(BSplineCurve):
                               control_points=self.control_points[::-1],
                               knot_multiplicities=self.knot_multiplicities[::-1],
                               knots=self.knots[::-1],
-                              weights=self.weights,
-                              periodic=self.periodic)
+                              weights=self.weights)
 
     def nearest_point_to(self, point):
         """
@@ -1841,8 +2003,7 @@ class BSplineCurve2D(BSplineCurve):
                               control_points=points_symmetry,
                               knot_multiplicities=self.knot_multiplicities[::-1],
                               knots=self.knots[::-1],
-                              weights=self.weights,
-                              periodic=self.periodic)
+                              weights=self.weights)
 
     def offset(self, offset_length: float):
         """
@@ -1871,6 +2032,11 @@ class BSplineCurve2D(BSplineCurve):
             return False
         return True
 
+    def normal(self, position: float = 0.0):
+        der = self.derivatives(position, 1)
+        tangent = der[1].unit_vector()
+        return tangent.rotation(der[0], 0.5 * math.pi)
+
 
 class BezierCurve2D(BSplineCurve2D):
     """
@@ -1886,13 +2052,13 @@ class BezierCurve2D(BSplineCurve2D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point2D],
                  name: str = ''):
-        knotvector = utilities.generate_knot_vector(degree,
+        knotvector = nurbs_helpers.generate_knot_vector(degree,
                                                     len(control_points))
         knot_multiplicity = [1] * len(knotvector)
 
         BSplineCurve2D.__init__(self, degree, control_points,
                                 knot_multiplicity, knotvector,
-                                None, False, name)
+                                None, name)
 
 
 class LineSegment2D(LineSegment):
@@ -2398,8 +2564,11 @@ class ArcMixin:
             return [None, self.copy()]
         if split_point.is_close(self.end, tol):
             return [self.copy(), None]
-        return [self.__class__(self.circle, self.start, split_point, self.is_trigo),
-                self.__class__(self.circle, split_point, self.end, self.is_trigo)]
+        if self.__class__.__name__[-2:] == "2D":
+            return [self.__class__(self.circle, self.start, split_point, self.is_trigo),
+                    self.__class__(self.circle, split_point, self.end, self.is_trigo)]
+        return [self.__class__(self.circle, self.start, split_point),
+                self.__class__(self.circle, split_point, self.end)]
 
     def get_shared_section(self, other_arc2, abs_tol: float = 1e-6):
         """
@@ -2509,6 +2678,7 @@ class FullArcMixin(ArcMixin):
 
     @classmethod
     def from_curve(cls, circle):
+        """Creates A full arc, 2d or 3d, from circle."""
         return cls(circle, circle.center + circle.frame.u * circle.radius)
 
 
@@ -2597,7 +2767,7 @@ class Arc2D(ArcMixin, Edge):
 
         """
         distance_point_to_center = point.point_distance(self.circle.center)
-        if not math.isclose(distance_point_to_center, self.circle.radius, abs_tol=abs_tol):
+        if not math.isclose(distance_point_to_center, self.circle.radius, rel_tol=0.005):
             return False
         if point.is_close(self.start) or point.is_close(self.end):
             return True
@@ -3317,13 +3487,13 @@ class ArcEllipse2D(Edge):
             return True
         point_in_local_coords = self.ellipse.frame.global_to_local_coordinates(point)
         if not math.isclose(
-                (point_in_local_coords.x - self.ellipse.center.x) ** 2 / self.ellipse.major_axis ** 2 +
-                (point_in_local_coords.y - self.ellipse.center.y) ** 2 / self.ellipse.minor_axis ** 2,
-                1, abs_tol=abs_tol) and\
+                round((point_in_local_coords.x - self.ellipse.center.x) ** 2 / self.ellipse.major_axis ** 2 +
+                (point_in_local_coords.y - self.ellipse.center.y) ** 2 / self.ellipse.minor_axis ** 2, 2),
+                1.0, abs_tol=abs_tol) and\
                 not math.isclose(
-                    (point_in_local_coords.x - self.ellipse.center.x) ** 2 / self.ellipse.minor_axis ** 2 +
-                    (point_in_local_coords.y - self.ellipse.center.y) ** 2 / self.ellipse.major_axis ** 2,
-                    1, abs_tol=abs_tol):
+                    round((point_in_local_coords.x - self.ellipse.center.x) ** 2 / self.ellipse.minor_axis ** 2 +
+                    (point_in_local_coords.y - self.ellipse.center.y) ** 2 / self.ellipse.major_axis ** 2, 2),
+                    1.0, abs_tol=abs_tol):
             return False
         clockwise_arcellipse = self.reverse() if self.ellipse.is_trigo else self
         vector_start = clockwise_arcellipse.start - clockwise_arcellipse.ellipse.center
@@ -3757,8 +3927,8 @@ class FullArcEllipse(Edge):
         :return: True is point lies on the ellipse, False otherwise
         """
         new_point = self.ellipse.frame.global_to_local_coordinates(point)
-        return math.isclose(new_point.x ** 2 / self.ellipse.major_axis ** 2 +
-                            new_point.y ** 2 / self.ellipse.minor_axis ** 2, 1.0, abs_tol=abs_tol)
+        return math.isclose(round(new_point.x ** 2 / self.ellipse.major_axis ** 2 +
+                            new_point.y ** 2 / self.ellipse.minor_axis ** 2, 2), 1.0, abs_tol=abs_tol)
 
     def get_reverse(self):
         """
@@ -3906,12 +4076,14 @@ class LineSegment3D(LineSegment):
 
     @property
     def bounding_box(self):
+        """Gets bounding box for Line Segment 3D. """
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
+        """Sets new value to Line Segment's Bounding box."""
         self._bbox = new_bounding_box
 
     def __hash__(self):
@@ -3948,10 +4120,14 @@ class LineSegment3D(LineSegment):
                 }
 
     def normal_vector(self, abscissa=0.):
+        """
+        Returns the normal vector to the curve at the specified abscissa.
+        """
         direction_vector = self.direction_vector()
         return direction_vector.deterministic_normal_vector()
 
     def unit_normal_vector(self, abscissa=0.):
+        """Calculates the Line segment's unit normal vector."""
         return self.normal_vector().unit_vector()
 
     def point_distance(self, point):
@@ -4056,6 +4232,7 @@ class LineSegment3D(LineSegment):
         return LineSegment3D(self.start.copy(), self.end.copy())
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """Plots the Line segment 3d using matplotlib."""
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4077,6 +4254,7 @@ class LineSegment3D(LineSegment):
         return ax
 
     def plot2d(self, x_3d, y_3d, ax=None, color='k', width=None):
+        """Creates a 2d plot of the Line segment 3d using matplotlib."""
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4235,6 +4413,7 @@ class LineSegment3D(LineSegment):
         return [volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(plane, 0, length_1, 0, length_2)]
 
     def _conical_revolution(self, params):
+        """Creates a conical revolution of a Line Segment 3D."""
         axis, u, p1_proj, dist1, dist2, angle = params
         v = axis.cross(u)
         direction_vector = self.direction_vector()
@@ -4256,6 +4435,7 @@ class LineSegment3D(LineSegment):
             surface, 0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
+        """Creates a cylindrical revolution of a Line Segment 3D."""
         axis, u, p1_proj, dist1, _, angle = params
         v = axis.cross(u)
         surface = volmdlr.surfaces.CylindricalSurface3D(volmdlr.Frame3D(p1_proj, u, v, axis), dist1)
@@ -4311,8 +4491,7 @@ class LineSegment3D(LineSegment):
                     arc2 = Arc2D.from_3_points(arc2_s, arc2_i, arc2_e)
                     line1 = LineSegment2D(arc2_e, volmdlr.O2D)
                     line2 = LineSegment2D(volmdlr.O2D, arc2_s)
-                    outer_contour2d = volmdlr.wires.Contour2D([arc2, line1,
-                                                               line2])
+                    outer_contour2d = volmdlr.wires.Contour2D([arc2, line1, line2])
 
                 else:
                     # Two arcs and lines
@@ -4346,11 +4525,10 @@ class LineSegment3D(LineSegment):
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, **kwargs):
-        tol = kwargs.get("tol", 1e-6)
-        if not self.point_belongs(point1, tol) or not self.point_belongs(point2, tol):
-            return self
-
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        """Trims a Line Segment at two given points."""
+        if not self.point_belongs(point1) or not self.point_belongs(point2):
+            raise ValueError('Point not on curve')
         return LineSegment3D(point1, point2)
 
     def sweep(self, *args):
@@ -4397,7 +4575,6 @@ class BSplineCurve3D(BSplineCurve):
     :param name: The name of the B-spline curve. Default value is ''
     :type name: str, optional
     """
-    _non_serializable_attributes = ['curve']
 
     def __init__(self,
                  degree: int,
@@ -4405,7 +4582,6 @@ class BSplineCurve3D(BSplineCurve):
                  knot_multiplicities: List[int],
                  knots: List[float],
                  weights: List[float] = None,
-                 periodic: bool = False,
                  name: str = ''):
 
         BSplineCurve.__init__(self, degree,
@@ -4413,7 +4589,6 @@ class BSplineCurve3D(BSplineCurve):
                               knot_multiplicities,
                               knots,
                               weights,
-                              periodic,
                               name)
 
         self._bbox = None
@@ -4460,15 +4635,30 @@ class BSplineCurve3D(BSplineCurve):
             else:
                 param1 = start_parameter + (i - 1) * delta_param
                 param2 = start_parameter + i * delta_param
-                point1 = volmdlr.Point3D(*self.curve.evaluate_single(param1))
-                point2 = volmdlr.Point3D(*self.curve.evaluate_single(param2))
+                point1 = self.evaluate_single(param1)
+                point2 = self.evaluate_single(param2)
                 distance += point1.point_distance(point2)
                 yield param2, distance
 
     def normal(self, position: float = 0.0):
-        _, normal = operations.normal(self.curve, position, normalize=True)
-        normal = volmdlr.Vector3D(normal[0], normal[1], normal[2])
-        return normal
+        der = self.derivatives(position, 1)
+        point1 = self.evaluate_single(0.0)
+        points = [point1]
+        count = 1
+        u = 0.1
+        while count < 3 and u <= 0.9:
+            point = self.evaluate_single(u)
+            if not volmdlr.core.point_in_list(point, points):
+                points.append(point)
+                count += 1
+            u += 0.1
+        if count < 3:
+            raise NotImplementedError("BSplineCurve3D is a line segment")
+        vec1 = points[1] - point1
+        vec2 = points[2] - point1
+        plane_normal = vec1.cross(vec2)
+        normal = plane_normal.cross(der[1])
+        return normal.unit_vector()
 
     def get_direction_vector(self, abscissa=0.0):
         """
@@ -4540,8 +4730,7 @@ class BSplineCurve3D(BSplineCurve):
         else:
             weight_data = None
 
-        closed_curve = points[0].is_close(points[-1])
-        return cls(degree, points, knot_multiplicities, knots, weight_data, closed_curve, name)
+        return cls(degree, points, knot_multiplicities, knots, weight_data, name)
 
     def to_step(self, current_id, surface_id=None, curve2d=None):
         """Exports to STEP format."""
@@ -4601,8 +4790,7 @@ class BSplineCurve3D(BSplineCurve):
                               self.control_points]
         new_bsplinecurve3d = BSplineCurve3D(self.degree, new_control_points,
                                             self.knot_multiplicities,
-                                            self.knots, self.weights,
-                                            self.periodic, self.name)
+                                            self.knots, self.weights, self.name)
         return new_bsplinecurve3d
 
     def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, tol:  float = 1e-6):
@@ -4659,7 +4847,9 @@ class BSplineCurve3D(BSplineCurve):
         if not same_sense:
             bspline_curve = self.reverse()
         n = len(bspline_curve.control_points)
-        local_discretization = bspline_curve.local_discretization(point1, point2, n)
+        local_discretization = bspline_curve.local_discretization(point1, point2, n, tol=1e-8)
+        if len(local_discretization) <= bspline_curve.degree:
+            return bspline_curve
         return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
@@ -4699,14 +4889,13 @@ class BSplineCurve3D(BSplineCurve):
         new_multiplicities[0] += 1
         new_knots = bspline_curve.knots[1:-1]
         # new_knots = bspline_curve.knots[2:-5]
-        new_knots = standardize_knot_vector(new_knots)
+        new_knots = nurbs_helpers.standardize_knot_vector(new_knots)
 
         return BSplineCurve3D(degree=bspline_curve.degree,
                               control_points=new_ctrlpts,
                               knot_multiplicities=new_multiplicities,
                               knots=new_knots,
                               weights=None,
-                              periodic=bspline_curve.periodic,
                               name=bspline_curve.name)
 
     def cut_before(self, parameter: float):
@@ -4723,8 +4912,8 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
-        curves = operations.split_curve(self.curve, round(parameter, 6))
-        return self.from_geomdl_curve(curves[1])
+        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
+        return curves[1]
 
     def cut_after(self, parameter: float):
         """
@@ -4741,19 +4930,15 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if math.isclose(parameter, 1, abs_tol=4e-3):
             return self
-
-        curves = operations.split_curve(self.curve, round(parameter, 6))
-
-        return self.from_geomdl_curve(curves[0])
+        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
+        return curves[0]
 
     def insert_knot(self, knot: float, num: int = 1):
         """
         Returns a new BSplineCurve3D.
 
         """
-        curve_copy = copy.deepcopy(self.curve)
-        modified_curve = operations.insert_knot(curve_copy, [knot], num=[num])
-        return self.from_geomdl_curve(modified_curve)
+        return volmdlr.nurbs.operations.insert_knot_curve(self, [knot], num=[num])
 
     # Copy paste du LineSegment3D
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
@@ -4782,7 +4967,7 @@ class BSplineCurve3D(BSplineCurve):
                             self.control_points]
         return BSplineCurve2D(self.degree, control_points2d,
                               self.knot_multiplicities, self.knots,
-                              self.weights, self.periodic, self.name)
+                              self.weights, self.name)
 
     def curvature(self, u: float, point_in_curve: bool = False):
         """
@@ -4925,13 +5110,13 @@ class BezierCurve3D(BSplineCurve3D):
 
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
                  name: str = ''):
-        knotvector = utilities.generate_knot_vector(degree,
+        knotvector = nurbs_helpers.generate_knot_vector(degree,
                                                     len(control_points))
         knot_multiplicity = [1] * len(knotvector)
 
         BSplineCurve3D.__init__(self, degree, control_points,
                                 knot_multiplicity, knotvector,
-                                None, False, name)
+                                None, name)
 
 
 class Arc3D(ArcMixin, Edge):
@@ -5504,12 +5689,11 @@ class FullArc3D(FullArcMixin, Arc3D):
 
         point1 = (self.circle.center + u * self.radius).to_point()
 
-        p1_content, p1_id = point1.to_step(curve_id + 1, vertex=True)
+        p1_content, p1_id = point1.to_step(curve_id, vertex=True)
         content += p1_content
 
         edge_curve = p1_id + 1
         content += f"#{edge_curve} = EDGE_CURVE('{self.name}',#{p1_id},#{p1_id},#{curve_id},.T.);\n"
-        curve_id += 1
 
         return content, edge_curve
 
@@ -5632,8 +5816,13 @@ class FullArc3D(FullArcMixin, Arc3D):
         return cls(circle, start_end)
 
     @classmethod
-    def from_curve(cls, circle):
-        return cls(circle, circle.center + circle.frame.u * circle.radius)
+    def from_curve(cls, circle, start_end=None):
+        """
+        Initialize a full arc from a circle.
+        """
+        if start_end is None:
+            start_end = circle.center + circle.frame.u * circle.radius
+        return cls(circle, start_end)
 
 
 class ArcEllipse3D(Edge):

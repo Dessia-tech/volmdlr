@@ -11,7 +11,166 @@ from volmdlr.models import bspline_surfaces
 from volmdlr import surfaces
 
 
+GEOMDL_DELTA = 0.001
+
+
 class TestBSplineSurface3D(unittest.TestCase):
+
+    def setUp(self):
+        """Create a B-spline surface instance as a fixture"""
+        # Set degrees
+        degree_u = 3
+        degree_v = 3
+
+        ctrlpts = [
+            [-25.0, -25.0, -10.0], [-25.0, -15.0, -5.0], [-25.0, -5.0, 0.0], [-25.0, 5.0, 0.0],
+            [-25.0, 15.0, -5.0], [-25.0, 25.0, -10.0], [-15.0, -25.0, -8.0], [-15.0, -15.0, -4.0],
+            [-15.0, -5.0, -4.0], [-15.0, 5.0, -4.0], [-15.0, 15.0, -4.0], [-15.0, 25.0, -8.0],
+            [-5.0, -25.0, -5.0], [-5.0, -15.0, -3.0], [-5.0, -5.0, -8.0], [-5.0, 5.0, -8.0],
+            [-5.0, 15.0, -3.0], [-5.0, 25.0, -5.0], [5.0, -25.0, -3.0], [5.0, -15.0, -2.0],
+            [5.0, -5.0, -8.0], [5.0, 5.0, -8.0], [5.0, 15.0, -2.0], [5.0, 25.0, -3.0],
+            [15.0, -25.0, -8.0], [15.0, -15.0, -4.0], [15.0, -5.0, -4.0], [15.0, 5.0, -4.0],
+            [15.0, 15.0, -4.0], [15.0, 25.0, -8.0], [25.0, -25.0, -10.0], [25.0, -15.0, -5.0],
+            [25.0, -5.0, 2.0], [25.0, 5.0, 2.0], [25.0, 15.0, -5.0], [25.0, 25.0, -10.0],
+        ]
+
+        nb_u, nb_v = 6, 6
+
+        # Set knot vectors
+        knots_u = [0.0, 0.33, 0.66, 1.0]
+        u_multiplicities = [4, 1, 1, 4]
+        knots_v = [0.0, 0.33, 0.66, 1.0]
+        v_multiplicities = [4, 1, 1, 4]
+        # knotvector_u = [0.0, 0.0, 0.0, 0.0, 0.33, 0.66, 1.0, 1.0, 1.0, 1.0]
+        # knotvector_v = [0.0, 0.0, 0.0, 0.0, 0.33, 0.66, 1.0, 1.0, 1.0, 1.0]
+
+        self.spline_surf = surfaces.BSplineSurface3D(degree_u, degree_v, ctrlpts, nb_u, nb_v,
+                                                     u_multiplicities, v_multiplicities, knots_u, knots_v)
+        weights = [0.5, 1.0, 0.75, 1.0, 0.25, 1.0, 0.5, 1.0, 0.75, 1.0, 0.25, 1.0,
+                   0.5, 1.0, 0.75, 1.0, 0.25, 1.0, 0.5, 1.0, 0.75, 1.0, 0.25, 1.0,
+                   0.5, 1.0, 0.75, 1.0, 0.25, 1.0, 0.5, 1.0, 0.75, 1.0, 0.25, 1.0]
+        self.nurbs_surf = surfaces.BSplineSurface3D(degree_u, degree_v, ctrlpts, nb_u, nb_v,
+                                                     u_multiplicities, v_multiplicities, knots_u, knots_v, weights)
+
+    def test_point2d_to_3d(self):
+        test_cases = [
+            (volmdlr.Point2D(0.0, 0.0), (-25.0, -25.0, -10.0)),
+            (volmdlr.Point2D(0.0, 0.2), (-25.0, -11.403, -3.385)),
+            (volmdlr.Point2D(0.0, 1.0), (-25.0, 25.0, -10.0)),
+            (volmdlr.Point2D(0.3, 0.0), (-7.006, -25.0, -5.725)),
+            (volmdlr.Point2D(0.3, 0.4), (-7.006, -3.308, -6.265)),
+            (volmdlr.Point2D(0.3, 1.0), (-7.006, 25.0, -5.725)),
+            (volmdlr.Point2D(0.6, 0.0), (3.533, -25.0, -4.224)),
+            (volmdlr.Point2D(0.6, 0.6), (3.533, 3.533, -6.801)),
+            (volmdlr.Point2D(0.6, 1.0), (3.533, 25.0, -4.224)),
+            (volmdlr.Point2D(1.0, 0.0), (25.0, -25.0, -10.0)),
+            (volmdlr.Point2D(1.0, 0.8), (25.0, 11.636, -2.751)),
+            (volmdlr.Point2D(1.0, 1.0), (25.0, 25.0, -10.0)),
+        ]
+
+        for param, res in test_cases:
+            evalpt = self.spline_surf.point2d_to_3d(param)
+            self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(evalpt[2], res[2], delta=GEOMDL_DELTA)
+
+        test_data = [
+            (volmdlr.Point2D(0.0, 0.0), (-25.0, -25.0, -10.0)),
+            (volmdlr.Point2D(0.0, 0.2), (-25.0, -11.563, -3.489)),
+            (volmdlr.Point2D(0.0, 1.0), (-25.0, 25.0, -10.0)),
+            (volmdlr.Point2D(0.3, 0.0), (-7.006, -25.0, -5.725)),
+            (volmdlr.Point2D(0.3, 0.4), (-7.006, -3.052, -6.196)),
+            (volmdlr.Point2D(0.3, 1.0), (-7.006, 25.0, -5.725)),
+            (volmdlr.Point2D(0.6, 0.0), (3.533, -25.0, -4.224)),
+            (volmdlr.Point2D(0.6, 0.6), (3.533, 2.868, -7.257)),
+            (volmdlr.Point2D(0.6, 1.0), (3.533, 25.0, -4.224)),
+            (volmdlr.Point2D(1.0, 0.0), (25.0, -25.0, -10.0)),
+            (volmdlr.Point2D(1.0, 0.8), (25.0, 9.425, -1.175)),
+            (volmdlr.Point2D(1.0, 1.0), (25.0, 25.0, -10.0)),
+        ]
+        for param, res in test_data:
+            evalpt = self.nurbs_surf.point2d_to_3d(param)
+            self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(evalpt[2], res[2], delta=GEOMDL_DELTA)
+
+    def test_derivatives(self):
+        test_data = [
+            (
+                (0.0, 0.25),
+                1,
+                [
+                    [[-25.0, -9.0771, -2.3972], [5.5511e-15, 43.6910, 17.5411]],
+                    [[90.9090, 0.0, -15.0882], [-5.9750e-15, 0.0, -140.0367]],
+                ],
+            ),
+            (
+                (0.95, 0.75),
+                2,
+                [
+                    [
+                        [20.8948, 9.3097, -2.4845],
+                        [-1.1347e-14, 43.7672, -15.0153],
+                        [-5.0393e-30, 100.1022, -74.1165],
+                    ],
+                    [
+                        [76.2308, -1.6965e-15, 18.0372],
+                        [9.8212e-15, -5.9448e-15, -158.5462],
+                        [4.3615e-30, -2.4356e-13, -284.3037],
+                    ],
+                    [
+                        [224.5342, -5.6794e-14, 93.3843],
+                        [4.9856e-14, -4.0400e-13, -542.6274],
+                        [2.2140e-29, -1.88662e-12, -318.8808],
+                    ],
+                ],
+            ),
+        ]
+        for param, order, res in test_data:
+            deriv = self.spline_surf.derivatives(*param, order=order)
+            for computed, expected in zip(deriv, res):
+                for idx in range(order + 1):
+                    for c, e in zip(computed[idx], expected[idx]):
+                        self.assertAlmostEqual(c, e, delta=GEOMDL_DELTA)
+
+        test_data = [
+            (
+                (0.0, 0.25),
+                1,
+                [
+                    [[-25.0, -9.4859, -2.6519], [9.1135e-15, 42.3855, 16.1635]],
+                    [[90.9090, 0.0, -12.5504], [-3.6454e-14, 0.0, -135.9542]]
+                ],
+            ),
+            (
+                (0.95, 0.75),
+                2,
+                [
+                    [
+                        [20.8948, 6.5923, -1.4087],
+                        [0.0, 42.0924, -14.6714],
+                        [-4.4688e-14, 498.0982, -230.2790]
+                    ],
+                    [
+                        [76.2308, -3.1813e-15, 31.9560],
+                        [2.6692e-14, -1.6062e-14, -134.4819],
+                        [-4.6035e-14, -4.5596e-13, -1646.1763]
+                    ],
+                    [
+                        [224.5342, -1.9181e-14, 144.3825],
+                        [-8.6754e-14, -4.3593e-13, -433.4414],
+                        [1.2012e-12, -5.9424e-12, -4603.0856]
+                    ]
+                ],
+            ),
+        ]
+        for param, order, res in test_data:
+            deriv = self.nurbs_surf.derivatives(*param, order=order)
+            for computed, expected in zip(deriv, res):
+                for idx in range(order + 1):
+                    for c, e in zip(computed[idx], expected[idx]):
+                        self.assertAlmostEqual(c, e, delta=GEOMDL_DELTA)
+
     def test_contour2d_parametric_to_dimension(self):
         bspline_face = vmf.BSplineFace3D.from_surface_rectangular_cut(bspline_surfaces.bspline_surface_2, 0, 1, 0, 1)
         contour2d = bspline_surfaces.bspline_surface_2.contour3d_to_2d(bspline_face.outer_contour3d)
@@ -19,7 +178,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         contour2d_dim = bspline_surfaces.bspline_surface_2.contour2d_parametric_to_dimension(contour2d, grid2d)
         self.assertEqual(len(contour2d_dim.primitives), 4)
         self.assertAlmostEqual(contour2d_dim.area(), 16.657085821451233, places=2)
-        self.assertAlmostEqual(contour2d_dim.length(), 16.81606170335965, places=2)
+        self.assertAlmostEqual(contour2d_dim.length(), 16.823814079415172, places=2)
 
     def test_periodicity(self):
         bspline_suface = surfaces.BSplineSurface3D.load_from_file('surfaces/surface3d_8.json')
@@ -90,8 +249,8 @@ class TestBSplineSurface3D(unittest.TestCase):
             "surfaces/objects_bspline_test/bsplinesurface_with_arcellipse.json")
         test = bsplinesurface.arcellipse3d_to_2d(arcellipse)[0]
         self.assertTrue(isinstance(test, vme.LineSegment2D))
-        self.assertTrue(test.start.is_close(volmdlr.Point2D(0.5, 2.69e-05)))
-        self.assertTrue(test.end.is_close(volmdlr.Point2D(0.5, 1), 1e-5))
+        self.assertTrue(test.start.is_close(volmdlr.Point2D(0.5, 0.0), 1e-4))
+        self.assertTrue(test.end.is_close(volmdlr.Point2D(0.5, 1), 1e-4))
 
         # todo: Uncomment this block when finish debugging contour2d healing
         # surface = surfaces.BSplineSurface3D.load_from_file(
@@ -116,5 +275,22 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1/6, 5)
 
+<<<<<<< HEAD
+=======
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            "surfaces/objects_bspline_test/contour3d_to_2d_small_primitives_surface.json")
+        contour3d = vmw.Contour3D.load_from_file(
+            "surfaces/objects_bspline_test/contour3d_to_2d_small_primitives_contour.json")
+        contour2d = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour2d.is_ordered(1e-2)) # 1e-2 is an acceptable value, because this is parametric dimension
+
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            "surfaces/objects_bspline_test/surface_with_singularity.json")
+        contour3d = vmw.Contour3D.load_from_file(
+            "surfaces/objects_bspline_test/surface_with_singularity_contour.json")
+        contour2d = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour2d.is_ordered())
+
+>>>>>>> nurbs_surface_2
 if __name__ == '__main__':
     unittest.main(verbosity=0)

@@ -5,6 +5,7 @@ Common primitives 3D.
 """
 
 import math
+import warnings
 from random import uniform
 from typing import Dict, List, Tuple
 
@@ -770,45 +771,77 @@ class RevolvedProfile(shells.ClosedShell3D):
 
 class Cylinder(shells.ClosedShell3D):
     """
-    Creates a full cylinder with the position, the axis of revolution the radius and the length.
+    Represents a 3D cylinder defined by its frame, radius, and length.
     """
+    # pylint: disable=too-many-arguments
 
-    def __init__(self,
-                 frame: volmdlr.Frame3D,
-                 radius: float, length: float,
-                 color: Tuple[float, float, float] = None, alpha: float = 1.,
-                 name: str = ''):
+    def __init__(
+        self,
+        frame: volmdlr.Frame3D,
+        radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1.0,
+        name: str = "",
+    ):
+        """
+        Initializes the Cylinder instance.
+
+        The `Cylinder` class creates a cylinder with the specified radius and length, positioned using the given frame.
+        The axis of revolution of the cylinder corresponds to the local z-axis (w-axis) of the provided frame.
+
+        :param frame: The reference frame defining the position and orientation of the cylinder.
+            The w-axis of the frame corresponds to the axis of revolution of the cylinder.
+        :type frame: volmdlr.Frame3D
+        :param radius: The radius of the cylinder.
+        :type radius: float
+        :param length: The length of the cylinder.
+        :type length: float
+        :param color: The color of the cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the cylinder. Default is an empty string.
+        :type name: str, optional
+        """
         self.frame = frame
         self.position = frame.origin
         self.axis = frame.w
         self.radius = radius
         self.length = length
+
         faces = self.shell_faces()
+
         shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
         """
         Computes the shell faces from init data.
-
         """
         surface3d = surfaces.CylindricalSurface3D(
-            self.frame.translation(-self.frame.w * (self.length * 0.5)), self.radius)
+            self.frame.translation(-self.frame.w * (self.length * 0.5)), self.radius
+        )
         cylindrical_face = volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
-            surface3d, 0, 2 * math.pi, 0, self.length)
+            surface3d, 0, 2 * math.pi, 0, self.length
+        )
         lower_plane = surfaces.Plane3D.from_plane_vectors(
-            self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v)
-        circle = volmdlr.curves.Circle2D(self.position.to_2d(self.frame.origin, self.frame.u,
-                                                             self.frame.v), self.radius)
+            self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v
+        )
+        circle = volmdlr.curves.Circle2D(
+            self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v), self.radius
+        )
         lower_face = volmdlr.faces.PlaneFace3D(
-            lower_plane, surfaces.Surface2D(volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(circle)]), []))
+            lower_plane, surfaces.Surface2D(volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(circle)]), [])
+        )
         upper_face = lower_face.translation(self.frame.w * self.length)
+
         return [lower_face, cylindrical_face, upper_face]
 
-    def get_bounding_box(self):
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
         """
         Computes the bounding box of a cylinder.
 
-        :return: The BoundingBox
+        :return: The BoundingBox of the Cylinder.
         :rtype: :class:`volmdlr.core.BoundingBox`
         """
         # This was copied for HollowCylinder. Inheritance removed to avoid problems
@@ -838,52 +871,151 @@ class Cylinder(shells.ClosedShell3D):
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def volume(self):
-        """Computes the volume of the cylinder."""
+    def volume(self) -> float:
+        """
+        Compute the volume of the cylinder.
+
+        :return: The computed volume of the Cylinder.
+        :rtype: float
+        """
         return self.length * math.pi * self.radius**2
 
     @classmethod
-    def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
-                             radius: float,
-                             color: Tuple[float, float, float] = None, alpha: float = 1,
-                             name: str = ''):
+    def from_end_points(
+        cls,
+        point1: volmdlr.Point3D,
+        point2: volmdlr.Point3D,
+        radius: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ):
+        """
+        Create a cylinder from two end points.
+
+        :param point1: The first end point defining the base of the cylinder.
+        :type point1: volmdlr.Point3D
+        :param point2: The second end point defining the top of the cylinder.
+        :type point2: volmdlr.Point3D
+        :param radius: The radius of the cylinder.
+        :type radius: float
+        :param color: The color of the cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the cylinder. Default is an empty string.
+        :type name: str, optional
+
+        :return: A Cylinder instance created from the specified end points.
+        :rtype: Cylinder
+        """
         position = 0.5 * (point1 + point2)
         length = point1.point_distance(point2)
-        axis = point2 - point1
+        axis = (point2 - point1).to_vector()
         axis.normalize()
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
 
         frame = volmdlr.Frame3D(position, u_vector, v_vector, axis)
-        return cls(frame, radius, length=length,
-                   color=color, alpha=alpha, name=name)
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
+        return cls(frame=frame, radius=radius, length=length, color=color, alpha=alpha, name=name)
+
+    @classmethod
+    def from_extremal_points(
+        cls,
+        point1: volmdlr.Point3D,
+        point2: volmdlr.Point3D,
+        radius: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ):
+        """Deprecated classmethod. Use 'from_end_points' instead."""
+        warnings.warn("Deprecated classmethod. Use 'from_end_points' instead.", DeprecationWarning)
+
+        return cls.from_end_points(point1, point2, radius, color, alpha, name)
+
+    @classmethod
+    def from_center_point_and_axis(
+        cls,
+        center_point: volmdlr.Point3D,
+        axis: volmdlr.Vector3D,
+        radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ) -> 'Cylinder':
+        """
+        Create a cylinder from a center point, an axis, radius, and length.
+
+        :param center_point: The center point of the cylinder (i.e. the middle point of the axis of the cylinder).
+        :type center_point: volmdlr.Point3D
+        :param axis: The axis of revolution for the cylinder.
+        :type axis: volmdlr.Vector3D
+        :param radius: The radius of the cylinder.
+        :type radius: float
+        :param length: The length of the cylinder.
+        :type length: float
+        :param color: The color of the cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the cylinder. Default is an empty string.
+        :type name: str, optional
+
+        :return: A Cylinder instance created from the specified center point, axis, radius, and length.
+        :rtype: Cylinder
+        """
+        u_vector = axis.deterministic_unit_normal_vector()
+        v_vector = axis.cross(u_vector)
+        frame = volmdlr.Frame3D(center_point, u_vector, v_vector, axis)
+
+        return cls(frame=frame, radius=radius, length=length, color=color, alpha=alpha, name=name)
+
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float) -> 'Cylinder':
         """
         Cylinder rotation.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated Cylinder
+        :param center: The rotation center.
+        :type center: volmdlr.Point3D
+        :param axis: The rotation axis.
+        :type axis: volmdlr.Vector3D
+        :param angle: The angle of rotation.
+        :type angle: float
+
+        :return: A new rotated Cylinder.
+        :rtype: Cylinder
         """
         return self.__class__(
             frame=self.frame.rotation(center, axis, angle),
-            length=self.length, radius=self.radius)
+            length=self.length,
+            radius=self.radius,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D) -> 'Cylinder':
         """
         Cylinder translation.
 
-        :param offset: translation vector
-        :return: A new translated Cylinder
+        :param offset: The translation vector.
+        :type offset: volmdlr.Vector3D
+
+        :return: A new translated Cylinder.
+        :rtype: Cylinder
         """
         return self.__class__(
             frame=self.frame.translation(offset),
-            length=self.length, radius=self.radius)
+            length=self.length,
+            radius=self.radius,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
 
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str) -> 'Cylinder':
         """
         Changes frame_mapping and return a new Frame3D.
 
@@ -893,29 +1025,36 @@ class Cylinder(shells.ClosedShell3D):
             frame=self.frame.frame_mapping(frame, side),
             radius=self.radius,
             length=self.length,
-            color=self.color, alpha=self.alpha)
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
 
-    def to_dict(self, *args, **kwargs):
-        """
-        Call to DessiaObject.to_dict to avoid calling the to_dict of the inherited class Revolved Profile.
-        """
-        return dc.DessiaObject.to_dict(self, use_pointers=False)
-
-    def copy(self, deep=True, memo=None):
+    def copy(self, deep=True, memo=None) -> 'Cylinder':
         """
         Creates a copy of Cylinder.
+
+        :return: A copy of a current Cylinder.
+        :rtype: Cylinder
         """
         return Cylinder(
-            self.frame.copy(),
-            self.radius, self.length,
-            color=self.color, alpha=self.alpha, name=self.name)
+            frame=self.frame.copy(),
+            radius=self.radius,
+            length=self.length,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
 
     def min_distance_to_other_cylinder(self, other_cylinder: 'Cylinder') -> float:
         """
         Compute the minimal distance between two volmdlr cylinders.
 
-        :param other_cylinder: volmdlr Cylinder
-        :return: minimal distance between two 3D cylinders
+        :param other_cylinder: The other cylinder to compute the distance with.
+        :type other_cylinder: Cylinder
+
+        :return: The minimal distance between the two 3D cylinders.
+        :rtype: float
         """
         # Basic check
         if self.point_belongs(other_cylinder.position) or other_cylinder.point_belongs(self.position):
@@ -1053,8 +1192,11 @@ class Cylinder(shells.ClosedShell3D):
         """
         Verifies if two cylinders are intersecting or not.
 
-        :param other_cylinder: volmdlr Cylinder
-        :return: boolean, True if cylinders are intersecting, False otherwise
+        :param other_cylinder: The other cylinder to compute if there is an intersection with.
+        :type other_cylinder: Cylinder
+
+        :return: True if cylinders are intersecting, False otherwise
+        :rtype: bool
         """
         dist = self.min_distance_to_other_cylinder(other_cylinder)
 
@@ -1062,9 +1204,10 @@ class Cylinder(shells.ClosedShell3D):
 
     def random_point_inside(self) -> volmdlr.Point3D:
         """
-        Gets a random point inside a cylinder.
+        Return a random point inside a cylinder.
 
         :return: a random point inside the Cylinder
+        :rtype: volmdlr.Point3D
         """
         theta = uniform(0, 2 * math.pi)
         radius = math.sqrt(uniform(0, 1)) * self.radius
@@ -1077,14 +1220,17 @@ class Cylinder(shells.ClosedShell3D):
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
         )
 
-        return local_frame.local_to_global_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
+        return local_frame.local_to_global_coordinates(volmdlr.Point3D(x_local, y_local, z_local)).to_point()
 
     def lhs_points_inside(self, n_points: int) -> List[volmdlr.Point3D]:
         """
         Returns some points inside the cylinder from a LHS samplings.
 
-        :param n_points: number of points
-        :return: Latin hypercube sampling points inside the cylinder
+        :param n_points: The number of points to generate.
+        :type n_points: int
+
+        :return: The Latin Hypercube Sampling points inside the cylinder.
+        :rtype: list[volmdlr.Point3D]
         """
         local_frame = volmdlr.Frame3D.from_point_and_vector(
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
@@ -1109,17 +1255,20 @@ class Cylinder(shells.ClosedShell3D):
             z_local = point[2]
 
             points.append(
-                local_frame.local_to_global_coordinates(volmdlr.Point3D(x_local, y_local, z_local))
+                local_frame.local_to_global_coordinates(volmdlr.Point3D(x_local, y_local, z_local)).to_point()
             )
 
         return points
 
     def point_belongs(self, point3d: volmdlr.Point3D, **kwargs) -> bool:
         """
-        Returns if the point belongs to the cylinder.
+        Check if the point belongs to the cylinder.
 
-        :param point3d: volmdlr Point3D
-        :return: True if the given point is inside the cylinder, False otherwise
+        :param point3d: The point to check if it's the cylinder.
+        :type point3d: volmdlr.Point3D
+
+        :return: True if the given point is inside the cylinder, False otherwise.
+        :rtype: bool
         """
         local_frame = volmdlr.Frame3D.from_point_and_vector(
             point=self.position, vector=self.axis, main_axis=volmdlr.Z3D
@@ -1131,15 +1280,17 @@ class Cylinder(shells.ClosedShell3D):
                 -self.length / 2 <= local_point.z <= self.length / 2
         )
 
-    def interference_volume_with_other_cylinder(
-            self, other_cylinder: "Cylinder", n_points: int = 1000
-    ) -> float:
+    def interference_volume_with_other_cylinder(self, other_cylinder: "Cylinder", n_points: int = 1000) -> float:
         """
         Estimation of the interpenetration volume using LHS sampling (inspired by Monte-Carlo method).
 
-        :param other_cylinder: volmdlr Cylinder
-        :param n_points: optional parameter used for the number of random point used to discretize the cylinder
-        :return: an estimation of the interference volume
+        :param other_cylinder: The other cylinder to compute the interference volume with.
+        :type other_cylinder: Cylinder
+        :param n_points: Optional parameter used for the number of random point used to discretize the cylinder
+        :type n_points: int
+
+        :return: An estimation of the interference volume.
+        :rtype: float
         """
 
         # doing the discretization on the smallest cylinder to have better precision
@@ -1161,39 +1312,85 @@ class Cylinder(shells.ClosedShell3D):
         ) * smallest_cylinder.volume()
 
 
-class Cone(RevolvedProfile):
+class Cone(shells.ClosedShell3D):
     """
-    Defines a cone at a given position & axis.
+    Represents a 3D cone defined by its frame, radius, and length.
     """
+    # pylint: disable=too-many-arguments
 
-    def __init__(self, frame: volmdlr.Frame3D,
-                 radius: float, length: float,
-                 color: Tuple[float, float, float] = None, alpha: float = 1.,
-                 name: str = ''):
+    def __init__(
+        self,
+        frame: volmdlr.Frame3D,
+        radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1.0,
+        name: str = "",
+    ):
+        """
+        Initializes the Cone instance.
 
+        The `Cone` class creates a cone with the specified radius and length, positioned using the given frame.
+        The axis of revolution of the cone corresponds to the local z-axis (w-axis) of the provided frame.
+        The top of the cone is oriented according to the local z-axis (w-axis) of the provided frame.
+        The center of the cone axis is positioned at the provided frame origin point.
+
+        :param frame: The reference frame defining the position and orientation of the cone.
+            The w-axis of the frame corresponds to the axis of revolution of the cone.
+        :type frame: volmdlr.Frame3D
+        :param radius: The radius of the cone.
+        :type radius: float
+        :param length: The length of the cone.
+        :type length: float
+        :param color: The color of the cone as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the cone (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the cone. Default is an empty string.
+        :type name: str, optional
+        """
+        self.frame = frame
         self.position = frame.origin
         self.axis = frame.w
         self.radius = radius
         self.length = length
-        self.bounding_box = self._bounding_box()
 
-        # Revolved Profile
-        point1 = volmdlr.Point2D(0., 0.)
-        point2 = volmdlr.Point2D(0., self.radius)
-        point3 = volmdlr.Point2D(self.length, 0.)
+        faces = self.shell_faces()
 
-        contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(point1, point2),
-                                           volmdlr.edges.LineSegment2D(point2, point3),
-                                           volmdlr.edges.LineSegment2D(point3, point1)])
-        RevolvedProfile.__init__(self, volmdlr.Frame3D(frame.origin, frame.w, -frame.v, frame.u),
-                                 contour, self.position, frame.w, color=color, alpha=alpha, name=name)
-        self.frame = frame
+        shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
-    def _bounding_box(self):
+    def shell_faces(self):
         """
-        A is the point at the basis.
+        Computes the shell faces from init data.
+        """
+        conical_surface_frame = self.frame.translation(self.frame.w * (self.length * 0.5))
+        conical_surface_frame.w = -conical_surface_frame.w
+        surface3d = surfaces.ConicalSurface3D(conical_surface_frame, math.atan(self.radius / self.length))
 
+        conical_face = volmdlr.faces.ConicalFace3D.from_surface_rectangular_cut(
+            surface3d, 0, 2 * math.pi, 0, self.length
+        )
+        lower_plane = surfaces.Plane3D.from_plane_vectors(
+            self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v
+        )
+        circle = volmdlr.curves.Circle2D(
+            self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v), self.radius
+        )
+        lower_face = volmdlr.faces.PlaneFace3D(
+            lower_plane, surfaces.Surface2D(volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(circle)]), [])
+        )
+
+        return [lower_face, conical_face]
+
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
+        """
+        Compute the bounding box of the cone.
+
+        A is the point at the basis.
         B is the top.
+
+        :return: The BoundingBox of the Cone.
+        :rtype: :class:`volmdlr.core.BoundingBox`
         """
         point_a = self.position - self.length / 2 * self.axis
         point_b = self.position + self.length / 2 * self.axis
@@ -1219,52 +1416,133 @@ class Cone(RevolvedProfile):
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def translation(self, offset: volmdlr.Vector3D):
-        """
-        Cone translation.
-
-        :param offset: translation vector
-        :return: A new translated Cone
-        """
-        return self.__class__(frame=self.frame.translation(offset),
-                              radius=self.radius,
-                              length=self.length,
-                              color=self.color,
-                              alpha=self.alpha)
-
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float) -> 'Cone':
         """
         Cone rotation.
 
-        :param center: rotation center
-        :param axis: rotation axis
-        :param angle: angle rotation
-        :return: a new rotated Cone
-        """
-        return self.__class__(frame=self.frame.rotation(center, axis, angle),
-                              radius=self.radius, length=self.length, color=self.color,
-                              alpha=self.alpha)
+        :param center: The rotation center.
+        :type center: volmdlr.Point3D
+        :param axis: The rotation axis.
+        :type axis: volmdlr.Vector3D
+        :param angle: The angle of rotation.
+        :type angle: float
 
-    def volume(self):
+        :return: A new rotated Cone.
+        :rtype: Cone
         """
-        Returns the volume of the cone.
+        return self.__class__(
+            frame=self.frame.rotation(center, axis, angle),
+            radius=self.radius,
+            length=self.length,
+            color=self.color,
+            alpha=self.alpha,
+        )
 
+    def translation(self, offset: volmdlr.Vector3D) -> 'Cone':
+        """
+        Cone translation.
+
+        :param offset: The translation vector.
+        :type offset: volmdlr.Vector3D
+
+        :return: A new translated Cone.
+        :rtype: Cone
+        """
+        return self.__class__(
+            frame=self.frame.translation(offset),
+            radius=self.radius,
+            length=self.length,
+            color=self.color,
+            alpha=self.alpha,
+        )
+
+    def volume(self) -> float:
+        """
+        Compute the volume of the cone.
+
+        :return: The computed volume of the cone.
+        :rtype: float
         """
         return self.length * math.pi * self.radius**2 / 3
+
+    @classmethod
+    def from_center_point_and_axis(
+        cls,
+        center_point: volmdlr.Point3D,
+        axis: volmdlr.Vector3D,
+        radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ) -> 'Cone':
+        """
+        Create a cone from a center point, an axis, radius, and length.
+
+        :param center_point: The center point of the cone (i.e. the middle point of the axis of the cone).
+        :type center_point: volmdlr.Point3D
+        :param axis: The axis of revolution for the cone.
+        :type axis: volmdlr.Vector3D
+        :param radius: The radius of the cone.
+        :type radius: float
+        :param length: The length of the cone.
+        :type length: float
+        :param color: The color of the cone as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the cone (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the cone. Default is an empty string.
+        :type name: str, optional
+
+        :return: A Cone instance created from the specified center point, axis, radius, and length.
+        :rtype: Cone
+        """
+        u_vector = axis.deterministic_unit_normal_vector()
+        v_vector = axis.cross(u_vector)
+        frame = volmdlr.Frame3D(center_point, u_vector, v_vector, axis)
+
+        return cls(frame=frame, radius=radius, length=length, color=color, alpha=alpha, name=name)
 
 
 class HollowCylinder(shells.ClosedShell3D):
     """
-    Creates a hollow cylinder with the position, the axis of revolution the inner and outer radius and the length.
-
+    Represents a 3D hollow cylinder defined by its frame, radii, and length.
     """
+    # pylint: disable=too-many-arguments
 
-    def __init__(self,
-                 frame: volmdlr.Frame3D,
-                 inner_radius: float, outer_radius: float, length: float,
-                 color: Tuple[float, float, float] = None, alpha: float = 1,
-                 name: str = ''):
+    def __init__(
+        self,
+        frame: volmdlr.Frame3D,
+        inner_radius: float,
+        outer_radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ):
+        """
+        Initializes the HollowCylinder instance.
+
+        The `HollowCylinder` class creates a hollow cylinder with the specified radii and length, positioned using the
+        given frame.
+        The axis of revolution of the hollow cylinder corresponds to the local z-axis (w-axis) of the provided frame.
+
+        :param frame: The reference frame defining the position and orientation of the hollow cylinder.
+            The w-axis of the frame corresponds to the axis of revolution of the hollow cylinder.
+        :type frame: volmdlr.Frame3D
+        :param inner_radius: The inner radius of the hollow cylinder.
+        :type inner_radius: float
+        :param outer_radius: The outer radius of the hollow cylinder.
+        :type outer_radius: float
+        :param length: The length of the hollow cylinder.
+        :type length: float
+        :param color: The color of the hollow cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the hollow cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the hollow cylinder. Default is an empty string.
+        :type name: str, optional
+        """
         self.frame = frame
         self.position = frame.origin
         self.axis = frame.w
@@ -1276,29 +1554,49 @@ class HollowCylinder(shells.ClosedShell3D):
         shells.ClosedShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
     def shell_faces(self):
+        """
+        Computes the shell faces from init data.
+        """
         surface3d_1 = surfaces.CylindricalSurface3D(
-            self.frame.translation(-self.frame.w * (self.length * 0.5)), self.outer_radius)
+            self.frame.translation(-self.frame.w * (self.length * 0.5)), self.outer_radius
+        )
         surface3d_2 = surfaces.CylindricalSurface3D(
-            self.frame.translation(-self.frame.w * (self.length * 0.5)), self.inner_radius)
+            self.frame.translation(-self.frame.w * (self.length * 0.5)), self.inner_radius
+        )
+
         cylindrical_face1 = volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
-            surface3d_1, 0, 2 * math.pi, 0, self.length)
+            surface3d_1, 0, 2 * math.pi, 0, self.length
+        )
         cylindrical_face2 = volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
-            surface3d_2, 0, 2 * math.pi, 0, self.length)
+            surface3d_2, 0, 2 * math.pi, 0, self.length
+        )
+
         lower_plane = surfaces.Plane3D.from_plane_vectors(
-            self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v)
+            self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v
+        )
+
         position_2d = self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         outer_circle = volmdlr.curves.Circle2D(position_2d, self.outer_radius)
         inner_circle = volmdlr.curves.Circle2D(position_2d, self.inner_radius)
+
         lower_face = volmdlr.faces.PlaneFace3D(
-            lower_plane, surfaces.Surface2D(
-                volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(outer_circle)]), [
-                    volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(inner_circle)])
-                ]))
+            lower_plane,
+            surfaces.Surface2D(
+                volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(outer_circle)]),
+                [volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(inner_circle)])],
+            ),
+        )
         upper_face = lower_face.translation(self.frame.w * self.length)
+
         return [lower_face, cylindrical_face1, cylindrical_face2, upper_face]
 
-    def _bounding_box(self):
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
+        """
+        Computes the bounding box of a hollow cylinder.
 
+        :return: The BoundingBox of the HollowCylinder.
+        :rtype: :class:`volmdlr.core.BoundingBox`
+        """
         radius = self.outer_radius
 
         point_a = self.position - self.length / 2 * self.axis
@@ -1325,69 +1623,177 @@ class HollowCylinder(shells.ClosedShell3D):
 
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def volume(self):
-        """Returns the volume of the hollow cylinder."""
-        return self.length * math.pi * (self.outer_radius**2
-                                        - self.inner_radius**2)
-
-    def copy(self, *args, **kwargs):
+    def volume(self) -> float:
         """
-        Creates a copy of HollowCylinder.
+        Compute the volume of the hollow cylinder.
 
+        :return: The computed volume of the Cylinder.
+        :rtype: float
         """
-        return HollowCylinder(self.frame.copy(), self.inner_radius, self.outer_radius, self.length,
-                              color=self.color, alpha=self.alpha, name=self.name)
+        return self.length * math.pi * (self.outer_radius**2 - self.inner_radius**2)
 
     @classmethod
-    def from_extremal_points(cls, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
-                             inner_radius: float, outer_radius: float,
-                             color: Tuple[float, float, float] = None, alpha: float = 1,
-                             name: str = ''):
+    def from_end_points(
+        cls,
+        point1: volmdlr.Point3D,
+        point2: volmdlr.Point3D,
+        inner_radius: float,
+        outer_radius: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ):
+        """
+        Create a hollow cylinder from two end points.
+
+        :param point1: The first end point defining the base of the hollow cylinder.
+        :type point1: volmdlr.Point3D
+        :param point2: The second end point defining the top of the hollow cylinder.
+        :type point2: volmdlr.Point3D
+        :param inner_radius: The inner radius of the hollow cylinder.
+        :type inner_radius: float
+        :param outer_radius: The outer radius of the hollow cylinder.
+        :type outer_radius: float
+        :param color: The color of the hollow cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the hollow cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the hollow cylinder. Default is an empty string.
+        :type name: str, optional
+
+        :return: A HollowCylinder instance created from the specified end points.
+        :rtype: HollowCylinder
+        """
         position = 0.5 * (point1 + point2)
         length = point1.point_distance(point2)
-        axis = point2 - point1
+        axis = (point2 - point1).to_vector()
         axis.normalize()
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
 
         frame = volmdlr.Frame3D(position, u_vector, v_vector, axis)
-        return cls(
-            frame,
-            inner_radius=inner_radius, outer_radius=outer_radius, length=length,
-                   color=color, alpha=alpha, name=name)
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
+        return cls(
+            frame=frame,
+            inner_radius=inner_radius,
+            outer_radius=outer_radius,
+            length=length,
+            color=color,
+            alpha=alpha,
+            name=name,
+        )
+
+    @classmethod
+    def from_extremal_points(
+        cls,
+        point1: volmdlr.Point3D,
+        point2: volmdlr.Point3D,
+        inner_radius: float,
+        outer_radius: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ):
+        """Deprecated classmethod. Use 'from_end_points' instead."""
+        warnings.warn("Deprecated classmethod. Use 'from_end_points' instead.", DeprecationWarning)
+
+        return cls.from_end_points(point1, point2, inner_radius, outer_radius, color, alpha, name)
+
+    @classmethod
+    def from_center_point_and_axis(
+        cls,
+        center_point: volmdlr.Point3D,
+        axis: volmdlr.Vector3D,
+        inner_radius: float,
+        outer_radius: float,
+        length: float,
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1,
+        name: str = "",
+    ) -> 'HollowCylinder':
+        """
+        Create a hollow cylinder from a center point, an axis, radius, and length.
+
+        :param center_point: The center point of the hollow cylinder
+            (i.e. the middle point of the axis of the hollow cylinder).
+        :type center_point: volmdlr.Point3D
+        :param axis: The axis of revolution for the hollow cylinder.
+        :type axis: volmdlr.Vector3D
+        :param inner_radius: The inner radius of the hollow cylinder.
+        :type inner_radius: float
+        :param outer_radius: The outer radius of the hollow cylinder.
+        :type outer_radius: float
+        :param length: The length of the hollow cylinder.
+        :type length: float
+        :param color: The color of the hollow cylinder as an RGB tuple. Default is None.
+        :type color: Tuple[float, float, float], optional
+        :param alpha: The opacity of the hollow cylinder (0.0 to 1.0). Default is 1.0.
+        :type alpha: float, optional
+        :param name: The name of the hollow cylinder. Default is an empty string.
+        :type name: str, optional
+
+        :return: A HollowCylinder instance created from the specified center point, axis, radii, and length.
+        :rtype: HollowCylinder
+        """
+        u_vector = axis.deterministic_unit_normal_vector()
+        v_vector = axis.cross(u_vector)
+        frame = volmdlr.Frame3D(center_point, u_vector, v_vector, axis)
+
+        return cls(
+            frame=frame,
+            inner_radius=inner_radius,
+            outer_radius=outer_radius,
+            length=length,
+            color=color,
+            alpha=alpha,
+            name=name,
+        )
+
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float) -> 'HollowCylinder':
         """
         Hollow cylinder rotation.
 
-        :param center: rotation center.
+        :param center: The rotation center.
         :type center: volmdlr.Point3D
-        :param axis: rotation axis.
+        :param axis: The rotation axis.
         :type axis: volmdlr.Vector3D
-        :param angle: angle rotation.
+        :param angle: The angle of rotation.
         :type angle: float
-        :return: a new rotated HollowCylinder.
+
+        :return: A new rotated HollowCylinder.
         :rtype: HollowCylinder
         """
         return self.__class__(
             frame=self.frame.rotation(center, axis, angle),
-            length=self.length, inner_radius=self.inner_radius,
-            outer_radius=self.outer_radius)
+            length=self.length,
+            inner_radius=self.inner_radius,
+            outer_radius=self.outer_radius,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
 
-    def translation(self, offset: volmdlr.Vector3D):
+    def translation(self, offset: volmdlr.Vector3D) -> 'HollowCylinder':
         """
         Hollow cylinder translation.
 
-        :param offset: translation vector.
+        :param offset: The translation vector.
+        :type offset: volmdlr.Vector3D
+
         :return: A new translated HollowCylinder.
+        :rtype: HollowCylinder
         """
         return self.__class__(
             frame=self.frame.translation(offset),
-            length=self.length, inner_radius=self.inner_radius,
-            outer_radius=self.outer_radius)
+            length=self.length,
+            inner_radius=self.inner_radius,
+            outer_radius=self.outer_radius,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
 
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str) -> 'HollowCylinder':
         """
         Changes frame_mapping and return a new HollowCylinder.
 
@@ -1396,7 +1802,29 @@ class HollowCylinder(shells.ClosedShell3D):
         return HollowCylinder(
             frame=self.frame.frame_mapping(frame, side),
             inner_radius=self.inner_radius,
-            outer_radius=self.outer_radius, length=self.length)
+            outer_radius=self.outer_radius,
+            length=self.length,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
+
+    def copy(self, *args, **kwargs) -> 'HollowCylinder':
+        """
+        Creates a copy of HollowCylinder.
+
+        :return: A copy of a current HollowCylinder.
+        :rtype: HollowCylinder
+        """
+        return HollowCylinder(
+            frame=self.frame.copy(),
+            inner_radius=self.inner_radius,
+            outer_radius=self.outer_radius,
+            length=self.length,
+            color=self.color,
+            alpha=self.alpha,
+            name=self.name,
+        )
 
 
 class Sweep(shells.ClosedShell3D):
@@ -1412,7 +1840,10 @@ class Sweep(shells.ClosedShell3D):
         self.contour2d = contour2d
         self.wire3d = wire3d
         self.frames = []
-
+        arc_radius = [prim.circle.radius for prim in self.wire3d.primitives if isinstance(prim, volmdlr.edges.Arc3D)]
+        if arc_radius and min(arc_radius) <= max(self.contour2d.bounding_rectangle.bounds()) / 2:
+            raise ValueError(f'Section too big in comparison to path curvature radiuses. All radiuses should be > '
+                             f'{max(self.contour2d.bounding_rectangle.bounds()) / 2}')
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces, color=color,
                                       alpha=alpha, name=name)
