@@ -4425,10 +4425,10 @@ class RevolutionSurface3D(PeriodicalSurface):
                 if isinstance(self.edge, (curves.Line3D, edges.LineSegment3D)):
                     return [edges.LineSegment3D(start3d, end3d)]
                 if self.edge.is_point_edge_extremity(start3d) and self.edge.is_point_edge_extremity(end3d):
-                    if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
-                        return [primitive.simplify]
+                    primitive = primitive.simplify
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
-                        return [primitive.simplify.reverse()]
+                        primitive = primitive.reverse()
+                    return [primitive]
                 primitive = primitive.split_between_two_points(start3d, end3d)
                 if abscissa1 > abscissa2:
                     primitive = primitive.reverse()
