@@ -45,11 +45,24 @@ class Curve(DessiaObject):
 
 
 class ClosedCurve(Curve):
+    """Abstract class for definiing closed curves (Circle, Ellipse) properties."""
 
-    def point_at_abscissa(self):
-        raise NotImplementedError(f'point_at_abscissa method not implemented by {self.__class__.__name__}')
+    def point_at_abscissa(self, abscissa):
+        """
+        Returns the point that corresponds to the given abscissa.
+
+        :param abscissa: The abscissa
+        :type abscissa: float
+        :return: The point that corresponds to the given abscissa.
+        :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        """
+        raise NotImplementedError(f'point_at_abscissa method using abscissa'
+                                  f'{abscissa} not implemented by {self.__class__.__name__}')
 
     def length(self):
+        """
+        Calcultes the Closed Curve's length.
+        """
         raise NotImplementedError(f'length method not implemented by {self.__class__.__name__}')
 
     def local_discretization(self, point1, point2, number_points: int = 10):
