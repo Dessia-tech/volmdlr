@@ -14,26 +14,26 @@ from volmdlr import edges, wires
 
 primitives = [
     edges.LineSegment2D(volmdlr.Point2D(0.001, 0.014),
-                                volmdlr.Point2D(0.001, 0.0125)),
+                        volmdlr.Point2D(0.001, 0.0125)),
 
     edges.Arc2D.from_3_points(volmdlr.Point2D(0.001, 0.0125),
-                        volmdlr.Point2D(0.009862829911410362, 0.007744326060968065),
-                        volmdlr.Point2D(0.012539936203984454, 0.0)),
+                              volmdlr.Point2D(0.009862829911410362, 0.007744326060968065),
+                              volmdlr.Point2D(0.012539936203984454, 0.0)),
 
     edges.Arc2D.from_3_points(volmdlr.Point2D(0.012539936203984454, 0.0),
-                        volmdlr.Point2D(0.0, -0.012539936203984454),
-                        volmdlr.Point2D(-0.012539936203984454, 0.0)),
+                              volmdlr.Point2D(0.0, -0.012539936203984454),
+                              volmdlr.Point2D(-0.012539936203984454, 0.0)),
 
     edges.Arc2D.from_3_points(volmdlr.Point2D(-0.012539936203984454, 0.0),
-                        volmdlr.Point2D(-0.00921384654213387, 0.008506176103162205),
-                        volmdlr.Point2D(-0.001, 0.0125)),
+                              volmdlr.Point2D(-0.00921384654213387, 0.008506176103162205),
+                              volmdlr.Point2D(-0.001, 0.0125)),
 
     edges.LineSegment2D(volmdlr.Point2D(-0.001, 0.0125),
-                                volmdlr.Point2D(-0.001, 0.014)),
+                        volmdlr.Point2D(-0.001, 0.014)),
 
     edges.LineSegment2D(volmdlr.Point2D(-0.001, 0.014),
-                                volmdlr.Point2D(0.001, 0.014))
-    ]
+                        volmdlr.Point2D(0.001, 0.014))
+]
 
 contour2d_1 = wires.Contour2D(primitives)
 
@@ -51,13 +51,13 @@ points2d = [volmdlr.Point2D(0.7557261768236382, 0.047840610095316816),
             volmdlr.Point2D(0.7306755405178993, 0.04995246337945117),
             volmdlr.Point2D(0.7310451707836978, 0.044346281865748856)]
 
-curve2d_1 = edges.BSplineCurve2D(degree = 3,
-                                         control_points = points2d,
-                                         knot_multiplicities = [4, 1, 1, 1, 1, 1, 1, 1, 4],
-                                         knots = [0.0, 0.26206414743620277, 0.3531225286567413,
-                                                  0.42241139891509305, 0.4822254408401885,
-                                                  0.5440692281614715, 0.6202023477514225,
-                                                  0.7222748100879735, 1.0])
+curve2d_1 = edges.BSplineCurve2D(degree=3,
+                                 control_points=points2d,
+                                 knot_multiplicities=[4, 1, 1, 1, 1, 1, 1, 1, 4],
+                                 knots=[0.0, 0.26206414743620277, 0.3531225286567413,
+                                        0.42241139891509305, 0.4822254408401885,
+                                        0.5440692281614715, 0.6202023477514225,
+                                        0.7222748100879735, 1.0])
 
 points2d = [volmdlr.Point2D(0.7310451707836978, 0.044346281865748856),
             volmdlr.Point2D(0.7308827017192874, 0.03840965331596735),
@@ -71,13 +71,13 @@ points2d = [volmdlr.Point2D(0.7310451707836978, 0.044346281865748856),
             volmdlr.Point2D(0.7561315600530795, 0.042073178367651974),
             volmdlr.Point2D(0.7557261768236382, 0.047840610095316816)]
 
-curve2d_2 = edges.BSplineCurve2D(degree = 3,
-                                         control_points = points2d,
-                                         knot_multiplicities = [4, 1, 1, 1, 1, 1, 1, 1, 4],
-                                         knots = [0.0, 0.26231860269644847, 0.35446984209379995,
-                                                  0.4237193471508679, 0.48275286541966095,
-                                                  0.5439383602451768, 0.62045686469776,
-                                                  0.7233434357617774, 1.0])
+curve2d_2 = edges.BSplineCurve2D(degree=3,
+                                 control_points=points2d,
+                                 knot_multiplicities=[4, 1, 1, 1, 1, 1, 1, 1, 4],
+                                 knots=[0.0, 0.26231860269644847, 0.35446984209379995,
+                                        0.4237193471508679, 0.48275286541966095,
+                                        0.5439383602451768, 0.62045686469776,
+                                        0.7233434357617774, 1.0])
 
 contour2d_2 = wires.Contour2D([curve2d_1, curve2d_2])
 
@@ -145,9 +145,7 @@ points = [
     volmdlr.Point2D(0.21715982313378532, 0.0),
     volmdlr.Point2D(0.2030881157414971, 0.012323183603131671)]
 
-
 contour2_cut_by_wire = wires.Contour2D.from_points(points)
-
 
 line_segment1 = edges.LineSegment2D(volmdlr.Point2D(1, -1), volmdlr.Point2D(1.5, 1))
 arc = edges.Arc2D.from_3_points(volmdlr.Point2D(1.5, 1), volmdlr.Point2D(1.3, 1.5), volmdlr.Point2D(0.5, 1.5))
@@ -167,3 +165,28 @@ invalid_unordered_contour2_unittest = wires.Contour2D([line_segment2, bspline.re
 
 unordered_wire_unittest = wires.Wire2D([line_segment2, bspline.reverse(), arc.reverse(),
                                         line_segment1, line_segment3])
+
+# Contour3D with all edges.
+degree = 5
+control_points = [volmdlr.Point3D(0, 3, 0),
+                  volmdlr.Point3D(3, 2, 1),
+                  volmdlr.Point3D(5, -1, 4),
+                  volmdlr.Point3D(5, -4, 0),
+                  volmdlr.Point3D(-1, -2, -3),
+                  volmdlr.Point3D(-3, 4, 1)]
+knots = [0.0, 1.0]
+knot_multiplicities = [6, 6]
+weights = None  # [1, 2, 1, 2, 1, 2]
+bspline_curve3d = edges.BSplineCurve3D(degree=degree, control_points=control_points,
+                                       knot_multiplicities=knot_multiplicities,
+                                       knots=knots,
+                                       weights=weights,
+                                       name='B Spline Curve 3D 1')
+lineseg1 = edges.LineSegment3D(volmdlr.Point3D(3, 3, 2), bspline_curve3d.start)
+lineseg2 = edges.LineSegment3D(bspline_curve3d.end, volmdlr.Point3D(-3, -3, 0))
+arc = edges.Arc3D.from_3_points(volmdlr.Point3D(-3, -3, 0),
+                                volmdlr.Point3D(6.324555320336761, -5.692099788303083, -0.8973665961010275),
+                                volmdlr.Point3D(3, 3, 2))
+contour3d = wires.Contour3D([lineseg1, bspline_curve3d, lineseg2, arc])
+
+

@@ -162,3 +162,27 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
             point1, point2 = ptest1, ptest2
 
     return point1, point2
+
+
+def abscissa_discretization(primitive, abscissa1, abscissa2, max_number_points: int = 10,
+                            return_abscissas: bool = True):
+    """
+    Gets n discretization points between two given points of the edge.
+
+    :param abscissa1: Initial abscissa.
+    :param abscissa2: Final abscissa.
+    :param max_number_points: Expected number of points to discretize locally.
+    :param return_abscissas: By default, returns also a list of abscissas corresponding to the
+        discretization points
+    :return: list of locally discretized point and a list containing the abscissas' values.
+    """
+    discretized_points_between_1_2 = []
+    points_abscissas = []
+    for abscissa in np.linspace(abscissa1, abscissa2, num=max_number_points):
+        abscissa_point = primitive.point_at_abscissa(abscissa)
+        if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+            discretized_points_between_1_2.append(abscissa_point)
+            points_abscissas.append(abscissa)
+    if return_abscissas:
+        return discretized_points_between_1_2, points_abscissas
+    return discretized_points_between_1_2

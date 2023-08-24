@@ -993,7 +993,7 @@ class Circle2D(CircleMixin, Curve):
         :param point: point to calculate distance.
         :return: the distance from the point to the circle 2D.
         """
-        return point.point_distance(self.center) - self.radius
+        return abs(point.point_distance(self.center) - self.radius)
 
     @property
     def bounding_rectangle(self):
@@ -1100,20 +1100,27 @@ class Circle2D(CircleMixin, Curve):
         """
         return volmdlr_intersections.get_circle_intersections(self, circle)
 
-    def arc_intersections(self, arc2d: 'volmdlr.edges.Arc2D'):
+    def arc_intersections(self, arc2d: 'volmdlr.edges.Arc2D', abs_tol: float = 1e-6):
         """
         Finds the intersection points between this circle and an arc 2d.
 
         :param arc2d: The arc 2d to find intersections with.
         :type arc2d: (edges.Arc2D).
+        :param abs_tol: tolerance to be considered while validating an intersection.
         :return: A list of intersection points between the circle and the arc.
         :rtype: List[Point2D].
         """
         circle_intesections = self.circle_intersections(arc2d.circle)
         intersections = []
         for inter in circle_intesections:
-            if arc2d.point_belongs(inter):
+            if arc2d.point_belongs(inter, abs_tol):
                 intersections.append(inter)
+        return intersections
+
+    def ellipse_intersections(self, ellipse2d, abs_tol: float = 1e-7):
+        if self.bounding_rectangle.distance_to_b_rectangle(ellipse2d.bounding_rectangle) > abs_tol:
+            return []
+        intersections = volmdlr_intersections.get_bsplinecurve_intersections(ellipse2d, self, abs_tol)
         return intersections
 
     def bsplinecurve_intersections(self, bsplinecurve: 'volmdlr.edges.BSplineCurve2D', abs_tol: float = 1e-6):
@@ -1339,17 +1346,56 @@ class Circle3D(CircleMixin, Curve):
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
 
-    def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment3D'):
+    def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment3D', abs_tol: float = 1e-6):
         """
         Calculates the intersections between the Circle3D and a line segment 3D.
 
         :param linesegment: line segment 3D to verify intersections
+        :param abs_tol: tolerance to be considered while validating an intersection.
         :return: list of points intersecting Circle
         """
         intersections = []
         circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, linesegment.line)
         for intersection in circle3d_line_intersections:
-            if linesegment.point_belongs(intersection):
+            if linesegment.point_belongs(intersection, abs_tol):
+                intersections.append(intersection)
+        return intersections
+
+    def circle_intersections(self, other_circle):
+        plane1 = volmdlr.surfaces.Plane3D(self.frame)
+        plane2 = volmdlr.surfaces.Plane3D(other_circle.frame)
+        plane_intersections = plane1.plane_intersection(plane2)
+        circle3d_line_intersections1 = volmdlr_intersections.circle_3d_line_intersections(self, plane_intersections[0])
+        circle3d_line_intersections2 = volmdlr_intersections.circle_3d_line_intersections(other_circle, plane_intersections[0])
+        intersections = []
+        for intersection in circle3d_line_intersections1 + circle3d_line_intersections2:
+            if volmdlr.core.point_in_list(intersection, intersections):
+                continue
+            if self.point_belongs(intersection) and other_circle.point_belongs(intersection):
+                intersections.append(intersection)
+        return intersections
+
+    def ellipse_intersections(self, ellipse, abs_tol: float = 1e-6):
+        intersections = []
+        from volmdlr import surfaces
+        plane1 = surfaces.Plane3D(self.frame)
+        plane2 = surfaces.Plane3D(ellipse.frame)
+        if plane1.is_coincident(plane2) and self.frame.w.is_colinear_to(ellipse.frame.w):
+            ellipse2d = ellipse.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+            circle2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+            intersections_2d = circle2d.ellipse_intersections(ellipse2d)
+            for intersection in intersections_2d:
+                intersections.append(intersection.to_3d(self.frame.origin, self.frame.u, self.frame.v))
+            return intersections
+
+        plane_intersections = plane1.plane_intersection(plane2)
+        circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, plane_intersections[0])
+        ellipse3d_line_intersections = volmdlr_intersections.ellipse3d_line_intersections(
+            ellipse, plane_intersections[0])
+        for intersection in circle3d_line_intersections + ellipse3d_line_intersections:
+            if volmdlr.core.point_in_list(intersection, intersections):
+                continue
+            if self.point_belongs(intersection, abs_tol) and ellipse.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
         return intersections
 
@@ -1614,10 +1660,37 @@ class Ellipse2D(Curve):
         self.theta = geometry.clockwise_angle(self.major_dir, volmdlr.X2D)
         if self.theta == math.pi * 2:
             self.theta = 0.0
+        self._bounding_rectangle = None
         Curve.__init__(self, name=name)
 
     def __hash__(self):
         return hash((self.center, self.major_dir, self.major_axis, self.minor_axis))
+
+    @property
+    def bounding_rectangle(self):
+        """
+        Gets the bounding rectangle of the ellipse 2d.
+
+        :return: a Bounding Rectangle object.
+        """
+        if not self._bounding_rectangle:
+            self._bounding_rectangle = self.get_bounding_rectangle()
+        return self._bounding_rectangle
+
+    def get_bounding_rectangle(self):
+        """
+        Calculates the bounding rectangle of the ellipse 2d.
+
+        :return: a Bounding Rectangle object.
+        """
+        point1 = self.center - self.major_dir * self.major_axis
+        point2 = self.center + self.major_dir * self.major_axis
+        point3 = self.center - self.minor_dir * self.minor_axis
+        point4 = self.center + self.minor_dir * self.minor_axis
+        x_components = [point1.x, point2.x, point3.x, point4.x]
+        y_components = [point1.y, point2.y, point3.y, point4.y]
+        return volmdlr.core.BoundingRectangle(min(x_components),  max(x_components),
+                                              min(y_components), max(y_components))
 
     def area(self):
         """
@@ -1696,17 +1769,18 @@ class Ellipse2D(Curve):
         intersections = volmdlr_intersections.ellipse2d_line_intersections(self, line)
         return intersections
 
-    def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D'):
+    def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D', abs_tol: float = 1e-6):
         """
         Calculates the intersections between a line segment and an ellipse.
 
         :param linesegment: line segment to calculate intersections.
+        :param abs_tol: tolerance to be considered while validating an intersection.
         :return: list of points intersections, if there are any.
         """
         line_intersections = self.line_intersections(linesegment.line)
         intersections = []
         for intersection in line_intersections:
-            if linesegment.point_belongs(intersection):
+            if linesegment.point_belongs(intersection, abs_tol=abs_tol):
                 intersections.append(intersection)
         return intersections
 
@@ -2058,3 +2132,14 @@ class Ellipse3D(Curve):
         frame = volmdlr.Frame3D(self.center, self.frame.u, -self.frame.v,
                                       self.frame.u.cross(-self.frame.v))
         return Ellipse3D(self.major_axis, self.minor_axis, frame)
+
+    def line_intersections(self, line):
+        return volmdlr_intersections.ellipse3d_line_intersections(self, line)
+
+    def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
+        ellipse3d_line_intersections = self.line_intersections(linesegment.line)
+        intersections = []
+        for intersection in ellipse3d_line_intersections:
+            if linesegment.point_belongs(intersection, abs_tol):
+                intersections.append(intersection)
+        return intersections
