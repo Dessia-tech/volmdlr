@@ -43,9 +43,32 @@ class Curve(DessiaObject):
         """
         raise NotImplementedError(f'abscissa method not implemented by {self.__class__.__name__}')
 
+
+class ClosedCurve(Curve):
+    """Abstract class for definiing closed curves (Circle, Ellipse) properties."""
+
+    def point_at_abscissa(self, abscissa):
+        """
+        Returns the point that corresponds to the given abscissa.
+
+        :param abscissa: The abscissa
+        :type abscissa: float
+        :return: The point that corresponds to the given abscissa.
+        :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        """
+        raise NotImplementedError(f'point_at_abscissa method using abscissa'
+                                  f'{abscissa} not implemented by {self.__class__.__name__}')
+
+    def length(self):
+        """
+        Calcultes the Closed Curve's length.
+        """
+        raise NotImplementedError(f'length method not implemented by {self.__class__.__name__}')
+
     def local_discretization(self, point1, point2, number_points: int = 10):
         """
         Gets n discretization points between two given points of the Curve.
+
         :param point1: point 1 on edge.
         :param point2: point 2 on edge.
         :param number_points: number of points to discretize locally.
@@ -581,7 +604,7 @@ class Line3D(Line):
         self._bbox = new_bounding_box
 
     def _bounding_box(self):
-        """Calculates the Bouding box."""
+        """Calculates the Bounding box."""
         xmin = min([self.point1[0], self.point2[0]])
         xmax = max([self.point1[0], self.point2[0]])
         ymin = min([self.point1[1], self.point2[1]])
@@ -854,7 +877,7 @@ class CircleMixin:
         return arc_class_(circle, point1, point2)
 
 
-class Circle2D(CircleMixin, Curve):
+class Circle2D(CircleMixin, ClosedCurve):
     """
     A class representing a 2D circle.
 
@@ -873,7 +896,7 @@ class Circle2D(CircleMixin, Curve):
         self.radius = radius
         self._bounding_rectangle = None
         self.frame = volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)
-        Curve.__init__(self, name=name)
+        ClosedCurve.__init__(self, name=name)
 
     def __hash__(self):
         return int(round(1e6 * (self.center.x + self.center.y + self.radius)))
@@ -1241,7 +1264,7 @@ class Circle2D(CircleMixin, Curve):
                 volmdlr.Point3D(-self.radius, self.center.y, 0)]
 
 
-class Circle3D(CircleMixin, Curve):
+class Circle3D(CircleMixin, ClosedCurve):
     """
     Defines a Circle in three dimensions, with a center and a radius.
 
@@ -1258,7 +1281,7 @@ class Circle3D(CircleMixin, Curve):
         self.frame = frame
         self._bbox = None
         self.angle = 2*math.pi
-        Curve.__init__(self, name=name)
+        ClosedCurve.__init__(self, name=name)
 
     @property
     def center(self):
@@ -1596,7 +1619,7 @@ class Circle3D(CircleMixin, Curve):
         return point1.point_distance(point2)
 
 
-class Ellipse2D(Curve):
+class Ellipse2D(ClosedCurve):
     """
     Defines an Ellipse in two-dimensions.
 
@@ -1634,7 +1657,7 @@ class Ellipse2D(Curve):
         if self.theta == math.pi * 2:
             self.theta = 0.0
         self._bounding_rectangle = None
-        Curve.__init__(self, name=name)
+        ClosedCurve.__init__(self, name=name)
 
     def __hash__(self):
         return hash((self.center, self.major_dir, self.major_axis, self.minor_axis))
@@ -1921,7 +1944,7 @@ class Ellipse2D(Curve):
         return Ellipse2D(self.major_axis, self.minor_axis, frame)
 
 
-class Ellipse3D(Curve):
+class Ellipse3D(ClosedCurve):
     """
     Defines a 3D ellipse.
 
@@ -1942,7 +1965,7 @@ class Ellipse3D(Curve):
         self.major_dir = frame.u
         self.minor_dir = frame.v
         self._self_2d = None
-        Curve.__init__(self, name=name)
+        ClosedCurve.__init__(self, name=name)
 
     @property
     def self_2d(self):
