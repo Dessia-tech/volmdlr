@@ -1368,7 +1368,7 @@ class BSplineCurve(Edge):
 
         :param position: Value of the parameter, between 0 and 1
         :type position: float
-        :param normalize: By default return a normilized tangent vector.
+        :param normalize: By default return a normalized tangent vector.
         :return: The tangent vector
         :rtype: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
         """
@@ -5270,7 +5270,7 @@ class Arc3D(ArcMixin, Edge):
         return Arc3D(new_circle, new_start, new_end, name=self.name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        """Plot method for Arc 3D using Matplolib."""
+        """Plot method for Arc 3D using Matplotlib."""
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         ax = vm_common_operations.plot_from_discretization_points(

@@ -104,7 +104,7 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
     :param element: volmdlr element to be plotted (either 2D or 3D).
     :param number_points: number of points to be used in the plot.
     :param close_plot: specifies if plot is to be closed or not.
-    :return: Matplolib plot axis.
+    :return: Matplotlib plot axis.
     """
     components = [[], [], []]
     for point in element.discretization_points(number_points=number_points):
@@ -169,7 +169,7 @@ def get_abscissa_discretization(primitive, abscissa1, abscissa2, max_number_poin
     """
     Gets n discretization points between two given points of the edge.
 
-    :param primitive: Primitive to dicretize locally.
+    :param primitive: Primitive to discretize locally.
     :param abscissa1: Initial abscissa.
     :param abscissa2: Final abscissa.
     :param max_number_points: Expected number of points to discretize locally.
@@ -195,7 +195,7 @@ def get_point_distance_to_edge(edge, point, start, end):
     """
     Calculates the distance from a given point to an edge.
 
-    :param edge: Edge to calculate distace to point.
+    :param edge: Edge to calculate distance to point.
     :param point: Point to calculate the distance to edge.
     :param start: Edge's start point.
     :param edge: Edge's end point.
@@ -226,4 +226,3 @@ def get_point_distance_to_edge(edge, point, start, end):
         if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
             break
     return distance
-
