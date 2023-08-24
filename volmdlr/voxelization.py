@@ -578,8 +578,7 @@ class PointBasedVoxelization(Voxelization):
         :return: A voxelization created from the Shell3D.
         :rtype: PointBasedVoxelization
         """
-        triangles = cls._shell_to_triangles(shell)
-        voxels = cls._triangles_to_voxels(triangles, voxel_size)
+        voxels = MatrixBasedVoxelization.from_shell(shell, voxel_size).to_point_voxelization().voxel_centers
 
         return cls(voxel_centers=voxels, voxel_size=voxel_size, name=name)
 
@@ -600,8 +599,9 @@ class PointBasedVoxelization(Voxelization):
         :return: A voxelization created from the VolumeModel.
         :rtype: PointBasedVoxelization
         """
-        triangles = cls._volume_model_to_triangles(volume_model)
-        voxels = cls._triangles_to_voxels(triangles, voxel_size)
+        voxels = (
+            MatrixBasedVoxelization.from_volume_model(volume_model, voxel_size).to_point_voxelization().voxel_centers
+        )
 
         return cls(voxel_centers=voxels, voxel_size=voxel_size, name=name)
 
@@ -898,73 +898,6 @@ class PointBasedVoxelization(Voxelization):
         )
 
     @staticmethod
-    def _triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
-        """
-        Helper method to compute all the voxels intersecting with a given list of triangles.
-
-        :param triangles: The triangles to compute the intersecting voxels.
-        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
-        :param voxel_size: The voxel edges size.
-        :type voxel_size: float
-
-        :return: The centers of the voxels that intersect with the triangles.
-        :rtype: set[tuple[float, float, float]]
-        """
-        return triangles_to_voxels(triangles, voxel_size).union(
-            PointBasedVoxelization._triangles_to_voxels_at_interface(triangles, voxel_size)
-        )
-
-    @staticmethod
-    def _triangle_interface_voxels(triangle: Triangle, voxel_size: float) -> Set[Point]:
-        """
-        Calculate the set of voxel centers that intersect the interface of a triangle within the voxelization.
-
-        :param triangle: The triangle to calculate the voxel centers for.
-        :type triangle: Triangle
-        :param voxel_size: The size of the voxels in the voxelization.
-        :type voxel_size: float
-        :return: The set of voxel centers that intersect the triangle interface.
-        :rtype: Set[Point]
-        """
-        voxel_centers = set()
-
-        for i in range(3):
-            # Check if the triangle is defined in the XY, XZ or YZ plane
-            if round(triangle[0][i], 6) == round(triangle[1][i], 6) == round(triangle[2][i], 6):
-                abscissa = round(triangle[0][i], 6)
-
-                # Check if this plane is defined is at the interface between voxels
-                if round(abscissa / voxel_size, 6).is_integer():
-                    # Define the 3D triangle in 2D
-
-                    v0 = triangle[0][:i] + triangle[0][i + 1 :]
-                    v1 = triangle[1][:i] + triangle[1][i + 1 :]
-                    v2 = triangle[2][:i] + triangle[2][i + 1 :]
-
-                    triangle_2d = np.array([v0, v1, v2])
-
-                    pixelization = Pixelization.from_polygon(triangle_2d, voxel_size).fill_enclosed_pixels()
-
-                    for center in pixelization.pixel_centers:
-                        center_left = list(copy(center))
-                        center_left.insert(i, round(abscissa - voxel_size / 2, 6))
-                        voxel_centers.add(tuple(center_left))
-
-                        center_right = list(copy(center))
-                        center_right.insert(i, round(abscissa + voxel_size / 2, 6))
-                        voxel_centers.add(tuple(center_right))
-
-        return voxel_centers
-
-    @staticmethod
-    def _triangles_to_voxels_at_interface(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
-        voxel_centers = set()
-        for triangle in triangles:
-            voxel_centers = voxel_centers.union(PointBasedVoxelization._triangle_interface_voxels(triangle, voxel_size))
-
-        return voxel_centers
-
-    @staticmethod
     def _voxels_intersecting_voxels(voxel_centers_array: np.ndarray, voxel_size: float) -> Set[Point]:
         """
         Helper method to compute the center of the voxels that intersect with a given array of voxels.
@@ -1226,14 +1159,14 @@ class MatrixBasedVoxelization(PhysicalObject):
 
     @classmethod
     def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = ""):
-        triangles = _shell_to_triangles(shell)
+        triangles = Voxelization._shell_to_triangles(shell)
         matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
 
         return cls(matrix, matrix_origin_center, voxel_size, name)._crop_matrix()
 
     @classmethod
     def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = ""):
-        triangles = _volume_model_to_triangles(volume_model)
+        triangles = Voxelization._volume_model_to_triangles(volume_model)
         matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
 
         return cls(matrix, matrix_origin_center, voxel_size, name)._crop_matrix()
