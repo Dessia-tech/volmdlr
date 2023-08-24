@@ -54,7 +54,7 @@ class TestEllipse3D(unittest.TestCase):
 
     def test_point_at_abcissa(self):
         point_at_abscissa = self.ellipse3d.point_at_abscissa(self.ellipse3d.length() * 0.4)
-        self.assertTrue(point_at_abscissa.is_close(volmdlr.Point3D(-0.236335934849, -1.104105421298, -1.104105421298)))
+        self.assertTrue(point_at_abscissa.is_close(volmdlr.Point3D(-0.236343248911, -1.104108201699, -1.104108201699)))
 
     def test_trim(self):
         trim = self.ellipse3d.trim(volmdlr.Point3D(-0.12975651199692162, 0.9309036597828997, 0.9309036597828997),
@@ -107,6 +107,20 @@ class TestEllipse3D(unittest.TestCase):
         self.assertEqual(ellipse.major_axis, 5.0)
         self.assertEqual(ellipse.minor_axis, 3.0)
 
+    def test_ellipse_intersections(self):
+        ellipse3d_2 = self.ellipse3d.translation(self.ellipse3d.frame.u * 0.2)
+        ellipse3d_2 = ellipse3d_2.rotation(self.ellipse3d.center, self.ellipse3d.frame.w, math.pi / 3)
+
+        ellipse_intersections = self.ellipse3d.ellipse_intersections(ellipse3d_2)
+        expected_results = [volmdlr.Point3D(1.387122270021, 0.498764319098, 0.498764319098),
+
+                            volmdlr.Point3D(0.442026341769, -0.728884874076, -0.728884874076),
+
+                            volmdlr.Point3D(-1.352092241872, -0.382919522276, -0.382919522276),
+
+                            volmdlr.Point3D(-0.499996156401, 0.685417254467, 0.685417254467)]
+        for intersection, expected_result in zip(ellipse_intersections, expected_results):
+            self.assertTrue(intersection.is_close(expected_result))
 
 if __name__ == '__main__':
     unittest.main()

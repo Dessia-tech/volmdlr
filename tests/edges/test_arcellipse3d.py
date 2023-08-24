@@ -190,6 +190,14 @@ class TestArcEllipse3D(unittest.TestCase):
         for result, expected_result in zip(intersections2, expected_intersections2):
             self.assertTrue(result.is_close(expected_result))
 
+    def test_arcellipse(self):
+        arc_ellipse3d_2 = self.arc_ellipse3d.translation(self.ellipse3d.frame.u * 0.2)
+        arc_ellipse3d_2 = arc_ellipse3d_2.rotation(self.ellipse3d.center, self.ellipse3d.frame.w, math.pi / 3)
+        arcellipse_intersections = self.arc_ellipse3d.arcellipse_intersections(arc_ellipse3d_2)
+        self.assertEqual(len(arcellipse_intersections), 1)
+        self.assertTrue(arcellipse_intersections[0].is_close(
+            volmdlr.Point3D(0.442026341769, -0.728884874076, -0.728884874076)))
+
 
 if __name__ == '__main__':
     unittest.main()
