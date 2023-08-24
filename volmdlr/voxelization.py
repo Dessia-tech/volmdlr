@@ -2,9 +2,9 @@
 Class for voxel representation of volmdlr models
 """
 import warnings
+from abc import ABC, abstractmethod
 from copy import copy
 from typing import List, Set, Tuple, TypeVar
-from abc import ABC, abstractmethod
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -19,8 +19,8 @@ from volmdlr.voxelization_compiled import (
     flood_fill_matrix_2d,
     flood_fill_matrix_3d,
     line_segments_to_pixels,
-    triangles_to_voxels,
     triangles_to_voxel_matrix,
+    triangles_to_voxels,
     voxel_triangular_faces,
 )
 
@@ -676,9 +676,7 @@ class PointBasedVoxelization(Voxelization):
         self._check_other_voxelization_type(other_voxelization)
         self._check_other_voxelization_voxel_size(other_voxelization)
 
-        return self.__class__(
-            self.voxel_centers.intersection(other_voxelization.voxel_centers), self.voxel_size
-        )
+        return self.__class__(self.voxel_centers.intersection(other_voxelization.voxel_centers), self.voxel_size)
 
     def symmetric_difference(self, other_voxelization: "PointBasedVoxelization") -> "PointBasedVoxelization":
         """

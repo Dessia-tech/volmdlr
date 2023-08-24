@@ -58,7 +58,9 @@ class TestVoxelMatrixCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_from_volume_model(self):
-        volume_model_voxelization = MatrixBasedVoxelization.from_volume_model(self.volume_model, 0.01, name="voxelization")
+        volume_model_voxelization = MatrixBasedVoxelization.from_volume_model(
+            self.volume_model, 0.01, name="voxelization"
+        )
         self.assertEqual(4296, len(volume_model_voxelization))
 
         if SHOW_BABYLONJS:
@@ -79,7 +81,9 @@ class TestVoxelMatrixBooleanOperation(unittest.TestCase):
         self.volume_model = VolumeModel(primitives=[self.sphere, self.cylinder], name="volume model")
 
         self.sphere_voxelization = MatrixBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
-        self.cylinder_voxelization = MatrixBasedVoxelization.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
+        self.cylinder_voxelization = MatrixBasedVoxelization.from_shell(
+            self.cylinder, 0.01, name="cylinder voxelization"
+        )
         self.volume_model_voxelization = MatrixBasedVoxelization.from_volume_model(
             self.volume_model, 0.01, name="volume model voxelization"
         )
@@ -145,7 +149,9 @@ class TestVoxelMatrixManipulation(unittest.TestCase):
 
     def setUp(self):
         self.cylinder = Cylinder(frame=volmdlr.OXYZ, radius=0.1, length=0.2, name="cylinder")
-        self.cylinder_voxelization = MatrixBasedVoxelization.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
+        self.cylinder_voxelization = MatrixBasedVoxelization.from_shell(
+            self.cylinder, 0.01, name="cylinder voxelization"
+        )
 
     def test_inverse(self):
         inverse_cylinder_voxelization = self.cylinder_voxelization.inverse()
