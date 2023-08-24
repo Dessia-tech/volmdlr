@@ -1035,7 +1035,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param point: point to calculate distance.
         :return: the distance from the point to the circle 2D.
         """
-        return point.point_distance(self.center) - self.radius
+        return abs(point.point_distance(self.center) - self.radius)
 
     @property
     def bounding_rectangle(self):
