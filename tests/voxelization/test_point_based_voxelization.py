@@ -204,6 +204,12 @@ class TestPointBasedVoxelizationManipulation(unittest.TestCase):
             volume_model = VolumeModel([self.cylinder, inner_filled_voxelization.to_closed_triangle_shell()])
             volume_model.babylonjs()
 
+    def test_min_voxel_grid_center(self):
+        self.assertEqual((-0.095, -0.095, -0.105), self.cylinder_voxelization.min_voxel_grid_center)
+
+    def test_max_voxel_grid_center(self):
+        self.assertEqual((0.105, 0.095, 0.105), self.cylinder_voxelization.max_voxel_grid_center)
+
 
 class TestPointBasedVoxelizationExport(unittest.TestCase):
     """
@@ -230,7 +236,7 @@ class TestPointBasedVoxelizationExport(unittest.TestCase):
         voxel_matrix = self.sphere_voxelization.to_matrix_based_voxelization()
 
         self.assertEqual(len(self.sphere_voxelization), len(voxel_matrix))
-        self.assertEqual(self.sphere_voxelization.min_voxel_grid_center, voxel_matrix.matrix_origin_center)
+        self.assertEqual(self.sphere_voxelization.min_voxel_grid_center, voxel_matrix._min_voxel_grid_center)
 
 
 if __name__ == "__main__":
