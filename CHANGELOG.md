@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
 - Circle3D: circle_intersections, ellipse_intersections
 - Circle2D: ellipse_intersections.
-
+- Arc3D: arc_intersections, arcellipse_intersections
 ### Fixed
 - Sweep with non smoth path
 - plot of vector3D.
@@ -83,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ellipse3D: test_ellipse_intersections, test_linesegment_intersections
 - ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
 - Circle3D: circle_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
 
 ## v0.12.0
 

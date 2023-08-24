@@ -5545,7 +5545,38 @@ class Arc3D(ArcMixin, Edge):
                 linesegment_intersections.append(intersection)
         return linesegment_intersections
 
+    def arc_intersections(self, other_arc, abs_tol: 1e-6):
+        """
+        Calculates intersections between two Arc3D.
+
+        :param other_arc: Arc 3D to verify intersections.
+        :param abs_tol: tolerance.
+        :return: list with intersections points between the two Arc3D.
+        """
+        circle_intersections = self.circle.circle_intersections(other_arc.circle)
+        intersections = []
+        for intersection in circle_intersections:
+            if self.point_belongs(intersection, abs_tol) and other_arc.point_belongs(intersection, abs_tol):
+                intersections.append(intersection)
+        return intersections
+
+    def arcellipse_intersections(self, arcellipse3d, abs_tol: float = 1e-6):
+        """
+       Calculates intersections between two Arc3D.
+
+       :param arcellipse3d: ArcEllipse 3D to verify intersections.
+       :param abs_tol: Tolerance.
+       :return: List with intersections points between ArcEllipse3D and Arc3D.
+       """
+        ellipse_intersections = self.circle.ellipse_intersections(arcellipse3d.ellipse, abs_tol)
+        intersections = []
+        for intersection in ellipse_intersections:
+            if self.point_belongs(intersection, abs_tol) and arcellipse3d.point_belongs(intersection, abs_tol):
+                intersections.append(intersection)
+        return intersections
+
     def complementary(self):
+        """Creates the corresponding complementary arc."""
         return Arc3D(self.circle, self.end, self.start)
 
     def sweep(self, *args):
