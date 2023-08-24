@@ -171,6 +171,54 @@ class TestBSplineSurface3D(unittest.TestCase):
                     for c, e in zip(computed[idx], expected[idx]):
                         self.assertAlmostEqual(c, e, delta=GEOMDL_DELTA)
 
+    def test_interpolate_surface(self):
+        points = [volmdlr.Point3D(1.0, 0.0, 0.0), volmdlr.Point3D(0.70710678, 0.70710678, 0.0),
+                  volmdlr.Point3D(0.0, 1.0, 0.0), volmdlr.Point3D(-0.70710678, 0.70710678, 0.0),
+                  volmdlr.Point3D(-1.0, 0.0, 0.0), volmdlr.Point3D(-0.70710678, -0.70710678, 0.0),
+                  volmdlr.Point3D(0.0, -1.0, 0.0), volmdlr.Point3D(0.70710678, -0.70710678, 0.0),
+                  volmdlr.Point3D(1.0, 0.0, 0.0), volmdlr.Point3D(1.0, 0.0, 1.0),
+                  volmdlr.Point3D(0.70710678, 0.70710678, 1.0), volmdlr.Point3D(0.0, 1.0, 1.0),
+                  volmdlr.Point3D(-0.70710678, 0.70710678, 1.0), volmdlr.Point3D(-1.0, 0.0, 1.0),
+                  volmdlr.Point3D(-0.70710678, -0.70710678, 1.0), volmdlr.Point3D(0.0, -1.0, 1.0),
+                  volmdlr.Point3D(0.70710678, -0.70710678, 1.0), volmdlr.Point3D(1.0, 0.0, 1.0)]
+
+        degree_u = 1
+        degree_v = 2
+        size_u = 2
+        size_v = 9
+        surface = surfaces.BSplineSurface3D.points_fitting_into_bspline_surface(points, size_u, size_v,
+                                                                                degree_u, degree_v)
+
+        expected_points = [volmdlr.Point3D(1.0, 0.0, 0.0),
+                           volmdlr.Point3D(0.9580995893491125, 0.6733882798117155, 0.0),
+                           volmdlr.Point3D(-0.0005819501479292128, 1.0804111054393308, 0.0),
+                           volmdlr.Point3D(-0.7628715805621301, 0.7627405224267781, 0.0),
+                           volmdlr.Point3D(-1.0790428064792899, 0.0, 0.0),
+                           volmdlr.Point3D(-0.7628715805621301, -0.7627405224267783, 0.0),
+                           volmdlr.Point3D(-0.0005819501479290552, -1.0804111054393304, 0.0),
+                           volmdlr.Point3D(0.9580995893491127, -0.6733882798117156, 0.0),
+                           volmdlr.Point3D(1.0, 0.0, 0.0),
+                           volmdlr.Point3D(1.0, 0.0, 1.0),
+                           volmdlr.Point3D(0.9580995893491125, 0.6733882798117155, 1.0),
+                           volmdlr.Point3D(-0.0005819501479292128, 1.0804111054393308, 1.0),
+                           volmdlr.Point3D(-0.7628715805621301, 0.7627405224267781, 1.0),
+                           volmdlr.Point3D(-1.0790428064792899, 0.0, 1.0),
+                           volmdlr.Point3D(-0.7628715805621301, -0.7627405224267783, 1.0),
+                           volmdlr.Point3D(-0.0005819501479290552, -1.0804111054393304, 1.0),
+                           volmdlr.Point3D(0.9580995893491127, -0.6733882798117156, 1.0),
+                           volmdlr.Point3D(1.0, 0.0, 1.0)]
+        for point, expected_point in zip(surface.control_points, expected_points):
+            self.assertTrue(point.is_close(expected_point))
+        point1 = surface.point2d_to_3d(volmdlr.Point2D(0.0, 0.0))
+        point2 = surface.point2d_to_3d(volmdlr.Point2D(0.25, 0.25))
+        point3 = surface.point2d_to_3d(volmdlr.Point2D(0.5, 0.5))
+        point4 = surface.point2d_to_3d(volmdlr.Point2D(0.75, 0.75))
+        point5 = surface.point2d_to_3d(volmdlr.Point2D(1.0, 1.0))
+
+        for point in [point1, point2, point3, point4, point5]:
+            self.assertAlmostEqual(point.point_distance(volmdlr.Point3D(0.0, 0.0, point.z)), 1.0)
+
+
     def test_contour2d_parametric_to_dimension(self):
         bspline_face = vmf.BSplineFace3D.from_surface_rectangular_cut(bspline_surfaces.bspline_surface_2, 0, 1, 0, 1)
         contour2d = bspline_surfaces.bspline_surface_2.contour3d_to_2d(bspline_face.outer_contour3d)

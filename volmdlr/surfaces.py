@@ -5077,7 +5077,6 @@ class BSplineSurface3D(Surface3D):
             self._domain = start_u, stop_u, start_v, stop_v
         return self._domain
 
-    @property
     def vertices(self):
         """
         Evaluated points.
@@ -5094,13 +5093,13 @@ class BSplineSurface3D(Surface3D):
                 for v in v_vector:
                     vertices.append((u, v))
             self._vertices = vertices
-            # u_vector = npy.linspace(u_min, u_max, self.sample_size_u, dtype=npy.float64)
-            # v_vector = npy.linspace(v_min, v_max, self.sample_size_v, dtype=npy.float64)
-            #
-            # u_mesh, v_mesh = npy.meshgrid(u_vector, v_vector)
-            # self._vertices = npy.column_stack((u_mesh.ravel(), v_mesh.ravel()))
-
         return self._vertices
+
+    def points(self):
+        """
+        Returns surface points
+        """
+        return [volmdlr.Point3D(*point) for point in self.evalpts]
 
     def control_points_matrix(self, coordinates):
         """
