@@ -53,20 +53,29 @@ class Voxelization(ABC, PhysicalObject):
     @abstractmethod
     def voxel_size(self) -> float:
         """
-        Get the size of each voxel.
+        Get the size of the voxels.
 
-        :return: The size of each voxel.
+        :return: The size of the voxels.
         :rtype: float
         """
         pass
 
+    def __str__(self):
+        """
+        Return a custom string representation of the voxelization.
+
+        :return: A string representation of the voxelization.
+        :rtype: str
+        """
+        return f"Voxelization: voxel size={self.voxel_size}, number of voxels={self.__len__()}, name={self.name}"
+
     @abstractmethod
-    def __eq__(self, other_voxelization: T) -> bool:
+    def __eq__(self, other_voxelization: VoxelizationType) -> bool:
         """
         Check if two voxelizations are equal.
 
         :param other_voxelization: Another voxelization to compare with.
-        :type other_voxelization: Voxelization
+        :type other_voxelization: VoxelizationType
 
         :return: True if the voxelizations are equal, False otherwise.
         :rtype: bool
@@ -90,7 +99,7 @@ class Voxelization(ABC, PhysicalObject):
         :return: The volume of the voxelization.
         :rtype: float
         """
-        return self.__len__() * self.voxel_size ** 3
+        return self.__len__() * self.voxel_size**3
 
     volume = property(_get_volume)
 
@@ -106,6 +115,7 @@ class Voxelization(ABC, PhysicalObject):
 
     bounding_box = property(_get_bounding_box)
 
+    # CLASS METHODS
     @classmethod
     @abstractmethod
     def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = "") -> VoxelizationType:
@@ -126,7 +136,7 @@ class Voxelization(ABC, PhysicalObject):
 
     @classmethod
     @abstractmethod
-    def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = "") -> T:
+    def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = "") -> VoxelizationType:
         """
         Create a voxelization from a VolumeModel.
 
