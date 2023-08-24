@@ -68,6 +68,7 @@ class ClosedCurve(Curve):
     def local_discretization(self, point1, point2, number_points: int = 10):
         """
         Gets n discretization points between two given points of the Curve.
+
         :param point1: point 1 on edge.
         :param point2: point 2 on edge.
         :param number_points: number of points to discretize locally.
