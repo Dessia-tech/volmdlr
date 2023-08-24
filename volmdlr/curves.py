@@ -43,6 +43,25 @@ class Curve(DessiaObject):
         """
         raise NotImplementedError(f'abscissa method not implemented by {self.__class__.__name__}')
 
+    def local_discretization(self, point1, point2, number_points: int = 10):
+        """
+        Gets n discretization points between two given points of the Curve.
+        :param point1: point 1 on edge.
+        :param point2: point 2 on edge.
+        :param number_points: number of points to discretize locally.
+        :return: list of locally discretized points.
+        """
+        abscissa1 = self.abscissa(point1)
+        abscissa2 = self.abscissa(point2)
+        if point1.is_close(point2) and point1.is_close(self.point_at_abscissa(0.0)):
+            abscissa1 = 0.0
+            abscissa2 = self.length()
+            points = vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
+            return points + [points[0]]
+        if abscissa1 > abscissa2 == 0.0:
+            abscissa2 = self.length()
+        return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
+
 
 class Line(Curve):
     """
@@ -1766,22 +1785,32 @@ class Ellipse2D(Curve):
             return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
                              (self.minor_axis ** 2) * math.cos(theta) ** 2)
         iter_counter = 0
-        increment_factor = 1e-5
         while True:
             res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-            if math.isclose(res, abscissa, abs_tol=1e-5):
+            if math.isclose(res, abscissa, abs_tol=1e-8):
                 abscissa_angle = initial_angle
                 break
             if res > abscissa:
-                if iter_counter == 0:
-                    increment_factor = -1e-5
-                else:
-                    raise NotImplementedError
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res)) / (2 * abs(res))
+            else:
+                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res)) / abs(res)
             initial_angle += increment_factor
             iter_counter += 1
         x = self.major_axis * math.cos(abscissa_angle)
         y = self.minor_axis * math.sin(abscissa_angle)
         return self.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
+
+    def point_distance(self, point):
+        """
+        Calculates the distance between an Ellipse 2d and point 2d.
+
+        :param point: Other point to calculate distance.
+        :type point: volmdlr.Point3D.
+        :return: The distance between ellipse and point
+        :rtype: float.
+        """
+        start = self.point_at_abscissa(0.0)
+        return vm_common_operations.get_point_distance_to_edge(self, point, start, start)
 
     def point_angle_with_major_dir(self, point2d):
         """
