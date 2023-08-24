@@ -8,7 +8,7 @@ import volmdlr
 from volmdlr.core import VolumeModel
 from volmdlr.primitives3d import Block, Cylinder, Sphere
 from volmdlr.shells import ClosedTriangleShell3D
-from volmdlr.voxelization import VoxelMatrix
+from volmdlr.voxelization import MatrixBasedVoxelization
 
 SHOW_BABYLONJS = False
 
@@ -25,7 +25,7 @@ class TestVoxelMatrixCreation(unittest.TestCase):
         self.volume_model = VolumeModel(primitives=[self.sphere, self.cylinder], name="volume model")
 
     def test_voxelize_block(self):
-        block_voxelization = VoxelMatrix.from_shell(self.block, 0.2, name="voxelization")
+        block_voxelization = MatrixBasedVoxelization.from_shell(self.block, 0.2, name="voxelization")
         self.assertEqual(152, len(block_voxelization))
 
         if SHOW_BABYLONJS:
@@ -34,7 +34,7 @@ class TestVoxelMatrixCreation(unittest.TestCase):
 
     def test_voxelize_translated_block(self):
         translated_block = self.block.translation(volmdlr.Vector3D(11, 1.8, 4.8))
-        translated_block_voxelization = VoxelMatrix.from_shell(translated_block, 0.1, name="voxelization")
+        translated_block_voxelization = MatrixBasedVoxelization.from_shell(translated_block, 0.1, name="voxelization")
         self.assertEqual(1216, len(translated_block_voxelization))
 
         if SHOW_BABYLONJS:
@@ -42,7 +42,7 @@ class TestVoxelMatrixCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_voxelize_sphere(self):
-        sphere_voxelization = VoxelMatrix.from_shell(self.sphere, 0.01, name="sphere voxelization")
+        sphere_voxelization = MatrixBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
         self.assertEqual(1876, len(sphere_voxelization))
 
         if SHOW_BABYLONJS:
@@ -50,7 +50,7 @@ class TestVoxelMatrixCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_voxelize_cylinder(self):
-        cylinder_voxelization = VoxelMatrix.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
+        cylinder_voxelization = MatrixBasedVoxelization.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
         self.assertEqual(2820, len(cylinder_voxelization))
 
         if SHOW_BABYLONJS:
@@ -58,7 +58,7 @@ class TestVoxelMatrixCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_from_volume_model(self):
-        volume_model_voxelization = VoxelMatrix.from_volume_model(self.volume_model, 0.01, name="voxelization")
+        volume_model_voxelization = MatrixBasedVoxelization.from_volume_model(self.volume_model, 0.01, name="voxelization")
         self.assertEqual(4296, len(volume_model_voxelization))
 
         if SHOW_BABYLONJS:
@@ -78,9 +78,9 @@ class TestVoxelMatrixBooleanOperation(unittest.TestCase):
         self.cylinder = Cylinder(frame=volmdlr.OXYZ, radius=0.1, length=0.2, name="cylinder")
         self.volume_model = VolumeModel(primitives=[self.sphere, self.cylinder], name="volume model")
 
-        self.sphere_voxelization = VoxelMatrix.from_shell(self.sphere, 0.01, name="sphere voxelization")
-        self.cylinder_voxelization = VoxelMatrix.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
-        self.volume_model_voxelization = VoxelMatrix.from_volume_model(
+        self.sphere_voxelization = MatrixBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
+        self.cylinder_voxelization = MatrixBasedVoxelization.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
+        self.volume_model_voxelization = MatrixBasedVoxelization.from_volume_model(
             self.volume_model, 0.01, name="volume model voxelization"
         )
 
@@ -145,7 +145,7 @@ class TestVoxelMatrixManipulation(unittest.TestCase):
 
     def setUp(self):
         self.cylinder = Cylinder(frame=volmdlr.OXYZ, radius=0.1, length=0.2, name="cylinder")
-        self.cylinder_voxelization = VoxelMatrix.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
+        self.cylinder_voxelization = MatrixBasedVoxelization.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
 
     def test_inverse(self):
         inverse_cylinder_voxelization = self.cylinder_voxelization.inverse()
@@ -206,7 +206,7 @@ class TestVoxelMatrixExport(unittest.TestCase):
 
     def setUp(self):
         self.sphere = Sphere(center=volmdlr.O3D, radius=0.1, name="sphere")
-        self.sphere_voxelization = VoxelMatrix.from_shell(self.sphere, 0.01, name="sphere voxelization")
+        self.sphere_voxelization = MatrixBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
 
     def test_to_triangles(self):
         self.assertEqual(7456, len(self.sphere_voxelization.to_triangles()))

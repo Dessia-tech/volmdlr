@@ -5,7 +5,7 @@ import math
 import time
 
 import volmdlr
-from volmdlr.voxelization import PointVoxelization
+from volmdlr.voxelization import PointBasedVoxelization
 from volmdlr.core import VolumeModel
 from volmdlr.stl import Stl
 
@@ -28,7 +28,7 @@ print(f"Volume model translation computing time: {(time.perf_counter() - start)*
 moved_volume_model.primitives[0].color = (0, 0, 1)
 
 # Voxelize the volume model
-voxelization = PointVoxelization.from_volume_model(volume_model, VOXEL_SIZE)
+voxelization = PointBasedVoxelization.from_volume_model(volume_model, VOXEL_SIZE)
 
 # Move the voxelization
 start = time.perf_counter()

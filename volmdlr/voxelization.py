@@ -29,34 +29,70 @@ Point = Tuple[float, float, float]
 Triangle = Tuple[Point, Point, Point]
 Segment = Tuple[Point, Point]
 
-# T = TypeVar("T", bound="Voxelization")
-
 
 class Voxelization(ABC, PhysicalObject):
     """
-    Abstract class for creation and manipulation of voxelization of volmdlr geometry.
+    Abstract base class for creating and manipulating voxelizations of volmdlr geometries.
 
-    This approach is used to create a Voxelization of the surfaces, and do not fill the volume.
+    This approach is used to create a voxelization of the surfaces, without filling the volume.
 
-    The voxelization is defined in an implicit grid of the 3D space. The grid is defined by the size of the voxels.
-    The implicit grid is defined by discretizing the 3D space into axis aligned cubes with given size, with the
-    origin of the global landmark (0, 0, 0) always being a corner point (and not inside a cube).
+    The voxelization is defined on an implicit 3D grid, where each voxel is defined by its size.
+    The implicit grid consists of axis-aligned cubes with a given size, ensuring that the global
+    origin (0, 0, 0) is always a corner point of a voxel.
 
-    For example, in 1D and with a voxel size of t, the set of voxels (defined by minimal and maximal point) can only
-    be defined as {i ∈ N, t ∈ R | (i * t, (i+1) * t)}
-    The corresponding set of voxel centers is defined by the following set: {i ∈ N, t ∈ R | (i + 0.5) * t}
+    For example, in 1D with a voxel size of 't', the set of voxels (defined by minimum and maximum points)
+    is: {i ∈ N, t ∈ R | (i * t, (i+1) * t)}
+    The corresponding set of voxel centers is: {i ∈ N, t ∈ R | (i + 0.5) * t}
 
-    This approach allows to always define voxelization of same size in the same grid of the 3D space, which is very
-    useful to perform very fast Boolean operations.
+    This approach enables consistent voxelization sizes across the 3D space, facilitating fast Boolean operations.
     """
 
+    VoxelizationType = TypeVar("VoxelizationType", bound="Voxelization")
+
+    @property
     @abstractmethod
-    def __eq__(self, other_voxelization: "Voxelization") -> bool:
+    def voxel_size(self) -> float:
+        """
+        Get the size of each voxel.
+
+        :return: The size of each voxel.
+        :rtype: float
+        """
+        pass
+
+    @abstractmethod
+    def __eq__(self, other_voxelization: T) -> bool:
+        """
+        Check if two voxelizations are equal.
+
+        :param other_voxelization: Another voxelization to compare with.
+        :type other_voxelization: Voxelization
+
+        :return: True if the voxelizations are equal, False otherwise.
+        :rtype: bool
+        """
         pass
 
     @abstractmethod
     def __len__(self) -> int:
+        """
+        Get the number of voxels in the voxelization.
+
+        :return: The number of voxels in the voxelization.
+        :rtype: int
+        """
         pass
+
+    def _get_volume(self) -> float:
+        """
+        Calculate the volume of the voxelization.
+
+        :return: The volume of the voxelization.
+        :rtype: float
+        """
+        return self.__len__() * self.voxel_size ** 3
+
+    volume = property(_get_volume)
 
     @abstractmethod
     def _get_bounding_box(self) -> BoundingBox:
@@ -68,83 +104,231 @@ class Voxelization(ABC, PhysicalObject):
         """
         pass
 
-    # BOOLEAN OPERATIONS
+    bounding_box = property(_get_bounding_box)
+
+    @classmethod
     @abstractmethod
-    def union(self, other_voxelization: "Voxelization") -> "Voxelization":
+    def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = "") -> VoxelizationType:
+        """
+        Create a voxelization from a Shell3D.
+
+        :param shell: The Shell3D to create the voxelization from.
+        :type shell: Shell3D
+        :param voxel_size: The size of each voxel.
+        :type voxel_size: float
+        :param name: Optional name for the voxelization.
+        :type name: str
+
+        :return: A voxelization created from the Shell3D.
+        :rtype: VoxelizationType
+        """
         pass
 
-    def __add__(self, other_voxelization: "Voxelization") -> "Voxelization":
+    @classmethod
+    @abstractmethod
+    def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = "") -> T:
+        """
+        Create a voxelization from a VolumeModel.
+
+        :param volume_model: The VolumeModel to create the voxelization from.
+        :type volume_model: VolumeModel
+        :param voxel_size: The size of each voxel.
+        :type voxel_size: float
+        :param name: Optional name for the voxelization.
+        :type name: str
+
+        :return: A voxelization created from the VolumeModel.
+        :rtype: VoxelizationType
+        """
+        pass
+
+    # BOOLEAN OPERATIONS
+    @abstractmethod
+    def union(self, other_voxelization: VoxelizationType) -> VoxelizationType:
+        """
+        Perform a union operation with another voxelization.
+
+        :param other_voxelization: The voxelization to perform the union with.
+        :type other_voxelization: VoxelizationType
+
+        :return: A new voxelization resulting from the union operation.
+        :rtype: VoxelizationType
+        """
+        pass
+
+    def __add__(self, other_voxelization: VoxelizationType) -> VoxelizationType:
+        """
+        Overloaded '+' operator for performing a union operation.
+
+        :param other_voxelization: The voxelization to perform the union with.
+        :type other_voxelization: VoxelizationType
+
+        :return: A new voxelization resulting from the union operation.
+        :rtype: VoxelizationType
+        """
         return self.union(other_voxelization)
 
     @abstractmethod
-    def difference(self, other_voxelization: "Voxelization") -> "Voxelization":
+    def difference(self, other_voxelization: VoxelizationType) -> VoxelizationType:
+        """
+        Perform a difference operation with another voxelization.
+
+        :param other_voxelization: The voxelization to perform the difference with.
+        :type other_voxelization: VoxelizationType
+
+        :return: A new voxelization resulting from the difference operation.
+        :rtype: VoxelizationType
+        """
         pass
 
-    def __sub__(self, other_voxelization: "Voxelization") -> "Voxelization":
+    def __sub__(self, other_voxelization: VoxelizationType) -> VoxelizationType:
+        """
+        Overloaded '-' operator for performing a difference operation.
+
+        :param other_voxelization: The voxelization to perform the difference with.
+        :type other_voxelization: VoxelizationType
+
+        :return: A new voxelization resulting from the difference operation.
+        :rtype: VoxelizationType
+        """
         return self.difference(other_voxelization)
 
     @abstractmethod
-    def intersection(self, other_voxelization: "Voxelization") -> "Voxelization":
+    def intersection(self, other_voxelization: VoxelizationType) -> VoxelizationType:
+        """
+        Perform an intersection operation with another voxelization.
+
+        :param other_voxelization: The voxelization to perform the intersection with.
+        :type other_voxelization: VoxelizationType
+
+        :return: A new voxelization resulting from the intersection operation.
+        :rtype: VoxelizationType
+        """
         pass
 
-    def __and__(self, other_voxelization: "Voxelization") -> "Voxelization":
+    def __and__(self, other_voxelization: VoxelizationType) -> VoxelizationType:
+        """
+        Overloaded '&' operator for performing an intersection operation.
+
+        :param other_voxelization: The voxelization to perform the intersection with.
+        :type other_voxelization: VoxelizationType
+
+        :return: A new voxelization resulting from the intersection operation.
+        :rtype: VoxelizationType
+        """
         return self.intersection(other_voxelization)
 
-    def symmetric_difference(self, other_voxelization: "Voxelization") -> "Voxelization":
+    def symmetric_difference(self, other_voxelization: VoxelizationType) -> VoxelizationType:
+        """
+        Perform a symmetric difference operation with another voxelization.
+
+        :param other_voxelization: The voxelization to perform the symmetric difference with.
+        :type other_voxelization: VoxelizationType
+
+        :return: A new voxelization resulting from the symmetric difference operation.
+        :rtype: VoxelizationType
+        """
         pass
 
-    def __xor__(self, other_voxelization: "Voxelization") -> "Voxelization":
+    def __xor__(self, other_voxelization: VoxelizationType) -> VoxelizationType:
+        """
+        Overloaded '^' operator for performing a symmetric difference operation.
+
+        :param other_voxelization: The voxelization to perform the symmetric difference with.
+        :type other_voxelization: VoxelizationType
+
+        :return: A new voxelization resulting from the symmetric difference operation.
+        :rtype: VoxelizationType
+        """
         return self.symmetric_difference(other_voxelization)
 
     @abstractmethod
-    def inverse(self) -> "Voxelization":
+    def inverse(self) -> VoxelizationType:
+        """
+        Compute the inverse of the voxelization.
+
+        :return: A new voxelization representing the inverse.
+        :rtype: VoxelizationType
+        """
         pass
 
-    def __invert__(self) -> "Voxelization":
+    def __invert__(self) -> VoxelizationType:
+        """
+        Overloaded '~' operator for computing the inverse.
+
+        :return: A new voxelization representing the inverse.
+        :rtype: Voxelization
+        """
         return self.inverse()
 
-    def interference(self, other_voxelization: "Voxelization") -> float:
+    def interference(self, other_voxelization: VoxelizationType) -> float:
         """
-        Compute the percentage of interference between two voxelization.
+        Compute the percentage of interference between two voxelizations.
 
-        :param other_voxelization: The other voxelization to compute percentage of interference with.
-        :type other_voxelization: PointVoxelization
+        :param other_voxelization: The other voxelization to compute interference with.
+        :type other_voxelization: Voxelization
 
-        :return: The percentage of interference between the two voxelization.
+        :return: The percentage of interference between the two voxelizations.
         :rtype: float
         """
         return len(self.intersection(other_voxelization)) / len(self.union(other_voxelization))
 
     # FILLING METHODS
     @abstractmethod
-    def flood_fill(self, start_point: Point, fill_with: bool) -> "Voxelization":
+    def flood_fill(self, start_point: Point, fill_with: bool) -> VoxelizationType:
+        """
+        Perform a flood fill operation on the voxelization.
+
+        :param start_point: The starting point for the flood fill.
+        :type start_point: Point
+        :param fill_with: The value to fill the voxels with during the operation.
+        :type fill_with: bool
+
+        :return: A new voxelization resulting from the flood fill operation.
+        :rtype: VoxelizationType
+        """
         pass
 
     @abstractmethod
-    def fill_outer_voxels(self) -> "Voxelization":
+    def fill_outer_voxels(self) -> VoxelizationType:
+        """
+        Fill the outer voxels of the voxelization.
+
+        :return: A new voxelization with outer voxels filled.
+        :rtype: VoxelizationType
+        """
         pass
 
     @abstractmethod
-    def fill_enclosed_voxels(self) -> "Voxelization":
-        pass
+    def fill_enclosed_voxels(self) -> VoxelizationType:
+        """
+        Fill the enclosed voxels of the voxelization.
 
-    # CLASS METHODS
-    @classmethod
-    @abstractmethod
-    def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = ""):
-        pass
-
-    @classmethod
-    @abstractmethod
-    def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = ""):
+        :return: A new voxelization with enclosed voxels filled.
+        :rtype: VoxelizationType
+        """
         pass
 
     # DISPLAY METHODS
     @abstractmethod
-    def to_closed_triangle_shell(self):
+    def to_closed_triangle_shell(self) -> ClosedTriangleShell3D:
+        """
+        Generate a closed triangle shell representing the voxelization.
+
+        :return: A closed triangle shell representation of the voxelization.
+        :rtype: ClosedTriangleShell3D
+        """
         pass
 
     def volmdlr_primitives(self, **kwargs):
+        """
+        Generate volmdlr primitives.
+
+        :param kwargs: Additional keyword arguments.
+
+        :return: A list of volmdlr primitives.
+        :rtype: List[ClosedTriangleShell3D]
+        """
         return [self.to_closed_triangle_shell()]
 
     # HELPER METHODS
@@ -178,7 +362,7 @@ class Voxelization(ABC, PhysicalObject):
         :type shell: Shell3D
 
         :return: The list of triangles extracted from the triangulated Shell3D.
-        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :rtype: List[Triangle]
         """
         triangulation = shell.triangulation()
         return [
@@ -204,36 +388,21 @@ class Voxelization(ABC, PhysicalObject):
         :type volume_model: VolumeModel
 
         :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
-        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :rtype: List[Triangle]
         """
         triangles = []
         for shell in volume_model.get_shells():
-            triangles.extend(_shell_to_triangles(shell))
+            triangles.extend(Voxelization._shell_to_triangles(shell))
 
         return triangles
 
 
-class PointVoxelization(PhysicalObject):
-    """
-    Class for creation and manipulation of voxelization of volmdlr geometry.
-
-    This approach is used to create a Voxelization of the surfaces, and do not fill the volume.
-
-    The voxelization is defined in an implicit grid of the 3D space. The grid is defined by the size of the voxels.
-    The implicit grid is defined by discretizing the 3D space into axis aligned cubes with given size, with the
-    origin of the global landmark (0, 0, 0) always being a corner point (and not inside a cube).
-
-    For example, in 1D and with a voxel size of t, the set of voxels (defined by minimal and maximal point) can only
-    be defined as {i ∈ N, t ∈ R | (i * t, (i+1) * t)}
-    The corresponding set of voxel centers is defined by the following set: {i ∈ N, t ∈ R | (i + 0.5) * t}
-
-    This approach allows to always define voxelization of same size in the same grid of the 3D space, which is very
-    useful to perform very fast Boolean operations.
-    """
+class PointBasedVoxelization(Voxelization):
+    """Voxelization implemented as a set of points."""
 
     def __init__(self, voxel_centers: Set[Point], voxel_size: float, name: str = ""):
         """
-        Initialize the Voxelization.
+        Initialize the PointBasedVoxelization.
 
         :param voxel_centers: The set of points representing voxel centers.
         :type voxel_centers: set[tuple[float, float, float]]
@@ -242,94 +411,30 @@ class PointVoxelization(PhysicalObject):
         :param name: The name of the Voxelization.
         :type name: str, optional
         """
+        self._voxel_size = voxel_size
         self.voxel_centers = voxel_centers
-        self.voxel_size = voxel_size
 
         PhysicalObject.__init__(self, name=name)
 
-    def __eq__(self, other_voxelization: "PointVoxelization") -> bool:
+    @property
+    def voxel_size(self):
+        return self._voxel_size
+
+    def __eq__(self, other_voxelization: "PointBasedVoxelization") -> bool:
         """
         Check if the current voxelization is equal to another voxelization.
 
         :param other_voxelization: The voxelization to compare.
-        :type other_voxelization: PointVoxelization
+        :type other_voxelization: PointBasedVoxelization
 
         :return: True if the voxelizations are equal, False otherwise.
         :rtype: bool
         """
         return (
-            self.voxel_centers == other_voxelization.voxel_centers and self.voxel_size == other_voxelization.voxel_size
+                self.voxel_centers == other_voxelization.voxel_centers and self.voxel_size == other_voxelization.voxel_size
         )
 
-    def __add__(self, other_voxelization: "PointVoxelization") -> "PointVoxelization":
-        """
-        Return the union of the current voxelization with another voxelization.
-
-        :param other_voxelization: The voxelization to union with.
-        :type other_voxelization: PointVoxelization
-
-        :return: The union of the voxelizations.
-        :rtype: PointVoxelization
-        """
-        return self.union(other_voxelization)
-
-    def __sub__(self, other_voxelization: "PointVoxelization") -> "PointVoxelization":
-        """
-        Return the difference between the current voxelization and another voxelization.
-
-        :param other_voxelization: The voxelization to subtract.
-        :type other_voxelization: PointVoxelization
-
-        :return: The difference between the voxelizations.
-        :rtype: PointVoxelization
-        """
-        return self.difference(other_voxelization)
-
-    def __and__(self, other_voxelization: "PointVoxelization") -> "PointVoxelization":
-        """
-        Return the intersection of the current voxelization with another voxelization.
-
-        :param other_voxelization: The voxelization to intersect with.
-        :type other_voxelization: PointVoxelization
-
-        :return: The intersection of the voxelizations.
-        :rtype: PointVoxelization
-        """
-        return self.intersection(other_voxelization)
-
-    def __or__(self, other_voxelization: "PointVoxelization") -> "PointVoxelization":
-        """
-        Return the union of the current voxelization with another voxelization.
-
-        :param other_voxelization: The voxelization to union with.
-        :type other_voxelization: PointVoxelization
-
-        :return: The union of the voxelizations.
-        :rtype: PointVoxelization
-        """
-        return self.union(other_voxelization)
-
-    def __xor__(self, other_voxelization: "PointVoxelization") -> "PointVoxelization":
-        """
-        Return the symmetric difference between the current voxelization and another voxelization.
-
-        :param other_voxelization: The voxelization to calculate the symmetric difference with.
-        :type other_voxelization: PointVoxelization
-        :return: The symmetric difference between the voxelizations.
-        :rtype: PointVoxelization
-        """
-        return self.symmetric_difference(other_voxelization)
-
-    def __invert__(self) -> "PointVoxelization":
-        """
-        Return the inverse of the current voxelization.
-
-        :return: The inverse Voxelization object.
-        :rtype: PointVoxelization
-        """
-        return self.inverse()
-
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Return the number of voxels in the voxelization.
 
@@ -339,7 +444,7 @@ class PointVoxelization(PhysicalObject):
         return len(self.voxel_centers)
 
     @classmethod
-    def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = "") -> "PointVoxelization":
+    def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = "") -> "PointBasedVoxelization":
         """
         Create a Voxelization from a ClosedTriangleShell3D.
 
@@ -351,7 +456,7 @@ class PointVoxelization(PhysicalObject):
         :type name: str, optional
 
         :return: The created Voxelization.
-        :rtype: PointVoxelization
+        :rtype: PointBasedVoxelization
         """
         triangles = _shell_to_triangles(shell)
         voxels = cls._triangles_to_voxels(triangles, voxel_size)
@@ -359,7 +464,9 @@ class PointVoxelization(PhysicalObject):
         return cls(voxel_centers=voxels, voxel_size=voxel_size, name=name)
 
     @classmethod
-    def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = "") -> "PointVoxelization":
+    def from_volume_model(
+            cls, volume_model: VolumeModel, voxel_size: float, name: str = ""
+    ) -> "PointBasedVoxelization":
         """
         Create a Voxelization from a VolumeModel.
 
@@ -371,7 +478,7 @@ class PointVoxelization(PhysicalObject):
         :type name: str, optional
 
         :return: The created Voxelization.
-        :rtype: PointVoxelization
+        :rtype: PointBasedVoxelization
         """
         triangles = _volume_model_to_triangles(volume_model)
         voxels = cls._triangles_to_voxels(triangles, voxel_size)
@@ -421,14 +528,14 @@ class PointVoxelization(PhysicalObject):
         :rtype: set[tuple[float, float, float]]
         """
         return triangles_to_voxels(triangles, voxel_size).union(
-            PointVoxelization._triangles_to_voxels_at_interface(triangles, voxel_size)
+            PointBasedVoxelization._triangles_to_voxels_at_interface(triangles, voxel_size)
         )
 
     @staticmethod
     def _triangles_to_voxels_at_interface(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
         voxel_centers = set()
         for triangle in triangles:
-            voxel_centers = voxel_centers.union(PointVoxelization._triangle_interface_voxels(triangle, voxel_size))
+            voxel_centers = voxel_centers.union(PointBasedVoxelization._triangle_interface_voxels(triangle, voxel_size))
 
         return voxel_centers
 
@@ -455,9 +562,9 @@ class PointVoxelization(PhysicalObject):
                 if round(abscissa / voxel_size, 6).is_integer():
                     # Define the 3D triangle in 2D
 
-                    v0 = triangle[0][:i] + triangle[0][i + 1 :]
-                    v1 = triangle[1][:i] + triangle[1][i + 1 :]
-                    v2 = triangle[2][:i] + triangle[2][i + 1 :]
+                    v0 = triangle[0][:i] + triangle[0][i + 1:]
+                    v1 = triangle[1][:i] + triangle[1][i + 1:]
+                    v2 = triangle[2][:i] + triangle[2][i + 1:]
 
                     triangle_2d = np.array([v0, v1, v2])
 
@@ -523,29 +630,31 @@ class PointVoxelization(PhysicalObject):
 
         return [self.to_closed_triangle_shell()]
 
-    def intersection(self, other_voxelization: "PointVoxelization") -> "PointVoxelization":
+    def intersection(self, other_voxelization: "PointBasedVoxelization") -> "PointBasedVoxelization":
         """
         Create a voxelization that is the Boolean intersection of two voxelization.
         Both voxelization must have same voxel size.
 
         :param other_voxelization: The other voxelization to compute the Boolean intersection with.
-        :type other_voxelization: PointVoxelization
+        :type other_voxelization: PointBasedVoxelization
 
         :return: The created voxelization resulting from the Boolean intersection.
-        :rtype: PointVoxelization
+        :rtype: PointBasedVoxelization
         """
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform intersection.")
 
-        return PointVoxelization(self.voxel_centers.intersection(other_voxelization.voxel_centers), self.voxel_size)
+        return PointBasedVoxelization(
+            self.voxel_centers.intersection(other_voxelization.voxel_centers), self.voxel_size
+        )
 
-    def is_intersecting(self, other_voxelization: "PointVoxelization") -> bool:
+    def is_intersecting(self, other_voxelization: "PointBasedVoxelization") -> bool:
         """
         Check if two voxelizations are intersecting.
         Both voxelization must have same voxel size.
 
         :param other_voxelization: The other voxelization to check if there is an intersection with.
-        :type other_voxelization: PointVoxelization
+        :type other_voxelization: PointBasedVoxelization
 
         :return: True if the voxelizations are intersecting, False otherwise.
         :rtype: bool
@@ -554,62 +663,62 @@ class PointVoxelization(PhysicalObject):
 
         return len(intersection) > 0
 
-    def union(self, other_voxelization: "PointVoxelization") -> "PointVoxelization":
+    def union(self, other_voxelization: "PointBasedVoxelization") -> "PointBasedVoxelization":
         """
         Create a voxelization that is the Boolean union of two voxelization.
         Both voxelization must have same voxel size.
 
         :param other_voxelization: The other voxelization to compute the Boolean union with.
-        :type other_voxelization: PointVoxelization
+        :type other_voxelization: PointBasedVoxelization
 
         :return: The created voxelization resulting from the Boolean union.
-        :rtype: PointVoxelization
+        :rtype: PointBasedVoxelization
         """
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform union.")
 
-        return PointVoxelization(self.voxel_centers.union(other_voxelization.voxel_centers), self.voxel_size)
+        return PointBasedVoxelization(self.voxel_centers.union(other_voxelization.voxel_centers), self.voxel_size)
 
-    def difference(self, other_voxelization: "PointVoxelization") -> "PointVoxelization":
+    def difference(self, other_voxelization: "PointBasedVoxelization") -> "PointBasedVoxelization":
         """
         Create a voxelization that is the Boolean difference of two voxelization.
         Both voxelization must have same voxel size.
 
         :param other_voxelization: The other voxelization to compute the Boolean difference with.
-        :type other_voxelization: PointVoxelization
+        :type other_voxelization: PointBasedVoxelization
 
         :return: The created voxelization resulting from the Boolean difference.
-        :rtype: PointVoxelization
+        :rtype: PointBasedVoxelization
         """
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform difference.")
 
-        return PointVoxelization(self.voxel_centers.difference(other_voxelization.voxel_centers), self.voxel_size)
+        return PointBasedVoxelization(self.voxel_centers.difference(other_voxelization.voxel_centers), self.voxel_size)
 
-    def symmetric_difference(self, other_voxelization: "PointVoxelization") -> "PointVoxelization":
+    def symmetric_difference(self, other_voxelization: "PointBasedVoxelization") -> "PointBasedVoxelization":
         """
         Create a voxelization that is the Boolean symmetric difference (XOR) of two voxelization.
         Both voxelization must have same voxel size.
 
         :param other_voxelization: The other voxelization to compute the Boolean symmetric difference with.
-        :type other_voxelization: PointVoxelization
+        :type other_voxelization: PointBasedVoxelization
 
         :return: The created voxelization resulting from the Boolean symmetric difference.
-        :rtype: PointVoxelization
+        :rtype: PointBasedVoxelization
         """
         if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Both voxelizations must have same voxel_size to perform symmetric difference.")
 
-        return PointVoxelization(
+        return PointBasedVoxelization(
             self.voxel_centers.symmetric_difference(other_voxelization.voxel_centers), self.voxel_size
         )
 
-    def interference(self, other_voxelization: "PointVoxelization") -> float:
+    def interference(self, other_voxelization: "PointBasedVoxelization") -> float:
         """
         Compute the percentage of interference between two voxelization.
 
         :param other_voxelization: The other voxelization to compute percentage of interference with.
-        :type other_voxelization: PointVoxelization
+        :type other_voxelization: PointBasedVoxelization
 
         :return: The percentage of interference between the two voxelization.
         :rtype: float
@@ -659,7 +768,7 @@ class PointVoxelization(PhysicalObject):
         :type angle: float
 
         :return: A new Voxelization object resulting from the rotation.
-        :rtype: PointVoxelization
+        :rtype: PointBasedVoxelization
         """
         rotation_matrix = self._rotation_matrix(axis, angle)
         voxel_array = np.array(list(self.voxel_centers)) - np.array([center.x, center.y, center.z])
@@ -668,7 +777,7 @@ class PointVoxelization(PhysicalObject):
 
         intersecting_voxels = self._voxels_intersecting_voxels(rotated_voxels, self.voxel_size)
 
-        return PointVoxelization(intersecting_voxels, self.voxel_size)
+        return PointBasedVoxelization(intersecting_voxels, self.voxel_size)
 
     def translation(self, offset: Vector3D):
         """
@@ -678,14 +787,14 @@ class PointVoxelization(PhysicalObject):
         :type offset: Vector3D
 
         :return: A new Voxelization object resulting from the translation.
-        :rtype: PointVoxelization
+        :rtype: PointBasedVoxelization
         """
         voxel_array = np.array(list(self.voxel_centers))
         translated_voxels = voxel_array + np.array([offset.x, offset.y, offset.z])
 
         intersecting_voxels = self._voxels_intersecting_voxels(translated_voxels, self.voxel_size)
 
-        return PointVoxelization(intersecting_voxels, self.voxel_size)
+        return PointBasedVoxelization(intersecting_voxels, self.voxel_size)
 
     @staticmethod
     def voxel_center_in_implicit_grid(voxel_center: Point, voxel_size: float) -> bool:
@@ -707,15 +816,15 @@ class PointVoxelization(PhysicalObject):
         return True
 
     @classmethod
-    def from_voxel_matrix(cls, voxel_matrix: "VoxelMatrix"):
+    def from_voxel_matrix(cls, voxel_matrix: "MatrixBasedVoxelization"):
         """
         Create a Voxelization object from a voxel matrix.
 
         :param voxel_matrix: The voxel matrix object representing the voxelization.
-        :type voxel_matrix: VoxelMatrix
+        :type voxel_matrix: MatrixBasedVoxelization
 
         :return: A Voxelization object created from the voxel matrix.
-        :rtype: PointVoxelization
+        :rtype: PointBasedVoxelization
         """
         if not cls.voxel_center_in_implicit_grid(voxel_matrix.matrix_origin_center, voxel_matrix.voxel_size):
             warnings.warn(
@@ -766,12 +875,12 @@ class PointVoxelization(PhysicalObject):
 
     max_voxel_grid_center = property(_get_max_voxel_grid_center)
 
-    def to_voxel_matrix(self) -> "VoxelMatrix":
+    def to_voxel_matrix(self) -> "MatrixBasedVoxelization":
         """
         Convert the voxelization to a voxel matrix object.
 
         :return: The voxel matrix representing the voxelization.
-        :rtype: VoxelMatrix
+        :rtype: MatrixBasedVoxelization
         """
         min_center = self.min_voxel_grid_center
         max_center = self.max_voxel_grid_center
@@ -785,18 +894,18 @@ class PointVoxelization(PhysicalObject):
         matrix = np.zeros((dim_x, dim_y, dim_z), dtype=np.bool_)
         matrix[indices[:, 0], indices[:, 1], indices[:, 2]] = True
 
-        return VoxelMatrix(matrix, min_center, self.voxel_size)
+        return MatrixBasedVoxelization(matrix, min_center, self.voxel_size)
 
-    def inverse(self) -> "PointVoxelization":
+    def inverse(self) -> "PointBasedVoxelization":
         """
         Create a new Voxelization object that is the inverse of the current voxelization.
 
         :return: The inverse Voxelization object.
-        :rtype: PointVoxelization
+        :rtype: PointBasedVoxelization
         """
         inverted_voxel_matrix = self.to_voxel_matrix().inverse()
 
-        return PointVoxelization.from_voxel_matrix(inverted_voxel_matrix)
+        return PointBasedVoxelization.from_voxel_matrix(inverted_voxel_matrix)
 
     def _get_bounding_box(self):
         """
@@ -806,10 +915,10 @@ class PointVoxelization(PhysicalObject):
         :rtype: BoundingBox
         """
         min_point = (
-            np.array([self.min_voxel_grid_center]) - np.array([self.voxel_size, self.voxel_size, self.voxel_size])
+                np.array([self.min_voxel_grid_center]) - np.array([self.voxel_size, self.voxel_size, self.voxel_size])
         )[0]
         max_point = (
-            np.array([self.max_voxel_grid_center]) + np.array([self.voxel_size, self.voxel_size, self.voxel_size])
+                np.array([self.max_voxel_grid_center]) + np.array([self.voxel_size, self.voxel_size, self.voxel_size])
         )[0]
 
         return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
@@ -837,7 +946,7 @@ class PointVoxelization(PhysicalObject):
 
         return x_index, y_index, z_index
 
-    def flood_fill(self, start_point: Point, fill_with: bool) -> "PointVoxelization":
+    def flood_fill(self, start_point: Point, fill_with: bool) -> "PointBasedVoxelization":
         """
         Perform a flood fill operation within the voxelization starting from the given point.
 
@@ -847,7 +956,7 @@ class PointVoxelization(PhysicalObject):
         :type fill_with: bool
 
         :return: A new Voxelization object with the filled voxels.
-        :rtype: PointVoxelization
+        :rtype: PointBasedVoxelization
         """
         start = self._point_to_local_grid_index(start_point)
         voxel_matrix = self.to_voxel_matrix()
@@ -855,22 +964,22 @@ class PointVoxelization(PhysicalObject):
 
         return self.from_voxel_matrix(filled_voxel_matrix)
 
-    def fill_outer_voxels(self) -> "PointVoxelization":
+    def fill_outer_voxels(self) -> "PointBasedVoxelization":
         return self.from_voxel_matrix(self.to_voxel_matrix().fill_outer_voxels())
 
-    def fill_enclosed_voxels(self) -> "PointVoxelization":
+    def fill_enclosed_voxels(self) -> "PointBasedVoxelization":
         return self.from_voxel_matrix(self.to_voxel_matrix().fill_enclosed_voxels())
 
 
-class VoxelMatrix(PhysicalObject):
-    """Class to manipulate voxel matrix."""
+class MatrixBasedVoxelization(PhysicalObject):
+    """Voxelization implemented as a 3D matrix."""
 
     def __init__(
-        self,
-        voxel_matrix: np.ndarray[np.bool_, np.ndim == 3],
-        voxel_matrix_origin_center: Point,
-        voxel_size: float,
-        name: str = "",
+            self,
+            voxel_matrix: np.ndarray[np.bool_, np.ndim == 3],
+            voxel_matrix_origin_center: Point,
+            voxel_size: float,
+            name: str = "",
     ):
         """
         :param voxel_matrix: The voxel numpy matrix object representing the voxelization.
@@ -886,11 +995,11 @@ class VoxelMatrix(PhysicalObject):
 
         PhysicalObject.__init__(self, name=name)
 
-    def __eq__(self, other_voxel_matrix: "VoxelMatrix") -> bool:
+    def __eq__(self, other_voxel_matrix: "MatrixBasedVoxelization") -> bool:
         return (
-            self.voxel_size == other_voxel_matrix.voxel_size
-            and self.matrix_origin_center == other_voxel_matrix.matrix_origin_center
-            and np.array_equal(self.matrix, other_voxel_matrix.matrix)
+                self.voxel_size == other_voxel_matrix.voxel_size
+                and self.matrix_origin_center == other_voxel_matrix.matrix_origin_center
+                and np.array_equal(self.matrix, other_voxel_matrix.matrix)
         )
 
     def __len__(self) -> int:
@@ -902,75 +1011,75 @@ class VoxelMatrix(PhysicalObject):
         """
         return len(np.argwhere(self.matrix))
 
-    def union(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+    def union(self, other_voxel_matrix: "MatrixBasedVoxelization") -> "MatrixBasedVoxelization":
         return self._logical_operation(other_voxel_matrix, np.logical_or)
 
-    def __add__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+    def __add__(self, other_voxel_matrix: "MatrixBasedVoxelization") -> "MatrixBasedVoxelization":
         """
         Return the union of the current voxel matrix with another voxel matrix.
 
         :param other_voxel_matrix: The voxel matrix to union with.
-        :type other_voxel_matrix: VoxelMatrix
+        :type other_voxel_matrix: MatrixBasedVoxelization
 
         :return: The union of the voxel matrices.
-        :rtype: VoxelMatrix
+        :rtype: MatrixBasedVoxelization
         """
         return self.union(other_voxel_matrix)
 
-    def difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+    def difference(self, other_voxel_matrix: "MatrixBasedVoxelization") -> "MatrixBasedVoxelization":
         return self._logical_operation(other_voxel_matrix, lambda a, b: np.logical_and(a, np.logical_not(b)))
 
-    def __sub__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+    def __sub__(self, other_voxel_matrix: "MatrixBasedVoxelization") -> "MatrixBasedVoxelization":
         """
         Return the difference between the current voxel matrix and another voxel matrix.
 
         :param other_voxel_matrix: The voxel matrix to subtract.
-        :type other_voxel_matrix: VoxelMatrix
+        :type other_voxel_matrix: MatrixBasedVoxelization
 
         :return: The difference between the voxel matrices.
-        :rtype: VoxelMatrix
+        :rtype: MatrixBasedVoxelization
         """
         return self.difference(other_voxel_matrix)
 
-    def intersection(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+    def intersection(self, other_voxel_matrix: "MatrixBasedVoxelization") -> "MatrixBasedVoxelization":
         return self._logical_operation(other_voxel_matrix, np.logical_and)
 
-    def __and__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+    def __and__(self, other_voxel_matrix: "MatrixBasedVoxelization") -> "MatrixBasedVoxelization":
         """
         Return the intersection of the current voxel matrix with another voxel matrix.
 
         :param other_voxel_matrix: The voxel matrix to intersect with.
-        :type other_voxel_matrix: VoxelMatrix
+        :type other_voxel_matrix: MatrixBasedVoxelization
 
         :return: The intersection of the voxel matrices.
-        :rtype: VoxelMatrix
+        :rtype: MatrixBasedVoxelization
         """
         return self.intersection(other_voxel_matrix)
 
-    def symmetric_difference(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+    def symmetric_difference(self, other_voxel_matrix: "MatrixBasedVoxelization") -> "MatrixBasedVoxelization":
         return self._logical_operation(other_voxel_matrix, np.logical_xor)
 
-    def __xor__(self, other_voxel_matrix: "VoxelMatrix") -> "VoxelMatrix":
+    def __xor__(self, other_voxel_matrix: "MatrixBasedVoxelization") -> "MatrixBasedVoxelization":
         """
         Return the symmetric difference between the current voxel matrix and another voxel matrix.
 
         :param other_voxel_matrix: The voxel matrix to calculate the symmetric difference with.
-        :type other_voxel_matrix: VoxelMatrix
+        :type other_voxel_matrix: MatrixBasedVoxelization
         :return: The symmetric difference between the voxel matrices.
-        :rtype: VoxelMatrix
+        :rtype: MatrixBasedVoxelization
         """
         return self.symmetric_difference(other_voxel_matrix)
 
-    def inverse(self) -> "VoxelMatrix":
+    def inverse(self) -> "MatrixBasedVoxelization":
         inverted_matrix = np.logical_not(self.matrix)
-        return VoxelMatrix(inverted_matrix, self.matrix_origin_center, self.voxel_size)
+        return MatrixBasedVoxelization(inverted_matrix, self.matrix_origin_center, self.voxel_size)
 
-    def __invert__(self) -> "VoxelMatrix":
+    def __invert__(self) -> "MatrixBasedVoxelization":
         """
         Return the inverse of the current voxel matrix.
 
         :return: The inverse VoxelMatrix object.
-        :rtype: VoxelMatrix
+        :rtype: MatrixBasedVoxelization
         """
         return self.inverse()
 
@@ -981,7 +1090,7 @@ class VoxelMatrix(PhysicalObject):
         )
         return extents_min, extents_max
 
-    def _logical_operation(self, other: "VoxelMatrix", logical_operation):
+    def _logical_operation(self, other: "MatrixBasedVoxelization", logical_operation):
         if self.voxel_size != other.voxel_size:
             raise ValueError("Voxel sizes must be the same to perform boolean operations.")
 
@@ -1000,22 +1109,22 @@ class VoxelMatrix(PhysicalObject):
         other_start = np.round((other_min - global_min) / self.voxel_size, 6).astype(int)
 
         new_self[
-            self_start[0] : self_start[0] + self.matrix.shape[0],
-            self_start[1] : self_start[1] + self.matrix.shape[1],
-            self_start[2] : self_start[2] + self.matrix.shape[2],
+        self_start[0]: self_start[0] + self.matrix.shape[0],
+        self_start[1]: self_start[1] + self.matrix.shape[1],
+        self_start[2]: self_start[2] + self.matrix.shape[2],
         ] = self.matrix
 
         new_other[
-            other_start[0] : other_start[0] + other.matrix.shape[0],
-            other_start[1] : other_start[1] + other.matrix.shape[1],
-            other_start[2] : other_start[2] + other.matrix.shape[2],
+        other_start[0]: other_start[0] + other.matrix.shape[0],
+        other_start[1]: other_start[1] + other.matrix.shape[1],
+        other_start[2]: other_start[2] + other.matrix.shape[2],
         ] = other.matrix
 
         result_matrix = logical_operation(new_self, new_other)
 
-        return VoxelMatrix(result_matrix, tuple(global_min), self.voxel_size)._crop_matrix()
+        return MatrixBasedVoxelization(result_matrix, tuple(global_min), self.voxel_size)._crop_matrix()
 
-    def _crop_matrix(self) -> "VoxelMatrix":
+    def _crop_matrix(self) -> "MatrixBasedVoxelization":
         """
         Crop the VoxelMatrix to the smallest possible size.
         """
@@ -1033,29 +1142,29 @@ class VoxelMatrix(PhysicalObject):
 
         # Crop the matrix to the smallest possible size
         cropped_matrix = self.matrix[
-            min_voxel_coords[0] : max_voxel_coords[0] + 1,
-            min_voxel_coords[1] : max_voxel_coords[1] + 1,
-            min_voxel_coords[2] : max_voxel_coords[2] + 1,
-        ]
+                         min_voxel_coords[0]: max_voxel_coords[0] + 1,
+                         min_voxel_coords[1]: max_voxel_coords[1] + 1,
+                         min_voxel_coords[2]: max_voxel_coords[2] + 1,
+                         ]
 
         # Calculate new matrix_origin_center
         new_origin_center = np.round(self.matrix_origin_center + min_voxel_coords * self.voxel_size, 6)
 
         return self.__class__(cropped_matrix, tuple(new_origin_center), self.voxel_size)
 
-    def flood_fill(self, start, fill_with) -> "VoxelMatrix":
-        return VoxelMatrix(
+    def flood_fill(self, start, fill_with) -> "MatrixBasedVoxelization":
+        return MatrixBasedVoxelization(
             flood_fill_matrix_3d(self.matrix, start, fill_with), self.matrix_origin_center, self.voxel_size
         )
 
-    def fill_outer_voxels(self) -> "VoxelMatrix":
+    def fill_outer_voxels(self) -> "MatrixBasedVoxelization":
         expanded_voxel_matrix = self._expand()
         outer_filled_expanded_voxel_matrix = expanded_voxel_matrix.flood_fill((0, 0, 0), True)
         outer_filled_voxel_matrix = outer_filled_expanded_voxel_matrix._reduce()
 
         return outer_filled_voxel_matrix
 
-    def fill_enclosed_voxels(self) -> "VoxelMatrix":
+    def fill_enclosed_voxels(self) -> "MatrixBasedVoxelization":
         outer_filled_voxel_matrix = self.fill_outer_voxels()
         inner_filled_voxel_matrix = self + outer_filled_voxel_matrix.inverse()
 
@@ -1064,32 +1173,32 @@ class VoxelMatrix(PhysicalObject):
 
         return inner_filled_voxel_matrix
 
-    def _expand(self) -> "VoxelMatrix":
+    def _expand(self) -> "MatrixBasedVoxelization":
         current_shape = self.matrix.shape
         new_shape = tuple(dim + 2 for dim in current_shape)
         expanded_matrix = np.zeros(new_shape, dtype="bool")
         slices = tuple(slice(1, -1) for _ in current_shape)
         expanded_matrix[slices] = self.matrix.copy()
 
-        return VoxelMatrix(
+        return MatrixBasedVoxelization(
             expanded_matrix,
             tuple(round(coord - self.voxel_size, 6) for coord in self.matrix_origin_center),
             self.voxel_size,
         )
 
-    def _reduce(self) -> "VoxelMatrix":
+    def _reduce(self) -> "MatrixBasedVoxelization":
         current_shape = self.matrix.shape
         slices = tuple(slice(1, -1) for _ in current_shape)
         reduced_matrix = self.matrix.copy()[slices]
 
-        return VoxelMatrix(
+        return MatrixBasedVoxelization(
             reduced_matrix,
             tuple(round(coord + self.voxel_size, 6) for coord in self.matrix_origin_center),
             self.voxel_size,
         )
 
     @classmethod
-    def from_point_voxelization(cls, voxelization: "PointVoxelization") -> "VoxelMatrix":
+    def from_point_voxelization(cls, voxelization: "PointBasedVoxelization") -> "MatrixBasedVoxelization":
         return voxelization.to_voxel_matrix()
 
     @classmethod
@@ -1106,8 +1215,8 @@ class VoxelMatrix(PhysicalObject):
 
         return cls(matrix, matrix_origin_center, voxel_size, name)._crop_matrix()
 
-    def to_point_voxelization(self) -> "PointVoxelization":
-        return PointVoxelization.from_voxel_matrix(self)
+    def to_point_voxelization(self) -> "PointBasedVoxelization":
+        return PointBasedVoxelization.from_voxel_matrix(self)
 
     def to_triangles(self) -> Set[Triangle]:
         return self.to_point_voxelization().to_triangles()
@@ -1137,7 +1246,7 @@ class Pixelization:
         :rtype: bool
         """
         return (
-            self.pixel_centers == other_pixelization.pixel_centers and self.pixel_size == other_pixelization.pixel_size
+                self.pixel_centers == other_pixelization.pixel_centers and self.pixel_size == other_pixelization.pixel_size
         )
 
     def __add__(self, other_pixelization: "Pixelization") -> "Pixelization":
@@ -1354,7 +1463,7 @@ class Pixelization:
 
     @classmethod
     def from_pixel_matrix(
-        cls, pixel_matrix: "PixelMatrix", pixel_size: float, pixel_matrix_origin_center: Tuple[float, float]
+            cls, pixel_matrix: "PixelMatrix", pixel_size: float, pixel_matrix_origin_center: Tuple[float, float]
     ):
         indices = np.argwhere(pixel_matrix.matrix)
         pixel_centers = pixel_matrix_origin_center + indices * pixel_size
