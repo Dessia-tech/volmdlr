@@ -4,7 +4,6 @@ Concatenate common operation for two or more objects.
 """
 import math
 import random
-import sys
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -164,6 +163,7 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
 
     return point1, point2
 
+
 def get_abscissa_discretization(primitive, abscissa1, abscissa2, max_number_points: int = 10,
                                 return_abscissas: bool = True):
     """
@@ -189,6 +189,7 @@ def get_abscissa_discretization(primitive, abscissa1, abscissa2, max_number_poin
     if return_abscissas:
         return discretized_points_between_1_2, points_abscissas
     return discretized_points_between_1_2
+
 
 def get_point_distance_to_edge(edge, point, start, end):
     """

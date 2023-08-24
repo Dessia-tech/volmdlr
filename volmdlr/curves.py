@@ -43,26 +43,6 @@ class Curve(DessiaObject):
         """
         raise NotImplementedError(f'abscissa method not implemented by {self.__class__.__name__}')
 
-    def local_discretization(self, point1, point2, number_points: int = 10):
-        """
-        Gets n discretization points between two given points of the Curve.
-
-        :param point1: point 1 on edge.
-        :param point2: point 2 on edge.
-        :param number_points: number of points to discretize locally.
-        :return: list of locally discretized points.
-        """
-        abscissa1 = self.abscissa(point1)
-        abscissa2 = self.abscissa(point2)
-        if point1.is_close(point2) and point1.is_close(self.point_at_abscissa(0.0)):
-            abscissa1 = 0.0
-            abscissa2 = self.length()
-            points = vm_common_operations.get_local_discretization(self, abscissa1, abscissa2, number_points)
-            return points + [points[0]]
-        if abscissa1 > abscissa2 and abscissa2 == 0.0:
-            abscissa2 = self.length()
-        return vm_common_operations.get_local_discretization(self, abscissa1, abscissa2, number_points)
-
 
 class ClosedCurve(Curve):
     """Abstract class for definiing closed curves (Circle, Ellipse) properties."""
@@ -1873,12 +1853,6 @@ class Ellipse2D(ClosedCurve):
             volmdlr.Point2D(self.major_axis * math.cos(theta), self.minor_axis * math.sin(theta)))
             for theta in npy.linspace(self.angle_start, self.angle_end, angle_resolution + 1)]
         return discretization_points
-
-    def ellipse_intersections(self, ellipse2d, abs_tol: float = 1e-7):
-        if self.bounding_rectangle.distance_to_b_rectangle(ellipse2d.bounding_rectangle) > abs_tol:
-            return []
-        intersections = volmdlr_intersections.get_bsplinecurve_intersections(ellipse2d, self, abs_tol)
-        return intersections
 
     def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-6):
         """
