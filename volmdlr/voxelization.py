@@ -3,7 +3,6 @@ Class for voxel representation of volmdlr models
 """
 import warnings
 from abc import ABC, abstractmethod
-from copy import copy
 from typing import List, Set, Tuple, TypeVar
 
 import matplotlib.patches as patches
@@ -20,7 +19,6 @@ from volmdlr.voxelization_compiled import (
     flood_fill_matrix_3d,
     line_segments_to_pixels,
     triangles_to_voxel_matrix,
-    triangles_to_voxels,
     voxel_triangular_faces,
 )
 
@@ -40,7 +38,7 @@ class Voxelization(ABC, PhysicalObject):
     The implicit grid consists of axis-aligned cubes with a given size, ensuring that the global
     origin (0, 0, 0) is always a corner point of a voxel.
 
-    For example, in 1D with a voxel size of 't', the set of voxels (defined by minimum and maximum points)
+    For example, in 1D with a voxel size of `t`, the set of voxels (defined by minimum and maximum points)
     is: {i ∈ N, t ∈ R | (i * t, (i+1) * t)}
     The corresponding set of voxel centers is: {i ∈ N, t ∈ R | (i + 0.5) * t}
 
@@ -336,12 +334,11 @@ class Voxelization(ABC, PhysicalObject):
 
     # FILLING METHODS
     @abstractmethod
-    def flood_fill(self, start_point: Point, fill_with: bool) -> VoxelizationType:
+    def flood_fill(self, start, fill_with: bool) -> VoxelizationType:
         """
         Perform a flood fill operation on the voxelization.
 
-        :param start_point: The starting point for the flood fill.
-        :type start_point: Point
+        :param start: The starting point for the flood fill.
         :param fill_with: The value to fill the voxels with during the operation.
         :type fill_with: bool
 
@@ -497,13 +494,22 @@ class Voxelization(ABC, PhysicalObject):
         """
         triangulation = shell.triangulation()
         return [
-            tuple(
-                tuple([float(point.x), float(point.y), float(point.z)])
-                for point in [
-                    triangulation.points[triangle[0]],
-                    triangulation.points[triangle[1]],
-                    triangulation.points[triangle[2]],
-                ]
+            (
+                (
+                    float(triangulation.points[triangle[0]].x),
+                    float(triangulation.points[triangle[0]].y),
+                    float(triangulation.points[triangle[0]].z),
+                ),
+                (
+                    float(triangulation.points[triangle[1]].x),
+                    float(triangulation.points[triangle[1]].y),
+                    float(triangulation.points[triangle[1]].z),
+                ),
+                (
+                    float(triangulation.points[triangle[2]].x),
+                    float(triangulation.points[triangle[2]].y),
+                    float(triangulation.points[triangle[2]].z),
+                ),
             )
             for triangle in triangulation.triangles
         ]
@@ -774,8 +780,8 @@ class PointBasedVoxelization(Voxelization):
         """
         Perform a flood fill operation on the voxelization.
 
-        :param start_point: The starting point for the flood fill.
-        :type start_point: Point
+        :param start_point: The coordinates of the starting point for the flood fill.
+        :type start_point: tuple[float, float, float]
         :param fill_with: The value to fill the voxels with during the operation.
         :type fill_with: bool
 
@@ -869,12 +875,12 @@ class PointBasedVoxelization(Voxelization):
 
         return MatrixBasedVoxelization(matrix, min_center, self.voxel_size)
 
-    def _point_to_local_grid_index(self, point: Point) -> Tuple[int, ...]:
+    def _point_to_local_grid_index(self, point: Point) -> Tuple[int, int, int]:
         """
         Convert a point to the local grid index within the voxelization.
 
         :param point: The point to convert.
-        :type point: Point
+        :type point: tuple[float, float, float]
 
         :return: The local grid index of the point.
         :rtype: Tuple[int, ...]
@@ -1159,12 +1165,12 @@ class MatrixBasedVoxelization(Voxelization):
         inverted_matrix = np.logical_not(self.matrix)
         return MatrixBasedVoxelization(inverted_matrix, self._min_voxel_grid_center, self.voxel_size)
 
-    def flood_fill(self, start_point: Point, fill_with: bool) -> "MatrixBasedVoxelization":
+    def flood_fill(self, start_indexes: Tuple[int, int, int], fill_with: bool) -> "MatrixBasedVoxelization":
         """
         Perform a flood fill operation on the voxelization.
 
-        :param start_point: The starting point for the flood fill.
-        :type start_point: Point
+        :param start_indexes: The indexes of the starting voxel in the 3D matrix for the flood fill.
+        :type start_indexes: tuple[int, int, int]
         :param fill_with: The value to fill the voxels with during the operation.
         :type fill_with: bool
 
@@ -1172,7 +1178,7 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: MatrixBasedVoxelization
         """
         return MatrixBasedVoxelization(
-            flood_fill_matrix_3d(self.matrix, start_point, fill_with), self._min_voxel_grid_center, self.voxel_size
+            flood_fill_matrix_3d(self.matrix, start_indexes, fill_with), self._min_voxel_grid_center, self.voxel_size
         )
 
     def fill_outer_voxels(self) -> "MatrixBasedVoxelization":
@@ -1213,7 +1219,7 @@ class MatrixBasedVoxelization(Voxelization):
 
         return MatrixBasedVoxelization(
             expanded_matrix,
-            tuple(round(coord - self.voxel_size, 6) for coord in self._min_voxel_grid_center),
+            tuple(np.round(np.array(self.min_voxel_grid_center) - self.voxel_size, 6)),
             self.voxel_size,
         )
 
@@ -1224,7 +1230,7 @@ class MatrixBasedVoxelization(Voxelization):
 
         return MatrixBasedVoxelization(
             reduced_matrix,
-            tuple(round(coord + self.voxel_size, 6) for coord in self._min_voxel_grid_center),
+            tuple(np.round(np.array(self.min_voxel_grid_center) + self.voxel_size, 6)),
             self.voxel_size,
         )
 

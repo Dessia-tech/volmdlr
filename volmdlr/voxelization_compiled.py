@@ -1,7 +1,8 @@
 # cython: language_level=3
 # distutils: language = c++
 """
-Pure python module to define cython function.
+Helper Cython functions for voxelization defined using the pure Python syntax.
+
 This module needs to be compiled!
 """
 from typing import List, Set, Tuple
@@ -14,7 +15,6 @@ from cython.cimports.libcpp import bool as bool_C
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
 
-# TODO: refactor, add docstrings
 
 # CUSTOM PYTHON TYPES
 
@@ -22,42 +22,6 @@ Point = Tuple[float, float, float]
 Triangle = Tuple[Point, Point, Point]
 
 # PYTHON FUNCTIONS
-
-
-def triangles_to_voxels(triangles: List[Triangle], voxel_size: float) -> Set[Point]:
-    """
-    Helper function to compute all the voxels intersecting with a given list of triangles.
-
-    :param triangles: The triangles to compute the intersecting voxels.
-    :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
-    :param voxel_size: The voxel edges size.
-    :type voxel_size: float
-
-    :return: The centers of the voxels that intersect with the triangles.
-    :rtype: set[tuple[float, float, float]]
-    """
-    # TODO: replace this method with triangles_to_voxel_matrix
-    voxel_centers = set()
-
-    for triangle in triangles:
-        min_point = tuple(min(p[i] for p in triangle) for i in range(3))
-        max_point = tuple(max(p[i] for p in triangle) for i in range(3))
-
-        for bbox_center in _aabb_intersecting_boxes(
-            min_point,
-            max_point,
-            voxel_size,
-        ):
-            bbox_center = tuple(bbox_center)
-            if bbox_center not in voxel_centers:
-                if _triangle_intersects_voxel(
-                    triangle,
-                    bbox_center,
-                    (0.5 * voxel_size, 0.5 * voxel_size, 0.5 * voxel_size),
-                ):
-                    voxel_centers.add(bbox_center)
-
-    return voxel_centers
 
 
 def triangles_to_voxel_matrix(
@@ -121,6 +85,9 @@ def flood_fill_matrix_2d(
     :return: The matrix after performing flood fill.
     :rtype: np.ndarray[np.bool_, np.ndim == 2]
     """
+    if not (0 <= start[0] < matrix.shape[0] and 0 <= start[1] < matrix.shape[1]):
+        raise IndexError("Start index is outside the matrix.")
+
     return np.asarray(
         _flood_fill_matrix_2d(
             matrix.astype(np.bool_),
@@ -148,6 +115,9 @@ def flood_fill_matrix_3d(
     :return: The matrix after performing flood fill.
     :rtype: np.ndarray[np.bool_, np.ndim == 3]
     """
+    if not (0 <= start[0] < matrix.shape[0] and 0 <= start[1] < matrix.shape[1] and 0 <= start[2] < matrix.shape[2]):
+        raise IndexError("Start index is outside the matrix.")
+
     return np.asarray(
         _flood_fill_matrix_3d(
             matrix.astype(np.bool_),
@@ -604,7 +574,6 @@ def _line_segment_intersects_pixel(
     ymin, ymax = pixel_center_y - pixel_size / 2, pixel_center_y + pixel_size / 2
 
     # Compute the line equation for a point
-
     line_eq1 = _round_to_digits((y2 - y1) * xmin + (x1 - x2) * ymin + (x2 * y1 - x1 * y2), 6)
     line_eq2 = _round_to_digits((y2 - y1) * xmin + (x1 - x2) * ymax + (x2 * y1 - x1 * y2), 6)
     line_eq3 = _round_to_digits((y2 - y1) * xmax + (x1 - x2) * ymin + (x2 * y1 - x1 * y2), 6)
