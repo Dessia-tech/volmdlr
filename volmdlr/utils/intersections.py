@@ -61,6 +61,14 @@ def circle_3d_line_intersections(circle_3d, line):
 
 
 def ellipse3d_line_intersections(ellipse3d, line3d, abs_tol: float = 1e-6):
+    """
+    Calculates the intersections between an Ellipse3D and a Line3D.
+
+    :param ellipse3d: The Ellipse 3D.
+    :param line3d: The Line 3D.
+    :param abs_tol: Tolerance.
+    :return: list of points intersecting the Ellipse 3D.
+    """
     intersections = []
     if not math.isclose(abs(ellipse3d.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=abs_tol):
         frame_mapped_ellipse3d = ellipse3d.frame_mapping(ellipse3d.frame, 'new')
