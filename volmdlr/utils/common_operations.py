@@ -105,7 +105,7 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
     :param element: volmdlr element to be plotted (either 2D or 3D).
     :param number_points: number of points to be used in the plot.
     :param close_plot: specifies if plot is to be closed or not.
-    :return: Matplolib plot axis.
+    :return: Matplotlib plot axis.
     """
     components = [[], [], []]
     for point in element.discretization_points(number_points=number_points):
@@ -164,12 +164,12 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
 
     return point1, point2
 
-
-def abscissa_discretization(primitive, abscissa1, abscissa2, max_number_points: int = 10,
-                            return_abscissas: bool = True):
+def get_abscissa_discretization(primitive, abscissa1, abscissa2, max_number_points: int = 10,
+                                return_abscissas: bool = True):
     """
     Gets n discretization points between two given points of the edge.
 
+    :param primitive: Primitive to discretize locally.
     :param abscissa1: Initial abscissa.
     :param abscissa2: Final abscissa.
     :param max_number_points: Expected number of points to discretize locally.
@@ -180,6 +180,8 @@ def abscissa_discretization(primitive, abscissa1, abscissa2, max_number_points: 
     discretized_points_between_1_2 = []
     points_abscissas = []
     for abscissa in np.linspace(abscissa1, abscissa2, num=max_number_points):
+        if abscissa > primitive.length() + 1e-6:
+            continue
         abscissa_point = primitive.point_at_abscissa(abscissa)
         if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
             discretized_points_between_1_2.append(abscissa_point)
@@ -188,12 +190,14 @@ def abscissa_discretization(primitive, abscissa1, abscissa2, max_number_points: 
         return discretized_points_between_1_2, points_abscissas
     return discretized_points_between_1_2
 
-
-def point_distance_to_edge(edge, point, start, end):
+def get_point_distance_to_edge(edge, point, start, end):
     """
     Calculates the distance from a given point to an edge.
 
-    :param point: point.
+    :param edge: Edge to calculate distance to point.
+    :param point: Point to calculate the distance to edge.
+    :param start: Edge's start point.
+    :param edge: Edge's end point.
     :return: distance to edge.
     """
     best_distance = math.inf
@@ -221,24 +225,3 @@ def point_distance_to_edge(edge, point, start, end):
         if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
             break
     return distance
-
-
-def get_local_discretization(element, abscissa1, abscissa2, number_points: int = 10):
-    """
-    Gets n discretization points between two given points of the edge.
-
-    :param point1: point 1 on edge.
-    :param point2: point 2 on edge.
-    :param number_points: number of points to discretize locally.
-    :return: list of locally discretized points.
-    """
-    # abscissa1 = element.abscissa(point1)
-    # abscissa2 = element.abscissa(point2)
-    discretized_points_between_1_2 = []
-    for abscissa in np.linspace(abscissa1, abscissa2, num=number_points):
-        if abscissa > element.length() + 1e-6:
-            continue
-        abscissa_point = element.point_at_abscissa(abscissa)
-        if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
-            discretized_points_between_1_2.append(abscissa_point)
-    return discretized_points_between_1_2

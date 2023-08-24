@@ -706,7 +706,7 @@ class EdgeCollection3D(WireMixin):
         self.name = name
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        """ Plot edges with matplolib, not tested. """
+        """ Plot edges with Matplotlib, not tested. """
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -3163,7 +3163,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         Determines if a polygon self intersects using the Bentley-Ottmann algorithm.
 
-        :return: True if the polygon self intersects, False otherwis. If True, returns two
+        :return: True if the polygon self intersects, False otherwise. If True, returns two
             intersecting line segments as LineSegment2D objects. If False, returns two None values;
         :rtype: Tuple[bool, Union[volmdlr.edges.LineSegment2D, None], Union[volmdlr.edges.LineSegment2D, None]]
         """
