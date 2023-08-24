@@ -1097,7 +1097,7 @@ class Compound(dc.PhysicalObject):
             if all(primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or
                    hasattr(primitive, "shell_faces") for primitive in self.primitives):
                 self._type = "manifold_solid_brep"
-            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edges, volmdlr.Point3D)) or
+            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edge, volmdlr.Point3D)) or
                      hasattr(primitive, "shell_faces") for primitive in self.primitives):
                 self._type = "geometric_curve_set"
             else:
@@ -1106,7 +1106,7 @@ class Compound(dc.PhysicalObject):
 
     @compound_type.setter
     def compound_type(self, value):
-        """Compound type setter."""
+        """Compound typesetter."""
         self._type = value
 
     def _bounding_box(self) -> BoundingBox:
