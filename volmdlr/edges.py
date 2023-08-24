@@ -319,14 +319,6 @@ class Edge(dc.DessiaObject):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
-        # discretized_points_between_1_2 = []
-        # for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
-        #     if abscissa > self.length() + 1e-6:
-        #         continue
-        #     abscissa_point = self.point_at_abscissa(abscissa)
-        #     if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
-        #         discretized_points_between_1_2.append(abscissa_point)
-        # return discretized_points_between_1_2
 
     def split_between_two_points(self, point1, point2):
         """
@@ -356,31 +348,6 @@ class Edge(dc.DessiaObject):
         :return: distance to edge.
         """
         return vm_common_operations.get_point_distance_to_edge(self, point, self.start, self.end)
-        # best_distance = math.inf
-        # abscissa1 = 0
-        # abscissa2 = self.abscissa(self.end)
-        # distance = best_distance
-        # point1_ = self.start
-        # point2_ = self.end
-        # linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
-        # while True:
-        #     discretized_points_between_1_2 = self.local_discretization(point1_, point2_)
-        #     if not discretized_points_between_1_2:
-        #         break
-        #     distance = point.point_distance(discretized_points_between_1_2[0])
-        #     for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
-        #         line = linesegment_class_(point1, point2)
-        #         dist = line.point_distance(point)
-        #         if dist < distance:
-        #             point1_ = point1
-        #             point2_ = point2
-        #             distance = dist
-        #     if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-6):
-        #         break
-        #     best_distance = distance
-        #     if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
-        #         break
-        # return distance
 
     @property
     def simplify(self):
@@ -470,16 +437,6 @@ class Edge(dc.DessiaObject):
         """
         return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2,
                                                                 max_number_points, return_abscissas)
-        # discretized_points_between_1_2 = []
-        # points_abscissas = []
-        # for abscissa in npy.linspace(abscissa1, abscissa2, num=max_number_points):
-        #     abscissa_point = self.point_at_abscissa(abscissa)
-        #     if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
-        #         discretized_points_between_1_2.append(abscissa_point)
-        #         points_abscissas.append(abscissa)
-        # if return_abscissas:
-        #     return discretized_points_between_1_2, points_abscissas
-        # return discretized_points_between_1_2
 
 
 class LineSegment(Edge):
