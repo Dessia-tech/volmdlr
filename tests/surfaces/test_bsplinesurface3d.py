@@ -186,7 +186,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         degree_v = 2
         size_u = 2
         size_v = 9
-        surface = surfaces.BSplineSurface3D.points_fitting_into_bspline_surface(points, size_u, size_v,
+        surface = surfaces.BSplineSurface3D.from_points_interpolation(points, size_u, size_v,
                                                                                 degree_u, degree_v)
 
         expected_points = [volmdlr.Point3D(1.0, 0.0, 0.0),
@@ -239,7 +239,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         degree_v = 3
         size_u = 7
         size_v = 9
-        surface = surfaces.BSplineSurface3D.points_approximate_into_bspline_surface(points, size_u, size_v,
+        surface = surfaces.BSplineSurface3D.from_points_approximation(points, size_u, size_v,
                                                                                     degree_u, degree_v,
                                                                                     ctrlpts_size_u=5, ctrlpts_size_v=6)
 

@@ -20,14 +20,16 @@ import cython
 import numpy as np
 from scipy.linalg import lu_factor, lu_solve
 
-from geomdl import BSpline, linalg
+from geomdl import BSpline
 from cython.cimports.libcpp.vector import vector
 
 from volmdlr.nurbs import core, helpers
 
 
+@cython.wraparound(False)
+@cython.boundscheck(False)
 def interpolate_curve(points: np.ndarray[np.double_t, ndim == 2], degree: cython.int,
-                      centripetal: cython.bint) -> BSpline:
+                      centripetal: cython.bint):
     """
     Curve interpolation through the data points.
 
@@ -65,7 +67,10 @@ def interpolate_curve(points: np.ndarray[np.double_t, ndim == 2], degree: cython
     return ctrlpts, knots, knot_multiplicities
 
 
-def interpolate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
+@cython.wraparound(False)
+@cython.boundscheck(False)
+def interpolate_surface(points, size_u: cython.int, size_v: cython.int, degree_u: cython.int, degree_v: cython.int,
+                        **kwargs):
     """
     Surface interpolation through the data points.
 
@@ -89,42 +94,50 @@ def interpolate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
 
     """
     # Keyword arguments
-    use_centripetal = kwargs.get("centripetal", False)
-
+    use_centripetal: cython.bint = kwargs.get("centripetal", False)
+    u_k: np.ndarray[np.double_t, ndim == 1]
+    v_l: np.ndarray[np.double_t, ndim == 1]
     u_k, v_l = compute_params_surface(points, size_u, size_v, use_centripetal)
 
     # Compute knot vectors
-    kv_u = compute_knot_vector(degree_u, size_u, u_k)
-    kv_v = compute_knot_vector(degree_v, size_v, v_l)
+    kv_u: vector[cython.double] = compute_knot_vector(degree_u, size_u, u_k)
+    kv_v: vector[cython.double] = compute_knot_vector(degree_v, size_v, v_l)
 
+    j: cython.int
+    u: cython.int
+    v: cython.int
+    dim: cython.size_t = len(points[0])
     # Do global interpolation on the u-direction
-    ctrlpts_r = []
+    ctrlpts_r: cython.double[:, :] = np.zeros((size_u * size_v, dim), dtype=np.float64)
+    temp: cython.double[:, :]
+    matrix_a: cython.double[:, :]
     for v in range(size_v):
-        pts = [points[v + (size_v * u)] for u in range(size_u)]
-        matrix_a = _build_coeff_matrix(degree_u, kv_u, u_k, pts)
-        ctrlpts_r += linalg.lu_solve(matrix_a, pts)
+        pts = np.asarray([points[v + (size_v * u)] for u in range(size_u)], dtype=np.float64)
+        matrix_a = _build_coeff_matrix(degree_u, kv_u, u_k, pts.shape[0])
+        temp = lu_solve(lu_factor(matrix_a), pts)
+        for u in range(size_u):
+            for j in range(dim):
+                ctrlpts_r[u + (size_u * v)][j] = temp[u][j]
 
     # Do global interpolation on the v-direction
-    ctrlpts = []
+    ctrlpts: np.ndarray[np.double_t, ndim == 2] = np.zeros((size_u * size_v, dim), dtype=np.float64)
     for u in range(size_u):
-        pts = [ctrlpts_r[u + (size_u * v)] for v in range(size_v)]
-        matrix_a = _build_coeff_matrix(degree_v, kv_v, v_l, pts)
-        ctrlpts += linalg.lu_solve(matrix_a, pts)
+        pts = np.asarray([ctrlpts_r[u + (size_u * v)] for v in range(size_v)], dtype=np.float64)
+        matrix_a = _build_coeff_matrix(degree_v, kv_v, v_l, pts.shape[0])
+        temp = lu_solve(lu_factor(matrix_a), pts)
+        for v in range(size_v):
+            for j in range(dim):
+                ctrlpts[v + (size_v * u)][j] = temp[v][j]
 
-    # Generate B-spline surface
-    surf = BSpline.Surface()
-    surf.degree_u = degree_u
-    surf.degree_v = degree_v
-    surf.ctrlpts_size_u = size_u
-    surf.ctrlpts_size_v = size_v
-    surf.ctrlpts = ctrlpts
-    surf.knotvector_u = kv_u
-    surf.knotvector_v = kv_v
+    knots_u = np.unique(kv_u)
+    knot_multiplicities_u = [core.find_multiplicity(knot, kv_u) for knot in knots_u]
+    knots_v = np.unique(kv_v)
+    knot_multiplicities_v = [core.find_multiplicity(knot, kv_v) for knot in knots_v]
 
-    return surf
+    return ctrlpts, knots_u, knot_multiplicities_u, knots_v, knot_multiplicities_v
 
 
-def approximate_curve(points, degree, **kwargs):
+def approximate_curve(points, degree: cython.int, **kwargs):
     """
     Curve approximation using least squares method with fixed number of control points.
 
@@ -143,22 +156,22 @@ def approximate_curve(points, degree, **kwargs):
 
     """
     # Number of data points
-    num_dpts = len(points)  # corresponds to variable "r" in the algorithm
+    num_dpts: cython.size_t = len(points)  # corresponds to variable "r" in the algorithm
 
     # Get keyword arguments
-    use_centripetal = kwargs.get("centripetal", False)
-    num_cpts = kwargs.get("ctrlpts_size", num_dpts - 1)
+    use_centripetal: cython.bint = kwargs.get("centripetal", False)
+    num_cpts: cython.int = kwargs.get("ctrlpts_size", num_dpts - 1)
 
     # Dimension
-    dim = len(points[0])
+    dim: cython.size_t = len(points[0])
 
-    u_k = compute_params_curve(points, use_centripetal)
+    u_k: np.ndarray[np.double_t, ndim == 1] = compute_params_curve(points, use_centripetal)
 
     # Compute knot vector
-    knotvector = compute_knot_vector2(degree, num_dpts, num_cpts, u_k)
+    knotvector: vector[cython.double] = compute_knot_vector2(degree, num_dpts, num_cpts, u_k)
 
     # Compute matrix N
-    matrix_n = np.zeros((num_dpts - 2, num_cpts - 2), dtype=np.float64)
+    matrix_n: np.ndarray[np.double_t, ndim == 2] = np.zeros((num_dpts - 2, num_cpts - 2), dtype=np.float64)
     for i in range(1, num_dpts - 1):
         for j in range(1, num_cpts - 1):
             matrix_n[i - 1, j - 1] = core.basis_function_one(degree, knotvector, j, u_k[i])
@@ -167,17 +180,17 @@ def approximate_curve(points, degree, **kwargs):
 
     matrix_ntn = np.dot(matrix_nt, matrix_n)
 
-    matrix_l, matrix_u = helpers.lu_decomposition(matrix_ntn.tolist())
+    matrix_l, matrix_u = helpers.lu_decomposition(matrix_ntn)
     # Initialize control points array
     ctrlpts = [[0.0 for _ in range(dim)] for _ in range(num_cpts)]
 
     # Fix start and end points
     ctrlpts[0] = list(points[0])
-    ctrlpts[-1] = list(points[-1])
+    ctrlpts[num_cpts - 1] = list(points[num_dpts - 1])
 
     # Compute - Eq 9.63
     pt0 = points[0]
-    ptm = points[-1]
+    ptm = points[num_dpts - 1]
     r_k = []
     for i in range(1, num_dpts - 1):
         ptk = points[i]
@@ -209,7 +222,10 @@ def approximate_curve(points, degree, **kwargs):
     return ctrlpts, knots.tolist(), knot_multiplicities
 
 
-def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
+@cython.wraparound(False)
+@cython.boundscheck(False)
+def approximate_surface(points, size_u: cython.int, size_v: cython.int, degree_u: cython.int, degree_v: cython.int,
+                        **kwargs):
     """
     Surface approximation using least squares method with fixed number of control points.
 
@@ -236,31 +252,32 @@ def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
 
     """
     # Keyword arguments
-    use_centripetal = kwargs.get("centripetal", False)
-    num_cpts_u = kwargs.get("ctrlpts_size_u", size_u - 1)
-    num_cpts_v = kwargs.get("ctrlpts_size_v", size_v - 1)
+    use_centripetal: cython.bint = kwargs.get("centripetal", False)
+    num_cpts_u: cython.int = kwargs.get("ctrlpts_size_u", size_u - 1)
+    num_cpts_v: cython.int = kwargs.get("ctrlpts_size_v", size_v - 1)
 
     # Dimension
-    dim = len(points[0])
-
+    dim: cython.size_t = len(points[0])
+    u_k: np.ndarray[np.double_t, ndim == 1]
+    v_l: np.ndarray[np.double_t, ndim == 1]
     u_k, v_l = compute_params_surface(points, size_u, size_v, use_centripetal)
 
     # Compute knot vectors
-    kv_u = compute_knot_vector2(degree_u, size_u, num_cpts_u, u_k)
-    kv_v = compute_knot_vector2(degree_v, size_v, num_cpts_v, v_l)
+    kv_u: vector[cython.double] = compute_knot_vector2(degree_u, size_u, num_cpts_u, u_k)
+    kv_v: vector[cython.double] = compute_knot_vector2(degree_v, size_v, num_cpts_v, v_l)
 
-    matrix_nu = []
+    matrix_nu: np.ndarray[np.double_t, ndim == 2] = np.zeros((size_u - 2, num_cpts_u - 2), dtype=np.float64)
+    i: cython.int
+    j: cython.int
     for i in range(1, size_u - 1):
-        m_temp = []
         for j in range(1, num_cpts_u - 1):
-            m_temp.append(core.basis_function_one(degree_u, kv_u, j, u_k[i]))
-        matrix_nu.append(m_temp)
+            matrix_nu[i - 1, j - 1] = core.basis_function_one(degree_u, kv_u, j, u_k[i])
 
-    matrix_ntu = linalg.matrix_transpose(matrix_nu)
+    matrix_ntu = matrix_nu.T
 
-    matrix_ntnu = linalg.matrix_multiply(matrix_ntu, matrix_nu)
+    matrix_ntnu = np.dot(matrix_ntu, matrix_nu)
 
-    matrix_ntnul, matrix_ntnuu = linalg.lu_decomposition(matrix_ntnu)
+    matrix_ntnul, matrix_ntnuu = helpers.lu_decomposition(matrix_ntnu)
 
     # Fit u-direction
     ctrlpts_tmp = [[0.0 for _ in range(dim)] for _ in range(num_cpts_u * size_v)]
@@ -290,23 +307,21 @@ def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
         # Get intermediate control points
         for d in range(dim):
             b = [pt[d] for pt in r_u]
-            y = linalg.forward_substitution(matrix_ntnul, b)
-            x = linalg.backward_substitution(matrix_ntnuu, y)
+            y = helpers.forward_substitution(matrix_ntnul, b)
+            x = helpers.backward_substitution(matrix_ntnuu, y)
             for i in range(1, num_cpts_u - 1):
                 ctrlpts_tmp[j + (size_v * i)][d] = x[i - 1]
 
-    matrix_nv = []
+    matrix_nv: np.ndarray[np.double_t, ndim == 1] = np.zeros((size_v - 2, num_cpts_v - 2), dtype=np.float64)
     for i in range(1, size_v - 1):
-        m_temp = []
         for j in range(1, num_cpts_v - 1):
-            m_temp.append(core.basis_function_one(degree_v, kv_v, j, v_l[i]))
-        matrix_nv.append(m_temp)
+            matrix_nv[i - 1, j - 1] = core.basis_function_one(degree_v, kv_v, j, v_l[i])
 
-    matrix_ntv = linalg.matrix_transpose(matrix_nv)
+    matrix_ntv = matrix_nv.T
 
-    matrix_ntnv = linalg.matrix_multiply(matrix_ntv, matrix_nv)
+    matrix_ntnv = np.dot(matrix_ntv, matrix_nv)
 
-    matrix_ntnvl, matrix_ntnvu = linalg.lu_decomposition(matrix_ntnv)
+    matrix_ntnvl, matrix_ntnvu = helpers.lu_decomposition(matrix_ntnv)
 
     # Fit v-direction
     ctrlpts = [[0.0 for _ in range(dim)] for _ in range(num_cpts_u * num_cpts_v)]
@@ -336,22 +351,17 @@ def approximate_surface(points, size_u, size_v, degree_u, degree_v, **kwargs):
         # Get intermediate control points
         for d in range(dim):
             b = [pt[d] for pt in r_v]
-            y = linalg.forward_substitution(matrix_ntnvl, b)
-            x = linalg.backward_substitution(matrix_ntnvu, y)
+            y = helpers.forward_substitution(matrix_ntnvl, b)
+            x = helpers.backward_substitution(matrix_ntnvu, y)
             for j in range(1, num_cpts_v - 1):
                 ctrlpts[j + (num_cpts_v * i)][d] = x[j - 1]
 
-    # Generate B-spline surface
-    surf = BSpline.Surface()
-    surf.degree_u = degree_u
-    surf.degree_v = degree_v
-    surf.ctrlpts_size_u = num_cpts_u
-    surf.ctrlpts_size_v = num_cpts_v
-    surf.ctrlpts = ctrlpts
-    surf.knotvector_u = kv_u
-    surf.knotvector_v = kv_v
+    knots_u = np.unique(kv_u)
+    knot_multiplicities_u = [core.find_multiplicity(knot, kv_u) for knot in knots_u]
+    knots_v = np.unique(kv_v)
+    knot_multiplicities_v = [core.find_multiplicity(knot, kv_v) for knot in knots_v]
 
-    return surf
+    return ctrlpts, knots_u, knot_multiplicities_u, knots_v, knot_multiplicities_v
 
 
 @cython.cfunc
@@ -428,7 +438,6 @@ def compute_knot_vector2(degree, num_dpts, num_cpts, params):
 
 
 @cython.cfunc
-@cython.cdivision
 def compute_params_curve(points: np.ndarray[np.double_t, ndim == 2], centripetal: cython.bint = False):
     """
     Computes ū_k for curves.
@@ -465,7 +474,9 @@ def compute_params_curve(points: np.ndarray[np.double_t, ndim == 2], centripetal
     return u_k
 
 
-def compute_params_surface(points, size_u, size_v, centripetal=False):
+@cython.cfunc
+def compute_params_surface(points: np.ndarray[np.double_t, ndim == 2], size_u: cython.int, size_v: cython.int,
+                           centripetal: cython.bint = False) -> tuple:
     """
     Computes :math:`\\overline{u}_{k}` and :math:`\\overline{u}_{l}` for surfaces.
 
@@ -488,13 +499,19 @@ def compute_params_surface(points, size_u, size_v, centripetal=False):
     :rtype: tuple
     """
     # Compute uk
-    u_k = [0.0 for _ in range(size_u)]
+    u_k: np.ndarray[np.double_t, ndim == 1] = np.zeros(size_u, dtype=np.double)
 
     # Compute for each curve on the v-direction
-    uk_temp = []
+    uk_temp: np.ndarray[np.double_t, ndim == 1] = np.zeros(size_u * size_v, dtype=np.double)
+    pts_u: np.ndarray[np.double_t, ndim == 2]
+    temp: cython.double[:]
+    u: cython.int
+    v: cython.int
     for v in range(size_v):
-        pts_u = [points[v + (size_v * u)] for u in range(size_u)]
-        uk_temp += compute_params_curve(pts_u, centripetal)
+        pts_u = np.asarray([points[v + (size_v * u)] for u in range(size_u)], dtype=np.float64)
+        temp = compute_params_curve(pts_u, centripetal)
+        for u in range(size_u):
+            uk_temp[u + (size_u * v)] = temp[u]
 
     # Do averaging on the u-direction
     for u in range(size_u):
@@ -502,13 +519,17 @@ def compute_params_surface(points, size_u, size_v, centripetal=False):
         u_k[u] = sum(knots_v) / size_v
 
     # Compute vl
-    v_l = [0.0 for _ in range(size_v)]
+    v_l: np.ndarray[np.double_t, ndim == 1] = np.zeros(size_v, dtype=np.double)
+    # v_l = [0.0 for _ in range(size_v)]
 
     # Compute for each curve on the u-direction
-    vl_temp = []
+    vl_temp: np.ndarray[np.double_t, ndim == 1] = np.zeros(size_u * size_v, dtype=np.double)
+    pts_u: np.ndarray[np.double_t, ndim == 2]
     for u in range(size_u):
-        pts_v = [points[v + (size_v * u)] for v in range(size_v)]
-        vl_temp += compute_params_curve(pts_v, centripetal)
+        pts_v = np.asarray([points[v + (size_v * u)] for v in range(size_v)], dtype=np.float64)
+        temp = compute_params_curve(pts_v, centripetal)
+        for v in range(size_v):
+            vl_temp[v + (size_v * u)] = temp[v]
 
     # Do averaging on the v-direction
     for v in range(size_v):

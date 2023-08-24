@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cylinder / Cone / HollowCylinder: from_center_point_and_axis
 - Cone: remove inheritance from RevolvedProfile
 - BSplineSurface3D: partial removal of dependencies on geomdl objects
+- BSplineSurface3D: from_points_interpolation, from_points_approximation
 
 ### Fixed
 - Sweep with non smoth path

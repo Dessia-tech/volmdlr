@@ -5073,15 +5073,15 @@ class BSplineCurve3D(BSplineCurve):
 
         polys = [volmdlr.wires.ClosedPolygon3D(c.discretization_points(number_points=36)) for c in contours]
 
-        size_v, size_u = len(polys[0].points) + 1, len(polys)
+        size_v, size_u = len(polys[0].points), len(polys)
         degree_u, degree_v = 3, 3
 
         points_3d = []
         for poly in polys:
             points_3d.extend(poly.points)
-            points_3d.append(poly.points[0])
 
-        bezier_surface3d = volmdlr.surfaces.BezierSurface3D(degree_u, degree_v, points_3d, size_u, size_v)
+        bspline_surface3d = volmdlr.surfaces.BSplineSurface3D.from_points_interpolation(points_3d, size_u,
+                                                                                       size_v,degree_u, degree_v)
 
         outer_contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D),
                                                  volmdlr.edges.LineSegment2D(
@@ -5091,7 +5091,7 @@ class BSplineCurve3D(BSplineCurve):
                                                  volmdlr.edges.LineSegment2D(volmdlr.Y2D, volmdlr.O2D)])
         surf2d = volmdlr.surfaces.Surface2D(outer_contour, [])
 
-        bsface3d = volmdlr.faces.BSplineFace3D(bezier_surface3d, surf2d)
+        bsface3d = volmdlr.faces.BSplineFace3D(bspline_surface3d, surf2d)
         new_faces.append(bsface3d)
         return new_faces
 
