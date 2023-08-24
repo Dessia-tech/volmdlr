@@ -5,7 +5,7 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr.core import VolumeModel
+from volmdlr.core import VolumeModel, BoundingBox
 from volmdlr.primitives3d import Block, Cylinder, Sphere
 from volmdlr.shells import ClosedTriangleShell3D
 from volmdlr.voxelization import PointBasedVoxelization
@@ -204,12 +204,6 @@ class TestPointBasedVoxelizationManipulation(unittest.TestCase):
             volume_model = VolumeModel([self.cylinder, inner_filled_voxelization.to_closed_triangle_shell()])
             volume_model.babylonjs()
 
-    def test_min_voxel_grid_center(self):
-        self.assertEqual((-0.095, -0.095, -0.105), self.cylinder_voxelization.min_voxel_grid_center)
-
-    def test_max_voxel_grid_center(self):
-        self.assertEqual((0.105, 0.095, 0.105), self.cylinder_voxelization.max_voxel_grid_center)
-
 
 class TestPointBasedVoxelizationExport(unittest.TestCase):
     """
@@ -220,11 +214,14 @@ class TestPointBasedVoxelizationExport(unittest.TestCase):
         self.sphere = Sphere(center=volmdlr.O3D, radius=0.1, name="sphere")
         self.sphere_voxelization = PointBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
 
-    def test_get_min_voxel_grid_center(self):
+    def test_min_voxel_grid_center(self):
         self.assertEqual((-0.095, -0.095, -0.105), self.sphere_voxelization.min_voxel_grid_center)
 
-    def test_get_max_voxel_grid_center(self):
+    def test_max_voxel_grid_center(self):
         self.assertEqual((0.105, 0.095, 0.105), self.sphere_voxelization.max_voxel_grid_center)
+
+    def test_bounding_box(self):
+        self.assertEqual(BoundingBox(-0.105, 0.115, -0.105, 0.105, -0.115, 0.115), self.sphere_voxelization.bounding_box)
 
     def test_to_triangles(self):
         self.assertEqual(7456, len(self.sphere_voxelization.to_triangles()))
@@ -236,7 +233,7 @@ class TestPointBasedVoxelizationExport(unittest.TestCase):
         voxel_matrix = self.sphere_voxelization.to_matrix_based_voxelization()
 
         self.assertEqual(len(self.sphere_voxelization), len(voxel_matrix))
-        self.assertEqual(self.sphere_voxelization.min_voxel_grid_center, voxel_matrix._min_voxel_grid_center)
+        self.assertEqual(self.sphere_voxelization.min_voxel_grid_center, voxel_matrix.min_voxel_grid_center)
 
 
 if __name__ == "__main__":
