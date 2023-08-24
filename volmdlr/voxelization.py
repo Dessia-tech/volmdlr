@@ -114,8 +114,9 @@ class Voxelization(ABC, PhysicalObject):
 
     volume = property(_get_volume)
 
+    @property
     @abstractmethod
-    def _get_bounding_box(self) -> BoundingBox:
+    def bounding_box(self) -> BoundingBox:
         """
         Get the bounding box of the voxelization.
 
@@ -123,8 +124,6 @@ class Voxelization(ABC, PhysicalObject):
         :rtype: BoundingBox
         """
         pass
-
-    bounding_box = property(_get_bounding_box)
 
     # CLASS METHODS
     @classmethod
@@ -366,7 +365,6 @@ class Voxelization(ABC, PhysicalObject):
 
         return triangles
 
-    @abstractmethod
     def to_closed_triangle_shell(self) -> ClosedTriangleShell3D:
         """
         Generate a closed triangle shell representing the voxelization.
@@ -547,7 +545,8 @@ class PointBasedVoxelization(Voxelization):
         """
         return len(self.voxel_centers)
 
-    def _get_bounding_box(self):
+    @property
+    def bounding_box(self):
         """
         Get the bounding box of the voxelization.
 
