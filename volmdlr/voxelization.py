@@ -704,7 +704,7 @@ class PointBasedVoxelization(Voxelization):
         """
         inverted_voxel_matrix = self.to_matrix_based_voxelization().inverse()
 
-        return PointBasedVoxelization.from_matrix_based_voxelization(inverted_voxel_matrix)
+        return self.__class__.from_matrix_based_voxelization(inverted_voxel_matrix)
 
     # FILLING METHODS
     def flood_fill(self, start_point: Point, fill_with: bool) -> "PointBasedVoxelization":
@@ -787,7 +787,7 @@ class PointBasedVoxelization(Voxelization):
 
         intersecting_voxels = self._voxels_intersecting_voxels(rotated_voxels, self.voxel_size)
 
-        return PointBasedVoxelization(intersecting_voxels, self.voxel_size)
+        return self.__class__(intersecting_voxels, self.voxel_size)
 
     def translation(self, offset: Vector3D):
         """
@@ -804,7 +804,7 @@ class PointBasedVoxelization(Voxelization):
 
         intersecting_voxels = self._voxels_intersecting_voxels(translated_voxels, self.voxel_size)
 
-        return PointBasedVoxelization(intersecting_voxels, self.voxel_size)
+        return self.__class__(intersecting_voxels, self.voxel_size)
 
     # HELPER METHODS
     def _get_min_voxel_grid_center(self) -> Point:
