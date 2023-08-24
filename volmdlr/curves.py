@@ -1758,6 +1758,13 @@ class Ellipse2D(Curve):
         return intersections
 
     def ellipse_intersections(self, ellipse2d, abs_tol: float = 1e-7):
+        """
+        Gets the intersections between two Ellipse 2D.
+
+        :param ellipse2d: The other ellipse.
+        :param abs_tol: Tolerance.
+        :return:
+        """
         if self.bounding_rectangle.distance_to_b_rectangle(ellipse2d.bounding_rectangle) > abs_tol:
             return []
         intersections = volmdlr_intersections.get_bsplinecurve_intersections(ellipse2d, self, abs_tol)
@@ -2123,9 +2130,22 @@ class Ellipse3D(Curve):
         return Ellipse3D(self.major_axis, self.minor_axis, frame)
 
     def line_intersections(self, line):
+        """
+        Gets intersections between an Ellipse 3D and a Line3D.
+
+        :param line: Other Line 3D.
+        :return: A list of points, containing all intersections between the Line 3D and the Ellipse3D.
+        """
         return volmdlr_intersections.ellipse3d_line_intersections(self, line)
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
+        """
+        Gets intersections between an Ellipse 3D and a Line3D.
+
+        :param linesegment: Other Line 3D.
+        :param abs_tol: tolerance.
+        :return: A list of points, containing all intersections between the Line 3D and the Ellipse3D.
+        """
         ellipse3d_line_intersections = self.line_intersections(linesegment.line)
         intersections = []
         for intersection in ellipse3d_line_intersections:
@@ -2134,6 +2154,13 @@ class Ellipse3D(Curve):
         return intersections
 
     def ellipse_intersections(self, ellipse, abs_tol: float = 1e-6):
+        """
+        Gets intersections between an Ellipse 3D and a Line3D.
+
+        :param ellipse: Other Ellipse 3D.
+        :param abs_tol: tolerance.
+        :return: A list of points, containing all intersections between the two Ellipse3D.
+        """
         intersections = []
         from volmdlr import surfaces
         plane1 = surfaces.Plane3D(self.frame)
