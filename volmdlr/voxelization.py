@@ -4,6 +4,7 @@ Class for voxel representation of volmdlr models
 import warnings
 from copy import copy
 from typing import List, Set, Tuple
+from abc import ABC, abstractmethod
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -27,6 +28,113 @@ from volmdlr.voxelization_compiled import (
 Point = Tuple[float, float, float]
 Triangle = Tuple[Point, Point, Point]
 Segment = Tuple[Point, Point]
+
+
+class Voxelization(ABC, PhysicalObject):
+    """
+    Abstract class for creation and manipulation of voxelization of volmdlr geometry.
+
+    This approach is used to create a Voxelization of the surfaces, and do not fill the volume.
+
+    The voxelization is defined in an implicit grid of the 3D space. The grid is defined by the size of the voxels.
+    The implicit grid is defined by discretizing the 3D space into axis aligned cubes with given size, with the
+    origin of the global landmark (0, 0, 0) always being a corner point (and not inside a cube).
+
+    For example, in 1D and with a voxel size of t, the set of voxels (defined by minimal and maximal point) can only
+    be defined as {i ∈ N, t ∈ R | (i * t, (i+1) * t)}
+    The corresponding set of voxel centers is defined by the following set: {i ∈ N, t ∈ R | (i + 0.5) * t}
+
+    This approach allows to always define voxelization of same size in the same grid of the 3D space, which is very
+    useful to perform very fast Boolean operations.
+    """
+
+    @abstractmethod
+    def __eq__(self, other_voxelization: "Voxelization") -> bool:
+        pass
+
+    @abstractmethod
+    def __len__(self) -> int:
+        pass
+
+    # BOOLEAN OPERATIONS
+    @abstractmethod
+    def union(self, other_voxelization: "Voxelization") -> "Voxelization":
+        pass
+
+    def __add__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        return self.union(other_voxelization)
+
+    @abstractmethod
+    def difference(self, other_voxelization: "Voxelization") -> "Voxelization":
+        pass
+
+    def __sub__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        return self.difference(other_voxelization)
+
+    @abstractmethod
+    def intersection(self, other_voxelization: "Voxelization") -> "Voxelization":
+        pass
+
+    def __and__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        return self.intersection(other_voxelization)
+
+    def symmetric_difference(self, other_voxelization: "Voxelization") -> "Voxelization":
+        pass
+
+    def __xor__(self, other_voxelization: "Voxelization") -> "Voxelization":
+        return self.symmetric_difference(other_voxelization)
+
+    @abstractmethod
+    def inverse(self) -> "Voxelization":
+        pass
+
+    def __invert__(self) -> "Voxelization":
+        return self.inverse()
+
+    @staticmethod
+    def _shell_to_triangles(shell: Shell3D) -> List[Triangle]:
+        """
+        Helper method to convert a Shell3D to a list of triangles.
+
+        It uses the "triangulation" method to triangulate the Shell3D.
+
+        :param shell: The Shell3D to convert to triangles.
+        :type shell: Shell3D
+
+        :return: The list of triangles extracted from the triangulated Shell3D.
+        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        """
+        triangulation = shell.triangulation()
+        return [
+            tuple(
+                tuple([float(point.x), float(point.y), float(point.z)])
+                for point in [
+                    triangulation.points[triangle[0]],
+                    triangulation.points[triangle[1]],
+                    triangulation.points[triangle[2]],
+                ]
+            )
+            for triangle in triangulation.triangles
+        ]
+
+    @staticmethod
+    def _volume_model_to_triangles(volume_model: VolumeModel) -> List[Triangle]:
+        """
+        Helper method to convert a VolumeModel to a list of triangles.
+
+        It uses the "triangulation" method to triangulate the shells of the VolumeModel.
+
+        :param volume_model: The VolumeModel to convert to triangles.
+        :type volume_model: VolumeModel
+
+        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
+        :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        """
+        triangles = []
+        for shell in volume_model.get_shells():
+            triangles.extend(_shell_to_triangles(shell))
+
+        return triangles
 
 
 class PointVoxelization(PhysicalObject):
@@ -74,7 +182,7 @@ class PointVoxelization(PhysicalObject):
         :rtype: bool
         """
         return (
-            self.voxel_centers == other_voxelization.voxel_centers and self.voxel_size == other_voxelization.voxel_size
+                self.voxel_centers == other_voxelization.voxel_centers and self.voxel_size == other_voxelization.voxel_size
         )
 
     def __add__(self, other_voxelization: "PointVoxelization") -> "PointVoxelization":
@@ -271,9 +379,9 @@ class PointVoxelization(PhysicalObject):
                 if round(abscissa / voxel_size, 6).is_integer():
                     # Define the 3D triangle in 2D
 
-                    v0 = triangle[0][:i] + triangle[0][i + 1 :]
-                    v1 = triangle[1][:i] + triangle[1][i + 1 :]
-                    v2 = triangle[2][:i] + triangle[2][i + 1 :]
+                    v0 = triangle[0][:i] + triangle[0][i + 1:]
+                    v1 = triangle[1][:i] + triangle[1][i + 1:]
+                    v2 = triangle[2][:i] + triangle[2][i + 1:]
 
                     triangle_2d = np.array([v0, v1, v2])
 
@@ -622,10 +730,10 @@ class PointVoxelization(PhysicalObject):
         :rtype: BoundingBox
         """
         min_point = (
-            np.array([self.min_voxel_grid_center]) - np.array([self.voxel_size, self.voxel_size, self.voxel_size])
+                np.array([self.min_voxel_grid_center]) - np.array([self.voxel_size, self.voxel_size, self.voxel_size])
         )[0]
         max_point = (
-            np.array([self.max_voxel_grid_center]) + np.array([self.voxel_size, self.voxel_size, self.voxel_size])
+                np.array([self.max_voxel_grid_center]) + np.array([self.voxel_size, self.voxel_size, self.voxel_size])
         )[0]
 
         return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
@@ -682,11 +790,11 @@ class VoxelMatrix(PhysicalObject):
     """Class to manipulate voxel matrix."""
 
     def __init__(
-        self,
-        voxel_matrix: np.ndarray[np.bool_, np.ndim == 3],
-        voxel_matrix_origin_center: Point,
-        voxel_size: float,
-        name: str = "",
+            self,
+            voxel_matrix: np.ndarray[np.bool_, np.ndim == 3],
+            voxel_matrix_origin_center: Point,
+            voxel_size: float,
+            name: str = "",
     ):
         """
         :param voxel_matrix: The voxel numpy matrix object representing the voxelization.
@@ -704,9 +812,9 @@ class VoxelMatrix(PhysicalObject):
 
     def __eq__(self, other_voxel_matrix: "VoxelMatrix") -> bool:
         return (
-            self.voxel_size == other_voxel_matrix.voxel_size
-            and self.matrix_origin_center == other_voxel_matrix.matrix_origin_center
-            and np.array_equal(self.matrix, other_voxel_matrix.matrix)
+                self.voxel_size == other_voxel_matrix.voxel_size
+                and self.matrix_origin_center == other_voxel_matrix.matrix_origin_center
+                and np.array_equal(self.matrix, other_voxel_matrix.matrix)
         )
 
     def __len__(self) -> int:
@@ -816,15 +924,15 @@ class VoxelMatrix(PhysicalObject):
         other_start = np.round((other_min - global_min) / self.voxel_size, 6).astype(int)
 
         new_self[
-            self_start[0] : self_start[0] + self.matrix.shape[0],
-            self_start[1] : self_start[1] + self.matrix.shape[1],
-            self_start[2] : self_start[2] + self.matrix.shape[2],
+        self_start[0]: self_start[0] + self.matrix.shape[0],
+        self_start[1]: self_start[1] + self.matrix.shape[1],
+        self_start[2]: self_start[2] + self.matrix.shape[2],
         ] = self.matrix
 
         new_other[
-            other_start[0] : other_start[0] + other.matrix.shape[0],
-            other_start[1] : other_start[1] + other.matrix.shape[1],
-            other_start[2] : other_start[2] + other.matrix.shape[2],
+        other_start[0]: other_start[0] + other.matrix.shape[0],
+        other_start[1]: other_start[1] + other.matrix.shape[1],
+        other_start[2]: other_start[2] + other.matrix.shape[2],
         ] = other.matrix
 
         result_matrix = logical_operation(new_self, new_other)
@@ -849,10 +957,10 @@ class VoxelMatrix(PhysicalObject):
 
         # Crop the matrix to the smallest possible size
         cropped_matrix = self.matrix[
-            min_voxel_coords[0] : max_voxel_coords[0] + 1,
-            min_voxel_coords[1] : max_voxel_coords[1] + 1,
-            min_voxel_coords[2] : max_voxel_coords[2] + 1,
-        ]
+                         min_voxel_coords[0]: max_voxel_coords[0] + 1,
+                         min_voxel_coords[1]: max_voxel_coords[1] + 1,
+                         min_voxel_coords[2]: max_voxel_coords[2] + 1,
+                         ]
 
         # Calculate new matrix_origin_center
         new_origin_center = np.round(self.matrix_origin_center + min_voxel_coords * self.voxel_size, 6)
@@ -953,7 +1061,7 @@ class Pixelization:
         :rtype: bool
         """
         return (
-            self.pixel_centers == other_pixelization.pixel_centers and self.pixel_size == other_pixelization.pixel_size
+                self.pixel_centers == other_pixelization.pixel_centers and self.pixel_size == other_pixelization.pixel_size
         )
 
     def __add__(self, other_pixelization: "Pixelization") -> "Pixelization":
@@ -1170,7 +1278,7 @@ class Pixelization:
 
     @classmethod
     def from_pixel_matrix(
-        cls, pixel_matrix: "PixelMatrix", pixel_size: float, pixel_matrix_origin_center: Tuple[float, float]
+            cls, pixel_matrix: "PixelMatrix", pixel_size: float, pixel_matrix_origin_center: Tuple[float, float]
     ):
         indices = np.argwhere(pixel_matrix.matrix)
         pixel_centers = pixel_matrix_origin_center + indices * pixel_size
