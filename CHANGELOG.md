@@ -15,7 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cylinder / Cone / HollowCylinder: from_center_point_and_axis
 - Cone: remove inheritance from RevolvedProfile
 - BSplineSurface3D: partial removal of dependencies on geomdl objects
-
+- Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
+- Curve: local_discretization
+- Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
 
 ### Fixed
 - Sweep with non smoth path
@@ -49,7 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add error protection stl
 - Sweep - add raise ValueError if section too big in comparision to arc radiuses
 - Update cython version requirement in setup.py
-- 
+- Ellipse2D: point_at_abscissa
+- ultis.common_operations: get_edge_distance_to_point and get_get_abscissa_discretization from edges so it can be used in curves too.
+
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
@@ -73,6 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 - Cylinder / Cone / HollowCylinder
+- Ellipse2D: point_distance
+- Ellipse3D: test_ellipse_intersections, test_linesegment_intersections
 
 ## v0.12.0
 
