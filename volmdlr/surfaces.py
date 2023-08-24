@@ -6574,7 +6574,7 @@ class BSplineSurface3D(Surface3D):
 
         Parameters
         ----------
-        points_3d : volmdlr.Point3D
+        points_3d : list[volmdlr.Point3D]
             data points
         size_u : int
             number of data points on the u-direction.
@@ -6604,7 +6604,7 @@ class BSplineSurface3D(Surface3D):
         points = [tuple([*point]) for point in points_3d]
 
         surface = approximate_surface(points, size_u, size_v, degree_u, degree_v,
-                                      ctrlpts_size_u=num_cpts_u, num_cpts_v=num_cpts_v)
+                                      ctrlpts_size_u=num_cpts_u, ctrlpts_size_v=num_cpts_v)
 
         return cls.from_geomdl_surface(surface)
 
