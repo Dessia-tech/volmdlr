@@ -1546,6 +1546,8 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
 
         :return: The plotted MatPlotLib figure.
         """
+        # pylint: disable=arguments-renamed
+
         if ax is None:
             _, ax = plt.subplots()
 
