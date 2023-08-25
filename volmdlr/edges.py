@@ -262,7 +262,7 @@ class Edge(dc.DessiaObject):
             return line_seg1.bounding_box.bbox_intersection(line_seg2.bounding_box)
 
         def edge2d_section_validator(line_seg1, line_seg2):
-            line_seg1.linesegment_intersections(line_seg2)
+            return line_seg1.linesegment_intersections(line_seg2)
 
         # min_dist, pt1, pt2 = self.minimum_distance(edge2, True)
         lineseg_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
