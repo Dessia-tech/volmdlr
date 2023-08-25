@@ -34,6 +34,7 @@ _Triangle3D = Tuple[_Point3D, _Point3D, _Point3D]
 _Point2D = Tuple[float, float]
 _Segment2D = Tuple[_Point2D, _Point2D]
 
+
 # GLOBAL VARIABLE
 DECIMALS = 9  # Used to round numbers and avoid floating point arithmetic imprecision
 
