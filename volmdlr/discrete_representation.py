@@ -101,9 +101,8 @@ class DiscreteRepresentation(ABC):
         :rtype: int
         """
 
-    @property
     @abstractmethod
-    def _element_centers(self) -> Set[Tuple]:
+    def _get_element_centers(self) -> Set[Tuple]:
         """
         Get the center point of each element.
 
@@ -311,7 +310,7 @@ class DiscreteRepresentation(ABC):
     @staticmethod
     def check_center_is_in_implicit_grid(element_center: Tuple[float, ...], element_size: float) -> bool:
         """
-        Check if a given element center point is a element center of the implicit grid, defined by element_size.
+        Check if a given element center point is an element center of the implicit grid, defined by element_size.
 
         :param element_center: The element center point to check.
         :type element_center: tuple[float, ...]
@@ -433,15 +432,14 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         """
         return self.element_size
 
-    @property
-    def voxel_centers(self) -> Set[_Point3D]:
+    def get_voxel_centers(self) -> Set[_Point3D]:
         """
         Get the center point of each voxel.
 
         :return: The center point of each voxel.
         :rtype: set[tuple[float, float, float]]
         """
-        return self._element_centers
+        return self._get_element_centers()
 
     @property
     def volume(self) -> float:
@@ -533,7 +531,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         """
         triangles = set()
 
-        for voxel in self.voxel_centers:
+        for voxel in self.get_voxel_centers():
             for triangle in voxel_triangular_faces(voxel, self.voxel_size):
                 if triangle not in triangles:
                     triangles.add(triangle)
@@ -641,19 +639,19 @@ class PointBasedVoxelization(Voxelization):
         """
         self._check_element_size_number_of_decimals(voxel_size)
 
-        self._voxel_centers = voxel_centers
+        self.voxel_centers = voxel_centers
 
         Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
     @property
-    def _element_centers(self) -> Set[_Point3D]:
+    def _get_element_centers(self) -> Set[_Point3D]:
         """
         Get the center point of each voxel.
 
         :return: The center point of each voxel.
         :rtype: set[tuple[float, float, float]]
         """
-        return self._voxel_centers
+        return self.voxel_centers
 
     def __eq__(self, other: "PointBasedVoxelization") -> bool:
         """
@@ -732,7 +730,7 @@ class PointBasedVoxelization(Voxelization):
         :return: A voxelization created from the Shell3D.
         :rtype: PointBasedVoxelization
         """
-        voxels = MatrixBasedVoxelization.from_shell(shell, voxel_size).voxel_centers
+        voxels = MatrixBasedVoxelization.from_shell(shell, voxel_size).get_voxel_centers()
 
         return cls(voxel_centers=voxels, voxel_size=voxel_size, name=name)
 
@@ -753,7 +751,7 @@ class PointBasedVoxelization(Voxelization):
         :return: A voxelization created from the VolumeModel.
         :rtype: PointBasedVoxelization
         """
-        voxels = MatrixBasedVoxelization.from_volume_model(volume_model, voxel_size).voxel_centers
+        voxels = MatrixBasedVoxelization.from_volume_model(volume_model, voxel_size).get_voxel_centers()
 
         return cls(voxel_centers=voxels, voxel_size=voxel_size, name=name)
 
@@ -1093,8 +1091,7 @@ class MatrixBasedVoxelization(Voxelization):
 
         Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
-    @property
-    def _element_centers(self) -> Set[_Point3D]:
+    def _get_element_centers(self) -> Set[_Point3D]:
         """
         Get the center point of each voxel.
 
@@ -1360,7 +1357,7 @@ class MatrixBasedVoxelization(Voxelization):
         :return: A PointBasedVoxelization representation of the current voxelization.
         :rtype: PointBasedVoxelization
         """
-        return PointBasedVoxelization(self.voxel_centers, self.voxel_size, self.name)
+        return PointBasedVoxelization(self.get_voxel_centers(), self.voxel_size, self.name)
 
     def _expand(self) -> "MatrixBasedVoxelization":
         """
@@ -1518,15 +1515,14 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
         """
         return self.element_size
 
-    @property
-    def pixel_centers(self) -> Set[_Point2D]:
+    def get_pixel_centers(self) -> Set[_Point2D]:
         """
         Get the center point of each pixel.
 
         :return: The center point of each pixel.
         :rtype: set[tuple[float, float]]
         """
-        return self._element_centers
+        return self._get_element_centers()
 
     @property
     def area(self) -> float:
@@ -1622,7 +1618,7 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
         if ax is None:
             _, ax = plt.subplots()
 
-        for center in self.pixel_centers:
+        for center in self.get_pixel_centers():
             x, y = center
             ax.add_patch(
                 patches.Rectangle(
@@ -1635,12 +1631,12 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
 
         # Setting the x and y limits to contain all the pixels
         ax.set_xlim(
-            min(x[0] for x in self.pixel_centers) - self.pixel_size,
-            max(x[0] for x in self.pixel_centers) + self.pixel_size,
+            min(x[0] for x in self.get_pixel_centers()) - self.pixel_size,
+            max(x[0] for x in self.get_pixel_centers()) + self.pixel_size,
         )
         ax.set_ylim(
-            min(x[1] for x in self.pixel_centers) - self.pixel_size,
-            max(x[1] for x in self.pixel_centers) + self.pixel_size,
+            min(x[1] for x in self.get_pixel_centers()) - self.pixel_size,
+            max(x[1] for x in self.get_pixel_centers()) + self.pixel_size,
         )
 
         ax.set_aspect("equal")  # Ensuring equal scaling for both axes
@@ -1685,19 +1681,18 @@ class PointBasedPixelization(Pixelization):
         """
         self._check_element_size_number_of_decimals(pixel_size)
 
-        self._pixel_centers = pixel_centers
+        self.pixel_centers = pixel_centers
 
         Pixelization.__init__(self, pixel_size=pixel_size, name=name)
 
-    @property
-    def _element_centers(self) -> Set[_Point2D]:
+    def _get_element_centers(self) -> Set[_Point2D]:
         """
         Get the center point of each pixel.
 
         :return: The center point of each pixel.
         :rtype: set[tuple[float, float]]
         """
-        return self._pixel_centers
+        return self.pixel_centers
 
     def __eq__(self, other: "PointBasedPixelization") -> bool:
         """
@@ -2036,8 +2031,7 @@ class MatrixBasedPixelization(Pixelization):
 
         Pixelization.__init__(self, pixel_size=pixel_size, name=name)
 
-    @property
-    def _element_centers(self) -> Set[_Point2D]:
+    def _get_element_centers(self) -> Set[_Point2D]:
         """
         Get the center point of each pixel.
 
@@ -2303,7 +2297,7 @@ class MatrixBasedPixelization(Pixelization):
         :return: A PointBasedPixelization representation of the current pixelization.
         :rtype: PointBasedPixelization
         """
-        return PointBasedPixelization(self.pixel_centers, self.pixel_size, self.name)
+        return PointBasedPixelization(self.get_pixel_centers(), self.pixel_size, self.name)
 
     def _expand(self) -> "MatrixBasedPixelization":
         """
