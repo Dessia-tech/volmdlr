@@ -206,7 +206,7 @@ class TestMatrixBasedVoxelizationExport(unittest.TestCase):
         self.assertIsInstance(self.sphere_voxelization.to_closed_triangle_shell(), ClosedTriangleShell3D)
 
     def test_to_point_voxelization(self):
-        point_voxelization = self.sphere_voxelization.to_point_voxelization()
+        point_voxelization = self.sphere_voxelization.to_point_based_voxelization()
 
         self.assertEqual(len(self.sphere_voxelization), len(point_voxelization))
         self.assertEqual(self.sphere_voxelization.min_grid_center, point_voxelization.min_grid_center)

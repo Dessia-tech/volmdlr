@@ -30,7 +30,6 @@ from volmdlr.voxelization_compiled import (
 # CUSTOM TYPES
 Point = Tuple[float, float, float]
 Triangle = Tuple[Point, Point, Point]
-Segment = Tuple[Point, Point]
 
 # GLOBAL VARIABLE
 DECIMALS = 9  # Used to round numbers and avoid floating point arithmetic imprecision
@@ -773,7 +772,7 @@ class PointBasedVoxelization(Voxelization):
             Some methods like boolean operation or interference computing may not work as expected."""
             )
 
-        return matrix_based_voxelization.to_point_voxelization()
+        return matrix_based_voxelization.to_point_based_voxelization()
 
     # BOOLEAN OPERATIONS
     def union(self, other: "PointBasedVoxelization") -> "PointBasedVoxelization":
@@ -793,12 +792,12 @@ class PointBasedVoxelization(Voxelization):
 
     def difference(self, other: "PointBasedVoxelization") -> "PointBasedVoxelization":
         """
-        Perform an intersection operation with another PointBasedVoxelization.
+        Perform a difference operation with another PointBasedVoxelization.
 
-        :param other: The PointBasedVoxelization to perform the intersection with.
+        :param other: The PointBasedVoxelization to perform the difference with.
         :type other: PointBasedVoxelization
 
-        :return: A new PointBasedVoxelization resulting from the intersection operation.
+        :return: A new PointBasedVoxelization resulting from the difference operation.
         :rtype: PointBasedVoxelization
         """
         self._check_other_type(other)
@@ -808,13 +807,12 @@ class PointBasedVoxelization(Voxelization):
 
     def intersection(self, other: "PointBasedVoxelization") -> "PointBasedVoxelization":
         """
-        Create a voxelization that is the Boolean intersection of two voxelization.
-        Both voxelization must have same voxel size.
+        Perform an intersection operation with another PointBasedVoxelization.
 
-        :param other: The other voxelization to compute the Boolean intersection with.
+        :param other: The PointBasedVoxelization to perform the intersection with.
         :type other: PointBasedVoxelization
 
-        :return: The created voxelization resulting from the Boolean intersection.
+        :return: A new PointBasedVoxelization resulting from the intersection operation.
         :rtype: PointBasedVoxelization
         """
         self._check_other_type(other)
@@ -881,7 +879,7 @@ class PointBasedVoxelization(Voxelization):
         Fill the enclosed voxels of the voxelization.
 
         :return: A new voxelization with enclosed voxels filled.
-        :rtype: VoxelizationType
+        :rtype: PointBasedVoxelization
         """
         return self.from_matrix_based_voxelization(self.to_matrix_based_voxelization().fill_enclosed_voxels())
 
@@ -946,7 +944,7 @@ class PointBasedVoxelization(Voxelization):
         matrix = np.zeros((dim_x, dim_y, dim_z), dtype=np.bool_)
         matrix[indices[:, 0], indices[:, 1], indices[:, 2]] = True
 
-        return MatrixBasedVoxelization(matrix, min_center, self.voxel_size)
+        return MatrixBasedVoxelization(matrix, min_center, self.voxel_size, self.name)
 
     def _point_to_local_grid_index(self, point: Point) -> Tuple[int, int, int]:
         """
@@ -1273,14 +1271,14 @@ class MatrixBasedVoxelization(Voxelization):
         return inner_filled_voxel_matrix
 
     # HELPER METHODS
-    def to_point_voxelization(self) -> "PointBasedVoxelization":
+    def to_point_based_voxelization(self) -> "PointBasedVoxelization":
         """
         Convert the MatrixBasedVoxelization to a PointBasedVoxelization.
 
         :return: A PointBasedVoxelization representation of the current voxelization.
         :rtype: PointBasedVoxelization
         """
-        return PointBasedVoxelization(self.voxel_centers, self.voxel_size)
+        return PointBasedVoxelization(self.voxel_centers, self.voxel_size, self.name)
 
     def _expand(self) -> "MatrixBasedVoxelization":
         """
@@ -1459,12 +1457,12 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
         return len(self) * self.pixel_size**2
 
     @property
-    def bounding_rectangle(self):
+    def bounding_rectangle(self) -> BoundingRectangle:
         """
-        Get the bounding box of the pixelization.
+        Get the bounding rectangle of the pixelization.
 
         :return: The bounding rectangle of the pixelization.
-        :rtype: BoundingBox
+        :rtype: BoundingRectangle
         """
         min_point = np.round((np.array([self.min_grid_center]) - self.pixel_size)[0], DECIMALS)
         max_point = np.round((np.array([self.max_grid_center]) + self.pixel_size)[0], DECIMALS)
@@ -1566,273 +1564,303 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
 
         return ax
 
+    # HELPER METHODS
 
-class PointBasedPixelization:
-    """Voxelization but in 2D"""
+    @staticmethod
+    def _extract_segment_from_line_segment(
+        line_segment: LineSegment2D,
+    ) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+        return (line_segment.start.x, line_segment.start.y), (line_segment.end.x, line_segment.end.y)
 
-    def __init__(self, pixel_centers, pixel_size):
-        self.pixel_centers = pixel_centers
-        self.pixel_size = pixel_size
+    @staticmethod
+    def _extract_segments_from_closed_polygon(
+        closed_polygon: ClosedPolygon2D,
+    ) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
+        return [
+            (
+                (closed_polygon.points[i - 1].x, closed_polygon.points[i - 1].y),
+                (closed_polygon.points[i].x, closed_polygon.points[i].y),
+            )
+            for i in range(len(closed_polygon.points))
+        ]
 
-    def __eq__(self, other_pixelization: "PointBasedPixelization") -> bool:
+
+class PointBasedPixelization(Pixelization):
+    """Pixelization implemented as a set of points, representing each pixel center."""
+
+    def __init__(self, pixel_centers: Set[Tuple[float, float]], pixel_size: float, name: str = ""):
         """
-        Check if the current pixelization is equal to another pixelization.
+        Initialize the PointBasedPixelization.
 
-        :param other_pixelization: The pixelization to compare.
-        :type other_pixelization: PointBasedPixelization
+        :param pixel_centers: The set of points representing pixel centers.
+        :type pixel_centers: set[tuple[float, float]]
+        :param pixel_size: The pixel edges size.
+        :type pixel_size: float
+        :param name: The name of the pixelization.
+        :type name: str, optional
+        """
+        self._check_element_size_number_of_decimals(pixel_size)
+
+        self._pixel_centers = pixel_centers
+
+        Pixelization.__init__(self, pixel_size=pixel_size, name=name)
+
+    @property
+    def _element_centers(self) -> Set[Tuple[float, float]]:
+        """
+        Get the center point of each pixel.
+
+        :return: The center point of each pixel.
+        :rtype: set[tuple[float, float]]
+        """
+        return self._pixel_centers
+
+    def __eq__(self, other: "PointBasedPixelization") -> bool:
+        """
+        Check if two pixelizations are equal.
+
+        :param other: Another pixelization to compare with.
+        :type other: PointBasedPixelization
 
         :return: True if the pixelizations are equal, False otherwise.
         :rtype: bool
         """
-        return (
-            self.pixel_centers == other_pixelization.pixel_centers and self.pixel_size == other_pixelization.pixel_size
-        )
-
-    def __add__(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
-        """
-        Return the union of the current pixelization with another pixelization.
-
-        :param other_pixelization: The pixelization to union with.
-        :type other_pixelization: PointBasedPixelization
-
-        :return: The union of the pixelizations.
-        :rtype: PointBasedPixelization
-        """
-        return self.union(other_pixelization)
-
-    def __sub__(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
-        """
-        Return the difference between the current pixelization and another pixelization.
-
-        :param other_pixelization: The pixelization to subtract.
-        :type other_pixelization: PointBasedPixelization
-
-        :return: The difference between the pixelizations.
-        :rtype: PointBasedPixelization
-        """
-        return self.difference(other_pixelization)
-
-    def __and__(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
-        """
-        Return the intersection of the current pixelization with another pixelization.
-
-        :param other_pixelization: The pixelization to intersect with.
-        :type other_pixelization: PointBasedPixelization
-
-        :return: The intersection of the pixelizations.
-        :rtype: PointBasedPixelization
-        """
-        return self.intersection(other_pixelization)
-
-    def __or__(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
-        """
-        Return the union of the current pixelization with another pixelization.
-
-        :param other_pixelization: The pixelization to union with.
-        :type other_pixelization: PointBasedPixelization
-
-        :return: The union of the pixelizations.
-        :rtype: PointBasedPixelization
-        """
-        return self.union(other_pixelization)
-
-    def __xor__(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
-        """
-        Return the symmetric difference between the current pixelization and another pixelization.
-
-        :param other_pixelization: The pixelization to calculate the symmetric difference with.
-        :type other_pixelization: PointBasedPixelization
-        :return: The symmetric difference between the pixelizations.
-        :rtype: PointBasedPixelization
-        """
-        return self.symmetric_difference(other_pixelization)
-
-    def __invert__(self) -> "PointBasedPixelization":
-        """
-        Return the inverse of the current pixelization.
-
-        :return: The inverse Pixelization object.
-        :rtype: PointBasedPixelization
-        """
-        return self.inverse()
+        return self.pixel_size == other.pixel_size and self.pixel_centers == other.pixel_centers
 
     def __len__(self):
         """
-        Return the number of pixels in the pixelization.
+        Get the number of pixel in the pixelization.
 
-        :return: The number of pixels.
+        :return: The number of pixels in the pixelization (i.e. the number of pixel centers).
         :rtype: int
         """
         return len(self.pixel_centers)
 
-    def intersection(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
+    @property
+    def min_grid_center(self) -> Tuple[float, float]:
         """
-        Create a pixelization that is the Boolean intersection of two pixelizations.
-        Both pixelizations must have the same pixel size.
+        Get the minimum center point from the set of pixel centers, in the pixel 3D grid.
 
-        :param other_pixelization: The other pixelization to compute the Boolean intersection with.
-        :type other_pixelization: PointBasedPixelization
+        This point may not be a pixel of the pixelization, because it is the minimum center in each direction (X, Y).
+
+        :return: The minimum center point.
+        :rtype: tuple[float, float]
+        """
+        min_x = min_y = float("inf")
+
+        for point in self.pixel_centers:
+            min_x = min(min_x, point[0])
+            min_y = min(min_y, point[1])
+
+        return min_x, min_y
+
+    @property
+    def max_grid_center(self) -> Tuple[float, float]:
+        """
+        Get the maximum center point from the set of pixel centers, in the pixel 3D grid.
+
+        This point may not be a pixel of the pixelization, because it is the maximum center in each direction (X, Y).
+
+        :return: The maximum center point.
+        :rtype: tuple[float, float]
+        """
+        max_x = max_y = -float("inf")
+
+        for point in self.pixel_centers:
+            max_x = max(max_x, point[0])
+            max_y = max(max_y, point[1])
+
+        return max_x, max_y
+
+    # CLASS METHODS
+    @classmethod
+    def from_line_segment(
+        cls, line_segment: LineSegment2D, pixel_size: float, name: str = ""
+    ) -> "PointBasedPixelization":
+        """
+        Create a pixelization from a LineSegment2D.
+
+        :param line_segment: The LineSegment2D to create the pixelization from.
+        :type line_segment: LineSegment2D
+        :param pixel_size: The size of each pixel.
+        :type pixel_size: float
+        :param name: Optional name for the pixelization.
+        :type name: str
+
+        :return: A pixelization created from the LineSegment2D.
+        :rtype: PointBasedPixelization
+        """
+
+        return cls(
+            line_segments_to_pixels([cls._extract_segment_from_line_segment(line_segment)], pixel_size),
+            pixel_size,
+            name,
+        )
+
+    @classmethod
+    def from_closed_polygon(
+        cls, closed_polygon: ClosedPolygon2D, pixel_size: float, name: str = ""
+    ) -> "PointBasedPixelization":
+        """
+        Create a pixelization from a ClosedPolygon2D.
+
+        :param closed_polygon: The ClosedPolygon2D to create the pixelization from.
+        :type closed_polygon: ClosedPolygon2D
+        :param pixel_size: The size of each pixel.
+        :type pixel_size: float
+        :param name: Optional name for the pixelization.
+        :type name: str
+
+        :return: A pixelization created from the ClosedPolygon2D.
+        :rtype: PointBasedPixelization
+        """
+
+        line_segments = cls._extract_segments_from_closed_polygon(closed_polygon)
+        return cls(line_segments_to_pixels(line_segments, pixel_size), pixel_size, name)
+
+    @classmethod
+    def from_matrix_based_pixelization(
+        cls, matrix_based_pixelization: "MatrixBasedPixelization"
+    ) -> "PointBasedPixelization":
+        """
+        Create a PointBasedPixelization object from a MatrixBasedPixelization.
+
+        :param matrix_based_pixelization: The MatrixBasedPixelization object representing the pixelization.
+        :type matrix_based_pixelization: MatrixBasedPixelization
+
+        :return: A PointBasedPixelization object created from the MatrixBasedPixelization.
+        :rtype: PointBasedPixelization
+        """
+        if not cls.check_center_is_in_implicit_grid(
+            matrix_based_pixelization.min_grid_center, matrix_based_pixelization.pixel_size
+        ):
+            warnings.warn(
+                """This matrix based pixelization is not defined in the implicit grid defined by the pixel_size. 
+            Some methods like boolean operation or interference computing may not work as expected."""
+            )
+
+        return matrix_based_pixelization.to_point_based_pixelization()
+
+    # BOOLEAN OPERATIONS
+    def union(self, other: "PointBasedPixelization") -> "PointBasedPixelization":
+        """
+        Perform a union operation with another PointBasedPixelization.
+
+        :param other: The PointBasedPixelization to perform the union with.
+        :type other: PointBasedPixelization
+
+        :return: A new PointBasedPixelization resulting from the union operation.
+        :rtype: PointBasedPixelization
+        """
+        if self.pixel_size != other.pixel_size:
+            raise ValueError("Both pixelizations must have the same pixel_size to perform union.")
+
+        return PointBasedPixelization(self.pixel_centers.union(other.pixel_centers), self.pixel_size)
+
+    def difference(self, other: "PointBasedPixelization") -> "PointBasedPixelization":
+        """
+        Perform an intersection operation with another PointBasedPixelization.
+
+        :param other: The PointBasedPixelization to perform the intersection with.
+        :type other: PointBasedPixelization
+
+        :return: A new PointBasedPixelization resulting from the intersection operation.
+        :rtype: PointBasedPixelization
+        """
+        if self.pixel_size != other.pixel_size:
+            raise ValueError("Both pixelizations must have the same pixel_size to perform difference.")
+
+        return PointBasedPixelization(self.pixel_centers.difference(other.pixel_centers), self.pixel_size)
+
+    def intersection(self, other: "PointBasedPixelization") -> "PointBasedPixelization":
+        """
+        Create a pixelization that is the Boolean intersection of two pixelization.
+        Both pixelization must have same pixel size.
+
+        :param other: The other pixelization to compute the Boolean intersection with.
+        :type other: PointBasedPixelization
 
         :return: The created pixelization resulting from the Boolean intersection.
         :rtype: PointBasedPixelization
         """
-        if self.pixel_size != other_pixelization.pixel_size:
+        if self.pixel_size != other.pixel_size:
             raise ValueError("Both pixelizations must have the same pixel_size to perform intersection.")
 
-        return PointBasedPixelization(
-            self.pixel_centers.intersection(other_pixelization.pixel_centers), self.pixel_size
-        )
+        return PointBasedPixelization(self.pixel_centers.intersection(other.pixel_centers), self.pixel_size)
 
-    def is_intersecting(self, other_pixelization: "PointBasedPixelization") -> bool:
+    def symmetric_difference(self, other: "PointBasedPixelization") -> "PointBasedPixelization":
         """
-        Check if two pixelizations are intersecting.
-        Both pixelizations must have the same pixel size.
+        Perform a symmetric difference operation with another PointBasedPixelization.
 
-        :param other_pixelization: The other pixelization to check if there is an intersection with.
-        :type other_pixelization: PointBasedPixelization
+        :param other: The PointBasedPixelization to perform the symmetric difference with.
+        :type other: PointBasedPixelization
 
-        :return: True if the pixelizations are intersecting, False otherwise.
-        :rtype: bool
-        """
-        intersection = self.intersection(other_pixelization)
-
-        return len(intersection) > 0
-
-    def union(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
-        """
-        Create a pixelization that is the Boolean union of two pixelizations.
-        Both pixelizations must have the same pixel size.
-
-        :param other_pixelization: The other pixelization to compute the Boolean union with.
-        :type other_pixelization: PointBasedPixelization
-
-        :return: The created pixelization resulting from the Boolean union.
+        :return: A new PointBasedPixelization resulting from the symmetric difference operation.
         :rtype: PointBasedPixelization
         """
-        if self.pixel_size != other_pixelization.pixel_size:
-            raise ValueError("Both pixelizations must have the same pixel_size to perform union.")
-
-        return PointBasedPixelization(self.pixel_centers.union(other_pixelization.pixel_centers), self.pixel_size)
-
-    def difference(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
-        """
-        Create a pixelization that is the Boolean difference of two pixelizations.
-        Both pixelizations must have the same pixel size.
-
-        :param other_pixelization: The other pixelization to compute the Boolean difference with.
-        :type other_pixelization: PointBasedPixelization
-
-        :return: The created pixelization resulting from the Boolean difference.
-        :rtype: PointBasedPixelization
-        """
-        if self.pixel_size != other_pixelization.pixel_size:
-            raise ValueError("Both pixelizations must have the same pixel_size to perform difference.")
-
-        return PointBasedPixelization(self.pixel_centers.difference(other_pixelization.pixel_centers), self.pixel_size)
-
-    def symmetric_difference(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
-        """
-        Create a pixelization that is the Boolean symmetric difference (XOR) of two pixelizations.
-        Both pixelizations must have the same pixel size.
-
-        :param other_pixelization: The other pixelization to compute the Boolean symmetric difference with.
-        :type other_pixelization: PointBasedPixelization
-
-        :return: The created pixelization resulting from the Boolean symmetric difference.
-        :rtype: PointBasedPixelization
-        """
-        if self.pixel_size != other_pixelization.pixel_size:
+        if self.pixel_size != other.pixel_size:
             raise ValueError("Both pixelizations must have the same pixel_size to perform symmetric difference.")
 
-        return PointBasedPixelization(
-            self.pixel_centers.symmetric_difference(other_pixelization.pixel_centers), self.pixel_size
-        )
+        return PointBasedPixelization(self.pixel_centers.symmetric_difference(other.pixel_centers), self.pixel_size)
 
-    def interference(self, other_pixelization: "PointBasedPixelization") -> float:
+    def inverse(self) -> "PointBasedPixelization":
         """
-        Compute the percentage of interference between two pixelizations.
+        Compute the inverse of the pixelization.
 
-        :param other_pixelization: The other pixelization to compute the percentage of interference with.
-        :type other_pixelization: PointBasedPixelization
-
-        :return: The percentage of interference between the two pixelizations.
-        :rtype: float
+        :return: A new pixelization representing the inverse.
+        :rtype: PointBasedPixelization
         """
-        return len(self.intersection(other_pixelization)) / len(self.union(other_pixelization))
+        inverted_pixel_matrix = self.to_matrix_based_pixelization().inverse()
 
-    def plot(self, ax=None):
-        """Plots the pixels on a 2D plane"""
-        if ax is None:
-            _, ax = plt.subplots()
+        return PointBasedPixelization.from_matrix_based_pixelization(inverted_pixel_matrix)
 
-        for center in self.pixel_centers:
-            x, y = center
-            ax.add_patch(
-                patches.Rectangle(
-                    (x - self.pixel_size / 2, y - self.pixel_size / 2),  # Bottom left corner
-                    self.pixel_size,  # Width
-                    self.pixel_size,  # Height
-                    color="black",
-                )
-            )
+    # FILLING METHODS
+    def flood_fill(self, start: Tuple[float, float], fill_with: bool) -> "PointBasedPixelization":
+        """
+        Perform a flood fill operation on the pixelization.
 
-        # Setting the x and y limits to contain all the pixels
-        ax.set_xlim(
-            min(x[0] for x in self.pixel_centers) - self.pixel_size,
-            max(x[0] for x in self.pixel_centers) + self.pixel_size,
-        )
-        ax.set_ylim(
-            min(x[1] for x in self.pixel_centers) - self.pixel_size,
-            max(x[1] for x in self.pixel_centers) + self.pixel_size,
-        )
+        :param start: The coordinates of the starting point for the flood fill.
+        :type start: tuple[float, float, float]
+        :param fill_with: The value to fill the pixels with during the operation.
+        :type fill_with: bool
 
-        ax.set_aspect("equal")  # Ensuring equal scaling for both axes
-        plt.show()
+        :return: A new pixelization resulting from the flood fill operation.
+        :rtype: PointBasedPixelization
+        """
+        start = self._point_to_local_grid_index(start)
+        pixel_matrix = self.to_matrix_based_pixelization()
+        filled_pixel_matrix = pixel_matrix.flood_fill(start, fill_with)
 
-        return ax
+        return self.from_matrix_based_pixelization(filled_pixel_matrix)
 
-    @classmethod
-    def from_line_segment(cls, line_segment, pixel_size):
-        return cls(cls._line_segments_to_pixels([line_segment], pixel_size), pixel_size)
+    def _fill_outer_elements(self) -> "PointBasedPixelization":
+        """
+        Fill the outer pixels of the pixelization.
 
-    @classmethod
-    def from_polygon(cls, polygon, pixel_size):
-        line_segments = [(polygon[i - 1], polygon[i]) for i in range(len(polygon))]
-        return cls(cls._line_segments_to_pixels(line_segments, pixel_size), pixel_size)
+        :return: A new pixelization with outer pixels filled.
+        :rtype: PointBasedPixelization
+        """
+        return self.from_matrix_based_pixelization(self.to_matrix_based_pixelization().fill_outer_pixels())
 
-    @staticmethod
-    def _line_segments_to_pixels(line_segments, pixel_size):
-        return line_segments_to_pixels(line_segments, pixel_size)
+    def _fill_enclosed_elements(self) -> "PointBasedPixelization":
+        """
+        Fill the enclosed pixels of the pixelization.
 
-    @classmethod
-    def from_pixel_matrix(
-        cls, pixel_matrix: "MatrixBasedPixelization", pixel_size: float, pixel_matrix_origin_center: Tuple[float, float]
-    ):
-        indices = np.argwhere(pixel_matrix.matrix)
-        pixel_centers = pixel_matrix_origin_center + indices * pixel_size
-        return cls(set(map(tuple, np.round(pixel_centers, DECIMALS))), pixel_size)
+        :return: A new pixelization with enclosed pixels filled.
+        :rtype: PointBasedPixelization
+        """
+        return self.from_matrix_based_pixelization(self.to_matrix_based_pixelization().fill_enclosed_pixels())
 
-    def _get_min_pixel_grid_center(self) -> Tuple[float, float]:
-        min_x = min_y = float("inf")
-        for point in self.pixel_centers:
-            min_x = min(min_x, point[0])
-            min_y = min(min_y, point[1])
-        return min_x, min_y
+    # HELPER METHODS
+    def to_matrix_based_pixelization(self) -> "MatrixBasedPixelization":
+        """
+        Convert the point based pixelization to a matrix based pixelization.
 
-    min_pixel_grid_center = property(_get_min_pixel_grid_center)
-
-    def _get_max_pixel_grid_center(self) -> Tuple[float, float]:
-        max_x = max_y = -float("inf")
-        for point in self.pixel_centers:
-            max_x = max(max_x, point[0])
-            max_y = max(max_y, point[1])
-        return max_x, max_y
-
-    max_pixel_grid_center = property(_get_max_pixel_grid_center)
-
-    def to_pixel_matrix(self) -> "MatrixBasedPixelization":
-        min_center = self.min_pixel_grid_center
-        max_center = self.max_pixel_grid_center
+        :return: The matrix based pixelization.
+        :rtype: MatrixBasedPixelization
+        """
+        min_center = self.min_grid_center
+        max_center = self.max_grid_center
 
         dim_x = round((max_center[0] - min_center[0]) / self.pixel_size + 1)
         dim_y = round((max_center[1] - min_center[1]) / self.pixel_size + 1)
@@ -1842,29 +1870,20 @@ class PointBasedPixelization:
         matrix = np.zeros((dim_x, dim_y), dtype=np.bool_)
         matrix[indices[:, 0], indices[:, 1]] = True
 
-        return MatrixBasedPixelization(matrix)
-
-    def inverse(self) -> "PointBasedPixelization":
-        """
-        Create a new Pixelization object that is the inverse of the current pixelization.
-
-        :return: The inverse Pixelization object.
-        :rtype: PointBasedPixelization
-        """
-        inverted_pixel_matrix = self.to_pixel_matrix().inverse()
-        min_pixel_center = self.min_pixel_grid_center
-
-        return PointBasedPixelization.from_pixel_matrix(inverted_pixel_matrix, self.pixel_size, min_pixel_center)
-
-    def _get_bounding_rectangle(self):
-        min_point = np.array([self.min_pixel_grid_center]) - np.array([self.pixel_size, self.pixel_size])
-        max_point = np.array([self.max_pixel_grid_center]) + np.array([self.pixel_size, self.pixel_size])
-
-        return BoundingRectangle(min_point[0], max_point[0], min_point[1], max_point[1])
-
-    bounding_rectangle = property(_get_bounding_rectangle)
+        return MatrixBasedPixelization(matrix, min_center, self.pixel_size)
 
     def _point_to_local_grid_index(self, point: Tuple[float, float]) -> Tuple[int, int]:
+        """
+        Convert a point to the local grid index within the pixelization.
+
+        :param point: The point to convert.
+        :type point: tuple[float, float]
+
+        :return: The local grid index of the point.
+        :rtype: Tuple[int, int]
+
+        :raises ValueError: If the point is not within the pixelization's bounding box.
+        """
         if not self.bounding_rectangle.point_belongs(Point2D(*point)):
             raise ValueError("Point not in local pixel grid.")
 
@@ -1872,23 +1891,6 @@ class PointBasedPixelization:
         y_index = int((point[1] - self.bounding_rectangle.ymin) // self.pixel_size)
 
         return x_index, y_index
-
-    def flood_fill(self, start_point: Tuple[float, float], fill_with: bool) -> "PointBasedPixelization":
-        start = self._point_to_local_grid_index(start_point)
-        pixel_matrix = self.to_pixel_matrix()
-        filled_pixel_matrix = pixel_matrix.flood_fill(start, fill_with)
-
-        return self.from_pixel_matrix(filled_pixel_matrix, self.pixel_size, self.min_pixel_grid_center)
-
-    def fill_outer_pixels(self) -> "PointBasedPixelization":
-        return self.from_pixel_matrix(
-            self.to_pixel_matrix().fill_outer_pixels(), self.pixel_size, self.min_pixel_grid_center
-        )
-
-    def fill_enclosed_pixels(self) -> "PointBasedPixelization":
-        return self.from_pixel_matrix(
-            self.to_pixel_matrix().fill_enclosed_pixels(), self.pixel_size, self.min_pixel_grid_center
-        )
 
 
 class MatrixBasedPixelization:
