@@ -2186,6 +2186,8 @@ class Ellipse3D(ClosedCurve):
         """
         intersections = []
         # from volmdlr import surfaces
+        # plane1 = surfaces.Plane3D(self.frame)
+        # plane2 = surfaces.Plane3D(ellipse.frame)
         plane1 = volmdlr.surfaces.Plane3D(self.frame)
         plane2 = volmdlr.surfaces.Plane3D(ellipse.frame)
         if plane1.is_coincident(plane2) and self.frame.w.is_colinear_to(ellipse.frame.w):
