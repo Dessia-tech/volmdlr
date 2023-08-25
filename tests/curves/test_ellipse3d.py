@@ -107,7 +107,7 @@ class TestEllipse3D(unittest.TestCase):
         self.assertEqual(ellipse.normal, volmdlr.Z3D)
         self.assertEqual(ellipse.major_axis, 5.0)
         self.assertEqual(ellipse.minor_axis, 3.0)
-
+        
     def test_linesegment_intersections(self):
         line1 = edges.LineSegment3D(volmdlr.Point3D(2.548547388496604, 3.4145727922810423, 3.4145727922810423),
                                     volmdlr.Point3D(-1.6329931618554527, -3.36504396942433, -3.36504396942433))

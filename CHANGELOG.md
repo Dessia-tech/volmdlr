@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Curve: local_discretization
 - Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
 - ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections, ellipse_intersections
+- Circle2D: ellipse_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
+- Wire3D/Contour3D: edge_intersections, wire_intersections
+- BSpline3D: arc_intersections
 - BSplineSurface3D: partial removal of dependencies on geomdl objects
 - BSplineSurface3D: from_points_interpolation, from_points_approximation
 - 
@@ -56,6 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update cython version requirement in setup.py
 - Ellipse2D: point_at_abscissa
 - ultis.common_operations: get_edge_distance_to_point and get_get_abscissa_discretization from edges so it can be used in curves too.
+- edges.Edge._generic_minimum_distance
+- LineSegment3D: distance_linesegment
+- BSpline3D: linesegment_intersections
 
 ### Refactor
 - refator some classes' init in primitives3D. 
@@ -85,7 +93,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ellipse2D: point_distance
 - Ellipse3D: test_ellipse_intersections, test_linesegment_intersections
 - ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
-
+- Circle3D: circle_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections, test_minimum_distance_bspline
+- BSplineCurve3D: test_bspline_linesegment_minimum_distance, test_bspline_linesegment_intersections
+- Contour3D: test_edge_intersections
 ## v0.12.0
 
 
@@ -109,6 +120,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: Translation
 - wires.WireMixin: from_circle
 - curves.CircleMixin: trim
+- Face3D: point_distance
+- BSplineCurve3D: revolution method.
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
