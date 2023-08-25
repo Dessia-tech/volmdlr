@@ -251,6 +251,8 @@ def ellipse_abscissa_angle_integration(ellipse3d, point_abcissa, angle_start, in
             break
         if res > point_abcissa:
             increment_factor = (abs(initial_angle - angle_start) * (point_abcissa - res)) / (2 * abs(res))
+        elif res == 0.0:
+            increment_factor = 1e-5
         else:
             increment_factor = (abs(initial_angle - angle_start) * (point_abcissa - res)) / abs(res)
         initial_angle += increment_factor

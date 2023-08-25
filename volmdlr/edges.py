@@ -3460,13 +3460,14 @@ class ArcEllipse2D(Edge):
         if self.start.is_close(point, abs_tol) or self.end.is_close(point, abs_tol):
             return True
         point_in_local_coords = self.ellipse.frame.global_to_local_coordinates(point)
+        local_ellipse = self.frame_mapping(self.ellipse.frame, 'new')
         if not math.isclose(
-                (point_in_local_coords.x - self.ellipse.center.x) ** 2 / self.ellipse.major_axis ** 2 +
-                (point_in_local_coords.y - self.ellipse.center.y) ** 2 / self.ellipse.minor_axis ** 2,
+                (point_in_local_coords.x - local_ellipse.ellipse.center.x) ** 2 / local_ellipse.ellipse.major_axis ** 2 +
+                (point_in_local_coords.y - local_ellipse.ellipse.center.y) ** 2 / local_ellipse.ellipse.minor_axis ** 2,
                 1, abs_tol=abs_tol) and\
                 not math.isclose(
-                    (point_in_local_coords.x - self.ellipse.center.x) ** 2 / self.ellipse.minor_axis ** 2 +
-                    (point_in_local_coords.y - self.ellipse.center.y) ** 2 / self.ellipse.major_axis ** 2,
+                    (point_in_local_coords.x - local_ellipse.ellipse.center.x) ** 2 / local_ellipse.ellipse.minor_axis ** 2 +
+                    (point_in_local_coords.y - local_ellipse.ellipse.center.y) ** 2 / local_ellipse.ellipse.major_axis ** 2,
                     1, abs_tol=abs_tol):
             return False
         clockwise_arcellipse = self.reverse() if self.ellipse.is_trigo else self
