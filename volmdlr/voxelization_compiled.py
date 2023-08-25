@@ -16,16 +16,19 @@ from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
 from numpy.typing import NDArray
 
-# CUSTOM PYTHON TYPES
-Point = Tuple[float, float, float]
-Triangle = Tuple[Point, Point, Point]
+# CUSTOM TYPES
+_Point3D = Tuple[float, float, float]
+_Triangle3D = Tuple[_Point3D, _Point3D, _Point3D]
+
+_Point2D = Tuple[float, float]
+_Segment2D = Tuple[_Point2D, _Point2D]
 
 
 # PYTHON FUNCTIONS
 
 
 def triangles_to_voxel_matrix(
-    triangles: List[Triangle],
+    triangles: List[_Triangle3D],
     voxel_size: float,
 ) -> Tuple[NDArray[np.bool_], Tuple[float, float, float]]:
     """
@@ -125,9 +128,7 @@ def flood_fill_matrix_3d(matrix: NDArray[np.bool_], start: Tuple[int, int, int],
     )
 
 
-def line_segments_to_pixels(
-    line_segments: List[Tuple[Tuple[float, float], Tuple[float, float]]], pixel_size: float
-) -> Set[Tuple[float, float]]:
+def line_segments_to_pixels(line_segments: List[_Segment2D], pixel_size: float) -> Set[_Point2D]:
     """
     Convert a list of line segments to a set of pixel coordinates.
 
@@ -147,7 +148,7 @@ def line_segments_to_pixels(
 
 
 def triangle_intersects_voxel(
-    triangle: Triangle, voxel_center: Point, voxel_extents: Tuple[float, float, float]
+    triangle: _Triangle3D, voxel_center: _Point3D, voxel_extents: Tuple[float, float, float]
 ) -> bool:
     """
     Helper function to compute if there is an intersection between a 3D triangle and a voxel.
@@ -166,7 +167,7 @@ def triangle_intersects_voxel(
     return _triangle_intersects_voxel(triangle, voxel_center, voxel_extents)
 
 
-def voxel_triangular_faces(voxel_center: Point, voxel_size: float) -> List[Triangle]:
+def voxel_triangular_faces(voxel_center: _Point3D, voxel_size: float) -> List[_Triangle3D]:
     """
     Helper function to compute the 12 triangular faces that compose a voxel, for visualization.
 

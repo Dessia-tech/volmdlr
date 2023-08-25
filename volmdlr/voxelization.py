@@ -28,8 +28,11 @@ from volmdlr.voxelization_compiled import (
 )
 
 # CUSTOM TYPES
-Point = Tuple[float, float, float]
-Triangle = Tuple[Point, Point, Point]
+_Point3D = Tuple[float, float, float]
+_Triangle3D = Tuple[_Point3D, _Point3D, _Point3D]
+
+_Point2D = Tuple[float, float]
+_Segment2D = Tuple[_Point2D, _Point2D]
 
 # GLOBAL VARIABLE
 DECIMALS = 9  # Used to round numbers and avoid floating point arithmetic imprecision
@@ -428,7 +431,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         return self.element_size
 
     @property
-    def voxel_centers(self) -> Set[Point]:
+    def voxel_centers(self) -> Set[_Point3D]:
         """
         Get the center point of each voxel.
 
@@ -515,7 +518,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         return self._fill_enclosed_elements()
 
     # DISPLAY METHODS
-    def to_triangles(self) -> Set[Triangle]:
+    def to_triangles(self) -> Set[_Triangle3D]:
         """
         Convert the voxelization to triangles for display purpose.
 
@@ -565,7 +568,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
     # HELPER METHODS
 
     @staticmethod
-    def _shell_to_triangles(shell: Shell3D) -> List[Triangle]:
+    def _shell_to_triangles(shell: Shell3D) -> List[_Triangle3D]:
         """
         Helper method to convert a Shell3D to a list of triangles.
 
@@ -600,7 +603,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         ]
 
     @staticmethod
-    def _volume_model_to_triangles(volume_model: VolumeModel) -> List[Triangle]:
+    def _volume_model_to_triangles(volume_model: VolumeModel) -> List[_Triangle3D]:
         """
         Helper method to convert a VolumeModel to a list of triangles.
 
@@ -622,7 +625,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
 class PointBasedVoxelization(Voxelization):
     """Voxelization implemented as a set of points, representing each voxel center."""
 
-    def __init__(self, voxel_centers: Set[Point], voxel_size: float, name: str = ""):
+    def __init__(self, voxel_centers: Set[_Point3D], voxel_size: float, name: str = ""):
         """
         Initialize the PointBasedVoxelization.
 
@@ -640,7 +643,7 @@ class PointBasedVoxelization(Voxelization):
         Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
     @property
-    def _element_centers(self) -> Set[Point]:
+    def _element_centers(self) -> Set[_Point3D]:
         """
         Get the center point of each voxel.
 
@@ -673,7 +676,7 @@ class PointBasedVoxelization(Voxelization):
         return len(self.voxel_centers)
 
     @property
-    def min_grid_center(self) -> Point:
+    def min_grid_center(self) -> _Point3D:
         """
         Get the minimum center point from the set of voxel centers, in the voxel 3D grid.
 
@@ -692,7 +695,7 @@ class PointBasedVoxelization(Voxelization):
         return min_x, min_y, min_z
 
     @property
-    def max_grid_center(self) -> Point:
+    def max_grid_center(self) -> _Point3D:
         """
         Get the maximum center point from the set of voxel centers, in the voxel 3D grid.
 
@@ -847,7 +850,7 @@ class PointBasedVoxelization(Voxelization):
         return self.__class__.from_matrix_based_voxelization(inverted_voxel_matrix)
 
     # FILLING METHODS
-    def flood_fill(self, start: Point, fill_with: bool) -> "PointBasedVoxelization":
+    def flood_fill(self, start: _Point3D, fill_with: bool) -> "PointBasedVoxelization":
         """
         Perform a flood fill operation on the voxelization.
 
@@ -946,7 +949,7 @@ class PointBasedVoxelization(Voxelization):
 
         return MatrixBasedVoxelization(matrix, min_center, self.voxel_size, self.name)
 
-    def _point_to_local_grid_index(self, point: Point) -> Tuple[int, int, int]:
+    def _point_to_local_grid_index(self, point: _Point3D) -> Tuple[int, int, int]:
         """
         Convert a point to the local grid index within the voxelization.
 
@@ -999,7 +1002,7 @@ class PointBasedVoxelization(Voxelization):
         )
 
     @staticmethod
-    def _voxels_intersecting_voxels(voxel_centers_array: np.ndarray, voxel_size: float) -> Set[Point]:
+    def _voxels_intersecting_voxels(voxel_centers_array: np.ndarray, voxel_size: float) -> Set[_Point3D]:
         """
         Helper method to compute the center of the voxels that intersect with a given array of voxels.
         The returned voxels are part of an implicit 3D grid defined by the voxel size, whereas the given voxels centers
@@ -1034,7 +1037,7 @@ class MatrixBasedVoxelization(Voxelization):
     def __init__(
         self,
         voxel_matrix: NDArray[np.bool_],
-        min_grid_center: Point,
+        min_grid_center: _Point3D,
         voxel_size: float,
         name: str = "",
     ):
@@ -1055,7 +1058,7 @@ class MatrixBasedVoxelization(Voxelization):
         Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
     @property
-    def _element_centers(self) -> Set[Point]:
+    def _element_centers(self) -> Set[_Point3D]:
         """
         Get the center point of each voxel.
 
@@ -1093,7 +1096,7 @@ class MatrixBasedVoxelization(Voxelization):
         return len(np.argwhere(self.matrix))
 
     @property
-    def min_grid_center(self) -> Point:
+    def min_grid_center(self) -> _Point3D:
         """
         Get the minimum center point from the set of voxel centers, in the voxel 3D grid.
 
@@ -1105,7 +1108,7 @@ class MatrixBasedVoxelization(Voxelization):
         return self._min_grid_center
 
     @property
-    def max_grid_center(self) -> Point:
+    def max_grid_center(self) -> _Point3D:
         """
         Get the maximum center point from the set of voxel centers, in the voxel 3D grid.
 
@@ -1327,7 +1330,7 @@ class MatrixBasedVoxelization(Voxelization):
             self.voxel_size,
         )
 
-    def _logical_operation(self, other: "MatrixBasedVoxelization", logical_operation):
+    def _logical_operation(self, other: "MatrixBasedVoxelization", logical_operation) -> "MatrixBasedVoxelization":
         """
         Perform a logical operation (e.g., union, intersection, etc.) between two voxelizations.
 
@@ -1448,7 +1451,7 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
         return self.element_size
 
     @property
-    def pixel_centers(self) -> Set[Tuple[float, float]]:
+    def pixel_centers(self) -> Set[_Point2D]:
         """
         Get the center point of each pixel.
 
@@ -1582,13 +1585,13 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
     @staticmethod
     def _extract_segment_from_line_segment(
         line_segment: LineSegment2D,
-    ) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    ) -> _Segment2D:
         return (line_segment.start.x, line_segment.start.y), (line_segment.end.x, line_segment.end.y)
 
     @staticmethod
     def _extract_segments_from_closed_polygon(
         closed_polygon: ClosedPolygon2D,
-    ) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
+    ) -> List[_Segment2D]:
         return [
             (
                 (closed_polygon.points[i - 1].x, closed_polygon.points[i - 1].y),
@@ -1601,7 +1604,7 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
 class PointBasedPixelization(Pixelization):
     """Pixelization implemented as a set of points, representing each pixel center."""
 
-    def __init__(self, pixel_centers: Set[Tuple[float, float]], pixel_size: float, name: str = ""):
+    def __init__(self, pixel_centers: Set[_Point2D], pixel_size: float, name: str = ""):
         """
         Initialize the PointBasedPixelization.
 
@@ -1619,7 +1622,7 @@ class PointBasedPixelization(Pixelization):
         Pixelization.__init__(self, pixel_size=pixel_size, name=name)
 
     @property
-    def _element_centers(self) -> Set[Tuple[float, float]]:
+    def _element_centers(self) -> Set[_Point2D]:
         """
         Get the center point of each pixel.
 
@@ -1650,7 +1653,7 @@ class PointBasedPixelization(Pixelization):
         return len(self.pixel_centers)
 
     @property
-    def min_grid_center(self) -> Tuple[float, float]:
+    def min_grid_center(self) -> _Point2D:
         """
         Get the minimum center point from the set of pixel centers, in the pixel 3D grid.
 
@@ -1668,7 +1671,7 @@ class PointBasedPixelization(Pixelization):
         return min_x, min_y
 
     @property
-    def max_grid_center(self) -> Tuple[float, float]:
+    def max_grid_center(self) -> _Point2D:
         """
         Get the maximum center point from the set of pixel centers, in the pixel 3D grid.
 
@@ -1828,7 +1831,7 @@ class PointBasedPixelization(Pixelization):
         return PointBasedPixelization.from_matrix_based_pixelization(inverted_pixel_matrix)
 
     # FILLING METHODS
-    def flood_fill(self, start: Tuple[float, float], fill_with: bool) -> "PointBasedPixelization":
+    def flood_fill(self, start: _Point2D, fill_with: bool) -> "PointBasedPixelization":
         """
         Perform a flood fill operation on the pixelization.
 
@@ -1885,7 +1888,7 @@ class PointBasedPixelization(Pixelization):
 
         return MatrixBasedPixelization(matrix, min_center, self.pixel_size, self.name)
 
-    def _point_to_local_grid_index(self, point: Tuple[float, float]) -> Tuple[int, int]:
+    def _point_to_local_grid_index(self, point: _Point2D) -> Tuple[int, int]:
         """
         Convert a point to the local grid index within the pixelization.
 
@@ -1912,7 +1915,7 @@ class MatrixBasedPixelization(Pixelization):
     def __init__(
         self,
         pixel_matrix: NDArray[np.bool_],
-        min_grid_center: Tuple[float, float],
+        min_grid_center: _Point2D,
         pixel_size: float,
         name: str = "",
     ):
@@ -1933,7 +1936,7 @@ class MatrixBasedPixelization(Pixelization):
         Pixelization.__init__(self, pixel_size=pixel_size, name=name)
 
     @property
-    def _element_centers(self) -> Set[Tuple[float, float]]:
+    def _element_centers(self) -> Set[_Point2D]:
         """
         Get the center point of each pixel.
 
@@ -1971,7 +1974,7 @@ class MatrixBasedPixelization(Pixelization):
         return len(np.argwhere(self.matrix))
 
     @property
-    def min_grid_center(self) -> Tuple[float, float]:
+    def min_grid_center(self) -> _Point2D:
         """
         Get the minimum center point from the set of pixel centers, in the pixel 3D grid.
 
@@ -1983,7 +1986,7 @@ class MatrixBasedPixelization(Pixelization):
         return self._min_grid_center
 
     @property
-    def max_grid_center(self) -> Tuple[float, float]:
+    def max_grid_center(self) -> _Point2D:
         """
         Get the maximum center point from the set of pixel centers, in the pixel 3D grid.
 
@@ -2205,7 +2208,7 @@ class MatrixBasedPixelization(Pixelization):
             self.pixel_size,
         )
 
-    def _logical_operation(self, other: "MatrixBasedPixelization", logical_operation):
+    def _logical_operation(self, other: "MatrixBasedPixelization", logical_operation) -> "MatrixBasedPixelization":
         """
         Perform a logical operation (e.g., union, intersection, etc.) between two pixelizations.
 
