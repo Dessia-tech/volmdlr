@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - Line: reverse.
 - BSplineCurve: Remove dependencies from the geomdl library.
+- perf: to_dict/dict_to_obj of OpenTriangleShell3D
+- Cylinder / Cone / HollowCylinder: from_center_point_and_axis
+- Cone: remove inheritance from RevolvedProfile
+- Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
+- Curve: local_discretization
+- Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
+- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections, ellipse_intersections
+- Circle2D: ellipse_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
+- New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
 
 ### Fixed
 - Sweep with non smoth path
@@ -43,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - VolumeModel: get_shells
 - add error protection stl
 - Sweep - add raise ValueError if section too big in comparision to arc radiuses
+- Update cython version requirement in setup.py
+- Ellipse2D: point_at_abscissa
+- ultis.common_operations: get_edge_distance_to_point and get_get_abscissa_discretization from edges so it can be used in curves too.
+
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
@@ -58,12 +73,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: transform some attributs into lazy evaluation and Caching
 - BSplineSurface3D: store control_points as numpy array for memory efficiency
 - PlaneFace3D: distance_to_point -> point_distance
+- Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
+- Cylinder / HollowCylinder: `from_extremal_points` is now depracted. Use `from_end_points` instead (for lexical reason)
 
 ### Unittests
--
+- Cylinder / Cone / HollowCylinder
+- Ellipse2D: point_distance
+- Ellipse3D: test_ellipse_intersections, test_linesegment_intersections
+- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
 
 ## v0.12.0
 
@@ -82,7 +104,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 - Sweep with muitiform profile contour.
-- New module: Voxelization
 - minimum_distance: face-to-face, shell-to-shell
 - OpenShell3D: from_faces (using faces graph)
 - SphericalFace3D: from_contours3d_and_rectangular_cut
