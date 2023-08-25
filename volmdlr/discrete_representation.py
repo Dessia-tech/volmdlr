@@ -1603,11 +1603,12 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
         return self._fill_enclosed_elements()
 
     # DISPLAY METHOD
-    def plot(self, ax=None, **kwargs):
+    def plot(self, ax=None, color: str = "b", **kwargs):
         """
         Plots the pixels on a 2D plane.
 
         :param ax: An existing figure to plot on.
+        :param color: The color of the pixels.
         :param kwargs: Additional keyword arguments.
 
         :return: The plotted MatPlotLib figure.
@@ -1624,7 +1625,7 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
                     (x - self.pixel_size / 2, y - self.pixel_size / 2),  # Bottom left corner
                     self.pixel_size,  # Width
                     self.pixel_size,  # Height
-                    color="black",
+                    color=color,
                 )
             )
 
@@ -1644,17 +1645,34 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
         return ax
 
     # HELPER METHODS
-
     @staticmethod
     def _extract_segment_from_line_segment(
         line_segment: LineSegment2D,
     ) -> _Segment2D:
+        """
+        Extract the segment coordinates from the given LineSegment2D.
+
+        :param line_segment: The LineSegment2D to extract from.
+        :type line_segment: LineSegment2D
+
+        :return: The extracted segment coordinates.
+        :rtype: tuple[tuple[float, float], tuple[float, float]]
+        """
         return (line_segment.start.x, line_segment.start.y), (line_segment.end.x, line_segment.end.y)
 
     @staticmethod
     def _extract_segments_from_closed_polygon(
         closed_polygon: ClosedPolygon2D,
     ) -> List[_Segment2D]:
+        """
+        Extract the segments coordinates from the given ClosedPolygon2D.
+
+        :param closed_polygon: The ClosedPolygon2D to extract from.
+        :type closed_polygon: ClosedPolygon2D
+
+        :return: The extracted segments coordinates.
+        :rtype: list[tuple[tuple[float, float], tuple[float, float]]]
+        """
         return [
             (
                 (closed_polygon.points[i - 1].x, closed_polygon.points[i - 1].y),

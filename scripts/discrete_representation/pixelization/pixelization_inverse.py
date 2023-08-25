@@ -3,7 +3,6 @@ Showcase of computing the inverse of a pixelization.
 """
 
 from volmdlr import Point2D
-from volmdlr.core import EdgeStyle
 from volmdlr.discrete_representation import MatrixBasedPixelization
 from volmdlr.wires import ClosedPolygon2D
 
@@ -29,5 +28,6 @@ pixelization = MatrixBasedPixelization.from_closed_polygon(closed_polygon, PIXEL
 
 # Computing the inverse
 inverse_pixelization = pixelization.inverse()
-ax = inverse_pixelization.plot()
-closed_polygon.plot(ax=ax, edge_style=EdgeStyle(color="r"))
+ax = pixelization.plot(color="b")
+inverse_pixelization.plot(ax=ax, color="r")
+closed_polygon.plot(ax=ax)
