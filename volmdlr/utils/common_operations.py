@@ -9,6 +9,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import least_squares
+import scipy.integrate as scipy_integrate
 
 import volmdlr.core
 from volmdlr.core import EdgeStyle
@@ -104,7 +105,7 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
     :param element: volmdlr element to be plotted (either 2D or 3D).
     :param number_points: number of points to be used in the plot.
     :param close_plot: specifies if plot is to be closed or not.
-    :return: Matplolib plot axis.
+    :return: Matplotlib plot axis.
     """
     components = [[], [], []]
     for point in element.discretization_points(number_points=number_points):
@@ -162,3 +163,98 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
             point1, point2 = ptest1, ptest2
 
     return point1, point2
+
+
+def get_abscissa_discretization(primitive, abscissa1, abscissa2, max_number_points: int = 10,
+                                return_abscissas: bool = True):
+    """
+    Gets n discretization points between two given points of the edge.
+
+    :param primitive: Primitive to discretize locally.
+    :param abscissa1: Initial abscissa.
+    :param abscissa2: Final abscissa.
+    :param max_number_points: Expected number of points to discretize locally.
+    :param return_abscissas: By default, returns also a list of abscissas corresponding to the
+        discretization points
+    :return: list of locally discretized point and a list containing the abscissas' values.
+    """
+    discretized_points_between_1_2 = []
+    points_abscissas = []
+    for abscissa in np.linspace(abscissa1, abscissa2, num=max_number_points):
+        if abscissa > primitive.length() + 1e-6:
+            continue
+        abscissa_point = primitive.point_at_abscissa(abscissa)
+        if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+            discretized_points_between_1_2.append(abscissa_point)
+            points_abscissas.append(abscissa)
+    if return_abscissas:
+        return discretized_points_between_1_2, points_abscissas
+    return discretized_points_between_1_2
+
+
+def get_point_distance_to_edge(edge, point, start, end):
+    """
+    Calculates the distance from a given point to an edge.
+
+    :param edge: Edge to calculate distance to point.
+    :param point: Point to calculate the distance to edge.
+    :param start: Edge's start point.
+    :param edge: Edge's end point.
+    :return: distance to edge.
+    """
+    best_distance = math.inf
+    abscissa1 = 0
+    abscissa2 = edge.length()
+    distance = best_distance
+    point1_ = start
+    point2_ = end
+    linesegment_class_ = getattr(volmdlr.edges, 'LineSegment' + edge.__class__.__name__[-2:])
+    while True:
+        discretized_points_between_1_2 = edge.local_discretization(point1_, point2_)
+        if not discretized_points_between_1_2:
+            break
+        distance = point.point_distance(discretized_points_between_1_2[0])
+        for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
+            line = linesegment_class_(point1, point2)
+            dist = line.point_distance(point)
+            if dist < distance:
+                point1_ = point1
+                point2_ = point2
+                distance = dist
+        if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-6):
+            break
+        best_distance = distance
+        if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
+            break
+    return distance
+
+
+def ellipse_abscissa_angle_integration(ellipse3d, point_abcissa, angle_start, initial_angle):
+    """
+    Caculates the angle for a given abcissa point by integrating the ellipse.
+
+    :param ellipse3d: the Ellipse3D.
+    :param point_abcissa: the given abscissa for given point.
+    :param angle_start: Ellipse3D / ArcEllipse3D start angle. (0 for Ellipse3D).
+    :param initial_angle: angle abscissa's initial value.
+    :return: final angle abscissa's value.
+    """
+    def ellipse_arc_length(theta):
+        return math.sqrt((ellipse3d.major_axis ** 2) * math.sin(theta) ** 2 +
+                         (ellipse3d.minor_axis ** 2) * math.cos(theta) ** 2)
+
+    iter_counter = 0
+    while True:
+        res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
+        if math.isclose(res, point_abcissa, abs_tol=1e-8):
+            abscissa_angle = initial_angle
+            break
+        if res > point_abcissa:
+            increment_factor = (abs(initial_angle - angle_start) * (point_abcissa - res)) / (2 * abs(res))
+        elif res == 0.0:
+            increment_factor = 1e-5
+        else:
+            increment_factor = (abs(initial_angle - angle_start) * (point_abcissa - res)) / abs(res)
+        initial_angle += increment_factor
+        iter_counter += 1
+    return abscissa_angle

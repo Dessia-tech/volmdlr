@@ -1741,7 +1741,7 @@ class Triangle3D(PlaneFace3D):
 
     @staticmethod
     def get_subdescription_points(new_points, resolution, max_length):
-        """Gets subdescription points."""
+        """Gets sub-description points."""
         vector = new_points[0] - new_points[1]
         vector = vector.unit_vector()
         points_0_1 = []
@@ -2723,10 +2723,8 @@ class BSplineFace3D(Face3D):
             inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True)
             # removes with a region search the grid points that are in the inner contour
             xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
-            x_grid_range = array_range_search(x, xmin, xmax)
-            y_grid_range = array_range_search(y, ymin, ymax)
-            for i in x_grid_range:
-                for j in y_grid_range:
+            for i in array_range_search(x, xmin, xmax):
+                for j in array_range_search(y, ymin, ymax):
                     point = grid_point_index.get((i, j))
                     if not point:
                         continue

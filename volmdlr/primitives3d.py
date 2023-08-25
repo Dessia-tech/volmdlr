@@ -2000,12 +2000,11 @@ class Sphere(shells.ClosedShell3D):
         rota_theta = [n * theta for n in range(nb_floor)]
 
         point1 = self.center + volmdlr.X3D * self.radius
-        rota_axis = volmdlr.Y3D
 
         skin_points = []
 
         for theta_ in rota_theta:
-            pt_floor_init = point1.rotation(self.center, rota_axis, theta_)
+            pt_floor_init = point1.rotation(self.center, volmdlr.Y3D, theta_)
 
             if math.isclose(theta_, 0, abs_tol=1e-6) or math.isclose(theta_, math.pi, abs_tol=1e-6):
                 skin_points.append(pt_floor_init)
