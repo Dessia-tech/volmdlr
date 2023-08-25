@@ -229,7 +229,7 @@ def _triangle_intersects_voxel(
 ) -> bool_C:
     """Check if a 3D triangle intersects with a voxel defined by its center and extents."""
     # Ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
-    # pylint: disable=too-many-locals, too-many-return-statements, too-many-branches, too-many-statements
+    # pylint: disable=too-many-locals, too-many-return-statements, too-many-branches, too-many-statements, invalid-name
 
     v0: cython.double[3]
     v1: cython.double[3]
@@ -239,7 +239,7 @@ def _triangle_intersects_voxel(
     f2: cython.double[3]
     plane_normal: cython.double[3]
     plane_distance: cython.double
-    r: cython.double
+    radius: cython.double
     a00: cython.double[3]
     a01: cython.double[3]
     a02: cython.double[3]
@@ -302,14 +302,14 @@ def _triangle_intersects_voxel(
     plane_distance = math_c.fabs(plane_normal[0] * v0[0] + plane_normal[1] * v0[1] + plane_normal[2] * v0[2])
 
     # Compute the projection interval radius of b onto L(t) = b.c + t * p.n
-    r = (
+    radius = (
         voxel_extents[0] * math_c.fabs(plane_normal[0])
         + voxel_extents[1] * math_c.fabs(plane_normal[1])
         + voxel_extents[2] * math_c.fabs(plane_normal[2])
     )
 
-    # Intersection occurs when plane distance falls within [-r,+r] interval
-    if plane_distance > r:
+    # Intersection occurs when plane distance falls within [-radius,+radius] interval
+    if plane_distance > radius:
         return False
 
     # ENDREGION
@@ -397,17 +397,18 @@ def _calculate_axis_values(
     voxel_extents: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C:
     """Calculate axis values used in triangle intersection tests with an axis-aligned box."""
+    # pylint: disable=invalid-name
 
     p0 = v0[0] * ax[0] + v0[1] * ax[1] + v0[2] * ax[2]
     p1 = v1[0] * ax[0] + v1[1] * ax[1] + v1[2] * ax[2]
     p2 = v2[0] * ax[0] + v2[1] * ax[1] + v2[2] * ax[2]
-    r = (
+    radius = (
         voxel_extents[0] * math_c.fabs(f[2])
         + voxel_extents[1] * math_c.fabs(f[0])
         + voxel_extents[2] * math_c.fabs(f[1])
     )
 
-    return max(-max(p0, p1, p2), min(p0, p1, p2)) > r
+    return max(-max(p0, p1, p2), min(p0, p1, p2)) > radius
 
 
 @cython.cfunc
@@ -471,8 +472,8 @@ def _flood_fill_matrix_2d(
 
     dx: cython.int[4] = [0, 0, -1, 1]
     dy: cython.int[4] = [-1, 1, 0, 0]
-    nx: cython.int
-    ny: cython.int
+    new_x: cython.int
+    new_y: cython.int
     x: cython.int
     y: cython.int
 
@@ -490,10 +491,10 @@ def _flood_fill_matrix_2d(
         matrix[x, y] = fill_with
 
         for i in range(4):
-            nx, ny = x + dx[i], y + dy[i]
+            new_x, new_y = x + dx[i], y + dy[i]
 
-            if 0 <= nx < shape[0] and 0 <= ny < shape[1] and matrix[nx, ny] == old_value:
-                fill_stack.push((nx, ny))
+            if 0 <= new_x < shape[0] and 0 <= new_y < shape[1] and matrix[new_x, new_y] == old_value:
+                fill_stack.push((new_x, new_y))
 
     return matrix
 
@@ -513,9 +514,9 @@ def _flood_fill_matrix_3d(
     dx: cython.int[6] = [0, 0, -1, 1, 0, 0]
     dy: cython.int[6] = [-1, 1, 0, 0, 0, 0]
     dz: cython.int[6] = [0, 0, 0, 0, -1, 1]
-    nx: cython.int
-    ny: cython.int
-    nz: cython.int
+    new_x: cython.int
+    new_y: cython.int
+    new_z: cython.int
     x: cython.int
     y: cython.int
     z: cython.int
@@ -534,15 +535,15 @@ def _flood_fill_matrix_3d(
         matrix[x, y, z] = fill_with
 
         for i in range(6):
-            nx, ny, nz = x + dx[i], y + dy[i], z + dz[i]
+            new_x, new_y, new_z = x + dx[i], y + dy[i], z + dz[i]
 
             if (
                 0 <= x + dx[i] < shape[0]
                 and 0 <= y + dy[i] < shape[1]
                 and 0 <= z + dz[i] < shape[2]
-                and matrix[nx, ny, nz] == old_value
+                and matrix[new_x, new_y, new_z] == old_value
             ):
-                fill_stack.push((nx, ny, nz))
+                fill_stack.push((new_x, new_y, new_z))
 
     return matrix
 
@@ -677,7 +678,7 @@ def _triangles_to_voxel_matrix(
     matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C[:, :, :]:
     """Convert 3D triangles to a voxel matrix representation using intersection tests."""
-    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements, invalid-name
 
     # Check interface voxels
     for i in range(n_triangles):
@@ -946,6 +947,8 @@ def _pixel_centers_to_filled_pixel_matrix(
     """
     Convert pixel centers to a filled boolean matrix.
     """
+    # pylint: disable=invalid-name
+
     matrix: bool_C[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.bool_)
 
     for i in range(pixel_centers.size()):
@@ -1085,6 +1088,7 @@ def _voxel_triangular_faces(
     ]
 ]:
     """Helper method to compute the 12 triangular faces that compose a voxel, for visualization."""
+    # pylint: disable=invalid-name
 
     sx, sy, sz = voxel_size, voxel_size, voxel_size
     hx, hy, hz = sx / 2, sy / 2, sz / 2
