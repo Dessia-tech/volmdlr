@@ -452,9 +452,14 @@ class Voxelization(ABC, PhysicalObject):
         if isinstance(voxel_size, float):
             decimal_part = abs(voxel_size - int(voxel_size))
             if decimal_part == 0:
-                return 0
+                pass
             else:
-                return len(str(decimal_part).split(".")[1])
+                decimals = len(str(decimal_part).split(".")[1])
+                if decimals >= DECIMALS:
+                    warnings.warn(
+                        f"""voxel_size has too much decimals: some functions may not work as intended.
+                        Consider using a voxel_size with less than {DECIMALS}."""
+                    )
         else:
             raise ValueError("voxel_size is not a float")
 
@@ -551,6 +556,8 @@ class PointBasedVoxelization(Voxelization):
         :param name: The name of the Voxelization.
         :type name: str, optional
         """
+        self._check_voxel_size_number_of_decimals(voxel_size)
+
         self._voxel_size = voxel_size
         self._voxel_centers = voxel_centers
 
@@ -979,6 +986,8 @@ class MatrixBasedVoxelization(Voxelization):
             This point may not be a voxel of the voxelization, because it's the minimum center in each direction (XYZ).
         :type min_voxel_grid_center: tuple[float, float, float]
         """
+        self._check_voxel_size_number_of_decimals(voxel_size)
+
         self.matrix = voxel_matrix
         self._min_voxel_grid_center = min_voxel_grid_center
         self._voxel_size = voxel_size

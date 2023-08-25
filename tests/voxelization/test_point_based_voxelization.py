@@ -50,7 +50,7 @@ class TestPointBasedVoxelizationCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_voxelize_cylinder(self):
-        cylinder_voxelization = PointBasedVoxelization.from_shell(self.cylinder, 0.001, name="cylinder voxelization")
+        cylinder_voxelization = PointBasedVoxelization.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
         self.assertEqual(2788, len(cylinder_voxelization))
 
         if SHOW_BABYLONJS:
