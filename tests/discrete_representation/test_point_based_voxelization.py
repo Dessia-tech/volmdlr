@@ -8,7 +8,7 @@ import volmdlr
 from volmdlr.core import VolumeModel, BoundingBox
 from volmdlr.primitives3d import Block, Cylinder, Sphere
 from volmdlr.shells import ClosedTriangleShell3D
-from volmdlr.voxelization import PointBasedVoxelization
+from volmdlr.discrete_representation import PointBasedVoxelization
 
 SHOW_BABYLONJS = False
 

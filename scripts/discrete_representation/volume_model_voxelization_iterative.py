@@ -1,10 +1,10 @@
 """
-Voxelization of a volume model using "octree" method.
+Voxelization of a volume model using "iterative" method.
 """
 import volmdlr
 from volmdlr.core import VolumeModel
 from volmdlr.primitives3d import Cylinder, Sphere
-from volmdlr.voxelization import PointBasedVoxelization
+from volmdlr.discrete_representation import PointBasedVoxelization
 
 VOXEL_SIZE = 0.01
 

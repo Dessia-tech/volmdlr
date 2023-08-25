@@ -4,7 +4,7 @@ Showcase of computing the inverse of a voxelization.
 import volmdlr
 from volmdlr.core import VolumeModel
 from volmdlr.primitives3d import Cylinder
-from volmdlr.voxelization import PointBasedVoxelization
+from volmdlr.discrete_representation import PointBasedVoxelization
 
 VOXEL_SIZE = 0.01
 

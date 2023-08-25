@@ -1,7 +1,7 @@
 """
 Example of voxelization from a STL file.
 """
-from volmdlr.voxelization import PointBasedVoxelization
+from volmdlr.discrete_representation import PointBasedVoxelization
 from volmdlr.stl import Stl
 
 VOXEL_SIZE = 0.0015

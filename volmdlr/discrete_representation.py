@@ -1,5 +1,5 @@
 """
-Class for discrete representations of volmdlr models
+Class for discrete representations of volmdlr models (voxelization for 3D geometries, pixelization for 2D geometries).
 """
 # pylint: disable=no-name-in-module
 
@@ -19,7 +19,7 @@ from volmdlr.wires import ClosedPolygon2D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.faces import Triangle3D
 from volmdlr.shells import ClosedTriangleShell3D, Shell3D
-from volmdlr.voxelization_compiled import (
+from volmdlr.discrete_representation_compiled import (
     flood_fill_matrix_2d,
     flood_fill_matrix_3d,
     line_segments_to_pixels,

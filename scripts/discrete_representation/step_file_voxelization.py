@@ -1,7 +1,7 @@
 """
 Example of voxelization from a STEP file.
 """
-from volmdlr.voxelization import PointBasedVoxelization
+from volmdlr.discrete_representation import PointBasedVoxelization
 from volmdlr.step import Step
 
 VOXEL_SIZE = 0.001

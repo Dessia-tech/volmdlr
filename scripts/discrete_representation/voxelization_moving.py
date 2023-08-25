@@ -5,7 +5,7 @@ import math
 import time
 
 import volmdlr
-from volmdlr.voxelization import PointBasedVoxelization
+from volmdlr.discrete_representation import PointBasedVoxelization
 from volmdlr.stl import Stl
 
 STL_MODEL_FILE_PATH = "../stl/simple.stl"

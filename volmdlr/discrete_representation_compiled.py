@@ -1,8 +1,8 @@
 # cython: language_level=3
 # distutils: language = c++
-# pylint: disable=no-member, used-before-assignment, invalid-name, no-name-in-module, import-error
+# pylint: disable=no-member, used-before-assignment, no-name-in-module, import-error
 """
-Helper Cython functions for voxelization defined using the pure Python syntax.
+Helper Cython functions for discrete representation defined using the pure Python syntax.
 
 This module needs to be compiled!
 """
