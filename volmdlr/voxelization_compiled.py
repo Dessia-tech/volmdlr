@@ -1,5 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
+# pylint: disable=no-member, used-before-assignment, invalid-name, no-name-in-module, import-error
 """
 Helper Cython functions for voxelization defined using the pure Python syntax.
 
@@ -9,8 +10,8 @@ from typing import List, Set, Tuple
 
 import cython
 import cython.cimports.libc.math as math_c
-import numpy
 import numpy as np
+from numpy.typing import NDArray
 from cython.cimports.libcpp import bool as bool_C
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
@@ -30,7 +31,7 @@ DECIMALS = 9  # Used to round numbers and avoid floating point arithmetic imprec
 def triangles_to_voxel_matrix(
     triangles: List[Triangle],
     voxel_size: float,
-) -> Tuple[np.ndarray[np.bool_, np.ndim == 3], Tuple[float, float, float]]:
+) -> Tuple[NDArray[np.bool_], Tuple[float, float, float]]:
     """
     Helper function to compute the voxel matrix of all the voxels intersecting with a given list of triangles.
 
@@ -49,7 +50,7 @@ def triangles_to_voxel_matrix(
         int(max_point[1] // voxel_size + 1) - int(min_point[1] // voxel_size) + 2,
         int(max_point[2] // voxel_size + 1) - int(min_point[2] // voxel_size) + 2,
     )
-    matrix = numpy.zeros(shape, dtype=np.bool_)
+    matrix = np.zeros(shape, dtype=np.bool_)
     matrix_origin_center = (
         round((min_point[0] // voxel_size - 0.5) * voxel_size, DECIMALS),
         round((min_point[1] // voxel_size - 0.5) * voxel_size, DECIMALS),
@@ -73,8 +74,8 @@ def triangles_to_voxel_matrix(
 
 
 def flood_fill_matrix_2d(
-    matrix: np.ndarray[np.bool_, np.ndim == 2], start: Tuple[int, int], fill_with: bool
-) -> np.ndarray[np.bool_, np.ndim == 2]:
+    matrix: NDArray[np.bool_], start: Tuple[int, int], fill_with: bool
+) -> NDArray[np.bool_]:
     """
     Perform 2D flood fill on the given matrix starting from the specified position.
 
@@ -103,8 +104,8 @@ def flood_fill_matrix_2d(
 
 
 def flood_fill_matrix_3d(
-    matrix: np.ndarray[np.bool_, np.ndim == 3], start: Tuple[int, int, int], fill_with: bool
-) -> np.ndarray[np.bool_, np.ndim == 3]:
+    matrix: NDArray[np.bool_], start: Tuple[int, int, int], fill_with: bool
+) -> NDArray[np.bool_]:
     """
     Perform 3D flood fill on the given matrix starting from the specified position.
 
@@ -243,8 +244,6 @@ def _triangle_intersects_voxel(
     f0: cython.double[3]
     f1: cython.double[3]
     f2: cython.double[3]
-    box_center: cython.double[3]
-    box_extents: cython.double[3]
     plane_normal: cython.double[3]
     plane_distance: cython.double
     r: cython.double
@@ -430,7 +429,7 @@ def _aabb_intersecting_boxes(
     max_point: Tuple[cython.double, cython.double, cython.double],
     voxel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double, cython.double]]:
-    """Calculate the voxel centers that intestects with a given axis-aligned boxes."""
+    """Calculate the voxel centers that intersects with a given axis-aligned boxes."""
 
     x_start: cython.int
     x_end: cython.int
@@ -725,10 +724,12 @@ def _triangles_to_voxel_matrix(
 
             # Put the corresponding voxels at True, using the indices
             ix1 = cython.cast(
-                cython.int, _round_to_digits((x_abscissa - matrix_origin_center[0] - voxel_size / 2) / voxel_size, DECIMALS)
+                cython.int,
+                _round_to_digits((x_abscissa - matrix_origin_center[0] - voxel_size / 2) / voxel_size, DECIMALS),
             )
             ix2 = cython.cast(
-                cython.int, _round_to_digits((x_abscissa - matrix_origin_center[0] + voxel_size / 2) / voxel_size, DECIMALS)
+                cython.int,
+                _round_to_digits((x_abscissa - matrix_origin_center[0] + voxel_size / 2) / voxel_size, DECIMALS),
             )
 
             dx: cython.int
@@ -782,10 +783,12 @@ def _triangles_to_voxel_matrix(
 
             # Put the corresponding voxels at True, using the indices
             iy1 = cython.cast(
-                cython.int, _round_to_digits((y_abscissa - matrix_origin_center[1] - voxel_size / 2) / voxel_size, DECIMALS)
+                cython.int,
+                _round_to_digits((y_abscissa - matrix_origin_center[1] - voxel_size / 2) / voxel_size, DECIMALS),
             )
             iy2 = cython.cast(
-                cython.int, _round_to_digits((y_abscissa - matrix_origin_center[1] + voxel_size / 2) / voxel_size, DECIMALS)
+                cython.int,
+                _round_to_digits((y_abscissa - matrix_origin_center[1] + voxel_size / 2) / voxel_size, DECIMALS),
             )
 
             dx: cython.int
@@ -839,10 +842,12 @@ def _triangles_to_voxel_matrix(
 
             # Put the corresponding voxels at True, using the indices
             iz1 = cython.cast(
-                cython.int, _round_to_digits((z_abscissa - matrix_origin_center[2] - voxel_size / 2) / voxel_size, DECIMALS)
+                cython.int,
+                _round_to_digits((z_abscissa - matrix_origin_center[2] - voxel_size / 2) / voxel_size, DECIMALS),
             )
             iz2 = cython.cast(
-                cython.int, _round_to_digits((z_abscissa - matrix_origin_center[2] + voxel_size / 2) / voxel_size, DECIMALS)
+                cython.int,
+                _round_to_digits((z_abscissa - matrix_origin_center[2] + voxel_size / 2) / voxel_size, DECIMALS),
             )
 
             dx: cython.int
