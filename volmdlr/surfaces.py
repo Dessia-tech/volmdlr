@@ -4393,7 +4393,7 @@ class RevolutionSurface3D(PeriodicalSurface):
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
                 if isinstance(self.edge, curves.Line3D):
                     return [edges.LineSegment3D(start3d, end3d)]
-                if self.edge.is_point_edge_extremity(start3d) and self.wire.is_point_edge_extremity(end3d):
+                if self.edge.is_point_edge_extremity(start3d) and self.edge.is_point_edge_extremity(end3d):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
                         return [primitive]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
