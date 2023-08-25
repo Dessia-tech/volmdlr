@@ -5562,12 +5562,12 @@ class Arc3D(ArcMixin, Edge):
 
     def arcellipse_intersections(self, arcellipse3d, abs_tol: float = 1e-6):
         """
-       Calculates intersections between two Arc3D.
+        Calculates intersections between two Arc3D.
 
-       :param arcellipse3d: ArcEllipse 3D to verify intersections.
-       :param abs_tol: Tolerance.
-       :return: List with intersections points between ArcEllipse3D and Arc3D.
-       """
+        :param arcellipse3d: ArcEllipse 3D to verify intersections.
+        :param abs_tol: Tolerance.
+        :return: List with intersections points between ArcEllipse3D and Arc3D.
+        """
         ellipse_intersections = self.circle.ellipse_intersections(arcellipse3d.ellipse, abs_tol)
         intersections = []
         for intersection in ellipse_intersections:
