@@ -1,5 +1,7 @@
 """
-Voxelization of a volume model using "octree" method.
+Voxelization of a volume model using PointBasedVoxelization.
+
+In PointBasedVoxelization, voxels are stored as a Set[Tuple[float, float, float]].
 """
 import volmdlr
 from volmdlr.core import VolumeModel
@@ -13,7 +15,7 @@ sphere = Sphere(volmdlr.O3D, 0.1, name="Sphere")
 cylinder = Cylinder(volmdlr.OXYZ.translation(0.1 * volmdlr.Z3D), 0.1, 0.2, name="Cylinder")
 volume_model = VolumeModel([sphere, cylinder])
 
-# Voxelize the volume model (it uses the triangulated model to create the voxelization)
+# Voxelize the volume model
 voxelization = PointBasedVoxelization.from_volume_model(volume_model, VOXEL_SIZE, name="Voxelization")
 
 # Display the result

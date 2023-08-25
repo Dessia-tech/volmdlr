@@ -8,7 +8,7 @@ import volmdlr
 from volmdlr.discrete_representation import PointBasedVoxelization
 from volmdlr.stl import Stl
 
-STL_MODEL_FILE_PATH = "../stl/simple.stl"
+STL_MODEL_FILE_PATH = "../../stl/simple.stl"
 VOXEL_SIZE = 0.0025
 TRANSLATION_VECTOR = volmdlr.Vector3D(0.01, 0.02, -0.01)
 ROTATION_ANGLE = math.pi / 2
@@ -18,8 +18,12 @@ volume_model = Stl.load_from_file(STL_MODEL_FILE_PATH).to_volume_model()
 volume_model.color = (1, 0, 0)
 
 # Move the volume model
+start = time.perf_counter()
 moved_volume_model = volume_model.rotation(volmdlr.O3D, volmdlr.X3D, ROTATION_ANGLE)
+print(f"Volume model rotation computing time: {(time.perf_counter() - start)*1000}ms")
+start = time.perf_counter()
 moved_volume_model = moved_volume_model.translation(TRANSLATION_VECTOR)
+print(f"Volume model translation computing time: {(time.perf_counter() - start)*1000}ms")
 moved_volume_model.color = (0, 0, 1)
 
 # Define a voxelization from the none-moved volume_model and move it

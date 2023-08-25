@@ -1,17 +1,17 @@
 """
 Example of voxelization from a STEP file.
 """
-from volmdlr.discrete_representation import PointBasedVoxelization
+from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.step import Step
 
 VOXEL_SIZE = 0.001
-STEP_MODEL_FILE_PATH = "../step/tore1.step"
+STEP_MODEL_FILE_PATH = "../../step/tore1.step"
 
 # Load and convert the SETP
 volume_model = Step.from_file(STEP_MODEL_FILE_PATH).to_volume_model()
 
 # Voxelize the model
-voxelization = PointBasedVoxelization.from_volume_model(volume_model, VOXEL_SIZE)
+voxelization = MatrixBasedVoxelization.from_volume_model(volume_model, VOXEL_SIZE)
 
 # Display the result
 voxelization_primitive = voxelization.to_closed_triangle_shell()

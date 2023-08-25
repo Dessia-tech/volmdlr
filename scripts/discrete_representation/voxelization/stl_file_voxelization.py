@@ -1,17 +1,17 @@
 """
-Example of voxelization from a STL file.
+Example of voxelization from an STL file.
 """
-from volmdlr.discrete_representation import PointBasedVoxelization
+from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.stl import Stl
 
 VOXEL_SIZE = 0.0015
-STL_MODEL_FILE_PATH = "../stl/simple.stl"
+STL_MODEL_FILE_PATH = "../../stl/simple.stl"
 
 # Load and convert the STL
 volume_model = Stl.load_from_file(STL_MODEL_FILE_PATH).to_volume_model()
 
 # Voxelize the model
-voxelization = PointBasedVoxelization.from_volume_model(volume_model, VOXEL_SIZE, name="Voxelization")
+voxelization = MatrixBasedVoxelization.from_volume_model(volume_model, VOXEL_SIZE, name="Voxelization")
 
 # Display the result
 voxelization_primitive = voxelization.to_closed_triangle_shell()
