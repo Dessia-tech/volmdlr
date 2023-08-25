@@ -18,9 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Curve: local_discretization
 - Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
 - ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections, ellipse_intersections
+- Circle2D: ellipse_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
 - BSplineSurface3D: partial removal of dependencies on geomdl objects
 - BSplineSurface3D: from_points_interpolation, from_points_approximation
-- 
 
 ### Fixed
 - Sweep with non smoth path
@@ -85,6 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ellipse2D: point_distance
 - Ellipse3D: test_ellipse_intersections, test_linesegment_intersections
 - ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
 
 ## v0.12.0
 
@@ -109,7 +113,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: Translation
 - wires.WireMixin: from_circle
 - curves.CircleMixin: trim
-
+- BSplineCurve3D: revolution method.
+- 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
 - ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching
