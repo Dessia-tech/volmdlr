@@ -445,6 +445,7 @@ class Edge(dc.DessiaObject):
         """
         n = max(1, int(self.length() / element.length()))
         best_distance = math.inf
+        distance_points = None
         distance = best_distance
 
         point1_edge1_ = self.start
@@ -452,8 +453,8 @@ class Edge(dc.DessiaObject):
 
         point1_edge2_ = element.start
         point2_edge2_ = element.end
-        min_dist_point1 = None
-        min_dist_point2 = None
+        # min_dist_point1 = None
+        # min_dist_point2 = None
         linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
         while True:
             edge1_discretized_points_between_1_2 = self.local_discretization(point1_edge1_, point2_edge1_,
@@ -462,6 +463,7 @@ class Edge(dc.DessiaObject):
             if not edge1_discretized_points_between_1_2:
                 break
             distance = edge2_discretized_points_between_1_2[0].point_distance(edge1_discretized_points_between_1_2[0])
+            distance_points = [edge2_discretized_points_between_1_2[0], edge1_discretized_points_between_1_2[0]]
             for point1_edge1, point2_edge1 in zip(edge1_discretized_points_between_1_2[:-1],
                                                   edge1_discretized_points_between_1_2[1:]):
                 lineseg1 = linesegment_class_(point1_edge1, point2_edge1)
@@ -473,13 +475,14 @@ class Edge(dc.DessiaObject):
                         point1_edge1_, point2_edge1_ = point1_edge1, point2_edge1
                         point1_edge2_, point2_edge2_ = point1_edge2, point2_edge2
                         distance = dist
-                        min_dist_point1, min_dist_point2 = min_dist_point1_, min_dist_point2_
+                        distance_points = [min_dist_point1_, min_dist_point2_]
             if math.isclose(distance, best_distance, abs_tol=1e-6):
                 break
             best_distance = distance
+            # best_distance_points = distance_points
             n = 1
         if return_points:
-            return distance, min_dist_point1, min_dist_point2
+            return distance, distance_points[0], distance_points[1]
         return distance
 
     def minimum_distance(self, element, return_points=False):
