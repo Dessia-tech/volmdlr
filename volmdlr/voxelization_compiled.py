@@ -11,18 +11,14 @@ from typing import List, Set, Tuple
 import cython
 import cython.cimports.libc.math as math_c
 import numpy as np
-from numpy.typing import NDArray
 from cython.cimports.libcpp import bool as bool_C
 from cython.cimports.libcpp.stack import stack
 from cython.cimports.libcpp.vector import vector
-
+from numpy.typing import NDArray
 
 # CUSTOM PYTHON TYPES
 Point = Tuple[float, float, float]
 Triangle = Tuple[Point, Point, Point]
-
-# GLOBAL VARIABLE
-DECIMALS = 9  # Used to round numbers and avoid floating point arithmetic imprecision
 
 
 # PYTHON FUNCTIONS
@@ -52,9 +48,9 @@ def triangles_to_voxel_matrix(
     )
     matrix = np.zeros(shape, dtype=np.bool_)
     matrix_origin_center = (
-        round((min_point[0] // voxel_size - 0.5) * voxel_size, DECIMALS),
-        round((min_point[1] // voxel_size - 0.5) * voxel_size, DECIMALS),
-        round((min_point[2] // voxel_size - 0.5) * voxel_size, DECIMALS),
+        round((min_point[0] // voxel_size - 0.5) * voxel_size, 9),
+        round((min_point[1] // voxel_size - 0.5) * voxel_size, 9),
+        round((min_point[2] // voxel_size - 0.5) * voxel_size, 9),
     )
 
     # compute the intersecting voxel
@@ -73,9 +69,7 @@ def triangles_to_voxel_matrix(
     )
 
 
-def flood_fill_matrix_2d(
-    matrix: NDArray[np.bool_], start: Tuple[int, int], fill_with: bool
-) -> NDArray[np.bool_]:
+def flood_fill_matrix_2d(matrix: NDArray[np.bool_], start: Tuple[int, int], fill_with: bool) -> NDArray[np.bool_]:
     """
     Perform 2D flood fill on the given matrix starting from the specified position.
 
@@ -103,9 +97,7 @@ def flood_fill_matrix_2d(
     )
 
 
-def flood_fill_matrix_3d(
-    matrix: NDArray[np.bool_], start: Tuple[int, int, int], fill_with: bool
-) -> NDArray[np.bool_]:
+def flood_fill_matrix_3d(matrix: NDArray[np.bool_], start: Tuple[int, int, int], fill_with: bool) -> NDArray[np.bool_]:
     """
     Perform 3D flood fill on the given matrix starting from the specified position.
 
@@ -235,8 +227,8 @@ def _triangle_intersects_voxel(
     voxel_extents: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C:
     """Check if a 3D triangle intersects with a voxel defined by its center and extents."""
-
     # Ported from https://gist.github.com/zvonicek/fe73ba9903f49d57314cf7e8e0f05dcf
+    # pylint: disable=too-many-locals, too-many-return-statements, too-many-branches, too-many-statements
 
     v0: cython.double[3]
     v1: cython.double[3]
@@ -256,9 +248,6 @@ def _triangle_intersects_voxel(
     a20: cython.double[3]
     a21: cython.double[3]
     a22: cython.double[3]
-    p0: cython.double
-    p1: cython.double
-    p2: cython.double
 
     # Translate triangle as conceptually moving AABB to origin
     v0[0] = triangle[0][0] - voxel_center[0]
@@ -424,6 +413,7 @@ def _calculate_axis_values(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
+@cython.exceptval(check=False)
 def _aabb_intersecting_boxes(
     min_point: Tuple[cython.double, cython.double, cython.double],
     max_point: Tuple[cython.double, cython.double, cython.double],
@@ -458,9 +448,9 @@ def _aabb_intersecting_boxes(
         for y in range(y_start, y_end):
             for z in range(z_start, z_end):
                 centers[num_centers] = (
-                    _round_to_digits((x + 0.5) * voxel_size, DECIMALS),
-                    _round_to_digits((y + 0.5) * voxel_size, DECIMALS),
-                    _round_to_digits((z + 0.5) * voxel_size, DECIMALS),
+                    _round_to_digits((x + 0.5) * voxel_size, 9),
+                    _round_to_digits((y + 0.5) * voxel_size, 9),
+                    _round_to_digits((z + 0.5) * voxel_size, 9),
                 )
                 num_centers += 1
 
@@ -484,8 +474,6 @@ def _flood_fill_matrix_2d(
     ny: cython.int
     x: cython.int
     y: cython.int
-    sx: cython.int = shape[0]
-    sy: cython.int = shape[1]
 
     old_value: cython.int = matrix[start[0], start[1]]
 
@@ -503,7 +491,7 @@ def _flood_fill_matrix_2d(
         for i in range(4):
             nx, ny = x + dx[i], y + dy[i]
 
-            if 0 <= nx < sx and 0 <= ny < sy and matrix[nx, ny] == old_value:
+            if 0 <= nx < shape[0] and 0 <= ny < shape[1] and matrix[nx, ny] == old_value:
                 fill_stack.push((nx, ny))
 
     return matrix
@@ -519,6 +507,7 @@ def _flood_fill_matrix_3d(
     shape: Tuple[cython.int, cython.int, cython.int],
 ) -> bool_C[:, :, :]:
     """Apply a flood fill algorithm to a 3D boolean matrix from a given starting point."""
+    # pylint: disable=too-many-locals
 
     dx: cython.int[6] = [0, 0, -1, 1, 0, 0]
     dy: cython.int[6] = [-1, 1, 0, 0, 0, 0]
@@ -529,9 +518,6 @@ def _flood_fill_matrix_3d(
     x: cython.int
     y: cython.int
     z: cython.int
-    sx: cython.int = shape[0]
-    sy: cython.int = shape[1]
-    sz: cython.int = shape[2]
 
     old_value: cython.int = matrix[start[0], start[1], start[2]]
 
@@ -549,7 +535,12 @@ def _flood_fill_matrix_3d(
         for i in range(6):
             nx, ny, nz = x + dx[i], y + dy[i], z + dz[i]
 
-            if 0 <= nx < sx and 0 <= ny < sy and 0 <= nz < sz and matrix[nx, ny, nz] == old_value:
+            if (
+                0 <= x + dx[i] < shape[0]
+                and 0 <= y + dy[i] < shape[1]
+                and 0 <= z + dz[i] < shape[2]
+                and matrix[nx, ny, nz] == old_value
+            ):
                 fill_stack.push((nx, ny, nz))
 
     return matrix
@@ -570,16 +561,17 @@ def _line_segment_intersects_pixel(
     pixel_size: cython.double,
 ) -> bool_C:
     """Check if a line segment intersects with a pixel defined by its center and size."""
+    # pylint: disable=too-many-arguments, too-many-locals
 
     # Determine the coordinates of lower-left and upper-right of rectangle
     xmin, xmax = pixel_center_x - pixel_size / 2, pixel_center_x + pixel_size / 2
     ymin, ymax = pixel_center_y - pixel_size / 2, pixel_center_y + pixel_size / 2
 
     # Compute the line equation for a point
-    line_eq1 = _round_to_digits((y2 - y1) * xmin + (x1 - x2) * ymin + (x2 * y1 - x1 * y2), DECIMALS)
-    line_eq2 = _round_to_digits((y2 - y1) * xmin + (x1 - x2) * ymax + (x2 * y1 - x1 * y2), DECIMALS)
-    line_eq3 = _round_to_digits((y2 - y1) * xmax + (x1 - x2) * ymin + (x2 * y1 - x1 * y2), DECIMALS)
-    line_eq4 = _round_to_digits((y2 - y1) * xmax + (x1 - x2) * ymax + (x2 * y1 - x1 * y2), DECIMALS)
+    line_eq1 = _round_to_digits((y2 - y1) * xmin + (x1 - x2) * ymin + (x2 * y1 - x1 * y2), 9)
+    line_eq2 = _round_to_digits((y2 - y1) * xmin + (x1 - x2) * ymax + (x2 * y1 - x1 * y2), 9)
+    line_eq3 = _round_to_digits((y2 - y1) * xmax + (x1 - x2) * ymin + (x2 * y1 - x1 * y2), 9)
+    line_eq4 = _round_to_digits((y2 - y1) * xmax + (x1 - x2) * ymax + (x2 * y1 - x1 * y2), 9)
 
     # Check if all corners are on the same side of the line
     miss: bool_C = (
@@ -608,6 +600,7 @@ def _line_segments_to_pixels(
     pixel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double]]:
     """Convert line segments to a list of pixel centers they intersect with."""
+    # pylint: disable=too-many-locals
 
     pixel_centers: vector[Tuple[cython.double, cython.double]]
 
@@ -635,8 +628,8 @@ def _line_segments_to_pixels(
                 x_coord: cython.double = (cython.cast(cython.double, x) + 0.5) * pixel_size
                 y_coord: cython.double = (cython.cast(cython.double, y) + 0.5) * pixel_size
                 center: Tuple[cython.double, cython.double] = (
-                    _round_to_digits(x_coord, DECIMALS),
-                    _round_to_digits(y_coord, DECIMALS),
+                    _round_to_digits(x_coord, 9),
+                    _round_to_digits(y_coord, 9),
                 )
 
                 if _line_segment_intersects_pixel(x1, y1, x2, y2, center[0], center[1], pixel_size):
@@ -683,23 +676,24 @@ def _triangles_to_voxel_matrix(
     matrix_origin_center: Tuple[cython.double, cython.double, cython.double],
 ) -> bool_C[:, :, :]:
     """Convert 3D triangles to a voxel matrix representation using intersection tests."""
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
 
     # Check interface voxels
     for i in range(n_triangles):
-        x_abscissa = _round_to_digits(triangles[i][0][0], DECIMALS)
-        y_abscissa = _round_to_digits(triangles[i][0][1], DECIMALS)
-        z_abscissa = _round_to_digits(triangles[i][0][2], DECIMALS)
+        x_abscissa = _round_to_digits(triangles[i][0][0], 9)
+        y_abscissa = _round_to_digits(triangles[i][0][1], 9)
+        z_abscissa = _round_to_digits(triangles[i][0][2], 9)
 
         # Check if two points of the triangle are equal
         if _check_triangle_equal_point(triangles[i]):
             pass
 
-        # Check if the triangle is in the YZ plane at the interface between voxels
+        # Check if the triangle is in the Y-Z plane at the interface between voxels
         elif (
-            _round_to_digits(triangles[i][0][0], DECIMALS)
-            == _round_to_digits(triangles[i][1][0], DECIMALS)
-            == _round_to_digits(triangles[i][2][0], DECIMALS)
-        ) and _is_integer(_round_to_digits(x_abscissa / voxel_size, DECIMALS)):
+            _round_to_digits(triangles[i][0][0], 9)
+            == _round_to_digits(triangles[i][1][0], 9)
+            == _round_to_digits(triangles[i][2][0], 9)
+        ) and _is_integer(_round_to_digits(x_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
             p0: Tuple[cython.double, cython.double] = (triangles[i][0][1], triangles[i][0][2])
             p1: Tuple[cython.double, cython.double] = (triangles[i][1][1], triangles[i][1][2])
@@ -725,11 +719,11 @@ def _triangles_to_voxel_matrix(
             # Put the corresponding voxels at True, using the indices
             ix1 = cython.cast(
                 cython.int,
-                _round_to_digits((x_abscissa - matrix_origin_center[0] - voxel_size / 2) / voxel_size, DECIMALS),
+                _round_to_digits((x_abscissa - matrix_origin_center[0] - voxel_size / 2) / voxel_size, 9),
             )
             ix2 = cython.cast(
                 cython.int,
-                _round_to_digits((x_abscissa - matrix_origin_center[0] + voxel_size / 2) / voxel_size, DECIMALS),
+                _round_to_digits((x_abscissa - matrix_origin_center[0] + voxel_size / 2) / voxel_size, 9),
             )
 
             dx: cython.int
@@ -753,12 +747,12 @@ def _triangles_to_voxel_matrix(
                         matrix[ix1, iy, iz] = True
                         matrix[ix2, iy, iz] = True
 
-        # Check if the triangle is in the XZ plane at the interface between voxels
+        # Check if the triangle is in the X-Z plane at the interface between voxels
         elif (
-            _round_to_digits(triangles[i][0][1], DECIMALS)
-            == _round_to_digits(triangles[i][1][1], DECIMALS)
-            == _round_to_digits(triangles[i][2][1], DECIMALS)
-        ) and _is_integer(_round_to_digits(y_abscissa / voxel_size, DECIMALS)):
+            _round_to_digits(triangles[i][0][1], 9)
+            == _round_to_digits(triangles[i][1][1], 9)
+            == _round_to_digits(triangles[i][2][1], 9)
+        ) and _is_integer(_round_to_digits(y_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
             p0: Tuple[cython.double, cython.double] = (triangles[i][0][0], triangles[i][0][2])
             p1: Tuple[cython.double, cython.double] = (triangles[i][1][0], triangles[i][1][2])
@@ -784,11 +778,11 @@ def _triangles_to_voxel_matrix(
             # Put the corresponding voxels at True, using the indices
             iy1 = cython.cast(
                 cython.int,
-                _round_to_digits((y_abscissa - matrix_origin_center[1] - voxel_size / 2) / voxel_size, DECIMALS),
+                _round_to_digits((y_abscissa - matrix_origin_center[1] - voxel_size / 2) / voxel_size, 9),
             )
             iy2 = cython.cast(
                 cython.int,
-                _round_to_digits((y_abscissa - matrix_origin_center[1] + voxel_size / 2) / voxel_size, DECIMALS),
+                _round_to_digits((y_abscissa - matrix_origin_center[1] + voxel_size / 2) / voxel_size, 9),
             )
 
             dx: cython.int
@@ -812,12 +806,12 @@ def _triangles_to_voxel_matrix(
                         matrix[ix, iy1, iz] = True
                         matrix[ix, iy2, iz] = True
 
-        # Check if the triangle is in the XY plane at the interface between voxels
+        # Check if the triangle is in the X-Y plane at the interface between voxels
         elif (
-            _round_to_digits(triangles[i][0][2], DECIMALS)
-            == _round_to_digits(triangles[i][1][2], DECIMALS)
-            == _round_to_digits(triangles[i][2][2], DECIMALS)
-        ) and _is_integer(_round_to_digits(z_abscissa / voxel_size, DECIMALS)):
+            _round_to_digits(triangles[i][0][2], 9)
+            == _round_to_digits(triangles[i][1][2], 9)
+            == _round_to_digits(triangles[i][2][2], 9)
+        ) and _is_integer(_round_to_digits(z_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
             p0: Tuple[cython.double, cython.double] = (triangles[i][0][0], triangles[i][0][1])
             p1: Tuple[cython.double, cython.double] = (triangles[i][1][0], triangles[i][1][1])
@@ -843,11 +837,11 @@ def _triangles_to_voxel_matrix(
             # Put the corresponding voxels at True, using the indices
             iz1 = cython.cast(
                 cython.int,
-                _round_to_digits((z_abscissa - matrix_origin_center[2] - voxel_size / 2) / voxel_size, DECIMALS),
+                _round_to_digits((z_abscissa - matrix_origin_center[2] - voxel_size / 2) / voxel_size, 9),
             )
             iz2 = cython.cast(
                 cython.int,
-                _round_to_digits((z_abscissa - matrix_origin_center[2] + voxel_size / 2) / voxel_size, DECIMALS),
+                _round_to_digits((z_abscissa - matrix_origin_center[2] + voxel_size / 2) / voxel_size, 9),
             )
 
             dx: cython.int
@@ -886,15 +880,15 @@ def _triangles_to_voxel_matrix(
             for j in range(voxel_centers.size()):
                 ix = cython.cast(
                     cython.int,
-                    _round_to_digits((voxel_centers[j][0] - matrix_origin_center[0]) / voxel_size, DECIMALS),
+                    _round_to_digits((voxel_centers[j][0] - matrix_origin_center[0]) / voxel_size, 9),
                 )
                 iy = cython.cast(
                     cython.int,
-                    _round_to_digits((voxel_centers[j][1] - matrix_origin_center[1]) / voxel_size, DECIMALS),
+                    _round_to_digits((voxel_centers[j][1] - matrix_origin_center[1]) / voxel_size, 9),
                 )
                 iz = cython.cast(
                     cython.int,
-                    _round_to_digits((voxel_centers[j][2] - matrix_origin_center[2]) / voxel_size, DECIMALS),
+                    _round_to_digits((voxel_centers[j][2] - matrix_origin_center[2]) / voxel_size, 9),
                 )
 
                 if not matrix[ix, iy, iz]:
@@ -954,8 +948,8 @@ def _pixel_centers_to_filled_pixel_matrix(
     matrix: bool_C[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.bool_)
 
     for i in range(pixel_centers.size()):
-        ix = cython.cast(cython.int, _round_to_digits((pixel_centers[i][0] - min_center[0]) / pixel_size, DECIMALS)) + 1
-        iy = cython.cast(cython.int, _round_to_digits((pixel_centers[i][1] - min_center[1]) / pixel_size, DECIMALS)) + 1
+        ix = cython.cast(cython.int, _round_to_digits((pixel_centers[i][0] - min_center[0]) / pixel_size, 9)) + 1
+        iy = cython.cast(cython.int, _round_to_digits((pixel_centers[i][1] - min_center[1]) / pixel_size, 9)) + 1
         matrix[ix, iy] = True
 
     matrix_outer_filled = _flood_fill_matrix_2d(matrix.copy(), (0, 0), True, (shape[0] + 2, shape[1] + 2))
@@ -1105,96 +1099,96 @@ def _voxel_triangular_faces(
     # Front face
     faces.push_back(
         (
-            _round_point_3d_to_digits((x - hx, y - hy, z + hz), DECIMALS),
-            _round_point_3d_to_digits((x - hx, y + hy, z + hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y + hy, z + hz), DECIMALS),
+            _round_point_3d_to_digits((x - hx, y - hy, z + hz), 9),
+            _round_point_3d_to_digits((x - hx, y + hy, z + hz), 9),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 9),
         )
     )
     faces.push_back(
         (
-            _round_point_3d_to_digits((x - hx, y - hy, z + hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y + hy, z + hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y - hy, z + hz), DECIMALS),
+            _round_point_3d_to_digits((x - hx, y - hy, z + hz), 9),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 9),
+            _round_point_3d_to_digits((x + hx, y - hy, z + hz), 9),
         )
     )
 
     # Back face
     faces.push_back(
         (
-            _round_point_3d_to_digits((x - hx, y - hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x - hx, y + hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y + hy, z - hz), DECIMALS),
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 9),
+            _round_point_3d_to_digits((x - hx, y + hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y + hy, z - hz), 9),
         )
     )
     faces.push_back(
         (
-            _round_point_3d_to_digits((x - hx, y - hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y + hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y - hy, z - hz), DECIMALS),
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y + hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y - hy, z - hz), 9),
         )
     )
 
     # Left face
     faces.push_back(
         (
-            _round_point_3d_to_digits((x - hx, y - hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x - hx, y + hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x - hx, y + hy, z + hz), DECIMALS),
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 9),
+            _round_point_3d_to_digits((x - hx, y + hy, z - hz), 9),
+            _round_point_3d_to_digits((x - hx, y + hy, z + hz), 9),
         )
     )
     faces.push_back(
         (
-            _round_point_3d_to_digits((x - hx, y - hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x - hx, y + hy, z + hz), DECIMALS),
-            _round_point_3d_to_digits((x - hx, y - hy, z + hz), DECIMALS),
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 9),
+            _round_point_3d_to_digits((x - hx, y + hy, z + hz), 9),
+            _round_point_3d_to_digits((x - hx, y - hy, z + hz), 9),
         )
     )
 
     # Right face
     faces.push_back(
         (
-            _round_point_3d_to_digits((x + hx, y - hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y + hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y + hy, z + hz), DECIMALS),
+            _round_point_3d_to_digits((x + hx, y - hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y + hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 9),
         )
     )
     faces.push_back(
         (
-            _round_point_3d_to_digits((x + hx, y - hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y + hy, z + hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y - hy, z + hz), DECIMALS),
+            _round_point_3d_to_digits((x + hx, y - hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 9),
+            _round_point_3d_to_digits((x + hx, y - hy, z + hz), 9),
         )
     )
 
     # Top face
     faces.push_back(
         (
-            _round_point_3d_to_digits((x - hx, y + hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y + hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y + hy, z + hz), DECIMALS),
+            _round_point_3d_to_digits((x - hx, y + hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y + hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 9),
         )
     )
     faces.push_back(
         (
-            _round_point_3d_to_digits((x - hx, y + hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y + hy, z + hz), DECIMALS),
-            _round_point_3d_to_digits((x - hx, y + hy, z + hz), DECIMALS),
+            _round_point_3d_to_digits((x - hx, y + hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y + hy, z + hz), 9),
+            _round_point_3d_to_digits((x - hx, y + hy, z + hz), 9),
         )
     )
 
     # Bottom face
     faces.push_back(
         (
-            _round_point_3d_to_digits((x - hx, y - hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y - hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y - hy, z + hz), DECIMALS),
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y - hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y - hy, z + hz), 9),
         )
     )
     faces.push_back(
         (
-            _round_point_3d_to_digits((x - hx, y - hy, z - hz), DECIMALS),
-            _round_point_3d_to_digits((x + hx, y - hy, z + hz), DECIMALS),
-            _round_point_3d_to_digits((x - hx, y - hy, z + hz), DECIMALS),
+            _round_point_3d_to_digits((x - hx, y - hy, z - hz), 9),
+            _round_point_3d_to_digits((x + hx, y - hy, z + hz), 9),
+            _round_point_3d_to_digits((x - hx, y - hy, z + hz), 9),
         )
     )
 
