@@ -82,16 +82,21 @@ scripts = [
             # 'mesh/geo_file_3.py',
             # cad_simplification
             'cad_simplifier/test_cad_simplifier.py',
-            # Discrete representation
-            'discrete_representation/compare_display_methods.py',
-            'discrete_representation/compare_voxelization_methods.py',
-            'discrete_representation/step_file_voxelization.py',
-            'discrete_representation/stl_file_voxelization.py',
-            'discrete_representation/voxelization_interference.py',
-            'discrete_representation/voxelization_inverse.py',
-            'discrete_representation/voxelization_moving.py',
-            'discrete_representation/volume_model_voxelization_iterative.py',
-            'discrete_representation/volume_model_voxelization_octree.py',
+            # Voxelization
+            'discrete_representation/voxelization/interference_surface_showcase.py',
+            'discrete_representation/voxelization/interference_volume_showcase.py.py',
+            'discrete_representation/voxelization/step_file_voxelization.py',
+            'discrete_representation/voxelization/stl_file_voxelization.py',
+            'discrete_representation/voxelization/volume_model_matrix_based_voxelization.py',
+            'discrete_representation/voxelization/volume_model_point_based_voxelization.py',
+            'discrete_representation/voxelization/voxelization_filling.py',
+            'discrete_representation/voxelization/voxelization_inverse.py',
+            'discrete_representation/voxelization/voxelization_moving.py',
+            # Pixelization
+            'discrete_representation/pixelization/pixelization_boolean_operations.py',
+            'discrete_representation/pixelization/pixelization_filling.py',
+            'discrete_representation/pixelization/pixelization_from_closed_polygon.py',
+            'discrete_representation/pixelization/pixelization_inverse.py',
             # Others
             'grid.py'
             ]
