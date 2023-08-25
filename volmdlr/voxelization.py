@@ -11,7 +11,7 @@ from matplotlib import patches
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
-from dessia_common.core import PhysicalObject
+from dessia_common.core import DessiaObject, PhysicalObject
 
 from volmdlr import Point2D, Point3D, Vector3D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
@@ -34,6 +34,314 @@ Segment = Tuple[Point, Point]
 DECIMALS = 9  # Used to round numbers and avoid floating point arithmetic imprecision
 
 
+class DiscreteRepresentation(ABC):
+    """
+    Abstract base class for discrete representation in any dimension:
+        - Voxelization in 3D
+        - Pixelization in 2D
+
+
+    Any discrete representation follows the same apprach:
+    The representation is defined on an implicit grid, where each element is defined by its size.
+    The implicit grid consists of axis-aligned elements with a given size, ensuring that the global
+    origin (0, ..., 0) is always a corner point of an element.
+
+    For example, in 1D with an element size of `t`, the set of elements (defined by minimum and maximum points)
+    is: {i ∈ N, t ∈ R | (i * t, (i+1) * t)}
+    The corresponding set of element centers is: {i ∈ N, t ∈ R | (i + 0.5) * t}
+
+    This approach enables consistent representation across the space, facilitating fast Boolean operations.
+    """
+
+    DiscreteRepresentationType = TypeVar("DiscreteRepresentationType", bound="DiscreteRepresentation")
+
+    def __init__(self, element_size: float):
+        """
+        Initialize the discrete representation.
+
+        :param element_size: The element size.
+        :type element_size: float
+        """
+        self.element_size = element_size
+
+    @abstractmethod
+    def __eq__(self, other: DiscreteRepresentationType) -> bool:
+        """
+        Check if two discrete representations are equal.
+
+        :param other: Another discrete representation to compare with.
+        :type other: DiscreteRepresentationType
+
+        :return: True if the discrete representations are equal, False otherwise.
+        :rtype: bool
+        """
+
+    @abstractmethod
+    def __len__(self) -> int:
+        """
+        Get the number of elements in the discrete representation.
+
+        :return: The number of elements in the discrete representation.
+        :rtype: int
+        """
+
+    # BOOLEAN OPERATIONS
+    def __add__(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
+        """
+        Overloaded '+' operator for performing a union operation.
+
+        :param other: The discrete representation to perform the union with.
+        :type other: DiscreteRepresentationType
+
+        :return: A new discrete representation resulting from the union operation.
+        :rtype: DiscreteRepresentationType
+        """
+        return self.union(other)
+
+    def __sub__(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
+        """
+        Overloaded '-' operator for performing a difference operation.
+
+        :param other: The discrete representation to perform the difference with.
+        :type other: DiscreteRepresentationType
+
+        :return: A new discrete representation resulting from the difference operation.
+        :rtype: DiscreteRepresentationType
+        """
+        return self.difference(other)
+
+    def __and__(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
+        """
+        Overloaded '&' operator for performing an intersection operation.
+
+        :param other: The discrete representation to perform the intersection with.
+        :type other: DiscreteRepresentationType
+
+        :return: A new discrete representation resulting from the intersection operation.
+        :rtype: DiscreteRepresentationType
+        """
+        return self.intersection(other)
+
+    def __xor__(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
+        """
+        Overloaded '^' operator for performing a symmetric difference operation.
+
+        :param other: The discrete representation to perform the symmetric difference with.
+        :type other: DiscreteRepresentationType
+
+        :return: A new discrete representation resulting from the symmetric difference operation.
+        :rtype: DiscreteRepresentationType
+        """
+        return self.symmetric_difference(other)
+
+    def __invert__(self) -> DiscreteRepresentationType:
+        """
+        Overloaded '~' operator for computing the inverse.
+
+        :return: A new discrete representation representing the inverse.
+        :rtype: DiscreteRepresentation
+        """
+        return self.inverse()
+
+    @abstractmethod
+    def union(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
+        """
+        Perform a union operation with another discrete representation.
+
+        :param other: The discrete representation to perform the union with.
+        :type other: DiscreteRepresentationType
+
+        :return: A new discrete representation resulting from the union operation.
+        :rtype: DiscreteRepresentationType
+        """
+
+    @abstractmethod
+    def difference(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
+        """
+        Perform a difference operation with another discrete representation.
+
+        :param other: The discrete representation to perform the difference with.
+        :type other: DiscreteRepresentationType
+
+        :return: A new discrete representation resulting from the difference operation.
+        :rtype: DiscreteRepresentationType
+        """
+
+    @abstractmethod
+    def intersection(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
+        """
+        Perform an intersection operation with another discrete representation.
+
+        :param other: The discrete representation to perform the intersection with.
+        :type other: DiscreteRepresentationType
+
+        :return: A new discrete representation resulting from the intersection operation.
+        :rtype: DiscreteRepresentationType
+        """
+
+    def symmetric_difference(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
+        """
+        Perform a symmetric difference operation with another discrete representation.
+
+        :param other: The discrete representation to perform the symmetric difference with.
+        :type other: DiscreteRepresentationType
+
+        :return: A new discrete representation resulting from the symmetric difference operation.
+        :rtype: DiscreteRepresentationType
+        """
+
+    @abstractmethod
+    def inverse(self) -> DiscreteRepresentationType:
+        """
+        Compute the inverse of the discrete representation.
+
+        :return: A new discrete representation representing the inverse.
+        :rtype: DiscreteRepresentationType
+        """
+
+    def interference(self, other: DiscreteRepresentationType) -> float:
+        """
+        Compute the percentage of interference between two discrete representations.
+
+        :param other: The other discrete representation to compute interference with.
+        :type other: DiscreteRepresentation
+
+        :return: The percentage of interference between the two discrete representations.
+        :rtype: float
+        """
+        return len(self.intersection(other)) / len(self.union(other))
+
+    def is_intersecting(self, other: DiscreteRepresentationType) -> bool:
+        """
+        Check if two discrete representations are intersecting.
+
+        :param other: The other discrete representation to check if there is an intersection with.
+        :type other: DiscreteRepresentationType
+
+        :return: True if the discrete representations are intersecting, False otherwise.
+        :rtype: bool
+        """
+        intersection = self.intersection(other)
+
+        return len(intersection) > 0
+
+    # FILLING METHODS
+    @abstractmethod
+    def flood_fill(self, start, fill_with: bool) -> DiscreteRepresentationType:
+        """
+        Perform a flood fill operation on the discrete representation.
+
+        :param start: The starting point for the flood fill.
+        :param fill_with: The value to fill the elements with during the operation.
+        :type fill_with: bool
+
+        :return: A new discrete representation resulting from the flood fill operation.
+        :rtype: DiscreteRepresentationType
+        """
+
+    @abstractmethod
+    def _fill_outer_elements(self) -> DiscreteRepresentationType:
+        """
+        Fill the outer elements of the discrete representation.
+
+        :return: A new discrete representation with outer elements filled.
+        :rtype: DiscreteRepresentationType
+        """
+
+    @abstractmethod
+    def _fill_enclosed_elements(self) -> DiscreteRepresentationType:
+        """
+        Fill the enclosed elements of the discrete representation.
+
+        :return: A new discrete representation with enclosed elements filled.
+        :rtype: DiscreteRepresentationType
+        """
+
+    # HELPER METHODS
+    @staticmethod
+    def check_element_center_is_in_implicit_grid(element_center: Tuple[float, ...], element_size: float) -> bool:
+        """
+        Check if a given element center point is a element center of the implicit grid, defined by element_size.
+
+        :param element_center: The element center point to check.
+        :type element_center: tuple[float, ...]
+        :param element_size: The element edges size.
+        :type element_size: float
+
+        :return: True if the given element center point is an element center of the implicit grid, False otherwise.
+        :rtype: bool
+        """
+        for coord in element_center:
+            if not round((coord - 0.5 * element_size) / element_size, DECIMALS).is_integer():
+                return False
+
+        return True
+
+    def is_hollow(self) -> bool:
+        """
+        Check if the discrete representation is hollow.
+
+        A hollow discrete representation is one that has enclosed elements that are not filled.
+
+        :return: True if the discrete representation is hollow, False otherwise.
+        :rtype: bool
+        """
+        return self._fill_enclosed_elements() == self
+
+    @staticmethod
+    def _check_element_size_number_of_decimals(element_size: float):
+        """
+        Check the number of decimal places in the element size.
+
+        If the element size has more decimal places than a specified threshold (DECIMALS),
+        a warning is issued, as some functions may not work as intended.
+
+        This is due to the use of rounding functions to avoid floating point arithmetic imprecision.
+
+        :param element_size: The size of the elements.
+        :type element_size: float
+
+        :raises ValueError: If element_size is not a float.
+        """
+        if isinstance(element_size, float):
+            decimal_part = abs(element_size - int(element_size))
+            if decimal_part == 0:
+                pass
+            else:
+                decimals = len(str(decimal_part).split(".")[1])
+                if decimals >= DECIMALS:
+                    warnings.warn(
+                        f"""Element size has too many decimals: some functions may not work as intended.
+                        Consider using an element size with less than {DECIMALS}."""
+                    )
+        else:
+            raise ValueError("Element size is not a float")
+
+    def _check_other_type(self, other):
+        """
+        Check if the provided 'other' is an instance of the same DiscreteRepresentation subclass.
+
+        :param other: Another discrete representation to be checked.
+        :type other: DiscreteRepresentation
+
+        :raises ValueError: If 'other' is not an instance of the same DiscreteRepresentation subclass.
+        """
+        if not isinstance(other, self.__class__):
+            raise ValueError(f"'other' must be an instance of '{self.__class__.__name__}'")
+
+    def _check_other_element_size(self, other: DiscreteRepresentationType):
+        """
+        Check if the provided 'other' has the same element size.
+
+        :param other: Another discrete representation to be checked.
+        :type other: DiscreteRepresentation
+
+        :raises ValueError: If 'other' has not the same element size.
+        """
+        if not self.element_size == other.element_size:
+            raise ValueError(f"Both {self.__class__} must have same element size to perform this operation.")
+
+
 class Voxelization(ABC, PhysicalObject):
     """
     Abstract base class for creating and manipulating voxelizations of volmdlr geometries.
@@ -54,6 +362,14 @@ class Voxelization(ABC, PhysicalObject):
     VoxelizationType = TypeVar("VoxelizationType", bound="Voxelization")
 
     def __init__(self, voxel_size: float, name: str):
+        """
+        Initialize the voxelization.
+
+        :param voxel_size: The voxel edges size.
+        :type voxel_size: float
+        :param name: The name of the voxelization.
+        :type name: str, optional
+        """
         self.voxel_size = voxel_size
 
         PhysicalObject.__init__(self, name=name)
@@ -75,28 +391,7 @@ class Voxelization(ABC, PhysicalObject):
         :return: A string representation of the voxelization.
         :rtype: str
         """
-        return f"Voxelization: voxel size={self.voxel_size}, number of voxels={self.__len__()}, name={self.name}"
-
-    @abstractmethod
-    def __eq__(self, other_voxelization: VoxelizationType) -> bool:
-        """
-        Check if two voxelizations are equal.
-
-        :param other_voxelization: Another voxelization to compare with.
-        :type other_voxelization: VoxelizationType
-
-        :return: True if the voxelizations are equal, False otherwise.
-        :rtype: bool
-        """
-
-    @abstractmethod
-    def __len__(self) -> int:
-        """
-        Get the number of voxels in the voxelization.
-
-        :return: The number of voxels in the voxelization.
-        :rtype: int
-        """
+        return f"{self.__class__}: voxel size={self.voxel_size}, number of voxels={len(self)}, name={self.name}"
 
     @property
     def volume(self) -> float:
@@ -180,161 +475,7 @@ class Voxelization(ABC, PhysicalObject):
         :rtype: VoxelizationType
         """
 
-    # BOOLEAN OPERATIONS
-    def __add__(self, other_voxelization: VoxelizationType) -> VoxelizationType:
-        """
-        Overloaded '+' operator for performing a union operation.
-
-        :param other_voxelization: The voxelization to perform the union with.
-        :type other_voxelization: VoxelizationType
-
-        :return: A new voxelization resulting from the union operation.
-        :rtype: VoxelizationType
-        """
-        return self.union(other_voxelization)
-
-    def __sub__(self, other_voxelization: VoxelizationType) -> VoxelizationType:
-        """
-        Overloaded '-' operator for performing a difference operation.
-
-        :param other_voxelization: The voxelization to perform the difference with.
-        :type other_voxelization: VoxelizationType
-
-        :return: A new voxelization resulting from the difference operation.
-        :rtype: VoxelizationType
-        """
-        return self.difference(other_voxelization)
-
-    def __and__(self, other_voxelization: VoxelizationType) -> VoxelizationType:
-        """
-        Overloaded '&' operator for performing an intersection operation.
-
-        :param other_voxelization: The voxelization to perform the intersection with.
-        :type other_voxelization: VoxelizationType
-
-        :return: A new voxelization resulting from the intersection operation.
-        :rtype: VoxelizationType
-        """
-        return self.intersection(other_voxelization)
-
-    def __xor__(self, other_voxelization: VoxelizationType) -> VoxelizationType:
-        """
-        Overloaded '^' operator for performing a symmetric difference operation.
-
-        :param other_voxelization: The voxelization to perform the symmetric difference with.
-        :type other_voxelization: VoxelizationType
-
-        :return: A new voxelization resulting from the symmetric difference operation.
-        :rtype: VoxelizationType
-        """
-        return self.symmetric_difference(other_voxelization)
-
-    def __invert__(self) -> VoxelizationType:
-        """
-        Overloaded '~' operator for computing the inverse.
-
-        :return: A new voxelization representing the inverse.
-        :rtype: Voxelization
-        """
-        return self.inverse()
-
-    @abstractmethod
-    def union(self, other_voxelization: VoxelizationType) -> VoxelizationType:
-        """
-        Perform a union operation with another voxelization.
-
-        :param other_voxelization: The voxelization to perform the union with.
-        :type other_voxelization: VoxelizationType
-
-        :return: A new voxelization resulting from the union operation.
-        :rtype: VoxelizationType
-        """
-
-    @abstractmethod
-    def difference(self, other_voxelization: VoxelizationType) -> VoxelizationType:
-        """
-        Perform a difference operation with another voxelization.
-
-        :param other_voxelization: The voxelization to perform the difference with.
-        :type other_voxelization: VoxelizationType
-
-        :return: A new voxelization resulting from the difference operation.
-        :rtype: VoxelizationType
-        """
-
-    @abstractmethod
-    def intersection(self, other_voxelization: VoxelizationType) -> VoxelizationType:
-        """
-        Perform an intersection operation with another voxelization.
-
-        :param other_voxelization: The voxelization to perform the intersection with.
-        :type other_voxelization: VoxelizationType
-
-        :return: A new voxelization resulting from the intersection operation.
-        :rtype: VoxelizationType
-        """
-
-    def symmetric_difference(self, other_voxelization: VoxelizationType) -> VoxelizationType:
-        """
-        Perform a symmetric difference operation with another voxelization.
-
-        :param other_voxelization: The voxelization to perform the symmetric difference with.
-        :type other_voxelization: VoxelizationType
-
-        :return: A new voxelization resulting from the symmetric difference operation.
-        :rtype: VoxelizationType
-        """
-
-    @abstractmethod
-    def inverse(self) -> VoxelizationType:
-        """
-        Compute the inverse of the voxelization.
-
-        :return: A new voxelization representing the inverse.
-        :rtype: VoxelizationType
-        """
-
-    def interference(self, other_voxelization: VoxelizationType) -> float:
-        """
-        Compute the percentage of interference between two voxelizations.
-
-        :param other_voxelization: The other voxelization to compute interference with.
-        :type other_voxelization: Voxelization
-
-        :return: The percentage of interference between the two voxelizations.
-        :rtype: float
-        """
-        return len(self.intersection(other_voxelization)) / len(self.union(other_voxelization))
-
-    def is_intersecting(self, other_voxelization: VoxelizationType) -> bool:
-        """
-        Check if two voxelizations are intersecting.
-
-        :param other_voxelization: The other voxelization to check if there is an intersection with.
-        :type other_voxelization: VoxelizationType
-
-        :return: True if the voxelizations are intersecting, False otherwise.
-        :rtype: bool
-        """
-        intersection = self.intersection(other_voxelization)
-
-        return len(intersection) > 0
-
     # FILLING METHODS
-    @abstractmethod
-    def flood_fill(self, start, fill_with: bool) -> VoxelizationType:
-        """
-        Perform a flood fill operation on the voxelization.
-
-        :param start: The starting point for the flood fill.
-        :param fill_with: The value to fill the voxels with during the operation.
-        :type fill_with: bool
-
-        :return: A new voxelization resulting from the flood fill operation.
-        :rtype: VoxelizationType
-        """
-
-    @abstractmethod
     def fill_outer_voxels(self) -> VoxelizationType:
         """
         Fill the outer voxels of the voxelization.
@@ -342,8 +483,8 @@ class Voxelization(ABC, PhysicalObject):
         :return: A new voxelization with outer voxels filled.
         :rtype: VoxelizationType
         """
+        return self._fill_outer_elements()
 
-    @abstractmethod
     def fill_enclosed_voxels(self) -> VoxelizationType:
         """
         Fill the enclosed voxels of the voxelization.
@@ -351,6 +492,7 @@ class Voxelization(ABC, PhysicalObject):
         :return: A new voxelization with enclosed voxels filled.
         :rtype: VoxelizationType
         """
+        return self._fill_enclosed_elements()
 
     # DISPLAY METHODS
     def to_triangles(self) -> Set[Triangle]:
@@ -401,88 +543,6 @@ class Voxelization(ABC, PhysicalObject):
         return [self.to_closed_triangle_shell()]
 
     # HELPER METHODS
-    @staticmethod
-    def check_voxel_center_is_in_implicit_grid(voxel_center: Point, voxel_size: float) -> bool:
-        """
-        Check if a given voxel center point is a voxel center of the implicit grid, defined by voxel_size.
-
-        :param voxel_center: The voxel center point to check.
-        :type voxel_center: tuple[float, float, float]
-        :param voxel_size: The voxel edges size.
-        :type voxel_size: float
-
-        :return: True if the given voxel center point is a voxel center of the implicit grid, False otherwise.
-        :rtype: bool
-        """
-        for coord in voxel_center:
-            if not round((coord - 0.5 * voxel_size) / voxel_size, DECIMALS).is_integer():
-                return False
-
-        return True
-
-    def is_hollow(self) -> bool:
-        """
-        Check if the voxelization is hollow.
-
-        A hollow voxelization is one that has enclosed voxels that are not filled.
-
-        :return: True if the voxelization is hollow, False otherwise.
-        :rtype: bool
-        """
-        return self.fill_enclosed_voxels() == self
-
-    @staticmethod
-    def _check_voxel_size_number_of_decimals(voxel_size: float):
-        """
-        Check the number of decimal places in the voxel size.
-
-        If the voxel size has more decimal places than a specified threshold (DECIMALS),
-        a warning is issued, as some functions may not work as intended.
-
-        This is due to the use of rounding functions to avoid floating point arithmetic imprecision.
-
-        :param voxel_size: The size of the voxels.
-        :type voxel_size: float
-
-        :raises ValueError: If voxel_size is not a float.
-        """
-        if isinstance(voxel_size, float):
-            decimal_part = abs(voxel_size - int(voxel_size))
-            if decimal_part == 0:
-                pass
-            else:
-                decimals = len(str(decimal_part).split(".")[1])
-                if decimals >= DECIMALS:
-                    warnings.warn(
-                        f"""voxel_size has too many decimals: some functions may not work as intended.
-                        Consider using a voxel_size with less than {DECIMALS}."""
-                    )
-        else:
-            raise ValueError("voxel_size is not a float")
-
-    def _check_other_voxelization_type(self, other_voxelization):
-        """
-        Check if the provided 'other_voxelization' is an instance of the same Voxelization subclass.
-
-        :param other_voxelization: Another voxelization to be checked.
-        :type other_voxelization: Voxelization
-
-        :raises ValueError: If 'other_voxelization' is not an instance of the same Voxelization subclass.
-        """
-        if not isinstance(other_voxelization, self.__class__):
-            raise ValueError(f"'other_voxelization' must be an instance of '{self.__class__.__name__}'")
-
-    def _check_other_voxelization_voxel_size(self, other_voxelization: VoxelizationType):
-        """
-        Check if the provided 'other_voxelization' has the same voxel size.
-
-        :param other_voxelization: Another voxelization to be checked.
-        :type other_voxelization: Voxelization
-
-        :raises ValueError: If 'other_voxelization' has not the same voxel size.
-        """
-        if not self.voxel_size == other_voxelization.voxel_size:
-            raise ValueError("Both voxelizations must have same voxel_size to perform this operation.")
 
     @staticmethod
     def _shell_to_triangles(shell: Shell3D) -> List[Triangle]:
@@ -550,7 +610,7 @@ class PointBasedVoxelization(Voxelization):
         :type voxel_centers: set[tuple[float, float, float]]
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
-        :param name: The name of the Voxelization.
+        :param name: The name of the voxelization.
         :type name: str, optional
         """
         self._check_voxel_size_number_of_decimals(voxel_size)
@@ -988,7 +1048,7 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: set[tuple[float, float, float]]
         """
         indices = np.argwhere(self.matrix)
-        voxel_centers = self._min_voxel_grid_center + indices * self.voxel_size
+        voxel_centers = self.min_voxel_grid_center + indices * self.voxel_size
 
         return set(map(tuple, np.round(voxel_centers, DECIMALS)))
 
@@ -1004,7 +1064,7 @@ class MatrixBasedVoxelization(Voxelization):
         """
         return (
             self.voxel_size == other_voxelization.voxel_size
-            and self._min_voxel_grid_center == other_voxelization._min_voxel_grid_center
+            and self.min_voxel_grid_center == other_voxelization.min_voxel_grid_center
             and np.array_equal(self.matrix, other_voxelization.matrix)
         )
 
@@ -1150,7 +1210,7 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: MatrixBasedVoxelization
         """
         inverted_matrix = np.logical_not(self.matrix)
-        return self.__class__(inverted_matrix, self._min_voxel_grid_center, self.voxel_size)
+        return self.__class__(inverted_matrix, self.min_voxel_grid_center, self.voxel_size)
 
     def flood_fill(self, start: Tuple[int, int, int], fill_with: bool) -> "MatrixBasedVoxelization":
         """
@@ -1165,7 +1225,7 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: MatrixBasedVoxelization
         """
         return self.__class__(
-            flood_fill_matrix_3d(self.matrix, start, fill_with), self._min_voxel_grid_center, self.voxel_size
+            flood_fill_matrix_3d(self.matrix, start, fill_with), self.min_voxel_grid_center, self.voxel_size
         )
 
     def fill_outer_voxels(self) -> "MatrixBasedVoxelization":
@@ -1315,24 +1375,57 @@ class MatrixBasedVoxelization(Voxelization):
         ]
 
         # Calculate new matrix_origin_center
-        new_origin_center = np.round(self._min_voxel_grid_center + min_voxel_coords * self.voxel_size, DECIMALS)
+        new_origin_center = np.round(self.min_voxel_grid_center + min_voxel_coords * self.voxel_size, DECIMALS)
 
         return self.__class__(cropped_matrix, tuple(new_origin_center), self.voxel_size)
 
 
-class Pixelization:
+class Pixelization(ABC, DessiaObject):
+    """
+    Abstract base class for creating and manipulating pixelizations of volmdlr geometries.
+
+    This approach is used to create a pixelization of the contour, without filling the surface.
+
+    The pixelization is defined on an implicit 2D grid, where each pixel is defined by its size.
+    The implicit grid consists of axis-aligned sqaures with a given size, ensuring that the global
+    origin (0, 0) is always a corner point of a pîxel.
+
+    For example, in 1D with a pixel size of `t`, the set of pixels (defined by minimum and maximum points)
+    is: {i ∈ N, t ∈ R | (i * t, (i+1) * t)}
+    The corresponding set of pixel centers is: {i ∈ N, t ∈ R | (i + 0.5) * t}
+
+    This approach enables consistent pixelization across the 3D space, facilitating fast Boolean operations.
+    """
+
+    PixelizationType = TypeVar("PixelizationType", bound="Pixelization")
+
+    def __init__(self, voxel_size: float, name: str):
+        """
+        Initialize the voxelization.
+
+        :param voxel_size: The voxel edges size.
+        :type voxel_size: float
+        :param name: The name of the voxelization.
+        :type name: str, optional
+        """
+        self.voxel_size = voxel_size
+
+        DessiaObject.__init__(self, name=name)
+
+
+class PointBasedPixelization:
     """Voxelization but in 2D"""
 
     def __init__(self, pixel_centers, pixel_size):
         self.pixel_centers = pixel_centers
         self.pixel_size = pixel_size
 
-    def __eq__(self, other_pixelization: "Pixelization") -> bool:
+    def __eq__(self, other_pixelization: "PointBasedPixelization") -> bool:
         """
         Check if the current pixelization is equal to another pixelization.
 
         :param other_pixelization: The pixelization to compare.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
 
         :return: True if the pixelizations are equal, False otherwise.
         :rtype: bool
@@ -1341,71 +1434,71 @@ class Pixelization:
             self.pixel_centers == other_pixelization.pixel_centers and self.pixel_size == other_pixelization.pixel_size
         )
 
-    def __add__(self, other_pixelization: "Pixelization") -> "Pixelization":
+    def __add__(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
         """
         Return the union of the current pixelization with another pixelization.
 
         :param other_pixelization: The pixelization to union with.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
 
         :return: The union of the pixelizations.
-        :rtype: Pixelization
+        :rtype: PointBasedPixelization
         """
         return self.union(other_pixelization)
 
-    def __sub__(self, other_pixelization: "Pixelization") -> "Pixelization":
+    def __sub__(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
         """
         Return the difference between the current pixelization and another pixelization.
 
         :param other_pixelization: The pixelization to subtract.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
 
         :return: The difference between the pixelizations.
-        :rtype: Pixelization
+        :rtype: PointBasedPixelization
         """
         return self.difference(other_pixelization)
 
-    def __and__(self, other_pixelization: "Pixelization") -> "Pixelization":
+    def __and__(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
         """
         Return the intersection of the current pixelization with another pixelization.
 
         :param other_pixelization: The pixelization to intersect with.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
 
         :return: The intersection of the pixelizations.
-        :rtype: Pixelization
+        :rtype: PointBasedPixelization
         """
         return self.intersection(other_pixelization)
 
-    def __or__(self, other_pixelization: "Pixelization") -> "Pixelization":
+    def __or__(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
         """
         Return the union of the current pixelization with another pixelization.
 
         :param other_pixelization: The pixelization to union with.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
 
         :return: The union of the pixelizations.
-        :rtype: Pixelization
+        :rtype: PointBasedPixelization
         """
         return self.union(other_pixelization)
 
-    def __xor__(self, other_pixelization: "Pixelization") -> "Pixelization":
+    def __xor__(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
         """
         Return the symmetric difference between the current pixelization and another pixelization.
 
         :param other_pixelization: The pixelization to calculate the symmetric difference with.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
         :return: The symmetric difference between the pixelizations.
-        :rtype: Pixelization
+        :rtype: PointBasedPixelization
         """
         return self.symmetric_difference(other_pixelization)
 
-    def __invert__(self) -> "Pixelization":
+    def __invert__(self) -> "PointBasedPixelization":
         """
         Return the inverse of the current pixelization.
 
         :return: The inverse Pixelization object.
-        :rtype: Pixelization
+        :rtype: PointBasedPixelization
         """
         return self.inverse()
 
@@ -1418,29 +1511,31 @@ class Pixelization:
         """
         return len(self.pixel_centers)
 
-    def intersection(self, other_pixelization: "Pixelization") -> "Pixelization":
+    def intersection(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
         """
         Create a pixelization that is the Boolean intersection of two pixelizations.
         Both pixelizations must have the same pixel size.
 
         :param other_pixelization: The other pixelization to compute the Boolean intersection with.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
 
         :return: The created pixelization resulting from the Boolean intersection.
-        :rtype: Pixelization
+        :rtype: PointBasedPixelization
         """
         if self.pixel_size != other_pixelization.pixel_size:
             raise ValueError("Both pixelizations must have the same pixel_size to perform intersection.")
 
-        return Pixelization(self.pixel_centers.intersection(other_pixelization.pixel_centers), self.pixel_size)
+        return PointBasedPixelization(
+            self.pixel_centers.intersection(other_pixelization.pixel_centers), self.pixel_size
+        )
 
-    def is_intersecting(self, other_pixelization: "Pixelization") -> bool:
+    def is_intersecting(self, other_pixelization: "PointBasedPixelization") -> bool:
         """
         Check if two pixelizations are intersecting.
         Both pixelizations must have the same pixel size.
 
         :param other_pixelization: The other pixelization to check if there is an intersection with.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
 
         :return: True if the pixelizations are intersecting, False otherwise.
         :rtype: bool
@@ -1449,60 +1544,62 @@ class Pixelization:
 
         return len(intersection) > 0
 
-    def union(self, other_pixelization: "Pixelization") -> "Pixelization":
+    def union(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
         """
         Create a pixelization that is the Boolean union of two pixelizations.
         Both pixelizations must have the same pixel size.
 
         :param other_pixelization: The other pixelization to compute the Boolean union with.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
 
         :return: The created pixelization resulting from the Boolean union.
-        :rtype: Pixelization
+        :rtype: PointBasedPixelization
         """
         if self.pixel_size != other_pixelization.pixel_size:
             raise ValueError("Both pixelizations must have the same pixel_size to perform union.")
 
-        return Pixelization(self.pixel_centers.union(other_pixelization.pixel_centers), self.pixel_size)
+        return PointBasedPixelization(self.pixel_centers.union(other_pixelization.pixel_centers), self.pixel_size)
 
-    def difference(self, other_pixelization: "Pixelization") -> "Pixelization":
+    def difference(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
         """
         Create a pixelization that is the Boolean difference of two pixelizations.
         Both pixelizations must have the same pixel size.
 
         :param other_pixelization: The other pixelization to compute the Boolean difference with.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
 
         :return: The created pixelization resulting from the Boolean difference.
-        :rtype: Pixelization
+        :rtype: PointBasedPixelization
         """
         if self.pixel_size != other_pixelization.pixel_size:
             raise ValueError("Both pixelizations must have the same pixel_size to perform difference.")
 
-        return Pixelization(self.pixel_centers.difference(other_pixelization.pixel_centers), self.pixel_size)
+        return PointBasedPixelization(self.pixel_centers.difference(other_pixelization.pixel_centers), self.pixel_size)
 
-    def symmetric_difference(self, other_pixelization: "Pixelization") -> "Pixelization":
+    def symmetric_difference(self, other_pixelization: "PointBasedPixelization") -> "PointBasedPixelization":
         """
         Create a pixelization that is the Boolean symmetric difference (XOR) of two pixelizations.
         Both pixelizations must have the same pixel size.
 
         :param other_pixelization: The other pixelization to compute the Boolean symmetric difference with.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
 
         :return: The created pixelization resulting from the Boolean symmetric difference.
-        :rtype: Pixelization
+        :rtype: PointBasedPixelization
         """
         if self.pixel_size != other_pixelization.pixel_size:
             raise ValueError("Both pixelizations must have the same pixel_size to perform symmetric difference.")
 
-        return Pixelization(self.pixel_centers.symmetric_difference(other_pixelization.pixel_centers), self.pixel_size)
+        return PointBasedPixelization(
+            self.pixel_centers.symmetric_difference(other_pixelization.pixel_centers), self.pixel_size
+        )
 
-    def interference(self, other_pixelization: "Pixelization") -> float:
+    def interference(self, other_pixelization: "PointBasedPixelization") -> float:
         """
         Compute the percentage of interference between two pixelizations.
 
         :param other_pixelization: The other pixelization to compute the percentage of interference with.
-        :type other_pixelization: Pixelization
+        :type other_pixelization: PointBasedPixelization
 
         :return: The percentage of interference between the two pixelizations.
         :rtype: float
@@ -1555,7 +1652,7 @@ class Pixelization:
 
     @classmethod
     def from_pixel_matrix(
-        cls, pixel_matrix: "PixelMatrix", pixel_size: float, pixel_matrix_origin_center: Tuple[float, float]
+        cls, pixel_matrix: "MatrixBasedPixelization", pixel_size: float, pixel_matrix_origin_center: Tuple[float, float]
     ):
         indices = np.argwhere(pixel_matrix.matrix)
         pixel_centers = pixel_matrix_origin_center + indices * pixel_size
@@ -1579,7 +1676,7 @@ class Pixelization:
 
     max_pixel_grid_center = property(_get_max_pixel_grid_center)
 
-    def to_pixel_matrix(self) -> "PixelMatrix":
+    def to_pixel_matrix(self) -> "MatrixBasedPixelization":
         min_center = self.min_pixel_grid_center
         max_center = self.max_pixel_grid_center
 
@@ -1591,19 +1688,19 @@ class Pixelization:
         matrix = np.zeros((dim_x, dim_y), dtype=np.bool_)
         matrix[indices[:, 0], indices[:, 1]] = True
 
-        return PixelMatrix(matrix)
+        return MatrixBasedPixelization(matrix)
 
-    def inverse(self) -> "Pixelization":
+    def inverse(self) -> "PointBasedPixelization":
         """
         Create a new Pixelization object that is the inverse of the current pixelization.
 
         :return: The inverse Pixelization object.
-        :rtype: Pixelization
+        :rtype: PointBasedPixelization
         """
         inverted_pixel_matrix = self.to_pixel_matrix().inverse()
         min_pixel_center = self.min_pixel_grid_center
 
-        return Pixelization.from_pixel_matrix(inverted_pixel_matrix, self.pixel_size, min_pixel_center)
+        return PointBasedPixelization.from_pixel_matrix(inverted_pixel_matrix, self.pixel_size, min_pixel_center)
 
     def _get_bounding_rectangle(self):
         min_point = np.array([self.min_pixel_grid_center]) - np.array([self.pixel_size, self.pixel_size])
@@ -1622,60 +1719,60 @@ class Pixelization:
 
         return x_index, y_index
 
-    def flood_fill(self, start_point: Tuple[float, float], fill_with: bool) -> "Pixelization":
+    def flood_fill(self, start_point: Tuple[float, float], fill_with: bool) -> "PointBasedPixelization":
         start = self._point_to_local_grid_index(start_point)
         pixel_matrix = self.to_pixel_matrix()
         filled_pixel_matrix = pixel_matrix.flood_fill(start, fill_with)
 
         return self.from_pixel_matrix(filled_pixel_matrix, self.pixel_size, self.min_pixel_grid_center)
 
-    def fill_outer_pixels(self) -> "Pixelization":
+    def fill_outer_pixels(self) -> "PointBasedPixelization":
         return self.from_pixel_matrix(
             self.to_pixel_matrix().fill_outer_pixels(), self.pixel_size, self.min_pixel_grid_center
         )
 
-    def fill_enclosed_pixels(self) -> "Pixelization":
+    def fill_enclosed_pixels(self) -> "PointBasedPixelization":
         return self.from_pixel_matrix(
             self.to_pixel_matrix().fill_enclosed_pixels(), self.pixel_size, self.min_pixel_grid_center
         )
 
 
-class PixelMatrix:
+class MatrixBasedPixelization:
     """Class to manipulate pixel matrix."""
 
     def __init__(self, numpy_pixel_matrix: NDArray[np.bool_]):
         self.matrix = numpy_pixel_matrix
 
-    def __eq__(self, other_pixel_matrix: "PixelMatrix") -> bool:
+    def __eq__(self, other_pixel_matrix: "MatrixBasedPixelization") -> bool:
         return np.array_equal(self.matrix, other_pixel_matrix.matrix)
 
-    def __add__(self, other_pixel_matrix: "PixelMatrix") -> "PixelMatrix":
-        return PixelMatrix(self.matrix + other_pixel_matrix.matrix)
+    def __add__(self, other_pixel_matrix: "MatrixBasedPixelization") -> "MatrixBasedPixelization":
+        return MatrixBasedPixelization(self.matrix + other_pixel_matrix.matrix)
 
-    def inverse(self) -> "PixelMatrix":
+    def inverse(self) -> "MatrixBasedPixelization":
         inverted_matrix = np.logical_not(self.matrix)
-        return PixelMatrix(inverted_matrix)
+        return MatrixBasedPixelization(inverted_matrix)
 
-    def flood_fill(self, start: Tuple[int, int], fill_with: bool) -> "PixelMatrix":
-        return PixelMatrix(flood_fill_matrix_2d(self.matrix, start, fill_with))
+    def flood_fill(self, start: Tuple[int, int], fill_with: bool) -> "MatrixBasedPixelization":
+        return MatrixBasedPixelization(flood_fill_matrix_2d(self.matrix, start, fill_with))
 
-    def _expand(self) -> "PixelMatrix":
+    def _expand(self) -> "MatrixBasedPixelization":
         current_shape = self.matrix.shape
         new_shape = tuple(dim + 2 for dim in current_shape)
         expanded_matrix = np.zeros(new_shape, dtype="bool")
         slices = tuple(slice(1, -1) for _ in current_shape)
         expanded_matrix[slices] = self.matrix.copy()
 
-        return PixelMatrix(expanded_matrix)
+        return MatrixBasedPixelization(expanded_matrix)
 
-    def _reduce(self) -> "PixelMatrix":
+    def _reduce(self) -> "MatrixBasedPixelization":
         current_shape = self.matrix.shape
         slices = tuple(slice(1, -1) for _ in current_shape)
         reduced_matrix = self.matrix.copy()[slices]
 
-        return PixelMatrix(reduced_matrix)
+        return MatrixBasedPixelization(reduced_matrix)
 
-    def fill_outer_pixels(self) -> "PixelMatrix":
+    def fill_outer_pixels(self) -> "MatrixBasedPixelization":
         # pylint: disable=protected-access
 
         expanded_pixel_matrix = self._expand()
@@ -1684,7 +1781,7 @@ class PixelMatrix:
 
         return outer_filled_pixel_matrix
 
-    def fill_enclosed_pixels(self) -> "PixelMatrix":
+    def fill_enclosed_pixels(self) -> "MatrixBasedPixelization":
         outer_filled_pixel_matrix = self.fill_outer_pixels()
         inner_filled_pixel_matrix = self + outer_filled_pixel_matrix.inverse()
 
