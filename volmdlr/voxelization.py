@@ -1,5 +1,5 @@
 """
-Class for voxel representation of volmdlr models
+Class for discrete representations of volmdlr models
 """
 # pylint: disable=no-name-in-module
 
@@ -373,15 +373,6 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         DiscreteRepresentation.__init__(self, element_size=voxel_size)
         PhysicalObject.__init__(self, name=name)
 
-    @abstractmethod
-    def __len__(self) -> int:
-        """
-        Get the number of elements in the voxelization.
-
-        :return: The number of elements in the voxelization.
-        :rtype: int
-        """
-
     @property
     def voxel_size(self) -> float:
         """
@@ -409,7 +400,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :return: A string representation of the voxelization.
         :rtype: str
         """
-        return f"{self.__class__}: voxel size={self.voxel_size}, number of voxels={self.__len__()}, name={self.name}"
+        return f"{self.__class__}: voxel size={self.voxel_size}, number of voxels={len(self)}, name={self.name}"
 
     @property
     def volume(self) -> float:
