@@ -388,5 +388,91 @@ class TestBSplineSurface3D(unittest.TestCase):
         contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered())
 
+    def test_split_surface_u(self):
+        surf1, surf2 = self.spline_surf.split_surface_u(0.33)
+        expected_point_surf1 = [volmdlr.Point3D(-25.0, -25.0, -10.0), volmdlr.Point3D(-25.0, -15.0, -5.0),
+                                volmdlr.Point3D(-25.0, -5.0, 0.0), volmdlr.Point3D(-25.0, 5.0, 0.0),
+                                volmdlr.Point3D(-25.0, 15.0, -5.0), volmdlr.Point3D(-25.0, 25.0, -10.0),
+                                volmdlr.Point3D(-15.0, -25.0, -8.0), volmdlr.Point3D(-15.0, -15.0, -4.0),
+                                volmdlr.Point3D(-15.0, -5.0, -4.0), volmdlr.Point3D(-15.0, 5.0, -4.0),
+                                volmdlr.Point3D(-15.0, 15.0, -4.0), volmdlr.Point3D(-15.0, 25.0, -8.0),
+                                volmdlr.Point3D(-10.0, -25.0, -6.5), volmdlr.Point3D(-10.0, -15.0, -3.5),
+                                volmdlr.Point3D(-10.0, -5.0, -6.0), volmdlr.Point3D(-10.0, 5.0, -6.0),
+                                volmdlr.Point3D(-10.0, 15.0, -3.5), volmdlr.Point3D(-10.0, 25.0, -6.5),
+                                volmdlr.Point3D(-5.85, -25.0, -5.42), volmdlr.Point3D(-5.85, -15.0, -3.085),
+                                volmdlr.Point3D(-5.85, -5.0, -7.0), volmdlr.Point3D(-5.85, 5.0, -7.0),
+                                volmdlr.Point3D(-5.85, 15.0, -3.085), volmdlr.Point3D(-5.85, 25.0, -5.42)]
+        expected_point_surf2 = [
+                volmdlr.Point3D(-5.85, -25.0, -5.42), volmdlr.Point3D(-5.85, -15.0, -3.085),
+                volmdlr.Point3D(-5.85, -5.0, -7.0), volmdlr.Point3D(-5.85, 5.0, -7.0),
+                volmdlr.Point3D(-5.85, 15.0, -3.085), volmdlr.Point3D(-5.85, 25.0, -5.42),
+                volmdlr.Point3D(-1.6999999999999995, -25.0, -4.34), volmdlr.Point3D(-1.6999999999999995, -15.0, -2.67),
+                volmdlr.Point3D(-1.6999999999999995, -5.0, -8.0), volmdlr.Point3D(-1.6999999999999995, 5.0, -8.0),
+                volmdlr.Point3D(-1.6999999999999995, 15.0, -2.67), volmdlr.Point3D(-1.6999999999999995, 25.0, -4.34),
+                volmdlr.Point3D(5.0, -25.0, -3.0), volmdlr.Point3D(5.0, -15.0, -2.0),
+                volmdlr.Point3D(5.0, -5.0, -8.0), volmdlr.Point3D(5.0, 5.0, -8.0),
+                volmdlr.Point3D(5.0, 15.0, -2.0), volmdlr.Point3D(5.0, 25.0, -3.0),
+                volmdlr.Point3D(15.0, -25.0, -8.0), volmdlr.Point3D(15.0, -15.0, -4.0),
+                volmdlr.Point3D(15.0, -5.0, -4.0), volmdlr.Point3D(15.0, 5.0, -4.0),
+                volmdlr.Point3D(15.0, 15.0, -4.0), volmdlr.Point3D(15.0, 25.0, -8.0),
+                volmdlr.Point3D(25.0, -25.0, -10.0), volmdlr.Point3D(25.0, -15.0, -5.0),
+                volmdlr.Point3D(25.0, -5.0, 2.0), volmdlr.Point3D(25.0, 5.0, 2.0),
+                volmdlr.Point3D(25.0, 15.0, -5.0), volmdlr.Point3D(25.0, 25.0, -10.0)]
+        self.assertEqual(surf1.nb_u, 4)
+        self.assertEqual(surf1.nb_v, 6)
+        self.assertEqual(surf2.nb_u, 5)
+        self.assertEqual(surf2.nb_v, 6)
+        for point, expected_point in zip(surf1.control_points, expected_point_surf1):
+            self.assertTrue(point.is_close(expected_point))
+        for point, expected_point in zip(surf2.control_points, expected_point_surf2):
+            self.assertTrue(point.is_close(expected_point))
+
+    def test_split_surface_v(self):
+        surf1, surf2 = self.spline_surf.split_surface_v(0.66)
+        expected_point_surf1 = [
+            volmdlr.Point3D(-25.0, -25.0, -10.0), volmdlr.Point3D(-25.0, -15.0, -5.0),
+            volmdlr.Point3D(-25.0, -5.0, 0.0), volmdlr.Point3D(-25.0, 1.6000000000000005, 0.0),
+            volmdlr.Point3D(-25.0, 5.700556916908, -1.212965025618178), volmdlr.Point3D(-15.0, -25.0, -8.0),
+            volmdlr.Point3D(-15.0, -15.0, -4.0), volmdlr.Point3D(-15.0, -5.0, -4.0),
+            volmdlr.Point3D(-15.0, 1.6000000000000005, -4.0), volmdlr.Point3D(-15.0, 5.700556916908, -4.0),
+            volmdlr.Point3D(-5.0, -25.0, -5.0), volmdlr.Point3D(-5.0, -15.0, -3.0),
+            volmdlr.Point3D(-5.0, -5.0, -8.0), volmdlr.Point3D(-5.0, 1.6000000000000005, -8.0),
+            volmdlr.Point3D(-5.0, 5.700556916908, -6.787034974381822), volmdlr.Point3D(5.0, -25.0, -3.0),
+            volmdlr.Point3D(5.0, -15.0, -2.0), volmdlr.Point3D(5.0, -5.0, -8.0),
+            volmdlr.Point3D(5.0, 1.6000000000000005, -8.0), volmdlr.Point3D(5.0, 5.700556916908, -6.544441969258186),
+            volmdlr.Point3D(15.0, -25.0, -8.0), volmdlr.Point3D(15.0, -15.0, -4.0),
+            volmdlr.Point3D(15.0, -5.0, -4.0), volmdlr.Point3D(15.0, 1.6000000000000005, -4.0),
+            volmdlr.Point3D(15.0, 5.700556916908, -4.0), volmdlr.Point3D(25.0, -25.0, -10.0),
+            volmdlr.Point3D(25.0, -15.0, -5.0), volmdlr.Point3D(25.0, -5.0, 2.0),
+            volmdlr.Point3D(25.0, 1.6000000000000005, 2.0), volmdlr.Point3D(25.0, 5.700556916908, 0.30184896413455065)]
+
+        expected_point_surf2 = [
+            volmdlr.Point3D(-25.0, 5.700556916908, -1.212965025618178),
+            volmdlr.Point3D(-25.0, 9.92537313432836, -2.4626865671641793),
+            volmdlr.Point3D(-25.0, 15.0, -5.0), volmdlr.Point3D(-25.0, 25.0, -10.0),
+            volmdlr.Point3D(-15.0, 5.700556916908, -4.0), volmdlr.Point3D(-15.0, 9.92537313432836, -4.0),
+            volmdlr.Point3D(-15.0, 15.0, -4.0), volmdlr.Point3D(-15.0, 25.0, -8.0),
+            volmdlr.Point3D(-5.0, 5.700556916908, -6.787034974381822),
+            volmdlr.Point3D(-5.0, 9.92537313432836, -5.537313432835821),
+            volmdlr.Point3D(-5.0, 15.0, -3.0), volmdlr.Point3D(-5.0, 25.0, -5.0),
+            volmdlr.Point3D(5.0, 5.700556916908, -6.544441969258186),
+            volmdlr.Point3D(5.0, 9.92537313432836, -5.044776119402984),
+            volmdlr.Point3D(5.0, 15.0, -2.0), volmdlr.Point3D(5.0, 25.0, -3.0),
+            volmdlr.Point3D(15.0, 5.700556916908, -4.0), volmdlr.Point3D(15.0, 9.92537313432836, -4.0),
+            volmdlr.Point3D(15.0, 15.0, -4.0), volmdlr.Point3D(15.0, 25.0, -8.0),
+            volmdlr.Point3D(25.0, 5.700556916908, 0.30184896413455065),
+            volmdlr.Point3D(25.0, 9.92537313432836, -1.4477611940298512),
+            volmdlr.Point3D(25.0, 15.0, -5.0), volmdlr.Point3D(25.0, 25.0, -10.0)]
+
+        self.assertEqual(surf1.nb_u, 6)
+        self.assertEqual(surf1.nb_v, 5)
+        self.assertEqual(surf2.nb_u, 6)
+        self.assertEqual(surf2.nb_v, 4)
+        for point, expected_point in zip(surf1.control_points, expected_point_surf1):
+            self.assertTrue(point.is_close(expected_point))
+        for point, expected_point in zip(surf2.control_points, expected_point_surf2):
+            self.assertTrue(point.is_close(expected_point))
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=0)
