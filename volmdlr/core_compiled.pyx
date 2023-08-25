@@ -2546,7 +2546,7 @@ class Basis2D(Basis):
 
     def normalize(self):
         """
-        Normalizes the basis, modifying its coordinates in place.
+        Normalizes the basis, and return a new object.
 
         :return: A new normalized basis
         :rtype: Basis2D
@@ -2958,6 +2958,15 @@ class Frame2D(Basis2D):
                 "v": self.v.to_dict()
                 }
 
+    def normalize(self):
+        """
+        Normalizes the Frame, and return a new object.
+
+        :return: A new normalized basis
+        :rtype: Frame2D
+        """
+        return Frame2D(self.origin, self.u.unit_vector(), self.v.unit_vector())
+
     def basis(self):
         """
         Returns the 2-dimensional basis oriented the same way as the Frame2D.
@@ -3216,6 +3225,15 @@ class Frame3D(Basis3D):
                 "v": self.v.to_dict(),
                 "w": self.w.to_dict()
                 }
+
+    def normalize(self):
+        """
+        Normalizes the Frame, and return a new object.
+
+        :return: A new normalized basis
+        :rtype: Frame2D
+        """
+        return Frame3D(self.origin, self.u.unit_vector(), self.v.unit_vector(), self.w.unit_vector())
 
     def basis(self):
         """
