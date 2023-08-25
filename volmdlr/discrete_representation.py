@@ -7,18 +7,14 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import List, Set, Tuple, TypeVar
 
-from matplotlib import patches
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import NDArray
 from dessia_common.core import DessiaObject, PhysicalObject
+from matplotlib import patches
+from numpy.typing import NDArray
 
 from volmdlr import Point2D, Point3D, Vector3D
-from volmdlr.edges import LineSegment2D
-from volmdlr.wires import ClosedPolygon2D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
-from volmdlr.faces import Triangle3D
-from volmdlr.shells import ClosedTriangleShell3D, Shell3D
 from volmdlr.discrete_representation_compiled import (
     flood_fill_matrix_2d,
     flood_fill_matrix_3d,
@@ -26,6 +22,10 @@ from volmdlr.discrete_representation_compiled import (
     triangles_to_voxel_matrix,
     voxel_triangular_faces,
 )
+from volmdlr.edges import LineSegment2D
+from volmdlr.faces import Triangle3D
+from volmdlr.shells import ClosedTriangleShell3D, Shell3D
+from volmdlr.wires import ClosedPolygon2D
 
 # CUSTOM TYPES
 _Point3D = Tuple[float, float, float]
