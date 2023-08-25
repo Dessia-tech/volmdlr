@@ -22,10 +22,13 @@ from volmdlr.voxelization_compiled import (
     voxel_triangular_faces,
 )
 
-# Custom types
+# CUSTOM TYPES
 Point = Tuple[float, float, float]
 Triangle = Tuple[Point, Point, Point]
 Segment = Tuple[Point, Point]
+
+# GLOBAL VARIABLE
+DECIMALS = 9  # Used to round numbers and avoid floating point arithmetic imprecision
 
 
 class Voxelization(ABC, PhysicalObject):
@@ -145,8 +148,8 @@ class Voxelization(ABC, PhysicalObject):
         :return: The bounding box of the voxelization.
         :rtype: BoundingBox
         """
-        min_point = np.round((np.array([self.min_voxel_grid_center]) - self.voxel_size)[0], 6)
-        max_point = np.round((np.array([self.max_voxel_grid_center]) + self.voxel_size)[0], 6)
+        min_point = np.round((np.array([self.min_voxel_grid_center]) - self.voxel_size)[0], DECIMALS)
+        max_point = np.round((np.array([self.max_voxel_grid_center]) + self.voxel_size)[0], DECIMALS)
 
         return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
 
@@ -430,7 +433,7 @@ class Voxelization(ABC, PhysicalObject):
         :rtype: bool
         """
         for coord in voxel_center:
-            if not round((coord - 0.5 * voxel_size) / voxel_size, 6).is_integer():
+            if not round((coord - 0.5 * voxel_size) / voxel_size, DECIMALS).is_integer():
                 return False
 
         return True
@@ -952,7 +955,7 @@ class PointBasedVoxelization(Voxelization):
         unique_indices = np.unique(indices, axis=0)
 
         # Convert back to voxel centers
-        centers = np.around((unique_indices + 0.5) * voxel_size, 6)
+        centers = np.around((unique_indices + 0.5) * voxel_size, DECIMALS)
 
         return set(tuple(center) for center in centers)
 
@@ -1003,7 +1006,7 @@ class MatrixBasedVoxelization(Voxelization):
         indices = np.argwhere(self.matrix)
         voxel_centers = self._min_voxel_grid_center + indices * self.voxel_size
 
-        return set(map(tuple, np.round(voxel_centers, 6)))
+        return set(map(tuple, np.round(voxel_centers, DECIMALS)))
 
     def __eq__(self, other_voxelization: "MatrixBasedVoxelization") -> bool:
         """
@@ -1219,7 +1222,7 @@ class MatrixBasedVoxelization(Voxelization):
 
         return MatrixBasedVoxelization(
             expanded_matrix,
-            tuple(np.round(np.array(self.min_voxel_grid_center) - self.voxel_size, 6)),
+            tuple(np.round(np.array(self.min_voxel_grid_center) - self.voxel_size, DECIMALS)),
             self.voxel_size,
         )
 
@@ -1230,12 +1233,12 @@ class MatrixBasedVoxelization(Voxelization):
 
         return MatrixBasedVoxelization(
             reduced_matrix,
-            tuple(np.round(np.array(self.min_voxel_grid_center) + self.voxel_size, 6)),
+            tuple(np.round(np.array(self.min_voxel_grid_center) + self.voxel_size, DECIMALS)),
             self.voxel_size,
         )
 
     def _get_extents(self):
-        extents_min = np.round(np.array(self._min_voxel_grid_center), 6)
+        extents_min = np.round(np.array(self._min_voxel_grid_center), DECIMALS)
         extents_max = np.round(
             self._min_voxel_grid_center + self.matrix.shape * np.array([self.voxel_size for _ in range(3)]), 6
         )
@@ -1251,13 +1254,13 @@ class MatrixBasedVoxelization(Voxelization):
         global_min = np.min([self_min, other_min], axis=0)
         global_max = np.max([self_max, other_max], axis=0)
 
-        new_shape = np.round((global_max - global_min) / self.voxel_size, 6).astype(int)
+        new_shape = np.round((global_max - global_min) / self.voxel_size, DECIMALS).astype(int)
 
         new_self = np.zeros(new_shape, dtype=bool)
         new_other = np.zeros(new_shape, dtype=bool)
 
-        self_start = np.round((self_min - global_min) / self.voxel_size, 6).astype(int)
-        other_start = np.round((other_min - global_min) / self.voxel_size, 6).astype(int)
+        self_start = np.round((self_min - global_min) / self.voxel_size, DECIMALS).astype(int)
+        other_start = np.round((other_min - global_min) / self.voxel_size, DECIMALS).astype(int)
 
         new_self[
             self_start[0] : self_start[0] + self.matrix.shape[0],
@@ -1287,7 +1290,7 @@ class MatrixBasedVoxelization(Voxelization):
             return self
 
         # Find the minimum and maximum indices along each axis
-        min_voxel_coords, max_voxel_coords = np.round(np.min(true_voxels, axis=0), 6), np.round(
+        min_voxel_coords, max_voxel_coords = np.round(np.min(true_voxels, axis=0), DECIMALS), np.round(
             np.max(true_voxels, axis=0), 6
         )
 
@@ -1299,7 +1302,7 @@ class MatrixBasedVoxelization(Voxelization):
         ]
 
         # Calculate new matrix_origin_center
-        new_origin_center = np.round(self._min_voxel_grid_center + min_voxel_coords * self.voxel_size, 6)
+        new_origin_center = np.round(self._min_voxel_grid_center + min_voxel_coords * self.voxel_size, DECIMALS)
 
         return self.__class__(cropped_matrix, tuple(new_origin_center), self.voxel_size)
 
@@ -1543,7 +1546,7 @@ class Pixelization:
     ):
         indices = np.argwhere(pixel_matrix.matrix)
         pixel_centers = pixel_matrix_origin_center + indices * pixel_size
-        return cls(set(map(tuple, np.round(pixel_centers, 6))), pixel_size)
+        return cls(set(map(tuple, np.round(pixel_centers, DECIMALS))), pixel_size)
 
     def _get_min_pixel_grid_center(self) -> Tuple[float, float]:
         min_x = min_y = float("inf")
