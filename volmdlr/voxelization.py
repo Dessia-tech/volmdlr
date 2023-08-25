@@ -1241,22 +1241,25 @@ class MatrixBasedVoxelization(Voxelization):
             self.voxel_size,
         )
 
-    def _logical_operation(self, other: "MatrixBasedVoxelization", logical_operation):
+    def _logical_operation(self, other_voxelization: "MatrixBasedVoxelization", logical_operation):
         """
         Perform a logical operation (e.g., union, intersection, etc.) between two voxelizations.
 
-        :param other: The other MatrixBasedVoxelization to perform the operation with.
-        :type other: MatrixBasedVoxelization
+        :param other_voxelization: The other MatrixBasedVoxelization to perform the operation with.
+        :type other_voxelization: MatrixBasedVoxelization
         :param logical_operation: The logical operation function to apply (e.g., np.logical_or).
 
         :return: A new MatrixBasedVoxelization resulting from the logical operation.
         :rtype: MatrixBasedVoxelization
         """
-        if self.voxel_size != other.voxel_size:
+        if self.voxel_size != other_voxelization.voxel_size:
             raise ValueError("Voxel sizes must be the same to perform boolean operations.")
 
-        self_min, self_max = self.min_voxel_grid_center, self.max_voxel_grid_center
-        other_min, other_max = other.min_voxel_grid_center, other.max_voxel_grid_center
+        self_min, self_max = np.array(self.min_voxel_grid_center), np.array(self.min_voxel_grid_center) + 1
+        other_min, other_max = (
+            np.array(other_voxelization.min_voxel_grid_center),
+            np.array(other_voxelization.min_voxel_grid_center) + 1,
+        )
 
         global_min = np.min([self_min, other_min], axis=0)
         global_max = np.max([self_max, other_max], axis=0)
@@ -1276,10 +1279,10 @@ class MatrixBasedVoxelization(Voxelization):
         ] = self.matrix
 
         new_other[
-            other_start[0] : other_start[0] + other.matrix.shape[0],
-            other_start[1] : other_start[1] + other.matrix.shape[1],
-            other_start[2] : other_start[2] + other.matrix.shape[2],
-        ] = other.matrix
+            other_start[0] : other_start[0] + other_voxelization.matrix.shape[0],
+            other_start[1] : other_start[1] + other_voxelization.matrix.shape[1],
+            other_start[2] : other_start[2] + other_voxelization.matrix.shape[2],
+        ] = other_voxelization.matrix
 
         result_matrix = logical_operation(new_self, new_other)
 
