@@ -597,5 +597,6 @@ class TestBSplineSurface3D(unittest.TestCase):
         for weight, expected_weight in zip(surf2.weights, expected_weights_surf2):
             self.assertAlmostEqual(weight, expected_weight)
 
+
 if __name__ == '__main__':
     unittest.main(verbosity=0)
