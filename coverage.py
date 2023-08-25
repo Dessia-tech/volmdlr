@@ -25,7 +25,8 @@ untracked_modules = ['volmdlr/templates.py',
                      'volmdlr/gmsh_vm.py',
                      'models/__init__.py',
                      'models/contours.py',
-                     'models/bspline_curves.py'
+                     'models/bspline_curves.py',
+                     'discrete_representation_compiled'
                      ]
 
 print('untracked modules:', untracked_modules)
