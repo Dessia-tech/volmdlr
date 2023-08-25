@@ -5,8 +5,8 @@ In PointBasedVoxelization, voxels are stored as a Set[Tuple[float, float, float]
 """
 import volmdlr
 from volmdlr.core import VolumeModel
-from volmdlr.primitives3d import Cylinder, Sphere
 from volmdlr.discrete_representation import PointBasedVoxelization
+from volmdlr.primitives3d import Cylinder, Sphere
 
 VOXEL_SIZE = 0.01
 

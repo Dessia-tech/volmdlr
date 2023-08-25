@@ -2348,10 +2348,10 @@ class MatrixBasedPixelization(Pixelization):
         if self.pixel_size != other.pixel_size:
             raise ValueError("Pixel sizes must be the same to perform boolean operations.")
 
-        self_min, self_max = np.array(self.min_grid_center), np.array(self.min_grid_center) + 1
+        self_min, self_max = np.array(self.min_grid_center), np.array(self.max_grid_center) + 1
         other_min, other_max = (
             np.array(other.min_grid_center),
-            np.array(other.min_grid_center) + 1,
+            np.array(other.max_grid_center) + 1,
         )
 
         global_min = np.min([self_min, other_min], axis=0)
