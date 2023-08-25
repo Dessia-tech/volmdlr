@@ -17,7 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
 - Curve: local_discretization
 - Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
-- 
+- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections, ellipse_intersections
+- Circle2D: ellipse_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
 ### Fixed
 - Sweep with non smoth path
 - plot of vector3D.
@@ -78,6 +81,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cylinder / Cone / HollowCylinder
 - Ellipse2D: point_distance
 - Ellipse3D: test_ellipse_intersections, test_linesegment_intersections
+- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
 
 ## v0.12.0
 

@@ -255,6 +255,21 @@ class TestArc3D(unittest.TestCase):
         arc = dessia_common.core.DessiaObject.load_from_file('edges/arc_objects/arc3d_test_point_distance.json')
         self.assertAlmostEqual(arc.point_distance(point), 0.0021097842575404403)
 
+    def test_arc_intersections(self):
+        arc1 = edges.Arc3D.from_3_points(
+            volmdlr.Point3D(-3, -3, 0),
+            volmdlr.Point3D(6.324555320336761, -5.692099788303083, -0.8973665961010275),
+            volmdlr.Point3D(3, 3, 2))
+        arc2 = edges.Arc3D.from_3_points(
+            volmdlr.Point3D(1.2067665579541171, -1.246879774203074, -0.4359328108960321),
+            volmdlr.Point3D(-1.2905737351068276, -5.961765089244547, -0.9872550297481824),
+            volmdlr.Point3D(7.33260591629263, -4.272128323147327, -0.4240427743824422))
+        intersections = arc1.intersections(arc2)
+        self.assertTrue(intersections[0].is_close(
+            volmdlr.Point3D(-1.2905737351057338, -5.961765089245487, -0.9872550297484957)))
+        self.assertTrue(intersections[1].is_close(
+            volmdlr.Point3D(7.332605916292026, -4.272128323148586, -0.42404277438286175)))
+
 
 if __name__ == '__main__':
     unittest.main()
