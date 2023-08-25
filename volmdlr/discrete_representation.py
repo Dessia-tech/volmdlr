@@ -934,7 +934,7 @@ class PointBasedVoxelization(Voxelization):
     def to_dict(
         self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
     ) -> JsonSerializable:
-        """Specific 'to_dict' method to allow serialization of set."""
+        """Specific 'to_dict' method to allow serialization of a set."""
         dict_ = self.base_dict()
 
         dict_["voxel_centers"] = list(self.voxel_centers)
@@ -952,9 +952,9 @@ class PointBasedVoxelization(Voxelization):
         pointers_memo: Dict[str, Any] = None,
         path: str = "#",
     ) -> "PointBasedVoxelization":
-        """Specific 'dict_to_object' method to allow serialization of set."""
+        """Specific 'dict_to_object' method to allow deserialization of a set."""
 
-        voxel_centers = dict_["voxel_centers"]
+        voxel_centers = set(tuple(voxel_center) for voxel_center in dict_["voxel_centers"])
         voxel_size = dict_["voxel_size"]
         name = dict_["name"]
 
@@ -1903,6 +1903,36 @@ class PointBasedPixelization(Pixelization):
         :rtype: PointBasedPixelization
         """
         return self.from_matrix_based_pixelization(self.to_matrix_based_pixelization().fill_enclosed_pixels())
+
+    # SERIALIZATION
+    def to_dict(
+        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+    ) -> JsonSerializable:
+        """Specific 'to_dict' method to allow serialization of a set."""
+        dict_ = self.base_dict()
+
+        dict_["pixel_centers"] = list(self.pixel_centers)
+        dict_["pixel_size"] = self.pixel_size
+        dict_["name"] = self.name
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(
+        cls,
+        dict_: JsonSerializable,
+        force_generic: bool = False,
+        global_dict=None,
+        pointers_memo: Dict[str, Any] = None,
+        path: str = "#",
+    ) -> "PointBasedPixelization":
+        """Specific 'dict_to_object' method to allow deserialization of a set."""
+
+        pixel_centers = set(tuple(pixel_center) for pixel_center in dict_["pixel_centers"])
+        pixel_size = dict_["pixel_size"]
+        name = dict_["name"]
+
+        return cls(pixel_centers, pixel_size, name)
 
     # HELPER METHODS
     def to_matrix_based_pixelization(self) -> "MatrixBasedPixelization":
