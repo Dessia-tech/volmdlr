@@ -10,7 +10,7 @@ from volmdlr.primitives3d import Block, Cylinder, Sphere
 from volmdlr.shells import ClosedTriangleShell3D
 from volmdlr.voxelization import PointBasedVoxelization
 
-SHOW_BABYLONJS = True
+SHOW_BABYLONJS = False
 
 
 class TestPointBasedVoxelizationCreation(unittest.TestCase):
