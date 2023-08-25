@@ -438,17 +438,32 @@ class Voxelization(ABC, PhysicalObject):
 
         return True
 
-    def count_outer_voxels(self) -> int:
-        return len(self.fill_outer_voxels() - self)
+    def is_hollow(self) -> bool:
+        """
+        Check if the voxelization is hollow.
 
-    def count_enclosed_voxels(self) -> int:
-        return len(self.fill_enclosed_voxels() - self)
+        A hollow voxelization is one that has enclosed voxels that are not filled.
 
-    def is_closed(self) -> bool:
-        return self.count_enclosed_voxels() == 0
+        :return: True if the voxelization is hollow, False otherwise.
+        :rtype: bool
+        """
+        return self.fill_enclosed_voxels() == self
 
     @staticmethod
     def _check_voxel_size_number_of_decimals(voxel_size: float):
+        """
+        Check the number of decimal places in the voxel size.
+
+        If the voxel size has more decimal places than a specified threshold (DECIMALS),
+        a warning is issued, as some functions may not work as intended.
+
+        This is due to the use of rounding functions to avoid floating point arithmetic imprecision.
+
+        :param voxel_size: The size of the voxels.
+        :type voxel_size: float
+
+        :raises ValueError: If voxel_size is not a float.
+        """
         if isinstance(voxel_size, float):
             decimal_part = abs(voxel_size - int(voxel_size))
             if decimal_part == 0:
@@ -457,7 +472,7 @@ class Voxelization(ABC, PhysicalObject):
                 decimals = len(str(decimal_part).split(".")[1])
                 if decimals >= DECIMALS:
                     warnings.warn(
-                        f"""voxel_size has too much decimals: some functions may not work as intended.
+                        f"""voxel_size has too many decimals: some functions may not work as intended.
                         Consider using a voxel_size with less than {DECIMALS}."""
                     )
         else:
