@@ -956,7 +956,7 @@ class PointBasedVoxelization(Voxelization):
         :return: The local grid index of the point.
         :rtype: Tuple[int, int, int]
 
-        :raises ValueError: If the point is not within the voxelization's bounding box.
+        :raises ValueError: If the point is not within the bounding box of the voxelization.
         """
         if not self.bounding_box.point_belongs(Point3D(*point)):
             raise ValueError("Point not in local voxel grid.")
@@ -1893,7 +1893,7 @@ class PointBasedPixelization(Pixelization):
         :return: The local grid index of the point.
         :rtype: Tuple[int, int]
 
-        :raises ValueError: If the point is not within the pixelization's bounding box.
+        :raises ValueError: If the point is not within the bounding rectangle of the pixelization.
         """
         if not self.bounding_rectangle.point_belongs(Point2D(*point)):
             raise ValueError("Point not in local pixel grid.")
