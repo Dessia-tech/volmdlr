@@ -5,10 +5,10 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr.core import VolumeModel, BoundingBox
+from volmdlr.core import BoundingBox, VolumeModel
+from volmdlr.discrete_representation import PointBasedVoxelization
 from volmdlr.primitives3d import Block, Cylinder, Sphere
 from volmdlr.shells import ClosedTriangleShell3D
-from volmdlr.discrete_representation import PointBasedVoxelization
 
 SHOW_BABYLONJS = False
 
@@ -214,10 +214,10 @@ class TestPointBasedVoxelizationExport(unittest.TestCase):
         self.sphere = Sphere(center=volmdlr.O3D, radius=0.1, name="sphere")
         self.sphere_voxelization = PointBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
 
-    def test_min_voxel_grid_center(self):
+    def test_min_grid_center(self):
         self.assertEqual((-0.095, -0.095, -0.105), self.sphere_voxelization.min_grid_center)
 
-    def test_max_voxel_grid_center(self):
+    def test_max_grid_center(self):
         self.assertEqual((0.105, 0.095, 0.105), self.sphere_voxelization.max_grid_center)
 
     def test_bounding_box(self):
