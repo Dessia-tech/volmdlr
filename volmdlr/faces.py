@@ -1786,7 +1786,7 @@ class Triangle3D(PlaneFace3D):
     def get_subdescription_points(new_points, resolution, max_length):
         """Gets sub-description points."""
         vector = new_points[0] - new_points[1]
-        vector.normalize()
+        vector = vector.unit_vector()
         points_0_1 = []
 
         for k in range(int(max_length / resolution) + 2):
@@ -1795,7 +1795,7 @@ class Triangle3D(PlaneFace3D):
             points_0_1.append(new_points[1] + vector * min(k * resolution, max_length))
 
         vector, length_2_1 = new_points[2] - new_points[1], new_points[2].point_distance(new_points[1])
-        vector.normalize()
+        vector = vector.unit_vector()
         points_in = []
 
         for p0_1 in points_0_1:
@@ -1808,7 +1808,7 @@ class Triangle3D(PlaneFace3D):
                 points_in.append(point_on_2_1)
             else:
                 vector_2_0 = point_on_2_1 - p0_1
-                vector_2_0.normalize()
+                vector_2_0 = vector_2_0.unit_vector()
                 step_in = length_2_0 / (nb_int - 1)
                 for i in range(nb_int):
                     if min(i * step_in, length_2_0) != 0:
@@ -1878,7 +1878,7 @@ class Triangle3D(PlaneFace3D):
 
         """
         normal = self.surface3d.frame.w
-        normal.normalize()
+        normal = normal.unit_vector()
         return normal
 
     def triangle_minimum_distance(self, triangle_face, return_points=False):

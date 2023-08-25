@@ -1118,7 +1118,7 @@ class Plane3D(Surface3D):
         :rtype: :class:`volmdlr.faces.Plane3D`
         """
         frame = object_dict[arguments[1]]
-        frame.normalize()
+        frame = frame.normalize()
         return cls(frame, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -1145,10 +1145,10 @@ class Plane3D(Surface3D):
         vector1 = vector1.to_vector()
         vector2 = point3 - point1
         vector2 = vector2.to_vector()
-        vector1.normalize()
-        vector2.normalize()
+        vector1 = vector1.unit_vector()
+        vector2 = vector2.unit_vector()
         normal = vector1.cross(vector2)
-        normal.normalize()
+        normal = normal.unit_vector()
         frame = volmdlr.Frame3D(point1, vector1, normal.cross(vector1), normal)
         return cls(frame)
 
@@ -1196,13 +1196,13 @@ class Plane3D(Surface3D):
 
         origin = points[0]
         vector1 = points[1] - origin
-        vector1.normalize()
+        vector1 = vector1.unit_vector()
         vector2_min = points[2] - origin
-        vector2_min.normalize()
+        vector2_min = vector2_min.unit_vector()
         dot_min = abs(vector1.dot(vector2_min))
         for point in points[3:]:
             vector2 = point - origin
-            vector2.normalize()
+            vector2 = vector2.unit_vector()
             dot = abs(vector1.dot(vector2))
             if dot < dot_min:
                 vector2_min = vector2
@@ -1371,7 +1371,7 @@ class Plane3D(Surface3D):
         plane1_plane2_intersection = plane1.plane_intersection(plane2)[0]
         u = plane1_plane2_intersection.unit_direction_vector()
         v = plane1.frame.w + plane2.frame.w
-        v.normalize()
+        v = v.unit_vector()
         w = u.cross(v)
         point = (plane1.frame.origin + plane2.frame.origin) / 2
         return cls(volmdlr.Frame3D(point, u, w, v))
@@ -3160,9 +3160,9 @@ class SphericalSurface3D(PeriodicalSurface):
         if start.is_close(interior) and interior.is_close(end) and end.is_close(start):
             return []
         u_vector = start - self.frame.origin
-        u_vector.normalize()
+        u_vector = u_vector.unit_vector()
         v_vector = interior - self.frame.origin
-        v_vector.normalize()
+        v_vector = v_vector.unit_vector()
         normal = u_vector.cross(v_vector)
         circle = curves.Circle3D(volmdlr.Frame3D(self.frame.origin, u_vector, v_vector, normal),
                                  start.point_distance(self.frame.origin))
@@ -3900,7 +3900,7 @@ class ExtrusionSurface3D(Surface3D):
     def __init__(self, edge: Union[edges.FullArcEllipse3D, edges.BSplineCurve3D],
                  direction: volmdlr.Vector3D, name: str = ''):
         self.edge = edge
-        direction.normalize()
+        direction = direction.unit_vector()
         self.direction = direction
         if hasattr(edge, "center"):
             self.frame = volmdlr.Frame3D.from_point_and_vector(edge.center, direction, volmdlr.Z3D)

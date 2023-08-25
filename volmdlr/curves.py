@@ -422,7 +422,7 @@ class Line2D(Line):
     @staticmethod
     def _change_reference_frame(vector_i, vector_a, vector_b, vector_c, vector_d):
         new_u = volmdlr.Vector2D((vector_b - vector_a))
-        new_u.normalize()
+        new_u = new_u.unit_vector()
         new_v = new_u.unit_normal_vector()
         new_basis = volmdlr.Frame2D(vector_i, new_u, new_v)
 
@@ -1486,7 +1486,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         center = object_dict[arguments[1]].origin
         radius = float(arguments[2]) * length_conversion_factor
         normal = object_dict[arguments[1]].w
-        normal.normalize()
+        normal = normal.unit_vector()
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
     def to_step(self, current_id, *args, **kwargs):
@@ -1568,17 +1568,17 @@ class Circle3D(CircleMixin, ClosedCurve):
         vector_u1 = point2 - point1
         vector_u2 = point2 - point3
         try:
-            vector_u1.normalize()
-            vector_u2.normalize()
+            vector_u1 = vector_u1.unit_vector()
+            vector_u2= vector_u2.unit_vector()
         except ZeroDivisionError as exc:
             raise ZeroDivisionError('the 3 points must be distincts') from exc
 
         normal = vector_u2.cross(vector_u1)
-        normal.normalize()
+        normal = normal.unit_vector()
 
         if vector_u1.is_close(vector_u2):
             vector_u2 = normal.cross(vector_u1)
-            vector_u2.normalize()
+            vector_u2 = vector_u2.unit_vector()
 
         vector_v1 = normal.cross(vector_u1)  # v1 is normal, equal u2
         vector_v2 = normal.cross(vector_u2)  # equal -u1
@@ -1606,7 +1606,7 @@ class Circle3D(CircleMixin, ClosedCurve):
             u = self.normal.deterministic_unit_normal_vector()
             v = self.normal.cross(u)
             w = extrusion_vector.copy()
-            w.normalize()
+            w = w.unit_vector()
             cylinder = volmdlr.surfaces.CylindricalSurface3D(
                 volmdlr.Frame3D(self.center, u, v, w), self.radius)
             return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(cylinder, 0, volmdlr.TWO_PI,
@@ -1623,7 +1623,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         line3d = Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.center)
         u = self.center - tore_center
-        u.normalize()
+        u = u.unit_vector()
         v = axis.cross(u)
         if not math.isclose(self.normal.dot(u), 0., abs_tol=1e-9):
             raise NotImplementedError(
