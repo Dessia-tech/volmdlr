@@ -447,23 +447,15 @@ class Edge(dc.DessiaObject):
         best_distance = math.inf
         distance = best_distance
 
-        # abscissa1_edge1_ = 0
-        # abscissa2_edge1_ = self.abscissa(self.end)
         point1_edge1_ = self.start
         point2_edge1_ = self.end
 
-        # abscissa1_edge2_ = 0
-        # abscissa2_edge2_ = element.abscissa(self.end)
         point1_edge2_ = element.start
         point2_edge2_ = element.end
         min_dist_point1 = None
         min_dist_point2 = None
         linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
         while True:
-            # pt11 = point1_edge1_
-            # pt12 = point2_edge1_
-            # pt21 = point1_edge2_
-            # pt22 = point2_edge2_
             edge1_discretized_points_between_1_2 = self.local_discretization(point1_edge1_, point2_edge1_,
                                                                              number_points=10*n)
             edge2_discretized_points_between_1_2 = element.local_discretization(point1_edge2_, point2_edge2_)
@@ -478,60 +470,17 @@ class Edge(dc.DessiaObject):
                     lineseg2 = linesegment_class_(point1_edge2, point2_edge2)
                     dist, min_dist_point1_, min_dist_point2_ = lineseg1.minimum_distance(lineseg2, True)
                     if dist < distance:
-                        point1_edge1_ = point1_edge1
-                        point2_edge1_ = point2_edge1
-                        point1_edge2_ = point1_edge2
-                        point2_edge2_ = point2_edge2
+                        point1_edge1_, point2_edge1_ = point1_edge1, point2_edge1
+                        point1_edge2_, point2_edge2_ = point1_edge2, point2_edge2
                         distance = dist
-                        min_dist_point1 = min_dist_point1_
-                        min_dist_point2 = min_dist_point2_
-                        # edges_ = (lineseg1, lineseg2)
-                        # print(True)
+                        min_dist_point1, min_dist_point2 = min_dist_point1_, min_dist_point2_
             if math.isclose(distance, best_distance, abs_tol=1e-6):
                 break
             best_distance = distance
             n = 1
-            # if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
-            #     break
         if return_points:
             return distance, min_dist_point1, min_dist_point2
         return distance
-
-    # def _generic_minimum_distance(self, element, return_points=False):
-    #     """
-    #     Gets the minimum distance two methods.
-    #
-    #     This is a generalized method in a case an analytical method has not yet been defined.
-    #
-    #     :param element: another edge.
-    #     :param return_points: weather also to return the corresponding points.
-    #     :return: minimum distance.
-    #     """
-    #     linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
-    #
-    #     def clean_points(list_pts):
-    #         points_ = []
-    #         for point in list_pts:
-    #             if not volmdlr.core.point_in_list(point, points_):
-    #                 points_.append(point)
-    #         return points_
-    #
-    #     points = clean_points(self.discretization_points(number_points=100))
-    #     discretization_primitves1 = [linesegment_class_(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
-    #     discretization_points2 = element.discretization_points(number_points=100)
-    #     points = clean_points(discretization_points2)
-    #     discretization_primitves2 = [linesegment_class_(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:])]
-    #     minimum_distance = math.inf
-    #     points = None
-    #     for prim1 in discretization_primitves1:
-    #         for prim2 in discretization_primitves2:
-    #             distance, point1, point2 = prim1.distance_linesegment(prim2, return_points=True)
-    #             if distance < minimum_distance:
-    #                 minimum_distance = distance
-    #                 points = (point1, point2)
-    #     if return_points:
-    #         return minimum_distance, points[0], points[1]
-    #     return minimum_distance
 
     def minimum_distance(self, element, return_points=False):
         """
@@ -1747,34 +1696,6 @@ class BSplineCurve(Edge):
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
 
-    # def get_intersection_sections(self, edge2):
-    #     """
-    #     Identify the sections where there may exist intersection between a bspline and another edge.
-    #
-    #     :param edge2: other edge.
-    #     :return: list containing the sections pairs to further search for intersections.
-    #     """
-    #     lineseg_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
-    #     bspline_discretized_points1 = []
-    #     for point in self.discretization_points(number_points=30):
-    #         if not volmdlr.core.point_in_list(point, bspline_discretized_points1):
-    #             bspline_discretized_points1.append(point)
-    #     line_segments1 = [lineseg_class_(point1, point2) for point1, point2 in
-    #                       zip(bspline_discretized_points1[:-1], bspline_discretized_points1[1:])]
-    #     edge_discretized_points2 = []
-    #     for point in edge2.discretization_points(number_points=30):
-    #         if not volmdlr.core.point_in_list(point, edge_discretized_points2):
-    #             edge_discretized_points2.append(point)
-    #     line_segments2 = [lineseg_class_(point1, point2) for point1, point2 in
-    #                       zip(edge_discretized_points2[:-1], edge_discretized_points2[1:])]
-    #     intersection_section_pairs = []
-    #     for lineseg1, lineseg2 in product(line_segments1, line_segments2):
-    #         lineseg_inter = lineseg1.linesegment_intersections(lineseg2)
-    #         if lineseg_inter:
-    #             intersection_section_pairs.append((self.split_between_two_points(lineseg1.start, lineseg1.end),
-    #                                                edge2.split_between_two_points(lineseg2.start, lineseg2.end)))
-    #     return intersection_section_pairs
-
     def point_projection(self, point):
         """
         Calculates the projection of a point on the B-Spline.
@@ -1844,22 +1765,6 @@ class BSplineCurve(Edge):
         new_control_points = [control_point.frame_mapping(frame, side) for control_point in self.control_points]
         return self.__class__(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights,
                               self.name)
-
-    # def edge_intersections(self, edge, abs_tol=1e-6):
-    #     """
-    #     General method to calculate the intersection of a bspline curve and another edge.
-    #
-    #     :param edge: other edge
-    #     :param abs_tol: tolerance.
-    #     :return: intersections between the two edges.
-    #     """
-    #     intersection_section_pairs = self.get_intersection_sections(edge)
-    #     intersections = []
-    #     for bspline, edge2 in intersection_section_pairs:
-    #         intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(
-    #             edge2, bspline, abs_tol=abs_tol)
-    #         intersections.extend(intersections_points)
-    #     return intersections
 
 
 class BSplineCurve2D(BSplineCurve):
@@ -4447,7 +4352,6 @@ class LineSegment3D(LineSegment):
         :param return_points: boolean weather to return the minimum distance corresponding points or not.
         :return: minimum distance / minimal distance with corresponding points.
         """
-        # p1, p2 = self.matrix_distance(linesegment)
         p1, p2 = self.minimum_distance_points(linesegment)
         if not self.point_belongs(p1):
             p1 = self.start if self.start.point_distance(p1) < self.end.point_distance(p1) else self.end
@@ -5106,15 +5010,10 @@ class BSplineCurve3D(BSplineCurve):
         """
         if not self.bounding_box.bbox_intersection(linesegment3d.bounding_box):
             return []
-        # intersections_points = self.get_linesegment_intersections(linesegment3d)
-        # return intersections_points
         intersection_section_pairs = self._get_intersection_sections(linesegment3d)
         intersections = []
         for bspline, edge2_ in intersection_section_pairs:
             intersections_points = bspline.get_linesegment_intersections(edge2_)
-            # min_dist, point_min_dist_1, point_min_dist_2 = bspline.minimum_distance(edge2_, True)
-            # if not math.isclose(min_dist, 0.0, abs_tol=1e-6):
-            #     continue
             for inter in intersections_points:
                 if not volmdlr.core.point_in_list(inter, intersections):
                     intersections.append(inter)

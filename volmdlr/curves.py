@@ -1412,44 +1412,6 @@ class Circle3D(CircleMixin, ClosedCurve):
                 intersections.append(intersection)
         return intersections
 
-    def circle_intersections(self, other_circle):
-        plane1 = volmdlr.surfaces.Plane3D(self.frame)
-        plane2 = volmdlr.surfaces.Plane3D(other_circle.frame)
-        plane_intersections = plane1.plane_intersection(plane2)
-        circle3d_line_intersections1 = volmdlr_intersections.circle_3d_line_intersections(self, plane_intersections[0])
-        circle3d_line_intersections2 = volmdlr_intersections.circle_3d_line_intersections(other_circle, plane_intersections[0])
-        intersections = []
-        for intersection in circle3d_line_intersections1 + circle3d_line_intersections2:
-            if volmdlr.core.point_in_list(intersection, intersections):
-                continue
-            if self.point_belongs(intersection) and other_circle.point_belongs(intersection):
-                intersections.append(intersection)
-        return intersections
-
-    def ellipse_intersections(self, ellipse, abs_tol: float = 1e-6):
-        intersections = []
-        from volmdlr import surfaces
-        plane1 = surfaces.Plane3D(self.frame)
-        plane2 = surfaces.Plane3D(ellipse.frame)
-        if plane1.is_coincident(plane2) and self.frame.w.is_colinear_to(ellipse.frame.w):
-            ellipse2d = ellipse.to_2d(self.frame.origin, self.frame.u, self.frame.v)
-            circle2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
-            intersections_2d = circle2d.ellipse_intersections(ellipse2d)
-            for intersection in intersections_2d:
-                intersections.append(intersection.to_3d(self.frame.origin, self.frame.u, self.frame.v))
-            return intersections
-
-        plane_intersections = plane1.plane_intersection(plane2)
-        circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, plane_intersections[0])
-        ellipse3d_line_intersections = volmdlr_intersections.ellipse3d_line_intersections(
-            ellipse, plane_intersections[0])
-        for intersection in circle3d_line_intersections + ellipse3d_line_intersections:
-            if volmdlr.core.point_in_list(intersection, intersections):
-                continue
-            if self.point_belongs(intersection, abs_tol) and ellipse.point_belongs(intersection, abs_tol):
-                intersections.append(intersection)
-        return intersections
-
     def circle_intersections(self, other_circle, abs_tol: float = 1e-6):
         """
         Calculates the intersections between two Circle3D.
