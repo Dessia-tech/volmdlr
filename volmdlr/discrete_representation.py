@@ -5,11 +5,12 @@ Class for discrete representations of volmdlr models (voxelization for 3D geomet
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import List, Set, Tuple, TypeVar
+from typing import List, Set, Tuple, TypeVar, Dict, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 from dessia_common.core import DessiaObject, PhysicalObject
+from dessia_common.serialization import JsonSerializable
 from matplotlib import patches
 from numpy.typing import NDArray
 
@@ -927,6 +928,36 @@ class PointBasedVoxelization(Voxelization):
         intersecting_voxels = self._voxels_intersecting_voxels(translated_voxels, self.voxel_size)
 
         return self.__class__(intersecting_voxels, self.voxel_size)
+
+    # SERIALIZATION
+    def to_dict(
+        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+    ) -> JsonSerializable:
+        """Specific 'to_dict' method to allow serialization of set."""
+        dict_ = self.base_dict()
+
+        dict_["voxel_centers"] = list(self.voxel_centers)
+        dict_["voxel_size"] = self.voxel_size
+        dict_["name"] = self.name
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(
+        cls,
+        dict_: JsonSerializable,
+        force_generic: bool = False,
+        global_dict=None,
+        pointers_memo: Dict[str, Any] = None,
+        path: str = "#",
+    ) -> "PointBasedVoxelization":
+        """Specific 'dict_to_object' method to allow serialization of set."""
+
+        voxel_centers = dict_["voxel_centers"]
+        voxel_size = dict_["voxel_size"]
+        name = dict_["name"]
+
+        return cls(voxel_centers, voxel_size, name)
 
     # HELPER METHODS
     def to_matrix_based_voxelization(self) -> "MatrixBasedVoxelization":
