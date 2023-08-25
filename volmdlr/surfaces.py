@@ -4658,11 +4658,11 @@ class BSplineSurface3D(Surface3D):
                 return False
         return True
 
-    def _data_eq(self, other):
+    def _data_eq(self, other_object):
         """
         Defines dessia common object equality.
         """
-        return self == other
+        return self == other_object
 
     @property
     def data(self):

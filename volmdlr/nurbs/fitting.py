@@ -20,7 +20,6 @@ import cython
 import numpy as np
 from scipy.linalg import lu_factor, lu_solve
 
-from geomdl import BSpline
 from cython.cimports.libcpp.vector import vector
 
 from volmdlr.nurbs import core, helpers
