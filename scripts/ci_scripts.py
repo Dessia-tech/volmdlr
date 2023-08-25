@@ -81,16 +81,16 @@ scripts = [
             # 'mesh/geo_file_3.py',
             # cad_simplification
             'cad_simplifier/test_cad_simplifier.py',
-            # Voxelization
-            'voxelization/compare_display_methods.py',
-            'voxelization/compare_voxelization_methods.py',
-            'voxelization/step_file_voxelization.py',
-            'voxelization/stl_file_voxelization.py',
-            'voxelization/voxelization_interference.py',
-            'voxelization/voxelization_inverse.py',
-            'voxelization/voxelization_moving.py',
-            'voxelization/volume_model_voxelization_iterative.py',
-            'voxelization/volume_model_voxelization_octree.py',
+            # Discrete representation
+            'discrete_representation/compare_display_methods.py',
+            'discrete_representation/compare_voxelization_methods.py',
+            'discrete_representation/step_file_voxelization.py',
+            'discrete_representation/stl_file_voxelization.py',
+            'discrete_representation/voxelization_interference.py',
+            'discrete_representation/voxelization_inverse.py',
+            'discrete_representation/voxelization_moving.py',
+            'discrete_representation/volume_model_voxelization_iterative.py',
+            'discrete_representation/volume_model_voxelization_octree.py',
             # Others
             'grid.py'
             ]
