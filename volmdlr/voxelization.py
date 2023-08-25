@@ -893,7 +893,7 @@ class PointBasedVoxelization(Voxelization):
         :type point: tuple[float, float, float]
 
         :return: The local grid index of the point.
-        :rtype: Tuple[int, ...]
+        :rtype: Tuple[int, int, int]
 
         :raises ValueError: If the point is not within the voxelization's bounding box.
         """
@@ -1175,7 +1175,7 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: MatrixBasedVoxelization
         """
         inverted_matrix = np.logical_not(self.matrix)
-        return MatrixBasedVoxelization(inverted_matrix, self._min_voxel_grid_center, self.voxel_size)
+        return self.__class__(inverted_matrix, self._min_voxel_grid_center, self.voxel_size)
 
     def flood_fill(self, start_indexes: Tuple[int, int, int], fill_with: bool) -> "MatrixBasedVoxelization":
         """
@@ -1189,7 +1189,7 @@ class MatrixBasedVoxelization(Voxelization):
         :return: A new voxelization resulting from the flood fill operation.
         :rtype: MatrixBasedVoxelization
         """
-        return MatrixBasedVoxelization(
+        return self.__class__(
             flood_fill_matrix_3d(self.matrix, start_indexes, fill_with), self._min_voxel_grid_center, self.voxel_size
         )
 
@@ -1229,7 +1229,7 @@ class MatrixBasedVoxelization(Voxelization):
         slices = tuple(slice(1, -1) for _ in current_shape)
         expanded_matrix[slices] = self.matrix.copy()
 
-        return MatrixBasedVoxelization(
+        return self.__class__(
             expanded_matrix,
             tuple(np.round(np.array(self.min_voxel_grid_center) - self.voxel_size, DECIMALS)),
             self.voxel_size,
@@ -1240,7 +1240,7 @@ class MatrixBasedVoxelization(Voxelization):
         slices = tuple(slice(1, -1) for _ in current_shape)
         reduced_matrix = self.matrix.copy()[slices]
 
-        return MatrixBasedVoxelization(
+        return self.__class__(
             reduced_matrix,
             tuple(np.round(np.array(self.min_voxel_grid_center) + self.voxel_size, DECIMALS)),
             self.voxel_size,
@@ -1285,7 +1285,7 @@ class MatrixBasedVoxelization(Voxelization):
 
         result_matrix = logical_operation(new_self, new_other)
 
-        return MatrixBasedVoxelization(result_matrix, tuple(global_min), self.voxel_size)._crop_matrix()
+        return self.__class__(result_matrix, tuple(global_min), self.voxel_size)._crop_matrix()
 
     def _crop_matrix(self) -> "MatrixBasedVoxelization":
         """
