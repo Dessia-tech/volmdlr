@@ -64,6 +64,15 @@ class DiscreteRepresentation(ABC):
         """
         self.element_size = element_size
 
+    def __str__(self):
+        """
+        Return a custom string representation of the discrete representation.
+
+        :return: A string representation of the discrete representation.
+        :rtype: str
+        """
+        return f"{self.__class__}: element size={self.element_size}, number of elements={len(self)}"
+
     @abstractmethod
     def __eq__(self, other: DiscreteRepresentationType) -> bool:
         """
@@ -83,6 +92,40 @@ class DiscreteRepresentation(ABC):
 
         :return: The number of elements in the discrete representation.
         :rtype: int
+        """
+
+    @property
+    @abstractmethod
+    def _element_centers(self) -> Set[Tuple]:
+        """
+        Get the center point of each element.
+
+        :return: The center point of each element.
+        :rtype: set[tuple[float, ...]]
+        """
+
+    @property
+    @abstractmethod
+    def min_grid_center(self) -> Tuple:
+        """
+        Get the minimum center point from the set of voxel centers, in the voxel 3D grid.
+
+        This point may not be a voxel of the voxelization, because it is the minimum center in each direction (X, Y, Z).
+
+        :return: The minimum center point.
+        :rtype: tuple[float, ...]
+        """
+
+    @property
+    @abstractmethod
+    def max_grid_center(self) -> Tuple:
+        """
+        Get the maximum center point from the set of voxel centers, in the voxel 3D grid.
+
+        This point may not be a voxel of the voxelization, because it is the maximum center in each direction (X, Y, Z).
+
+        :return: The maximum center point.
+        :rtype: tuple[float, ...]
         """
 
     # BOOLEAN OPERATIONS
@@ -384,7 +427,6 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         return self.element_size
 
     @property
-    @abstractmethod
     def voxel_centers(self) -> Set[Point]:
         """
         Get the center point of each voxel.
@@ -392,15 +434,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :return: The center point of each voxel.
         :rtype: set[tuple[float, float, float]]
         """
-
-    def __str__(self):
-        """
-        Return a custom string representation of the voxelization.
-
-        :return: A string representation of the voxelization.
-        :rtype: str
-        """
-        return f"{self.__class__}: voxel size={self.voxel_size}, number of voxels={len(self)}, name={self.name}"
+        return self._element_centers
 
     @property
     def volume(self) -> float:
@@ -413,39 +447,15 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         return len(self) * self.voxel_size**3
 
     @property
-    @abstractmethod
-    def min_voxel_grid_center(self) -> Point:
-        """
-        Get the minimum center point from the set of voxel centers, in the voxel 3D grid.
-
-        This point may not be a voxel of the voxelization, because it is the minimum center in each direction (X, Y, Z).
-
-        :return: The minimum center point.
-        :rtype: tuple[float, float, float]
-        """
-
-    @property
-    @abstractmethod
-    def max_voxel_grid_center(self) -> Point:
-        """
-        Get the maximum center point from the set of voxel centers, in the voxel 3D grid.
-
-        This point may not be a voxel of the voxelization, because it is the maximum center in each direction (X, Y, Z).
-
-        :return: The maximum center point.
-        :rtype: tuple[float, float, float]
-        """
-
-    @property
-    def bounding_box(self):
+    def bounding_box(self) -> BoundingBox:
         """
         Get the bounding box of the voxelization.
 
         :return: The bounding box of the voxelization.
         :rtype: BoundingBox
         """
-        min_point = np.round((np.array([self.min_voxel_grid_center]) - self.voxel_size)[0], DECIMALS)
-        max_point = np.round((np.array([self.max_voxel_grid_center]) + self.voxel_size)[0], DECIMALS)
+        min_point = np.round((np.array([self.min_grid_center]) - self.voxel_size)[0], DECIMALS)
+        max_point = np.round((np.array([self.max_grid_center]) + self.voxel_size)[0], DECIMALS)
 
         return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
 
@@ -629,7 +639,7 @@ class PointBasedVoxelization(Voxelization):
         Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
     @property
-    def voxel_centers(self) -> Set[Point]:
+    def _element_centers(self) -> Set[Point]:
         """
         Get the center point of each voxel.
 
@@ -664,7 +674,7 @@ class PointBasedVoxelization(Voxelization):
         return len(self.voxel_centers)
 
     @property
-    def min_voxel_grid_center(self) -> Point:
+    def min_grid_center(self) -> Point:
         """
         Get the minimum center point from the set of voxel centers, in the voxel 3D grid.
 
@@ -683,7 +693,7 @@ class PointBasedVoxelization(Voxelization):
         return min_x, min_y, min_z
 
     @property
-    def max_voxel_grid_center(self) -> Point:
+    def max_grid_center(self) -> Point:
         """
         Get the maximum center point from the set of voxel centers, in the voxel 3D grid.
 
@@ -756,7 +766,7 @@ class PointBasedVoxelization(Voxelization):
         :rtype: PointBasedVoxelization
         """
         if not cls.check_center_is_in_implicit_grid(
-            matrix_based_voxelization.min_voxel_grid_center, matrix_based_voxelization.voxel_size
+            matrix_based_voxelization.min_grid_center, matrix_based_voxelization.voxel_size
         ):
             warnings.warn(
                 """This matrix based voxelization is not defined in the implicit grid defined by the voxel_size. 
@@ -926,8 +936,8 @@ class PointBasedVoxelization(Voxelization):
         :return: The matrix based voxelization.
         :rtype: MatrixBasedVoxelization
         """
-        min_center = self.min_voxel_grid_center
-        max_center = self.max_voxel_grid_center
+        min_center = self.min_grid_center
+        max_center = self.max_grid_center
 
         dim_x = round((max_center[0] - min_center[0]) / self.voxel_size + 1)
         dim_y = round((max_center[1] - min_center[1]) / self.voxel_size + 1)
@@ -1049,7 +1059,7 @@ class MatrixBasedVoxelization(Voxelization):
         Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
     @property
-    def voxel_centers(self) -> Set[Point]:
+    def _element_centers(self) -> Set[Point]:
         """
         Get the center point of each voxel.
 
@@ -1057,7 +1067,7 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: set[tuple[float, float, float]]
         """
         indices = np.argwhere(self.matrix)
-        voxel_centers = self.min_voxel_grid_center + indices * self.voxel_size
+        voxel_centers = self.min_grid_center + indices * self.voxel_size
 
         return set(map(tuple, np.round(voxel_centers, DECIMALS)))
 
@@ -1072,9 +1082,9 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: bool
         """
         return (
-            self.voxel_size == other.voxel_size
-            and self.min_voxel_grid_center == other.min_voxel_grid_center
-            and np.array_equal(self.matrix, other.matrix)
+                self.voxel_size == other.voxel_size
+                and self.min_grid_center == other.min_grid_center
+                and np.array_equal(self.matrix, other.matrix)
         )
 
     def __len__(self) -> int:
@@ -1087,7 +1097,7 @@ class MatrixBasedVoxelization(Voxelization):
         return len(np.argwhere(self.matrix))
 
     @property
-    def min_voxel_grid_center(self) -> Point:
+    def min_grid_center(self) -> Point:
         """
         Get the minimum center point from the set of voxel centers, in the voxel 3D grid.
 
@@ -1099,7 +1109,7 @@ class MatrixBasedVoxelization(Voxelization):
         return self._min_voxel_grid_center
 
     @property
-    def max_voxel_grid_center(self) -> Point:
+    def max_grid_center(self) -> Point:
         """
         Get the maximum center point from the set of voxel centers, in the voxel 3D grid.
 
@@ -1110,7 +1120,7 @@ class MatrixBasedVoxelization(Voxelization):
         """
         return tuple(
             np.round(
-                np.array(self.min_voxel_grid_center) + (np.array(self.matrix.shape) - 1) * self.voxel_size,
+                np.array(self.min_grid_center) + (np.array(self.matrix.shape) - 1) * self.voxel_size,
                 6,
             )
         )
@@ -1219,7 +1229,7 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: MatrixBasedVoxelization
         """
         inverted_matrix = np.logical_not(self.matrix)
-        return self.__class__(inverted_matrix, self.min_voxel_grid_center, self.voxel_size)
+        return self.__class__(inverted_matrix, self.min_grid_center, self.voxel_size)
 
     def flood_fill(self, start: Tuple[int, int, int], fill_with: bool) -> "MatrixBasedVoxelization":
         """
@@ -1234,7 +1244,7 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: MatrixBasedVoxelization
         """
         return self.__class__(
-            flood_fill_matrix_3d(self.matrix, start, fill_with), self.min_voxel_grid_center, self.voxel_size
+            flood_fill_matrix_3d(self.matrix, start, fill_with), self.min_grid_center, self.voxel_size
         )
 
     def _fill_outer_elements(self) -> "MatrixBasedVoxelization":
@@ -1289,7 +1299,7 @@ class MatrixBasedVoxelization(Voxelization):
 
         return self.__class__(
             expanded_matrix,
-            tuple(np.round(np.array(self.min_voxel_grid_center) - self.voxel_size, DECIMALS)),
+            tuple(np.round(np.array(self.min_grid_center) - self.voxel_size, DECIMALS)),
             self.voxel_size,
         )
 
@@ -1306,7 +1316,7 @@ class MatrixBasedVoxelization(Voxelization):
 
         return self.__class__(
             reduced_matrix,
-            tuple(np.round(np.array(self.min_voxel_grid_center) + self.voxel_size, DECIMALS)),
+            tuple(np.round(np.array(self.min_grid_center) + self.voxel_size, DECIMALS)),
             self.voxel_size,
         )
 
@@ -1324,10 +1334,10 @@ class MatrixBasedVoxelization(Voxelization):
         if self.voxel_size != other.voxel_size:
             raise ValueError("Voxel sizes must be the same to perform boolean operations.")
 
-        self_min, self_max = np.array(self.min_voxel_grid_center), np.array(self.min_voxel_grid_center) + 1
+        self_min, self_max = np.array(self.min_grid_center), np.array(self.min_grid_center) + 1
         other_min, other_max = (
-            np.array(other.min_voxel_grid_center),
-            np.array(other.min_voxel_grid_center) + 1,
+            np.array(other.min_grid_center),
+            np.array(other.min_grid_center) + 1,
         )
 
         global_min = np.min([self_min, other_min], axis=0)
@@ -1384,12 +1394,12 @@ class MatrixBasedVoxelization(Voxelization):
         ]
 
         # Calculate new matrix_origin_center
-        new_origin_center = np.round(self.min_voxel_grid_center + min_voxel_coords * self.voxel_size, DECIMALS)
+        new_origin_center = np.round(self.min_grid_center + min_voxel_coords * self.voxel_size, DECIMALS)
 
         return self.__class__(cropped_matrix, tuple(new_origin_center), self.voxel_size)
 
 
-class Pixelization(ABC, DessiaObject):
+class Pixelization(DiscreteRepresentation, DessiaObject):
     """
     Abstract base class for creating and manipulating pixelizations of volmdlr geometries.
 
@@ -1408,18 +1418,183 @@ class Pixelization(ABC, DessiaObject):
 
     PixelizationType = TypeVar("PixelizationType", bound="Pixelization")
 
-    def __init__(self, voxel_size: float, name: str):
+    def __init__(self, pixel_size: float, name: str):
         """
-        Initialize the voxelization.
+        Initialize the pixelization.
 
-        :param voxel_size: The voxel edges size.
-        :type voxel_size: float
-        :param name: The name of the voxelization.
+        :param pixel_size: The pixel edges size.
+        :type pixel_size: float
+        :param name: The name of the pixelization.
         :type name: str, optional
         """
-        self.voxel_size = voxel_size
-
+        DiscreteRepresentation.__init__(self, element_size=pixel_size)
         DessiaObject.__init__(self, name=name)
+
+    @property
+    def pixel_size(self) -> float:
+        """
+        Get the pixel size.
+
+        :return: The pixel size.
+        :rtype: float
+        """
+        return self.element_size
+
+    @property
+    def pixel_centers(self) -> Set[Point]:
+        """
+        Get the center point of each pixel.
+
+        :return: The center point of each pixel.
+        :rtype: set[tuple[float, float]]
+        """
+        return self._element_centers
+
+    @property
+    def volume(self) -> float:
+        """
+        Calculate the volume of the pixelization.
+
+        :return: The volume of the pixelization.
+        :rtype: float
+        """
+        return len(self) * self.pixel_size**3
+
+    @property
+    def bounding_rectangle(self):
+        """
+        Get the bounding box of the pixelization.
+
+        :return: The bounding rectangle of the pixelization.
+        :rtype: BoundingBox
+        """
+        min_point = np.round((np.array([self.min_grid_center]) - self.pixel_size)[0], DECIMALS)
+        max_point = np.round((np.array([self.max_grid_center]) + self.pixel_size)[0], DECIMALS)
+
+        return BoundingRectangle(min_point[0], max_point[0], min_point[1], max_point[1])
+
+    # CLASS METHODS
+    @classmethod
+    @abstractmethod
+    def from_shell(cls, shell: Shell3D, pixel_size: float, name: str = "") -> PixelizationType:
+        """
+        Create a pixelization from a Shell3D.
+
+        :param shell: The Shell3D to create the pixelization from.
+        :type shell: Shell3D
+        :param pixel_size: The size of each pixel.
+        :type pixel_size: float
+        :param name: Optional name for the pixelization.
+        :type name: str
+
+        :return: A pixelization created from the Shell3D.
+        :rtype: PixelizationType
+        """
+
+    @classmethod
+    @abstractmethod
+    def from_volume_model(cls, volume_model: VolumeModel, pixel_size: float, name: str = "") -> PixelizationType:
+        """
+        Create a pixelization from a VolumeModel.
+
+        :param volume_model: The VolumeModel to create the pixelization from.
+        :type volume_model: VolumeModel
+        :param pixel_size: The size of each pixel.
+        :type pixel_size: float
+        :param name: Optional name for the pixelization.
+        :type name: str
+
+        :return: A pixelization created from the VolumeModel.
+        :rtype: PixelizationType
+        """
+
+    # FILLING METHODS
+    def fill_outer_pixels(self) -> PixelizationType:
+        """
+        Fill the outer pixels of the pixelization.
+
+        :return: A new pixelization with outer pixels filled.
+        :rtype: PixelizationType
+        """
+        return self._fill_outer_elements()
+
+    def fill_enclosed_pixels(self) -> PixelizationType:
+        """
+        Fill the enclosed pixels of the pixelization.
+
+        :return: A new pixelization with enclosed pixels filled.
+        :rtype: PixelizationType
+        """
+        return self._fill_enclosed_elements()
+
+    # DISPLAY METHODS
+
+    @abstractmethod
+    def plot(self, **kwargs):
+        """
+        Generate volmdlr primitives.
+
+        :param kwargs: Additional keyword arguments.
+
+        :return: A list of volmdlr primitives.
+        :rtype: List[ClosedTriangleShell3D]
+        """
+
+    # HELPER METHODS
+
+    @staticmethod
+    def _shell_to_triangles(shell: Shell3D) -> List[Triangle]:
+        """
+        Helper method to convert a Shell3D to a list of triangles.
+
+        It uses the "triangulation" method to triangulate the Shell3D.
+
+        :param shell: The Shell3D to convert to triangles.
+        :type shell: Shell3D
+
+        :return: The list of triangles extracted from the triangulated Shell3D.
+        :rtype: List[Triangle]
+        """
+        triangulation = shell.triangulation()
+        return [
+            (
+                (
+                    float(triangulation.points[triangle[0]].x),
+                    float(triangulation.points[triangle[0]].y),
+                    float(triangulation.points[triangle[0]].z),
+                ),
+                (
+                    float(triangulation.points[triangle[1]].x),
+                    float(triangulation.points[triangle[1]].y),
+                    float(triangulation.points[triangle[1]].z),
+                ),
+                (
+                    float(triangulation.points[triangle[2]].x),
+                    float(triangulation.points[triangle[2]].y),
+                    float(triangulation.points[triangle[2]].z),
+                ),
+            )
+            for triangle in triangulation.triangles
+        ]
+
+    @staticmethod
+    def _volume_model_to_triangles(volume_model: VolumeModel) -> List[Triangle]:
+        """
+        Helper method to convert a VolumeModel to a list of triangles.
+
+        It uses the "triangulation" method to triangulate the shells of the VolumeModel.
+
+        :param volume_model: The VolumeModel to convert to triangles.
+        :type volume_model: VolumeModel
+
+        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
+        :rtype: List[Triangle]
+        """
+        triangles = []
+        for shell in volume_model.get_shells():
+            triangles.extend(Pixelization._shell_to_triangles(shell))
+
+        return triangles
 
 
 class PointBasedPixelization:

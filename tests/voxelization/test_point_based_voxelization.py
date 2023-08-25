@@ -215,10 +215,10 @@ class TestPointBasedVoxelizationExport(unittest.TestCase):
         self.sphere_voxelization = PointBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
 
     def test_min_voxel_grid_center(self):
-        self.assertEqual((-0.095, -0.095, -0.105), self.sphere_voxelization.min_voxel_grid_center)
+        self.assertEqual((-0.095, -0.095, -0.105), self.sphere_voxelization.min_grid_center)
 
     def test_max_voxel_grid_center(self):
-        self.assertEqual((0.105, 0.095, 0.105), self.sphere_voxelization.max_voxel_grid_center)
+        self.assertEqual((0.105, 0.095, 0.105), self.sphere_voxelization.max_grid_center)
 
     def test_bounding_box(self):
         self.assertEqual(BoundingBox(-0.105, 0.115, -0.105, 0.105, -0.115, 0.115), self.sphere_voxelization.bounding_box)
@@ -233,7 +233,7 @@ class TestPointBasedVoxelizationExport(unittest.TestCase):
         voxel_matrix = self.sphere_voxelization.to_matrix_based_voxelization()
 
         self.assertEqual(len(self.sphere_voxelization), len(voxel_matrix))
-        self.assertEqual(self.sphere_voxelization.min_voxel_grid_center, voxel_matrix.min_voxel_grid_center)
+        self.assertEqual(self.sphere_voxelization.min_grid_center, voxel_matrix.min_grid_center)
 
 
 if __name__ == "__main__":
