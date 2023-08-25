@@ -1034,7 +1034,7 @@ class MatrixBasedVoxelization(Voxelization):
     def __init__(
         self,
         voxel_matrix: NDArray[np.bool_],
-        min_voxel_grid_center: Point,
+        min_grid_center: Point,
         voxel_size: float,
         name: str = "",
     ):
@@ -1043,14 +1043,14 @@ class MatrixBasedVoxelization(Voxelization):
         :type voxel_matrix: np.ndarray[np.bool_, np.ndim == 3]
         :param voxel_size: The size of the voxel edges.
         :type voxel_size: float
-        :param min_voxel_grid_center: Minimum voxel center point of the voxel grid matrix, i.e 'matrix[0][0][0]'.
+        :param min_grid_center: Minimum voxel center point of the voxel grid matrix, i.e 'matrix[0][0][0]'.
         This point may not be a voxel of the voxelization, because it's the minimum center in each direction (X, Y, Z).
-        :type min_voxel_grid_center: tuple[float, float, float]
+        :type min_grid_center: tuple[float, float, float]
         """
         self._check_element_size_number_of_decimals(voxel_size)
 
         self.matrix = voxel_matrix
-        self._min_voxel_grid_center = min_voxel_grid_center
+        self._min_grid_center = min_grid_center
 
         Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
@@ -1102,7 +1102,7 @@ class MatrixBasedVoxelization(Voxelization):
         :return: The minimum center point.
         :rtype: tuple[float, float, float]
         """
-        return self._min_voxel_grid_center
+        return self._min_grid_center
 
     @property
     def max_grid_center(self) -> Point:
@@ -1165,8 +1165,19 @@ class MatrixBasedVoxelization(Voxelization):
         return cls(matrix, matrix_origin_center, voxel_size, name).crop_matrix()
 
     @classmethod
-    def from_point_voxelization(cls, voxelization: "PointBasedVoxelization") -> "MatrixBasedVoxelization":
-        return voxelization.to_matrix_based_voxelization()
+    def from_point_based_voxelization(
+        cls, point_based_voxelization: "PointBasedVoxelization"
+    ) -> "MatrixBasedVoxelization":
+        """
+        Create a MatrixBasedVoxelization from a PointBasedVoxelization.
+
+        :param point_based_voxelization: The PointBasedVoxelization to create the MatrixBasedVoxelization from.
+        :type point_based_voxelization: PointBasedVoxelization
+
+        :return: A MatrixBasedVoxelization created from the PointBasedVoxelization.
+        :rtype: MatrixBasedVoxelization
+        """
+        return point_based_voxelization.to_matrix_based_voxelization()
 
     # BOOLEAN OPERATIONS
     def union(self, other: "MatrixBasedVoxelization") -> "MatrixBasedVoxelization":
@@ -1820,7 +1831,7 @@ class PointBasedPixelization(Pixelization):
         Perform a flood fill operation on the pixelization.
 
         :param start: The coordinates of the starting point for the flood fill.
-        :type start: tuple[float, float, float]
+        :type start: tuple[float, float]
         :param fill_with: The value to fill the pixels with during the operation.
         :type fill_with: bool
 
@@ -1870,7 +1881,7 @@ class PointBasedPixelization(Pixelization):
         matrix = np.zeros((dim_x, dim_y), dtype=np.bool_)
         matrix[indices[:, 0], indices[:, 1]] = True
 
-        return MatrixBasedPixelization(matrix, min_center, self.pixel_size)
+        return MatrixBasedPixelization(matrix, min_center, self.pixel_size, self.name)
 
     def _point_to_local_grid_index(self, point: Tuple[float, float]) -> Tuple[int, int]:
         """
@@ -1893,42 +1904,239 @@ class PointBasedPixelization(Pixelization):
         return x_index, y_index
 
 
-class MatrixBasedPixelization:
-    """Class to manipulate pixel matrix."""
+class MatrixBasedPixelization(Pixelization):
+    """Pixelization implemented as a 2D matrix."""
 
-    def __init__(self, numpy_pixel_matrix: NDArray[np.bool_]):
-        self.matrix = numpy_pixel_matrix
+    def __init__(
+        self,
+        pixel_matrix: NDArray[np.bool_],
+        min_grid_center: Tuple[float, float],
+        pixel_size: float,
+        name: str = "",
+    ):
+        """
+        :param pixel_matrix: The pixel numpy matrix object representing the pixelization.
+        :type pixel_matrix: np.ndarray[np.bool_, np.ndim == 3]
+        :param pixel_size: The size of the pixel edges.
+        :type pixel_size: float
+        :param min_grid_center: Minimum pixel center point of the pixel grid matrix, i.e 'matrix[0][0]'.
+        This point may not be a pixel of the pixelization, because it's the minimum center in each direction (X, Y).
+        :type min_grid_center: tuple[float, float]
+        """
+        self._check_element_size_number_of_decimals(pixel_size)
 
-    def __eq__(self, other_pixel_matrix: "MatrixBasedPixelization") -> bool:
-        return np.array_equal(self.matrix, other_pixel_matrix.matrix)
+        self.matrix = pixel_matrix
+        self._min_grid_center = min_grid_center
 
-    def __add__(self, other_pixel_matrix: "MatrixBasedPixelization") -> "MatrixBasedPixelization":
-        return MatrixBasedPixelization(self.matrix + other_pixel_matrix.matrix)
+        Pixelization.__init__(self, pixel_size=pixel_size, name=name)
+
+    @property
+    def _element_centers(self) -> Set[Tuple[float, float]]:
+        """
+        Get the center point of each pixel.
+
+        :return: The center point of each pixel.
+        :rtype: set[tuple[float, float]]
+        """
+        indices = np.argwhere(self.matrix)
+        pixel_centers = self.min_grid_center + indices * self.pixel_size
+
+        return set(map(tuple, np.round(pixel_centers, DECIMALS)))
+
+    def __eq__(self, other: "MatrixBasedPixelization") -> bool:
+        """
+        Check if two MatrixBasedPixelization are equal.
+
+        :param other: Another MatrixBasedPixelization to compare with.
+        :type other: MatrixBasedPixelization
+
+        :return: True if the MatrixBasedPixelization are equal, False otherwise.
+        :rtype: bool
+        """
+        return (
+            self.pixel_size == other.pixel_size
+            and self.min_grid_center == other.min_grid_center
+            and np.array_equal(self.matrix, other.matrix)
+        )
+
+    def __len__(self) -> int:
+        """
+        Get the number of pixels in the pixelization (i.e. the number of True value in the 2D pixel matrix).
+
+        :return: The number of pixels in the pixelization.
+        :rtype: int
+        """
+        return len(np.argwhere(self.matrix))
+
+    @property
+    def min_grid_center(self) -> Tuple[float, float]:
+        """
+        Get the minimum center point from the set of pixel centers, in the pixel 3D grid.
+
+        This point may not be a pixel of the pixelization, because it is the minimum center in each direction (X, Y, Z).
+
+        :return: The minimum center point.
+        :rtype: tuple[float, float]
+        """
+        return self._min_grid_center
+
+    @property
+    def max_grid_center(self) -> Tuple[float, float]:
+        """
+        Get the maximum center point from the set of pixel centers, in the pixel 3D grid.
+
+        This point may not be a pixel of the pixelization, because it is the maximum center in each direction (X, Y, Z).
+
+        :return: The maximum center point.
+        :rtype: tuple[float, float]
+        """
+        return tuple(
+            np.round(
+                np.array(self.min_grid_center) + (np.array(self.matrix.shape) - 1) * self.pixel_size,
+                6,
+            )
+        )
+
+    # CLASS METHODS
+    @classmethod
+    def from_line_segment(
+        cls, line_segment: LineSegment2D, pixel_size: float, name: str = ""
+    ) -> "MatrixBasedPixelization":
+        """
+        Create a pixelization from a LineSegment2D.
+
+        :param line_segment: The LineSegment2D to create the pixelization from.
+        :type line_segment: LineSegment2D
+        :param pixel_size: The size of each pixel.
+        :type pixel_size: float
+        :param name: Optional name for the pixelization.
+        :type name: str
+
+        :return: A pixelization created from the LineSegment2D.
+        :rtype: MatrixBasedPixelization
+        """
+
+        return PointBasedPixelization.from_line_segment(line_segment, pixel_size, name).to_matrix_based_pixelization()
+
+    @classmethod
+    def from_closed_polygon(
+        cls, closed_polygon: ClosedPolygon2D, pixel_size: float, name: str = ""
+    ) -> "MatrixBasedPixelization":
+        """
+        Create a pixelization from a ClosedPolygon2D.
+
+        :param closed_polygon: The ClosedPolygon2D to create the pixelization from.
+        :type closed_polygon: ClosedPolygon2D
+        :param pixel_size: The size of each pixel.
+        :type pixel_size: float
+        :param name: Optional name for the pixelization.
+        :type name: str
+
+        :return: A pixelization created from the ClosedPolygon2D.
+        :rtype: MatrixBasedPixelization
+        """
+
+        return PointBasedPixelization.from_closed_polygon(
+            closed_polygon, pixel_size, name
+        ).to_matrix_based_pixelization()
+
+    @classmethod
+    def from_point_based_pixelization(
+        cls, point_based_pixelization: "PointBasedPixelization"
+    ) -> "MatrixBasedPixelization":
+        """
+        Create a MatrixBasedPixelization from a PointBasedPixelization.
+
+        :param point_based_pixelization: The PointBasedPixelization to create the MatrixBasedPixelization from.
+        :type point_based_pixelization: PointBasedPixelization
+
+        :return: A MatrixBasedPixelization created from the PointBasedPixelization.
+        :rtype: MatrixBasedPixelization
+        """
+        return point_based_pixelization.to_matrix_based_pixelization()
+
+    # BOOLEAN OPERATIONS
+    def union(self, other: "MatrixBasedPixelization") -> "MatrixBasedPixelization":
+        """
+        Perform a union operation with another MatrixBasedPixelization.
+
+        :param other: The MatrixBasedPixelization to perform the union with.
+        :type other: MatrixBasedPixelization
+
+        :return: A new MatrixBasedPixelization resulting from the union operation.
+        :rtype: MatrixBasedPixelization
+        """
+        return self._logical_operation(other, np.logical_or)
+
+    def difference(self, other: "MatrixBasedPixelization") -> "MatrixBasedPixelization":
+        """
+        Perform a difference operation with another pixelization.
+
+        :param other: The MatrixBasedPixelization to perform the difference with.
+        :type other: MatrixBasedPixelization
+
+        :return: A new MatrixBasedPixelization resulting from the difference operation.
+        :rtype: MatrixBasedPixelization
+        """
+        return self._logical_operation(other, lambda a, b: np.logical_and(a, np.logical_not(b)))
+
+    def intersection(self, other: "MatrixBasedPixelization") -> "MatrixBasedPixelization":
+        """
+        Perform an intersection operation with another MatrixBasedPixelization.
+
+        :param other: The MatrixBasedPixelization to perform the intersection with.
+        :type other: MatrixBasedPixelization
+
+        :return: A new MatrixBasedPixelization resulting from the intersection operation.
+        :rtype: MatrixBasedPixelization
+        """
+        return self._logical_operation(other, np.logical_and)
+
+    def symmetric_difference(self, other: "MatrixBasedPixelization") -> "MatrixBasedPixelization":
+        """
+        Perform a symmetric difference operation with another MatrixBasedPixelization.
+
+        :param other: The MatrixBasedPixelization to perform the symmetric difference with.
+        :type other: MatrixBasedPixelization
+
+        :return: A new MatrixBasedPixelization resulting from the symmetric difference operation.
+        :rtype: MatrixBasedPixelization
+        """
+        return self._logical_operation(other, np.logical_xor)
 
     def inverse(self) -> "MatrixBasedPixelization":
+        """
+        Compute the inverse of the pixelization.
+
+        :return: A new pixelization representing the inverse.
+        :rtype: MatrixBasedPixelization
+        """
         inverted_matrix = np.logical_not(self.matrix)
-        return MatrixBasedPixelization(inverted_matrix)
+        return self.__class__(inverted_matrix, self.min_grid_center, self.pixel_size)
 
     def flood_fill(self, start: Tuple[int, int], fill_with: bool) -> "MatrixBasedPixelization":
-        return MatrixBasedPixelization(flood_fill_matrix_2d(self.matrix, start, fill_with))
+        """
+        Perform a flood fill operation on the pixelization.
 
-    def _expand(self) -> "MatrixBasedPixelization":
-        current_shape = self.matrix.shape
-        new_shape = tuple(dim + 2 for dim in current_shape)
-        expanded_matrix = np.zeros(new_shape, dtype="bool")
-        slices = tuple(slice(1, -1) for _ in current_shape)
-        expanded_matrix[slices] = self.matrix.copy()
+        :param start: The indexes of the starting pixel in the 3D matrix for the flood fill.
+        :type start: tuple[int, int]
+        :param fill_with: The value to fill the pixels with during the operation.
+        :type fill_with: bool
 
-        return MatrixBasedPixelization(expanded_matrix)
+        :return: A new pixelization resulting from the flood fill operation.
+        :rtype: MatrixBasedPixelization
+        """
+        return self.__class__(
+            flood_fill_matrix_2d(self.matrix, start, fill_with), self.min_grid_center, self.pixel_size
+        )
 
-    def _reduce(self) -> "MatrixBasedPixelization":
-        current_shape = self.matrix.shape
-        slices = tuple(slice(1, -1) for _ in current_shape)
-        reduced_matrix = self.matrix.copy()[slices]
+    def _fill_outer_elements(self) -> "MatrixBasedPixelization":
+        """
+        Fill the outer pixels of the pixelization.
 
-        return MatrixBasedPixelization(reduced_matrix)
-
-    def fill_outer_pixels(self) -> "MatrixBasedPixelization":
+        :return: A new pixelization with outer pixels filled.
+        :rtype: MatrixBasedPixelization
+        """
         # pylint: disable=protected-access
 
         expanded_pixel_matrix = self._expand()
@@ -1937,11 +2145,135 @@ class MatrixBasedPixelization:
 
         return outer_filled_pixel_matrix
 
-    def fill_enclosed_pixels(self) -> "MatrixBasedPixelization":
+    def _fill_enclosed_elements(self) -> "MatrixBasedPixelization":
+        """
+        Fill the enclosed pixels of the pixelization.
+
+        :return: A new pixelization with enclosed pixels filled.
+        :rtype: MatrixBasedPixelization
+        """
         outer_filled_pixel_matrix = self.fill_outer_pixels()
         inner_filled_pixel_matrix = self + outer_filled_pixel_matrix.inverse()
 
-        # if inner_filled_pixel_matrix == self:
-        #     warnings.warn("This pixel matrix doesn't have any enclosed pixels.")
-
         return inner_filled_pixel_matrix
+
+    # HELPER METHODS
+    def to_point_based_pixelization(self) -> "PointBasedPixelization":
+        """
+        Convert the MatrixBasedPixelization to a PointBasedPixelization.
+
+        :return: A PointBasedPixelization representation of the current pixelization.
+        :rtype: PointBasedPixelization
+        """
+        return PointBasedPixelization(self.pixel_centers, self.pixel_size, self.name)
+
+    def _expand(self) -> "MatrixBasedPixelization":
+        """
+        Expand the pixelization matrix by adding a single layer of False pixels around the existing matrix.
+
+        :return: A new MatrixBasedPixelization with an expanded pixelization matrix.
+        :rtype: MatrixBasedPixelization
+        """
+        current_shape = self.matrix.shape
+        new_shape = tuple(dim + 2 for dim in current_shape)
+        expanded_matrix = np.zeros(new_shape, dtype="bool")
+        slices = tuple(slice(1, -1) for _ in current_shape)
+        expanded_matrix[slices] = self.matrix.copy()
+
+        return self.__class__(
+            expanded_matrix,
+            tuple(np.round(np.array(self.min_grid_center) - self.pixel_size, DECIMALS)),
+            self.pixel_size,
+        )
+
+    def _reduce(self) -> "MatrixBasedPixelization":
+        """
+        Reduce the size of the pixelization matrix by removing a single layer of pixels around the edges.
+
+        :return: A new MatrixBasedPixelization with a reduced pixelization matrix.
+        :rtype: MatrixBasedPixelization
+        """
+        current_shape = self.matrix.shape
+        slices = tuple(slice(1, -1) for _ in current_shape)
+        reduced_matrix = self.matrix.copy()[slices]
+
+        return self.__class__(
+            reduced_matrix,
+            tuple(np.round(np.array(self.min_grid_center) + self.pixel_size, DECIMALS)),
+            self.pixel_size,
+        )
+
+    def _logical_operation(self, other: "MatrixBasedPixelization", logical_operation):
+        """
+        Perform a logical operation (e.g., union, intersection, etc.) between two pixelizations.
+
+        :param other: The other MatrixBasedPixelization to perform the operation with.
+        :type other: MatrixBasedPixelization
+        :param logical_operation: The logical operation function to apply (e.g., np.logical_or).
+
+        :return: A new MatrixBasedPixelization resulting from the logical operation.
+        :rtype: MatrixBasedPixelization
+        """
+        if self.pixel_size != other.pixel_size:
+            raise ValueError("Pixel sizes must be the same to perform boolean operations.")
+
+        self_min, self_max = np.array(self.min_grid_center), np.array(self.min_grid_center) + 1
+        other_min, other_max = (
+            np.array(other.min_grid_center),
+            np.array(other.min_grid_center) + 1,
+        )
+
+        global_min = np.min([self_min, other_min], axis=0)
+        global_max = np.max([self_max, other_max], axis=0)
+
+        new_shape = np.round((global_max - global_min) / self.pixel_size, DECIMALS).astype(int)
+
+        new_self = np.zeros(new_shape, dtype=bool)
+        new_other = np.zeros(new_shape, dtype=bool)
+
+        self_start = np.round((self_min - global_min) / self.pixel_size, DECIMALS).astype(int)
+        other_start = np.round((other_min - global_min) / self.pixel_size, DECIMALS).astype(int)
+
+        new_self[
+            self_start[0] : self_start[0] + self.matrix.shape[0],
+            self_start[1] : self_start[1] + self.matrix.shape[1],
+        ] = self.matrix
+
+        new_other[
+            other_start[0] : other_start[0] + other.matrix.shape[0],
+            other_start[1] : other_start[1] + other.matrix.shape[1],
+        ] = other.matrix
+
+        result_matrix = logical_operation(new_self, new_other)
+
+        return self.__class__(result_matrix, tuple(global_min), self.pixel_size).crop_matrix()
+
+    def crop_matrix(self) -> "MatrixBasedPixelization":
+        """
+        Crop the pixel matrix to the smallest possible size.
+
+        :return: The MatrixBasedPixelization with cropped pixel matrix.
+        :rtype: MatrixBasedPixelization
+        """
+        # Find the indices of the True pixels
+        true_pixels = np.argwhere(self.matrix)
+
+        if len(true_pixels) == 0:
+            # Can't crop a matrix of False values
+            return self
+
+        # Find the minimum and maximum indices along each axis
+        min_pixel_coords, max_pixel_coords = np.round(np.min(true_pixels, axis=0), DECIMALS), np.round(
+            np.max(true_pixels, axis=0), 6
+        )
+
+        # Crop the matrix to the smallest possible size
+        cropped_matrix = self.matrix[
+            min_pixel_coords[0] : max_pixel_coords[0] + 1,
+            min_pixel_coords[1] : max_pixel_coords[1] + 1,
+        ]
+
+        # Calculate new matrix_origin_center
+        new_origin_center = np.round(self.min_grid_center + min_pixel_coords * self.pixel_size, DECIMALS)
+
+        return self.__class__(cropped_matrix, tuple(new_origin_center), self.pixel_size)
