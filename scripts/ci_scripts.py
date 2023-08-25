@@ -84,7 +84,7 @@ scripts = [
             'cad_simplifier/test_cad_simplifier.py',
             # Voxelization
             'discrete_representation/voxelization/interference_surface_showcase.py',
-            'discrete_representation/voxelization/interference_volume_showcase.py.py',
+            'discrete_representation/voxelization/interference_volume_showcase.py',
             'discrete_representation/voxelization/step_file_voxelization.py',
             'discrete_representation/voxelization/stl_file_voxelization.py',
             'discrete_representation/voxelization/volume_model_matrix_based_voxelization.py',
