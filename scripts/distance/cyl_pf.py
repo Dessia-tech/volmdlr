@@ -26,7 +26,7 @@ c1 = volmdlr.Point3D([x1,y1,z1])
 x3, y3, z3 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
 
 n1 = volmdlr.Vector3D([x3,y3,z3])
-n1.Normalize() #Normalize the normal if it is not the case
+n1 = n1.unit_vector() #Normalize the normal if it is not the case
 plane1 = volmdlr.Plane3D.from_normal(c1, n1)
 
 frame1 = volmdlr.Frame3D(c1, plane1.vectors[0], plane1.vectors[1], n1) #Frame in the center of the cylinder
