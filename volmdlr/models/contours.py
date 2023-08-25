@@ -188,5 +188,3 @@ arc = edges.Arc3D.from_3_points(volmdlr.Point3D(-3, -3, 0),
                                 volmdlr.Point3D(6.324555320336761, -5.692099788303083, -0.8973665961010275),
                                 volmdlr.Point3D(3, 3, 2))
 contour3d = wires.Contour3D([lineseg1, bspline_curve3d, lineseg2, arc])
-
-
