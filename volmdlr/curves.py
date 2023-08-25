@@ -1442,9 +1442,9 @@ class Circle3D(CircleMixin, ClosedCurve):
         :return: list of points intersecting Circle
         """
         intersections = []
-        from volmdlr import surfaces
-        plane1 = surfaces.Plane3D(self.frame)
-        plane2 = surfaces.Plane3D(ellipse.frame)
+        # from volmdlr import surfaces
+        plane1 = volmdlr.surfaces.Plane3D(self.frame)
+        plane2 = volmdlr.surfaces.Plane3D(ellipse.frame)
         if plane1.is_coincident(plane2) and self.frame.w.is_colinear_to(ellipse.frame.w):
             ellipse2d = ellipse.to_2d(self.frame.origin, self.frame.u, self.frame.v)
             circle2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
@@ -2254,9 +2254,6 @@ class Ellipse3D(ClosedCurve):
         :return: A list of points, containing all intersections between the two Ellipse3D.
         """
         intersections = []
-        # from volmdlr import surfaces
-        # plane1 = surfaces.Plane3D(self.frame)
-        # plane2 = surfaces.Plane3D(ellipse.frame)
         plane1 = volmdlr.surfaces.Plane3D(self.frame)
         plane2 = volmdlr.surfaces.Plane3D(ellipse.frame)
         if plane1.is_coincident(plane2) and self.frame.w.is_colinear_to(ellipse.frame.w):
