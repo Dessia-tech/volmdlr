@@ -10,18 +10,20 @@ from volmdlr.core import VolumeModel
 from volmdlr.step import Step
 
 STEP_MODEL_FILE_PATH = "../../step/tore1.step"
-VOXEL_SIZE = 0.0005
-TRANSLATION_VECTOR = volmdlr.Vector3D(-0.0015, 0.005, 0.01)
+VOXEL_SIZE = 0.001
+TRANSLATION_VECTOR = volmdlr.Vector3D(-0.003, 0.005, 0.01)
 ROTATION_ANGLE = math.pi / 2
 
 # Define the volume model from file
 volume_model = Step.from_file(STEP_MODEL_FILE_PATH).to_volume_model()
 volume_model.primitives[0].color = (0, 1, 0)
+volume_model.primitives[0].alpha = 0.7
 
 # Move the volume model
 moved_volume_model = volume_model.rotation(volmdlr.O3D, volmdlr.X3D, ROTATION_ANGLE)
 moved_volume_model = moved_volume_model.translation(TRANSLATION_VECTOR)
 moved_volume_model.primitives[0].color = (0, 0, 1)
+moved_volume_model.primitives[0].alpha = 0.7
 
 # Voxelize the volume models
 start = time.perf_counter()

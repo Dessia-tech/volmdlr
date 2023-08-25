@@ -1470,7 +1470,7 @@ class MatrixBasedVoxelization(Voxelization):
         # Calculate new matrix_origin_center
         new_origin_center = np.round(self.min_grid_center + min_voxel_coords * self.voxel_size, DECIMALS)
 
-        return self.__class__(cropped_matrix, tuple(new_origin_center), self.voxel_size)
+        return self.__class__(cropped_matrix, tuple(new_origin_center), self.voxel_size, self.name)
 
 
 class Pixelization(DiscreteRepresentation, DessiaObject):
@@ -2407,4 +2407,4 @@ class MatrixBasedPixelization(Pixelization):
         # Calculate new matrix_origin_center
         new_origin_center = np.round(self.min_grid_center + min_pixel_coords * self.pixel_size, DECIMALS)
 
-        return self.__class__(cropped_matrix, tuple(new_origin_center), self.pixel_size)
+        return self.__class__(cropped_matrix, tuple(new_origin_center), self.pixel_size, self.name)

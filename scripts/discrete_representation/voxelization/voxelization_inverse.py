@@ -4,7 +4,7 @@ Showcase of computing the inverse of a voxelization.
 import volmdlr
 from volmdlr.core import VolumeModel
 from volmdlr.primitives3d import Cylinder
-from volmdlr.discrete_representation import PointBasedVoxelization
+from volmdlr.discrete_representation import MatrixBasedVoxelization
 
 VOXEL_SIZE = 0.01
 
@@ -13,7 +13,7 @@ cylinder = Cylinder(volmdlr.OXYZ, 0.1, 0.2, name="Cylinder")
 volume_model = VolumeModel([cylinder])
 
 # Voxelize the volume model (it uses the triangulated model to create the voxelization)
-voxelization = PointBasedVoxelization.from_volume_model(volume_model, VOXEL_SIZE, name="Voxelization")
+voxelization = MatrixBasedVoxelization.from_volume_model(volume_model, VOXEL_SIZE, name="Voxelization")
 
 # Compute the inverse of the voxelization
 voxelization_inverse = ~voxelization  # equivalent to voxelization.inverse()

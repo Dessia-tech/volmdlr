@@ -45,6 +45,7 @@ voxelization_from_moved_volume_model = PointBasedVoxelization.from_volume_model(
 
 # Display the result
 moved_volume_model.primitives.append(moved_voxelization.to_closed_triangle_shell())
+moved_volume_model.primitives[-1].alpha = 0.5
 moved_volume_model.babylonjs()
 
 # Display the difference between the voxelization from moved volume model and the moved voxelization
