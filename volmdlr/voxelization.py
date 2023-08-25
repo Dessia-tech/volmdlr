@@ -1235,9 +1235,21 @@ class MatrixBasedVoxelization(Voxelization):
 
     # HELPER METHODS
     def to_point_voxelization(self) -> "PointBasedVoxelization":
+        """
+        Convert the MatrixBasedVoxelization to a PointBasedVoxelization.
+
+        :return: A PointBasedVoxelization representation of the current voxelization.
+        :rtype: PointBasedVoxelization
+        """
         return PointBasedVoxelization(self.voxel_centers, self.voxel_size)
 
     def _expand(self) -> "MatrixBasedVoxelization":
+        """
+        Expand the voxelization matrix by adding a single layer of False voxels around the existing matrix.
+
+        :return: A new MatrixBasedVoxelization with an expanded voxelization matrix.
+        :rtype: MatrixBasedVoxelization
+        """
         current_shape = self.matrix.shape
         new_shape = tuple(dim + 2 for dim in current_shape)
         expanded_matrix = np.zeros(new_shape, dtype="bool")
@@ -1251,6 +1263,12 @@ class MatrixBasedVoxelization(Voxelization):
         )
 
     def _reduce(self) -> "MatrixBasedVoxelization":
+        """
+        Reduce the size of the voxelization matrix by removing a single layer of voxels around the edges.
+
+        :return: A new MatrixBasedVoxelization with a reduced voxelization matrix.
+        :rtype: MatrixBasedVoxelization
+        """
         current_shape = self.matrix.shape
         slices = tuple(slice(1, -1) for _ in current_shape)
         reduced_matrix = self.matrix.copy()[slices]
@@ -1262,6 +1280,12 @@ class MatrixBasedVoxelization(Voxelization):
         )
 
     def _get_extents(self):
+        """
+        Get the minimum and maximum extents (coordinates) of the voxelization in world space.
+
+        :return: A tuple containing the minimum and maximum extents of the voxelization.
+        :rtype: tuple[np.ndarray, np.ndarray]
+        """
         extents_min = np.round(np.array(self._min_voxel_grid_center), DECIMALS)
         extents_max = np.round(
             self._min_voxel_grid_center + self.matrix.shape * np.array([self.voxel_size for _ in range(3)]), 6
@@ -1269,6 +1293,17 @@ class MatrixBasedVoxelization(Voxelization):
         return extents_min, extents_max
 
     def _logical_operation(self, other: "MatrixBasedVoxelization", logical_operation):
+        """
+        Perform a logical operation (e.g., union, intersection, etc.) between two voxelizations.
+
+        :param other: The other MatrixBasedVoxelization to perform the operation with.
+        :type other: MatrixBasedVoxelization
+        :param logical_operation: The logical operation function to apply (e.g., np.logical_or).
+        :type logical_operation: function
+
+        :return: A new MatrixBasedVoxelization resulting from the logical operation.
+        :rtype: MatrixBasedVoxelization
+        """
         if self.voxel_size != other.voxel_size:
             raise ValueError("Voxel sizes must be the same to perform boolean operations.")
 
@@ -1304,7 +1339,10 @@ class MatrixBasedVoxelization(Voxelization):
 
     def _crop_matrix(self) -> "MatrixBasedVoxelization":
         """
-        Crop the VoxelMatrix to the smallest possible size.
+        Crop the voxel matrix to the smallest possible size.
+
+        :return: The MatrixBasedVoxelization with cropped voxel matrix.
+        :rtype: MatrixBasedVoxelization
         """
         # Find the indices of the True voxels
         true_voxels = np.argwhere(self.matrix)
