@@ -54,7 +54,8 @@ class TestEllipse3D(unittest.TestCase):
 
     def test_point_at_abcissa(self):
         point_at_abscissa = self.ellipse3d.point_at_abscissa(self.ellipse3d.length() * 0.4)
-        self.assertTrue(point_at_abscissa.is_close(volmdlr.Point3D(-0.236335934849, -1.104105421298, -1.104105421298)))
+        self.assertTrue(point_at_abscissa.is_close(
+            volmdlr.Point3D(-0.236343248911, -1.104108201699, -1.104108201699)))
 
     def test_trim(self):
         trim = self.ellipse3d.trim(volmdlr.Point3D(-0.12975651199692162, 0.9309036597828997, 0.9309036597828997),

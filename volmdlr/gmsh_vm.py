@@ -359,7 +359,7 @@ class GmshParser(DessiaObject):
     @staticmethod
     def from_file_parametrizations(lines):
         """
-        Gets mesh parametrizations from .msh file.
+        Gets mesh parametrization from .msh file.
         """
 
         if not lines:
