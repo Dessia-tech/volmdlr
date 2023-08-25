@@ -5061,6 +5061,25 @@ class BSplineSurface3D(Surface3D):
             self._domain = start_u, stop_u, start_v, stop_v
         return self._domain
 
+    def ctrlpts2d(self):
+        """
+        Each row represents the control points in u direction and each column the points in v direction.
+        """
+        ctrlpts = self.ctrlptsw if self.rational else self.ctrlpts
+        control_points_table = []
+        points_row = []
+        i = 1
+        for point in ctrlpts:
+            points_row.append(point)
+            if i == self.nb_v:
+                control_points_table.append(points_row)
+                points_row = []
+                i = 1
+            else:
+                i += 1
+        return control_points_table
+
+
     def vertices(self):
         """
         Evaluated points.
@@ -6494,7 +6513,7 @@ class BSplineSurface3D(Surface3D):
         return self.contour2d_to_3d(contour01)
 
     @classmethod
-    def from_geomdl_surface(cls, surface):
+    def from_geomdl_surface(cls, surface, name: str = ""):
         """
         Create a volmdlr BSpline_Surface3D from a geomdl's one.
 
@@ -6515,7 +6534,7 @@ class BSplineSurface3D(Surface3D):
                               u_multiplicities=u_multiplicities,
                               v_multiplicities=v_multiplicities,
                               u_knots=u_knots,
-                              v_knots=v_knots)
+                              v_knots=v_knots, weights=surface.weights, name=name)
 
         return bspline_surface
 
@@ -6887,10 +6906,7 @@ class BSplineSurface3D(Surface3D):
         :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
-
-        surfaces_geo = split_surface_v(self.surface, v)
-        surfaces = [BSplineSurface3D.from_geomdl_surface(surface) for surface in surfaces_geo]
-        return surfaces
+        return split_surface_v(self, v)
 
     def split_surface_with_bspline_curve(self, bspline_curve3d: edges.BSplineCurve3D):
         """

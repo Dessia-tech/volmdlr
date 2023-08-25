@@ -1,5 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
+# pylint: disable=no-member, used-before-assignment, no-name-in-module, import-error
 """
 Provides curve and surface fitting functions.
 
