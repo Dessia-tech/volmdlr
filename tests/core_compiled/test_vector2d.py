@@ -36,9 +36,9 @@ class TestVector2D(unittest.TestCase):
         v1 = Vector2D(3.0, 4.0)
         self.assertEqual(v1.norm(), 5.0)
 
-    def test_normalize(self):
+    def test_unit_vector(self):
         v1 = Vector2D(3.0, 4.0)
-        v1.normalize()
+        v1 = v1.unit_vector()
         self.assertAlmostEqual(v1.x, 0.6)
         self.assertAlmostEqual(v1.y, 0.8)
 
