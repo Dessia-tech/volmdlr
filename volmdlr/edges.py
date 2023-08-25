@@ -5705,6 +5705,13 @@ class Arc3D(ArcMixin, Edge):
         return linesegment_intersections
 
     def arc_intersections(self, other_arc, abs_tol: 1e-6):
+        """
+        Calculates intersections between two Arc3D.
+
+        :param other_arc: Arc 3D to verify intersections.
+        :param abs_tol: tolerance.
+        :return: list with intersections points between the two Arc3D.
+        """
         circle_intersections = self.circle.circle_intersections(other_arc.circle)
         intersections = []
         for intersection in circle_intersections:
@@ -5713,6 +5720,13 @@ class Arc3D(ArcMixin, Edge):
         return intersections
 
     def arcellipse_intersections(self, arcellipse3d, abs_tol: float = 1e-6):
+        """
+        Calculates intersections between two Arc3D.
+
+        :param arcellipse3d: ArcEllipse 3D to verify intersections.
+        :param abs_tol: Tolerance.
+        :return: List with intersections points between ArcEllipse3D and Arc3D.
+        """
         ellipse_intersections = self.circle.ellipse_intersections(arcellipse3d.ellipse, abs_tol)
         intersections = []
         for intersection in ellipse_intersections:
@@ -5721,6 +5735,7 @@ class Arc3D(ArcMixin, Edge):
         return intersections
 
     def complementary(self):
+        """Creates the corresponding complementary arc."""
         return Arc3D(self.circle, self.end, self.start)
 
     def sweep(self, *args):
@@ -6237,6 +6252,13 @@ class ArcEllipse3D(Edge):
         return intersections
 
     def arcellipse_intersections(self, arcellipse3d, abs_tol: float = 1e-6):
+        """
+        Gets the intersections between an Ellipse 3D and a Line Segement 3D.
+
+        :param arcellipse3d: The other linesegment.
+        :param abs_tol: The absolute tolerance.
+        :return: A list with the intersections points between the two edges.
+        """
         ellipse_intersections = self.ellipse.ellipse_intersections(arcellipse3d.ellipse, abs_tol)
         intersections = []
         for intersection in ellipse_intersections:

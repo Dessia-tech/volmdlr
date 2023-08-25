@@ -154,7 +154,7 @@ class TestArcEllipse3D(unittest.TestCase):
             volmdlr.Point3D(-0.5978657793452512, -2.7629292888063484, -1.2103434310450787),
             volmdlr.Point3D(0.47829262347620083, 2.2103434310450787, -0.8948282844774607))
         lineseg3 = edges.LineSegment3D(volmdlr.Point3D(3.0, 4.0, 2.5),
-                                    volmdlr.Point3D(-3.0, -5.0, -2.0))
+                                       volmdlr.Point3D(-3.0, -5.0, -2.0))
         expected_results = [
             [volmdlr.Point3D(-0.23914631173810008, -1.105171715522539, -1.105171715522539),
              volmdlr.Point3D(1.154700538379252, 1.1547005383792517, 1.1547005383792517)],
