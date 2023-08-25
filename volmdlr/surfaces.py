@@ -5046,12 +5046,6 @@ class BSplineSurface3D(Surface3D):
                 for v in v_vector:
                     vertices.append((u, v))
             self._vertices = vertices
-            # u_vector = npy.linspace(u_min, u_max, self.sample_size_u, dtype=npy.float64)
-            # v_vector = npy.linspace(v_min, v_max, self.sample_size_v, dtype=npy.float64)
-            #
-            # u_mesh, v_mesh = npy.meshgrid(u_vector, v_vector)
-            # self._vertices = npy.column_stack((u_mesh.ravel(), v_mesh.ravel()))
-
         return self._vertices
 
     def control_points_matrix(self, coordinates):
@@ -5257,10 +5251,6 @@ class BSplineSurface3D(Surface3D):
         index = npy.argmin(distances)
         # Find the parametric coordinates of the point
 
-        # if self.x_periodicity or self.y_periodicity:
-        #     x0s.insert(1, self.surface.vertices[index].uv)
-        # else:
-        #     x0s.insert(0, self.surface.vertices[index].uv)
         if self.x_periodicity or self.y_periodicity:
             x0s.insert(1, self.vertices[index])
         else:
