@@ -269,7 +269,7 @@ class Block(shells.ClosedShell3D):
         hly = 0.5 * self.frame.v.norm()
         hlz = 0.5 * self.frame.w.norm()
         frame = self.frame.copy()
-        frame.normalize()
+        frame = frame.normalize()
         xm_frame = volmdlr.Frame3D(frame.origin - 0.5 * self.frame.u,
                                    frame.v, frame.w, frame.u)
         xp_frame = volmdlr.Frame3D(frame.origin + 0.5 * self.frame.u,

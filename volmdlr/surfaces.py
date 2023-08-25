@@ -1117,7 +1117,7 @@ class Plane3D(Surface3D):
         :rtype: :class:`volmdlr.faces.Plane3D`
         """
         frame = object_dict[arguments[1]]
-        frame.normalize()
+        frame = frame.normalize()
         return cls(frame, arguments[0][1:-1])
 
     def to_step(self, current_id):

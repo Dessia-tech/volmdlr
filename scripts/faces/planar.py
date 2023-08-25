@@ -16,7 +16,7 @@ p4s = volmdlr.Point2D(-0.01, 0.05)
 surface2d = surfaces.Surface2D(volmdlr.wires.ClosedPolygon2D([p1s, p2s, p3s, p4s]), [])
 
 u = volmdlr.Vector3D(0.1, 0.7, -0.5)
-u.normalize()
+u = u.unit_vector()
 v = u.deterministic_unit_normal_vector()
 w = u.cross(v)
 plane = surfaces.Plane3D(frame=volmdlr.Frame3D(0.1*volmdlr.X3D, u, v, w))

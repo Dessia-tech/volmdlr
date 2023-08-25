@@ -2548,11 +2548,10 @@ class Basis2D(Basis):
         """
         Normalizes the basis, modifying its coordinates in place.
 
-        :return: None
-        :rtype: None
+        :return: A new normalized basis
+        :rtype: Basis2D
         """
-        self.u = self.u.unit_vector()
-        self.v = self.v.unit_vector()
+        return Basis2D(self.u.unit_vector(), self.v.unit_vector())
 
 
 XY = Basis2D(X2D, Y2D)
@@ -2875,15 +2874,17 @@ class Basis3D(Basis):
         """
         Normalizes the basis, modifying its coordinates in place.
 
-        :return: None
-        :rtype: None
+        :return: New normalized basis
+        :rtype: Basis3D
         """
+        u, v, w = self.u, self.v, self.w
         if not math.isclose(self.u.norm(), 0.0, abs_tol=1e-10):
-            self.u = self.u.unit_vector()
+            u = self.u.unit_vector()
         if not math.isclose(self.v.norm(), 0.0, abs_tol=1e-10):
-            self.v = self.v.unit_vector()
+            v = self.v.unit_vector()
         if not math.isclose(self.w.norm(), 0.0, abs_tol=1e-10):
-            self.w = self.w.unit_vector()
+            w = self.w.unit_vector()
+        return Basis3D(u, v, w)
 
 
 class Frame2D(Basis2D):
