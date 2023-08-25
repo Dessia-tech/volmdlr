@@ -377,11 +377,11 @@ class Stl(dc.DessiaObject):
                 point_normal += point
             points_normals[key] = point_normal
             try:
-                point_normal.normalize()
+                point_normal = point_normal.unit_vector()
             except ZeroDivisionError:
                 point_normal = value[0]
                 points_normals[key] = point_normal
-                point_normal.normalize()
+                point_normal = point_normal.unit_vector()
             normals.append(point_normal)
         self.normals = normals
         return points_normals
