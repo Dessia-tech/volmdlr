@@ -659,6 +659,34 @@ class WireMixin:
 
         return ax
 
+    def edge_intersections(self, edge, abs_tol: float = 1e-6):
+        """
+        Compute intersections between a wire (2D or 3D) and an edge (2D or 3D).
+
+        :param edge: edge to compute intersections.
+        """
+        edge_intersections = []
+        for primitive in self.primitives:
+            intersections = primitive.intersections(edge, abs_tol)
+            for intersection in intersections:
+                if not volmdlr.core.point_in_list(intersection, edge_intersections):
+                    edge_intersections.append(intersection)
+        return edge_intersections
+
+    def wire_intersections(self, wire, abs_tol: float = 1e-6):
+        """
+        Compute intersections between two wire 2d.
+
+        :param wire: volmdlr.wires.Wire2D
+        """
+        intersections_points = []
+        for primitive in wire.primitives:
+            edge_intersections = self.edge_intersections(primitive, abs_tol)
+            for crossing in edge_intersections:
+                if not volmdlr.core.point_in_list(crossing, intersections_points):
+                    intersections_points.append(crossing)
+        return intersections_points
+
 
 class EdgeCollection3D(WireMixin):
     """
@@ -965,34 +993,6 @@ class Wire2D(WireMixin, PhysicalObject):
             if linesegment.point_belongs(result[0]):
                 crossings_points.append(result)
         return crossings_points
-
-    def edge_intersections(self, edge):
-        """
-        Compute intersections between a wire 2d and an edge.
-
-        :param edge: edge to compute intersections.
-        """
-        edge_intersections = []
-        for primitive in self.primitives:
-            intersections = primitive.intersections(edge)
-            for intersection in intersections:
-                if not volmdlr.core.point_in_list(intersection, edge_intersections):
-                    edge_intersections.append(intersection)
-        return edge_intersections
-
-    def wire_intersections(self, wire):
-        """
-        Compute intersections between two wire 2d.
-
-        :param wire: volmdlr.wires.Wire2D
-        """
-        intersections_points = []
-        for primitive in wire.primitives:
-            edge_intersections = self.edge_intersections(primitive)
-            for crossing in edge_intersections:
-                if not volmdlr.core.point_in_list(crossing, intersections_points):
-                    intersections_points.append(crossing)
-        return intersections_points
 
     def validate_edge_crossings(self, crossings):
         """
