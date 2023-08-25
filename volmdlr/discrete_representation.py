@@ -643,7 +643,6 @@ class PointBasedVoxelization(Voxelization):
 
         Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
-    @property
     def _get_element_centers(self) -> Set[_Point3D]:
         """
         Get the center point of each voxel.

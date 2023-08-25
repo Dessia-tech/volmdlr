@@ -44,7 +44,7 @@ print(f"\nIntersection computing time: {(time.perf_counter() - start)*1000}ms")
 start = time.perf_counter()
 print(f"Voxelizations are intersecting: {voxelization.is_intersecting(voxelization_moved)}")
 print(f"Voxelization.is_intersecting computing time: {(time.perf_counter() - start)*1000}ms")
-print(f"Voxelization interference percentage: {voxelization.interference(voxelization_moved)*100}%")
+print(f"Voxelization interference volume: {voxelization_intersection.volume}")
 
 # Display the result
 voxelization_intersection_cs = voxelization_intersection.to_closed_triangle_shell()
