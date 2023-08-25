@@ -194,7 +194,7 @@ class Edge(dc.DessiaObject):
         :return: unit normal vector
         """
         vector = self.normal_vector(abscissa).copy(deep=True)
-        vector.normalize()
+        vector = vector.unit_vector()
         return vector
 
     def direction_vector(self, abscissa):
@@ -218,7 +218,7 @@ class Edge(dc.DessiaObject):
             self._unit_direction_vector_memo = {}
         if abscissa not in self._unit_direction_vector_memo:
             vector = self.direction_vector(abscissa).copy(deep=True)
-            vector.normalize()
+            vector = vector.unit_vector()
             self._unit_direction_vector_memo[abscissa] = vector
         return self._unit_direction_vector_memo[abscissa]
 
@@ -2485,7 +2485,7 @@ class ArcMixin:
                 return linesegment.length() - self.circle.radius
             return min(self.start.point_distance(point), self.end.point_distance(point))
         vector_to_point = point - self.circle.center
-        vector_to_point.normalize()
+        vector_to_point = vector_to_point.unit_vector()
         projected_point = self.circle.center + self.circle.radius * vector_to_point
         if self.point_belongs(projected_point):
             return self.circle.radius - linesegment.length()
@@ -2888,7 +2888,7 @@ class Arc2D(ArcMixin, Edge):
         :return: center of mass point.
         """
         u = self.middle_point() - self.circle.center
-        u.normalize()
+        u = u.unit_vector()
         return self.circle.center + 4 / (3 * self.angle) * self.circle.radius * math.sin(
             self.angle * 0.5) * u
 
@@ -2992,7 +2992,7 @@ class Arc2D(ArcMixin, Edge):
             return self.center_of_mass()
 
         u = self.middle_point() - self.circle.center
-        u.normalize()
+        u = u.unit_vector()
         if self.angle >= math.pi:
             u = -u
         bissec = volmdlr_curves.Line2D(self.circle.center, self.circle.center + u)
@@ -3173,9 +3173,9 @@ class Arc2D(ArcMixin, Edge):
     def infinite_primitive(self, offset):
         """Create an offset curve from a distance of the original curve."""
         vector_start_center = self.start - self.circle.center
-        vector_start_center.normalize()
+        vector_start_center = vector_start_center.unit_vector()
         vector_end_center = self.end - self.circle.center
-        vector_end_center.normalize()
+        vector_end_center = vector_end_center.unit_vector()
         if self.is_trigo:
             radius = self.circle.radius + offset
             center = self.circle.center
@@ -4335,7 +4335,7 @@ class LineSegment3D(LineSegment):
         """Calculates the parallel distance between two Line Segments 3D."""
         pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
         vector = volmdlr.Vector3D((pt_a - pt_b).vector)
-        vector.normalize()
+        vector = vector.unit_vector()
         plane1 = volmdlr.surfaces.Plane3D.from_3_points(pt_a, pt_b, pt_c)
         v = vector.cross(plane1.frame.w)  # distance vector
         # pt_a = k*u + c*v + pt_c
@@ -4413,7 +4413,7 @@ class LineSegment3D(LineSegment):
         """
         u = self.unit_direction_vector()
         v = extrusion_vector.copy()
-        v.normalize()
+        v = v.unit_vector()
         w = u.cross(v)
         length_1 = self.length()
         length_2 = extrusion_vector.norm()
@@ -4425,7 +4425,7 @@ class LineSegment3D(LineSegment):
         axis, u, p1_proj, dist1, dist2, angle = params
         v = axis.cross(u)
         direction_vector = self.direction_vector()
-        direction_vector.normalize()
+        direction_vector = direction_vector.unit_vector()
 
         semi_angle = math.atan2(direction_vector.dot(u), direction_vector.dot(axis))
         cone_origin = p1_proj - dist1 / math.tan(semi_angle) * axis
@@ -4465,10 +4465,10 @@ class LineSegment3D(LineSegment):
         distance_2 = self.end.point_distance(p2_proj)
         if not math.isclose(distance_1, 0., abs_tol=1e-9):
             u = self.start - p1_proj  # Unit vector from p1_proj to p1
-            u.normalize()
+            u = u.unit_vector()
         elif not math.isclose(distance_2, 0., abs_tol=1e-9):
             u = self.end - p2_proj  # Unit vector from p1_proj to p1
-            u.normalize()
+            u = u.unit_vector()
         else:
             return []
         if u.is_colinear_to(self.direction_vector()):
@@ -5431,13 +5431,13 @@ class Arc3D(ArcMixin, Edge):
     def minimum_distance_points_arc(self, other_arc):
         """Calculates the minimum distance points between two arcs."""
         u1 = self.start - self.circle.center
-        u1.normalize()
+        u1 = u1.unit_vector()
         u2 = self.circle.normal.cross(u1)
 
         w = other_arc.circle.center - self.circle.center
 
         u3 = other_arc.start - other_arc.circle.center
-        u3.normalize()
+        u3 = u3.unit_vector()
         u4 = other_arc.circle.normal.cross(u3)
 
         radius1, radius2 = self.radius, other_arc.radius
@@ -5503,9 +5503,9 @@ class Arc3D(ArcMixin, Edge):
         """Extrudes an arc 3d in the given extrusion vector direction."""
         if self.circle.normal.is_colinear_to(extrusion_vector):
             u = self.start - self.circle.center
-            u.normalize()
+            u = u.unit_vector()
             w = extrusion_vector.copy()
-            w.normalize()
+            w = w.unit_vector()
             v = w.cross(u)
             arc2d = self.to_2d(self.circle.center, u, v)
             angle1, angle2 = arc2d.angle1, arc2d.angle2
@@ -5538,7 +5538,7 @@ class Arc3D(ArcMixin, Edge):
                     interior_p, _ = line3d.point_projection(self.middle_point())
                     u = self.middle_point - interior_p
 
-            u.normalize()
+            u = u.unit_vector()
             v = axis.cross(u)
             arc2d = self.to_2d(self.circle.center, u, axis)
 
@@ -5550,7 +5550,7 @@ class Arc3D(ArcMixin, Edge):
 
         # Toroidal
         u = self.circle.center - tore_center
-        u.normalize()
+        u = u.unit_vector()
         v = axis.cross(u)
         if not math.isclose(self.circle.normal.dot(u), 0., abs_tol=1e-6):
             raise NotImplementedError(
@@ -5748,7 +5748,7 @@ class FullArc3D(FullArcMixin, Arc3D):
         content, frame_id = self.circle.frame.to_step(current_id)
         # Not calling Circle3D.to_step because of circular imports
         u = self.start - self.circle.center
-        u.normalize()
+        u = u.unit_vector()
         curve_id = frame_id + 1
         # Not calling Circle3D.to_step because of circular imports
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.radius * 1000});\n"

@@ -3112,7 +3112,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                 vector_i = vector_i.normal_vector()
                 offset_vectors.append(vector_i)
             else:
-                vector_i.normalize()
+                vector_i = vector_i.unit_vector()
                 if vector_i.dot(vectors[2 * i - 1].normal_vector()) > 0:
                     vector_i = - vector_i
                     # check = True
@@ -3120,8 +3120,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
             normal_vector1 = - vectors[2 * i - 1].normal_vector()
             normal_vector2 = vectors[2 * i].normal_vector()
-            normal_vector1.normalize()
-            normal_vector2.normalize()
+            normal_vector1 = normal_vector1.unit_vector()
+            normal_vector2 = normal_vector2.unit_vector()
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
@@ -3673,7 +3673,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         returns the closing point.
         """
         vec_dir = crossing_point.copy()
-        vec_dir.normalize()
+        vec_dir = vec_dir.unit_vector()
 
         line = volmdlr.edges.LineSegment2D(volmdlr.O2D,
                                            crossing_point + vec_dir * 5)
@@ -3684,8 +3684,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             point_intersection = line_segment.linesegment_intersections(
                 line)
             if point_intersection:
-                point_intersections[line_segment] = point_intersection[
-                    0]
+                point_intersections[line_segment] = point_intersection[0]
             else:
                 if line.point_belongs(line_segment.start):
                     point_intersections[line_segment] = line_segment.start
