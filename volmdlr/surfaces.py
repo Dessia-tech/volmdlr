@@ -1248,12 +1248,7 @@ class Plane3D(Surface3D):
         :return: ADD DESCRIPTION
         :rtype: List[volmdlr.Point3D]
         """
-        u_vector = line.point2 - line.point1
-        w_vector = line.point1 - self.frame.origin
-        if math.isclose(self.frame.w.dot(u_vector), 0, abs_tol=1e-08):
-            return []
-        intersection_abscissea = - self.frame.w.dot(w_vector) / self.frame.w.dot(u_vector)
-        return [line.point1 + intersection_abscissea * u_vector]
+        return vm_utils_intersections.get_plane_line_intersections(self.frame, line)
 
     def linesegment_intersections(self, linesegment: edges.LineSegment3D, abs_tol: float = 1e-6) \
             -> List[volmdlr.Point3D]:
@@ -1264,20 +1259,7 @@ class Plane3D(Surface3D):
         :param abs_tol: tolerance allowed.
         :return: a list with the intersecting point.
         """
-        u_vector = linesegment.end - linesegment.start
-        w_vector = linesegment.start - self.frame.origin
-        normaldotu = self.frame.w.dot(u_vector)
-        if normaldotu == 0.0 or math.isclose(self.frame.w.unit_vector().dot(u_vector.unit_vector()),
-                                             0.0, abs_tol=abs_tol):
-            return []
-        intersection_abscissea = - self.frame.w.dot(w_vector) / normaldotu
-        if intersection_abscissea < 0 or intersection_abscissea > 1:
-            if math.isclose(abs(intersection_abscissea), 0, abs_tol=abs_tol):
-                return [linesegment.start]
-            if math.isclose(intersection_abscissea, 1, abs_tol=abs_tol):
-                return [linesegment.end]
-            return []
-        return [linesegment.start + intersection_abscissea * u_vector]
+        return vm_utils_intersections.get_plane_linesegment_intersections(self.frame, linesegment, abs_tol)
 
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
         """
@@ -4410,7 +4392,7 @@ class RevolutionSurface3D(PeriodicalSurface):
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
                 if isinstance(self.edge, curves.Line3D):
                     return [edges.LineSegment3D(start3d, end3d)]
-                if self.edge.is_point_edge_extremity(start3d) and self.wire.is_point_edge_extremity(end3d):
+                if self.edge.is_point_edge_extremity(start3d) and self.edge.is_point_edge_extremity(end3d):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
                         return [primitive]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
