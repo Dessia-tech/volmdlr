@@ -6076,6 +6076,36 @@ class ArcEllipse3D(Edge):
         ellipse3d = volmdlr_curves.Ellipse3D(self.ellipse.major_axis, self.ellipse.minor_axis, new_frame)
         return self.__class__(ellipse3d, self.end, self.start, self.name + '_reverse')
 
+    def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
+        """
+        Gets the intersections between an Ellipse 3D and a Line Segement 3D.
+
+        :param linesegment: The other linesegment.
+        :param abs_tol: The absolute tolerance.
+        :return: A list with the intersections points between the two edges.
+        """
+        ellipse_linesegment_intersections = self.ellipse.linesegment_intersections(linesegment, abs_tol)
+        intersections = []
+        for intersection in ellipse_linesegment_intersections:
+            if self.point_belongs(intersection, abs_tol):
+                intersections.append(intersection)
+        return intersections
+
+    def arcellipse_intersections(self, arcellipse3d, abs_tol: float = 1e-6):
+        """
+        Gets the intersections between an Ellipse 3D and a Line Segement 3D.
+
+        :param arcellipse3d: The other linesegment.
+        :param abs_tol: The absolute tolerance.
+        :return: A list with the intersections points between the two edges.
+        """
+        ellipse_intersections = self.ellipse.ellipse_intersections(arcellipse3d.ellipse, abs_tol)
+        intersections = []
+        for intersection in ellipse_intersections:
+            if self.point_belongs(intersection, abs_tol) and arcellipse3d.point_belongs(intersection, abs_tol):
+                intersections.append(intersection)
+        return intersections
+
 
 class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
     """
