@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: transform some attributs into lazy evaluation and Caching
 - BSplineSurface3D: store control_points as numpy array for memory efficiency
 - PlaneFace3D: distance_to_point -> point_distance
+- remove normalize() methods
 - Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
 
 ### Changed
