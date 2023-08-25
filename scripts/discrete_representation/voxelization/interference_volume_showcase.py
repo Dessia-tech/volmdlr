@@ -1,5 +1,5 @@
 """
-Showcase of surface interference computing using voxelization.
+Showcase of volume interference computing using voxelization.
 """
 import math
 import time
