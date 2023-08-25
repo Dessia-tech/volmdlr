@@ -4993,11 +4993,6 @@ class BSplineSurface3D(Surface3D):
         start_v = kwargs.get('start_v', knotvector_v[self.degree_v])
         stop_v = kwargs.get('stop_v', knotvector_v[-(self.degree_v + 1)])
 
-        # # Check parameters
-        # if self._kv_normalize:
-        #     if not utilities.check_params([start_u, stop_u, start_v, stop_v]):
-        #         raise GeomdlException("Parameters should be between 0 and 1")
-
         # Evaluate and cache
         self._eval_points = npy.asarray(evaluate_surface(self.data,
                                                          start=(start_u, start_v),
@@ -5125,12 +5120,6 @@ class BSplineSurface3D(Surface3D):
         to u k times and v l times
         :rtype: List[`volmdlr.Vector3D`]
         """
-        # if self.surface.rational:
-        #     # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
-        #     derivatives = volmdlr.rational_derivatives(self.surface.data, (u, v), order)
-        # else:
-        #     # derivatives = self._derivatives(self.surface.data, (u, v), order)
-        #     derivatives = volmdlr.derivatives(self.surface.data, (u, v), order)
         if self.weights is not None:
             control_points = self.ctrlptsw
         else:
@@ -5190,14 +5179,14 @@ class BSplineSurface3D(Surface3D):
         return blending_mat
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        """
+        Evaluate the surface at a given parameter coordinate.
+        """
         u, v = point2d
         u = float(min(max(u, 0.0), 1.0))
         v = float(min(max(v, 0.0), 1.0))
         point_array = evaluate_surface(self.data, start=(u, v), stop=(u, v))[0]
         return volmdlr.Point3D(*point_array)
-        # uses derivatives for performance because it's already compiled
-        # return volmdlr.Point3D(*self.derivatives(u, v, 0)[0][0])
-        # return volmdlr.Point3D(*self.surface.evaluate_single((x, y)))
 
     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-6):
         """
@@ -5225,9 +5214,6 @@ class BSplineSurface3D(Surface3D):
                                       vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
 
-        #
-        # min_bound_x, max_bound_x = self.surface.domain[0]
-        # min_bound_y, max_bound_y = self.surface.domain[1]
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
 
         delta_bound_x = max_bound_x - min_bound_x
