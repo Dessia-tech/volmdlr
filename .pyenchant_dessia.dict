@@ -112,6 +112,9 @@ voxel
 voxels
 voxelization
 voxelizations
+voxelization's
+pixelization
+pixelizations
 octree
 voxelized
 Iterable
@@ -135,3 +138,4 @@ discretizing
 argmax
 pre
 scipy
+ndim

@@ -1,13 +1,16 @@
 """
 Class for voxel representation of volmdlr models
 """
+# pylint: disable=no-name-in-module
+
 import warnings
 from abc import ABC, abstractmethod
 from typing import List, Set, Tuple, TypeVar
 
-import matplotlib.patches as patches
+from matplotlib import patches
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 from dessia_common.core import PhysicalObject
 
 from volmdlr import Point2D, Point3D, Vector3D
@@ -50,16 +53,10 @@ class Voxelization(ABC, PhysicalObject):
 
     VoxelizationType = TypeVar("VoxelizationType", bound="Voxelization")
 
-    @property
-    @abstractmethod
-    def voxel_size(self) -> float:
-        """
-        Get the size of the voxels.
+    def __init__(self, voxel_size: float, name: str):
+        self.voxel_size = voxel_size
 
-        :return: The size of the voxels.
-        :rtype: float
-        """
-        pass
+        PhysicalObject.__init__(self, name=name)
 
     @property
     @abstractmethod
@@ -70,7 +67,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: The center point of each voxel.
         :rtype: set[tuple[float, float, float]]
         """
-        pass
 
     def __str__(self):
         """
@@ -92,7 +88,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: True if the voxelizations are equal, False otherwise.
         :rtype: bool
         """
-        pass
 
     @abstractmethod
     def __len__(self) -> int:
@@ -102,7 +97,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: The number of voxels in the voxelization.
         :rtype: int
         """
-        pass
 
     @property
     def volume(self) -> float:
@@ -112,7 +106,7 @@ class Voxelization(ABC, PhysicalObject):
         :return: The volume of the voxelization.
         :rtype: float
         """
-        return self.__len__() * self.voxel_size**3
+        return len(self) * self.voxel_size**3
 
     @property
     @abstractmethod
@@ -125,7 +119,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: The minimum center point.
         :rtype: tuple[float, float, float]
         """
-        pass
 
     @property
     @abstractmethod
@@ -138,7 +131,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: The maximum center point.
         :rtype: tuple[float, float, float]
         """
-        pass
 
     @property
     def bounding_box(self):
@@ -170,7 +162,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: A voxelization created from the Shell3D.
         :rtype: VoxelizationType
         """
-        pass
 
     @classmethod
     @abstractmethod
@@ -188,7 +179,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: A voxelization created from the VolumeModel.
         :rtype: VoxelizationType
         """
-        pass
 
     # BOOLEAN OPERATIONS
     def __add__(self, other_voxelization: VoxelizationType) -> VoxelizationType:
@@ -259,7 +249,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: A new voxelization resulting from the union operation.
         :rtype: VoxelizationType
         """
-        pass
 
     @abstractmethod
     def difference(self, other_voxelization: VoxelizationType) -> VoxelizationType:
@@ -272,7 +261,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: A new voxelization resulting from the difference operation.
         :rtype: VoxelizationType
         """
-        pass
 
     @abstractmethod
     def intersection(self, other_voxelization: VoxelizationType) -> VoxelizationType:
@@ -285,7 +273,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: A new voxelization resulting from the intersection operation.
         :rtype: VoxelizationType
         """
-        pass
 
     def symmetric_difference(self, other_voxelization: VoxelizationType) -> VoxelizationType:
         """
@@ -297,7 +284,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: A new voxelization resulting from the symmetric difference operation.
         :rtype: VoxelizationType
         """
-        pass
 
     @abstractmethod
     def inverse(self) -> VoxelizationType:
@@ -307,7 +293,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: A new voxelization representing the inverse.
         :rtype: VoxelizationType
         """
-        pass
 
     def interference(self, other_voxelization: VoxelizationType) -> float:
         """
@@ -348,7 +333,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: A new voxelization resulting from the flood fill operation.
         :rtype: VoxelizationType
         """
-        pass
 
     @abstractmethod
     def fill_outer_voxels(self) -> VoxelizationType:
@@ -358,7 +342,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: A new voxelization with outer voxels filled.
         :rtype: VoxelizationType
         """
-        pass
 
     @abstractmethod
     def fill_enclosed_voxels(self) -> VoxelizationType:
@@ -368,7 +351,6 @@ class Voxelization(ABC, PhysicalObject):
         :return: A new voxelization with enclosed voxels filled.
         :rtype: VoxelizationType
         """
-        pass
 
     # DISPLAY METHODS
     def to_triangles(self) -> Set[Triangle]:
@@ -573,20 +555,9 @@ class PointBasedVoxelization(Voxelization):
         """
         self._check_voxel_size_number_of_decimals(voxel_size)
 
-        self._voxel_size = voxel_size
         self._voxel_centers = voxel_centers
 
-        PhysicalObject.__init__(self, name=name)
-
-    @property
-    def voxel_size(self) -> float:
-        """
-        Get the size of the voxels.
-
-        :return: The size of the voxels.
-        :rtype: float
-        """
-        return self._voxel_size
+        Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
     @property
     def voxel_centers(self) -> Set[Point]:
@@ -801,19 +772,19 @@ class PointBasedVoxelization(Voxelization):
         return self.__class__.from_matrix_based_voxelization(inverted_voxel_matrix)
 
     # FILLING METHODS
-    def flood_fill(self, start_point: Point, fill_with: bool) -> "PointBasedVoxelization":
+    def flood_fill(self, start: Point, fill_with: bool) -> "PointBasedVoxelization":
         """
         Perform a flood fill operation on the voxelization.
 
-        :param start_point: The coordinates of the starting point for the flood fill.
-        :type start_point: tuple[float, float, float]
+        :param start: The coordinates of the starting point for the flood fill.
+        :type start: tuple[float, float, float]
         :param fill_with: The value to fill the voxels with during the operation.
         :type fill_with: bool
 
         :return: A new voxelization resulting from the flood fill operation.
         :rtype: PointBasedVoxelization
         """
-        start = self._point_to_local_grid_index(start_point)
+        start = self._point_to_local_grid_index(start)
         voxel_matrix = self.to_matrix_based_voxelization()
         filled_voxel_matrix = voxel_matrix.flood_fill(start, fill_with)
 
@@ -987,7 +958,7 @@ class MatrixBasedVoxelization(Voxelization):
 
     def __init__(
         self,
-        voxel_matrix: np.ndarray[np.bool_, np.ndim == 3],
+        voxel_matrix: NDArray[np.bool_],
         min_voxel_grid_center: Point,
         voxel_size: float,
         name: str = "",
@@ -998,26 +969,15 @@ class MatrixBasedVoxelization(Voxelization):
         :param voxel_size: The size of the voxel edges.
         :type voxel_size: float
         :param min_voxel_grid_center: Minimum voxel center point of the voxel grid matrix, i.e 'matrix[0][0][0]'.
-            This point may not be a voxel of the voxelization, because it's the minimum center in each direction (XYZ).
+        This point may not be a voxel of the voxelization, because it's the minimum center in each direction (X, Y, Z).
         :type min_voxel_grid_center: tuple[float, float, float]
         """
         self._check_voxel_size_number_of_decimals(voxel_size)
 
         self.matrix = voxel_matrix
         self._min_voxel_grid_center = min_voxel_grid_center
-        self._voxel_size = voxel_size
 
-        PhysicalObject.__init__(self, name=name)
-
-    @property
-    def voxel_size(self) -> float:
-        """
-        Get the size of the voxels.
-
-        :return: The size of the voxels.
-        :rtype: float
-        """
-        return self._voxel_size
+        Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
     @property
     def voxel_centers(self) -> Set[Point]:
@@ -1105,7 +1065,7 @@ class MatrixBasedVoxelization(Voxelization):
         triangles = Voxelization._shell_to_triangles(shell)
         matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
 
-        return cls(matrix, matrix_origin_center, voxel_size, name)._crop_matrix()
+        return cls(matrix, matrix_origin_center, voxel_size, name).crop_matrix()
 
     @classmethod
     def from_volume_model(
@@ -1127,7 +1087,7 @@ class MatrixBasedVoxelization(Voxelization):
         triangles = Voxelization._volume_model_to_triangles(volume_model)
         matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
 
-        return cls(matrix, matrix_origin_center, voxel_size, name)._crop_matrix()
+        return cls(matrix, matrix_origin_center, voxel_size, name).crop_matrix()
 
     @classmethod
     def from_point_voxelization(cls, voxelization: "PointBasedVoxelization") -> "MatrixBasedVoxelization":
@@ -1192,12 +1152,12 @@ class MatrixBasedVoxelization(Voxelization):
         inverted_matrix = np.logical_not(self.matrix)
         return self.__class__(inverted_matrix, self._min_voxel_grid_center, self.voxel_size)
 
-    def flood_fill(self, start_indexes: Tuple[int, int, int], fill_with: bool) -> "MatrixBasedVoxelization":
+    def flood_fill(self, start: Tuple[int, int, int], fill_with: bool) -> "MatrixBasedVoxelization":
         """
         Perform a flood fill operation on the voxelization.
 
-        :param start_indexes: The indexes of the starting voxel in the 3D matrix for the flood fill.
-        :type start_indexes: tuple[int, int, int]
+        :param start: The indexes of the starting voxel in the 3D matrix for the flood fill.
+        :type start: tuple[int, int, int]
         :param fill_with: The value to fill the voxels with during the operation.
         :type fill_with: bool
 
@@ -1205,7 +1165,7 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: MatrixBasedVoxelization
         """
         return self.__class__(
-            flood_fill_matrix_3d(self.matrix, start_indexes, fill_with), self._min_voxel_grid_center, self.voxel_size
+            flood_fill_matrix_3d(self.matrix, start, fill_with), self._min_voxel_grid_center, self.voxel_size
         )
 
     def fill_outer_voxels(self) -> "MatrixBasedVoxelization":
@@ -1215,6 +1175,8 @@ class MatrixBasedVoxelization(Voxelization):
         :return: A new voxelization with outer voxels filled.
         :rtype: MatrixBasedVoxelization
         """
+        # pylint: disable=protected-access
+
         expanded_voxel_matrix = self._expand()
         outer_filled_expanded_voxel_matrix = expanded_voxel_matrix.flood_fill((0, 0, 0), True)
         outer_filled_voxel_matrix = outer_filled_expanded_voxel_matrix._reduce()
@@ -1279,19 +1241,6 @@ class MatrixBasedVoxelization(Voxelization):
             self.voxel_size,
         )
 
-    def _get_extents(self):
-        """
-        Get the minimum and maximum extents (coordinates) of the voxelization in world space.
-
-        :return: A tuple containing the minimum and maximum extents of the voxelization.
-        :rtype: tuple[np.ndarray, np.ndarray]
-        """
-        extents_min = np.round(np.array(self._min_voxel_grid_center), DECIMALS)
-        extents_max = np.round(
-            self._min_voxel_grid_center + self.matrix.shape * np.array([self.voxel_size for _ in range(3)]), 6
-        )
-        return extents_min, extents_max
-
     def _logical_operation(self, other: "MatrixBasedVoxelization", logical_operation):
         """
         Perform a logical operation (e.g., union, intersection, etc.) between two voxelizations.
@@ -1299,7 +1248,6 @@ class MatrixBasedVoxelization(Voxelization):
         :param other: The other MatrixBasedVoxelization to perform the operation with.
         :type other: MatrixBasedVoxelization
         :param logical_operation: The logical operation function to apply (e.g., np.logical_or).
-        :type logical_operation: function
 
         :return: A new MatrixBasedVoxelization resulting from the logical operation.
         :rtype: MatrixBasedVoxelization
@@ -1307,8 +1255,8 @@ class MatrixBasedVoxelization(Voxelization):
         if self.voxel_size != other.voxel_size:
             raise ValueError("Voxel sizes must be the same to perform boolean operations.")
 
-        self_min, self_max = self._get_extents()
-        other_min, other_max = other._get_extents()
+        self_min, self_max = self.min_voxel_grid_center, self.max_voxel_grid_center
+        other_min, other_max = other.min_voxel_grid_center, other.max_voxel_grid_center
 
         global_min = np.min([self_min, other_min], axis=0)
         global_max = np.max([self_max, other_max], axis=0)
@@ -1335,9 +1283,9 @@ class MatrixBasedVoxelization(Voxelization):
 
         result_matrix = logical_operation(new_self, new_other)
 
-        return self.__class__(result_matrix, tuple(global_min), self.voxel_size)._crop_matrix()
+        return self.__class__(result_matrix, tuple(global_min), self.voxel_size).crop_matrix()
 
-    def _crop_matrix(self) -> "MatrixBasedVoxelization":
+    def crop_matrix(self) -> "MatrixBasedVoxelization":
         """
         Crop the voxel matrix to the smallest possible size.
 
@@ -1692,7 +1640,7 @@ class Pixelization:
 class PixelMatrix:
     """Class to manipulate pixel matrix."""
 
-    def __init__(self, numpy_pixel_matrix: np.ndarray[np.bool_, np.ndim == 2]):
+    def __init__(self, numpy_pixel_matrix: NDArray[np.bool_]):
         self.matrix = numpy_pixel_matrix
 
     def __eq__(self, other_pixel_matrix: "PixelMatrix") -> bool:
@@ -1725,6 +1673,8 @@ class PixelMatrix:
         return PixelMatrix(reduced_matrix)
 
     def fill_outer_pixels(self) -> "PixelMatrix":
+        # pylint: disable=protected-access
+
         expanded_pixel_matrix = self._expand()
         outer_filled_expanded_pixel_matrix = expanded_pixel_matrix.flood_fill((0, 0), True)
         outer_filled_pixel_matrix = outer_filled_expanded_pixel_matrix._reduce()
