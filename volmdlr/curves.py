@@ -1159,7 +1159,6 @@ class Circle2D(CircleMixin, ClosedCurve):
         return intersections
 
     def ellipse_intersections(self, ellipse2d, abs_tol: float = 1e-7):
-
         """
         Finds the intersection points between this circle and an arc 2d.
 
