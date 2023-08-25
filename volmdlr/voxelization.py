@@ -14,6 +14,8 @@ from numpy.typing import NDArray
 from dessia_common.core import DessiaObject, PhysicalObject
 
 from volmdlr import Point2D, Point3D, Vector3D
+from volmdlr.edges import LineSegment2D
+from volmdlr.wires import ClosedPolygon2D
 from volmdlr.core import BoundingBox, BoundingRectangle, VolumeModel
 from volmdlr.faces import Triangle3D
 from volmdlr.shells import ClosedTriangleShell3D, Shell3D
@@ -660,9 +662,7 @@ class PointBasedVoxelization(Voxelization):
         """
         self._check_other_type(other)
 
-        return (
-            self.voxel_centers == other.voxel_centers and self.voxel_size == other.voxel_size
-        )
+        return self.voxel_centers == other.voxel_centers and self.voxel_size == other.voxel_size
 
     def __len__(self) -> int:
         """
@@ -835,9 +835,7 @@ class PointBasedVoxelization(Voxelization):
         self._check_other_type(other)
         self._check_other_element_size(other)
 
-        return self.__class__(
-            self.voxel_centers.symmetric_difference(other.voxel_centers), self.voxel_size
-        )
+        return self.__class__(self.voxel_centers.symmetric_difference(other.voxel_centers), self.voxel_size)
 
     def inverse(self) -> "PointBasedVoxelization":
         """
@@ -1082,9 +1080,9 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: bool
         """
         return (
-                self.voxel_size == other.voxel_size
-                and self.min_grid_center == other.min_grid_center
-                and np.array_equal(self.matrix, other.matrix)
+            self.voxel_size == other.voxel_size
+            and self.min_grid_center == other.min_grid_center
+            and np.array_equal(self.matrix, other.matrix)
         )
 
     def __len__(self) -> int:
@@ -1441,7 +1439,7 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
         return self.element_size
 
     @property
-    def pixel_centers(self) -> Set[Point]:
+    def pixel_centers(self) -> Set[Tuple[float, float]]:
         """
         Get the center point of each pixel.
 
@@ -1451,14 +1449,14 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
         return self._element_centers
 
     @property
-    def volume(self) -> float:
+    def area(self) -> float:
         """
-        Calculate the volume of the pixelization.
+        Calculate the area of the pixelization.
 
         :return: The volume of the pixelization.
         :rtype: float
         """
-        return len(self) * self.pixel_size**3
+        return len(self) * self.pixel_size**2
 
     @property
     def bounding_rectangle(self):
@@ -1476,35 +1474,37 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
     # CLASS METHODS
     @classmethod
     @abstractmethod
-    def from_shell(cls, shell: Shell3D, pixel_size: float, name: str = "") -> PixelizationType:
+    def from_line_segment(cls, line_segment: LineSegment2D, pixel_size: float, name: str = "") -> PixelizationType:
         """
-        Create a pixelization from a Shell3D.
+        Create a pixelization from a LineSegment2D.
 
-        :param shell: The Shell3D to create the pixelization from.
-        :type shell: Shell3D
+        :param line_segment: The LineSegment2D to create the pixelization from.
+        :type line_segment: LineSegment2D
         :param pixel_size: The size of each pixel.
         :type pixel_size: float
         :param name: Optional name for the pixelization.
         :type name: str
 
-        :return: A pixelization created from the Shell3D.
+        :return: A pixelization created from the LineSegment2D.
         :rtype: PixelizationType
         """
 
     @classmethod
     @abstractmethod
-    def from_volume_model(cls, volume_model: VolumeModel, pixel_size: float, name: str = "") -> PixelizationType:
+    def from_closed_polygon(
+        cls, closed_polygon: ClosedPolygon2D, pixel_size: float, name: str = ""
+    ) -> PixelizationType:
         """
-        Create a pixelization from a VolumeModel.
+        Create a pixelization from a ClosedPolygon2D.
 
-        :param volume_model: The VolumeModel to create the pixelization from.
-        :type volume_model: VolumeModel
+        :param closed_polygon: The ClosedPolygon2D to create the pixelization from.
+        :type closed_polygon: ClosedPolygon2D
         :param pixel_size: The size of each pixel.
         :type pixel_size: float
         :param name: Optional name for the pixelization.
         :type name: str
 
-        :return: A pixelization created from the VolumeModel.
+        :return: A pixelization created from the ClosedPolygon2D.
         :rtype: PixelizationType
         """
 
@@ -1527,74 +1527,44 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
         """
         return self._fill_enclosed_elements()
 
-    # DISPLAY METHODS
-
-    @abstractmethod
-    def plot(self, **kwargs):
+    # DISPLAY METHOD
+    def plot(self, ax=None, **kwargs):
         """
-        Generate volmdlr primitives.
+        Plots the pixels on a 2D plane.
 
+        :param ax: An existing figure to plot on.
         :param kwargs: Additional keyword arguments.
 
-        :return: A list of volmdlr primitives.
-        :rtype: List[ClosedTriangleShell3D]
+        :return: The plotted MatPlotLib figure.
         """
+        if ax is None:
+            _, ax = plt.subplots()
 
-    # HELPER METHODS
-
-    @staticmethod
-    def _shell_to_triangles(shell: Shell3D) -> List[Triangle]:
-        """
-        Helper method to convert a Shell3D to a list of triangles.
-
-        It uses the "triangulation" method to triangulate the Shell3D.
-
-        :param shell: The Shell3D to convert to triangles.
-        :type shell: Shell3D
-
-        :return: The list of triangles extracted from the triangulated Shell3D.
-        :rtype: List[Triangle]
-        """
-        triangulation = shell.triangulation()
-        return [
-            (
-                (
-                    float(triangulation.points[triangle[0]].x),
-                    float(triangulation.points[triangle[0]].y),
-                    float(triangulation.points[triangle[0]].z),
-                ),
-                (
-                    float(triangulation.points[triangle[1]].x),
-                    float(triangulation.points[triangle[1]].y),
-                    float(triangulation.points[triangle[1]].z),
-                ),
-                (
-                    float(triangulation.points[triangle[2]].x),
-                    float(triangulation.points[triangle[2]].y),
-                    float(triangulation.points[triangle[2]].z),
-                ),
+        for center in self.pixel_centers:
+            x, y = center
+            ax.add_patch(
+                patches.Rectangle(
+                    (x - self.pixel_size / 2, y - self.pixel_size / 2),  # Bottom left corner
+                    self.pixel_size,  # Width
+                    self.pixel_size,  # Height
+                    color="black",
+                )
             )
-            for triangle in triangulation.triangles
-        ]
 
-    @staticmethod
-    def _volume_model_to_triangles(volume_model: VolumeModel) -> List[Triangle]:
-        """
-        Helper method to convert a VolumeModel to a list of triangles.
+        # Setting the x and y limits to contain all the pixels
+        ax.set_xlim(
+            min(x[0] for x in self.pixel_centers) - self.pixel_size,
+            max(x[0] for x in self.pixel_centers) + self.pixel_size,
+        )
+        ax.set_ylim(
+            min(x[1] for x in self.pixel_centers) - self.pixel_size,
+            max(x[1] for x in self.pixel_centers) + self.pixel_size,
+        )
 
-        It uses the "triangulation" method to triangulate the shells of the VolumeModel.
+        ax.set_aspect("equal")  # Ensuring equal scaling for both axes
+        plt.show()
 
-        :param volume_model: The VolumeModel to convert to triangles.
-        :type volume_model: VolumeModel
-
-        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
-        :rtype: List[Triangle]
-        """
-        triangles = []
-        for shell in volume_model.get_shells():
-            triangles.extend(Pixelization._shell_to_triangles(shell))
-
-        return triangles
+        return ax
 
 
 class PointBasedPixelization:
