@@ -197,7 +197,9 @@ class TestMatrixBasedVoxelizationExport(unittest.TestCase):
         self.assertEqual((0.105, 0.095, 0.105), self.sphere_voxelization.max_grid_center)
 
     def test_bounding_box(self):
-        self.assertEqual(BoundingBox(-0.105, 0.115, -0.105, 0.105, -0.115, 0.115), self.sphere_voxelization.bounding_box)
+        self.assertEqual(
+            BoundingBox(-0.105, 0.115, -0.105, 0.105, -0.115, 0.115), self.sphere_voxelization.bounding_box
+        )
 
     def test_to_triangles(self):
         self.assertEqual(7456, len(self.sphere_voxelization.to_triangles()))
@@ -210,6 +212,11 @@ class TestMatrixBasedVoxelizationExport(unittest.TestCase):
 
         self.assertEqual(len(self.sphere_voxelization), len(point_voxelization))
         self.assertEqual(self.sphere_voxelization.min_grid_center, point_voxelization.min_grid_center)
+
+    def test_serialization(self):
+        self.assertEqual(
+            self.sphere_voxelization, MatrixBasedVoxelization.dict_to_object(self.sphere_voxelization.to_dict())
+        )
 
 
 if __name__ == "__main__":

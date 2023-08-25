@@ -1320,6 +1320,38 @@ class MatrixBasedVoxelization(Voxelization):
 
         return inner_filled_voxel_matrix
 
+    # SERIALIZATION
+    def to_dict(
+        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+    ) -> JsonSerializable:
+        """Specific 'to_dict' method to allow serialization of a numpy array."""
+        dict_ = self.base_dict()
+
+        dict_["matrix"] = self.matrix.tolist()
+        dict_["min_grid_center"] = self.min_grid_center
+        dict_["voxel_size"] = self.voxel_size
+        dict_["name"] = self.name
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(
+        cls,
+        dict_: JsonSerializable,
+        force_generic: bool = False,
+        global_dict=None,
+        pointers_memo: Dict[str, Any] = None,
+        path: str = "#",
+    ) -> "MatrixBasedVoxelization":
+        """Specific 'dict_to_object' method to allow deserialization of a numpy array."""
+
+        matrix = np.array(dict_["matrix"])
+        min_grid_center = tuple(dict_["min_grid_center"])
+        voxel_size = dict_["voxel_size"]
+        name = dict_["name"]
+
+        return cls(matrix, min_grid_center, voxel_size, name)
+
     # HELPER METHODS
     def to_point_based_voxelization(self) -> "PointBasedVoxelization":
         """
@@ -2230,6 +2262,38 @@ class MatrixBasedPixelization(Pixelization):
         inner_filled_pixel_matrix = self + outer_filled_pixel_matrix.inverse()
 
         return inner_filled_pixel_matrix
+
+    # SERIALIZATION
+    def to_dict(
+        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+    ) -> JsonSerializable:
+        """Specific 'to_dict' method to allow serialization of a numpy array."""
+        dict_ = self.base_dict()
+
+        dict_["matrix"] = self.matrix.tolist()
+        dict_["min_grid_center"] = self.min_grid_center
+        dict_["pixel_size"] = self.pixel_size
+        dict_["name"] = self.name
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(
+        cls,
+        dict_: JsonSerializable,
+        force_generic: bool = False,
+        global_dict=None,
+        pointers_memo: Dict[str, Any] = None,
+        path: str = "#",
+    ) -> "MatrixBasedPixelization":
+        """Specific 'dict_to_object' method to allow deserialization of a numpy array."""
+
+        matrix = np.array(dict_["matrix"])
+        min_grid_center = tuple(dict_["min_grid_center"])
+        pixel_size = dict_["pixel_size"]
+        name = dict_["name"]
+
+        return cls(matrix, min_grid_center, pixel_size, name)
 
     # HELPER METHODS
     def to_point_based_pixelization(self) -> "PointBasedPixelization":
