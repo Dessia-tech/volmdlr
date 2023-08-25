@@ -1914,22 +1914,26 @@ class Ellipse2D(ClosedCurve):
         u1, u2 = initial_point.x / self.major_axis, initial_point.y / self.minor_axis
         initial_angle = geometry.sin_cos_angle(u1, u2)
         angle_start = 0
+        abscissa_angle = vm_common_operations.ellipse_abscissa_angle_integration(
+            self, abscissa, angle_start, initial_angle)
+        # angle_start = 0
+        #
+        # def ellipse_arc_length(theta):
+        #     return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
+        #                      (self.minor_axis ** 2) * math.cos(theta) ** 2)
+        # iter_counter = 0
+        # while True:
+        #     res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
+        #     if math.isclose(res, abscissa, abs_tol=1e-8):
+        #         abscissa_angle = initial_angle
+        #         break
+        #     if res > abscissa:
+        #         increment_factor = (abs(initial_angle - angle_start) * (abscissa - res)) / (2 * abs(res))
+        #     else:
+        #         increment_factor = (abs(initial_angle - angle_start) * (abscissa - res)) / abs(res)
+        #     initial_angle += increment_factor
+        #     iter_counter += 1
 
-        def ellipse_arc_length(theta):
-            return math.sqrt((self.major_axis ** 2) * math.sin(theta) ** 2 +
-                             (self.minor_axis ** 2) * math.cos(theta) ** 2)
-        iter_counter = 0
-        while True:
-            res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-            if math.isclose(res, abscissa, abs_tol=1e-8):
-                abscissa_angle = initial_angle
-                break
-            if res > abscissa:
-                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res)) / (2 * abs(res))
-            else:
-                increment_factor = (abs(initial_angle - angle_start) * (abscissa - res)) / abs(res)
-            initial_angle += increment_factor
-            iter_counter += 1
         x = self.major_axis * math.cos(abscissa_angle)
         y = self.minor_axis * math.sin(abscissa_angle)
         return self.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
@@ -2255,6 +2259,7 @@ class Ellipse3D(ClosedCurve):
         :return: A list of points, containing all intersections between the two Ellipse3D.
         """
         intersections = []
+        # from volmdlr import surfaces
         plane1 = volmdlr.surfaces.Plane3D(self.frame)
         plane2 = volmdlr.surfaces.Plane3D(ellipse.frame)
         if plane1.is_coincident(plane2) and self.frame.w.is_colinear_to(ellipse.frame.w):
