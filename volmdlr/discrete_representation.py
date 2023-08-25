@@ -42,10 +42,11 @@ DECIMALS = 9  # Used to round numbers and avoid floating point arithmetic imprec
 
 class DiscreteRepresentation(ABC):
     """
-    Abstract base class for discrete representation in any dimension:
+    Abstract base class for discrete representation in any dimension.
+
+    It is used for:
         - Voxelization in 3D
         - Pixelization in 2D
-
 
     Any discrete representation follows the same approach:
     The representation is defined on an implicit grid, where each element is defined by its size.
@@ -1037,6 +1038,7 @@ class PointBasedVoxelization(Voxelization):
     def _voxels_intersecting_voxels(voxel_centers_array: np.ndarray, voxel_size: float) -> Set[_Point3D]:
         """
         Helper method to compute the center of the voxels that intersect with a given array of voxels.
+
         The returned voxels are part of an implicit 3D grid defined by the voxel size, whereas the given voxels centers
         are not.
 
@@ -1074,6 +1076,8 @@ class MatrixBasedVoxelization(Voxelization):
         name: str = "",
     ):
         """
+        Initialize a MatrixBasedVoxelization.
+
         :param voxel_matrix: The voxel numpy matrix object representing the voxelization.
         :type voxel_matrix: np.ndarray[np.bool_, np.ndim == 3]
         :param voxel_size: The size of the voxel edges.
@@ -1823,6 +1827,7 @@ class PointBasedPixelization(Pixelization):
     def intersection(self, other: "PointBasedPixelization") -> "PointBasedPixelization":
         """
         Create a pixelization that is the Boolean intersection of two pixelization.
+
         Both pixelization must have same pixel size.
 
         :param other: The other pixelization to compute the Boolean intersection with.
@@ -1952,6 +1957,8 @@ class MatrixBasedPixelization(Pixelization):
         name: str = "",
     ):
         """
+        Initialize a MatrixBasedPixelization.
+
         :param pixel_matrix: The pixel numpy matrix object representing the pixelization.
         :type pixel_matrix: np.ndarray[np.bool_, np.ndim == 3]
         :param pixel_size: The size of the pixel edges.

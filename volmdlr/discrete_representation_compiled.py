@@ -152,6 +152,7 @@ def triangle_intersects_voxel(
 ) -> bool:
     """
     Helper function to compute if there is an intersection between a 3D triangle and a voxel.
+
     This function uses the "Separating Axis Theorem".
 
     :param triangle: The triangle to check if it intersects with the voxel.
