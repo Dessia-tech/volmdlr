@@ -4408,8 +4408,6 @@ class RevolutionSurface3D(PeriodicalSurface):
                     return [edges.LineSegment3D(start3d, end3d)]
                 if self.edge.is_point_edge_extremity(start3d) and self.edge.is_point_edge_extremity(end3d):
                     primitive = primitive.simplify
-                    if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
-                        return [primitive]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
                         primitive = primitive.reverse()
                     return [primitive]
