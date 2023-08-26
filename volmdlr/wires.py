@@ -3549,7 +3549,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         points = [vmd.Node2D(*triangulate_result['vertices'][i, :]) for i in range(number_points)]
         return vmd.DisplayMesh2D(points, triangles=triangles)
 
-    def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
+    def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25,
+                                  include_edge_points: bool = True):
         """
         Use an n by m grid to triangulate the contour.
 
@@ -3572,7 +3573,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         for i, xi in enumerate(x):
             for j, yi in enumerate(y):
                 point = vmd.Node2D(xi, yi)
-                if self.point_belongs(point, include_edge_points=True) and point not in polygon_points:
+                if self.point_belongs(point, include_edge_points=include_edge_points) and point not in polygon_points:
                     grid_point_index[(i, j)] = point
                     points.append(point)
 
@@ -4236,11 +4237,13 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
         contour = cls(raw_edges, name=name)
-        if contour.is_ordered():
+        if contour.is_ordered(1e-6):
             return contour
-        list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
-        if list_edges:
-            return cls(list_edges, name=name)
+        list_contours = cls.contours_from_edges(raw_edges)
+        for contour in list_contours:
+        # list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
+            if contour.is_ordered():
+                return contour
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):

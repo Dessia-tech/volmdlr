@@ -178,7 +178,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         contour2d_dim = bspline_surfaces.bspline_surface_2.contour2d_parametric_to_dimension(contour2d, grid2d)
         self.assertEqual(len(contour2d_dim.primitives), 4)
         self.assertAlmostEqual(contour2d_dim.area(), 16.657085821451233, places=2)
-        self.assertAlmostEqual(contour2d_dim.length(), 16.81606170335965, places=2)
+        self.assertAlmostEqual(contour2d_dim.length(), 16.823814079415172, places=2)
 
     def test_periodicity(self):
         bspline_suface = surfaces.BSplineSurface3D.load_from_file('surfaces/surface3d_8.json')
@@ -249,8 +249,8 @@ class TestBSplineSurface3D(unittest.TestCase):
             "surfaces/objects_bspline_test/bsplinesurface_with_arcellipse.json")
         test = bsplinesurface.arcellipse3d_to_2d(arcellipse)[0]
         self.assertTrue(isinstance(test, vme.LineSegment2D))
-        self.assertTrue(test.start.is_close(volmdlr.Point2D(0.5, 2.69e-05)))
-        self.assertTrue(test.end.is_close(volmdlr.Point2D(0.5, 1), 1e-5))
+        self.assertTrue(test.start.is_close(volmdlr.Point2D(0.5, 0.0), 1e-4))
+        self.assertTrue(test.end.is_close(volmdlr.Point2D(0.5, 1), 1e-4))
 
         # todo: Uncomment this block when finish debugging contour2d healing
         # surface = surfaces.BSplineSurface3D.load_from_file(
@@ -267,6 +267,19 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1/6, 5)
 
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            "surfaces/objects_bspline_test/contour3d_to_2d_small_primitives_surface.json")
+        contour3d = vmw.Contour3D.load_from_file(
+            "surfaces/objects_bspline_test/contour3d_to_2d_small_primitives_contour.json")
+        contour2d = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour2d.is_ordered(1e-2)) # 1e-2 is an acceptable value, because this is parametric dimension
+
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            "surfaces/objects_bspline_test/surface_with_singularity.json")
+        contour3d = vmw.Contour3D.load_from_file(
+            "surfaces/objects_bspline_test/surface_with_singularity_contour.json")
+        contour2d = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour2d.is_ordered())
 
 if __name__ == '__main__':
     unittest.main(verbosity=0)

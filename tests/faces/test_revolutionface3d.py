@@ -1,4 +1,6 @@
 import unittest
+
+import volmdlr
 from volmdlr.core import VolumeModel
 from volmdlr.step import Step
 
@@ -12,6 +14,7 @@ class TestRevolutionFace3D(unittest.TestCase):
         model2 = step_import.to_volume_model()
         revolutionface = model2.primitives[0].primitives[0]
         self.assertTrue(revolutionface.outer_contour3d.is_ordered())
+        self.assertAlmostEqual(revolutionface.surface2d.area(), 0.00738824 * volmdlr.TWO_PI, 6)
 
 
 if __name__ == '__main__':

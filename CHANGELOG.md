@@ -81,6 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PlaneFace3D: distance_to_point -> point_distance
 - remove normalize() methods
 - Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
+- BSplineSurface3D: point3d_to_2d performance improvements.
+
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader

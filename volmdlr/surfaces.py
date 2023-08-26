@@ -11,7 +11,7 @@ from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
 from geomdl.fitting import approximate_surface, interpolate_surface
 from geomdl.operations import split_surface_u, split_surface_v
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
@@ -2397,8 +2397,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         if abs(z) < 1e-6:
             z = 0
 
-        zr = z / self.small_radius
-        phi = math.asin(zr)
+        z_r = z / self.small_radius
+        phi = math.asin(z_r)
         if abs(phi) < 1e-9:
             phi = 0
 
@@ -3966,7 +3966,7 @@ class ExtrusionSurface3D(Surface3D):
         point_at_curve_local = volmdlr.Point3D(x, y, 0)
         point_at_curve_global = self.frame.local_to_global_coordinates(point_at_curve_local)
 
-        u = self.edge.abscissa(point_at_curve_global, tol=1e-3) / self.edge.length()
+        u = self.edge.abscissa(point_at_curve_global, tol=1e-6) / self.edge.length()
         u = min(u, 1.0)
         return volmdlr.Point2D(u, v)
 
@@ -3979,7 +3979,7 @@ class ExtrusionSurface3D(Surface3D):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        self.frame.plot(ax=ax, ratio=z)
+        self.frame.plot(ax=ax, ratio=self.edge.length())
         for i in range(21):
             step = i / 20. * z
             wire = self.edge.translation(step * self.frame.w)
@@ -4029,6 +4029,8 @@ class ExtrusionSurface3D(Surface3D):
         # todo: needs detailed investigation
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
+        if start.is_close(end):
+            print("surfaces.py")
         if self.x_periodicity:
             start, end = self._verify_start_end_parametric_points(start, end, arc3d)
         return [edges.LineSegment2D(start, end, name="arc")]
@@ -4305,12 +4307,16 @@ class RevolutionSurface3D(PeriodicalSurface):
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
                 if middle_point.x == math.pi:
                     middle_point.x = -math.pi
-                start = volmdlr.Point2D(middle_point.x, start.y)
+                    if end.x == math.pi:
+                        end.x = middle_point.x
+                start.x = middle_point.x
             if self.edge.is_point_edge_extremity(arc3d.end):
                 middle_point = self.point3d_to_2d(arc3d.middle_point())
                 if middle_point.x == math.pi:
                     middle_point.x = -math.pi
-                end = volmdlr.Point2D(middle_point.x, end.y)
+                    if start.x == math.pi:
+                        start.x = middle_point.x
+                end.x = middle_point.x
         if math.isclose(start.y, end.y, rel_tol=0.01):
             point_after_start, point_before_end = self._reference_points(arc3d)
             point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
@@ -4392,24 +4398,43 @@ class RevolutionSurface3D(PeriodicalSurface):
         if self.edge.point_at_abscissa(abscissa1).is_close(self.edge.point_at_abscissa(abscissa2)):
             theta_i = 0.5 * (theta1 + theta2)
             interior = self.point2d_to_3d(volmdlr.Point2D(theta_i, abscissa1))
+            if start3d.is_close(end3d):
+                theta_e = 0.25 * (theta1 + theta2)
+                extra_point = self.point2d_to_3d(volmdlr.Point2D(theta_e, abscissa1))
+                temp_arc = edges.Arc3D.from_3_points(start3d, extra_point, interior)
+                circle = temp_arc.circle
+                if theta1 > theta2:
+                    circle = temp_arc.circle.reverse()
+                return [edges.FullArc3D.from_curve(circle, start3d)]
             return [edges.Arc3D.from_3_points(start3d, interior, end3d)]
 
         if math.isclose(theta1, theta2, abs_tol=1e-3):
             primitive = self.edge.rotation(self.axis_point, self.axis, 0.5 * (theta1 + theta2))
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if isinstance(self.edge, curves.Line3D):
+                if isinstance(self.edge, (curves.Line3D, edges.LineSegment3D)):
                     return [edges.LineSegment3D(start3d, end3d)]
                 if self.edge.is_point_edge_extremity(start3d) and self.edge.is_point_edge_extremity(end3d):
-                    if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
-                        return [primitive]
+                    primitive = primitive.simplify
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
-                        return [primitive.reverse()]
+                        primitive = primitive.reverse()
+                    return [primitive]
                 primitive = primitive.split_between_two_points(start3d, end3d)
+                if abscissa1 > abscissa2:
+                    primitive = primitive.reverse()
                 return [primitive]
         n = 10
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
         return [edges.BSplineCurve3D.from_points_interpolation(points, degree).simplify]
+
+    def bsplinecurve2d_to_3d(self, bspline_curve2d):
+        """
+        Is this right?.
+        """
+        n = len(bspline_curve2d.control_points)
+        points = [self.point2d_to_3d(p)
+                  for p in bspline_curve2d.discretization_points(number_points=n)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree)]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -4488,6 +4513,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         return self.edge.is_point_edge_extremity(point)
 
 
+
+
 class BSplineSurface3D(Surface3D):
     """
     A class representing a 3D B-spline surface.
@@ -4545,11 +4572,11 @@ class BSplineSurface3D(Surface3D):
         self.v_knots = v_knots
         self.u_multiplicities = u_multiplicities
         self.v_multiplicities = v_multiplicities
-        self.weights = weights
+        self._weights = weights
         self.rational = False
         if weights is not None:
             self.rational = True
-            self.weights = npy.asarray(weights, dtype=npy.float64)
+            self._weights = npy.asarray(weights, dtype=npy.float64)
 
         self._surface = None
         Surface3D.__init__(self, name=name)
@@ -4562,9 +4589,9 @@ class BSplineSurface3D(Surface3D):
         self._surface_curves = None
         self._knotvector = None
         self.ctrlptsw = None
-        if self.weights is not None:
+        if self._weights is not None:
             ctrlptsw = []
-            for point, w in zip(self.ctrlpts, self.weights):
+            for point, w in zip(self.ctrlpts, self._weights):
                 temp = [float(c * w) for c in point]
                 temp.append(float(w))
                 ctrlptsw.append(temp)
@@ -4587,7 +4614,7 @@ class BSplineSurface3D(Surface3D):
         if weights is None:
             weights = tuple(1.0 for _ in range(len(control_points)))
         else:
-            weights = tuple(self.weights)
+            weights = tuple(weights)
         return hash((tuple(control_points),
                      self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
                      self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v, weights))
@@ -4634,10 +4661,10 @@ class BSplineSurface3D(Surface3D):
             "knotvector": self.knotvector,
             "size": (self.nb_u, self.nb_v),
             "sample_size": self.sample_size,
-            "rational": not (self.weights is None),
+            "rational": not (self._weights is None),
             "precision": 18
         }
-        if self.weights is not None:
+        if self._weights is not None:
             datadict["control_points"] = self.ctrlptsw
         else:
             datadict["control_points"] = self.ctrlpts
@@ -4851,14 +4878,14 @@ class BSplineSurface3D(Surface3D):
     def surface(self):
         """Create nurbs surface for special evaluations."""
         if not self._surface:
-            if self.weights is None:
+            if self._weights is None:
                 surface = BSpline.Surface()
                 points = self.ctrlpts.tolist()
 
             else:
                 surface = NURBS.Surface()
-                points = [(control_point[0] * self.weights[i], control_point[1] * self.weights[i],
-                           control_point[2] * self.weights[i], self.weights[i])
+                points = [(control_point[0] * self._weights[i], control_point[1] * self._weights[i],
+                           control_point[2] * self._weights[i], self._weights[i])
                           for i, control_point in enumerate(self.control_points)]
             surface.degree_u = self.degree_u
             surface.degree_v = self.degree_v
@@ -4887,11 +4914,14 @@ class BSplineSurface3D(Surface3D):
         dict_['v_multiplicities'] = self.v_multiplicities
         dict_['u_knots'] = self.u_knots
         dict_['v_knots'] = self.v_knots
-        if self.weights is None:
-            dict_['weights'] = self.weights
-        else:
-            dict_['weights'] = self.weights.tolist()
+        dict_['weights'] = self.weights
         return dict_
+
+    @property
+    def weights(self):
+        if self._weights is None:
+            return self._weights
+        return self._weights.tolist()
 
     @property
     def x_periodicity(self):
@@ -5189,6 +5219,157 @@ class BSplineSurface3D(Surface3D):
         point_array = evaluate_surface(self.data, start=(u, v), stop=(u, v))[0]
         return volmdlr.Point3D(*point_array)
 
+    def _get_grid_bounds(self, params, delta_u, delta_v, sample_size_u, sample_size_v):
+        """
+        Update bounds and grid_size at each iteration of point inversion grid search.
+        """
+        u, v = params
+        if u == self.domain[0]:
+            u_start = self.domain[0]
+            u_stop = self.domain[0]
+            sample_size_u = 1
+
+        elif u == self.domain[1]:
+            u_start = self.domain[1]
+            u_stop = self.domain[1]
+            sample_size_u = 1
+        else:
+            u_start = max(u - delta_u, self.domain[0])
+            u_stop = min(u + delta_u, self.domain[1])
+
+        if v == self.domain[2]:
+            v_start = self.domain[2]
+            v_stop = self.domain[2]
+            sample_size_v = 1
+        elif v == self.domain[3]:
+            v_start = self.domain[3]
+            v_stop = self.domain[3]
+            sample_size_v = 1
+        else:
+            v_start = max(v - delta_v, self.domain[2])
+            v_stop = min(v + delta_v, self.domain[3])
+        return u_start, u_stop, v_start, v_stop, sample_size_u, sample_size_v
+
+    @staticmethod
+    def _update_parameters(bounds, sample_size_u, sample_size_v, index):
+        """
+        Helper function to update parameters of point inversion grid search at each iteration.
+        """
+        u_start, u_stop, v_start, v_stop = bounds
+        if sample_size_u == 1:
+            delta_u = 0.0
+            u = u_start
+            delta_v = (v_stop - v_start) / (sample_size_v - 1)
+            v = v_start + index * delta_v
+        elif sample_size_v == 1:
+            delta_u = (u_stop - u_start) / (sample_size_u - 1)
+            u = u_start + index * delta_u
+            delta_v = 0.0
+            v = v_start
+        else:
+            if index == 0:
+                u_idx, v_idx = 0, 0
+            else:
+                u_idx = int(index / sample_size_v)
+                v_idx = index % sample_size_v
+            delta_u = (u_stop - u_start) / (sample_size_u - 1)
+            delta_v = (v_stop - v_start) / (sample_size_v - 1)
+            u = u_start + u_idx * delta_u
+            v = v_start + v_idx * delta_v
+        return u, v, delta_u, delta_v
+
+    @staticmethod
+    def _find_index_min(matrix_points, point):
+        # Calculate distances
+        distances = npy.linalg.norm(matrix_points - point, axis=1)
+
+        return npy.argmin(distances), distances.min()
+
+    def _point_inversion_initialization(self, point3d_array):
+        """
+        Helper function to initialize parameters.
+        """
+        sample_size_u = 10
+        sample_size_v = 10
+        initial_index, minimal_distance = self._find_index_min(self.evalpts, point3d_array)
+
+        if initial_index == 0:
+            u_idx, v_idx = 0, 0
+        else:
+            u_idx = int(initial_index / self.sample_size_v)
+            v_idx = initial_index % self.sample_size_v
+
+        u_start, u_stop, v_start, v_stop = self.domain
+        delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
+        delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
+        u = u_start + u_idx * delta_u
+        v = v_start + v_idx * delta_v
+
+        if u == u_start:
+            u_stop = u + delta_u
+            sample_size_u = 2
+        elif u == u_stop:
+            u_start = u - delta_u
+            sample_size_u = 2
+        else:
+            u_start = max(u - delta_u, self.domain[0])
+            u_stop = min(u + delta_u, self.domain[1])
+
+        if v == v_start:
+            v_stop = v + delta_v
+            sample_size_v = 2
+        elif v == v_stop:
+            v_start = v - delta_v
+            sample_size_v = 2
+        else:
+            v_start = max(v - delta_v, self.domain[2])
+            v_stop = min(v + delta_v, self.domain[3])
+        return u, v, u_start, u_stop, v_start, v_stop, delta_u, delta_v, sample_size_u, sample_size_v, minimal_distance
+
+    def point_inversion_grid_search(self, point3d, acceptable_distance):
+        """
+        Find the parameters (u, v) of a 3D point on the BSpline surface using a grid search algorithm.
+        """
+        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
+        u, v, u_start, u_stop, v_start, v_stop, delta_u, delta_v, sample_size_u, sample_size_v, minimal_distance = \
+            self._point_inversion_initialization(point3d_array)
+        datadict = {
+            "degree": (self.degree_u, self.degree_v),
+            "knotvector": self.knotvector,
+            "size": (self.nb_u, self.nb_v),
+            "sample_size": [sample_size_u, sample_size_v],
+            "rational": not (self._weights is None),
+            "precision": 18
+        }
+        if self._weights is not None:
+            datadict["control_points"] = self.ctrlptsw
+        else:
+            datadict["control_points"] = self.ctrlpts
+        last_distance = 0.0
+        count = 0
+        while minimal_distance > acceptable_distance and count < 15:
+            if count > 0:
+                u_start, u_stop, v_start, v_stop, sample_size_u, sample_size_v = self._get_grid_bounds(
+                    (u, v), delta_u, delta_v, sample_size_u, sample_size_v)
+
+            if sample_size_u == 1 and sample_size_v == 1:
+                return (u, v), minimal_distance
+            datadict["sample_size"] = [sample_size_u, sample_size_v]
+            matrix = npy.asarray(evaluate_surface(datadict,
+                                         start=(u_start, v_start),
+                                         stop=(u_stop, v_stop)), dtype=npy.float64)
+            index, distance = self._find_index_min(matrix, point3d_array)
+            if distance < minimal_distance:
+                minimal_distance = distance
+            if abs(distance - last_distance) < acceptable_distance * 0.01:
+                return (u, v), minimal_distance
+            u, v, delta_u, delta_v = self._update_parameters([u_start, u_stop, v_start, v_stop], sample_size_u,
+                                                             sample_size_v, index)
+            last_distance = distance
+            count += 1
+
+        return (u, v), minimal_distance
+
     def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-6):
         """
         Evaluates the parametric coordinates (u, v) of a 3D point (x, y, z).
@@ -5200,7 +5381,6 @@ class BSplineSurface3D(Surface3D):
         :return: The parametric coordinates (u, v) of the point.
         :rtype: :class:`volmdlr.Point2D`
         """
-
         def sort_func(x):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
 
@@ -5215,8 +5395,18 @@ class BSplineSurface3D(Surface3D):
                                       vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
 
-        min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
+        x0, distance = self.point_inversion_grid_search(point3d, tol)
+        if distance < tol:
+            return volmdlr.Point2D(*x0)
 
+        min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
+        res = minimize(fun, x0=npy.array(x0), jac=True,
+                       bounds=[(min_bound_x, max_bound_x),
+                               (min_bound_y, max_bound_y)])
+        if res.fun <= tol:
+            return volmdlr.Point2D(*res.x)
+
+        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
         delta_bound_x = max_bound_x - min_bound_x
         delta_bound_y = max_bound_y - min_bound_y
         x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
@@ -5231,24 +5421,9 @@ class BSplineSurface3D(Surface3D):
                (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
                (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
                (0.33333333, 0.009), (0.5555555, 0.0099)]
-
-        # Sort the initial conditions
+        #Sort the initial conditions
         x0s.sort(key=sort_func)
-        matrix = self.evalpts
-        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
-
-        # Calculate distances
-        distances = npy.linalg.norm(matrix - point3d_array, axis=1)
-
-        # Find the minimal index
-        index = npy.argmin(distances)
-        # Find the parametric coordinates of the point
-
-        if self.x_periodicity or self.y_periodicity:
-            x0s.insert(1, self.vertices[index])
-        else:
-            x0s.insert(0, self.vertices[index])
-
+        x0s = [x0] + x0s
         if self.weights is not None:
             control_points = self.ctrlptsw
         else:
@@ -5288,8 +5463,9 @@ class BSplineSurface3D(Surface3D):
         A line segment on a BSplineSurface3D will be in any case a line in 2D?.
 
         """
-        start = self.point3d_to_2d(linesegment3d.start)
-        end = self.point3d_to_2d(linesegment3d.end)
+        tol = 1e-6 if linesegment3d.length() > 1e-5 else 1e-8
+        start = self.point3d_to_2d(linesegment3d.start, tol)
+        end = self.point3d_to_2d(linesegment3d.end, tol)
         if self.x_periodicity:
             if start.x != end.x:
                 end = volmdlr.Point2D(start.x, end.y)
@@ -5367,7 +5543,8 @@ class BSplineSurface3D(Surface3D):
 
         n = min(len(bspline_curve3d.control_points), 20)  # Limit points to avoid non-convergence
         points3d = bspline_curve3d.discretization_points(number_points=n)
-        points = [self.point3d_to_2d(p) for p in points3d]
+        tol = 1e-6 if lth > 1e-5 else 1e-8
+        points = [self.point3d_to_2d(p, tol) for p in points3d]
 
         if self.u_closed() or self.v_closed():
             points = self.check_start_end_parametric_points(bspline_curve3d, points, points3d)
@@ -5384,8 +5561,10 @@ class BSplineSurface3D(Surface3D):
 
         if self._is_line_segment(points):
             return [edges.LineSegment2D(points[0], points[-1])]
-
-        return [edges.BSplineCurve2D.from_points_interpolation(points=points, degree=bspline_curve3d.degree)]
+        brep = edges.BSplineCurve2D.from_points_interpolation(points=points, degree=bspline_curve3d.degree)
+        if brep:
+            return [brep]
+        return None
 
     @staticmethod
     def _handle_periodic_curve(curve_domain, points, axis):
@@ -5422,6 +5601,8 @@ class BSplineSurface3D(Surface3D):
     @staticmethod
     def _is_line_segment(points):
         """Helper function to check if the BREP can be a line segment."""
+        if points[0].is_close(points[-1]):
+            return False
         linesegment = edges.LineSegment2D(points[0], points[-1])
         for point in points:
             if not linesegment.point_belongs(point, abs_tol=1e-4):
@@ -5459,8 +5640,9 @@ class BSplineSurface3D(Surface3D):
         number_points = max(self.nb_u, self.nb_v)
         degree = min(self.degree_u, self.degree_v)
         points = []
+        tol = 1e-6 if arc3d.length() > 1e-5 else 1e-8
         for point3d in arc3d.discretization_points(number_points=number_points):
-            point2d = self.point3d_to_2d(point3d)
+            point2d = self.point3d_to_2d(point3d, tol)
             if not volmdlr.core.point_in_list(point2d, points):
                 points.append(point2d)
         start = points[0]
@@ -5505,7 +5687,8 @@ class BSplineSurface3D(Surface3D):
         # todo: Is this right? Needs detailed investigation
         number_points = max(self.nb_u, self.nb_v)
         degree = max(self.degree_u, self.degree_v)
-        points = [self.point3d_to_2d(point3d) for point3d in
+        tol = 1e-6 if arcellipse3d.length() > 1e-5 else 1e-8
+        points = [self.point3d_to_2d(point3d, tol) for point3d in
                   arcellipse3d.discretization_points(number_points=number_points)]
         start = points[0]
         end = points[-1]
@@ -5534,7 +5717,7 @@ class BSplineSurface3D(Surface3D):
         linesegment = edges.LineSegment2D(start, end, name="parametric.arc")
         flag = True
         for point in points:
-            if not linesegment.point_belongs(point):
+            if not linesegment.point_belongs(point, 1e-3):
                 flag = False
                 break
         if flag:
@@ -7156,12 +7339,12 @@ class BSplineSurface3D(Surface3D):
 
         def get_local_discretization_points(start_point, end_points):
             distance = start_point.point_distance(end_points)
-            maximum_linear_distance_reference_point = 1e-5
+            maximum_linear_distance_reference_point = 1e-4
             if distance < maximum_linear_distance_reference_point:
                 return []
             number_points = max(int(distance / maximum_linear_distance_reference_point), 2)
 
-            local_discretization = [self.point3d_to_2d(point)
+            local_discretization = [self.point3d_to_2d(point, 1e-8)
                                     for point in edge3d.local_discretization(
                     start_point, end_points, number_points)]
             return local_discretization
@@ -7209,7 +7392,7 @@ class BSplineSurface3D(Surface3D):
             if local_discretization_points:
                 temp_points = points[:-2] + local_discretization_points[:-1]
             else:
-                temp_points = points
+                temp_points = points[:-1]
             temp_edge2d = get_temp_edge2d(temp_points)
             singularity_line = get_singularity_line(umin, umax, vmin, vmax, temp_points[-1])
             points[-1] = self.fix_start_end_singularity_point_at_parametric_domain(temp_edge2d,

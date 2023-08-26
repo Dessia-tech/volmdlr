@@ -1189,11 +1189,18 @@ class BSplineCurve(Edge):
         :rtype: float
         """
         if not self._length:
-            if self.delta != 0.01:
-                self.delta = 0.01
-            if self._eval_points is None:
+            if self._eval_points is None and self.delta == 0.01:
                 self.evaluate()
-            differences = npy.diff(self._eval_points, axis=0)
+                points = self._eval_points
+            elif self.delta == 0.01:
+                points = self._eval_points
+            else:
+                datadict = self.data
+                datadict["sample_size"] = 100
+                start, stop = self.domain
+                points = npy.asarray(evaluate_curve(datadict, start=start, stop=stop), dtype=npy.float64)
+
+            differences = npy.diff(points, axis=0)
 
             squared_distances = npy.sum(differences ** 2, axis=1)
 
@@ -1488,6 +1495,11 @@ class BSplineCurve(Edge):
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
+        set_points = set(points)
+        if len(set_points) < len(points) - 1:
+            warnings.warn("Not able to perform point interpolation."
+                          "There are repeated points not in the edges of the point list.")
+            return None
         point_name = 'Point' + points[0].__class__.__name__[-2:]
         ctrlpts, knots, knot_multiplicities = fitting.interpolate_curve(
             npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points], dtype=npy.float64),
@@ -1717,7 +1729,7 @@ class BSplineCurve(Edge):
         """
         return [self.point_at_abscissa(self.abscissa(point))]
 
-    def local_discretization(self, point1, point2, number_points: int = 10):
+    def local_discretization(self, point1, point2, number_points: int = 10, tol: float = 1e-6):
         """
         Gets n discretization points between two given points of the edge.
 
@@ -1729,12 +1741,12 @@ class BSplineCurve(Edge):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         # special case periodical bsplinecurve
-        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=1e-6):
+        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=tol):
             abscissa2 = self.length()
         discretized_points_between_1_2 = []
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
             abscissa_point = self.point_at_abscissa(abscissa)
-            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2, tol=tol):
                 discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
 
@@ -2550,8 +2562,11 @@ class ArcMixin:
             return [None, self.copy()]
         if split_point.is_close(self.end, tol):
             return [self.copy(), None]
-        return [self.__class__(self.circle, self.start, split_point, self.is_trigo),
-                self.__class__(self.circle, split_point, self.end, self.is_trigo)]
+        if self.__class__.__name__[-2:] == "2D":
+            return [self.__class__(self.circle, self.start, split_point, self.is_trigo),
+                    self.__class__(self.circle, split_point, self.end, self.is_trigo)]
+        return [self.__class__(self.circle, self.start, split_point),
+                self.__class__(self.circle, split_point, self.end)]
 
     def get_shared_section(self, other_arc2, abs_tol: float = 1e-6):
         """
@@ -2750,9 +2765,9 @@ class Arc2D(ArcMixin, Edge):
 
         """
         distance_point_to_center = point.point_distance(self.circle.center)
-        if not math.isclose(distance_point_to_center, self.circle.radius, abs_tol=abs_tol):
+        if not math.isclose(distance_point_to_center, self.circle.radius, rel_tol=0.005):
             return False
-        if point.is_close(self.start) or point.is_close(self.end):
+        if point.is_close(self.start, abs_tol) or point.is_close(self.end, abs_tol):
             return True
         clockwise_arc = self.reverse() if self.is_trigo else self
         vector_start = clockwise_arc.start - clockwise_arc.circle.center
@@ -3898,8 +3913,8 @@ class FullArcEllipse(Edge):
         :return: True is point lies on the ellipse, False otherwise
         """
         new_point = self.ellipse.frame.global_to_local_coordinates(point)
-        return math.isclose(new_point.x ** 2 / self.ellipse.major_axis ** 2 +
-                            new_point.y ** 2 / self.ellipse.minor_axis ** 2, 1.0, abs_tol=abs_tol)
+        return math.isclose(round(new_point.x ** 2 / self.ellipse.major_axis ** 2 +
+                            new_point.y ** 2 / self.ellipse.minor_axis ** 2, 2), 1.0, abs_tol=abs_tol)
 
     def get_reverse(self):
         """
@@ -4823,7 +4838,9 @@ class BSplineCurve3D(BSplineCurve):
         if not same_sense:
             bspline_curve = self.reverse()
         n = len(bspline_curve.control_points)
-        local_discretization = bspline_curve.local_discretization(point1, point2, n)
+        local_discretization = bspline_curve.local_discretization(point1, point2, n, tol=1e-8)
+        if len(local_discretization) <= bspline_curve.degree:
+            return bspline_curve
         return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
@@ -5531,7 +5548,7 @@ class Arc3D(ArcMixin, Edge):
         return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(
             surface, 0, angle, arc2d.angle1, arc2d.angle2)]
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, *args, **kwargs):
         """
         Converts the object to a STEP representation.
 
@@ -5848,8 +5865,13 @@ class FullArc3D(FullArcMixin, Arc3D):
         return cls(circle, start_end)
 
     @classmethod
-    def from_curve(cls, circle):
-        return cls(circle, circle.center + circle.frame.u * circle.radius)
+    def from_curve(cls, circle, start_end=None):
+        """
+        Initialize a full arc from a circle.
+        """
+        if start_end is None:
+            start_end = circle.center + circle.frame.u * circle.radius
+        return cls(circle, start_end)
 
 
 class ArcEllipse3D(Edge):
