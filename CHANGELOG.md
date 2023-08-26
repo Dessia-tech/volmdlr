@@ -57,12 +57,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add error protection stl
 - Sweep - add raise ValueError if section too big in comparision to arc radiuses
 - Update cython version requirement in setup.py
+- Step import: handles when there is an empty assembly in the file.
 - Ellipse2D: point_at_abscissa
 - ultis.common_operations: get_edge_distance_to_point and get_get_abscissa_discretization from edges so it can be used in curves too.
 - edges.Edge._generic_minimum_distance
 - LineSegment3D: distance_linesegment
 - BSpline3D: linesegment_intersections
-
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
