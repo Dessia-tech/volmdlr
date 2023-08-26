@@ -1,10 +1,29 @@
 # cython: language_level=3
+# distutils: language = c++
 """
 Helpers.
 """
-from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from cython cimport cdivision
+from libcpp.vector cimport vector
 import cython.cimports.libc.math as math_c
+
+
+@cdivision(True)
+cdef double binomial_coefficient(int k, int i):
+    """
+    Computes the binomial coefficient (denoted by *k choose i*).
+    """
+    # Special case
+    if i > k:
+        return 0.0
+    if i == 0 or i == k:
+        return 1.0
+    # Compute binomial coefficient
+    cdef int j
+    cdef double result = 1.0
+    for j in range(i):
+        result *= (float(k - j) / float(i - j))
+    return result
 
 
 @cdivision(True)
@@ -13,7 +32,7 @@ cpdef double round_c(double num, int digits=0):
     return float(math_c.round(num * multiplier)) / multiplier
 
 
-def linspace(double start, double stop, int num, int decimals=18):
+cdef vector[double] linspace(double start, double stop, int num, int decimals):
     """Returns a list of evenly spaced numbers over a specified interval.
 
     Inspired from Numpy's linspace function: https://github.com/numpy/numpy/blob/master/numpy/core/function_base.py
@@ -32,20 +51,18 @@ def linspace(double start, double stop, int num, int decimals=18):
     cdef double delta
     cdef int div, x
     cdef double step = 0.0
-    cdef double *result = <double *>PyMem_Malloc(num * sizeof(double))
+    cdef vector[double] result = vector[double](num, 0.0)
 
     if abs(start - stop) <= 10e-8:
         return [start]
 
     div = num - 1
     delta = stop - start
-    try:
-        for x in range(num):
-            step = start + (x * delta / div)
-            result[x] = round_c(step, decimals)
-        return [result[i] for i in range(num)]
-    finally:
-        PyMem_Free(result)  # Free the dynamically allocated memory
+
+    for x in range(num):
+        step = start + (x * delta / div)
+        result[x] = round_c(step, decimals)
+    return result
 
 
 def generate_knot_vector(degree, num_ctrlpts, **kwargs):
@@ -92,7 +109,7 @@ def generate_knot_vector(degree, num_ctrlpts, **kwargs):
     knot_vector = [0.0 for _ in range(0, num_repeat)]
 
     # Middle knots
-    knot_vector += linspace(0.0, 1.0, num_segments + 2)
+    knot_vector += linspace(0.0, 1.0, num_segments + 2, 18)
 
     # Last knots
     knot_vector += [1.0 for _ in range(0, num_repeat)]
