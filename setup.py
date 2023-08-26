@@ -151,6 +151,7 @@ setup(
                            "volmdlr/bspline_compiled.pyx",
                            "volmdlr/bspline_fitting.pyx",
                            "volmdlr/bspline_evaluators.pyx",
+                           "volmdlr/discrete_representation_compiled.py",
                            "volmdlr/nurbs/core.pyx",
                            "volmdlr/nurbs/helpers.pyx",
                            "volmdlr/nurbs/fitting.py"]),
