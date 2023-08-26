@@ -5464,8 +5464,6 @@ class BSplineSurface3D(Surface3D):
                 points.append(point2d)
         start = points[0]
         end = points[-1]
-        # min_bound_x, max_bound_x = self.surface.domain[0]
-        # min_bound_y, max_bound_y = self.surface.domain[1]
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         if self.x_periodicity:
             points = self._repair_periodic_boundary_points(arc3d, points, 'x')
