@@ -249,7 +249,7 @@ def split_curve(obj, param, **kwargs):
     for _ in range(0, temp_obj.degree + 1):
         curve2_kv.insert(0, param)
 
-    # Control points (use Pw if rational)
+    # Control points
     control_points = temp_obj.control_points
     curve1_ctrlpts = control_points[0:knot_span + insertion_count]
     curve2_ctrlpts = control_points[knot_span + insertion_count - 1:]

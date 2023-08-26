@@ -779,6 +779,12 @@ class Surface3D(DessiaObject):
         self.frame = frame
         DessiaObject.__init__(self, name=name)
 
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
+        """
+        Abstract method.
+        """
+        raise NotImplementedError(f"plot method is not implemented for {self.__class__.__name__}")
+
     def point2d_to_3d(self, point2d):
         raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
 
@@ -4638,11 +4644,11 @@ class BSplineSurface3D(Surface3D):
                 return False
         return True
 
-    def _data_eq(self, other):
+    def _data_eq(self, other_object):
         """
         Defines dessia common object equality.
         """
-        return self == other
+        return self == other_object
 
     @property
     def data(self):
@@ -5017,11 +5023,6 @@ class BSplineSurface3D(Surface3D):
         start_v = kwargs.get('start_v', knotvector_v[self.degree_v])
         stop_v = kwargs.get('stop_v', knotvector_v[-(self.degree_v + 1)])
 
-        # # Check parameters
-        # if self._kv_normalize:
-        #     if not utilities.check_params([start_u, stop_u, start_v, stop_v]):
-        #         raise GeomdlException("Parameters should be between 0 and 1")
-
         # Evaluate and cache
         self._eval_points = npy.asarray(evaluate_surface(self.data,
                                                          start=(start_u, start_v),
@@ -5076,12 +5077,6 @@ class BSplineSurface3D(Surface3D):
                 for v in v_vector:
                     vertices.append((u, v))
             self._vertices = vertices
-            # u_vector = npy.linspace(u_min, u_max, self.sample_size_u, dtype=npy.float64)
-            # v_vector = npy.linspace(v_min, v_max, self.sample_size_v, dtype=npy.float64)
-            #
-            # u_mesh, v_mesh = npy.meshgrid(u_vector, v_vector)
-            # self._vertices = npy.column_stack((u_mesh.ravel(), v_mesh.ravel()))
-
         return self._vertices
 
     def control_points_matrix(self, coordinates):
@@ -5155,13 +5150,7 @@ class BSplineSurface3D(Surface3D):
         to u k times and v l times
         :rtype: List[`volmdlr.Vector3D`]
         """
-        # if self.surface.rational:
-        #     # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
-        #     derivatives = volmdlr.rational_derivatives(self.surface.data, (u, v), order)
-        # else:
-        #     # derivatives = self._derivatives(self.surface.data, (u, v), order)
-        #     derivatives = volmdlr.derivatives(self.surface.data, (u, v), order)
-        if self._weights is not None:
+        if self.weights is not None:
             control_points = self.ctrlptsw
         else:
             control_points = self.ctrlpts
@@ -5220,6 +5209,9 @@ class BSplineSurface3D(Surface3D):
         return blending_mat
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        """
+        Evaluate the surface at a given parameter coordinate.
+        """
         u, v = point2d
         u = float(min(max(u, 0.0), 1.0))
         v = float(min(max(v, 0.0), 1.0))
