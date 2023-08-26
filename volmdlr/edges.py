@@ -5548,7 +5548,7 @@ class Arc3D(ArcMixin, Edge):
         return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(
             surface, 0, angle, arc2d.angle1, arc2d.angle2)]
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, *args, **kwargs):
         """
         Converts the object to a STEP representation.
 
