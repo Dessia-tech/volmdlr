@@ -2767,7 +2767,7 @@ class Arc2D(ArcMixin, Edge):
         distance_point_to_center = point.point_distance(self.circle.center)
         if not math.isclose(distance_point_to_center, self.circle.radius, rel_tol=0.005):
             return False
-        if point.is_close(self.start) or point.is_close(self.end):
+        if point.is_close(self.start, abs_tol) or point.is_close(self.end, abs_tol):
             return True
         clockwise_arc = self.reverse() if self.is_trigo else self
         vector_start = clockwise_arc.start - clockwise_arc.circle.center
