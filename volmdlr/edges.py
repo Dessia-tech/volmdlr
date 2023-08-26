@@ -3523,23 +3523,6 @@ class ArcEllipse2D(Edge):
         angle_start, initial_angle = self.valid_abscissa_start_end_angle(initial_angle)
         abscissa_angle = vm_common_operations.ellipse_abscissa_angle_integration(
             self.ellipse, abscissa, angle_start, initial_angle)
-
-        # def ellipse_arc_length(theta):
-        #     return math.sqrt((self.ellipse.major_axis ** 2) * math.sin(theta) ** 2 +
-        #                      (self.ellipse.minor_axis ** 2) * math.cos(theta) ** 2)
-        #
-        # iter_counter = 0
-        # while True:
-        #     res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-        #     if math.isclose(res, abscissa, abs_tol=1e-8):
-        #         abscissa_angle = initial_angle
-        #         break
-        #     if res > abscissa:
-        #         increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(2 * abs(res))
-        #     else:
-        #         increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/abs(res)
-        #     initial_angle += increment_factor
-        #     iter_counter += 1
         x = self.ellipse.major_axis * math.cos(abscissa_angle)
         y = self.ellipse.minor_axis * math.sin(abscissa_angle)
         return self.ellipse.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
