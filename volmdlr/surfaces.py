@@ -1518,6 +1518,7 @@ class Plane3D(Surface3D):
 PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
 PLANE3D_OYZ = Plane3D(volmdlr.OYZX)
 PLANE3D_OZX = Plane3D(volmdlr.OZXY)
+PLANE3D_OXZ = Plane3D(volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Z3D, volmdlr.Y3D))
 
 
 class PeriodicalSurface(Surface3D):
@@ -5646,7 +5647,6 @@ class BSplineSurface3D(Surface3D):
                 points.append(point2d)
         start = points[0]
         end = points[-1]
-
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         if self.x_periodicity:
             points = self._repair_periodic_boundary_points(arc3d, points, 'x')

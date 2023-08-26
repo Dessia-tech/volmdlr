@@ -108,6 +108,21 @@ Tore's
 deserialization
 Trimesh
 networkx
+voxel
+voxels
+voxelization
+voxelizations
+pixelization
+pixelizations
+octree
+voxelized
+Iterable
+iterable
+voxelize
+undirected
+Cython
+discretize
+discretizing
 arcellipse
 bendjebla
 vmc
@@ -122,4 +137,5 @@ discretizing
 argmax
 pre
 scipy
+ndim
 RGB
