@@ -1,245 +1,321 @@
-=================
-D I S T A N C E S
-=================
+=========
+DISTANCES
+=========
 
-Distance between two points
-***************************
+This section presents how to compute distances between `volmdlr` objects.
 
-.. plot::
-    :include-source:
-    :align: center
+Distance between a point and another object
+-------------------------------------------------
 
-    import volmdlr
-
-
-    point1 = volmdlr.Point2D(0.0, 0.0)
-    point2 = volmdlr.Point2D(1.0, 1.0)
-
-    distance_point1_point2 = point1.point_distance(point2)
-    print(distance_point1_point2)
-
-    ax = point1.plot(color='k')
-    point2.plot(ax, color='c')
-
-
-Distance between point and another object
-*****************************************
-
-To calculate the distance between a point and **any** other volmdlr object is enough to use just the `point_distance` method.
-If an abject does not have yet a point_distance method, it you raise you an error.
+To compute the distance between a point and **any** other `volmdlr` object, the `point_distance` method proves
+sufficient.
+In cases where an object lacks the `point_distance` method, attempting to use it will result in an error being raised.
 
 Here are some examples:
 
-Distance LineSegment2D to Point2D:
+Distance between two ``Point2D``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. plot::
     :include-source:
     :align: center
 
-    import volmdlr
-    from volmdlr import edges
-    from volmdlr.core import EdgeStyle
+    from volmdlr import Point2D
 
-    point1 = volmdlr.Point2D(0.0, 0.0)
-    linesegment2d = edges.LineSegment2D(volmdlr.Point2D(1.0, 1.0), volmdlr.Point2D(2.0, -1))
+    # Define the points
+    point1 = Point2D(0.0, 0.0)
+    point2 = Point2D(1.0, 1.0)
 
-    distance_linesegment2d_point1, other_point = linesegment2d.point_distance(point1, return_other_point=True)
+    # Compute and print the distance
+    distance = point1.point_distance(point2)
+    print(f"Distance between point1 and point2: {distance}")
 
-    ax = point1.plot()
-    linesegment2d.plot(ax, EdgeStyle(color='c'))
-    other_point.plot(ax, 'g')
+    # Plot the points
+    ax = point1.plot(color="k")
+    point2.plot(ax, color="c")
 
-.. code-block:: python
+Expected output:
 
-   print('distance_linesegment2d_point1: ', distance_linesegment2d_point1)
-   >>> distance_linesegment2d_point1:  1.3416407864998738
+.. code-block:: none
 
-Distance PlaneFace3D to Point2D:
+    Distance between point1 and point2: 1.4142135623730951
+
+
+Distance between ``Point2D`` and a ``LineSegment2D``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. plot::
     :include-source:
     :align: center
 
-    import volmdlr
-    from volmdlr import faces, surfaces
+    from volmdlr import Point2D
     from volmdlr.core import EdgeStyle
+    from volmdlr.edges import LineSegment2D
 
-    plane = surfaces.Plane3D(volmdlr.OXYZ)
-    face = faces.PlaneFace3D.from_surface_rectangular_cut(plane, -1, 1, -1, 1)
-    point = volmdlr.Point3D(0.2, -0.3, 0.7)
-    distance_face_point, pt = face.point_distance(point, True)
-    ax = face.plot()
-    point.plot(ax, 'r')
-    pt.plot(ax, 'b')
+    # Define a point and a line segment
+    point = Point2D(0.0, 0.0)
+    line_segment = LineSegment2D(Point2D(1.0, 1.0), Point2D(2.0, -1.0))
 
-.. code-block:: python
+    # Compute and print the distance
+    distance, closest_point = line_segment.point_distance(point, return_other_point=True)
+    print(f"Distance between point and line_segment: {distance}")
 
-   print('distance_face_point: ', distance_face_point)
-   >>> distance_face_point: 0.7
+    # Plot the points and the line segment
+    ax = point.plot()
+    line_segment.plot(ax, EdgeStyle(color="c"))
+    closest_point.plot(ax, "g")
+
+Expected output:
+
+.. code-block:: none
+
+    Distance between point and line_segment: 1.3416407864998738
+
+
+Distance between a ``Point3D`` and a ``PlaneFace3D``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. plot::
+    :include-source:
+    :align: center
+
+    from volmdlr import OXYZ, Point3D
+    from volmdlr.faces import PlaneFace3D
+    from volmdlr.surfaces import Plane3D
+
+    # Define a point and a plane face
+    point = Point3D(0.2, -0.3, 0.7)
+    plane = Plane3D(OXYZ)
+    plane_face = PlaneFace3D.from_surface_rectangular_cut(plane, -1, 1, -1, 1)
+
+    # Compute and print the distance
+    distance, closest_point = plane_face.point_distance(point, True)
+    print(f"Distance between point and plane_face: {distance}")
+
+    # Plot the points and the plane face
+    ax = plane_face.plot()
+    point.plot(ax, "r")
+    closest_point.plot(ax, "b")
+
+
+Expected output:
+
+.. code-block:: none
+
+    Distance between point and plane_face: 0.7
 
 Distance between two edges
-**************************
+--------------------------
 
-To calculate the distance between any two edges, it is enough to use just the `minimum_distance` method.
+For calculating the distance between any two edges, employing the `minimum_distance` method is sufficient.
 
 Here are some examples:
 
+Distance beteween a ``BSplineCurve2D`` and a ``LineSegment2D``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. plot::
     :include-source:
     :align: center
 
-    import volmdlr
-    from nurbs import utilities
-    from volmdlr import edges
+    from volmdlr import Point2D
     from volmdlr.core import EdgeStyle
+    from volmdlr.edges import BSplineCurve2D, LineSegment2D
+    from volmdlr.nurbs.helpers import generate_knot_vector
 
-    #### DISTANCE BETWEEN A BSPLINECURVE2D AND A LINESEGMENT2D ####
+    # Define LineSegment2D
+    line_segment = LineSegment2D(Point2D(1, 0.5), Point2D(3, 1))
 
-    #Defining the BSplineCurve2D
+    # Define a BSplineCurve2D
     DEGREE = 3
-    points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
-    knotvector = utilities.generate_knot_vector(DEGREE, len(points))
-    knot_multiplicity = [1] * len(knotvector)
-    bspline1 = edges.BSplineCurve2D(DEGREE, points, knot_multiplicity, knotvector, None, False)
+    points = [Point2D(0, 0), Point2D(1, 1), Point2D(2, -1), Point2D(3, 0)]
+    knot_vector = generate_knot_vector(DEGREE, len(points))
+    knot_multiplicity = [1] * len(knot_vector)
+    b_spline_curve = BSplineCurve2D(DEGREE, points, knot_multiplicity, knot_vector, None)
 
-    #Defining the LineSegment2D
-    lineseg = edges.LineSegment2D(volmdlr.Point2D(1, .5), volmdlr.Point2D(3, 1))
+    # Compute and print the minimum distance
+    distance, point1, point2 = b_spline_curve.minimum_distance(line_segment, return_points=True)
+    print(f"Minimum distance between b_spline_curve and line_segment: {distance}")
 
-    #plot
-    ax = bspline1.plot()
-    lineseg.plot(ax, EdgeStyle('g'))
-    distance_bspline_linesegment, pt1, pt2 = bspline1.minimum_distance(lineseg, True)
-    pt1.plot(ax, 'r')
-    pt2.plot(ax, 'b')
+    # Plot the line_segment, the b_spline_curve and the points
+    ax = b_spline_curve.plot()
+    line_segment.plot(ax, EdgeStyle("g"))
+    point1.plot(ax, "r")
+    point2.plot(ax, "b")
 
-.. code-block:: python
 
-   print('distance_bspline_linesegment: ', distance_bspline_linesegment)
-   >>> distance_bspline_linesegment: 0.26561504740059355
+Expected output:
+
+.. code-block:: none
+
+    Minimum distance between b_spline_curve and line_segment: 0.2655463988751082
+
+Distance beteween an ``Arc3D`` and a ``LineSegment2D``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. plot::
     :include-source:
     :align: center
 
-    import volmdlr
-    from volmdlr import edges, curves
+    from volmdlr import O3D, Frame3D, Point3D, Vector3D
     from volmdlr.core import EdgeStyle
+    from volmdlr.curves import Circle3D, Ellipse3D
+    from volmdlr.edges import Arc3D, ArcEllipse3D
 
-    #### DISTANCE BETWEEN A ARC3D AND A ARCELLIPSE3D ####
-
-    vector1 = volmdlr.Vector3D(1, 1, 1)
+    vector1 = Vector3D(1, 1, 1)
     vector1 = vector1.unit_vector()
     vector2 = vector1.deterministic_unit_normal_vector()
     vector3 = vector1.cross(vector2)
 
-    #Defining the Arc3D
-    circle3d = curves.Circle3D(volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3), 1)
-    arc3d = edges.Arc3D(circle3d,
-                        start=volmdlr.Point3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
-                        end=volmdlr.Point3D(-0.9855985596534886, -0.11957315586905026, -0.11957315586905026))
+    # Define the Arc3D
+    circle3d = Circle3D(Frame3D(O3D, vector1, vector2, vector3), 1)
+    arc_3d = Arc3D(
+        circle=circle3d,
+        start=Point3D(0.57, 0.57, 0.57),
+        end=Point3D(-0.98, -0.11, -0.11),
+    )
 
-    #Defining the Ellipse3D
-    ellipse3d = curves.Ellipse3D(2, 1, volmdlr.Frame3D(volmdlr.Point3D(1, 0, 1), vector3, vector1, vector2))
-    arcellipse3d = edges.ArcEllipse3D(ellipse3d,
-                      start=volmdlr.Point3D(0.42264973081037405, -0.5773502691896255, 0.42264973081037427),
-                      end=volmdlr.Point3D(1.577350269189626, 0.5773502691896254, 1.5773502691896257))
+    # Define the ArcEllipse3D
+    ellipse3d = Ellipse3D(2, 1, Frame3D(Point3D(1, 0, 1), vector3, vector1, vector2))
+    arc_ellipse_3d = ArcEllipse3D(
+        ellipse=ellipse3d,
+        start=Point3D(0.42, -0.57, 0.42),
+        end=Point3D(1.57, 0.57, 1.57),
+    )
 
-    #plot
-    ax = arc3d.plot()
-    arcellipse3d.plot(ax, EdgeStyle('g'))
-    distance_arc3d_arcellipse3d, pt1, pt2 = arc3d.minimum_distance(arcellipse3d, True)
-    pt1.plot(ax, 'r')
-    pt2.plot(ax, 'b')
+    # Compute and print the minimum distance
+    distance, point1, point2 = arc_3d.minimum_distance(arc_ellipse_3d, return_points=True)
+    print(f"Minimum distance between arc_3d and arc_ellipse_3d: {distance}")
 
-.. code-block:: python
+    # Plot the arc_3d, the arc_ellipse_3d and the points
+    ax = arc_3d.plot()
+    arc_ellipse_3d.plot(ax, EdgeStyle("g"))
+    point1.plot(ax, "r")
+    point2.plot(ax, "b")
 
-   print('distance_arc3d_arcellipse3d: ', distance_arc3d_arcellipse3d)
-   >>> distance_arc3d_arcellipse3d: 0.5340975460532926
+
+Expected output:
+
+.. code-block:: none
+
+    Minimum distance between arc_3d and arc_ellipse_3d: 0.8102555248814264
 
 Distances betweeen two faces
-****************************
+----------------------------
 
-You can also calculate the distance between two faces. To do so, you can use the `face_minimum_distance` method.
-It will work for any two faces.
+Calculating the distance between two faces is also feasible. To achieve this, rely on the `face_minimum_distance` method.
+This method is universally applicable for any pair of faces.
 
 .. plot::
     :include-source:
     :align: center
 
-    import volmdlr
-    from volmdlr import surfaces, faces
+    from volmdlr import OXYZ, TWO_PI, Frame3D, Point3D, Vector3D
+    from volmdlr.faces import CylindricalFace3D
+    from volmdlr.surfaces import CylindricalSurface3D
 
+    # Define two cylindrical faces
     R = 0.15
-    cylindricalsurface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, R)
-    cylindricalface = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindricalsurface, 0, volmdlr.TWO_PI, -.25, .25)
-    u_vector = volmdlr.Vector3D(-1, -1, -1)
+    cylindrical_surface = CylindricalSurface3D(OXYZ, R)
+    cylindrical_face1 = CylindricalFace3D.from_surface_rectangular_cut(
+        cylindrical_surface, 0, TWO_PI, -0.25, 0.25
+    )
+
+    u_vector = Vector3D(-1, -1, -1)
     u_vector = u_vector.unit_vector()
     v_vector = u_vector.deterministic_unit_normal_vector()
     w_vector = u_vector.cross(v_vector)
-    cylindrical_face_ = cylindricalface.frame_mapping(volmdlr.Frame3D(volmdlr.Point3D(-.5, .5, -.1),
-                                                                      u_vector, v_vector, w_vector), 'new')
-    ax = cylindricalface.plot()
-    cylindrical_face_.plot(ax, 'r')
-    minimum_distance, pt1, pt2 = cylindricalface.face_minimum_distance(cylindrical_face_, True)
-    pt1.plot(ax, 'y')
-    pt2.plot(ax, 'b')
+    cylindrical_face2 = cylindrical_face1.frame_mapping(
+        Frame3D(Point3D(-0.5, 0.5, -0.1), u_vector, v_vector, w_vector), "new"
+    )
 
-.. code-block:: python
+    # Compute and print the minimum distance
+    minimum_distance, point1, point2 = cylindrical_face1.face_minimum_distance(cylindrical_face2, True)
+    print(f"Minimum distance between cylindrical_face1 and cylindrical_face2: {minimum_distance}")
 
-   print('minimum_distance: ', minimum_distance)
-   >>> minimum_distance: 0.3097688266437426
+    # Plot the cylindrical_face1, the cylindrical_face2 and the points
+    ax = cylindrical_face1.plot()
+    cylindrical_face2.plot(ax, "r")
+    point1.plot(ax, "y")
+    point2.plot(ax, "b")
+
+Expected output:
+
+.. code-block:: none
+
+    Minimum distance between cylindrical_face1 and cylindrical_face2: 0.30994820373017934
 
 Distances betweeen two shells
-*****************************
+-----------------------------
 
-Likewise, you can calculate the distance between two shells as shown in the next example:
+Similarly, you can determine the distance between two shells, as illustrated in the following example:
 
 .. plot::
     :include-source:
     :align: center
 
-    import volmdlr
-    from volmdlr import edges, curves, surfaces, wires, faces, shells
-    from volmdlr.core import EdgeStyle
     import math
 
-    # Create a random shape shell's faces
-    polygon1_vol1 = wires.ClosedPolygon3D([volmdlr.Point3D(-0.1, -0.05, 0), volmdlr.Point3D(-0.15, 0.1, 0),
-                       volmdlr.Point3D(0.05, 0.2, 0), volmdlr.Point3D(0.12, 0.15, 0), volmdlr.Point3D(0.1, -0.02, 0)])
+    import volmdlr
+    from volmdlr.faces import PlaneFace3D, Triangle3D
+    from volmdlr.shells import ClosedShell3D
+    from volmdlr.surfaces import Plane3D, Surface2D
+    from volmdlr.wires import ClosedPolygon3D
 
-    polygon2_vol1 = polygon1_vol1.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi).translation(0.2*volmdlr.Z3D)
-    polygon3_vol1 = polygon2_vol1.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi/8).translation(0.1*(volmdlr.Z3D+volmdlr.X3D+volmdlr.Y3D))
-    faces_ = [faces.Triangle3D(*points) for points in polygon1_vol1.sewing(polygon2_vol1, volmdlr.X3D, volmdlr.Y3D)] \
-                                                      + [faces.Triangle3D(*points)
-                                        for points in polygon2_vol1.sewing(polygon3_vol1, volmdlr.X3D, volmdlr.Y3D)]
-    bottom_surface3d = surfaces.Plane3D.from_plane_vectors(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
-    bottom_surface2d = surfaces.Surface2D(polygon1_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D),[])
+    # Create the contours of the faces of a random shape
+    polygon1_vol1 = ClosedPolygon3D(
+        [
+            volmdlr.Point3D(-0.1, -0.05, 0),
+            volmdlr.Point3D(-0.15, 0.1, 0),
+            volmdlr.Point3D(0.05, 0.2, 0),
+            volmdlr.Point3D(0.12, 0.15, 0),
+            volmdlr.Point3D(0.1, -0.02, 0),
+        ]
+    )
+    polygon2_vol1 = polygon1_vol1.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi).translation(
+        0.2 * volmdlr.Z3D
+    )
+    polygon3_vol1 = polygon2_vol1.rotation(volmdlr.O3D, volmdlr.Z3D, math.pi / 8).translation(
+        0.1 * (volmdlr.Z3D + volmdlr.X3D + volmdlr.Y3D)
+    )
 
-    top_surface3d = surfaces.Plane3D.from_plane_vectors(0.3*volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
-    top_surface2d = surfaces.Surface2D(polygon3_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D),[])
+    # Create the faces of the shape
+    faces = [
+        Triangle3D(*points)
+        for points in polygon1_vol1.sewing(polygon2_vol1, volmdlr.X3D, volmdlr.Y3D)
+    ] + [
+        Triangle3D(*points)
+        for points in polygon2_vol1.sewing(polygon3_vol1, volmdlr.X3D, volmdlr.Y3D)
+    ]
 
-    bottom_face = faces.PlaneFace3D(bottom_surface3d, bottom_surface2d)
-    top_face = faces.PlaneFace3D(top_surface3d, top_surface2d)
-    faces_ += [bottom_face, top_face]
+    # Create the top and bottom faces of the shape
+    bottom_surface3d = Plane3D.from_plane_vectors(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+    bottom_surface2d = Surface2D(polygon1_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), [])
+    top_surface3d = Plane3D.from_plane_vectors(0.3 * volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
+    top_surface2d = Surface2D(polygon3_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), [])
+    bottom_face = PlaneFace3D(bottom_surface3d, bottom_surface2d)
+    top_face = PlaneFace3D(top_surface3d, top_surface2d)
+    faces += [bottom_face, top_face]
 
-    #Instanciate shell
-    shell1 = shells.ClosedShell3D(faces_)
+    # Create a closed shell from these faces
+    shell1 = ClosedShell3D(faces)
 
-    #Create a second shell from the first one, by rotating and translating it.
+    # Create a second shell from the first one, by rotating and translating it.
     shell2 = shell1.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 5)
-    shell2 = shell2.translation(volmdlr.Vector3D(.5, .5, .5))
+    shell2 = shell2.translation(volmdlr.Vector3D(0.5, 0.5, 0.5))
 
-    #Search mimimum distance
-    minimum_distance_between_two_shells, point1, point2 = shell1.minimum_distance(shell2, True)
+    # Compute and print the distance
+    minimum_distance, point1, point2 = shell1.minimum_distance(shell2, True)
+    print(f"Minimum distance between shell1 and shell2: {minimum_distance}")
 
-    #plot
+    # Plot the shells
     ax = shell1.plot()
-    shell2.plot(ax, 'r')
-    point1.plot(ax, 'b')
-    point2.plot(ax, 'g')
+    shell2.plot(ax, "r")
+    point1.plot(ax, "b")
+    point2.plot(ax, "g")
 
-.. code-block:: python
+Expected output:
 
-   print('minimum_distance_between_two_shells: ', minimum_distance_between_two_shells)
-   >>> minimum_distance_between_two_shells: 0.3374259086917476
+.. code-block:: none
 
+    Minimum distance between shell1 and shell2: 0.3374259086917476
