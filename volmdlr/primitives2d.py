@@ -157,7 +157,7 @@ class RoundedLineSegments2D(RoundedLineSegments):
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                           offset_vectors[i - (not self.closed)]
+                offset_vectors[i - (not self.closed)]
             offset_points.append(offset_point)
 
         if not self.closed:
@@ -420,6 +420,7 @@ class ClosedRoundedLineSegments2D(RoundedLineSegments2D, wires.Contour2D):
     :param radius: Radius used to connect different parts of the wire
     :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}
     """
+
     def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
                  adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments2D.__init__(self, points, radius, adapt_radius=adapt_radius, name='')

@@ -897,9 +897,9 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                                     discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
                                                                                   start_point_tag=start_point_tag
-                                                                                                  + point_account,
+                                                                                  + point_account,
                                                                                   end_point_tag=end_point_tag
-                                                                                                + point_account))
+                                                                                  + point_account))
 
                             if isinstance(primitive, volmdlr.edges.LineSegment):
 
@@ -975,7 +975,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         return False
 
     @classmethod
-    def from_faces(cls, faces):
+    def from_faces(cls, faces, name: str = ''):
         """
         Defines a List of separated OpenShell3D from a list of faces, based on the faces graph.
         """
@@ -984,12 +984,12 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
 
         shells_list = []
-        for _, graph_i in enumerate(components, start=1):
+        for index, graph_i in enumerate(components, start=1):
             faces_list = [faces[n_index] for n_index in graph_i.nodes]
             if cls.is_shell_open(faces, graph_i):
-                shells_list.append(OpenShell3D(faces_list))
+                shells_list.append(OpenShell3D(faces_list, name=name + f'_{index}'))
             else:
-                shells_list.append(ClosedShell3D(faces_list))
+                shells_list.append(ClosedShell3D(faces_list, name=name + f'_{index}'))
 
         return shells_list
 
@@ -1782,7 +1782,7 @@ class OpenTriangleShell3D(OpenShell3D):
 
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'SerializableObject':
+                       pointers_memo: Dict[str, Any] = None, path: str = '#', name: str = '') -> 'SerializableObject':
         t_points = dict_['unique_point']
         faces = dict_['faces']
         alpha = dict_['alpha']
@@ -1795,7 +1795,7 @@ class OpenTriangleShell3D(OpenShell3D):
                                                             point3=volmdlr.Point3D.dict_to_object(t_points[face[2]])
                                                             ))
 
-        return cls(faces=liste_triangles, color=color, alpha=alpha)
+        return cls(faces=liste_triangles, color=color, alpha=alpha, name=name)
 
     def to_mesh_data(self):
         """To mesh data for Open Triangle Shell."""
@@ -1822,22 +1822,22 @@ class OpenTriangleShell3D(OpenShell3D):
         return positions, faces
 
     @classmethod
-    def from_mesh_data(cls, positions, faces):
+    def from_mesh_data(cls, positions, faces, name: str = ''):
         """Creates an Open Triangle Shell 3D from mesh data."""
         triangles = []
         points = [volmdlr.Point3D(px, py, pz) for px, py, pz in positions]
         for i1, i2, i3 in faces:
             triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
-        return cls(triangles)
+        return cls(triangles, name=name)
 
     def to_trimesh(self):
         """Creates a Trimesh from Open Triangle Shell 3D."""
         return Trimesh(*self.to_mesh_data())
 
     @classmethod
-    def from_trimesh(cls, trimesh):
+    def from_trimesh(cls, trimesh, name: str = ''):
         """Creates an Open Triangle Shell 3D from Trimesh."""
-        return cls.from_mesh_data(trimesh.vertices.tolist(), trimesh.faces.tolist())
+        return cls.from_mesh_data(trimesh.vertices.tolist(), trimesh.faces.tolist(), name=name)
 
     def triangulation(self):
         """Triangulation of an Open Triangle Shell 3D."""
