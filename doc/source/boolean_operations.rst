@@ -9,11 +9,13 @@ This section will demonstrate all available boolean operations through the usage
     import math
 
     import volmdlr
-    from volmdlr import faces, shells, surfaces, wires
-    from volmdlr.core import EdgeStyle
+    from volmdlr.faces import PlaneFace3D, Triangle3D
+    from volmdlr.shells import ClosedShell3D
+    from volmdlr.surfaces import Plane3D, Surface2D
+    from volmdlr.wires import ClosedPolygon3D
 
     # Create the contours of the faces of a random shape
-    polygon1_vol1 = wires.ClosedPolygon3D(
+    polygon1_vol1 = ClosedPolygon3D(
         [
             volmdlr.Point3D(-0.1, -0.05, 0),
             volmdlr.Point3D(-0.15, 0.1, 0),
@@ -30,30 +32,22 @@ This section will demonstrate all available boolean operations through the usage
     )
 
     # Create the faces of the shape
-    faces_ = [
-        faces.Triangle3D(*points)
+    faces = [
+        Triangle3D(*points)
         for points in polygon1_vol1.sewing(polygon2_vol1, volmdlr.X3D, volmdlr.Y3D)
     ] + [
-        faces.Triangle3D(*points)
+        Triangle3D(*points)
         for points in polygon2_vol1.sewing(polygon3_vol1, volmdlr.X3D, volmdlr.Y3D)
     ]
 
     # Create the top and bottom faces of the shape
-    bottom_surface3d = surfaces.Plane3D.from_plane_vectors(
-        volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D
-    )
-    bottom_surface2d = surfaces.Surface2D(
-        polygon1_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), []
-    )
-    top_surface3d = surfaces.Plane3D.from_plane_vectors(
-        0.3 * volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D
-    )
-    top_surface2d = surfaces.Surface2D(
-        polygon3_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), []
-    )
-    bottom_face = faces.PlaneFace3D(bottom_surface3d, bottom_surface2d)
-    top_face = faces.PlaneFace3D(top_surface3d, top_surface2d)
-    faces_ += [bottom_face, top_face]
+    bottom_surface3d = Plane3D.from_plane_vectors(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
+    bottom_surface2d = Surface2D(polygon1_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), [])
+    top_surface3d = Plane3D.from_plane_vectors(0.3 * volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
+    top_surface2d = Surface2D(polygon3_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), [])
+    bottom_face = PlaneFace3D(bottom_surface3d, bottom_surface2d)
+    top_face = PlaneFace3D(top_surface3d, top_surface2d)
+    faces += [bottom_face, top_face]
 
     # Create the shells from these faces
     shell1 = shells.ClosedShell3D(faces_, color=(1.0, 0.1, 0.1), alpha=0.6)
