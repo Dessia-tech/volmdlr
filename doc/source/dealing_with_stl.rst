@@ -30,7 +30,7 @@ Here's an example demonstrating the process of importing a STL file:
     closed_shell.alpha = 0.3
     closed_shell.babylonjs()
 
-If we break it down we have:
+Breaking it down further:
 
 1. **Importing Required Modules:**
 
@@ -46,7 +46,7 @@ This module offers tools to interact with STL files.
 
 .. code-block:: python
 
-    loaded_stl = stl.Stl.load_from_file("path/to/your/stl/file.stl")
+    loaded_stl = volmdlr.stl.Stl.load_from_file("path/to/your/stl/file.stl")
 
 This line employs the ``Step.load_from_file()`` method to load a STL file.
 You must substitute ``"path/to/your/stl/file.stl"`` with the accurate file path pointing to the intended STL file
