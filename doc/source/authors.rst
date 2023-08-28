@@ -17,26 +17,26 @@ maintenance:
 |pierre gibertini| Pierre Gibertini
 
 
-.. |axel ringhausen| figure:: ../source/images/axel_ringhausen.jpeg
-  :width: 100
-  :target: https://github.com/AxelRinghausen
-
-.. |steven masfaraud| figure:: ../source/images/steven_masfaraud.jpeg
+.. |steven masfaraud| figure:: https://github.com/masfaraud.png
   :width: 100
   :target: https://github.com/masfaraud
 
-.. |wirajan da silva| figure:: ../source/images/WirajanDASILVA.png
+.. |wirajan da silva| figure:: https://github.com/WirajanDASILVA.png
   :width: 100
   :target: https://github.com/WirajanDASILVA
 
-.. |gabriel jesus| figure:: ../source/images/GabrielJMS .png
+.. |gabriel jesus| figure:: https://github.com/GabrielJMS.png
   :width: 100
-  :target: https://github.com/GabrielJMS 
+  :target: https://github.com/GabrielJMS
 
-.. |pierre gibertini| figure:: ../source/images/pgibertini.png
-    :width: 100
-    :target: https://github.com/pgibertini
+.. |axel ringhausen| figure:: https://github.com/AxelRinghausen.png
+  :width: 100
+  :target: https://github.com/AxelRinghausen
 
-.. |soumiya bendjebla| figure:: ../source/images/sbendjebla.png
+.. |soumiya bendjebla| figure:: https://github.com/sbendjebla.png
     :width: 100
     :target: https://github.com/sbendjebla
+
+.. |pierre gibertini| figure:: https://github.com/pgibertini.png
+    :width: 100
+    :target: https://github.com/pgibertini
