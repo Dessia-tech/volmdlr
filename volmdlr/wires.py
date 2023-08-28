@@ -1243,7 +1243,7 @@ class Wire2D(WireMixin, PhysicalObject):
             y_max = max(y_max, ymax_edge)
         return volmdlr.core.BoundingRectangle(x_min, x_max, y_min, y_max)
 
-    def is_inside(self, other_contour=None):
+    def is_inside(self, other_contour):
         """
         Verifies if a contour is inside another contour perimeter, including the edges.
 
