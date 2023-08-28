@@ -1087,6 +1087,22 @@ class Surface3D(DessiaObject):
         """Verifies if the edge is contained within the periodicity boundary."""
         return False
 
+    def surface_intersections(self, other_surface: 'Surface3D'):
+        """
+        Gets intersections between two surfaces.
+
+        :param other_surface: other surface to get intersections with.
+        :return: a list containing all itersections between the two surfaces 3d.
+        """
+        method_name = f'{other_surface.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(self, method_name):
+            return getattr(self, method_name)(other_surface)
+        method_name = f'{self.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(other_surface, method_name):
+            return getattr(other_surface, method_name)(self)
+        raise (f'No method available for calculating intersections between {self.__class__} and '
+               f'{other_surface.__class__}')
+
 
 class Plane3D(Surface3D):
     """
@@ -1277,7 +1293,7 @@ class Plane3D(Surface3D):
         :return: list of intersections: List[volmdlr.Point3D].
         """
         fullarc_plane = Plane3D(fullarc.circle.frame)
-        plane_intersections = self.plane_intersection(fullarc_plane)
+        plane_intersections = self.plane_intersections(fullarc_plane)
         if not plane_intersections:
             return []
         fullarc2d = fullarc.to_2d(fullarc.circle.center, fullarc_plane.frame.u, fullarc_plane.frame.v)
@@ -1315,7 +1331,7 @@ class Plane3D(Surface3D):
         d = -self.frame.origin.dot(self.frame.w)
         return round(a, 12), round(b, 12), round(c, 12), round(d, 12)
 
-    def plane_intersection(self, other_plane):
+    def plane_intersections(self, other_plane):
         """
         Computes intersection points between two Planes 3D.
 
@@ -1344,6 +1360,15 @@ class Plane3D(Surface3D):
         else:
             raise NotImplementedError
         return [curves.Line3D(point1, point1 + line_direction)]
+
+    def cylindricalsurface_intersections(self, cylindrical_surface: 'CylindricalSurface3D'):
+        """
+        Gets intersections between plane and cylindrical surface.
+
+        :param cylindrical_surface: cylindrical surface to get intersections with.
+        :return: List containing all intersections between plane and cylindrical surface.
+        """
+        return cylindrical_surface.plane_intersections(self)
 
     def is_coincident(self, plane2):
         """
@@ -1376,7 +1401,7 @@ class Plane3D(Surface3D):
         :param name: object's name.
         :return: resulting plane.
         """
-        plane1_plane2_intersection = plane1.plane_intersection(plane2)[0]
+        plane1_plane2_intersection = plane1.plane_intersections(plane2)[0]
         u = plane1_plane2_intersection.unit_direction_vector()
         v = plane1.frame.w + plane2.frame.w
         v = v.unit_vector()
@@ -2273,7 +2298,7 @@ class CylindricalSurface3D(PeriodicalSurface):
                                                    minor_dir, plane3d.frame.w))
         return [ellipse]
 
-    def plane_intersection(self, plane3d):
+    def plane_intersections(self, plane3d):
         """
         Cylinder intersections with a plane.
 
@@ -3015,6 +3040,47 @@ class ConicalSurface3D(PeriodicalSurface):
 
         raise AttributeError(f'Use method from ConicalFace3D{volmdlr.faces.ConicalFace3D.from_base_and_vertex}')
 
+    def parallel_plane_intersection(self, plane3d):
+        """
+        Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis.
+
+        :param plane3d: intersecting plane
+        :return: list of intersecting curves
+        """
+        return
+
+    def perpendicular_plane_intersection(self, plane3d):
+        """
+        Cylinder plane intersections when plane's normal is parallel with the cylinder axis.
+
+        :param plane3d: intersecting plane
+        :return: list of intersecting curves
+        """
+        line = curves.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
+        center3d_plane = plane3d.line_intersections(line)[0]
+        circle3d = curves.Circle3D(volmdlr.Frame3D(center3d_plane, plane3d.frame.u,
+                                                   plane3d.frame.v, plane3d.frame.w), self.radius)
+        return [circle3d]
+
+    def concurrent_plane_intersection(self, plane3d):
+        """
+        Cylinder plane intersections when plane's normal is concurrent with the cylinder axis, but not orthogonal.
+
+        Heavily based on the implementation available in this link:
+        https://www.geometrictools.com/Documentation/IntersectionCylinderPlane.pdf
+
+        :param plane3d: intersecting plane.
+        :return: list of intersecting curves.
+        """
+        return
+
+    def plane_intersections(self, plane3d):
+        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
+            return self.parallel_plane_intersection(plane3d)
+        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
+            return self.perpendicular_plane_intersection(plane3d)
+        return self.concurrent_plane_intersection(plane3d)
+
 
 class SphericalSurface3D(PeriodicalSurface):
     """
@@ -3747,7 +3813,7 @@ class SphericalSurface3D(PeriodicalSurface):
         new_frame = self.frame.frame_mapping(frame, side)
         return SphericalSurface3D(new_frame, self.radius)
 
-    def plane_intersection(self, plane3d):
+    def plane_intersections(self, plane3d):
         """
         Sphere intersections with a plane.
 
@@ -6749,7 +6815,7 @@ class BSplineSurface3D(Surface3D):
 
         return (u1, v1), (u2, v2)  # (uv1, uv2)
 
-    def plane_intersection(self, plane3d):
+    def plane_intersections(self, plane3d):
         """
         Compute intersection points between a Bspline surface and a plane 3d.
 

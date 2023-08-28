@@ -1079,7 +1079,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return minimum_distance
 
     def plane_intersections(self, plane3d: surfaces.Plane3D):
-        surfaces_intersections = self.surface3d.plane_intersection(plane3d)
+        surfaces_intersections = self.surface3d.plane_intersections(plane3d)
         outer_contour_intersections_with_plane = plane3d.contour_intersections(self.outer_contour3d)
         plane_intersections = []
         for plane_intersection in surfaces_intersections:
@@ -1289,7 +1289,7 @@ class PlaneFace3D(Face3D):
         return True
 
     def planeface_intersections(self, planeface):
-        face2_plane_interections = planeface.surface3d.plane_intersection(self.surface3d)
+        face2_plane_interections = planeface.surface3d.plane_intersections(self.surface3d)
         if not face2_plane_interections:
             return []
         points_intersections = []

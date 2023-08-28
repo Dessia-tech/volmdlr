@@ -1429,7 +1429,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         """
         plane1 = volmdlr.surfaces.Plane3D(self.frame)
         plane2 = volmdlr.surfaces.Plane3D(other_circle.frame)
-        plane_intersections = plane1.plane_intersection(plane2)
+        plane_intersections = plane1.plane_intersections(plane2)
         circle3d_line_intersections1 = volmdlr_intersections.circle_3d_line_intersections(self, plane_intersections[0])
         circle3d_line_intersections2 = volmdlr_intersections.circle_3d_line_intersections(other_circle,
                                                                                           plane_intersections[0])
