@@ -460,7 +460,7 @@ class Edge(dc.DessiaObject):
         linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
         while True:
             edge1_discretized_points_between_1_2 = self.local_discretization(point1_edge1_, point2_edge1_,
-                                                                             number_points=10*n)
+                                                                             number_points=10 * n)
             edge2_discretized_points_between_1_2 = element.local_discretization(point1_edge2_, point2_edge2_)
             if not edge1_discretized_points_between_1_2:
                 break
@@ -498,7 +498,7 @@ class Edge(dc.DessiaObject):
         :return: The minimum distance between the edge and the specified primitive.
             tuple, optional: A tuple containing the closest points if return_points is True.
         """
-        method_name_ = 'distance_'+element.__class__.__name__.lower()[:-2]
+        method_name_ = 'distance_' + element.__class__.__name__.lower()[:-2]
         if hasattr(self, method_name_):
             return getattr(self, method_name_)(element, return_points)
         method_name_ = 'distance_to_' + self.__class__.__name__.lower()[:-2]
@@ -890,8 +890,8 @@ class BSplineCurve(Edge):
             if self._eval_points is None:
                 self.evaluate()
             self._points = [getattr(volmdlr,
-                               f'Point{self.__class__.__name__[-2::]}')(*point)
-                       for point in self._eval_points]
+                                    f'Point{self.__class__.__name__[-2::]}')(*point)
+                            for point in self._eval_points]
         return self._points
 
     @property
@@ -1124,7 +1124,7 @@ class BSplineCurve(Edge):
             knot_multiplicities=self.knot_multiplicities[::-1],
             knots=self.knots[::-1],
             weights=self.weights,
-           )
+        )
 
     @property
     def simplify(self):
@@ -1479,7 +1479,7 @@ class BSplineCurve(Edge):
 
     @classmethod
     def from_points_interpolation(cls, points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                                  degree: int, centripetal: bool = True,  name: str = " "):
+                                  degree: int, centripetal: bool = True, name: str = " "):
         """
         Creates a B-spline curve interpolation through the data points.
 
@@ -2054,7 +2054,7 @@ class BezierCurve2D(BSplineCurve2D):
     def __init__(self, degree: int, control_points: List[volmdlr.Point2D],
                  name: str = ''):
         knotvector = nurbs_helpers.generate_knot_vector(degree,
-                                                    len(control_points))
+                                                        len(control_points))
         knot_multiplicity = [1] * len(knotvector)
 
         BSplineCurve2D.__init__(self, degree, control_points,
@@ -4256,8 +4256,8 @@ class LineSegment3D(LineSegment):
         edge2d.plot(ax=ax, edge_style=EdgeStyle(color=color, width=width))
         return ax
 
-    def plot_data(self, x_3d, y_3d, edge_style = plot_data.EdgeStyle(color_stroke=plot_data.colors.BLACK,
-                                                                     line_width=1, dashline=None)):
+    def plot_data(self, x_3d, y_3d, edge_style=plot_data.EdgeStyle(color_stroke=plot_data.colors.BLACK,
+                                                                   line_width=1, dashline=None)):
         """Plot a Line Segment 3D object using dessia's plot_data library."""
         edge2d = self.plane_projection2d(volmdlr.O3D, x_3d, y_3d)
         return edge2d.plot_data(edge_style)
@@ -5136,7 +5136,7 @@ class BezierCurve3D(BSplineCurve3D):
     def __init__(self, degree: int, control_points: List[volmdlr.Point3D],
                  name: str = ''):
         knotvector = nurbs_helpers.generate_knot_vector(degree,
-                                                    len(control_points))
+                                                        len(control_points))
         knot_multiplicity = [1] * len(knotvector)
 
         BSplineCurve3D.__init__(self, degree, control_points,

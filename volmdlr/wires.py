@@ -332,7 +332,7 @@ class WireMixin:
                     primitives.remove(primitive)
                     break
             else:
-                #print(self, primitive)
+                # print(self, primitive)
                 # ax = self.plot()
                 # primitive.plot(edge_style=EdgeStyle(color='r'), ax=ax)
                 raise NotImplementedError('There may exist a problem with this'
@@ -412,7 +412,7 @@ class WireMixin:
             return True
         return False
 
-    def is_primitive_section_over_wire(self, primitive, tol:float = 1e-6):
+    def is_primitive_section_over_wire(self, primitive, tol: float = 1e-6):
         """
         Verifies if primitive's section is over wire.
 
@@ -4245,7 +4245,7 @@ class Contour3D(ContourMixin, Wire3D):
             return contour
         list_contours = cls.contours_from_edges(raw_edges)
         for contour in list_contours:
-        # list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
+            # list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
             if contour.is_ordered():
                 return contour
         return None

@@ -132,8 +132,8 @@ class PointCloud3D(dc.DessiaObject):
 
         dist_between_plane, position_plane = self.position_plane(posmax=posmax,
                                                                  resolution=resolution)
-        sub_clouds3d = [self.extract(normal, pos_plane - 0.5*dist_between_plane,
-                                     pos_plane + 0.5*dist_between_plane) for pos_plane in position_plane]
+        sub_clouds3d = [self.extract(normal, pos_plane - 0.5 * dist_between_plane,
+                                     pos_plane + 0.5 * dist_between_plane) for pos_plane in position_plane]
         sub_clouds2d = [sub_clouds3d[n].to_subcloud2d(position_plane[n] * normal, vec1, vec2)
                         for n in range(resolution)]
 

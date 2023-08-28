@@ -398,7 +398,7 @@ class Block(shells.ClosedShell3D):
         return Block(new_frame, color=self.color,
                      alpha=self.alpha, name=self.name)
 
-    def plot_data(self, x3d, y3d, edge_style = plot_data.EdgeStyle):
+    def plot_data(self, x3d, y3d, edge_style=plot_data.EdgeStyle):
         """Plot the 2D projections of a block."""
         lines = []
         for edge3d in self.edges():

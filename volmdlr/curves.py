@@ -1302,7 +1302,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         self.radius = radius
         self.frame = frame
         self._bbox = None
-        self.angle = 2*math.pi
+        self.angle = 2 * math.pi
         ClosedCurve.__init__(self, name=name)
 
     @property

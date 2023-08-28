@@ -1225,7 +1225,7 @@ class Point2D(Vector2D):
         return plot_data.Point2D(self.x, self.y)
 
     @classmethod
-    def middle_point(cls, point1: Vector2D, point2: Vector2D, name: str = ''):
+    def middle_point(cls, point1: Vector2D, point2: Vector2D, name: str = ""):
         """
         Computes the middle point between two two-dimensional vector-like objects.
 
@@ -1243,7 +1243,7 @@ class Point2D(Vector2D):
 
     @classmethod
     def line_projection(cls, point: Vector2D,
-                        line: "volmdlr.edges.Line2D", name: str = ''):
+                        line: "volmdlr.edges.Line2D", name: str = ""):
         """
         Computes the projection of a two-dimensional vector-like object on an
         infinite two-dimensional line
@@ -1755,7 +1755,7 @@ class Vector3D(Vector):
         return self.__class__(self.x, self.y, self.z)
 
     @classmethod
-    def random(cls, xmin: float, xmax: float, ymin: float, ymax: float, zmin: float, zmax: float, name: str = ''):
+    def random(cls, xmin: float, xmax: float, ymin: float, ymax: float, zmin: float, zmax: float, name: str = ""):
         """
         Returns a random 2-dimensional point.
 
@@ -2020,7 +2020,7 @@ class Point3D(Vector3D):
         return (self - point2).norm()
 
     @classmethod
-    def middle_point(cls, point1: "Point3D", point2: "Point3D", name: str = ''):
+    def middle_point(cls, point1: "Point3D", point2: "Point3D", name: str = ""):
         """
         Computes the middle point between two 3-dimensional points.
 
@@ -2344,7 +2344,7 @@ class Matrix33:
             raise ValueError("The matrix is singular")
 
     @classmethod
-    def random_matrix(cls, minimum: float = 0., maximum: float = 1., name: str = ''):
+    def random_matrix(cls, minimum: float = 0., maximum: float = 1., name: str = ""):
         """
         Creates a random matrix with values between bounds.
 
@@ -2665,7 +2665,7 @@ class Basis3D(Basis):
 
     # TODO: transform to annotation when available
     @classmethod
-    def from_two_vectors(cls, vector1: Vector3D, vector2: Vector3D, name: str = '') -> "Basis3D":
+    def from_two_vectors(cls, vector1: Vector3D, vector2: Vector3D, name: str = "") -> "Basis3D":
         """
         Creates a basis with first vector1 adimensionned, as u, v is the
         vector2 substracted of u component, w is the cross product of u and v.

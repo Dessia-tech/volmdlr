@@ -222,9 +222,9 @@ class Step(dc.DessiaObject):
 
             elif function.name in STEP_TO_VOLMDLR:
                 graph.add_node(function.id,
-                           color='rgb(0, 0, 0)',
-                           shape='.',
-                           name=str(function.id))
+                               color='rgb(0, 0, 0)',
+                               shape='.',
+                               name=str(function.id))
                 labels[function.id] = str(function.id) + ' ' + function.name
 
         # Delete connection if node not found

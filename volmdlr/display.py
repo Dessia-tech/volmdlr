@@ -17,6 +17,7 @@ class Node2D(volmdlr.Point2D):
     """
     A node is a point with some hash capabilities for performance.
     """
+
     def __init__(self, x: float, y: float, name: str = ""):
         self.x = x
         self.y = y
@@ -41,6 +42,7 @@ class Node3D(volmdlr.Point3D):
     """
     A node is a point with some hash capabilities for performance.
     """
+
     def __init__(self, x: float, y: float, z: float, name: str = ""):
         self.x = x
         self.y = y

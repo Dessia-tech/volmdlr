@@ -897,9 +897,9 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                                     discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
                                                                                   start_point_tag=start_point_tag
-                                                                                                  + point_account,
+                                                                                  + point_account,
                                                                                   end_point_tag=end_point_tag
-                                                                                                + point_account))
+                                                                                  + point_account))
 
                             if isinstance(primitive, volmdlr.edges.LineSegment):
 
@@ -987,9 +987,9 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         for index, graph_i in enumerate(components, start=1):
             faces_list = [faces[n_index] for n_index in graph_i.nodes]
             if cls.is_shell_open(faces, graph_i):
-                shells_list.append(OpenShell3D(faces_list, name=name+f'_{index}'))
+                shells_list.append(OpenShell3D(faces_list, name=name + f'_{index}'))
             else:
-                shells_list.append(ClosedShell3D(faces_list, name=name+f'_{index}'))
+                shells_list.append(ClosedShell3D(faces_list, name=name + f'_{index}'))
 
         return shells_list
 

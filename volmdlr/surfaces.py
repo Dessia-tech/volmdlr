@@ -1669,7 +1669,7 @@ class PeriodicalSurface(Surface3D):
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
                 closing_linesegment2 = edges.LineSegment2D(point4, point1)
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
-                                               old_innner_contour_positioned.primitives + [closing_linesegment2]
+                    old_innner_contour_positioned.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-4)
             else:
@@ -2350,21 +2350,21 @@ class ToroidalSurface3D(PeriodicalSurface):
     def _bounding_box(self):
         distance = self.tore_radius + self.small_radius
         point1 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point2 = self.frame.origin + \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point3 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point4 = self.frame.origin + \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
         point5 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance + self.frame.w * self.small_radius
         point6 = self.frame.origin - \
-                 self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance + self.frame.v * distance - self.frame.w * self.small_radius
         point7 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance + self.frame.w * self.small_radius
         point8 = self.frame.origin - \
-                 self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
+            self.frame.u * distance - self.frame.v * distance - self.frame.w * self.small_radius
 
         return volmdlr.core.BoundingBox.from_points(
             [point1, point2, point3, point4, point5, point6, point7, point8])
@@ -2531,10 +2531,10 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
         theta_discontinuity = arc3d.point_belongs(point_theta_discontinuity) and \
-                              not arc3d.is_point_edge_extremity(point_theta_discontinuity)
+            not arc3d.is_point_edge_extremity(point_theta_discontinuity)
         point_phi_discontinuity = self.point2d_to_3d(volmdlr.Point2D(start.x, math.pi))
         phi_discontinuity = arc3d.point_belongs(point_phi_discontinuity) and \
-                            not arc3d.is_point_edge_extremity(point_phi_discontinuity)
+            not arc3d.is_point_edge_extremity(point_phi_discontinuity)
         undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
         undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
         undefined_start_phi = arc3d.start.is_close(point_phi_discontinuity)
@@ -2552,7 +2552,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         point_after_start, point_before_end = self._reference_points(fullarc3d)
         theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
             undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(
-            fullarc3d, start)
+                fullarc3d, start)
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(
             [start, end],
             [undefined_start_theta, undefined_end_theta, undefined_start_phi, undefined_end_phi],
@@ -4516,8 +4516,6 @@ class RevolutionSurface3D(PeriodicalSurface):
         return self.edge.is_point_edge_extremity(point)
 
 
-
-
 class BSplineSurface3D(Surface3D):
     """
     A class representing a 3D B-spline surface.
@@ -4559,6 +4557,7 @@ class BSplineSurface3D(Surface3D):
     """
     face_class = "BSplineFace3D"
     _eq_is_data_eq = False
+
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
                  weights: List[float] = None, name: str = ''):
@@ -4630,7 +4629,7 @@ class BSplineSurface3D(Surface3D):
             return False
 
         if (self.rational != other.rational or self.degree_u != other.degree_u or self.degree_v != other.degree_v or
-            self.nb_u != other.nb_u or self.nb_v != other.nb_v):
+                self.nb_u != other.nb_u or self.nb_v != other.nb_v):
             return False
 
         for s_k, o_k in zip(self.knotvector, other.knotvector):
@@ -5359,8 +5358,8 @@ class BSplineSurface3D(Surface3D):
                 return (u, v), minimal_distance
             datadict["sample_size"] = [sample_size_u, sample_size_v]
             matrix = npy.asarray(evaluate_surface(datadict,
-                                         start=(u_start, v_start),
-                                         stop=(u_stop, v_stop)), dtype=npy.float64)
+                                                  start=(u_start, v_start),
+                                                  stop=(u_stop, v_stop)), dtype=npy.float64)
             index, distance = self._find_index_min(matrix, point3d_array)
             if distance < minimal_distance:
                 minimal_distance = distance
@@ -5424,7 +5423,7 @@ class BSplineSurface3D(Surface3D):
                (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
                (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
                (0.33333333, 0.009), (0.5555555, 0.0099)]
-        #Sort the initial conditions
+        # Sort the initial conditions
         x0s.sort(key=sort_func)
         x0s = [x0] + x0s
         if self.weights is not None:
@@ -6549,7 +6548,7 @@ class BSplineSurface3D(Surface3D):
 
     @classmethod
     def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u,
-                                                degree_v, name: str = '',**kwargs):
+                                                degree_v, name: str = '', **kwargs):
         """
         Bspline Surface approximate through 3d points.
 
@@ -7194,7 +7193,7 @@ class BSplineSurface3D(Surface3D):
                 closing_linesegment2 = edges.LineSegment2D(inner_contour.primitives[-1].end,
                                                            outer_contour.primitives[0].start)
                 new_outer_contour_primitives = outer_contour.primitives + [closing_linesegment1] + \
-                                               inner_contour.primitives + [closing_linesegment2]
+                    inner_contour.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 new_outer_contour.order_contour(tol=1e-3)
             else:
