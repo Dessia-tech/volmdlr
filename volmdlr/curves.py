@@ -45,7 +45,7 @@ class Curve(DessiaObject):
 
 
 class ClosedCurve(Curve):
-    """Abstract class for definiing closed curves (Circle, Ellipse) properties."""
+    """Abstract class for defining closed curves (Circle, Ellipse) properties."""
 
     def point_at_abscissa(self, abscissa):
         """
@@ -61,7 +61,7 @@ class ClosedCurve(Curve):
 
     def length(self):
         """
-        Calcultes the Closed Curve's length.
+        Calculates the Closed Curve's length.
         """
         raise NotImplementedError(f'length method not implemented by {self.__class__.__name__}')
 
@@ -918,7 +918,7 @@ class Circle2D(CircleMixin, ClosedCurve):
                              abs_tol=1e-06)
 
     @classmethod
-    def from_3_points(cls, point1, point2, point3):
+    def from_3_points(cls, point1, point2, point3, name: str = ''):
         """
         Creates a circle 2d from 3 points.
 
@@ -940,7 +940,7 @@ class Circle2D(CircleMixin, ClosedCurve):
             matrix_a = npy.array(matrix1)
             b_vector = - npy.array(b_vector_components)
             center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
-        circle = cls(center, point1.point_distance(center))
+        circle = cls(center, point1.point_distance(center), name=name)
         return circle
 
     def area(self):
@@ -1261,7 +1261,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         return self.split(split_points[0], split_points[1])
 
     def split(self, split_start, split_end):
-        """Splites a Circle2D into two arcs 2d."""
+        """Splits a Circle2D into two arcs 2d."""
         return [volmdlr.edges.Arc2D(self, split_start, split_end),
                 volmdlr.edges.Arc2D(self, split_end, split_start)]
 
@@ -1563,7 +1563,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         return cls(volmdlr.Frame3D(center, u, v, normal), radius, name)
 
     @classmethod
-    def from_3_points(cls, point1, point2, point3):
+    def from_3_points(cls, point1, point2, point3, name: str = ''):
         """
         Creates a circle from three points.
 
@@ -1572,7 +1572,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         vector_u2 = point2 - point3
         try:
             vector_u1 = vector_u1.unit_vector()
-            vector_u2= vector_u2.unit_vector()
+            vector_u2 = vector_u2.unit_vector()
         except ZeroDivisionError as exc:
             raise ZeroDivisionError('the 3 points must be distincts') from exc
 
@@ -1583,23 +1583,19 @@ class Circle3D(CircleMixin, ClosedCurve):
             vector_u2 = normal.cross(vector_u1)
             vector_u2 = vector_u2.unit_vector()
 
-        vector_v1 = normal.cross(vector_u1)  # v1 is normal, equal u2
-        vector_v2 = normal.cross(vector_u2)  # equal -u1
-
         point11 = 0.5 * (point1 + point2)  # Mid-point of segment s,m
         point21 = 0.5 * (point2 + point3)  # Mid-point of segment s,m
 
-        line1 = Line3D(point11, point11 + vector_v1)
-        line2 = Line3D(point21, point21 + vector_v2)
+        line1 = Line3D(point11, point11 + normal.cross(vector_u1))
+        line2 = Line3D(point21, point21 + normal.cross(vector_u2))
 
         try:
             center, _ = line1.minimum_distance_points(line2)
         except ZeroDivisionError as exc:
             raise ZeroDivisionError('Start, end and interior points  of an arc must be distincts') from exc
 
-        radius = (center - point1).norm()
         return cls(frame=volmdlr.Frame3D(center, vector_u1, normal.cross(vector_u1), normal),
-                   radius=radius)
+                   radius=(center - point1).norm(), name=name)
 
     def extrusion(self, extrusion_vector):
         """

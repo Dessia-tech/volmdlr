@@ -54,17 +54,18 @@ class Node2D(vm.Point2D):
             and math.isclose(self.y, other_node.y, abs_tol=1e-12)
 
     @classmethod
-    def from_point(cls, point2d):
+    def from_point(cls, point2d, name: str = ''):
         """
         Defines a node2d from a point2d.
 
         :param point2d: A point2d
-        :type point2d: vm.Point2D
+        :type point2d: vm.Point2D.
+        :param name: object's name.
         :return: A node2d
         :rtype: Node2D
         """
 
-        return cls(point2d.x, point2d.y)
+        return cls(point2d.x, point2d.y, name=name)
 
 
 class Node3D(vm.Point3D):
@@ -89,17 +90,18 @@ class Node3D(vm.Point3D):
             and math.isclose(self.y, other_node.y, abs_tol=1e-12)
 
     @classmethod
-    def from_point(cls, point3d):
+    def from_point(cls, point3d, name: str = ''):
         """
         Defines a node3d from a point3d.
 
         :param point3d: A point3d
-        :type point3d: vm.Point3D
+        :type point3d: vm.Point3D.
+        :param name: object's name.
         :return: A node3d
         :rtype: Node3D
         """
 
-        return cls(point3d.x, point3d.y, point3d.z)
+        return cls(point3d.x, point3d.y, point3d.z, name=name)
 
 
 class LinearElement(vme.LineSegment2D):

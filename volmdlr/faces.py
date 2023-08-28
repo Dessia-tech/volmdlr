@@ -1293,7 +1293,7 @@ class PlaneFace3D(Face3D):
             return []
         points_intersections = []
         for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d + \
-                       planeface.inner_contours3d:
+                planeface.inner_contours3d:
             for intersection in contour.line_intersections(face2_plane_interections[0]):
                 if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
                     points_intersections.append(intersection)
@@ -3260,5 +3260,4 @@ class BSplineFace3D(Face3D):
             point2 = neutral_fiber.point_projection(point3d_max)[0]
         else:
             point2 = neutral_fiber.end
-        neutral_fiber = neutral_fiber.trim(point1, point2)
-        return volmdlr.wires.Wire3D([neutral_fiber])
+        return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, point2)])
