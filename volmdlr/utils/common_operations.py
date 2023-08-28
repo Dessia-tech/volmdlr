@@ -199,7 +199,7 @@ def get_point_distance_to_edge(edge, point, start, end):
     :param edge: Edge to calculate distance to point.
     :param point: Point to calculate the distance to edge.
     :param start: Edge's start point.
-    :param edge: Edge's end point.
+    :param end: Edge's end point.
     :return: distance to edge.
     """
     best_distance = math.inf
