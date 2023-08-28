@@ -6557,7 +6557,7 @@ class BSplineSurface3D(Surface3D):
     def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v,
                                                 name: str = "", **kwargs):
         warnings.warn("points_approximate_into_bspline_surface is deprecated. Use from_points_approximation instead")
-        return cls.from_points_approximation(points_3d, size_u, size_v, degree_u, degree_v,, name, **kwargs)
+        return cls.from_points_approximation(points_3d, size_u, size_v, degree_u, degree_v, name, **kwargs)
 
     @classmethod
     def from_points_approximation(cls, points_3d: List[volmdlr.Point3D], size_u: int, size_v: int, degree_u: int,

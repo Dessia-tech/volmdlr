@@ -19,7 +19,7 @@ MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 190,
                      "wrong-spelling-in-docstring": 143,
                      'invalid-name': 167,
-                     'no-member': 22,
+                     'no-member': 1,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 62,
@@ -30,7 +30,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-branches': 26,
                      'too-many-statements': 13,
                      'super-init-not-called': 5,
-                     'no-name-in-module': 8,
+                     'no-name-in-module': 2,
                      'abstract-method': 32,
                      'duplicate-code': 10,
                      'arguments-renamed': 52,
@@ -45,7 +45,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-nested-blocks': 7,
                      'too-many-return-statements': 3,
                      'cyclic-import': 1,
-                     'undefined-variable': 24,  # 2 when gmsh is fixed
+                     'undefined-variable': 8,  # 2 when gmsh is fixed
                      'broad-except': 1,
                      "broad-exception-caught": 2,
                      'too-many-boolean-expressions': 2,
