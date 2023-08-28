@@ -258,3 +258,13 @@ def ellipse_abscissa_angle_integration(ellipse3d, point_abscissa, angle_start, i
         initial_angle += increment_factor
         iter_counter += 1
     return abscissa_angle
+
+
+def get_plane_equation_coefficients(plane_frame):
+    """
+    Returns the a,b,c,d coefficient from equation ax+by+cz+d = 0.
+
+    """
+    a, b, c = plane_frame.w
+    d = -plane_frame.origin.dot(plane_frame.w)
+    return round(a, 12), round(b, 12), round(c, 12), round(d, 12)

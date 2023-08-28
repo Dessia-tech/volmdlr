@@ -1427,12 +1427,13 @@ class Circle3D(CircleMixin, ClosedCurve):
         :param abs_tol: tolerance.
         :return: list of points intersecting Circle
         """
-        plane1 = volmdlr.surfaces.Plane3D(self.frame)
-        plane2 = volmdlr.surfaces.Plane3D(other_circle.frame)
-        plane_intersections = plane1.plane_intersection(plane2)
-        circle3d_line_intersections1 = volmdlr_intersections.circle_3d_line_intersections(self, plane_intersections[0])
+        plane_intersections = volmdlr_intersections.get_two_planes_intersections(self.frame, other_circle.frame)
+        if not plane_intersections:
+            return []
+        plane_intersections = Line3D(plane_intersections[0], plane_intersections[1])
+        circle3d_line_intersections1 = volmdlr_intersections.circle_3d_line_intersections(self, plane_intersections)
         circle3d_line_intersections2 = volmdlr_intersections.circle_3d_line_intersections(other_circle,
-                                                                                          plane_intersections[0])
+                                                                                          plane_intersections)
         intersections = []
         for intersection in circle3d_line_intersections1 + circle3d_line_intersections2:
             if volmdlr.core.point_in_list(intersection, intersections):
@@ -1450,10 +1451,8 @@ class Circle3D(CircleMixin, ClosedCurve):
         :return: list of points intersecting Circle
         """
         intersections = []
-        # from volmdlr import surfaces
-        plane1 = volmdlr.surfaces.Plane3D(self.frame)
-        plane2 = volmdlr.surfaces.Plane3D(ellipse.frame)
-        if plane1.is_coincident(plane2) and self.frame.w.is_colinear_to(ellipse.frame.w):
+        if self.frame.w.is_colinear_to(ellipse.frame.w) and \
+                math.isclose(self.frame.w.dot(ellipse.frame.origin - self.frame.origin), 0, abs_tol=1e-6):
             ellipse2d = ellipse.to_2d(self.frame.origin, self.frame.u, self.frame.v)
             circle2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
             intersections_2d = circle2d.ellipse_intersections(ellipse2d)
@@ -1461,10 +1460,13 @@ class Circle3D(CircleMixin, ClosedCurve):
                 intersections.append(intersection.to_3d(self.frame.origin, self.frame.u, self.frame.v))
             return intersections
 
-        plane_intersections = plane1.plane_intersection(plane2)
-        circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, plane_intersections[0])
+        plane_intersections = volmdlr_intersections.get_two_planes_intersections(self.frame, ellipse.frame)
+        if not plane_intersections:
+            return []
+        plane_intersections = Line3D(plane_intersections[0], plane_intersections[1])
+        circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, plane_intersections)
         ellipse3d_line_intersections = volmdlr_intersections.ellipse3d_line_intersections(
-            ellipse, plane_intersections[0])
+            ellipse, plane_intersections)
         for intersection in circle3d_line_intersections + ellipse3d_line_intersections:
             if volmdlr.core.point_in_list(intersection, intersections):
                 continue
@@ -2245,10 +2247,8 @@ class Ellipse3D(ClosedCurve):
         :return: A list of points, containing all intersections between the two Ellipse3D.
         """
         intersections = []
-        # from volmdlr import surfaces
-        plane1 = volmdlr.surfaces.Plane3D(self.frame)
-        plane2 = volmdlr.surfaces.Plane3D(ellipse.frame)
-        if plane1.is_coincident(plane2) and self.frame.w.is_colinear_to(ellipse.frame.w):
+        if self.frame.w.is_colinear_to(ellipse.frame.w) and\
+                math.isclose(self.frame.w.dot(ellipse.frame.origin - self.frame.origin), 0, abs_tol=1e-6):
             ellipse2d = ellipse.to_2d(self.frame.origin, self.frame.u, self.frame.v)
             self_ellipse2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
             intersections_2d = self_ellipse2d.ellipse_intersections(ellipse2d)
@@ -2256,11 +2256,13 @@ class Ellipse3D(ClosedCurve):
                 intersections.append(intersection.to_3d(self.frame.origin, self.frame.u, self.frame.v))
             return intersections
 
-        plane_intersections = plane1.plane_intersection(plane2)
+        plane_intersections = volmdlr_intersections.get_two_planes_intersections(self.frame, ellipse.frame)
+        if not plane_intersections:
+            return []
+        plane_intersections = Line3D(plane_intersections[0], plane_intersections[1])
         self_ellipse3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self,
-                                                                                               plane_intersections[0])
-        ellipse3d_line_intersections = volmdlr_intersections.ellipse3d_line_intersections(
-            ellipse, plane_intersections[0])
+                                                                                               plane_intersections)
+        ellipse3d_line_intersections = volmdlr_intersections.ellipse3d_line_intersections(ellipse, plane_intersections)
         for intersection in self_ellipse3d_line_intersections + ellipse3d_line_intersections:
             if volmdlr.core.point_in_list(intersection, intersections):
                 continue
