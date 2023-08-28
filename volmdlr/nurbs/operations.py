@@ -133,7 +133,6 @@ def insert_knot_curve(obj, param, num, **kwargs):
         * ``check_num``: enables/disables operation validity checks. *Default: True*
 
     :param obj: spline geometry
-    :type obj: abstract.SplineGeometry
     :param param: knot(s) to be inserted in [u, v, w] format
     :type param: list, tuple
     :param num: number of knot insertions in [num_u, num_v, num_w] format
@@ -184,8 +183,6 @@ def insert_knot_curve(obj, param, num, **kwargs):
         point_name = "Point" + obj.__class__.__name__[-2:]
         cpts_tmp = [getattr(volmdlr, point_name)(*point) for point in cpts_tmp]
         obj = obj.__class__(obj.degree, cpts_tmp, knot_multiplicities, knots, weights)
-        # obj.control_points = cpts_tmp
-        # obj.knotvector = kv_new
     # Return new spline geometry
     return obj
 

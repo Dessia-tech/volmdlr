@@ -12,7 +12,6 @@ import numpy as npy
 
 from dessia_common.core import DessiaObject
 
-import volmdlr.bspline_compiled
 import volmdlr.core
 from volmdlr.core import EdgeStyle
 import volmdlr.core_compiled
