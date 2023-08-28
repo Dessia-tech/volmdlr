@@ -36,16 +36,17 @@ class PointCloud3D(dc.DessiaObject):
         dc.DessiaObject.__init__(self, name=name)
 
     @classmethod
-    def from_stl(cls, file_path):
+    def from_stl(cls, file_path, name: str = 'from_stl'):
         """
-        Creates a point cloud 3d from an stl file.
+        Creates a point cloud 3d from a stl file.
 
         :param file_path: path to stl file.
+        :param name: object's name.
         :return: point cloud 3d object.
         """
         list_points = vmstl.Stl.from_file(file_path).extract_points_BIS()
 
-        return cls(list_points, name='from_stl')
+        return cls(list_points, name=name)
 
     def _bounding_box(self):
         return vm.core.BoundingBox.from_points(self.points)
@@ -151,7 +152,7 @@ class PointCloud3D(dc.DessiaObject):
 
     @classmethod
     def generate_shell(cls, polygons_3d: List[vm.wires.ClosedPolygon3D],
-                       normal: vm.Vector3D, vec1: vm.Vector3D, vec2: vm.Vector3D):
+                       normal: vm.Vector3D, vec1: vm.Vector3D, vec2: vm.Vector3D, name: str = ''):
         """
         Generates a shell from a list of polygon 3d, using a sewing algorithm.
 
@@ -159,6 +160,7 @@ class PointCloud3D(dc.DessiaObject):
         :param normal: normal to the sewing plane.
         :param vec1: u vector in the sewing plane.
         :param vec2: v vector in the sewing plane.
+        :param name: object's name.
         :return: return a shell.
         """
         position_plane = [p.points[0].dot(normal) for p in polygons_3d]
@@ -232,16 +234,17 @@ class PointCloud3D(dc.DessiaObject):
         return [point.coordinates() for point in self.points]
 
     @classmethod
-    def from_step(cls, step_file: str):
+    def from_step(cls, step_file: str, name: str = ''):
         """
         Creates a cloud of points from a step file.
 
         :param step_file: step file.
+        :param name: object's name.
         :return: Point Cloud 3D.
         """
         step = vstep.Step(step_file)
         points = step.to_points()
-        return cls(points)
+        return cls(points, name=name)
 
     def plot(self, ax=None, color='k'):
         """

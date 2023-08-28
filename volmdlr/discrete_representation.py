@@ -756,13 +756,14 @@ class PointBasedVoxelization(Voxelization):
 
     @classmethod
     def from_matrix_based_voxelization(
-        cls, matrix_based_voxelization: "MatrixBasedVoxelization"
+        cls, matrix_based_voxelization: "MatrixBasedVoxelization",
     ) -> "PointBasedVoxelization":
         """
         Create a PointBasedVoxelization object from a MatrixBasedVoxelization.
 
         :param matrix_based_voxelization: The MatrixBasedVoxelization object representing the voxelization.
         :type matrix_based_voxelization: MatrixBasedVoxelization
+        :param name: object's name.
 
         :return: A PointBasedVoxelization object created from the MatrixBasedVoxelization.
         :rtype: PointBasedVoxelization

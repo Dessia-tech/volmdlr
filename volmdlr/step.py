@@ -96,7 +96,7 @@ class Step(dc.DessiaObject):
         return self._graph
 
     @classmethod
-    def from_stream(cls, stream: BinaryFile):
+    def from_stream(cls, stream: BinaryFile, name: str = ''):
         """Instantiate a Step object from a stream."""
         stream.seek(0)
         lines = []
@@ -104,16 +104,16 @@ class Step(dc.DessiaObject):
             line = line.decode("ISO-8859-1")
             line = line.replace("\r", "")
             lines.append(line)
-        return cls(lines)
+        return cls(lines, name=name)
 
     @classmethod
-    def from_file(cls, filepath: str = None):
+    def from_file(cls, filepath: str = None, name: str = ''):
         """Instantiate a Step object from a step file."""
         with open(filepath, "r", encoding="ISO-8859-1") as file:
             lines = []
             for line in file:
                 lines.append(line)
-        return cls(lines)
+        return cls(lines, name=name)
 
     def read_lines(self, lines):
         """Translate the step file into step functions objects."""

@@ -72,7 +72,7 @@ class Grid2D(DessiaObject):
         return index
 
     @classmethod
-    def from_points(cls, points, points_dim_1, direction):
+    def from_points(cls, points, points_dim_1, direction, name: str = ''):
         """
         Defines a Grid2D given a list of points, number of points along the 1st dimension, and a direction.
 
@@ -81,18 +81,19 @@ class Grid2D(DessiaObject):
         :param points_dim_1:
         :type points_dim_1: int
         :param direction:
-        :type direction: List[str]
+        :type direction: List[str].
+        :param name: object's name.
         :return:
         :rtype:
         """
 
         lists_points = [points[i:i + points_dim_1] for i in range(0, len(points), points_dim_1)]
 
-        return cls(lists_points, direction)
+        return cls(lists_points, direction, name=name)
 
     @classmethod
     def from_properties(cls, x_limits, y_limits, points_nbr,
-                        direction=None):
+                        direction=None, name: str = ''):
         """
         Defines Grid2d based on the given properties.
 
@@ -103,7 +104,8 @@ class Grid2D(DessiaObject):
         :param points_nbr: Number of points along the x-axis and the y-axis
         :type points_nbr: Tuple[int, int]
         :param direction: Used for ordering the generated points
-        :type direction: List[str]
+        :type direction: List[str].
+        :param name: object's name.
         :return: The 2 dimensional grid
         :rtype: :class:`volmdlr.grid.Grid2D`
         """
@@ -148,7 +150,7 @@ class Grid2D(DessiaObject):
                 grid2d.append(points)
                 points = []
 
-        return cls(lists_points=grid2d, direction=direction)
+        return cls(lists_points=grid2d, direction=direction, name=name)
 
     def grid_pattern(self):
         """

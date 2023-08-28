@@ -918,7 +918,7 @@ class Circle2D(CircleMixin, ClosedCurve):
                              abs_tol=1e-06)
 
     @classmethod
-    def from_3_points(cls, point1, point2, point3):
+    def from_3_points(cls, point1, point2, point3, name: str = ''):
         """
         Creates a circle 2d from 3 points.
 
@@ -940,7 +940,7 @@ class Circle2D(CircleMixin, ClosedCurve):
             matrix_a = npy.array(matrix1)
             b_vector = - npy.array(b_vector_components)
             center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
-        circle = cls(center, point1.point_distance(center))
+        circle = cls(center, point1.point_distance(center), name=name)
         return circle
 
     def area(self):
@@ -1563,7 +1563,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         return cls(volmdlr.Frame3D(center, u, v, normal), radius, name)
 
     @classmethod
-    def from_3_points(cls, point1, point2, point3):
+    def from_3_points(cls, point1, point2, point3, name: str = ''):
         """
         Creates a circle from three points.
 

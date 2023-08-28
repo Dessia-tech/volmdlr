@@ -517,13 +517,14 @@ class Vector(DessiaObject):
         return math.isclose(abs(self.dot(other_vector)), 0, abs_tol=abs_tol)
 
     @classmethod
-    def mean_point(cls, points: List["Vector"]):
+    def mean_point(cls, points: List["Vector"], name: str = ""):
         """
         Find the mean point from a list of points. All the objects of this list
         should be of same dimension.
 
         :param points: A list of vector-like objects
         :type points: List[:class:`volmdlr.Vector`]
+        :param name: object's name.
         :return: The mean point or vector
         :rtype: :class:`volmdlr.Vector`
         """
@@ -533,6 +534,7 @@ class Vector(DessiaObject):
             point += point2
             n += 1
         point /= n
+        point.name = name
         return point
 
     def vector_projection(self, other_vector):
@@ -879,7 +881,7 @@ class Vector2D(Vector):
         return self.unit_normal_vector()
 
     @classmethod
-    def random(cls, xmin: float, xmax: float, ymin: float, ymax: float):
+    def random(cls, xmin: float, xmax: float, ymin: float, ymax: float, name: str = ""):
         """
         Returns a random 2-dimensional point.
 
@@ -891,11 +893,12 @@ class Vector2D(Vector):
         :type ymin: float
         :param ymax: The maximal ordinate
         :type ymax: float
+        :param name: object's name.
         :return: A random Vector2D
         :rtype: :class:`volmdlr.Vector2D`
         """
         return cls(random.uniform(xmin, xmax),
-                   random.uniform(ymin, ymax))
+                   random.uniform(ymin, ymax), name=name)
 
     def plot(self,
              head_width: float = 3, origin: "Vector2D" = None,
@@ -1109,7 +1112,7 @@ class Point2D(Vector2D):
     @classmethod
     def line_intersection(cls, line1: "volmdlr.edges.Line2D",
                           line2: "volmdlr.edges.Line2D",
-                          curvilinear_abscissa: bool = False):
+                          curvilinear_abscissa: bool = False, name: str = ""):
         """
         Returns a Point2D based on the intersection between two infinite lines.
 
@@ -1122,6 +1125,7 @@ class Point2D(Vector2D):
             first line and on the second line. Otherwise, only the point will
             be returned
         :type curvilinear_abscissa: bool, optional
+        :param name: Object's name.
         :return: The two-dimensional point at the intersection of the two lines
         :rtype: :class:`volmdlr.Point2D`
         """
@@ -1151,7 +1155,7 @@ class Point2D(Vector2D):
     @classmethod
     def segment_intersection(cls, segment1: "volmdlr.edges.LineSegment2D",
                              segment2: "volmdlr.edges.LineSegment2D",
-                             curvilinear_abscissa: bool = False):
+                             curvilinear_abscissa: bool = False, name: str = ""):
         """
         Returns a Point2D based on the intersection between two finite lines.
 
@@ -1164,6 +1168,7 @@ class Point2D(Vector2D):
             first line segment and on the second line segment. Otherwise, only
             the point will be returned
         :type curvilinear_abscissa: bool, optional
+        :param name: object's name.
         :return: The two-dimensional point at the intersection of the two lines
             segments
         :rtype: :class:`volmdlr.Point2D`
@@ -1188,9 +1193,9 @@ class Point2D(Vector2D):
             y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)
             y = y / denominateur
             if not curvilinear_abscissa:
-                return cls(x, y)
+                return cls(x, y, name=name)
             else:
-                return cls(x, y), t, u
+                return cls(x, y, name=name), t, u
         else:
             if not curvilinear_abscissa:
                 return None
@@ -1220,23 +1225,25 @@ class Point2D(Vector2D):
         return plot_data.Point2D(self.x, self.y)
 
     @classmethod
-    def middle_point(cls, point1: Vector2D,
-                     point2: Vector2D):
+    def middle_point(cls, point1: Vector2D, point2: Vector2D, name: str = ''):
         """
         Computes the middle point between two two-dimensional vector-like objects.
 
         :param point1: the first point
         :type point1: :class:`volmdlr.Vector2D`
         :param point2: the second point
-        :type point2: :class:`volmdlr.Vector2D`
+        :type point2: :class:`volmdlr.Vector2D`.
+        :param name: object's name.
         :return: the middle point
         :rtype: :class:`volmdlr.Point2D`
         """
-        return (point1 + point2) * 0.5
+        middle_point = (point1 + point2) * 0.5
+        middle_point.name = name
+        return middle_point
 
     @classmethod
     def line_projection(cls, point: Vector2D,
-                        line: "volmdlr.edges.Line2D"):
+                        line: "volmdlr.edges.Line2D", name: str = ''):
         """
         Computes the projection of a two-dimensional vector-like object on an
         infinite two-dimensional line
@@ -1244,14 +1251,17 @@ class Point2D(Vector2D):
         :param point: the point to be projected
         :type point: :class:`volmdlr.Vector2D`
         :param line: the infinite line
-        :type line: :class:`volmdlr.edges.Line2D`
+        :type line: :class:`volmdlr.edges.Line2D`.
+        :param name: object's name.
         :return: the projected point
         :rtype: :class:`volmdlr.Point2D`
         """
         p1, p2 = line[0], line[1]
         n = line.unit_normal_vector()
         pp1 = point - p1
-        return pp1 - pp1.dot(n) * n + p1
+        point = pp1 - pp1.dot(n) * n + p1
+        point.name = name
+        return point
 
     def nearest_point(self, points: List[Vector2D]):
         """
@@ -1745,7 +1755,7 @@ class Vector3D(Vector):
         return self.__class__(self.x, self.y, self.z)
 
     @classmethod
-    def random(cls, xmin: float, xmax: float, ymin: float, ymax: float, zmin: float, zmax: float):
+    def random(cls, xmin: float, xmax: float, ymin: float, ymax: float, zmin: float, zmax: float, name: str = ''):
         """
         Returns a random 2-dimensional point.
 
@@ -1760,13 +1770,14 @@ class Vector3D(Vector):
         :param zmin: The minimal applicate
         :type zmin: float
         :param zmax: The maximal applicate
-        :type zmax: float
+        :type zmax: float.
+        :param name: object's name.
         :return: A random Vector3D
         :rtype: :class:`volmdlr.Vector3D`
         """
         return cls(random.uniform(xmin, xmax),
                    random.uniform(ymin, ymax),
-                   random.uniform(zmin, zmax))
+                   random.uniform(zmin, zmax), name=name)
 
     def to_point(self):
         """
@@ -2009,18 +2020,21 @@ class Point3D(Vector3D):
         return (self - point2).norm()
 
     @classmethod
-    def middle_point(cls, point1: "Point3D", point2: "Point3D"):
+    def middle_point(cls, point1: "Point3D", point2: "Point3D", name: str = ''):
         """
         Computes the middle point between two 3-dimensional points.
 
         :param point1: The first 3-dimensional point
         :type point1: :class:`volmdlr.Point3D`
         :param point2: The second 3-dimensional point
-        :type point2: :class:`volmdlr.Point3D`
+        :type point2: :class:`volmdlr.Point3D`.
+        :param name: object's name.
         :return: The middle point
         :rtype: :class:`volmdlr.Point3D`
         """
-        return (point1 + point2) * 0.5
+        middle_point = (point1 + point2) * 0.5
+        middle_point.name = name
+        return middle_point
 
     def to_step(self, current_id, vertex=False):
         """
@@ -2330,7 +2344,7 @@ class Matrix33:
             raise ValueError("The matrix is singular")
 
     @classmethod
-    def random_matrix(cls, minimum: float = 0., maximum: float = 1.):
+    def random_matrix(cls, minimum: float = 0., maximum: float = 1., name: str = ''):
         """
         Creates a random matrix with values between bounds.
 
@@ -2339,7 +2353,8 @@ class Matrix33:
         :type minimum: float, optional
         :param maximum: Maximum possible value of matrix coefficients. Default
             value is 1
-        :type maximum: float, optional
+        :type maximum: float, optional.
+        :param name: object's name.
         :return: A random matrix
         :rtype: :class:`volmdlr.Matrix33`
         """
@@ -2650,13 +2665,14 @@ class Basis3D(Basis):
 
     # TODO: transform to annotation when available
     @classmethod
-    def from_two_vectors(cls, vector1: Vector3D, vector2: Vector3D) -> "Basis3D":
+    def from_two_vectors(cls, vector1: Vector3D, vector2: Vector3D, name: str = '') -> "Basis3D":
         """
         Creates a basis with first vector1 adimensionned, as u, v is the
         vector2 substracted of u component, w is the cross product of u and v.
 
         :param vector1: The first vector of the Basis3D
-        :type vector1: :class:`volmdlr.Vector3D`
+        :type vector1: :class:`volmdlr.Vector3D`.
+        :param name: object's name.
         :param vector2: The second vector of the Basis3D
         :type vector2: :class:`volmdlr.Vector3D`
         """
@@ -2665,7 +2681,7 @@ class Basis3D(Basis):
         v = vector2 - vector2.dot(vector1) * vector1
         v = v.unit_vector()
         w = u.cross(v)
-        return Basis3D(u, v, w)
+        return Basis3D(u, v, w, name=name)
 
     def to_frame(self, origin):
         """
@@ -3538,13 +3554,14 @@ class Frame3D(Basis3D):
         return cls(point, u, v, w, name=name)
 
     @classmethod
-    def from_3_points(cls, point1, point2, point3):
+    def from_3_points(cls, point1, point2, point3, name: str = ""):
         """
         Creates a frame 3d from 3 points.
 
         :param point1: point 1.
         :param point2: point 2.
         :param point3: point 3.
+        :param name: object's name.
         :return: a frame 3d.
         """
         vector1 = point2 - point1
@@ -3553,14 +3570,14 @@ class Frame3D(Basis3D):
         vector2 = vector2.to_vector().unit_vector()
         normal = vector1.cross(vector2)
         normal = normal.unit_vector()
-        return cls(point1, vector1, normal.cross(vector1), normal)
+        return cls(point1, vector1, normal.cross(vector1), normal, name=name)
 
     @classmethod
-    def from_point_and_normal(cls, origin, normal):
+    def from_point_and_normal(cls, origin, normal, name: str = ""):
         """Creates a frame 3D from a point and a normal vector."""
         u_vector = normal.deterministic_unit_normal_vector()
         v_vector = normal.cross(u_vector)
-        return cls(origin, u_vector, v_vector, normal)
+        return cls(origin, u_vector, v_vector, normal, name=name)
 
     # def babylonjs(self, size=0.1, parent=None):
     #     """

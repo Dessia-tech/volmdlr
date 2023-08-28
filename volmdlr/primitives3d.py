@@ -204,7 +204,7 @@ class Block(shells.ClosedShell3D):
         return self.size[0] * self.size[1] * self.size[2]
 
     @classmethod
-    def from_bounding_box(cls, bounding_box):
+    def from_bounding_box(cls, bounding_box, name: str = ''):
         """
         Transform a bounding box into a block.
         """
@@ -213,7 +213,7 @@ class Block(shells.ClosedShell3D):
         frame = volmdlr.Frame3D(origin, bbox_size[0] * volmdlr.Vector3D(1, 0, 0),
                                 bbox_size[1] * volmdlr.Vector3D(0, 1, 0),
                                 bbox_size[2] * volmdlr.Vector3D(0, 0, 1))
-        return cls(frame=frame)
+        return cls(frame=frame, name=name)
 
     def vertices(self):
         """Computes the vertices of the block."""

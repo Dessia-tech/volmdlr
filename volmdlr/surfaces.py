@@ -1142,7 +1142,7 @@ class Plane3D(Surface3D):
         return content, [plane_id]
 
     @classmethod
-    def from_3_points(cls, *args):
+    def from_3_points(cls, *args, name: str = ''):
         """
         Point 1 is used as origin of the plane.
         """
@@ -1156,31 +1156,32 @@ class Plane3D(Surface3D):
         normal = vector1.cross(vector2)
         normal = normal.unit_vector()
         frame = volmdlr.Frame3D(point1, vector1, normal.cross(vector1), normal)
-        return cls(frame)
+        return cls(frame, name=name)
 
     @classmethod
-    def from_normal(cls, point, normal):
+    def from_normal(cls, point, normal, name: str = ''):
         """Creates a Plane 3D form a point and a normal vector."""
         v1 = normal.deterministic_unit_normal_vector()
         v2 = v1.cross(normal)
-        return cls(volmdlr.Frame3D(point, v1, v2, normal))
+        return cls(volmdlr.Frame3D(point, v1, v2, normal), name=name)
 
     @classmethod
     def from_plane_vectors(cls, plane_origin: volmdlr.Point3D,
-                           plane_x: volmdlr.Vector3D, plane_y: volmdlr.Vector3D):
+                           plane_x: volmdlr.Vector3D, plane_y: volmdlr.Vector3D, name: str = ''):
         """
         Initializes a 3D plane object with a given plane origin and plane x and y vectors.
 
         :param plane_origin: A volmdlr.Point3D representing the origin of the plane.
         :param plane_x: A volmdlr.Vector3D representing the x-axis of the plane.
         :param plane_y: A volmdlr.Vector3D representing the y-axis of the plane.
+        :param name: object's name.
         :return: A Plane3D object initialized from the provided plane origin and plane x and y vectors.
         """
         normal = plane_x.cross(plane_y)
-        return cls(volmdlr.Frame3D(plane_origin, plane_x, plane_y, normal))
+        return cls(volmdlr.Frame3D(plane_origin, plane_x, plane_y, normal), name=name)
 
     @classmethod
-    def from_points(cls, points):
+    def from_points(cls, points, name: str = ''):
         """
         Returns a 3D plane that goes through the 3 first points on the list.
 
@@ -1191,7 +1192,7 @@ class Plane3D(Surface3D):
         if len(points) == 3:
             return cls.from_3_points(points[0],
                                      points[1],
-                                     points[2])
+                                     points[2], name=name)
         points = [p.copy() for p in points]
         indexes_to_del = []
         for i, point in enumerate(points[1:]):
@@ -1213,7 +1214,7 @@ class Plane3D(Surface3D):
             if dot < dot_min:
                 vector2_min = vector2
                 dot_min = dot
-        return cls.from_3_points(origin, vector1 + origin, vector2_min + origin)
+        return cls.from_3_points(origin, vector1 + origin, vector2_min + origin, name=name)
 
     def angle_between_planes(self, plane2):
         """
@@ -1366,12 +1367,13 @@ class Plane3D(Surface3D):
         return False
 
     @classmethod
-    def plane_betweeen_two_planes(cls, plane1, plane2):
+    def plane_betweeen_two_planes(cls, plane1, plane2, name: str = ''):
         """
         Calculates a plane between two other planes.
 
         :param plane1: plane1.
         :param plane2: plane2.
+        :param name: object's name.
         :return: resulting plane.
         """
         plane1_plane2_intersection = plane1.plane_intersection(plane2)[0]
@@ -1380,7 +1382,7 @@ class Plane3D(Surface3D):
         v = v.unit_vector()
         w = u.cross(v)
         point = (plane1.frame.origin + plane2.frame.origin) / 2
-        return cls(volmdlr.Frame3D(point, u, w, v))
+        return cls(volmdlr.Frame3D(point, u, w, v), name=name)
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -6485,7 +6487,7 @@ class BSplineSurface3D(Surface3D):
         return self.contour2d_to_3d(contour01)
 
     @classmethod
-    def from_geomdl_surface(cls, surface):
+    def from_geomdl_surface(cls, surface, name: str = ''):
         """
         Create a volmdlr BSpline_Surface3D from a geomdl's one.
 
@@ -6506,12 +6508,12 @@ class BSplineSurface3D(Surface3D):
                               u_multiplicities=u_multiplicities,
                               v_multiplicities=v_multiplicities,
                               u_knots=u_knots,
-                              v_knots=v_knots)
+                              v_knots=v_knots, name=name)
 
         return bspline_surface
 
     @classmethod
-    def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v):
+    def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, name: str = ''):
         """
         Bspline Surface interpolation through 3d points.
 
@@ -6527,7 +6529,8 @@ class BSplineSurface3D(Surface3D):
             degree of the output surface for the u-direction.
         degree_v : int
             degree of the output surface for the v-direction.
-
+        name: str
+            object's name.
         Returns
         -------
         B-spline surface
@@ -6540,10 +6543,11 @@ class BSplineSurface3D(Surface3D):
 
         surface = interpolate_surface(points, size_u, size_v, degree_u, degree_v)
 
-        return cls.from_geomdl_surface(surface)
+        return cls.from_geomdl_surface(surface, name=name)
 
     @classmethod
-    def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, **kwargs):
+    def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u,
+                                                degree_v, name: str = '',**kwargs):
         """
         Bspline Surface approximate through 3d points.
 
@@ -6559,6 +6563,8 @@ class BSplineSurface3D(Surface3D):
             degree of the output surface for the u-direction.
         degree_v : int
             degree of the output surface for the v-direction.
+        name: str
+            object's name.
 
         Keyword Arguments:
             * ``ctrlpts_size_u``: number of control points on the u-direction. *Default: size_u - 1*
@@ -6581,11 +6587,11 @@ class BSplineSurface3D(Surface3D):
         surface = approximate_surface(points, size_u, size_v, degree_u, degree_v,
                                       ctrlpts_size_u=num_cpts_u, num_cpts_v=num_cpts_v)
 
-        return cls.from_geomdl_surface(surface)
+        return cls.from_geomdl_surface(surface, name=name)
 
     @classmethod
     def from_cylindrical_faces(cls, cylindrical_faces, degree_u, degree_v,
-                               points_x: int = 10, points_y: int = 10):
+                               points_x: int = 10, points_y: int = 10, name: str = ''):
         """
         Define a bspline surface from a list of cylindrical faces.
 
@@ -6601,6 +6607,8 @@ class BSplineSurface3D(Surface3D):
             number of points in x-direction
         points_y : int
             number of points in y-direction
+        name: str
+            object's name.
 
         Returns
         -------
@@ -6662,11 +6670,11 @@ class BSplineSurface3D(Surface3D):
             to_be_merged = merged
 
         bspline_surface = to_be_merged
-
+        bspline_surface.name = name
         return bspline_surface
 
     @classmethod
-    def from_cylindrical_face(cls, cylindrical_face, degree_u, degree_v,
+    def from_cylindrical_face(cls, cylindrical_face, degree_u, degree_v, name: str = '',
                               **kwargs):  # points_x: int = 50, points_y: int = 50
         """
         Define a bspline surface from a cylindrical face.
@@ -6683,6 +6691,8 @@ class BSplineSurface3D(Surface3D):
             number of points in x-direction
         points_y : int
             number of points in y-direction
+        name: str
+            object's name.
 
         Returns
         -------
@@ -6700,7 +6710,7 @@ class BSplineSurface3D(Surface3D):
                                                   bounding_rectangle[3]),
                                         points_nbr=(points_x, points_y)))
 
-        return cls.points_fitting_into_bspline_surface(points_3d, points_x, points_x, degree_u, degree_v)
+        return cls.points_fitting_into_bspline_surface(points_3d, points_x, points_x, degree_u, degree_v, name=name)
 
     def intersection_with(self, other_bspline_surface3d):
         """
