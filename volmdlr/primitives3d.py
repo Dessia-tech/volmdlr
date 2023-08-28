@@ -269,7 +269,7 @@ class Block(shells.ClosedShell3D):
         hly = 0.5 * self.frame.v.norm()
         hlz = 0.5 * self.frame.w.norm()
         frame = self.frame.copy()
-        frame.normalize()
+        frame = frame.normalize()
         xm_frame = volmdlr.Frame3D(frame.origin - 0.5 * self.frame.u,
                                    frame.v, frame.w, frame.u)
         xp_frame = volmdlr.Frame3D(frame.origin + 0.5 * self.frame.u,
@@ -912,7 +912,7 @@ class Cylinder(shells.ClosedShell3D):
         position = 0.5 * (point1 + point2)
         length = point1.point_distance(point2)
         axis = (point2 - point1).to_vector()
-        axis.normalize()
+        axis = axis.unit_vector()
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
 
@@ -1667,7 +1667,7 @@ class HollowCylinder(shells.ClosedShell3D):
         position = 0.5 * (point1 + point2)
         length = point1.point_distance(point2)
         axis = (point2 - point1).to_vector()
-        axis.normalize()
+        axis = axis.unit_vector()
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
 
@@ -2000,12 +2000,11 @@ class Sphere(shells.ClosedShell3D):
         rota_theta = [n * theta for n in range(nb_floor)]
 
         point1 = self.center + volmdlr.X3D * self.radius
-        rota_axis = volmdlr.Y3D
 
         skin_points = []
 
         for theta_ in rota_theta:
-            pt_floor_init = point1.rotation(self.center, rota_axis, theta_)
+            pt_floor_init = point1.rotation(self.center, volmdlr.Y3D, theta_)
 
             if math.isclose(theta_, 0, abs_tol=1e-6) or math.isclose(theta_, math.pi, abs_tol=1e-6):
                 skin_points.append(pt_floor_init)
@@ -2074,7 +2073,7 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
     def __init__(self, obj, vectorextru: volmdlr.Vector3D, name: str = ''):
         self.obj = obj
-        vectorextru.normalize()
+        vectorextru = vectorextru.unit_vector()
         self.vectorextru = vectorextru
         if obj.__class__ is curves.Ellipse3D:
             self.points = obj.tessel_points

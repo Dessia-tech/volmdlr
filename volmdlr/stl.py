@@ -304,9 +304,9 @@ class Stl(dc.DessiaObject):
         :return: A list of unique Point3D objects.
         :rtype: List[vm.Point3D]
         """
-        points1 = [t.point1 for t in self.triangles]
-        points2 = [t.point2 for t in self.triangles]
-        points3 = [t.point3 for t in self.triangles]
+        points1 = [triangle.point1 for triangle in self.triangles]
+        points2 = [triangle.point2 for triangle in self.triangles]
+        points3 = [triangle.point3 for triangle in self.triangles]
 
         valid_points = vm.Vector3D.remove_duplicate(points1 + points2 + points3)
         return valid_points
@@ -314,24 +314,24 @@ class Stl(dc.DessiaObject):
     # TODO: decide which algorithm to be used (no _BIS)
     def extract_points_BIS(self, min_distance: float = 0.001):
         points = []
-        for t in self.triangles:
-            distance12 = t.point1.point_distance(t.point2)
-            distance13 = t.point1.point_distance(t.point3)
-            distance23 = t.point2.point_distance(t.point3)
+        for triangle in self.triangles:
+            distance12 = triangle.point1.point_distance(triangle.point2)
+            distance13 = triangle.point1.point_distance(triangle.point3)
+            distance23 = triangle.point2.point_distance(triangle.point3)
             if distance12 > min_distance:
                 n_div = int(distance12 / min_distance)
                 for n in range(n_div):
-                    new_point = t.point1 + (t.point2 - t.point1) * n / n_div
+                    new_point = triangle.point1 + (triangle.point2 - triangle.point1) * n / n_div
                     points.append(new_point)
             if distance13 > min_distance:
                 n_div = int(distance13 / min_distance)
                 for n in range(n_div):
-                    new_point = t.point1 + (t.point3 - t.point1) * (n + 1) / n_div
+                    new_point = triangle.point1 + (triangle.point3 - triangle.point1) * (n + 1) / n_div
                     points.append(new_point)
             if distance23 > min_distance:
                 n_div = int(distance23 / min_distance)
                 for n in range(n_div):
-                    new_point = t.point2 + (t.point3 - t.point2) * n / n_div
+                    new_point = triangle.point2 + (triangle.point3 - triangle.point2) * n / n_div
                     points.append(new_point)
 
         valid_points = vm.Vector3D.remove_duplicate(points)
@@ -377,11 +377,11 @@ class Stl(dc.DessiaObject):
                 point_normal += point
             points_normals[key] = point_normal
             try:
-                point_normal.normalize()
+                point_normal = point_normal.unit_vector()
             except ZeroDivisionError:
                 point_normal = value[0]
                 points_normals[key] = point_normal
-                point_normal.normalize()
+                point_normal = point_normal.unit_vector()
             normals.append(point_normal)
         self.normals = normals
         return points_normals
@@ -394,10 +394,9 @@ class Stl(dc.DessiaObject):
         :rtype: Stl
         """
         invalid_triangles = []
-        for it, triangles in enumerate(self.triangles):
+        for index_t, triangles in enumerate(self.triangles):
             if triangles.area() < threshold:
-                invalid_triangles.append(it)
-                print(it, triangles.area())
+                invalid_triangles.append(index_t)
 
         triangles = self.triangles[:]
         for invalid_triangle_index in invalid_triangles[::-1]:

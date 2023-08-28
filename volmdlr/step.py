@@ -204,7 +204,7 @@ class Step(dc.DessiaObject):
         :return: A graph representation the step file structure.
         :rtype: networkx.DiGraph
         """
-        F = nx.DiGraph()
+        graph = nx.DiGraph()
         labels = {}
 
         for function in self.functions.values():
@@ -221,14 +221,14 @@ class Step(dc.DessiaObject):
                 self.functions[id1].arg.append(f'#{id2}')
 
             elif function.name in STEP_TO_VOLMDLR:
-                F.add_node(function.id,
+                graph.add_node(function.id,
                            color='rgb(0, 0, 0)',
                            shape='.',
                            name=str(function.id))
                 labels[function.id] = str(function.id) + ' ' + function.name
 
         # Delete connection if node not found
-        node_list = list(F.nodes())
+        node_list = list(graph.nodes())
         delete_connection = []
         for connection in self.all_connections:
             if connection[0] not in node_list \
@@ -238,17 +238,17 @@ class Step(dc.DessiaObject):
             self.all_connections.remove(delete)
 
         # Create graph connections
-        F.add_edges_from(self.all_connections)
+        graph.add_edges_from(self.all_connections)
 
         # Remove single nodes
         delete_nodes = []
-        for node in F.nodes:
-            if F.degree(node) == 0:
+        for node in graph.nodes:
+            if graph.degree(node) == 0:
                 delete_nodes.append(node)
         for node in delete_nodes:
-            F.remove_node(node)
+            graph.remove_node(node)
             # G.remove_node(node)
-        return F
+        return graph
 
     def draw_graph(self, graph=None, reduced=False):
         """
@@ -666,8 +666,6 @@ class Step(dc.DessiaObject):
 
                     if not list_primitives:
                         none_primitives.add(instantiate_id)
-                        instantiate_ids.pop()
-                        continue
 
                     volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_positions, assembly_frame,
                                                            name=name)

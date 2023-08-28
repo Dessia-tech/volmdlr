@@ -86,7 +86,7 @@ def generate_param_component(xmin, xmax, ymin, ymax, c_min, c_max, h_min, h_max)
     c = random.randrange(c_min*100, c_max*100, 1)/100 
     x_vec, y_vec = random.randrange(xmin*100, xmax*100, 1)/100, random.randrange(ymin*100, ymax*100, 1)/100
     vec1 = vm.Vector2D((x_vec, y_vec))
-    vec1.Normalize()
+    vec1 = vec1.unit_vector()
     vec2 = vec1.deterministic_unit_normal_vector()
     
     center = vm.Point2D((x, y))

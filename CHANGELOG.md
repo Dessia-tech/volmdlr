@@ -22,6 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle2D: ellipse_intersections.
 - Arc3D: arc_intersections, arcellipse_intersections
 - BSplineSurface3D: partial removal of dependencies on geomdl objects
+- Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
+- Curve: local_discretization
+- Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
+- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections, ellipse_intersections
+- Circle2D: ellipse_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
+- Wire3D/Contour3D: edge_intersections, wire_intersections
+- BSpline3D: arc_intersections
+- New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
 - BSplineSurface3D: from_points_interpolation, from_points_approximation
 
 ### Fixed
@@ -56,8 +66,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add error protection stl
 - Sweep - add raise ValueError if section too big in comparision to arc radiuses
 - Update cython version requirement in setup.py
+- Step import: handles when there is an empty assembly in the file.
 - Ellipse2D: point_at_abscissa
 - ultis.common_operations: get_edge_distance_to_point and get_get_abscissa_discretization from edges so it can be used in curves too.
+- edges.Edge._generic_minimum_distance
+- LineSegment3D: distance_linesegment
+- BSpline3D: linesegment_intersections
 
 ### Refactor
 - refator some classes' init in primitives3D. 
@@ -74,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: transform some attributs into lazy evaluation and Caching
 - BSplineSurface3D: store control_points as numpy array for memory efficiency
 - PlaneFace3D: distance_to_point -> point_distance
+- remove normalize() methods
 - Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
 - BSplineSurface3D: point3d_to_2d performance improvements.
 
@@ -88,7 +103,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ellipse3D: test_ellipse_intersections, test_linesegment_intersections
 - ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
 - Circle3D: circle_intersections.
-- Arc3D: arc_intersections, arcellipse_intersections
+- Arc3D: arc_intersections, arcellipse_intersections, test_minimum_distance_bspline
+- BSplineCurve3D: test_bspline_linesegment_minimum_distance, test_bspline_linesegment_intersections
+- Contour3D: test_edge_intersections
 
 ## v0.12.0
 
@@ -113,8 +130,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: Translation
 - wires.WireMixin: from_circle
 - curves.CircleMixin: trim
+- Face3D: point_distance
 - BSplineCurve3D: revolution method.
-- 
+
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
 - ContourMixin: delete_shared_contour_section, reorder_contour_at_point, are_extremity_points_touching

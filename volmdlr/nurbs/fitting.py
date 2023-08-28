@@ -1,5 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
+# pylint: disable=no-member, used-before-assignment, no-name-in-module, import-error
 """
 Provides curve and surface fitting functions.
 
@@ -421,7 +422,7 @@ def compute_knot_vector2(degree, num_dpts, num_cpts, params):
     # Start knot vector
     knotvector = [0.0 for _ in range(degree + 1)]
 
-    # Compute "d" value - Eqn 9.68
+    # Compute "d" value - Eq 9.68
     d = float(num_dpts) / float(num_cpts - degree)
     # Find internal knots
     for j in range(1, num_cpts - degree):
@@ -519,7 +520,6 @@ def compute_params_surface(points: np.ndarray[np.double_t, ndim == 2], size_u: c
 
     # Compute vl
     v_l: np.ndarray[np.double_t, ndim == 1] = np.zeros(size_v, dtype=np.double)
-    # v_l = [0.0 for _ in range(size_v)]
 
     # Compute for each curve on the u-direction
     vl_temp: np.ndarray[np.double_t, ndim == 1] = np.zeros(size_u * size_v, dtype=np.double)

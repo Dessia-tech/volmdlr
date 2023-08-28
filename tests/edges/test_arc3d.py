@@ -242,7 +242,7 @@ class TestArc3D(unittest.TestCase):
         point1 = volmdlr.Point3D(-1, -1, 0)
         self.assertEqual(arc.point_distance(point1), math.sqrt(2) - 1)
 
-        point2 = volmdlr.Point3D(-0.5/math.sqrt(2), -0.5/math.sqrt(2), 0)
+        point2 = volmdlr.Point3D(-0.5 / math.sqrt(2), -0.5 / math.sqrt(2), 0)
         self.assertEqual(arc.point_distance(point2), 0.5)
 
         point3 = volmdlr.Point3D(0, 0, 0)
@@ -269,6 +269,21 @@ class TestArc3D(unittest.TestCase):
             volmdlr.Point3D(-1.2905737351057338, -5.961765089245487, -0.9872550297484957)))
         self.assertTrue(intersections[1].is_close(
             volmdlr.Point3D(7.332605916292026, -4.272128323148586, -0.42404277438286175)))
+
+    def test_minimum_distance_bspline(self):
+        arc = edges.Arc3D.from_3_points(volmdlr.Point3D(-3, -3, 0),
+                                        volmdlr.Point3D(6.324555320336761, -5.692099788303083, -0.8973665961010275),
+                                        volmdlr.Point3D(3, 3, 2))
+        bspline = edges.BSplineCurve3D.from_points_interpolation(
+            [volmdlr.Point3D(1.2067665579541171, -1.246879774203074, -0.4359328108960321),
+             volmdlr.Point3D(-1.2905737351068276, -5.961765089244547, -0.9872550297481824),
+             volmdlr.Point3D(2.739350840642852, -5.869347626045908, -0.7880999427201254)], 2)
+        dist, min_dist_point1, min_dist_point2 = bspline.minimum_distance(arc, True)
+        self.assertAlmostEqual(dist, 1.9450692583417427e-11)
+        self.assertTrue(min_dist_point1.is_close(
+            volmdlr.Point3D(-1.29057373513423, -5.961765089185557, -0.9872550297440593)))
+        self.assertTrue(min_dist_point2.is_close(
+            volmdlr.Point3D(-1.2905737351257018, -5.9617650891813065, -0.9872550297271026)))
 
 
 if __name__ == '__main__':

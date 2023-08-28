@@ -781,6 +781,12 @@ class Surface3D(DessiaObject):
         self.frame = frame
         DessiaObject.__init__(self, name=name)
 
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
+        """
+        Abstract method.
+        """
+        raise NotImplementedError(f"plot method is not implemented for {self.__class__.__name__}")
+
     def point2d_to_3d(self, point2d):
         raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
 
@@ -1120,7 +1126,7 @@ class Plane3D(Surface3D):
         :rtype: :class:`volmdlr.faces.Plane3D`
         """
         frame = object_dict[arguments[1]]
-        frame.normalize()
+        frame = frame.normalize()
         return cls(frame, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -1147,10 +1153,10 @@ class Plane3D(Surface3D):
         vector1 = vector1.to_vector()
         vector2 = point3 - point1
         vector2 = vector2.to_vector()
-        vector1.normalize()
-        vector2.normalize()
+        vector1 = vector1.unit_vector()
+        vector2 = vector2.unit_vector()
         normal = vector1.cross(vector2)
-        normal.normalize()
+        normal = normal.unit_vector()
         frame = volmdlr.Frame3D(point1, vector1, normal.cross(vector1), normal)
         return cls(frame)
 
@@ -1198,13 +1204,13 @@ class Plane3D(Surface3D):
 
         origin = points[0]
         vector1 = points[1] - origin
-        vector1.normalize()
+        vector1 = vector1.unit_vector()
         vector2_min = points[2] - origin
-        vector2_min.normalize()
+        vector2_min = vector2_min.unit_vector()
         dot_min = abs(vector1.dot(vector2_min))
         for point in points[3:]:
             vector2 = point - origin
-            vector2.normalize()
+            vector2 = vector2.unit_vector()
             dot = abs(vector1.dot(vector2))
             if dot < dot_min:
                 vector2_min = vector2
@@ -1373,7 +1379,7 @@ class Plane3D(Surface3D):
         plane1_plane2_intersection = plane1.plane_intersection(plane2)[0]
         u = plane1_plane2_intersection.unit_direction_vector()
         v = plane1.frame.w + plane2.frame.w
-        v.normalize()
+        v = v.unit_vector()
         w = u.cross(v)
         point = (plane1.frame.origin + plane2.frame.origin) / 2
         return cls(volmdlr.Frame3D(point, u, w, v))
@@ -1514,6 +1520,7 @@ class Plane3D(Surface3D):
 PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
 PLANE3D_OYZ = Plane3D(volmdlr.OYZX)
 PLANE3D_OZX = Plane3D(volmdlr.OZXY)
+PLANE3D_OXZ = Plane3D(volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Z3D, volmdlr.Y3D))
 
 
 class PeriodicalSurface(Surface3D):
@@ -3162,9 +3169,9 @@ class SphericalSurface3D(PeriodicalSurface):
         if start.is_close(interior) and interior.is_close(end) and end.is_close(start):
             return []
         u_vector = start - self.frame.origin
-        u_vector.normalize()
+        u_vector = u_vector.unit_vector()
         v_vector = interior - self.frame.origin
-        v_vector.normalize()
+        v_vector = v_vector.unit_vector()
         normal = u_vector.cross(v_vector)
         circle = curves.Circle3D(volmdlr.Frame3D(self.frame.origin, u_vector, v_vector, normal),
                                  start.point_distance(self.frame.origin))
@@ -3902,7 +3909,7 @@ class ExtrusionSurface3D(Surface3D):
     def __init__(self, edge: Union[edges.FullArcEllipse3D, edges.BSplineCurve3D],
                  direction: volmdlr.Vector3D, name: str = ''):
         self.edge = edge
-        direction.normalize()
+        direction = direction.unit_vector()
         self.direction = direction
         if hasattr(edge, "center"):
             self.frame = volmdlr.Frame3D.from_point_and_vector(edge.center, direction, volmdlr.Z3D)
@@ -5019,11 +5026,6 @@ class BSplineSurface3D(Surface3D):
         start_v = kwargs.get('start_v', knotvector_v[self.degree_v])
         stop_v = kwargs.get('stop_v', knotvector_v[-(self.degree_v + 1)])
 
-        # # Check parameters
-        # if self._kv_normalize:
-        #     if not utilities.check_params([start_u, stop_u, start_v, stop_v]):
-        #         raise GeomdlException("Parameters should be between 0 and 1")
-
         # Evaluate and cache
         self._eval_points = npy.asarray(evaluate_surface(self.data,
                                                          start=(start_u, start_v),
@@ -5156,13 +5158,7 @@ class BSplineSurface3D(Surface3D):
         to u k times and v l times
         :rtype: List[`volmdlr.Vector3D`]
         """
-        # if self.surface.rational:
-        #     # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
-        #     derivatives = volmdlr.rational_derivatives(self.surface.data, (u, v), order)
-        # else:
-        #     # derivatives = self._derivatives(self.surface.data, (u, v), order)
-        #     derivatives = volmdlr.derivatives(self.surface.data, (u, v), order)
-        if self._weights is not None:
+        if self.weights is not None:
             control_points = self.ctrlptsw
         else:
             control_points = self.ctrlpts
@@ -5221,6 +5217,9 @@ class BSplineSurface3D(Surface3D):
         return blending_mat
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        """
+        Evaluate the surface at a given parameter coordinate.
+        """
         u, v = point2d
         u = float(min(max(u, 0.0), 1.0))
         v = float(min(max(v, 0.0), 1.0))
@@ -5655,7 +5654,6 @@ class BSplineSurface3D(Surface3D):
                 points.append(point2d)
         start = points[0]
         end = points[-1]
-
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         if self.x_periodicity:
             points = self._repair_periodic_boundary_points(arc3d, points, 'x')
