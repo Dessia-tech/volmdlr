@@ -898,7 +898,10 @@ class Assembly(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
+        bbox_list = [prim.bounding_box for prim in self.primitives if hasattr(prim, "bounding_box")]
+        if not bbox_list:
+            return BoundingBox.from_points(self.primitives)
+        return BoundingBox.from_bounding_boxes(bbox_list)
 
     def babylon_data(self, merge_meshes=True):
         """
@@ -957,6 +960,8 @@ class Assembly(dc.PhysicalObject):
         :rtype: Primitive3D
 
         """
+        if global_frame == transformed_frame:
+            return primitive
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
         matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
@@ -1092,7 +1097,7 @@ class Compound(dc.PhysicalObject):
             if all(primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or
                    hasattr(primitive, "shell_faces") for primitive in self.primitives):
                 self._type = "manifold_solid_brep"
-            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edges, volmdlr.Point3D)) or
+            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edge, volmdlr.Point3D)) or
                      hasattr(primitive, "shell_faces") for primitive in self.primitives):
                 self._type = "geometric_curve_set"
             else:
@@ -1101,14 +1106,17 @@ class Compound(dc.PhysicalObject):
 
     @compound_type.setter
     def compound_type(self, value):
-        """Compound type setter."""
+        """Compound typesetter."""
         self._type = value
 
     def _bounding_box(self) -> BoundingBox:
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+        bbox_list = [p.bounding_box for p in self.primitives if hasattr(p, "bounding_box")]
+        if not bbox_list:
+            return BoundingBox.from_points(self.primitives)
+        return BoundingBox.from_bounding_boxes(bbox_list)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1244,7 +1252,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives if hasattr(p, "bounding_box")])
 
     def volume(self) -> float:
         """

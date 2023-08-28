@@ -204,7 +204,7 @@ class Step(dc.DessiaObject):
         :return: A graph representation the step file structure.
         :rtype: networkx.DiGraph
         """
-        F = nx.DiGraph()
+        graph = nx.DiGraph()
         labels = {}
 
         for function in self.functions.values():
@@ -221,14 +221,14 @@ class Step(dc.DessiaObject):
                 self.functions[id1].arg.append(f'#{id2}')
 
             elif function.name in STEP_TO_VOLMDLR:
-                F.add_node(function.id,
+                graph.add_node(function.id,
                            color='rgb(0, 0, 0)',
                            shape='.',
                            name=str(function.id))
                 labels[function.id] = str(function.id) + ' ' + function.name
 
         # Delete connection if node not found
-        node_list = list(F.nodes())
+        node_list = list(graph.nodes())
         delete_connection = []
         for connection in self.all_connections:
             if connection[0] not in node_list \
@@ -238,17 +238,17 @@ class Step(dc.DessiaObject):
             self.all_connections.remove(delete)
 
         # Create graph connections
-        F.add_edges_from(self.all_connections)
+        graph.add_edges_from(self.all_connections)
 
         # Remove single nodes
         delete_nodes = []
-        for node in F.nodes:
-            if F.degree(node) == 0:
+        for node in graph.nodes:
+            if graph.degree(node) == 0:
                 delete_nodes.append(node)
         for node in delete_nodes:
-            F.remove_node(node)
+            graph.remove_node(node)
             # G.remove_node(node)
-        return F
+        return graph
 
     def draw_graph(self, graph=None, reduced=False):
         """
@@ -345,6 +345,7 @@ class Step(dc.DessiaObject):
         self.parse_arguments(arguments)
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
+
         try:
             if hasattr(step_reader, fun_name):
                 volmdlr_object = getattr(step_reader, fun_name)(arguments, object_dict)
@@ -644,7 +645,7 @@ class Step(dc.DessiaObject):
                 # here we invert instantiate_ids because if the code enter inside the except
                 # block, we want to loop from the last KeyError to the first. This avoids an infinite loop
                 for instantiate_id in reversed(instantiate_ids):
-                    if instantiate_id in object_dict:
+                    if instantiate_id in object_dict or instantiate_id in none_primitives:
                         instantiate_ids.pop()
                         continue
                     product_id = self.shape_definition_representation_to_product_node(instantiate_id)
@@ -656,18 +657,20 @@ class Step(dc.DessiaObject):
 
                     assembly_shape_ids, assembly_position_ids = self.get_assembly_data(
                         assemblies_structure[instantiate_id], valid_entities, assembly_frame, object_dict)
-                    assembly_positions = [object_dict[id_frame] for id_frame in assembly_position_ids]
-                    list_primitives = [object_dict[id_shape] for id_shape in assembly_shape_ids]
+                    assembly_positions = []
+                    list_primitives = []
+                    for id_shape, id_frame in zip(assembly_shape_ids, assembly_position_ids):
+                        if id_shape not in none_primitives:
+                            assembly_positions.append(object_dict[id_frame])
+                            list_primitives.append(object_dict[id_shape])
 
                     if not list_primitives:
                         none_primitives.add(instantiate_id)
-                        instantiate_ids.pop()
-                        continue
 
                     volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_positions, assembly_frame,
                                                            name=name)
                     object_dict[instantiate_id] = volmdlr_object
-
+                    last_error = None
                 error = False
             except KeyError as key:
                 # Sometimes the search don't instantiate the nodes of a
@@ -710,7 +713,6 @@ class Step(dc.DessiaObject):
         nodes = self.create_node_list(shape_representations)
         errors = set()
         for node in nodes:
-
             if node is None:
                 continue
             object_dict, times = self._helper_instantiate(node, object_dict, times, show_times)

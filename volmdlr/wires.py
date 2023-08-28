@@ -332,7 +332,7 @@ class WireMixin:
                     primitives.remove(primitive)
                     break
             else:
-                # print(self, primitive)
+                #print(self, primitive)
                 # ax = self.plot()
                 # primitive.plot(edge_style=EdgeStyle(color='r'), ax=ax)
                 raise NotImplementedError('There may exist a problem with this'
@@ -647,12 +647,9 @@ class WireMixin:
         return cls([circle.trim(point, point)])
 
     def plot(self, ax=None, edge_style=EdgeStyle()):
-        """Wire 2D plot using Matplotlib."""
+        """Wire plot using Matplotlib."""
         if ax is None:
             ax = self._get_plot_ax()
-
-        # if edge_style.equal_aspect:
-        #     ax.set_aspect('equal')
 
         for element in self.primitives:
             element.plot(ax=ax, edge_style=edge_style)
@@ -661,6 +658,34 @@ class WireMixin:
         plt.show()
 
         return ax
+
+    def edge_intersections(self, edge, abs_tol: float = 1e-6):
+        """
+        Compute intersections between a wire (2D or 3D) and an edge (2D or 3D).
+
+        :param edge: edge to compute intersections.
+        """
+        edge_intersections = []
+        for primitive in self.primitives:
+            intersections = primitive.intersections(edge, abs_tol)
+            for intersection in intersections:
+                if not volmdlr.core.point_in_list(intersection, edge_intersections):
+                    edge_intersections.append(intersection)
+        return edge_intersections
+
+    def wire_intersections(self, wire, abs_tol: float = 1e-6):
+        """
+        Compute intersections between two wire 2d.
+
+        :param wire: volmdlr.wires.Wire2D
+        """
+        intersections_points = []
+        for primitive in wire.primitives:
+            edge_intersections = self.edge_intersections(primitive, abs_tol)
+            for crossing in edge_intersections:
+                if not volmdlr.core.point_in_list(crossing, intersections_points):
+                    intersections_points.append(crossing)
+        return intersections_points
 
 
 class EdgeCollection3D(WireMixin):
@@ -681,7 +706,7 @@ class EdgeCollection3D(WireMixin):
         self.name = name
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-        """ Plot edges with matplolib, not tested. """
+        """ Plot edges with Matplotlib, not tested. """
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -969,34 +994,6 @@ class Wire2D(WireMixin, PhysicalObject):
                 crossings_points.append(result)
         return crossings_points
 
-    def edge_intersections(self, edge):
-        """
-        Compute intersections between a wire 2d and an edge.
-
-        :param edge: edge to compute intersections.
-        """
-        edge_intersections = []
-        for primitive in self.primitives:
-            intersections = primitive.intersections(edge)
-            for intersection in intersections:
-                if not volmdlr.core.point_in_list(intersection, edge_intersections):
-                    edge_intersections.append(intersection)
-        return edge_intersections
-
-    def wire_intersections(self, wire):
-        """
-        Compute intersections between two wire 2d.
-
-        :param wire: volmdlr.wires.Wire2D
-        """
-        intersections_points = []
-        for primitive in wire.primitives:
-            edge_intersections = self.edge_intersections(primitive)
-            for crossing in edge_intersections:
-                if not volmdlr.core.point_in_list(crossing, intersections_points):
-                    intersections_points.append(crossing)
-        return intersections_points
-
     def validate_edge_crossings(self, crossings):
         """
         Validates the crossings points from an edge and a wire.
@@ -1246,7 +1243,7 @@ class Wire2D(WireMixin, PhysicalObject):
             y_max = max(y_max, ymax_edge)
         return volmdlr.core.BoundingRectangle(x_min, x_max, y_min, y_max)
 
-    def is_inside(self, contour2):
+    def is_inside(self, contour2=None):
         """
         Verifies if a contour is inside another contour perimeter, including the edges.
 
@@ -1455,8 +1452,7 @@ class Wire3D(WireMixin, PhysicalObject):
         return Wire3D(new_edges, self.name)
 
     def _get_plot_ax(self):
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        _, ax = plt.subplots(subplot_kw={"projection": "3d"})
         return ax
 
     def babylon_points(self):
@@ -3108,19 +3104,19 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         nb_points = len(self.points)
         vectors = []
         for i in range(nb_points - 1):
-            v1 = self.points[i + 1] - self.points[i]
-            v2 = self.points[i] - self.points[i + 1]
-            v1.normalize()
-            v2.normalize()
-            vectors.append(v1)
-            vectors.append(v2)
+            vector1 = self.points[i + 1] - self.points[i]
+            vector2 = self.points[i] - self.points[i + 1]
+            vector1 = vector1.unit_vector()
+            vector2 = vector2.unit_vector()
+            vectors.append(vector1)
+            vectors.append(vector2)
 
-        v1 = self.points[0] - self.points[-1]
-        v2 = self.points[-1] - self.points[0]
-        v1.normalize()
-        v2.normalize()
-        vectors.append(v1)
-        vectors.append(v2)
+        vector1 = self.points[0] - self.points[-1]
+        vector2 = self.points[-1] - self.points[0]
+        vector1 = vector1.unit_vector()
+        vector2 = vector2.unit_vector()
+        vectors.append(vector1)
+        vectors.append(vector2)
 
         offset_vectors = []
         offset_points = []
@@ -3134,7 +3130,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                 vector_i = vector_i.normal_vector()
                 offset_vectors.append(vector_i)
             else:
-                vector_i.normalize()
+                vector_i = vector_i.unit_vector()
                 if vector_i.dot(vectors[2 * i - 1].normal_vector()) > 0:
                     vector_i = - vector_i
                     # check = True
@@ -3142,8 +3138,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
             normal_vector1 = - vectors[2 * i - 1].normal_vector()
             normal_vector2 = vectors[2 * i].normal_vector()
-            normal_vector1.normalize()
-            normal_vector2.normalize()
+            normal_vector1 = normal_vector1.unit_vector()
+            normal_vector2 = normal_vector2.unit_vector()
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
@@ -3185,7 +3181,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         Determines if a polygon self intersects using the Bentley-Ottmann algorithm.
 
-        :return: True if the polygon self intersects, False otherwis. If True, returns two
+        :return: True if the polygon self intersects, False otherwise. If True, returns two
             intersecting line segments as LineSegment2D objects. If False, returns two None values;
         :rtype: Tuple[bool, Union[volmdlr.edges.LineSegment2D, None], Union[volmdlr.edges.LineSegment2D, None]]
         """
@@ -3571,7 +3567,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         points = [vmd.Node2D(*triangulate_result['vertices'][i, :]) for i in range(number_points)]
         return vmd.DisplayMesh2D(points, triangles=triangles)
 
-    def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25):
+    def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25,
+                                  include_edge_points: bool = True):
         """
         Use an n by m grid to triangulate the contour.
 
@@ -3594,7 +3591,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         for i, xi in enumerate(x):
             for j, yi in enumerate(y):
                 point = vmd.Node2D(xi, yi)
-                if self.point_belongs(point, include_edge_points=True) and point not in polygon_points:
+                if self.point_belongs(point, include_edge_points=include_edge_points) and point not in polygon_points:
                     grid_point_index[(i, j)] = point
                     points.append(point)
 
@@ -3694,7 +3691,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         returns the closing point.
         """
         vec_dir = crossing_point.copy()
-        vec_dir.normalize()
+        vec_dir = vec_dir.unit_vector()
 
         line = volmdlr.edges.LineSegment2D(volmdlr.O2D,
                                            crossing_point + vec_dir * 5)
@@ -3705,8 +3702,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             point_intersection = line_segment.linesegment_intersections(
                 line)
             if point_intersection:
-                point_intersections[line_segment] = point_intersection[
-                    0]
+                point_intersections[line_segment] = point_intersection[0]
             else:
                 if line.point_belongs(line_segment.start):
                     point_intersections[line_segment] = line_segment.start
@@ -4259,11 +4255,13 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
         contour = cls(raw_edges, name=name)
-        if contour.is_ordered():
+        if contour.is_ordered(1e-6):
             return contour
-        list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
-        if list_edges:
-            return cls(list_edges, name=name)
+        list_contours = cls.contours_from_edges(raw_edges)
+        for contour in list_contours:
+        # list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
+            if contour.is_ordered():
+                return contour
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):

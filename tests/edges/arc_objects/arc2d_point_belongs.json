@@ -1,0 +1,56 @@
+{
+  "object_class": "volmdlr.edges.Arc2D",
+  "name": "",
+  "circle": {
+    "object_class": "volmdlr.curves.Circle2D",
+    "name": "",
+    "center": {
+      "$ref": "#/_references/b77d8883-40d6-11ee-b2c9-68545aefcc97"
+    },
+    "radius": 0.38,
+    "frame": {
+      "object_class": "volmdlr.Frame2D",
+      "name": "",
+      "origin": {
+        "object_class": "volmdlr.Point2D",
+        "x": 0.04024333938399982,
+        "y": 0.38519367021000006
+      },
+      "u": {
+        "object_class": "volmdlr.Vector2D",
+        "x": 1.0,
+        "y": 0.0,
+        "name": ""
+      },
+      "v": {
+        "object_class": "volmdlr.Vector2D",
+        "x": 0.0,
+        "y": 1.0,
+        "name": ""
+      }
+    }
+  },
+  "is_trigo": true,
+  "start": {
+    "object_class": "volmdlr.Point2D",
+    "x": 0.0,
+    "y": 0.007334023958999958
+  },
+  "end": {
+    "object_class": "volmdlr.Point2D",
+    "x": 0.0014304392109998343,
+    "y": 0.007184414490999935
+  },
+  "center": {
+    "$ref": "#/_references/b77d8883-40d6-11ee-b2c9-68545aefcc97"
+  },
+  "angle1": -1.6768997630665636,
+  "angle2": -1.6731148805305642,
+  "_references": {
+    "b77d8883-40d6-11ee-b2c9-68545aefcc97": {
+      "object_class": "volmdlr.Point2D",
+      "x": 0.04024333938399982,
+      "y": 0.38519367021000006
+    }
+  }
+}

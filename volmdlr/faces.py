@@ -242,8 +242,8 @@ class Face3D(volmdlr.core.Primitive3D):
                    surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),
                    name=name)
         # To improve performance while reading from step file
-        face.outer_contour3d = outer_contour3d
-        face.inner_contours3d = inner_contours3d
+        # face.outer_contour3d = outer_contour3d
+        # face.inner_contours3d = inner_contours3d
         return face
 
     def to_step(self, current_id):
@@ -432,7 +432,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def plot(self, ax=None, color='k', alpha=1, edge_details=False):
         """Plots the face."""
         if not ax:
-            ax = plt.figure().add_subplot(111, projection='3d')
+            _, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
         self.outer_contour3d.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
                                                               edge_ends=edge_details, edge_direction=edge_details))
@@ -1114,6 +1114,51 @@ class Face3D(volmdlr.core.Primitive3D):
                 break
         return self.divide_face(intersections_with_plane2d)
 
+    def _get_face_decomposition_set_closest_to_point(self, point):
+        """
+        Searches for the faces decomposition's set closest to given point.
+
+        :param point: other point.
+        :return: list of triangular faces, corresponding to area of the face closest to point.
+        """
+        face_decomposition1 = self.face_decomposition()
+        list_set_points1 = [{point for face in faces1 for point in face.points}
+                            for _, faces1 in face_decomposition1.items()]
+        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1])
+                            for sets_points1 in list_set_points1]
+        list_set_points2 = [npy.array([(point[0], point[0], point[0])])]
+
+        minimum_distance = math.inf
+        index1 = None
+        for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
+            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
+            sets_min_dist = npy.min(distances)
+            if sets_min_dist < minimum_distance:
+                minimum_distance = sets_min_dist
+                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
+        return list(face_decomposition1.values())[index1]
+
+    def point_distance(self, point, return_other_point: bool = False):
+        """
+        Calculates the distance from a face 3d and a point.
+
+        :param point: point to verify.
+        :param return_other_point: bool to decide if corresponding point on face should be returned.
+        :return: distance to face3D.
+        """
+
+        faces1 = self._get_face_decomposition_set_closest_to_point(point)
+        minimum_distance = math.inf
+        best_distance_point = None
+        for face1 in faces1:
+            distance, point1 = face1.point_distance(point, True)
+            if distance < minimum_distance:
+                minimum_distance = distance
+                best_distance_point = point1
+        if return_other_point:
+            return minimum_distance, best_distance_point
+        return minimum_distance
+
 
 class PlaneFace3D(Face3D):
     """
@@ -1167,9 +1212,7 @@ class PlaneFace3D(Face3D):
         :return: distance to planeface3D.
         """
 
-        projected_pt = point.plane_projection3d(self.surface3d.frame.origin,
-                                                self.surface3d.frame.u,
-                                                self.surface3d.frame.v)
+        projected_pt = self.surface3d.point_projection(point)
         projection_distance = point.point_distance(projected_pt)
 
         if self.point_belongs(projected_pt):
@@ -1741,9 +1784,9 @@ class Triangle3D(PlaneFace3D):
 
     @staticmethod
     def get_subdescription_points(new_points, resolution, max_length):
-        """Gets subdescription points."""
+        """Gets sub-description points."""
         vector = new_points[0] - new_points[1]
-        vector.normalize()
+        vector = vector.unit_vector()
         points_0_1 = []
 
         for k in range(int(max_length / resolution) + 2):
@@ -1752,7 +1795,7 @@ class Triangle3D(PlaneFace3D):
             points_0_1.append(new_points[1] + vector * min(k * resolution, max_length))
 
         vector, length_2_1 = new_points[2] - new_points[1], new_points[2].point_distance(new_points[1])
-        vector.normalize()
+        vector = vector.unit_vector()
         points_in = []
 
         for p0_1 in points_0_1:
@@ -1765,7 +1808,7 @@ class Triangle3D(PlaneFace3D):
                 points_in.append(point_on_2_1)
             else:
                 vector_2_0 = point_on_2_1 - p0_1
-                vector_2_0.normalize()
+                vector_2_0 = vector_2_0.unit_vector()
                 step_in = length_2_0 / (nb_int - 1)
                 for i in range(nb_int):
                     if min(i * step_in, length_2_0) != 0:
@@ -1835,7 +1878,7 @@ class Triangle3D(PlaneFace3D):
 
         """
         normal = self.surface3d.frame.w
-        normal.normalize()
+        normal = normal.unit_vector()
         return normal
 
     def triangle_minimum_distance(self, triangle_face, return_points=False):
@@ -2703,17 +2746,23 @@ class BSplineFace3D(Face3D):
 
     def get_bounding_box(self):
         """Creates a bounding box from the face mesh."""
-        number_points_x, number_points_y = self.grid_size()
-        if number_points_x >= number_points_y:
-            number_points_x, number_points_y = 5, 3
-        else:
-            number_points_x, number_points_y = 3, 5
-        outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
-        points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
-                                                                                      number_points_y=number_points_y)
-        if self.surface2d.inner_contours:
-            points_grid = self._get_bbox_inner_contours_points(points_grid, x, y, grid_point_index)
-        points3d = [self.surface3d.point2d_to_3d(point) for point in points_grid]
+        try:
+            number_points_x, number_points_y = self.grid_size()
+            if number_points_x >= number_points_y:
+                number_points_x, number_points_y = 5, 3
+            else:
+                number_points_x, number_points_y = 3, 5
+            outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
+            points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x,
+                                                                                          number_points_y,
+                                                                                          include_edge_points=False)
+            if self.surface2d.inner_contours:
+                points_grid = self._get_bbox_inner_contours_points(points_grid, x, y, grid_point_index)
+            points3d = [self.surface3d.point2d_to_3d(point) for point in points_grid]
+        except ZeroDivisionError:
+            points3d = []
+        if not points3d:
+            return self.outer_contour3d.bounding_box
         return volmdlr.core.BoundingBox.from_bounding_boxes([volmdlr.core.BoundingBox.from_points(points3d),
                                                             self.outer_contour3d.bounding_box])
 
@@ -2723,10 +2772,8 @@ class BSplineFace3D(Face3D):
             inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True)
             # removes with a region search the grid points that are in the inner contour
             xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
-            x_grid_range = array_range_search(x, xmin, xmax)
-            y_grid_range = array_range_search(y, ymin, ymax)
-            for i in x_grid_range:
-                for j in y_grid_range:
+            for i in array_range_search(x, xmin, xmax):
+                for j in array_range_search(y, ymin, ymax):
                     point = grid_point_index.get((i, j))
                     if not point:
                         continue

@@ -4,7 +4,6 @@
   "package_version": "0.6.1.dev338+g675c34b5",
   "degree": 3,
   "weights": null,
-  "periodic": false,
   "start": {
     "object_class": "volmdlr.Point2D",
     "x": 1.8145832652650462,
