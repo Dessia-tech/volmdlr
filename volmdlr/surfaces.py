@@ -17,7 +17,6 @@ from scipy.optimize import least_squares, minimize
 from dessia_common.core import DessiaObject, PhysicalObject
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
-import volmdlr.bspline_compiled
 import volmdlr.core
 from volmdlr import display, edges, grid, wires, curves
 import volmdlr.geometry
@@ -6523,28 +6522,25 @@ class BSplineSurface3D(Surface3D):
         return cls.from_points_interpolation(points_3d, size_u, size_v, degree_u, degree_v)
 
     @classmethod
-    def from_points_interpolation(cls, points_3d, size_u: int, size_v: int,
+    def from_points_interpolation(cls, points_3d: List[volmdlr.Point3D], size_u: int, size_v: int,
                                   degree_u: int, degree_v: int, name: str = ""):
         """
         Bspline Surface interpolation through 3d points.
 
-        Parameters
-        ----------
-        points_3d : list[volmdlr.Point3D]
-            data points
-        size_u : int
-            number of data points on the u-direction.
-        size_v : int
-            number of data points on the v-direction.
-        degree_u : int
-            degree of the output surface for the u-direction.
-        degree_v : int
-            degree of the output surface for the v-direction.
-
-        Returns
-        -------
-        B-spline surface
-
+        :param points_3d: data points.
+        :type points_3d: List[volmdlr.Point3D]
+        :param size_u: number of data points on the u-direction.
+        :type size_u: int
+        :param size_v: number of data points on the v-direction.
+        :type size_v: int
+        :param degree_u: degree of the output surface for the u-direction.
+        :type degree_u: int
+        :param degree_v: degree of the output surface for the v-direction.
+        :type degree_v: int
+        :param name: (Optional) instance name.
+        :type name: str
+        :return: B-spline surface.
+        :rtype: BSplineSurface3D
         """
 
         points = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points_3d], dtype=npy.float64)
@@ -6561,31 +6557,30 @@ class BSplineSurface3D(Surface3D):
         return cls.from_points_approximation(points_3d, size_u, size_v, degree_u, degree_v, **kwargs)
 
     @classmethod
-    def from_points_approximation(cls, points_3d, size_u: int, size_v: int,
-                                  degree_u: int, degree_v: int, name: str = "", **kwargs):
+    def from_points_approximation(cls, points_3d: List[volmdlr.Point3D], size_u: int, size_v: int, degree_u: int,
+                                  degree_v: int, name: str = "", **kwargs):
         """
         Bspline Surface approximate through 3d points.
 
-        Parameters
-        ----------
-        points_3d : list[volmdlr.Point3D]
-            data points
-        size_u : int
-            number of data points on the u-direction.
-        size_v : int
-            number of data points on the v-direction.
-        degree_u : int
-            degree of the output surface for the u-direction.
-        degree_v : int
-            degree of the output surface for the v-direction.
+        :param points_3d: data points.
+        :type points_3d: List[volmdlr.Point3D]
+        :param size_u: number of data points on the u-direction.
+        :type size_u: int
+        :param size_v: number of data points on the v-direction.
+        :type size_v: int
+        :param degree_u: degree of the output surface for the u-direction.
+        :type degree_u: int
+        :param degree_v: degree of the output surface for the v-direction.
+        :type degree_v: int
+        :param name: (Optional) instance name.
+        :type name: str
 
         Keyword Arguments:
             * ``ctrlpts_size_u``: number of control points on the u-direction. *Default: size_u - 1*
             * ``ctrlpts_size_v``: number of control points on the v-direction. *Default: size_v - 1*
 
-        Returns
-        -------
-        B-spline surface: volmdlr.faces.BSplineSurface3D
+        :return: B-spline surface.
+        :rtype: BSplineSurface3D
 
         """
 

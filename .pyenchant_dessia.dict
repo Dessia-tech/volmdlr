@@ -17,8 +17,10 @@ Bspline
 bsplines
 BSpline's
 cartesian
+classmethod
 cosinus
 ctrlpts
+ctrlptsw
 cython
 dataset
 dbscan
