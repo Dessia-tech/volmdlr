@@ -5084,14 +5084,13 @@ class BSplineSurface3D(Surface3D):
 
     def points(self):
         """
-        Returns surface points
+        Returns surface points.
         """
         return [volmdlr.Point3D(*point) for point in self.evalpts]
 
     def control_points_matrix(self, coordinates):
         """
         Define control points like a matrix, for each coordinate: x:0, y:1, z:2.
-
         """
 
         points = npy.empty((self.nb_u, self.nb_v))
