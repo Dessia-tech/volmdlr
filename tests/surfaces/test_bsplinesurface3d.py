@@ -597,6 +597,48 @@ class TestBSplineSurface3D(unittest.TestCase):
         for weight, expected_weight in zip(surf2.weights, expected_weights_surf2):
             self.assertAlmostEqual(weight, expected_weight)
 
+    def test_surface_curves(self):
+        curves = self.spline_surf.surface_curves
+        u_curves = curves["u"]
+        v_curves = curves["v"]
+        self.assertEqual(len(u_curves), 6)
+        self.assertEqual(len(v_curves), 6)
+        self.assertTrue(u_curves[0].start.is_close(volmdlr.Point3D(-25.0, -25.0, -10.0)))
+        self.assertTrue(u_curves[0].end.is_close(volmdlr.Point3D(25.0, -25.0, -10.0)))
+        self.assertTrue(u_curves[-1].start.is_close(volmdlr.Point3D(-25.0, 25.0, -10.0)))
+        self.assertTrue(u_curves[-1].end.is_close(volmdlr.Point3D(25.0, 25.0, -10.0)))
+        self.assertTrue(v_curves[0].start.is_close(volmdlr.Point3D(-25.0, -25.0, -10.0)))
+        self.assertTrue(v_curves[0].end.is_close(volmdlr.Point3D(-25.0, 25.0, -10.0)))
+        self.assertTrue(v_curves[-1].start.is_close(volmdlr.Point3D(25.0, -25.0, -10.0)))
+        self.assertTrue(v_curves[-1].end.is_close(volmdlr.Point3D(25.0, 25.0, -10.0)))
+
+        curves = self.nurbs_surf.surface_curves
+        u_curves = curves["u"]
+        v_curves = curves["v"]
+        self.assertEqual(len(u_curves), 6)
+        self.assertEqual(len(v_curves), 6)
+        self.assertTrue(u_curves[0].start.is_close(volmdlr.Point3D(-25.0, -25.0, -10.0)))
+        self.assertTrue(u_curves[0].end.is_close(volmdlr.Point3D(25.0, -25.0, -10.0)))
+        self.assertTrue(u_curves[-1].start.is_close(volmdlr.Point3D(-25.0, 25.0, -10.0)))
+        self.assertTrue(u_curves[-1].end.is_close(volmdlr.Point3D(25.0, 25.0, -10.0)))
+        self.assertTrue(v_curves[0].start.is_close(volmdlr.Point3D(-25.0, -25.0, -10.0)))
+        self.assertTrue(v_curves[0].end.is_close(volmdlr.Point3D(-25.0, 25.0, -10.0)))
+        self.assertTrue(v_curves[-1].start.is_close(volmdlr.Point3D(25.0, -25.0, -10.0)))
+        self.assertTrue(v_curves[-1].end.is_close(volmdlr.Point3D(25.0, 25.0, -10.0)))
+
+        u0_expected_weights = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+        v0_expected_weights = [0.5, 1.0, 0.75, 1.0, 0.25, 1.0]
+        for curve, expected_weights in zip((u_curves[0], v_curves[0]), (u0_expected_weights, v0_expected_weights)):
+            for weight, expected_weight in zip(curve.weights, expected_weights):
+                self.assertAlmostEqual(weight, expected_weight)
+
+    def test_plane_intersection(self):
+        frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
+        plane = surfaces.Plane3D(frame)
+        intersections = self.spline_surf.plane_intersection(plane)
+        for point in intersections:
+            self.assertTrue(plane.point_on_surface(point))
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=0)
