@@ -1,6 +1,7 @@
 Volmdlr: the absolute basics for beginners
 ------------------------------------------
-Welcome to the absolute beginner’s guide to volmdlr! If you have comments or suggestions, please don’t hesitate to reach out!
+Welcome to the absolute beginner’s guide to volmdlr! If you have comments or suggestions, please don’t hesitate to reach
+out!
 
 Welcome to volmdlr!
 ^^^^^^^^^^^^^^^^^^^
@@ -25,28 +26,22 @@ To install the latest version of the package you need to run the following
 command::
 
   pip install volmdlr
-  # or
-  pip3 install volmdlr
 
-To install a specific version of the package you would issue the following
-command::
+To install a specific version of the package you would issue the following command::
 
   pip install volmdlr==0.1.0
-  # or
-  pip3 install volmdlr==0.1.0
 
 Developer installation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-First, clone the package. Then, enter the newly created volmdlr repository. Finally, develop the setup.py file, and you are good to go ! ::
+First, clone the package. Then, enter the newly created volmdlr repository.
+Finally, develop the setup.py file, and you are good to go ! ::
 
   git clone https://github.com/Dessia-tech/volmdlr.git
 
   cd volmdlr
 
   python3 setup.py develop --user
-  # or whatever version you are using :
-  python3.x setup.py develop --user
 
 Requirements
 ^^^^^^^^^^^^
@@ -60,7 +55,7 @@ Dependency     Minimum Version  Usage
 =============  ===============  ===========
 packaging          latest       computation
 dessia_common      >=0.10.0     computation      
-Cython             latest       computation
+Cython             >=3.0.0      computation
 numpy              latest       computation
 matplotlib         latest       display
 scipy              latest       computation
