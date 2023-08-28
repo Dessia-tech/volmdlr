@@ -56,14 +56,14 @@ def direction_to_euler_angles(u: vm.Vector3D, v=None):
         v = vm.Vector3D.random(0, 1, 0, 1, 0, 1)
 
     u = u.copy()
-    u.normalize()
+    u = u.unit_vector()
     matrix_r = zeros((3, 3))
     matrix_r[0, 0] = u.x
     matrix_r[1, 0] = u.y
     matrix_r[2, 0] = u.z
 
     v = v - u.dot(v) * u
-    v.normalize()
+    v = v.unit_vector()
     w = u.cross(v)
     matrix_r[0, 1] = v.y
     matrix_r[1, 1] = v.y

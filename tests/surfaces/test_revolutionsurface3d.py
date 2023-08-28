@@ -124,5 +124,22 @@ class TestRevolutionSurface3D(unittest.TestCase):
         self.assertAlmostEqual(contour2d.area(), 0.00031415327300491437 * math.pi, 2)
 
 
+    def test_arc3d_to_2d(self):
+        surface = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/arc3d_to_2d_surface.json")
+        arc3d = vme.Arc3D.load_from_file("surfaces/objects_revolution_tests/arc3d_to_2d_arc3d.json")
+        brep = surface.arc3d_to_2d(arc3d)[0]
+        self.assertTrue(brep.start.is_close(volmdlr.Point2D(-math.pi, 0.0)))
+        self.assertTrue(brep.end.is_close(volmdlr.Point2D(-math.pi, 0.0038322109949349634)))
+
+        surface = surfaces.RevolutionSurface3D.load_from_file(
+            "surfaces/objects_revolution_tests/arc3d_to_2d_surface_2.json")
+        arc3d = vme.Arc3D.load_from_file("surfaces/objects_revolution_tests/arc3d_to_2d_arc3d_2.json")
+        brep = surface.arc3d_to_2d(arc3d)[0]
+        self.assertTrue(brep.start.is_close(volmdlr.Point2D(-math.pi, 0.0038322109949349634)))
+        self.assertTrue(brep.end.is_close(volmdlr.Point2D(-math.pi, 0.0)))
+
+
+
 if __name__ == '__main__':
     unittest.main()

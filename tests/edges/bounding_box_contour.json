@@ -70,8 +70,7 @@
         0.0,
         1.0
       ],
-      "weights": null,
-      "periodic": false
+      "weights": null
     },
     {
       "object_class": "volmdlr.edges.LineSegment2D",
@@ -140,8 +139,7 @@
         0.0,
         1.0
       ],
-      "weights": null,
-      "periodic": false
+      "weights": null
     }
   ]
 }

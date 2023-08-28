@@ -173,9 +173,9 @@ class TriangularElement(vmw.Triangle):
         normal1 = vm.Vector2D(-vec1.y, vec1.x)
         normal2 = vm.Vector2D(-vec2.y, vec2.x)
         normal3 = vm.Vector2D(-vec3.y, vec3.x)
-        normal1.normalize()
-        normal2.normalize()
-        normal3.normalize()
+        normal1 = normal1.unit_vector()
+        normal2 = normal2.unit_vector()
+        normal3 = normal3.unit_vector()
         if normal1.dot(vec2) < 0:
             normal1 = - normal1
         if normal2.dot(vec3) < 0:
@@ -316,9 +316,9 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         normal1 = vm.Vector2D(-vec1.y, vec1.x)
         normal2 = vm.Vector2D(-vec2.y, vec2.x)
         normal3 = vm.Vector2D(-vec3.y, vec3.x)
-        normal1.normalize()
-        normal2.normalize()
-        normal3.normalize()
+        normal1 = normal1.unit_vector()
+        normal2 = normal2.unit_vector()
+        normal3 = normal3.unit_vector()
         if normal1.dot(vec2) < 0:
             normal1 = - normal1
         if normal2.dot(vec3) < 0:
@@ -446,8 +446,8 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
             plt.fill(x, y, facecolor=fill_color, edgecolor="k")
             return ax
         if point_numbering:
-            for ip, point in enumerate(self.points):
-                ax.text(*point, f'point {ip + 1}', ha='center', va='top')
+            for index_point, point in enumerate(self.points):
+                ax.text(*point, f'point {index_point + 1}', ha='center', va='top')
         for p1, p2 in zip(self.points, self.points[1:] + [self.points[0]]):
             if edge_style.width is None:
                 edge_style.width = 1
@@ -511,9 +511,9 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
     #     normal1 = vm.Vector2D(-vec1.y, vec1.x)
     #     normal2 = vm.Vector2D(-vec2.y, vec2.x)
     #     normal3 = vm.Vector2D(-vec3.y, vec3.x)
-    #     normal1.normalize()
-    #     normal2.normalize()
-    #     normal3.normalize()
+    #     normal1 = normal1.unit_vector()
+    #     normal2 = normal2.unit_vector()
+    #     normal3 = normal3.unit_vector()
     #     if normal1.dot(vec2) < 0:
     #         normal1 = - normal1
     #     if normal2.dot(vec3) < 0:
@@ -1025,7 +1025,7 @@ class Mesh(DessiaObject):
 
         count = 0
         old_elements, new_elements = set(), set()
-        for g, group in enumerate(groups):
+        for index_g, group in enumerate(groups):
             elements = []
             for element in group.elements:
                 new = False
@@ -1045,7 +1045,7 @@ class Mesh(DessiaObject):
                 if new:
                     new_elements.add(element.__class__(points))
 
-            groups[g] = group.__class__(elements, name='')
+            groups[index_g] = group.__class__(elements, name='')
 
         groups.insert(reference_index, self.elements_groups[reference_index])
 
@@ -1104,8 +1104,8 @@ class Mesh(DessiaObject):
         self._gmsh = gmsh_parser
 
     def copy(self):
-        m = self.__class__(elements_groups=self.elements_groups[:])
-        m.set_nodes_correction(self.get_nodes_correction())
-        m.gmsh = self.gmsh
+        mesh = self.__class__(elements_groups=self.elements_groups[:])
+        mesh.set_nodes_correction(self.get_nodes_correction())
+        mesh.gmsh = self.gmsh
 
-        return m
+        return mesh

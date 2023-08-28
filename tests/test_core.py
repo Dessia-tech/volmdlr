@@ -21,7 +21,7 @@ class TestContour(unittest.TestCase):
 
         # Testing if normalized vector has norm ==1 and is still colinear to original vector
         v2D_1_normalized = v2D_1.copy()
-        v2D_1_normalized.normalize()
+        v2D_1_normalized = v2D_1_normalized.unit_vector()
         self.assertAlmostEqual(v2D_1_normalized.norm(), 1)
         self.assertAlmostEqual(v2D_1_normalized.dot(v2D_1), v2D_1.norm())
         # Testing normal vector

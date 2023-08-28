@@ -8,6 +8,7 @@ import re
 from os.path import dirname, isdir, join
 from subprocess import CalledProcessError, check_output
 
+import numpy as np
 from setuptools import setup
 
 from Cython.Build import cythonize  # isort: skip This prevent a build bug
@@ -120,13 +121,14 @@ setup(
         "volmdlr",
         "volmdlr.models",
         "volmdlr.utils",
+        "volmdlr.nurbs"
     ],  # ,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
     package_dir={},
     include_package_data=True,
     install_requires=[
         "packaging",
         "dessia_common>=0.10.0",
-        "Cython",
+        "Cython>=3.0.0",
         "numpy<1.24.0",
         "matplotlib<=3.4.3",  # remove when https://github.com/DanPorter/Dans_Diffraction/pull/11 available
         "scipy<1.10.1",
@@ -148,6 +150,11 @@ setup(
     ext_modules=cythonize(["volmdlr/core_compiled.pyx",
                            "volmdlr/bspline_compiled.pyx",
                            "volmdlr/bspline_fitting.pyx",
-                           "volmdlr/bspline_evaluators.pyx"]),
+                           "volmdlr/bspline_evaluators.pyx",
+                           "volmdlr/discrete_representation_compiled.py",
+                           "volmdlr/nurbs/core.pyx",
+                           "volmdlr/nurbs/helpers.pyx",
+                           "volmdlr/nurbs/fitting.py"]),
+    include_dirs=[np.get_include()],
     python_requires=">=3.9",
 )
