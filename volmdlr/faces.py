@@ -3261,5 +3261,4 @@ class BSplineFace3D(Face3D):
             point2 = neutral_fiber.point_projection(point3d_max)[0]
         else:
             point2 = neutral_fiber.end
-        neutral_fiber = neutral_fiber.trim(point1, point2)
-        return volmdlr.wires.Wire3D([neutral_fiber])
+        return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, point2)])

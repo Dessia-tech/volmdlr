@@ -229,12 +229,12 @@ def get_point_distance_to_edge(edge, point, start, end):
     return distance
 
 
-def ellipse_abscissa_angle_integration(ellipse3d, point_abcissa, angle_start, initial_angle):
+def ellipse_abscissa_angle_integration(ellipse3d, point_abscissa, angle_start, initial_angle):
     """
-    Caculates the angle for a given abcissa point by integrating the ellipse.
+    Calculates the angle for a given abscissa point by integrating the ellipse.
 
     :param ellipse3d: the Ellipse3D.
-    :param point_abcissa: the given abscissa for given point.
+    :param point_abscissa: the given abscissa for given point.
     :param angle_start: Ellipse3D / ArcEllipse3D start angle. (0 for Ellipse3D).
     :param initial_angle: angle abscissa's initial value.
     :return: final angle abscissa's value.
@@ -246,15 +246,15 @@ def ellipse_abscissa_angle_integration(ellipse3d, point_abcissa, angle_start, in
     iter_counter = 0
     while True:
         res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-        if math.isclose(res, point_abcissa, abs_tol=1e-8):
+        if math.isclose(res, point_abscissa, abs_tol=1e-8):
             abscissa_angle = initial_angle
             break
-        if res > point_abcissa:
-            increment_factor = (abs(initial_angle - angle_start) * (point_abcissa - res)) / (2 * abs(res))
+        if res > point_abscissa:
+            increment_factor = (abs(initial_angle - angle_start) * (point_abscissa - res)) / (2 * abs(res))
         elif res == 0.0:
             increment_factor = 1e-5
         else:
-            increment_factor = (abs(initial_angle - angle_start) * (point_abcissa - res)) / abs(res)
+            increment_factor = (abs(initial_angle - angle_start) * (point_abscissa - res)) / abs(res)
         initial_angle += increment_factor
         iter_counter += 1
     return abscissa_angle

@@ -187,7 +187,7 @@ class PointCloud3D(dc.DessiaObject):
                 list_faces = [vmf.Triangle3D(*triangle_points, alpha=0.9, color=(1, 0.1, 0.1))
                               for triangle_points in list_triangles_points]
                 faces.extend(list_faces)
-        return vmshells.ClosedShell3D(faces)
+        return vmshells.ClosedShell3D(faces, name=name)
 
     @staticmethod
     def _helper_simplify_polygon(polygon, position_plane, normal, vec1, vec2):

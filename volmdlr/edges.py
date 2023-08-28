@@ -291,7 +291,7 @@ class Edge(dc.DessiaObject):
 
     def _generic_edge_intersections(self, edge2, abs_tol: float = 1e-6):
         """
-        General method to calculate the intersection of any two adges.
+        General method to calculate the intersection of any two edges.
 
         :param edge2: other edge
         :param abs_tol: tolerance.
@@ -2421,7 +2421,7 @@ class ArcMixin:
     # :type name: str, optional
     """
 
-    def __init__(self, circle, start, end, is_trigo: bool = True):
+    def __init__(self, circle, start, end, is_trigo: bool = True, name: str = ''):
         # Edge.__init__(self, start=start, end=end, name=name)
         self.start = start
         self.end = end
@@ -2429,6 +2429,7 @@ class ArcMixin:
         self.center = circle.center
         self.is_trigo = is_trigo
         self._length = None
+        self.name = name
 
     def length(self):
         """
@@ -2651,10 +2652,10 @@ class FullArcMixin(ArcMixin):
     """
 
     def __init__(self, circle: Union[volmdlr.curves.Circle2D, volmdlr.curves.Circle3D],
-                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D]):
+                 start_end: Union[volmdlr.Point2D, volmdlr.Point3D], name: str = ''):
         self.circle = circle
         self.start_end = start_end
-        ArcMixin.__init__(self, circle=circle, start=start_end, end=start_end)  # !!! this is dangerous
+        ArcMixin.__init__(self, circle=circle, start=start_end, end=start_end, name=name)  # !!! this is dangerous
 
     @property
     def angle(self):
@@ -2700,7 +2701,7 @@ class Arc2D(ArcMixin, Edge):
         self.is_trigo = is_trigo
         self._angle = None
         self._bounding_rectangle = None
-        ArcMixin.__init__(self, circle, start, end, is_trigo)
+        ArcMixin.__init__(self, circle, start, end, is_trigo, name=name)
         Edge.__init__(self, start=start, end=end, name=name)
         start_to_center = start - self.circle.center
         end_to_center = end - self.circle.center
@@ -3211,7 +3212,7 @@ class FullArc2D(FullArcMixin, Arc2D):
                  name: str = ''):
         # self.interior = start_end.rotation(center, math.pi)
         self._bounding_rectangle = None
-        FullArcMixin.__init__(self, circle=circle, start_end=start_end)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
         Arc2D.__init__(self, circle=circle, start=start_end, end=start_end, name=name)
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
@@ -4162,10 +4163,12 @@ class LineSegment3D(LineSegment):
         Gets the intersection between a line segment 3d and another line segment 3D.
 
         :param linesegment: other line segment.
+        :param abs_tol: tolerance.
         :return: a list with the intersection points.
         """
         intersection = self.line.intersection(linesegment.line)
-        if intersection and self.point_belongs(intersection) and linesegment.point_belongs(intersection):
+        if intersection and self.point_belongs(intersection, abs_tol=abs_tol) and\
+                linesegment.point_belongs(intersection, abs_tol=abs_tol):
             return [intersection]
         return []
 
@@ -5027,6 +5030,7 @@ class BSplineCurve3D(BSplineCurve):
         Calculates intersections between a BSplineCurve3D and a LineSegment3D.
 
         :param linesegment3d: linesegment to verify intersections.
+        :param abs_tol: tolerance.
         :return: list with the intersections points.
         """
         if not self.bounding_box.bbox_intersection(linesegment3d.bounding_box):
@@ -5036,7 +5040,7 @@ class BSplineCurve3D(BSplineCurve):
         for bspline, edge2_ in intersection_section_pairs:
             intersections_points = bspline.get_linesegment_intersections(edge2_)
             for inter in intersections_points:
-                if not volmdlr.core.point_in_list(inter, intersections):
+                if not volmdlr.core.point_in_list(inter, intersections, abs_tol):
                     intersections.append(inter)
         return intersections
 
@@ -5147,7 +5151,7 @@ class Arc3D(ArcMixin, Edge):
     """
 
     def __init__(self, circle, start, end, name=''):
-        ArcMixin.__init__(self, circle, start=start, end=end)
+        ArcMixin.__init__(self, circle, start=start, end=end, name=name)
         Edge.__init__(self, start=start, end=end, name=name)
         self._angle = None
         self.frame = self.circle.frame
@@ -5629,7 +5633,7 @@ class Arc3D(ArcMixin, Edge):
         linesegment_intersections = []
         intersections = self.line_intersections(linesegment3d.line)
         for intersection in intersections:
-            if linesegment3d.point_belongs(intersection):
+            if linesegment3d.point_belongs(intersection, abs_tol=abs_tol):
                 linesegment_intersections.append(intersection)
         return linesegment_intersections
 
@@ -5696,7 +5700,7 @@ class FullArc3D(FullArcMixin, Arc3D):
                  name: str = ''):
         self._utd_frame = None
         self._bbox = None
-        FullArcMixin.__init__(self, circle=circle, start_end=start_end)
+        FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
         Arc3D.__init__(self, circle=circle, start=start_end, end=start_end, name=name)
 
     def __hash__(self):
@@ -6172,7 +6176,7 @@ class ArcEllipse3D(Edge):
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
-        Gets the intersections between an Ellipse 3D and a Line Segement 3D.
+        Gets the intersections between an Ellipse 3D and a Line Segment 3D.
 
         :param linesegment: The other linesegment.
         :param abs_tol: The absolute tolerance.
@@ -6187,7 +6191,7 @@ class ArcEllipse3D(Edge):
 
     def arcellipse_intersections(self, arcellipse3d, abs_tol: float = 1e-6):
         """
-        Gets the intersections between an Ellipse 3D and a Line Segement 3D.
+        Gets the intersections between an Ellipse 3D and a Line Segment 3D.
 
         :param arcellipse3d: The other linesegment.
         :param abs_tol: The absolute tolerance.

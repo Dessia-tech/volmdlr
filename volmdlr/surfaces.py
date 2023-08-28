@@ -2668,7 +2668,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                                         angle=angle)
         return self.__class__(new_frame, self.tore_radius, self.small_radius)
 
-    def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
         """Plot torus arcs."""
         if ax is None:
             fig = plt.figure()
@@ -2682,7 +2682,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             for j in range(number_arcs):
                 phi = j / number_arcs * volmdlr.TWO_PI
                 t_points.append(self.point2d_to_3d(volmdlr.Point2D(theta, phi)))
-            ax = wires.ClosedPolygon3D(t_points).plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+            ax = wires.ClosedPolygon3D(t_points).plot(ax=ax, edge_style=edge_style)
 
         return ax
 
@@ -4238,7 +4238,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         """Deprecated method, Use RevolutionFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use RevolutionFace3D from_surface_rectangular_cut method')
 
-    def plot(self, ax=None, color='grey', alpha=0.5, number_curves: int = 20, **kwargs):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5),
+             number_curves: int = 20, **kwargs):
         """
         Plot rotated Revolution surface generatrix.
 
@@ -4251,7 +4252,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         for i in range(number_curves + 1):
             theta = i / number_curves * volmdlr.TWO_PI
             wire = self.edge.rotation(self.axis_point, self.axis, theta)
-            wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+            wire.plot(ax=ax, edge_style=edge_style)
 
         return ax
 
