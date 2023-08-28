@@ -21,7 +21,7 @@ Here's an example demonstrating the process of importing a STEP file:
 
 .. code-block:: python
 
-    from volmdlr import step
+    import volmdlr.step
 
     loaded_step = step.Step.from_file("/path/to/your/step/file.step")
 
@@ -36,11 +36,10 @@ Breaking it down further:
 
 .. code-block:: python
 
-    from volmdlr import step
+    import volmdlr.step
 
 The script imports the `step` module from the `volmdlr` library.
-This module offers tools to interact with STEP (Standard for the Exchange of Product model data) files, a format
-utilized for the exchange of 3D CAD models and their corresponding information.
+This module offers tools to interact with STEP files.
 
 2. **Loading a STEP File:**
 
@@ -49,7 +48,7 @@ utilized for the exchange of 3D CAD models and their corresponding information.
     loaded_step = step.Step.from_file('/path/to/your/step/file.step')
 
 This line employs the ``Step.from_file()`` method to load a STEP file.
-You must substitute ``'/path/to/your/step/file.step'`` with the accurate file path pointing to the intended STEP file
+You must substitute ``"/path/to/your/step/file.step"`` with the accurate file path pointing to the intended STEP file
 for loading. This file encompasses the 3D CAD model along with its associated data.
 
 3. **Converting to Volume Model:**
