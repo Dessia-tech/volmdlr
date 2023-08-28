@@ -437,7 +437,9 @@ class Edge(dc.DessiaObject):
 
     def _generic_minimum_distance(self, element, return_points=False):
         """
-        Calculates the distance from a given point to an edge.
+        Gets the minimum distance between two elements.
+
+        This is a generalized method in a case an analytical method has not yet been defined.
 
         :param element: other element.
         :param return_points: Weather to return the corresponding points or not.
