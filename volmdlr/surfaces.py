@@ -10,14 +10,12 @@ import numpy as npy
 import triangle as triangle_lib
 from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
-# from geomdl.operations import split_surface_u, split_surface_v
 from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
 from volmdlr.nurbs.operations import split_surface_u, split_surface_v
-import volmdlr.bspline_compiled
 import volmdlr.core
 from volmdlr import display, edges, grid, wires, curves
 import volmdlr.geometry
@@ -5104,14 +5102,13 @@ class BSplineSurface3D(Surface3D):
 
     def points(self):
         """
-        Returns surface points
+        Returns surface points.
         """
         return [volmdlr.Point3D(*point) for point in self.evalpts]
 
     def control_points_matrix(self, coordinates):
         """
         Define control points like a matrix, for each coordinate: x:0, y:1, z:2.
-
         """
 
         points = npy.empty((self.nb_u, self.nb_v))
@@ -6539,36 +6536,33 @@ class BSplineSurface3D(Surface3D):
 
     @classmethod
     def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, name: str = ''):
+        """
+        Bspline Surface interpolation through 3d points.
+        """
         warnings.warn("points_fitting_into_bspline_surface is deprecated. Use from_points_interpolation instead")
         return cls.from_points_interpolation(points_3d, size_u, size_v, degree_u, degree_v, name)
 
     @classmethod
-    def from_points_interpolation(cls, points_3d, size_u: int, size_v: int,
+    def from_points_interpolation(cls, points_3d: List[volmdlr.Point3D], size_u: int, size_v: int,
                                   degree_u: int, degree_v: int, name: str = ""):
         """
         Bspline Surface interpolation through 3d points.
 
-        Parameters
-        ----------
-        points_3d : list[volmdlr.Point3D]
-            data points
-        size_u : int
-            number of data points on the u-direction.
-        size_v : int
-            number of data points on the v-direction.
-        degree_u : int
-            degree of the output surface for the u-direction.
-        degree_v : int
-            degree of the output surface for the v-direction.
-        name: str
-            object's name.
-
-        Returns
-        -------
-        B-spline surface
-
+        :param points_3d: data points.
+        :type points_3d: List[volmdlr.Point3D]
+        :param size_u: number of data points on the u-direction.
+        :type size_u: int
+        :param size_v: number of data points on the v-direction.
+        :type size_v: int
+        :param degree_u: degree of the output surface for the u-direction.
+        :type degree_u: int
+        :param degree_v: degree of the output surface for the v-direction.
+        :type degree_v: int
+        :param name: (Optional) instance name.
+        :type name: str
+        :return: B-spline surface.
+        :rtype: BSplineSurface3D
         """
-
         points = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points_3d], dtype=npy.float64)
 
         ctrlpts, knots_u, knot_multiplicities_u, knots_v, knot_multiplicities_v = \
@@ -6580,37 +6574,38 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v,
                                                 name: str = "", **kwargs):
+        """
+        Bspline Surface approximate through 3d points.
+        """
         warnings.warn("points_approximate_into_bspline_surface is deprecated. Use from_points_approximation instead")
         return cls.from_points_approximation(points_3d, size_u, size_v, degree_u, degree_v, name, **kwargs)
 
     @classmethod
-    def from_points_approximation(cls, points_3d, size_u: int, size_v: int,
-                                  degree_u: int, degree_v: int, name: str = "", **kwargs):
+    def from_points_approximation(cls, points_3d: List[volmdlr.Point3D], size_u: int, size_v: int, degree_u: int,
+                                  degree_v: int, name: str = "", **kwargs):
+
         """
         Bspline Surface approximate through 3d points.
 
-        Parameters
-        ----------
-        points_3d : list[volmdlr.Point3D]
-            data points
-        size_u : int
-            number of data points on the u-direction.
-        size_v : int
-            number of data points on the v-direction.
-        degree_u : int
-            degree of the output surface for the u-direction.
-        degree_v : int
-            degree of the output surface for the v-direction.
-        name: str
-            object's name.
+        :param points_3d: data points.
+        :type points_3d: List[volmdlr.Point3D]
+        :param size_u: number of data points on the u-direction.
+        :type size_u: int
+        :param size_v: number of data points on the v-direction.
+        :type size_v: int
+        :param degree_u: degree of the output surface for the u-direction.
+        :type degree_u: int
+        :param degree_v: degree of the output surface for the v-direction.
+        :type degree_v: int
+        :param name: (Optional) instance name.
+        :type name: str
 
         Keyword Arguments:
             * ``ctrlpts_size_u``: number of control points on the u-direction. *Default: size_u - 1*
             * ``ctrlpts_size_v``: number of control points on the v-direction. *Default: size_v - 1*
 
-        Returns
-        -------
-        B-spline surface: volmdlr.faces.BSplineSurface3D
+        :return: B-spline surface.
+        :rtype: BSplineSurface3D
 
         """
 

@@ -79,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edges.Edge._generic_minimum_distance
 - LineSegment3D: distance_linesegment
 - BSpline3D: linesegment_intersections
+
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
@@ -112,6 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: arc_intersections, arcellipse_intersections, test_minimum_distance_bspline
 - BSplineCurve3D: test_bspline_linesegment_minimum_distance, test_bspline_linesegment_intersections
 - Contour3D: test_edge_intersections
+
 ## v0.12.0
 
 

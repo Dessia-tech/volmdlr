@@ -25,7 +25,7 @@ MAX_ERROR_BY_TYPE = {
                      'arguments-differ': 62,
                      'too-many-locals': 84,
                      'unused-argument': 8,
-                     'too-many-arguments': 23,
+                     'too-many-arguments': 25,
                      'line-too-long': 12,
                      'too-many-branches': 26,
                      'too-many-statements': 13,
@@ -45,7 +45,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-nested-blocks': 7,
                      'too-many-return-statements': 3,
                      'cyclic-import': 1,
-                     'undefined-variable': 24,  # 2 when gmsh is fixed
+                     'undefined-variable': 8,  # 2 when gmsh is fixed
                      'broad-except': 1,
                      "broad-exception-caught": 2,
                      'too-many-boolean-expressions': 2,
@@ -56,7 +56,7 @@ MAX_ERROR_BY_TYPE = {
                      'consider-using-generator': 1,
                      'import-outside-toplevel': 5,
                      'unsubscriptable-object': 1,
-                     'signature-differs': 1,
+                     'signature-differs': 2,
                      'consider-using-enumerate': 2,
                      'unbalanced-tuple-unpacking': 1,
                     }

@@ -13,7 +13,6 @@ from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
 from trimesh import Trimesh
 
-import volmdlr.bspline_compiled
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.faces
