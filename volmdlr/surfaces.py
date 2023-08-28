@@ -6532,6 +6532,7 @@ class BSplineSurface3D(Surface3D):
             degree of the output surface for the v-direction.
         name: str
             object's name.
+
         Returns
         -------
         B-spline surface
