@@ -4,24 +4,148 @@ Unit tests for volmdlr.faces.BSplineCurve
 import unittest
 
 from dessia_common.core import DessiaObject
-from geomdl import BSpline, utilities
+from geomdl import BSpline
 
 import volmdlr
 import volmdlr.edges as vme
 from volmdlr import curves
 from volmdlr.models import bspline_curves
+import volmdlr.nurbs.helpers as nurbs_helpers
+
+
+GEOMDL_DELTA = 0.001
 
 
 class TestBSplineCurve2D(unittest.TestCase):
     degree = 3
     points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
-    knotvector = utilities.generate_knot_vector(degree, len(points))
+    knotvector = nurbs_helpers.generate_knot_vector(degree, len(points))
     knot_multiplicity = [1] * len(knotvector)
     bspline1 = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
     bspline2, bspline3 = bspline1.split(volmdlr.Point2D(1.5, 0.0))
     bspline4, bspline5 = bspline2.split(bspline2.point_at_abscissa(0.3 * bspline2.length()))
     bspline6 = bspline1.split(bspline1.point_at_abscissa(0.7 * bspline1.length()))[0]
     bspline7 = bspline1.split(bspline1.point_at_abscissa(0.3 * bspline1.length()))[1]
+    degree = 3
+    ctrlpts = [
+        volmdlr.Point2D(5.0, 5.0),
+        volmdlr.Point2D(10.0, 10.0),
+        volmdlr.Point2D(20.0, 15.0),
+        volmdlr.Point2D(35.0, 15.0),
+        volmdlr.Point2D(45.0, 10.0),
+        volmdlr.Point2D(50.0, 5.0),
+    ]
+    knot_multiplicities = [4, 1, 1, 4]
+    knots = [0.0, 0.33, 0.66, 1.0]
+
+    bspline2d = vme.BSplineCurve2D(degree, ctrlpts, knot_multiplicities, knots)
+    weights = [0.5, 1.0, 0.75, 1.0, 0.25, 1.0]
+    bspline2d_rational = vme.BSplineCurve2D(degree, ctrlpts, knot_multiplicities, knots, weights=weights)
+
+    def test_evaluate_single(self):
+        test_cases = [
+            (0.0, (5.0, 5.0)),
+            (0.3, (18.617, 13.377)),
+            (0.5, (27.645, 14.691)),
+            (0.6, (32.143, 14.328)),
+            (1.0, (50.0, 5.0)),
+        ]
+        for param, res in test_cases:
+            with self.subTest(param=param):
+                evalpt = self.bspline2d.evaluate_single(param)
+                self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
+                self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
+
+        test_cases = [
+            (0.0, (5.0, 5.0)),
+            (0.2, (13.8181, 11.5103)),
+            (0.5, (28.1775, 14.7858)),
+            (0.95, (48.7837, 6.0022)),
+        ]
+        for param, res in test_cases:
+            with self.subTest(param=param):
+                evalpt = self.bspline2d_rational.evaluate_single(param)
+
+                self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
+                self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
+
+    def test_derivatives(self):
+        derivatives = self.bspline2d.derivatives(u=0.35, order=2)
+        expected_result = [[20.879272837543425, 13.96350686701158], [45.20015428165102, 9.987462558623653], [-1.334434093851499, -68.74685708529317]]
+        for der, res in zip(derivatives, expected_result):
+            self.assertAlmostEqual(der[0], res[0], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(der[1], res[1], delta=GEOMDL_DELTA)
+
+        test_cases = [
+            (0.0, 1, ((5.0, 5.0), (90.9090, 90.9090))),
+            (0.2, 2, ((13.8181, 11.5103), (40.0602, 17.3878), (104.4062, -29.3672))),
+            (0.5, 3, ((28.1775, 14.7858), (39.7272, 2.2562), (-116.9254, -49.7367), (125.5276, 196.8865))),
+            (0.95, 1, ((48.7837, 6.0022), (39.5178, -29.9962))),
+        ]
+        for param, order, res in test_cases:
+            deriv = self.bspline2d_rational.derivatives(u=param, order=order)
+
+            for computed, expected in zip(deriv, res):
+                for c, e in zip(computed, expected):
+                    self.assertAlmostEqual(c, e, delta=GEOMDL_DELTA)
+
+    def test_interpolate_curve(self):
+        # The NURBS Book Ex9.1
+        points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(3, 4), volmdlr.Point2D(-1, 4),
+                  volmdlr.Point2D(-4, 0), volmdlr.Point2D(-4, -3)]
+        degree = 3  # cubic curve
+
+        # Do global curve interpolation
+        curve = vme.BSplineCurve2D.from_points_interpolation(points, degree, centripetal=False)
+        expected_ctrlpts = [
+            [0.0, 0.0],
+            [7.3169635171119936, 3.6867775257587367],
+            [-2.958130565851424, 6.678276528176592],
+            [-4.494953466891109, -0.6736915062424752],
+            [-4.0, -3.0],
+        ]
+        for point, expected_point in zip(curve.control_points, expected_ctrlpts):
+            self.assertAlmostEqual(point[0], expected_point[0], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(point[1], expected_point[1], delta=GEOMDL_DELTA)
+
+    def test_approximate_curve(self):
+        # The NURBS Book Ex9.1
+        points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(3, 4), volmdlr.Point2D(-1, 4),
+                  volmdlr.Point2D(-4, 0), volmdlr.Point2D(-4, -3)]
+        degree = 3  # cubic curve
+
+        # Do global curve interpolation
+        curve = vme.BSplineCurve2D.from_points_approximation(points, degree, centripetal=False)
+        expected_ctrlpts = [
+            [0.0, 0.0],
+            [9.610024470158852, 8.200277881464892],
+            [-8.160625855418692, 3.3820642030608417],
+            [-4.0, -3.0],
+        ]
+        for point, expected_point in zip(curve.control_points, expected_ctrlpts):
+            self.assertAlmostEqual(point[0], expected_point[0], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(point[1], expected_point[1], delta=GEOMDL_DELTA)
+
+        points2d = [volmdlr.Point2D(0, 0.1),
+                    volmdlr.Point2D(0.2, 0.3),
+                    volmdlr.Point2D(0.4, 0.4),
+                    volmdlr.Point2D(0.5, 0.6),
+                    volmdlr.Point2D(0.6, 0.7),
+                    volmdlr.Point2D(0.8, 0.8),
+                    volmdlr.Point2D(1, 0.9)]
+
+        # %%% Approximation
+        bspline_curve2d_approximated = vme.BSplineCurve2D.from_points_approximation(points2d, 3, ctrlpts_size=5)
+        expected_ctrlpts = [volmdlr.Point2D(0.0, 0.1), volmdlr.Point2D(0.1686778402310228, 0.2366540266279785),
+                            volmdlr.Point2D(0.466545895266623, 0.5077440536607246),
+                            volmdlr.Point2D(0.7432185866086097, 0.852531277025759), volmdlr.Point2D(1.0, 0.9)]
+        for point, expected_point in zip(bspline_curve2d_approximated.control_points, expected_ctrlpts):
+            self.assertAlmostEqual(point[0], expected_point[0], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(point[1], expected_point[1], delta=GEOMDL_DELTA)
+
+    def test_length(self):
+        total_length = self.bspline2d.length()
+        self.assertAlmostEqual(total_length, 50.33433959792692, delta=GEOMDL_DELTA)
 
     def test_abscissa(self):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
@@ -109,7 +233,7 @@ class TestBSplineCurve2D(unittest.TestCase):
 
     def test_offset(self):
         offseted_bspline = self.bspline1.offset(-0.2)
-        expected_distances = [0.2, 0.20000160183808904, 0.20053651951715856, 0.20372900125730523, 0.21044118400720574,
+        expected_distances = [0.2, 0.20000160183808904, 0.20053651951715856, 0.20372910969690097, 0.210441370708919,
                               0.2192581584663399, 0.22774528008118392, 0.23404460706854788, 0.23739001591364056,
                               0.2379018126594174, 0.2362014374337063, 0.23307773295678147, 0.22924032294583793,
                               0.22517329538697972, 0.22109005047384114, 0.21697594011450796, 0.21267059325565962,
@@ -139,7 +263,7 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertEqual(len(shared_section2), 1)
         self.assertTrue(shared_section2[0].start.is_close(volmdlr.Point2D(0.8999999, 0.252000000)))
         self.assertTrue(shared_section2[0].end.is_close(volmdlr.Point2D(2.09999999, -0.251999999)))
-        self.assertAlmostEqual(shared_section2[0].length(), 1.3038324934975103, 6)
+        self.assertAlmostEqual(shared_section2[0].length(), 1.3039875674329982, 6)
         shared_section3 = self.bspline1.get_shared_section(self.bspline5)
         self.assertEqual(shared_section3, [self.bspline5])
         shared_section4 = self.bspline5.get_shared_section(self.bspline1)
@@ -196,6 +320,20 @@ class TestBSplineCurve2D(unittest.TestCase):
         bsplinecurve2 = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_objects/bspline_curve2.json")
         self.assertTrue(bsplinecurve1.direction_independent_is_close(bsplinecurve2))
 
+    def test_split_curve(self):
+        split_point = volmdlr.Point2D(28.1775252667145, 14.785855215217019)
+        curves = self.bspline2d_rational.split(split_point)
+        self.assertTrue(curves[0].start.is_close(volmdlr.Point2D(5.0, 5.0)))
+        self.assertTrue(curves[0].end.is_close(split_point))
+        self.assertTrue(curves[1].start.is_close(split_point))
+        self.assertTrue(curves[1].end.is_close(volmdlr.Point2D(50.0, 5.0)))
+
+    def test_tangent(self):
+        tangent = self.bspline1.tangent(0.5)
+        tangent_rational = self.bspline2d_rational.tangent(0.5)
+        self.assertTrue(tangent.is_close(volmdlr.Vector2D(0.8944271909999159, -0.4472135954999579)))
+        self.assertTrue(tangent_rational.is_close(volmdlr.Vector2D(0.998391126712381, 0.05670236416572517)))
+
 
 class TestBSplineCurve3D(unittest.TestCase):
     b_splinecurve3d = vme.BSplineCurve3D(degree=5, control_points=[
@@ -223,7 +361,32 @@ class TestBSplineCurve3D(unittest.TestCase):
         bspline_lineseg_intersections2 = self.b_splinecurve3d.linesegment_intersections(linesegment2)
         self.assertFalse(bspline_lineseg_intersections1)
         self.assertTrue(bspline_lineseg_intersections2[0].is_close(
-            volmdlr.Point3D(0.5334000000000001, 1.7846221071023372, -1.1990620053976129)))
+            volmdlr.Point3D(0.5334, 1.7846158355713697, -1.199073665042839)))
+
+    def test_normal(self):
+        normal = self.b_splinecurve3d.normal()
+        self.assertTrue(normal.is_close(volmdlr.Z3D))
+
+
+class TestBezierCurve2D(unittest.TestCase):
+    # Set up the Bezier curve
+    degree = 2
+    ctrlpts = [volmdlr.Point2D(10, 0), volmdlr.Point2D(20, 15), volmdlr.Point2D(30, 0)]
+
+    curve1 = vme.BezierCurve2D(degree, ctrlpts)
+
+    # Set evaluation delta
+    curve1.sample_size = 5
+
+    def test_setup(self):
+        points = self.curve1.points
+        expected_points = [[10.0, 0.0], [15.0, 5.625], [20.0, 7.5], [25.0, 5.625], [30.0, 0.0]]
+        expected_knot_vector = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0]
+
+        self.assertEqual(self.curve1.knotvector, expected_knot_vector)
+        for point, test in zip(points, expected_points):
+            self.assertAlmostEqual(point[0], test[0], delta=1e-6)
+            self.assertAlmostEqual(point[1], test[1], delta=1e-6)
 
 
 if __name__ == '__main__':

@@ -73,7 +73,7 @@ class TestCircle3D(unittest.TestCase):
                             volmdlr.Point3D(1.3359999999999999, -0.1256745618000169, -0.6913380852144492)]]
         for i, side in enumerate(['old', 'new']):
             circle = curves.Circle3D(volmdlr.Frame3D(volmdlr.Point3D(1.456, -0.12456, -0.457),
-                                                    volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), 0.32)
+                                                     volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), 0.32)
             frame = volmdlr.Frame3D(volmdlr.Point3D(0.12, 0.1, -0.07), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
             framed_mapped_circle = circle.frame_mapping(frame, side)
             for expected_point, point in zip(expected_points[i],
@@ -164,6 +164,21 @@ class TestCircle3D(unittest.TestCase):
         circle_linseg_intersections1 = circle3.linesegment_intersections(lineseg2)
         self.assertEqual(len(circle_linseg_intersections1), 1)
         self.assertTrue(circle_linseg_intersections1[0].is_close(volmdlr.Point3D(1, 0.0, 0.0)))
+
+    def test_circle_intersections(self):
+        circle1 = curves.Circle3D.from_3_points(volmdlr.Point3D(-3, -3, 0),
+                                                volmdlr.Point3D(6.324555320336761, -5.692099788303083,
+                                                                -0.8973665961010275),
+                                                volmdlr.Point3D(3, 3, 2))
+        circle2 = curves.Circle3D.from_3_points(
+            volmdlr.Point3D(1.2067665579541171, -1.246879774203074, -0.4359328108960321),
+            volmdlr.Point3D(-1.2905737351068276, -5.961765089244547, -0.9872550297481824),
+            volmdlr.Point3D(7.33260591629263, -4.272128323147327, -0.4240427743824422))
+        intersections = circle1.circle_intersections(circle2)
+        expected_results = [volmdlr.Point3D(-1.2905737351057338, -5.961765089245487, -0.9872550297484957),
+                            volmdlr.Point3D(7.332605916292026, -4.272128323148586, -0.42404277438286175)]
+        for intersection, expected_result in zip(intersections, expected_results):
+            self.assertTrue(intersection.is_close(expected_result))
 
 
 if __name__ == '__main__':

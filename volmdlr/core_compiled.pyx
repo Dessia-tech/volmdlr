@@ -18,7 +18,7 @@ import numpy as npy
 import plot_data
 import volmdlr
 from dessia_common.core import DessiaObject
-from matplotlib.patches import FancyArrow, FancyArrowPatch
+from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
 # =============================================================================
@@ -426,14 +426,24 @@ def LineSegment3DDistance(points_linesegment1, points_linesegment2):
 
 
 class Arrow3D(FancyArrowPatch):
-    def __init__(self, xs, ys, zs, *args, **kwargs):
+    def __init__(self, x, y, z, starting_point=None, *args, **kwargs):
         FancyArrowPatch.__init__(self, (0, 0), (0, 0), *args, **kwargs)
-        self._verts3d = xs, ys, zs
+        if starting_point is None:
+            starting_point = (0., 0., 0.)
 
-    def plot2d(self, renderer):
-        xs3d, ys3d, zs3d = self._verts3d
-        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
-        self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
+        self.starting_point = starting_point
+        self._xyz = x, y, z
+
+    def draw(self, renderer):
+        """
+        Draw the arrow by overloading a Matplotlib method. Do not rename this method!
+
+        """
+        x1, y1, z1 = self.starting_point
+        dx, dy, dz = self._xyz
+        x2, y2, z2 = (dx + x1, dy + y1, dz + z1)
+        xn, yn, zn = proj3d.proj_transform((x1, x2), (y1, y2), (z1, z2), self.axes.M)
+        self.set_positions((xn[0], yn[0]), (xn[1], yn[1]))
         FancyArrowPatch.draw(self, renderer)
 
     def plot(self, ax=None, color="b"):
@@ -546,6 +556,9 @@ class Vector(DessiaObject):
         """
         dict_ = {p.approx_hash(): p for p in points}
         return list(dict_.values())
+
+    def to_vector(self):
+        return self
 
 
 class Vector2D(Vector):
@@ -699,21 +712,6 @@ class Vector2D(Vector):
         """
         return CVector2Dnorm(self.x, self.y)
 
-    def normalize(self):
-        """
-        In place operation, normalizing the coordinates of the 2-dimensional
-        vector.
-
-        :return: None
-        :rtype: None
-        """
-        n = self.norm()
-        if math.isclose(n, 0, abs_tol=1e-9):
-            raise ZeroDivisionError
-
-        self.x /= n
-        self.y /= n
-
     def unit_vector(self):
         """Calculates the unit vector."""
         n = self.norm()
@@ -769,8 +767,8 @@ class Vector2D(Vector):
         :rtype: tuple
         """
         u = self - center
-        v2x = math.cos(angle) * u[0] - math.sin(angle) * u[1] + center[0]
-        v2y = math.sin(angle) * u[0] + math.cos(angle) * u[1] + center[1]
+        v2x = math.cos(angle) * u.x - math.sin(angle) * u.y + center.x
+        v2y = math.sin(angle) * u.x + math.cos(angle) * u.y + center.y
         return v2x, v2y
 
     def rotation(self, center: "Point2D", angle: float):
@@ -796,8 +794,8 @@ class Vector2D(Vector):
         :return: A translated Vector2D-like object
         :rtype: :class:`volmdlr.Vector2D`
         """
-        v2x = self.x + offset[0]
-        v2y = self.y + offset[1]
+        v2x = self.x + offset.x
+        v2y = self.y + offset.y
         return self.__class__(v2x, v2y)
 
     def frame_mapping(self, frame: "Frame2D", side: str):
@@ -871,8 +869,7 @@ class Vector2D(Vector):
         :rtype: :class:`volmdlr.Vector2D`
         """
         n = self.normal_vector()
-        n.normalize()
-        return n
+        return n.unit_vector()
 
     def deterministic_unit_normal_vector(self):
         """
@@ -900,21 +897,15 @@ class Vector2D(Vector):
         return cls(random.uniform(xmin, xmax),
                    random.uniform(ymin, ymax))
 
-    def plot(self, amplitude: float = 0.5, width: float = None,
-             head_width: float = None, origin: "Vector2D" = None,
+    def plot(self,
+             head_width: float = 3, origin: "Vector2D" = None,
              ax: "matplotlib.axes.Axes" = None,
-             color: str = "k", line: bool = False, label: str = None,
-             normalize: bool = False):
+             color: str = "k", label: str = None):
         """
         Plots the 2-dimensional vector. If the vector has a norm greater than
         1e-9, it will be plotted with an arrow, else it will be plotted with
         a point.
 
-        :param amplitude: A general parameter to quickly change the aspect of
-            the arrow
-        :type amplitude: float, optional
-        :param width: The width of the tail of the arrow
-        :type width: float, optional
         :param head_width: The width of the head of the arrow
         :type head_width: float, optional
         :param origin: The starting point of the tail of the arrow
@@ -923,12 +914,8 @@ class Vector2D(Vector):
         :type ax: :class:`matplotlib.axes.Axes`, optional
         :param color: The color of the arrow
         :type color: str, optional
-        :param line: #TODO: delete this attribute ?
-        :type line: bool, optional
         :param label: The text you want to display
         :type label: str, optional
-        :param normalize: `True` if the Vector2D should be normalized,
-        :type normalize: bool, optional
         :return: A matplotlib Axes object on which the Vector2D have been
             plotted
         :rtype: :class:`matplotlib.axes.Axes`
@@ -938,49 +925,19 @@ class Vector2D(Vector):
 
         if ax is None:
             fig, ax = plt.subplots()
-        else:
-            fig = ax.figure
 
         if math.isclose(self.norm(), 0, abs_tol=1e-9):
             point = origin.copy()
             point.plot(ax=ax, color=color)
             return ax
 
-        if width is None:
-            width = 0.001 * 5 * amplitude
-        if head_width is None:
-            head_width = 0.3 * amplitude
+        ax.quiver(origin[0], origin[1], self[0], self[1], angles="xy", scale_units="xy",
+                  scale=1, color=color)
 
-        if not normalize:
-            ax.add_patch(FancyArrow(origin[0], origin[1],
-                                    self.x * amplitude, self.y * amplitude,
-                                    width=width,
-                                    head_width=head_width,
-                                    length_includes_head=True,
-                                    color=color))
-        else:
-            normalized_vector = self.copy()
-            normalized_vector.normalize()
-            ax.add_patch(FancyArrow(origin[0], origin[1],
-                                    normalized_vector.x * amplitude,
-                                    normalized_vector.y * amplitude,
-                                    width=width,
-                                    head_width=head_width,
-                                    length_includes_head=True,
-                                    color=color))
-
-        if line:
-            style = "-" + color
-            linestyle = "-."
-            origin = Point2D(*origin)
-            p1, p2 = origin, origin + self
-            u = p2 - p1
-            p3 = p1 - 3 * u
-            p4 = p2 + 4 * u
-            ax.plot([p3[0], p4[0]], [p3[1], p4[1]], style, linestyle=linestyle)
+        ax.set(xlim=sorted([self.x, origin.x]), ylim=sorted([self.y, origin.y]))
 
         if label is not None:
-            ax.text(*(origin + self * amplitude), label)
+            ax.text(*(origin + self * 0.5), label)
 
         return ax
 
@@ -1555,22 +1512,6 @@ class Vector3D(Vector):
         """
         return CVector3Dnorm(self.x, self.y, self.z)
 
-    def normalize(self) -> None:
-        """
-        In place operation, normalizing the coordinates of the 2-dimensional
-        vector.
-
-        :return: None
-        :rtype: None
-        """
-        n = self.norm()
-        if n == 0:
-            raise ZeroDivisionError
-
-        self.x /= n
-        self.y /= n
-        self.z /= n
-
     def unit_vector(self):
         """Calculates the unit vector."""
         n = self.norm()
@@ -1715,7 +1656,7 @@ class Vector3D(Vector):
         :rtype: :class:`volmdlr.Vector3D`
         """
         z = x.cross(y)
-        z.normalize()
+        z = z.unit_vector()
         return self - z.dot(self - plane_origin) * z
 
     def plane_projection2d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
@@ -1731,9 +1672,6 @@ class Vector3D(Vector):
         :return: The projection on the 2D plane
         :rtype: :class:`volmdlr.Point2D`
         """
-        # z = x.cross(y)
-        # z.normalize()
-        # p3d = self - (self - plane_origin).dot(z) * z
         p3d = self.plane_projection3d(plane_origin, x, y)
         u1 = p3d.dot(x)
         u2 = p3d.dot(y)
@@ -1768,8 +1706,7 @@ class Vector3D(Vector):
         v = Vector3D.random(0, 1, 0, 1, 0, 1)
 
         v = v - v.dot(self) * self / (self.norm()**2)
-        v.normalize()
-        return v
+        return v.unit_vector()
 
     def deterministic_normal_vector(self):
         """
@@ -1896,7 +1833,7 @@ class Vector3D(Vector):
             current_id += 1
         return content, current_id
 
-    def plot(self, ax=None, starting_point=None, color=""):
+    def plot(self, ax=None, starting_point=None, color="k"):
         """
         Plots the 3-dimensional vector.
 
@@ -1917,14 +1854,11 @@ class Vector3D(Vector):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
-        xs = [starting_point[0], self.x + starting_point[0]]
-        ys = [starting_point[1], self.y + starting_point[1]]
-        zs = [starting_point[2], self.z + starting_point[2]]
-        if color:
-            a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>", color=color)
-        else:
-            a = Arrow3D(xs, ys, zs, mutation_scale=10, lw=3, arrowstyle="-|>")
-        ax.add_artist(a)
+        # Change for head length
+        arrow = Arrow3D(self.x, self.y, self.z, starting_point=starting_point, mutation_scale=20,
+                        arrowstyle="-|>", color=color)
+
+        ax.add_artist(arrow)
         return ax
 
 
@@ -2612,13 +2546,12 @@ class Basis2D(Basis):
 
     def normalize(self):
         """
-        Normalizes the basis, modifying its coordinates in place.
+        Normalizes the basis, and return a new object.
 
-        :return: None
-        :rtype: None
+        :return: A new normalized basis
+        :rtype: Basis2D
         """
-        self.u.normalize()
-        self.v.normalize()
+        return Basis2D(self.u.unit_vector(), self.v.unit_vector())
 
 
 XY = Basis2D(X2D, Y2D)
@@ -2728,9 +2661,9 @@ class Basis3D(Basis):
         :type vector2: :class:`volmdlr.Vector3D`
         """
         u = vector1.copy()
-        u.normalize()
+        u = u.unit_vector()
         v = vector2 - vector2.dot(vector1) * vector1
-        v.normalize()
+        v = v.unit_vector()
         w = u.cross(v)
         return Basis3D(u, v, w)
 
@@ -2941,15 +2874,17 @@ class Basis3D(Basis):
         """
         Normalizes the basis, modifying its coordinates in place.
 
-        :return: None
-        :rtype: None
+        :return: New normalized basis
+        :rtype: Basis3D
         """
+        u, v, w = self.u, self.v, self.w
         if not math.isclose(self.u.norm(), 0.0, abs_tol=1e-10):
-            self.u.normalize()
+            u = self.u.unit_vector()
         if not math.isclose(self.v.norm(), 0.0, abs_tol=1e-10):
-            self.v.normalize()
+            v = self.v.unit_vector()
         if not math.isclose(self.w.norm(), 0.0, abs_tol=1e-10):
-            self.w.normalize()
+            w = self.w.unit_vector()
+        return Basis3D(u, v, w)
 
 
 class Frame2D(Basis2D):
@@ -3022,6 +2957,15 @@ class Frame2D(Basis2D):
                 "u": self.u.to_dict(),
                 "v": self.v.to_dict()
                 }
+
+    def normalize(self):
+        """
+        Normalizes the Frame, and return a new object.
+
+        :return: A new normalized basis
+        :rtype: Frame2D
+        """
+        return Frame2D(self.origin, self.u.unit_vector(), self.v.unit_vector())
 
     def basis(self):
         """
@@ -3281,6 +3225,15 @@ class Frame3D(Basis3D):
                 "v": self.v.to_dict(),
                 "w": self.w.to_dict()
                 }
+
+    def normalize(self):
+        """
+        Normalizes the Frame, and return a new object.
+
+        :return: A new normalized basis
+        :rtype: Frame2D
+        """
+        return Frame3D(self.origin, self.u.unit_vector(), self.v.unit_vector(), self.w.unit_vector())
 
     def basis(self):
         """
@@ -3559,7 +3512,7 @@ class Frame3D(Basis3D):
         if main_axis not in [X3D, Y3D, Z3D]:
             raise ValueError("main_axis must be X, Y or Z of the global frame")
 
-        vector.normalize()
+        vector = vector.unit_vector()
 
         if vector == main_axis:
             # The local frame is oriented like the global frame
@@ -3576,7 +3529,7 @@ class Frame3D(Basis3D):
         # Rotation axis
         vector2 = vector - main_axis
         rot_axis = main_axis.cross(vector2)
-        rot_axis.normalize()
+        rot_axis = rot_axis.unit_vector()
 
         u = X3D.rotation(O3D, rot_axis, rot_angle)
         v = Y3D.rotation(O3D, rot_axis, rot_angle)
@@ -3599,8 +3552,15 @@ class Frame3D(Basis3D):
         vector1 = vector1.to_vector().unit_vector()
         vector2 = vector2.to_vector().unit_vector()
         normal = vector1.cross(vector2)
-        normal.normalize()
+        normal = normal.unit_vector()
         return cls(point1, vector1, normal.cross(vector1), normal)
+
+    @classmethod
+    def from_point_and_normal(cls, origin, normal):
+        """Creates a frame 3D from a point and a normal vector."""
+        u_vector = normal.deterministic_unit_normal_vector()
+        v_vector = normal.cross(u_vector)
+        return cls(origin, u_vector, v_vector, normal)
 
     # def babylonjs(self, size=0.1, parent=None):
     #     """

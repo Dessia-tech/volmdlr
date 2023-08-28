@@ -1,6 +1,8 @@
 import math
 import unittest
 
+import numpy
+
 import dessia_common.core
 import volmdlr
 from volmdlr import edges, faces, primitives3d, wires, surfaces, shells
@@ -22,7 +24,7 @@ class TestClosedShell3D(unittest.TestCase):
                                                  volmdlr.Point2D(-1, 1), volmdlr.Point2D(1, 1),
                                                  volmdlr.Point2D(1, -1), volmdlr.Point2D(0, -1)])
         extrude1 = volmdlr.primitives3d.ExtrudedProfile(
-            volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D, contour, [], -volmdlr.Z3D)
+            volmdlr.OXYZ, contour, [], -1)
         frame1 = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), 2 * volmdlr.X3D, 2 * volmdlr.Y3D, volmdlr.Z3D)
         block1 = volmdlr.primitives3d.Block(frame1)
         union1 = extrude1.union(block1)
@@ -35,9 +37,9 @@ class TestClosedShell3D(unittest.TestCase):
             (volmdlr.Point2D(-0.03, 0.02), volmdlr.Point2D(-0.020436, 0.029871)),
             (volmdlr.Point2D(-0.020436, 0.029871), volmdlr.Point2D(0.0, 0.029871)),
             (volmdlr.Point2D(0.0, 0.029871), volmdlr.Point2D(0.0, 0.0))]]
-        extruded_prifile1 = primitives3d.ExtrudedProfile(volmdlr.O3D, volmdlr.Y3D, volmdlr.Z3D,
+        extruded_prifile1 = primitives3d.ExtrudedProfile(volmdlr.OYZX,
                                                          wires.Contour2D(contour_primitives), [],
-                                                         volmdlr.Vector3D(0.01, 0, 0), (0.4, 0.1, 0.1), 0.6)
+                                                         0.01, (0.4, 0.1, 0.1), 0.6)
         extruded_prifile2 = extruded_prifile1.translation(volmdlr.Vector3D(0.01, 0, 0))
         union_shell1_shell2 = extruded_prifile1.union(extruded_prifile2)[0]
         union_shell1_shell2.merge_faces()
@@ -94,8 +96,8 @@ class TestClosedShell3D(unittest.TestCase):
         contour = wires.ClosedPolygon2D([volmdlr.Point2D(0, 0), volmdlr.Point2D(-1, 0),
                                          volmdlr.Point2D(-1, 1), volmdlr.Point2D(1, 1),
                                          volmdlr.Point2D(1, -1), volmdlr.Point2D(0, -1)])
-        extrude1 = volmdlr.primitives3d.ExtrudedProfile(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D,
-                                                        contour, [], -volmdlr.Z3D)
+        extrude1 = volmdlr.primitives3d.ExtrudedProfile(volmdlr.OXYZ,
+                                                        contour, [], -1)
         frame1 = volmdlr.Frame3D(volmdlr.Point3D(0, 0.5, -0.5), 2 * volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
         block1 = volmdlr.primitives3d.Block(frame1)
         union1 = extrude1.union(block1)[0]
@@ -187,6 +189,12 @@ class TestClosedShell3D(unittest.TestCase):
         fm_shell = closed_shell.frame_mapping(frame, 'new')
         min_distance, point1, point2 = closed_shell.minimum_distance(fm_shell, True)
         self.assertEqual(min_distance, 0.0)
+
+    def test_volume(self):
+        closed_shell = dessia_common.core.DessiaObject.load_from_file('shells/test_shell_volume.json')
+        closed_shell2 = closed_shell.rotation(volmdlr.O3D - 0.95 * volmdlr.X3D, volmdlr.Z3D, numpy.pi / 2)
+        closed_shell2 = closed_shell2.translation(-0.95 * volmdlr.X3D + 0.45 * volmdlr.Z3D + 0.2 * volmdlr.Y3D)
+        self.assertAlmostEqual(closed_shell.volume(), closed_shell2.volume())
 
 
 if __name__ == '__main__':

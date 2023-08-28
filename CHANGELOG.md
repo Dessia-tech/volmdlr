@@ -6,7 +6,99 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## v0.12.0 [future]
+## v0.13.0 [future]
+
+### New Features
+- Line: reverse.
+- BSplineCurve: Remove dependencies from the geomdl library.
+- perf: to_dict/dict_to_obj of OpenTriangleShell3D
+- Cylinder / Cone / HollowCylinder: from_center_point_and_axis
+- Cone: remove inheritance from RevolvedProfile
+- BSplineSurface3D: partial removal of dependencies on geomdl objects
+- Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
+- Curve: local_discretization
+- Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
+- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections, ellipse_intersections
+- Circle2D: ellipse_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
+- Wire3D/Contour3D: edge_intersections, wire_intersections
+- BSpline3D: arc_intersections
+- New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
+
+### Fixed
+- Sweep with non smoth path
+- plot of vector3D.
+- BSplineSurface3D: point3d_to_2d, improve inital condition.
+- EdgeCollection3D: babylon_meshes.
+- BSplineCurve3D: trim
+- FullArc3D: hash
+- SphericalSurface3D: enhance repair_periodicity_method
+- CylindricalSurface3D: concurrent_plane_intersection
+- BSplineFace3D: fix neutral_fiber
+- Step: assembly import
+- BSplineFace3D: fix bounding_box.
+- Ellipse3D: from_step
+- edges.py: general improvements.
+- ExtrusionSurface3D: point3d_to_2d.
+- ExtrusionSurface3D: enhance parametric operations when the surface is periodic.
+- BSplineFace3D: fix neutral_fiber
+- BSplineSurface3D: improve bsplinecurve3d_to_2d.
+- BSplineSurface3D: improve bsplinecurve3d_to_3d.
+- Circle2D: plot
+- Line3D: fix Line3D plot()
+- Vector2D: plot()
+- fix RevolutionFace3D init parameter wire to edge.
+- fix Sweep: bug when first primitive is an arc.
+- fix closedshell3d volume
+- Step.py: enhance step import/export
+- VolumeModel: get_shells
+- step.py uses deque in stack based algorithms
+- VolumeModel: get_shells
+- add error protection stl
+- Sweep - add raise ValueError if section too big in comparision to arc radiuses
+- Update cython version requirement in setup.py
+- Step import: handles when there is an empty assembly in the file.
+- Ellipse2D: point_at_abscissa
+- ultis.common_operations: get_edge_distance_to_point and get_get_abscissa_discretization from edges so it can be used in curves too.
+- edges.Edge._generic_minimum_distance
+- LineSegment3D: distance_linesegment
+- BSpline3D: linesegment_intersections
+### Refactor
+- refator some classes' init in primitives3D. 
+- Shells: refactor.
+- Composite_primitives
+- Surface3D: enhance repair_primitives_periodicity method.
+- volmdlr.utils.intersections:
+- BSplineCurve: replace periodic bool parameter with verification inside from_points_intepolation method.
+- Wire3D: removes heritage from volmdlr.core.CompositePrimitive3D
+- BSplineCurve3D: bounding_box
+- edges: minimum_distance.
+- BSplineSurface3D: bsplinecurve3d_to_2d
+- BSplineCurve: transform some attributs into lazy evaluation and Caching
+- BSplineSurface3D: transform some attributs into lazy evaluation and Caching
+- BSplineSurface3D: store control_points as numpy array for memory efficiency
+- PlaneFace3D: distance_to_point -> point_distance
+- remove normalize() methods
+- Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
+- BSplineSurface3D: point3d_to_2d performance improvements.
+
+
+### Changed
+- Moves functions from step.py to volmdlr.utils.step_reader
+- Cylinder / HollowCylinder: `from_extremal_points` is now depracted. Use `from_end_points` instead (for lexical reason)
+
+### Unittests
+- Cylinder / Cone / HollowCylinder
+- Ellipse2D: point_distance
+- Ellipse3D: test_ellipse_intersections, test_linesegment_intersections
+- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections, test_minimum_distance_bspline
+- BSplineCurve3D: test_bspline_linesegment_minimum_distance, test_bspline_linesegment_intersections
+- Contour3D: test_edge_intersections
+## v0.12.0
+
 
 ### New Features
 - New module: cad_simplification - OctreeBlockSimplify, TrippleExtrusionSimplify
@@ -25,6 +117,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - minimum_distance: face-to-face, shell-to-shell
 - OpenShell3D: from_faces (using faces graph)
 - SphericalFace3D: from_contours3d_and_rectangular_cut
+- RevolutionSurface3D: Translation
+- wires.WireMixin: from_circle
+- curves.CircleMixin: trim
+- Face3D: point_distance
+- BSplineCurve3D: revolution method.
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs
@@ -59,6 +156,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: line_intersections
 - Line3D: minimum_distance_points
 - remove arcellipse handleling for bspline2d_3d.
+- plot of vector3D
+- Ellipse3D: discretization_points.
 
 ### Refactor
 - ClosedShell3D: point_belongs, get_non_intersecting_faces
@@ -77,7 +176,6 @@ All adequations have been done for all tests and existing scripts.
 - OpenShell3D: faces_graph.
 - RevolutionSurface3D: Improve init and methods
 
-
 ### Changed
 - OpenShell3D: faces_graph is now vertices_graph. faces_graph method now represents the faces' topology of the shell.
 
@@ -89,7 +187,7 @@ All adequations have been done for all tests and existing scripts.
 - common_operations: split_wire_by_plane
 - SphericalSurface3D: line_intersections, linesegment_intersections.
 
-## v0.11.0 [unreleased]
+## v0.11.0
 
 
 ### New Features

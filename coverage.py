@@ -17,11 +17,16 @@ untracked_modules = ['volmdlr/templates.py',
                      'volmdlr/bspline_compiled.py',
                      "volmdlr/bspline_fitting.py",
                      "volmdlr/bspline_evaluators.py",
+                     "volmdlr/discrete_representation_compiled.py",
+                     'nurbs/core.py',
+                     'nurbs/helpers.py',
+                     'nurbs/fitting.py',
+                     'nurbs/operations.py',
                      'volmdlr/mesh.py',
                      'volmdlr/gmsh_vm.py',
                      'models/__init__.py',
                      'models/contours.py',
-                     'models/bspline_curves.py'
+                     'models/bspline_curves.py',
                      ]
 
 print('untracked modules:', untracked_modules)
