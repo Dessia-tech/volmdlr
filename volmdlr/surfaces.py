@@ -781,6 +781,12 @@ class Surface3D(DessiaObject):
         self.frame = frame
         DessiaObject.__init__(self, name=name)
 
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
+        """
+        Abstract method.
+        """
+        raise NotImplementedError(f"plot method is not implemented for {self.__class__.__name__}")
+
     def point2d_to_3d(self, point2d):
         raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
 
@@ -1514,6 +1520,7 @@ class Plane3D(Surface3D):
 PLANE3D_OXY = Plane3D(volmdlr.OXYZ)
 PLANE3D_OYZ = Plane3D(volmdlr.OYZX)
 PLANE3D_OZX = Plane3D(volmdlr.OZXY)
+PLANE3D_OXZ = Plane3D(volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, volmdlr.Z3D, volmdlr.Y3D))
 
 
 class PeriodicalSurface(Surface3D):
@@ -5019,11 +5026,6 @@ class BSplineSurface3D(Surface3D):
         start_v = kwargs.get('start_v', knotvector_v[self.degree_v])
         stop_v = kwargs.get('stop_v', knotvector_v[-(self.degree_v + 1)])
 
-        # # Check parameters
-        # if self._kv_normalize:
-        #     if not utilities.check_params([start_u, stop_u, start_v, stop_v]):
-        #         raise GeomdlException("Parameters should be between 0 and 1")
-
         # Evaluate and cache
         self._eval_points = npy.asarray(evaluate_surface(self.data,
                                                          start=(start_u, start_v),
@@ -5175,13 +5177,7 @@ class BSplineSurface3D(Surface3D):
         to u k times and v l times
         :rtype: List[`volmdlr.Vector3D`]
         """
-        # if self.surface.rational:
-        #     # derivatives = self._rational_derivatives(self.surface.data,(u, v), order)
-        #     derivatives = volmdlr.rational_derivatives(self.surface.data, (u, v), order)
-        # else:
-        #     # derivatives = self._derivatives(self.surface.data, (u, v), order)
-        #     derivatives = volmdlr.derivatives(self.surface.data, (u, v), order)
-        if self._weights is not None:
+        if self.weights is not None:
             control_points = self.ctrlptsw
         else:
             control_points = self.ctrlpts
@@ -5240,6 +5236,9 @@ class BSplineSurface3D(Surface3D):
         return blending_mat
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
+        """
+        Evaluate the surface at a given parameter coordinate.
+        """
         u, v = point2d
         u = float(min(max(u, 0.0), 1.0))
         v = float(min(max(v, 0.0), 1.0))
@@ -5425,7 +5424,6 @@ class BSplineSurface3D(Surface3D):
         x0, distance = self.point_inversion_grid_search(point3d, tol)
         if distance < tol:
             return volmdlr.Point2D(*x0)
-
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         res = minimize(fun, x0=npy.array(x0), jac=True,
                        bounds=[(min_bound_x, max_bound_x),
@@ -5674,7 +5672,6 @@ class BSplineSurface3D(Surface3D):
                 points.append(point2d)
         start = points[0]
         end = points[-1]
-
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         if self.x_periodicity:
             points = self._repair_periodic_boundary_points(arc3d, points, 'x')

@@ -875,7 +875,6 @@ def derivatives_surface(list degree, list knotvector, cnp.ndarray[cnp.double_t, 
                         bint rational, list parpos, int deriv_order):
     cdef int[2] _degree = degree
     cdef vector[vector[double]] _knotvector = knotvector
-    # cdef cnp.ndarray[cnp.double_t, ndim=2] ctrlpts = datadict["control_points"]
     cdef int[2] _size = size
     cdef int dimension = 4 if rational else 3
     cdef double[2] _parpos = parpos
@@ -986,8 +985,6 @@ cdef vector[vector[vector[double]]] derivatives_surface_rational(int[2] degree, 
     # Algorithm A4.4
     for k in range(0, deriv_order + 1):
         for li in range(0, deriv_order + 1):
-            # Deep copying might seem a little overkill but we also want to avoid same pointer issues too
-            # v = copy.deepcopy(SKLw[k][l])
             for i in range(dimension -1):
                 v[i] = SKLw[k][li][i]
             for j in range(1, li + 1):
@@ -1023,18 +1020,11 @@ cdef vector[vector[vector[double]]] derivatives_surface_rational(int[2] degree, 
 def fun(x, point3d, degree, knotvector, ctrlpts, size, rational):
     derivatives = np.asarray(derivatives_surface(degree, knotvector, ctrlpts, size, rational, x.tolist(), 1),
                              dtype=np.float64)
-    # print(derivatives)
     f_vector = derivatives[0][0] - point3d
     f_value = np.linalg.norm(f_vector)
     if f_value == 0.0:
         jacobian = np.array([0.0, 0.0])
     else:
-        # jacobian = np.array([(vector[0] * derivatives[1][0][0] +
-        #                       vector[1] * derivatives[1][0][1]+
-        #                       vector[2] * derivatives[1][0][2]) / f_value,
-        #                      (vector[0] * derivatives[0][1][0] +
-        #                       vector[1] * derivatives[0][1][1] +
-        #                       vector[2] * derivatives[0][1][2]) / f_value])
         jacobian = np.array([np.dot(f_vector, derivatives[1][0]) / f_value,
                              np.dot(f_vector, derivatives[0][1]) / f_value])
     return f_value, jacobian

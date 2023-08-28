@@ -2767,7 +2767,7 @@ class Arc2D(ArcMixin, Edge):
         distance_point_to_center = point.point_distance(self.circle.center)
         if not math.isclose(distance_point_to_center, self.circle.radius, rel_tol=0.005):
             return False
-        if point.is_close(self.start) or point.is_close(self.end):
+        if point.is_close(self.start, abs_tol) or point.is_close(self.end, abs_tol):
             return True
         clockwise_arc = self.reverse() if self.is_trigo else self
         vector_start = clockwise_arc.start - clockwise_arc.circle.center
@@ -3547,23 +3547,6 @@ class ArcEllipse2D(Edge):
         angle_start, initial_angle = self.valid_abscissa_start_end_angle(initial_angle)
         abscissa_angle = vm_common_operations.ellipse_abscissa_angle_integration(
             self.ellipse, abscissa, angle_start, initial_angle)
-
-        # def ellipse_arc_length(theta):
-        #     return math.sqrt((self.ellipse.major_axis ** 2) * math.sin(theta) ** 2 +
-        #                      (self.ellipse.minor_axis ** 2) * math.cos(theta) ** 2)
-        #
-        # iter_counter = 0
-        # while True:
-        #     res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-        #     if math.isclose(res, abscissa, abs_tol=1e-8):
-        #         abscissa_angle = initial_angle
-        #         break
-        #     if res > abscissa:
-        #         increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(2 * abs(res))
-        #     else:
-        #         increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/abs(res)
-        #     initial_angle += increment_factor
-        #     iter_counter += 1
         x = self.ellipse.major_axis * math.cos(abscissa_angle)
         y = self.ellipse.minor_axis * math.sin(abscissa_angle)
         return self.ellipse.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
@@ -5565,7 +5548,7 @@ class Arc3D(ArcMixin, Edge):
         return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(
             surface, 0, angle, arc2d.angle1, arc2d.angle2)]
 
-    def to_step(self, current_id, surface_id=None):
+    def to_step(self, current_id, *args, **kwargs):
         """
         Converts the object to a STEP representation.
 

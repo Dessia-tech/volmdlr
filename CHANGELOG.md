@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - perf: to_dict/dict_to_obj of OpenTriangleShell3D
 - Cylinder / Cone / HollowCylinder: from_center_point_and_axis
 - Cone: remove inheritance from RevolvedProfile
+- BSplineSurface3D: partial removal of dependencies on geomdl objects
 - Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
 - Curve: local_discretization
 - Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
@@ -23,9 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: arc_intersections, arcellipse_intersections
 - Wire3D/Contour3D: edge_intersections, wire_intersections
 - BSpline3D: arc_intersections
+- New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
 - BSplineSurface3D: partial removal of dependencies on geomdl objects
 - BSplineSurface3D: from_points_interpolation, from_points_approximation
-- 
 
 ### Fixed
 - Sweep with non smoth path
@@ -59,12 +60,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add error protection stl
 - Sweep - add raise ValueError if section too big in comparision to arc radiuses
 - Update cython version requirement in setup.py
+- Step import: handles when there is an empty assembly in the file.
 - Ellipse2D: point_at_abscissa
 - ultis.common_operations: get_edge_distance_to_point and get_get_abscissa_discretization from edges so it can be used in curves too.
 - edges.Edge._generic_minimum_distance
 - LineSegment3D: distance_linesegment
 - BSpline3D: linesegment_intersections
-
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
