@@ -1245,8 +1245,9 @@ class Wire2D(WireMixin, PhysicalObject):
 
     def is_inside(self, other_contour):
         """
-        Verifies if a contour is inside another contour perimeter, including the edges.
+        Verifies if given contour is inside self contour perimeter, including its edges.
 
+        :param other_contour: other contour.
         :returns: True or False
         """
         return False

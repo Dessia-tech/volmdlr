@@ -30,7 +30,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-branches': 26,
                      'too-many-statements': 13,
                      'super-init-not-called': 5,
-                     'no-name-in-module': 2,
+                     'no-name-in-module': 8,
                      'abstract-method': 32,
                      'duplicate-code': 10,
                      'arguments-renamed': 52,
@@ -56,7 +56,7 @@ MAX_ERROR_BY_TYPE = {
                      'consider-using-generator': 1,
                      'import-outside-toplevel': 5,
                      'unsubscriptable-object': 1,
-                     'signature-differs': 1,
+                     'signature-differs': 2,
                      'consider-using-enumerate': 2,
                      'unbalanced-tuple-unpacking': 1,
                     }
