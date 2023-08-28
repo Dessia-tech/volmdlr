@@ -795,6 +795,7 @@ class Line3D(Line):
         return volmdlr.edges.LineSegment3D(point1, point2)
 
     def copy(self, *args, **kwargs):
+        """Creates a copy of Line 3D."""
         return Line3D(*[point.copy() for point in [self.point1, self.point2]])
 
     @classmethod
@@ -1260,6 +1261,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         return self.split(split_points[0], split_points[1])
 
     def split(self, split_start, split_end):
+        """Splites a Circle2D into two arcs 2d."""
         return [volmdlr.edges.Arc2D(self, split_start, split_end),
                 volmdlr.edges.Arc2D(self, split_end, split_start)]
 
@@ -1305,6 +1307,7 @@ class Circle3D(CircleMixin, ClosedCurve):
 
     @property
     def center(self):
+        """Gets the center point of the circle 3d."""
         return self.frame.origin
 
     @property
