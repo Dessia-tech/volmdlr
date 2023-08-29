@@ -1662,8 +1662,11 @@ class PeriodicalSurface(Surface3D):
                     old_innner_contour_positioned = inner_contour
 
                 else:
-                    old_innner_contour_positioned = self._align_contours(inner_contour, [[theta1, theta2],
+                    try:
+                        old_innner_contour_positioned = self._align_contours(inner_contour, [[theta1, theta2],
                                                                                          [theta3, theta4]], z1, z3)
+                    except AttributeError:
+                        print(True)
                 point1, point2, point3, point4 = self._get_closing_points(outer_contour,
                                                                           old_innner_contour_positioned)
                 closing_linesegment1 = edges.LineSegment2D(point2, point3)
