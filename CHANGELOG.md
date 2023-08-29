@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactor
 -
 ### Changed
--
+- Cache BSplineCurve points into a numpy array to reduce memory usage.
 ### Unittests
 -
 
