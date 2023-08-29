@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
-import numpy as npy
+import numpy as np
 import pyfqmr
 from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
@@ -658,23 +658,23 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         list_set_points1 = [{point for face in faces1
                              for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces1 in
                             shell_decomposition1.items()]
-        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in
+        list_set_points1 = [np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in
                             list_set_points1]
         list_set_points2 = [{point for face in faces2
                              for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces2 in
                             shell_decomposition2.items()]
-        list_set_points2 = [npy.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
+        list_set_points2 = [np.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
                             list_set_points2]
 
         minimum_distance = math.inf
         index1, index2 = None, None
         for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
-            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
-            sets_min_dist = npy.min(distances)
+            distances = np.linalg.norm(sets_points2[:, np.newaxis] - sets_points1, axis=2)
+            sets_min_dist = np.min(distances)
             if sets_min_dist < minimum_distance:
                 minimum_distance = sets_min_dist
-                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
-                index2 = next((i for i, x in enumerate(list_set_points2) if npy.array_equal(x, sets_points2)), -1)
+                index1 = next((i for i, x in enumerate(list_set_points1) if np.array_equal(x, sets_points1)), -1)
+                index2 = next((i for i, x in enumerate(list_set_points2) if np.array_equal(x, sets_points2)), -1)
         faces1 = list(shell_decomposition1.values())[index1]
         faces2 = list(shell_decomposition2.values())[index2]
 
@@ -1800,8 +1800,8 @@ class OpenTriangleShell3D(OpenShell3D):
 
     def to_mesh_data(self):
         """To mesh data for Open Triangle Shell."""
-        positions = npy.zeros((3 * len(self.faces), 3))
-        faces = npy.zeros((len(self.faces), 3))
+        positions = np.zeros((3 * len(self.faces), 3))
+        faces = np.zeros((len(self.faces), 3))
         for i, triangle_face in enumerate(self.faces):
             i1 = 3 * i
             i2 = i1 + 1
@@ -1851,6 +1851,47 @@ class OpenTriangleShell3D(OpenShell3D):
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
         return display.DisplayMesh3D(points, triangles)
 
+    def get_vertices_and_faces(
+        self, round_vertices: bool = False, decimal_places: int = 6
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Get the vertices and faces of the shell as numpy arrays.
+
+        :param round_vertices: Whether to round vertices to prevent numerical errors.
+        :type round_vertices: bool
+        :param decimal_places: Number of decimal places to round vertices.
+        :type decimal_places: int
+
+        :return: A tuple containing two numpy arrays - vertices and faces.
+        :rtype: Tuple[np.ndarray, np.ndarray]
+        """
+        vertices = np.array([(point.x, point.y, point.z) for face in self.faces for point in face.points])
+
+        if round_vertices:
+            vertices = np.round(vertices, decimal_places)
+
+        vertices = np.unique(vertices, axis=0)  # Remove duplicate vertices
+
+        from tqdm import tqdm
+
+        vertex_indices = []
+        for face in tqdm(self.faces):
+            if round_vertices:
+                indices = [
+                    np.where(np.all(vertices == np.round((point.x, point.y, point.z), decimal_places), axis=1))[0][0]
+                    for point in face.points
+                ]
+            else:
+                indices = [
+                    np.where(np.all(vertices == (point.x, point.y, point.z), axis=1))[0][0] for point in face.points
+                ]
+
+            vertex_indices.append(indices)
+
+        faces = np.array(vertex_indices)
+
+        return vertices, faces
+
     def decimate(
         self,
         target_count: int,
@@ -1892,8 +1933,10 @@ class OpenTriangleShell3D(OpenShell3D):
 
         :return: The deciamated TriangleShell3D
         """
+        vertices, faces = self.get_vertices_and_faces(round_vertices=True, decimal_places=8)
+
         simplifier = pyfqmr.Simplify()
-        simplifier.setMesh(self.to_mesh_data())
+        simplifier.setMesh(vertices, faces)
         simplifier.simplify_mesh(
             target_count=target_count,
             update_rate=update_rate,
