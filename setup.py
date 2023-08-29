@@ -142,6 +142,7 @@ setup(
         "trimesh",
         "rtree",
         "gmsh",
+        "pyfqmr",
     ],
     classifiers=["Topic :: Scientific/Engineering",
                  "Topic :: Multimedia :: Graphics :: 3D Modeling",
