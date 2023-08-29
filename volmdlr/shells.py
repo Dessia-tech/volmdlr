@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Tuple
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as npy
+import pyfqmr
 from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
 from trimesh import Trimesh
@@ -1849,6 +1850,65 @@ class OpenTriangleShell3D(OpenShell3D):
             points.append(display.Node3D.from_point(triangle.point3))
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
         return display.DisplayMesh3D(points, triangles)
+
+    def decimate(
+        self,
+        target_count: int,
+        update_rate: int = 5,
+        aggressiveness: float = 7.0,
+        max_iterations: int = 100,
+        verbose: bool = False,
+        lossless: bool = False,
+        threshold_lossless: float = 1e-3,
+        alpha: float = 1e-9,
+        k: int = 3,
+        preserve_border: bool = True,
+    ):
+        """
+        Decimate TriangleShell3D.
+
+        None: threshold = alpha * pow(iteration + k, aggressiveness)
+
+        :param target_count: Target number of triangles. Not used if `lossless` is True.
+        :type target_count: int
+        :param update_rate: Number of iterations between each update. If `lossless` flag is set to True, rate is 1.
+        :type update_rate: int
+        :param aggressiveness: Parameter controlling the growth rate of the threshold at each iteration when `lossless` is False.
+        :type aggressiveness: float
+        :param max_iterations: Maximal number of iterations.
+        :type max_iterations: int
+        :param verbose: Control verbosity.
+        :type verbose: bool
+        :param lossless: Use the lossless simplification method.
+        :type lossless: bool
+        :param threshold_lossless: Maximal error after which a vertex is not deleted. Only for `lossless` method.
+        :type threshold_lossless: float
+        :param alpha: Parameter for controlling the threshold growth.
+        :type alpha: float
+        :param k: Parameter for controlling the threshold growth.
+        :type k: int
+        :param preserve_border: Flag for preserving vertices on open border.
+        :type preserve_border: bool
+
+        :return: The deciamated TriangleShell3D
+        """
+        simplifier = pyfqmr.Simplify()
+        simplifier.setMesh(self.to_mesh_data())
+        simplifier.simplify_mesh(
+            target_count=target_count,
+            update_rate=update_rate,
+            aggressiveness=aggressiveness,
+            max_iterations=max_iterations,
+            verbose=verbose,
+            lossless=lossless,
+            threshold_lossless=threshold_lossless,
+            alpha=alpha,
+            K=k,
+            preserve_border=preserve_border,
+        )
+        vertices, faces, _ = simplifier.getMesh()
+
+        return self.__class__.from_mesh_data(vertices, faces, self.name)
 
 
 class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
