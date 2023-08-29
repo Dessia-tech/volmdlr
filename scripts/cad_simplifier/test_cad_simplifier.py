@@ -16,7 +16,7 @@ time_s = time.time()
 simplified_shell = octre_block_simplify.simplify(3)
 simplified_shell.alpha = 0.6
 volmdlr.core.VolumeModel([obj, simplified_shell]).babylonjs()
-simplified_model2 = cad_simplification.TrippleExtrusionSimplify(volmdlr.core.VolumeModel([obj])).simplify()
+simplified_model2 = cad_simplification.TripleExtrusionSimplify(volmdlr.core.VolumeModel([obj])).simplify()
 simplified_model2.alpha = 0.6
 volmdlr.core.VolumeModel([obj, simplified_model2]).babylonjs()
 time_e = time.time()
