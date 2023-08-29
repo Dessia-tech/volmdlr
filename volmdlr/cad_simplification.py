@@ -1,6 +1,7 @@
 """
 volmdlr cad simplification module.
 """
+import warnings
 from typing import List
 
 from dessia_common.core import DessiaObject
@@ -37,16 +38,24 @@ class OctreeBlockSimplify(DessiaObject):
         :return: A list of octree blocks that are outside the given closed shell.
         """
         block_volume = self.block.volume()
-        min_block_volume = block_volume / (8 ** depth)
+        min_block_volume = block_volume / (8**depth)
         dict_faces_to_box = {box: [] for box in self.block.octree()}
         for box, list_faces in dict_faces_to_box.items():
             for face in self.closed_shell.faces:
-                if (
-                    box.is_face_intersecting(face)
-                    or box.is_face_inside(face)
-                    or box.bounding_box.distance_to_bbox(face.bounding_box) <= 1e-6
-                ):
-                    list_faces.append(face)
+                try:
+                    if (
+                        box.is_face_inside(face)
+                        or box.bounding_box.distance_to_bbox(face.bounding_box) <= 1e-6
+                        or box.is_face_intersecting(face)
+                    ):
+                        list_faces.append(face)
+
+                except NotImplementedError as error:
+                    warnings.warn(f"Ignoring {face} because of {error}")
+                except IndexError as error:
+                    warnings.warn(f"Ignoring {face} because of {error}")
+                except AttributeError as error:
+                    warnings.warn(f"Ignoring {face} because of {error}")
 
         not_intersecting_boxes = []
         inside_boxes = []
@@ -68,15 +77,22 @@ class OctreeBlockSimplify(DessiaObject):
                 divided_boxes = box.octree()
                 if divided_boxes[0].volume() >= min_block_volume:
                     for divided_box in divided_boxes:
-                        new_list_faces = [
-                            face
-                            for face in list_faces
-                            if (
-                                divided_box.is_face_intersecting(face)
-                                or divided_box.is_face_inside(face)
-                                or divided_box.bounding_box.distance_to_bbox(face.bounding_box) <= 1e-6
-                            )
-                        ]
+                        new_list_faces = []
+                        for face in list_faces:
+                            try:
+                                if (
+                                    divided_box.is_face_intersecting(face)
+                                    or divided_box.is_face_inside(face)
+                                    or divided_box.bounding_box.distance_to_bbox(face.bounding_box) <= 1e-6
+                                ):
+                                    new_list_faces.append(face)
+                            except NotImplementedError as error:
+                                warnings.warn(f"Ignoring {face} because of {error}")
+                            except IndexError as error:
+                                warnings.warn(f"Ignoring {face} because of {error}")
+                            except AttributeError as error:
+                                warnings.warn(f"Ignoring {face} because of {error}")
+
                         dict_faces_to_box_[divided_box] = new_list_faces
 
                 del dict_faces_to_box_[box]
