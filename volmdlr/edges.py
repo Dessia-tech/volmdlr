@@ -1521,7 +1521,7 @@ class BSplineCurve(Edge):
         if angle_resolution:
             number_points = int(math.pi * angle_resolution)
 
-        if len(self._eval_points) == number_points or (not number_points and not angle_resolution):
+        if self.sample_size == number_points or (not number_points and not angle_resolution):
             return self.points
 
         datadict = self.data
