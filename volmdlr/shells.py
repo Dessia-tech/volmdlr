@@ -1881,6 +1881,18 @@ class OpenTriangleShell3D(OpenShell3D):
 
         return triangle_shell
 
+    def babylon_meshes(self, merge_meshes=True):
+        """Overload of 'babylon_meshes' for performance."""
+
+        positions, indices = self.to_mesh_data(round_vertices=True, n_decimals=6)
+        positions = positions.flatten().tolist()
+        indices = indices.flatten().tolist()
+
+        babylon_mesh = {"positions": positions, "indices": indices}
+        babylon_mesh.update(self.babylon_param())
+
+        return [babylon_mesh]
+
 
 class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     """
