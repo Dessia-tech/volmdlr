@@ -1,9 +1,6 @@
 """
 volmdlr cad simplification module.
 """
-import warnings
-from typing import List
-
 from dessia_common.core import DessiaObject
 
 import volmdlr
@@ -21,7 +18,9 @@ class TripleExtrusionSimplify(DessiaObject):
         Initialize an instance of TripleExtrusionSimplify.
 
         :param volume_model: The volume model to simplify.
-        :param name (str): Optional. A name for the TripleExtrusionSimplify instance.
+        :type volume_model: VolumeModel
+        :param name: A name for the TripleExtrusionSimplify instance, optional.
+        :type name: str
         """
         self.volume_model = volume_model
 
@@ -32,30 +31,31 @@ class TripleExtrusionSimplify(DessiaObject):
         Simplify the volume model using the 'triple extrusion' method.
 
         :return: The simplified volume model.
+        :rtype: VolumeModel
         """
         points = []
         for primitive in self.volume_model.primitives:
             tri = primitive.triangulation()
             points.extend(tri.points)
 
-        cloud = PointCloud3D(points)
-        model = VolumeModel([self.extrusion_union_cloud_simplifier(cloud)])
+        point_cloud3d = PointCloud3D(points)
+        simplified_volume_model = VolumeModel([self.extrusion_union_cloud_simplifier(point_cloud3d)])
 
-        return model
+        return simplified_volume_model
 
     @staticmethod
-    def extrusion_union_cloud_simplifier(cloud3d: PointCloud3D) -> ExtrudedProfile:
+    def extrusion_union_cloud_simplifier(point_cloud3d: PointCloud3D) -> ExtrudedProfile:
         """
         Simplify a point cloud using extrusion and union operations.
 
-        :param cloud3d: The 3D point cloud to simplify.
+        :param point_cloud3d: The 3D point cloud to simplify.
 
         :return: The simplified shell.
         """
         simplified_shell = None
         list_shells = []
 
-        bbox = cloud3d.bounding_box
+        bbox = point_cloud3d.bounding_box
         lx = bbox.xmax - bbox.xmin
         ly = bbox.ymax - bbox.ymin
         lz = bbox.zmax - bbox.zmin
@@ -64,7 +64,7 @@ class TripleExtrusionSimplify(DessiaObject):
             u_vector = w_vector.random_unit_normal_vector()
             v_vector = w_vector.cross(u_vector)
 
-            cloud2d = cloud3d.to_2d(volmdlr.O3D, u_vector, v_vector)
+            cloud2d = point_cloud3d.to_2d(volmdlr.O3D, u_vector, v_vector)
             polygon2d = cloud2d.to_polygon(convex=True)
             contour2d = Contour2D(polygon2d.line_segments)
 
