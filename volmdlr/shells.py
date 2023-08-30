@@ -1931,7 +1931,7 @@ class OpenTriangleShell3D(OpenShell3D):
         :param preserve_border: Flag for preserving vertices on open border.
         :type preserve_border: bool
 
-        :return: The deciamated TriangleShell3D
+        :return: The decimated TriangleShell3D
         """
         vertices, faces = self.get_vertices_and_faces(round_vertices=True, decimal_places=8)
 
