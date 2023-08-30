@@ -6,6 +6,7 @@ import math
 from typing import List, Union
 
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
 import numpy as npy
 import scipy.integrate as scipy_integrate
 from matplotlib import __version__ as _mpl_version
@@ -579,6 +580,13 @@ class Line2D(Line):
         vector_r = self.point1 - point2d
         vector_v = self.normal_vector()
         return abs(vector_v.dot(vector_r)) / vector_v.norm()
+
+    def get_slope(self):
+        return (self.point2.y - self.point1.y) / (self.point2.x - self.point1.x)
+
+    def get_y_intersection(self):
+        slope = self.get_slope()
+        return self.point1.y - slope * self.point1.x
 
 
 class Line3D(Line):
@@ -2267,3 +2275,224 @@ class Ellipse3D(ClosedCurve):
             if self.point_belongs(intersection, abs_tol) and ellipse.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
         return intersections
+
+
+class Hyperbola(Curve):
+    def __init__(self, frame: Union[volmdlr.Frame2D, volmdlr.Frame3D], semi_major_axis: float,
+                 semi_minor_axis: float, name: str = ''):
+        self.frame = frame
+        self.semi_major_axis = semi_major_axis
+        self.semi_minor_axis = semi_minor_axis
+        Curve.__init__(self, name=name)
+
+    # def get_points(self):
+    #     # point_class_ = getattr(volmdlr, f'Point'+self.__class__.__name__[:-2])
+    #     y_vals = npy.linspace(-self.semi_major_axis * 5, self.semi_major_axis * 5, 400)  # Adjust range as needed
+    #     # x_positive_vals, x_negative_vals = self._get_x(y_vals)
+    #     x_positive_vals = self._get_x(y_vals)
+    #     points_positive_branch = []
+    #     # points_negative_branch = []
+    #     for i, y in enumerate(y_vals):
+    #         points_positive_branch.append(volmdlr.Point2D(x_positive_vals[i], y))
+    #         # points_negative_branch.append(volmdlr.Point2D(x_negative_vals[i], y))
+    #     points_positive_branch = [self.frame.local_to_global_coordinates(point) for point in points_positive_branch]
+    #     # points_negative_branch = [self.frame.local_to_global_coordinates(point) for point in points_negative_branch]
+    #     # return points_positive_branch, points_negative_branch
+    #     return points_positive_branch
+
+    def _get_x(self, y):
+        x_positive = npy.sqrt(((y ** 2) / (self.semi_minor_axis ** 2) + 1)*(self.semi_major_axis ** 2))
+        # x_negative = -x_positive
+        # return x_positive, x_negative
+        return x_positive
+
+
+class Hyperbola2D(Hyperbola):
+    def __init__(self, frame: volmdlr.Frame2D, semi_major_axis, semi_minor_axis, name: str = ''):
+        self.frame = frame
+        self.semi_major_axis = semi_major_axis
+        self.semi_minor_axis = semi_minor_axis
+        Hyperbola.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
+
+    def get_points(self):
+        # point_class_ = getattr(volmdlr, f'Point'+self.__class__.__name__[:-2])
+        y_vals = npy.linspace(-self.semi_major_axis * 5, self.semi_major_axis * 5, 400)  # Adjust range as needed
+        # x_positive_vals, x_negative_vals = self._get_x(y_vals)
+        x_positive_vals = self._get_x(y_vals)
+        points_positive_branch = []
+        # points_negative_branch = []
+        for i, y in enumerate(y_vals):
+            points_positive_branch.append(volmdlr.Point2D(x_positive_vals[i], y))
+            # points_negative_branch.append(volmdlr.Point2D(x_negative_vals[i], y))
+        points_positive_branch = [self.frame.local_to_global_coordinates(point) for point in points_positive_branch]
+        # points_negative_branch = [self.frame.local_to_global_coordinates(point) for point in points_negative_branch]
+        # return points_positive_branch, points_negative_branch
+        return points_positive_branch
+
+    def line_intersections(self, line: Line2D):
+        a = self.semi_major_axis
+        b = self.semi_minor_axis
+        frame_mapped_ellipse = self.frame_mapping(self.frame, 'new')
+        line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
+        m = line_to_local_coodinates.get_slope()
+        c = line_to_local_coodinates.get_y_intersection()
+        a_quad_equation = ((a**2) * (m**2) - b**2)
+        b_quad_equation = 2*(a**2)*m*c
+        c_quad_equation = a**2 * (b**2 + c**2)
+        if c**2 < (a**2)*(m**2) - b**2:
+            return []
+        if a_quad_equation == 0.0:
+            return []
+        delta = math.sqrt(b_quad_equation**2 - 4*a_quad_equation*c_quad_equation)
+        x1 = (-b_quad_equation + delta) / (2*a_quad_equation)
+        x2 = (-b_quad_equation - delta) / (2*a_quad_equation)
+        y1 = m * x1 + c
+        y2 = m * x2 + c
+        intersections = []
+        if x1 > 0:
+            intersections.append(volmdlr.Point2D(x1, y1))
+        if x2 > 0:
+            intersections.append(volmdlr.Point2D(x2, y2))
+        # intersections = [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]
+        intersections = [self.frame.local_to_global_coordinates(point) for point in intersections]
+        return intersections
+
+    def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
+        line_intersections = self.line_intersections(linesegment.line)
+        intersections = []
+        for intersection in line_intersections:
+            if linesegment.point_belongs(intersection, abs_tol):
+                intersections.append(intersection)
+        return intersections
+
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
+        """
+        Changes frame_mapping and return a new Ellipse2D.
+
+        side = 'old' or 'new'.
+        """
+        return Hyperbola2D(self.frame.frame_mapping(frame, side), self.semi_major_axis, self.semi_minor_axis)
+
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        if ax is None:
+            _, ax = plt.subplots()
+        # points_positive_branch, points_negative_branch = self.get_points()
+        points_positive_branch = self.get_points()
+        components_positive_branch = vm_common_operations.plot_components_from_points(points_positive_branch)
+        # components_negative_branch = vm_common_operations.plot_components_from_points(points_negative_branch)
+        ax.plot(*components_positive_branch, label='Positive Branch')
+        # ax.plot(*components_negative_branch, label='Negative Branch')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_title('2D Hyperbola')
+        ax.grid(True)
+        ax.legend()
+        ax.axis('equal')
+        return ax
+
+
+class Hyperbola3D(Hyperbola):
+    def __init__(self, frame: volmdlr.Frame3D, semi_major_axis, semi_minor_axis, name: str = ''):
+        self._self_2d = None
+        Hyperbola.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
+
+    @property
+    def self_2d(self):
+        """Version 2d of the ellipse 3d as a property."""
+        if not self._self_2d:
+            self._self_2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        return self._self_2d
+
+    def get_points(self):
+        y_vals = npy.linspace(-self.semi_major_axis * 5, self.semi_major_axis * 5, 400)  # Adjust range as needed
+        # x_positive_vals, x_negative_vals = self._get_x(y_vals)
+        x_positive_vals = self._get_x(y_vals)
+        points_positive_branch = []
+        # points_negative_branch = []
+        for i, y in enumerate(y_vals):
+            points_positive_branch.append(volmdlr.Point3D(x_positive_vals[i], y, 0))
+            # points_negative_branch.append(volmdlr.Point3D(x_negative_vals[i], y, 0))
+        points_positive_branch = [self.frame.local_to_global_coordinates(point) for point in points_positive_branch]
+        # points_negative_branch = [self.frame.local_to_global_coordinates(point) for point in points_negative_branch]
+        # return points_positive_branch, points_negative_branch
+        return points_positive_branch
+
+    # def _get_x(self, y):
+    #     x_positive = npy.sqrt(((y ** 2) / (self.semi_minor_axis ** 2) + 1)*(self.semi_major_axis ** 2))
+    #     x_negative = -x_positive
+    #     return x_positive, x_negative
+
+    def to_2d(self, plane_origin, x, y):
+        """
+        Transforms an Ellipse 3D into an Ellipse 2D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Ellipse2D.
+        """
+        origin = self.frame.origin.to_2d(plane_origin, x, y)
+        u_point = self.frame.origin + self.frame.u
+        v_point = self.frame.origin + self.frame.v
+        u_point2d = u_point.to_2d(plane_origin, x, y)
+        v_point2d = v_point.to_2d(plane_origin, x, y)
+        u_vector = (u_point2d - origin).to_vector().unit_vector()
+        v_vector = (v_point2d - origin).to_vector().unit_vector()
+        frame = volmdlr.Frame2D(origin, u_vector, v_vector)
+        return Hyperbola2D(frame, self.semi_major_axis, self.semi_minor_axis)
+
+    def point_belongs(self, point, tol: float = 1e-6):
+        """
+        Verifies if a given point lies on the Hyperbola 3D.
+
+        :param point: point to be verified.
+        :param tol: tolerance.
+        :return: True is point lies on the Hyperbola 3D, False otherwise
+        """
+        new_point = self.frame.global_to_local_coordinates(point)
+        return math.isclose(new_point.x ** 2 / self.semi_major_axis ** 2 -
+                            new_point.y ** 2 / self.semi_minor_axis ** 2, 1.0, abs_tol=tol)
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Hyperbola3D.
+
+        side = 'old' or 'new'.
+        """
+
+        return Hyperbola3D(self.frame.frame_mapping(frame, side), self.semi_major_axis, self.semi_minor_axis)
+
+    def line_intersections(self, line):
+        """
+        Gets intersections between a Hyperbola 3D and a Line 3D.
+
+        :param line: Other Line 3D.
+        :return: A list of points, containing all intersections between the Line 3D and the Hyperbola3D.
+        """
+        return volmdlr_intersections.hyperbola3d_line_intersections(self, line)
+
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        if ax is None:
+            ax = plt.figure().add_subplot(111, projection='3d')
+        # points_positive_branch, points_negative_branch = self.get_points()
+        points_positive_branch = self.get_points()
+        components_positive_branch = vm_common_operations.plot_components_from_points(points_positive_branch)
+        # components_negative_branch = vm_common_operations.plot_components_from_points(points_negative_branch)
+        ax.plot(*components_positive_branch, label='Positive Branch')
+        # ax.plot(*components_negative_branch, label='Negative Branch')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_title('3D Hyperbola')
+        ax.grid(True)
+        ax.legend()
+        # ax.axis('equal')
+        return ax
+
+
+class Parabola2D(Curve):
+    pass
+
+
+class Parabola3D(Curve):
+    pass
+

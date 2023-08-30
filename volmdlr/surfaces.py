@@ -502,18 +502,16 @@ class Surface2D(PhysicalObject):
                 surface2d_inner_contours.append(inner_contour)
         return cls(surface2d_outer_contour, surface2d_inner_contours)
 
-    def plot(self, ax=None, color='k', alpha=1, equal_aspect=False, **kwargs):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5, equal_aspect=False), **kwargs):
         """Plot surface 2d using Matplotlib."""
 
         if ax is None:
             _, ax = plt.subplots()
-        self.outer_contour.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
-                                                            equal_aspect=equal_aspect))
+        self.outer_contour.plot(ax=ax, edge_style=edge_style)
         for inner_contour in self.inner_contours:
-            inner_contour.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
-                                                           equal_aspect=equal_aspect))
+            inner_contour.plot(ax=ax, edge_style=edge_style)
 
-        if equal_aspect:
+        if edge_style.equal_aspect:
             ax.set_aspect('equal')
 
         ax.margins(0.1)
@@ -2776,7 +2774,7 @@ class ConicalSurface3D(PeriodicalSurface):
         self.semi_angle = semi_angle
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
-    def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
         """
         Plots the ConicalSurface3D.
         """
@@ -2794,7 +2792,7 @@ class ConicalSurface3D(PeriodicalSurface):
         for i in range(37):
             theta = i / 36. * volmdlr.TWO_PI
             wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
-            wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+            wire.plot(ax=ax, edge_style=edge_style)
         return ax
 
     @classmethod
@@ -3047,6 +3045,7 @@ class ConicalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane
         :return: list of intersecting curves
         """
+        line_plane_intersections = vm_utils_intersections.get
         return
 
     def perpendicular_plane_intersection(self, plane3d):
@@ -3058,8 +3057,16 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         line = curves.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
         center3d_plane = plane3d.line_intersections(line)[0]
+        z = 1
+        x = z * math.tan(self.semi_angle)
+        # point1 = self.frame.local_to_global_coordinates(volmdlr.Point3D(-x, 0, -z))
+        point1 = self.frame.origin
+        point2 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, z))
+        generatrix = curves.Line3D(point1, point2)
+        generatrix_intersection = plane3d.line_intersections(generatrix)[0]
+        radius = center3d_plane.point_distance(generatrix_intersection)
         circle3d = curves.Circle3D(volmdlr.Frame3D(center3d_plane, plane3d.frame.u,
-                                                   plane3d.frame.v, plane3d.frame.w), self.radius)
+                                                   plane3d.frame.v, plane3d.frame.w), radius)
         return [circle3d]
 
     def concurrent_plane_intersection(self, plane3d):
@@ -3693,7 +3700,7 @@ class SphericalSurface3D(PeriodicalSurface):
 
         return [edges.BSplineCurve2D.from_points_interpolation(points, 2)]
 
-    def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
         """Plot sphere arcs."""
         if ax is None:
             fig = plt.figure()
@@ -3706,7 +3713,7 @@ class SphericalSurface3D(PeriodicalSurface):
             for j in range(20):
                 phi = j / 20. * volmdlr.TWO_PI
                 t_points.append(self.point2d_to_3d(volmdlr.Point2D(theta, phi)))
-            ax = wires.ClosedPolygon3D(t_points).plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+            ax = wires.ClosedPolygon3D(t_points).plot(ax=ax, edge_style=edge_style)
 
         return ax
 
@@ -4043,7 +4050,7 @@ class ExtrusionSurface3D(Surface3D):
         """Deprecated method, Use ExtrusionFace3D from_surface_rectangular_cut method."""
         raise AttributeError('Use ExtrusionFace3D from_surface_rectangular_cut method')
 
-    def plot(self, ax=None, color='grey', alpha=0.5, z: float = 0.5, **kwargs):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), z: float = 0.5, **kwargs):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -4051,7 +4058,7 @@ class ExtrusionSurface3D(Surface3D):
         for i in range(21):
             step = i / 20. * z
             wire = self.edge.translation(step * self.frame.w)
-            wire.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+            wire.plot(ax=ax, edge_style=edge_style)
 
         return ax
 
@@ -4310,6 +4317,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         Plot rotated Revolution surface generatrix.
 
         :param number_curves: Number of curves to display.
+        :param ax: matplotlib axis.
+        :param edge_style: plot edge style.
         :type number_curves: int
         """
         if ax is None:
@@ -5863,17 +5872,17 @@ class BSplineSurface3D(Surface3D):
                                                 self.weights, self.name)
         return new_bsplinesurface3d
 
-    def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
         u_curves = [edges.BSplineCurve3D.from_geomdl_curve(u) for u in self.curves['u']]
         v_curves = [edges.BSplineCurve3D.from_geomdl_curve(v) for v in self.curves['v']]
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         for u in u_curves:
-            u.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+            u.plot(ax=ax, edge_style=edge_style)
         for v in v_curves:
-            v.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha))
+            v.plot(ax=ax, edge_style=edge_style)
         for point in self.control_points:
-            point.plot(ax, color=color, alpha=alpha)
+            point.plot(ax, color=edge_style.color, alpha=edge_style.alpha)
         return ax
 
     def simplify_surface(self):

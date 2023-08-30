@@ -91,6 +91,37 @@ def ellipse3d_line_intersections(ellipse3d, line3d, abs_tol: float = 1e-6):
     return []
 
 
+def hyperbola3d_line_intersections(hyperbola3d, line3d, abs_tol: float = 1e-6):
+    """
+    Calculates the intersections between an Ellipse3D and a Line3D.
+
+    :param hyperbola3d: The Hyperbola 3D.
+    :param line3d: The Line 3D.
+    :param abs_tol: Tolerance.
+    :return: list of points intersecting the Hyperbola 3D.
+    """
+    intersections = []
+    if not math.isclose(abs(hyperbola3d.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=abs_tol):
+        frame_mapped_ellipse3d = hyperbola3d.frame_mapping(hyperbola3d.frame, 'new')
+        frame_mapped_line = line3d.frame_mapping(hyperbola3d.frame, 'new')
+        circle_linseg_intersections = hyperbola3d_line_intersections(frame_mapped_ellipse3d, frame_mapped_line)
+        for inter in circle_linseg_intersections:
+            intersections.append(hyperbola3d.frame.local_to_global_coordinates(inter))
+        return intersections
+
+    if line3d.point1.z == line3d.point2.z == hyperbola3d.frame.origin.z:
+        hyperbola2d = hyperbola3d.self_2d
+        line2d = line3d.to_2d(hyperbola3d.frame.origin, hyperbola3d.frame.u, hyperbola3d.frame.v)
+        intersections_2d = hyperbola2d.line_intersections(line2d)
+        for intersection in intersections_2d:
+            intersections.append(volmdlr.Point3D(intersection[0], intersection[1], hyperbola3d.frame.origin.z))
+        return intersections
+    plane_lineseg_intersections = get_plane_line_intersections(hyperbola3d.frame, line3d)
+    if hyperbola3d.point_belongs(plane_lineseg_intersections[0]):
+        return plane_lineseg_intersections
+    return []
+
+
 def ellipse2d_line_intersections(ellipse2d, line2d):
     """
     Calculates the intersections between a line and an ellipse.

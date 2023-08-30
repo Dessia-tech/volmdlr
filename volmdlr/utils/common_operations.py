@@ -96,6 +96,20 @@ def split_wire_by_plane(wire, plane3d):
     return wire1, wire2
 
 
+def plot_components_from_points(points, close_plot: bool = False):
+    components = [[], [], []]
+    for point in points:
+        for i, component in enumerate(point):
+            components[i].append(component)
+    valid_components = []
+    for list_components in components:
+        if list_components:
+            if close_plot:
+                list_components.append(list_components[0])
+            valid_components.append(list_components)
+    return valid_components
+
+
 def plot_from_discretization_points(ax, edge_style, element, number_points: int = None, close_plot: bool = False):
     """
     General plot method using discretization_points method to generate points.
@@ -107,16 +121,8 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
     :param close_plot: specifies if plot is to be closed or not.
     :return: Matplotlib plot axis.
     """
-    components = [[], [], []]
-    for point in element.discretization_points(number_points=number_points):
-        for i, component in enumerate(point):
-            components[i].append(component)
-    valid_components = []
-    for list_components in components:
-        if list_components:
-            if close_plot:
-                list_components.append(list_components[0])
-            valid_components.append(list_components)
+    points = element.discretization_points(number_points=number_points)
+    valid_components = plot_components_from_points(points, close_plot)
     ax.plot(*valid_components, color=edge_style.color, alpha=edge_style.alpha)
     return ax
 
