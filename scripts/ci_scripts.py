@@ -83,6 +83,7 @@ scripts = [
             # cad_simplification
             'cad_simplifier/triple_extrusion_simplify.py',
             'cad_simplifier/voxelization_simplify.py',
+            'cad_simplifier/triangle_decimation_simplify.py',
             # Voxelization
             'discrete_representation/voxelization/interference_surface_showcase.py',
             'discrete_representation/voxelization/interference_volume_showcase.py',
