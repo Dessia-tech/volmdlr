@@ -151,7 +151,7 @@ def find_multiplicity(double knot, vector[double] knot_vector, **kwargs):
     :rtype: int
     """
     # Get tolerance value
-    cdef double tol = kwargs.get("tol", 10e-8)
+    cdef double tol = kwargs.get("tol", 10e-18)
 
     cdef int mult = 0  # initial multiplicity
     cdef int i
@@ -619,8 +619,8 @@ def build_coeff_matrix(int degree, vector[double] knotvector, double[:] params, 
 
 def evaluate_curve(dict datadict, double start: float = 0.0, double stop: float = 1.0):
     cdef int degree = datadict["degree"]
-    cdef list knotvector = datadict["knotvector"]
-    cdef tuple ctrlpts = datadict["control_points"]
+    cdef vector[double] knotvector = datadict["knotvector"]
+    cdef vector[vector[double]] ctrlpts = datadict["control_points"]
     cdef int size = datadict["size"]
     cdef int sample_size = datadict["sample_size"]
     cdef bint rational = datadict["rational"]
@@ -633,8 +633,9 @@ def evaluate_curve(dict datadict, double start: float = 0.0, double stop: float 
     return evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size, dimension, precision, start, stop)
 
 
-cdef list evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts, int size,
-                           int sample_size, int dimension, int precision, double start, double stop):
+cdef vector[vector[double]] evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts,
+                                             int size, int sample_size, int dimension, int precision, double start,
+                                             double stop):
     """Evaluates the curve.
 
     Keyword Arguments:
@@ -651,18 +652,18 @@ cdef list evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[
     cdef vector[int] spans = find_spans(degree, knotvector, size, knots)
     cdef vector[vector[double]] basis = basis_functions(degree, knotvector, spans, knots)
 
-    cdef list eval_points = []
-    cdef int i, idx
-    cdef list crvpt
+    cdef vector[vector[double]] eval_points
+    eval_points.reserve(dimension * sample_size)
+    cdef int i, j, idx
+    cdef vector[double] crvpt = vector[double](dimension, 0.0)
     cdef double crv_p, ctl_p
-    for idx in range(len(knots)):
-        crvpt = [0.0 for _ in range(dimension)]
+    for idx in range(knots.size()):
+        crvpt = vector[double](dimension, 0.0)
         for i in range(0, degree + 1):
-            crvpt[:] = [
-                crv_p + (basis[idx][i] * ctl_p) for crv_p, ctl_p in zip(crvpt, ctrlpts[spans[idx] - degree + i])
-            ]
+            for j in range(dimension):
+                crvpt[j] = crvpt[j] + (basis[idx][i] * ctrlpts[spans[idx] - degree + i][j])
 
-        eval_points.append(crvpt)
+        eval_points.push_back(crvpt)
 
     return eval_points
 
@@ -714,8 +715,9 @@ cdef vector[vector[double]] derivatives_curve_c(int degree, vector[double] knotv
     return CK
 
 
-cdef evaluate_curve_rational(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts, int size,
-                             int sample_size, int dimension, int precision, double start, double stop):
+cdef vector[vector[double]] evaluate_curve_rational(int degree, vector[double] knotvector,
+                                                    vector[vector[double]] ctrlpts, int size, int sample_size,
+                                                    int dimension, int precision, double start, double stop):
     """Evaluates the rational curve.
 
     Keyword Arguments:
@@ -728,15 +730,18 @@ cdef evaluate_curve_rational(int degree, vector[double] knotvector, vector[vecto
     :rtype: list
     """
     # Algorithm A4.1
-    cdef list crvptw = evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size,
+    cdef vector[vector[double]] crvptw = evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size,
                                         dimension, precision, start, stop)
 
     # Divide by weight
-    cdef list eval_points = []
-    cdef list pt, cpt
-    for pt in crvptw:
-        cpt = [float(c / pt[-1]) for c in pt[0: (dimension - 1)]]
-        eval_points.append(cpt)
+    cdef vector[vector[double]] eval_points
+    eval_points.reserve((dimension - 1) * sample_size)
+    cdef vector[double] cpt = vector[double](dimension - 1, 0.0)
+    cdef int i, j
+    for i in range(crvptw.size()):
+        for j in range(dimension - 1):
+            cpt[j] = float(crvptw[i][j] / crvptw[i][dimension - 1])
+        eval_points.push_back(cpt)
 
     return eval_points
 

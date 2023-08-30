@@ -1,5 +1,6 @@
 """volmdlr module for 3D Surfaces."""
 import math
+import warnings
 from itertools import chain
 from typing import List, Union
 import traceback
@@ -7,15 +8,14 @@ import traceback
 import matplotlib.pyplot as plt
 import numpy as npy
 import triangle as triangle_lib
-from geomdl import NURBS, BSpline, utilities
-from geomdl.construct import extract_curves
-from geomdl.fitting import approximate_surface, interpolate_surface
-from geomdl.operations import split_surface_u, split_surface_v
+from geomdl import NURBS, BSpline
 from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
-from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
-import volmdlr.bspline_compiled
+from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
+from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
+from volmdlr.nurbs.helpers import generate_knot_vector
+from volmdlr.nurbs.operations import split_surface_u, split_surface_v
 import volmdlr.core
 from volmdlr import display, edges, grid, wires, curves
 import volmdlr.geometry
@@ -4880,49 +4880,6 @@ class BSplineSurface3D(Surface3D):
             raise ValueError("Cannot set delta. Please input a numeric value or a list or tuple with 2 numeric values")
 
     @property
-    def surface(self):
-        """Create nurbs surface for special evaluations."""
-        if not self._surface:
-            if self._weights is None:
-                surface = BSpline.Surface()
-                points = self.ctrlpts.tolist()
-
-            else:
-                surface = NURBS.Surface()
-                points = [(control_point[0] * self._weights[i], control_point[1] * self._weights[i],
-                           control_point[2] * self._weights[i], self._weights[i])
-                          for i, control_point in enumerate(self.control_points)]
-            surface.degree_u = self.degree_u
-            surface.degree_v = self.degree_v
-            surface.set_ctrlpts(points, self.nb_u, self.nb_v)
-            knot_vector = self.knotvector
-            surface.knotvector_u = knot_vector[0]
-            surface.knotvector_v = knot_vector[1]
-            surface.delta = 0.05
-            self._surface = surface
-        return self._surface
-
-    @property
-    def curves(self):
-        """Extract curves from surface."""
-        return extract_curves(self.surface, extract_u=True, extract_v=True)
-
-    def to_dict(self, *args, **kwargs):
-        """Avoids storing points in memo that makes serialization slow."""
-        dict_ = self.base_dict()
-        dict_['degree_u'] = self.degree_u
-        dict_['degree_v'] = self.degree_v
-        dict_['control_points'] = [point.to_dict() for point in self.control_points]
-        dict_['nb_u'] = self.nb_u
-        dict_['nb_v'] = self.nb_v
-        dict_['u_multiplicities'] = self.u_multiplicities
-        dict_['v_multiplicities'] = self.v_multiplicities
-        dict_['u_knots'] = self.u_knots
-        dict_['v_knots'] = self.v_knots
-        dict_['weights'] = self.weights
-        return dict_
-
-    @property
     def weights(self):
         if self._weights is None:
             return self._weights
@@ -4934,8 +4891,7 @@ class BSplineSurface3D(Surface3D):
         Evaluates the periodicity of the surface in u direction.
         """
         if self._x_periodicity is False:
-            a, b = self.surface.domain[0]
-            c, d = self.surface.domain[1]
+            a, b, c, d = self.domain
             point_at_a = self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (d - c)))
             point_at_b = self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (d - c)))
             if point_at_b.is_close(point_at_a) or self.u_closed():
@@ -4950,8 +4906,7 @@ class BSplineSurface3D(Surface3D):
         Evaluates the periodicity of the surface in v direction.
         """
         if self._y_periodicity is False:
-            a, b = self.surface.domain[0]
-            c, d = self.surface.domain[1]
+            a, b, c, d = self.domain
             point_at_c = self.point2d_to_3d(volmdlr.Point2D(0.5 * (b - a), c))
             point_at_d = self.point2d_to_3d(volmdlr.Point2D(0.5 * (b - a), d))
             if point_at_d.is_close(point_at_c) or self.v_closed():
@@ -4971,9 +4926,14 @@ class BSplineSurface3D(Surface3D):
         Computes the bounding box of the surface.
 
         """
-        min_bounds, max_bounds = self.surface.bbox
-        xmin, ymin, zmin = min_bounds
-        xmax, ymax, zmax = max_bounds
+        points = self.evalpts
+        xmin = npy.min(points[:, 0])
+        ymin = npy.min(points[:, 1])
+        zmin = npy.min(points[:, 2])
+
+        xmax = npy.max(points[:, 0])
+        ymax = npy.max(points[:, 1])
+        zmax = npy.max(points[:, 2])
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @property
@@ -4985,21 +4945,43 @@ class BSplineSurface3D(Surface3D):
             self._surface_curves = self.get_surface_curves()
         return self._surface_curves
 
-    def get_surface_curves(self):
+    def get_surface_curves(self, **kwargs):
         """
-        Converts the surface curves from geomdl curve to volmdlr.
+        Extracts curves from a surface.
         """
+        # Get keyword arguments
+        extract_u = kwargs.get('extract_u', True)
+        extract_v = kwargs.get('extract_v', True)
+
+        # Get data from the surface object
+        kv_u = self.knots_vector_u
+        u_knots = list(sorted(set(kv_u)))
+        u_multiplicities = [find_multiplicity(knot, kv_u) for knot in u_knots]
+        kv_v = self.knots_vector_v
+        v_knots = list(sorted(set(kv_v)))
+        v_multiplicities = [find_multiplicity(knot, kv_v) for knot in v_knots]
+        cpts = self.control_points
+
         # v-direction
         crvlist_v = []
-        surf_curves = self.curves
-        v_curves = surf_curves["v"]
-        for curve in v_curves:
-            crvlist_v.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+        weights = []
+        if extract_v:
+            for u in range(self.nb_u):
+                control_points = [cpts[v + (self.nb_v * u)] for v in range(self.nb_v)]
+                if self.rational:
+                    weights = [self._weights[v + (self.nb_v * u)] for v in range(self.nb_v)]
+                curve = edges.BSplineCurve3D(self.degree_v, control_points, v_multiplicities, v_knots, weights)
+                crvlist_v.append(curve)
+
         # u-direction
         crvlist_u = []
-        u_curves = surf_curves["u"]
-        for curve in u_curves:
-            crvlist_u.append(edges.BSplineCurve3D.from_geomdl_curve(curve))
+        if extract_u:
+            for v in range(self.nb_v):
+                control_points = [cpts[v + (self.nb_v * u)] for u in range(self.nb_u)]
+                if self.rational:
+                    weights = [self._weights[v + (self.nb_v * u)] for u in range(self.nb_u)]
+                curve = edges.BSplineCurve3D(self.degree_u, control_points, u_multiplicities, u_knots, weights)
+                crvlist_u.append(curve)
 
         # Return shapes as a dict object
         return {"u": crvlist_u, "v": crvlist_v}
@@ -5066,7 +5048,61 @@ class BSplineSurface3D(Surface3D):
             self._domain = start_u, stop_u, start_v, stop_v
         return self._domain
 
-    @property
+    def to_geomdl(self):
+        """Tranlate into a geomdl object."""
+        if not self._surface:
+            if self._weights is None:
+                surface = BSpline.Surface()
+                points = self.ctrlpts.tolist()
+
+            else:
+                surface = NURBS.Surface()
+                points = [(control_point[0] * self._weights[i], control_point[1] * self._weights[i],
+                           control_point[2] * self._weights[i], self._weights[i])
+                          for i, control_point in enumerate(self.control_points)]
+            surface.degree_u = self.degree_u
+            surface.degree_v = self.degree_v
+            surface.set_ctrlpts(points, self.nb_u, self.nb_v)
+            knot_vector = self.knotvector
+            surface.knotvector_u = knot_vector[0]
+            surface.knotvector_v = knot_vector[1]
+            surface.delta = 0.05
+            self._surface = surface
+        return self._surface
+
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        dict_ = self.base_dict()
+        dict_['degree_u'] = self.degree_u
+        dict_['degree_v'] = self.degree_v
+        dict_['control_points'] = [point.to_dict() for point in self.control_points]
+        dict_['nb_u'] = self.nb_u
+        dict_['nb_v'] = self.nb_v
+        dict_['u_multiplicities'] = self.u_multiplicities
+        dict_['v_multiplicities'] = self.v_multiplicities
+        dict_['u_knots'] = self.u_knots
+        dict_['v_knots'] = self.v_knots
+        dict_['weights'] = self.weights
+        return dict_
+
+    def ctrlpts2d(self):
+        """
+        Each row represents the control points in u direction and each column the points in v direction.
+        """
+        ctrlpts = self.ctrlptsw if self.rational else self.ctrlpts
+        control_points_table = []
+        points_row = []
+        i = 1
+        for point in ctrlpts:
+            points_row.append(point)
+            if i == self.nb_v:
+                control_points_table.append(points_row)
+                points_row = []
+                i = 1
+            else:
+                i += 1
+        return control_points_table
+
     def vertices(self):
         """
         Evaluated points.
@@ -5084,6 +5120,12 @@ class BSplineSurface3D(Surface3D):
                     vertices.append((u, v))
             self._vertices = vertices
         return self._vertices
+
+    def points(self):
+        """
+        Returns surface points
+        """
+        return [volmdlr.Point3D(*point) for point in self.evalpts]
 
     def control_points_matrix(self, coordinates):
         """
@@ -5502,14 +5544,14 @@ class BSplineSurface3D(Surface3D):
         points = points_2d
         pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.15 * lth))
         pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.85 * lth))
-        # pt_after_start = points[1]
-        # pt_before_end = points[-2]
 
         if direction_periodicity == 'x':
             i = 0
+            min_bound, max_bound, _, _ = self.domain
         else:
             i = 1
-        min_bound, max_bound = self.surface.domain[i]
+            _, _, min_bound, max_bound = self.domain
+
         delta = max_bound + min_bound
 
         if math.isclose(start[i], min_bound, abs_tol=1e-4) and pt_after_start[i] > 0.5 * delta:
@@ -5697,8 +5739,7 @@ class BSplineSurface3D(Surface3D):
                   arcellipse3d.discretization_points(number_points=number_points)]
         start = points[0]
         end = points[-1]
-        min_bound_x, max_bound_x = self.surface.domain[0]
-        min_bound_y, max_bound_y = self.surface.domain[1]
+        min_bound_x, max_bound_x, min_bound_y, max_bound_y= self.domain
         if self.x_periodicity:
             points = self._repair_periodic_boundary_points(arcellipse3d, points, 'x')
             start = points[0]
@@ -5801,8 +5842,8 @@ class BSplineSurface3D(Surface3D):
         return new_bsplinesurface3d
 
     def plot(self, ax=None, color='grey', alpha=0.5, **kwargs):
-        u_curves = [edges.BSplineCurve3D.from_geomdl_curve(u) for u in self.curves['u']]
-        v_curves = [edges.BSplineCurve3D.from_geomdl_curve(v) for v in self.curves['v']]
+        u_curves = self.surface_curves['u']
+        v_curves = self.surface_curves['v']
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         for u in u_curves:
@@ -6490,7 +6531,7 @@ class BSplineSurface3D(Surface3D):
         return self.contour2d_to_3d(contour01)
 
     @classmethod
-    def from_geomdl_surface(cls, surface, name: str = ''):
+    def from_geomdl_surface(cls, surface, name: str = ""):
         """
         Create a volmdlr BSpline_Surface3D from a geomdl's one.
 
@@ -6511,72 +6552,75 @@ class BSplineSurface3D(Surface3D):
                               u_multiplicities=u_multiplicities,
                               v_multiplicities=v_multiplicities,
                               u_knots=u_knots,
-                              v_knots=v_knots, name=name)
+                              v_knots=v_knots, weights=surface.weights, name=name)
 
         return bspline_surface
 
     @classmethod
     def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, name: str = ''):
+        warnings.warn("points_fitting_into_bspline_surface is deprecated. Use from_points_interpolation instead")
+        return cls.from_points_interpolation(points_3d, size_u, size_v, degree_u, degree_v)
+
+    @classmethod
+    def from_points_interpolation(cls, points_3d: List[volmdlr.Point3D], size_u: int, size_v: int,
+                                  degree_u: int, degree_v: int, name: str = ""):
         """
         Bspline Surface interpolation through 3d points.
 
-        Parameters
-        ----------
-        points_3d : volmdlr.Point3D
-            data points
-        size_u : int
-            number of data points on the u-direction.
-        size_v : int
-            number of data points on the v-direction.
-        degree_u : int
-            degree of the output surface for the u-direction.
-        degree_v : int
-            degree of the output surface for the v-direction.
-        name: str
-            object's name.
-
-        Returns
-        -------
-        B-spline surface
-
+        :param points_3d: data points.
+        :type points_3d: List[volmdlr.Point3D]
+        :param size_u: number of data points on the u-direction.
+        :type size_u: int
+        :param size_v: number of data points on the v-direction.
+        :type size_v: int
+        :param degree_u: degree of the output surface for the u-direction.
+        :type degree_u: int
+        :param degree_v: degree of the output surface for the v-direction.
+        :type degree_v: int
+        :param name: (Optional) instance name.
+        :type name: str
+        :return: B-spline surface.
+        :rtype: BSplineSurface3D
         """
 
-        points = []
-        for point in points_3d:
-            points.append((point.x, point.y, point.z))
+        points = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points_3d], dtype=npy.float64)
 
-        surface = interpolate_surface(points, size_u, size_v, degree_u, degree_v)
-
-        return cls.from_geomdl_surface(surface, name=name)
+        ctrlpts, knots_u, knot_multiplicities_u, knots_v, knot_multiplicities_v = \
+            interpolate_surface(points, size_u, size_v, degree_u, degree_v)
+        ctrlpts = [volmdlr.Point3D(*point) for point in ctrlpts]
+        return cls(degree_u, degree_v, ctrlpts, size_u, size_v, knot_multiplicities_u, knot_multiplicities_v, knots_u,
+                   knots_v, name=name)
 
     @classmethod
-    def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u,
-                                                degree_v, name: str = '', **kwargs):
+    def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, **kwargs):
+        warnings.warn("points_approximate_into_bspline_surface is deprecated. Use from_points_approximation instead")
+        return cls.from_points_approximation(points_3d, size_u, size_v, degree_u, degree_v, **kwargs)
+
+    @classmethod
+    def from_points_approximation(cls, points_3d: List[volmdlr.Point3D], size_u: int, size_v: int, degree_u: int,
+                                  degree_v: int, name: str = "", **kwargs):
         """
         Bspline Surface approximate through 3d points.
 
-        Parameters
-        ----------
-        points_3d : volmdlr.Point3D
-            data points
-        size_u : int
-            number of data points on the u-direction.
-        size_v : int
-            number of data points on the v-direction.
-        degree_u : int
-            degree of the output surface for the u-direction.
-        degree_v : int
-            degree of the output surface for the v-direction.
-        name: str
-            object's name.
+        :param points_3d: data points.
+        :type points_3d: List[volmdlr.Point3D]
+        :param size_u: number of data points on the u-direction.
+        :type size_u: int
+        :param size_v: number of data points on the v-direction.
+        :type size_v: int
+        :param degree_u: degree of the output surface for the u-direction.
+        :type degree_u: int
+        :param degree_v: degree of the output surface for the v-direction.
+        :type degree_v: int
+        :param name: (Optional) instance name.
+        :type name: str
 
         Keyword Arguments:
             * ``ctrlpts_size_u``: number of control points on the u-direction. *Default: size_u - 1*
             * ``ctrlpts_size_v``: number of control points on the v-direction. *Default: size_v - 1*
 
-        Returns
-        -------
-        B-spline surface: volmdlr.faces.BSplineSurface3D
+        :return: B-spline surface.
+        :rtype: BSplineSurface3D
 
         """
 
@@ -6586,12 +6630,15 @@ class BSplineSurface3D(Surface3D):
         # number of data points, s + 1 > number of control points, m + 1
         num_cpts_v = kwargs.get('ctrlpts_size_v', size_v - 1)
 
-        points = [tuple([*point]) for point in points_3d]
+        points = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points_3d], dtype=npy.float64)
 
-        surface = approximate_surface(points, size_u, size_v, degree_u, degree_v,
-                                      ctrlpts_size_u=num_cpts_u, num_cpts_v=num_cpts_v)
+        ctrlpts, knots_u, knot_multiplicities_u, knots_v, knot_multiplicities_v = \
+            approximate_surface(points, size_u, size_v, degree_u, degree_v,
+                                ctrlpts_size_u=num_cpts_u, ctrlpts_size_v=num_cpts_v)
 
-        return cls.from_geomdl_surface(surface, name=name)
+        ctrlpts = [volmdlr.Point3D(*point) for point in ctrlpts]
+        return cls(degree_u, degree_v, ctrlpts, size_u, size_v, knot_multiplicities_u, knot_multiplicities_v, knots_u,
+                   knots_v, name=name)
 
     @classmethod
     def from_cylindrical_faces(cls, cylindrical_faces, degree_u, degree_v,
@@ -6755,14 +6802,12 @@ class BSplineSurface3D(Surface3D):
     def plane_intersection(self, plane3d):
         """
         Compute intersection points between a Bspline surface and a plane 3d.
-
         """
+        a, b, c, d = plane3d.equation_coefficients()
 
         def fun(param):
-            return ((self.surface.evaluate_single((param[0], param[1]))[0]) * plane3d.equation_coefficients()[0] +
-                    (self.surface.evaluate_single((param[0], param[1]))[1]) * plane3d.equation_coefficients()[1] +
-                    (self.surface.evaluate_single((param[0], param[1]))[2]) * plane3d.equation_coefficients()[2] +
-                    plane3d.equation_coefficients()[3])
+            point3d = self.point2d_to_3d(volmdlr.Point2D(*param))
+            return point3d[0] * a + point3d[1] * b + point3d[2] * c + d
 
         x = npy.linspace(0, 1, 20)
         x_init = []
@@ -6773,13 +6818,10 @@ class BSplineSurface3D(Surface3D):
         intersection_points = []
 
         for x0 in x_init:
-            z = least_squares(fun, x0=x0, bounds=([0, 1]))
-            if z.fun < 1e-20:
+            z = least_squares(fun, x0=npy.array(x0), bounds=([0, 1]))
+            if abs(z.fun) < 1e-8:
                 solution = z.x
-                intersection_points.append(volmdlr.Point3D(
-                    self.surface.evaluate_single((solution[0], solution[1]))[0],
-                    self.surface.evaluate_single((solution[0], solution[1]))[1],
-                    self.surface.evaluate_single((solution[0], solution[1]))[2]))
+                intersection_points.append(self.point2d_to_3d(volmdlr.Point2D(*solution)))
         return intersection_points
 
     def error_with_point3d(self, point3d):
@@ -6866,10 +6908,7 @@ class BSplineSurface3D(Surface3D):
         :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
-
-        surfaces_geo = split_surface_u(self.surface, u)
-        surfaces = [BSplineSurface3D.from_geomdl_surface(surface) for surface in surfaces_geo]
-        return surfaces
+        return split_surface_u(self, u)
 
     def split_surface_v(self, v: float):
         """
@@ -6880,10 +6919,7 @@ class BSplineSurface3D(Surface3D):
         :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
-
-        surfaces_geo = split_surface_v(self.surface, v)
-        surfaces = [BSplineSurface3D.from_geomdl_surface(surface) for surface in surfaces_geo]
-        return surfaces
+        return split_surface_v(self, v)
 
     def split_surface_with_bspline_curve(self, bspline_curve3d: edges.BSplineCurve3D):
         """
@@ -7260,8 +7296,7 @@ class BSplineSurface3D(Surface3D):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
-        a, b = self.surface.domain[0]
-        c, _ = self.surface.domain[1]
+        a, b, c, _ = self.domain
         point_at_a_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
         point_at_b_lower = self.point2d_to_3d(volmdlr.Point2D(b, c))
         if point_at_b_lower.is_close(point_at_a_lower):
@@ -7272,8 +7307,7 @@ class BSplineSurface3D(Surface3D):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
-        a, b = self.surface.domain[0]
-        _, d = self.surface.domain[1]
+        a, b, _, d = self.domain
         point_at_a_upper = self.point2d_to_3d(volmdlr.Point2D(a, d))
         point_at_b_upper = self.point2d_to_3d(volmdlr.Point2D(b, d))
         if point_at_b_upper.is_close(point_at_a_upper):
@@ -7284,8 +7318,7 @@ class BSplineSurface3D(Surface3D):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
-        a, _ = self.surface.domain[0]
-        c, d = self.surface.domain[1]
+        a, _, c, d = self.domain
         point_at_c_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
         point_at_d_lower = self.point2d_to_3d(volmdlr.Point2D(a, d))
         if point_at_d_lower.is_close(point_at_c_lower):
@@ -7296,8 +7329,7 @@ class BSplineSurface3D(Surface3D):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
-        _, b = self.surface.domain[0]
-        c, d = self.surface.domain[1]
+        _, b, c, d = self.domain
         point_at_c_upper = self.point2d_to_3d(volmdlr.Point2D(b, c))
         point_at_d_upper = self.point2d_to_3d(volmdlr.Point2D(b, d))
         if point_at_d_upper.is_close(point_at_c_upper):
@@ -7320,8 +7352,7 @@ class BSplineSurface3D(Surface3D):
         """Returns True if the point belongs to the surface singularity and False otherwise."""
         if not self.u_closed() and not self.v_closed():
             return False
-        u_min, u_max = self.surface.domain[0]
-        v_min, v_max = self.surface.domain[1]
+        u_min, u_max, v_min, v_max = self.domain
         delta_u = u_max - u_min
         delta_v = v_max - v_min
 
@@ -7386,8 +7417,7 @@ class BSplineSurface3D(Surface3D):
                 edge2d = edges.BSplineCurve2D.from_points_interpolation(_points, 2)
             return edge2d
 
-        umin, umax = self.surface.domain[0]
-        vmin, vmax = self.surface.domain[1]
+        umin, umax, vmin, vmax = self.domain
         if self.is_singularity_point(points3d[0]):
             local_discretization_points = get_local_discretization_points(start_point=points3d[0],
                                                                           end_points=points3d[1])
@@ -7444,8 +7474,8 @@ class BezierSurface3D(BSplineSurface3D):
     def __init__(self, degree_u: int, degree_v: int,
                  control_points: List[List[volmdlr.Point3D]],
                  nb_u: int, nb_v: int, name=''):
-        u_knots = utilities.generate_knot_vector(degree_u, nb_u)
-        v_knots = utilities.generate_knot_vector(degree_v, nb_v)
+        u_knots = generate_knot_vector(degree_u, nb_u)
+        v_knots = generate_knot_vector(degree_v, nb_v)
 
         u_multiplicities = [1] * len(u_knots)
         v_multiplicities = [1] * len(v_knots)

@@ -12,7 +12,6 @@ import numpy as npy
 
 from dessia_common.core import DessiaObject
 
-import volmdlr.bspline_compiled
 import volmdlr.core
 from volmdlr.core import EdgeStyle
 import volmdlr.core_compiled
@@ -183,7 +182,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if len(contours) == 2 and point_in_contours3d:
             vertex = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             base = next(contour for contour in contours if contour is not vertex)
-            return face.from_base_and_vertex(base, vertex, name)
+            return face.from_base_and_vertex(surface, base, vertex, name)
         if point_in_contours3d:
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]

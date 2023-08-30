@@ -3,7 +3,7 @@
 """
 Helpers.
 """
-from cython cimport cdivision
+from cython cimport cdivision, wraparound, boundscheck
 from libcpp.vector cimport vector
 import cython.cimports.libc.math as math_c
 
@@ -65,7 +65,10 @@ cdef vector[double] linspace(double start, double stop, int num, int decimals):
     return result
 
 
-def generate_knot_vector(degree, num_ctrlpts, **kwargs):
+
+@boundscheck(False)
+@wraparound(False)
+def generate_knot_vector(int degree, int num_ctrlpts, **kwargs):
     """Generates an equally spaced knot vector.
 
     It uses the following equality to generate knot vector: :math:`m = n + p + 1`
@@ -90,31 +93,35 @@ def generate_knot_vector(degree, num_ctrlpts, **kwargs):
     if degree == 0 or num_ctrlpts == 0:
         raise ValueError("Input values should be different than zero.")
 
-    # Get keyword arguments
-    clamped = kwargs.get("clamped", True)
+    cdef bint clamped = kwargs.get("clamped", True)
 
-    # Number of repetitions at the start and end of the array
     num_repeat = degree
-
-    # Number of knots in the middle
-    num_segments = num_ctrlpts - (degree + 1)
+    cdef int num_segments = num_ctrlpts - (degree + 1)
 
     if not clamped:
-        # No repetitions at the start and end
         num_repeat = 0
-        # Should conform the rule: m = n + p + 1
         num_segments = degree + num_ctrlpts - 1
 
+    cdef vector[double] knot_vector
+    knot_vector.reserve(num_repeat + num_segments + 2 + num_repeat)
+
     # First knots
-    knot_vector = [0.0 for _ in range(0, num_repeat)]
+    for _ in range(num_repeat):
+        knot_vector.push_back(0.0)
 
     # Middle knots
-    knot_vector += linspace(0.0, 1.0, num_segments + 2, 18)
+    cdef double start = 0.0
+    cdef double stop = 1.0
+    cdef int num_middle = num_segments + 2
+    cdef int decimals = 18
+    cdef vector[double] middle_knots = linspace(start, stop, num_middle, decimals)
+    for value in middle_knots:
+        knot_vector.push_back(value)
 
     # Last knots
-    knot_vector += [1.0 for _ in range(0, num_repeat)]
+    for _ in range(num_repeat):
+        knot_vector.push_back(1.0)
 
-    # Return auto-generated knot vector
     return knot_vector
 
 
