@@ -4,11 +4,21 @@ import random
 import traceback
 import warnings
 from itertools import chain, product
+<<<<<<< HEAD
 from typing import List, Tuple, Any, Dict
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as npy
+=======
+from typing import Any, Dict, List, Tuple, Iterable
+
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+from numpy.typing import NDArray
+from dessia_common.core import DessiaObject
+>>>>>>> 6db8efe1... TriangleShell3D: perf
 from dessia_common.typings import JsonSerializable
 from trimesh import Trimesh
 
@@ -653,23 +663,23 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         list_set_points1 = [{point for face in faces1
                              for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces1 in
                             shell_decomposition1.items()]
-        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in
+        list_set_points1 = [np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in
                             list_set_points1]
         list_set_points2 = [{point for face in faces2
                              for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces2 in
                             shell_decomposition2.items()]
-        list_set_points2 = [npy.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
+        list_set_points2 = [np.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
                             list_set_points2]
 
         minimum_distance = math.inf
         index1, index2 = None, None
         for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
-            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
-            sets_min_dist = npy.min(distances)
+            distances = np.linalg.norm(sets_points2[:, np.newaxis] - sets_points1, axis=2)
+            sets_min_dist = np.min(distances)
             if sets_min_dist < minimum_distance:
                 minimum_distance = sets_min_dist
-                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
-                index2 = next((i for i, x in enumerate(list_set_points2) if npy.array_equal(x, sets_points2)), -1)
+                index1 = next((i for i, x in enumerate(list_set_points1) if np.array_equal(x, sets_points1)), -1)
+                index2 = next((i for i, x in enumerate(list_set_points2) if np.array_equal(x, sets_points2)), -1)
         faces1 = list(shell_decomposition1.values())[index1]
         faces2 = list(shell_decomposition2.values())[index2]
 
@@ -1811,54 +1821,60 @@ class OpenTriangleShell3D(OpenShell3D):
 
         return cls(faces=liste_triangles, color=color, alpha=alpha)
 
-    def to_mesh_data(self):
-        """To mesh data for Open Triangle Shell."""
-        positions = npy.zeros((3 * len(self.faces), 3))
-        faces = npy.zeros((len(self.faces), 3))
-        for i, triangle_face in enumerate(self.faces):
-            i1 = 3 * i
-            i2 = i1 + 1
-            i3 = i1 + 2
-            positions[i1, 0] = triangle_face.points[0].x
-            positions[i1, 1] = triangle_face.points[0].y
-            positions[i1, 2] = triangle_face.points[0].z
-            positions[i2, 0] = triangle_face.points[1].x
-            positions[i2, 1] = triangle_face.points[1].y
-            positions[i2, 2] = triangle_face.points[1].z
-            positions[i3, 0] = triangle_face.points[2].x
-            positions[i3, 1] = triangle_face.points[2].y
-            positions[i3, 2] = triangle_face.points[2].z
+    def to_mesh_data(self) -> Tuple[NDArray[float], NDArray[int]]:
+        """
+        Convert the TriangleShell3D to mesh data: vertices and faces described as index of vertices.
 
-            faces[i, 0] = i1
-            faces[i, 1] = i2
-            faces[i, 2] = i3
+        :return: The vertices and faces composing the mesh data.
+        :rtype: Tuple[NDArray[float], NDArray[int]]
+        """
+        # Flatten and round the vertices array
+        vertices = np.array(
+            [(face.points[i].x, face.points[i].y, face.points[i].z) for face in self.faces for i in range(3)]
+        )
+        vertices = np.round(vertices, 9)  # rounding to prevent numerical imprecision
 
-        return positions, faces
+        # Get unique vertices and their indices
+        vertices, unique_indices = np.unique(vertices, axis=0, return_inverse=True)
+
+        # Create the triangle indices array using NumPy indexing
+        flattened_indices = unique_indices.reshape(-1, 3)
+        faces = flattened_indices[: len(self.faces)]
+
+        return vertices, faces
 
     @classmethod
-    def from_mesh_data(cls, positions, faces):
-        """Creates an Open Triangle Shell 3D from mesh data."""
+    def from_mesh_data(cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], name: str = ""):
+        """
+        Create a TriangleShell3D from mesh data: vertices and faces described as index of vertices.
+
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
+        :param name: A name for the TriangleShell3D, optional.
+        :type name: str
+
+        :return: The created TriangleShell3D.
+        :rtype: TriangleShell3D
+        """
         triangles = []
-        points = [volmdlr.Point3D(px, py, pz) for px, py, pz in positions]
+
+        points = [volmdlr.Point3D(px, py, pz) for px, py, pz in vertices]
+
         for i1, i2, i3 in faces:
-            triangle_points = []
-            triangle_points = [point for point in (points[i1], points[i2], points[i3])
-                               if not volmdlr.core.point_in_list(point, triangle_points)]
-            if len(triangle_points) == 3:
-                vec1 = triangle_points[1] - triangle_points[0]
-                vec2 = triangle_points[2] - triangle_points[0]
-                if not vec1.is_colinear_to(vec2):
-                    triangles.append(volmdlr.faces.Triangle3D(*triangle_points))
-        return cls(triangles)
+            triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
+
+        return cls(triangles, name=name)
 
     def to_trimesh(self):
-        """Creates a Trimesh from Open Triangle Shell 3D."""
+        """Creates a Trimesh from a TriangleShell3D."""
         return Trimesh(*self.to_mesh_data())
 
     @classmethod
-    def from_trimesh(cls, trimesh):
-        """Creates an Open Triangle Shell 3D from Trimesh."""
-        return cls.from_mesh_data(trimesh.vertices.tolist(), trimesh.faces.tolist())
+    def from_trimesh(cls, trimesh, name: str = ""):
+        """Creates a TriangleShell3D from Trimesh."""
+        return cls.from_mesh_data(trimesh.vertices, trimesh.faces, name=name)
 
     def triangulation(self):
         """Triangulation of an Open Triangle Shell 3D."""
