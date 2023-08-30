@@ -195,53 +195,31 @@ class TriangleDecimationSimplify(Simplify):
 
             vertices, faces, _ = simplifier.getMesh()
 
-            # valid_faces = []
-            # for face1, fa in faces:
-            #     if face[0] == face[1] or face[1] == face[2] or face[0] == face[2]:
-            #         print("found")
-            #     else:
-            #         valid_faces.append(faces)
-
             decimated_shells.append(ClosedTriangleShell3D.from_mesh_data(vertices, faces))
 
         return VolumeModel(decimated_shells)
 
     @staticmethod
-    def get_vertices_and_faces(
-        closed_triangle_shell, round_vertices: bool = False, decimal_places: int = 6
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    def get_vertices_and_faces(closed_triangle_shell) -> Tuple[np.ndarray, np.ndarray]:
         """
         Get the vertices and faces of the shell as numpy arrays.
-        :param round_vertices: Whether to round vertices to prevent numerical errors.
-        :type round_vertices: bool
-        :param decimal_places: Number of decimal places to round vertices.
-        :type decimal_places: int
+
         :return: A tuple containing two numpy arrays - vertices and faces.
         :rtype: Tuple[np.ndarray, np.ndarray]
         """
-        vertices = np.array([(point.x, point.y, point.z) for face in closed_triangle_shell.faces for point in face.points])
+        faces = closed_triangle_shell.faces
 
-        if round_vertices:
-            vertices = np.round(vertices, decimal_places)
+        # Flatten and round the vertices array
+        vertices = np.array(
+            [(face.points[i].x, face.points[i].y, face.points[i].z) for face in faces for i in range(3)]
+        )
+        vertices = np.round(vertices, 9)
 
-        vertices = np.unique(vertices, axis=0)  # Remove duplicate vertices
+        # Get unique vertices and their indices
+        unique_vertices, unique_indices = np.unique(vertices, axis=0, return_inverse=True)
 
-        from tqdm import tqdm
+        # Create the triangle indices array using NumPy indexing
+        flattened_indices = unique_indices.reshape(-1, 3)
+        triangle_indices = flattened_indices[: len(faces)]
 
-        vertex_indices = []
-        for face in tqdm(closed_triangle_shell.faces):
-            if round_vertices:
-                indices = [
-                    np.where(np.all(vertices == np.round((point.x, point.y, point.z), decimal_places), axis=1))[0][0]
-                    for point in face.points
-                ]
-            else:
-                indices = [
-                    np.where(np.all(vertices == (point.x, point.y, point.z), axis=1))[0][0] for point in face.points
-                ]
-
-            vertex_indices.append(indices)
-
-        faces = np.array(vertex_indices)
-
-        return vertices, faces
+        return unique_vertices, triangle_indices
