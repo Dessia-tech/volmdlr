@@ -1776,34 +1776,6 @@ class OpenTriangleShell3D(OpenShell3D):
     ):
         OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
-    def to_dict(self, *args, **kwargs):
-        """Overload of to_dict for performance."""
-        dict_ = self.base_dict()
-
-        # not rounding to make sure to retrieve the exact same object with 'dict_to_object'
-        vertices, faces = self.to_mesh_data(round_vertices=False)
-
-        dict_["vertices"] = vertices.tolist()
-        dict_["faces"] = faces.tolist()
-        dict_["alpha"] = self.alpha
-        dict_["color"] = self.color
-
-        return dict_
-
-    @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False,
-                       global_dict=None, pointers_memo: Dict[str, Any] = None,
-                       path: str = "#", name: str = "") -> "OpenTriangleShell3D":
-        vertices = dict_["vertices"]
-        faces = dict_["faces"]
-        name = dict_["name"]
-
-        triangle_shell = cls.from_mesh_data(vertices, faces, name)
-        triangle_shell.alpha = dict_["alpha"]
-        triangle_shell.color = dict_["color"]
-
-        return triangle_shell
-
     def to_mesh_data(self, round_vertices: bool = True, n_decimals: int = 9) -> Tuple[NDArray[float], NDArray[int]]:
         """
         Convert the TriangleShell3D to mesh data: vertices and faces described as index of vertices.
@@ -1879,6 +1851,42 @@ class OpenTriangleShell3D(OpenShell3D):
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
 
         return display.DisplayMesh3D(points, triangles)
+
+    def to_dict(self, *args, **kwargs):
+        """Overload of 'to_dict' for performance."""
+        dict_ = self.base_dict()
+
+        # not rounding to make sure to retrieve the exact same object with 'dict_to_object'
+        vertices, faces = self.to_mesh_data(round_vertices=False)
+
+        dict_["vertices"] = vertices.tolist()
+        dict_["faces"] = faces.tolist()
+        dict_["alpha"] = self.alpha
+        dict_["color"] = self.color
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(
+        cls,
+        dict_: JsonSerializable,
+        force_generic: bool = False,
+        global_dict=None,
+        pointers_memo: Dict[str, Any] = None,
+        path: str = "#",
+        name: str = "",
+    ) -> "OpenTriangleShell3D":
+        """Overload of 'dict_to_object' for performance."""
+
+        vertices = dict_["vertices"]
+        faces = dict_["faces"]
+        name = dict_["name"]
+
+        triangle_shell = cls.from_mesh_data(vertices, faces, name)
+        triangle_shell.alpha = dict_["alpha"]
+        triangle_shell.color = dict_["color"]
+
+        return triangle_shell
 
 
 class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
