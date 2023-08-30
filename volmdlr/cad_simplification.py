@@ -1,13 +1,14 @@
 """
 volmdlr cad simplification module.
 """
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from dessia_common.core import DessiaObject
 
 import volmdlr
 from volmdlr.cloud import PointCloud3D
 from volmdlr.core import VolumeModel
+from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.primitives3d import ExtrudedProfile
 from volmdlr.wires import Contour2D
 
@@ -28,22 +29,13 @@ class Simplify(ABC, DessiaObject):
 
         DessiaObject.__init__(self, name=name)
 
-    @abstractmethod
-    def simplify(self, *args, **kwargs) -> VolumeModel:
-        """
-        Simplify the volume model and return it.
-
-        :return: The simplified volume model.
-        :rtype: VolumeModel
-        """
-
 
 class TripleExtrusionSimplify(Simplify):
     """CAD simplification based on 'triple extrusion' method."""
 
-    def simplify(self, *args, **kwargs) -> VolumeModel:
+    def simplify(self) -> VolumeModel:
         """
-        Simplify the volume model using the 'triple extrusion' method.
+        Simplify the volume model using the 'triple extrusion' method, and return it.
 
         :return: The simplified volume model.
         :rtype: VolumeModel
@@ -54,7 +46,9 @@ class TripleExtrusionSimplify(Simplify):
             points.extend(tri.points)
 
         point_cloud3d = PointCloud3D(points)
-        simplified_volume_model = VolumeModel([self.extrusion_union_cloud_simplifier(point_cloud3d)])
+        simplified_volume_model = VolumeModel(
+            [self.extrusion_union_cloud_simplifier(point_cloud3d)], name=f"{self.volume_model.name} voxel simplified"
+        )
 
         return simplified_volume_model
 
@@ -97,3 +91,27 @@ class TripleExtrusionSimplify(Simplify):
                 simplified_shell = list_shells[0]
 
         return simplified_shell
+
+
+class VoxelizationSimplify(Simplify):
+    """CAD simplification using 'voxelization' method."""
+
+    def simplify(self, voxel_size: float, fill: bool = True) -> VolumeModel:
+        """
+        Simplify the volume model using the 'voxelization' method, and return it.
+
+        :param voxel_size: The size of the voxels used for simplification.
+        :type voxel_size: float
+        :param fill: Control the filling of the voxelization, default is True.
+        :type fill: bool
+
+        :return: The simplified volume model.
+        :rtype: VolumeModel
+        """
+        voxelization = MatrixBasedVoxelization.from_volume_model(
+            self.volume_model, voxel_size, name=f"{self.volume_model.name} voxel simplified"
+        )
+        if fill:
+            voxelization = voxelization.fill_enclosed_voxels()
+
+        return VolumeModel(voxelization.volmdlr_primitives())
