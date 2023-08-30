@@ -1908,7 +1908,7 @@ class OpenTriangleShell3D(OpenShell3D):
         """
         Decimate TriangleShell3D.
 
-        None: threshold = alpha * pow(iteration + k, aggressiveness)
+        Note: threshold = alpha * pow(iteration + k, aggressiveness)
 
         :param target_count: Target number of triangles. Not used if `lossless` is True.
         :type target_count: int
