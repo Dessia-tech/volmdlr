@@ -1776,6 +1776,15 @@ class OpenTriangleShell3D(OpenShell3D):
     ):
         OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
+        """Gets the Shell bounding box."""
+        vertices = np.array(
+            [(face.points[i].x, face.points[i].y, face.points[i].z) for face in self.faces for i in range(3)]
+        )
+        bbox_min, bbox_max = np.min(vertices, axis=0), np.max(vertices, axis=0)
+
+        return volmdlr.core.BoundingBox(bbox_min[0], bbox_max[0], bbox_min[1], bbox_max[1], bbox_min[2], bbox_max[2])
+
     def to_mesh_data(self, round_vertices: bool = True, n_decimals: int = 9) -> Tuple[NDArray[float], NDArray[int]]:
         """
         Convert the TriangleShell3D to mesh data: vertices and faces described as index of vertices.
