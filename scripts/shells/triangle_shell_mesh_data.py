@@ -9,3 +9,5 @@ triangle_shell = Stl.load_from_file("../stl/simple.stl").to_closed_shell()
 
 mesh_data = triangle_shell.to_mesh_data()
 triangle_shell_2 = ClosedTriangleShell3D.from_mesh_data(mesh_data[0], mesh_data[1])
+
+triangle_shell.save_to_file("triangle_shell_opti.json")

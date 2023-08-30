@@ -1751,56 +1751,59 @@ class OpenTriangleShell3D(OpenShell3D):
     :type name: str
     """
 
-    def __init__(self, faces: List[volmdlr.faces.Triangle3D],
-                 color: Tuple[float, float, float] = None,
-                 alpha: float = 1., name: str = ''):
+    def __init__(
+        self,
+        faces: List[volmdlr.faces.Triangle3D],
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1.0,
+        name: str = "",
+    ):
         OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
-    def to_dict(self):
+    def to_dict(self, *args, **kwargs):
+        """Overload of to_dict for performance."""
         dict_ = self.base_dict()
 
-        list_of_triangles = self.faces
+        # not rounding to make sure to retrieve the exact same object with 'dict_to_object'
+        vertices, faces = self.to_mesh_data(round_vertices=False)
 
-        set_of_points = set()
-
-        for triangle in list_of_triangles:
-            set_of_points.update(triangle.points)
-
-        index_of_points = {point: index for index, point in enumerate(set_of_points)}
-        list_of_unique_points = list(set_of_points)
-
-        triangles_with_index = []
-        for triangle in list_of_triangles:
-            triangle_with_index = [index_of_points[point] for point in triangle.points]
-            triangles_with_index.append(triangle_with_index)
-
-        dict_['unique_point'] = [pt.to_dict() for pt in list_of_unique_points]
-        dict_['faces'] = triangles_with_index
-        dict_['alpha'] = self.alpha
-        dict_['color'] = self.color
+        dict_["vertices"] = vertices.tolist()
+        dict_["faces"] = faces.tolist()
+        dict_["alpha"] = self.alpha
+        dict_["color"] = self.color
 
         return dict_
 
     @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = '#', name: str = '') -> 'SerializableObject':
-        t_points = dict_['unique_point']
-        faces = dict_['faces']
-        alpha = dict_['alpha']
-        color = dict_['color']
+    def dict_to_object(
+        cls,
+        dict_: JsonSerializable,
+        force_generic: bool = False,
+        global_dict=None,
+        pointers_memo: Dict[str, Any] = None,
+        path: str = "#",
+        name: str = "",
+    ) -> "OpenTriangleShell3D":
+        vertices = dict_["vertices"]
+        faces = dict_["faces"]
+        name = dict_["name"]
 
-        liste_triangles = []
-        for face in faces:
-            liste_triangles.append(volmdlr.faces.Triangle3D(point1=volmdlr.Point3D.dict_to_object(t_points[face[0]]),
-                                                            point2=volmdlr.Point3D.dict_to_object(t_points[face[1]]),
-                                                            point3=volmdlr.Point3D.dict_to_object(t_points[face[2]])
-                                                            ))
+        triangle_shell = cls.from_mesh_data(vertices, faces, name)
+        triangle_shell.alpha = dict_["alpha"]
+        triangle_shell.color = dict_["color"]
 
-        return cls(faces=liste_triangles, color=color, alpha=alpha, name=name)
+        return triangle_shell
 
-    def to_mesh_data(self) -> Tuple[NDArray[float], NDArray[int]]:
+    def to_mesh_data(self, round_vertices: bool = True, n_decimals: int = 9) -> Tuple[NDArray[float], NDArray[int]]:
         """
         Convert the TriangleShell3D to mesh data: vertices and faces described as index of vertices.
+
+        :param round_vertices: Allows to choose to round vertices coordinates or not.
+            Rounding vertices coordinates allows to prevent numerical imprecision, which allows vertex sharing between
+            adjacent triangles.
+        :type round_vertices: bool
+        :param n_decimals: int
+        :type n_decimals: float
 
         :return: The vertices and faces composing the mesh data.
         :rtype: Tuple[NDArray[float], NDArray[int]]
@@ -1809,7 +1812,9 @@ class OpenTriangleShell3D(OpenShell3D):
         vertices = np.array(
             [(face.points[i].x, face.points[i].y, face.points[i].z) for face in self.faces for i in range(3)]
         )
-        vertices = np.round(vertices, 9)  # rounding to prevent numerical imprecision
+
+        if round_vertices:
+            vertices = np.round(vertices, n_decimals)  # rounding to prevent numerical imprecision
 
         # Get unique vertices and their indices
         vertices, unique_indices = np.unique(vertices, axis=0, return_inverse=True)
@@ -1862,12 +1867,13 @@ class OpenTriangleShell3D(OpenShell3D):
             points.append(display.Node3D.from_point(triangle.point2))
             points.append(display.Node3D.from_point(triangle.point3))
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
+
         return display.DisplayMesh3D(points, triangles)
 
 
 class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     """
-        A 3D closed shell composed of multiple triangle faces.
+    A 3D closed shell composed of multiple triangle faces.
 
     This class represents a 3D closed shell, which is a collection of connected
     triangle faces with a volume. It is a subclass of both the `ClosedShell3D`
@@ -1884,8 +1890,12 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     :type name: str
     """
 
-    def __init__(self, faces: List[volmdlr.faces.Triangle3D],
-                 color: Tuple[float, float, float] = None,
-                 alpha: float = 1., name: str = ''):
+    def __init__(
+            self,
+            faces: List[volmdlr.faces.Triangle3D],
+            color: Tuple[float, float, float] = None,
+            alpha: float = 1.0,
+            name: str = "",
+    ):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
         ClosedShell3D.__init__(self, faces, color, alpha, name)
