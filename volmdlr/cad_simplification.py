@@ -1,6 +1,8 @@
 """
 volmdlr cad simplification module.
 """
+from abc import ABC, abstractmethod
+
 from dessia_common.core import DessiaObject
 
 import volmdlr
@@ -10,12 +12,12 @@ from volmdlr.primitives3d import ExtrudedProfile
 from volmdlr.wires import Contour2D
 
 
-class TripleExtrusionSimplify(DessiaObject):
-    """CAD simplification based on 'triple extrusion' method."""
+class Simplify(ABC, DessiaObject):
+    """CAD simplification abstract class."""
 
     def __init__(self, volume_model: VolumeModel, name: str = ""):
         """
-        Initialize an instance of TripleExtrusionSimplify.
+        Initialize an instance of the Simplify class.
 
         :param volume_model: The volume model to simplify.
         :type volume_model: VolumeModel
@@ -26,7 +28,20 @@ class TripleExtrusionSimplify(DessiaObject):
 
         DessiaObject.__init__(self, name=name)
 
-    def simplify(self) -> VolumeModel:
+    @abstractmethod
+    def simplify(self, *args, **kwargs) -> VolumeModel:
+        """
+        Simplify the volume model and return it.
+
+        :return: The simplified volume model.
+        :rtype: VolumeModel
+        """
+
+
+class TripleExtrusionSimplify(Simplify):
+    """CAD simplification based on 'triple extrusion' method."""
+
+    def simplify(self, *args, **kwargs) -> VolumeModel:
         """
         Simplify the volume model using the 'triple extrusion' method.
 
@@ -49,8 +64,10 @@ class TripleExtrusionSimplify(DessiaObject):
         Simplify a point cloud using extrusion and union operations.
 
         :param point_cloud3d: The 3D point cloud to simplify.
+        :type point_cloud3d: PointCloud3D
 
         :return: The simplified shell.
+        :rtype: ExtrudedProfile
         """
         simplified_shell = None
         list_shells = []
