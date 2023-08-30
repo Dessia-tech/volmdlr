@@ -1,9 +1,9 @@
 """
-Showcase of the 'VoxelizationSimplify'
+Showcase of the 'TriangleDecimationSimplify'
 """
 import time
 
-from volmdlr.cad_simplification import VoxelizationSimplify
+from volmdlr.cad_simplification import TriangleDecimationSimplify
 from volmdlr.step import Step
 
 VOXEL_SIZE = 0.005
@@ -13,8 +13,8 @@ volume_model = Step.from_file("engine.step").to_volume_model()
 
 # Simplify
 start = time.perf_counter()
-simplifier = VoxelizationSimplify(volume_model=volume_model)
-simplified_volume_model = simplifier.simplify(voxel_size=VOXEL_SIZE)
+octre_block_simplify = TriangleDecimationSimplify(volume_model=volume_model)
+simplified_volume_model = octre_block_simplify.simplify(target_ratio=0.2, preserve_border=True)
 
 print(f"Simplification took {time.perf_counter() - start:.6f} seconds\n")
 

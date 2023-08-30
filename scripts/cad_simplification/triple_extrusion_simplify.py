@@ -11,8 +11,8 @@ volume_model = Step.from_file("engine.step").to_volume_model()
 
 # Simplify
 start = time.perf_counter()
-octre_block_simplify = TripleExtrusionSimplify(volume_model=volume_model)
-simplified_volume_model = octre_block_simplify.simplify()
+simplifier = TripleExtrusionSimplify(volume_model=volume_model)
+simplified_volume_model = simplifier.simplify()
 
 print(f"Simplification took {time.perf_counter() - start:.6f} seconds\n")
 
