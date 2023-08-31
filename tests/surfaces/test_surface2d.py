@@ -12,8 +12,11 @@ class TestSurface2D(unittest.TestCase):
 
     def test_triangulation(self):
         tri = self.surface2d.triangulation()
-        tri.plot()
-        self.assertAlmostEqual(self.surface2d.triangulation().area(), 1)
+        self.assertAlmostEqual(tri.area(), 1)
+
+        surface2d = surfaces.Surface2D.load_from_file("surfaces/objects_surface2d_test/self_intersections.json")
+        tri = surface2d.triangulation()
+        self.assertTrue(tri)
 
 
 if __name__ == '__main__':

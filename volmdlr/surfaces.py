@@ -196,7 +196,7 @@ class Surface2D(PhysicalObject):
             discretize_line_direction = "x"
         elif number_points_y > 20 * number_points_x:
             discretize_line_direction = "y"
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
                                                       discretize_line_direction=discretize_line_direction)
 
         if not self.inner_contours and not triangulates_with_grid:
@@ -205,9 +205,23 @@ class Surface2D(PhysicalObject):
         points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
                                                                                       number_points_y=number_points_y)
         points = [display.Node2D(*point) for point in outer_polygon.points]
-        vertices = [(point.x, point.y) for point in points]
-        n = len(points)
-        segments = [(i, i + 1) for i in range(n - 1)]
+        prev_point = (points[0].x, points[0].y)
+        vertices_dict = {prev_point: 0}
+        vertices = [prev_point]
+        count_vertices = 1
+        segments = []
+        for point in points[1:]:
+            point = (point.x, point.y)
+            if point not in vertices_dict:
+                vertices.append(point)
+                vertices_dict[point] = count_vertices
+                current_idx = count_vertices
+                count_vertices += 1
+            else:
+                current_idx = vertices_dict[point]
+            segments.append((vertices_dict[prev_point], current_idx))
+            prev_point = point
+        n = len(vertices)
         segments.append((n - 1, 0))
 
         if not self.inner_contours:  # No holes
@@ -257,7 +271,7 @@ class Surface2D(PhysicalObject):
                'segments': npy.array(segments).reshape((-1, 2)),
                'holes': npy.array(holes).reshape((-1, 2))
                }
-        triangulation = triangle_lib.triangulate(tri, tri_opt)
+        triangulation = triangle_lib.triangulate(tri, "p")
         triangles = triangulation['triangles'].tolist()
         number_points = triangulation['vertices'].shape[0]
         points = [display.Node2D(*triangulation['vertices'][i, :]) for i in range(number_points)]

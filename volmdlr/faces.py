@@ -208,7 +208,6 @@ class Face3D(volmdlr.core.Primitive3D):
             inner_contours2d = []
 
         elif len(contours3d) > 1:
-            area = -1
             inner_contours2d = []
             inner_contours3d = []
 
@@ -219,18 +218,22 @@ class Face3D(volmdlr.core.Primitive3D):
                 # Not implemented yet, but connect_contours should also return outer_contour3d and inner_contours3d
                 outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
             else:
-                for contour2d, contour3d in zip(contours2d, contours3d):
+                outer_contour2d = contours2d[0]
+                outer_contour3d = contours3d[0]
+                area = outer_contour2d.area()
+                for contour2d, contour3d in zip(contours2d[1:], contours3d[1:]):
                     # if not contour2d.is_ordered(1e-4):
                     #     contour2d = vm_parametric.contour2d_healing(contour2d)
-                    inner_contours2d.append(contour2d)
-                    inner_contours3d.append(contour3d)
                     contour_area = contour2d.area()
                     if contour_area > area:
                         area = contour_area
+                        inner_contours2d.append(outer_contour2d)
+                        inner_contours3d.append(outer_contour3d)
                         outer_contour2d = contour2d
                         outer_contour3d = contour3d
-                inner_contours2d.remove(outer_contour2d)
-                inner_contours3d.remove(outer_contour3d)
+                    else:
+                        inner_contours2d.append(contour2d)
+                        inner_contours3d.append(contour3d)
         else:
             raise ValueError('Must have at least one contour')
 
