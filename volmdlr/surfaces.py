@@ -6562,7 +6562,6 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def from_points_approximation(cls, points_3d: List[volmdlr.Point3D], size_u: int, size_v: int, degree_u: int,
                                   degree_v: int, name: str = "", **kwargs):
-
         """
         Bspline Surface approximate through 3d points.
 

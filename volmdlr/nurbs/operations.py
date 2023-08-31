@@ -352,9 +352,9 @@ def split_surface_u(obj, param, **kwargs):
     This method splits the surface into two pieces at the given parametric coordinate on the u-direction,
     generates two different surface objects and returns them. It does not modify the input surface.
 
-    Keyword Arguments:
-        * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
-        * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
+        Keyword Arguments:
+            * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
+            * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
 
     :param obj: surface
     :type obj: abstract.Surface
@@ -362,6 +362,7 @@ def split_surface_u(obj, param, **kwargs):
     :type param: float
     :return: a list of surface patches
     :rtype: list
+
     """
 
     if param in (obj.domain[0], obj.domain[1]):
@@ -394,9 +395,9 @@ def split_surface_v(obj, param, **kwargs):
     This method splits the surface into two pieces at the given parametric coordinate on the v-direction,
     generates two different surface objects and returns them. It does not modify the input surface.
 
-    Keyword Arguments:
-        * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
-        * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
+        Keyword Arguments:
+            * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
+            * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
 
     :param obj: surface
     :type obj: abstract.Surface
@@ -404,6 +405,7 @@ def split_surface_v(obj, param, **kwargs):
     :type param: float
     :return: a list of surface patches
     :rtype: list
+
     """
     if param in (obj.domain[2], obj.domain[3]):
         raise ValueError("Cannot split from the v-domain edge")
@@ -449,7 +451,8 @@ def separate_ctrlpts_weights(ctrlptsw):
 
 
 def flip_ctrlpts_u(ctrlpts, size_u, size_v):
-    """ Flips a list of 1-dimensional control points from u-row order to v-row order.
+    """
+    Flips a list of 1-dimensional control points from u-row order to v-row order.
 
     **u-row order**: each row corresponds to a list of u values
 
@@ -475,7 +478,7 @@ def flip_ctrlpts_u(ctrlpts, size_u, size_v):
 
 def ctrlpts2d_to_ctrlpts(control_points_table):
     """
-    Transform the control_points m x n
+    Transform the control_points m x n.
     """
     size_u = len(control_points_table)
     size_v = len(control_points_table[0])
