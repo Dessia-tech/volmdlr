@@ -4,14 +4,14 @@ import random
 import traceback
 import warnings
 from itertools import chain, product
-from typing import Any, Dict, List, Tuple, Iterable, Union
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-from numpy.typing import NDArray
 from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
+from numpy.typing import NDArray
 from trimesh import Trimesh
 
 import volmdlr.bspline_compiled
