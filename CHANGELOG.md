@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.14.0 [future]
 
 ### New Features
--
+- BSplineSurface3D: from_points_interpolation, from_points_approximation.
+
 ### Fixed
 - add missing name attributes to classmethods
 - fixed circular imports
@@ -46,7 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wire3D/Contour3D: edge_intersections, wire_intersections
 - BSpline3D: arc_intersections
 - New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
-- BSplineSurface3D: from_points_interpolation, from_points_approximation
 
 ### Fixed
 - Sweep with non smoth path
