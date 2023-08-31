@@ -1,6 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
-# pylint: disable=no-member, used-before-assignment, no-name-in-module, import-error
+# pylint: disable=no-member, used-before-assignment, no-name-in-module, import-error, undefined-variable
 """
 Provides curve and surface fitting functions.
 
@@ -498,7 +498,6 @@ def compute_params_surface(points: np.ndarray[np.double_t, ndim == 2], size_u: c
     :return: :math:`\\overline{u}_{k}` and :math:`\\overline{u}_{l}` parameter arrays as a tuple
     :rtype: tuple
     """
-    # Compute uk
     u_k: np.ndarray[np.double_t, ndim == 1] = np.zeros(size_u, dtype=np.double)
 
     # Compute for each curve on the v-direction
@@ -518,7 +517,6 @@ def compute_params_surface(points: np.ndarray[np.double_t, ndim == 2], size_u: c
         knots_v = [uk_temp[u + (size_u * v)] for v in range(size_v)]
         u_k[u] = sum(knots_v) / size_v
 
-    # Compute vl
     v_l: np.ndarray[np.double_t, ndim == 1] = np.zeros(size_v, dtype=np.double)
 
     # Compute for each curve on the u-direction
