@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from numpy.typing import NDArray
-from dessia_common.core import DessiaObject
+from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.typings import JsonSerializable
 from trimesh import Trimesh
 
@@ -1785,7 +1785,7 @@ class OpenTriangleShell3D(OpenShell3D):
 
         return volmdlr.core.BoundingBox(bbox_min[0], bbox_max[0], bbox_min[1], bbox_max[1], bbox_min[2], bbox_max[2])
 
-    def to_mesh_data(self, round_vertices: bool = True, n_decimals: int = 9) -> Tuple[NDArray[float], NDArray[int]]:
+    def to_mesh_data(self, round_vertices: bool, n_decimals: int = 9) -> Tuple[NDArray[float], NDArray[int]]:
         """
         Convert the TriangleShell3D to mesh data: vertices and faces described as index of vertices.
 
@@ -1842,7 +1842,7 @@ class OpenTriangleShell3D(OpenShell3D):
 
     def to_trimesh(self):
         """Creates a Trimesh from a TriangleShell3D."""
-        return Trimesh(*self.to_mesh_data())
+        return Trimesh(*self.to_mesh_data(round_vertices=True))
 
     @classmethod
     def from_trimesh(cls, trimesh, name: str = ""):
@@ -1897,18 +1897,6 @@ class OpenTriangleShell3D(OpenShell3D):
 
         return triangle_shell
 
-    def babylon_meshes(self, merge_meshes=True):
-        """Overload of 'babylon_meshes' for performance."""
-
-        positions, indices = self.to_mesh_data(round_vertices=True, n_decimals=6)
-        positions = positions.flatten().tolist()
-        indices = indices.flatten().tolist()
-
-        babylon_mesh = {"positions": positions, "indices": indices}
-        babylon_mesh.update(self.babylon_param())
-
-        return [babylon_mesh]
-
 
 class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     """
@@ -1938,3 +1926,82 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     ):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
         ClosedShell3D.__init__(self, faces, color, alpha, name)
+
+
+class DisplayTriangleShell3D(Shell3D):
+    """Triangle Shell 3D optimized for display and saving purpose."""
+    def __init__(self, positions, indices, name):
+        """
+        Instantiate the DisplayTriangleShell3D.
+
+        :param positions:
+        :param indices:
+        :param name:
+        """
+        self.positions = positions
+        self.indices = indices
+
+        Shell3D.__init__(self, faces=[], name=name)  # avoid saving the faces 3D
+
+    @classmethod
+    def from_open_triangle_shell_3d(cls, open_triangle_shell_3d: 'OpenTriangleShell3D'):
+        positions, indices = open_triangle_shell_3d.to_mesh_data(round_vertices=True, n_decimals=6)
+        name = open_triangle_shell_3d.name
+
+        display_triangle_shell = cls(positions, indices, name)
+
+        display_triangle_shell.alpha = open_triangle_shell_3d.alpha
+        display_triangle_shell.color = open_triangle_shell_3d.color
+
+        return display_triangle_shell
+
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
+        """Gets the Shell bounding box."""
+        bbox_min, bbox_max = np.min(self.positions, axis=0), np.max(self.positions, axis=0)
+
+        return volmdlr.core.BoundingBox(bbox_min[0], bbox_max[0], bbox_min[1], bbox_max[1], bbox_min[2], bbox_max[2])
+
+    def babylon_meshes(self, merge_meshes=True):
+        """Overload of 'babylon_meshes' for performance."""
+
+        position = self.positions.flatten().tolist()
+        indices = self.indices.flatten().tolist()
+
+        babylon_mesh = {"positions": position, "indices": indices}
+        babylon_mesh.update(self.babylon_param())
+
+        return [babylon_mesh]
+
+    def to_dict(self, *args, **kwargs):
+        """Overload of 'to_dict' for performance."""
+        dict_ = self.base_dict()
+
+        dict_["positions"] = self.positions.tolist()
+        dict_["indices"] = self.indices.tolist()
+        dict_["alpha"] = self.alpha
+        dict_["color"] = self.color
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(
+        cls,
+        dict_: JsonSerializable,
+        force_generic: bool = False,
+        global_dict=None,
+        pointers_memo: Dict[str, Any] = None,
+        path: str = "#",
+        name: str = "",
+    ) -> "DisplayTriangleShell3D":
+        """Overload of 'dict_to_object' for performance."""
+
+        positions = np.array(dict_["positions"])
+        indices = np.array(dict_["indices"])
+        name = dict_["name"]
+
+        display_triangle_shell = cls(positions, indices, name)
+
+        display_triangle_shell.alpha = dict_["alpha"]
+        display_triangle_shell.color = dict_["color"]
+
+        return display_triangle_shell
