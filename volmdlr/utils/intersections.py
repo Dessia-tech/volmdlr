@@ -28,7 +28,8 @@ def circle_3d_line_intersections(circle_3d, line):
     if distance_center_lineseg > circle_3d.radius:
         return []
     direction_vector = line.direction_vector()
-    if line.point1.z == line.point2.z == circle_3d.frame.origin.z:
+    if math.isclose(line.point1.z, line.point2.z, abs_tol=1e-6) and\
+            math.isclose(line.point2.z, circle_3d.frame.origin.z, abs_tol=1e-6):
         if line.point1.is_close(circle_3d.center):
             point1 = line.point2
             vec = line.point1 - line.point2
@@ -43,7 +44,7 @@ def circle_3d_line_intersections(circle_3d, line):
         delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c
         if delta < 0:  # No real solutions, no intersection
             return []
-        if delta == 0:  # One real solution, tangent intersection
+        if math.isclose(delta, 0, abs_tol=1e-7):  # One real solution, tangent intersection
             t_param = -quadratic_equation_b / (2 * quadratic_equation_a)
             return [point1 + t_param * vec]
         sqrt_delta = math.sqrt(delta)

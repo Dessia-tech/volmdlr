@@ -4,7 +4,7 @@ import unittest
 import dessia_common.core
 import volmdlr
 import volmdlr.edges as vme
-from volmdlr import curves
+from volmdlr import curves, surfaces
 import volmdlr.wires as vmw
 from volmdlr import O3D, X3D, Y3D, Z3D, Point2D, Point3D
 from volmdlr.models import conical_surfaces
@@ -72,7 +72,7 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertEqual(linesegment2d_cone.start, Point2D(-2 * math.pi, 0.1))
         self.assertEqual(linesegment2d_cone.end, Point2D(-2 * math.pi, 0.0))
 
-    def bsplinecurve3d_to_2d(self):
+    def test_bsplinecurve3d_to_2d(self):
         conical_surface3 = conical_surfaces.conical_surface3
         control_points = [volmdlr.Point3D(-0.00235270234694772, 0.004075, 0.000502294734194974),
                           volmdlr.Point3D(-0.00158643061573795, 0.004075, 0.000281091139051792),
@@ -82,13 +82,40 @@ class TestConicalSurface3D(unittest.TestCase):
 
         bspline_curve = vme.BSplineCurve3D(3, control_points, [4, 1, 4], knots=[0.0, 0.5, 1.0])
         bspline_curve2d = conical_surface3.bsplinecurve3d_to_2d(bspline_curve)
-        bspline_curve3d = conical_surface3.bsplinecurve2d_to_3d(bspline_curve2d)
+        bspline_curve3d = conical_surface3.bsplinecurve2d_to_3d(bspline_curve2d[0])
         original_length = bspline_curve.length()
-        length_after_transformation = bspline_curve3d.length()
+        length_after_transformation = bspline_curve3d[0].length()
         point = bspline_curve.point_at_abscissa(0.5*original_length)
-        point_test = bspline_curve3d.point_at_abscissa(0.5 * length_after_transformation)
+        point_test = bspline_curve3d[0].point_at_abscissa(0.5 * length_after_transformation)
         self.assertAlmostEqual(original_length, length_after_transformation, places=6)
         self.assertTrue(point.is_close(point_test, 1e-6))
+
+    def test_line_intersections(self):
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
+
+        lines = [curves.Line3D(volmdlr.Point3D(-2, -2, 1), volmdlr.Point3D(5, 5, 5)),
+                 curves.Line3D(volmdlr.Point3D(1.1409943273101928, 1.1409943273101928, 2.7948539013201095),
+                               volmdlr.Point3D(1.1409943273101928, 1.1409943273101928, 2.7948539013201095) +
+                               2 * volmdlr.Vector3D(-0.9742215979209138, -0.15847358160064154, -0.0)),
+                 curves.Line3D(volmdlr.Point3D(1, 1, 0), volmdlr.Point3D(2, -2, 5)),
+                 curves.Line3D(volmdlr.Point3D(1, 1, 0), volmdlr.Point3D(2, 2, 5)),
+                 curves.Line3D(volmdlr.Point3D(1, 1, 0), volmdlr.Point3D(0.0, 3.920784075149046, 4.801960187872612)),
+                 curves.Line3D(volmdlr.Point3D(1.960392037574523, 1.960392037574523, 4.801960187872612),
+                               volmdlr.Point3D(0.0, 3.920784075149046, 4.801960187872612))]
+        list_intersections = [[volmdlr.Point3D(1.1409943273101928, 1.1409943273101928, 2.7948539013201095),
+                               volmdlr.Point3D(-0.7093396510512004, -0.7093396510512004, 1.7375201993993143)],
+                              [volmdlr.Point3D(-1.443803221499384, 0.7205333909643816, 2.794853901319333),
+                               volmdlr.Point3D(1.1409943273076404, 1.1409943273121101, 2.7948539013193323)],
+                              [volmdlr.Point3D(1.7101020514359682, -1.1303061543105355, 3.550510257187456),
+                               volmdlr.Point3D(2.6898979485879435, -4.06969384577009, 8.449489742957839)],
+                              [volmdlr.Point3D(1.960392037574523, 1.960392037574523, 4.801960187872612)],
+                              [],
+                              [volmdlr.Point3D(1.9603920375740307, 1.9603920375740307, 4.801960187873013)]]
+
+        for i, line in enumerate(lines):
+            line_intersections = conical_surface.line_intersections(line)
+            for intersection, expected_sesult in zip(line_intersections, list_intersections[i]):
+                self.assertTrue(intersection.is_close(expected_sesult))
 
 
 if __name__ == '__main__':

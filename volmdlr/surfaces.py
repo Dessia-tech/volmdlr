@@ -2781,7 +2781,7 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         Plots the ConicalSurface3D.
         """
-        z = kwargs.get("z", 0.5)
+        z = kwargs.get("z", 1)
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -3041,15 +3041,74 @@ class ConicalSurface3D(PeriodicalSurface):
 
         raise AttributeError(f'Use method from ConicalFace3D{volmdlr.faces.ConicalFace3D.from_base_and_vertex}')
 
-    def parallel_plane_intersection(self, plane3d):
+    def line_intersections(self, line: curves.Line3D):
+        if line.point_belongs(self.frame.origin):
+            return [self.frame.origin]
+        d = line.unit_direction_vector()
+        vertex = self.frame.origin
+        v = self.frame.w
+        plane_normal = d.cross((vertex-line.point1).to_vector()).unit_vector()
+        if v.dot(plane_normal) > 0:
+            plane_normal = - plane_normal
+        plane = Plane3D.from_normal(vertex, plane_normal)
+        cos_theta = math.sqrt(1-(plane_normal.dot(v)**2))
+        if cos_theta >= math.cos(self.semi_angle):
+            plane_h = Plane3D.from_normal(vertex+v, v)
+            circle = self.perpendicular_plane_intersection(plane_h)[0]
+            line_p = plane_h.plane_intersections(plane)[0]
+            circle_line_p_intersections = circle.line_intersections(line_p)
+            intersections = []
+            for intersection in circle_line_p_intersections:
+                line_v_x = curves.Line3D(vertex, intersection)
+                line_inter = line_v_x.intersection(line)
+                local_point = self.frame.global_to_local_coordinates(line_inter)
+                if local_point.z < 0:
+                    continue
+                # if not volmdlr.core.point_in_list(line_inter, intersections):
+                intersections.append(line_inter)
+            return intersections
+        return []
+
+    def parallel_plane_intersection(self, plane3d: Plane3D):
         """
         Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis.
 
         :param plane3d: intersecting plane
         :return: list of intersecting curves
         """
-        line_plane_intersections = vm_utils_intersections.get
-        return
+        line_plane_intersections_points = vm_utils_intersections.get_two_planes_intersections(
+            self.frame, plane3d.frame)
+        line_plane_intersections = curves.Line3D(*line_plane_intersections_points)
+        if plane3d.point_on_surface(self.frame.origin):
+            point1 = self.frame.origin + line_plane_intersections.direction_vector()
+            point2 = self.frame.origin - line_plane_intersections.direction_vector()
+            point1 = self.frame.local_to_global_coordinates(
+                volmdlr.Point3D(point1.x, point1.y,
+                                math.sqrt(point1.x ** 2 + point1.y ** 2) / math.tan(self.semi_angle)))
+            point2 = self.frame.local_to_global_coordinates(
+                volmdlr.Point3D(point2.x, point2.y,
+                                math.sqrt(point2.x ** 2 + point2.y ** 2) / math.tan(self.semi_angle)))
+            return [curves.Line3D(self.frame.origin, point1), curves.Line3D(self.frame.origin, point2)] 
+        hyperbola_center = line_plane_intersections.closest_point_on_line(self.frame.origin)
+        hyperbola_positive_vertex = self.frame.local_to_global_coordinates(
+            volmdlr.Point3D(hyperbola_center.x, hyperbola_center.y,
+                            math.sqrt(hyperbola_center.x ** 2 + hyperbola_center.y ** 2) / math.tan(self.semi_angle)))
+        semi_major_axis = hyperbola_center.point_distance(hyperbola_positive_vertex)
+        circle = self.perpendicular_plane_intersection(
+            Plane3D(volmdlr.Frame3D(self.frame.origin + semi_major_axis * 2 * self.frame.w,
+                                    self.frame.u, self.frame.v, self.frame.w)))[0]
+        line_circle_intersecting_plane = vm_utils_intersections.get_two_planes_intersections(
+            plane3d.frame, circle.frame)
+        line_circle_intersecting_plane = curves.Line3D(*line_circle_intersecting_plane)
+        hyperbola_points = circle.line_intersections(line_circle_intersecting_plane)
+        semi_major_dir = (hyperbola_positive_vertex - hyperbola_center).unit_vector()
+        frame = volmdlr.Frame3D(hyperbola_center, semi_major_dir,
+                                plane3d.frame.w.cross(semi_major_dir), plane3d.frame.w)
+        local_point = frame.global_to_local_coordinates(hyperbola_points[0])
+        semi_minor_axis = math.sqrt((local_point.y ** 2)/(local_point.x**2/semi_major_axis**2 - 1))
+        hyperbola = curves.Hyperbola3D(frame, semi_major_axis, semi_minor_axis)
+
+        return [hyperbola]
 
     def perpendicular_plane_intersection(self, plane3d):
         """

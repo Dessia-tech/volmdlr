@@ -635,6 +635,14 @@ class Line3D(Line):
             return True
         return self.direction_vector().is_colinear_to(point3d - self.point1)
 
+    def closest_point_on_line(self, point):
+        segment_vector = self.direction_vector()
+        p_vector = point - self.point1
+        p_vector = p_vector.to_vector()
+        t_param = p_vector.dot(segment_vector) / segment_vector.dot(segment_vector)
+        point = self.point1 + t_param*segment_vector
+        return point
+
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
         vector1 = point - self.point1
@@ -1411,6 +1419,15 @@ class Circle3D(CircleMixin, ClosedCurve):
         start = self.frame.origin + self.radius * self.frame.u
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
+
+    def line_intersections(self, line: Line3D):
+        """
+        Calculates the intersections between the Circle3D and a line 3D.
+
+        :param line: line segment 3D to verify intersections
+        :return: list of points intersecting Circle
+        """
+        return volmdlr_intersections.circle_3d_line_intersections(self, line)
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment3D', abs_tol: float = 1e-6):
         """
