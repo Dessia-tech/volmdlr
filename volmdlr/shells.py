@@ -4,13 +4,13 @@ import random
 import traceback
 import warnings
 from itertools import chain, product
-from typing import Any, Dict, List, Tuple, Iterable
+from typing import Any, Dict, List, Tuple, Iterable, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from numpy.typing import NDArray
-from dessia_common.core import DessiaObject, PhysicalObject
+from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
 from trimesh import Trimesh
 
@@ -1918,40 +1918,57 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     """
 
     def __init__(
-            self,
-            faces: List[volmdlr.faces.Triangle3D],
-            color: Tuple[float, float, float] = None,
-            alpha: float = 1.0,
-            name: str = "",
+        self,
+        faces: List[volmdlr.faces.Triangle3D],
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1.0,
+        name: str = "",
     ):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
         ClosedShell3D.__init__(self, faces, color, alpha, name)
 
 
 class DisplayTriangleShell3D(Shell3D):
-    """Triangle Shell 3D optimized for display and saving purpose."""
-    def __init__(self, positions, indices, name):
+    """
+    A Triangle Shell 3D optimized for display and saving purpose.
+
+    This shell has the particularity to not instantiante the Triangle3D objects, to reduce memory usage and improve
+    performance.
+    """
+
+    def __init__(self, positions: NDArray[float], indices: NDArray[int], name):
         """
         Instantiate the DisplayTriangleShell3D.
 
-        :param positions:
-        :param indices:
-        :param name:
+        :param positions: A 3D numpy array of float reprensenting the positions of the vertices of the triangles.
+        :param indices: A 3D numpy array of int reprensenting the indices of the vertices representing the triangles.
+        :param name: A name for the DisplayTriangleShell3D, optional.
         """
         self.positions = positions
         self.indices = indices
 
-        Shell3D.__init__(self, faces=[], name=name)  # avoid saving the faces 3D
+        Shell3D.__init__(self, faces=[], name=name)  # avoid saving the faces for performance
 
     @classmethod
-    def from_open_triangle_shell_3d(cls, open_triangle_shell_3d: 'OpenTriangleShell3D'):
-        positions, indices = open_triangle_shell_3d.to_mesh_data(round_vertices=True, n_decimals=6)
-        name = open_triangle_shell_3d.name
+    def from_triangle_shell_3d(
+        cls, triangle_shell: Union["OpenTriangleShell3D", "ClosedTriangleShell3D"]
+    ) -> "DisplayTriangleShell3D":
+        """
+        Instantiate a DisplayTriangleShell3D from an OpenTriangleShell3D or a ClosedTriangleShell3D.
+
+        :param triangle_shell: The triangle shell to create the DisplayTriangleShell3D from.
+        :type triangle_shell: OpenTriangleShell3D | ClosedTriangleShell3D
+
+        :return: The created DisplayTriangleShell3D.
+        :rtype: DisplayTriangleShell3D
+        """
+        positions, indices = triangle_shell.to_mesh_data(round_vertices=True, n_decimals=6)
+        name = triangle_shell.name
 
         display_triangle_shell = cls(positions, indices, name)
 
-        display_triangle_shell.alpha = open_triangle_shell_3d.alpha
-        display_triangle_shell.color = open_triangle_shell_3d.color
+        display_triangle_shell.alpha = triangle_shell.alpha
+        display_triangle_shell.color = triangle_shell.color
 
         return display_triangle_shell
 
