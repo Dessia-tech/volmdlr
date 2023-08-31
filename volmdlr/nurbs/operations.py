@@ -249,7 +249,7 @@ def construct_split_curve(obj, curve1_kv, curve2_kv, knot_span, insertion_count)
     curve2 = obj.__class__(obj.degree, curve2_ctrlpts, knot_multiplicities_2, knots_2, curve2_weights)
 
     # Return the split curves
-    return curve1, curve2
+    return [curve1, curve2]
 
 
 def insert_knot_surface(obj, param, num, **kwargs):
@@ -571,4 +571,4 @@ def construct_split_surfaces(obj, knotvectors, direction, knot_span, insertion_c
                           surf2_nb_u, surf2_nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weights)
 
     # Return the new surfaces
-    return surf1, surf2
+    return [surf1, surf2]
