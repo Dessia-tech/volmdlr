@@ -6,7 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## v0.13.0 [future]
+### New Features
+- DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
+### Fixed
+- add missing name attributes to classmethods
+- fixed circular imports
+
+### Refactor
+- TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
+
+### Changed
+-
+### Unittests
+-
+
+## v0.13.0 [unreleased]
 
 ### New Features
 - Line: reverse.
