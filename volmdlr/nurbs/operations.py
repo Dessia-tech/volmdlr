@@ -156,10 +156,10 @@ def insert_knot_curve(obj, param, num, **kwargs):
 
     if param[0] is not None and num[0] > 0:
         # Find knot multiplicity
-        knot_multiplicity = core.find_multiplicity(param[0], obj.knotvector)
+        param_multiplicity = core.find_multiplicity(param[0], obj.knotvector)
 
         # Check if it is possible add that many number of knots
-        if check_num and num[0] > obj.degree - knot_multiplicity:
+        if check_num and num[0] > obj.degree - param_multiplicity:
             raise ValueError("Knot " + str(param[0]) + " cannot be inserted " + str(num[0]) + " times")
 
         # Find knot span
@@ -171,7 +171,7 @@ def insert_knot_curve(obj, param, num, **kwargs):
         # Compute new control points
         cpts = obj.ctrlptsw if obj.rational else obj.ctrlpts
         cpts_tmp = knot_insertion(obj.degree, obj.knotvector, cpts, param[0],
-                                  num=num[0], s=knot_multiplicity, span=span)
+                                  num=num[0], s=param_multiplicity, span=span)
         weights = None
         if obj.rational:
             cpts_tmp, weights = separate_ctrlpts_weights(cpts_tmp)
@@ -272,31 +272,31 @@ def insert_knot_surface(obj, param, num, **kwargs):
     # u-direction
     if param[0] is not None and num[0] > 0:
         # Find knot multiplicity
-        knotvector_u = obj.knots_vector_u
-        s_u = core.find_multiplicity(param[0], knotvector_u)
+        knotvector = obj.knots_vector_u
+        param_multiplicity = core.find_multiplicity(param[0], knotvector)
 
         # Check if it is possible add that many number of knots
-        if check_num and num[0] > obj.degree_u - s_u:
+        if check_num and num[0] > obj.degree_u - param_multiplicity:
             raise ValueError("Knot " + str(param[0]) + " cannot be inserted " + str(num[0]) + " times (u-dir)")
 
         # Find knot span
-        span_u = core.find_span_linear(obj.degree_u, knotvector_u, obj.nb_u, param[0])
+        span = core.find_span_linear(obj.degree_u, knotvector, obj.nb_u, param[0])
 
         # Compute new knot vector
-        kv_u = knot_insertion_kv(knotvector_u, param[0], span_u, num[0])
+        new_kv = knot_insertion_kv(knotvector, param[0], span, num[0])
 
         # Get curves
         cpts_tmp = []
         cpts = obj.ctrlptsw if obj.rational else obj.ctrlpts
         for v in range(obj.nb_v):
-            ccu = [cpts[v + (obj.nb_v * u)] for u in range(obj.nb_u)]
-            ctrlpts_tmp = knot_insertion(obj.degree_u, knotvector_u, ccu, param[0],
-                                         num=num[0], s=s_u, span=span_u)
+            ctrlpts = [cpts[v + (obj.nb_v * u)] for u in range(obj.nb_u)]
+            ctrlpts_tmp = knot_insertion(obj.degree_u, knotvector, ctrlpts, param[0],
+                                         num=num[0], s=param_multiplicity, span=span)
             cpts_tmp += ctrlpts_tmp
 
         # Update the surface after knot insertion
-        knots_u = np.unique(kv_u)
-        u_multiplicities = [core.find_multiplicity(knot, kv_u) for knot in knots_u]
+        knots = np.unique(new_kv)
+        multiplicities = [core.find_multiplicity(knot, new_kv) for knot in knots]
         cpts_tmp = flip_ctrlpts_u(cpts_tmp, obj.nb_u + num[0], obj.nb_v)
         weights = None
         if obj.rational:
@@ -304,43 +304,43 @@ def insert_knot_surface(obj, param, num, **kwargs):
         control_points = [volmdlr.Point3D(*point) for point in cpts_tmp]
         obj = obj.__class__(obj.degree_u, obj.degree_v,
                             control_points,
-                            obj.nb_u + num[0], obj.nb_v, u_multiplicities, obj.v_multiplicities,
-                            knots_u, obj.v_knots, weights)
+                            obj.nb_u + num[0], obj.nb_v, multiplicities, obj.v_multiplicities,
+                            knots, obj.v_knots, weights)
     # v-direction
     if param[1] is not None and num[1] > 0:
         # Find knot multiplicity
-        knotvector_v = obj.knots_vector_v
-        s_v = core.find_multiplicity(param[1], knotvector_v)
+        knotvector = obj.knots_vector_v
+        param_multiplicity = core.find_multiplicity(param[1], knotvector)
 
         # Check if it is possible add that many number of knots
-        if check_num and num[1] > obj.degree_v - s_v:
+        if check_num and num[1] > obj.degree_v - param_multiplicity:
             raise ValueError("Knot " + str(param[1]) + " cannot be inserted " + str(num[1]) + " times (v-dir)")
 
         # Find knot span
-        span_v = core.find_span_linear(obj.degree_v, knotvector_v, obj.nb_v, param[1])
+        span = core.find_span_linear(obj.degree_v, knotvector, obj.nb_v, param[1])
 
         # Compute new knot vector
-        kv_v = knot_insertion_kv(knotvector_v, param[1], span_v, num[1])
+        new_kv = knot_insertion_kv(knotvector, param[1], span, num[1])
 
         # Get curves
         cpts_tmp = []
         cpts = obj.ctrlptsw if obj.rational else obj.ctrlpts
         for u in range(obj.nb_u):
-            ccv = [cpts[v + (obj.nb_v * u)] for v in range(obj.nb_v)]
-            ctrlpts_tmp = knot_insertion(obj.degree_v, knotvector_v, ccv, param[1],
-                                         num=num[1], s=s_v, span=span_v)
+            ctrlpts = [cpts[v + (obj.nb_v * u)] for v in range(obj.nb_v)]
+            ctrlpts_tmp = knot_insertion(obj.degree_v, knotvector, ctrlpts, param[1],
+                                         num=num[1], s=param_multiplicity, span=span)
             cpts_tmp += ctrlpts_tmp
 
-        v_knots = np.unique(kv_v)
-        v_multiplicities = [core.find_multiplicity(knot, kv_v) for knot in v_knots]
+        knots = np.unique(new_kv)
+        multiplicities = [core.find_multiplicity(knot, new_kv) for knot in knots]
         weights = None
         if obj.rational:
             cpts_tmp, weights = separate_ctrlpts_weights(cpts_tmp)
         control_points = [volmdlr.Point3D(*point) for point in cpts_tmp]
         # Update the surface after knot insertion
         obj = obj.__class__(obj.degree_u, obj.degree_v,
-                            control_points, obj.nb_u, obj.nb_v + num[1], obj.u_multiplicities, v_multiplicities,
-                            obj.u_knots, v_knots, weights)
+                            control_points, obj.nb_u, obj.nb_v + num[1], obj.u_multiplicities, multiplicities,
+                            obj.u_knots, knots, weights)
     return obj
 
 
