@@ -171,6 +171,113 @@ class TestBSplineSurface3D(unittest.TestCase):
                     for c, e in zip(computed[idx], expected[idx]):
                         self.assertAlmostEqual(c, e, delta=GEOMDL_DELTA)
 
+    def test_interpolate_surface(self):
+        points = [volmdlr.Point3D(1.0, 0.0, 0.0), volmdlr.Point3D(0.70710678, 0.70710678, 0.0),
+                  volmdlr.Point3D(0.0, 1.0, 0.0), volmdlr.Point3D(-0.70710678, 0.70710678, 0.0),
+                  volmdlr.Point3D(-1.0, 0.0, 0.0), volmdlr.Point3D(-0.70710678, -0.70710678, 0.0),
+                  volmdlr.Point3D(0.0, -1.0, 0.0), volmdlr.Point3D(0.70710678, -0.70710678, 0.0),
+                  volmdlr.Point3D(1.0, 0.0, 0.0), volmdlr.Point3D(1.0, 0.0, 1.0),
+                  volmdlr.Point3D(0.70710678, 0.70710678, 1.0), volmdlr.Point3D(0.0, 1.0, 1.0),
+                  volmdlr.Point3D(-0.70710678, 0.70710678, 1.0), volmdlr.Point3D(-1.0, 0.0, 1.0),
+                  volmdlr.Point3D(-0.70710678, -0.70710678, 1.0), volmdlr.Point3D(0.0, -1.0, 1.0),
+                  volmdlr.Point3D(0.70710678, -0.70710678, 1.0), volmdlr.Point3D(1.0, 0.0, 1.0)]
+
+        degree_u = 1
+        degree_v = 2
+        size_u = 2
+        size_v = 9
+        surface = surfaces.BSplineSurface3D.from_points_interpolation(points, size_u, size_v,
+                                                                                degree_u, degree_v)
+
+        expected_points = [volmdlr.Point3D(1.0, 0.0, 0.0),
+                           volmdlr.Point3D(0.9580995893491125, 0.6733882798117155, 0.0),
+                           volmdlr.Point3D(-0.0005819501479292128, 1.0804111054393308, 0.0),
+                           volmdlr.Point3D(-0.7628715805621301, 0.7627405224267781, 0.0),
+                           volmdlr.Point3D(-1.0790428064792899, 0.0, 0.0),
+                           volmdlr.Point3D(-0.7628715805621301, -0.7627405224267783, 0.0),
+                           volmdlr.Point3D(-0.0005819501479290552, -1.0804111054393304, 0.0),
+                           volmdlr.Point3D(0.9580995893491127, -0.6733882798117156, 0.0),
+                           volmdlr.Point3D(1.0, 0.0, 0.0),
+                           volmdlr.Point3D(1.0, 0.0, 1.0),
+                           volmdlr.Point3D(0.9580995893491125, 0.6733882798117155, 1.0),
+                           volmdlr.Point3D(-0.0005819501479292128, 1.0804111054393308, 1.0),
+                           volmdlr.Point3D(-0.7628715805621301, 0.7627405224267781, 1.0),
+                           volmdlr.Point3D(-1.0790428064792899, 0.0, 1.0),
+                           volmdlr.Point3D(-0.7628715805621301, -0.7627405224267783, 1.0),
+                           volmdlr.Point3D(-0.0005819501479290552, -1.0804111054393304, 1.0),
+                           volmdlr.Point3D(0.9580995893491127, -0.6733882798117156, 1.0),
+                           volmdlr.Point3D(1.0, 0.0, 1.0)]
+        for point, expected_point in zip(surface.control_points, expected_points):
+            self.assertTrue(point.is_close(expected_point))
+        point1 = surface.point2d_to_3d(volmdlr.Point2D(0.0, 0.0))
+        point2 = surface.point2d_to_3d(volmdlr.Point2D(0.25, 0.25))
+        point3 = surface.point2d_to_3d(volmdlr.Point2D(0.5, 0.5))
+        point4 = surface.point2d_to_3d(volmdlr.Point2D(0.75, 0.75))
+        point5 = surface.point2d_to_3d(volmdlr.Point2D(1.0, 1.0))
+
+        for point in [point1, point2, point3, point4, point5]:
+            self.assertAlmostEqual(point.point_distance(volmdlr.Point3D(0.0, 0.0, point.z)), 1.0)
+
+    def test_approximation_surface(self):
+        construction_linesegment1 = vme.LineSegment3D(volmdlr.Point3D(0.5, -0.5, 0), volmdlr.Point3D(0.1, -0.5, 0))
+        construction_linesegment2 = vme.LineSegment3D(volmdlr.Point3D(-0.5, -0.5, 0.5),
+                                                      volmdlr.Point3D(-1.2, -0.5, 0.5))
+        points = (construction_linesegment1.discretization_points(number_points=4) +
+                  construction_linesegment2.discretization_points(number_points=5))
+        for i in range(1, 4):
+            temp_line1 = construction_linesegment1.translation(volmdlr.Vector3D(0, i*0.1, 0))
+            temp_line2 = construction_linesegment2.translation(volmdlr.Vector3D(0, i * 0.1, 0))
+            points.extend(temp_line1.discretization_points(number_points=4))
+            points.extend(temp_line2.discretization_points(number_points=5))
+        for i in range(7, 10):
+            temp_line1 = construction_linesegment1.translation(volmdlr.Vector3D(0, i*0.1, -0.5))
+            temp_line2 = construction_linesegment2.translation(volmdlr.Vector3D(0, i * 0.1, -0.5))
+            points.extend(temp_line1.discretization_points(number_points=4))
+            points.extend(temp_line2.discretization_points(number_points=5))
+
+        degree_u = 2
+        degree_v = 3
+        size_u = 7
+        size_v = 9
+        surface = surfaces.BSplineSurface3D.from_points_approximation(points, size_u, size_v,
+                                                                                    degree_u, degree_v,
+                                                                                    ctrlpts_size_u=5, ctrlpts_size_v=6)
+
+        expected_points = [
+                           volmdlr.Point3D(0.5, -0.5, 0.0),
+                           volmdlr.Point3D(0.4177877608688984, -0.49999999999999895, 0.018441240030724965),
+                           volmdlr.Point3D(-0.08774883457241012, -0.5000000000000024, -0.12940652269371028),
+                           volmdlr.Point3D(-0.4016938826094424, -0.4999999999999982, 0.7352898743278582),
+                           volmdlr.Point3D(-1.046377148047132, -0.5000000000000008, 0.4409552496220567),
+                           volmdlr.Point3D(-1.2, -0.5, 0.5),
+                           volmdlr.Point3D(0.5000000000000002, -0.4376959060246239, -0.009076877140464948),
+                           volmdlr.Point3D(0.41778776086889857, -0.4376959060246231, 0.009364362890260018),
+                           volmdlr.Point3D(-0.08774883457241027, -0.4376959060246253, -0.13848339983417526),
+                           volmdlr.Point3D(-0.4016938826094421, -0.43769590602462305, 0.7262129971873936),
+                           volmdlr.Point3D(-1.046377148047133, -0.4376959060246242, 0.43187837248159167),
+                           volmdlr.Point3D(-1.2000000000000002, -0.4376959060246239, 0.4909231228595352),
+                           volmdlr.Point3D(0.49999999999999967, -0.04693124471297373, 0.04778074658303208),
+                           volmdlr.Point3D(0.417787760868898, -0.04693124471297371, 0.06622198661375721),
+                           volmdlr.Point3D(-0.08774883457240966, -0.04693124471297377, -0.08162577611067864),
+                           volmdlr.Point3D(-0.4016938826094423, -0.04693124471297371, 0.7830706209108907),
+                           volmdlr.Point3D(-1.0463771480471313, -0.046931244712973746, 0.4887359962050881),
+                           volmdlr.Point3D(-1.2000000000000004, -0.04693124471297373, 0.5477807465830319),
+                           volmdlr.Point3D(0.5, 0.1605350614381673, -0.5681325600258332),
+                           volmdlr.Point3D(0.41778776086889857, 0.16053506143816723, -0.5496913199951079),
+                           volmdlr.Point3D(-0.08774883457241042, 0.16053506143816734, -0.6975390827195442),
+                           volmdlr.Point3D(-0.4016938826094424, 0.16053506143816715, 0.1671573143020255),
+                           volmdlr.Point3D(-1.046377148047132, 0.16053506143816737, -0.12717731040377675),
+                           volmdlr.Point3D(-1.1999999999999997, 0.1605350614381673, -0.06813256002583319),
+                           volmdlr.Point3D(0.5, 0.4, -0.5),
+                           volmdlr.Point3D(0.4177877608688984, 0.4000000000000003, -0.4815587599692746),
+                           volmdlr.Point3D(-0.08774883457241012, 0.39999999999999913, -0.629406522693711),
+                           volmdlr.Point3D(-0.4016938826094424, 0.4000000000000003, 0.2352898743278587),
+                           volmdlr.Point3D(-1.046377148047132, 0.4000000000000001, -0.059044750377943586),
+                           volmdlr.Point3D(-1.2, 0.4, 0.0)]
+
+        for point, expected_point in zip(surface.control_points, expected_points):
+            self.assertTrue(point.is_close(expected_point))
+
     def test_contour2d_parametric_to_dimension(self):
         bspline_face = vmf.BSplineFace3D.from_surface_rectangular_cut(bspline_surfaces.bspline_surface_2, 0, 1, 0, 1)
         contour2d = bspline_surfaces.bspline_surface_2.contour3d_to_2d(bspline_face.outer_contour3d)
