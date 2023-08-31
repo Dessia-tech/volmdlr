@@ -1881,6 +1881,15 @@ class OpenTriangleShell3D(OpenShell3D):
 
         return triangle_shell
 
+    def to_display_triangle_shell(self) -> "DisplayTriangleShell3D":
+        """
+        Create a DisplayTriangleShell3D from the current TriangleShell3D.
+
+        :return: The created DisplayTriangleShell3D.
+        :rtype: DisplayTriangleShell3D
+        """
+        return DisplayTriangleShell3D.from_triangle_shell_3d(self)
+
 
 class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     """
