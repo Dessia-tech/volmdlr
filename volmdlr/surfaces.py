@@ -1323,30 +1323,6 @@ class Plane3D(Surface3D):
         if plane_intersections:
             return [curves.Line3D(plane_intersections[0], plane_intersections[1])]
         return []
-        # if self.is_parallel(other_plane):
-        #     return []
-        # line_direction = self.frame.w.cross(other_plane.frame.w)
-        #
-        # if line_direction.norm() < 1e-6:
-        #     return None
-        #
-        # a1, b1, c1, d1 = self.equation_coefficients()
-        # a2, b2, c2, d2 = other_plane.equation_coefficients()
-        # if not math.isclose(a1 * b2 - a2 * b1, 0.0, abs_tol=1e-10):
-        #     x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
-        #     y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
-        #     point1 = volmdlr.Point3D(x0, y0, 0)
-        # elif a2 * c1 != a1 * c2:
-        #     x0 = (c2 * d1 - c1 * d2) / (a2 * c1 - a1 * c2)
-        #     z0 = (a1 * d2 - a2 * d1) / (a2 * c1 - a1 * c2)
-        #     point1 = volmdlr.Point3D(x0, 0, z0)
-        # elif c1 * b2 != b1 * c2:
-        #     y0 = (- c2 * d1 + c1 * d2) / (b1 * c2 - c1 * b2)
-        #     z0 = (- b1 * d2 + b2 * d1) / (b1 * c2 - c1 * b2)
-        #     point1 = volmdlr.Point3D(0, y0, z0)
-        # else:
-        #     raise NotImplementedError
-        # return [curves.Line3D(point1, point1 + line_direction)]
 
     def is_coincident(self, plane2):
         """

@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
 - BSplineSurface3D: partial removal of dependencies on geomdl objects
 
+
 ### Fixed
 - Sweep with non smoth path
 - plot of vector3D.
