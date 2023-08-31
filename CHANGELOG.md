@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - add missing name attributes to classmethods
-- 
+- fixed circular imports
+
 ### Refactor
 -
 ### Changed
