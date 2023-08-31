@@ -129,29 +129,12 @@ def insert_knot_curve(obj, param, num, **kwargs):
     """
     Inserts knots n-times to a spline geometry.
 
-    The following code snippet illustrates the usage of this function:
-
-    .. code-block:: python
-
-        # Insert knot u=0.5 to a curve 2 times
-        operations.insert_knot(curve, [0.5], [2])
-
-        # Insert knot v=0.25 to a surface 1 time
-        operations.insert_knot(surface, [None, 0.25], [0, 1])
-
-        # Insert knots u=0.75, v=0.25 to a surface 2 and 1 times, respectively
-        operations.insert_knot(surface, [0.75, 0.25], [2, 1])
-
-        # Insert knot w=0.5 to a volume 1 time
-        operations.insert_knot(volume, [None, None, 0.5], [0, 0, 1])
-
     Please note that input spline geometry object will always be updated if the knot insertion operation is successful.
 
     Keyword Arguments:
         * ``check_num``: enables/disables operation validity checks. *Default: True*
 
     :param obj: spline geometry
-    :type obj: abstract.SplineGeometry
     :param param: knot(s) to be inserted in [u, v, w] format
     :type param: list, tuple
     :param num: number of knot insertions in [num_u, num_v, num_w] format
@@ -202,8 +185,6 @@ def insert_knot_curve(obj, param, num, **kwargs):
         point_name = "Point" + obj.__class__.__name__[-2:]
         cpts_tmp = [getattr(volmdlr, point_name)(*point) for point in cpts_tmp]
         obj = obj.__class__(obj.degree, cpts_tmp, knot_multiplicities, knots, weights)
-        # obj.control_points = cpts_tmp
-        # obj.knotvector = kv_new
     # Return new spline geometry
     return obj
 

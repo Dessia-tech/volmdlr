@@ -5089,15 +5089,15 @@ class BSplineCurve3D(BSplineCurve):
 
         polys = [volmdlr.wires.ClosedPolygon3D(c.discretization_points(number_points=36)) for c in contours]
 
-        size_v, size_u = len(polys[0].points) + 1, len(polys)
+        size_v, size_u = len(polys[0].points), len(polys)
         degree_u, degree_v = 3, 3
 
         points_3d = []
         for poly in polys:
             points_3d.extend(poly.points)
-            points_3d.append(poly.points[0])
 
-        bezier_surface3d = volmdlr.surfaces.BezierSurface3D(degree_u, degree_v, points_3d, size_u, size_v)
+        bspline_surface3d = volmdlr.surfaces.BSplineSurface3D.from_points_interpolation(points_3d, size_u,
+                                                                                       size_v,degree_u, degree_v)
 
         outer_contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D),
                                                  volmdlr.edges.LineSegment2D(
@@ -5107,7 +5107,7 @@ class BSplineCurve3D(BSplineCurve):
                                                  volmdlr.edges.LineSegment2D(volmdlr.Y2D, volmdlr.O2D)])
         surf2d = volmdlr.surfaces.Surface2D(outer_contour, [])
 
-        bsface3d = volmdlr.faces.BSplineFace3D(bezier_surface3d, surf2d)
+        bsface3d = volmdlr.faces.BSplineFace3D(bspline_surface3d, surf2d)
         new_faces.append(bsface3d)
         return new_faces
 
@@ -5433,26 +5433,26 @@ class Arc3D(ArcMixin, Edge):
 
         radius1, radius2 = self.radius, other_arc.radius
 
-        a, b, c, d = u1.dot(u1), u1.dot(u2), u1.dot(u3), u1.dot(u4)
-        e, f, g = u2.dot(u2), u2.dot(u3), u2.dot(u4)
-        h, i = u3.dot(u3), u3.dot(u4)
-        j = u4.dot(u4)
-        k, l, m, n, o = w.dot(u1), w.dot(u2), w.dot(u3), w.dot(u4), w.dot(w)
+        u1_u1, u1_u2, u1_u3, u1_u4 = u1.dot(u1), u1.dot(u2), u1.dot(u3), u1.dot(u4)
+        u2_u2, u2_u3, u2_u4 = u2.dot(u2), u2.dot(u3), u2.dot(u4)
+        u3_u3, u3_u4 = u3.dot(u3), u3.dot(u4)
+        u4_u4 = u4.dot(u4)
+        w_u1, w_u2, w_u3, w_u4, w_w = w.dot(u1), w.dot(u2), w.dot(u3), w.dot(u4), w.dot(w)
 
         def distance_squared(x):
-            return (a * ((math.cos(x[0])) ** 2) * radius1 ** 2 + e * (
+            return (u1_u1 * ((math.cos(x[0])) ** 2) * radius1 ** 2 + u2_u2 * (
                     (math.sin(x[0])) ** 2) * radius1 ** 2
-                    + o + h * ((math.cos(x[1])) ** 2) * radius2 ** 2 + j * (
+                    + w_w + u3_u3 * ((math.cos(x[1])) ** 2) * radius2 ** 2 + u4_u4 * (
                             (math.sin(x[1])) ** 2) * radius2 ** 2
-                    + b * math.sin(2 * x[0]) * radius1 ** 2 - 2 * radius1 * math.cos(
-                        x[0]) * k
-                    - 2 * radius1 * radius2 * math.cos(x[0]) * math.cos(x[1]) * c
+                    + u1_u2 * math.sin(2 * x[0]) * radius1 ** 2 - 2 * radius1 * math.cos(
+                        x[0]) * w_u1
+                    - 2 * radius1 * radius2 * math.cos(x[0]) * math.cos(x[1]) * u1_u3
                     - 2 * radius1 * radius2 * math.cos(x[0]) * math.sin(
-                        x[1]) * d - 2 * radius1 * math.sin(x[0]) * l
-                    - 2 * radius1 * radius2 * math.sin(x[0]) * math.cos(x[1]) * f
+                        x[1]) * u1_u4 - 2 * radius1 * math.sin(x[0]) * w_u2
+                    - 2 * radius1 * radius2 * math.sin(x[0]) * math.cos(x[1]) * u2_u3
                     - 2 * radius1 * radius2 * math.sin(x[0]) * math.sin(
-                        x[1]) * g + 2 * radius2 * math.cos(x[1]) * m
-                    + 2 * radius2 * math.sin(x[1]) * n + i * math.sin(
+                        x[1]) * u2_u4 + 2 * radius2 * math.cos(x[1]) * w_u3
+                    + 2 * radius2 * math.sin(x[1]) * w_u4 + u3_u4 * math.sin(
                         2 * x[1]) * radius2 ** 2)
 
         x01 = npy.array([self.angle / 2, other_arc.angle / 2])
