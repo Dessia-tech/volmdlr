@@ -1888,7 +1888,7 @@ class OpenTriangleShell3D(OpenShell3D):
         :return: The created DisplayTriangleShell3D.
         :rtype: DisplayTriangleShell3D
         """
-        return DisplayTriangleShell3D.from_triangle_shell_3d(self)
+        return DisplayTriangleShell3D.from_triangle_shell(self)
 
 
 class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
@@ -1925,7 +1925,7 @@ class DisplayTriangleShell3D(Shell3D):
     """
     A Triangle Shell 3D optimized for display and saving purpose.
 
-    This shell has the particularity to not instantiante the Triangle3D objects, to reduce memory usage and improve
+    This shell has the particularity to not instantiate the Triangle3D objects, to reduce memory usage and improve
     performance.
     """
 
@@ -1933,8 +1933,8 @@ class DisplayTriangleShell3D(Shell3D):
         """
         Instantiate the DisplayTriangleShell3D.
 
-        :param positions: A 3D numpy array of float reprensenting the positions of the vertices of the triangles.
-        :param indices: A 3D numpy array of int reprensenting the indices of the vertices representing the triangles.
+        :param positions: A 3D numpy array of float representing the positions of the vertices of the triangles.
+        :param indices: A 3D numpy array of int representing the indices of the vertices representing the triangles.
         :param name: A name for the DisplayTriangleShell3D, optional.
         """
         self.positions = positions
@@ -1943,7 +1943,7 @@ class DisplayTriangleShell3D(Shell3D):
         Shell3D.__init__(self, faces=[], name=name)  # avoid saving the faces for memory and performance
 
     @classmethod
-    def from_triangle_shell_3d(
+    def from_triangle_shell(
         cls, triangle_shell: Union["OpenTriangleShell3D", "ClosedTriangleShell3D"]
     ) -> "DisplayTriangleShell3D":
         """
