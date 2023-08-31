@@ -1956,7 +1956,7 @@ class DisplayTriangleShell3D(Shell3D):
         self.positions = positions
         self.indices = indices
 
-        Shell3D.__init__(self, faces=[], name=name)  # avoid saving the faces for performance
+        Shell3D.__init__(self, faces=[], name=name)  # avoid saving the faces for memory and performance
 
     @classmethod
     def from_triangle_shell_3d(
@@ -1990,10 +1990,7 @@ class DisplayTriangleShell3D(Shell3D):
     def babylon_meshes(self, merge_meshes=True):
         """Overload of 'babylon_meshes' for performance."""
 
-        position = self.positions.flatten().tolist()
-        indices = self.indices.flatten().tolist()
-
-        babylon_mesh = {"positions": position, "indices": indices}
+        babylon_mesh = {"positions": self.positions.flatten().tolist(), "indices": self.indices.flatten().tolist()}
         babylon_mesh.update(self.babylon_param())
 
         return [babylon_mesh]
