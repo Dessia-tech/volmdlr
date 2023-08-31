@@ -1323,30 +1323,6 @@ class Plane3D(Surface3D):
         if plane_intersections:
             return [curves.Line3D(plane_intersections[0], plane_intersections[1])]
         return []
-        # if self.is_parallel(other_plane):
-        #     return []
-        # line_direction = self.frame.w.cross(other_plane.frame.w)
-        #
-        # if line_direction.norm() < 1e-6:
-        #     return None
-        #
-        # a1, b1, c1, d1 = self.equation_coefficients()
-        # a2, b2, c2, d2 = other_plane.equation_coefficients()
-        # if not math.isclose(a1 * b2 - a2 * b1, 0.0, abs_tol=1e-10):
-        #     x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
-        #     y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
-        #     point1 = volmdlr.Point3D(x0, y0, 0)
-        # elif a2 * c1 != a1 * c2:
-        #     x0 = (c2 * d1 - c1 * d2) / (a2 * c1 - a1 * c2)
-        #     z0 = (a1 * d2 - a2 * d1) / (a2 * c1 - a1 * c2)
-        #     point1 = volmdlr.Point3D(x0, 0, z0)
-        # elif c1 * b2 != b1 * c2:
-        #     y0 = (- c2 * d1 + c1 * d2) / (b1 * c2 - c1 * b2)
-        #     z0 = (- b1 * d2 + b2 * d1) / (b1 * c2 - c1 * b2)
-        #     point1 = volmdlr.Point3D(0, y0, z0)
-        # else:
-        #     raise NotImplementedError
-        # return [curves.Line3D(point1, point1 + line_direction)]
 
     def is_coincident(self, plane2):
         """
@@ -5123,14 +5099,13 @@ class BSplineSurface3D(Surface3D):
 
     def points(self):
         """
-        Returns surface points
+        Returns surface points.
         """
         return [volmdlr.Point3D(*point) for point in self.evalpts]
 
     def control_points_matrix(self, coordinates):
         """
         Define control points like a matrix, for each coordinate: x:0, y:1, z:2.
-
         """
 
         points = npy.empty((self.nb_u, self.nb_v))
@@ -6553,13 +6528,12 @@ class BSplineSurface3D(Surface3D):
                               v_multiplicities=v_multiplicities,
                               u_knots=u_knots,
                               v_knots=v_knots, weights=surface.weights, name=name)
-
         return bspline_surface
 
     @classmethod
-    def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, name: str = ''):
+    def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, name: str = ""):
         warnings.warn("points_fitting_into_bspline_surface is deprecated. Use from_points_interpolation instead")
-        return cls.from_points_interpolation(points_3d, size_u, size_v, degree_u, degree_v)
+        return cls.from_points_interpolation(points_3d, size_u, size_v, degree_u, degree_v, name)
 
     @classmethod
     def from_points_interpolation(cls, points_3d: List[volmdlr.Point3D], size_u: int, size_v: int,
@@ -6592,9 +6566,10 @@ class BSplineSurface3D(Surface3D):
                    knots_v, name=name)
 
     @classmethod
-    def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, **kwargs):
+    def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v,
+                                                name: str = "", **kwargs):
         warnings.warn("points_approximate_into_bspline_surface is deprecated. Use from_points_approximation instead")
-        return cls.from_points_approximation(points_3d, size_u, size_v, degree_u, degree_v, **kwargs)
+        return cls.from_points_approximation(points_3d, size_u, size_v, degree_u, degree_v, name, **kwargs)
 
     @classmethod
     def from_points_approximation(cls, points_3d: List[volmdlr.Point3D], size_u: int, size_v: int, degree_u: int,
