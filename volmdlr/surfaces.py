@@ -5420,7 +5420,6 @@ class BSplineSurface3D(Surface3D):
         x0, distance = self.point_inversion_grid_search(point3d, tol)
         if distance < tol:
             return volmdlr.Point2D(*x0)
-
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         res = minimize(fun, x0=npy.array(x0), jac=True,
                        bounds=[(min_bound_x, max_bound_x),
@@ -6532,7 +6531,10 @@ class BSplineSurface3D(Surface3D):
         return bspline_surface
 
     @classmethod
-    def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, name: str = ""):
+    def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, name: str = ''):
+        """
+        Bspline Surface interpolation through 3d points.
+        """
         warnings.warn("points_fitting_into_bspline_surface is deprecated. Use from_points_interpolation instead")
         return cls.from_points_interpolation(points_3d, size_u, size_v, degree_u, degree_v, name)
 
@@ -6557,7 +6559,6 @@ class BSplineSurface3D(Surface3D):
         :return: B-spline surface.
         :rtype: BSplineSurface3D
         """
-
         points = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points_3d], dtype=npy.float64)
 
         ctrlpts, knots_u, knot_multiplicities_u, knots_v, knot_multiplicities_v = \
@@ -6569,6 +6570,9 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v,
                                                 name: str = "", **kwargs):
+        """
+        Bspline Surface approximate through 3d points.
+        """
         warnings.warn("points_approximate_into_bspline_surface is deprecated. Use from_points_approximation instead")
         return cls.from_points_approximation(points_3d, size_u, size_v, degree_u, degree_v, name, **kwargs)
 

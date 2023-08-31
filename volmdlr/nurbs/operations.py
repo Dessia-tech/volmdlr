@@ -38,8 +38,7 @@ def knot_insertion(degree, knotvector, ctrlpts, u, **kwargs):
     knot_span = kwargs.get('span', core.find_span_linear(degree, knotvector, len(ctrlpts), u))  # knot span
 
     # Initialize variables
-    num_ctrlpts_orig = len(ctrlpts)
-    num_ctrlpts_new = num_ctrlpts_orig + num_insertions
+    num_ctrlpts_new = len(ctrlpts) + num_insertions
 
     # Initialize new control points array (control points may be weighted or not)
     ctrlpts_new = [np.empty_like(ctrlpts[0]) for _ in range(num_ctrlpts_new)]
@@ -221,14 +220,20 @@ def split_curve(obj, param, **kwargs):
                                                      param,
                                                      core.find_span_linear)
 
-    # Control points
     knot_span = core.find_span_linear(obj.degree, obj.knotvector, len(obj.ctrlpts), param) - obj.degree + 1
-    control_points = temp_obj.control_points
+    return construct_split_curve(temp_obj, curve1_kv, curve2_kv, knot_span, insertion_count)
+
+
+def construct_split_curve(obj, curve1_kv, curve2_kv, knot_span, insertion_count):
+    """
+    Helper function to instatiate split curve.
+    """
+    control_points = obj.control_points
     curve1_ctrlpts = control_points[0:knot_span + insertion_count]
     curve2_ctrlpts = control_points[knot_span + insertion_count - 1:]
     if obj.rational:
-        curve1_weights = temp_obj.weights[0:knot_span + insertion_count]
-        curve2_weights = temp_obj.weights[knot_span + insertion_count - 1:]
+        curve1_weights = obj.weights[0:knot_span + insertion_count]
+        curve2_weights = obj.weights[knot_span + insertion_count - 1:]
     else:
         curve1_weights = None
         curve2_weights = None
@@ -236,12 +241,12 @@ def split_curve(obj, param, **kwargs):
     knots_1 = list(sorted(set(curve1_kv)))
     knot_multiplicities_1 = [core.find_multiplicity(knot, curve1_kv) for knot in knots_1]
     # Create a new curve for the first half
-    curve1 = temp_obj.__class__(temp_obj.degree, curve1_ctrlpts, knot_multiplicities_1, knots_1, curve1_weights)
+    curve1 = obj.__class__(obj.degree, curve1_ctrlpts, knot_multiplicities_1, knots_1, curve1_weights)
 
     knots_2 = list(sorted(set(curve2_kv)))
     knot_multiplicities_2 = [core.find_multiplicity(knot, curve2_kv) for knot in knots_2]
     # Create another curve for the second half
-    curve2 = temp_obj.__class__(temp_obj.degree, curve2_ctrlpts, knot_multiplicities_2, knots_2, curve2_weights)
+    curve2 = obj.__class__(obj.degree, curve2_ctrlpts, knot_multiplicities_2, knots_2, curve2_weights)
 
     # Return the split curves
     return curve1, curve2
@@ -273,8 +278,7 @@ def insert_knot_surface(obj, param, num, **kwargs):
 
         # Check if it is possible add that many number of knots
         if check_num and num[0] > obj.degree_u - s_u:
-            raise ValueError("Knot " + str(param[0]) + " cannot be inserted " + str(num[0]) + " times (u-dir)",
-                             data=dict(knot=param[0], num=num[0], multiplicity=s_u))
+            raise ValueError("Knot " + str(param[0]) + " cannot be inserted " + str(num[0]) + " times (u-dir)")
 
         # Find knot span
         span_u = core.find_span_linear(obj.degree_u, knotvector_u, obj.nb_u, param[0])
@@ -311,8 +315,7 @@ def insert_knot_surface(obj, param, num, **kwargs):
 
         # Check if it is possible add that many number of knots
         if check_num and num[1] > obj.degree_v - s_v:
-            raise ValueError("Knot " + str(param[1]) + " cannot be inserted " + str(num[1]) + " times (v-dir)",
-                             data=dict(knot=param[1], num=num[1], multiplicity=s_v))
+            raise ValueError("Knot " + str(param[1]) + " cannot be inserted " + str(num[1]) + " times (v-dir)")
 
         # Find knot span
         span_v = core.find_span_linear(obj.degree_v, knotvector_v, obj.nb_v, param[1])
@@ -349,9 +352,9 @@ def split_surface_u(obj, param, **kwargs):
     This method splits the surface into two pieces at the given parametric coordinate on the u-direction,
     generates two different surface objects and returns them. It does not modify the input surface.
 
-    Keyword Arguments:
-        * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
-        * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
+        Keyword Arguments:
+            * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
+            * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
 
     :param obj: surface
     :type obj: abstract.Surface
@@ -359,6 +362,7 @@ def split_surface_u(obj, param, **kwargs):
     :type param: float
     :return: a list of surface patches
     :rtype: list
+
     """
 
     if param in (obj.domain[0], obj.domain[1]):
@@ -391,9 +395,9 @@ def split_surface_v(obj, param, **kwargs):
     This method splits the surface into two pieces at the given parametric coordinate on the v-direction,
     generates two different surface objects and returns them. It does not modify the input surface.
 
-    Keyword Arguments:
-        * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
-        * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
+        Keyword Arguments:
+            * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
+            * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
 
     :param obj: surface
     :type obj: abstract.Surface
@@ -401,6 +405,7 @@ def split_surface_v(obj, param, **kwargs):
     :type param: float
     :return: a list of surface patches
     :rtype: list
+
     """
     if param in (obj.domain[2], obj.domain[3]):
         raise ValueError("Cannot split from the v-domain edge")
@@ -446,7 +451,8 @@ def separate_ctrlpts_weights(ctrlptsw):
 
 
 def flip_ctrlpts_u(ctrlpts, size_u, size_v):
-    """ Flips a list of 1-dimensional control points from u-row order to v-row order.
+    """
+    Flips a list of 1-dimensional control points from u-row order to v-row order.
 
     **u-row order**: each row corresponds to a list of u values
 
@@ -472,7 +478,7 @@ def flip_ctrlpts_u(ctrlpts, size_u, size_v):
 
 def ctrlpts2d_to_ctrlpts(control_points_table):
     """
-    Transform the control_points m x n
+    Transform the control_points m x n.
     """
     size_u = len(control_points_table)
     size_v = len(control_points_table[0])
