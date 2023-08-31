@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.14.0 [future]
 
 ### New Features
--
+- BSplineSurface3D: from_points_interpolation, from_points_approximation.
+
 ### Fixed
 - add missing name attributes to classmethods
 - fixed circular imports
@@ -29,6 +30,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - perf: to_dict/dict_to_obj of OpenTriangleShell3D
 - Cylinder / Cone / HollowCylinder: from_center_point_and_axis
 - Cone: remove inheritance from RevolvedProfile
+- Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
+- Curve: local_discretization
+- Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
+- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections, ellipse_intersections
+- Circle2D: ellipse_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
 - BSplineSurface3D: partial removal of dependencies on geomdl objects
 - Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
 - Curve: local_discretization
@@ -79,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edges.Edge._generic_minimum_distance
 - LineSegment3D: distance_linesegment
 - BSpline3D: linesegment_intersections
+
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
@@ -112,6 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: arc_intersections, arcellipse_intersections, test_minimum_distance_bspline
 - BSplineCurve3D: test_bspline_linesegment_minimum_distance, test_bspline_linesegment_intersections
 - Contour3D: test_edge_intersections
+
 ## v0.12.0
 
 
