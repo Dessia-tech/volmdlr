@@ -260,7 +260,6 @@ def insert_knot_surface(obj, param, num, **kwargs):
         * ``check_num``: enables/disables operation validity checks. *Default: True*
 
     :param obj: spline geometry
-    :type obj: abstract.SplineGeometry
     :param param: knot(s) to be inserted in [u, v, w] format
     :type param: list, tuple
     :param num: number of knot insertions in [num_u, num_v, num_w] format
@@ -352,9 +351,9 @@ def split_surface_u(obj, param, **kwargs):
     This method splits the surface into two pieces at the given parametric coordinate on the u-direction,
     generates two different surface objects and returns them. It does not modify the input surface.
 
-        Keyword Arguments:
-            * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
-            * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
+    Keyword Arguments:
+        * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
+        * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
 
     :param obj: surface
     :type obj: abstract.Surface
@@ -395,9 +394,9 @@ def split_surface_v(obj, param, **kwargs):
     This method splits the surface into two pieces at the given parametric coordinate on the v-direction,
     generates two different surface objects and returns them. It does not modify the input surface.
 
-        Keyword Arguments:
-            * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
-            * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
+    Keyword Arguments:
+        * ``find_span_func``: FindSpan implementation. *Default:* :func:`.helpers.find_span_linear`
+        * ``insert_knot_func``: knot insertion algorithm implementation. *Default:* :func:`.operations.insert_knot`
 
     :param obj: surface
     :type obj: abstract.Surface
