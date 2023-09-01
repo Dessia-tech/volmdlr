@@ -357,10 +357,8 @@ class Step(dc.DessiaObject):
                     angle_conversion_factor=self.angle_conversion_factor)
 
             else:
-                print("step.py")
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
         except (ValueError, NotImplementedError) as error:
-            print("step.py")
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
         return volmdlr_object
 
