@@ -4,13 +4,6 @@ import random
 import traceback
 import warnings
 from itertools import chain, product
-<<<<<<< HEAD
-from typing import List, Tuple, Any, Dict
-
-import matplotlib.pyplot as plt
-import networkx as nx
-import numpy as npy
-=======
 from typing import Any, Dict, List, Tuple, Iterable
 
 import matplotlib.pyplot as plt
@@ -18,7 +11,6 @@ import networkx as nx
 import numpy as np
 from numpy.typing import NDArray
 from dessia_common.core import DessiaObject
->>>>>>> 6db8efe1... TriangleShell3D: perf
 from dessia_common.typings import JsonSerializable
 from trimesh import Trimesh
 
