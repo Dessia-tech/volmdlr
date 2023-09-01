@@ -239,9 +239,15 @@ class Face3D(volmdlr.core.Primitive3D):
         #     return None
         #     outer_contour2d = contour2d_healing(outer_contour2d, outer_contour3d)
         if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-2)):
-            warnings.warn("Impossible to instatiate face because of topology inconsistency in the "
-                          "face's contour from step file.")
-            return None
+            list_contours = outer_contour2d.__class__.contours_from_edges(outer_contour2d.primitives)
+            for contour in list_contours:
+                if contour.is_ordered():
+                    outer_contour2d = contour
+                    break
+            else:
+                warnings.warn("Impossible to instatiate face because of topology inconsistency in the "
+                              "face's contour from step file.")
+                return None
         face = cls(surface,
                    surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),
                    name=name)
