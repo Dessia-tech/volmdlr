@@ -238,7 +238,9 @@ class Face3D(volmdlr.core.Primitive3D):
         #                   "face contour from step file.")
         #     return None
         #     outer_contour2d = contour2d_healing(outer_contour2d, outer_contour3d)
-        if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-2)):
+        if (not outer_contour2d) or (not outer_contour2d.primitives):
+            return None
+        if not outer_contour2d.is_ordered(1e-2):
             list_contours = outer_contour2d.__class__.contours_from_edges(outer_contour2d.primitives)
             for contour in list_contours:
                 if contour.is_ordered():

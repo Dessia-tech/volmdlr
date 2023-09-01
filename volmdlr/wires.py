@@ -4237,6 +4237,7 @@ class Contour3D(ContourMixin, Wire3D):
         :return: The corresponding Contour3D object.
         :rtype: :class:`volmdlr.wires.Contour3D`
         """
+        step_id = kwargs.get("step_id", "UNKOWN")
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
