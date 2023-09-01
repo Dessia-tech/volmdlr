@@ -298,7 +298,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         volume = bbox.volume()
 
         # Check if the bounding box volume is correct
-        self.assertEqual(volume, 4.0)
+        self.assertAlmostEqual(volume, 3.97787, 2)
 
     def test_arc3d_to_2d(self):
         bspline_surface = surfaces.BSplineSurface3D.load_from_file('surfaces/BSplineSurface3D_with_Arc3D.json')

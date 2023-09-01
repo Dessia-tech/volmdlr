@@ -11,12 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: from_points_interpolation, from_points_approximation.
 - nurbs module.
 
-
 ### Fixed
 - add missing name attributes to classmethods
 - fixed circular imports
 - nurbs.core: find_multiplicity, evaluate_curve.
-
 
 ### Refactor
 -
