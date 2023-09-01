@@ -542,7 +542,6 @@ def construct_split_surfaces(obj, knotvectors, direction, knot_span, insertion_c
         surf1_nb_v = knot_span + insertion_count
         surf2_nb_u = obj.nb_u
         surf2_nb_v = obj.nb_v - (knot_span + insertion_count - 1)
-    # Create a new surface for the first half
     weights = None
     if obj.rational:
         surf1_ctrlpts, weights = separate_ctrlpts_weights(surf1_ctrlpts)
@@ -550,7 +549,6 @@ def construct_split_surfaces(obj, knotvectors, direction, knot_span, insertion_c
     surf1 = obj.__class__(obj.degree_u, obj.degree_v, control_points, surf1_nb_u,
                           surf1_nb_v, u_multiplicities, v_multiplicities, u_knots, v_knots, weights)
 
-    # Create another surface fot the second half
     # knots
     if direction == "u":
         u_knots = np.unique(surf2_kv)
@@ -558,7 +556,6 @@ def construct_split_surfaces(obj, knotvectors, direction, knot_span, insertion_c
     else:
         v_knots = np.unique(surf2_kv)
         v_multiplicities = [core.find_multiplicity(knot, surf2_kv) for knot in v_knots]
-    # Create a new surface for the first half
     weights = None
     if obj.rational:
         surf2_ctrlpts, weights = separate_ctrlpts_weights(surf2_ctrlpts)
