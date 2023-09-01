@@ -14,8 +14,8 @@ class TestSurface2D(unittest.TestCase):
         tri = self.surface2d.triangulation()
         self.assertAlmostEqual(tri.area(), 1)
 
-        surface2d = surfaces.Surface2D.load_from_file("surfaces/objects_surface2d_test/self_intersections.json")
-        tri = surface2d.triangulation()
+        surface2d = surfaces.Surface2D.load_from_file("objects_surface2d_test/self_intersections.json")
+        tri = surface2d.triangulation(number_points_x=5, number_points_y=0)
         self.assertTrue(tri)
 
 
