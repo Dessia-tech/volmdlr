@@ -182,7 +182,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if len(contours) == 2 and point_in_contours3d:
             vertex = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             base = next(contour for contour in contours if contour is not vertex)
-            return face.from_base_and_vertex(base, vertex, name)
+            return face.from_base_and_vertex(surface, base, vertex, name)
         if point_in_contours3d:
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
@@ -3263,8 +3263,7 @@ class BSplineFace3D(Face3D):
                                                                          min(self.surface3d.degree_u,
                                                                              self.surface3d.degree_v))
         umin, umax, vmin, vmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
-        min_bound_u, max_bound_u = self.surface3d.surface.domain[0]
-        min_bound_v, max_bound_v = self.surface3d.surface.domain[1]
+        min_bound_u, max_bound_u, min_bound_v, max_bound_v = self.surface3d.domain
         if not math.isclose(umin, min_bound_u, rel_tol=0.01) or not math.isclose(vmin, min_bound_v, rel_tol=0.01):
             point3d_min = self.surface3d.point2d_to_3d(volmdlr.Point2D(umin, vmin))
             point1 = neutral_fiber.point_projection(point3d_min)[0]
