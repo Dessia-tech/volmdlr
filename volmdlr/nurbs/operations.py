@@ -240,16 +240,13 @@ def construct_split_curve(obj, curve1_kv, curve2_kv, knot_span, insertion_count)
 
     knots_1 = list(sorted(set(curve1_kv)))
     knot_multiplicities_1 = [core.find_multiplicity(knot, curve1_kv) for knot in knots_1]
-    # Create a new curve for the first half
-    curve1 = obj.__class__(obj.degree, curve1_ctrlpts, knot_multiplicities_1, knots_1, curve1_weights)
 
     knots_2 = list(sorted(set(curve2_kv)))
     knot_multiplicities_2 = [core.find_multiplicity(knot, curve2_kv) for knot in knots_2]
-    # Create another curve for the second half
-    curve2 = obj.__class__(obj.degree, curve2_ctrlpts, knot_multiplicities_2, knots_2, curve2_weights)
 
     # Return the split curves
-    return [curve1, curve2]
+    return [obj.__class__(obj.degree, curve1_ctrlpts, knot_multiplicities_1, knots_1, curve1_weights),
+            obj.__class__(obj.degree, curve2_ctrlpts, knot_multiplicities_2, knots_2, curve2_weights)]
 
 
 def insert_knot_surface(obj, param, num, **kwargs):
