@@ -10,13 +10,12 @@ import numpy as npy
 import triangle as triangle_lib
 from geomdl import NURBS, BSpline, utilities
 from geomdl.construct import extract_curves
-# from geomdl.fitting import approximate_surface, interpolate_surface
-from geomdl.operations import split_surface_u, split_surface_v
 from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
+from volmdlr.nurbs.operations import split_surface_u, split_surface_v
 import volmdlr.core
 from volmdlr import display, edges, grid, wires, curves
 import volmdlr.geometry
@@ -5043,6 +5042,25 @@ class BSplineSurface3D(Surface3D):
             self._domain = start_u, stop_u, start_v, stop_v
         return self._domain
 
+    def ctrlpts2d(self):
+        """
+        Each row represents the control points in u direction and each column the points in v direction.
+        """
+        ctrlpts = self.ctrlptsw if self.rational else self.ctrlpts
+        control_points_table = []
+        points_row = []
+        i = 1
+        for point in ctrlpts:
+            points_row.append(point)
+            if i == self.nb_v:
+                control_points_table.append(points_row)
+                points_row = []
+                i = 1
+            else:
+                i += 1
+        return control_points_table
+
+
     def vertices(self):
         """
         Evaluated points.
@@ -5384,7 +5402,6 @@ class BSplineSurface3D(Surface3D):
         x0, distance = self.point_inversion_grid_search(point3d, tol)
         if distance < tol:
             return volmdlr.Point2D(*x0)
-
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         res = minimize(fun, x0=npy.array(x0), jac=True,
                        bounds=[(min_bound_x, max_bound_x),
@@ -6471,7 +6488,7 @@ class BSplineSurface3D(Surface3D):
         return self.contour2d_to_3d(contour01)
 
     @classmethod
-    def from_geomdl_surface(cls, surface, name: str = ''):
+    def from_geomdl_surface(cls, surface, name: str = ""):
         """
         Create a volmdlr BSpline_Surface3D from a geomdl's one.
 
@@ -6492,12 +6509,15 @@ class BSplineSurface3D(Surface3D):
                               u_multiplicities=u_multiplicities,
                               v_multiplicities=v_multiplicities,
                               u_knots=u_knots,
-                              v_knots=v_knots, name=name)
+                              v_knots=v_knots, weights=surface.weights, name=name)
 
         return bspline_surface
 
     @classmethod
-    def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, name: str = ""):
+    def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, name: str = ''):
+        """
+        Bspline Surface interpolation through 3d points.
+        """
         warnings.warn("points_fitting_into_bspline_surface is deprecated. Use from_points_interpolation instead")
         return cls.from_points_interpolation(points_3d, size_u, size_v, degree_u, degree_v, name)
 
@@ -6522,7 +6542,6 @@ class BSplineSurface3D(Surface3D):
         :return: B-spline surface.
         :rtype: BSplineSurface3D
         """
-
         points = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points_3d], dtype=npy.float64)
 
         ctrlpts, knots_u, knot_multiplicities_u, knots_v, knot_multiplicities_v = \
@@ -6534,6 +6553,9 @@ class BSplineSurface3D(Surface3D):
     @classmethod
     def points_approximate_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v,
                                                 name: str = "", **kwargs):
+        """
+        Bspline Surface approximate through 3d points.
+        """
         warnings.warn("points_approximate_into_bspline_surface is deprecated. Use from_points_approximation instead")
         return cls.from_points_approximation(points_3d, size_u, size_v, degree_u, degree_v, name, **kwargs)
 
@@ -6854,10 +6876,7 @@ class BSplineSurface3D(Surface3D):
         :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
-
-        surfaces_geo = split_surface_u(self.surface, u)
-        surfaces = [BSplineSurface3D.from_geomdl_surface(surface) for surface in surfaces_geo]
-        return surfaces
+        return split_surface_u(self, u)
 
     def split_surface_v(self, v: float):
         """
@@ -6868,10 +6887,7 @@ class BSplineSurface3D(Surface3D):
         :return: Two split surfaces
         :rtype: List[:class:`volmdlr.faces.BSplineSurface3D`]
         """
-
-        surfaces_geo = split_surface_v(self.surface, v)
-        surfaces = [BSplineSurface3D.from_geomdl_surface(surface) for surface in surfaces_geo]
-        return surfaces
+        return split_surface_v(self, v)
 
     def split_surface_with_bspline_curve(self, bspline_curve3d: edges.BSplineCurve3D):
         """
