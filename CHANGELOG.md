@@ -30,13 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - perf: to_dict/dict_to_obj of OpenTriangleShell3D
 - Cylinder / Cone / HollowCylinder: from_center_point_and_axis
 - Cone: remove inheritance from RevolvedProfile
-- Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
-- Curve: local_discretization
-- Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
-- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
-- Circle3D: circle_intersections, ellipse_intersections
-- Circle2D: ellipse_intersections.
-- Arc3D: arc_intersections, arcellipse_intersections
 - BSplineSurface3D: partial removal of dependencies on geomdl objects
 - Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
 - Curve: local_discretization
@@ -48,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wire3D/Contour3D: edge_intersections, wire_intersections
 - BSpline3D: arc_intersections
 - New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
+- BSplineSurface3D: partial removal of dependencies on geomdl objects
+
 
 ### Fixed
 - Sweep with non smoth path
