@@ -17,6 +17,7 @@ class Node2D(volmdlr.Point2D):
     """
     A node is a point with some hash capabilities for performance.
     """
+
     def __init__(self, x: float, y: float, name: str = ""):
         self.x = x
         self.y = y
@@ -33,14 +34,15 @@ class Node2D(volmdlr.Point2D):
             and math.isclose(self.y, other_node.y, abs_tol=1e-06)
 
     @classmethod
-    def from_point(cls, point2d):
-        return cls(point2d.x, point2d.y)
+    def from_point(cls, point2d, name: str = ''):
+        return cls(point2d.x, point2d.y, name=name)
 
 
 class Node3D(volmdlr.Point3D):
     """
     A node is a point with some hash capabilities for performance.
     """
+
     def __init__(self, x: float, y: float, z: float, name: str = ""):
         self.x = x
         self.y = y
@@ -59,8 +61,8 @@ class Node3D(volmdlr.Point3D):
             and math.isclose(self.z, other_node.z, abs_tol=1e-06)
 
     @classmethod
-    def from_point(cls, point3d):
-        return cls(point3d.x, point3d.y, point3d.z)
+    def from_point(cls, point3d, name: str = ''):
+        return cls(point3d.x, point3d.y, point3d.z, name=name)
 
 
 class DisplayMesh(dc.DessiaObject):
@@ -94,7 +96,7 @@ class DisplayMesh(dc.DessiaObject):
         return self._point_index
 
     @classmethod
-    def merge_meshes(cls, meshes: List['DisplayMesh']):
+    def merge_meshes(cls, meshes: List['DisplayMesh'], name: str = ''):
         """
         Merge several meshes into one.
         """
@@ -103,7 +105,7 @@ class DisplayMesh(dc.DessiaObject):
         point_index = {}
         points = []
         if len(meshes) == 1:
-            return cls(meshes[0].points, meshes[0].triangles)
+            return cls(meshes[0].points, meshes[0].triangles, name=name)
         for mesh in meshes:
             if not mesh:
                 continue
@@ -124,7 +126,7 @@ class DisplayMesh(dc.DessiaObject):
                 triangles.append((point_index[point1],
                                   point_index[point2],
                                   point_index[point3]))
-        return cls(points, triangles)
+        return cls(points, triangles, name=name)
 
     def merge_mesh(self, other_mesh):
         i_points = len(self.points)

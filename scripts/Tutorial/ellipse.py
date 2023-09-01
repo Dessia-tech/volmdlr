@@ -16,7 +16,7 @@ h = 20e-3 #Height of the Ellipse
 
 center = vm.Point3D([0,0,0]) #Choose the coordinate of the center
 normal = vm.Vector3D([1,1,1]) #Choose the normal
-normal.Normalize() #Normalize the normal if it is not the case
+normal = normal.unit_vector() #Normalize the normal if it is not the case
 plane = vm.Plane3D.from_normal(center, normal) #Create a plane to give us two others vector
 Gdir = plane.vectors[0] #Gradius direction
 Sdir = plane.vectors[1] #Sradius direction 

@@ -204,7 +204,7 @@ class Block(shells.ClosedShell3D):
         return self.size[0] * self.size[1] * self.size[2]
 
     @classmethod
-    def from_bounding_box(cls, bounding_box):
+    def from_bounding_box(cls, bounding_box, name: str = ''):
         """
         Transform a bounding box into a block.
         """
@@ -213,7 +213,7 @@ class Block(shells.ClosedShell3D):
         frame = volmdlr.Frame3D(origin, bbox_size[0] * volmdlr.Vector3D(1, 0, 0),
                                 bbox_size[1] * volmdlr.Vector3D(0, 1, 0),
                                 bbox_size[2] * volmdlr.Vector3D(0, 0, 1))
-        return cls(frame=frame)
+        return cls(frame=frame, name=name)
 
     def vertices(self):
         """Computes the vertices of the block."""
@@ -269,7 +269,7 @@ class Block(shells.ClosedShell3D):
         hly = 0.5 * self.frame.v.norm()
         hlz = 0.5 * self.frame.w.norm()
         frame = self.frame.copy()
-        frame.normalize()
+        frame = frame.normalize()
         xm_frame = volmdlr.Frame3D(frame.origin - 0.5 * self.frame.u,
                                    frame.v, frame.w, frame.u)
         xp_frame = volmdlr.Frame3D(frame.origin + 0.5 * self.frame.u,
@@ -398,7 +398,7 @@ class Block(shells.ClosedShell3D):
         return Block(new_frame, color=self.color,
                      alpha=self.alpha, name=self.name)
 
-    def plot_data(self, x3d, y3d, edge_style = plot_data.EdgeStyle):
+    def plot_data(self, x3d, y3d, edge_style=plot_data.EdgeStyle):
         """Plot the 2D projections of a block."""
         lines = []
         for edge3d in self.edges():
@@ -912,7 +912,7 @@ class Cylinder(shells.ClosedShell3D):
         position = 0.5 * (point1 + point2)
         length = point1.point_distance(point2)
         axis = (point2 - point1).to_vector()
-        axis.normalize()
+        axis = axis.unit_vector()
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
 
@@ -930,7 +930,7 @@ class Cylinder(shells.ClosedShell3D):
         alpha: float = 1,
         name: str = "",
     ):
-        """Deprecated classmethod. Use 'from_end_points' instead."""
+        """Deprecated class method. Use 'from_end_points' instead."""
         warnings.warn("Deprecated classmethod. Use 'from_end_points' instead.", DeprecationWarning)
 
         return cls.from_end_points(point1, point2, radius, color, alpha, name)
@@ -1667,7 +1667,7 @@ class HollowCylinder(shells.ClosedShell3D):
         position = 0.5 * (point1 + point2)
         length = point1.point_distance(point2)
         axis = (point2 - point1).to_vector()
-        axis.normalize()
+        axis = axis.unit_vector()
         u_vector = axis.deterministic_unit_normal_vector()
         v_vector = axis.cross(u_vector)
 
@@ -1694,7 +1694,7 @@ class HollowCylinder(shells.ClosedShell3D):
         alpha: float = 1,
         name: str = "",
     ):
-        """Deprecated classmethod. Use 'from_end_points' instead."""
+        """Deprecated class method. Use 'from_end_points' instead."""
         warnings.warn("Deprecated classmethod. Use 'from_end_points' instead.", DeprecationWarning)
 
         return cls.from_end_points(point1, point2, inner_radius, outer_radius, color, alpha, name)
@@ -2000,12 +2000,11 @@ class Sphere(shells.ClosedShell3D):
         rota_theta = [n * theta for n in range(nb_floor)]
 
         point1 = self.center + volmdlr.X3D * self.radius
-        rota_axis = volmdlr.Y3D
 
         skin_points = []
 
         for theta_ in rota_theta:
-            pt_floor_init = point1.rotation(self.center, rota_axis, theta_)
+            pt_floor_init = point1.rotation(self.center, volmdlr.Y3D, theta_)
 
             if math.isclose(theta_, 0, abs_tol=1e-6) or math.isclose(theta_, math.pi, abs_tol=1e-6):
                 skin_points.append(pt_floor_init)
@@ -2074,7 +2073,7 @@ class BSplineExtrusion(volmdlr.core.Primitive3D):
 
     def __init__(self, obj, vectorextru: volmdlr.Vector3D, name: str = ''):
         self.obj = obj
-        vectorextru.normalize()
+        vectorextru = vectorextru.unit_vector()
         self.vectorextru = vectorextru
         if obj.__class__ is curves.Ellipse3D:
             self.points = obj.tessel_points

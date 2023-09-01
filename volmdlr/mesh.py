@@ -54,17 +54,18 @@ class Node2D(vm.Point2D):
             and math.isclose(self.y, other_node.y, abs_tol=1e-12)
 
     @classmethod
-    def from_point(cls, point2d):
+    def from_point(cls, point2d, name: str = ''):
         """
         Defines a node2d from a point2d.
 
         :param point2d: A point2d
-        :type point2d: vm.Point2D
+        :type point2d: vm.Point2D.
+        :param name: object's name.
         :return: A node2d
         :rtype: Node2D
         """
 
-        return cls(point2d.x, point2d.y)
+        return cls(point2d.x, point2d.y, name=name)
 
 
 class Node3D(vm.Point3D):
@@ -89,17 +90,18 @@ class Node3D(vm.Point3D):
             and math.isclose(self.y, other_node.y, abs_tol=1e-12)
 
     @classmethod
-    def from_point(cls, point3d):
+    def from_point(cls, point3d, name: str = ''):
         """
         Defines a node3d from a point3d.
 
         :param point3d: A point3d
-        :type point3d: vm.Point3D
+        :type point3d: vm.Point3D.
+        :param name: object's name.
         :return: A node3d
         :rtype: Node3D
         """
 
-        return cls(point3d.x, point3d.y, point3d.z)
+        return cls(point3d.x, point3d.y, point3d.z, name=name)
 
 
 class LinearElement(vme.LineSegment2D):
@@ -173,9 +175,9 @@ class TriangularElement(vmw.Triangle):
         normal1 = vm.Vector2D(-vec1.y, vec1.x)
         normal2 = vm.Vector2D(-vec2.y, vec2.x)
         normal3 = vm.Vector2D(-vec3.y, vec3.x)
-        normal1.normalize()
-        normal2.normalize()
-        normal3.normalize()
+        normal1 = normal1.unit_vector()
+        normal2 = normal2.unit_vector()
+        normal3 = normal3.unit_vector()
         if normal1.dot(vec2) < 0:
             normal1 = - normal1
         if normal2.dot(vec3) < 0:
@@ -316,9 +318,9 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
         normal1 = vm.Vector2D(-vec1.y, vec1.x)
         normal2 = vm.Vector2D(-vec2.y, vec2.x)
         normal3 = vm.Vector2D(-vec3.y, vec3.x)
-        normal1.normalize()
-        normal2.normalize()
-        normal3.normalize()
+        normal1 = normal1.unit_vector()
+        normal2 = normal2.unit_vector()
+        normal3 = normal3.unit_vector()
         if normal1.dot(vec2) < 0:
             normal1 = - normal1
         if normal2.dot(vec3) < 0:
@@ -446,8 +448,8 @@ class TriangularElement2D(TriangularElement, vmw.ClosedPolygon2D):
             plt.fill(x, y, facecolor=fill_color, edgecolor="k")
             return ax
         if point_numbering:
-            for index_p, point in enumerate(self.points):
-                ax.text(*point, f'point {index_p + 1}', ha='center', va='top')
+            for index_point, point in enumerate(self.points):
+                ax.text(*point, f'point {index_point + 1}', ha='center', va='top')
         for p1, p2 in zip(self.points, self.points[1:] + [self.points[0]]):
             if edge_style.width is None:
                 edge_style.width = 1
@@ -511,9 +513,9 @@ class TriangularElement3D(TriangularElement, vmw.ClosedPolygon3D):
     #     normal1 = vm.Vector2D(-vec1.y, vec1.x)
     #     normal2 = vm.Vector2D(-vec2.y, vec2.x)
     #     normal3 = vm.Vector2D(-vec3.y, vec3.x)
-    #     normal1.normalize()
-    #     normal2.normalize()
-    #     normal3.normalize()
+    #     normal1 = normal1.unit_vector()
+    #     normal2 = normal2.unit_vector()
+    #     normal3 = normal3.unit_vector()
     #     if normal1.dot(vec2) < 0:
     #         normal1 = - normal1
     #     if normal2.dot(vec3) < 0:
