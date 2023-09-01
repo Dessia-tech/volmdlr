@@ -8,11 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.14.0 [future]
 
 ### New Features
-- BSplineSurface3D: from_points_interpolation, from_points_approximation.
+- nurbs module.
 
 ### Fixed
 - add missing name attributes to classmethods
 - fixed circular imports
+- BSplineSurface3D: from_points_interpolation, from_points_approximation.
 
 ### Refactor
 -
@@ -29,7 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - perf: to_dict/dict_to_obj of OpenTriangleShell3D
 - Cylinder / Cone / HollowCylinder: from_center_point_and_axis
 - Cone: remove inheritance from RevolvedProfile
-- BSplineSurface3D: partial removal of dependencies on geomdl objects
 - Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
 - Curve: local_discretization
 - Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
@@ -41,7 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSpline3D: arc_intersections
 - New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
 - BSplineSurface3D: partial removal of dependencies on geomdl objects
-
 
 ### Fixed
 - Sweep with non smoth path
