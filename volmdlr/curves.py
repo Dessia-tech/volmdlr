@@ -249,6 +249,20 @@ class Line(Curve):
         """Gets a line in the reverse direction."""
         return self.__class__(self.point2, self.point1, name=self.name + '_reverse')
 
+    def closest_point_on_line(self, point):
+        segment_vector = self.direction_vector()
+        p_vector = point - self.point1
+        p_vector = p_vector.to_vector()
+        t_param = p_vector.dot(segment_vector) / segment_vector.dot(segment_vector)
+        point = self.point1 + t_param*segment_vector
+        return point
+
+    @classmethod
+    def from_point_and_vector(cls, point: Union[volmdlr.Point2D, volmdlr.Point3D],
+                              direction_vector: Union[volmdlr.Vector2D, volmdlr.Vector3D]):
+        point2 = point + direction_vector
+        return cls(point, point2)
+
 
 class Line2D(Line):
     """
@@ -634,14 +648,6 @@ class Line3D(Line):
         if point3d.is_close(self.point1):
             return True
         return self.direction_vector().is_colinear_to(point3d - self.point1)
-
-    def closest_point_on_line(self, point):
-        segment_vector = self.direction_vector()
-        p_vector = point - self.point1
-        p_vector = p_vector.to_vector()
-        t_param = p_vector.dot(segment_vector) / segment_vector.dot(segment_vector)
-        point = self.point1 + t_param*segment_vector
-        return point
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
@@ -2399,11 +2405,11 @@ class Hyperbola2D(Hyperbola):
         points_positive_branch = self.get_points()
         components_positive_branch = vm_common_operations.plot_components_from_points(points_positive_branch)
         # components_negative_branch = vm_common_operations.plot_components_from_points(points_negative_branch)
-        ax.plot(*components_positive_branch, label='Positive Branch')
+        ax.plot(*components_positive_branch, color = edge_style.color, alpha = edge_style.alpha)
         # ax.plot(*components_negative_branch, label='Negative Branch')
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-        ax.set_title('2D Hyperbola')
+        # ax.set_title('2D Hyperbola')
         ax.grid(True)
         ax.legend()
         ax.axis('equal')
@@ -2488,7 +2494,7 @@ class Hyperbola3D(Hyperbola):
         :param line: Other Line 3D.
         :return: A list of points, containing all intersections between the Line 3D and the Hyperbola3D.
         """
-        return volmdlr_intersections.hyperbola3d_line_intersections(self, line)
+        return volmdlr_intersections.conic3d_line_intersections(self, line)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         if ax is None:
@@ -2497,21 +2503,180 @@ class Hyperbola3D(Hyperbola):
         points_positive_branch = self.get_points()
         components_positive_branch = vm_common_operations.plot_components_from_points(points_positive_branch)
         # components_negative_branch = vm_common_operations.plot_components_from_points(points_negative_branch)
-        ax.plot(*components_positive_branch, label='Positive Branch')
+        ax.plot(*components_positive_branch, color=edge_style.color, alpha=edge_style.alpha)
         # ax.plot(*components_negative_branch, label='Negative Branch')
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
-        ax.set_title('3D Hyperbola')
+        ax.set_zlabel('Z')
         ax.grid(True)
-        ax.legend()
+        # ax.legend()
         # ax.axis('equal')
         return ax
 
 
 class Parabola2D(Curve):
-    pass
+    def __init__(self, frame, focal_length: float, name: str = ''):
+        self.vertex = frame.origin
+        self.focal_length = focal_length
+        self.focus = self.vertex + focal_length * frame.v
+        self.frame = frame
+        self.vrtx_equation_a = 1 / (4 * focal_length)
+        Curve.__init__(self, name=name)
+
+    def get_points(self):
+        x_vals = npy.linspace(-self.focal_length * 5, self.focal_length * 5, 200)
+        points = []
+        for i, x in enumerate(x_vals):
+            y = self.evaluate_point(x)
+            points.append(self.frame.local_to_global_coordinates(volmdlr.Point2D(x, y)))
+        return points
+
+    def evaluate_point(self, x):
+        """
+        Evaluate the y-coordinate of the parabola at a given x-coordinate.
+
+        Parameters:
+            x (float): The x-coordinate of the point.
+
+        Returns:
+            float: The y-coordinate of the point on the parabola.
+        """
+        return 0.5 * (x ** 2) / (2 * self.focal_length)
+
+    def line_intersections(self, line: Line2D):
+        line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
+        m = line_to_local_coodinates.get_slope()
+        c = line_to_local_coodinates.get_y_intersection()
+        if m**2 > - 4 * self.vrtx_equation_a * c:
+            delta = math.sqrt(m**2 - 4 * self.vrtx_equation_a * (-c))
+            x1 = (m + delta) / (2 * self.vrtx_equation_a)
+            x2 = (m - delta) / (2 * self.vrtx_equation_a)
+            y1 = m * x1 + c
+            y2 = m * x2 + c
+            intersections = [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]
+            intersections = [self.frame.local_to_global_coordinates(point) for point in intersections]
+            return intersections
+        if math.isclose(m**2, - 4 * self.vrtx_equation_a * c, abs_tol=1e-6):
+            x = m / (2 * self.vrtx_equation_a)
+            return [volmdlr.Point2D(x, m * x + c)]
+        return []
+
+    def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
+        line_intersections = self.line_intersections(linesegment.line)
+        intersections = []
+        for intersection in line_intersections:
+            if linesegment.point_belongs(intersection, abs_tol):
+                intersections.append(intersection)
+        return intersections
+
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        if ax is None:
+            _, ax = plt.subplots()
+
+        points_positive_branch = self.get_points()
+        components_positive_branch = vm_common_operations.plot_components_from_points(points_positive_branch)
+        ax.plot(*components_positive_branch, color=edge_style.color, alpha=edge_style.alpha)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.grid(True)
+        ax.axis('equal')
+        return ax
 
 
 class Parabola3D(Curve):
-    pass
+    def __init__(self, frame: volmdlr.Frame3D, focal_length: float, name: str = ''):
+        self.vertex = frame.origin
+        self.focal_length = focal_length
+        self.focus = self.vertex + focal_length * frame.v
+        self.frame = frame
+        self.vrtx_equation_a = 1 / (4 * focal_length)
+        Curve.__init__(self, name=name)
+        self._self_2d = None
+
+    @property
+    def self_2d(self):
+        """Version 2d of the ellipse 3d as a property."""
+        if not self._self_2d:
+            self._self_2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        return self._self_2d
+
+    def get_points(self):
+        x_vals = npy.linspace(-self.focal_length * 5, self.focal_length * 5, 200)
+        points = []
+        for i, x in enumerate(x_vals):
+            y = self.evaluate_point(x)
+            points.append(self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, 0)))
+        return points
+
+    def evaluate_point(self, x):
+        """
+        Evaluate the y-coordinate of the parabola at a given x-coordinate.
+
+        Parameters:
+            x (float): The x-coordinate of the point.
+
+        Returns:
+            float: The y-coordinate of the point on the parabola.
+        """
+        return 0.5 * (x ** 2) / (2 * self.focal_length)
+
+    def to_2d(self, plane_origin, x, y):
+        """
+        Transforms a Parabola 3D into a Parabola 2D, given a plane origin and an u and v plane vector.
+
+        :param plane_origin: plane origin.
+        :param x: plane u vector.
+        :param y: plane v vector.
+        :return: Parabola2D.
+        """
+        origin = self.frame.origin.to_2d(plane_origin, x, y)
+        u_point = self.frame.origin + self.frame.u
+        v_point = self.frame.origin + self.frame.v
+        u_point2d = u_point.to_2d(plane_origin, x, y)
+        v_point2d = v_point.to_2d(plane_origin, x, y)
+        u_vector = (u_point2d - origin).to_vector().unit_vector()
+        v_vector = (v_point2d - origin).to_vector().unit_vector()
+        frame = volmdlr.Frame2D(origin, u_vector, v_vector)
+        return Parabola2D(frame, self.focal_length)
+
+    def point_belongs(self, point, tol: float = 1e-6):
+        """
+        Verifies if a given point lies on the Hyperbola 3D.
+
+        :param point: point to be verified.
+        :param tol: tolerance.
+        :return: True is point lies on the Hyperbola 3D, False otherwise
+        """
+        new_point = self.frame.global_to_local_coordinates(point)
+        return math.isclose(new_point.y, self.vrtx_equation_a * new_point.x **2, abs_tol=tol)
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Hyperbola3D.
+
+        side = 'old' or 'new'.
+        """
+
+        return Parabola3D(self.frame.frame_mapping(frame, side), self.focal_length)
+
+    def line_intersections(self, line):
+        """
+        Gets intersections between a Hyperbola 3D and a Line 3D.
+
+        :param line: Other Line 3D.
+        :return: A list of points, containing all intersections between the Line 3D and the Hyperbola3D.
+        """
+        return volmdlr_intersections.conic3d_line_intersections(self, line)
+
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        if ax is None:
+            ax = plt.figure().add_subplot(111, projection='3d')
+        points_positive_branch = self.get_points()
+        components_positive_branch = vm_common_operations.plot_components_from_points(points_positive_branch)
+        ax.plot(*components_positive_branch, color=edge_style.color, alpha=edge_style.alpha)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        ax.grid(True)
+        return ax
 

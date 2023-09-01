@@ -3061,13 +3061,22 @@ class ConicalSurface3D(PeriodicalSurface):
             for intersection in circle_line_p_intersections:
                 line_v_x = curves.Line3D(vertex, intersection)
                 line_inter = line_v_x.intersection(line)
+                if not line_inter:
+                    continue
                 local_point = self.frame.global_to_local_coordinates(line_inter)
                 if local_point.z < 0:
                     continue
-                # if not volmdlr.core.point_in_list(line_inter, intersections):
                 intersections.append(line_inter)
             return intersections
         return []
+
+    def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
+        line_intersections = self.line_intersections(linesegment.line)
+        intersections = []
+        for intersection in line_intersections:
+            if linesegment.point_belongs(intersection, abs_tol):
+                intersections.append(intersection)
+        return intersections
 
     def parallel_plane_intersection(self, plane3d: Plane3D):
         """
@@ -3131,7 +3140,7 @@ class ConicalSurface3D(PeriodicalSurface):
                                                    plane3d.frame.v, plane3d.frame.w), radius)
         return [circle3d]
 
-    def concurrent_plane_intersection(self, plane3d):
+    def concurrent_plane_intersection(self, plane3d: Plane3D):
         """
         Cylinder plane intersections when plane's normal is concurrent with the cylinder axis, but not orthogonal.
 
@@ -3141,7 +3150,43 @@ class ConicalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        return
+        plane_normal = self.frame.w.cross(plane3d.frame.w)
+        plane2 = Plane3D.from_normal(plane3d.frame.origin, plane_normal)
+        plane2_plane3d_intersections = plane3d.plane_intersections(plane2)
+        line_intersections = self.line_intersections(plane2_plane3d_intersections[0])
+        angle_plane_cones_direction = volmdlr.geometry.vectors3d_angle(self.frame.w, plane3d.frame.w) - math.pi / 2
+        if math.isclose(angle_plane_cones_direction, self.semi_angle, abs_tol=1e-8):
+            parabola_vertex = line_intersections[0]
+            distance_plane_vertex = parabola_vertex.point_distance(self.frame.origin)
+            circle = self.perpendicular_plane_intersection(
+                Plane3D(volmdlr.Frame3D(self.frame.origin + distance_plane_vertex * 5 * self.frame.w,
+                                        self.frame.u, self.frame.v, self.frame.w)))[0]
+            line_circle_intersecting_plane = vm_utils_intersections.get_two_planes_intersections(
+                plane3d.frame, circle.frame)
+            line_circle_intersecting_plane = curves.Line3D(*line_circle_intersecting_plane)
+            parabola_points = circle.line_intersections(line_circle_intersecting_plane)
+            v_vector = ((parabola_points[0] + parabola_points[1]) / 2 - parabola_vertex).unit_vector()
+            frame = volmdlr.Frame3D(parabola_vertex, v_vector.cross(plane3d.frame.w), v_vector, plane3d.frame.w)
+            local_point = frame.global_to_local_coordinates(parabola_points[0])
+            vrtx_equation_a = local_point.y / local_point.x**2
+            parabola = curves.Parabola3D(frame, 1 / (4 * vrtx_equation_a))
+            return [parabola]
+
+        ellipse_center = (line_intersections[0] + line_intersections[1]) / 2
+        line2 = curves.Line3D.from_point_and_vector(ellipse_center, plane_normal)
+        line_intersections2 = self.line_intersections(line2)
+        major_dir = (line_intersections[0] - ellipse_center).unit_vector()
+        major_axis = ellipse_center.point_distance(line_intersections[0])
+        minor_dir = (line_intersections2[0] - ellipse_center).unit_vector()
+        minor_axis = ellipse_center.point_distance(line_intersections2[0])
+
+        if minor_axis > major_axis:
+            major_axis, minor_axis = minor_axis, major_axis
+            major_dir, minor_dir = minor_dir, major_dir
+        ellipse = curves.Ellipse3D(major_axis, minor_axis,
+                                   volmdlr.Frame3D(ellipse_center, major_dir,
+                                                   minor_dir, plane3d.frame.w))
+        return [ellipse]
 
     def plane_intersections(self, plane3d):
         if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
