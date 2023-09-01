@@ -4902,9 +4902,10 @@ class BSplineCurve3D(BSplineCurve):
         :type parameter: float
         """
         # Is a value of parameter below 4e-3 a real need for precision ?
-        if math.isclose(parameter, 0, abs_tol=4e-3):
+        a, b = self.domain
+        if math.isclose(parameter, a, abs_tol=4e-3):
             return self
-        if math.isclose(parameter, 1, abs_tol=4e-3):
+        if math.isclose(parameter, b, abs_tol=4e-3):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
@@ -4919,12 +4920,10 @@ class BSplineCurve3D(BSplineCurve):
         :type parameter: float
         """
         # Is a value of parameter below 4e-3 a real need for precision ?
-        if math.isclose(parameter, 0, abs_tol=1e-6):
-            #     # raise ValueError('Nothing will be left from the BSplineCurve3D')
-            #     curves = operations.split_curve(operations.refine_knotvector(self.curve, [4]), parameter)
-            #     return self.from_geomdl_curve(curves[0])
+        a, b = self.domain
+        if math.isclose(parameter, a, abs_tol=1e-6):
             return self.reverse()
-        if math.isclose(parameter, 1, abs_tol=4e-3):
+        if math.isclose(parameter, b, abs_tol=4e-3):
             return self
         curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
         return curves[0]
