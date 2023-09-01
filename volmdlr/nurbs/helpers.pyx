@@ -65,7 +65,6 @@ cdef vector[double] linspace(double start, double stop, int num, int decimals):
     return result
 
 
-
 @boundscheck(False)
 @wraparound(False)
 def generate_knot_vector(int degree, int num_ctrlpts, **kwargs):
