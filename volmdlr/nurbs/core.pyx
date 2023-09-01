@@ -656,7 +656,6 @@ cdef vector[vector[double]] evaluate_curve_c(int degree, vector[double] knotvect
     eval_points.reserve(dimension * sample_size)
     cdef int i, j, idx
     cdef vector[double] crvpt = vector[double](dimension, 0.0)
-    cdef double crv_p, ctl_p
     for idx in range(knots.size()):
         crvpt = vector[double](dimension, 0.0)
         for i in range(0, degree + 1):
@@ -731,7 +730,7 @@ cdef vector[vector[double]] evaluate_curve_rational(int degree, vector[double] k
     """
     # Algorithm A4.1
     cdef vector[vector[double]] crvptw = evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size,
-                                        dimension, precision, start, stop)
+                                                          dimension, precision, start, stop)
 
     # Divide by weight
     cdef vector[vector[double]] eval_points
