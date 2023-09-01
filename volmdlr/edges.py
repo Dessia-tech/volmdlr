@@ -1526,7 +1526,8 @@ class BSplineCurve(Edge):
 
         datadict = self.data
         datadict["sample_size"] = number_points
-        points_list = evaluate_curve(datadict)
+        start, stop = self.domain
+        points_list = evaluate_curve(datadict, start, stop)
         point_name = 'Point' + self.__class__.__name__[-2:]
         return [getattr(volmdlr, point_name)(*point) for point in points_list]
 
