@@ -9,15 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
+- nurbs module.
+- 
 ### Fixed
 - add missing name attributes to classmethods
 - fixed circular imports
+- BSplineSurface3D: from_points_interpolation, from_points_approximation.
 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
 
 ### Changed
--
+- Cache BSplineCurve points into a numpy array to reduce memory usage.
 ### Unittests
 -
 
@@ -29,7 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - perf: to_dict/dict_to_obj of OpenTriangleShell3D
 - Cylinder / Cone / HollowCylinder: from_center_point_and_axis
 - Cone: remove inheritance from RevolvedProfile
-- BSplineSurface3D: partial removal of dependencies on geomdl objects
 - Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
 - Curve: local_discretization
 - Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
@@ -40,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wire3D/Contour3D: edge_intersections, wire_intersections
 - BSpline3D: arc_intersections
 - New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
+- BSplineSurface3D: partial removal of dependencies on geomdl objects
 
 ### Fixed
 - Sweep with non smoth path
@@ -79,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - edges.Edge._generic_minimum_distance
 - LineSegment3D: distance_linesegment
 - BSpline3D: linesegment_intersections
+
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
@@ -112,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: arc_intersections, arcellipse_intersections, test_minimum_distance_bspline
 - BSplineCurve3D: test_bspline_linesegment_minimum_distance, test_bspline_linesegment_intersections
 - Contour3D: test_edge_intersections
+
 ## v0.12.0
 
 
