@@ -1,5 +1,6 @@
 # cython: language_level=3
 # distutils: language=c++
+# cython: profile=True
 """
 This module provides functions for working with Non-Uniform Rational B-Splines (NURBS) geometries.
 Some functions are based on the geomdl open-source library (MIT license),
@@ -804,6 +805,8 @@ def evaluate_surface(dict datadict, **kwargs):
     return evaluate_surface_c(degree, knotvector, ctrlpts, size, sample_size, dimension, precision, start, stop)
 
 
+@boundscheck(False)
+@wraparound(False)
 cdef vector[vector[double]] evaluate_surface_c(int[2] degree, vector[vector[double]] knotvector, double[:, :] ctrlpts,
                                                int[2] size, int[2] sample_size, int dimension, int precision,
                                                double[2] start, double[2] stop):

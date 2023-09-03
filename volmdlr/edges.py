@@ -887,7 +887,8 @@ class BSplineCurve(Edge):
         """
         if self._eval_points is None:
             self.evaluate()
-        return [getattr(volmdlr, f'Point{self.__class__.__name__[-2::]}')(*point) for point in self._eval_points]
+        point_name = f'Point{self.__class__.__name__[-2:]}'
+        return [getattr(volmdlr, point_name)(*point) for point in self._eval_points]
 
     @property
     def data(self):
@@ -958,7 +959,6 @@ class BSplineCurve(Edge):
             raise ValueError("Curve evaluation delta should be between 0.0 and 1.0")
 
         # Clean up the curve points list
-        self._points = None
         self._eval_points = None
 
         # Set new delta value
@@ -1021,14 +1021,6 @@ class BSplineCurve(Edge):
         # Find evaluation start and stop parameter values
         start = kwargs.get('start', self.knotvector[self.degree])
         stop = kwargs.get('stop', self.knotvector[-(self.degree + 1)])
-
-        # # Check parameters
-        # if self._kv_normalize:
-        #     if not utilities.check_params([start, stop]):
-        #         raise GeomdlException("Parameters should be between 0 and 1")
-
-        # Clean up the curve points
-        self._points = None
 
         # Evaluate and cache
         self._eval_points = npy.asarray(evaluate_curve(self.data, start=start, stop=stop), dtype=npy.float64)
