@@ -28,8 +28,8 @@ class TestVector3D(unittest.TestCase):
         self.point2 = None
 
     def test___repr__(self):
-        self.assertEqual(repr(self.v1), "Vector3D: [1.0, 2.0, 3.0]")
-        self.assertEqual(repr(self.v2), "Vector3D: [3.0, 4.0, 5.0]")
+        self.assertEqual(repr(self.v1), "Vector3D(1.0, 2.0, 3.0)")
+        self.assertEqual(repr(self.v2), "Vector3D(3.0, 4.0, 5.0)")
 
     def test___setitem__(self):
         self.v1[0] = 4
