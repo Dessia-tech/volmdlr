@@ -2376,7 +2376,7 @@ class HyperbolaMixin(Curve):
 
     def _get_x(self, y):
         """
-        For given y component, get the corresponding hyperbola x component, in local coodinates.
+        For given y component, get the corresponding hyperbola x component, in local coordinates.
 
         :param y: y component.
         :return: x component.
