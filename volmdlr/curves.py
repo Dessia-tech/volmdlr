@@ -2620,13 +2620,13 @@ class Parabola2D(Curve):
     def __getitem__(self, key):
         if key == 0:
             return self.frame
-        elif key == 1:
+        if key == 1:
             return self.focal_length
         raise IndexError
 
     def get_points(self, number_points: int = 200):
         """
-        Gets parbola points.
+        Gets parabola points.
 
         :param number_points: number of point to be generated.
         :return: a List of 2D points.
@@ -2676,9 +2676,9 @@ class Parabola2D(Curve):
         """
         Matplotlib plot for a parabola in 2D.
 
-        :param ax: Matplolib 2D axes.
+        :param ax: Matplotlib 2D axes.
         :param edge_style: the Styles to be applied to the Parabola.
-        :return: Matplolib 2D axes.
+        :return: Matplotlib 2D axes.
         """
         if ax is None:
             _, ax = plt.subplots()
@@ -2727,7 +2727,7 @@ class Parabola3D(Curve):
 
     def get_points(self, number_points: int = 200):
         """
-        Gets parbola points.
+        Gets parabola points.
 
         :param number_points: number of point to be generated.
         :return: a List of 2D points.
@@ -2824,9 +2824,9 @@ class Parabola3D(Curve):
         """
         Matplotlib plot for a parabola in 3D.
 
-        :param ax: Matplolib 3D axes.
+        :param ax: Matplotlib 3D axes.
         :param edge_style: the Styles to be applied to the Parabola.
-        :return: Matplolib 3D axes.
+        :return: Matplotlib 3D axes.
         """
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')

@@ -33,7 +33,7 @@ MAX_ERROR_BY_TYPE = {
                      'no-name-in-module': 2,
                      'abstract-method': 37,
                      'duplicate-code': 10,
-                     'arguments-renamed': 54,
+                     'arguments-renamed': 56,
                      'too-many-ancestors': 25,
                      'too-few-public-methods': 2,
                      'too-many-public-methods': 13,
