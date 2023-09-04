@@ -2994,6 +2994,75 @@ class ConicalSurface3D(PeriodicalSurface):
 
         raise AttributeError(f'Use method from ConicalFace3D{volmdlr.faces.ConicalFace3D.from_base_and_vertex}')
 
+    def line_intersections(self, line: curves.Line3D):
+        """
+        Calculates the inteserctions between a conical surface and a Line 3D.
+
+        :param line: other line to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        if line.point_belongs(self.frame.origin):
+            return [self.frame.origin]
+        d = line.unit_direction_vector()
+        vertex = self.frame.origin
+        v = self.frame.w
+        plane_normal = d.cross((vertex - line.point1).to_vector()).unit_vector()
+        if v.dot(plane_normal) > 0:
+            plane_normal = - plane_normal
+        plane = Plane3D.from_normal(vertex, plane_normal)
+        cos_theta = math.sqrt(1 - (plane_normal.dot(v) ** 2))
+        if cos_theta >= math.cos(self.semi_angle):
+            plane_h = Plane3D.from_normal(vertex + v, v)
+            circle = self.perpendicular_plane_intersection(plane_h)[0]
+            line_p = plane_h.plane_intersection(plane)[0]
+            circle_line_p_intersections = circle.line_intersections(line_p)
+            intersections = []
+            for intersection in circle_line_p_intersections:
+                line_v_x = curves.Line3D(vertex, intersection)
+                line_inter = line_v_x.intersection(line)
+                if not line_inter:
+                    continue
+                local_point = self.frame.global_to_local_coordinates(line_inter)
+                if local_point.z < 0:
+                    continue
+                intersections.append(line_inter)
+            return intersections
+        return []
+
+    def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
+        """
+        Calculates the inteserctions between a conical surface and a Line Segment 3D.
+
+        :param linesegment: other line to verify intersections.
+        :param abs_tol: tolerance.
+        :return: a list of intersection points, if there exists any.
+        """
+        line_intersections = self.line_intersections(linesegment.line)
+        intersections = []
+        for intersection in line_intersections:
+            if linesegment.point_belongs(intersection, abs_tol):
+                intersections.append(intersection)
+        return intersections
+
+    def perpendicular_plane_intersection(self, plane3d):
+        """
+        Cylinder plane intersections when plane's normal is parallel with the cylinder axis.
+
+        :param plane3d: Intersecting plane.
+        :return: List of intersecting curves.
+        """
+        line = curves.Line3D(self.frame.origin, self.frame.origin + self.frame.w)
+        center3d_plane = plane3d.line_intersections(line)[0]
+        x = math.tan(self.semi_angle)
+        point1 = self.frame.origin
+        point2 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, 1))
+        generatrix = curves.Line3D(point1, point2)
+        generatrix_intersection = plane3d.line_intersections(generatrix)[0]
+        radius = center3d_plane.point_distance(generatrix_intersection)
+        circle3d = curves.Circle3D(volmdlr.Frame3D(center3d_plane, plane3d.frame.u,
+                                                   plane3d.frame.v, plane3d.frame.w), radius)
+        return [circle3d]
+
 
 class SphericalSurface3D(PeriodicalSurface):
     """

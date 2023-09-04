@@ -1466,6 +1466,9 @@ class Circle3D(CircleMixin, ClosedCurve):
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
 
+    def line_intersections(self, line):
+        return volmdlr_intersections.circle_3d_line_intersections(self, line)
+
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment3D', abs_tol: float = 1e-6):
         """
         Calculates the intersections between the Circle3D and a line segment 3D.
