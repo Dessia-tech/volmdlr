@@ -273,7 +273,7 @@ def seam_curve(arguments, object_dict):
     return object_dict[arguments[1]]
 
 
-def trimmed_curve(arguments, object_dict):
+def trimmed_curve(arguments, object_dict, **kwargs):
     """
     Returns xx.
 
