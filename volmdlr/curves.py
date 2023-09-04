@@ -963,7 +963,7 @@ class Circle2D(CircleMixin, ClosedCurve):
     def __getitem__(self, key):
         if key == 0:
             return self.center
-        elif key == 1:
+        if key == 1:
             return self.radius
         raise IndexError
 
@@ -1377,7 +1377,7 @@ class Circle3D(CircleMixin, ClosedCurve):
     def __getitem__(self, key):
         if key == 0:
             return self.frame
-        elif key == 1:
+        if key == 1:
             return self.radius
         raise IndexError
 
@@ -1806,9 +1806,9 @@ class Ellipse2D(ClosedCurve):
     def __getitem__(self, key):
         if key == 0:
             return self.major_axis
-        elif key == 1:
+        if key == 1:
             return self.minor_axis
-        elif key == 2:
+        if key == 2:
             return self.frame
         raise IndexError
 
@@ -2107,9 +2107,9 @@ class Ellipse3D(ClosedCurve):
     def __getitem__(self, key):
         if key == 0:
             return self.major_axis
-        elif key == 1:
+        if key == 1:
             return self.minor_axis
-        elif key == 2:
+        if key == 2:
             return self.frame
         raise IndexError
 
@@ -2370,9 +2370,9 @@ class Hyperbola(Curve):
     def __getitem__(self, key):
         if key == 0:
             return self.frame
-        elif key == 1:
+        if key == 1:
             return self.semi_major_axis
-        elif key == 2:
+        if key == 2:
             return self.semi_minor_axis
         raise IndexError
 
@@ -2608,7 +2608,7 @@ class Parabola2D(Curve):
     def __getitem__(self, key):
         if key == 0:
             return self.frame
-        elif key == 1:
+        if key == 1:
             return self.focal_length
         raise IndexError
 
@@ -2697,7 +2697,7 @@ class Parabola3D(Curve):
     def __getitem__(self, key):
         if key == 0:
             return self.frame
-        elif key == 1:
+        if key == 1:
             return self.focal_length
         raise IndexError
 
