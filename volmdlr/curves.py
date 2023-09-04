@@ -2633,7 +2633,7 @@ class Parabola2D(Curve):
         """
         x_vals = npy.linspace(-self.focal_length * 5, self.focal_length * 5, number_points)
         points = []
-        for i, x in enumerate(x_vals):
+        for x in x_vals:
             y = self._get_y(x)
             points.append(self.frame.local_to_global_coordinates(volmdlr.Point2D(x, y)))
         return points
@@ -2734,7 +2734,7 @@ class Parabola3D(Curve):
         """
         x_vals = npy.linspace(-self.focal_length * 5, self.focal_length * 5, number_points)
         points = []
-        for i, x in enumerate(x_vals):
+        for x in x_vals:
             y = self._get_y(x)
             points.append(self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, 0)))
         return points
