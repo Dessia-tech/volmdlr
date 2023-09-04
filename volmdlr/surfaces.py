@@ -196,7 +196,7 @@ class Surface2D(PhysicalObject):
             discretize_line_direction = "x"
         elif number_points_y > 20 * number_points_x:
             discretize_line_direction = "y"
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
                                                       discretize_line_direction=discretize_line_direction,
                                                       number_points_x=number_points_x,
                                                       number_points_y=number_points_y)
