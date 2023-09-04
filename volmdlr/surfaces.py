@@ -3003,10 +3003,10 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         if line.point_belongs(self.frame.origin):
             return [self.frame.origin]
-        d = line.unit_direction_vector()
+        line_direction_vector = line.unit_direction_vector()
         vertex = self.frame.origin
         v = self.frame.w
-        plane_normal = d.cross((vertex - line.point1).to_vector()).unit_vector()
+        plane_normal = line_direction_vector.cross((vertex - line.point1).to_vector()).unit_vector()
         if v.dot(plane_normal) > 0:
             plane_normal = - plane_normal
         plane = Plane3D.from_normal(vertex, plane_normal)
