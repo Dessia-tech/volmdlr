@@ -13,7 +13,6 @@ from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
 from trimesh import Trimesh
 
-import volmdlr.bspline_compiled
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.faces
@@ -1081,8 +1080,7 @@ class ClosedShell3D(Shell3D):
 
         """
         volume = 0
-        center = self.bounding_box.center
-        center_x, center_y, center_z = center
+        center_x, center_y, center_z = self.bounding_box.center
         for face in self.faces:
             display3d = face.triangulation()
             for triangle_index in display3d.triangles:

@@ -149,7 +149,7 @@ class TestConicalSurface3D(unittest.TestCase):
             for intersection, expected_result in zip(intersections, expected_results[i]):
                 self.assertEqual(intersection.__class__.__name__, expected_result[0])
                 self.assertEqual(intersection[1], expected_result[1])
-
+                
 
 if __name__ == '__main__':
     unittest.main()
