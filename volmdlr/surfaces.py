@@ -3098,7 +3098,8 @@ class ConicalSurface3D(PeriodicalSurface):
                                     self.frame.u, self.frame.v, self.frame.w)))[0]
         line_circle_intersecting_plane = vm_utils_intersections.get_two_planes_intersections(
             plane3d.frame, circle.frame)
-        line_circle_intersecting_plane = curves.Line3D(*line_circle_intersecting_plane)
+        line_circle_intersecting_plane = curves.Line3D(line_circle_intersecting_plane[0],
+                                                       line_circle_intersecting_plane[1])
         hyperbola_points = circle.line_intersections(line_circle_intersecting_plane)
         semi_major_dir = (hyperbola_positive_vertex - hyperbola_center).unit_vector()
         frame = volmdlr.Frame3D(hyperbola_center, semi_major_dir,
@@ -3149,7 +3150,8 @@ class ConicalSurface3D(PeriodicalSurface):
                                         self.frame.u, self.frame.v, self.frame.w)))[0]
             line_circle_intersecting_plane = vm_utils_intersections.get_two_planes_intersections(
                 plane3d.frame, circle.frame)
-            line_circle_intersecting_plane = curves.Line3D(*line_circle_intersecting_plane)
+            line_circle_intersecting_plane = curves.Line3D(line_circle_intersecting_plane[0],
+                                                           line_circle_intersecting_plane[1])
             parabola_points = circle.line_intersections(line_circle_intersecting_plane)
             v_vector = ((parabola_points[0] + parabola_points[1]) / 2 - parabola_vertex).unit_vector()
             frame = volmdlr.Frame3D(parabola_vertex, v_vector.cross(plane3d.frame.w), v_vector, plane3d.frame.w)
