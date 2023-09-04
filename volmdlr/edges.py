@@ -2033,6 +2033,7 @@ class BSplineCurve2D(BSplineCurve):
         return True
 
     def normal(self, position: float = 0.0):
+        """Normal vector to BPlineCurve2D."""
         der = self.derivatives(position, 1)
         tangent = der[1].unit_vector()
         return tangent.rotation(der[0], 0.5 * math.pi)

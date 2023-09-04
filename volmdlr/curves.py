@@ -757,12 +757,12 @@ class Line3D(Line):
 
     def line_intersections(self, line):
         """
-       Gtes the intersection between two Line3D, if there is an intersection.
+        Gets the intersection between two Line3D, if there is an intersection.
 
-       :param line: other Line3D
-       :return: None if there is no intersection between Lines.
-       A volmdlr.Point3D if there exists an intersection.
-       """
+        :param line: other Line3D
+        :return: None if there is no intersection between Lines.
+        A volmdlr.Point3D if there exists an intersection.
+        """
         return self.intersection(line)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
@@ -2401,6 +2401,13 @@ class HyperbolaMixin(Curve):
 
 
 class Hyperbola2D(HyperbolaMixin):
+    """
+    Class for Hyperbola 2D.
+
+    :param frame: 2D frame where the hyperbola is at.
+    :param semi_major_axis: hyperbola's semi major axis.
+    :param semi_minor_axis: hyperbola's semi minor axis.
+    """
     def __init__(self, frame: volmdlr.Frame2D, semi_major_axis, semi_minor_axis, name: str = ''):
         self.frame = frame
         self.semi_major_axis = semi_major_axis
@@ -2491,6 +2498,13 @@ class Hyperbola2D(HyperbolaMixin):
 
 
 class Hyperbola3D(HyperbolaMixin):
+    """
+    Class for Hyperbola 3D.
+
+    :param frame: 3D frame where the hyperbola is at.
+    :param semi_major_axis: hyperbola's semi major axis.
+    :param semi_minor_axis: hyperbola's semi minor axis.
+    """
     def __init__(self, frame: volmdlr.Frame3D, semi_major_axis, semi_minor_axis, name: str = ''):
         self._self_2d = None
         HyperbolaMixin.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
