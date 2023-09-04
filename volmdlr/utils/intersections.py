@@ -28,7 +28,7 @@ def circle_3d_line_intersections(circle_3d, line):
     if distance_center_lineseg > circle_3d.radius:
         return []
     direction_vector = line.direction_vector()
-    if math.isclose(line.point1.z, line.point2.z, abs_tol=1e-6) and\
+    if math.isclose(line.point1.z, line.point2.z, abs_tol=1e-6) and \
             math.isclose(line.point2.z, circle_3d.frame.origin.z, abs_tol=1e-6):
         if line.point1.is_close(circle_3d.center):
             point1 = line.point2
@@ -296,7 +296,7 @@ def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-8):
 
 def get_two_planes_intersections(plane1_frame, plane2_frame):
     """
-    Caculates the intersctions between two planes, given their frames.
+    Caculates the intersections between two planes, given their frames.
 
     :param plane1_frame: Plane's 1 frame.
     :param plane2_frame: Plane's 2 frame.

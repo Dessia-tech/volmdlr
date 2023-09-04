@@ -44,7 +44,7 @@ class TestHyperbola3D(unittest.TestCase):
         frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
         hyperbola = curves.Hyperbola3D(frame, a, b)
 
-        points = hyperbola.get_points()
+        points = hyperbola.get_points(number_points=400)
         line3d_1 = curves.Line3D(points[20], points[250])
         line3d_2 = curves.Line3D(points[20], points[320])
         line3d_3 = curves.Line3D(points[50], volmdlr.Point3D(10, 15, -15))
