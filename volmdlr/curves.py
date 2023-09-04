@@ -43,7 +43,7 @@ class Curve(DessiaObject):
         """
         raise NotImplementedError(f'abscissa method not implemented by {self.__class__.__name__}')
 
-    def line_intersections(self, point):
+    def line_intersections(self, line):
         """
         Calculate the line_intersections between line and curve.
         """
@@ -51,7 +51,8 @@ class Curve(DessiaObject):
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
-        Calculates the intersections between a curve and a Line Segment .
+        Calculates the intersections between a curve and a Line Segment.
+
         :param linesegment: the Line Segment.
         :param abs_tol: tolerance.
         :return:a list containing all intersections between the two objects, if any exists.
@@ -285,7 +286,7 @@ class Line(Curve):
     def from_point_and_vector(cls, point: Union[volmdlr.Point2D, volmdlr.Point3D],
                               direction_vector: Union[volmdlr.Vector2D, volmdlr.Vector3D], name: str =  ''):
         """
-        Creates a Line obejct using only a point and a direction vector.
+        Creates a Line object using only a point and a direction vector.
 
         :param point: line's origin point.
         :param direction_vector: line's direction vector.
@@ -728,7 +729,7 @@ class Line3D(Line):
 
     def intersection(self, line2):
         """
-        Calculates the intersection between to Line3D, if there is an intersection.
+        Calculates the intersection between two Line3D, if there is an intersection.
 
         :param line2: other Line3D
         :return: None if there is no intersection between Lines.
@@ -753,6 +754,16 @@ class Line3D(Line):
         # direction_vector2)) / direction_vector2.dot(direction_vector2)
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
+
+    def line_intersections(self, line):
+        """
+        Gets the intersection between two Line3D, if there is an intersection.
+
+        :param line: other Line3D
+        :return: None if there is no intersection between Lines.
+        A volmdlr.Point3D if there exists an intersection.
+        """
+        return self.intersection(line)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plot method for Line 3D using Matplotlib."""
@@ -1466,6 +1477,16 @@ class Circle3D(CircleMixin, ClosedCurve):
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
 
+    def line_intersections(self, line):
+        """
+        Calculates the intersections between the Circle3D and a line 3D.
+
+        :param line: line 3D to verify intersections
+        :return: list of points intersecting Circle
+        """
+        circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, line)
+        return circle3d_line_intersections
+
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment3D', abs_tol: float = 1e-6):
         """
         Calculates the intersections between the Circle3D and a line segment 3D.
@@ -1527,7 +1548,7 @@ class Circle3D(CircleMixin, ClosedCurve):
             return []
         plane_intersections = Line3D(plane_intersections[0], plane_intersections[1])
         circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, plane_intersections)
-        ellipse3d_line_intersections = volmdlr_intersections.ellipse3d_line_intersections(
+        ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(
             ellipse, plane_intersections)
         for intersection in circle3d_line_intersections + ellipse3d_line_intersections:
             if volmdlr.core.point_in_list(intersection, intersections):
@@ -2283,7 +2304,7 @@ class Ellipse3D(ClosedCurve):
         :param line: Other Line 3D.
         :return: A list of points, containing all intersections between the Line 3D and the Ellipse3D.
         """
-        return volmdlr_intersections.ellipse3d_line_intersections(self, line)
+        return volmdlr_intersections.conic3d_line_intersections(self, line)
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
@@ -2322,9 +2343,9 @@ class Ellipse3D(ClosedCurve):
         if not plane_intersections:
             return []
         plane_intersections = Line3D(plane_intersections[0], plane_intersections[1])
-        self_ellipse3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self,
-                                                                                               plane_intersections)
-        ellipse3d_line_intersections = volmdlr_intersections.ellipse3d_line_intersections(ellipse, plane_intersections)
+        self_ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(self,
+                                                                                             plane_intersections)
+        ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(ellipse, plane_intersections)
         for intersection in self_ellipse3d_line_intersections + ellipse3d_line_intersections:
             if volmdlr.core.point_in_list(intersection, intersections):
                 continue
@@ -2333,7 +2354,7 @@ class Ellipse3D(ClosedCurve):
         return intersections
 
 
-class Hyperbola(Curve):
+class HyperbolaMixin(Curve):
     """
     Abstract class for a Hyperbola.
     """
@@ -2347,15 +2368,16 @@ class Hyperbola(Curve):
     def __getitem__(self, key):
         if key == 0:
             return self.frame
-        elif key == 1:
+        if key == 1:
             return self.semi_major_axis
-        elif key == 2:
+        if key == 2:
             return self.semi_minor_axis
         raise IndexError
 
     def _get_x(self, y):
         """
         For given y component, get the corresponding hyperbola x component, in local coodinates.
+
         :param y: y component.
         :return: x component.
         """
@@ -2364,7 +2386,8 @@ class Hyperbola(Curve):
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
-        Calculates the intersections between a Hyperbola and a Line Segment .
+        Calculates the intersections between a Hyperbola and a Line Segment.
+
         :param linesegment: the Line Segment.
         :param abs_tol: tolerance.
         :return:a list containing all intersections between the two objects, if any exists.
@@ -2377,12 +2400,19 @@ class Hyperbola(Curve):
         return intersections
 
 
-class Hyperbola2D(Hyperbola):
+class Hyperbola2D(HyperbolaMixin):
+    """
+    Class for Hyperbola 2D.
+
+    :param frame: 2D frame where the hyperbola is at.
+    :param semi_major_axis: hyperbola's semi major axis.
+    :param semi_minor_axis: hyperbola's semi minor axis.
+    """
     def __init__(self, frame: volmdlr.Frame2D, semi_major_axis, semi_minor_axis, name: str = ''):
         self.frame = frame
         self.semi_major_axis = semi_major_axis
         self.semi_minor_axis = semi_minor_axis
-        Hyperbola.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
+        HyperbolaMixin.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
 
     def __eq__(self, other):
         if self.frame != other.frame:
@@ -2394,9 +2424,10 @@ class Hyperbola2D(Hyperbola):
 
     def get_points(self, number_points: int = 200):
         """
-        Gets hyperbola positive branche points.
+        Gets hyperbola positive branch points.
+
         :param number_points: number of point to be generated.
-        :return: a List of 2D points for the hyperbola positive branche.
+        :return: a List of 2D points for the hyperbola positive branch.
         """
         y_vals = npy.linspace(-self.semi_major_axis * 5, self.semi_major_axis * 5, number_points)
         x_positive_vals = self._get_x(y_vals)
@@ -2409,6 +2440,7 @@ class Hyperbola2D(Hyperbola):
     def line_intersections(self, line: Line2D):
         """
         Calculates the intersections between a Hyperbola and an infinite Line in 2D.
+
         :param line: the infinite 2d line.
         :return:a list containing all intersections between the two objects, if any exists.
         """
@@ -2417,7 +2449,7 @@ class Hyperbola2D(Hyperbola):
         line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
         m = line_to_local_coodinates.get_slope()
         c = line_to_local_coodinates.get_y_intersection()
-        a_quad_equation = ((a**2) * (m**2) - b**2)
+        a_quad_equation = (a**2) * (m**2) - b**2
         b_quad_equation = 2*(a**2)*m*c
         c_quad_equation = a**2 * (b**2 + c**2)
         if c**2 < (a**2)*(m**2) - b**2:
@@ -2439,7 +2471,8 @@ class Hyperbola2D(Hyperbola):
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
-        Changes frame_mapping and return a new Ellipse2D.
+        Changes frame_mapping and return a new Hyperbola2D.
+
         side = 'old' or 'new'.
         """
         return Hyperbola2D(self.frame.frame_mapping(frame, side), self.semi_major_axis, self.semi_minor_axis)
@@ -2447,9 +2480,10 @@ class Hyperbola2D(Hyperbola):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
         Matplotlib plot for a hyperbola in 2D.
-        :param ax: Matplolib 2D axes.
+
+        :param ax: Matplotlib 2D axes.
         :param edge_style: the Styles to be applied to the Hyperbola.
-        :return: Matplolib 2D axes.
+        :return: Matplotlib 2D axes.
         """
         if ax is None:
             _, ax = plt.subplots()
@@ -2463,10 +2497,17 @@ class Hyperbola2D(Hyperbola):
         return ax
 
 
-class Hyperbola3D(Hyperbola):
+class Hyperbola3D(HyperbolaMixin):
+    """
+    Class for Hyperbola 3D.
+
+    :param frame: 3D frame where the hyperbola is at.
+    :param semi_major_axis: hyperbola's semi major axis.
+    :param semi_minor_axis: hyperbola's semi minor axis.
+    """
     def __init__(self, frame: volmdlr.Frame3D, semi_major_axis, semi_minor_axis, name: str = ''):
         self._self_2d = None
-        Hyperbola.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
+        HyperbolaMixin.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
 
     @property
     def self_2d(self):
@@ -2477,9 +2518,10 @@ class Hyperbola3D(Hyperbola):
 
     def get_points(self, number_points: int = 200):
         """
-        Gets hyperbola positive branche points.
+        Gets hyperbola positive branch points.
+
         :param number_points: number of point to be generated.
-        :return: a List of 3D points for the hyperbola positive branche.
+        :return: a List of 3D points for the hyperbola positive branch.
         """
         y_vals = npy.linspace(-self.semi_major_axis * 5, self.semi_major_axis * 5, number_points)
         x_positive_vals = self._get_x(y_vals)
@@ -2492,6 +2534,7 @@ class Hyperbola3D(Hyperbola):
     def to_2d(self, plane_origin, x, y):
         """
         Transforms a Hyperbola 3D into a Hyperbola 2D, given a plane origin and an u and v plane vector.
+
         :param plane_origin: plane origin.
         :param x: plane u vector.
         :param y: plane v vector.
@@ -2510,6 +2553,7 @@ class Hyperbola3D(Hyperbola):
     def point_belongs(self, point, tol: float = 1e-6):
         """
         Verifies if a given point lies on the Hyperbola 3D.
+
         :param point: point to be verified.
         :param tol: tolerance.
         :return: True is point lies on the Hyperbola 3D, False otherwise
@@ -2521,6 +2565,7 @@ class Hyperbola3D(Hyperbola):
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Hyperbola3D.
+
         side = 'old' or 'new'.
         """
 
@@ -2538,9 +2583,10 @@ class Hyperbola3D(Hyperbola):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
         Matplotlib plot for a hyperbola in 3D.
-        :param ax: Matplolib 3D axes.
+
+        :param ax: Matplotlib 3D axes.
         :param edge_style: the Styles to be applied to the Hyperbola.
-        :return: Matplolib 3D axes.
+        :return: Matplotlib 3D axes.
         """
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
@@ -2668,7 +2714,7 @@ class Parabola3D(Curve):
     def __getitem__(self, key):
         if key == 0:
             return self.frame
-        elif key == 1:
+        if key == 1:
             return self.focal_length
         raise IndexError
 

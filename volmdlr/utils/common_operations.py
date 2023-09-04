@@ -97,6 +97,13 @@ def split_wire_by_plane(wire, plane3d):
 
 
 def plot_components_from_points(points, close_plot: bool = False):
+    """
+    Gets Matplotlib components from points.
+
+    :param points: given points.
+    :param close_plot: Weather to close the plot or not.
+    :return:
+    """
     components = [[], [], []]
     for point in points:
         for i, component in enumerate(point):
