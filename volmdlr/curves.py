@@ -2442,7 +2442,7 @@ class Hyperbola2D(HyperbolaMixin):
         line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
         m = line_to_local_coodinates.get_slope()
         c = line_to_local_coodinates.get_y_intersection()
-        a_quad_equation = ((a**2) * (m**2) - b**2)
+        a_quad_equation = (a**2) * (m**2) - b**2
         b_quad_equation = 2*(a**2)*m*c
         c_quad_equation = a**2 * (b**2 + c**2)
         if c**2 < (a**2)*(m**2) - b**2:
