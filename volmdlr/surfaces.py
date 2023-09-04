@@ -1091,7 +1091,7 @@ class Surface3D(DessiaObject):
         Gets intersections between two surfaces.
 
         :param other_surface: other surface to get intersections with.
-        :return: a list containing all itersections between the two surfaces 3d.
+        :return: a list containing all intersections between the two surfaces 3d.
         """
         method_name = f'{other_surface.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(self, method_name):
@@ -3037,7 +3037,7 @@ class ConicalSurface3D(PeriodicalSurface):
         if cos_theta >= math.cos(self.semi_angle):
             plane_h = Plane3D.from_normal(vertex + v, v)
             circle = self.perpendicular_plane_intersection(plane_h)[0]
-            line_p = plane_h.plane_intersection(plane)[0]
+            line_p = plane_h.plane_intersections(plane)[0]
             circle_line_p_intersections = circle.line_intersections(line_p)
             intersections = []
             for intersection in circle_line_p_intersections:
@@ -3076,7 +3076,8 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         line_plane_intersections_points = vm_utils_intersections.get_two_planes_intersections(
             self.frame, plane3d.frame)
-        line_plane_intersections = curves.Line3D(*line_plane_intersections_points)
+        line_plane_intersections = curves.Line3D(line_plane_intersections_points[0],
+                                                 line_plane_intersections_points[1])
         if plane3d.point_on_surface(self.frame.origin):
             point1 = self.frame.origin + line_plane_intersections.direction_vector()
             point2 = self.frame.origin - line_plane_intersections.direction_vector()
@@ -3103,10 +3104,8 @@ class ConicalSurface3D(PeriodicalSurface):
         frame = volmdlr.Frame3D(hyperbola_center, semi_major_dir,
                                 plane3d.frame.w.cross(semi_major_dir), plane3d.frame.w)
         local_point = frame.global_to_local_coordinates(hyperbola_points[0])
-        semi_minor_axis = math.sqrt((local_point.y ** 2)/(local_point.x**2/semi_major_axis**2 - 1))
-        hyperbola = curves.Hyperbola3D(frame, semi_major_axis, semi_minor_axis)
-
-        return [hyperbola]
+        return [curves.Hyperbola3D(frame, semi_major_axis,
+                                       math.sqrt((local_point.y ** 2)/(local_point.x**2/semi_major_axis**2 - 1)))]
 
     def perpendicular_plane_intersection(self, plane3d):
         """

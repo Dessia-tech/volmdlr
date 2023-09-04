@@ -6,7 +6,6 @@ import math
 from typing import List, Union
 
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
 import numpy as npy
 import scipy.integrate as scipy_integrate
 from matplotlib import __version__ as _mpl_version
@@ -2477,15 +2476,13 @@ class Hyperbola2D(HyperbolaMixin):
         :param line: the infinite 2d line.
         :return:a list containing all intersections between the two objects, if any exists.
         """
-        a = self.semi_major_axis
-        b = self.semi_minor_axis
         line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
         m = line_to_local_coodinates.get_slope()
         c = line_to_local_coodinates.get_y_intersection()
-        a_quad_equation = (a**2) * (m**2) - b**2
-        b_quad_equation = 2*(a**2)*m*c
-        c_quad_equation = a**2 * (b**2 + c**2)
-        if c**2 < (a**2)*(m**2) - b**2:
+        a_quad_equation = (self.semi_major_axis**2) * (m**2) - self.semi_minor_axis**2
+        b_quad_equation = 2*(self.semi_major_axis**2)*m*c
+        c_quad_equation = self.semi_major_axis**2 * (self.semi_minor_axis**2 + c**2)
+        if c**2 < (self.semi_major_axis**2)*(m**2) - self.semi_minor_axis**2:
             return []
         if a_quad_equation == 0.0:
             return []
