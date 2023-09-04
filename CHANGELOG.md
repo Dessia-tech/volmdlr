@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - BSplineSurface3D: from_points_interpolation, from_points_approximation.
 - nurbs module.
+- New curves classes: Hyperbola2D and Hyperbola3D.
+- Line: closest_point_on_line, from_point_and_vector
+- Line2D: get_slope, get_y_intersection.
 
 ### Fixed
 - add missing name attributes to classmethods
@@ -19,9 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactor
 -
 ### Changed
--
+- Cache BSplineCurve points into a numpy array to reduce memory usage.
+- 
 ### Unittests
--
+-Hyperbola2D/3D: line_intersections
 
 ## v0.13.0 [unreleased]
 
