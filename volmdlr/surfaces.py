@@ -259,7 +259,7 @@ class Surface2D(PhysicalObject):
                'segments': npy.array(segments).reshape((-1, 2)),
                'holes': npy.array(holes).reshape((-1, 2))
                }
-        triangulation = triangle_lib.triangulate(tri, tri_opt)
+        triangulation = triangle_lib.triangulate(tri, "p")
         triangles = triangulation['triangles'].tolist()
         number_points = triangulation['vertices'].shape[0]
         points = [display.Node2D(*triangulation['vertices'][i, :]) for i in range(number_points)]
