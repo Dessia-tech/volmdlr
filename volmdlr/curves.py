@@ -2634,11 +2634,11 @@ class Parabola2D(Curve):
         x_vals = npy.linspace(-self.focal_length * 5, self.focal_length * 5, number_points)
         points = []
         for i, x in enumerate(x_vals):
-            y = self.evaluate_point(x)
+            y = self._get_y(x)
             points.append(self.frame.local_to_global_coordinates(volmdlr.Point2D(x, y)))
         return points
 
-    def evaluate_point(self, x):
+    def _get_y(self, x):
         """
         Evaluate the y-coordinate of the parabola at a given x-coordinate.
 
@@ -2735,11 +2735,11 @@ class Parabola3D(Curve):
         x_vals = npy.linspace(-self.focal_length * 5, self.focal_length * 5, number_points)
         points = []
         for i, x in enumerate(x_vals):
-            y = self.evaluate_point(x)
+            y = self._get_y(x)
             points.append(self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, 0)))
         return points
 
-    def evaluate_point(self, x):
+    def _get_y(self, x):
         """
         Evaluate the y-coordinate of the parabola at a given x-coordinate.
 
