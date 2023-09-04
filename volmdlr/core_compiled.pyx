@@ -3145,9 +3145,9 @@ class Frame2D(Basis2D):
         y2 = [p.y for p in (self.origin, self.origin + self.v * ratio)]
         ax.plot(x2, y2, "g")
         ax.axline((self.origin.x, self.origin.y), (self.u.x, self.u.y),
-                  color='black', linewidth=0.8, linestyle='--')
+                  color="black", linewidth=0.8, linestyle="--")
         ax.axline((self.origin.x, self.origin.y), (self.v.x, self.v.y),
-                  color='black', linewidth=0.8, linestyle='--')
+                  color="black", linewidth=0.8, linestyle="--")
         return ax
 
 
