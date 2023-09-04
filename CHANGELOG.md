@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 ### Changed
 - Cache BSplineCurve points into a numpy array to reduce memory usage.
+- Vector2D, Vector3D: __repr__
+- core_compiled: cdef functions' names.
+
 ### Unittests
 -
 
