@@ -6320,17 +6320,3 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Ellipse plot."""
         return self.ellipse.plot(ax, edge_style)
-
-
-class ConicEdge3D(Edge):
-    def __init__(self, conic_curve: Union[volmdlr_curves.Hyperbola3D, volmdlr_curves.Parabola3D],
-                 start, end, name: str = ''):
-        self.conic_curve = conic_curve
-        Edge.__init__(self, start, end, name=name)
-
-    def __eq__(self, other):
-        if self.conic_curve == other.conic_curve and self.start == other.start and self.end == other.end:
-            return True
-        return False
-
-    # def discretization_points(self, *, number_points: int = None, angle_resolution: int = None):

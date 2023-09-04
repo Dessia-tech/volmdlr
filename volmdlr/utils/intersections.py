@@ -61,37 +61,6 @@ def circle_3d_line_intersections(circle_3d, line):
     return intersections
 
 
-def ellipse3d_line_intersections(ellipse3d, line3d, abs_tol: float = 1e-6):
-    """
-    Calculates the intersections between an Ellipse3D and a Line3D.
-
-    :param ellipse3d: The Ellipse 3D.
-    :param line3d: The Line 3D.
-    :param abs_tol: Tolerance.
-    :return: list of points intersecting the Ellipse 3D.
-    """
-    intersections = []
-    if not math.isclose(abs(ellipse3d.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=abs_tol):
-        frame_mapped_ellipse3d = ellipse3d.frame_mapping(ellipse3d.frame, 'new')
-        frame_mapped_line = line3d.frame_mapping(ellipse3d.frame, 'new')
-        circle_linseg_intersections = ellipse3d_line_intersections(frame_mapped_ellipse3d, frame_mapped_line)
-        for inter in circle_linseg_intersections:
-            intersections.append(ellipse3d.frame.local_to_global_coordinates(inter))
-        return intersections
-
-    if line3d.point1.z == line3d.point2.z == ellipse3d.frame.origin.z:
-        ellipse2d = ellipse3d.self_2d
-        line2d = line3d.to_2d(ellipse3d.frame.origin, ellipse3d.frame.u, ellipse3d.frame.v)
-        intersections_2d = ellipse2d_line_intersections(ellipse2d, line2d)
-        for intersection in intersections_2d:
-            intersections.append(volmdlr.Point3D(intersection[0], intersection[1], ellipse3d.frame.origin.z))
-        return intersections
-    plane_lineseg_intersections = get_plane_line_intersections(ellipse3d.frame, line3d)
-    if ellipse3d.point_belongs(plane_lineseg_intersections[0]):
-        return plane_lineseg_intersections
-    return []
-
-
 def conic3d_line_intersections(conic3d, line3d, abs_tol: float = 1e-6):
     """
     Calculates the intersections between an Ellipse3D and a Line3D.
@@ -103,17 +72,17 @@ def conic3d_line_intersections(conic3d, line3d, abs_tol: float = 1e-6):
     """
     intersections = []
     if not math.isclose(abs(conic3d.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=abs_tol):
-        frame_mapped_ellipse3d = conic3d.frame_mapping(conic3d.frame, 'new')
+        frame_mapped_conic3d = conic3d.frame_mapping(conic3d.frame, 'new')
         frame_mapped_line = line3d.frame_mapping(conic3d.frame, 'new')
-        circle_linseg_intersections = conic3d_line_intersections(frame_mapped_ellipse3d, frame_mapped_line)
+        circle_linseg_intersections = conic3d_line_intersections(frame_mapped_conic3d, frame_mapped_line)
         for inter in circle_linseg_intersections:
             intersections.append(conic3d.frame.local_to_global_coordinates(inter))
         return intersections
 
     if line3d.point1.z == line3d.point2.z == conic3d.frame.origin.z:
-        hyperbola2d = conic3d.self_2d
+        conic2d = conic3d.self_2d
         line2d = line3d.to_2d(conic3d.frame.origin, conic3d.frame.u, conic3d.frame.v)
-        intersections_2d = hyperbola2d.line_intersections(line2d)
+        intersections_2d = conic2d.line_intersections(line2d)
         for intersection in intersections_2d:
             intersections.append(volmdlr.Point3D(intersection[0], intersection[1], conic3d.frame.origin.z))
         return intersections
