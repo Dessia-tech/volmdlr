@@ -3019,7 +3019,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def line_intersections(self, line: curves.Line3D):
         """
-        Calculates the interserctions between a conical surface and a Line 3D.
+        Calculates the intersections between a conical surface and a Line 3D.
 
         :param line: other line to verify intersections.
         :return: a list of intersection points, if there exists any.
@@ -3054,7 +3054,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
-        Calculates the interserctions between a conical surface and a Line Segment 3D.
+        Calculates the intersections between a conical surface and a Line Segment 3D.
 
         :param linesegment: other line to verify intersections.
         :param abs_tol: tolerance.
@@ -3177,7 +3177,7 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         Gets the intersections between a plane 3d and a conical surface 3d.
 
-        :param plane3d: othe plane, to verify intersections.
+        :param plane3d: other plane, to verify intersections.
         :return:
         """
         if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
@@ -5219,7 +5219,7 @@ class BSplineSurface3D(Surface3D):
         return self._domain
 
     def to_geomdl(self):
-        """Tranlate into a geomdl object."""
+        """Translate into a geomdl object."""
         if not self._surface:
             if self._weights is None:
                 surface = BSpline.Surface()
