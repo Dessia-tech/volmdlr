@@ -2431,6 +2431,19 @@ class HyperbolaMixin(Curve):
                 intersections.append(intersection)
         return intersections
 
+    def split(self, split_start, split_end):
+        """Splits a Hyperbola between a start and end point."""
+        _bspline_class = getattr(volmdlr.edges, 'BSplineCurve'+self.__class__.__name__[-2:])
+        local_split_start = self.frame.global_to_local_coordinates(split_start)
+        local_split_end = self.frame.global_to_local_coordinates(split_end)
+        max_y = max(local_split_start.y, local_split_end.y)
+        min_y = min(local_split_start.y, local_split_end.y)
+        hyperbola_points = self.get_points(min_y, max_y, 200)
+        if not hyperbola_points[0].is_close(split_start):
+            hyperbola_points = hyperbola_points[::-1]
+        bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
+        return [bspline]
+
 
 class Hyperbola2D(HyperbolaMixin):
     """
@@ -2454,14 +2467,18 @@ class Hyperbola2D(HyperbolaMixin):
             return False
         return True
 
-    def get_points(self, number_points: int = 200):
+    def get_points(self, min_y: float = None, max_y: float = None, number_points: int = 200):
         """
         Gets hyperbola positive branch points.
 
         :param number_points: number of point to be generated.
+        :param min_y: y-minimal value.
+        :param max_y: y-maximal value.
         :return: a List of 2D points for the hyperbola positive branch.
         """
-        y_vals = npy.linspace(-self.semi_major_axis * 5, self.semi_major_axis * 5, number_points)
+        if not min_y and not max_y:
+            min_y, max_y = -self.semi_major_axis * 5, self.semi_major_axis * 5
+        y_vals = npy.linspace(min_y, max_y, number_points)
         x_positive_vals = self._get_x(y_vals)
         points_positive_branch = []
         for i, y in enumerate(y_vals):
@@ -2546,14 +2563,18 @@ class Hyperbola3D(HyperbolaMixin):
             self._self_2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         return self._self_2d
 
-    def get_points(self, number_points: int = 200):
+    def get_points(self, min_y: float = None, max_y: float = None, number_points: int = 200):
         """
         Gets hyperbola positive branch points.
 
         :param number_points: number of point to be generated.
+        :param min_y: y-minimal value.
+        :param max_y: y-maximal value.
         :return: a List of 3D points for the hyperbola positive branch.
         """
-        y_vals = npy.linspace(-self.semi_major_axis * 5, self.semi_major_axis * 5, number_points)
+        if not min_y and not max_y:
+            min_y, max_y = -self.semi_major_axis * 5, self.semi_major_axis * 5
+        y_vals = npy.linspace(min_y, max_y, number_points)
         x_positive_vals = self._get_x(y_vals)
         points_positive_branch = []
         for i, y in enumerate(y_vals):
@@ -2630,7 +2651,40 @@ class Hyperbola3D(HyperbolaMixin):
         return ax
 
 
-class Parabola2D(Curve):
+class ParabolaMixin(Curve):
+    """Abstract class for Parabola."""
+    def __getitem__(self, key):
+        if key == 0:
+            return self.frame
+        if key == 1:
+            return self.focal_length
+        raise IndexError
+
+    def _get_y(self, x):
+        """
+        Evaluate the y-coordinate of the parabola at a given x-coordinate.
+
+        :param x: The x-coordinate of the point.
+        :type x: float.
+        :return float: The y-coordinate of the point on the parabola.
+        """
+        return 0.5 * (x ** 2) / (2 * self.focal_length)
+
+    def split(self, split_start, split_end):
+        """Splits a Parabola between a start and end point."""
+        _bspline_class = getattr(volmdlr.edges, 'BSplineCurve'+self.__class__.__name__[-2:])
+        local_split_start = self.frame.global_to_local_coordinates(split_start)
+        local_split_end = self.frame.global_to_local_coordinates(split_end)
+        max_x = max(local_split_start.x, local_split_end.x)
+        min_x = min(local_split_start.x, local_split_end.x)
+        hyperbola_points = self.get_points(min_x, max_x, 200)
+        if not hyperbola_points[0].is_close(split_start):
+            hyperbola_points = hyperbola_points[::-1]
+        bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
+        return [bspline]
+
+
+class Parabola2D(ParabolaMixin):
     """
     Class for a Parabola in 2D.
 
@@ -2645,38 +2699,25 @@ class Parabola2D(Curve):
         self.focus = self.vertex + focal_length * frame.v
         self.frame = frame
         self.vrtx_equation_a = 1 / (4 * focal_length)
-        Curve.__init__(self, name=name)
+        ParabolaMixin.__init__(self, name=name)
 
-    def __getitem__(self, key):
-        if key == 0:
-            return self.frame
-        if key == 1:
-            return self.focal_length
-        raise IndexError
-
-    def get_points(self, number_points: int = 200):
+    def get_points(self, min_x: float = None, max_x: float = None, number_points: int = 200):
         """
         Gets parabola points.
 
         :param number_points: number of point to be generated.
+        :param min_x: x-minimal value.
+        :param max_x: x-maximal value.
         :return: a List of 2D points.
         """
-        x_vals = npy.linspace(-self.focal_length * 5, self.focal_length * 5, number_points)
+        if not min_x and not max_x:
+            min_x, max_x = -self.focal_length * 5, self.focal_length * 5
+        x_vals = npy.linspace(min_x, max_x, number_points)
         points = []
         for x in x_vals:
             y = self._get_y(x)
             points.append(self.frame.local_to_global_coordinates(volmdlr.Point2D(x, y)))
         return points
-
-    def _get_y(self, x):
-        """
-        Evaluate the y-coordinate of the parabola at a given x-coordinate.
-
-        :param x: The x-coordinate of the point.
-        :type x: float.
-        :return float: The y-coordinate of the point on the parabola.
-        """
-        return 0.5 * (x ** 2) / (2 * self.focal_length)
 
     def line_intersections(self, line: Line2D):
         """
@@ -2702,6 +2743,19 @@ class Parabola2D(Curve):
             return [volmdlr.Point2D(x, m * x + c)]
         return []
 
+    def split(self, split_start, split_end):
+        """Splits a Parabola between a start and end point."""
+        _bspline_class = getattr(volmdlr.edges, 'BSplineCurve'+self.__class__.__name__[-2:])
+        local_split_start = self.frame.global_to_local_coordinates(split_start)
+        local_split_end = self.frame.global_to_local_coordinates(split_end)
+        max_x = max(local_split_start.x, local_split_end.x)
+        min_x = min(local_split_start.x, local_split_end.x)
+        hyperbola_points = self.get_points(min_x, max_x, 200)
+        if not hyperbola_points[0].is_close(split_start):
+            hyperbola_points = hyperbola_points[::-1]
+        bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
+        return [bspline]
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
         Matplotlib plot for a parabola in 2D.
@@ -2723,7 +2777,7 @@ class Parabola2D(Curve):
         return ax
 
 
-class Parabola3D(Curve):
+class Parabola3D(ParabolaMixin):
     """
     Class for a Parabola in 3D.
 
@@ -2738,15 +2792,8 @@ class Parabola3D(Curve):
         self.focus = self.vertex + focal_length * frame.v
         self.frame = frame
         self.vrtx_equation_a = 1 / (4 * focal_length)
-        Curve.__init__(self, name=name)
+        ParabolaMixin.__init__(self, name=name)
         self._self_2d = None
-
-    def __getitem__(self, key):
-        if key == 0:
-            return self.frame
-        if key == 1:
-            return self.focal_length
-        raise IndexError
 
     @property
     def self_2d(self):
@@ -2755,27 +2802,23 @@ class Parabola3D(Curve):
             self._self_2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         return self._self_2d
 
-    def get_points(self, number_points: int = 200):
+    def get_points(self, min_x: float = None, max_x: float = None, number_points: int = 200):
         """
-        Gets parabola points.
+        Gets parabola 3D points.
 
         :param number_points: number of point to be generated.
-        :return: a List of 2D points.
+        :param min_x: x-minimal value.
+        :param max_x: x-maximal value.
+        :return: a List of 3D points.
         """
-        x_vals = npy.linspace(-self.focal_length * 5, self.focal_length * 5, number_points)
+        if not min_x and not max_x:
+            min_x, max_x = -self.focal_length * 5, self.focal_length * 5
+        x_vals = npy.linspace(min_x, max_x, number_points)
         points = []
         for x in x_vals:
             y = self._get_y(x)
             points.append(self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, 0)))
         return points
-
-    def _get_y(self, x):
-        """
-        Evaluate the y-coordinate of the parabola at a given x-coordinate.
-
-        :return : The y-coordinate of the point on the parabola.
-        """
-        return 0.5 * (x ** 2) / (2 * self.focal_length)
 
     def to_2d(self, plane_origin, x, y):
         """

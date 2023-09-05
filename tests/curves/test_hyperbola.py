@@ -61,6 +61,16 @@ class TestHyperbola3D(unittest.TestCase):
             for intersection, expected_result in zip(intersections, expected_results[i]):
                 self.assertTrue(intersection.is_close(expected_result))
 
+    def test_split(self):
+        hyperbola = curves.Hyperbola3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0.25, 0),
+                                                       volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D),
+                                       0.4330127018922194, 0.25000000000016875)
+
+        point_start = volmdlr.Point3D(0.4330127018922191, 0.25, 0.866025403784)
+        point_end = volmdlr.Point3D(-0.4330127018922191, 0.25, 0.866025403784)
+        bspline = hyperbola.split(point_start, point_end)[0]
+        self.assertAlmostEqual(bspline.length(), 1.259818722659198)
+
 
 if __name__ == '__main__':
     unittest.main()

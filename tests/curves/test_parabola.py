@@ -63,6 +63,16 @@ class TestParabola3D(unittest.TestCase):
                 for intersection, expected_result in zip(line_intersections, expected_results[i][j]):
                     self.assertTrue(intersection.is_close(expected_result))
 
+    def test_split(self):
+        parabola = curves.Parabola3D(volmdlr.Frame3D(
+            volmdlr.Point3D(-0.43301270189243873, 0.0, 0.7500000000003803),
+            volmdlr.Vector3D(-0.0, 1.0, 0.0), volmdlr.Vector3D(0.5000000000002298, 0.0, 0.8660254037843059),
+            volmdlr.Vector3D(0.8660254037844387, 0.0, -0.49999999999999994)), 0.21650635094600354)
+        point_start = volmdlr.Point3D(1.6339745962174324, -1.8921223583379627, 4.330127018924)
+        point_end = volmdlr.Point3D(1.6339745962174324, 1.8921223583379627, 4.330127018924)
+        bspline = parabola.split(point_start, point_end)[0]
+        self.assertAlmostEqual(bspline.length(), 9.425433371950165)
+
 
 if __name__ == '__main__':
     unittest.main()
