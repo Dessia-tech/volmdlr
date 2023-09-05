@@ -2431,18 +2431,23 @@ class HyperbolaMixin(Curve):
                 intersections.append(intersection)
         return intersections
 
-    def split(self, split_start, split_end):
-        """Splits a Hyperbola between a start and end point."""
+    def trim(self, point1, point2):
+        """
+        Trims a hyperbola between two points.
+
+        :param point1: point 1 used to trim circle.
+        :param point2: point2 used to trim circle.
+        """
         _bspline_class = getattr(volmdlr.edges, 'BSplineCurve'+self.__class__.__name__[-2:])
-        local_split_start = self.frame.global_to_local_coordinates(split_start)
-        local_split_end = self.frame.global_to_local_coordinates(split_end)
+        local_split_start = self.frame.global_to_local_coordinates(point1)
+        local_split_end = self.frame.global_to_local_coordinates(point2)
         max_y = max(local_split_start.y, local_split_end.y)
         min_y = min(local_split_start.y, local_split_end.y)
         hyperbola_points = self.get_points(min_y, max_y, 200)
-        if not hyperbola_points[0].is_close(split_start):
+        if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
         bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
-        return [bspline]
+        return bspline
 
 
 class Hyperbola2D(HyperbolaMixin):
@@ -2670,18 +2675,23 @@ class ParabolaMixin(Curve):
         """
         return 0.5 * (x ** 2) / (2 * self.focal_length)
 
-    def split(self, split_start, split_end):
-        """Splits a Parabola between a start and end point."""
+    def trim(self, point1, point2):
+        """
+        Trims a Parabola between two points.
+
+        :param point1: point 1 used to trim circle.
+        :param point2: point2 used to trim circle.
+        """
         _bspline_class = getattr(volmdlr.edges, 'BSplineCurve'+self.__class__.__name__[-2:])
-        local_split_start = self.frame.global_to_local_coordinates(split_start)
-        local_split_end = self.frame.global_to_local_coordinates(split_end)
+        local_split_start = self.frame.global_to_local_coordinates(point1)
+        local_split_end = self.frame.global_to_local_coordinates(point2)
         max_x = max(local_split_start.x, local_split_end.x)
         min_x = min(local_split_start.x, local_split_end.x)
         hyperbola_points = self.get_points(min_x, max_x, 200)
-        if not hyperbola_points[0].is_close(split_start):
+        if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
         bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
-        return [bspline]
+        return bspline
 
 
 class Parabola2D(ParabolaMixin):

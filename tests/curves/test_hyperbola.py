@@ -68,7 +68,7 @@ class TestHyperbola3D(unittest.TestCase):
 
         point_start = volmdlr.Point3D(0.4330127018922191, 0.25, 0.866025403784)
         point_end = volmdlr.Point3D(-0.4330127018922191, 0.25, 0.866025403784)
-        bspline = hyperbola.split(point_start, point_end)[0]
+        bspline = hyperbola.trim(point_start, point_end)
         self.assertAlmostEqual(bspline.length(), 1.259818722659198)
 
 

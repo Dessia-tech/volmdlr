@@ -70,7 +70,7 @@ class TestParabola3D(unittest.TestCase):
             volmdlr.Vector3D(0.8660254037844387, 0.0, -0.49999999999999994)), 0.21650635094600354)
         point_start = volmdlr.Point3D(1.6339745962174324, -1.8921223583379627, 4.330127018924)
         point_end = volmdlr.Point3D(1.6339745962174324, 1.8921223583379627, 4.330127018924)
-        bspline = parabola.split(point_start, point_end)[0]
+        bspline = parabola.trim(point_start, point_end)
         self.assertAlmostEqual(bspline.length(), 9.425433371950165)
 
 
