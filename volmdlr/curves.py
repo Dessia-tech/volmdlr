@@ -2443,7 +2443,7 @@ class HyperbolaMixin(Curve):
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_y = max(local_split_start.y, local_split_end.y)
         min_y = min(local_split_start.y, local_split_end.y)
-        hyperbola_points = self.get_points(min_y, max_y, 200)
+        hyperbola_points = self.get_points(min_y, max_y, 50)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
         bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
@@ -2472,7 +2472,7 @@ class Hyperbola2D(HyperbolaMixin):
             return False
         return True
 
-    def get_points(self, min_y: float = None, max_y: float = None, number_points: int = 200):
+    def get_points(self, min_y: float = None, max_y: float = None, number_points: int = 30):
         """
         Gets hyperbola positive branch points.
 
@@ -2568,7 +2568,7 @@ class Hyperbola3D(HyperbolaMixin):
             self._self_2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         return self._self_2d
 
-    def get_points(self, min_y: float = None, max_y: float = None, number_points: int = 200):
+    def get_points(self, min_y: float = None, max_y: float = None, number_points: int = 30):
         """
         Gets hyperbola positive branch points.
 
@@ -2687,7 +2687,7 @@ class ParabolaMixin(Curve):
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_x = max(local_split_start.x, local_split_end.x)
         min_x = min(local_split_start.x, local_split_end.x)
-        hyperbola_points = self.get_points(min_x, max_x, 200)
+        hyperbola_points = self.get_points(min_x, max_x, 50)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
         bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
@@ -2711,7 +2711,7 @@ class Parabola2D(ParabolaMixin):
         self.vrtx_equation_a = 1 / (4 * focal_length)
         ParabolaMixin.__init__(self, name=name)
 
-    def get_points(self, min_x: float = None, max_x: float = None, number_points: int = 200):
+    def get_points(self, min_x: float = None, max_x: float = None, number_points: int = 30):
         """
         Gets parabola points.
 
@@ -2812,7 +2812,7 @@ class Parabola3D(ParabolaMixin):
             self._self_2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         return self._self_2d
 
-    def get_points(self, min_x: float = None, max_x: float = None, number_points: int = 200):
+    def get_points(self, min_x: float = None, max_x: float = None, number_points: int = 30):
         """
         Gets parabola 3D points.
 
