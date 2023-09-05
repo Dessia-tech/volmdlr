@@ -5,6 +5,7 @@ import volmdlr.wires as vmw
 import volmdlr.edges as vme
 from volmdlr import surfaces
 
+
 class TestPeriodicalSurface(unittest.TestCase):
 
     def test_bsplinecurve3d_to_2d(self):
