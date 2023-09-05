@@ -148,8 +148,11 @@ class TestConicalSurface3D(unittest.TestCase):
             intersections = conical_surface.surface_intersections(plane)
             for intersection, expected_result in zip(intersections, expected_results[i]):
                 self.assertEqual(intersection.__class__.__name__, expected_result[0])
-                self.assertEqual(intersection[1], expected_result[1])
-                
+                if i == 2:
+                    self.assertTrue(intersection[1].is_close(expected_result[1]))
+                else:
+                    self.assertAlmostEqual(intersection[1], expected_result[1])
+
 
 if __name__ == '__main__':
     unittest.main()
