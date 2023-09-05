@@ -3019,7 +3019,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def line_intersections(self, line: curves.Line3D):
         """
-        Calculates the inteserctions between a conical surface and a Line 3D.
+        Calculates the interserctions between a conical surface and a Line 3D.
 
         :param line: other line to verify intersections.
         :return: a list of intersection points, if there exists any.
@@ -3054,7 +3054,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
-        Calculates the inteserctions between a conical surface and a Line Segment 3D.
+        Calculates the interserctions between a conical surface and a Line Segment 3D.
 
         :param linesegment: other line to verify intersections.
         :param abs_tol: tolerance.
