@@ -990,6 +990,13 @@ class Circle2D(CircleMixin, ClosedCurve):
             and math.isclose(self.radius, other_circle.radius,
                              abs_tol=1e-06)
 
+    def __getitem__(self, key):
+        if key == 0:
+            return self.center
+        if key == 1:
+            return self.radius
+        raise IndexError
+
     @classmethod
     def from_3_points(cls, point1, point2, point3, name: str = ''):
         """
@@ -1397,6 +1404,13 @@ class Circle3D(CircleMixin, ClosedCurve):
             and math.isclose(self.radius,
                              other_circle.radius, abs_tol=1e-06)
 
+    def __getitem__(self, key):
+        if key == 0:
+            return self.frame
+        if key == 1:
+            return self.radius
+        raise IndexError
+
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
         Discretize a Circle to have "n" points.
@@ -1477,7 +1491,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
 
-    def line_intersections(self, line):
+    def line_intersections(self, line: Line3D):
         """
         Calculates the intersections between the Circle3D and a line 3D.
 
@@ -1820,6 +1834,15 @@ class Ellipse2D(ClosedCurve):
     def __hash__(self):
         return hash((self.center, self.major_dir, self.major_axis, self.minor_axis))
 
+    def __getitem__(self, key):
+        if key == 0:
+            return self.major_axis
+        if key == 1:
+            return self.minor_axis
+        if key == 2:
+            return self.frame
+        raise IndexError
+
     @property
     def bounding_rectangle(self):
         """
@@ -2111,6 +2134,15 @@ class Ellipse3D(ClosedCurve):
         self.minor_dir = frame.v
         self._self_2d = None
         ClosedCurve.__init__(self, name=name)
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self.major_axis
+        if key == 1:
+            return self.minor_axis
+        if key == 2:
+            return self.frame
+        raise IndexError
 
     @property
     def self_2d(self):
@@ -2413,7 +2445,7 @@ class Hyperbola2D(HyperbolaMixin):
         self.semi_major_axis = semi_major_axis
         self.semi_minor_axis = semi_minor_axis
         HyperbolaMixin.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
-
+  
     def __eq__(self, other):
         if self.frame != other.frame:
             return False
@@ -2444,15 +2476,13 @@ class Hyperbola2D(HyperbolaMixin):
         :param line: the infinite 2d line.
         :return:a list containing all intersections between the two objects, if any exists.
         """
-        a = self.semi_major_axis
-        b = self.semi_minor_axis
         line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
         m = line_to_local_coodinates.get_slope()
         c = line_to_local_coodinates.get_y_intersection()
-        a_quad_equation = (a**2) * (m**2) - b**2
-        b_quad_equation = 2*(a**2)*m*c
-        c_quad_equation = a**2 * (b**2 + c**2)
-        if c**2 < (a**2)*(m**2) - b**2:
+        a_quad_equation = (self.semi_major_axis**2) * (m**2) - self.semi_minor_axis**2
+        b_quad_equation = 2*(self.semi_major_axis**2)*m*c
+        c_quad_equation = self.semi_major_axis**2 * (self.semi_minor_axis**2 + c**2)
+        if c**2 < (self.semi_major_axis**2)*(m**2) - self.semi_minor_axis**2:
             return []
         if a_quad_equation == 0.0:
             return []

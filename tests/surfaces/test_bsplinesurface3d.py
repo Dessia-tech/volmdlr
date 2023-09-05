@@ -632,10 +632,10 @@ class TestBSplineSurface3D(unittest.TestCase):
             for weight, expected_weight in zip(curve.weights, expected_weights):
                 self.assertAlmostEqual(weight, expected_weight)
 
-    def test_plane_intersection(self):
+    def test_plane_intersections(self):
         frame = volmdlr.Frame3D(volmdlr.O3D, volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
         plane = surfaces.Plane3D(frame)
-        intersections = self.spline_surf.plane_intersection(plane)
+        intersections = self.spline_surf.plane_intersections(plane)
         for point in intersections:
             self.assertTrue(plane.point_on_surface(point))
 

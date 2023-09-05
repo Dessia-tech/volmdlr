@@ -4,7 +4,7 @@ import unittest
 import dessia_common.core
 import volmdlr
 import volmdlr.edges as vme
-from volmdlr import curves, surfaces
+from volmdlr import curves, surfaces, edges
 import volmdlr.wires as vmw
 from volmdlr import O3D, X3D, Y3D, Z3D, Point2D, Point3D
 from volmdlr.models import conical_surfaces
@@ -116,6 +116,42 @@ class TestConicalSurface3D(unittest.TestCase):
             line_intersections = conical_surface.line_intersections(line)
             for intersection, expected_sesult in zip(line_intersections, list_intersections[i]):
                 self.assertTrue(intersection.is_close(expected_sesult))
+
+    def test_plane_intersections(self):
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
+
+        plane1 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5),
+                                                  volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D))
+        plane2 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0.25, 0.5),
+                                                  volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D))
+        plane3 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0.0, 0.5),
+                                                  volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D))
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        frame = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), vector1, vector2, vector3)
+        plane4 = surfaces.Plane3D(frame)
+        point1 = conical_surface.frame.origin
+        point2 = conical_surface.frame.local_to_global_coordinates(
+            volmdlr.Point3D(10 * math.tan(conical_surface.semi_angle), 0, 10))
+        generatrix = edges.LineSegment3D(point1, point2)
+        normal = generatrix.unit_normal_vector()
+        plane5 = surfaces.Plane3D.from_normal(frame.origin - normal * .5, normal)
+        expected_results = [[('Circle3D', 0.2886751345948128)],
+                            [('Hyperbola3D', 0.4330127018922194)],
+                            [('Line3D', volmdlr.Point3D(-1.0, 0.0, 1.7320508075688776)),
+                             ('Line3D', volmdlr.Point3D(1.0, 0.0, 1.7320508075688776))],
+                            [('Ellipse3D', 0.3535533905927743)],
+                            [('Parabola3D', 0.21650635094600354)]]
+        for i, plane in enumerate([plane1, plane2, plane3, plane4, plane5]):
+            intersections = conical_surface.surface_intersections(plane)
+            for intersection, expected_result in zip(intersections, expected_results[i]):
+                self.assertEqual(intersection.__class__.__name__, expected_result[0])
+                if i == 2:
+                    self.assertTrue(intersection[1].is_close(expected_result[1]))
+                else:
+                    self.assertAlmostEqual(intersection[1], expected_result[1])
 
 
 if __name__ == '__main__':
