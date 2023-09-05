@@ -2033,6 +2033,7 @@ class BSplineCurve2D(BSplineCurve):
         return True
 
     def normal(self, position: float = 0.0):
+        """Normal vector to BPlineCurve2D."""
         der = self.derivatives(position, 1)
         tangent = der[1].unit_vector()
         return tangent.rotation(der[0], 0.5 * math.pi)
@@ -3452,13 +3453,11 @@ class ArcEllipse2D(Edge):
             major_axis = math.sqrt(x2 ** 2 / (1 - (y2 ** 2 / minor_axis ** 2)))
         else:
             raise NotImplementedError
-        ellipse = volmdlr_curves.Ellipse2D(major_axis, minor_axis,
-                                           volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D))
-        arcellipse = cls(ellipse, start, end, name=name)
+        arcellipse = cls(volmdlr_curves.Ellipse2D(
+            major_axis, minor_axis, volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)), start, end, name=name)
         if not arcellipse.point_belongs(interior):
-            ellipse = volmdlr_curves.Ellipse2D(major_axis, minor_axis,
-                                               volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D))
-            arcellipse = cls(ellipse, start, end, name=name)
+            arcellipse = cls(volmdlr_curves.Ellipse2D(
+                major_axis, minor_axis, volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)), start, end, name=name)
 
         return arcellipse
 
