@@ -3110,7 +3110,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def perpendicular_plane_intersection(self, plane3d):
         """
-        Cylinder plane intersections when plane's normal is parallel with the cylinder axis.
+        Cone plane intersections when plane's normal is parallel with the cylinder axis.
 
         :param plane3d: Intersecting plane.
         :return: List of intersecting curves.
@@ -3129,10 +3129,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def concurrent_plane_intersection(self, plane3d: Plane3D):
         """
-        Cylinder plane intersections when plane's normal is concurrent with the cylinder axis, but not orthogonal.
-
-        Heavily based on the implementation available in this link:
-        https://www.geometrictools.com/Documentation/IntersectionCylinderPlane.pdf
+        Cone plane intersections when plane's normal is concurrent with the cone's axis, but not orthogonal.
 
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
@@ -3177,6 +3174,12 @@ class ConicalSurface3D(PeriodicalSurface):
         return [ellipse]
 
     def plane_intersections(self, plane3d):
+        """
+        Gets the intersections between a plane 3d and a conical surface 3d.
+
+        :param plane3d: othe plane, to verify intersections.
+        :return:
+        """
         if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
             return self.parallel_plane_intersection(plane3d)
         if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
