@@ -1078,7 +1078,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return minimum_distance
 
     def plane_intersections(self, plane3d: surfaces.Plane3D):
-        surfaces_intersections = self.surface3d.plane_intersection(plane3d)
+        surfaces_intersections = self.surface3d.plane_intersections(plane3d)
         outer_contour_intersections_with_plane = plane3d.contour_intersections(self.outer_contour3d)
         plane_intersections = []
         for plane_intersection in surfaces_intersections:
@@ -1288,7 +1288,7 @@ class PlaneFace3D(Face3D):
         return True
 
     def planeface_intersections(self, planeface):
-        face2_plane_interections = planeface.surface3d.plane_intersection(self.surface3d)
+        face2_plane_interections = planeface.surface3d.plane_intersections(self.surface3d)
         if not face2_plane_interections:
             return []
         points_intersections = []
@@ -1324,7 +1324,7 @@ class PlaneFace3D(Face3D):
         return self.planeface_intersections(triangleface)
 
     def cylindricalface_intersections(self, cylindricalface: 'CylindricalFace3D'):
-        cylindricalsurfaceface_intersections = cylindricalface.surface3d.plane_intersection(self.surface3d)
+        cylindricalsurfaceface_intersections = cylindricalface.surface3d.plane_intersections(self.surface3d)
         if not isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Line3D):
             if all(self.edge3d_inside(intersection) and cylindricalface.edge3d_inside(intersection)
                    for intersection in cylindricalsurfaceface_intersections):
