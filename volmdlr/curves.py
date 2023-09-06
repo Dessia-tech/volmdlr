@@ -28,6 +28,12 @@ class Curve(DessiaObject):
     def __init__(self, name: str = ''):
         DessiaObject.__init__(self, name=name)
 
+    def abscissa(self, point):
+        """
+        Calculate the abscissa of a point on the curve.
+        """
+        raise NotImplementedError(f'abscissa method not implemented by {self.__class__.__name__}')
+
     def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
         """
         Sort point along a curve.
@@ -63,12 +69,6 @@ class Curve(DessiaObject):
 
 class ClosedCurve(Curve):
     """Abstract class for defining closed curves (Circle, Ellipse) properties."""
-
-    def abscissa(self, point):
-        """
-        Calculate the abscissa of a point on the curve.
-        """
-        raise NotImplementedError(f'abscissa method not implemented by {self.__class__.__name__}')
 
     def point_at_abscissa(self, abscissa):
         """
