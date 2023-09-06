@@ -2842,13 +2842,17 @@ class ConicalSurface3D(PeriodicalSurface):
         :type point3d: :class:`volmdlr.`Point3D`
         """
         x, y, z = self.frame.global_to_local_coordinates(point3d)
+        radius = z * math.tan(self.semi_angle)
+        if radius == 0.0:
+            return volmdlr.Point2D(0, z)
         # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Generally this is related to uncertainty of step files.
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
             y = 0
-        theta = math.atan2(y, x)
+        # theta = math.atan2(y, x)
+        theta = volmdlr.geometry.sin_cos_angle(x / radius, y / radius)
         if abs(theta) < 1e-9:
             theta = 0.0
         return volmdlr.Point2D(theta, z)
