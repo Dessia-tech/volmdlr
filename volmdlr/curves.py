@@ -43,7 +43,6 @@ class Curve(DessiaObject):
         """
         return sorted(points, key=self.abscissa)
 
-
     def line_intersections(self, line):
         """
         Calculate the line_intersections between line and curve.
