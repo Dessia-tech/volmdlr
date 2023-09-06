@@ -2797,6 +2797,21 @@ class ConicalSurface3D(PeriodicalSurface):
         frame.origin = frame.origin - radius / math.tan(semi_angle) * frame.w
         return cls(frame, semi_angle, arguments[0][1:-1])
 
+    def is_coincident(self, surface3d):
+        """
+        Verifies if two conical surfaces are coincidents.
+
+        :param surface3d: other surface 3d.
+        :return: True if they are coincident, False otherwise.
+        """
+        if not isinstance(surface3d, ConicalSurface3D):
+            return False
+        if math.isclose(self.frame.w.dot(surface3d.frame.w), 1.0, abs_tol=1e-6) and \
+            self.frame.origin.is_close(surface3d.frame.origin) and \
+                math.isclose(self.semi_angle, surface3d.semi_angle, abs_tol=1e-6):
+            return True
+        return False
+
     def to_step(self, current_id):
         """
         Converts the object to a STEP representation.
@@ -2842,13 +2857,15 @@ class ConicalSurface3D(PeriodicalSurface):
         :type point3d: :class:`volmdlr.`Point3D`
         """
         x, y, z = self.frame.global_to_local_coordinates(point3d)
+        radius = z * math.tan(self.semi_angle)
         # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Generally this is related to uncertainty of step files.
         if abs(x) < 1e-12:
             x = 0
         if abs(y) < 1e-12:
             y = 0
-        theta = math.atan2(y, x)
+        # theta = math.atan2(y, x)
+        theta = volmdlr.geometry.sin_cos_angle(x / radius, y / radius)
         if abs(theta) < 1e-9:
             theta = 0.0
         return volmdlr.Point2D(theta, z)
