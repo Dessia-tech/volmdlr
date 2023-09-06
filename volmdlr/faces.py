@@ -2275,7 +2275,7 @@ class ConicalFace3D(Face3D):
                  name: str = ''):
         surface2d_br = surface2d.bounding_rectangle()
         if surface2d_br[0] < 0:
-            surface2d = surface2d.translation(volmdlr.Vector2D(2*math.pi, 0))
+            surface2d = surface2d.translation(volmdlr.Vector2D(2 * math.pi, 0))
         Face3D.__init__(self,
                         surface3d=surface3d,
                         surface2d=surface2d,
@@ -2395,14 +2395,14 @@ class ConicalFace3D(Face3D):
             return False
         x, y, z = self.surface3d.frame.global_to_local_coordinates(point3d)
         radius = z * math.tan(self.surface3d.semi_angle)
-        theta = volmdlr.geometry.sin_cos_angle(x / radius, y / radius) # theta is between 0 and 2pi
-        alphamin, alphamax, _, _ = self.surface2d.bounding_rectangle()
-        if alphamin < 0:
-            alphamin, alphamax = alphamin + 2*math.pi, alphamax + 2*math.pi
+        point2d = volmdlr.Point2D(0, z)
+        if radius != 0.0:
+            theta = volmdlr.geometry.sin_cos_angle(x / radius, y / radius)
+            if abs(theta) < 1e-9:
+                theta = 0.0
+            point2d = volmdlr.Point2D(theta, z)
 
-        point2d = self.surface3d.point3d_to_2d(point3d)
         point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
-        # point2d_minus_2pi = point2d.translation(volmdlr.Point2D(-volmdlr.TWO_PI, 0))
         check_point3d = self.surface3d.point2d_to_3d(point2d)
         if check_point3d.point_distance(point3d) > tol:
             return False
