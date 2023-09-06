@@ -54,7 +54,7 @@ class TestParabola3D(unittest.TestCase):
         parabola1 = curves.Parabola3D(frame1, 1)
         parabola2 = curves.Parabola3D(frame2, 1)
         for i, parabola in enumerate([parabola1, parabola2]):
-            points = parabola.get_points()
+            points = parabola.get_points(number_points=200)
             line3d_1 = curves.Line3D(points[20], points[150])
             line3d_3 = curves.Line3D(points[50], volmdlr.Point3D(1, 1.5, -1.5))
             line3d_4 = curves.Line3D(volmdlr.Point3D(-2., -1.5, 1.5), volmdlr.Point3D(1.0, 1.5, -1.5))
