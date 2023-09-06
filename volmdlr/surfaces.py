@@ -6725,11 +6725,10 @@ class BSplineSurface3D(Surface3D):
                               v_multiplicities=v_multiplicities,
                               u_knots=u_knots,
                               v_knots=v_knots, weights=surface.weights, name=name)
-
         return bspline_surface
 
     @classmethod
-    def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, name: str = ''):
+    def points_fitting_into_bspline_surface(cls, points_3d, size_u, size_v, degree_u, degree_v, name: str = ""):
         """
         Bspline Surface interpolation through 3d points.
         """
