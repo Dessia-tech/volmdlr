@@ -98,10 +98,10 @@ class TestPlane3D(unittest.TestCase):
         self.assertFalse(self.plane1.is_coincident(self.plane2))
 
     def test_plane_intersections(self):
-        plane_intersections = self.plane1.plane_intersection(self.plane2)
+        plane_intersections = self.plane1.plane_intersections(self.plane2)
         self.assertEqual(len(plane_intersections), 1)
         self.assertEqual(plane_intersections[0], curves.Line3D(volmdlr.O3D, volmdlr.Point3D(0, 0.7071067811865476, 0)))
-        no_plane_intersections = self.plane1.plane_intersection(self.plane3)
+        no_plane_intersections = self.plane1.plane_intersections(self.plane3)
         self.assertFalse(no_plane_intersections)
         plane1 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(2.47172762684, 0.709056119825, 0.533657243895),
                                                volmdlr.Vector3D(0.08730196938518492, 0.9961818941044193, 0.0),
@@ -118,7 +118,7 @@ class TestPlane3D(unittest.TestCase):
                                                                 -0.9305864982826579)))
         expected_line = curves.Line3D(volmdlr.Point3D(2.4648333822539743, 0.0, 0.6735585604963772),
                                      volmdlr.Point3D(2.377531412868789, -0.9961818941044192, 0.6735585604963764))
-        plane_intersections2 = plane1.plane_intersection(plane2)
+        plane_intersections2 = plane1.plane_intersections(plane2)
         self.assertEqual(expected_line, plane_intersections2[0])
 
     def test_line_intersections(self):
