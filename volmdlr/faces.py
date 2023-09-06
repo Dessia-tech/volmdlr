@@ -1358,15 +1358,15 @@ class PlaneFace3D(Face3D):
 
     def conicalface_intersections(self, conical_face: 'ConicalFace3D'):
         surface_intersections = self.surface3d.surface_intersections(conical_face.surface3d)
-        if not isinstance(surface_intersections[0], volmdlr_curves.Line3D):
-            if all(self.edge3d_inside(intersection) and conical_face.edge3d_inside(intersection)
-                   for intersection in surface_intersections):
-                if isinstance(surface_intersections[0], volmdlr_curves.Circle3D):
-                    contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArc3D.from_curve(
-                        surface_intersections[0])])
-                else:
-                    contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArcEllipse3D.from_curve(
-                        surface_intersections[0])])
+        if isinstance(surface_intersections[0], volmdlr_curves.Circle3D):
+            if self.edge3d_inside(surface_intersections[0]) and conical_face.edge3d_inside(surface_intersections[0]):
+                contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArc3D.from_curve(
+                    surface_intersections[0])])
+                return [contour3d]
+        if isinstance(surface_intersections[0], volmdlr_curves.Ellipse3D):
+            if self.edge3d_inside(surface_intersections[0]) and conical_face.edge3d_inside(surface_intersections[0]):
+                contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArcEllipse3D.from_curve(
+                    surface_intersections[0])])
                 return [contour3d]
         intersections_points = self.face_intersections_outer_contour(conical_face)
         for point in conical_face.face_intersections_outer_contour(self):
@@ -2408,6 +2408,21 @@ class ConicalFace3D(Face3D):
             return False
 
         return self.surface2d.point_belongs(point2d) or self.surface2d.point_belongs(point2d_plus_2pi)
+
+    def circle_inside(self, circle: volmdlr_curves.Circle3D):
+        """
+        Verifies if a circle 3D lies completly on the Conical face.
+
+        :param circle: Circle to be verified.
+        :return: True if circle inside face. False otherwise.
+        """
+        if not math.isclose(abs(circle.frame.w.dot(self.surface3d.frame.w)), 1.0, abs_tol=1e-6):
+            return False
+        points = circle.discretization_points(number_points=10)
+        for point in points:
+            if not self.point_belongs(point):
+                return False
+        return True
 
 
 class SphericalFace3D(Face3D):
