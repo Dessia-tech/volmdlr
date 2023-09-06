@@ -887,7 +887,8 @@ class BSplineCurve(Edge):
         """
         if self._eval_points is None:
             self.evaluate()
-        return [getattr(volmdlr, f'Point{self.__class__.__name__[-2::]}')(*point) for point in self._eval_points]
+        point_name = f'Point{self.__class__.__name__[-2:]}'
+        return [getattr(volmdlr, point_name)(*point) for point in self._eval_points]
 
     @property
     def data(self):
