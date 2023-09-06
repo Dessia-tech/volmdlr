@@ -37,11 +37,7 @@ class Curve(DessiaObject):
         """
         return sorted(points, key=self.abscissa)
 
-    def abscissa(self, point):
-        """
-        Calculate the abscissa of a point on the curve.
-        """
-        raise NotImplementedError(f'abscissa method not implemented by {self.__class__.__name__}')
+
 
     def line_intersections(self, line):
         """
@@ -67,6 +63,12 @@ class Curve(DessiaObject):
 
 class ClosedCurve(Curve):
     """Abstract class for defining closed curves (Circle, Ellipse) properties."""
+
+    def abscissa(self, point):
+        """
+        Calculate the abscissa of a point on the curve.
+        """
+        raise NotImplementedError(f'abscissa method not implemented by {self.__class__.__name__}')
 
     def point_at_abscissa(self, abscissa):
         """
@@ -2883,6 +2885,7 @@ class Parabola3D(ParabolaMixin):
         Gets intersections between a two conic curves 3D.
 
         :param conic: Other Line 3D.
+        :param abs_tol: tolerance.
         :return: A list of points, containing all intersections between the Line 3D and the Parabola3D.
         """
         if self.frame.w.is_colinear_to(conic.frame.w) and \
