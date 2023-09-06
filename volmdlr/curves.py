@@ -2617,8 +2617,10 @@ class Hyperbola3D(HyperbolaMixin):
         :param points: list of points to be sorted.
         :return: sorted points.
         """
-
-        return sorted(points, key=self.abscissa)
+        points_ = [self.frame.global_to_local_coordinates(point) for point in points]
+        localy_sorted = sorted(points_, key=lambda ip: ip.y)
+        sorted_points = [self.frame.local_to_global_coordinates(point) for point in localy_sorted]
+        return sorted_points
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
@@ -2859,6 +2861,18 @@ class Parabola3D(Curve):
             if self.point_belongs(intersection, abs_tol) and conic.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
         return intersections
+
+    def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
+        """
+        Sort point along a curve.
+
+        :param points: list of points to be sorted.
+        :return: sorted points.
+        """
+        points_ = [self.frame.global_to_local_coordinates(point) for point in points]
+        localy_sorted = sorted(points_, key=lambda ip: ip.x)
+        sorted_points = [self.frame.local_to_global_coordinates(point) for point in localy_sorted]
+        return sorted_points
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
