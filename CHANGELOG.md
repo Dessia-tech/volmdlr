@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.14.0 [future]
 
 ### New Features
+- BSplineSurface3D: from_points_interpolation, from_points_approximation.
 - nurbs module.
 - New curves classes: Hyperbola2D and Hyperbola3D.
 - Line: closest_point_on_line, from_point_and_vector
@@ -18,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - add missing name attributes to classmethods
 - fixed circular imports
-- BSplineSurface3D: from_points_interpolation, from_points_approximation.
+- nurbs.core: find_multiplicity, evaluate_curve.
 
 ### Refactor
 -
