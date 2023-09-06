@@ -371,6 +371,11 @@ class Face3D(volmdlr.core.Primitive3D):
         method_name = f'{edge.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(self, method_name):
             intersections = getattr(self, method_name)(edge)
+        elif hasattr(self.surface3d, method_name):
+            edge_surface_intersections = getattr(self.surface3d, method_name)(edge)
+            for intersection in edge_surface_intersections:
+                if self.point_belongs(intersection) and not volmdlr.core.point_in_list(intersection, intersections):
+                    intersections.append(intersection)
         if not intersections:
             for point in [edge.start, edge.end]:
                 if self.point_belongs(point):

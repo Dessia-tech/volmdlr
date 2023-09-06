@@ -2610,6 +2610,16 @@ class Hyperbola3D(HyperbolaMixin):
         """
         return volmdlr_intersections.conic3d_line_intersections(self, line)
 
+    def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
+        """
+        Sort point along a curve.
+
+        :param points: list of points to be sorted.
+        :return: sorted points.
+        """
+
+        return sorted(points, key=self.abscissa)
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
         Matplotlib plot for a hyperbola in 3D.
