@@ -2141,9 +2141,8 @@ class LineSegment2D(LineSegment):
         :param point: point to calculate distance.
         :param return_other_point: Boolean variable to return line segment's corresponding point or not.
         """
-        distance, point = volmdlr.LineSegment2DPointDistance(
-            [(self.start.x, self.start.y), (self.end.x, self.end.y)],
-            (point.x, point.y))
+        distance, point = volmdlr.linesegment2d_point_distance((self.start.x, self.start.y),
+                                                               (self.end.x, self.end.y), (point.x, point.y))
         if return_other_point:
             return distance, volmdlr.Point2D(*point)
         return distance
@@ -4122,10 +4121,9 @@ class LineSegment3D(LineSegment):
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
-        distance, point = volmdlr.LineSegment3DPointDistance(
-            [(self.start.x, self.start.y, self.start.z),
-             (self.end.x, self.end.y, self.end.z)],
-            (point.x, point.y, point.z))
+        distance, point = volmdlr.linesegment3d_point_distance((self.start.x, self.start.y, self.start.z),
+                                                               (self.end.x, self.end.y, self.end.z),
+                                                               (point.x, point.y, point.z))
         return distance
 
     def plane_projection2d(self, center, x, y):
