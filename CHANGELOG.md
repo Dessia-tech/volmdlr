@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - nurbs module.
+- New curves classes: Hyperbola2D and Hyperbola3D.
+- Line: closest_point_on_line, from_point_and_vector
+- Line2D: get_slope, get_y_intersection.
+- New curves classes: Parabola2D/3D.
+- ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection, parallel_plane_intersections, concurent_plane_intersections, plane_intersections.
 
 ### Fixed
 - add missing name attributes to classmethods
@@ -21,9 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cache BSplineCurve points into a numpy array to reduce memory usage.
 - Vector2D, Vector3D: __repr__
 - core_compiled: cdef functions' names.
+-
 
 ### Unittests
--
+- Hyperbola2D/3D: line_intersections
+- Parabola2D/3D: line_intersections
+- ConicalSurface3D: test_line_intersections, test_plane_intersections.
 
 ## v0.13.0 [unreleased]
 

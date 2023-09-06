@@ -226,7 +226,7 @@ def split_curve(obj, param, **kwargs):
 
 def construct_split_curve(obj, curve1_kv, curve2_kv, knot_span, insertion_count):
     """
-    Helper function to instatiate split curve.
+    Helper function to instantiate split curve.
     """
     control_points = obj.control_points
     curve1_ctrlpts = control_points[0:knot_span + insertion_count]
@@ -491,7 +491,7 @@ def ctrlpts2d_to_ctrlpts(control_points_table):
 
 def helper_split_knot_vectors(degree, knotvector, num_ctrlpts, param, span_func):
     """
-    Computes knot vectors to split object into two pices.
+    Computes knot vectors to split object into two pieces.
     """
     knot_span_new = span_func(degree, knotvector, num_ctrlpts, param) + 1
     kv_1 = list(knotvector[0:knot_span_new])
