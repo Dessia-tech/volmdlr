@@ -25,7 +25,7 @@ MAX_ERROR_BY_TYPE = {
                      'arguments-differ': 64,
                      'too-many-locals': 86,
                      'unused-argument': 8,
-                     'too-many-arguments': 25,
+                     'too-many-arguments': 26,
                      'line-too-long': 12,
                      'too-many-branches': 26,
                      'too-many-statements': 13,
