@@ -1375,7 +1375,7 @@ class PlaneFace3D(Face3D):
                 return [contour3d]
         intersections_points = self.face_intersections_outer_contour(conical_face)
         for point in conical_face.face_intersections_outer_contour(self):
-            if point not in intersections_points:
+            if not volmdlr.core.point_in_list(point, intersections_points):
                 intersections_points.append(point)
         face_intersections = []
         for primitive in surface_intersections:
@@ -2401,6 +2401,9 @@ class ConicalFace3D(Face3D):
             return False
         x, y, z = self.surface3d.frame.global_to_local_coordinates(point3d)
         radius = z * math.tan(self.surface3d.semi_angle)
+        circle = volmdlr.curves.Circle3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0, z),
+                                                         self.surface3d.frame.u, self.surface3d.frame.v,
+                                                         self.surface3d.frame.w), radius=radius)
         point2d = volmdlr.Point2D(0, z)
         if radius != 0.0:
             theta = volmdlr.geometry.sin_cos_angle(x / radius, y / radius)
@@ -2410,7 +2413,7 @@ class ConicalFace3D(Face3D):
 
         point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
         check_point3d = self.surface3d.point2d_to_3d(point2d)
-        if check_point3d.point_distance(point3d) > tol:
+        if check_point3d.point_distance(point3d) > tol and not circle.point_belongs(check_point3d):
             return False
 
         return self.surface2d.point_belongs(point2d) or self.surface2d.point_belongs(point2d_plus_2pi)

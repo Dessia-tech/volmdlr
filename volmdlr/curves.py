@@ -2443,7 +2443,7 @@ class HyperbolaMixin(Curve):
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_y = max(local_split_start.y, local_split_end.y)
         min_y = min(local_split_start.y, local_split_end.y)
-        hyperbola_points = self.get_points(min_y, max_y, 30)
+        hyperbola_points = self.get_points(min_y, max_y, 100)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
         bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
@@ -2699,7 +2699,7 @@ class ParabolaMixin(Curve):
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_x = max(local_split_start.x, local_split_end.x)
         min_x = min(local_split_start.x, local_split_end.x)
-        hyperbola_points = self.get_points(min_x, max_x, 30)
+        hyperbola_points = self.get_points(min_x, max_x, 60)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
         bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
