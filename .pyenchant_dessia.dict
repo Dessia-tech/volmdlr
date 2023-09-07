@@ -141,3 +141,6 @@ pre
 scipy
 ndim
 RGB
+planeface
+triangleface
+cylindricalface

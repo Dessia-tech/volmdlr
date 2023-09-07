@@ -54,7 +54,7 @@ class TestParabola3D(unittest.TestCase):
         parabola1 = curves.Parabola3D(frame1, 1)
         parabola2 = curves.Parabola3D(frame2, 1)
         for i, parabola in enumerate([parabola1, parabola2]):
-            points = parabola.get_points()
+            points = parabola.get_points(number_points=200)
             line3d_1 = curves.Line3D(points[20], points[150])
             line3d_3 = curves.Line3D(points[50], volmdlr.Point3D(1, 1.5, -1.5))
             line3d_4 = curves.Line3D(volmdlr.Point3D(-2., -1.5, 1.5), volmdlr.Point3D(1.0, 1.5, -1.5))
@@ -62,6 +62,16 @@ class TestParabola3D(unittest.TestCase):
                 line_intersections = parabola.line_intersections(line)
                 for intersection, expected_result in zip(line_intersections, expected_results[i][j]):
                     self.assertTrue(intersection.is_close(expected_result))
+
+    def test_trim(self):
+        parabola = curves.Parabola3D(volmdlr.Frame3D(
+            volmdlr.Point3D(-0.43301270189243873, 0.0, 0.7500000000003803),
+            volmdlr.Vector3D(-0.0, 1.0, 0.0), volmdlr.Vector3D(0.5000000000002298, 0.0, 0.8660254037843059),
+            volmdlr.Vector3D(0.8660254037844387, 0.0, -0.49999999999999994)), 0.21650635094600354)
+        point_start = volmdlr.Point3D(1.6339745962174324, -1.8921223583379627, 4.330127018924)
+        point_end = volmdlr.Point3D(1.6339745962174324, 1.8921223583379627, 4.330127018924)
+        bspline = parabola.trim(point_start, point_end)
+        self.assertAlmostEqual(bspline.length(), 9.425430953568256, 5)
 
 
 if __name__ == '__main__':
