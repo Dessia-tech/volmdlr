@@ -2453,7 +2453,7 @@ class ConicalFace3D(Face3D):
 
     def circle_inside(self, circle: volmdlr_curves.Circle3D):
         """
-        Verifies if a circle 3D lies completly on the Conical face.
+        Verifies if a circle 3D lies completely on the Conical face.
 
         :param circle: Circle to be verified.
         :return: True if circle inside face. False otherwise.

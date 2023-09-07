@@ -2799,7 +2799,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def is_coincident(self, surface3d):
         """
-        Verifies if two conical surfaces are coincidents.
+        Verifies if two conical surfaces are coincident.
 
         :param surface3d: other surface 3d.
         :return: True if they are coincident, False otherwise.
