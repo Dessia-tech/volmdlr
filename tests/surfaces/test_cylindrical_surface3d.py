@@ -37,26 +37,26 @@ class TestCylindricalSurface3D(unittest.TestCase):
         cylinder_concurrent_plane = plane_surface.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 4)
         cylinder_perpendicular_plane = plane_surface.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2)
 
-        cylinder_surface_secant_parallel_plane_intersec = self.cylindrical_surface.plane_intersection(
+        cylinder_surface_secant_parallel_plane_intersec = self.cylindrical_surface.plane_intersections(
             parallel_plane_secant_cylinder)
         self.assertEqual(len(cylinder_surface_secant_parallel_plane_intersec), 2)
         self.assertTrue(isinstance(cylinder_surface_secant_parallel_plane_intersec[0], curves.Line3D))
         self.assertTrue(isinstance(cylinder_surface_secant_parallel_plane_intersec[1], curves.Line3D))
 
-        cylinder_surface_tangent_plane = self.cylindrical_surface.plane_intersection(
+        cylinder_surface_tangent_plane = self.cylindrical_surface.plane_intersections(
             cylinder_tanget_plane)
         self.assertEqual(len(cylinder_surface_tangent_plane), 1)
         self.assertTrue(isinstance(cylinder_surface_tangent_plane[0], curves.Line3D))
 
-        cylinder_surface_tangent_plane_not_intersecting = self.cylindrical_surface.plane_intersection(
+        cylinder_surface_tangent_plane_not_intersecting = self.cylindrical_surface.plane_intersections(
             not_intersecting_cylinder_parallel_plane)
         self.assertEqual(len(cylinder_surface_tangent_plane_not_intersecting), 0)
 
-        cylinder_surface_concurrent_plane_intersec = self.cylindrical_surface.plane_intersection(
+        cylinder_surface_concurrent_plane_intersec = self.cylindrical_surface.plane_intersections(
             cylinder_concurrent_plane)
         self.assertTrue(isinstance(cylinder_surface_concurrent_plane_intersec[0], curves.Ellipse3D))
 
-        cylinder_surface_perpendicular_plane_intersec = self.cylindrical_surface.plane_intersection(
+        cylinder_surface_perpendicular_plane_intersec = self.cylindrical_surface.plane_intersections(
             cylinder_perpendicular_plane)
         self.assertTrue(isinstance(cylinder_surface_perpendicular_plane_intersec[0], curves.Circle3D))
 

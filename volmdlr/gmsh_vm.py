@@ -57,7 +57,7 @@ class GmshParser(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
     @classmethod
-    def from_file(cls, file_stream: BinaryFile):
+    def from_file(cls, file_stream: BinaryFile, name: str = ''):
         """
         Defines a gmsh object from .msh file.
         """
@@ -86,7 +86,7 @@ class GmshParser(DessiaObject):
                    node_data=node_data,
                    element_data=element_data,
                    element_node_data=element_node_data,
-                   name='')
+                   name=name)
 
     @staticmethod
     def from_file_elements(lines):
