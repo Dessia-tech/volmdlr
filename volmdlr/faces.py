@@ -1275,6 +1275,12 @@ class PlaneFace3D(Face3D):
         return min_distance
 
     def linesegment_inside(self, linesegment: vme.LineSegment3D):
+        """
+        Verifies if a line segment 3D is completely inside the plane face.
+
+        :param linesegment: the line segment to verify.
+        :return: True if circle is inside False otherwise.
+        """
         direction_vector = linesegment.unit_direction_vector()
         if not math.isclose(abs(direction_vector.dot(self.surface3d.frame.w)), 0.0, abs_tol=1e-6):
             return False
@@ -1284,6 +1290,12 @@ class PlaneFace3D(Face3D):
         return True
 
     def circle_inside(self, circle: volmdlr_curves.Circle3D):
+        """
+        Verifies if a circle 3D is completely inside the plane face.
+
+        :param circle: the circle to verify.
+        :return: True if circle is inside False otherwise.
+        """
         if not math.isclose(abs(circle.frame.w.dot(self.surface3d.frame.w)), 1.0, abs_tol=1e-6):
             return False
         points = circle.discretization_points(number_points=4)
@@ -1293,6 +1305,12 @@ class PlaneFace3D(Face3D):
         return True
 
     def planeface_intersections(self, planeface):
+        """
+        Calculates the intersections between two plane faces.
+
+        :param planeface: the other Plane Face 3D to verify intersections with Plane Face 3D.
+        :return: list of intersecting wires.
+        """
         face2_plane_interections = planeface.surface3d.plane_intersections(self.surface3d)
         if not face2_plane_interections:
             return []
@@ -1326,9 +1344,21 @@ class PlaneFace3D(Face3D):
         return planeface_intersections
 
     def triangle_intersections(self, triangleface):
+        """
+        Gets the intersections between a Plane Face3D and a Triangle3D.
+
+        :param triangleface: the other triangle face.
+        :return:
+        """
         return self.planeface_intersections(triangleface)
 
     def cylindricalface_intersections(self, cylindricalface: 'CylindricalFace3D'):
+        """
+        Calculates the intersections between a plane face 3D and Cylindrical Face3D.
+
+        :param cylindricalface: the Cylindrical Face 3D to verify intersections with Plane Face 3D.
+        :return: list of intersecting wires.
+        """
         cylindricalsurfaceface_intersections = cylindricalface.surface3d.plane_intersections(self.surface3d)
         if not isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Line3D):
             if all(self.edge3d_inside(intersection) and cylindricalface.edge3d_inside(intersection)
