@@ -488,38 +488,6 @@ class TetrahedralElement(DessiaObject):
         return abs(1 / 6 * (npy.linalg.det(npy.array(data).reshape(3, 3))))
 
     def _form_functions(self):
-        # coeff = [1, -1, 1, 1]
-        # alpha = []
-        # for i in range(4):
-        #     data = []
-        #     for c in range(4):
-        #         if c != i:
-        #             data.extend([self.points[c].x, self.points[c].y, self.points[c].z])
-        #     alpha.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
-        # gamma = []
-        # for i in range(4):
-        #     data = []
-        #     for c in range(4):
-        #         if c != i:
-        #             data.extend([1, self.points[c].x, self.points[c].z])
-        #     gamma.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
-
-        # coeff = [-1, 1, -1, 1]
-        # betha = []
-        # for i in range(4):
-        #     data = []
-        #     for c in range(4):
-        #         if c != i:
-        #             data.extend([1, self.points[c].y, self.points[c].z])
-        #     betha.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
-        # delta = []
-        # for i in range(4):
-        #     data = []
-        #     for c in range(4):
-        #         if c != i:
-        #             data.extend([1, self.points[c].x, self.points[c].y])
-        #     delta.append(coeff[i] * (npy.linalg.det(npy.array(data).reshape(3,3))))
-
         coeff = [1, -1, 1, -1]
         form_funct = []
         for i in range(4):
@@ -655,26 +623,6 @@ class Mesh(DessiaObject):
         self._gmsh = None
         DessiaObject.__init__(self, name='')
 
-    # def __add__(self, other_mesh):
-    #     new_nodes = self.nodes[:]
-    #     new_nodes_index = {p: i for i, p in enumerate(self.points)}
-    #     ip = len(new_nodes)
-    #     for point in other_mesh.nodes:
-    #         if point not in new_nodes_index:
-    #             new_nodes_index[point] = ip
-    #             ip += 1
-    #             new_nodes.append(point)
-
-    #     new_elements_groups = self.elements_groups[:]
-    #     for i1, i2, i3 in other_mesh.elements_groups:
-    #         p1 = other_mesh.nodes[i1]
-    #         p2 = other_mesh.nodes[i2]
-    #         p3 = other_mesh.nodes[i3]
-    #         new_elements_groups.append((new_nodes_index[p1],
-    #                                     new_nodes_index[p2],
-    #                                     new_nodes_index[p3]))
-    #     return self.__class__(new_elements_groups)
-
     def _set_nodes_number(self):
         nodes = set()
         for elements_group in self.elements_groups:
@@ -693,30 +641,6 @@ class Mesh(DessiaObject):
                 return element
         return None
 
-    # def set_node_displacement_index(self):
-    #     indexes = {}
-    #     for node in self.nodes:
-    #         indexes[node] = [2*self.node_to_index[node],
-    #                           2*self.node_to_index[node]+1]
-    #     return indexes
-
-    # def boundary_dict(self):
-    #     boundary_dict = {}
-    #     for elements_group1, elements_group2 in combinations(
-    #             self.elements_groups, 2):
-    #         linear_elements1 = []
-    #         linear_elements2 = []
-    #         for element in elements_group1.elements:
-    #             linear_elements1.extend(element.linear_elements)
-    #         for element in elements_group2.elements:
-    #             linear_elements2.extend(element.linear_elements)
-    #         duplicate_linear_elements = find_duplicate_linear_element(
-    #             linear_elements1, linear_elements2)
-    #         if duplicate_linear_elements:
-    #             boundary_dict[(elements_group1,
-    #                             elements_group2)] = duplicate_linear_elements
-    #     return boundary_dict
-
     def plot(self, ax=None):
         if ax is None:
             if self.elements_groups[0].elements[0].__class__.__name__[-2::] == '2D':
@@ -727,43 +651,6 @@ class Mesh(DessiaObject):
         for elements_group in self.elements_groups:
             elements_group.plot(ax=ax)
         return ax
-
-    # def plot_data(self, pos=0, quote=True, constructor=True, direction=1):
-    #     plot_datas = []
-    #     for element_group in self.elements_groups:
-    #         for element in element_group.elements:
-    #             c1 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
-    #                 element.points[0], element.points[1])])
-    #             c2 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
-    #                 element.points[1], element.points[2])])
-    #             c3 = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(
-    #                 element.points[2], element.points[0])])
-    #             plot_datas.append(c1.plot_data())
-    #             plot_datas.append(c2.plot_data())
-    #             plot_datas.append(c3.plot_data())
-    #             # plot_datas.extend([c1, c2, c3])
-    #     return plot_datas
-
-    # def plot_displaced_mesh(self,
-    #                         node_displacement: Dict[volmdlr.Point2D,
-    #                                                 List[float]],
-    #                         ax=None, amplification=0.5):
-
-    #     deformed_mesh = self.copy()
-    #     nodes = deformed_mesh.nodes
-
-    #     for node in nodes:
-    #         for displaced_node in node_displacement:
-    #             if node == displaced_node:
-    #                 node.x += amplification*node_displacement[
-    #                     displaced_node][0]
-    #                 node.y += amplification*node_displacement[
-    #                     displaced_node][1]
-
-    #     ax = deformed_mesh.plot(ax=ax)
-    #     ax.set_aspect('equal')
-
-    #     return ax
 
     def bounding_rectangle(self):
         nodes = self.nodes
