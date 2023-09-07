@@ -296,7 +296,7 @@ def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-8):
 
 def get_two_planes_intersections(plane1_frame, plane2_frame):
     """
-    Caculates the intersections between two planes, given their frames.
+    Calculates the intersections between two planes, given their frames.
 
     :param plane1_frame: Plane's 1 frame.
     :param plane2_frame: Plane's 2 frame.
