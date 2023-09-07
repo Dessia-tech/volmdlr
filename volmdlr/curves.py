@@ -2491,7 +2491,7 @@ class HyperbolaMixin(Curve):
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_y = max(local_split_start.y, local_split_end.y)
         min_y = min(local_split_start.y, local_split_end.y)
-        hyperbola_points = self.get_points(min_y, max_y, 30)
+        hyperbola_points = self.get_points(min_y, max_y, 100)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
         bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
@@ -2684,6 +2684,18 @@ class Hyperbola3D(HyperbolaMixin):
         """
         return volmdlr_intersections.conic3d_line_intersections(self, line)
 
+    def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
+        """
+        Sort point along a curve.
+
+        :param points: list of points to be sorted.
+        :return: sorted points.
+        """
+        points_ = [self.frame.global_to_local_coordinates(point) for point in points]
+        localy_sorted = sorted(points_, key=lambda ip: ip.y)
+        sorted_points = [self.frame.local_to_global_coordinates(point) for point in localy_sorted]
+        return sorted_points
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
         Matplotlib plot for a hyperbola in 3D.
@@ -2735,7 +2747,7 @@ class ParabolaMixin(Curve):
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_x = max(local_split_start.x, local_split_end.x)
         min_x = min(local_split_start.x, local_split_end.x)
-        hyperbola_points = self.get_points(min_x, max_x, 30)
+        hyperbola_points = self.get_points(min_x, max_x, 60)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
         bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
@@ -2951,6 +2963,18 @@ class Parabola3D(ParabolaMixin):
             if self.point_belongs(intersection, abs_tol) and conic.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
         return intersections
+
+    def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
+        """
+        Sort point along a curve.
+
+        :param points: list of points to be sorted.
+        :return: sorted points.
+        """
+        points_ = [self.frame.global_to_local_coordinates(point) for point in points]
+        localy_sorted = sorted(points_, key=lambda ip: ip.x)
+        sorted_points = [self.frame.local_to_global_coordinates(point) for point in localy_sorted]
+        return sorted_points
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """

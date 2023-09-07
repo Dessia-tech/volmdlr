@@ -152,6 +152,66 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertEqual(face_intersections[0].primitives[0], edges.LineSegment3D(volmdlr.Point3D(0.0, 0.15, -0.25),
                                                                                   volmdlr.Point3D(0.0, 0.15, 0.25)))
 
+    def test_conical_face_intersections(self):
+        def get_face(plane, x1=-1, x2=1, y1=-1, y2=1):
+            return faces.PlaneFace3D.from_surface_rectangular_cut(plane, x1, x2, y1, y2)
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
+        conical_face = faces.ConicalFace3D.from_surface_rectangular_cut(conical_surface,
+                                                                        0, 1.5 * math.pi, 0., 1)
+        """======== Arc3D ========="""
+        plane1 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5),
+                                                  volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D))
+        face = get_face(plane1)
+        intersections = face.face_intersections(conical_face)
+        self.assertEqual(len(intersections), 1)
+        self.assertIsInstance(intersections[0].primitives[0], edges.Arc3D)
+        self.assertAlmostEqual(intersections[0].length(), 1.360349523175663)
+        """========= Hyperbola (BSpline3D) ======="""
+        plane2 = surfaces.Plane3D(
+            volmdlr.Frame3D(volmdlr.Point3D(0, 0.25, 0.5), volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D))
+        face = get_face(plane2)
+        intersections = face.face_intersections(conical_face)
+        self.assertEqual(len(intersections), 1)
+        self.assertIsInstance(intersections[0].primitives[0], edges.BSplineCurve3D)
+        self.assertAlmostEqual(intersections[0].length(), 1.5797324269472552)
+
+        """============== Two LineSegments ==================="""
+        plane3 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0.0, 0.5),
+                                                  volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D))
+        face = get_face(plane3)
+        intersections = face.face_intersections(conical_face)
+        self.assertEqual(len(intersections), 2)
+        self.assertIsInstance(intersections[0].primitives[0], edges.LineSegment3D)
+        self.assertAlmostEqual(intersections[0].length(), 1.1547005383794386)
+        self.assertAlmostEqual(intersections[1].length(), 1.1547005383794386)
+        """===================== Ellipse 3D ============================="""
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        frame = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), vector1, vector2, vector3)
+        plane4 = surfaces.Plane3D(frame)
+        face = get_face(plane4)
+        intersections = face.face_intersections(conical_face)
+        self.assertEqual(len(intersections), 2)
+        self.assertIsInstance(intersections[0].primitives[0], edges.ArcEllipse3D)
+        self.assertIsInstance(intersections[1].primitives[0], edges.ArcEllipse3D)
+        self.assertAlmostEqual(intersections[0].length(), 1.1339664625179093)
+        self.assertAlmostEqual(intersections[1].length(), 0.7233023692399578)
+        """================== Parabola ===================="""
+        point1 = conical_surface.frame.origin
+        point2 = conical_surface.frame.local_to_global_coordinates(
+            volmdlr.Point3D(10 * math.tan(conical_surface.semi_angle), 0, 10))
+        generatrix = edges.LineSegment3D(point1, point2)
+        normal = generatrix.unit_normal_vector()
+        plane_origin = frame.origin - normal * .5
+        plane5 = surfaces.Plane3D.from_normal(plane_origin, normal)
+        face = get_face(plane5)
+        intersections = face.face_intersections(conical_face)
+        self.assertEqual(len(intersections), 1)
+        self.assertIsInstance(intersections[0].primitives[0], edges.BSplineCurve3D)
+        self.assertAlmostEqual(intersections[0].length(), 1.190977548203506)
+
     def test_linesegment_inside(self):
         lineseg = volmdlr.edges.LineSegment3D(volmdlr.Point3D(0.2, 0, -0.2), volmdlr.Point3D(0.1, 0.0, 0.2))
         self.assertTrue(self.plane_face_cylindricalface_intersec.linesegment_inside(lineseg))

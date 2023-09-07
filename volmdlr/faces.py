@@ -371,6 +371,11 @@ class Face3D(volmdlr.core.Primitive3D):
         method_name = f'{edge.__class__.__name__.lower()[:-2]}_intersections'
         if hasattr(self, method_name):
             intersections = getattr(self, method_name)(edge)
+        elif hasattr(self.surface3d, method_name):
+            edge_surface_intersections = getattr(self.surface3d, method_name)(edge)
+            for intersection in edge_surface_intersections:
+                if self.point_belongs(intersection) and not volmdlr.core.point_in_list(intersection, intersections):
+                    intersections.append(intersection)
         if not intersections:
             for point in [edge.start, edge.end]:
                 if self.point_belongs(point):
@@ -1270,6 +1275,12 @@ class PlaneFace3D(Face3D):
         return min_distance
 
     def linesegment_inside(self, linesegment: vme.LineSegment3D):
+        """
+        Verifies if a line segment 3D is completely inside the plane face.
+
+        :param linesegment: the line segment to verify.
+        :return: True if circle is inside False otherwise.
+        """
         direction_vector = linesegment.unit_direction_vector()
         if not math.isclose(abs(direction_vector.dot(self.surface3d.frame.w)), 0.0, abs_tol=1e-6):
             return False
@@ -1279,6 +1290,12 @@ class PlaneFace3D(Face3D):
         return True
 
     def circle_inside(self, circle: volmdlr_curves.Circle3D):
+        """
+        Verifies if a circle 3D is completely inside the plane face.
+
+        :param circle: the circle to verify.
+        :return: True if circle is inside False otherwise.
+        """
         if not math.isclose(abs(circle.frame.w.dot(self.surface3d.frame.w)), 1.0, abs_tol=1e-6):
             return False
         points = circle.discretization_points(number_points=4)
@@ -1288,6 +1305,12 @@ class PlaneFace3D(Face3D):
         return True
 
     def planeface_intersections(self, planeface):
+        """
+        Calculates the intersections between two plane faces.
+
+        :param planeface: the other Plane Face 3D to verify intersections with Plane Face 3D.
+        :return: list of intersecting wires.
+        """
         face2_plane_interections = planeface.surface3d.plane_intersections(self.surface3d)
         if not face2_plane_interections:
             return []
@@ -1321,9 +1344,21 @@ class PlaneFace3D(Face3D):
         return planeface_intersections
 
     def triangle_intersections(self, triangleface):
+        """
+        Gets the intersections between a Plane Face3D and a Triangle3D.
+
+        :param triangleface: the other triangle face.
+        :return:
+        """
         return self.planeface_intersections(triangleface)
 
     def cylindricalface_intersections(self, cylindricalface: 'CylindricalFace3D'):
+        """
+        Calculates the intersections between a plane face 3D and Cylindrical Face3D.
+
+        :param cylindricalface: the Cylindrical Face 3D to verify intersections with Plane Face 3D.
+        :return: list of intersecting wires.
+        """
         cylindricalsurfaceface_intersections = cylindricalface.surface3d.plane_intersections(self.surface3d)
         if not isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Line3D):
             if all(self.edge3d_inside(intersection) and cylindricalface.edge3d_inside(intersection)
@@ -1353,6 +1388,46 @@ class PlaneFace3D(Face3D):
             for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
                 edge = primitive.trim(point1, point2)
                 if self.edge3d_inside(edge) and cylindricalface.edge3d_inside(edge):
+                    face_intersections.append(volmdlr.wires.Wire3D([edge]))
+        return face_intersections
+
+    def conicalface_intersections(self, conical_face: 'ConicalFace3D'):
+        """
+        Calculates the intersections between a plane face 3D and Conical Face3D.
+
+        :param conical_face: the Conical Face 3D to verify intersections with Plane Face 3D.
+        :return: list of intersecting wires.
+        """
+        surface_intersections = self.surface3d.surface_intersections(conical_face.surface3d)
+        if isinstance(surface_intersections[0], volmdlr_curves.Circle3D):
+            if self.edge3d_inside(surface_intersections[0]) and conical_face.edge3d_inside(surface_intersections[0]):
+                contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArc3D.from_curve(
+                    surface_intersections[0])])
+                return [contour3d]
+        if isinstance(surface_intersections[0], volmdlr_curves.Ellipse3D):
+            if self.edge3d_inside(surface_intersections[0]) and conical_face.edge3d_inside(surface_intersections[0]):
+                contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArcEllipse3D.from_curve(
+                    surface_intersections[0])])
+                return [contour3d]
+        intersections_points = self.face_intersections_outer_contour(conical_face)
+        for point in conical_face.face_intersections_outer_contour(self):
+            if not volmdlr.core.point_in_list(point, intersections_points):
+                intersections_points.append(point)
+        face_intersections = []
+        for primitive in surface_intersections:
+            points_on_primitive = []
+            for point in intersections_points:
+                if primitive.point_belongs(point):
+                    points_on_primitive.append(point)
+            if not points_on_primitive:
+                continue
+            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
+            if isinstance(primitive, volmdlr_curves.ClosedCurve):
+            # if isinstance(primitive, volmdlr_curves.Ellipse3D) or isinstance(primitive, volmdlr_curves.Circle3D):
+                points_on_primitive = points_on_primitive + [points_on_primitive[0]]
+            for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                edge = primitive.trim(point1, point2)
+                if self.edge3d_inside(edge) and conical_face.edge3d_inside(edge):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
         return face_intersections
 
@@ -2370,11 +2445,26 @@ class ConicalFace3D(Face3D):
             point2d = volmdlr.Point2D(theta, z)
 
         point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
-        check_point3d = self.surface3d.point2d_to_3d(point2d)
+        check_point3d = self.surface3d.point2d_to_3d(self.surface3d.point3d_to_2d(point3d))
         if check_point3d.point_distance(point3d) > tol:
             return False
 
         return self.surface2d.point_belongs(point2d) or self.surface2d.point_belongs(point2d_plus_2pi)
+
+    def circle_inside(self, circle: volmdlr_curves.Circle3D):
+        """
+        Verifies if a circle 3D lies completely on the Conical face.
+
+        :param circle: Circle to be verified.
+        :return: True if circle inside face. False otherwise.
+        """
+        if not math.isclose(abs(circle.frame.w.dot(self.surface3d.frame.w)), 1.0, abs_tol=1e-6):
+            return False
+        points = circle.discretization_points(number_points=10)
+        for point in points:
+            if not self.point_belongs(point):
+                return False
+        return True
 
 
 class SphericalFace3D(Face3D):
