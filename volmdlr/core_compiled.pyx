@@ -6,11 +6,11 @@
 Cython functions
 
 """
+import cython.cimports.libc.math as math_c
 import math
 import random
 import sys
 import warnings
-# from __future__ import annotations
 from typing import List, Text, Tuple
 
 import matplotlib.pyplot as plt
@@ -21,108 +21,58 @@ from dessia_common.core import DessiaObject
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
-# =============================================================================
 
-cdef(double, double) Csub2D(double u1, double u2,
-                            double v1, double v2):
+# C functions
+# =============================================================================
+cdef(double, double) c_sub_2d(double u1, double u2, double v1, double v2):
     return (u1 - v1, u2 - v2)
 
 
-# =============================================================================
-
-cdef(double, double) Cadd2D(double u1, double u2,
-                            double v1, double v2,):
+cdef(double, double) c_add_2d(double u1, double u2, double v1, double v2,):
     return (u1 + v1, u2 + v2)
 
 
-# =============================================================================
-
-cdef(double, double) Cmul2D(double u1, double u2, double value):
+cdef(double, double) c_mul_2d(double u1, double u2, double value):
     return (u1 * value, u2 * value)
 
-# def mul2D(vector, value):
-#    return Cmul2D(vector.x, vector.y, value)
 
-# =============================================================================
-
-cdef double CVector2DDot(double u1, double u2,
-                         double v1, double v2):
+cdef double c_vector2d_dot(double u1, double u2, double v1, double v2):
     return u1 * v1 + u2 * v2
 
-# def Vector2DDot(vector1, vector2):
-#    return CVector2DDot(vector1.x, vector1.y,
-#                        vector2.x, vector2.y)
 
-# =============================================================================
-
-cdef double CVector2Dnorm(double u1, double u2):
+cdef double c_vector2d_norm(double u1, double u2):
     return (u1 * u1 + u2 * u2)**0.5
 
-# def Vector2Dnorm(vector):
-#    return CVector2Dnorm(vector.x, vector.y)
 
-# =============================================================================
-
-cdef(double, double, double) Csub3D(double u1, double u2, double u3,
-                                    double v1, double v2, double v3):
+cdef(double, double, double) c_sub_3d(double u1, double u2, double u3,
+                                      double v1, double v2, double v3):
     return (u1 - v1, u2 - v2, u3 - v3)
 
-# def sub3D(vector1, vector2):
-#    return Csub3D(vector1.x, vector1.y, vector1.z,
-#                  vector2.x, vector2.y, vector2.z)
 
-# =============================================================================
-
-cdef(double, double, double) Cadd3D(double u1, double u2, double u3,
-                                    double v1, double v2, double v3):
+cdef(double, double, double) c_add_3d(double u1, double u2, double u3,
+                                      double v1, double v2, double v3):
     return (u1 + v1, u2 + v2, u3 + v3)
 
-# def add3D(vector1, vector2):
-#    return Cadd3D(vector1.x, vector1.y, vector1.z,
-#                  vector2.x, vector2.y, vector2.z)
 
-# =============================================================================
-
-cdef(double, double, double) Cmul3D(double u1, double u2, double u3,
-                                    double value):
+cdef(double, double, double) c_mul_3d(double u1, double u2, double u3, double value):
     return (u1 * value, u2 * value, u3 * value)
 
-# def mul3D(vector, value):
-#    return Cmul3D(vector.x, vector.y, vector.z, value)
 
-# =============================================================================
-
-cdef double CVector3DDot(double u1, double u2, double u3,
-                         double v1, double v2, double v3):
+cdef double c_vector3d_dot(double u1, double u2, double u3,
+                           double v1, double v2, double v3):
     return u1 * v1 + u2 * v2 + u3 * v3
 
-# def Vector3DDot(vector1, vector2):
-#    return CVector3DDot(vector1.x, vector1.y, vector1.z,
-#                        vector2.x, vector2.y, vector2.z)
 
-# =============================================================================
-
-cdef double CVector3Dnorm(double u1, double u2, double u3):
+cdef double c_vector3d_norm(double u1, double u2, double u3):
     return (u1 * u1 + u2 * u2 + u3 * u3)**0.5
 
-# def Vector3Dnorm(vector):
-#    return CVector3Dnorm(vector.x, vector.y, vector.z)
 
-
-# =============================================================================
-
-cdef(double, double, double) CVector3D_cross(double u1, double u2, double u3,
-                                             double v1, double v2, double v3):
+cdef(double, double, double) c_vector3d_cross(double u1, double u2, double u3,
+                                              double v1, double v2, double v3):
     return (u2 * v3 - u3 * v2, u3 * v1 - u1 * v3, u1 * v2 - u2 * v1)
 
-# def vector3D_cross(vector1, vector2):
-#    return C_vector3D_cross(vector1.x, vector1.y, vector1.z,
-#                            vector2.x, vector2.y, vector2.z)
 
-
-# =============================================================================
-
-cdef(double, double, double) C_vector3D_rotation(double vx, double vy, double vz,
+cdef(double, double, double) c_vector3d_rotation(double vx, double vy, double vz,
                                                  double center_x, double center_y, double center_z,
                                                  double axis_x, double axis_y, double axis_z,
                                                  double angle):
@@ -131,35 +81,24 @@ cdef(double, double, double) C_vector3D_rotation(double vx, double vy, double vz
     cdef double uy = vy - center_y
     cdef double uz = vz - center_z
 
-    cdef double cos_angle = math.cos(angle)
-    cdef double sin_angle = math.sin(angle)
+    cdef double cos_angle = math_c.cos(angle)
+    cdef double sin_angle = math_c.sin(angle)
 
     cdef double rv1_x = cos_angle * ux
     cdef double rv1_y = cos_angle * uy
     cdef double rv1_z = cos_angle * uz
+    cdef double rv2_x, rv2_y, rv2_z, rv3_x, rv3_y, rv3_z
+    rv2_x, rv2_y, rv2_z = c_mul_3d(axis_x, axis_y, axis_z,
+                                   (1 - cos_angle) * c_vector3d_dot(ux, uy, uz, axis_x, axis_y, axis_z))
 
-    rv2_x, rv2_y, rv2_z = Cmul3D(axis_x, axis_y, axis_z,
-                                 (1 - cos_angle) * CVector3DDot(
-                                         ux, uy, uz,
-                                         axis_x, axis_y, axis_z)
-                                 )
-
-    rv3_x, rv3_y, rv3_z = CVector3D_cross(axis_x, axis_y, axis_z,
-                                          ux, uy, uz)
+    rv3_x, rv3_y, rv3_z = c_vector3d_cross(axis_x, axis_y, axis_z, ux, uy, uz)
 
     return (rv1_x + rv2_x + rv3_x * sin_angle + center_x,
             rv1_y + rv2_y + rv3_y * sin_angle + center_y,
             rv1_z + rv2_z + rv3_z * sin_angle + center_z)
 
 
-def vector3D_rotation(vector, center, axis, angle):
-    return C_vector3D_rotation(vector.x, vector.y, vector.z,
-                               center.x, center.y, center.z,
-                               axis.x, axis.y, axis.z,
-                               angle)
-
-
-cdef(double, double, double) C_matrix_vector_multiplication3(double M11, double M12, double M13,
+cdef(double, double, double) c_matrix_vector_multiplication3(double M11, double M12, double M13,
                                                              double M21, double M22, double M23,
                                                              double M31, double M32, double M33,
                                                              double v1, double v2, double v3):
@@ -168,7 +107,7 @@ cdef(double, double, double) C_matrix_vector_multiplication3(double M11, double 
             M21 * v1 + M22 * v2 + M23 * v3,
             M31 * v1 + M32 * v2 + M33 * v3)
 
-cdef(double, double) C_matrix_vector_multiplication2(double M11, double M12,
+cdef(double, double) c_matrix_vector_multiplication2(double M11, double M12,
                                                      double M21, double M22,
                                                      double v1, double v2):
 
@@ -178,12 +117,12 @@ cdef(double, double) C_matrix_vector_multiplication2(double M11, double M12,
 
 cdef(double, double, double,
      double, double, double,
-     double, double, double) Cmatrix_multiplication3(double A11, double A12, double A13,
-                                                     double A21, double A22, double A23,
-                                                     double A31, double A32, double A33,
-                                                     double B11, double B12, double B13,
-                                                     double B21, double B22, double B23,
-                                                     double B31, double B32, double B33):
+     double, double, double) c_matrix_multiplication3(double A11, double A12, double A13,
+                                                      double A21, double A22, double A23,
+                                                      double A31, double A32, double A33,
+                                                      double B11, double B12, double B13,
+                                                      double B21, double B22, double B23,
+                                                      double B31, double B32, double B33):
 
     return (A11 * B11 + A12 * B21 + A13 * B31,
             A11 * B12 + A12 * B22 + A13 * B32,
@@ -196,26 +135,58 @@ cdef(double, double, double,
             A31 * B13 + A32 * B23 + A33 * B33)
 
 
+cdef(double, (double, double)) c_linesegment2d_point_distance((double, double) p1,
+                                                              (double, double) p2, (double, double) point):
+    cdef double t, ux, uy, ppx, ppy, vx, vy
+    cdef (double, double) projection
+
+    ux, uy = c_sub_2d(p2[0], p2[1], p1[0], p1[1])
+    ppx, ppy = c_sub_2d(point[0], point[1], p1[0], p1[1])
+
+    t = max(0, min(1, c_vector2d_dot(ppx, ppy, ux, uy) / c_vector2d_norm(ux, uy)**2))
+    vx, vy = c_mul_2d(ux, uy, t)
+
+    projection = c_add_2d(p1[0], p1[1], vx, vy)
+    ppx, ppy = projection[0] - point[0], projection[1] - point[1]
+    return c_vector2d_norm(ppx, ppy), projection
+
+
+cdef (double, (double, double, double)) c_linesegment3d_point_distance((double, double, double) p1,
+                                                                       (double, double, double) p2,
+                                                                       (double, double, double) point):
+    cdef double t, ux, uy, uz, ppx, ppy, ppz, vx, vy, vz
+    cdef (double, double, double) projection
+    ux, uy, uz = c_sub_3d(p2[0], p2[1], p2[2], p1[0], p1[1], p1[2])
+    ppx, ppy, ppz = c_sub_3d(point[0], point[1], point[2], p1[0], p1[1], p1[2])
+    t = max(0, min(1, c_vector3d_dot(ppx, ppy, ppz, ux, uy, uz) / c_vector3d_norm(ux, uy, uz)**2))
+    vx, vy, vz = c_mul_3d(ux, uy, uz, t)
+    projection = c_add_3d(p1[0], p1[1], p1[2], vx, vy, vz)
+    ppx, ppy, ppz = projection[0]-point[0], projection[1]-point[1], projection[2]-point[2]
+    return c_vector3d_norm(ppx, ppy, ppz), projection
+
+
 # =============================================================================
+
 
 def polygon_point_belongs(point, points, include_edge_points: bool = False, tol: float = 1e-6):
     cdef int i
     cdef int n = len(points)
     cdef bint inside = False
-    cdef float x, y, p1x, p1y, p2x, p2y, xints
+    cdef double x, y, p1x, p1y, p2x, p2y, xints, dot_product, length_squared, t, distance_projection_to_point
+    cdef double[2] u, v, projection_vector, projection_point
     x, y = point
     for i in range(n):
         p1x, p1y = points[i]
         p2x, p2y = points[(i + 1) % n]
-        v = (p2x - p1x, p2y - p1y)
-        u = (x - p1x, y - p1y)
+        v = [p2x - p1x, p2y - p1y]
+        u = [x - p1x, y - p1y]
         dot_product = u[0] * v[0] + u[1] * v[1]
         length_squared = v[0] ** 2 + v[1] ** 2
         t = (dot_product / length_squared)
         if 0.0 <= t <= 1.0:
-            projection_vector = (v[0] * t, v[1] * t)
-            projection_point = (p1x + projection_vector[0], p1y + projection_vector[1])
-            distance_projection_to_point = math.sqrt((projection_point[0] - x) ** 2 + (projection_point[1] - y) ** 2)
+            projection_vector = [v[0] * t, v[1] * t]
+            projection_point = [p1x + projection_vector[0], p1y + projection_vector[1]]
+            distance_projection_to_point = math_c.sqrt((projection_point[0] - x) ** 2 + (projection_point[1] - y) ** 2)
             if distance_projection_to_point <= tol:
                 if include_edge_points:
                     return True
@@ -239,7 +210,7 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False, tol:
 # =============================================================================
 def bbox_is_intersecting(bbox1, bbox2, tol):
     """Verifies if the two bouding boxes are intersecting, or touching."""
-    cdef float x1_min, x1_max, y1_min, y1_max, z1_min, z1_max, x2_min, x2_max, y2_min, y2_max, z2_min, z2_max
+    cdef double x1_min, x1_max, y1_min, y1_max, z1_min, z1_max, x2_min, x2_max, y2_min, y2_max, z2_min, z2_max
     x1_min = bbox1.xmin - tol
     x1_max = bbox1.xmax + tol
     y1_min = bbox1.ymin - tol
@@ -263,56 +234,22 @@ def bbox_is_intersecting(bbox1, bbox2, tol):
     return True
 
 
-# =============================================================================
+def linesegment2d_point_distance(tuple start, tuple end, tuple point):
+    return c_linesegment2d_point_distance(start, end, point)
 
 
-cdef(double, (double, double)) CLineSegment2DPointDistance((double, double) p1,
-                                                           (double, double) p2, (double, double) point):
-    cdef double t
-
-    ux, uy = Csub2D(p2[0], p2[1], p1[0], p1[1])
-    ppx, ppy = Csub2D(point[0], point[1], p1[0], p1[1])
-
-    t = max(0, min(1, CVector2DDot(ppx, ppy, ux, uy) / CVector2Dnorm(ux, uy)**2))
-    vx, vy = Cmul2D(ux, uy, t)
-
-    projection = Cadd2D(p1[0], p1[1], vx, vy)
-    ppx, ppy = projection[0] - point[0], projection[1] - point[1]
-    return CVector2Dnorm(ppx, ppy), projection
-
-
-def LineSegment2DPointDistance(points, point):
-    return CLineSegment2DPointDistance(tuple(points[0]), tuple(points[1]), tuple(point))
-
-# =============================================================================
-
-
-cdef (double, (double, double, double)) CLineSegment3DPointDistance((double, double, double) p1,
-                                                                    (double, double, double) p2,
-                                                                    (double, double, double) point):
-    cdef double t
-
-    ux, uy, uz = Csub3D(p2[0], p2[1], p2[2], p1[0], p1[1], p1[2])
-    ppx, ppy, ppz = Csub3D(point[0], point[1], point[2], p1[0], p1[1], p1[2])
-    t = max(0, min(1, CVector3DDot(ppx, ppy, ppz, ux, uy, uz) / CVector3Dnorm(ux, uy, uz)**2))
-    vx, vy, vz = Cmul3D(ux, uy, uz, t)
-    projection = Cadd3D(p1[0], p1[1], p1[2], vx, vy, vz)
-    ppx, ppy, ppz = projection[0]-point[0], projection[1]-point[1], projection[2]-point[2]
-    return CVector3Dnorm(ppx, ppy, ppz), projection
-
-
-def LineSegment3DPointDistance(points, point):
-    return CLineSegment3DPointDistance(tuple(points[0]), tuple(points[1]), tuple(point))
+def linesegment3d_point_distance(tuple start, tuple end, tuple point):
+    return c_linesegment3d_point_distance(start, end, point)
 
 
 cdef (double, double) CLineSegment3DDistance((double, double, double) u,
                                              (double, double, double) v,
                                              (double, double, double) w):
-    cdef double a = CVector3DDot(u[0], u[1], u[2], u[0], u[1], u[2])
-    cdef double b = CVector3DDot(u[0], u[1], u[2], v[0], v[1], v[2])
-    cdef double c = CVector3DDot(v[0], v[1], v[2], v[0], v[1], v[2])
-    cdef double d = CVector3DDot(u[0], u[1], u[2], w[0], w[1], w[2])
-    cdef double e = CVector3DDot(v[0], v[1], v[2], w[0], w[1], w[2])
+    cdef double a = c_vector3d_dot(u[0], u[1], u[2], u[0], u[1], u[2])
+    cdef double b = c_vector3d_dot(u[0], u[1], u[2], v[0], v[1], v[2])
+    cdef double c = c_vector3d_dot(v[0], v[1], v[2], v[0], v[1], v[2])
+    cdef double d = c_vector3d_dot(u[0], u[1], u[2], w[0], w[1], w[2])
+    cdef double e = c_vector3d_dot(v[0], v[1], v[2], w[0], w[1], w[2])
     cdef double determinant = a * c - b * c
     cdef double s_parameter
     cdef double t_parameter
@@ -410,12 +347,12 @@ cdef (double, double) CLineSegment3DDistance((double, double, double) u,
 
 
 def LineSegment3DDistance(points_linesegment1, points_linesegment2):
-    u = Csub3D(points_linesegment1[1].x, points_linesegment1[1].y, points_linesegment1[1].z,
-               points_linesegment1[0].x, points_linesegment1[0].y, points_linesegment1[0].z)
-    v = Csub3D(points_linesegment2[1].x, points_linesegment2[1].y, points_linesegment2[1].z,
-               points_linesegment2[0].x, points_linesegment2[0].y, points_linesegment2[0].z)
-    w = Csub3D(points_linesegment1[0].x, points_linesegment1[0].y, points_linesegment1[0].z,
-               points_linesegment2[0].x, points_linesegment2[0].y, points_linesegment2[0].z)
+    u = c_sub_3d(points_linesegment1[1].x, points_linesegment1[1].y, points_linesegment1[1].z,
+                 points_linesegment1[0].x, points_linesegment1[0].y, points_linesegment1[0].z)
+    v = c_sub_3d(points_linesegment2[1].x, points_linesegment2[1].y, points_linesegment2[1].z,
+                 points_linesegment2[0].x, points_linesegment2[0].y, points_linesegment2[0].z)
+    w = c_sub_3d(points_linesegment1[0].x, points_linesegment1[0].y, points_linesegment1[0].z,
+                 points_linesegment2[0].x, points_linesegment2[0].y, points_linesegment2[0].z)
     s_parameter, t_parameter = CLineSegment3DDistance(u, v, w)
     point1 = points_linesegment1[0] + Vector3D(*u) * s_parameter
     point2 = points_linesegment2[0] + Vector3D(*v) * t_parameter
@@ -580,7 +517,7 @@ class Vector2D(Vector):
         self.name = name
 
     def __repr__(self):
-        return "{}: [{}, {}]".format(self.__class__.__name__, self.x, self.y)
+        return f"{self.__class__.__name__}({self.x}, {self.y})"
 
     def __setitem__(self, key, item):
         if key == 0:
@@ -599,18 +536,16 @@ class Vector2D(Vector):
             raise IndexError
 
     def __add__(self, other_vector):
-        return Vector2D(*Cadd2D(self.x, self.y,
-                                other_vector.x, other_vector.y))
+        return Vector2D(*c_add_2d(self.x, self.y, other_vector.x, other_vector.y))
 
     def __neg__(self):
         return Vector2D(-self.x, -self.y)
 
     def __sub__(self, other_vector):
-        return Vector2D(*Csub2D(self.x, self.y,
-                                other_vector.x, other_vector.y))
+        return Vector2D(*c_sub_2d(self.x, self.y, other_vector.x, other_vector.y))
 
     def __mul__(self, value: float):
-        return Vector2D(*Cmul2D(self.x, self.y, value))
+        return Vector2D(*c_mul_2d(self.x, self.y, value))
 
     def __truediv__(self, value: float):
         if value == 0:
@@ -712,7 +647,7 @@ class Vector2D(Vector):
         :return: Norm of the Vector2D-like object
         :rtype: float
         """
-        return CVector2Dnorm(self.x, self.y)
+        return c_vector2d_norm(self.x, self.y)
 
     def unit_vector(self):
         """Calculates the unit vector."""
@@ -730,10 +665,7 @@ class Vector2D(Vector):
         :return: A scalar, result of the dot product
         :rtype: float
         """
-        return CVector2DDot(self.x,
-                            self.y,
-                            other_vector.x,
-                            other_vector.y)
+        return c_vector2d_dot(self.x, self.y, other_vector.x, other_vector.y)
 
     def cross(self, other_vector: "Vector2D"):
         """
@@ -992,17 +924,16 @@ class Point2D(Vector2D):
         Vector2D.__init__(self, x=x, y=y, name=name)
 
     def __add__(self, other_vector):
-        return Point2D(*Cadd2D(self.x, self.y, other_vector.x, other_vector.y))
+        return Point2D(*c_add_2d(self.x, self.y, other_vector.x, other_vector.y))
 
     def __neg__(self):
         return Point2D(-self.x, -self.y)
 
     def __sub__(self, other_vector):
-        return Point2D(*Csub2D(self.x, self.y,
-                               other_vector.x, other_vector.y))
+        return Point2D(*c_sub_2d(self.x, self.y, other_vector.x, other_vector.y))
 
     def __mul__(self, value: float):
-        return Point2D(*Cmul2D(self.x, self.y, value))
+        return Point2D(*c_mul_2d(self.x, self.y, value))
 
     def __truediv__(self, value: float):
         if value == 0:
@@ -1346,7 +1277,7 @@ class Vector3D(Vector):
         self.name = name
 
     def __repr__(self):
-        return "{}: [{}, {}, {}]".format(self.__class__.__name__, self.x, self.y, self.z)
+        return f"{self.__class__.__name__}({self.x}, {self.y}, {self.z})"
 
     def __setitem__(self, key, item):
         if key == 0:
@@ -1369,22 +1300,16 @@ class Vector3D(Vector):
             raise IndexError
 
     def __add__(self, other_vector):
-        return Vector3D(*Cadd3D(self.x, self.y, self.z,
-                                other_vector.x,
-                                other_vector.y,
-                                other_vector.z))
+        return Vector3D(*c_add_3d(self.x, self.y, self.z, other_vector.x, other_vector.y, other_vector.z))
 
     def __neg__(self):
         return Vector3D(-self.x, -self.y, -self.z)
 
     def __sub__(self, other_vector):
-        return Vector3D(*Csub3D(self.x, self.y, self.z,
-                                other_vector.x,
-                                other_vector.y,
-                                other_vector.z))
+        return Vector3D(*c_sub_3d(self.x, self.y, self.z, other_vector.x, other_vector.y, other_vector.z))
 
     def __mul__(self, value):
-        return Vector3D(*Cmul3D(self.x, self.y, self.z, value))
+        return Vector3D(*c_mul_3d(self.x, self.y, self.z, value))
 
     def __truediv__(self, value):
         if value == 0:
@@ -1425,9 +1350,6 @@ class Vector3D(Vector):
         """
         if other_vector.__class__.__name__ not in ["Vector3D", "Point3D", "Node3D"]:
             return False
-        # return math.isclose(self.x, other_vector.x, abs_tol=tol) \
-        # and math.isclose(self.y, other_vector.y, abs_tol=tol) \
-        # and math.isclose(self.z, other_vector.z, abs_tol=tol)
         return math.isclose(self.point_distance(other_vector), 0, abs_tol=tol)
 
     def approx_hash(self):
@@ -1496,8 +1418,8 @@ class Vector3D(Vector):
         :return: Value of the dot product
         :rtype: float
         """
-        return CVector3DDot(self.x, self.y, self.z,
-                            other_vector.x, other_vector.y, other_vector.z)
+        return c_vector3d_dot(self.x, self.y, self.z,
+                              other_vector.x, other_vector.y, other_vector.z)
 
     def cross(self, other_vector: "Vector3D") -> "Vector3D":
         """
@@ -1508,10 +1430,8 @@ class Vector3D(Vector):
         :return: Value of the cross product
         :rtype: float
         """
-        return self.__class__(*CVector3D_cross(self.x, self.y, self.z,
-                                               other_vector.x,
-                                               other_vector.y,
-                                               other_vector.z))
+        return self.__class__(*c_vector3d_cross(self.x, self.y, self.z,
+                                                other_vector.x, other_vector.y, other_vector.z))
 
     def norm(self) -> float:
         """
@@ -1520,7 +1440,7 @@ class Vector3D(Vector):
         :return: Norm of the Vector3D-like object
         :rtype: float
         """
-        return CVector3Dnorm(self.x, self.y, self.z)
+        return c_vector3d_norm(self.x, self.y, self.z)
 
     def unit_vector(self):
         """Calculates the unit vector."""
@@ -1556,7 +1476,9 @@ class Vector3D(Vector):
         :return: A rotated Vector3D-like object
         :rtype: :class:`volmdlr.Vector3D`
         """
-        vector2 = vector3D_rotation(self, center, axis, angle)
+        vector2 = c_vector3d_rotation(self.x, self.y, self.z,
+                                      center.x, center.y, center.z,
+                                      axis.x, axis.y, axis.z, angle)
         return self.__class__(*vector2)
 
     @staticmethod
@@ -1901,20 +1823,16 @@ class Point3D(Vector3D):
         Vector3D.__init__(self, x, y, z, name)
 
     def __add__(self, other_vector):
-        return Point3D(*Cadd3D(self.x, self.y, self.z,
-                               other_vector.x,
-                               other_vector.y,
-                               other_vector.z))
+        return Point3D(*c_add_3d(self.x, self.y, self.z, other_vector.x, other_vector.y, other_vector.z))
 
     def __neg__(self):
         return Point3D(-self.x, -self.y, -self.z)
 
     def __sub__(self, other_vector):
-        return Point3D(*Csub3D(self.x, self.y, self.z,
-                               other_vector.x, other_vector.y, other_vector.z))
+        return Point3D(*c_sub_3d(self.x, self.y, self.z, other_vector.x, other_vector.y, other_vector.z))
 
     def __mul__(self, value):
-        return Point3D(*Cmul3D(self.x, self.y, self.z, value))
+        return Point3D(*c_mul_3d(self.x, self.y, self.z, value))
 
     def __truediv__(self, value):
         if value == 0:
@@ -2172,7 +2090,7 @@ class Matrix22:
         :return: A Vector2D-like object
         :rtype: :class:`volmdlr.Vector2D`
         """
-        u1, u2 = C_matrix_vector_multiplication2(self.M11, self.M12,
+        u1, u2 = c_matrix_vector_multiplication2(self.M11, self.M12,
                                                  self.M21, self.M22,
                                                  vector.x, vector.y)
 
@@ -2258,19 +2176,19 @@ class Matrix33:
     def __mul__(self, other_matrix):
         (M11, M12, M13,
          M21, M22, M23,
-         M31, M32, M33) = Cmatrix_multiplication3(self.M11, self.M12, self.M13,
-                                                  self.M21, self.M22, self.M23,
-                                                  self.M31, self.M32, self.M33,
-                                                  other_matrix.M11, other_matrix.M12, other_matrix.M13,
-                                                  other_matrix.M21, other_matrix.M22, other_matrix.M23,
-                                                  other_matrix.M31, other_matrix.M32, other_matrix.M33)
+         M31, M32, M33) = c_matrix_multiplication3(self.M11, self.M12, self.M13,
+                                                   self.M21, self.M22, self.M23,
+                                                   self.M31, self.M32, self.M33,
+                                                   other_matrix.M11, other_matrix.M12, other_matrix.M13,
+                                                   other_matrix.M21, other_matrix.M22, other_matrix.M23,
+                                                   other_matrix.M31, other_matrix.M32, other_matrix.M33)
 
         return Matrix33(M11, M12, M13, M21, M22, M23, M31, M32, M33)
 
     def __repr__(self):
-        s = "[{} {} {}]\n[{} {} {}]\n[{} {} {}]\n".format(self.M11, self.M12, self.M13,
-                                                          self.M21, self.M22, self.M23,
-                                                          self.M31, self.M32, self.M33)
+        s = (f"[{self.M11} {self.M12} {self.M13}]\n"
+             f"[{self.M21} {self.M22} {self.M23}]\n"
+             f"[{self.M31} {self.M32} {self.M33}]\n")
         return s
 
     def float_multiplication(self, float_value: float):
@@ -2295,7 +2213,7 @@ class Matrix33:
        :return: A Vector3D-like object
        :rtype: :class:`volmdlr.Vector3D`
        """
-        u1, u2, u3 = C_matrix_vector_multiplication3(self.M11, self.M12, self.M13,
+        u1, u2, u3 = c_matrix_vector_multiplication3(self.M11, self.M12, self.M13,
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
