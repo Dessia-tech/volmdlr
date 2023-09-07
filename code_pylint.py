@@ -68,7 +68,8 @@ ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-man
                                 "too-few-public-methods", "duplicate-code", "too-many-return-statements",
                                 "import-outside-toplevel", "arguments-differ", "arguments-renamed",
                                 "too-many-boolean-expressions", "super-init-not-called", "unused-argument", 
-                                'consider-using-enumerate', 'unbalanced-tuple-unpacking', 'undefined-variable']
+                                'consider-using-enumerate', 'unbalanced-tuple-unpacking', 'undefined-variable',
+                                'wrong-spelling-in-comment']
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
