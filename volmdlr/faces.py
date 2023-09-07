@@ -3340,4 +3340,3 @@ class BSplineFace3D(Face3D):
         else:
             point2 = neutral_fiber.end
         return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, point2)])
-
