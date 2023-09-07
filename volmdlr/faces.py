@@ -1362,6 +1362,12 @@ class PlaneFace3D(Face3D):
         return face_intersections
 
     def conicalface_intersections(self, conical_face: 'ConicalFace3D'):
+        """
+        Calculates the intersections between a plane face 3D and Conical Face3D.
+
+        :param conical_face: the Conical Face 3D to verify intersections with Plane Face 3D.
+        :return: list of intersecting wires.
+        """
         surface_intersections = self.surface3d.surface_intersections(conical_face.surface3d)
         if isinstance(surface_intersections[0], volmdlr_curves.Circle3D):
             if self.edge3d_inside(surface_intersections[0]) and conical_face.edge3d_inside(surface_intersections[0]):
