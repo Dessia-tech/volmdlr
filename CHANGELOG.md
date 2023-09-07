@@ -15,10 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Line2D: get_slope, get_y_intersection.
 - New curves classes: Parabola2D/3D.
 - ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection, parallel_plane_intersections, concurent_plane_intersections, plane_intersections.
-
+- Hyperbola2D/3D and Parabola2D/3D: split
+- 
 ### Fixed
 - add missing name attributes to classmethods
 - fixed circular imports
+- BSplineSurface3D: from_points_interpolation, from_points_approximation.
+- ConicalFace3D: point_belongs
 - nurbs.core: find_multiplicity, evaluate_curve.
 
 ### Refactor
