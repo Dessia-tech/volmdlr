@@ -2797,6 +2797,21 @@ class ConicalSurface3D(PeriodicalSurface):
         frame.origin = frame.origin - radius / math.tan(semi_angle) * frame.w
         return cls(frame, semi_angle, arguments[0][1:-1])
 
+    def is_coincident(self, surface3d):
+        """
+        Verifies if two conical surfaces are coincident.
+
+        :param surface3d: other surface 3d.
+        :return: True if they are coincident, False otherwise.
+        """
+        if not isinstance(surface3d, ConicalSurface3D):
+            return False
+        if math.isclose(self.frame.w.dot(surface3d.frame.w), 1.0, abs_tol=1e-6) and \
+            self.frame.origin.is_close(surface3d.frame.origin) and \
+                math.isclose(self.semi_angle, surface3d.semi_angle, abs_tol=1e-6):
+            return True
+        return False
+
     def to_step(self, current_id):
         """
         Converts the object to a STEP representation.
