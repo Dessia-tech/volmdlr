@@ -568,6 +568,9 @@ cdef class Vector2D(Vector):
             return self.x == other.x and self.y == other.y
         return False
 
+    def _data_eq(self, other):
+        return self == other
+
     def is_close(self, other_vector: Vector2D, tol: float = 1e-6):
         """
         Checks if two vectors are close to each other considering the
@@ -756,7 +759,7 @@ cdef class Vector2D(Vector):
             new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
-    def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
+    def to_3d(self, plane_origin: Point3D, vx: Vector3D, vy: Vector3D):
         """
         Returns the 3-dimensional vector corresponding to the 2-dimensional
         vector placed on the 3-dimensional plane (XY) of the 3-dimensional
@@ -946,6 +949,15 @@ cdef class Point2D(Vector2D):
     def __hash__(self):
         """Return a hash value for the point 2d."""
         return hash(("point", self.x, self.y))
+
+    def __eq__(self, other):
+        """Return True if the other point has the same x and y coordinates, False otherwise."""
+        if isinstance(other, self.__class__):
+            return self.x == other.x and self.y == other.y
+        return False
+
+    def _data_eq(self, other):
+        return self == other
 
     def to_dict(self, *args, **kwargs):
         """
@@ -1335,6 +1347,9 @@ cdef class Vector3D(Vector):
             return self.x == other.x and self.y == other.y and self.z == other.z
         return False
 
+    def _data_eq(self, other):
+        return self == other
+
     def is_close(self, other_vector, tol=1e-6):
         """
         Checks if two vectors are close to each other considering the
@@ -1611,7 +1626,7 @@ cdef class Vector3D(Vector):
         u2 = p3d.dot(y)
         return Point2D(u1, u2)
 
-    def to_2d(self, plane_origin: Vector3D, x: Vector3D, y: Vector3D):
+    def to_2d(self, plane_origin: Point3D, x: Vector3D, y: Vector3D):
         """
         # TODO: difference with plane_projection2d needs details
         Transforms a Vector3D-like object to a Point2D.
@@ -1628,7 +1643,9 @@ cdef class Vector3D(Vector):
         x2d = self.dot(x) - plane_origin.dot(x)
         y2d = self.dot(y) - plane_origin.dot(y)
         class_name = self.__class__.__name__[:-2] + "2D"
-        return getattr(sys.modules[self.__module__], class_name)(x2d, y2d)
+        if class_name in ("Vector2D", "Point2D"):
+            return getattr(sys.modules["volmdlr.core_compiled"], class_name)(x2d, y2d)
+        return getattr(sys.modules["volmdlr.display"], class_name)(x2d, y2d)
 
     def random_unit_normal_vector(self):
         """
@@ -1844,6 +1861,15 @@ cdef class Point3D(Vector3D):
     def __hash__(self):
         """Return a hash value for the point 3d."""
         return hash(("point", self.x, self.y, self.z))
+
+    def __eq__(self, other):
+        """Return True if the other point has the same x, y and z coordinates, False otherwise."""
+        if isinstance(other, self.__class__):
+            return self.x == other.x and self.y == other.y and self.z == other.z
+        return False
+
+    def _data_eq(self, other):
+        return self == other
 
     def to_dict(self, *args, **kwargs):
         """
