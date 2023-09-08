@@ -8,18 +8,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.14.0 [future]
 
 ### New Features
+- DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
 - BSplineSurface3D: from_points_interpolation, from_points_approximation.
+- nurbs module.
+- New curves classes: Hyperbola2D and Hyperbola3D.
+- Line: closest_point_on_line, from_point_and_vector
+- Line2D: get_slope, get_y_intersection.
+- New curves classes: Parabola2D/3D.
+- ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection
+- ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection, parallel_plane_intersections, concurent_plane_intersections, plane_intersections.
+- Hyperbola2D/3D and Parabola2D/3D: split
+- PlaneFace3D: conicalface_intersections
 
 ### Fixed
 - add missing name attributes to classmethods
 - fixed circular imports
+- BSplineSurface3D: from_points_interpolation, from_points_approximation.
+- ConicalFace3D: point_belongs
+- nurbs.core: find_multiplicity, evaluate_curve.
 
 ### Refactor
--
+- TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
+
 ### Changed
+- Cache BSplineCurve points into a numpy array to reduce memory usage.
+- Vector2D, Vector3D: __repr__
+- core_compiled: cdef functions' names.
 -
+
 ### Unittests
--
+- Hyperbola2D/3D: line_intersections
+- Parabola2D/3D: line_intersections
+- ConicalSurface3D: test_line_intersections, test_plane_intersections.
 
 ## v0.13.0 [unreleased]
 
@@ -36,17 +56,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle3D: circle_intersections, ellipse_intersections
 - Circle2D: ellipse_intersections.
 - Arc3D: arc_intersections, arcellipse_intersections
-- BSplineSurface3D: partial removal of dependencies on geomdl objects
-- Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
-- Curve: local_discretization
-- Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
-- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
-- Circle3D: circle_intersections, ellipse_intersections
-- Circle2D: ellipse_intersections.
-- Arc3D: arc_intersections, arcellipse_intersections
 - Wire3D/Contour3D: edge_intersections, wire_intersections
 - BSpline3D: arc_intersections
 - New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
+- BSplineSurface3D: partial removal of dependencies on geomdl objects
 
 ### Fixed
 - Sweep with non smoth path

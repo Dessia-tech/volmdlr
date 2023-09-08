@@ -28,7 +28,8 @@ def circle_3d_line_intersections(circle_3d, line):
     if distance_center_lineseg > circle_3d.radius:
         return []
     direction_vector = line.direction_vector()
-    if line.point1.z == line.point2.z == circle_3d.frame.origin.z:
+    if math.isclose(line.point1.z, line.point2.z, abs_tol=1e-6) and \
+            math.isclose(line.point2.z, circle_3d.frame.origin.z, abs_tol=1e-6):
         if line.point1.is_close(circle_3d.center):
             point1 = line.point2
             vec = line.point1 - line.point2
@@ -43,7 +44,7 @@ def circle_3d_line_intersections(circle_3d, line):
         delta = quadratic_equation_b ** 2 - 4 * quadratic_equation_a * quadratic_equation_c
         if delta < 0:  # No real solutions, no intersection
             return []
-        if delta == 0:  # One real solution, tangent intersection
+        if math.isclose(delta, 0, abs_tol=1e-7):  # One real solution, tangent intersection
             t_param = -quadratic_equation_b / (2 * quadratic_equation_a)
             return [point1 + t_param * vec]
         sqrt_delta = math.sqrt(delta)
@@ -60,33 +61,33 @@ def circle_3d_line_intersections(circle_3d, line):
     return intersections
 
 
-def ellipse3d_line_intersections(ellipse3d, line3d, abs_tol: float = 1e-6):
+def conic3d_line_intersections(conic3d, line3d, abs_tol: float = 1e-6):
     """
     Calculates the intersections between an Ellipse3D and a Line3D.
 
-    :param ellipse3d: The Ellipse 3D.
+    :param conic3d: The Hyperbola 3D.
     :param line3d: The Line 3D.
     :param abs_tol: Tolerance.
-    :return: list of points intersecting the Ellipse 3D.
+    :return: list of points intersecting the Hyperbola 3D.
     """
     intersections = []
-    if not math.isclose(abs(ellipse3d.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=abs_tol):
-        frame_mapped_ellipse3d = ellipse3d.frame_mapping(ellipse3d.frame, 'new')
-        frame_mapped_line = line3d.frame_mapping(ellipse3d.frame, 'new')
-        circle_linseg_intersections = ellipse3d_line_intersections(frame_mapped_ellipse3d, frame_mapped_line)
+    if not math.isclose(abs(conic3d.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=abs_tol):
+        frame_mapped_conic3d = conic3d.frame_mapping(conic3d.frame, 'new')
+        frame_mapped_line = line3d.frame_mapping(conic3d.frame, 'new')
+        circle_linseg_intersections = conic3d_line_intersections(frame_mapped_conic3d, frame_mapped_line)
         for inter in circle_linseg_intersections:
-            intersections.append(ellipse3d.frame.local_to_global_coordinates(inter))
+            intersections.append(conic3d.frame.local_to_global_coordinates(inter))
         return intersections
 
-    if line3d.point1.z == line3d.point2.z == ellipse3d.frame.origin.z:
-        ellipse2d = ellipse3d.self_2d
-        line2d = line3d.to_2d(ellipse3d.frame.origin, ellipse3d.frame.u, ellipse3d.frame.v)
-        intersections_2d = ellipse2d_line_intersections(ellipse2d, line2d)
+    if line3d.point1.z == line3d.point2.z == conic3d.frame.origin.z:
+        conic2d = conic3d.self_2d
+        line2d = line3d.to_2d(conic3d.frame.origin, conic3d.frame.u, conic3d.frame.v)
+        intersections_2d = conic2d.line_intersections(line2d)
         for intersection in intersections_2d:
-            intersections.append(volmdlr.Point3D(intersection[0], intersection[1], ellipse3d.frame.origin.z))
+            intersections.append(volmdlr.Point3D(intersection[0], intersection[1], conic3d.frame.origin.z))
         return intersections
-    plane_lineseg_intersections = get_plane_line_intersections(ellipse3d.frame, line3d)
-    if ellipse3d.point_belongs(plane_lineseg_intersections[0]):
+    plane_lineseg_intersections = get_plane_line_intersections(conic3d.frame, line3d)
+    if conic3d.point_belongs(plane_lineseg_intersections[0]):
         return plane_lineseg_intersections
     return []
 
@@ -295,7 +296,7 @@ def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-8):
 
 def get_two_planes_intersections(plane1_frame, plane2_frame):
     """
-    Caculates the intersctions between two planes, given their frames.
+    Calculates the intersections between two planes, given their frames.
 
     :param plane1_frame: Plane's 1 frame.
     :param plane2_frame: Plane's 2 frame.

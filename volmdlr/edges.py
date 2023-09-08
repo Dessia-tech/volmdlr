@@ -823,7 +823,6 @@ class BSplineCurve(Edge):
         self._simplified = None
         self._delta = 0.01
         self._length = None
-        self._points = None
         self._eval_points = None
         self.ctrlptsw = None
         self.rational = False
@@ -886,13 +885,10 @@ class BSplineCurve(Edge):
         """
         Evaluate the BSpline points based on the set delta value of the curve.
         """
-        if self._points is None:
-            if self._eval_points is None:
-                self.evaluate()
-            self._points = [getattr(volmdlr,
-                                    f'Point{self.__class__.__name__[-2::]}')(*point)
-                            for point in self._eval_points]
-        return self._points
+        if self._eval_points is None:
+            self.evaluate()
+        point_name = f'Point{self.__class__.__name__[-2:]}'
+        return [getattr(volmdlr, point_name)(*point) for point in self._eval_points]
 
     @property
     def data(self):
@@ -1133,19 +1129,20 @@ class BSplineCurve(Edge):
             return self
         class_sufix = self.__class__.__name__[-2:]
         if self._simplified is None:
+            points = self.points
             if self.periodic:
                 fullarc_class_ = getattr(sys.modules[__name__], 'FullArc' + class_sufix)
-                n = len(self.points)
-                try_fullarc = fullarc_class_.from_3_points(self.points[0], self.points[int(0.5 * n)],
-                                                           self.points[int(0.75 * n)])
+                n = len(points)
+                try_fullarc = fullarc_class_.from_3_points(points[0], points[int(0.5 * n)],
+                                                           points[int(0.75 * n)])
 
-                if all(try_fullarc.point_belongs(point, 1e-6) for point in self.points):
+                if all(try_fullarc.point_belongs(point, 1e-6) for point in points):
                     self._simplified = try_fullarc
                     return try_fullarc
             else:
                 lineseg_class = getattr(sys.modules[__name__], 'LineSegment' + class_sufix)
-                lineseg = lineseg_class(self.points[0], self.points[-1])
-                if all(lineseg.point_belongs(pt) for pt in self.points):
+                lineseg = lineseg_class(points[0], points[-1])
+                if all(lineseg.point_belongs(pt) for pt in points):
                     self._simplified = lineseg
                     return lineseg
                 interior = self.point_at_abscissa(0.5 * self.length())
@@ -1155,7 +1152,7 @@ class BSplineCurve(Edge):
                     return self
                 arc_class_ = getattr(sys.modules[__name__], 'Arc' + class_sufix)
                 try_arc = arc_class_.from_3_points(self.start, interior, self.end)
-                if all(try_arc.point_belongs(point, 1e-6) for point in self.points):
+                if all(try_arc.point_belongs(point, 1e-6) for point in points):
                     self._simplified = try_arc
                     return try_arc
             self._simplified = self
@@ -1525,13 +1522,15 @@ class BSplineCurve(Edge):
         if angle_resolution:
             number_points = int(math.pi * angle_resolution)
 
-        if len(self.points) == number_points or (not number_points and not angle_resolution):
+        if self.sample_size == number_points or (not number_points and not angle_resolution):
             return self.points
 
-        temp_curve = self.copy(deep=True)
-        temp_curve.sample_size = number_points
-
-        return temp_curve.points
+        datadict = self.data
+        datadict["sample_size"] = number_points
+        start, stop = self.domain
+        points_list = evaluate_curve(datadict, start, stop)
+        point_name = 'Point' + self.__class__.__name__[-2:]
+        return [getattr(volmdlr, point_name)(*point) for point in points_list]
 
     def get_geo_lines(self, tag: int, control_points_tags: List[int]):
         """
@@ -2014,10 +2013,11 @@ class BSplineCurve2D(BSplineCurve):
             direction of the curve. if negative, in the opposite direction of the normal.
         :return: returns an offset bsplinecurve2D, created with from_points_interpolation.
         """
+        points = self.points
         unit_normal_vectors = [self.unit_normal_vector(
-            self.abscissa(point)) for point in self.points]
+            self.abscissa(point)) for point in points]
         offseted_points = [point.translation(normal_vector * offset_length) for point, normal_vector
-                           in zip(self.points, unit_normal_vectors)]
+                           in zip(points, unit_normal_vectors)]
         offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree)
         return offseted_bspline
 
@@ -2034,6 +2034,7 @@ class BSplineCurve2D(BSplineCurve):
         return True
 
     def normal(self, position: float = 0.0):
+        """Normal vector to BPlineCurve2D."""
         der = self.derivatives(position, 1)
         tangent = der[1].unit_vector()
         return tangent.rotation(der[0], 0.5 * math.pi)
@@ -2142,9 +2143,8 @@ class LineSegment2D(LineSegment):
         :param point: point to calculate distance.
         :param return_other_point: Boolean variable to return line segment's corresponding point or not.
         """
-        distance, point = volmdlr.LineSegment2DPointDistance(
-            [(self.start.x, self.start.y), (self.end.x, self.end.y)],
-            (point.x, point.y))
+        distance, point = volmdlr.linesegment2d_point_distance((self.start.x, self.start.y),
+                                                               (self.end.x, self.end.y), (point.x, point.y))
         if return_other_point:
             return distance, volmdlr.Point2D(*point)
         return distance
@@ -3453,13 +3453,11 @@ class ArcEllipse2D(Edge):
             major_axis = math.sqrt(x2 ** 2 / (1 - (y2 ** 2 / minor_axis ** 2)))
         else:
             raise NotImplementedError
-        ellipse = volmdlr_curves.Ellipse2D(major_axis, minor_axis,
-                                           volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D))
-        arcellipse = cls(ellipse, start, end, name=name)
+        arcellipse = cls(volmdlr_curves.Ellipse2D(
+            major_axis, minor_axis, volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)), start, end, name=name)
         if not arcellipse.point_belongs(interior):
-            ellipse = volmdlr_curves.Ellipse2D(major_axis, minor_axis,
-                                               volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D))
-            arcellipse = cls(ellipse, start, end, name=name)
+            arcellipse = cls(volmdlr_curves.Ellipse2D(
+                major_axis, minor_axis, volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)), start, end, name=name)
 
         return arcellipse
 
@@ -4123,10 +4121,9 @@ class LineSegment3D(LineSegment):
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
-        distance, point = volmdlr.LineSegment3DPointDistance(
-            [(self.start.x, self.start.y, self.start.z),
-             (self.end.x, self.end.y, self.end.z)],
-            (point.x, point.y, point.z))
+        distance, point = volmdlr.linesegment3d_point_distance((self.start.x, self.start.y, self.start.z),
+                                                               (self.end.x, self.end.y, self.end.z),
+                                                               (point.x, point.y, point.z))
         return distance
 
     def plane_projection2d(self, center, x, y):
@@ -4904,9 +4901,10 @@ class BSplineCurve3D(BSplineCurve):
         :type parameter: float
         """
         # Is a value of parameter below 4e-3 a real need for precision ?
-        if math.isclose(parameter, 0, abs_tol=4e-3):
+        a, b = self.domain
+        if math.isclose(parameter, a, abs_tol=4e-3):
             return self
-        if math.isclose(parameter, 1, abs_tol=4e-3):
+        if math.isclose(parameter, b, abs_tol=4e-3):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
@@ -4921,12 +4919,10 @@ class BSplineCurve3D(BSplineCurve):
         :type parameter: float
         """
         # Is a value of parameter below 4e-3 a real need for precision ?
-        if math.isclose(parameter, 0, abs_tol=1e-6):
-            #     # raise ValueError('Nothing will be left from the BSplineCurve3D')
-            #     curves = operations.split_curve(operations.refine_knotvector(self.curve, [4]), parameter)
-            #     return self.from_geomdl_curve(curves[0])
+        a, b = self.domain
+        if math.isclose(parameter, a, abs_tol=1e-6):
             return self.reverse()
-        if math.isclose(parameter, 1, abs_tol=4e-3):
+        if math.isclose(parameter, b, abs_tol=4e-3):
             return self
         curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
         return curves[0]
@@ -4943,10 +4939,10 @@ class BSplineCurve3D(BSplineCurve):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-
-        x = [point.x for point in self.points]
-        y = [point.y for point in self.points]
-        z = [point.z for point in self.points]
+        points = self.points
+        x = [point.x for point in points]
+        y = [point.y for point in points]
+        z = [point.z for point in points]
         ax.plot(x, y, z, color=edge_style.color, alpha=edge_style.alpha)
         if edge_style.edge_ends:
             ax.plot(x, y, z, 'o', color=edge_style.color, alpha=edge_style.alpha)
@@ -5077,12 +5073,13 @@ class BSplineCurve3D(BSplineCurve):
         new_faces = []
         tangents = []
         section_contour2d, _ = args
-        for k, _ in enumerate(self.points):
-            position = k / (len(self.points) - 1)
+        points = self.points
+        for k, _ in enumerate(points):
+            position = k / (len(points) - 1)
             tangents.append(self.unit_direction_vector(position * self.length()))
 
         contours = []
-        for point, tan in zip(self.points, tangents):
+        for point, tan in zip(points, tangents):
             normal = tan.deterministic_unit_normal_vector()
             v_vector = tan.cross(normal)
             section_contour3d = section_contour2d.to_3d(point, normal, v_vector)

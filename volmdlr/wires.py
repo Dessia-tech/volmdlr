@@ -4225,7 +4225,6 @@ class Contour3D(ContourMixin, Wire3D):
         :return: The corresponding Contour3D object.
         :rtype: :class:`volmdlr.wires.Contour3D`
         """
-        step_id = kwargs.get("step_id", "#UNKNOW_ID")
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
@@ -4834,6 +4833,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     @staticmethod
     def sewing_closing_point_past_point0(closing_point_index, list_closing_point_indexes,
                                          passed_by_zero_index, ratio_denominator):
+        """
+        Chooses sewing closing point when point index passes through zero index again.
+        """
         last_to_new_point_index_ratio = (list_closing_point_indexes[-1] -
                                          closing_point_index) / ratio_denominator
         if passed_by_zero_index:
