@@ -34,8 +34,19 @@ Example:
 Matplotlib plots
 ****************
 
-To have a matplotlib visualization of a volmdlr, you can call the plot method in any object. See the following example
-#tobe continued
+To have a matplotlib visualization of a volmdlr object in 2D or 3D, you can call the ``plot`` method in any object. See the following example
+
+.. plot::
+    :include-source:
+    :align: center
+
+    import volmdlr
+    from volmdlr import edges
+    from volmdlr.core import EdgeStyle
+
+    line_segment2d = edges.LineSegment2D(volmdlr.Point2D(1, 1), volmdlr.Point2D(-1, -2))
+    line_segment2d.plot(edge_style=EdgeStyle('b'))
+
 Model Visualization
 *******************
 

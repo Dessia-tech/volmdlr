@@ -645,7 +645,7 @@ A Triangle3D receives three mandatory arguments: The three vertices points of th
            from volmdlr.core import EdgeStyle
 
            triangle3d = faces.Triangle3D(volmdlr.Point3D(0., 0., 1.0), volmdlr.Point3D(2, 0, 0.2), volmdlr.Point3D(2, 2, 3.0))
-           triangle3d.babylonjs(dark_mode=True)
+           triangle3d.babylonjs()
 
         .. figure:: ../source/_static/index-images/triangle3d.png
 
@@ -685,7 +685,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
 
            face3d = faces.CylindricalFace3D(surface3d, surface2d)
 
-           face3d.babylonjs(dark_mode=True)
+           face3d.babylonjs()
 
         .. figure:: ../source/_static/index-images/cylindricalface3d.png
 
@@ -723,7 +723,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
 
            toroidal_face3d = faces.ToroidalFace3D(surface3d, surface2d)
 
-           toroidal_face3d.babylonjs(dark_mode=True)
+           toroidal_face3d.babylonjs()
 
         .. figure:: ../source/_static/index-images/toroidalface3d.png
 
@@ -760,7 +760,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
 
            toroidal_face3d = faces.ConicalFace3D(surface3d, surface2d)
 
-           toroidal_face3d.babylonjs(dark_mode=True)
+           toroidal_face3d.babylonjs()
 
         .. figure:: ../source/_static/index-images/conicalface3d.png
 
@@ -798,7 +798,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
 
            spherical_face3d = faces.SphericalFace3D(surface3d, surface2d)
 
-           spherical_face3d.babylonjs(dark_mode=True)
+           spherical_face3d.babylonjs()
 
         .. figure:: ../source/_static/index-images/sphericalface3d.png
 
@@ -842,7 +842,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
 
            face = faces.ExtrusionFace3D(surface3d, surface2d)
 
-           face.babylonjs(dark_mode=True)
+           face.babylonjs()
 
         .. figure:: ../source/_static/index-images/extrusionface3d.png
 
@@ -894,7 +894,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d)
            face = faces.RevolutionFace3D(surface3d, surface2d)
 
-           face.babylonjs(dark_mode=True)
+           face.babylonjs()
 
         .. figure:: ../source/_static/index-images/revolutionface3d.png
 
@@ -938,7 +938,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
 
            face = faces.RevolutionFace3D(surface3d, surface2d)
 
-           face.babylonjs(dark_mode=True)
+           face.babylonjs()
 
         .. figure:: ../source/_static/index-images/bsplineface3d.png
 
@@ -987,7 +987,7 @@ OpenShell3D
         .. code-block:: python
 
            shell1 = shells.OpenShell3D(faces_)
-           shell1.babylonjs(dark_mode=True)
+           shell1.babylonjs()
 
         .. figure:: ../source/_static/index-images/openshell3d.png
 
@@ -1015,7 +1015,7 @@ ClosedShell3D
            faces_ += [bottom_face, top_face]
 
            shell1 = shells.ClosedShell3D(faces_)
-           shell1.babylonjs(dark_mode=True)
+           shell1.babylonjs()
 
     .. figure:: ../source/_static/index-images/closedshell3d.png
 
