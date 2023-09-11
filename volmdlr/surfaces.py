@@ -2005,6 +2005,16 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.radius = radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
+    def get_generatrixes(self, length: float = 1, number_lines: int = 30):
+        list_generatrix = []
+        for i in range(number_lines):
+            theta = i / (number_lines - 1) * volmdlr.TWO_PI
+            start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
+            end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5 * length))
+            generatrix = edges.LineSegment3D(start, end)
+            list_generatrix.append(generatrix)
+        return list_generatrix
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5),
              length: float = 1, **kwargs):
         """
@@ -2020,7 +2030,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :rtype: Axes3D
         """
         ncircles = 10
-        nlines = 30
+        nlines = 37
 
         if ax is None:
             fig = plt.figure()
@@ -2287,6 +2297,48 @@ class CylindricalSurface3D(PeriodicalSurface):
         if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
             return self.perpendicular_plane_intersection(plane3d)
         return self.concurrent_plane_intersection(plane3d)
+
+    def conicalsurface_intersections(self, conical_surface: 'ConicalSurface3D'):
+        """
+        Cylinder Surface intersections with a Conical surface.
+
+        :param conical_surface: intersecting plane.
+        :return: list of intersecting curves.
+        """
+        def _list_linesegments_intersections(surface, linesegments):
+
+            all_generatrixes_intersecting = True
+            lists_intersections = [[], []]
+            for generatrix in linesegments:
+                linseg_intersections = surface.line_intersections(generatrix.line)
+                if not linseg_intersections:
+                    all_generatrixes_intersecting = False
+                for index, point in enumerate(linseg_intersections):
+                    if not volmdlr.core.point_in_list(point, lists_intersections[index]):
+                        lists_intersections[index].append(point)
+            return lists_intersections, all_generatrixes_intersecting
+
+        cone_generatrixes_point_intersections, all_cone_generatrixes_intersecting_cylinder = \
+            _list_linesegments_intersections(self, conical_surface.get_generatrixes(2, 36))
+        cylinder_generatrixes_point_intersections, all_cylinder_generatrixes_intersecting_cone = \
+            _list_linesegments_intersections(conical_surface, self.get_generatrixes(2, 36))
+        if all_cylinder_generatrixes_intersecting_cone:
+            intersections_points = cylinder_generatrixes_point_intersections
+        elif all_cone_generatrixes_intersecting_cylinder:
+            intersections_points = cone_generatrixes_point_intersections
+        elif not all_cone_generatrixes_intersecting_cylinder:
+            intersections_points = [[]]
+            for point in (cylinder_generatrixes_point_intersections[0] + cylinder_generatrixes_point_intersections[1] +
+                          cone_generatrixes_point_intersections[0] + cone_generatrixes_point_intersections[1]):
+                if not volmdlr.core.point_in_list(point, intersections_points[0]):
+                    intersections_points[0].append(point)
+        list_curves = []
+        for list_points in intersections_points:
+            order_ed_points = vm_common_operations.order_points_list_for_nearest_neighbor(list_points)
+            bspline = edges.BSplineCurve3D.from_points_interpolation(order_ed_points + [order_ed_points[0]], 3,
+                                                                     centripetal=False)
+            list_curves.append(bspline)
+        return list_curves
 
     def is_coincident(self, surface3d):
         """
@@ -2753,6 +2805,19 @@ class ConicalSurface3D(PeriodicalSurface):
         self.semi_angle = semi_angle
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
+    def get_generatrixes(self, z: float = 1, number_lines: int = 36):
+        x = z * math.tan(self.semi_angle)
+        # point1 = self.frame.local_to_global_coordinates(volmdlr.Point3D(-x, 0, -z))
+        point1 = self.frame.origin
+        point2 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, z))
+        generatrix = edges.LineSegment3D(point1, point2)
+        list_generatrix = [generatrix]
+        for i in range(number_lines+1):
+            theta = i / number_lines * volmdlr.TWO_PI
+            wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
+            list_generatrix.append(wire)
+        return list_generatrix
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
         """
         Plots the ConicalSurface3D.
@@ -3064,7 +3129,7 @@ class ConicalSurface3D(PeriodicalSurface):
                 if local_point.z < 0:
                     continue
                 intersections.append(line_inter)
-            return intersections
+            return line.sort_points_along_curve(intersections)
         return []
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):

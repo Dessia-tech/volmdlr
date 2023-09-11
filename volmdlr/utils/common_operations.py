@@ -281,3 +281,24 @@ def get_plane_equation_coefficients(plane_frame):
     a, b, c = plane_frame.w
     d = -plane_frame.origin.dot(plane_frame.w)
     return round(a, 12), round(b, 12), round(c, 12), round(d, 12)
+
+
+def order_points_list_for_nearest_neighbor(points):
+    """
+    Given a list of unordered points defining a path, it will order these points considering the nearest neighbor.
+
+    """
+    ordered_points = []
+    remaining_points = points.copy()
+    current_point = remaining_points.pop(0)  # Start with the first point
+
+    while remaining_points:
+        nearest_point_idx = np.argmin([current_point.point_distance(p)for p in remaining_points])
+        nearest_point = remaining_points.pop(nearest_point_idx)
+        ordered_points.append(current_point)
+        current_point = nearest_point
+
+    # Add the last point to complete the loop
+    ordered_points.append(current_point)
+
+    return ordered_points
