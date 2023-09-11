@@ -29,6 +29,7 @@ import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
+import volmdlr.display as vmd
 
 npy.seterr(divide='raise')
 
@@ -937,6 +938,12 @@ class Assembly(dc.PhysicalObject):
         babylon_data['center'] = list(center)
 
         return babylon_data
+
+    def triangulation(self):
+        display_meshes = []
+        for primitive in self.primitives:
+            display_meshes.append(primitive.triangulation())
+        return vmd.DisplayMesh2D.merge_meshes(display_meshes)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
