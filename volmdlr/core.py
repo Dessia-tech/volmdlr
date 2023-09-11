@@ -943,7 +943,7 @@ class Assembly(dc.PhysicalObject):
         display_meshes = []
         for primitive in self.primitives:
             display_meshes.append(primitive.triangulation())
-        return vmd.DisplayMesh2D.merge_meshes(display_meshes)
+        return vmd.DisplayMesh3D.merge_meshes(display_meshes)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
