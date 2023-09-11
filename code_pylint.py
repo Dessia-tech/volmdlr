@@ -18,7 +18,7 @@ WEEKLY_DECREASE = 0.03
 MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 13,
                      "wrong-spelling-in-docstring": 143,
-                     'invalid-name': 167,
+                     'invalid-name': 11,
                      'no-member': 1,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
@@ -69,7 +69,7 @@ ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-man
                                 "import-outside-toplevel", "arguments-differ", "arguments-renamed",
                                 "too-many-boolean-expressions", "super-init-not-called", "unused-argument", 
                                 'consider-using-enumerate', 'unbalanced-tuple-unpacking', 'undefined-variable',
-                                'wrong-spelling-in-comment']
+                                'wrong-spelling-in-comment', 'invalid-name']
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
