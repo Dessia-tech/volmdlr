@@ -77,7 +77,7 @@ belt_width = 0.011
 belt_outer_contour = inner_contour.offset(-belt_width)
 
 belt = primitives3d.ExtrudedProfile(
-    frame=volmdlr.Frame3D(volmdlr.OXYZ, volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D),
+    frame=volmdlr.OXYZ,
     outer_contour2d=belt_outer_contour,
     inner_contours2d=[inner_contour],
     extrusion_length=thickness,
