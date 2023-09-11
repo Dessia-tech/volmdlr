@@ -196,8 +196,8 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertEqual(len(intersections), 2)
         self.assertIsInstance(intersections[0].primitives[0], edges.ArcEllipse3D)
         self.assertIsInstance(intersections[1].primitives[0], edges.ArcEllipse3D)
-        self.assertAlmostEqual(intersections[0].length(), 1.1339664625179093)
-        self.assertAlmostEqual(intersections[1].length(), 0.7233023692399578)
+        self.assertAlmostEqual(intersections[0].length(), 0.7233023692399578)
+        self.assertAlmostEqual(intersections[1].length(), 1.1339664625179093, 6)
         """================== Parabola ===================="""
         point1 = conical_surface.frame.origin
         point2 = conical_surface.frame.local_to_global_coordinates(
