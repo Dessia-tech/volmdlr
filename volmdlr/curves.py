@@ -650,6 +650,8 @@ class Line2D(Line):
         """
         Gets the line's slope.
         """
+        if self.point1.x == self.point2.x:
+            return math.inf
         return (self.point2.y - self.point1.y) / (self.point2.x - self.point1.x)
 
     def get_y_intersection(self):
@@ -659,6 +661,8 @@ class Line2D(Line):
         :return: y-intersection value.
         """
         slope = self.get_slope()
+        if slope == math.inf:
+            return None
         return self.point1.y - slope * self.point1.x
 
 
@@ -1194,26 +1198,36 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param tol: tolerance to consider in calculations.
         :return: circle and line intersections.
         """
-        line_to_local_coodinates = line2d.frame_mapping(self.frame, 'new')
-        local_circle = self.frame_mapping(self.frame, side='new')
-        m = line_to_local_coodinates.get_slope()
-        c = line_to_local_coodinates.get_y_intersection()
-        quad_eq_a = 1 + m**2
+        if line2d.point_belongs(self.center):
+            direction_vector = line2d.unit_direction_vector()
+            return [self.center + self.radius * direction_vector, self.center - self.radius * direction_vector]
+        if not self.center.is_close(volmdlr.O2D):
+            local_line = line2d.frame_mapping(self.frame, 'new')
+            local_circle = self.frame_mapping(self.frame, 'new')
+            local_line_intersections = local_circle.line_intersections(local_line)
+            return [self.frame.local_to_global_coordinates(point) for point in local_line_intersections]
+        m = line2d.get_slope()
+        c = line2d.get_y_intersection()
+        if m == math.inf and c is None:
+            x_line = line2d.point1.x
+            y1 = - math.sqrt(self.radius**2 - x_line**2)
+            y2 = math.sqrt(self.radius**2 - x_line**2)
+            return [volmdlr.Point2D(x_line, y1), volmdlr.Point2D(x_line, y2)]
+        quad_eq_a = 1 + m ** 2
         quad_eq_b = 2 * m * c
-        quad_eq_c = c**2 - self.radius**2
-        delta = quad_eq_b**2 - 4 * quad_eq_a * quad_eq_c
-        if delta < 0:
+        quad_eq_c = c ** 2 - self.radius ** 2
+        delta = quad_eq_b ** 2 - 4 * quad_eq_a * quad_eq_c
+        if delta < 0.0 or quad_eq_a == 0.0:
             return []
         if math.isclose(delta, 0, abs_tol=1e-6):
-            x1 = - quad_eq_b / 2*quad_eq_a
+            x1 = - quad_eq_b / 2 * quad_eq_a
             y1 = m * x1 + c
-            return [self.frame.local_to_global_coordinates(volmdlr.Point2D(x1, y1))]
-        x1 = (-quad_eq_b + math.sqrt(delta)) / (2*quad_eq_a)
-        x2 = (-quad_eq_b - math.sqrt(delta)) / (2*quad_eq_a)
+            return [volmdlr.Point2D(x1, y1)]
+        x1 = (-quad_eq_b + math.sqrt(delta)) / (2 * quad_eq_a)
+        x2 = (-quad_eq_b - math.sqrt(delta)) / (2 * quad_eq_a)
         y1 = m * x1 + c
         y2 = m * x2 + c
-        return [self.frame.local_to_global_coordinates(point) for point in
-                [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]]
+        return [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D', tol=1e-9):
         """
