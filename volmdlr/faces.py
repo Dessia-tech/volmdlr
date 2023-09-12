@@ -2108,6 +2108,36 @@ class CylindricalFace3D(Face3D):
         planeface_intersections = planeface.cylindricalface_intersections(self)
         return planeface_intersections
 
+    def conicalface_intersections(self, conical_face: 'ConicalFace3D'):
+        """
+        Calculates the intersections between a plane face 3D and Conical Face3D.
+
+        :param conical_face: the Conical Face 3D to verify intersections with Plane Face 3D.
+        :return: list of intersecting wires.
+        """
+        surface_intersections = self.surface3d.surface_intersections(conical_face.surface3d)
+        intersections_points = self.face_intersections_outer_contour(conical_face)
+        for point in conical_face.face_intersections_outer_contour(self):
+            if not volmdlr.core.point_in_list(point, intersections_points):
+                intersections_points.append(point)
+        face_intersections = []
+        for primitive in surface_intersections:
+            points_on_primitive = []
+            for point in intersections_points:
+                if primitive.point_belongs(point):
+                    points_on_primitive.append(point)
+            if not points_on_primitive:
+                continue
+            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
+            if isinstance(primitive, volmdlr_curves.ClosedCurve):
+                # if isinstance(primitive, volmdlr_curves.Ellipse3D) or isinstance(primitive, volmdlr_curves.Circle3D):
+                points_on_primitive = points_on_primitive + [points_on_primitive[0]]
+            for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                edge = primitive.trim(point1, point2)
+                if self.edge3d_inside(edge) and conical_face.edge3d_inside(edge):
+                    face_intersections.append(volmdlr.wires.Wire3D([edge]))
+        return face_intersections
+
     @classmethod
     def from_surface_rectangular_cut(cls, cylindrical_surface, theta1: float, theta2: float,
                                      param_z1: float, param_z2: float, name: str = ''):

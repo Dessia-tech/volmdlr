@@ -64,6 +64,24 @@ class Curve(DessiaObject):
                 intersections.append(intersection)
         return intersections
 
+    def curve_intersections(self, other_curve, abs_tol: float = 1e-6):
+        """
+        Gets the intersections between two curves.
+
+        :param other_curve: other curve.
+        :param abs_tol: tolerance.
+        :return: list of intersection points.
+        """
+        method_name = f'{other_curve.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(self, method_name):
+            intersections = getattr(self, method_name)(other_curve, abs_tol)
+            return intersections
+        method_name = f'{self.__class__.__name__.lower()[:-2]}_intersections'
+        if hasattr(other_curve, method_name):
+            intersections = getattr(other_curve, method_name)(self, abs_tol)
+            return intersections
+        raise NotImplementedError
+
 
 class ClosedCurve(Curve):
     """Abstract class for defining closed curves (Circle, Ellipse) properties."""
@@ -1176,28 +1194,26 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param tol: tolerance to consider in calculations.
         :return: circle and line intersections.
         """
-        if line2d.point1.is_close(self.center):
-            point1 = line2d.point2
-            vec = line2d.point1 - line2d.point2
-        else:
-            point1 = line2d.point1
-            vec = line2d.point2 - line2d.point1
-        vector1 = vec.dot(vec)
-        vector2 = 2 * vec.dot(point1 - self.center)
-        vector3 = point1.dot(point1) + self.center.dot(self.center) - 2 * point1.dot(self.center) - self.radius ** 2
-
-        disc = vector2 ** 2 - 4 * vector1 * vector3
-        if math.isclose(disc, 0., abs_tol=tol):
-            t_param = -vector2 / (2 * vector1)
-            return [point1 + t_param * vec]
-
-        if disc > 0:
-            sqrt_disc = math.sqrt(disc)
-            t_param = (-vector2 + sqrt_disc) / (2 * vector1)
-            s_param = (-vector2 - sqrt_disc) / (2 * vector1)
-            return [point1 + t_param * vec, point1 + s_param * vec]
-
-        return []
+        line_to_local_coodinates = line2d.frame_mapping(self.frame, 'new')
+        local_circle = self.frame_mapping(self.frame, side='new')
+        m = line_to_local_coodinates.get_slope()
+        c = line_to_local_coodinates.get_y_intersection()
+        quad_eq_a = 1 + m**2
+        quad_eq_b = 2 * m * c
+        quad_eq_c = c**2 - self.radius**2
+        delta = quad_eq_b**2 - 4 * quad_eq_a * quad_eq_c
+        if delta < 0:
+            return []
+        if math.isclose(delta, 0, abs_tol=1e-6):
+            x1 = - quad_eq_b / 2*quad_eq_a
+            y1 = m * x1 + c
+            return [self.frame.local_to_global_coordinates(volmdlr.Point2D(x1, y1))]
+        x1 = (-quad_eq_b + math.sqrt(delta)) / (2*quad_eq_a)
+        x2 = (-quad_eq_b - math.sqrt(delta)) / (2*quad_eq_a)
+        y1 = m * x1 + c
+        y2 = m * x2 + c
+        return [self.frame.local_to_global_coordinates(point) for point in
+                [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]]
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D', tol=1e-9):
         """
@@ -1268,6 +1284,13 @@ class Circle2D(CircleMixin, ClosedCurve):
         :return: a list with all intersections between circle and bsplinecurve.
         """
         return volmdlr_intersections.get_bsplinecurve_intersections(self, bsplinecurve, abs_tol)
+
+    def hyperbola_intersections(self, hyperbola2d, abs_tol: float = 1e-6):
+        b_rectangle = self.bounding_rectangle
+        hyperbola_point1 = volmdlr.Point2D(hyperbola2d._get_x(b_rectangle.ymin), b_rectangle.ymin)
+        hyperbola_point2 = volmdlr.Point2D(hyperbola2d._get_x(b_rectangle.ymax), b_rectangle.ymax)
+        hyperbola_bspline = hyperbola2d.trim(hyperbola_point1, hyperbola_point2)
+        return self.bsplinecurve_intersections(hyperbola_bspline, abs_tol)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plots the circle using Matplotlib."""
@@ -2635,6 +2658,26 @@ class Hyperbola3D(HyperbolaMixin):
         :return: A list of points, containing all intersections between the Line 3D and the Hyperbola3D.
         """
         return volmdlr_intersections.conic3d_line_intersections(self, line)
+
+    def circle_intersections(self, circle, abs_tol: float = 1e-6):
+        """
+        Gets intersections between a Hyperbola and Circle 3D.
+
+        :param circle: Other Circle 3D.
+        :param abs_tol: tolerance.
+        :return: A list of points, containing all intersections between the Line 3D and the Parabola3D.
+        """
+        return volmdlr_intersections.conic_intersections(self, circle, abs_tol)
+
+    def ellipse_intersections(self, ellipse, abs_tol: float = 1e-6):
+        """
+        Gets intersections between a Hyperbola and Circle 3D.
+
+        :param ellipse: Other Circle 3D.
+        :param abs_tol: tolerance.
+        :return: A list of points, containing all intersections between the Line 3D and the Parabola3D.
+        """
+        return volmdlr_intersections.conic_intersections(self, ellipse, abs_tol)
 
     def sort_points_along_curve(self, points: List[Union[volmdlr.Point2D, volmdlr.Point3D]]):
         """

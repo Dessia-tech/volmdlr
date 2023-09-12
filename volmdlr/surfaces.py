@@ -3147,6 +3147,23 @@ class ConicalSurface3D(PeriodicalSurface):
                 intersections.append(intersection)
         return intersections
 
+    def fullarc_intersections(self, fullarc: edges.FullArc3D):
+        circle_plane = Plane3D(fullarc.circle.frame)
+        circle_plane_intersection = self.plane_intersections(circle_plane)
+        # ax = self.plot()
+        # fullarc.plot(ax, EdgeStyle('r'))
+        # circle_plane.plot(ax, EdgeStyle('b'), length=2)
+        # for i in circle_plane_intersection:
+        #     i.plot(ax, EdgeStyle(volmdlr.utils.common_operations.random_color()))
+        # face2.plot(ax, 'r')
+        intersections = []
+        for inter in circle_plane_intersection:
+            inters = inter.circle_intersections(fullarc.circle)
+            for i in inters:
+                if not volmdlr.core.point_in_list(i, intersections):
+                    intersections.append(i)
+        return intersections
+
     def parallel_plane_intersection(self, plane3d: Plane3D):
         """
         Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis.

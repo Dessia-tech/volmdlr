@@ -249,6 +249,46 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
     return intersections
 
 
+def conic_intersections(conic1, conic2, abs_tol: float = 1e-6):
+    """
+    Gets intersections between a two conic curves 3D.
+
+    :param conic1: First conic curve 3D.
+    :param conic2: Other conic curve 3D.
+    :param abs_tol: tolerance.
+    :return: A list of points, containing all intersections between the Line 3D and the Parabola3D.
+    """
+    intersections = []
+    if conic1.frame.w.is_colinear_to(conic2.frame.w) and \
+            math.isclose(conic1.frame.w.dot(conic2.frame.origin - conic1.frame.origin), 0, abs_tol=abs_tol):
+        frame_mapped_conic1 = conic1.frame_mapping(conic1.frame, 'new')
+        frame_mapped_conic2 = conic2.frame_mapping(conic1.frame, 'new')
+        conic1_2d = frame_mapped_conic1.self_2d
+        conic2_2d = frame_mapped_conic2.to_2d(frame_mapped_conic1.frame.origin,
+                                              frame_mapped_conic1.frame.u,frame_mapped_conic1.frame.v)
+        intersections_2d = conic1_2d.curve_intersections(conic2_2d, abs_tol)
+        local_intersections = []
+        for intersection in intersections_2d:
+            local_intersections.append(volmdlr.Point3D(intersection[0], intersection[1], conic1.frame.origin.z))
+        # circle_linseg_intersections = conic3d_line_intersections(frame_mapped_conic1, frame_mapped_conic2, abs_tol)
+        for inter in local_intersections:
+            intersections.append(conic1.frame.local_to_global_coordinates(inter))
+        return intersections
+
+    plane_intersections = get_two_planes_intersections(conic1.frame, conic2.frame)
+    if not plane_intersections:
+        return []
+    plane_intersections = volmdlr.curves.Line3D(plane_intersections[0], plane_intersections[1])
+    self_ellipse3d_line_intersections = conic3d_line_intersections(conic1, plane_intersections)
+    ellipse3d_line_intersections = conic3d_line_intersections(conic2, plane_intersections)
+    for intersection in self_ellipse3d_line_intersections + ellipse3d_line_intersections:
+        if volmdlr.core.point_in_list(intersection, intersections):
+            continue
+        if conic1.point_belongs(intersection, abs_tol) and conic2.point_belongs(intersection, abs_tol):
+            intersections.append(intersection)
+    return intersections
+
+
 def get_plane_linesegment_intersections(plane_frame, linesegment, abs_tol: float = 1e-6):
     """
     Gets the intersections of a plane a line segment 3d.
