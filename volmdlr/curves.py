@@ -1182,8 +1182,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         """
         if line2d.point_belongs(self.center):
             direction_vector = line2d.unit_direction_vector()
-            return [self.center + self.radius * direction_vector, self.center - self.radius * direction_vector]
-        # line_to_local_coodinates = line2d
+            return [self.center + self.radius * direction_vector, self.center - self.radius * direction_vecto
         if not self.center.is_close(volmdlr.O2D):
             local_line = line2d.frame_mapping(self.frame, 'new')
             local_circle = self.frame_mapping(self.frame, 'new')
