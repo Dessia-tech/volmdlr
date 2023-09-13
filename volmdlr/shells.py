@@ -148,9 +148,9 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         for face in faces:
             for contour in [face.outer_contour3d] + face.inner_contours3d:
                 for edge in contour.primitives:
-                    if not volmdlr.core.point_in_list(edge.start, vertices_points):
+                    if not volmdlr.utils.common_operations.point_in_list(edge.start, vertices_points):
                         vertices_points.append(edge.start)
-                    if not volmdlr.core.point_in_list(edge.end, vertices_points):
+                    if not volmdlr.utils.common_operations.point_in_list(edge.end, vertices_points):
                         vertices_points.append(edge.end)
         return vertices_points
 
@@ -1187,7 +1187,7 @@ class ClosedShell3D(Shell3D):
                 if point_inters[0].is_close(point3d):
                     return True
                 for inter in point_inters:
-                    if volmdlr.core.point_in_list(inter, intersections):
+                    if volmdlr.utils.common_operations.point_in_list(inter, intersections):
                         break
                     intersections.append(inter)
                     count += 1

@@ -305,7 +305,7 @@ class Edge(dc.DessiaObject):
 
     def validate_crossings(self, edge, intersection):
         """Validates the intersections as crossings: edge not touching the other at one end, or in a tangent point."""
-        if not volmdlr.core.point_in_list(intersection, [self.start, self.end, edge.start, edge.end]):
+        if not volmdlr.utils.common_operations.point_in_list(intersection, [self.start, self.end, edge.start, edge.end]):
             tangent1 = self.unit_direction_vector(self.abscissa(intersection))
             tangent2 = edge.unit_direction_vector(edge.abscissa(intersection))
             if math.isclose(abs(tangent1.dot(tangent2)), 1, abs_tol=1e-6):
@@ -356,7 +356,7 @@ class Edge(dc.DessiaObject):
             if abscissa > self.length() + 1e-6:
                 continue
             abscissa_point = self.point_at_abscissa(abscissa)
-            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+            if not volmdlr.utils.common_operations.point_in_list(abscissa_point, discretized_points_between_1_2):
                 discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
 
@@ -447,7 +447,7 @@ class Edge(dc.DessiaObject):
         def clean_points(list_pts):
             points_ = []
             for point in list_pts:
-                if not volmdlr.core.point_in_list(point, points_):
+                if not volmdlr.utils.common_operations.point_in_list(point, points_):
                     points_.append(point)
             return points_
 
@@ -493,7 +493,7 @@ class Edge(dc.DessiaObject):
         points_abscissas = []
         for abscissa in npy.linspace(abscissa1, abscissa2, num=max_number_points):
             abscissa_point = self.point_at_abscissa(abscissa)
-            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+            if not volmdlr.utils.common_operations.point_in_list(abscissa_point, discretized_points_between_1_2):
                 discretized_points_between_1_2.append(abscissa_point)
                 points_abscissas.append(abscissa)
         if return_abscissas:
@@ -655,11 +655,11 @@ class LineSegment(Edge):
         new_linesegment_points = []
         for point in [self.start, self.end]:
             if other_linesegment.point_belongs(point, abs_tol=abs_tol) and\
-                    not volmdlr.core.point_in_list(point, new_linesegment_points):
+                    not volmdlr.utils.common_operations.point_in_list(point, new_linesegment_points):
                 new_linesegment_points.append(point)
         for point in [other_linesegment.start, other_linesegment.end]:
             if self.point_belongs(point, abs_tol=abs_tol) and\
-                    not volmdlr.core.point_in_list(point, new_linesegment_points):
+                    not volmdlr.utils.common_operations.point_in_list(point, new_linesegment_points):
                 new_linesegment_points.append(point)
         if len(new_linesegment_points) == 1:
             return []
@@ -681,7 +681,7 @@ class LineSegment(Edge):
             return [self]
         points = []
         for point in [self.start, self.end, shared_section[0].start, shared_section[0].end]:
-            if not volmdlr.core.point_in_list(point, points):
+            if not volmdlr.utils.common_operations.point_in_list(point, points):
                 points.append(point)
         points = sorted(points, key=self.start.point_distance)
         new_line_segments = []
@@ -1349,7 +1349,7 @@ class BSplineCurve(Edge):
         """
         polygon_points = []
         for point in self.points:
-            if not volmdlr.core.point_in_list(point, polygon_points):
+            if not volmdlr.utils.common_operations.point_in_list(point, polygon_points):
                 polygon_points.append(point)
         list_intersections = []
         initial_abscissa = 0
@@ -1531,13 +1531,13 @@ class BSplineCurve(Edge):
         lineseg_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
         bspline_discretized_points1 = []
         for point in self.discretization_points(number_points=30):
-            if not volmdlr.core.point_in_list(point, bspline_discretized_points1):
+            if not volmdlr.utils.common_operations.point_in_list(point, bspline_discretized_points1):
                 bspline_discretized_points1.append(point)
         line_segments1 = [lineseg_class_(point1, point2) for point1, point2 in
                           zip(bspline_discretized_points1[:-1], bspline_discretized_points1[1:])]
         edge_discretized_points2 = []
         for point in edge2.discretization_points(number_points=30):
-            if not volmdlr.core.point_in_list(point, edge_discretized_points2):
+            if not volmdlr.utils.common_operations.point_in_list(point, edge_discretized_points2):
                 edge_discretized_points2.append(point)
         line_segments2 = [lineseg_class_(point1, point2) for point1, point2 in
                           zip(edge_discretized_points2[:-1], edge_discretized_points2[1:])]
@@ -1575,7 +1575,7 @@ class BSplineCurve(Edge):
         discretized_points_between_1_2 = []
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
             abscissa_point = self.point_at_abscissa(abscissa)
-            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+            if not volmdlr.utils.common_operations.point_in_list(abscissa_point, discretized_points_between_1_2):
                 discretized_points_between_1_2.append(abscissa_point)
         return discretized_points_between_1_2
 

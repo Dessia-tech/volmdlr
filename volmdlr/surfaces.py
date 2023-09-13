@@ -1097,7 +1097,7 @@ class Surface3D(DessiaObject):
         for primitive in contour3d.primitives:
             primitive_plane_intersections = self.edge_intersections(primitive)
             for primitive_plane_intersection in primitive_plane_intersections:
-                if not volmdlr.core.point_in_list(primitive_plane_intersection,
+                if not volmdlr.utils.common_operations.point_in_list(primitive_plane_intersection,
                                                   outer_contour_intersections_with_plane):
                     outer_contour_intersections_with_plane.append(primitive_plane_intersection)
         return outer_contour_intersections_with_plane
@@ -4968,7 +4968,7 @@ class BSplineSurface3D(Surface3D):
         points = []
         for point in linesegment2d.discretization_points(number_points=20):
             point3d = self.point2d_to_3d(point)
-            if not volmdlr.core.point_in_list(point3d, points):
+            if not volmdlr.utils.common_operations.point_in_list(point3d, points):
                 points.append(point3d)
         if len(points) < 2:
             return None
@@ -5126,7 +5126,6 @@ class BSplineSurface3D(Surface3D):
                 return False
         return True
 
-
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
         Converts the parametric boundary representation into a 3D primitive.
@@ -5145,7 +5144,7 @@ class BSplineSurface3D(Surface3D):
         points = []
         for point in bspline_curve2d.discretization_points(number_points=number_points):
             point3d = self.point2d_to_3d(point)
-            if not volmdlr.core.point_in_list(point3d, points):
+            if not volmdlr.utils.common_operations.point_in_list(point3d, points):
                 points.append(point3d)
         if len(points) < bspline_curve2d.degree + 1:
             return None
@@ -5160,7 +5159,7 @@ class BSplineSurface3D(Surface3D):
         points = []
         for point3d in arc3d.discretization_points(number_points=number_points):
             point2d = self.point3d_to_2d(point3d)
-            if not volmdlr.core.point_in_list(point2d, points):
+            if not volmdlr.utils.common_operations.point_in_list(point2d, points):
                 points.append(point2d)
         start = points[0]
         end = points[-1]
