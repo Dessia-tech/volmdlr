@@ -21,8 +21,9 @@ import volmdlr.core
 from volmdlr import display, edges, wires, surfaces, curves
 import volmdlr.faces
 import volmdlr.geometry
-from volmdlr.core import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
+# from volmdlr.core import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, step_ids_to_str
+from volmdlr.utils.common_operations import point_in_list, edge_in_list, get_edge_index_in_list, get_point_index_in_list
 
 
 def union_list_of_shells(list_shells):

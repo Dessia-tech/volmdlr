@@ -24,6 +24,7 @@ import volmdlr.grid
 from volmdlr import surfaces
 from volmdlr.utils.parametric import array_range_search
 import volmdlr.wires
+from volmdlr.utils.common_operations import point_in_list
 
 
 def octree_decomposition(bbox, faces):
@@ -47,8 +48,7 @@ def octree_face_decomposition(face):
     :return: returns a dictionary containing bounding boxes as keys and as values, a list of faces
     inside that bounding box.
     """
-    triangulation = face.triangulation()
-    triangulation_faces = triangulation.faces
+    triangulation_faces = face.triangular_faces()
     return octree_decomposition(face.bounding_box, triangulation_faces)
 
 
@@ -278,6 +278,11 @@ class Face3D(volmdlr.core.Primitive3D):
         Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
         """
         return [], []
+
+    def triangular_faces(self):
+        triangulation = self.triangulation()
+        faces_triangulation = triangulation.triangular_faces()
+        return [Triangle3D(*face_triangulation) for face_triangulation in faces_triangulation]
 
     def grid_size(self):
         """
@@ -1000,8 +1005,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if self.__class__ == PlaneFace3D:
             faces_triangulation = [self]
         else:
-            triangulation = self.triangulation()
-            faces_triangulation = triangulation.triangular_faces()
+            faces_triangulation = self.triangular_faces()
         for face in faces_triangulation:
             inters = face.linesegment_intersections(linesegment)
             yield inters
@@ -1022,7 +1026,7 @@ class Face3D(volmdlr.core.Primitive3D):
         linesegment_intersections = []
         for inters in self._get_linesegment_intersections_approximation(linesegment):
             for point in inters:
-                if not volmdlr.core.point_in_list(point, linesegment_intersections):
+                if not point_in_list(point, linesegment_intersections):
                     linesegment_intersections.append(point)
 
         return linesegment_intersections
@@ -1249,7 +1253,7 @@ class PlaneFace3D(Face3D):
         for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d + \
                        planeface.inner_contours3d:
             for intersection in contour.line_intersections(face2_plane_interections[0]):
-                if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
+                if intersection and not point_in_list(intersection, points_intersections):
                     points_intersections.append(intersection)
         points_intersections = face2_plane_interections[0].sort_points_along_curve(points_intersections)
         planeface_intersections = []

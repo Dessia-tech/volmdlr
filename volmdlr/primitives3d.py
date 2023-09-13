@@ -1416,6 +1416,21 @@ class Sweep(shells.ClosedShell3D):
         self.wire3d = wire3d
         self.frames = []
 
+        # for prim in self.wire3d.primitives:
+        #     if isinstance(prim, volmdlr.edges.Arc3D):
+        #         arc_radius = prim.circle.radius
+        #         if arc_radius < max(self.contour2d.bounding_rectangle.bounds())/2:
+        #             prim.circle.radius = max(self.contour2d.bounding_rectangle.bounds())/2
+        #             print('RADIUS MODIFIED')
+
+        # arc_radius = [prim.circle.radius for prim in self.wire3d.primitives if
+        #               isinstance(prim, volmdlr.edges.Arc3D)]
+        # if arc_radius and min(arc_radius) <= max(
+        #         self.contour2d.bounding_rectangle.bounds()) / 2:
+        #     raise ValueError(
+        #         f'Section too big in comparison to path curvature radiuses. All radiuses should be > '
+        #         f'{max(self.contour2d.bounding_rectangle.bounds()) / 2}')
+
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces, color=color,
                                       alpha=alpha, name=name)

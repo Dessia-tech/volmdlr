@@ -5,48 +5,8 @@ Concatenate common operation for two or more objects.
 import math
 import random
 
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import least_squares
-
-import volmdlr.core
-from volmdlr.core import EdgeStyle
-
-
-def plot_circle(circle, ax=None, edge_style: EdgeStyle = EdgeStyle()):
-    """
-    Create a Matplotlib plot for a circle 2d or fullarc 2d.
-
-    :param circle: circle to plot.
-    :param ax: Matplotlib plot axis.
-    :param edge_style: Edge Style to implement.
-    :return: Matplotlib plot axis.
-    """
-    if ax is None:
-        _, ax = plt.subplots()
-    if circle.radius > 0:
-        ax.add_patch(matplotlib.patches.Arc((circle.center.x, circle.center.y),
-                                            2 * circle.radius,
-                                            2 * circle.radius,
-                                            angle=0,
-                                            theta1=0,
-                                            theta2=360,
-                                            color=edge_style.color,
-                                            alpha=edge_style.alpha,
-                                            linestyle=edge_style.linestyle,
-                                            linewidth=edge_style.linewidth))
-    if edge_style.plot_points:
-        ax.plot([circle.start.x], [circle.start.y], 'o',
-                color=edge_style.color, alpha=edge_style.alpha)
-    if edge_style.equal_aspect:
-        ax.set_aspect('equal')
-    x_min, x_max = circle.center[0] - circle.radius, circle.center[0] + circle.radius
-    y_min, y_max = circle.center[1] - circle.radius, circle.center[1] + circle.radius
-    ax.set_xlim(x_min, x_max)
-    ax.set_ylim(y_min, y_max)
-
-    return ax
 
 
 def random_color():
@@ -87,7 +47,7 @@ def split_wire_by_plane(wire, plane3d):
     for primitive in wire.primitives:
         intersections = plane3d.edge_intersections(primitive)
         for intersection in intersections:
-            if not volmdlr.core.point_in_list(intersection, wire_plane_intersections):
+            if not point_in_list(intersection, wire_plane_intersections):
                 wire_plane_intersections.append(intersection)
     if len(wire_plane_intersections) > 1:
         raise NotImplementedError
@@ -162,3 +122,122 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
             point1, point2 = ptest1, ptest2
 
     return point1, point2
+
+
+def element_in_list(element, list_elements, tol: float = 1e-6):
+    """
+    Verifies if a volmdlr element is inside a list  of elements, considering a certain tolerance.
+
+    :param element: Element to be verified inside list.
+    :param list_elements: List of elements to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: True if there is an element inside the list close to the element to given tolerance.
+    """
+    for element_i in list_elements:
+        if element.is_close(element_i, tol):
+            return True
+    return False
+
+
+def point_in_list(point, list_points, tol: float = 1e-6):
+    """
+    Verifies if a point is inside a list  of points, considering a certain tolerance.
+
+    :param point: Point to be verified inside list.
+    :param list_points: List of points to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: True if there is a point inside the list close to the point to given tolerance.
+    """
+
+    return element_in_list(point, list_points, tol)
+
+
+def edge_in_list(edge, list_edges, tol: float = 1e-6):
+    """
+    Verifies if an edge is inside a list  of edges, considering a certain tolerance.
+
+    :param edge: Edge to be verified inside list.
+    :param list_edges: List of edges to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: True if there is an edge inside the list close to the edge to given tolerance.
+    """
+
+    return element_in_list(edge, list_edges, tol)
+
+
+def get_element_index_in_list(element, list_elements, tol: float = 1e-6):
+    """
+    Gets the index an element inside a list of elements, considering a certain tolerance.
+
+    :param point: Element to be verified inside list.
+    :param list_elements: List of elements to be used.
+    :param tol: Tolerance to consider if two elements are the same.
+    :return: The element index.
+    """
+    for i, element_i in enumerate(list_elements):
+        if element_i.is_close(element, tol):
+            return i
+    raise ValueError(f'{element} is not in list')
+
+
+def get_point_index_in_list(point, list_points, tol: float = 1e-6):
+    """
+    Gets the index a point inside a list of points, considering a certain tolerance.
+
+    :param point: Point to be verified inside list.
+    :param list_points: List of points to be used.
+    :param tol: Tolerance to consider if two points are the same.
+    :return: The point index.
+    """
+
+    return get_element_index_in_list(point, list_points, tol)
+
+
+def get_edge_index_in_list(edge, list_edges, tol: float = 1e-6):
+    """
+    Gets the index a edge inside a list of edges, considering a certain tolerance.
+
+    :param edge: Edge to be verified inside list.
+    :param list_edges: List of edges to be used.
+    :param tol: Tolerance to consider if two edges are the same.
+    :return: The edge index.
+    """
+
+    return get_element_index_in_list(edge, list_edges, tol)
+
+
+def determinant(vec1, vec2, vec3):
+    """
+    Calculates the determinant for a three vector matrix.
+
+    """
+    # TODO: to be removed
+    a = np.array((vec1.vector, vec2.vector, vec3.vector))
+    return np.linalg.det(a)
+
+
+def delete_double_point(list_point):
+    """
+    Delete duplicate points from a list of points.
+
+    :param list_point: The initial list of points
+    :type list_point: Union[List[:class:`volmdlr.Point2D`],
+        List[:class:`volmdlr.Point3D`]]
+    :return: The final list of points containing no duplicates
+    :rtype: Union[List[:class:`volmdlr.Point2D`],
+        List[:class:`volmdlr.Point3D`]]
+    """
+    # TODO : this method would be faster using sets
+    points = []
+    for point in list_point:
+        if point not in points:
+            points.append(point)
+        else:
+            continue
+    return points
+
+# def get_triangulation(primitives):
+#     display_meshes = []
+#     for primitive in primitives:
+#         display_meshes.append(primitive.triangulation())
+#     return DisplayMesh3D.merge_meshes(display_meshes)

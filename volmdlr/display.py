@@ -10,10 +10,12 @@ from typing import List, Tuple
 
 import dessia_common.core as dc
 
-import volmdlr.edges
+from volmdlr.edges import LineSegment, LineSegment2D, LineSegment3D
+from volmdlr import Point2D, Point3D
+# from volmdlr.faces import Triangle3D
 
 
-class Node2D(volmdlr.Point2D):
+class Node2D(Point2D):
     """
     A node is a point with some hash capabilities for performance.
     """
@@ -21,7 +23,7 @@ class Node2D(volmdlr.Point2D):
     def __init__(self, x: float, y: float, name: str = ""):
         self.x = x
         self.y = y
-        volmdlr.Point2D.__init__(self, x, y, name)
+        Point2D.__init__(self, x, y, name)
 
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
@@ -38,7 +40,7 @@ class Node2D(volmdlr.Point2D):
         return cls(point2d.x, point2d.y)
 
 
-class Node3D(volmdlr.Point3D):
+class Node3D(Point3D):
     """
     A node is a point with some hash capabilities for performance.
     """
@@ -47,7 +49,7 @@ class Node3D(volmdlr.Point3D):
         self.x = x
         self.y = y
         self.z = z
-        volmdlr.Point3D.__init__(self, x, y, z, name)
+        Point3D.__init__(self, x, y, z, name)
 
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))
@@ -71,7 +73,7 @@ class DisplayMesh(dc.DessiaObject):
 
     This is an abstract class for 2D & 3D.
     """
-    _linesegment_class = volmdlr.edges.LineSegment
+    _linesegment_class = LineSegment
 
     def __init__(self, points, triangles, name: str = ''):
 
@@ -196,10 +198,10 @@ class DisplayMesh2D(DisplayMesh):
 
     """
 
-    _linesegment_class = volmdlr.edges.LineSegment2D
-    _point_class = volmdlr.Point2D
+    _linesegment_class = LineSegment2D
+    _point_class = Point2D
 
-    def __init__(self, points: List[volmdlr.Point2D],
+    def __init__(self, points: List[Point2D],
                  triangles: List[Tuple[int, int, int]],
                  name: str = ''):
         DisplayMesh.__init__(self, points, triangles, name=name)
@@ -223,12 +225,12 @@ class DisplayMesh3D(DisplayMesh):
 
     """
 
-    _linesegment_class = volmdlr.edges.LineSegment3D
-    _point_class = volmdlr.Point3D
+    _linesegment_class = LineSegment3D
+    _point_class = Point3D
 
-    def __init__(self, points: List[volmdlr.Point3D],
+    def __init__(self, points: List[Point3D],
                  triangles: List[Tuple[int, int, int]], name=''):
-        self._faces = None
+        # self._faces = None
         DisplayMesh.__init__(self, points, triangles, name=name)
 
     def to_babylon(self):
@@ -248,11 +250,11 @@ class DisplayMesh3D(DisplayMesh):
             flatten_indices.extend(vertex)
         return positions, flatten_indices
 
-    @property
-    def faces(self):
-        if not self._faces:
-            self._faces = self.triangular_faces()
-        return self._faces
+    # @property
+    # def faces(self):
+    #     if not self._faces:
+    #         self._faces = self.triangular_faces()
+    #     return self._faces
 
     def triangular_faces(self):
         triangular_faces = []
@@ -262,10 +264,32 @@ class DisplayMesh3D(DisplayMesh):
             point3 = self.points[vertex3]
             if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3) and\
                     {point1, point2, point3}.__len__() == 3:
-                face = volmdlr.faces.Triangle3D(point1, point2, point3)
-                if face.area() >= 1e-11:
+                # face = Triangle3D(point1, point2, point3)
+                face = (point1, point2, point3)
+
+                a = point1.point_distance(point2)
+                b = point2.point_distance(point3)
+                c = point3.point_distance(point1)
+
+                semi_perimeter = (a + b + c) / 2
+
+                try:
+                    # Area with Heron's formula
+                    area = math.sqrt(semi_perimeter * (semi_perimeter - a) * (
+                                semi_perimeter - b) * (semi_perimeter - c))
+                except ValueError:
+                    area = 0
+
+                if area >= 1e-11:
                     triangular_faces.append(face)
         return triangular_faces
+
+    @classmethod
+    def from_assembly(cls, assembly):
+        display_meshes = []
+        for primitive in assembly.primitives:
+            display_meshes.append(primitive.triangulation())
+        return cls.merge_meshes(display_meshes)
 
     def to_stl(self):
         """

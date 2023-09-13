@@ -28,6 +28,7 @@ import volmdlr.geometry
 from volmdlr import curves, edges
 from volmdlr.core_compiled import polygon_point_belongs
 from volmdlr.core import EdgeStyle
+from volmdlr.utils.common_operations import point_in_list
 
 
 def argmax(list_of_numbers):
@@ -490,9 +491,9 @@ class WireMixin:
         self_start_equal_to_end = True
         if not self.primitives[0].start.is_close(self.primitives[-1].end):
             self_start_equal_to_end = False
-            if not volmdlr.core.point_in_list(self.primitives[0].start, sorted_points):
+            if not point_in_list(self.primitives[0].start, sorted_points):
                 sorted_points = [self.primitives[0].start] + sorted_points
-            if not volmdlr.core.point_in_list(self.primitives[-1].end, sorted_points):
+            if not point_in_list(self.primitives[-1].end, sorted_points):
                 sorted_points.append(self.primitives[-1].end)
         if not self_start_equal_to_end:
             if len(sorted_points) == 2 and sorted_points[0].is_close(self.primitives[0].start) and \
@@ -947,7 +948,7 @@ class Wire2D(WireMixin, PhysicalObject):
         for primitive in self.primitives:
             intersections = primitive.line_intersections(line)
             for intersection in intersections:
-                if not volmdlr.core.point_in_list(intersection, intersection_points):
+                if not point_in_list(intersection, intersection_points):
                     if not self.is_crossing_start_end_point(intersections, primitive):
                         intersection_points.append(intersection)
                         intersection_points_primitives.append((intersection, primitive))
@@ -979,7 +980,7 @@ class Wire2D(WireMixin, PhysicalObject):
         for primitive in self.primitives:
             intersections = primitive.intersections(edge)
             for intersection in intersections:
-                if not volmdlr.core.point_in_list(intersection, edge_intersections):
+                if not point_in_list(intersection, edge_intersections):
                     edge_intersections.append(intersection)
         return edge_intersections
 
@@ -993,7 +994,7 @@ class Wire2D(WireMixin, PhysicalObject):
         for primitive in wire.primitives:
             edge_intersections = self.edge_intersections(primitive)
             for crossing in edge_intersections:
-                if not volmdlr.core.point_in_list(crossing, intersections_points):
+                if not point_in_list(crossing, intersections_points):
                     intersections_points.append(crossing)
         return intersections_points
 
@@ -1027,7 +1028,7 @@ class Wire2D(WireMixin, PhysicalObject):
                 crossings = self.validate_edge_crossings(crossings)
             for crossing in crossings:
                 if not edge.is_point_edge_extremity(crossing) and\
-                        not volmdlr.core.point_in_list(crossing, edge_crossings):
+                        not point_in_list(crossing, edge_crossings):
                     edge_crossings.append(crossing)
         return edge_crossings
 
@@ -1097,8 +1098,8 @@ class Wire2D(WireMixin, PhysicalObject):
                 if i_prim != len_wire_primitives - 1:
                     if not self.validate_wire_crossing(crossing, primitive, wire_primitives[i_prim + 1]):
                         continue
-                    if not volmdlr.core.point_in_list(crossing, crossings_points) and\
-                            not volmdlr.core.point_in_list(crossing, invalid_crossings):
+                    if not point_in_list(crossing, crossings_points) and\
+                            not point_in_list(crossing, invalid_crossings):
                         crossings_points.append(crossing)
         return crossings_points
 
@@ -1551,10 +1552,10 @@ class ContourMixin(WireMixin):
         remove = False
         for i, contour in enumerate(contours_list):
             if not contour.primitive_over_contour(edge):
-                if volmdlr.core.point_in_list(contour.primitives[0].start, [edge.end, edge.start]):
+                if point_in_list(contour.primitives[0].start, [edge.end, edge.start]):
                     contours_list[i].primitives = [edge.copy(deep=True)] + contour.primitives
                     remove = True
-                elif volmdlr.core.point_in_list(contour.primitives[-1].end, [edge.end, edge.start]):
+                elif point_in_list(contour.primitives[-1].end, [edge.end, edge.start]):
                     contours_list[i].primitives = contour.primitives + [edge.copy(deep=True)]
                     remove = True
         return contours_list, remove
@@ -1665,7 +1666,7 @@ class ContourMixin(WireMixin):
                 points = [list_edges[0].start, list_edges[0].end]
                 contour_primitives = [list_edges.pop(0)]
                 continue
-            if volmdlr.core.point_in_list(validating_point, validating_points):
+            if point_in_list(validating_point, validating_points):
                 if not validating_point.is_close(validating_points[0]):
                     spliting_primitives_index = volmdlr.core.get_point_index_in_list(
                         validating_point, validating_points)
@@ -1798,7 +1799,7 @@ class ContourMixin(WireMixin):
         for contour_i in contours:
             points_ = contour_i.extremities_points(list_p)
             for point in points_:
-                if not volmdlr.core.point_in_list(point, points):
+                if not point_in_list(point, points):
                     points.append(point)
 
         return points
@@ -1916,12 +1917,12 @@ class ContourMixin(WireMixin):
                 if primitives[i].point_belongs(point):
                     pts.append(point)
             if len(pts) == 1:
-                if not volmdlr.core.point_in_list(pts[0], points):
+                if not point_in_list(pts[0], points):
                     points.append(pts[0])
                     break
             elif len(pts) > 1:
                 point = primitives[i].end.nearest_point(pts)
-                if not volmdlr.core.point_in_list(point, points):
+                if not point_in_list(point, points):
                     points.append(point)
                     break
         return points
@@ -2509,12 +2510,12 @@ class Contour2D(ContourMixin, Wire2D):
             for primitive2 in contour2d.primitives:
                 line_intersection = primitive1.linesegment_intersections(primitive2)
                 if line_intersection:
-                    if not volmdlr.core.point_in_list(line_intersection[0], intersecting_points):
+                    if not point_in_list(line_intersection[0], intersecting_points):
                         intersecting_points.extend(line_intersection)
                 else:
                     touching_points = primitive1.touching_points(primitive2)
                     for point in touching_points:
-                        if not volmdlr.core.point_in_list(point, intersecting_points):
+                        if not point_in_list(point, intersecting_points):
                             intersecting_points.append(point)
             if len(intersecting_points) == 2:
                 break
@@ -2839,7 +2840,7 @@ class ClosedPolygonMixin:
                         if new_point.point_distance(points[-1]) > max_distance:
                             points.append(new_point)
                 else:
-                    if not volmdlr.core.point_in_list(point, points):
+                    if not point_in_list(point, points):
                         points.append(point)
             if len(points) > 1:
                 vector1 = points[-1] - points[-2]
@@ -2847,9 +2848,9 @@ class ClosedPolygonMixin:
                 cos = vector1.dot(vector2) / (vector1.norm() * vector2.norm())
                 cos = math.degrees(math.acos(round(cos, 6)))
                 if abs(cos) > angle:
-                    if not volmdlr.core.point_in_list(previous_point, points):
+                    if not point_in_list(previous_point, points):
                         points.append(previous_point)
-                    if not volmdlr.core.point_in_list(point, points):
+                    if not point_in_list(point, points):
                         points.append(point)
             if len(points) > 2:
                 vector1 = points[-2] - points[-3]
@@ -3400,7 +3401,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         hull_points = list({point for line in hull_concave_edges for point in [line[0], line[1]]})
         unused_points = []
         for point in points:
-            if not volmdlr.core.point_in_list(point, hull_points):
+            if not point_in_list(point, hull_points):
                 unused_points.append(point)
 
         a_line_was_divided_in_the_iteration = True
@@ -3623,7 +3624,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                 intersections = current_polygon.linesegment_intersections(line_segment)
                 if intersections:
                     for inter in intersections:
-                        if not volmdlr.core.point_in_list(inter[0], [line_segment.start, line_segment.end]):
+                        if not point_in_list(inter[0], [line_segment.start, line_segment.end]):
                             intersect = True
                             break
 
@@ -3816,11 +3817,11 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                     line_intersections[line_segment].append((inters[0], prim))
                     inter_points.append(inters[0])
                 elif line_segment.point_belongs(prim.start, 1e-7):
-                    if not volmdlr.core.point_in_list(prim.start, inter_points):
+                    if not point_in_list(prim.start, inter_points):
                         line_intersections[line_segment].append((prim.start, prim))
                         inter_points.append(prim.start)
                 elif line_segment.point_belongs(prim.end, 1e-7):
-                    if not volmdlr.core.point_in_list(prim.end, inter_points):
+                    if not point_in_list(prim.end, inter_points):
                         line_intersections[line_segment].append((prim.end, prim))
                         inter_points.append(prim.end)
                 elif prim.point_belongs(middle_point, 1e-7):
@@ -4737,9 +4738,9 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             self.line_segments[:polygon1_2d.line_segments.index(polygon1_2d_valid__primitive)]
         polygon1_3d_points = []
         for prim in new_polygon_primitives:
-            if not volmdlr.core.point_in_list(prim.start, polygon1_3d_points):
+            if not point_in_list(prim.start, polygon1_3d_points):
                 polygon1_3d_points.append(prim.start)
-            if not volmdlr.core.point_in_list(prim.end, polygon1_3d_points):
+            if not point_in_list(prim.end, polygon1_3d_points):
                 polygon1_3d_points.append(prim.end)
         return ClosedPolygon3D(polygon1_3d_points)
 
