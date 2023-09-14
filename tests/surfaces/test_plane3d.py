@@ -6,6 +6,7 @@ from volmdlr import edges, surfaces, curves
 from volmdlr.surfaces import Plane3D
 from volmdlr.models.edges import bspline_curve3d
 
+
 class TestPlane3D(unittest.TestCase):
 
     plane1 = surfaces.Plane3D(volmdlr.OXYZ)

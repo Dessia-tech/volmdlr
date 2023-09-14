@@ -556,7 +556,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
-    def edge3d_inside(self, edge3d):
+    def edge3d_inside(self, edge3d, abs_tol: float = 1e-6):
         """
         Returns True if edge 3d is coplanar to the face.
         """
@@ -565,7 +565,7 @@ class Face3D(volmdlr.core.Primitive3D):
             return getattr(self, method_name)(edge3d)
         points = edge3d.discretization_points(number_points=5)
         for point in points[1:-1]:
-            if not self.point_belongs(point):
+            if not self.point_belongs(point, abs_tol):
                 return False
         return True
 
@@ -607,7 +607,7 @@ class Face3D(volmdlr.core.Primitive3D):
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
                 for point in intersection_points:
-                    if point not in intersections_points:
+                    if not volmdlr.core.point_in_list(point, intersections_points):
                         intersections_points.append(point)
 
         return intersections_points
@@ -2027,10 +2027,10 @@ class CylindricalFace3D(Face3D):
         point2d = self.surface3d.point3d_to_2d(point3d)
         point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
         point2d_minus_2pi = point2d.translation(volmdlr.Point2D(-volmdlr.TWO_PI, 0))
-        check_point3d = self.surface3d.point2d_to_3d(point2d)
-        if check_point3d.point_distance(point3d) > tol:
+        # check_point3d = self.surface3d.point2d_to_3d(point2d)
+        # if check_point3d.point_distance(point3d) > tol:
+        if not self.surface3d.point_on_surface(point3d, tol):
             return False
-
         return any(self.surface2d.point_belongs(pt2d) for pt2d in [point2d, point2d_plus_2pi, point2d_minus_2pi])
 
     def parametrized_grid_size(self, angle_resolution, z_resolution):
@@ -2123,18 +2123,23 @@ class CylindricalFace3D(Face3D):
         face_intersections = []
         for primitive in surface_intersections:
             points_on_primitive = []
+            # for face in [self, conical_face]:
+            #     edge_intersections = face.edge_intersections(primitive)
+            #     for inter in edge_intersections:
+            #         if not volmdlr.core.point_in_list(inter, points_on_primitive):
+            #             points_on_primitive.append(inter)
             for point in intersections_points:
-                if primitive.point_belongs(point):
+                if primitive.point_belongs(point, 1e-4):
                     points_on_primitive.append(point)
             if not points_on_primitive:
                 continue
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
-            if isinstance(primitive, volmdlr_curves.ClosedCurve):
+            # if isinstance(primitive, volmdlr_curves.ClosedCurve):
                 # if isinstance(primitive, volmdlr_curves.Ellipse3D) or isinstance(primitive, volmdlr_curves.Circle3D):
-                points_on_primitive = points_on_primitive + [points_on_primitive[0]]
+            points_on_primitive = points_on_primitive + [points_on_primitive[0]]
             for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
                 edge = primitive.trim(point1, point2)
-                if self.edge3d_inside(edge) and conical_face.edge3d_inside(edge):
+                if self.edge3d_inside(edge, 1e-4) and conical_face.edge3d_inside(edge, 1e-3):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
         return face_intersections
 

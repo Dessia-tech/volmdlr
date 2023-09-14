@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hyperbola2D/3D and Parabola2D/3D: split
 - PlaneFace3D: conicalface_intersections
 - CylindricalSurface3D: conicalsurface_intersections
+- CylindricalFace3D: conicalface_intersections
 
 ### Fixed
 - add missing name attributes to classmethods

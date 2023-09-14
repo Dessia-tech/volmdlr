@@ -234,7 +234,7 @@ def get_point_distance_to_edge(edge, point, start, end):
                 point1_ = point1
                 point2_ = point2
                 distance = dist
-        if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-6):
+        if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-7):
             break
         best_distance = distance
         if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
