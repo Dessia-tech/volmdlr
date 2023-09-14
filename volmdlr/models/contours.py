@@ -167,7 +167,6 @@ unordered_wire_unittest = wires.Wire2D([line_segment2, bspline.reverse(), arc.re
                                         line_segment1, line_segment3])
 
 # Contour3D with all edges.
-degree = 5
 control_points = [volmdlr.Point3D(0, 3, 0),
                   volmdlr.Point3D(3, 2, 1),
                   volmdlr.Point3D(5, -1, 4),
@@ -176,11 +175,10 @@ control_points = [volmdlr.Point3D(0, 3, 0),
                   volmdlr.Point3D(-3, 4, 1)]
 knots = [0.0, 1.0]
 knot_multiplicities = [6, 6]
-weights = None  # [1, 2, 1, 2, 1, 2]
-bspline_curve3d = edges.BSplineCurve3D(degree=degree, control_points=control_points,
+bspline_curve3d = edges.BSplineCurve3D(degree=5, control_points=control_points,
                                        knot_multiplicities=knot_multiplicities,
                                        knots=knots,
-                                       weights=weights,
+                                       weights=None,
                                        name='B Spline Curve 3D 1')
 lineseg1 = edges.LineSegment3D(volmdlr.Point3D(3, 3, 2), bspline_curve3d.start)
 lineseg2 = edges.LineSegment3D(bspline_curve3d.end, volmdlr.Point3D(-3, -3, 0))
