@@ -287,8 +287,12 @@ class DisplayMesh3D(DisplayMesh):
     @classmethod
     def from_assembly(cls, assembly):
         display_meshes = []
-        for primitive in assembly.primitives:
-            display_meshes.append(primitive.triangulation())
+        assembly_primitives = []
+        for primitive in assembly.primitives + assembly_primitives:
+            if primitive.__class__.__name__ != 'Assembly':
+                display_meshes.append(primitive.triangulation())
+            else:
+                assembly_primitives.extend(primitive.primitives)
         return cls.merge_meshes(display_meshes)
 
     def to_stl(self):
