@@ -34,6 +34,22 @@ class TestParabola2D(unittest.TestCase):
                 for intersection, expected_result in zip(line_intersections, expected_results[i][j]):
                     self.assertTrue(intersection.is_close(expected_result))
 
+    def test_point_belongs(self):
+        parabola = curves.Parabola2D(volmdlr.OXY, 0.25)
+        point1 = volmdlr.Point2D(0.9051724137931036, 0.8193370986920336)
+        point2 = volmdlr.Point2D(0.2051724137931036, -0.8193370986920336)
+        self.assertTrue(parabola.point_belongs(point1))
+        self.assertFalse(parabola.point_belongs(point2))
+
+    def test_tangent(self):
+        parabola = curves.Parabola2D(volmdlr.OXY, 0.25)
+        point1 = volmdlr.Point2D(0.9051724137931036, 0.8193370986920336)
+        point2 = volmdlr.Point2D(-0.8189655172413792, 0.6707045184304398)
+        tangent_vector1 = parabola.tangent(point1)
+        tangent_vector2 = parabola.tangent(point2)
+        self.assertTrue(tangent_vector1.is_close(volmdlr.Vector2D(1.0, 1.8103448275862073)))
+        self.assertTrue(tangent_vector2.is_close(volmdlr.Vector2D(1.0, -1.6379310344827585)))
+
 
 class TestParabola3D(unittest.TestCase):
     def test_line_intersections(self):
@@ -72,6 +88,36 @@ class TestParabola3D(unittest.TestCase):
         point_end = volmdlr.Point3D(1.6339745962174324, 1.8921223583379627, 4.330127018924)
         bspline = parabola.trim(point_start, point_end)
         self.assertAlmostEqual(bspline.length(), 9.425430953568256, 5)
+
+    def test_point_belongs(self):
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+        parabola3d = curves.Parabola3D(frame, 0.25)
+        point1 = volmdlr.Point3D(0.34684705570366325, 0.16253460292661448, 0.16253460292661448)
+        point2 = volmdlr.Point3D(0.3259646383580663, -1.0961993491191613, -1.0961993491191613)
+        point3 = volmdlr.Point3D(2.3259646383580663, 1.0961993491191613, -3.0961993491191613)
+        self.assertTrue(parabola3d.point_belongs(point1))
+        self.assertTrue(parabola3d.point_belongs(point2))
+        self.assertFalse(parabola3d.point_belongs(point3))
+
+    def test_tangent(self):
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+        parabola3d = curves.Parabola3D(frame, 0.25)
+        point1 = volmdlr.Point3D(0.34684705570366325, 0.16253460292661448, 0.16253460292661448)
+        point2 = volmdlr.Point3D(0.3259646383580663, -1.0961993491191613, -1.0961993491191613)
+        tangent_vector1 = parabola3d.tangent(point1)
+        tangent_vector2 = parabola3d.tangent(point2)
+        self.assertTrue(tangent_vector1.is_close(
+            volmdlr.Vector3D(1.2108389957713368, 0.2606059058983855, 0.2606059058983855)))
+        self.assertTrue(tangent_vector2.is_close(
+            volmdlr.Vector3D(-1.1823406379820662, 1.4571957227751613, 1.4571957227751613)))
 
 
 if __name__ == '__main__':
