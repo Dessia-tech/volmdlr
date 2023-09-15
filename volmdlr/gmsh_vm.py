@@ -48,12 +48,10 @@ class GmshParser(DessiaObject):
         self.elements = elements
         self.partitioned_entities = partitioned_entities
         self.periodic = periodic
-        # self.ghost_elements = ghost_elements,
         self.parametrizations = parametrizations
         self.node_data = node_data
         self.element_data = element_data
         self.element_node_data = element_node_data
-        # self.interpolation_scheme = interpolation_scheme,
         self.name = name
 
         DessiaObject.__init__(self, name=name)
@@ -72,12 +70,10 @@ class GmshParser(DessiaObject):
         elements = GmshParser.from_file_elements(file_data['Elements'])
         partitioned_entities = GmshParser.from_file_partitioned_entities(file_data['PartitionedEntities'])
         periodic = GmshParser.from_file_periodic(file_data['Periodic'])
-        # ghost_elements = GmshParser.from_file_ghost_elements(file_data['GhostElements'])
         parametrizations = GmshParser.from_file_parametrizations(file_data['Parametrizations'])
         node_data = GmshParser.from_file_node_data(file_data['NodeData'])
         element_data = GmshParser.from_file_element_data(file_data['ElementData'])
         element_node_data = GmshParser.from_file_element_node_data(file_data['ElementNodeData'])
-        # interpolation_scheme = GmshParser.from_file_interpolation_scheme(file_data['InterpolationScheme'])
 
         return cls(mesh_format=mesh_format,
                    entities=entities,
@@ -86,12 +82,10 @@ class GmshParser(DessiaObject):
                    physical_names=physical_names,
                    partitioned_entities=partitioned_entities,
                    periodic=periodic,
-                   # ghost_elements=ghost_elements,
                    parametrizations=parametrizations,
                    node_data=node_data,
                    element_data=element_data,
                    element_node_data=element_node_data,
-                   # interpolation_scheme=interpolation_scheme
                    name='')
 
     @staticmethod
@@ -123,7 +117,6 @@ class GmshParser(DessiaObject):
                 for i in range(step, step + num_elements_in_block):
                     line = lines[i].split()
                     element = [int(index) - 1 for index in line[1::]]
-                    # elements['elements_type_'+ element_type].append(element)
                     elements_list.append(element)
                     elements_type.append(element)
                 elements['elements_type_' + element_type].append(elements_list)
@@ -134,17 +127,6 @@ class GmshParser(DessiaObject):
                 break
 
         return elements
-
-    # $ElementData
-    #   numStringTags(ASCII int)
-    #   stringTag(string) ...
-    #   numRealTags(ASCII int)
-    #   realTag(ASCII double) ...
-    #   numIntegerTags(ASCII int)
-    #   integerTag(ASCII int) ...
-    #   elementTag(int) value(double) ...
-    #   ...
-    # $EndElementData
 
     @staticmethod
     def from_file_element_data(lines):
@@ -158,17 +140,6 @@ class GmshParser(DessiaObject):
         element_data = {}
 
         return element_data
-
-    # $ElementNodeData
-    #   numStringTags(ASCII int)
-    #   stringTag(string) ...
-    #   numRealTags(ASCII int)
-    #   realTag(ASCII double) ...
-    #   numIntegerTags(ASCII int)
-    #   integerTag(ASCII int) ...
-    #   elementTag(int) numNodesPerElement(int) value(double) ...
-    #   ...
-    # $EndElementNodeData
 
     @staticmethod
     def from_file_element_node_data(lines):
@@ -276,13 +247,6 @@ class GmshParser(DessiaObject):
                 'surfaces': surfaces_data,
                 'volumes': volumes_data}
 
-    # $GhostElements
-    #   numGhostElements(size_t)
-    #   elementTag(size_t) partitionTag(int)
-    #     numGhostPartitions(size_t) ghostPartitionTag(int) ...
-    #   ...
-    # $EndGhostElements
-
     @staticmethod
     def from_file_ghost_elements(lines):
         """
@@ -295,14 +259,6 @@ class GmshParser(DessiaObject):
         ghost_elements = {}
 
         return ghost_elements
-
-    # $InterpolationScheme
-    #   name(string)
-    #   numElementTopologies(ASCII int)
-    #   elementTopology
-    #   numInterpolationMatrices(ASCII int)
-    #   numRows(ASCII int) numColumns(ASCII int) value(ASCII double) ...
-    # $EndInterpolationScheme
 
     @staticmethod
     def from_file_interpolation_scheme(lines):
@@ -364,14 +320,6 @@ class GmshParser(DessiaObject):
                                                       float(line[1]),
                                                       float(line[2])))
 
-                    # nodes['nodes_dim_'+ entity_dim].append(
-                    #     volmdlr.Point3D(float(line[0]),
-                    #                     float(line[1]),
-                    #                     float(line[2])))
-                    # nodes_points.append(volmdlr.Point3D(float(line[0]),
-                    #                                     float(line[1]),
-                    #                                     float(line[2])))
-
                 nodes['nodes_dim_' + entity_dim].append(points)
                 nodes_points.extend(points)
 
@@ -395,17 +343,6 @@ class GmshParser(DessiaObject):
 
         return nodes
 
-    # $NodeData
-    #   numStringTags(ASCII int)
-    #   stringTag(string) ...
-    #   numRealTags(ASCII int)
-    #   realTag(ASCII double) ...
-    #   numIntegerTags(ASCII int)
-    #   integerTag(ASCII int) ...
-    #   nodeTag(int) value(double) ...
-    #   ...
-    # $EndNodeData
-
     @staticmethod
     def from_file_node_data(lines):
         """
@@ -419,27 +356,10 @@ class GmshParser(DessiaObject):
 
         return node_data
 
-    # $Parametrizations
-    #   numCurveParam(size_t) numSurfaceParam(size_t)
-    #   curveTag(int) numNodes(size_t)
-    #     nodeX(double) nodeY(double) nodeZ(double) nodeU(double)
-    #     ...
-    #   ...
-    #   surfaceTag(int) numNodes(size_t) numTriangles(size_t)
-    #     nodeX(double) nodeY(double) nodeZ(double)
-    #       nodeU(double) nodeV(double)
-    #       curvMaxX(double) curvMaxY(double) curvMaxZ(double)
-    #       curvMinX(double) curvMinY(double) curvMinZ(double)
-    #     ...
-    #     nodeIndex1(int) nodeIndex2(int) nodeIndex3(int)
-    #     ...
-    #   ...
-    # $EndParametrizations
-
     @staticmethod
     def from_file_parametrizations(lines):
         """
-        Gets mesh parametrizations from .msh file.
+        Gets mesh parametrization from .msh file.
         """
 
         if not lines:
@@ -448,41 +368,6 @@ class GmshParser(DessiaObject):
         parametrizations = {}
 
         return parametrizations
-
-    # $PartitionedEntities
-    #   numPartitions(size_t)
-    #   numGhostEntities(size_t)
-    #     ghostEntityTag(int) partition(int)
-    #     ...
-    #   numPoints(size_t) numCurves(size_t)
-    #     numSurfaces(size_t) numVolumes(size_t)
-    #   pointTag(int) parentDim(int) parentTag(int)
-    #     numPartitions(size_t) partitionTag(int) ...
-    #     X(double) Y(double) Z(double)
-    #     numPhysicalTags(size_t) physicalTag(int) ...
-    #   ...
-    #   curveTag(int) parentDim(int) parentTag(int)
-    #     numPartitions(size_t) partitionTag(int) ...
-    #     minX(double) minY(double) minZ(double)
-    #     maxX(double) maxY(double) maxZ(double)
-    #     numPhysicalTags(size_t) physicalTag(int) ...
-    #     numBoundingPoints(size_t) pointTag(int) ...
-    #   ...
-    #   surfaceTag(int) parentDim(int) parentTag(int)
-    #     numPartitions(size_t) partitionTag(int) ...
-    #     minX(double) minY(double) minZ(double)
-    #     maxX(double) maxY(double) maxZ(double)
-    #     numPhysicalTags(size_t) physicalTag(int) ...
-    #     numBoundingCurves(size_t) curveTag(int) ...
-    #   ...
-    #   volumeTag(int) parentDim(int) parentTag(int)
-    #     numPartitions(size_t) partitionTag(int) ...
-    #     minX(double) minY(double) minZ(double)
-    #     maxX(double) maxY(double) maxZ(double)
-    #     numPhysicalTags(size_t) physicalTag(int) ...
-    #     numBoundingSurfaces(size_t) surfaceTag(int) ...
-    #   ...
-    # $EndPartitionedEntities
 
     @staticmethod
     def from_file_partitioned_entities(lines):
@@ -592,8 +477,6 @@ class GmshParser(DessiaObject):
             element_groups.append(volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name=''))
 
         mesh = volmdlr.mesh.Mesh(element_groups)
-        # mesh.nodes = points #gmsh points are duplicated > not needed
-        # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
         mesh.gmsh = self
 
         return mesh
@@ -620,8 +503,6 @@ class GmshParser(DessiaObject):
             element_groups.append(volmdlr.mesh.ElementsGroup(tetrahedrons_mesh, name=''))
 
         mesh = volmdlr.mesh.Mesh(element_groups)
-        # mesh.nodes = points #gmsh points are duplicated > not needed
-        # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
         mesh.gmsh = self
 
         return mesh
@@ -651,8 +532,6 @@ class GmshParser(DessiaObject):
             element_groups.append(volmdlr.mesh.ElementsGroup(triangles_mesh, name=''))
 
         mesh = volmdlr.mesh.Mesh(element_groups)
-        # mesh.nodes = points #gmsh points are duplicated > not needed
-        # mesh.node_to_index = {mesh.nodes[i]: i for i in range(len(mesh.nodes))}
         mesh.gmsh = self
 
         return mesh

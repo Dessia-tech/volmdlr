@@ -182,16 +182,16 @@ def arc3d_to_cylindrical_coordinates_verification(start_end, start_end_theta_sta
     return [start, end]
 
 
-def fullarc_to_cylindrical_coordinates_verification(start, end, theta3):
+def fullarc_to_cylindrical_coordinates_verification(start, end, normal_dot_product):
     """
     Verifies theta from start and end of a full arc after transformation from spatial to parametric coordinates.
     """
     theta1, _ = start
     _, z2 = end
 
-    if theta1 > theta3:
+    if normal_dot_product > 0:
         end = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
-    elif theta1 < theta3:
+    elif normal_dot_product < 0:
         end = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
     return [start, end]
 

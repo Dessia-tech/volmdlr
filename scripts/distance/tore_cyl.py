@@ -31,8 +31,8 @@ x3, y3, z3 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, p
 x4, y4, z4 = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
 
 n1, n2 = volmdlr.Vector3D([x3,y3,z3]), volmdlr.Vector3D([x4,y4,z4]) #Choose the normal
-n1.Normalize() #Normalize the normal if it is not the case
-n2.Normalize()
+n1 = n1.unit_vector() #Normalize the normal if it is not the case
+n2 = n2.unit_vector()
 plane1, plane2 = volmdlr.Plane3D.from_normal(c1, n1), volmdlr.Plane3D.from_normal(c2, n2) #Create a plane to give us two others vector
 
 frame1 = volmdlr.Frame3D(c1, plane1.vectors[0], plane1.vectors[1], n1) #Frame in the center of the Tore

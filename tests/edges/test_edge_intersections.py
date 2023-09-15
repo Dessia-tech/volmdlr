@@ -24,10 +24,10 @@ class TestEdge2DIntersections(unittest.TestCase):
                              volmdlr.Point2D(1.7686124077855423, -0.1299992524853488)],
                             [volmdlr.Point2D(1.8893801268948387, -0.051917350252645156),
                              volmdlr.Point2D(0.07997689764965771, 0.18933641364671233)],
-                            [volmdlr.Point2D(1.0591654855246853, -0.30366407228860615)],
+                            [volmdlr.Point2D(1.0593077590442093, -0.3034760060018991)],
                             [volmdlr.Point2D(1.3169500217886863, 0.09016194906901831)],
                             [volmdlr.Point2D(1.2821273688601553, 0.029049684151979283)],
-                            [volmdlr.Point2D(1.0591654855246853, -0.30366407228860615)]]
+                            [volmdlr.Point2D(1.0593077590442093, -0.3034760060018991)]]
 
         intersection_results = []
         for edge1, edge2 in product([bspline1, lineseg, arc, arc_ellipse2d], repeat=2):

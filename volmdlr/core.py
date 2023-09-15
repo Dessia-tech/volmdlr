@@ -26,9 +26,8 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
-from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer,\
+from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
-
 
 npy.seterr(divide='raise')
 
@@ -167,145 +166,12 @@ class EdgeStyle:
     equal_aspect: bool = True
 
 
-class CompositePrimitive(dc.PhysicalObject):
-    """
-    A collection of simple primitives.
-
-    :param name: The name of the collection of primitives.
-    :type name: str
-    """
-
-    def __init__(self, primitives, name: str = ''):
-        self.primitives = primitives
-        self.name = name
-        self._primitives_to_index = None
-        self._utd_primitives_to_index = False
-        self.basis_primitives = []
-
-        dc.PhysicalObject.__init__(self, name=name)
-
-    def to_dict(self, *args, **kwargs):
-        """Avoids storing points in memo that makes serialization slow."""
-        return dc.PhysicalObject.to_dict(self, use_pointers=False)
-
-    def primitive_to_index(self, primitive):
-        """Constructs a dictionary associating primitive to its index."""
-        if not self._utd_primitives_to_index:
-            self._primitives_to_index = {p: ip for ip, p in enumerate(self.primitives)}
-            self._utd_primitives_to_index = True
-        return self._primitives_to_index[primitive]
-
-    def update_basis_primitives(self):
-        basis_primitives = []
-        for primitive in self.primitives:
-            if hasattr(primitive, 'basis_primitives'):
-                basis_primitives.extend(primitive.basis_primitives)
-            else:
-                basis_primitives.append(primitive)
-
-        self.basis_primitives = basis_primitives
-
-
-class Primitive2D(dc.PhysicalObject):
-    """
-    Abstract class for 2D primitives.
-
-    :param name: The name of the 2D primitive.
-    :type name: str
-    """
-
-    def __init__(self, name: str = ''):
-        self.name = name
-
-        dc.PhysicalObject.__init__(self, name=name)
-
-
-class CompositePrimitive2D(CompositePrimitive):
-    """
-    A collection of simple 2D primitives.
-
-    :param name: The name of the collection of 2D primitives.
-    :type name: str
-
-    """
-    _non_serializable_attributes = ['name', '_utd_primitives_to_index',
-                                    '_primitives_to_index']
-    _non_data_hash_attributes = ['name', '_utd_primitives_to_index',
-                                 '_primitives_to_index']
-
-    def __init__(self, primitives: List[Primitive2D], name: str = ''):
-        CompositePrimitive.__init__(self, primitives, name=name)
-        self.update_basis_primitives()
-
-        self._utd_primitives_to_index = False
-
-    def rotation(self, center: volmdlr.Point2D, angle: float):
-        """
-        Rotates the CompositePrimitive2D.
-
-        :param center: rotation center.
-        :param angle: angle rotation.
-        :return: a new rotated CompositePrimitive2D.
-        """
-        return self.__class__([point.rotation(center, angle)
-                               for point in self.primitives])
-
-    def translation(self, offset: volmdlr.Vector2D):
-        """
-        Translates the CompositePrimitive2D.
-
-        :param offset: translation vector
-        :return: A new translated CompositePrimitive2D
-        """
-        return self.__class__([primitive.translation(offset)
-                               for primitive in self.primitives])
-
-    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
-        """
-        Changes frame_mapping and return a new CompositePrimitive2D.
-
-        side = 'old' or 'new'
-        """
-        return self.__class__([primitive.frame_mapping(frame, side)
-                               for primitive in self.primitives])
-
-    def plot(self, ax=None, edge_style=EdgeStyle()):
-
-        if ax is None:
-            _, ax = plt.subplots()
-
-        if edge_style.equal_aspect:
-            ax.set_aspect('equal')
-
-        for element in self.primitives:
-            element.plot(ax=ax, edge_style=edge_style)
-
-        ax.margins(0.1)
-        plt.show()
-
-        return ax
-
-    def plot_data(self, name, fill=None, color='black', stroke_width=0.2,
-                  opacity=1):
-        # TODO: not working on 0.8.0
-        plot_data = {}
-        plot_data['fill'] = fill
-        plot_data['name'] = name
-        plot_data['type'] = 'wire'
-        plot_data['plot_data'] = []
-        for item in self.primitives:
-            plot_data['plot_data'].append(item.plot_data(color=color,
-                                                         stroke_width=stroke_width,
-                                                         opacity=opacity))
-        return plot_data
-
-
 class Primitive3D(dc.PhysicalObject):
     """
     Defines a Primitive3D.
     """
 
-    def __init__(self, color: Tuple[float, float, float] = None, alpha: int = 1, name: str = ''):
+    def __init__(self, color: Tuple[float, float, float] = None, alpha: float = 1.0, name: str = ''):
         self.color = color
         self.alpha = alpha
 
@@ -320,16 +186,13 @@ class Primitive3D(dc.PhysicalObject):
 
         :return: babylonjs parameters (alpha, name, color)
         :rtype: dict
-
         """
 
-        babylon_param = {'alpha': self.alpha,
-                         'name': self.name,
-                         }
-        if self.color is None:
-            babylon_param['color'] = [0.8, 0.8, 0.8]
-        else:
-            babylon_param['color'] = list(self.color)
+        babylon_param = {
+            'alpha': self.alpha,
+            'name': self.name,
+            'color': list(self.color) if self.color is not None else [0.8, 0.8, 0.8]
+        }
 
         return babylon_param
 
@@ -353,21 +216,25 @@ class Primitive3D(dc.PhysicalObject):
         return [babylon_mesh]
 
 
-class CompositePrimitive3D(CompositePrimitive, Primitive3D):
+class CompositePrimitive3D(Primitive3D):
     """
     A collection of simple primitives3D.
     """
     _standalone_in_db = True
     _eq_is_data_eq = True
-    _non_serializable_attributes = ['basis_primitives']
-    _non_data_eq_attributes = ['name', 'basis_primitives']
+    _non_serializable_attributes = []
+    _non_data_eq_attributes = ['name']
     _non_data_hash_attributes = []
 
     def __init__(self, primitives: List[Primitive3D], color: Tuple[float, float, float] = None, alpha: float = 1,
                  name: str = ''):
-        CompositePrimitive.__init__(self, primitives=primitives, name=name)
+        self.primitives = primitives
         Primitive3D.__init__(self, color=color, alpha=alpha, name=name)
         self._utd_primitives_to_index = False
+
+    def to_dict(self, *args, **kwargs):
+        """Avoids storing points in memo that makes serialization slow."""
+        return dc.PhysicalObject.to_dict(self, use_pointers=False)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
@@ -389,32 +256,6 @@ class CompositePrimitive3D(CompositePrimitive, Primitive3D):
         for primitive in self.primitives:
             primitive.plot(ax=ax, edge_style=edge_style)
         return ax
-
-    def babylon_points(self):
-        """
-        Returns a list of discretization points from the 3D primitive.
-        """
-        points = []
-        if hasattr(self, 'primitives') and hasattr(self.primitives[0], "discretization_points"):
-            for primitive in self.primitives:
-                points.extend([*point] for point in primitive.discretization_points())
-        elif hasattr(self, "discretization_points"):
-            points.extend([*point] for point in self.discretization_points())
-        return points
-
-    def babylon_lines(self, points=None):
-        if points is None:
-            points = self.babylon_points()
-        babylon_lines = {'points': points}
-        babylon_lines.update(self.babylon_param())
-        return [babylon_lines]
-
-    def babylon_curves(self):
-        points = self.babylon_points()
-        if points:
-            babylon_curves = self.babylon_lines(points)[0]
-            return babylon_curves
-        return None
 
 
 class BoundingRectangle(dc.DessiaObject):
@@ -1057,7 +898,10 @@ class Assembly(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([prim.bounding_box for prim in self.primitives])
+        bbox_list = [prim.bounding_box for prim in self.primitives if hasattr(prim, "bounding_box")]
+        if not bbox_list:
+            return BoundingBox.from_points(self.primitives)
+        return BoundingBox.from_bounding_boxes(bbox_list)
 
     def babylon_data(self, merge_meshes=True):
         """
@@ -1071,10 +915,10 @@ class Assembly(dc.PhysicalObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
-                if hasattr(primitive, 'babylon_curves'):
-                    curves = primitive.babylon_curves()
-                    if curves:
-                        babylon_data['lines'].append(curves)
+            elif hasattr(primitive, 'babylon_curves'):
+                curves = primitive.babylon_curves()
+                if curves:
+                    babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
@@ -1116,6 +960,8 @@ class Assembly(dc.PhysicalObject):
         :rtype: Primitive3D
 
         """
+        if global_frame == transformed_frame:
+            return primitive
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
         matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
@@ -1147,13 +993,13 @@ class Assembly(dc.PhysicalObject):
         step_content += product_content
         assembly_frames = assembly_data[-1]
         for i, primitive in enumerate(self.components):
-            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
                 primitive_content, current_id, primitive_data = primitive.to_step_product(current_id)
                 assembly_frame_id = assembly_frames[0]
                 component_frame_id = assembly_frames[i + 1]
                 assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
-                                                                              primitive_data, assembly_frame_id,
-                                                                              component_frame_id)
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
 
             else:
                 primitive_content, current_id, primitive_data = primitive.to_step(current_id)
@@ -1161,8 +1007,8 @@ class Assembly(dc.PhysicalObject):
                 assembly_frame_id = assembly_frames[0]
                 component_frame_id = assembly_frames[i + 1]
                 assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
-                                                                              primitive_data, assembly_frame_id,
-                                                                              component_frame_id)
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
             step_content += primitive_content
             step_content += assembly_content
 
@@ -1223,6 +1069,7 @@ class Compound(dc.PhysicalObject):
     def __init__(self, primitives, name: str = ""):
         self.primitives = primitives
         self._bbox = None
+        self._type = None
         dc.PhysicalObject.__init__(self, name=name)
 
     @property
@@ -1240,11 +1087,36 @@ class Compound(dc.PhysicalObject):
         """Bounding box setter."""
         self._bbox = new_bounding_box
 
+    @property
+    def compound_type(self):
+        """
+        Returns the compound type.
+
+        """
+        if not self._type:
+            if all(primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or
+                   hasattr(primitive, "shell_faces") for primitive in self.primitives):
+                self._type = "manifold_solid_brep"
+            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edge, volmdlr.Point3D)) or
+                     hasattr(primitive, "shell_faces") for primitive in self.primitives):
+                self._type = "geometric_curve_set"
+            else:
+                self._type = "shell_based_surface_model"
+        return self._type
+
+    @compound_type.setter
+    def compound_type(self, value):
+        """Compound typesetter."""
+        self._type = value
+
     def _bounding_box(self) -> BoundingBox:
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+        bbox_list = [p.bounding_box for p in self.primitives if hasattr(p, "bounding_box")]
+        if not bbox_list:
+            return BoundingBox.from_points(self.primitives)
+        return BoundingBox.from_bounding_boxes(bbox_list)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1268,10 +1140,10 @@ class Compound(dc.PhysicalObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
-                if hasattr(primitive, 'babylon_curves'):
-                    curves = primitive.babylon_curves()
-                    if curves:
-                        babylon_data['lines'].append(curves)
+            elif hasattr(primitive, 'babylon_curves'):
+                curves = primitive.babylon_curves()
+                if curves:
+                    babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
@@ -1307,9 +1179,10 @@ class Compound(dc.PhysicalObject):
         current_id = frame_id
 
         for primitive in self.primitives:
-            primitive_content, current_id = primitive.to_step(current_id)
-            primitives_content += primitive_content
-            manifold_ids.append(current_id)
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                primitive_content, current_id = primitive.to_step(current_id)
+                primitives_content += primitive_content
+                manifold_ids.append(current_id)
 
         geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
         step_content += f"#{brep_id} = MANIFOLD_SURFACE_SHAPE_REPRESENTATION(''," \
@@ -1379,7 +1252,7 @@ class VolumeModel(dc.PhysicalObject):
         """
         Computes the bounding box of the model.
         """
-        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives])
+        return BoundingBox.from_bounding_boxes([p.bounding_box for p in self.primitives if hasattr(p, "bounding_box")])
 
     def volume(self) -> float:
         """
@@ -1475,10 +1348,10 @@ class VolumeModel(dc.PhysicalObject):
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
-                if hasattr(primitive, 'babylon_curves'):
-                    curves = primitive.babylon_curves()
-                    if curves:
-                        babylon_data['lines'].append(curves)
+            elif hasattr(primitive, 'babylon_curves'):
+                curves = primitive.babylon_curves()
+                if curves:
+                    babylon_data['lines'].append(curves)
             elif hasattr(primitive, 'babylon_data'):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
@@ -1533,12 +1406,10 @@ class VolumeModel(dc.PhysicalObject):
 
         return page_name
 
-    def save_babylonjs_to_file(self, filename: str = None,
-                               use_cdn=True, debug=False):
+    def save_babylonjs_to_file(self, filename: str = None, use_cdn=True, debug=False):
         """Export a html file of the model."""
         babylon_data = self.babylon_data()
-        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                       debug=debug)
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn, debug=debug)
         if filename is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
                                              delete=False) as file:
@@ -1548,9 +1419,9 @@ class VolumeModel(dc.PhysicalObject):
         if not filename.endswith('.html'):
             filename += '.html'
 
-            with open(filename, 'w', encoding='utf-8') as file:
-                file.write(script)
-            return filename
+        with open(filename, 'w', encoding='utf-8') as file:
+            file.write(script)
+        return filename
 
     def to_stl_model(self):
         """Converts the model into a stl object."""
@@ -1686,7 +1557,6 @@ class VolumeModel(dc.PhysicalObject):
                 if kwargs['min_points']:
                     lines.extend(primitive.get_mesh_lines_with_transfinite_curves(min_points=kwargs['min_points'],
                                                                                   size=size))
-
 
                 lines.append('Field[' + str(field_num) + '] = MathEval;')
                 lines.append('Field[' + str(field_num) + '].F = "' + str(size) + '";')
@@ -2145,15 +2015,15 @@ class VolumeModel(dc.PhysicalObject):
 
         def unpack_assembly(assembly):
             for prim in assembly.primitives:
-                if primitive.__class__.__name__ in ('Assembly', "Compound"):
+                if prim.__class__.__name__ in ('Assembly', "Compound"):
                     unpack_assembly(prim)
-                elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+                elif hasattr(prim, "faces") or hasattr(prim, "shell_faces"):
                     list_shells.append(prim)
 
         for primitive in self.primitives:
             if primitive.__class__.__name__ in ('Assembly', "Compound"):
                 unpack_assembly(primitive)
-            elif primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D'):
+            elif hasattr(primitive, "faces") or hasattr(primitive, "shell_faces"):
                 list_shells.append(primitive)
 
         return list_shells

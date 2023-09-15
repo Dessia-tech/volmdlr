@@ -56,14 +56,14 @@ def direction_to_euler_angles(u: vm.Vector3D, v=None):
         v = vm.Vector3D.random(0, 1, 0, 1, 0, 1)
 
     u = u.copy()
-    u.normalize()
+    u = u.unit_vector()
     matrix_r = zeros((3, 3))
     matrix_r[0, 0] = u.x
     matrix_r[1, 0] = u.y
     matrix_r[2, 0] = u.z
 
     v = v - u.dot(v) * u
-    v.normalize()
+    v = v.unit_vector()
     w = u.cross(v)
     matrix_r[0, 1] = v.y
     matrix_r[1, 1] = v.y
@@ -170,10 +170,10 @@ def clockwise_interior_from_circle3d(start, end, circle):
     end2d = end.to_2d(plane_origin=circle.frame.origin,
                       x=circle.frame.u, y=circle.frame.v)
 
-    # Angle pour le p1
+    # p1 angle
     u1, u2 = start2d.x / circle.radius, start2d.y / circle.radius
     theta1 = sin_cos_angle(u1, u2)
-    # Angle pour le p2
+    # p2 angle
     u3, u4 = end2d.x / circle.radius, end2d.y / circle.radius
     theta2 = sin_cos_angle(u3, u4)
 
