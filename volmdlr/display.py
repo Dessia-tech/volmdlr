@@ -259,17 +259,12 @@ class DisplayMesh3D(DisplayMesh):
     def triangular_faces(self):
         triangular_faces = []
         for (vertex1, vertex2, vertex3) in self.triangles:
-            point1 = self.points[vertex1]
-            point2 = self.points[vertex2]
-            point3 = self.points[vertex3]
-            if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3) and\
-                    {point1, point2, point3}.__len__() == 3:
-                # face = Triangle3D(point1, point2, point3)
-                face = (point1, point2, point3)
+            points = [self.points[vertex1], self.points[vertex2], self.points[vertex3]]
 
-                a = point1.point_distance(point2)
-                b = point2.point_distance(point3)
-                c = point3.point_distance(point1)
+            if len(set(points)) == 3:
+                a = points[0].point_distance(points[1])
+                b = points[1].point_distance(points[2])
+                c = points[2].point_distance(points[0])
 
                 semi_perimeter = (a + b + c) / 2
 
@@ -281,7 +276,7 @@ class DisplayMesh3D(DisplayMesh):
                     area = 0
 
                 if area >= 1e-11:
-                    triangular_faces.append(face)
+                    triangular_faces.append(tuple(points))
         return triangular_faces
 
     @classmethod
