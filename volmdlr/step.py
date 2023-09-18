@@ -146,7 +146,16 @@ class Step(dc.DessiaObject):
             function_id = int(function[0][1:].strip())
             function_name_arg = function[1].split("(", 1)
             function_name = function_name_arg[0].replace(" ", "")
-            function_arg = function_name_arg[1].split("#")
+            start_index_name = function_name_arg[1].find("'")
+            if start_index_name != -1:
+                end_index_name = function_name_arg[1].find("'", start_index_name + 1)
+                if end_index_name != -1:
+                    function_arg_string = function_name_arg[1][end_index_name + 1:]
+                else:
+                    function_arg_string = function_name_arg[1]
+            else:
+                function_arg_string = function_name_arg[1]
+            function_arg = function_arg_string.split("#")
             function_connections = []
             connections = []
             for connec in function_arg[1:]:
