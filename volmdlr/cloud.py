@@ -44,7 +44,7 @@ class PointCloud3D(dc.DessiaObject):
         :param name: object's name.
         :return: point cloud 3d object.
         """
-        list_points = vmstl.Stl.from_file(file_path).extract_points_BIS()
+        list_points = vmstl.Stl.from_file(file_path).extract_points_bis()
 
         return cls(list_points, name=name)
 
