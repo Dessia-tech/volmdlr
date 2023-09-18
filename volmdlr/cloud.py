@@ -164,7 +164,7 @@ class PointCloud3D(dc.DessiaObject):
 
     def to_subcloud2d(self, pos_normal, vec1, vec2):
         """
-        Converts the point cloud to a simplified 2D subcloud.
+        Converts the point cloud to a simplified 2D sub-cloud.
 
         :param pos_normal: Position and normal vector.
         :param vec1: Vector 1.
