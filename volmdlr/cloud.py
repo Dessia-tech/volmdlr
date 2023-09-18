@@ -49,19 +49,45 @@ class PointCloud3D(dc.DessiaObject):
         return cls(list_points, name=name)
 
     def _bounding_box(self):
+        """
+        Computes the bounding box of the point cloud.
+
+        :return: Bounding box object.
+        """
         return vm.core.BoundingBox.from_points(self.points)
 
     @property
     def bounding_box(self):
+        """
+        Property to get the bounding box of the point cloud.
+
+        :return: Bounding box object.
+        """
         if not self.__bounding_box:
             self.__bounding_box = self._bounding_box()
         return self.__bounding_box
 
     def to_2d(self, plane_origin, x, y):
+        """
+        Projects the point cloud on a 2D plane.
+
+        :param plane_origin: Origin of the plane in 3D.
+        :param x: X-axis vector in 3D.
+        :param y: Y-axis vector in 3D.
+        :return: PointCloud2D object.
+        """
         list_points2d = [pt3d.to_2d(plane_origin, x, y) for pt3d in self.points]
         return PointCloud2D(list_points2d, name='3d_to_2d')
 
     def extract(self, u, umin, umax):  # -> List[PointCloud3D] :
+        """
+        Extracts a subset of points within a given range from a plane.
+
+        :param u: Normal vector of the plane.
+        :param umin: Minimum distance to the plane.
+        :param umax: Maximum distance to the plane.
+        :return: PointCloud3D object containing the extracted points.
+        """
         extracted_points = []
         for points in self.points:
             dist_to_plane = points.dot(u)
@@ -70,6 +96,11 @@ class PointCloud3D(dc.DessiaObject):
         return PointCloud3D(extracted_points)
 
     def determine_extrusion_vector(self):
+        """
+        Determines the extrusion vector based on the bounding box.
+
+        :return: Tuple containing position, normal, vec1, and vec2.
+        """
         bbox = self._bounding_box()
         xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin, bbox.ymax], [bbox.zmin, bbox.zmax]]
         xyz_list = [l[1] - l[0] for l in xyz_bbox]
@@ -81,6 +112,13 @@ class PointCloud3D(dc.DessiaObject):
         return posmax, normal, vec1, vec2
 
     def position_plane(self, posmax, resolution):
+        """
+        Calculates the position of planes.
+
+        :param posmax: Position index.
+        :param resolution: Resolution of the plane.
+        :return: Tuple containing distance between planes and position of planes.
+        """
         bbox = self._bounding_box()
         xyz_bbox = [[bbox.xmin, bbox.xmax], [bbox.ymin, bbox.ymax], [bbox.zmin, bbox.zmax]]
         dist_between_plane = (xyz_bbox[posmax][1] - xyz_bbox[posmax][0]) / (resolution - 1)
@@ -91,6 +129,16 @@ class PointCloud3D(dc.DessiaObject):
     @staticmethod
     def check_area_polygon(initial_polygons2d, position_plane,
                            normal, vec1, vec2):
+        """
+        Checks and processes area of polygons.
+
+        :param initial_polygons2d: List of 2D polygons.
+        :param position_plane: Position of planes.
+        :param normal: Normal vector.
+        :param vec1: Vector 1.
+        :param vec2: Vector 2.
+        :return: List of processed 3D polygons.
+        """
         areas = [0] * len(initial_polygons2d)
         for n, poly in enumerate(initial_polygons2d):
             if poly is not None:
@@ -115,12 +163,20 @@ class PointCloud3D(dc.DessiaObject):
         return polygons_3d
 
     def to_subcloud2d(self, pos_normal, vec1, vec2):
+        """
+        Converts the point cloud to a simplified 2D subcloud.
+
+        :param pos_normal: Position and normal vector.
+        :param vec1: Vector 1.
+        :param vec2: Vector 2.
+        :return: Simplified PointCloud2D object.
+        """
         subcloud2d_tosimp = self.to_2d(pos_normal, vec1, vec2)
         subcloud2d = subcloud2d_tosimp.simplify(resolution=5)
         return subcloud2d
 
     def to_shell(self, resolution: int = 10, normal=None, offset: float = 0):
-        """ Creates a Shell from a Cloud of points 3D."""
+        """Creates a Shell from a Cloud of points 3D."""
         if normal is None:
             posmax, normal, vec1, vec2 = self.determine_extrusion_vector()
         else:
