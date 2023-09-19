@@ -9,6 +9,7 @@ import warnings
 from typing import List, Tuple
 
 import dessia_common.core as dc
+import volmdlr
 
 from volmdlr.edges import LineSegment, LineSegment2D, LineSegment3D
 from volmdlr import Point2D, Point3D
@@ -230,7 +231,7 @@ class DisplayMesh3D(DisplayMesh):
 
     def __init__(self, points: List[Point3D],
                  triangles: List[Tuple[int, int, int]], name=''):
-        # self._faces = None
+        self._faces = None
         DisplayMesh.__init__(self, points, triangles, name=name)
 
     def to_babylon(self):
@@ -250,35 +251,47 @@ class DisplayMesh3D(DisplayMesh):
             flatten_indices.extend(vertex)
         return positions, flatten_indices
 
-    # @property
-    # def faces(self):
-    #     if not self._faces:
-    #         self._faces = self.triangular_faces()
-    #     return self._faces
+    @property
+    def faces(self):
+        if not self._faces:
+            self._faces = self.triangular_faces()
+        return self._faces
 
     def triangular_faces(self):
         triangular_faces = []
         for (vertex1, vertex2, vertex3) in self.triangles:
-            points = [self.points[vertex1], self.points[vertex2], self.points[vertex3]]
-
-            a = points[0].point_distance(points[1])
-            b = points[1].point_distance(points[2])
-            c = points[2].point_distance(points[0])
-
-            if a > 1e-6 and b > 1e-6 and c > 1e-6:
-
-                semi_perimeter = (a + b + c) / 2
-
-                try:
-                    # Area with Heron's formula
-                    area = math.sqrt(semi_perimeter * (semi_perimeter - a) * (
-                                semi_perimeter - b) * (semi_perimeter - c))
-                except ValueError:
-                    area = 0
-
-                if area >= 1e-11:
-                    triangular_faces.append(tuple(points))
+            point1 = self.points[vertex1]
+            point2 = self.points[vertex2]
+            point3 = self.points[vertex3]
+            if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3):
+                face = volmdlr.faces.Triangle3D(point1, point2, point3)
+                if face.area() >= 1e-11:
+                    triangular_faces.append(face)
         return triangular_faces
+
+    # def triangular_faces(self):
+    #     triangular_faces = []
+    #     for (vertex1, vertex2, vertex3) in self.triangles:
+    #         points = [self.points[vertex1], self.points[vertex2], self.points[vertex3]]
+
+    #         a = points[0].point_distance(points[1])
+    #         b = points[1].point_distance(points[2])
+    #         c = points[2].point_distance(points[0])
+
+    #         if a > 1e-6 and b > 1e-6 and c > 1e-6:
+
+    #             semi_perimeter = (a + b + c) / 2
+
+    #             try:
+    #                 # Area with Heron's formula
+    #                 area = math.sqrt(semi_perimeter * (semi_perimeter - a) * (
+    #                             semi_perimeter - b) * (semi_perimeter - c))
+    #             except ValueError:
+    #                 area = 0
+
+    #             if area >= 1e-11:
+    #                 triangular_faces.append(tuple(points))
+    #     return triangular_faces
 
     @classmethod
     def from_assembly(cls, assembly):
