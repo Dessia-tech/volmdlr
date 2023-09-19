@@ -227,7 +227,7 @@ class Face3D(volmdlr.core.Primitive3D):
                     if contour_area > area:
                         area = contour_area
                         outer_contour2d = contour2d
-                        outer_contour3d = contour3d
+                        # outer_contour3d = contour3d
                 inner_contours2d.remove(outer_contour2d)
                 # inner_contours3d.remove(outer_contour3d)
         else:
