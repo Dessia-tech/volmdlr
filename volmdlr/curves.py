@@ -23,6 +23,28 @@ import volmdlr.utils.intersections as volmdlr_intersections
 from volmdlr.core import EdgeStyle
 
 
+def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_tangent, point):
+    start_tangent = start_tangent.unit_vector()
+    end_tangent = end_tangent.unit_vector()
+    line_class = globals()["Line"+start.__class__.__name__[-2:]]
+    v02 = end - start
+    line02 = line_class.from_point_and_vector(start, v02)
+
+    line0 = line_class.from_point_and_vector(start, start_tangent)
+    line2 = line_class.from_point_and_vector(end, end_tangent)
+    p1 = line0.line_intersections(line2)[0]
+    v1p = point - p1
+    line1p = line_class.from_point_and_vector(p1, v1p)
+    q = line02.line_intersections(line1p)[0]
+    a = math.sqrt((start - q).norm()/(q - end).norm())
+    u = a/(1.0 + a)
+    vp1 = p1 - point
+    num =  ((1.0 + u)**2) * (point - start).dot(vp1) + u**2 * (point - end).dot(vp1)
+    den = 2.0 * u * (1.0 - u) * vp1.dot(vp1)
+    w1 = num/den
+    return p1, w1
+
+
 class Curve(DessiaObject):
     """Abstract class for a curve object."""
 
@@ -2476,7 +2498,11 @@ class HyperbolaMixin(Curve):
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_y = max(local_split_start.y, local_split_end.y)
         min_y = min(local_split_start.y, local_split_end.y)
-        hyperbola_points = self.get_points(min_y, max_y, 100)
+        hyperbola_points = self.get_points(min_y, max_y, 3)
+        t0 = self.tangent(hyperbola_points[0])
+        t2 = self.tangent(hyperbola_points[2])
+        p1, w1 = hyperbola_parabola_control_point_and_weight(hyperbola_points[0], t0, hyperbola_points[2], t2,
+                                                             hyperbola_points[1])
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
         bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
