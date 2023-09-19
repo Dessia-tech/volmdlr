@@ -231,7 +231,7 @@ class DisplayMesh3D(DisplayMesh):
 
     def __init__(self, points: List[Point3D],
                  triangles: List[Tuple[int, int, int]], name=''):
-        self._faces = None
+        # self._faces = None
         DisplayMesh.__init__(self, points, triangles, name=name)
 
     def to_babylon(self):
@@ -251,11 +251,11 @@ class DisplayMesh3D(DisplayMesh):
             flatten_indices.extend(vertex)
         return positions, flatten_indices
 
-    @property
-    def faces(self):
-        if not self._faces:
-            self._faces = self.triangular_faces()
-        return self._faces
+    # @property
+    # def faces(self):
+    #     if not self._faces:
+    #         self._faces = self.triangular_faces()
+    #     return self._faces
 
     def triangular_faces(self):
         triangular_faces = []
