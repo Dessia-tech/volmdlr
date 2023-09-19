@@ -261,10 +261,11 @@ class DisplayMesh3D(DisplayMesh):
         for (vertex1, vertex2, vertex3) in self.triangles:
             points = [self.points[vertex1], self.points[vertex2], self.points[vertex3]]
 
-            if len(set(points)) == 3:
-                a = points[0].point_distance(points[1])
-                b = points[1].point_distance(points[2])
-                c = points[2].point_distance(points[0])
+            a = points[0].point_distance(points[1])
+            b = points[1].point_distance(points[2])
+            c = points[2].point_distance(points[0])
+
+            if a > 1e-6 and b > 1e-6 and c > 1e-6:
 
                 semi_perimeter = (a + b + c) / 2
 
