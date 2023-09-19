@@ -200,10 +200,10 @@ class Face3D(volmdlr.core.Primitive3D):
         :param name: the name to inject in the new face
         """
         outer_contour2d = None
-        outer_contour3d, inner_contours3d = None, None
+        # outer_contour3d, inner_contours3d = None, None
         if len(contours3d) == 1:
             outer_contour2d = surface.contour3d_to_2d(contours3d[0])
-            outer_contour3d = contours3d[0]
+            # outer_contour3d = contours3d[0]
             inner_contours2d = []
 
         elif len(contours3d) > 1:
@@ -222,24 +222,35 @@ class Face3D(volmdlr.core.Primitive3D):
                     # if not contour2d.is_ordered(1e-4):
                     #     contour2d = vm_parametric.contour2d_healing(contour2d)
                     inner_contours2d.append(contour2d)
-                    inner_contours3d.append(contour3d)
+                    # inner_contours3d.append(contour3d)
                     contour_area = contour2d.area()
                     if contour_area > area:
                         area = contour_area
                         outer_contour2d = contour2d
                         outer_contour3d = contour3d
                 inner_contours2d.remove(outer_contour2d)
-                inner_contours3d.remove(outer_contour3d)
+                # inner_contours3d.remove(outer_contour3d)
         else:
             raise ValueError('Must have at least one contour')
 
-        # if outer_contour3d and not outer_contour3d.is_ordered():
-        #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
-        if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-3)):
+        if (not outer_contour2d) or (not outer_contour2d.primitives):
             return None
+        if not outer_contour2d.is_ordered(1e-2):
+            list_contours = outer_contour2d.__class__.contours_from_edges(outer_contour2d.primitives)
+            for contour in list_contours:
+                if contour.is_ordered():
+                    outer_contour2d = contour
+                    break
+            else:
+                warnings.warn("Impossible to instatiate face because of topology inconsistency in the "
+                              "face's contour from step file.")
+                return None
         face = cls(surface,
                    surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),
                    name=name)
+        if isinstance(face, ExtrusionFace3D):
+            ax = outer_contour2d.plot()
+            ax.set_aspect("auto")
         # To improve performance while reading from step file
         # face.outer_contour3d = outer_contour3d
         # face.inner_contours3d = inner_contours3d

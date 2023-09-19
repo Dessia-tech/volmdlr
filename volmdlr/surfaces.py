@@ -4133,11 +4133,9 @@ class ExtrusionSurface3D(Surface3D):
         if abs(v) < 1e-7:
             v = 0.0
 
-        point_at_curve_global = self.edge.point_at_abscissa(u * self.edge.length())
-        point_at_curve_local = self.frame.global_to_local_coordinates(point_at_curve_global)
-        # x, y, z = point_at_curve_local
-        point_local = point_at_curve_local.translation(volmdlr.Vector3D(0, 0, v))
-        return self.frame.local_to_global_coordinates(point_local)
+        point_at_curve = self.edge.point_at_abscissa(u * self.edge.length())
+        point = point_at_curve.translation(self.frame.w * v)
+        return point
 
     def point3d_to_2d(self, point3d):
         """
@@ -4150,12 +4148,24 @@ class ExtrusionSurface3D(Surface3D):
             y = 0.0
         if abs(z) < 1e-7:
             z = 0.0
-        v = z
-        point_at_curve_local = volmdlr.Point3D(x, y, 0)
-        point_at_curve_global = self.frame.local_to_global_coordinates(point_at_curve_local)
+        point_at_curve = []
+        if hasattr(self.edge, "line_intersections"):
+            line = curves.Line3D(point3d, point3d.translation(self.frame.w))
+            point_at_curve = self.edge.line_intersections(line, tol=1e-4)
+        if point_at_curve:
+            point_at_curve = point_at_curve[0]
+            point_at_curve_local = self.frame.global_to_local_coordinates(point_at_curve)
+        else:
+            if hasattr(self.edge, "point_projection"):
+                point_at_curve = self.edge.point_projection(point3d)[0]
+                point_at_curve_local = self.frame.global_to_local_coordinates(point_at_curve)
+            else:
+                point_at_curve_local = volmdlr.Point3D(x, y, 0)
+                point_at_curve = self.frame.local_to_global_coordinates(point_at_curve_local)
 
-        u = self.edge.abscissa(point_at_curve_global, tol=1e-6) / self.edge.length()
-        u = min(u, 1.0)
+        u = self.edge.abscissa(point_at_curve, tol=1e-6) / self.edge.length()
+        v = z - point_at_curve_local.z
+
         return volmdlr.Point2D(u, v)
 
     def rectangular_cut(self, x1: float = 0.0, x2: float = 1.0,
@@ -4228,9 +4238,11 @@ class ExtrusionSurface3D(Surface3D):
         Transformation of an arc-ellipse 3d to 2d, in a cylindrical surface.
 
         """
+        start2d = self.point3d_to_2d(arcellipse3d.start)
+        end2d = self.point3d_to_2d(arcellipse3d.end)
         if isinstance(self.edge, edges.FullArcEllipse3D):
-            start2d = self.point3d_to_2d(arcellipse3d.start)
-            end2d = self.point3d_to_2d(arcellipse3d.end)
+            return [edges.LineSegment2D(start2d, end2d)]
+        if self.is_isocurve(arcellipse3d, start2d.y):
             return [edges.LineSegment2D(start2d, end2d)]
         points = [self.point3d_to_2d(p)
                   for p in arcellipse3d.discretization_points(number_points=15)]
@@ -4303,6 +4315,10 @@ class ExtrusionSurface3D(Surface3D):
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         n = len(bspline_curve3d.control_points)
+        start = self.point3d_to_2d(bspline_curve3d.start)
+        end = self.point3d_to_2d(bspline_curve3d.end)
+        if self.is_isocurve(bspline_curve3d, start.y):
+            return [edges.LineSegment2D(start, end)]
         points = [self.point3d_to_2d(point)
                   for point in bspline_curve3d.discretization_points(number_points=n)]
         if self.x_periodicity:
@@ -4353,6 +4369,10 @@ class ExtrusionSurface3D(Surface3D):
             if vec2.dot(vec1) < 0:
                 end.x = self.x_periodicity
         return start, end
+
+    def is_isocurve(self, edge, v):
+        """Test if 3D curve at v is a surface isocurve."""
+        return self.edge.direction_independent_is_close(edge.translation(-self.frame.w * v))
 
 
 class RevolutionSurface3D(PeriodicalSurface):

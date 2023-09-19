@@ -4225,6 +4225,7 @@ class Contour3D(ContourMixin, Wire3D):
         :return: The corresponding Contour3D object.
         :rtype: :class:`volmdlr.wires.Contour3D`
         """
+        step_id = kwargs.get("step_id", "UNKOWN")
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
@@ -4243,11 +4244,13 @@ class Contour3D(ContourMixin, Wire3D):
         contour = cls(raw_edges, name=name)
         if contour.is_ordered(1e-6):
             return contour
-        list_contours = cls.contours_from_edges(raw_edges)
-        for contour in list_contours:
-            # list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
-            if contour.is_ordered():
-                return contour
+        list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
+        if list_edges:
+            return cls(list_edges, name=name)
+        # list_contours = cls.contours_from_edges(raw_edges)
+        # for contour in list_contours:
+        #     if contour.is_ordered():
+        #         return contour
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
