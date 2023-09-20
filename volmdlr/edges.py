@@ -3397,7 +3397,7 @@ class ArcEllipse2D(Edge):
                 break
             if res > abscissa:
                 increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(6 * abs(res))
-            else:
+            elif res != 0:
                 increment_factor = (abs(initial_angle - angle_start) * (abscissa - res))/(3 * abs(res))
             initial_angle += increment_factor
             iter_counter += 1
