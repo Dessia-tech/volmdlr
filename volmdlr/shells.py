@@ -1822,6 +1822,10 @@ class OpenTriangleShell3D(OpenShell3D):
 
         return cls(triangles, name=name)
 
+    def decimate(self):
+        vertices, faces = self.to_mesh_data(round_vertices=True)
+
+
     def to_trimesh(self):
         """Creates a Trimesh from a TriangleShell3D."""
         return Trimesh(*self.to_mesh_data(round_vertices=True))
