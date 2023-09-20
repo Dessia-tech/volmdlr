@@ -33,4 +33,4 @@ for simplified_shell in simplified_volume_model.get_shells():
     simplified_shell.alpha = 0.6
     volume_model.primitives.append(simplified_shell)
 
-volume_model.babylonjs()
+volume_model.babylonjs(use_cdn=False)

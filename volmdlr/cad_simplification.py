@@ -172,9 +172,7 @@ class TriangleDecimationSimplify(Simplify):
         simplifier = pyfqmr.Simplify()
 
         for shell in self.volume_model.get_shells():
-            triangulation = shell.triangulation()
-
-            vertices, triangles = (OpenTriangleShell3D(triangulation.faces)).to_mesh_data(round_vertices=True)
+            vertices, triangles = shell.to_triangle_shell().to_mesh_data(round_vertices=True)
 
             simplifier.setMesh(vertices, triangles)
             simplifier.simplify_mesh(
