@@ -1629,17 +1629,18 @@ class ContourMixin(WireMixin):
         return contour_primitives, list_edges, finished_loop
 
     @classmethod
-    def contours_from_edges(cls, list_edges, tol=1e-6):
+    def contours_from_edges(cls, list_edges, tol=1e-6, name: str = 'r'):
         if not list_edges:
             return []
         if len(list_edges) == 1:
-            return [cls(list_edges)]
+            return [cls(list_edges, name=name)]
         list_contours = []
         points = [list_edges[0].start, list_edges[0].end]
         contour_primitives = [list_edges.pop(0)]
         while True:
             for i, edge in enumerate(list_edges):
-                if edge.is_point_edge_extremity(contour_primitives[-1].end, tol):
+                if (edge.is_point_edge_extremity(contour_primitives[-1].end, tol) and
+                        not edge.direction_independent_is_close(contour_primitives[-1])):
                     if contour_primitives[-1].end.is_close(edge.start, tol):
                         contour_primitives.append(edge)
                     else:
@@ -1649,7 +1650,8 @@ class ContourMixin(WireMixin):
                     validating_point = contour_primitives[-1].end
                     points.append(contour_primitives[-1].end)
                     break
-                if edge.is_point_edge_extremity(contour_primitives[0].start, tol):
+                if (edge.is_point_edge_extremity(contour_primitives[0].start, tol) and
+                        not edge.direction_independent_is_close(contour_primitives[0])):
                     if contour_primitives[0].start.is_close(edge.end, tol):
                         contour_primitives.insert(0, edge)
                     else:
@@ -1668,7 +1670,7 @@ class ContourMixin(WireMixin):
                 continue
             if point_in_list(validating_point, validating_points):
                 if not validating_point.is_close(validating_points[0]):
-                    spliting_primitives_index = volmdlr.core.get_point_index_in_list(
+                    spliting_primitives_index = volmdlr.utils.common_operations.get_point_index_in_list(
                         validating_point, validating_points)
                     if validating_point == points[0]:
                         new_contour = cls(contour_primitives[:spliting_primitives_index + 1])
@@ -4252,11 +4254,13 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
         contour = cls(raw_edges, name=name)
-        if contour.is_ordered():
+        if contour.is_ordered(1e-6):
             return contour
-        list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
-        if list_edges:
-            return cls(list_edges, name=name)
+        list_contours = cls.contours_from_edges(raw_edges)
+        for contour in list_contours:
+            # list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
+            if contour.is_ordered():
+                return contour
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
