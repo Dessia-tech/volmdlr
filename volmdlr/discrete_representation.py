@@ -1474,6 +1474,248 @@ class MatrixBasedVoxelization(Voxelization):
         return self.__class__(cropped_matrix, tuple(new_origin_center), self.voxel_size, self.name)
 
 
+class OctreeBasedVoxelization(Voxelization):
+    """Voxelization implemented as an octree."""
+
+    def __init__(
+        self,
+        octree: List,
+        min_grid_center: _Point3D,
+        voxel_size: float,
+        name: str = "",
+    ):
+        """
+        Initialize a OctreeBasedVoxelization.
+
+        # :param voxel_matrix: The voxel numpy matrix object representing the voxelization.
+        # :type voxel_matrix: np.ndarray[np.bool_, np.ndim == 3]
+        :param voxel_size: The size of the voxel edges.
+        :type voxel_size: float
+        :param min_grid_center: Minimum voxel center point of the voxel grid matrix, i.e 'matrix[0][0][0]'.
+        This point may not be a voxel of the voxelization, because it's the minimum center in each direction (X, Y, Z).
+        :type min_grid_center: tuple[float, float, float]
+        """
+        self._check_element_size_number_of_decimals(voxel_size)
+
+        self._octree = octree
+        self._min_grid_center = min_grid_center
+
+        Voxelization.__init__(self, voxel_size=voxel_size, name=name)
+
+    def _get_element_centers(self) -> Set[_Point3D]:
+        """
+        Get the center point of each voxel.
+
+        :return: The center point of each voxel.
+        :rtype: set[tuple[float, float, float]]
+        """
+        pass
+
+    def __eq__(self, other: "OctreeBasedVoxelization") -> bool:
+        """
+        Check if two OctreeBasedVoxelization are equal.
+
+        :param other: Another OctreeBasedVoxelization to compare with.
+        :type other: OctreeBasedVoxelization
+
+        :return: True if the OctreeBasedVoxelization are equal, False otherwise.
+        :rtype: bool
+        """
+        pass
+
+    def __len__(self) -> int:
+        """
+        Get the number of voxels in the voxelization (i.e. the number of True value in the 3D voxel matrix).
+
+        :return: The number of voxels in the voxelization.
+        :rtype: int
+        """
+        pass
+
+    @property
+    def min_grid_center(self) -> _Point3D:
+        """
+        Get the minimum center point from the set of voxel centers, in the voxel 3D grid.
+
+        This point may not be a voxel of the voxelization, because it is the minimum center in each direction (X, Y, Z).
+
+        :return: The minimum center point.
+        :rtype: tuple[float, float, float]
+        """
+        pass
+
+    @property
+    def max_grid_center(self) -> _Point3D:
+        """
+        Get the maximum center point from the set of voxel centers, in the voxel 3D grid.
+
+        This point may not be a voxel of the voxelization, because it is the maximum center in each direction (X, Y, Z).
+
+        :return: The maximum center point.
+        :rtype: tuple[float, float, float]
+        """
+        pass
+
+    # CLASS METHODS
+    @classmethod
+    def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = "") -> "OctreeBasedVoxelization":
+        """
+        Create a voxelization from a Shell3D.
+
+        :param shell: The Shell3D to create the voxelization from.
+        :type shell: Shell3D
+        :param voxel_size: The size of each voxel.
+        :type voxel_size: float
+        :param name: Optional name for the voxelization.
+        :type name: str
+
+        :return: A voxelization created from the Shell3D.
+        :rtype: OctreeBasedVoxelization
+        """
+        pass
+
+    @classmethod
+    def from_volume_model(
+        cls, volume_model: VolumeModel, voxel_size: float, name: str = ""
+    ) -> "OctreeBasedVoxelization":
+        """
+        Create a voxelization from a VolumeModel.
+
+        :param volume_model: The VolumeModel to create the voxelization from.
+        :type volume_model: VolumeModel
+        :param voxel_size: The size of each voxel.
+        :type voxel_size: float
+        :param name: Optional name for the voxelization.
+        :type name: str
+
+        :return: A voxelization created from the VolumeModel.
+        :rtype: OctreeBasedVoxelization
+        """
+        pass
+
+    @classmethod
+    def from_point_based_voxelization(
+        cls, point_based_voxelization: "PointBasedVoxelization"
+    ) -> "OctreeBasedVoxelization":
+        """
+        Create a OctreeBasedVoxelization from a PointBasedVoxelization.
+
+        :param point_based_voxelization: The PointBasedVoxelization to create the OctreeBasedVoxelization from.
+        :type point_based_voxelization: PointBasedVoxelization
+
+        :return: A OctreeBasedVoxelization created from the PointBasedVoxelization.
+        :rtype: OctreeBasedVoxelization
+        """
+        pass
+
+    # BOOLEAN OPERATIONS
+    def union(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
+        """
+        Perform a union operation with another OctreeBasedVoxelization.
+
+        :param other: The OctreeBasedVoxelization to perform the union with.
+        :type other: OctreeBasedVoxelization
+
+        :return: A new OctreeBasedVoxelization resulting from the union operation.
+        :rtype: OctreeBasedVoxelization
+        """
+        pass
+
+    def difference(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
+        """
+        Perform a difference operation with another voxelization.
+
+        :param other: The OctreeBasedVoxelization to perform the difference with.
+        :type other: OctreeBasedVoxelization
+
+        :return: A new OctreeBasedVoxelization resulting from the difference operation.
+        :rtype: OctreeBasedVoxelization
+        """
+        pass
+
+    def intersection(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
+        """
+        Perform an intersection operation with another OctreeBasedVoxelization.
+
+        :param other: The OctreeBasedVoxelization to perform the intersection with.
+        :type other: OctreeBasedVoxelization
+
+        :return: A new OctreeBasedVoxelization resulting from the intersection operation.
+        :rtype: OctreeBasedVoxelization
+        """
+        pass
+
+    def symmetric_difference(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
+        """
+        Perform a symmetric difference operation with another OctreeBasedVoxelization.
+
+        :param other: The OctreeBasedVoxelization to perform the symmetric difference with.
+        :type other: OctreeBasedVoxelization
+
+        :return: A new OctreeBasedVoxelization resulting from the symmetric difference operation.
+        :rtype: OctreeBasedVoxelization
+        """
+        pass
+
+    def inverse(self) -> "OctreeBasedVoxelization":
+        """
+        Compute the inverse of the voxelization.
+
+        :return: A new voxelization representing the inverse.
+        :rtype: OctreeBasedVoxelization
+        """
+        pass
+
+    def flood_fill(self, start: Tuple[int, int, int], fill_with: bool) -> "OctreeBasedVoxelization":
+        """
+        Perform a flood fill operation on the voxelization.
+
+        :param start: The indexes of the starting voxel in the 3D matrix for the flood fill.
+        :type start: tuple[int, int, int]
+        :param fill_with: The value to fill the voxels with during the operation.
+        :type fill_with: bool
+
+        :return: A new voxelization resulting from the flood fill operation.
+        :rtype: OctreeBasedVoxelization
+        """
+        pass
+
+    def _fill_outer_elements(self) -> "OctreeBasedVoxelization":
+        """
+        Fill the outer voxels of the voxelization.
+
+        :return: A new voxelization with outer voxels filled.
+        :rtype: OctreeBasedVoxelization
+        """
+        pass
+
+    def _fill_enclosed_elements(self) -> "OctreeBasedVoxelization":
+        """
+        Fill the enclosed voxels of the voxelization.
+
+        :return: A new voxelization with enclosed voxels filled.
+        :rtype: OctreeBasedVoxelization
+        """
+        pass
+
+    # SERIALIZATION
+    def to_dict(
+        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+    ) -> JsonSerializable:
+        pass
+
+    @classmethod
+    def dict_to_object(
+        cls,
+        dict_: JsonSerializable,
+        force_generic: bool = False,
+        global_dict=None,
+        pointers_memo: Dict[str, Any] = None,
+        path: str = "#",
+    ) -> "OctreeBasedVoxelization":
+        pass
+
+
 class Pixelization(DiscreteRepresentation, DessiaObject):
     """
     Abstract base class for creating and manipulating pixelizations of volmdlr geometries.
