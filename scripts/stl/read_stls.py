@@ -21,7 +21,7 @@ for stl_file in [
     assert len(shell.faces)
     shells.append(shell)
 
-    list_points = stl.extract_points_BIS()
+    list_points = stl.extract_points_bis()
     if len(list_points) > 50:
         pointcloud3d = volmdlr.cloud.PointCloud3D(list_points)
         shell2 = pointcloud3d.to_shell(resolution=15)
