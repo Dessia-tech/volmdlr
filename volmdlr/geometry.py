@@ -31,20 +31,20 @@ def euler_angles_to_transfer_matrix(psi, theta, phi):
     return matrix
 
 
-def transfer_matrix_to_euler_angles(R):
+def transfer_matrix_to_euler_angles(r_matrix):
     """Returns the Euler angle from a transfer matrix."""
-    if (R[2, 2] != 1) and (R[2, 2] != -1):
-        theta = math.acos(R[2, 2])
-        psi = math.atan2(R[2, 0] / math.sin(theta), R[2, 1] / math.sin(theta))
-        phi = math.atan2(R[0, 2] / math.sin(theta), -R[1, 2] / math.sin(theta))
+    if (r_matrix[2, 2] != 1) and (r_matrix[2, 2] != -1):
+        theta = math.acos(r_matrix[2, 2])
+        psi = math.atan2(r_matrix[2, 0] / math.sin(theta), r_matrix[2, 1] / math.sin(theta))
+        phi = math.atan2(r_matrix[0, 2] / math.sin(theta), -r_matrix[1, 2] / math.sin(theta))
     else:
         phi = 0
-        if R[2, 2] == 1:
+        if r_matrix[2, 2] == 1:
             theta = 0
-            psi = math.atan2(R[1, 0], R[0, 0])
+            psi = math.atan2(r_matrix[1, 0], r_matrix[0, 0])
         else:
             theta = math.pi
-            psi = -math.atan2(R[1, 0], R[0, 0])
+            psi = -math.atan2(r_matrix[1, 0], r_matrix[0, 0])
     return psi, theta, phi
 
 
