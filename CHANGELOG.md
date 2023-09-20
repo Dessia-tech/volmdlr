@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PlaneFace3D: conicalface_intersections
 
 ### Fixed
-- add missing name attributes to classmethods
+- add missing name attributes to classmethods.
 - fixed circular imports
 - BSplineSurface3D: from_points_interpolation, from_points_approximation.
 - ConicalFace3D: point_belongs

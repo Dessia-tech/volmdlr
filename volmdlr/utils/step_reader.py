@@ -11,7 +11,7 @@ def set_to_list(step_set):
     """
     Convert a string representation of a set to a list of strings.
 
-    :param step_set: String relpresentation of a set, e.g. "{A,B,C}"
+    :param step_set: String representation of a set, e.g. "{A,B,C}"
     :type step_set: str
     :return: List of strings, e.g. ["A", "B", "C"]
     :rtype: List[str]

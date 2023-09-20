@@ -750,18 +750,18 @@ class Step(dc.DessiaObject):
                 # here we invert instantiate_ids because if the code enter inside the except
                 # block, we want to loop from the last KeyError to the first. This avoids an infinite loop
                 for instantiate_id in instantiate_ids[::-1]:
-                    t = time.time()
+                    t_tracker = time.time()
                     volmdlr_object = self.instantiate(
                         self.functions[instantiate_id].name,
                         self.functions[instantiate_id].arg[:], object_dict, instantiate_id)
-                    t = time.time() - t
+                    t_tracker = time.time() - t_tracker
                     object_dict[instantiate_id] = volmdlr_object
                     if show_times:
                         if volmdlr_object.__class__ not in times:
-                            times[volmdlr_object.__class__] = [1, t]
+                            times[volmdlr_object.__class__] = [1, t_tracker]
                         else:
                             times[volmdlr_object.__class__][0] += 1
-                            times[volmdlr_object.__class__][1] += t
+                            times[volmdlr_object.__class__][1] += t_tracker
                 error = False
             except KeyError as key:
                 # Sometimes the search don't instantiate the nodes of a
