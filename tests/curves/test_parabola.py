@@ -1,6 +1,6 @@
 import unittest
 import volmdlr
-from volmdlr import curves
+from volmdlr import curves, edges
 
 
 class TestParabola2D(unittest.TestCase):

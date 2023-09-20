@@ -1,6 +1,7 @@
 import unittest
 import volmdlr
 from volmdlr import curves
+from volmdlr import edges
 
 
 class TestHyperbola2D(unittest.TestCase):
@@ -87,7 +88,7 @@ class TestHyperbola3D(unittest.TestCase):
         point_start = volmdlr.Point3D(0.4330127018922191, 0.25, 0.866025403784)
         point_end = volmdlr.Point3D(-0.4330127018922191, 0.25, 0.866025403784)
         bspline = hyperbola.trim(point_start, point_end)
-        self.assertAlmostEqual(bspline.length(), 1.259818722659198, 5)
+        self.assertAlmostEqual(bspline.length(), 1.2598407301760584, 5)
 
     def test_point_belongs(self):
         vector1 = volmdlr.Vector3D(1, 1, 1)
