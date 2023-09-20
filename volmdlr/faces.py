@@ -281,8 +281,8 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def triangular_faces(self):
         triangulation = self.triangulation()
-        faces_triangulation = triangulation.triangular_faces()
-        return [Triangle3D(*face_triangulation) for face_triangulation in faces_triangulation]
+        return triangulation.triangular_faces()
+        # return [Triangle3D(*face_triangulation) for face_triangulation in faces_triangulation]
 
     def grid_size(self):
         """
