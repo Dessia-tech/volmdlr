@@ -13,7 +13,7 @@ from volmdlr.cloud import PointCloud3D
 from volmdlr.core import VolumeModel
 from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.primitives3d import ExtrudedProfile
-from volmdlr.shells import ClosedTriangleShell3D
+from volmdlr.shells import OpenTriangleShell3D
 from volmdlr.wires import Contour2D
 
 
@@ -174,10 +174,7 @@ class TriangleDecimationSimplify(Simplify):
         for shell in self.volume_model.get_shells():
             triangulation = shell.triangulation()
 
-            # vertices = np.array([(point.x, point.y, point.z) for point in triangulation.points])
-            # triangles = np.array(triangulation.triangles)
-
-            vertices, triangles = self.get_vertices_and_faces(ClosedTriangleShell3D(triangulation.faces))
+            vertices, triangles = (OpenTriangleShell3D(triangulation.faces)).to_mesh_data(round_vertices=True)
 
             simplifier.setMesh(vertices, triangles)
             simplifier.simplify_mesh(
@@ -195,31 +192,6 @@ class TriangleDecimationSimplify(Simplify):
 
             vertices, faces, _ = simplifier.getMesh()
 
-            decimated_shells.append(ClosedTriangleShell3D.from_mesh_data(vertices, faces))
+            decimated_shells.append(OpenTriangleShell3D.from_mesh_data(vertices, faces))
 
         return VolumeModel(decimated_shells)
-
-    @staticmethod
-    def get_vertices_and_faces(closed_triangle_shell) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Get the vertices and faces of the shell as numpy arrays.
-
-        :return: A tuple containing two numpy arrays - vertices and faces.
-        :rtype: Tuple[np.ndarray, np.ndarray]
-        """
-        faces = closed_triangle_shell.faces
-
-        # Flatten and round the vertices array
-        vertices = np.array(
-            [(face.points[i].x, face.points[i].y, face.points[i].z) for face in faces for i in range(3)]
-        )
-        vertices = np.round(vertices, 9)
-
-        # Get unique vertices and their indices
-        unique_vertices, unique_indices = np.unique(vertices, axis=0, return_inverse=True)
-
-        # Create the triangle indices array using NumPy indexing
-        flattened_indices = unique_indices.reshape(-1, 3)
-        triangle_indices = flattened_indices[: len(faces)]
-
-        return unique_vertices, triangle_indices
