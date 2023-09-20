@@ -96,6 +96,27 @@ def split_wire_by_plane(wire, plane3d):
     return wire1, wire2
 
 
+def plot_components_from_points(points, close_plot: bool = False):
+    """
+    Gets Matplotlib components from points.
+
+    :param points: given points.
+    :param close_plot: Weather to close the plot or not.
+    :return:
+    """
+    components = [[], [], []]
+    for point in points:
+        for i, component in enumerate(point):
+            components[i].append(component)
+    valid_components = []
+    for list_components in components:
+        if list_components:
+            if close_plot:
+                list_components.append(list_components[0])
+            valid_components.append(list_components)
+    return valid_components
+
+
 def plot_from_discretization_points(ax, edge_style, element, number_points: int = None, close_plot: bool = False):
     """
     General plot method using discretization_points method to generate points.
@@ -107,16 +128,8 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
     :param close_plot: specifies if plot is to be closed or not.
     :return: Matplotlib plot axis.
     """
-    components = [[], [], []]
-    for point in element.discretization_points(number_points=number_points):
-        for i, component in enumerate(point):
-            components[i].append(component)
-    valid_components = []
-    for list_components in components:
-        if list_components:
-            if close_plot:
-                list_components.append(list_components[0])
-            valid_components.append(list_components)
+    points = element.discretization_points(number_points=number_points)
+    valid_components = plot_components_from_points(points, close_plot)
     ax.plot(*valid_components, color=edge_style.color, alpha=edge_style.alpha)
     return ax
 
@@ -258,3 +271,13 @@ def ellipse_abscissa_angle_integration(ellipse3d, point_abscissa, angle_start, i
         initial_angle += increment_factor
         iter_counter += 1
     return abscissa_angle
+
+
+def get_plane_equation_coefficients(plane_frame):
+    """
+    Returns the a,b,c,d coefficient from equation ax+by+cz+d = 0.
+
+    """
+    a, b, c = plane_frame.w
+    d = -plane_frame.origin.dot(plane_frame.w)
+    return round(a, 12), round(b, 12), round(c, 12), round(d, 12)

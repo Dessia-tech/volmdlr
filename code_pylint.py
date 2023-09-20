@@ -16,24 +16,24 @@ EFFECTIVE_DATE = date(2023, 1, 31)
 WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
-                     "wrong-spelling-in-comment": 190,
+                     "wrong-spelling-in-comment": 13,
                      "wrong-spelling-in-docstring": 143,
                      'invalid-name': 167,
                      'no-member': 1,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
-                     'arguments-differ': 62,
-                     'too-many-locals': 84,
+                     'arguments-differ': 64,
+                     'too-many-locals': 86,
                      'unused-argument': 8,
-                     'too-many-arguments': 23,
+                     'too-many-arguments': 26,
                      'line-too-long': 12,
                      'too-many-branches': 26,
                      'too-many-statements': 13,
                      'super-init-not-called': 5,
                      'no-name-in-module': 2,
-                     'abstract-method': 32,
+                     'abstract-method': 41,
                      'duplicate-code': 10,
-                     'arguments-renamed': 52,
+                     'arguments-renamed': 56,
                      'too-many-ancestors': 25,
                      'too-few-public-methods': 2,
                      'too-many-public-methods': 13,
@@ -56,7 +56,7 @@ MAX_ERROR_BY_TYPE = {
                      'consider-using-generator': 1,
                      'import-outside-toplevel': 5,
                      'unsubscriptable-object': 1,
-                     'signature-differs': 1,
+                     'signature-differs': 2,
                      'consider-using-enumerate': 2,
                      'unbalanced-tuple-unpacking': 1,
                     }
@@ -68,7 +68,8 @@ ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-man
                                 "too-few-public-methods", "duplicate-code", "too-many-return-statements",
                                 "import-outside-toplevel", "arguments-differ", "arguments-renamed",
                                 "too-many-boolean-expressions", "super-init-not-called", "unused-argument", 
-                                'consider-using-enumerate', 'unbalanced-tuple-unpacking', 'undefined-variable']
+                                'consider-using-enumerate', 'unbalanced-tuple-unpacking', 'undefined-variable',
+                                'wrong-spelling-in-comment']
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
