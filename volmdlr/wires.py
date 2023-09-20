@@ -1637,7 +1637,8 @@ class ContourMixin(WireMixin):
         contour_primitives = [list_edges.pop(0)]
         while True:
             for i, edge in enumerate(list_edges):
-                if edge.is_point_edge_extremity(contour_primitives[-1].end, tol):
+                if (edge.is_point_edge_extremity(contour_primitives[-1].end, tol) and
+                        not edge.direction_independent_is_close(contour_primitives[-1])):
                     if contour_primitives[-1].end.is_close(edge.start, tol):
                         contour_primitives.append(edge)
                     else:
@@ -1647,7 +1648,8 @@ class ContourMixin(WireMixin):
                     validating_point = contour_primitives[-1].end
                     points.append(contour_primitives[-1].end)
                     break
-                if edge.is_point_edge_extremity(contour_primitives[0].start, tol):
+                if (edge.is_point_edge_extremity(contour_primitives[0].start, tol) and
+                        not edge.direction_independent_is_close(contour_primitives[0])):
                     if contour_primitives[0].start.is_close(edge.end, tol):
                         contour_primitives.insert(0, edge)
                     else:
@@ -4225,6 +4227,7 @@ class Contour3D(ContourMixin, Wire3D):
         :return: The corresponding Contour3D object.
         :rtype: :class:`volmdlr.wires.Contour3D`
         """
+        step_id = kwargs.get("step_id")
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
