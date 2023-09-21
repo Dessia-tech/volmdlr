@@ -24,6 +24,14 @@ class TestBSplineCurve3D(unittest.TestCase):
         trimmed_curve = obj.trim(point1, point2)
         self.assertTrue(trimmed_curve.start.is_close(point1))
         self.assertAlmostEqual(trimmed_curve.length(), 0.03513727259692126, 2)
+        obj = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_objects/bsplinecurve_trim.json")
+        point1 = volmdlr.Point3D(0.342947999551, -0.440408114191, 0.0132802444727)
+        point2 = volmdlr.Point3D(0.342919095763, -0.44741803835000005, 0.0132953396808)
+        trimmed_curve = obj.trim(point1, point2, True)
+        self.assertTrue(trimmed_curve.start.is_close(point1))
+        self.assertAlmostEqual(trimmed_curve.length(), 0.011010880733091775, 2)
+
+
 
     def test_from_step(self):
         obj_list = volmdlr.core.VolumeModel.load_from_file(

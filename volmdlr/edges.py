@@ -162,7 +162,7 @@ class Edge(dc.DessiaObject):
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
         step_id = kwargs.get("step_id")
-        if step_id == 20333:
+        if step_id == 20272:
             print("edges.py")
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
@@ -1257,9 +1257,8 @@ class BSplineCurve(Edge):
         :return: the given point when the BSplineCurve3D is evaluated at the u value.
         """
         u = max(min(abscissa / self.length(), 1.), 0.0)
-        if self.periodic:
-            u_min, u_max = self.domain
-            u = u * (u_max - u_min) + u_min
+        u_min, u_max = self.domain
+        u = u * (u_max - u_min) + u_min
         return u
 
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
@@ -4841,13 +4840,21 @@ class BSplineCurve3D(BSplineCurve):
             return bsplinecurve.cut_after(bsplinecurve.point_to_parameter(point2))
 
         if point2.is_close(bsplinecurve.start) and not point1.is_close(bsplinecurve.end):
-            return bsplinecurve.cut_after(bsplinecurve.point_to_parameter(point1))
+            if self.periodic:
+                bsplinecurve = bsplinecurve.cut_before(bsplinecurve.point_to_parameter(point1))
+            else:
+                bsplinecurve = bsplinecurve.cut_after(bsplinecurve.point_to_parameter(point1))
+            return bsplinecurve
 
         if not point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end):
             return bsplinecurve.cut_before(bsplinecurve.point_to_parameter(point1))
 
         if not point2.is_close(bsplinecurve.start) and point1.is_close(bsplinecurve.end):
-            return bsplinecurve.cut_before(bsplinecurve.point_to_parameter(point2))
+            if self.periodic:
+                bsplinecurve = bsplinecurve.cut_after(bsplinecurve.point_to_parameter(point2))
+            else:
+                bsplinecurve = bsplinecurve.cut_before(bsplinecurve.point_to_parameter(point2))
+            return bsplinecurve
 
         parameter1 = bsplinecurve.point_to_parameter(point1)
         parameter2 = bsplinecurve.point_to_parameter(point2)
@@ -4858,9 +4865,9 @@ class BSplineCurve3D(BSplineCurve):
             parameter1, parameter2 = parameter2, parameter1
             point1, point2 = point2, point1
 
-        bspline_curve = bsplinecurve.cut_before(parameter1)
-        new_param2 = bspline_curve.point_to_parameter(point2)
-        trimmed_bspline_cruve = bspline_curve.cut_after(new_param2)
+        bsplinecurve = bsplinecurve.cut_before(parameter1)
+        new_param2 = bsplinecurve.point_to_parameter(point2)
+        trimmed_bspline_cruve = bsplinecurve.cut_after(new_param2)
         return trimmed_bspline_cruve
 
     def trim_with_interpolation(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):

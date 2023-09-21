@@ -5725,8 +5725,8 @@ class BSplineSurface3D(Surface3D):
         start = points_2d[0]
         end = points_2d[-1]
         points = points_2d
-        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.02 * lth))
-        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.98 * lth))
+        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.15 * lth))
+        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.85 * lth))
 
         if direction_periodicity == 'x':
             i = 0

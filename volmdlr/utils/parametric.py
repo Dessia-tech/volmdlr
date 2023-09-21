@@ -305,7 +305,7 @@ def contour2d_healing(contour2d, contour3d):
     Heals topologies incoherencies on the boundary representation.
     """
     contour2d = contour2d_healing_self_intersection(contour2d)
-    contour2d = contour2d_healing_close_gaps(contour2d, contour3d)
+    # contour2d = contour2d_healing_close_gaps(contour2d, contour3d)
     return contour2d
 
 
