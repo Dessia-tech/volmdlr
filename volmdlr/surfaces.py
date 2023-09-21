@@ -5725,8 +5725,8 @@ class BSplineSurface3D(Surface3D):
         start = points_2d[0]
         end = points_2d[-1]
         points = points_2d
-        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.15 * lth))
-        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.85 * lth))
+        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.02 * lth))
+        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.98 * lth))
 
         if direction_periodicity == 'x':
             i = 0
@@ -5771,7 +5771,7 @@ class BSplineSurface3D(Surface3D):
             print('BSplineCurve3D skipped because it is too small')
             return []
 
-        n = min(len(bspline_curve3d.control_points), 20)  # Limit points to avoid non-convergence
+        n = len(bspline_curve3d.control_points)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         tol = 1e-6 if lth > 1e-5 else 1e-8
         points = [self.point3d_to_2d(p, tol) for p in points3d]
