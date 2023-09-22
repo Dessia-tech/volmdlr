@@ -162,7 +162,7 @@ class Edge(dc.DessiaObject):
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
         step_id = kwargs.get("step_id")
-        if step_id == 20272:
+        if step_id == 752965:
             print("edges.py")
         if obj.__class__.__name__ == 'LineSegment3D':
             return object_dict[arguments[3]]
@@ -4095,6 +4095,7 @@ class LineSegment3D(LineSegment):
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D, line: volmdlr_curves.Line3D = None,
                  name: str = ''):
         if start.is_close(end):
+
             raise NotImplementedError('Start and end of Linesegment3D are equal')
         self.line = line
         if not line:
@@ -4941,9 +4942,9 @@ class BSplineCurve3D(BSplineCurve):
         """
         # Is a value of parameter below 4e-3 a real need for precision ?
         a, b = self.domain
-        if math.isclose(parameter, a, abs_tol=4e-3):
+        if math.isclose(parameter, a, abs_tol=1e-6):
             return self
-        if math.isclose(parameter, b, abs_tol=4e-3):
+        if math.isclose(parameter, b, abs_tol=1e-6):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
@@ -4961,7 +4962,7 @@ class BSplineCurve3D(BSplineCurve):
         a, b = self.domain
         if math.isclose(parameter, a, abs_tol=1e-6):
             return self.reverse()
-        if math.isclose(parameter, b, abs_tol=4e-3):
+        if math.isclose(parameter, b, abs_tol=1e-6):
             return self
         curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
         return curves[0]
