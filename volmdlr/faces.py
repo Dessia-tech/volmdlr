@@ -235,7 +235,7 @@ class Face3D(volmdlr.core.Primitive3D):
             raise ValueError('Must have at least one contour')
 
         if outer_contour3d and outer_contour3d.primitives and not outer_contour3d.is_ordered():
-            outer_contour2d = contour2d_healing(outer_contour2d, outer_contour3d)
+            outer_contour2d = contour2d_healing(outer_contour2d)
         if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-2)):
             return None
         face = cls(surface,
