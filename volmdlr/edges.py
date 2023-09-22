@@ -1014,25 +1014,17 @@ class BSplineCurve(Edge):
         if point.is_close(self.end):
             return self.length()
         length = self.length()
-        point_array = npy.array(list(point), dtype=npy.float64)
-        distances = npy.linalg.norm(self._eval_points - point_array, axis=1)
-        index = npy.argmin(distances)
-        u_min, u_max = self.domain
-        u0 = u_min + index * (u_max - u_min) / (self.sample_size - 1)
-        u, convergence_sucess = self.point_invertion(u0, point)
-        if u_min != 0.0 or u_max != 1.0:
-            u = (u - u_min) / (u_max - u_min)
-        abscissa = u * length
-        if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
-            return abscissa
+        initial_condition_list = [0, 0.15, 0.25, 0.35, 0.5, 0.65, 0.75, 0.9, 1]
 
         def evaluate_point_distance(u_param):
             return (point - self.evaluate_single(u_param)).norm()
-        results = [(abscissa, evaluate_point_distance(u))]
-        initial_condition_list = npy.linspace(u_min, u_max, 10).tolist()
+        results = []
         initial_condition_list.sort(key=evaluate_point_distance)
-        for u0 in initial_condition_list[:2]:
+        u_min, u_max = self.curve.domain
+        for u0 in initial_condition_list:
             u, convergence_sucess = self.point_invertion(u0, point)
+            if u_min != 0.0 or u_max != 1.0:
+                u = (u - u_min) / (u_max - u_min)
             abscissa = u * length
             if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
                 return abscissa
