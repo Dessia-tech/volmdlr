@@ -24,6 +24,12 @@ class TestBSplineCurve3D(unittest.TestCase):
         trimmed_curve = obj.trim(point1, point2)
         self.assertTrue(trimmed_curve.start.is_close(point1))
         self.assertAlmostEqual(trimmed_curve.length(), 0.03513727259692126, 2)
+        obj = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_objects/bsplinecurve_trim.json")
+        point1 = volmdlr.Point3D(0.342947999551, -0.440408114191, 0.0132802444727)
+        point2 = volmdlr.Point3D(0.342919095763, -0.44741803835000005, 0.0132953396808)
+        trimmed_curve = obj.trim(point1, point2, True)
+        self.assertTrue(trimmed_curve.start.is_close(point1))
+        self.assertAlmostEqual(trimmed_curve.length(), 0.011010880733091775, 2)
 
     def test_from_step(self):
         obj_list = volmdlr.core.VolumeModel.load_from_file(
@@ -33,7 +39,7 @@ class TestBSplineCurve3D(unittest.TestCase):
         bsplinecurve = vme.Edge.from_step(arguments, object_dict)
         self.assertTrue(bsplinecurve.start.is_close(object_dict[1], 1e-5))
         self.assertTrue(bsplinecurve.end.is_close(object_dict[2], 1e-5))
-        self.assertTrue(bsplinecurve.point_at_abscissa(0.5*bsplinecurve.length()).is_close(
+        self.assertTrue(bsplinecurve.point_at_abscissa(0.5 * bsplinecurve.length()).is_close(
             volmdlr.Point3D(0.04916207191208274, -0.0426452922068, 0.14332757998779702)))
 
     def test_bspline_linesegment_minimum_distance(self):
@@ -64,6 +70,13 @@ class TestBSplineCurve3D(unittest.TestCase):
         self.assertEqual(len(intersections), 1)
         self.assertTrue(intersections[0].is_close(
             volmdlr.Point3D(-3.000003493713931, 1.022247107552729, 0.5746061300812078)))
+
+    def test_point_at_abscissa(self):
+        bspline = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_objects/bsplinecurve_periodic.json")
+        self.assertTrue(bspline.start.is_close(bspline.point_at_abscissa(0)))
+        self.assertTrue(bspline.end.is_close(bspline.point_at_abscissa(bspline.length())))
+        self.assertTrue(bspline.point_at_abscissa(0.5 * bspline.length()).is_close(
+            volmdlr.Point3D(0.3429479995510001, -0.44040811419137504, 0.01328024447265125)))
 
 
 if __name__ == '__main__':
