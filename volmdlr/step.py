@@ -72,7 +72,7 @@ class Step(dc.DessiaObject):
     _standalone_in_db = True
 
     def __init__(self, lines: List[str], name: str = ''):
-        self.functions, self.all_connections, self.connections = self.read_lines(lines)
+        self.functions, self.connections = self.read_lines(lines)
         self._graph = None
         self.global_uncertainty = 1e-6
         self.length_conversion_factor = 1
@@ -81,6 +81,15 @@ class Step(dc.DessiaObject):
         self._roots_nodes = None
 
         dc.DessiaObject.__init__(self, name=name)
+
+    @property
+    def all_connections(self):
+        """Returns all pairs of connections."""
+        list_connections = []
+        for key, values in self.connections.items():
+            for value in values:
+                list_connections.append((key, value))
+        return list_connections
 
     @property
     def root_nodes(self):
@@ -117,11 +126,9 @@ class Step(dc.DessiaObject):
 
     def read_lines(self, lines):
         """Translate the step file into step functions objects."""
-        all_connections = []
         dict_connections = {}
         previous_line = ""
         functions = {}
-
         for line in lines:
             # line = line.replace(" ", "")
             line = line.replace("\n", "")
@@ -156,7 +163,6 @@ class Step(dc.DessiaObject):
             else:
                 function_arg_string = function_name_arg[1]
             function_arg = function_arg_string.split("#")
-            function_connections = []
             connections = []
             for connec in function_arg[1:]:
                 connec = connec.split(",")
@@ -164,40 +170,45 @@ class Step(dc.DessiaObject):
                 if connec[0][-1] != "'":
                     function_connection = int(connec[0])
                     connections.append(function_connection)
-                    function_connections.append(
-                        (function_id, function_connection))
-            dict_connections[function_id] = connections
-            all_connections.extend(function_connections)
 
             previous_line = str()
 
             # FUNCTION ARGUMENTS
-            function_arg = function_name_arg[1]
-            arguments = step_reader.step_split_arguments(function_arg)
-            new_name = ''
-            new_arguments = []
-            if function_name == "":
-                name_arg = self.step_subfunctions(arguments)
-                for name, arg in name_arg:
-                    new_name += name + ', '
-                    new_arguments.extend(arg)
-                new_name = new_name[:-2]
-                function_name = new_name
-                arguments = new_arguments
-                for arg in arguments:
-                    if arg[0] == '#':
-                        function_connections.append(
-                            (function_id, int(arg[1:])))
+            functions, connections = self._helper_intantiate_step_functions(functions, connections,
+                                                                            [function_id, function_name,
+                                                                             function_name_arg])
 
-            for i, argument in enumerate(arguments):
-                if argument[:2] == '(#' and argument[-1] == ')':
-                    arg_list = step_reader.set_to_list(argument)
-                    arguments[i] = arg_list
+            dict_connections[function_id] = connections
 
-            function = StepFunction(function_id, function_name, arguments)
-            functions[function_id] = function
+        return functions, dict_connections
 
-        return functions, all_connections, dict_connections
+    def _helper_intantiate_step_functions(self, functions, connections, function_parameters):
+        """Helper funtion to read_lines."""
+        function_id, function_name, function_name_arg = function_parameters
+        function_arg = function_name_arg[1]
+        arguments = step_reader.step_split_arguments(function_arg)
+        new_name = ''
+        new_arguments = []
+        if function_name == "":
+            name_arg = self.step_subfunctions(arguments)
+            for name, arg in name_arg:
+                new_name += name + ', '
+                new_arguments.extend(arg)
+            new_name = new_name[:-2]
+            function_name = new_name
+            arguments = new_arguments
+            for arg in arguments:
+                if arg[0] == '#':
+                    connections.append(int(arg[1:]))
+
+        for i, argument in enumerate(arguments):
+            if argument[:2] == '(#' and argument[-1] == ')':
+                arg_list = step_reader.set_to_list(argument)
+                arguments[i] = arg_list
+
+        function = StepFunction(function_id, function_name, arguments)
+        functions[function_id] = function
+        return functions, connections
 
     def not_implemented(self):
         not_implemented = []
