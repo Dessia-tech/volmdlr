@@ -980,7 +980,7 @@ class BSplineCurve(Edge):
         """
         abscissa = self.abscissa(point)
         u = max(min(abscissa / self.length(), 1.), 0.0)
-        u_min, u_max = self.domain
+        u_min, u_max = self.curve.domain
         if u_min != 0.0 or u_max != 1.0:
             u = u * (u_max - u_min) + u_min
         return u
@@ -992,7 +992,7 @@ class BSplineCurve(Edge):
         :return: the given point when the BSplineCurve3D is evaluated at the u value.
         """
         u = max(min(abscissa / self.length(), 1.), 0.0)
-        u_min, u_max = self.domain
+        u_min, u_max = self.curve.domain
         if u_min != 0.0 or u_max != 1.0:
             u = u * (u_max - u_min) + u_min
         return u
