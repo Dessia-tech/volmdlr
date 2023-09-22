@@ -108,7 +108,6 @@ def get_version():
 setup(
     name="volmdlr",
     version=get_version(),
-    #      setup_requires=['setuptools_scm'],
     description=" A volume modeler computation-oriented. Include rendering bindings.",
     long_description=readme(),
     long_description_content_type="text/markdown",
