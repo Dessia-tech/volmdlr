@@ -19,13 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection, parallel_plane_intersections, concurent_plane_intersections, plane_intersections.
 - Hyperbola2D/3D and Parabola2D/3D: split
 - PlaneFace3D: conicalface_intersections
+- BSplineCurve: point_to_parameter, abscissa_to_parameter.
 
 ### Fixed
-- add missing name attributes to classmethods
+- add missing name attributes to classmethods.
 - fixed circular imports
 - BSplineSurface3D: from_points_interpolation, from_points_approximation.
 - ConicalFace3D: point_belongs
 - nurbs.core: find_multiplicity, evaluate_curve.
+- BSplineCurve: direction_vector, point_at_abscissa, abscissa, trim.
 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object

@@ -309,7 +309,7 @@ class Edge(dc.DessiaObject):
                 intersections.append(edge_extremity)
         intersection_section_pairs = self._get_intersection_sections(edge2)
         for bspline, edge2_ in intersection_section_pairs:
-            min_dist, point_min_dist_1, point_min_dist_2 = bspline.minimum_distance(edge2_, True)
+            min_dist, point_min_dist_1, _ = bspline.minimum_distance(edge2_, True)
             if not math.isclose(min_dist, 0.0, abs_tol=1e-6):
                 continue
             intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(
