@@ -130,7 +130,7 @@ setup(
         "dessia_common>=0.10.0",
         "Cython>=3.0.0",
         "numpy",
-        "matplotlib",  # remove when https://github.com/DanPorter/Dans_Diffraction/pull/11 available
+        "matplotlib",
         "scipy",
         "geomdl",
         "networkx",
