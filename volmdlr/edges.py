@@ -1245,8 +1245,8 @@ class BSplineCurve(Edge):
         """
         abscissa = self.abscissa(point)
         u = max(min(abscissa / self.length(), 1.), 0.0)
-        if self.periodic:
-            u_min, u_max = self.domain
+        u_min, u_max = self.domain
+        if u_min != 0 or u_max != 1.0:
             u = u * (u_max - u_min) + u_min
         return u
 
@@ -1258,7 +1258,8 @@ class BSplineCurve(Edge):
         """
         u = max(min(abscissa / self.length(), 1.), 0.0)
         u_min, u_max = self.domain
-        u = u * (u_max - u_min) + u_min
+        if u_min != 0 or u_max != 1.0:
+            u = u * (u_max - u_min) + u_min
         return u
 
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
@@ -1284,7 +1285,7 @@ class BSplineCurve(Edge):
         u_min, u_max = self.domain
         u0 = u_min + index * (u_max - u_min) / (self.sample_size - 1)
         u, convergence_sucess = self.point_invertion(u0, point)
-        if self.periodic:
+        if u_min != 0 or u_max != 1.0:
             u = (u - u_min) / (u_max - u_min)
         abscissa = u * length
         if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
@@ -1297,6 +1298,8 @@ class BSplineCurve(Edge):
         initial_condition_list.sort(key=evaluate_point_distance)
         for u0 in initial_condition_list[:2]:
             u, convergence_sucess = self.point_invertion(u0, point)
+            if u_min != 0 or u_max != 1.0:
+                u = (u - u_min) / (u_max - u_min)
             abscissa = u * length
             if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
                 return abscissa
