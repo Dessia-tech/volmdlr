@@ -1102,7 +1102,7 @@ class BSplineCurve(Edge):
 
         :param point: The point where the B-spline curve is split
         :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
-        :param tol: The precision in terms of distance. Default value is 1e-4
+        :param tol: The precision in terms of distance. Default value is 1e-6
         :type tol: float, optional
         :return: A list containing the first and second split of the B-spline
             curve
@@ -1112,7 +1112,7 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if point.is_close(self.end, tol):
             return [self.copy(), None]
-        adim_abscissa = min(1.0, max(0.0, round(self.abscissa(point) / self.length(), 7)))
+        adim_abscissa = self.point_to_parameter(point)
         return split_curve(self, adim_abscissa)
 
     def get_reverse(self):
@@ -4938,9 +4938,9 @@ class BSplineCurve3D(BSplineCurve):
         """
         # Is a value of parameter below 4e-3 a real need for precision ?
         a, b = self.domain
-        if math.isclose(parameter, a, abs_tol=4e-3):
+        if math.isclose(parameter, a, abs_tol=1e-6):
             return self
-        if math.isclose(parameter, b, abs_tol=4e-3):
+        if math.isclose(parameter, b, abs_tol=1e-6):
             return self.reverse()
         #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
@@ -4958,7 +4958,7 @@ class BSplineCurve3D(BSplineCurve):
         a, b = self.domain
         if math.isclose(parameter, a, abs_tol=1e-6):
             return self.reverse()
-        if math.isclose(parameter, b, abs_tol=4e-3):
+        if math.isclose(parameter, b, abs_tol=1e-6):
             return self
         curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
         return curves[0]
