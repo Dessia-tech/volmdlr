@@ -284,7 +284,7 @@ class Line(Curve):
 
     @classmethod
     def from_point_and_vector(cls, point: Union[volmdlr.Point2D, volmdlr.Point3D],
-                              direction_vector: Union[volmdlr.Vector2D, volmdlr.Vector3D], name: str =  ''):
+                              direction_vector: Union[volmdlr.Vector2D, volmdlr.Vector3D], name: str = ''):
         """
         Creates a Line object using only a point and a direction vector.
 
@@ -863,7 +863,8 @@ class Line3D(Line):
         :return: line segment.
         """
         if not self.point_belongs(point1) or not self.point_belongs(point2):
-            raise ValueError('Point not on curve')
+            print(True)
+        #     raise ValueError('Point not on curve')
 
         return volmdlr.edges.LineSegment3D(point1, point2)
 

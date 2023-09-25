@@ -177,6 +177,8 @@ class Face3D(volmdlr.core.Primitive3D):
         surface = object_dict[int(arguments[2])]
         face = globals()[surface.face_class]
         point_in_contours3d = any(isinstance(contour, volmdlr.Point3D) for contour in contours)
+        if step_id == 213700:
+            print("faces.py")
         if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
             return face.from_surface_rectangular_cut(surface)
         if len(contours) == 2 and point_in_contours3d:
@@ -234,10 +236,9 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             raise ValueError('Must have at least one contour')
 
-        if outer_contour3d and outer_contour3d.primitives and not outer_contour3d.is_ordered():
-            outer_contour2d = contour2d_healing(outer_contour2d, outer_contour3d)
+        if outer_contour3d and outer_contour3d.primitives and not outer_contour3d.is_ordered(1e-5):
+            outer_contour2d = contour2d_healing(outer_contour2d)
         if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-2)):
-            print(True)
             return None
         face = cls(surface,
                    surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),

@@ -300,12 +300,12 @@ def array_range_search(x, xmin, xmax):
     return range(left, right)
 
 
-def contour2d_healing(contour2d, contour3d):
+def contour2d_healing(contour2d):
     """
     Heals topologies incoherencies on the boundary representation.
     """
     contour2d = contour2d_healing_self_intersection(contour2d)
-    contour2d = contour2d_healing_close_gaps(contour2d, contour3d)
+    # contour2d = contour2d_healing_close_gaps(contour2d, contour3d)
     return contour2d
 
 

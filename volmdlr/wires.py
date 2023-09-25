@@ -4244,7 +4244,7 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
         contour = cls(raw_edges, name=name)
-        if step_id == 762591:
+        if step_id in (3236634, 3236504):
             print(True)
         if contour.is_ordered(1e-6):
             return contour
