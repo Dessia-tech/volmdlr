@@ -169,6 +169,8 @@ class Face3D(volmdlr.core.Primitive3D):
         step_name = kwargs.get("name", "ADVANCED_FACE")
         name = arguments[0][1:-1]
         contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
+        if step_id == 2072693:
+            print("faces.py")
         if any(contour is None for contour in contours):
             warnings.warn(f"Could not instantiate #{step_id} = {step_name}({arguments})"
                           f" because some of the contours are NoneType."
