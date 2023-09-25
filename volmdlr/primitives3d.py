@@ -1506,6 +1506,8 @@ class Sweep(shells.ClosedShell3D):
 
             if i == 0 or not start_tangent.is_close(last_end_tangent):
                 if self.frames:
+                    if not wire_primitive.start.is_close(self.frames[i].origin):
+                        raise ValueError("Frame origin and edge start should be coincident.")
                     contour3d = self.contour2d.to_3d(self.frames[i].origin, self.frames[i].u, self.frames[i].v)
                     new_faces = wire_primitive.sweep(self.contour2d, contour3d)
                 else:
