@@ -1409,12 +1409,13 @@ class Sweep(shells.ClosedShell3D):
     """
 
     def __init__(self, contour2d: volmdlr.wires.Contour2D,
-                 wire3d: volmdlr.wires.Wire3D, *,
+                 wire3d: volmdlr.wires.Wire3D,
+                 frames=None, *,
                  color: Tuple[float, float, float] = None, alpha: float = 1,
                  name: str = ''):
         self.contour2d = contour2d
         self.wire3d = wire3d
-        self.frames = []
+        self.frames = frames
 
         # for prim in self.wire3d.primitives:
         #     if isinstance(prim, volmdlr.edges.Arc3D):
@@ -1460,25 +1461,30 @@ class Sweep(shells.ClosedShell3D):
                         primitives_on_section_face.append(prim)
             contour3d_ = volmdlr.wires.Contour3D.contours_from_edges(primitives_on_section_face)[0]
             return contour3d_
+        if self.frames:
+            if not self.wire3d.point_at_abscissa(0.).is_close(self.frames[0].origin):
+                raise ValueError("Frame origin and wire start should be coincident.")
+            start_plane = surfaces.Plane3D(self.frames[0])
+            end_plane = surfaces.Plane3D(self.frames[-1])
+        else:
+            # End  planar faces
+            w = self.wire3d.primitives[0].unit_direction_vector(0.)
+            u = self.wire3d.primitives[0].unit_normal_vector(0.)
+            if not u:
+                u = w.deterministic_unit_normal_vector()
+            v = w.cross(u)
 
-        # End  planar faces
-        w = self.wire3d.primitives[0].unit_direction_vector(0.)
-        u = self.wire3d.primitives[0].unit_normal_vector(0.)
-        if not u:
-            u = w.deterministic_unit_normal_vector()
-        v = w.cross(u)
+            start_plane = surfaces.Plane3D(
+                volmdlr.Frame3D(self.wire3d.point_at_abscissa(0.), u, v, w))
 
-        start_plane = surfaces.Plane3D(
-            volmdlr.Frame3D(self.wire3d.point_at_abscissa(0.), u, v, w))
+            length_last_primitive = self.wire3d.primitives[-1].length()
+            w = self.wire3d.primitives[-1].unit_direction_vector(length_last_primitive)
+            u = self.wire3d.primitives[-1].unit_normal_vector(length_last_primitive)
+            if not u:
+                u = w.deterministic_unit_normal_vector()
+            v = w.cross(u)
 
-        length_last_primitive = self.wire3d.primitives[-1].length()
-        w = self.wire3d.primitives[-1].unit_direction_vector(length_last_primitive)
-        u = self.wire3d.primitives[-1].unit_normal_vector(length_last_primitive)
-        if not u:
-            u = w.deterministic_unit_normal_vector()
-        v = w.cross(u)
-
-        end_plane = surfaces.Plane3D(
+            end_plane = surfaces.Plane3D(
             volmdlr.Frame3D(self.wire3d.primitives[-1].point_at_abscissa(length_last_primitive), u, v, w))
 
         faces = [volmdlr.faces.PlaneFace3D(start_plane, surfaces.Surface2D(self.contour2d, []))]
@@ -1499,7 +1505,11 @@ class Sweep(shells.ClosedShell3D):
             tangent_normal_orthonormal = start_tangent.cross(normal)
 
             if i == 0 or not start_tangent.is_close(last_end_tangent):
-                new_faces = wire_primitive.sweep(self.contour2d, None)
+                if self.frames:
+                    contour3d = self.contour2d.to_3d(self.frames[i].origin, self.frames[i].u, self.frames[i].v)
+                    new_faces = wire_primitive.sweep(self.contour2d, contour3d)
+                else:
+                    new_faces = wire_primitive.sweep(self.contour2d, None)
             else:
                 plane = surfaces.Plane3D(volmdlr.Frame3D(wire_primitive.start, normal,
                                                          tangent_normal_orthonormal, start_tangent))
