@@ -125,6 +125,7 @@ utils
 uv
 umin
 umax
+vectorextru
 vmc
 vme
 vme.EdgeStyle

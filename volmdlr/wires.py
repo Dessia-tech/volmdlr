@@ -533,6 +533,7 @@ class WireMixin:
             return [cls(list_edges, name=name)]
 
         new_primitives, i = [], -1
+        index_primitive = 0
         while list_edges:
             i += 1
             new_primitives.append([list_edges[0]])
