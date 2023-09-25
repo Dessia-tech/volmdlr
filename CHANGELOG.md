@@ -5,8 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.14.0 [future]
 
-## v0.13.0 [future]
+### New Features
+- DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
+- BSplineSurface3D: from_points_interpolation, from_points_approximation.
+- nurbs module.
+- New curves classes: Hyperbola2D and Hyperbola3D.
+- Line: closest_point_on_line, from_point_and_vector
+- Line2D: get_slope, get_y_intersection.
+- New curves classes: Parabola2D/3D.
+- ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection
+- ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection, parallel_plane_intersections, concurent_plane_intersections, plane_intersections.
+- Hyperbola2D/3D and Parabola2D/3D: split
+- PlaneFace3D: conicalface_intersections
+
+### Fixed
+- add missing name attributes to classmethods.
+- fixed circular imports
+- BSplineSurface3D: from_points_interpolation, from_points_approximation.
+- ConicalFace3D: point_belongs
+- nurbs.core: find_multiplicity, evaluate_curve.
+
+### Refactor
+- TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
+
+### Changed
+- Cache BSplineCurve points into a numpy array to reduce memory usage.
+- Vector2D, Vector3D: __repr__
+- core_compiled: cdef functions' names.
+-
+
+### Unittests
+- Hyperbola2D/3D: line_intersections
+- Parabola2D/3D: line_intersections
+- ConicalSurface3D: test_line_intersections, test_plane_intersections.
+
+## v0.13.0 [unreleased]
 
 ### New Features
 - Line: reverse.
@@ -24,6 +59,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: arc_intersections, arcellipse_intersections
 - Wire3D/Contour3D: edge_intersections, wire_intersections
 - BSpline3D: arc_intersections
+- New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
+- BSplineSurface3D: partial removal of dependencies on geomdl objects
+
 ### Fixed
 - Sweep with non smoth path
 - plot of vector3D.
@@ -56,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add error protection stl
 - Sweep - add raise ValueError if section too big in comparision to arc radiuses
 - Update cython version requirement in setup.py
+- Step import: handles when there is an empty assembly in the file.
 - Ellipse2D: point_at_abscissa
 - ultis.common_operations: get_edge_distance_to_point and get_get_abscissa_discretization from edges so it can be used in curves too.
 - edges.Edge._generic_minimum_distance
@@ -79,6 +118,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PlaneFace3D: distance_to_point -> point_distance
 - remove normalize() methods
 - Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
+- BSplineSurface3D: point3d_to_2d performance improvements.
+
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
@@ -93,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc3D: arc_intersections, arcellipse_intersections, test_minimum_distance_bspline
 - BSplineCurve3D: test_bspline_linesegment_minimum_distance, test_bspline_linesegment_intersections
 - Contour3D: test_edge_intersections
+
 ## v0.12.0
 
 

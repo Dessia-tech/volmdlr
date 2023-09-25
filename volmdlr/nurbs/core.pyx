@@ -15,8 +15,10 @@ code for any particular purpose.
 
 import numpy as np
 cimport numpy as cnp
+from scipy.optimize import minimize
 from cython cimport cdivision
 from cython cimport boundscheck, wraparound
+from volmdlr.nurbs.helpers cimport linspace, binomial_coefficient
 from libcpp.vector cimport vector
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 
@@ -24,24 +26,6 @@ import volmdlr.nurbs.helpers as helpers
 
 
 cnp.import_array()
-
-
-@cdivision(True)
-cdef double binomial_coefficient_c(int k, int i):
-    """
-    Computes the binomial coefficient (denoted by *k choose i*).
-    """
-    # Special case
-    if i > k:
-        return 0.0
-    if i == 0 or i == k:
-        return 1.0
-    # Compute binomial coefficient
-    cdef int j
-    cdef double result = 1.0
-    for j in range(i):
-        result *= (float(k - j) / float(i - j))
-    return result
 
 
 def find_span_binsearch(int degree, vector[double] knot_vector, int num_ctrlpts, double knot, **kwargs):
@@ -167,7 +151,7 @@ def find_multiplicity(double knot, vector[double] knot_vector, **kwargs):
     :rtype: int
     """
     # Get tolerance value
-    cdef double tol = kwargs.get("tol", 10e-8)
+    cdef double tol = kwargs.get("tol", 10e-18)
 
     cdef int mult = 0  # initial multiplicity
     cdef int i
@@ -186,7 +170,8 @@ cdef double* basis_function_c(int degree, vector[double] knot_vector, int span, 
     cdef double *left = <double *>PyMem_Malloc((degree + 1) * sizeof(double))
     cdef double *right = <double *>PyMem_Malloc((degree + 1) * sizeof(double))
     cdef double *N = <double *>PyMem_Malloc((degree + 1) * sizeof(double))
-
+    if not N:
+        raise MemoryError()
     # Initialize N[0] to 1.0 by definition
     N[0] = 1.0
 
@@ -632,38 +617,10 @@ def build_coeff_matrix(int degree, vector[double] knotvector, double[:] params, 
     return matrix_a
 
 
-cpdef list knot_insertion_kv(list[float] knotvector, float u, int span, int r):
-    """ Computes the knot vector of the rational/non-rational spline after knot insertion.
-
-    Part of Algorithm A5.1 of The NURBS Book by Piegl & Tiller, 2nd Edition.
-
-    :param knotvector: knot vector
-    :param u: knot
-    :param span: knot span
-    :param r: number of knot insertions
-    :return: updated knot vector
-    """
-    # Initialize variables
-    cdef int kv_size = len(knotvector)
-    cdef list[float] kv_updated = [0.0 for _ in range(kv_size + r)]
-
-    # Compute new knot vector
-    cdef int i
-    for i in range(0, span + 1):
-        kv_updated[i] = knotvector[i]
-    for i in range(1, r + 1):
-        kv_updated[span + i] = u
-    for i in range(span + 1, kv_size):
-        kv_updated[i + r] = knotvector[i]
-
-    # Return the new knot vector
-    return kv_updated
-
-
 def evaluate_curve(dict datadict, double start: float = 0.0, double stop: float = 1.0):
     cdef int degree = datadict["degree"]
-    cdef list knotvector = datadict["knotvector"]
-    cdef tuple ctrlpts = datadict["control_points"]
+    cdef vector[double] knotvector = datadict["knotvector"]
+    cdef vector[vector[double]] ctrlpts = datadict["control_points"]
     cdef int size = datadict["size"]
     cdef int sample_size = datadict["sample_size"]
     cdef bint rational = datadict["rational"]
@@ -673,12 +630,12 @@ def evaluate_curve(dict datadict, double start: float = 0.0, double stop: float 
     if rational:
         return evaluate_curve_rational(degree, knotvector, ctrlpts, size, sample_size,
                                        dimension, precision, start, stop)
-    return evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size,
-                            dimension, precision, start, stop)
+    return evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size, dimension, precision, start, stop)
 
 
-cdef list evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts, int size,
-                           int sample_size, int dimension, int precision, double start, double stop):
+cdef vector[vector[double]] evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts,
+                                             int size, int sample_size, int dimension, int precision, double start,
+                                             double stop):
     """Evaluates the curve.
 
     Keyword Arguments:
@@ -691,22 +648,21 @@ cdef list evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[
     :rtype: list
     """
     # Algorithm A3.1
-    cdef list knots = helpers.linspace(start, stop, sample_size, decimals=precision)
-    cdef list spans = find_spans(degree, knotvector, size, knots)
-    cdef list basis = basis_functions(degree, knotvector, spans, knots)
+    cdef vector[double] knots = linspace(start, stop, sample_size, decimals=precision)
+    cdef vector[int] spans = find_spans(degree, knotvector, size, knots)
+    cdef vector[vector[double]] basis = basis_functions(degree, knotvector, spans, knots)
 
-    cdef list eval_points = []
-    cdef int i, idx
-    cdef list crvpt
-    cdef double crv_p, ctl_p
-    for idx in range(len(knots)):
-        crvpt = [0.0 for _ in range(dimension)]
+    cdef vector[vector[double]] eval_points
+    eval_points.reserve(dimension * sample_size)
+    cdef int i, j, idx
+    cdef vector[double] crvpt = vector[double](dimension, 0.0)
+    for idx in range(knots.size()):
+        crvpt = vector[double](dimension, 0.0)
         for i in range(0, degree + 1):
-            crvpt[:] = [
-                crv_p + (basis[idx][i] * ctl_p) for crv_p, ctl_p in zip(crvpt, ctrlpts[spans[idx] - degree + i])
-            ]
+            for j in range(dimension):
+                crvpt[j] = crvpt[j] + (basis[idx][i] * ctrlpts[spans[idx] - degree + i][j])
 
-        eval_points.append(crvpt)
+        eval_points.push_back(crvpt)
 
     return eval_points
 
@@ -758,8 +714,9 @@ cdef vector[vector[double]] derivatives_curve_c(int degree, vector[double] knotv
     return CK
 
 
-cdef evaluate_curve_rational(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts, int size,
-                             int sample_size, int dimension, int precision, double start, double stop):
+cdef vector[vector[double]] evaluate_curve_rational(int degree, vector[double] knotvector,
+                                                    vector[vector[double]] ctrlpts, int size, int sample_size,
+                                                    int dimension, int precision, double start, double stop):
     """Evaluates the rational curve.
 
     Keyword Arguments:
@@ -772,15 +729,18 @@ cdef evaluate_curve_rational(int degree, vector[double] knotvector, vector[vecto
     :rtype: list
     """
     # Algorithm A4.1
-    cdef list crvptw = evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size,
-                                        dimension, precision, start, stop)
+    cdef vector[vector[double]] crvptw = evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size,
+                                                          dimension, precision, start, stop)
 
     # Divide by weight
-    cdef list eval_points = []
-    cdef list pt, cpt
-    for pt in crvptw:
-        cpt = [float(c / pt[-1]) for c in pt[0: (dimension - 1)]]
-        eval_points.append(cpt)
+    cdef vector[vector[double]] eval_points
+    eval_points.reserve((dimension - 1) * sample_size)
+    cdef vector[double] cpt = vector[double](dimension - 1, 0.0)
+    cdef int i, j
+    for i in range(crvptw.size()):
+        for j in range(dimension - 1):
+            cpt[j] = float(crvptw[i][j] / crvptw[i][dimension - 1])
+        eval_points.push_back(cpt)
 
     return eval_points
 
@@ -818,7 +778,7 @@ cdef vector[vector[double]] derivatives_curve_rational(int degree, vector[double
         for j in range(dimension - 1):
             v[j] = CKw[k][j]
         for i in range(1, k + 1):
-            binomial_coeff = binomial_coefficient_c(k, i)
+            binomial_coeff = binomial_coefficient(k, i)
             for j in range(dimension - 1):
                 v[j] -= binomial_coeff * CKw[i][dimension - 1] * CK[k - i][j]
         binomial_coeff = 1.0 / CKw[0][dimension - 1]
@@ -827,3 +787,256 @@ cdef vector[vector[double]] derivatives_curve_rational(int degree, vector[double
 
     # Return C(u) derivatives
     return CK
+
+
+def evaluate_surface(dict datadict, **kwargs):
+    cdef int[2] degree = datadict["degree"]
+    cdef vector[vector[double]] knotvector = datadict["knotvector"]
+    cdef double[:, :] ctrlpts = datadict["control_points"]
+    cdef int[2] size = datadict["size"]
+    cdef int[2] sample_size = datadict["sample_size"]
+    cdef bint rational = datadict["rational"]
+    cdef int dimension = 4 if rational else 3
+    cdef int precision = datadict["precision"]
+    # Keyword arguments.
+    cdef double[2] start = kwargs.get("start", [0.0, 0.0])
+    cdef double[2] stop = kwargs.get("stop", [1.0, 1.0])
+
+    if rational:
+        return evaluate_surface_rational(degree, knotvector, ctrlpts, size, sample_size,
+                                         dimension, precision, start, stop)
+    return evaluate_surface_c(degree, knotvector, ctrlpts, size, sample_size, dimension, precision, start, stop)
+
+
+cdef vector[vector[double]] evaluate_surface_c(int[2] degree, vector[vector[double]] knotvector, double[:, :] ctrlpts,
+                                               int[2] size, int[2] sample_size, int dimension, int precision,
+                                               double[2] start, double[2] stop):
+    """
+    Evaluates surface.
+    """
+    # Algorithm A3.5
+    cdef vector[double] knots_u = linspace(start[0], stop[0], sample_size[0], precision)
+    cdef vector[int] spans_u = find_spans(degree[0], knotvector[0], size[0], knots_u)
+    cdef vector[vector[double]] basis_u = basis_functions(degree[0], knotvector[0], spans_u, knots_u)
+
+    cdef vector[double] knots_v = linspace(start[1], stop[1], sample_size[1], precision)
+    cdef vector[int] spans_v = find_spans(degree[1], knotvector[1], size[1], knots_v)
+    cdef vector[vector[double]] basis_v = basis_functions(degree[1], knotvector[1], spans_v, knots_v)
+
+    cdef vector[vector[double]] eval_points
+    cdef int i, j, k, m, dim, idx_u, idx_v
+    cdef vector[double] spt = vector[double](dimension, 0.0)
+    cdef vector[double] temp = vector[double](dimension, 0.0)
+
+    for i in range(spans_u.size()):
+        idx_u = spans_u[i] - degree[0]
+        for j in range(spans_v.size()):
+            idx_v = spans_v[j] - degree[1]
+            spt = vector[double](dimension, 0.0)
+            for k in range(0, degree[0] + 1):
+                temp = vector[double](dimension, 0.0)
+                for m in range(0, degree[1] + 1):
+                    for dim in range(dimension):
+                        temp[dim] += basis_v[j][m] * ctrlpts[idx_v + m + (size[1] * (idx_u + k))][dim]
+                for dim in range(dimension):
+                    spt[dim] += basis_u[i][k] * temp[dim]
+
+            eval_points.push_back(spt)
+    return eval_points
+
+
+@cdivision(True)
+cdef vector[vector[double]] evaluate_surface_rational(int[2] degree, vector[vector[double]] knotvector,
+                                                      double[:, :] ctrlpts, int[2] size, int[2] sample_size,
+                                                      int dimension, int precision, double[2] start, double[2] stop):
+    """Evaluates the rational surface.
+
+    Keyword Arguments:
+        * ``start``: starting parametric position for evaluation
+        * ``stop``: ending parametric position for evaluation
+
+    :param datadict: data dictionary containing the necessary variables
+    :type datadict: dict
+    :return: evaluated points
+    :rtype: list
+    """
+    # Algorithm A4.3
+    cdef vector[vector[double]] cptw = evaluate_surface_c(degree, knotvector, ctrlpts, size, sample_size, dimension,
+                                                          precision, start, stop)
+
+    # Divide by weight
+    cdef vector[vector[double]] eval_points
+    cdef vector[double] cpt = vector[double](dimension - 1, 0.0)
+    for i in range(cptw.size()):
+        for j in range(dimension - 1):
+            cpt[j] = cptw[i][j]/cptw[i][dimension - 1]
+        eval_points.push_back(cpt)
+
+    return eval_points
+
+
+def derivatives_surface(list degree, list knotvector, cnp.ndarray[cnp.double_t, ndim=2] ctrlpts, list size,
+                        bint rational, list parpos, int deriv_order):
+    cdef int[2] _degree = degree
+    cdef vector[vector[double]] _knotvector = knotvector
+    cdef int[2] _size = size
+    cdef int dimension = 4 if rational else 3
+    cdef double[2] _parpos = parpos
+
+    if rational:
+        return derivatives_surface_rational(_degree, knotvector, ctrlpts, _size, dimension, _parpos, deriv_order)
+    return derivatives_surface_c(_degree, knotvector, ctrlpts, _size, dimension, _parpos, deriv_order)
+
+
+@boundscheck(False)
+@wraparound(False)
+cdef vector[vector[vector[double]]] derivatives_surface_c(int[2] degree, vector[vector[double]] knotvector,
+                                                          double[:, :] ctrlpts, int[2] size, int dimension,
+                                                          double[2] parpos, int deriv_order):
+    """
+    Evaluates the n-th order derivatives at the input parametric position.
+
+    :param datadict: data dictionary containing the necessary variables
+    :type datadict: dict
+    :param parpos: parametric position where the derivatives will be computed
+    :type parpos: list, tuple
+    :param deriv_order: derivative order; to get the i-th derivative
+    :type deriv_order: int
+    :return: evaluated derivatives
+    :rtype: list
+    """
+    # Geometry data from datadict
+    cdef int degree_u = degree[0]
+    cdef int degree_v = degree[1]
+    cdef int size_u = size[0], size_v = size[1]
+    cdef double u = parpos[0], v = parpos[1]
+    cdef vector[double] knotvector_u = knotvector[0]
+    cdef vector[double] knotvector_v = knotvector[1]
+    # cdef int pdimension = 2
+
+    cdef int k, li, s, r, i, dd, cu, cv
+    # Algorithm A3.6
+    cdef int[2] d = [min(degree_u, deriv_order), min(degree_u, deriv_order)]
+
+    cdef vector[vector[vector[double]]] SKL = vector[vector[vector[double]]](deriv_order + 1,
+                                                                             vector[vector[double]](deriv_order + 1,
+                                                                                                    vector[double](
+                                                                                                        dimension,
+                                                                                                        0.0)))
+
+    cdef int span_u = find_span_linear_c(degree_u, knotvector_u, size_u, u)
+    cdef int span_v = find_span_linear_c(degree_v, knotvector_v, size_v, v)
+    cdef vector[vector[double]] basisdrv_u = basis_function_ders(degree_u, knotvector_u, span_u, u, d[0])
+    cdef vector[vector[double]] basisdrv_v = basis_function_ders(degree_v, knotvector_v, span_v, v, d[1])
+    cdef double[:] cp = np.zeros(dimension, dtype=np.float64)
+    cdef vector[double] tmp = vector[double](dimension, 0.0)
+    cdef vector[vector[double]] temp = vector[vector[double]](degree_v + 1, vector[double](dimension, 0.0))
+    for k in range(0, d[0] + 1):
+        temp = vector[vector[double]](degree_v + 1, vector[double](dimension, 0.0))
+        for s in range(0, degree_v + 1):
+            for r in range(0, degree_u + 1):
+                cu = span_u - degree_u + r
+                cv = span_v - degree_v + s
+                cp = ctrlpts[cv + (size_v * cu)]
+                for i in range(dimension):
+                    tmp[i] = temp[s][i] + (basisdrv_u[k][r] * cp[i])
+                for i in range(dimension):
+                    temp[s][i] = tmp[i]
+
+        dd = min(deriv_order, d[1])
+        for li in range(0, dd + 1):
+            for s in range(0, degree_v + 1):
+                for i in range(dimension):
+                    tmp[i] = SKL[k][li][i] + (basisdrv_v[li][s] * temp[s][i])
+                for i in range(dimension):
+                    SKL[k][li][i] = tmp[i]
+    return SKL
+
+
+@boundscheck(False)
+@wraparound(False)
+cdef vector[vector[vector[double]]] derivatives_surface_rational(int[2] degree, vector[vector[double]] knotvector,
+                                                                 double[:, :] ctrlpts, int[2] size, int dimension,
+                                                                 double[2] parpos, int deriv_order):
+    """Evaluates the n-th order derivatives at the input parametric position.
+
+    :param datadict: data dictionary containing the necessary variables
+    :type datadict: dict
+    :param parpos: parametric position where the derivatives will be computed
+    :type parpos: list, tuple
+    :param deriv_order: derivative order; to get the i-th derivative
+    :type deriv_order: int
+    :return: evaluated derivatives
+    :rtype: list
+    """
+    # Call the parent function to evaluate A(u) and w(u) derivatives
+    cdef vector[vector[vector[double]]] SKLw = derivatives_surface_c(degree, knotvector, ctrlpts, size,
+                                                                     dimension, parpos, deriv_order)
+    # Generate an empty list of derivatives
+    cdef vector[vector[vector[double]]] SKL = vector[vector[vector[double]]](deriv_order + 1,
+                                                                             vector[vector[double]](deriv_order + 1,
+                                                                                                    vector[double](
+                                                                                                        dimension - 1,
+                                                                                                        0.0)))
+
+    # Algorithm A4.4
+    cdef int i, j, k, li, ii
+
+    cdef vector[double] tmp = vector[double](dimension - 1, 0.0)
+    cdef vector[double] v = vector[double](dimension - 1, 0.0)
+    cdef vector[double] v2 = vector[double](dimension - 1, 0.0)
+    cdef vector[double] res = vector[double](dimension - 1, 0.0)
+    # Algorithm A4.4
+    for k in range(0, deriv_order + 1):
+        for li in range(0, deriv_order + 1):
+            for i in range(dimension -1):
+                v[i] = SKLw[k][li][i]
+            for j in range(1, li + 1):
+                for ii in range(dimension - 1):
+                    tmp[ii] = v[ii] - (binomial_coefficient(li, j) * SKLw[0][j][dimension - 1] * SKL[k][li - j][ii])
+                for ii in range(dimension - 1):
+                    v[ii] = tmp[ii]
+            for i in range(1, k + 1):
+                for ii in range(dimension - 1):
+                    tmp[ii] = v[ii] - (binomial_coefficient(k, i) * SKLw[i][0][dimension - 1] * SKL[k - i][li][ii])
+                for ii in range(dimension - 1):
+                    v[ii] = tmp[ii]
+                v2 = vector[double](dimension - 1, 0.0)
+                for j in range(1, li + 1):
+                    for ii in range(dimension - 1):
+                        tmp[ii] = v2[ii] + (binomial_coefficient(li, j) *
+                                            SKLw[i][j][dimension - 1] * SKL[k - i][li - j][ii])
+                    for ii in range(dimension - 1):
+                        v2[ii] = tmp[ii]
+                for ii in range(dimension - 1):
+                    tmp[ii] = v[ii] - (binomial_coefficient(k, i) * v2[ii])
+                for ii in range(dimension - 1):
+                    v[ii] = tmp[ii]
+
+            for i in range(dimension - 1):
+                res[i] = v[i] / SKLw[0][0][dimension - 1]
+            for i in range(dimension - 1):
+                SKL[k][li][i] = res[i]
+    # Return S(u,v) derivatives
+    return SKL
+
+
+def fun(x, point3d, degree, knotvector, ctrlpts, size, rational):
+    derivatives = np.asarray(derivatives_surface(degree, knotvector, ctrlpts, size, rational, x.tolist(), 1),
+                             dtype=np.float64)
+    f_vector = derivatives[0][0] - point3d
+    f_value = np.linalg.norm(f_vector)
+    if f_value == 0.0:
+        jacobian = np.array([0.0, 0.0])
+    else:
+        jacobian = np.array([np.dot(f_vector, derivatives[1][0]) / f_value,
+                             np.dot(f_vector, derivatives[0][1]) / f_value])
+    return f_value, jacobian
+
+
+def point_inversion(point3d, x0, bounds, degree, knotvector, ctrlpts, size, rational):
+
+    res = minimize(fun, x0=np.array(x0), jac=True, method="L-BFGS-B",
+                   bounds=bounds, args=(point3d, degree, knotvector, ctrlpts, size, rational))
+
+    return res

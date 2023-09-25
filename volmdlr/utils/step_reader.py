@@ -602,10 +602,8 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
                        [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
                        [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
         transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
-        u_vector = volmdlr.Vector3D(*transfer_matrix[0])
-        v_vector = volmdlr.Vector3D(*transfer_matrix[1])
-        w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, volmdlr.Vector3D(*transfer_matrix[0]),
+                                    volmdlr.Vector3D(*transfer_matrix[1]), volmdlr.Vector3D(*transfer_matrix[2]))
         new_closedshells.append(shell3d.frame_mapping(new_frame, 'old'))
     return new_closedshells
 

@@ -96,6 +96,27 @@ def split_wire_by_plane(wire, plane3d):
     return wire1, wire2
 
 
+def plot_components_from_points(points, close_plot: bool = False):
+    """
+    Gets Matplotlib components from points.
+
+    :param points: given points.
+    :param close_plot: Weather to close the plot or not.
+    :return:
+    """
+    components = [[], [], []]
+    for point in points:
+        for i, component in enumerate(point):
+            components[i].append(component)
+    valid_components = []
+    for list_components in components:
+        if list_components:
+            if close_plot:
+                list_components.append(list_components[0])
+            valid_components.append(list_components)
+    return valid_components
+
+
 def plot_from_discretization_points(ax, edge_style, element, number_points: int = None, close_plot: bool = False):
     """
     General plot method using discretization_points method to generate points.
@@ -107,16 +128,8 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
     :param close_plot: specifies if plot is to be closed or not.
     :return: Matplotlib plot axis.
     """
-    components = [[], [], []]
-    for point in element.discretization_points(number_points=number_points):
-        for i, component in enumerate(point):
-            components[i].append(component)
-    valid_components = []
-    for list_components in components:
-        if list_components:
-            if close_plot:
-                list_components.append(list_components[0])
-            valid_components.append(list_components)
+    points = element.discretization_points(number_points=number_points)
+    valid_components = plot_components_from_points(points, close_plot)
     ax.plot(*valid_components, color=edge_style.color, alpha=edge_style.alpha)
     return ax
 
@@ -199,7 +212,7 @@ def get_point_distance_to_edge(edge, point, start, end):
     :param edge: Edge to calculate distance to point.
     :param point: Point to calculate the distance to edge.
     :param start: Edge's start point.
-    :param edge: Edge's end point.
+    :param end: Edge's end point.
     :return: distance to edge.
     """
     best_distance = math.inf
@@ -229,12 +242,12 @@ def get_point_distance_to_edge(edge, point, start, end):
     return distance
 
 
-def ellipse_abscissa_angle_integration(ellipse3d, point_abcissa, angle_start, initial_angle):
+def ellipse_abscissa_angle_integration(ellipse3d, point_abscissa, angle_start, initial_angle):
     """
-    Caculates the angle for a given abcissa point by integrating the ellipse.
+    Calculates the angle for a given abscissa point by integrating the ellipse.
 
     :param ellipse3d: the Ellipse3D.
-    :param point_abcissa: the given abscissa for given point.
+    :param point_abscissa: the given abscissa for given point.
     :param angle_start: Ellipse3D / ArcEllipse3D start angle. (0 for Ellipse3D).
     :param initial_angle: angle abscissa's initial value.
     :return: final angle abscissa's value.
@@ -246,15 +259,25 @@ def ellipse_abscissa_angle_integration(ellipse3d, point_abcissa, angle_start, in
     iter_counter = 0
     while True:
         res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-        if math.isclose(res, point_abcissa, abs_tol=1e-8):
+        if math.isclose(res, point_abscissa, abs_tol=1e-8):
             abscissa_angle = initial_angle
             break
-        if res > point_abcissa:
-            increment_factor = (abs(initial_angle - angle_start) * (point_abcissa - res)) / (2 * abs(res))
+        if res > point_abscissa:
+            increment_factor = (abs(initial_angle - angle_start) * (point_abscissa - res)) / (2 * abs(res))
         elif res == 0.0:
             increment_factor = 1e-5
         else:
-            increment_factor = (abs(initial_angle - angle_start) * (point_abcissa - res)) / abs(res)
+            increment_factor = (abs(initial_angle - angle_start) * (point_abscissa - res)) / abs(res)
         initial_angle += increment_factor
         iter_counter += 1
     return abscissa_angle
+
+
+def get_plane_equation_coefficients(plane_frame):
+    """
+    Returns the a,b,c,d coefficient from equation ax+by+cz+d = 0.
+
+    """
+    a, b, c = plane_frame.w
+    d = -plane_frame.origin.dot(plane_frame.w)
+    return round(a, 12), round(b, 12), round(c, 12), round(d, 12)

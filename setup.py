@@ -108,7 +108,6 @@ def get_version():
 setup(
     name="volmdlr",
     version=get_version(),
-    #      setup_requires=['setuptools_scm'],
     description=" A volume modeler computation-oriented. Include rendering bindings.",
     long_description=readme(),
     long_description_content_type="text/markdown",
@@ -129,9 +128,9 @@ setup(
         "packaging",
         "dessia_common>=0.10.0",
         "Cython>=3.0.0",
-        "numpy<1.24.0",
-        "matplotlib<=3.4.3",  # remove when https://github.com/DanPorter/Dans_Diffraction/pull/11 available
-        "scipy<1.10.1",
+        "numpy",
+        "matplotlib",
+        "scipy",
         "geomdl",
         "networkx",
         "triangle",
@@ -148,9 +147,7 @@ setup(
                  "Development Status :: 5 - Production/Stable"],
 
     ext_modules=cythonize(["volmdlr/core_compiled.pyx",
-                           "volmdlr/bspline_compiled.pyx",
-                           "volmdlr/bspline_fitting.pyx",
-                           "volmdlr/bspline_evaluators.pyx",
+                           "volmdlr/discrete_representation_compiled.py",
                            "volmdlr/nurbs/core.pyx",
                            "volmdlr/nurbs/helpers.pyx",
                            "volmdlr/nurbs/fitting.py"]),

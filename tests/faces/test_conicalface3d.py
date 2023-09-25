@@ -62,6 +62,28 @@ class TestConicalFace3D(unittest.TestCase):
         neutral_fiber = face.neutral_fiber()
         self.assertEqual(neutral_fiber.length(), 0.5)
 
+    def test_point_belongs(self):
+        expected_results_lists = [[0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+                                  [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+                                  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
+        theta_ranges = [(.3 * math.pi, math.pi), (-.3 * math.pi, math.pi), (-1.5 * math.pi, -.3 * math.pi),
+                        (0.0, math.pi), (-math.pi, 0.0)]
+        circle_radius = 0.5 * math.tan(conical_surface.semi_angle)
+        circle = curves.Circle3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5),
+                                                 volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D), radius=circle_radius)
+        points = circle.discretization_points(number_points=20)
+        for i, (theta1, theta2) in enumerate(theta_ranges):
+            conical_face = faces.ConicalFace3D.from_surface_rectangular_cut(
+                conical_surface, theta1, theta2, 0., 1)
+            for j, expected_result in enumerate(expected_results_lists[i]):
+                if expected_result == 1:
+                    self.assertTrue(conical_face.point_belongs(points[j]))
+                    continue
+                self.assertFalse(conical_face.point_belongs(points[j]))
+
 
 if __name__ == '__main__':
     unittest.main()
