@@ -2584,7 +2584,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def discretized_contour(self, n: float):
         """
-        Discretize each contour's primitive and return a new contour with theses discretized primitives.
+        Discretize each contour's primitive and return a new contour with these discretized primitives.
         """
         contour = Contour2D((self.discretized_primitives(n)))
 

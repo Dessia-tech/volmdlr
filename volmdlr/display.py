@@ -269,4 +269,4 @@ class DisplayMesh3D(DisplayMesh):
         Exports to STL.
 
         """
-        warnings.warn('Please use the Stl.from_display_mesh methos instead')
+        warnings.warn('Please use the Stl.from_display_mesh method instead')
