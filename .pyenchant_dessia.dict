@@ -1,5 +1,3 @@
-.geo
-.msh
 Aabb
 arcellipse
 argmax
@@ -19,9 +17,9 @@ BoundingRectangle
 BREP
 bspline
 Bspline
-BSpline's
 bsplinecurve
 bsplines
+BSpline's
 bsplinesurface
 cartesian
 classmethod
@@ -29,8 +27,8 @@ cosinus
 ctrlpts
 ctrlptsw
 cylindricalface
-Cython
 cython
+Cython
 dataset
 dbscan
 dectree
@@ -49,6 +47,7 @@ euler
 facecolor
 filepath
 freecad
+.geo
 geo
 geomdl
 geomdl's
@@ -62,8 +61,8 @@ init
 inplace
 isinstance
 isort
-Iterable
 iterable
+Iterable
 JSON
 jsonschema
 knot
@@ -74,9 +73,10 @@ LHS
 linesegment
 linewidth
 linspace
-Matplotlib
 matplotlib
+Matplotlib
 maxiter
+.msh
 msh
 nbv
 ndarray
@@ -87,8 +87,8 @@ np
 num
 numpy
 numpy
-Nurbs
 nurbs
+Nurbs
 nx
 octree
 Ottmann
@@ -108,8 +108,8 @@ SKL
 spline
 Spline
 STEP
-STL
 stl
+STL
 str
 th
 todo
@@ -120,11 +120,11 @@ triangleface
 trigo
 Trimesh
 txt
+umax
+umin
 undirected
 utils
 uv
-umin
-umax
 vmc
 vme
 vme.EdgeStyle
