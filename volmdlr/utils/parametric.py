@@ -305,22 +305,24 @@ def contour2d_healing(contour2d):
     Heals topologies incoherencies on the boundary representation.
     """
     contour2d = contour2d_healing_self_intersection(contour2d)
-    contour2d = contour2d_healing_close_gaps(contour2d)
+    # contour2d = contour2d_healing_close_gaps(contour2d, contour3d)
     return contour2d
 
 
-def contour2d_healing_close_gaps(contour2d):
+def contour2d_healing_close_gaps(contour2d, contour3d):
     """
     Heals topologies incoherencies on the boundary representation.
     """
-    new_primitives = [contour2d.primitives[0]]
-    for i, (prim1, prim2) in enumerate(
-            zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
+    new_primitives = []
+    for prim1_3d, prim2_3d, prim1, prim2 in zip(contour3d.primitives, contour3d.primitives[1:] +
+                                                [contour3d.primitives[0]],
+                                                contour2d.primitives, contour2d.primitives[1:] +
+                                                                      [contour2d.primitives[0]]):
         if prim1 and prim2:
-            if not prim1.end.is_close(prim2.start):
+            if not prim1_3d.end.is_close(prim2_3d.start) and not prim1.end.is_close(prim2.start):
                 new_primitives.append(vme.LineSegment2D(prim1.end, prim2.start))
-            if i < len(contour2d.primitives) - 1:
-                new_primitives.append(prim2)
+
+            new_primitives.append(prim2)
     contour2d.primitives = new_primitives
 
     return contour2d
@@ -337,8 +339,7 @@ def contour2d_healing_self_intersection(contour2d):
             intersections = prim1.intersections(prim2)
             if intersections:
                 if len(intersections) > 1:
-                    warnings.warn("More than one crossings found while detecting contour self intersection.")
-                    return contour2d
+                    intersections = prim1.sort_points_along_curve(intersections)
                 split_point = intersections[0]
                 if prim1.is_point_edge_extremity(split_point):
                     new_prim1 = prim1

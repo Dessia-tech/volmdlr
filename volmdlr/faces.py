@@ -21,7 +21,7 @@ import volmdlr.curves as volmdlr_curves
 import volmdlr.geometry
 import volmdlr.grid
 from volmdlr import surfaces
-from volmdlr.utils.parametric import array_range_search
+from volmdlr.utils.parametric import array_range_search, contour2d_healing
 import volmdlr.wires
 
 
@@ -177,6 +177,8 @@ class Face3D(volmdlr.core.Primitive3D):
         surface = object_dict[int(arguments[2])]
         face = globals()[surface.face_class]
         point_in_contours3d = any(isinstance(contour, volmdlr.Point3D) for contour in contours)
+        if step_id == 455864:
+            print("faces.py")
         if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
             return face.from_surface_rectangular_cut(surface)
         if len(contours) == 2 and point_in_contours3d:
@@ -188,7 +190,7 @@ class Face3D(volmdlr.core.Primitive3D):
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
 
-        return face.from_contours3d(surface, contours, name)
+        return face.from_contours3d(surface, contours, step_id)
 
     @classmethod
     def from_contours3d(cls, surface, contours3d: List[volmdlr.wires.Contour3D], name: str = ''):
@@ -217,6 +219,7 @@ class Face3D(volmdlr.core.Primitive3D):
             if any(check_contours):
                 # Not implemented yet, but connect_contours should also return outer_contour3d and inner_contours3d
                 outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
+                outer_contour3d = surface.contour2d_to_3d(outer_contour2d)
             else:
                 for contour2d, contour3d in zip(contours2d, contours3d):
                     # if not contour2d.is_ordered(1e-4):
@@ -233,9 +236,9 @@ class Face3D(volmdlr.core.Primitive3D):
         else:
             raise ValueError('Must have at least one contour')
 
-        # if outer_contour3d and not outer_contour3d.is_ordered():
-        #     outer_contour2d = vm_parametric.contour2d_healing(outer_contour2d)
-        if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-3)):
+        if outer_contour3d and outer_contour3d.primitives and not outer_contour3d.is_ordered(1e-5):
+            outer_contour2d = contour2d_healing(outer_contour2d)
+        if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-2)):
             return None
         face = cls(surface,
                    surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),
