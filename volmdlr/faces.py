@@ -177,8 +177,6 @@ class Face3D(volmdlr.core.Primitive3D):
         surface = object_dict[int(arguments[2])]
         face = globals()[surface.face_class]
         point_in_contours3d = any(isinstance(contour, volmdlr.Point3D) for contour in contours)
-        if step_id == 455864:
-            print("faces.py")
         if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
             return face.from_surface_rectangular_cut(surface)
         if len(contours) == 2 and point_in_contours3d:

@@ -7666,8 +7666,6 @@ class BSplineSurface3D(Surface3D):
                 temp_points = points
             temp_edge2d = get_temp_edge2d(temp_points)
             singularity_line = get_singularity_line(umin, umax, vmin, vmax, temp_points[0])
-            if temp_points[1] is None or temp_edge2d is None:
-                print(True)
             points[0] = self.fix_start_end_singularity_point_at_parametric_domain(temp_edge2d,
                                                                                   reference_point=temp_points[1],
                                                                                   singularity_line=singularity_line)
