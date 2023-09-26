@@ -142,6 +142,8 @@ setup(
         "rtree",
         "gmsh",
     ],
+    extras_require={"test": ["coverage"],
+                    "doc": ["sphinx", "sphinx_rtd_theme"]},
     classifiers=["Topic :: Scientific/Engineering",
                  "Topic :: Multimedia :: Graphics :: 3D Modeling",
                  "Development Status :: 5 - Production/Stable"],
