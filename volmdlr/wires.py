@@ -1484,6 +1484,8 @@ class ContourMixin(WireMixin):
         :param tol: tolerance to be considered.
         :return: True if ordered, False if not.
         """
+        if len(self.primitives) == 2 and self.primitives[0].direction_independent_is_close(self.primitives[1]):
+            return False
         for prim1, prim2 in zip(self.primitives, self.primitives[1:] + [self.primitives[0]]):
             if not prim1.end.is_close(prim2.start, tol):
                 return False
@@ -4244,7 +4246,7 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
         contour = cls(raw_edges, name=name)
-        if step_id in (3236634, 3236504):
+        if step_id == 2072685:
             print(True)
         if contour.is_ordered(1e-6):
             return contour

@@ -40,7 +40,8 @@ class TestContour3D(unittest.TestCase):
         step = Step.from_file(filepath="wires/contour_with_repeated_edge_in_contour3d.step")
         model = step.to_volume_model()
         face = model.primitives[0].primitives[0]
-        self.assertEqual(len(face.outer_contour3d.primitives), 4)
+        self.assertEqual(len(face.outer_contour3d.primitives), 5)
+        self.assertTrue(face.outer_contour3d.is_ordered())
 
         # todo: refactor SphericalSuface3D repair periodicity
         # step = Step.from_file(filepath="wires/sphere_with_singularity.step")
@@ -50,7 +51,8 @@ class TestContour3D(unittest.TestCase):
         step = Step.from_file(filepath="wires/contour_with_repeated_edge_in_contour3d.step")
         model = step.to_volume_model()
         face = model.primitives[0].primitives[0]
-        self.assertEqual(len(face.outer_contour3d.primitives), 4)
+        self.assertEqual(len(face.outer_contour3d.primitives), 5)
+        self.assertTrue(face.outer_contour3d.is_ordered())
 
     def test_edge_intersections(self):
         points = [volmdlr.Point3D(1.2918566581549966, 2.3839907440191492, 0.5678759590090421),
