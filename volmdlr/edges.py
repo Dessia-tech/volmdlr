@@ -162,8 +162,6 @@ class Edge(dc.DessiaObject):
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
         step_id = kwargs.get("step_id")
-        if step_id == 3236522:
-            print("edges.py")
         if obj.__class__.__name__ == 'LineSegment3D':
             return LineSegment3D(point1, point2, name=arguments[0][1:-1])
         if obj.__class__.__name__ == 'Line3D':
@@ -4095,7 +4093,6 @@ class LineSegment3D(LineSegment):
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D, line: volmdlr_curves.Line3D = None,
                  name: str = ''):
         if start.is_close(end):
-            print(True)
             raise NotImplementedError('Start and end of Linesegment3D are equal')
         self.line = line
         if not line:
