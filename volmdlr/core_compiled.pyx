@@ -210,7 +210,7 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False, tol:
 
 # =============================================================================
 def bbox_is_intersecting(bbox1, bbox2, tol):
-    """Verifies if the two bouding boxes are intersecting, or touching."""
+    """Verifies if the two bounding boxes are intersecting, or touching."""
     cdef double x1_min, x1_max, y1_min, y1_max, z1_min, z1_max, x2_min, x2_max, y2_min, y2_max, z2_min, z2_max
     x1_min = bbox1.xmin - tol
     x1_max = bbox1.xmax + tol
@@ -1737,7 +1737,7 @@ cdef class Vector3D(Vector):
         :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
-            that have already been instanciated
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Vector3D object
         :rtype: :class:`volmdlr.Vector3D`
@@ -1933,7 +1933,7 @@ cdef class Point3D(Vector3D):
         :param arguments: The arguments of the step primitive
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
-            that have already been instanciated
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Point3D object
         :rtype: :class:`volmdlr.Point3D`
@@ -2612,7 +2612,7 @@ class Basis3D(Basis):
     def from_two_vectors(cls, vector1: Vector3D, vector2: Vector3D, name: str = "") -> "Basis3D":
         """
         Creates a basis with first vector1 adimensionned, as u, v is the
-        vector2 substracted of u component, w is the cross product of u and v.
+        vector2 subtracted of u component, w is the cross product of u and v.
 
         :param vector1: The first vector of the Basis3D
         :type vector1: :class:`volmdlr.Vector3D`.
@@ -3429,7 +3429,7 @@ class Frame3D(Basis3D):
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
-            that have already been instanciated
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Frame3D object
         :rtype: :class:`volmdlr.Frame3D`
