@@ -45,7 +45,7 @@ class Curve(DessiaObject):
 
 
 class ClosedCurve(Curve):
-    """Abstract class for definiing closed curves (Circle, Ellipse) properties."""
+    """Abstract class for defining closed curves (Circle, Ellipse) properties."""
 
     def point_at_abscissa(self, abscissa):
         """
@@ -61,7 +61,7 @@ class ClosedCurve(Curve):
 
     def length(self):
         """
-        Calcultes the Closed Curve's length.
+        Calculates the Closed Curve's length.
         """
         raise NotImplementedError(f'length method not implemented by {self.__class__.__name__}')
 
@@ -1261,7 +1261,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         return self.split(split_points[0], split_points[1])
 
     def split(self, split_start, split_end):
-        """Splites a Circle2D into two arcs 2d."""
+        """Splits a Circle2D into two arcs 2d."""
         return [volmdlr.edges.Arc2D(self, split_start, split_end),
                 volmdlr.edges.Arc2D(self, split_end, split_start)]
 
@@ -1302,7 +1302,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         self.radius = radius
         self.frame = frame
         self._bbox = None
-        self.angle = 2*math.pi
+        self.angle = 2 * math.pi
         ClosedCurve.__init__(self, name=name)
 
     @property
@@ -1572,7 +1572,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         vector_u2 = point2 - point3
         try:
             vector_u1 = vector_u1.unit_vector()
-            vector_u2= vector_u2.unit_vector()
+            vector_u2 = vector_u2.unit_vector()
         except ZeroDivisionError as exc:
             raise ZeroDivisionError('the 3 points must be distincts') from exc
 

@@ -291,7 +291,7 @@ class Edge(dc.DessiaObject):
 
     def _generic_edge_intersections(self, edge2, abs_tol: float = 1e-6):
         """
-        General method to calculate the intersection of any two adges.
+        General method to calculate the intersection of any two edges.
 
         :param edge2: other edge
         :param abs_tol: tolerance.
@@ -6168,7 +6168,7 @@ class ArcEllipse3D(Edge):
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
-        Gets the intersections between an Ellipse 3D and a Line Segement 3D.
+        Gets the intersections between an Ellipse 3D and a Line Segment 3D.
 
         :param linesegment: The other linesegment.
         :param abs_tol: The absolute tolerance.
@@ -6183,7 +6183,7 @@ class ArcEllipse3D(Edge):
 
     def arcellipse_intersections(self, arcellipse3d, abs_tol: float = 1e-6):
         """
-        Gets the intersections between an Ellipse 3D and a Line Segement 3D.
+        Gets the intersections between an Ellipse 3D and a Line Segment 3D.
 
         :param arcellipse3d: The other linesegment.
         :param abs_tol: The absolute tolerance.

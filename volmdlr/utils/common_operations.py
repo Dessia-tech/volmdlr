@@ -231,7 +231,7 @@ def get_point_distance_to_edge(edge, point, start, end):
 
 def ellipse_abscissa_angle_integration(ellipse3d, point_abcissa, angle_start, initial_angle):
     """
-    Caculates the angle for a given abcissa point by integrating the ellipse.
+    Calculates the angle for a given abcissa point by integrating the ellipse.
 
     :param ellipse3d: the Ellipse3D.
     :param point_abcissa: the given abscissa for given point.
