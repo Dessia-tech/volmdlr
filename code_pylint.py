@@ -79,7 +79,7 @@ if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
 
 if os.environ.get('DRONE_TARGET_BRANCH', '') in ['master', 'testing']:
     limit_time_effect = True
-    print(f"Limiting time effect of 21 days as we are targetting {os.environ['DRONE_TARGET_BRANCH']}")
+    print(f"Limiting time effect of 21 days as we are targeting {os.environ['DRONE_TARGET_BRANCH']}")
 
 if limit_time_effect:
     EFFECTIVE_DATE += timedelta(days=21)
