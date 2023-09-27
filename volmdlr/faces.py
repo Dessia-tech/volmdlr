@@ -24,6 +24,8 @@ from volmdlr import surfaces
 from volmdlr.utils.parametric import array_range_search
 import volmdlr.wires
 
+warnings.simplefilter("once")
+
 
 def octree_decomposition(bbox, faces):
     """Decomposes a list of faces into eight Bounding boxes subdivided boxes."""
