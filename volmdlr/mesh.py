@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-unary-operand-type
 """
 Module containing mesh and relative objects.
 """

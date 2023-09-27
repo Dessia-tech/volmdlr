@@ -120,7 +120,7 @@ class TestClosedShell3D(unittest.TestCase):
         plane3d_1 = surfaces.Plane3D.from_plane_vectors(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
         surf2d_1 = surfaces.Surface2D(poly1_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), [])
 
-        plane3d_2 = surfaces.Plane3D.from_plane_vectors(0.3 * volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D)
+        plane3d_2 = surfaces.Plane3D.from_plane_vectors(0.3 * volmdlr.Z3D.to_point(), volmdlr.X3D, volmdlr.Y3D)
         surf2d_2 = surfaces.Surface2D(poly3_vol1.to_2d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D), [])
         shell_faces += [faces.PlaneFace3D(plane3d_1, surf2d_1), faces.PlaneFace3D(plane3d_2, surf2d_2)]
 

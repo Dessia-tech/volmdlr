@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # cython: language_level=3
+# cython: c_string_type=str, c_string_encoding=ascii
 """
 
 Cython functions
@@ -396,10 +397,12 @@ class Arrow3D(FancyArrowPatch):
         return ax
 
 
-class Vector(DessiaObject):
+cdef class Vector:
     """
     Abstract class of vector
     """
+    def __init__(self, name = ""):
+        self.name = name
 
     def __radd__(self, other_vector):
         return self + other_vector
@@ -419,7 +422,7 @@ class Vector(DessiaObject):
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-6):
+    def is_colinear_to(self, other_vector: Vector, abs_tol: float = 1e-6):
         """
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.
@@ -439,7 +442,7 @@ class Vector(DessiaObject):
         except ZeroDivisionError:
             return False
 
-    def is_perpendicular_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
+    def is_perpendicular_to(self, other_vector: Vector, abs_tol: float = 1e-5):
         """
         Checks if two vectors are perpendicular.
         The two vectors should be of same dimension.
@@ -454,7 +457,7 @@ class Vector(DessiaObject):
         return math.isclose(abs(self.dot(other_vector)), 0, abs_tol=abs_tol)
 
     @classmethod
-    def mean_point(cls, points: List["Vector"], name: str = ""):
+    def mean_point(cls, points: List["Vector"], name = ""):
         """
         Find the mean point from a list of points. All the objects of this list
         should be of same dimension.
@@ -500,7 +503,7 @@ class Vector(DessiaObject):
         return self
 
 
-class Vector2D(Vector):
+cdef class Vector2D(Vector):
     """
     Class representing a 2-dimensional vector.
 
@@ -508,13 +511,12 @@ class Vector2D(Vector):
     :type x: float
     :param y: The vector's ordinate
     :type y: float
-    :param name: The vector's name
-    :type name: str
+
     """
-    def __init__(self, x: float, y: float, name=""):
+    def __init__(self, x: float, y: float, name: str = ""):
         self.x = x
         self.y = y
-        self.name = name
+        Vector.__init__(self, name=name)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.x}, {self.y})"
@@ -566,7 +568,10 @@ class Vector2D(Vector):
             return self.x == other.x and self.y == other.y
         return False
 
-    def is_close(self, other_vector: "Vector2D", tol: float = 1e-6):
+    def _data_eq(self, other):
+        return self == other
+
+    def is_close(self, other_vector: Vector2D, tol: float = 1e-6):
         """
         Checks if two vectors are close to each other considering the
         Euclidean distance. The tolerance can be modified. The two vectors
@@ -754,7 +759,7 @@ class Vector2D(Vector):
             new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
-    def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
+    def to_3d(self, plane_origin: Point3D, vx: Vector3D, vy: Vector3D):
         """
         Returns the 3-dimensional vector corresponding to the 2-dimensional
         vector placed on the 3-dimensional plane (XY) of the 3-dimensional
@@ -906,7 +911,7 @@ X2D = Vector2D(1, 0)
 Y2D = Vector2D(0, 1)
 
 
-class Point2D(Vector2D):
+cdef class Point2D(Vector2D):
     """
     Class representing a 2-dimensional point.
 
@@ -918,10 +923,10 @@ class Point2D(Vector2D):
     :type name: str
     """
 
-    def __init__(self, x: float, y: float, name: Text = ""):
+    def __init__(self, x, y, name = ""):
         self.x = x
         self.y = y
-        Vector2D.__init__(self, x=x, y=y, name=name)
+        self.name = name
 
     def __add__(self, other_vector):
         return Point2D(*c_add_2d(self.x, self.y, other_vector.x, other_vector.y))
@@ -944,6 +949,15 @@ class Point2D(Vector2D):
     def __hash__(self):
         """Return a hash value for the point 2d."""
         return hash(("point", self.x, self.y))
+
+    def __eq__(self, other):
+        """Return True if the other point has the same x and y coordinates, False otherwise."""
+        if isinstance(other, self.__class__):
+            return self.x == other.x and self.y == other.y
+        return False
+
+    def _data_eq(self, other):
+        return self == other
 
     def to_dict(self, *args, **kwargs):
         """
@@ -1156,7 +1170,7 @@ class Point2D(Vector2D):
         return plot_data.Point2D(self.x, self.y)
 
     @classmethod
-    def middle_point(cls, point1: Vector2D, point2: Vector2D, name: str = ""):
+    def middle_point(cls, point1: Vector2D, point2: Vector2D, name = ""):
         """
         Computes the middle point between two two-dimensional vector-like objects.
 
@@ -1174,7 +1188,7 @@ class Point2D(Vector2D):
 
     @classmethod
     def line_projection(cls, point: Vector2D,
-                        line: "volmdlr.edges.Line2D", name: str = ""):
+                        line: "volmdlr.edges.Line2D", name = ""):
         """
         Computes the projection of a two-dimensional vector-like object on an
         infinite two-dimensional line
@@ -1256,7 +1270,7 @@ class Point2D(Vector2D):
 O2D = Point2D(0, 0)
 
 
-class Vector3D(Vector):
+cdef class Vector3D(Vector):
     """
     Class representing a 3-dimensional vector.
 
@@ -1270,11 +1284,11 @@ class Vector3D(Vector):
     :type name: str
     """
 
-    def __init__(self, x: float, y: float, z: float, name: Text = ""):
+    def __init__(self, double x, double y, double z, name: str = ""):
         self.x = x
         self.y = y
         self.z = z
-        self.name = name
+        Vector.__init__(self, name=name)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.x}, {self.y}, {self.z})"
@@ -1332,6 +1346,9 @@ class Vector3D(Vector):
         if isinstance(other, self.__class__):
             return self.x == other.x and self.y == other.y and self.z == other.z
         return False
+
+    def _data_eq(self, other):
+        return self == other
 
     def is_close(self, other_vector, tol=1e-6):
         """
@@ -1574,7 +1591,7 @@ class Vector3D(Vector):
             new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
-    def plane_projection3d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
+    def plane_projection3d(self, plane_origin: Vector3D, x: Vector3D, y: Vector3D):
         """
         Projects a Vector3D-like object on a 3D plane.
 
@@ -1591,7 +1608,7 @@ class Vector3D(Vector):
         z = z.unit_vector()
         return self - z.dot(self - plane_origin) * z
 
-    def plane_projection2d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
+    def plane_projection2d(self, plane_origin: Vector3D, x: Vector3D, y: Vector3D):
         """
         Projects a Vector3D-like object on a 2D plane.
 
@@ -1609,7 +1626,7 @@ class Vector3D(Vector):
         u2 = p3d.dot(y)
         return Point2D(u1, u2)
 
-    def to_2d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
+    def to_2d(self, plane_origin: Point3D, x: Vector3D, y: Vector3D):
         """
         # TODO: difference with plane_projection2d needs details
         Transforms a Vector3D-like object to a Point2D.
@@ -1626,7 +1643,9 @@ class Vector3D(Vector):
         x2d = self.dot(x) - plane_origin.dot(x)
         y2d = self.dot(y) - plane_origin.dot(y)
         class_name = self.__class__.__name__[:-2] + "2D"
-        return getattr(sys.modules[self.__module__], class_name)(x2d, y2d)
+        if class_name in ("Vector2D", "Point2D"):
+            return getattr(sys.modules["volmdlr.core_compiled"], class_name)(x2d, y2d)
+        return getattr(sys.modules["volmdlr.display"], class_name)(x2d, y2d)
 
     def random_unit_normal_vector(self):
         """
@@ -1699,7 +1718,7 @@ class Vector3D(Vector):
         """
         return cls(random.uniform(xmin, xmax),
                    random.uniform(ymin, ymax),
-                   random.uniform(zmin, zmax), name=name)
+                   random.uniform(zmin, zmax))
 
     def to_point(self):
         """
@@ -1800,7 +1819,7 @@ Y3D = Vector3D(0, 1, 0)
 Z3D = Vector3D(0, 0, 1)
 
 
-class Point3D(Vector3D):
+cdef class Point3D(Vector3D):
     """
     Class representing a 3-dimensional point.
 
@@ -1814,13 +1833,11 @@ class Point3D(Vector3D):
     :type name: str
     """
 
-    _standalone_in_db = False
-
-    def __init__(self, x: float, y: float, z: float, name: Text = ""):
+    def __init__(self, x, y, z, name = ""):
         self.x = x
         self.y = y
         self.z = z
-        Vector3D.__init__(self, x, y, z, name)
+        self.name = name
 
     def __add__(self, other_vector):
         return Point3D(*c_add_3d(self.x, self.y, self.z, other_vector.x, other_vector.y, other_vector.z))
@@ -1844,6 +1861,15 @@ class Point3D(Vector3D):
     def __hash__(self):
         """Return a hash value for the point 3d."""
         return hash(("point", self.x, self.y, self.z))
+
+    def __eq__(self, other):
+        """Return True if the other point has the same x, y and z coordinates, False otherwise."""
+        if isinstance(other, self.__class__):
+            return self.x == other.x and self.y == other.y and self.z == other.z
+        return False
+
+    def _data_eq(self, other):
+        return self == other
 
     def to_dict(self, *args, **kwargs):
         """
@@ -1938,7 +1964,7 @@ class Point3D(Vector3D):
         return (self - point2).norm()
 
     @classmethod
-    def middle_point(cls, point1: "Point3D", point2: "Point3D", name: str = ""):
+    def middle_point(cls, point1: "Point3D", point2: "Point3D", name = ""):
         """
         Computes the middle point between two 3-dimensional points.
 
