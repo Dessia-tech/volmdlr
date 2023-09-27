@@ -540,9 +540,9 @@ class Step(dc.DessiaObject):
                 "GEOMETRIC_REPRESENTATION_CONTEXT": geometric_representation_context,
                 "SHELLS": shell_nodes}
 
-    def get_assembly_struct(self):
+    def get_assembly_structure(self):
         """
-        Get assembly dependecy struct.
+        Get assembly dependency structure.
         """
         assemblies_structure = {}
         assemblies = set()
@@ -639,7 +639,7 @@ class Step(dc.DessiaObject):
             self.functions[next_assembly_usage_occurrence].arg.append(f'#{node}')
 
     def instatiate_assembly(self, object_dict):
-        assemblies_structure, valid_entities = self.get_assembly_struct()
+        assemblies_structure, valid_entities = self.get_assembly_structure()
 
         instantiate_ids = list(assemblies_structure.keys())
         error = True
