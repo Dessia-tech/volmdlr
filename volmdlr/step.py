@@ -541,6 +541,9 @@ class Step(dc.DessiaObject):
                 "SHELLS": shell_nodes}
 
     def get_assembly_struct(self):
+        """
+        Get assembly dependecy struct.
+        """
         assemblies_structure = {}
         assemblies = set()
         shapes = set()
@@ -558,6 +561,9 @@ class Step(dc.DessiaObject):
         return assemblies_structure, valid_entities
 
     def get_assembly_data(self, assembly_usage_occurence, valid_entities, assembly_frame, object_dict):
+        """
+        Helper function to get assembly data.
+        """
         assembly_shapes = []
         assembly_positions = []
         for node in assembly_usage_occurence:
