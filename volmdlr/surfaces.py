@@ -1973,7 +1973,7 @@ class PeriodicalSurface(Surface3D):
             circle3d = curves.Circle3D(
                 volmdlr.Frame3D(center, self.frame.u, self.frame.v, self.frame.w),
                 start3d.point_distance(center))
-        if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametic.linesegment":
+        if math.isclose(theta1, theta2, abs_tol=1e-4) or linesegment2d.name == "parametric.linesegment":
             if start3d.is_close(end3d):
                 return None
             return [edges.LineSegment3D(start3d, end3d)]
