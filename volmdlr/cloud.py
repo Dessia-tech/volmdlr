@@ -190,7 +190,7 @@ class PointCloud3D(dc.DessiaObject):
                                                                  resolution=resolution)
         sub_clouds3d = [self.extract(normal, pos_plane - 0.5 * dist_between_plane,
                                      pos_plane + 0.5 * dist_between_plane) for pos_plane in position_plane]
-        sub_clouds2d = [sub_clouds3d[n].to_subcloud2d(position_plane[n] * normal, vec1, vec2)
+        sub_clouds2d = [sub_clouds3d[n].to_subcloud2d((position_plane[n] * normal).to_point(), vec1, vec2)
                         for n in range(resolution)]
 
         # Offsetting
@@ -232,7 +232,8 @@ class PointCloud3D(dc.DessiaObject):
                     vec2_ = -vec2
                 faces.append(
                     vmf.PlaneFace3D(
-                        surface3d=surfaces.Plane3D.from_plane_vectors(position_plane[n] * normal, vec1, vec2_),
+                        surface3d=surfaces.Plane3D.from_plane_vectors((position_plane[n] * normal).to_point(),
+                                                                      vec1, vec2_),
                         surface2d=cls._poly_to_surf2d(poly1_simplified, position_plane[n], normal, vec1, vec2_)))
 
             if n != resolution - 1:
@@ -247,7 +248,7 @@ class PointCloud3D(dc.DessiaObject):
 
     @staticmethod
     def _helper_simplify_polygon(polygon, position_plane, normal, vec1, vec2):
-        poly_2d = polygon.to_2d(position_plane * normal, vec1, vec2)
+        poly_2d = polygon.to_2d((position_plane * normal).to_point(), vec1, vec2)
         poly_2d_simplified = poly_2d.simplify_polygon(0.01, 1)
         if 1 - poly_2d_simplified.area() / poly_2d.area() > 0.3:
             poly_2d_simplified = poly_2d
@@ -255,7 +256,7 @@ class PointCloud3D(dc.DessiaObject):
 
     @staticmethod
     def _poly_to_surf2d(polygon, position_plane, normal, vec1, vec2):
-        return surfaces.Surface2D(polygon.to_2d(position_plane * normal, vec1, vec2), [])
+        return surfaces.Surface2D(polygon.to_2d((position_plane * normal).to_point(), vec1, vec2), [])
 
     @staticmethod
     def _helper_sew_polygons(poly1, poly2, vec1, vec2):

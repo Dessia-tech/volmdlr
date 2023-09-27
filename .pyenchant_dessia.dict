@@ -1,4 +1,5 @@
 Aabb
+arcellipse
 argmax
 args
 asarray
@@ -37,9 +38,11 @@ dessia's
 dimensioned
 discretization
 discretized
+discretize
 discretizing
 distutils
 dof
+EdgeStyle
 euler
 facecolor
 filepath
@@ -82,6 +85,7 @@ networkx
 networkx.DiGraph
 np
 num
+numpy
 nurbs
 Nurbs
 nx
@@ -112,8 +116,11 @@ tol
 Tore's
 toroidal
 triangleface
+Trimesh
 umax
+vectorextru
 umin
+utils
 uv
 vmc
 vme
