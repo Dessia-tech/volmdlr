@@ -533,6 +533,7 @@ class WireMixin:
             return [cls(list_edges, name=name)]
 
         new_primitives, i = [], -1
+        index_primitive = 0
         while list_edges:
             i += 1
             new_primitives.append([list_edges[0]])
@@ -2588,7 +2589,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def discretized_contour(self, n: float):
         """
-        Discretize each contour's primitive and return a new contour with theses discretized primitives.
+        Discretize each contour's primitive and return a new contour with these discretized primitives.
         """
         contour = Contour2D((self.discretized_primitives(n)))
 
@@ -3988,9 +3989,9 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             middle_point = primitive1.middle_point()
             normal_vector = primitive1.unit_normal_vector()
             line_segment1 = volmdlr.edges.LineSegment2D(middle_point,
-                                                        middle_point - normal_vector)
+                                                        (middle_point - normal_vector).to_point())
             line_segment2 = volmdlr.edges.LineSegment2D(middle_point,
-                                                        middle_point + normal_vector)
+                                                        (middle_point + normal_vector).to_point())
             possible_closing_points = self.get_possible_sewing_closing_points(
                 polygon2_2d, primitive1, line_segment1, line_segment2)
             if len(possible_closing_points[line_segment1]) == 1 and \
@@ -4914,8 +4915,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return closing_point_index, list_remove_closing_points, passed_by_zero_index
 
     def concave_sewing(self, polygon2, x, y):
-        polygon1_2d = self.to_2d(volmdlr.O2D, x, y)
-        polygon2_2d = polygon2.to_2d(volmdlr.O2D, x, y)
+        polygon1_2d = self.to_2d(volmdlr.O3D, x, y)
+        polygon2_2d = polygon2.to_2d(volmdlr.O3D, x, y)
         polygon1_3d = self
         polygon2_3d = polygon2
         need_fix_normal = False
@@ -4926,7 +4927,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             need_fix_normal = True
         polygon1_3d = polygon1_3d.get_valid_concave_sewing_polygon(
             polygon1_2d, polygon2_2d)
-        polygon1_2d = polygon1_3d.to_2d(volmdlr.O2D, x, y)
+        polygon1_2d = polygon1_3d.to_2d(volmdlr.O3D, x, y)
 
         dict_closing_pairs = {}
         triangles_points = []
@@ -5051,8 +5052,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         :param x: The vector representing first direction to project polygons in
         :param y: The vector representing second direction to project polygons in
         """
-        polygon1_2d = self.to_2d(volmdlr.O2D, x, y)
-        polygon2_2d = polygon2.to_2d(volmdlr.O2D, x, y)
+        polygon1_2d = self.to_2d(volmdlr.O3D, x, y)
+        polygon2_2d = polygon2.to_2d(volmdlr.O3D, x, y)
         if polygon1_2d.is_convex() and polygon2_2d.is_convex():
             return self.convex_sewing(polygon2, x, y)
         return self.concave_sewing(polygon2, x, y)

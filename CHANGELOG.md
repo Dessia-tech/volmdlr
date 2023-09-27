@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cache BSplineCurve points into a numpy array to reduce memory usage.
 - Vector2D, Vector3D: __repr__
 - core_compiled: cdef functions' names.
--
+- Vector2D, Vector3D, Point2D, Point3D: transformed into extension types for memory performance
 
 ### Unittests
 - Hyperbola2D/3D: line_intersections

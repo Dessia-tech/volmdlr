@@ -45,7 +45,8 @@ for i in range(N_SCREWS):
     screw_holes.append(volmdlr.wires.Contour2D([edges.FullArc2D.from_curve(circle)]))
 
 belt_outer_contour = inner_contour.offset(-(2*SCREW_HOLES_CLEARANCE + SCREW_HOLES_DIAMETER+THICKNESS))
-belt = primitives3d.ExtrudedProfile(volmdlr.Frame3D(vm.Z3D*(HEIGHT - 2*THICKNESS), vm.X3D, vm.Y3D, vm.Z3D),
+belt = primitives3d.ExtrudedProfile(volmdlr.Frame3D(vm.Point3D(0, 0, 1) * (HEIGHT - 2*THICKNESS),
+                                                    vm.X3D, vm.Y3D, vm.Z3D),
                                     belt_outer_contour,
                                     [inner_contour]+screw_holes,
                                     THICKNESS, name='belt')
