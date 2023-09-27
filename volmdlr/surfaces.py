@@ -1869,6 +1869,8 @@ class PeriodicalSurface(Surface3D):
         points3d = bspline_curve3d.discretization_points(number_points=n)
         points = [self.point3d_to_2d(point) for point in points3d]
         if self.is_singularity_point(bspline_curve3d.start) or self.is_singularity_point(bspline_curve3d.end):
+            if isinstance(self, RevolutionSurface3D):
+                print("surfaces.py")
             points = self.fix_start_end_singularity_point_at_parametric_domain(bspline_curve3d, points, points3d)
         theta1, z1 = points[0]
         theta2, z2 = points[-1]
@@ -7666,8 +7668,6 @@ class BSplineSurface3D(Surface3D):
                 temp_points = points
             temp_edge2d = get_temp_edge2d(temp_points)
             singularity_line = get_singularity_line(umin, umax, vmin, vmax, temp_points[0])
-            if temp_points[1] is None or temp_edge2d is None:
-                print(True)
             points[0] = self.fix_start_end_singularity_point_at_parametric_domain(temp_edge2d,
                                                                                   reference_point=temp_points[1],
                                                                                   singularity_line=singularity_line)
