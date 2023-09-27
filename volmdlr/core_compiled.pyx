@@ -928,6 +928,22 @@ cdef class Point2D(Vector2D):
         self.y = y
         self.name = name
 
+    def __setitem__(self, key, item):
+        if key == 0:
+            self.x = item
+        elif key == 1:
+            self.y = item
+        else:
+            raise IndexError
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self.x
+        elif key == 1:
+            return self.y
+        else:
+            raise IndexError
+
     def __add__(self, other_vector):
         return Point2D(*c_add_2d(self.x, self.y, other_vector.x, other_vector.y))
 
@@ -1838,6 +1854,26 @@ cdef class Point3D(Vector3D):
         self.y = y
         self.z = z
         self.name = name
+
+    def __setitem__(self, key, item):
+        if key == 0:
+            self.x = item
+        elif key == 1:
+            self.y = item
+        elif key == 2:
+            self.z = item
+        else:
+            raise IndexError
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self.x
+        elif key == 1:
+            return self.y
+        elif key == 2:
+            return self.z
+        else:
+            raise IndexError
 
     def __add__(self, other_vector):
         return Point3D(*c_add_3d(self.x, self.y, self.z, other_vector.x, other_vector.y, other_vector.z))
