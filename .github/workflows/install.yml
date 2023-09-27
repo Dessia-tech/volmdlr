@@ -20,4 +20,3 @@ jobs:
       - name: Install
         run: |
           pip install .
-
