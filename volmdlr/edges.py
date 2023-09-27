@@ -5134,12 +5134,12 @@ class BSplineCurve3D(BSplineCurve):
         bspline_surface3d = volmdlr.surfaces.BSplineSurface3D.from_points_interpolation(points_3d, size_u,
                                                                                        size_v,degree_u, degree_v)
 
-        outer_contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D),
+        outer_contour = volmdlr.wires.Contour2D([volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D.to_point()),
                                                  volmdlr.edges.LineSegment2D(
-                                                     volmdlr.X2D, volmdlr.X2D + volmdlr.Y2D),
+                                                     volmdlr.X2D.to_point(), (volmdlr.X2D + volmdlr.Y2D).to_point()),
                                                  volmdlr.edges.LineSegment2D(
-                                                     volmdlr.X2D + volmdlr.Y2D, volmdlr.Y2D),
-                                                 volmdlr.edges.LineSegment2D(volmdlr.Y2D, volmdlr.O2D)])
+                                                     (volmdlr.X2D + volmdlr.Y2D).to_point(), volmdlr.Y2D.to_point()),
+                                                 volmdlr.edges.LineSegment2D(volmdlr.Y2D.to_point(), volmdlr.O2D)])
         surf2d = volmdlr.surfaces.Surface2D(outer_contour, [])
 
         bsface3d = volmdlr.faces.BSplineFace3D(bspline_surface3d, surf2d)

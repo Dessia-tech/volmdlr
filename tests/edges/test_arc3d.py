@@ -1,4 +1,5 @@
 import math
+import os
 import unittest
 from itertools import product
 
@@ -6,6 +7,9 @@ import dessia_common.core
 import volmdlr
 from volmdlr import edges, wires, curves
 from volmdlr.models.curves import circle3d
+
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "arc_objects")
 
 
 class TestArc3D(unittest.TestCase):
@@ -82,7 +86,7 @@ class TestArc3D(unittest.TestCase):
         for abscissa, expected_abscissa in zip(abscissas, expected_abscissa):
             self.assertAlmostEqual(abscissa, expected_abscissa)
 
-        arc = edges.Arc3D.load_from_file("edges/arc_objects/arc_abscissa_bug.json")
+        arc = edges.Arc3D.load_from_file(os.path.join(folder, "arc_abscissa_bug.json"))
         point = volmdlr.Point3D(0.6002208894332702, -0.637646466964, 0.006570128575852758)
         abscissa = arc.abscissa(point)
         self.assertAlmostEqual(abscissa, 0.019320794819579237)
@@ -252,7 +256,7 @@ class TestArc3D(unittest.TestCase):
         self.assertEqual(arc.point_distance(point4), math.sqrt(2))
 
         point = volmdlr.Point3D(0.33525, -0.51106, 0.639935)
-        arc = dessia_common.core.DessiaObject.load_from_file('edges/arc_objects/arc3d_test_point_distance.json')
+        arc = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "arc3d_test_point_distance.json"))
         self.assertAlmostEqual(arc.point_distance(point), 0.0021097842575404403)
 
     def test_arc_intersections(self):
