@@ -102,6 +102,7 @@ steps:
   - pip install .[doc,test]
   - python setup.py build_ext --inplace
   - python setup.py install
+  - cd doc
   - make html
   - cd ../tests
   - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
@@ -114,7 +115,6 @@ steps:
   - coverage report
   - coverage html
   - python coverage.py
-  - cd ../doc
 
   volumes:
     # Mount pip cache from host
