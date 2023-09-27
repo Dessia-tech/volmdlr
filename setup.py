@@ -130,7 +130,7 @@ setup(
         "Cython>=3.0.0",
         "numpy",
         "matplotlib",
-        "scipy",
+        "scipy<=1.11.1",
         "geomdl",
         "networkx",
         "triangle",
