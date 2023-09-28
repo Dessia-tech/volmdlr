@@ -1243,13 +1243,22 @@ class BSplineCurve(Edge):
         if point.is_close(self.end):
             return self.length()
         length = self.length()
-        initial_condition_list = [0, 0.15, 0.25, 0.35, 0.5, 0.65, 0.75, 0.9, 1]
+        point_array = npy.array(list(point), dtype=npy.float64)
+        distances = npy.linalg.norm(self._eval_points - point_array, axis=1)
+        index = npy.argmin(distances)
+        u_min, u_max = self.domain
+        u0 = u_min + index * (u_max - u_min) / (self.sample_size - 1)
+        u, convergence_sucess = self.point_invertion(u0, point)
+        abscissa = u * length
+        if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
+            return abscissa
 
         def evaluate_point_distance(u_param):
             return (point - self.evaluate_single(u_param)).norm()
-        results = []
+        results = [(abscissa, evaluate_point_distance(u))]
+        initial_condition_list = [0, 0.15, 0.25, 0.35, 0.5, 0.65, 0.75, 0.9, 1]
         initial_condition_list.sort(key=evaluate_point_distance)
-        for u0 in initial_condition_list:
+        for u0 in initial_condition_list[:2]:
             u, convergence_sucess = self.point_invertion(u0, point)
             abscissa = u * length
             if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
@@ -1553,7 +1562,7 @@ class BSplineCurve(Edge):
         """Gets the points that define a BsplineCurve in a .geo file."""
         return list(self.discretization_points())
 
-    def line_intersections(self, line):
+    def line_intersections(self, line, tol: float = 1e-6):
         """
         Calculates the intersections of a BSplineCurve (2D or 3D) with a Line (2D or 3D).
 
@@ -1572,10 +1581,10 @@ class BSplineCurve(Edge):
             intersections = linesegment.line_intersections(line)
 
             if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
-                if line.point_distance(linesegment.middle_point()) < 1e-8:
+                if line.point_distance(linesegment.middle_point()) < (tol * 0.01):
                     list_intersections.append(linesegment.middle_point())
             if intersections and intersections[0] not in list_intersections:
-                if self.point_belongs(intersections[0], 1e-6):
+                if self.point_belongs(intersections[0], tol):
                     list_intersections.append(intersections[0])
                     continue
                 abs1 = self.abscissa(linesegment.start)
@@ -1763,7 +1772,7 @@ class BSplineCurve(Edge):
         if isinstance(other_edge, self.__class__):
             if self.start.is_close(other_edge.start) and self.end.is_close(other_edge.end):
                 is_true = True
-                for point in other_edge.discretization_points(number_points=20):
+                for point in other_edge.discretization_points(number_points=10):
                     if not self.point_belongs(point):
                         is_true = False
                         break
