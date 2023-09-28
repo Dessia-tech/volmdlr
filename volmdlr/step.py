@@ -183,7 +183,7 @@ class Step(dc.DessiaObject):
         return functions, dict_connections
 
     def _helper_intantiate_step_functions(self, functions, connections, function_parameters):
-        """Helper funtion to read_lines."""
+        """Helper function to read_lines."""
         function_id, function_name, function_name_arg = function_parameters
         function_arg = function_name_arg[1]
         arguments = step_reader.step_split_arguments(function_arg)
