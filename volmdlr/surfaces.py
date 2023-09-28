@@ -4472,7 +4472,9 @@ class RevolutionSurface3D(PeriodicalSurface):
     @property
     def domain(self):
         """Returns u and v bounds."""
-        return -math.pi, math.pi, 0.0, self.edge.length()
+        if self.edge.__class__.__name__ != "Line3D":
+            return -math.pi, math.pi, 0.0, self.edge.length()
+        return -math.pi, math.pi, 0.0, 1.0
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """
@@ -4538,17 +4540,14 @@ class RevolutionSurface3D(PeriodicalSurface):
         :return: The corresponding RevolutionSurface3D object.
         :rtype: :class:`volmdlr.faces.RevolutionSurface3D`
         """
-        y_periodicity = None
         name = arguments[0][1:-1]
         edge = object_dict[arguments[1]]
         if edge.__class__ is curves.Circle3D:
             start_end = edge.center + edge.frame.u * edge.radius
             edge = edges.FullArc3D(edge, start_end, edge.name)
-            y_periodicity = edge.length()
 
         axis_point, axis = object_dict[arguments[2]]
         surface = cls(edge=edge, axis_point=axis_point, axis=axis, name=name)
-        surface.y_periodicity = y_periodicity
         return surface.simplify()
 
     def to_step(self, current_id):
@@ -5915,7 +5914,7 @@ class BSplineSurface3D(Surface3D):
         points = [self.point3d_to_2d(p, tol) for p in points3d]
 
         if self.u_closed() or self.v_closed():
-            points = self.check_start_end_parametric_points(bspline_curve3d, points, points3d)
+            points = self.fix_start_end_singularity_point_at_parametric_domain(bspline_curve3d, points, points3d)
 
         if self.x_periodicity:
             points = self._repair_periodic_boundary_points(bspline_curve3d, points, 'x')
