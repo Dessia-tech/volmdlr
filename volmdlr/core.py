@@ -786,17 +786,17 @@ class BoundingBox(dc.DessiaObject):
             if self.point_belongs(point):
                 return True
 
-        x = [point[0] for point in triangle.points]
-        y = [point[1] for point in triangle.points]
-        z = [point[2] for point in triangle.points]
+        x = npy.array([point[0] for point in triangle.points])
+        y = npy.array([point[1] for point in triangle.points])
+        z = npy.array([point[2] for point in triangle.points])
 
         if (
-                max(x) < self.xmin or
-                min(x) > self.xmax or
-                max(y) < self.ymin or
-                min(y) > self.ymax or
-                max(z) < self.zmin or
-                min(z) > self.zmax
+                npy.max(x) < self.xmin or
+                npy.min(x) > self.xmax or
+                npy.max(y) < self.ymin or
+                npy.min(y) > self.ymax or
+                npy.max(z) < self.zmin or
+                npy.min(z) > self.zmax
         ):
             return False
 
