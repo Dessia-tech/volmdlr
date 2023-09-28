@@ -4808,7 +4808,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         return False
 
-    def is_singularity_point(self, point, *args):
+    def is_singularity_point(self, point):
         """Returns True if the point belongs to the surface singularity and False otherwise."""
 
         if self.u_closed_lower() and self.edge.start.is_close(point):
@@ -7662,7 +7662,7 @@ class BSplineSurface3D(Surface3D):
         """
         return bool(self.v_closed_lower() or self.v_closed_upper())
 
-    def is_singularity_point(self, point, *args):
+    def is_singularity_point(self, point):
         """Returns True if the point belongs to the surface singularity and False otherwise."""
         if not self.u_closed() and not self.v_closed():
             return False
