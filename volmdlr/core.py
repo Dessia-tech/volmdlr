@@ -781,6 +781,27 @@ class BoundingBox(dc.DessiaObject):
             return False
         return True
 
+    def triangle_intersection_2(self, triangle: 'Triangle3D'):
+        for point in triangle.points:
+            if self.point_belongs(point):
+                return True
+
+        x = [point[0] for point in triangle.points]
+        y = [point[1] for point in triangle.points]
+        z = [point[2] for point in triangle.points]
+
+        if (
+                max(x) < self.xmin or
+                min(x) > self.xmax or
+                max(y) < self.ymin or
+                min(y) > self.ymax or
+                max(z) < self.zmin or
+                min(z) > self.zmax
+        ):
+            return False
+
+        return True
+
     def octree(self):
         """Creates a simple octree structure for a bounding box."""
         if not self._octree:
