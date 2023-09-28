@@ -198,6 +198,9 @@ class TestArcEllipse3D(unittest.TestCase):
         self.assertTrue(arcellipse_intersections[0].is_close(
             volmdlr.Point3D(0.442026341769, -0.728884874076, -0.728884874076)))
 
+    def test_is_close(self):
+        self.assertTrue(self.arc_ellipse3d.is_close(self.arc_ellipse3d))
+
 
 if __name__ == '__main__':
     unittest.main()

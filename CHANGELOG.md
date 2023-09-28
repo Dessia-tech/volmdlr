@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalFace3D: point_belongs
 - nurbs.core: find_multiplicity, evaluate_curve.
 - Step.read_lines: handles name with # character in name.
+- ArcEllipse3D: is_close
 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
