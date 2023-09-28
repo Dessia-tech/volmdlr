@@ -209,7 +209,6 @@ class Face3D(volmdlr.core.Primitive3D):
         elif len(contours3d) > 1:
             area = -1
             inner_contours2d = []
-            inner_contours3d = []
 
             contours2d = [surface.contour3d_to_2d(contour3d) for contour3d in contours3d]
 

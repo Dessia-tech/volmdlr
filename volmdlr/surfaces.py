@@ -3042,21 +3042,19 @@ class ConicalSurface3D(PeriodicalSurface):
         if line.point_belongs(self.frame.origin):
             return [self.frame.origin]
         line_direction_vector = line.unit_direction_vector()
-        vertex = self.frame.origin
-        v = self.frame.w
-        plane_normal = line_direction_vector.cross((vertex - line.point1).to_vector()).unit_vector()
-        if v.dot(plane_normal) > 0:
+        plane_normal = line_direction_vector.cross((self.frame.origin - line.point1).to_vector()).unit_vector()
+        if self.frame.w.dot(plane_normal) > 0:
             plane_normal = - plane_normal
-        plane = Plane3D.from_normal(vertex, plane_normal)
-        cos_theta = math.sqrt(1 - (plane_normal.dot(v) ** 2))
+        plane = Plane3D.from_normal(self.frame.origin, plane_normal)
+        cos_theta = math.sqrt(1 - (plane_normal.dot(self.frame.w) ** 2))
         if cos_theta >= math.cos(self.semi_angle):
-            plane_h = Plane3D.from_normal(vertex + v, v)
+            plane_h = Plane3D.from_normal(self.frame.origin + self.frame.w, self.frame.w)
             circle = self.perpendicular_plane_intersection(plane_h)[0]
             line_p = plane_h.plane_intersections(plane)[0]
             circle_line_p_intersections = circle.line_intersections(line_p)
             intersections = []
             for intersection in circle_line_p_intersections:
-                line_v_x = curves.Line3D(vertex, intersection)
+                line_v_x = curves.Line3D(self.frame.origin, intersection)
                 line_inter = line_v_x.intersection(line)
                 if not line_inter:
                     continue
