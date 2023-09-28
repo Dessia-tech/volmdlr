@@ -4,10 +4,10 @@ volmdlr utils for calculating 3D to surface parametric domain operation.
 """
 import bisect
 import math
-import warnings
 
 import volmdlr
 import volmdlr.edges as vme
+from volmdlr import curves
 
 
 def find_sign_changes(list_of_values):
@@ -352,3 +352,11 @@ def contour2d_healing_self_intersection(contour2d):
                 contour2d.primitives[i] = new_prim1
                 contour2d.primitives[(i + 1) % len(contour2d.primitives)] = new_prim2
     return contour2d
+
+
+def find_parametric_point_at_singularity(edge, reference_point, singularity_line):
+    """Uses tangent line to find real theta angle of the singularity point on parametric domain."""
+    abscissa_before_singularity = edge.abscissa(reference_point)
+    direction_vector = edge.direction_vector(abscissa_before_singularity)
+    direction_line = curves.Line2D(reference_point, reference_point + direction_vector)
+    return direction_line.line_intersections(singularity_line)[0]
