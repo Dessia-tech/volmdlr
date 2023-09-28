@@ -175,7 +175,6 @@ control_points = [volmdlr.Point3D(0, 3, 0),
                   volmdlr.Point3D(-3, 4, 1)]
 knots = [0.0, 1.0]
 knot_multiplicities = [6, 6]
-# weights = None  # [1, 2, 1, 2, 1, 2]
 bspline_curve3d = edges.BSplineCurve3D(degree=5, control_points=control_points,
                                        knot_multiplicities=knot_multiplicities,
                                        knots=knots,
