@@ -60,6 +60,7 @@ idx
 init
 inplace
 isinstance
+isocurve
 isort
 iterable
 Iterable

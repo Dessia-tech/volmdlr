@@ -1599,7 +1599,7 @@ class BSplineCurve(Edge):
         """Gets the points that define a BsplineCurve in a .geo file."""
         return list(self.discretization_points())
 
-    def line_intersections(self, line):
+    def line_intersections(self, line, tol: float = 1e-6):
         """
         Calculates the intersections of a BSplineCurve (2D or 3D) with a Line (2D or 3D).
 
@@ -1618,10 +1618,10 @@ class BSplineCurve(Edge):
             intersections = linesegment.line_intersections(line)
 
             if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
-                if line.point_distance(linesegment.middle_point()) < 1e-8:
+                if line.point_distance(linesegment.middle_point()) < (tol * 0.01):
                     list_intersections.append(linesegment.middle_point())
             if intersections and intersections[0] not in list_intersections:
-                if self.point_belongs(intersections[0], 1e-6):
+                if self.point_belongs(intersections[0], tol):
                     list_intersections.append(intersections[0])
                     continue
                 abs1 = self.abscissa(linesegment.start)
@@ -1808,7 +1808,7 @@ class BSplineCurve(Edge):
         if isinstance(other_edge, self.__class__):
             if self.start.is_close(other_edge.start) and self.end.is_close(other_edge.end):
                 is_true = True
-                for point in other_edge.discretization_points(number_points=20):
+                for point in other_edge.discretization_points(number_points=10):
                     if not self.point_belongs(point):
                         is_true = False
                         break
