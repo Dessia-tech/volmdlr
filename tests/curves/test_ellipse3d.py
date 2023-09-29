@@ -28,10 +28,9 @@ class TestEllipse3D(unittest.TestCase):
 
     def test_discretization_points(self):
         discretization_points = self.ellipse.discretization_points(number_points=4)
-        expected_points = [volmdlr.Point3D(4.0, 0.0, 0.0),
-                           volmdlr.Point3D(0, -3, 0),
-                           volmdlr.Point3D(-4, 0, 0),
-                           volmdlr.Point3D(0, 3, 0)]
+        expected_points = [volmdlr.Point3D(4.0, 0.0, 0.0), volmdlr.Point3D(0, 3, 0), volmdlr.Point3D(-4, 0, 0),
+                           volmdlr.Point3D(0, -3, 0)
+                           ]
         for expected_point, point in zip(expected_points, discretization_points):
             self.assertTrue(expected_point.is_close(point))
 
@@ -67,11 +66,11 @@ class TestEllipse3D(unittest.TestCase):
         rotated_ellipse3d = self.ellipse3d.rotation(volmdlr.O3D, self.ellipse3d.frame.v, math.pi / 2)
         rotated_ellipse3d_points = rotated_ellipse3d.discretization_points(number_points=6)
         expected_points = [volmdlr.Point3D(-3.825416359218455e-16, -1.414213562373095, 1.4142135623730954),
-                           volmdlr.Point3D(-0.7071067811865475, -0.35355339059327356, 1.0606601717798214),
-                           volmdlr.Point3D(-0.7071067811865472, 1.0606601717798212, -0.3535533905932735),
-                           volmdlr.Point3D(2.825496434870558e-16, 1.414213562373095, -1.4142135623730954),
+                           volmdlr.Point3D(0.7071067811865475, -1.0606601717798207, 0.3535533905932728),
                            volmdlr.Point3D(0.7071067811865474, 0.3535533905932742, -1.060660171779822),
-                           volmdlr.Point3D(0.7071067811865475, -1.0606601717798207, 0.3535533905932728)]
+                           volmdlr.Point3D(2.825496434870558e-16, 1.414213562373095, -1.4142135623730954),
+                           volmdlr.Point3D(-0.7071067811865472, 1.0606601717798212, -0.3535533905932735),
+                           volmdlr.Point3D(-0.7071067811865475, -0.35355339059327356, 1.0606601717798214)]
         for point, expected_point in zip(rotated_ellipse3d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
@@ -79,11 +78,11 @@ class TestEllipse3D(unittest.TestCase):
         translated_ellipse3d = self.ellipse3d.translation(self.ellipse3d.frame.w)
         translated_ellipse3d_points = translated_ellipse3d.discretization_points(number_points=6)
         expected_points = [volmdlr.Point3D(1.1547005383792517, 1.8618073195657994, 0.4475937571927041),
-                           volmdlr.Point3D(-0.12975651199692162, 1.6380104409694474, 0.22379687859635217),
-                           volmdlr.Point3D(-1.2844570503761734, 0.48330990259019585, -0.9309036597828992),
-                           volmdlr.Point3D(-1.1547005383792517, -0.44759375719270406, -1.8618073195657994),
+                           volmdlr.Point3D(1.2844570503761727, 0.9309036597828986, -0.48330990259019657),
                            volmdlr.Point3D(0.12975651199692095, -0.2237968785963525, -1.6380104409694478),
-                           volmdlr.Point3D(1.2844570503761727, 0.9309036597828986, -0.48330990259019657)]
+                           volmdlr.Point3D(-1.1547005383792517, -0.44759375719270406, -1.8618073195657994),
+                           volmdlr.Point3D(-1.2844570503761734, 0.48330990259019585, -0.9309036597828992),
+                           volmdlr.Point3D(-0.12975651199692162, 1.6380104409694474, 0.22379687859635217)]
         for point, expected_point in zip(translated_ellipse3d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
@@ -91,11 +90,11 @@ class TestEllipse3D(unittest.TestCase):
         frame_mapped_ellipse3d = self.ellipse3d.frame_mapping(self.ellipse3d.frame, 'new')
         frame_mapped_ellipse3d_points = frame_mapped_ellipse3d.discretization_points(number_points=6)
         expected_points = [volmdlr.Point3D(1.9999999999999996, 0.0, 0.0),
-                           volmdlr.Point3D(1.0, -0.8660254037844384, 0.0),
-                           volmdlr.Point3D(-0.9999999999999993, -0.8660254037844386, 0.0),
-                           volmdlr.Point3D(-1.9999999999999996, -1.224646799147353e-16, 0.0),
+                           volmdlr.Point3D(0.9999999999999983, 0.8660254037844388, 0.0),
                            volmdlr.Point3D(-1.0000000000000007, 0.8660254037844382, 0.0),
-                           volmdlr.Point3D(0.9999999999999983, 0.8660254037844388, 0.0)]
+                           volmdlr.Point3D(-1.9999999999999996, -1.224646799147353e-16, 0.0),
+                           volmdlr.Point3D(-0.9999999999999993, -0.8660254037844386, 0.0),
+                           volmdlr.Point3D(1.0, -0.8660254037844384, 0.0)]
         for point, expected_point in zip(frame_mapped_ellipse3d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 

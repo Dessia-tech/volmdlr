@@ -2194,7 +2194,7 @@ class Ellipse3D(ClosedCurve):
                                        + self.minor_axis * math.sin(
                                            theta) * self.minor_dir for theta in
                                        npy.linspace(0, volmdlr.TWO_PI,
-                                                    angle_resolution + 1)]
+                                                    angle_resolution + 1)][:-1]
         return discretization_points_3d
 
     def to_2d(self, plane_origin, x, y):
