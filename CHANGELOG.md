@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalFace3D: point_belongs
 - nurbs.core: find_multiplicity, evaluate_curve.
 - Step.read_lines: handles name with # character in name.
+- ExtrusionSurface3D: enhance 3D to parametric operations.
 - BSplineCurve: direction_vector, point_at_abscissa, abscissa, trim
 
 
