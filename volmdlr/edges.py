@@ -162,7 +162,7 @@ class Edge(dc.DessiaObject):
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
         if obj.__class__.__name__ == 'LineSegment3D':
-            return object_dict[arguments[3]]
+            return LineSegment3D(point1, point2, name=arguments[0][1:-1])
         if obj.__class__.__name__ == 'Line3D':
             if not same_sense:
                 obj = obj.reverse()
@@ -6166,7 +6166,7 @@ class ArcEllipse3D(Edge):
 
         if isinstance(other_edge, self.__class__):
             if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
-                    and self.ellipse.center.is_close(other_edge.ellipse3d.center, tol)
+                    and self.ellipse.center.is_close(other_edge.ellipse.center, tol)
                     and self.point_belongs(other_edge.point_at_abscissa(other_edge.length() * 0.5), tol)):
                 return True
         return False

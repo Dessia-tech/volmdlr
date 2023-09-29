@@ -1485,6 +1485,8 @@ class ContourMixin(WireMixin):
         :param tol: tolerance to be considered.
         :return: True if ordered, False if not.
         """
+        if len(self.primitives) == 2 and self.primitives[0].direction_independent_is_close(self.primitives[1]):
+            return False
         for prim1, prim2 in zip(self.primitives, self.primitives[1:] + [self.primitives[0]]):
             if not prim1.end.is_close(prim2.start, tol):
                 return False
@@ -1638,7 +1640,8 @@ class ContourMixin(WireMixin):
         contour_primitives = [list_edges.pop(0)]
         while True:
             for i, edge in enumerate(list_edges):
-                if edge.is_point_edge_extremity(contour_primitives[-1].end, tol):
+                if (edge.is_point_edge_extremity(contour_primitives[-1].end, tol) and
+                        not edge.direction_independent_is_close(contour_primitives[-1])):
                     if contour_primitives[-1].end.is_close(edge.start, tol):
                         contour_primitives.append(edge)
                     else:
@@ -1648,7 +1651,8 @@ class ContourMixin(WireMixin):
                     validating_point = contour_primitives[-1].end
                     points.append(contour_primitives[-1].end)
                     break
-                if edge.is_point_edge_extremity(contour_primitives[0].start, tol):
+                if (edge.is_point_edge_extremity(contour_primitives[0].start, tol) and
+                        not edge.direction_independent_is_close(contour_primitives[0])):
                     if contour_primitives[0].start.is_close(edge.end, tol):
                         contour_primitives.insert(0, edge)
                     else:
@@ -4226,6 +4230,7 @@ class Contour3D(ContourMixin, Wire3D):
         :return: The corresponding Contour3D object.
         :rtype: :class:`volmdlr.wires.Contour3D`
         """
+        step_id = kwargs.get("step_id")
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
@@ -4244,11 +4249,13 @@ class Contour3D(ContourMixin, Wire3D):
         contour = cls(raw_edges, name=name)
         if contour.is_ordered(1e-6):
             return contour
-        list_contours = cls.contours_from_edges(raw_edges)
-        for contour in list_contours:
-            # list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
-            if contour.is_ordered():
-                return contour
+        list_contours = cls.contours_from_edges(raw_edges.copy())
+        for contour_reordered in list_contours:
+            if contour_reordered.is_ordered():
+                return contour_reordered
+        list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
+        if list_edges:
+            return cls(list_edges, name=name)
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
