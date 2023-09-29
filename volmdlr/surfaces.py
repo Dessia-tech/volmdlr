@@ -4,6 +4,7 @@ import warnings
 from itertools import chain
 from typing import List, Union
 import traceback
+from collections import deque
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -1789,11 +1790,19 @@ class PeriodicalSurface(Surface3D):
             index_angle_discontinuity = indexes_angle_discontinuity[0]
             points = self._helper_fix_angle_discontinuity(points, index_angle_discontinuity, i)
         else:
-            for j, index_angle_discontinuity in enumerate(indexes_angle_discontinuity[:-1]):
-                next_angle_discontinuity_index = indexes_angle_discontinuity[j + 1]
-                temp_points = points[:next_angle_discontinuity_index]
-                temp_points = self._helper_fix_angle_discontinuity(temp_points, index_angle_discontinuity, i)
-                points = temp_points + points[next_angle_discontinuity_index:]
+            stack = deque(indexes_angle_discontinuity)
+            while stack:
+                index_angle_discontinuity = stack.popleft()
+                if stack:
+                    next_angle_discontinuity_index = stack[0]
+                    temp_points = points[:next_angle_discontinuity_index]
+                    temp_points = self._helper_fix_angle_discontinuity(temp_points, index_angle_discontinuity, i)
+                    points = temp_points + points[next_angle_discontinuity_index:]
+                else:
+                    temp_points = points
+                    points = self._helper_fix_angle_discontinuity(temp_points, index_angle_discontinuity, i)
+                theta_discontinuity, indexes_angle_discontinuity = angle_discontinuity([point.x for point in points])
+                stack = deque(indexes_angle_discontinuity)
         return points
 
     def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start):
@@ -2024,7 +2033,7 @@ class PeriodicalSurface(Surface3D):
 
         def get_local_discretization_points(start_point, end_points):
             distance = start_point.point_distance(end_points)
-            maximum_linear_distance_reference_point = 1e-5
+            maximum_linear_distance_reference_point = 1e-4
             if distance < maximum_linear_distance_reference_point:
                 return []
             number_points = max(int(distance / maximum_linear_distance_reference_point), 2)
@@ -2098,7 +2107,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5),
-             length: float = 1, **kwargs):
+             length=None, **kwargs):
         """
         Plot the cylindrical surface in the local frame normal direction.
 
@@ -2117,12 +2126,14 @@ class CylindricalSurface3D(PeriodicalSurface):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
+        if length is None:
+            length = self.radius
 
         self.frame.plot(ax=ax, color=edge_style.color, ratio=self.radius)
         for i in range(nlines):
             theta = i / (nlines - 1) * volmdlr.TWO_PI
-            start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
-            end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5 * length))
+            start = self.point2d_to_3d(volmdlr.Point2D(theta, -length))
+            end = self.point2d_to_3d(volmdlr.Point2D(theta, length))
             edges.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
 
         for j in range(ncircles):
@@ -2980,8 +2991,6 @@ class ConicalSurface3D(PeriodicalSurface):
             end = volmdlr.Point2D(start.x, end.y)
         if not start.is_close(end):
             return [edges.LineSegment2D(start, end)]
-        self.save_to_file("conicalsurface_linesegment3d_to_2d.json")
-        linesegment3d.save_to_file("conicalsurface_linesegment3d_to_2d_linesegment3d.json")
         return None
 
     def linesegment2d_to_3d(self, linesegment2d):

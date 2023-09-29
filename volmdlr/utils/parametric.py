@@ -43,9 +43,9 @@ def angle_discontinuity(angle_list):
     if indexes_sign_changes:
         for index in indexes_sign_changes:
             sign = round(angle_list[index - 1] / abs(angle_list[index - 1]), 2)
-            delta = abs(angle_list[index] + sign * volmdlr.TWO_PI - angle_list[index - 1])
-            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta) and \
-                    not math.isclose(abs(angle_list[index]), 0, abs_tol=delta):
+            delta = max(abs(angle_list[index] + sign * volmdlr.TWO_PI - angle_list[index - 1]), 1e-4)
+            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=1.1 * delta) and \
+                    not math.isclose(abs(angle_list[index]), 0, abs_tol=1.1 * delta):
                 indexes_angle_discontinuity.append(index)
                 discontinuity = True
     return discontinuity, indexes_angle_discontinuity
@@ -186,11 +186,12 @@ def fullarc_to_cylindrical_coordinates_verification(start, end, normal_dot_produ
     """
     Verifies theta from start and end of a full arc after transformation from spatial to parametric coordinates.
     """
-    theta1, _ = start
+    theta1, z1 = start
     _, z2 = end
-
     if normal_dot_product > 0:
         end = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
+    elif normal_dot_product < 0 and math.isclose(theta1, -math.pi, abs_tol=1e-6):
+        start = volmdlr.Point2D(math.pi, z1)
     elif normal_dot_product < 0:
         end = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
     return [start, end]
