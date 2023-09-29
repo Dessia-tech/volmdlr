@@ -1801,7 +1801,7 @@ class PeriodicalSurface(Surface3D):
                 else:
                     temp_points = points
                     points = self._helper_fix_angle_discontinuity(temp_points, index_angle_discontinuity, i)
-                theta_discontinuity, indexes_angle_discontinuity = angle_discontinuity([point.x for point in points])
+                _, indexes_angle_discontinuity = angle_discontinuity([point.x for point in points])
                 stack = deque(indexes_angle_discontinuity)
         return points
 
@@ -2132,7 +2132,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.frame.plot(ax=ax, color=edge_style.color, ratio=self.radius)
         for i in range(nlines):
             theta = i / (nlines - 1) * volmdlr.TWO_PI
-            start = self.point2d_to_3d(volmdlr.Point2D(theta, -length))
+            start = self.point2d_to_3d(volmdlr.Point2D(theta, -1 * length))
             end = self.point2d_to_3d(volmdlr.Point2D(theta, length))
             edges.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
 
