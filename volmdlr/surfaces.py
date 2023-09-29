@@ -1866,6 +1866,8 @@ class PeriodicalSurface(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
+        if bspline_curve3d.simplify.__class__.__name__ == "LineSegment3D":
+            return self.linesegment3d_to_2d(bspline_curve3d.simplify)
         n = len(bspline_curve3d.control_points)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         points = [self.point3d_to_2d(point) for point in points3d]
@@ -2024,7 +2026,7 @@ class PeriodicalSurface(Surface3D):
 
         def get_local_discretization_points(start_point, end_points):
             distance = start_point.point_distance(end_points)
-            maximum_linear_distance_reference_point = 1e-5
+            maximum_linear_distance_reference_point = 1e-4
             if distance < maximum_linear_distance_reference_point:
                 return []
             number_points = max(int(distance / maximum_linear_distance_reference_point), 2)
@@ -2982,8 +2984,6 @@ class ConicalSurface3D(PeriodicalSurface):
             end = volmdlr.Point2D(start.x, end.y)
         if not start.is_close(end):
             return [edges.LineSegment2D(start, end)]
-        self.save_to_file("conicalsurface_linesegment3d_to_2d.json")
-        linesegment3d.save_to_file("conicalsurface_linesegment3d_to_2d_linesegment3d.json")
         return None
 
     def linesegment2d_to_3d(self, linesegment2d):

@@ -1,0 +1,35 @@
+{
+  "object_class": "volmdlr.surfaces.ConicalSurface3D",
+  "name": "Cone",
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "Cone Axis2P3D",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.116097844223,
+      "y": 0.684858562185,
+      "z": 0.643329658876
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.1334834051627373,
+      "y": 0.10304110278698116,
+      "z": -0.9856798220936671
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 0.07256712264610667,
+      "y": -0.9908942444364338,
+      "z": -0.11341344300648959
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.988390708808,
+      "y": -0.0866667611034,
+      "z": 0.12479054156,
+      "name": "Axis2P3D Direction"
+    }
+  },
+  "semi_angle": 1.28547682178,
+  "_references": {}
+}
