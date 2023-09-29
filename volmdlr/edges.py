@@ -3784,18 +3784,19 @@ class ArcEllipse2D(Edge):
                                                          -self.ellipse.frame.v))
         return self.__class__(ellipse, self.end.copy(), self.start.copy(), self.name + '_reverse')
 
-    def line_intersections(self, line2d: volmdlr_curves.Line2D):
+    def line_intersections(self, line2d: volmdlr_curves.Line2D, tol: float = 1e-6):
         """
         Intersections between an Arc Ellipse 2D and a Line 2D.
 
         :param line2d: Line 2D to verify intersections
+        :param tol: maximum tolerance.
         :return: List with all intersections
         """
         ellipse2d_linesegment_intersections = vm_utils_intersections.ellipse2d_line_intersections(
             self.ellipse, line2d)
         linesegment_intersections = []
         for inter in ellipse2d_linesegment_intersections:
-            if self.point_belongs(inter):
+            if self.point_belongs(inter, tol):
                 linesegment_intersections.append(inter)
         return linesegment_intersections
 
@@ -4177,17 +4178,18 @@ class LineSegment3D(LineSegment):
             return LineSegment2D(start, end)
         return None
 
-    def line_intersections(self, line):
+    def line_intersections(self, line, tol: float = 1e-6):
         """
         Gets the intersection between a line segment 3d and line3D.
 
         :param line: other line.
+        :param tol: maximum tolerance.
         :return: a list with the intersection points.
         """
         line_self = self.line
         if line_self.skew_to(line):
             return []
-        intersection = line_self.intersection(line)
+        intersection = line_self.intersection(line, tol=tol)
         if intersection and self.point_belongs(intersection):
             return [intersection]
         return []
@@ -5638,11 +5640,12 @@ class Arc3D(ArcMixin, Edge):
         """
         return None
 
-    def line_intersections(self, line3d: volmdlr_curves.Line3D):
+    def line_intersections(self, line3d: volmdlr_curves.Line3D, tol: float = 1e-6):
         """
         Calculates intersections between an Arc3D and a Line3D.
 
         :param line3d: line to verify intersections.
+        :param tol: maximum tolerance.
         :return: list with intersections points between line and Arc3D.
         """
         if line3d.point_belongs(self.start):
@@ -5652,7 +5655,7 @@ class Arc3D(ArcMixin, Edge):
         circle3d_lineseg_inters = vm_utils_intersections.circle_3d_line_intersections(self.circle, line3d)
         linesegment_intersections = []
         for intersection in circle3d_lineseg_inters:
-            if self.point_belongs(intersection, 1e-6):
+            if self.point_belongs(intersection, tol):
                 linesegment_intersections.append(intersection)
         return linesegment_intersections
 

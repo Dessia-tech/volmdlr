@@ -727,11 +727,12 @@ class Line3D(Line):
             return False
         return True
 
-    def intersection(self, line2):
+    def intersection(self, line2, tol: float = 1e-6):
         """
         Calculates the intersection between two Line3D, if there is an intersection.
 
         :param line2: other Line3D
+        :param tol: maximum tolerance.
         :return: None if there is no intersection between Lines.
         A volmdlr.Point3D if there exists an intersection.
         """
@@ -739,10 +740,10 @@ class Line3D(Line):
         direction_vector2 = line2.direction_vector()
         distance_to_line = self.line_distance(line2)
         if direction_vector1.is_colinear_to(direction_vector2) or \
-                not math.isclose(distance_to_line, 0, abs_tol=1e-6):
+                not math.isclose(distance_to_line, 0, abs_tol=tol):
             return None
-        if math.isclose(distance_to_line, 0, abs_tol=1e-6) and \
-                math.isclose(direction_vector1.dot(direction_vector2), 0, abs_tol=1e-6):
+        if math.isclose(distance_to_line, 0, abs_tol=tol) and \
+                math.isclose(direction_vector1.dot(direction_vector2), 0, abs_tol=tol):
             projected_point, _ = self.point_projection(line2.point1)
             return projected_point
         vector = self.point1 - line2.point1
