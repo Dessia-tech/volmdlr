@@ -130,8 +130,8 @@ cpdef vector[int] find_spans(int degree, vector[double] knot_vector, int num_ctr
     """
     cdef int i
     cdef vector[int] spans
-
-    for i in range(len(knots)):
+    spans.reserve(knots.size())
+    for i in range(knots.size()):
         spans.push_back(find_span_linear_c(degree, knot_vector, num_ctrlpts, knots[i]))
 
     return spans
