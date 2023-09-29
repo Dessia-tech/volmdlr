@@ -1929,15 +1929,15 @@ class PeriodicalSurface(Surface3D):
 
         """
         points = [self.point3d_to_2d(p)
-                  for p in fullarcellipse3d.discretization_points(number_points=100)]
-        start, end = points[0], points[-1]
+                  for p in fullarcellipse3d.discretization_points(number_points=50)]
+        start, end = points[0], points[0]
         normal_dot_product = self.frame.w.dot(fullarcellipse3d.ellipse.normal)
         start, end = vm_parametric.fullarc_to_cylindrical_coordinates_verification(start, end, normal_dot_product)
         theta1, z1 = start
         theta2, z2 = end
         theta1, theta2 = self._verify_start_end_angles(fullarcellipse3d, theta1, theta2)
         points[0] = volmdlr.Point2D(theta1, z1)
-        points[-1] = volmdlr.Point2D(theta2, z2)
+        points.append(volmdlr.Point2D(theta2, z2))
 
         theta_list = [point.x for point in points]
         theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
@@ -2098,7 +2098,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5),
-             length: float = 1, **kwargs):
+             length=None, **kwargs):
         """
         Plot the cylindrical surface in the local frame normal direction.
 
@@ -2117,12 +2117,14 @@ class CylindricalSurface3D(PeriodicalSurface):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
+        if length is None:
+            length = self.radius
 
         self.frame.plot(ax=ax, color=edge_style.color, ratio=self.radius)
         for i in range(nlines):
             theta = i / (nlines - 1) * volmdlr.TWO_PI
-            start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
-            end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5 * length))
+            start = self.point2d_to_3d(volmdlr.Point2D(theta, -length))
+            end = self.point2d_to_3d(volmdlr.Point2D(theta, length))
             edges.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
 
         for j in range(ncircles):

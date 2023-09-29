@@ -128,6 +128,14 @@ class TestRevolutionSurface3D(unittest.TestCase):
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), surface.edge.length() * math.pi, 2)
 
+        surface = surfaces.RevolutionSurface3D.load_from_file(os.path.join(folder,
+                                                                        "revolutionsurface_with_singularity_1.json"))
+        contour = vmw.Contour3D.load_from_file(os.path.join(folder,
+                                                            "revolutionsurface_with_singularity_contour_1.json"))
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), surface.edge.length() * math.pi, 2)
+
 
     def test_arc3d_to_2d(self):
         surface = surfaces.RevolutionSurface3D.load_from_file(os.path.join(folder, "arc3d_to_2d_surface.json"))

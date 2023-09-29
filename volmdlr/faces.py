@@ -179,7 +179,7 @@ class Face3D(volmdlr.core.Primitive3D):
         surface = object_dict[int(arguments[2])]
         face = globals()[surface.face_class]
         point_in_contours3d = any(isinstance(contour, volmdlr.Point3D) for contour in contours)
-        if step_id == 455864:
+        if step_id in (5888302, 6067803, 7212251):
             print("faces.py")
         if (len(contours) == 1) and isinstance(contours[0], volmdlr.Point3D):
             return face.from_surface_rectangular_cut(surface)
@@ -2046,7 +2046,7 @@ class CylindricalFace3D(Face3D):
         number_points_x = max(angle_resolution, int(delta_theta * angle_resolution))
 
         delta_z = zmax - zmin
-        number_points_y = int(delta_z * z_resolution)
+        number_points_y = min(int(delta_z * z_resolution), 20)
         return number_points_x, number_points_y
 
     def grid_size(self):
