@@ -1112,7 +1112,7 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if point.is_close(self.end, tol):
             return [self.copy(), None]
-        adim_abscissa = self.point_to_parameter(point)
+        adim_abscissa = min(1.0, max(0.0, round(self.abscissa(point) / self.length(), 7)))
         return split_curve(self, adim_abscissa)
 
     def get_reverse(self):
@@ -1260,7 +1260,7 @@ class BSplineCurve(Edge):
         return u
 
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
-                 tol: float = 1e-6):
+                 tol: float = 1e-7):
         """
         Computes the abscissa of a 2D or 3D point using the least square method.
 
@@ -1317,7 +1317,7 @@ class BSplineCurve(Edge):
         func_first_derivative = curve_derivatives[2].dot(distance_vector) + curve_derivatives[1].norm() ** 2
         return func, func_first_derivative, curve_derivatives, distance_vector
 
-    def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-6, tol2: float = 1e-8):
+    def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-7, tol2: float = 1e-8):
         """
         Finds the equivalent B-Spline curve parameter u to a given a point 3D or 2D using an initial guess u0.
 
@@ -1342,13 +1342,13 @@ class BSplineCurve(Edge):
         new_u = u0 - func / (func_first_derivative + 1e-18)
         new_u = self._check_bounds(new_u)
         residual = (new_u - u0) * curve_derivatives[1]
-        if residual.norm() <= 1e-6:
+        if residual.norm() <= tol1:
             return u0, False
         u0 = new_u
         return self.point_invertion(u0, point, maxiter=maxiter - 1)
 
     @staticmethod
-    def _check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-6, tol2: float = 1e-8):
+    def _check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-7, tol2: float = 1e-8):
         """
         Helper function to check convergence of point_invertion method.
         """
