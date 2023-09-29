@@ -4218,7 +4218,7 @@ class ExtrusionSurface3D(Surface3D):
         point_at_curve = []
         if hasattr(self.edge, "line_intersections"):
             line = curves.Line3D(point3d, point3d.translation(self.frame.w))
-            point_at_curve = self.edge.line_intersections(line, tol=1e-4)
+            point_at_curve = self.edge.line_intersections(line)
         if point_at_curve:
             point_at_curve = point_at_curve[0]
             point_at_curve_local = self.frame.global_to_local_coordinates(point_at_curve)
