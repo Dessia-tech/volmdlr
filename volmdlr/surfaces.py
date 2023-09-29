@@ -4,6 +4,7 @@ import warnings
 from itertools import chain
 from typing import List, Union
 import traceback
+from collections import deque
 
 import matplotlib.pyplot as plt
 import numpy as npy
@@ -1789,11 +1790,19 @@ class PeriodicalSurface(Surface3D):
             index_angle_discontinuity = indexes_angle_discontinuity[0]
             points = self._helper_fix_angle_discontinuity(points, index_angle_discontinuity, i)
         else:
-            for j, index_angle_discontinuity in enumerate(indexes_angle_discontinuity[:-1]):
-                next_angle_discontinuity_index = indexes_angle_discontinuity[j + 1]
-                temp_points = points[:next_angle_discontinuity_index]
-                temp_points = self._helper_fix_angle_discontinuity(temp_points, index_angle_discontinuity, i)
-                points = temp_points + points[next_angle_discontinuity_index:]
+            stack = deque(indexes_angle_discontinuity)
+            while stack:
+                index_angle_discontinuity = stack.popleft()
+                if stack:
+                    next_angle_discontinuity_index = stack[0]
+                    temp_points = points[:next_angle_discontinuity_index]
+                    temp_points = self._helper_fix_angle_discontinuity(temp_points, index_angle_discontinuity, i)
+                    points = temp_points + points[next_angle_discontinuity_index:]
+                else:
+                    temp_points = points
+                    points = self._helper_fix_angle_discontinuity(temp_points, index_angle_discontinuity, i)
+                theta_discontinuity, indexes_angle_discontinuity = angle_discontinuity([point.x for point in points])
+                stack = deque(indexes_angle_discontinuity)
         return points
 
     def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start):
@@ -1866,8 +1875,6 @@ class PeriodicalSurface(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        if bspline_curve3d.simplify.__class__.__name__ == "LineSegment3D":
-            return self.linesegment3d_to_2d(bspline_curve3d.simplify)
         n = len(bspline_curve3d.control_points)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         points = [self.point3d_to_2d(point) for point in points3d]
