@@ -202,16 +202,15 @@ class Face3D(volmdlr.core.Primitive3D):
         :param name: the name to inject in the new face
         """
         outer_contour2d = None
-        outer_contour3d, inner_contours3d = None, None
+        # outer_contour3d, inner_contours3d = None, None
         if len(contours3d) == 1:
             outer_contour2d = surface.contour3d_to_2d(contours3d[0])
-            outer_contour3d = contours3d[0]
+            # outer_contour3d = contours3d[0]
             inner_contours2d = []
 
         elif len(contours3d) > 1:
             area = -1
             inner_contours2d = []
-            inner_contours3d = []
 
             contours2d = [surface.contour3d_to_2d(contour3d) for contour3d in contours3d]
 
@@ -225,14 +224,14 @@ class Face3D(volmdlr.core.Primitive3D):
                     # if not contour2d.is_ordered(1e-4):
                     #     contour2d = vm_parametric.contour2d_healing(contour2d)
                     inner_contours2d.append(contour2d)
-                    inner_contours3d.append(contour3d)
+                    # inner_contours3d.append(contour3d)
                     contour_area = contour2d.area()
                     if contour_area > area:
                         area = contour_area
                         outer_contour2d = contour2d
-                        outer_contour3d = contour3d
+                        # outer_contour3d = contour3d
                 inner_contours2d.remove(outer_contour2d)
-                inner_contours3d.remove(outer_contour3d)
+                # inner_contours3d.remove(outer_contour3d)
         else:
             raise ValueError('Must have at least one contour')
 
