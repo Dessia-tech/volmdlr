@@ -25,6 +25,7 @@ from volmdlr.core import EdgeStyle
 
 
 def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_tangent, point):
+    """Gets control points and weights for hyperbola and parabola curves represented by bsplines."""
     start_tangent = start_tangent.unit_vector()
     end_tangent = end_tangent.unit_vector()
     line_class = globals()["Line"+start.__class__.__name__[-2:]]
@@ -2781,6 +2782,7 @@ class Hyperbola3D(HyperbolaMixin):
     def circle_intersections(self, circle, abs_tol: float = 1e-6):
         """
         Gets intersections between a Hyperbola and Circle 3D.
+
         :param circle: Other Circle 3D.
         :param abs_tol: tolerance.
         :return: A list of points, containing all intersections between the Line 3D and the Parabola3D.
@@ -2790,6 +2792,7 @@ class Hyperbola3D(HyperbolaMixin):
     def ellipse_intersections(self, ellipse, abs_tol: float = 1e-6):
         """
         Gets intersections between a Hyperbola and Circle 3D.
+
         :param ellipse: Other Circle 3D.
         :param abs_tol: tolerance.
         :return: A list of points, containing all intersections between the Line 3D and the Parabola3D.
