@@ -70,7 +70,7 @@ ERRORS_WITHOUT_TIME_DECREASE = ["signature-differs", "broad-exception-caught", '
                                 "import-outside-toplevel", "arguments-differ", "arguments-renamed",
                                 "too-many-boolean-expressions", "super-init-not-called", "unused-argument", 
                                 'consider-using-enumerate', 'unbalanced-tuple-unpacking', 'undefined-variable',
-                                'wrong-spelling-in-comment']
+                                'wrong-spelling-in-comment', 'invalid-name']
 
 limit_time_effect = False
 if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:

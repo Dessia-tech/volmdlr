@@ -3365,6 +3365,7 @@ class FullArc2D(FullArcMixin, Arc2D):
                            [self.circle, self.start]])
 
     def polygonization(self):
+        """Creates a Polygon from a full arc 2d."""
         return volmdlr.wires.ClosedPolygon2D(self.discretization_points(angle_resolution=15))
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
@@ -3443,6 +3444,7 @@ class ArcEllipse2D(Edge):
         self._reverse = None
 
     def get_start_end_angles(self):
+        """Gets start and end angles for start and end points, respectively."""
         local_start_point = self.ellipse.frame.global_to_local_coordinates(self.start)
         u1, u2 = local_start_point.x / self.ellipse.major_axis, local_start_point.y / self.ellipse.minor_axis
         start_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
@@ -3456,7 +3458,7 @@ class ArcEllipse2D(Edge):
     @classmethod
     def from_3_points_and_center(cls, start, interior, end, center, name: str = ''):
         """
-        Creates an arcellipse using 3 points and a center.
+        Creates an arc ellipse using 3 points and a center.
 
         :param start: start point.
         :param interior: interior point.
@@ -3778,6 +3780,7 @@ class ArcEllipse2D(Edge):
         return tangent_vector
 
     def get_reverse(self):
+        """Gets the arc ellipse in the reverse direction."""
         ellipse = self.ellipse.__class__(self.ellipse.major_axis, self.ellipse.minor_axis,
                                          volmdlr.Frame2D(self.ellipse.center, self.ellipse.frame.u,
                                                          -self.ellipse.frame.v))
@@ -4050,7 +4053,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        FullArcEllipse2D translation.
+        Full ArcEllipse 2D translation.
 
         :param offset: translation vector.
         :type offset: volmdlr.Vector2D
@@ -5880,6 +5883,7 @@ class FullArc3D(FullArcMixin, Arc3D):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3, name: str = ''):
+        """Creates a full arc 3D from 3 given points."""
         fullarc = cls(volmdlr_curves.Circle3D.from_3_points(point1, point2, point3), point1, name=name)
         return fullarc
 
@@ -6061,7 +6065,7 @@ class ArcEllipse3D(Edge):
 
     def triangulation(self):
         """
-        Triangulation for an ArcEllipse3D.
+        Triangulation for an Arc Ellipse 3D.
 
         """
         return None

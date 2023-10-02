@@ -632,6 +632,8 @@ class Line2D(Line):
         """
         Gets the line's slope.
         """
+        if self.point1.x == self.point2.x:
+            return math.inf
         return (self.point2.y - self.point1.y) / (self.point2.x - self.point1.x)
 
     def get_y_intersection(self):
@@ -641,6 +643,8 @@ class Line2D(Line):
         :return: y-intersection value.
         """
         slope = self.get_slope()
+        if slope == math.inf:
+            return None
         return self.point1.y - slope * self.point1.x
 
 
@@ -789,6 +793,7 @@ class Line3D(Line):
         return ax
 
     def plane_projection2d(self, center, x, y):
+        """Line 3D plane projection in 2d."""
         return Line2D(self.point1.plane_projection2d(center, x, y),
                       self.point2.plane_projection2d(center, x, y))
 
@@ -1177,28 +1182,36 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param tol: tolerance to consider in calculations.
         :return: circle and line intersections.
         """
-        if line2d.point1.is_close(self.center):
-            point1 = line2d.point2
-            vec = line2d.point1 - line2d.point2
-        else:
-            point1 = line2d.point1
-            vec = line2d.point2 - line2d.point1
-        vector1 = vec.dot(vec)
-        vector2 = 2 * vec.dot(point1 - self.center)
-        vector3 = point1.dot(point1) + self.center.dot(self.center) - 2 * point1.dot(self.center) - self.radius ** 2
-
-        disc = vector2 ** 2 - 4 * vector1 * vector3
-        if math.isclose(disc, 0., abs_tol=tol):
-            t_param = -vector2 / (2 * vector1)
-            return [point1 + t_param * vec]
-
-        if disc > 0:
-            sqrt_disc = math.sqrt(disc)
-            t_param = (-vector2 + sqrt_disc) / (2 * vector1)
-            s_param = (-vector2 - sqrt_disc) / (2 * vector1)
-            return [point1 + t_param * vec, point1 + s_param * vec]
-
-        return []
+        if line2d.point_belongs(self.center):
+            direction_vector = line2d.unit_direction_vector()
+            return [self.center + self.radius * direction_vector, self.center - self.radius * direction_vector]
+        if not self.center.is_close(volmdlr.O2D):
+            local_line = line2d.frame_mapping(self.frame, 'new')
+            local_circle = self.frame_mapping(self.frame, 'new')
+            local_line_intersections = local_circle.line_intersections(local_line)
+            return [self.frame.local_to_global_coordinates(point) for point in local_line_intersections]
+        m = line2d.get_slope()
+        c = line2d.get_y_intersection()
+        if m == math.inf and c is None:
+            x_line = line2d.point1.x
+            y1 = - math.sqrt(self.radius**2 - x_line**2)
+            y2 = math.sqrt(self.radius**2 - x_line**2)
+            return [volmdlr.Point2D(x_line, y1), volmdlr.Point2D(x_line, y2)]
+        quad_eq_a = 1 + m ** 2
+        quad_eq_b = 2 * m * c
+        quad_eq_c = c ** 2 - self.radius ** 2
+        delta = quad_eq_b ** 2 - 4 * quad_eq_a * quad_eq_c
+        if delta < 0.0 or quad_eq_a == 0.0:
+            return []
+        if math.isclose(delta, 0, abs_tol=1e-6):
+            x1 = - quad_eq_b / 2 * quad_eq_a
+            y1 = m * x1 + c
+            return [volmdlr.Point2D(x1, y1)]
+        x1 = (-quad_eq_b + math.sqrt(delta)) / (2 * quad_eq_a)
+        x2 = (-quad_eq_b - math.sqrt(delta)) / (2 * quad_eq_a)
+        y1 = m * x1 + c
+        y2 = m * x2 + c
+        return [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D', tol=1e-9):
         """
@@ -2251,8 +2264,8 @@ class Ellipse3D(ClosedCurve):
 
         :param point1: point1 used to trim ellipse.
         :param point2: point2 used to trim ellipse.
-        :same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
-            direction (False) to the edge direction. By default, it's assumed True
+        :param same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
+               direction (False) to the edge direction. By default, it's assumed True
         :return: arc of ellipse between these two points.
         """
         ellipse = self
@@ -2871,7 +2884,7 @@ class Parabola3D(ParabolaMixin):
         :return: True is point lies on the Hyperbola 3D, False otherwise
         """
         new_point = self.frame.global_to_local_coordinates(point)
-        return math.isclose(new_point.y, self.vrtx_equation_a * new_point.x **2, abs_tol=tol)
+        return math.isclose(new_point.y, self.vrtx_equation_a * new_point.x**2, abs_tol=tol)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
