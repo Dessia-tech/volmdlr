@@ -21,7 +21,7 @@ for z in [0, 0.1, 0.2, 0.3]:
         grid1.append(vm.Point3D(x, y, z))
         
 size_u, size_v, degree_u, degree_v = 4, 4, 2, 2
-surface1 = surfaces.BSplineSurface3D.points_fitting_into_bspline_surface(grid1, size_u, size_v, degree_u, degree_v)
+surface1 = surfaces.BSplineSurface3D.from_points_interpolation(grid1, size_u, size_v, degree_u, degree_v)
 # surface1 = vmf.BSplineSurface3D.from_pointgrid(grid1, 4, 4, 2, 2)
 
 p1 = surface1.point2d_to_3d(vm.Point2D(0, 0))
@@ -43,7 +43,7 @@ for z in [0.05, 0.12, 0.21, 0.28]:
         grid2.append(vm.Point3D(x, y, z))
         
 size_u, size_v, degree_u, degree_v = 4, 4, 2, 2
-surface2 = surfaces.BSplineSurface3D.points_fitting_into_bspline_surface(grid2, size_u, size_v, degree_u, degree_v)
+surface2 = surfaces.BSplineSurface3D.from_points_interpolation(grid2, size_u, size_v, degree_u, degree_v)
 # surface2 = vmf.BSplineSurface3D.from_pointgrid(grid2, 4, 4, 2, 2)
 face2 = vmf.BSplineFace3D.from_surface_rectangular_cut(surface2, 0, 1, 0, 1)
 

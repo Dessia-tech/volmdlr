@@ -552,7 +552,7 @@ class ExtrudedProfile(shells.ClosedShell3D):
     def area(self):
         """Returns the area of the extruded 2D surface."""
         areas = self.outer_contour2d.area()
-        areas -= sum([contour.area() for contour in self.inner_contours2d])
+        areas -= sum(contour.area() for contour in self.inner_contours2d)
         return areas
 
     def volume(self):
