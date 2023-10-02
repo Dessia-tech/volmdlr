@@ -793,6 +793,7 @@ class Line3D(Line):
         return ax
 
     def plane_projection2d(self, center, x, y):
+        """Line 3D plane projection in 2d."""
         return Line2D(self.point1.plane_projection2d(center, x, y),
                       self.point2.plane_projection2d(center, x, y))
 
