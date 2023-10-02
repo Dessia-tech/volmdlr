@@ -566,7 +566,7 @@ class Face3D(volmdlr.core.Primitive3D):
         method_name = f'{edge3d.__class__.__name__.lower()[:-2]}_inside'
         if hasattr(self, method_name):
             return getattr(self, method_name)(edge3d)
-        points = edge3d.discretization_points(number_points=7)
+        points = edge3d.discretization_points(number_points=10)
         for point in points[1:-1]:
             if not self.point_belongs(point):
                 return False
