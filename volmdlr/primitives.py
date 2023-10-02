@@ -178,9 +178,10 @@ class RoundedLineSegments:
                             a_ub[ieq_ub, dof[ip2]] = 1
                             b_ub[ieq_ub] = lines_length[ip1]
                             ieq_ub += 1
+                    optimized_radius_solution = linprog(c, a_ub, b_ub, bounds=bounds)
 
                     for ipoint, dof_point in dof.items():
-                        radius = linprog(c, a_ub, b_ub, bounds=bounds).x[dof_point] * math.tan(alpha[ipoint])
+                        radius = optimized_radius_solution .x[dof_point] * math.tan(alpha[ipoint])
                         if radius > 1e-10:
                             self.radius[ipoint] = radius
                         else:

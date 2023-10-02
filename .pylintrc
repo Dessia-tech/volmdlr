@@ -250,7 +250,7 @@ max-spelling-suggestions=4
 spelling-dict=en_US
 
 # List of comma separated words that should not be checked.
-spelling-ignore-words=rtype,txt,str,msh,geo,gmsh,dx,dy,u3,v3,u4,v4,du,dv,fullarc,cz,generatrix
+spelling-ignore-words=param,type,rtype,txt,str,msh,geo,gmsh,dx,dy,u3,v3,u4,v4,du,dv,fullarc,cz,generatrix
 
 # A path to a file that contains the private dictionary; one word per line.
 spelling-private-dict-file=.pyenchant_dessia.dict

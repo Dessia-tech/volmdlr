@@ -15,17 +15,17 @@ v = u.normal_vector()
 
 l = 0.05
 
-p1 = v * l
-p2 = p1 + l*u
-p3 = p2 - 2*l*v
-p4 = p3 + l*u
-p5 = p4 + 2*l*u + 3*l*v
-p6 = p5 + l*u
-p7 = p6 - 4*l*v + l*v
-p8 = p7 - l*u
-p9 = 0.5*(p5 + p6) - l*v
-p10 = p4 - l*v
-p11 = p1 - 3*l*v
+p1 = (v * l).to_point()
+p2 = (p1 + l*u).to_point()
+p3 = (p2 - 2*l*v).to_point()
+p4 = (p3 + l*u).to_point()
+p5 = (p4 + 2*l*u + 3*l*v).to_point()
+p6 = (p5 + l*u).to_point()
+p7 = (p6 - 4*l*v + l*v).to_point()
+p8 = (p7 - l*u).to_point()
+p9 = (0.5*(p5 + p6) - l*v).to_point()
+p10 = (p4 - l*v).to_point()
+p11 = (p1 - 3*l*v).to_point()
 
 contour =p2d.ClosedRoundedLineSegments2D(
     [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11],

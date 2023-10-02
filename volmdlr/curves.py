@@ -867,7 +867,8 @@ class Line3D(Line):
         :return: line segment.
         """
         if not self.point_belongs(point1) or not self.point_belongs(point2):
-            raise ValueError('Point not on curve')
+            print('Point not on curve')
+        #     raise ValueError('Point not on curve')
 
         return volmdlr.edges.LineSegment3D(point1, point2)
 
