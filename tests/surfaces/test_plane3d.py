@@ -2,7 +2,7 @@ import math
 import unittest
 
 import volmdlr
-from volmdlr import edges, surfaces, curves
+from volmdlr import edges, surfaces, curves, wires
 from volmdlr.surfaces import Plane3D
 from volmdlr.models.edges import bspline_curve3d
 
@@ -170,8 +170,8 @@ class TestPlane3D(unittest.TestCase):
                            volmdlr.Point3D(2, 3, 2.5))
         arc_intersections2 = plane.arc_intersections(arc2)
         self.assertEqual(len(arc_intersections2), 2)
-        self.assertTrue(arc_intersections2[0].is_close(volmdlr.Point3D(2.0, 1.133974596216, 3.0)))
-        self.assertTrue(arc_intersections2[1].is_close(volmdlr.Point3D(2.0, 2.866025403784, 3.0)))
+        self.assertTrue(arc_intersections2[1].is_close(volmdlr.Point3D(2.0, 1.133974596216, 3.0)))
+        self.assertTrue(arc_intersections2[0].is_close(volmdlr.Point3D(2.0, 2.866025403784, 3.0)))
 
     def test_bspline_intersections(self):
         plane = Plane3D(volmdlr.OZXY)
@@ -219,6 +219,15 @@ class TestPlane3D(unittest.TestCase):
             volmdlr.O3D, volmdlr.Vector3D(0.7071067811865476, 0.0, -0.7071067811865475),
             volmdlr.Vector3D(0, 1, 0), volmdlr.Vector3D(0.7071067811865475, 0.0, 0.7071067811865476))
         self.assertEqual(rotated_plane1.frame, expected_frame)
+
+    def test_contour3d_to_2d(self):
+        plane = surfaces.Plane3D.load_from_file(
+            "surfaces/objects_plane_test/plane_parametric_operation_bug_surface.json")
+        contour3d = wires.Contour3D.load_from_file(
+            "surfaces/objects_plane_test/plane_parametric_operation_bug_contour.json")
+        contour = plane.contour3d_to_2d(contour3d)
+        self.assertTrue(contour.is_ordered())
+        self.assertAlmostEqual(contour.area(), 8.120300532917004e-06)
 
 
 if __name__ == '__main__':

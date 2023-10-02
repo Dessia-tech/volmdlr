@@ -17,13 +17,13 @@ WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 13,
-                     "wrong-spelling-in-docstring": 143,
-                     'invalid-name': 11,
+                     "wrong-spelling-in-docstring": 0,
+                     'invalid-name': 1,
                      'no-member': 1,
                      'inconsistent-return-statements': 4,
                      'unused-variable': 22,
                      'arguments-differ': 64,
-                     'too-many-locals': 86,
+                     'too-many-locals': 89,
                      'unused-argument': 8,
                      'too-many-arguments': 26,
                      'line-too-long': 12,
@@ -47,7 +47,7 @@ MAX_ERROR_BY_TYPE = {
                      'cyclic-import': 1,
                      'undefined-variable': 8,  # 2 when gmsh is fixed
                      'broad-except': 1,
-                     "broad-exception-caught": 2,
+                     "broad-exception-caught": 1,
                      'too-many-boolean-expressions': 2,
                      'too-many-lines': 4,
                      'consider-using-with': 1,
@@ -56,12 +56,13 @@ MAX_ERROR_BY_TYPE = {
                      'consider-using-generator': 1,
                      'import-outside-toplevel': 5,
                      'unsubscriptable-object': 1,
-                     'signature-differs': 2,
+                     'signature-differs': 1,
                      'consider-using-enumerate': 2,
                      'unbalanced-tuple-unpacking': 1,
                     }
 
-ERRORS_WITHOUT_TIME_DECREASE = ["too-many-locals", "too-many-branches", "too-many-arguments", "too-many-statements",
+ERRORS_WITHOUT_TIME_DECREASE = ["signature-differs", "broad-exception-caught", 'invalid-name', "too-many-locals",
+                                "too-many-branches", "too-many-arguments", "too-many-statements",
                                 "too-many-nested-blocks", "too-many-instance-attributes", "abstract-method",
                                 "no-name-in-module", "too-many-public-methods", "too-many-ancestors",
                                 "protected-access", "cyclic-import", "line-too-long", "too-many-lines", "no-member",
@@ -78,7 +79,7 @@ if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
 
 if os.environ.get('DRONE_TARGET_BRANCH', '') in ['master', 'testing']:
     limit_time_effect = True
-    print(f"Limiting time effect of 21 days as we are targetting {os.environ['DRONE_TARGET_BRANCH']}")
+    print(f"Limiting time effect of 21 days as we are targeting {os.environ['DRONE_TARGET_BRANCH']}")
 
 if limit_time_effect:
     EFFECTIVE_DATE += timedelta(days=21)

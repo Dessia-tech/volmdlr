@@ -9,9 +9,6 @@
 
 # Reload the web page (quit) and execute this cell
 import sys
-
-import volmdlr
-
 print("User Current Version:-", sys.version)
 if sys.version[:3] != "3.9":
   raise SystemError("Try to reload the web page (quit)")
@@ -52,7 +49,7 @@ outer_contour = inner_contour.offset(-thickness)
 height = 0.080
 
 sides = primitives3d.ExtrudedProfile(
-    frame=volmdlr.OXYZ,
+    frame=vm.OXYZ,
     outer_contour2d=outer_contour,
     inner_contours2d=[inner_contour],
     extrusion_length=(height - 2 * thickness),
@@ -63,7 +60,7 @@ sides.save_babylonjs_to_file(filename='/tmp/sides')
 
 
 bottom = primitives3d.ExtrudedProfile(
-    frame=volmdlr.OXYZ,
+    frame=vm.OXYZ,
     outer_contour2d=outer_contour,
     inner_contours2d=[],
     extrusion_length=-thickness,
@@ -77,7 +74,7 @@ belt_width = 0.011
 belt_outer_contour = inner_contour.offset(-belt_width)
 
 belt = primitives3d.ExtrudedProfile(
-    frame=volmdlr.OXYZ,
+    frame=vm.Frame3D((vm.Z3D*(height - 2*thickness)).to_point(), vm.X3D, vm.Y3D, vm.Z3D),
     outer_contour2d=belt_outer_contour,
     inner_contours2d=[inner_contour],
     extrusion_length=thickness,
@@ -94,7 +91,7 @@ casing.save_babylonjs_to_file(filename='/tmp/casing')
 
 
 lid = primitives3d.ExtrudedProfile(
-    frame=volmdlr.Frame3D(volmdlr.Z3D*(height - thickness), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D),
+    frame=vm.Frame3D((vm.Z3D*(height - thickness)).to_point(), vm.X3D, vm.Y3D, vm.Z3D),
     outer_contour2d=belt_outer_contour,
     inner_contours2d=[],
     extrusion_length=thickness,

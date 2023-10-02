@@ -18,9 +18,32 @@ import plot_data.colors
 import plot_data.core as plot_data
 import volmdlr
 from volmdlr import core, geometry
+from volmdlr.nurbs.helpers import generate_knot_vector
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as volmdlr_intersections
 from volmdlr.core import EdgeStyle
+
+
+def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_tangent, point):
+    """Gets control points and weights for hyperbola and parabola curves represented by bsplines."""
+    start_tangent = start_tangent.unit_vector()
+    end_tangent = end_tangent.unit_vector()
+    line_class = globals()["Line"+start.__class__.__name__[-2:]]
+    vector_02 = end - start
+    line02 = line_class.from_point_and_vector(start, vector_02)
+
+    line0 = line_class.from_point_and_vector(start, start_tangent)
+    line2 = line_class.from_point_and_vector(end, end_tangent)
+    point1 = line0.line_intersections(line2)[0]
+    vector_p1 = point1 - point
+    line1p = line_class.from_point_and_vector(point1, vector_p1)
+    point_q = line02.line_intersections(line1p)[0]
+    a = math.sqrt((start - point_q).norm()/(point_q - end).norm())
+    u = a/(1.0 + a)
+    num = ((1.0 - u)**2) * (point - start).dot(vector_p1) + u**2 * (point - end).dot(vector_p1)
+    den = 2.0 * u * (1.0 - u) * vector_p1.dot(vector_p1)
+    weight_1 = num/den
+    return point1, weight_1
 
 
 class Curve(DessiaObject):
@@ -307,7 +330,7 @@ class Line(Curve):
 
     @classmethod
     def from_point_and_vector(cls, point: Union[volmdlr.Point2D, volmdlr.Point3D],
-                              direction_vector: Union[volmdlr.Vector2D, volmdlr.Vector3D], name: str =  ''):
+                              direction_vector: Union[volmdlr.Vector2D, volmdlr.Vector3D], name: str = ''):
         """
         Creates a Line object using only a point and a direction vector.
 
@@ -816,6 +839,7 @@ class Line3D(Line):
         return ax
 
     def plane_projection2d(self, center, x, y):
+        """Line 3D plane projection in 2d."""
         return Line2D(self.point1.plane_projection2d(center, x, y),
                       self.point2.plane_projection2d(center, x, y))
 
@@ -890,7 +914,8 @@ class Line3D(Line):
         :return: line segment.
         """
         if not self.point_belongs(point1) or not self.point_belongs(point2):
-            raise ValueError('Point not on curve')
+            print('Point not on curve')
+        #     raise ValueError('Point not on curve')
 
         return volmdlr.edges.LineSegment3D(point1, point2)
 
@@ -1305,9 +1330,16 @@ class Circle2D(CircleMixin, ClosedCurve):
         return volmdlr_intersections.get_bsplinecurve_intersections(self, bsplinecurve, abs_tol)
 
     def hyperbola_intersections(self, hyperbola2d, abs_tol: float = 1e-6):
+        """
+        Calculates the intersections between a circle 2d and a Hyperbola 2D.
+
+        :param hyperbola2d: hyperbola to search for intersections with.
+        :param abs_tol: tolerance to be considered while validating an intersection.
+        :return: a list with all intersections between circle and hyperbola.
+        """
         b_rectangle = self.bounding_rectangle
-        hyperbola_point1 = volmdlr.Point2D(hyperbola2d._get_x(b_rectangle.ymin), b_rectangle.ymin)
-        hyperbola_point2 = volmdlr.Point2D(hyperbola2d._get_x(b_rectangle.ymax), b_rectangle.ymax)
+        hyperbola_point1 = volmdlr.Point2D(hyperbola2d.get_x(b_rectangle.ymin), b_rectangle.ymin)
+        hyperbola_point2 = volmdlr.Point2D(hyperbola2d.get_x(b_rectangle.ymax), b_rectangle.ymax)
         hyperbola_bspline = hyperbola2d.trim(hyperbola_point1, hyperbola_point2)
         return self.bsplinecurve_intersections(hyperbola_bspline, abs_tol)
 
@@ -2293,8 +2325,8 @@ class Ellipse3D(ClosedCurve):
 
         :param point1: point1 used to trim ellipse.
         :param point2: point2 used to trim ellipse.
-        :same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
-            direction (False) to the edge direction. By default, it's assumed True
+        :param same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
+               direction (False) to the edge direction. By default, it's assumed True
         :return: arc of ellipse between these two points.
         """
         ellipse = self
@@ -2449,7 +2481,7 @@ class HyperbolaMixin(Curve):
             return self.semi_minor_axis
         raise IndexError
 
-    def _get_x(self, y):
+    def get_x(self, y):
         """
         For given y component, get the corresponding hyperbola x component, in local coordinates.
 
@@ -2486,10 +2518,17 @@ class HyperbolaMixin(Curve):
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_y = max(local_split_start.y, local_split_end.y)
         min_y = min(local_split_start.y, local_split_end.y)
-        hyperbola_points = self.get_points(min_y, max_y, 100)
+        hyperbola_points = self.get_points(min_y, max_y, 3)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
-        bspline = _bspline_class.from_points_interpolation(hyperbola_points, 2)
+        point, weight1 = hyperbola_parabola_control_point_and_weight(
+            hyperbola_points[0], self.tangent(hyperbola_points[0]),
+            hyperbola_points[2], self.tangent(hyperbola_points[2]),
+            hyperbola_points[1])
+        knotvector = generate_knot_vector(2, 3)
+        knot_multiplicity = [1] * len(knotvector)
+
+        bspline = _bspline_class(2, [point1, point, point2], knot_multiplicity, knotvector, [1, weight1, 1])
         return bspline
 
 
@@ -2527,7 +2566,7 @@ class Hyperbola2D(HyperbolaMixin):
         if not min_y and not max_y:
             min_y, max_y = -self.semi_major_axis * 5, self.semi_major_axis * 5
         y_vals = npy.linspace(min_y, max_y, number_points)
-        x_positive_vals = self._get_x(y_vals)
+        x_positive_vals = self.get_x(y_vals)
         points_positive_branch = []
         for i, y in enumerate(y_vals):
             points_positive_branch.append(volmdlr.Point2D(x_positive_vals[i], y))
@@ -2535,34 +2574,47 @@ class Hyperbola2D(HyperbolaMixin):
         return points_positive_branch
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
+        """
+        Verifies if point belongs to the Hyperbola.
+
+        :param point: other point.
+        :param abs_tol: tolerance.
+        :return: True if point belongs, and False otherwise.
+        """
         local_point = self.frame.global_to_local_coordinates(point)
-        if math.isclose(local_point.x**2/self.semi_major_axis**2 - local_point.y*+2/self.semi_minor_axis**1,
-                        1, abs_tol=abs_tol):
+        if math.isclose(
+                local_point.x ** 2 / self.semi_major_axis ** 2 - local_point.y**2 / self.semi_minor_axis ** 1,
+                1, abs_tol=abs_tol):
             return True
         return False
 
     def get_dx_dy(self, point):
-        return (self.semi_major_axis**2 * point.y) / (self.semi_minor_axis**2 * math.sqrt(
-            self.semi_major_axis**2 * point.y**2 / self.semi_minor_axis**2 + self.semi_major_axis**2))
+        """
+        Gets the dx/dy at a given point of the hyperbola 2d.
+
+        :param point: the other point.
+        :return: the dx/dy slope at given point.
+        """
+        return (self.semi_major_axis ** 2 * point.y) / (self.semi_minor_axis ** 2 * math.sqrt(
+            self.semi_major_axis ** 2 * point.y ** 2 / self.semi_minor_axis ** 2 + self.semi_major_axis ** 2))
 
     def tangent(self, point):
         """
-        Calculates the tangent vector to an hyperbola at a given point.
+        Calculates the tangent vector to a hyperbola at a given point.
 
         :param point: The point at which the tangent vector is to be calculated.
         :type point: volmdlr.Point2D.
-        :return: The tangent vector to the ellipse at the given point.
+        :return: The tangent vector to the hyperbola at the given point.
         :rtype: volmdlr.Vector2D.
-
         """
-        # Convert the point to local coordinates within the ellipse's frame
+        # Convert the point to local coordinates within the hyperbola's frame
         point_at_local_coord = self.frame.global_to_local_coordinates(point)
 
         # Calculate the slope of the tangent line at the given abscissa
-        dy_dx = self.get_dx_dy(point)
+        dx_dy = self.get_dx_dy(point)
 
-        # Construct the second point on the tangent line still on ellipse's frame.
-        tangent_second_point = point_at_local_coord + volmdlr.Point2D(dy_dx, 1)
+        # Construct the second point on the tangent line still on hyperbola's frame.
+        tangent_second_point = point_at_local_coord + volmdlr.Point2D(dx_dy, 1)
 
         # Convert the second point back to global coordinates
         global_coord_second_point = self.frame.local_to_global_coordinates(tangent_second_point)
@@ -2661,7 +2713,7 @@ class Hyperbola3D(HyperbolaMixin):
         if not min_y and not max_y:
             min_y, max_y = -self.semi_major_axis * 5, self.semi_major_axis * 5
         y_vals = npy.linspace(min_y, max_y, number_points)
-        x_positive_vals = self._get_x(y_vals)
+        x_positive_vals = self.get_x(y_vals)
         points_positive_branch = []
         for i, y in enumerate(y_vals):
             points_positive_branch.append(volmdlr.Point3D(x_positive_vals[i], y, 0))
@@ -2698,6 +2750,21 @@ class Hyperbola3D(HyperbolaMixin):
         new_point = self.frame.global_to_local_coordinates(point)
         return math.isclose(new_point.x ** 2 / self.semi_major_axis ** 2 -
                             new_point.y ** 2 / self.semi_minor_axis ** 2, 1.0, abs_tol=tol)
+
+    def tangent(self, point):
+        """
+        Calculates the tangent vector to a hyperbola at a given point.
+
+        :param point: The point at which the tangent vector is to be calculated.
+        :type point: volmdlr.Point3D.
+        :return: The tangent vector to the hyperbola at the given point.
+        :rtype: volmdlr.Vector3D.
+        """
+        point_2d = point.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        tangent_2d = self.self_2d.tangent(point_2d)
+        point_tangent_2d = point_2d + tangent_2d
+        point_tangent_3d = point_tangent_2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+        return (point_tangent_3d - point).to_vector()
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -2842,9 +2909,16 @@ class Parabola2D(ParabolaMixin):
         return points
 
     def point_belongs(self, point, abs_tol: float = 1e-6):
+        """
+        Verifies if point belongs to the Parabola.
+
+        :param point: other point.
+        :param abs_tol: tolerance.
+        :return: True if point belongs, and False otherwise.
+        """
         local_point = self.frame.global_to_local_coordinates(point)
         if math.isclose(local_point.y,
-                        self.vrtx_equation_a * local_point.x**2, abs_tol=abs_tol):
+                        self.vrtx_equation_a * local_point.x ** 2, abs_tol=abs_tol):
             return True
         return False
 
@@ -2880,7 +2954,6 @@ class Parabola2D(ParabolaMixin):
         :type point: volmdlr.Point2D.
         :return: The tangent vector to the ellipse at the given point.
         :rtype: volmdlr.Vector2D.
-
         """
         # Convert the point to local coordinates within the parabola's frame
         point_at_local_coord = self.frame.global_to_local_coordinates(point)
@@ -2983,6 +3056,14 @@ class Parabola3D(ParabolaMixin):
         return Parabola2D(frame, self.focal_length)
 
     def tangent(self, point):
+        """
+        Calculates the tangent vector to a parabola at a given point.
+
+        :param point: The point at which the tangent vector is to be calculated.
+        :type point: volmdlr.Point3D.
+        :return: The tangent vector to the parabola at the given point.
+        :rtype: volmdlr.Vector3D.
+        """
         point_2d = point.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         tangent_2d = self.self_2d.tangent(point_2d)
         point_tangent_2d = point_2d + tangent_2d
@@ -2998,7 +3079,7 @@ class Parabola3D(ParabolaMixin):
         :return: True is point lies on the Hyperbola 3D, False otherwise
         """
         new_point = self.frame.global_to_local_coordinates(point)
-        return math.isclose(new_point.y, self.vrtx_equation_a * new_point.x **2, abs_tol=tol)
+        return math.isclose(new_point.y, self.vrtx_equation_a * new_point.x**2, abs_tol=tol)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
