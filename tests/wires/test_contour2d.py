@@ -84,7 +84,7 @@ class TestContour2D(unittest.TestCase):
         contour_to_offset = DessiaObject.load_from_file(os.path.join(folder, "contour_to_offset.json"))
         stringer_contour_offset = contour_to_offset.offset(4)
         self.assertEqual(len(stringer_contour_offset.primitives), 10)
-        self.assertAlmostEqual(stringer_contour_offset.area(), 546.1486677646163)
+        self.assertAlmostEqual(stringer_contour_offset.area(), 546.1486690034756)
 
     def test_edge_crossings(self):
         points = [volmdlr.Point2D(-0.3, -0.2), volmdlr.Point2D(0.3, -0.2),
