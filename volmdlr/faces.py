@@ -2126,19 +2126,12 @@ class CylindricalFace3D(Face3D):
         face_intersections = []
         for primitive in surface_intersections:
             points_on_primitive = []
-            # for face in [self, conical_face]:
-            #     edge_intersections = face.edge_intersections(primitive)
-            #     for inter in edge_intersections:
-            #         if not volmdlr.core.point_in_list(inter, points_on_primitive):
-            #             points_on_primitive.append(inter)
             for point in intersections_points:
                 if primitive.point_belongs(point, 1e-4):
                     points_on_primitive.append(point)
             if not points_on_primitive:
                 continue
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
-            # if isinstance(primitive, volmdlr_curves.ClosedCurve):
-                # if isinstance(primitive, volmdlr_curves.Ellipse3D) or isinstance(primitive, volmdlr_curves.Circle3D):
             points_on_primitive = points_on_primitive + [points_on_primitive[0]]
             for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
                 edge = primitive.trim(point1, point2)

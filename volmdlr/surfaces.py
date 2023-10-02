@@ -2347,47 +2347,19 @@ class CylindricalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        a_plane_vector = npy.array([[plane3d.frame.u.x],
-                                    [plane3d.frame.u.y],
-                                    [plane3d.frame.u.z]])
-        b_plane_vector = npy.array([[plane3d.frame.v.x],
-                                    [plane3d.frame.v.y],
-                                    [plane3d.frame.v.z]])
-        c_point = npy.array([[self.frame.origin.x],
-                             [self.frame.origin.y],
-                             [self.frame.origin.z]])
-        i_matrix = npy.identity(3)
-        w_vector = npy.array([[self.frame.w.x],
-                              [self.frame.w.y],
-                              [self.frame.w.z]])
-        point_on_plane = npy.array([[plane3d.frame.origin.x],
-                                    [plane3d.frame.origin.y],
-                                    [plane3d.frame.origin.z]])
-        delta = point_on_plane - c_point
-        m_matrix = i_matrix - npy.dot(w_vector, w_vector.T)
-        q_2 = npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), a_plane_vector)[0][0],
-                          npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0]],
-                         [npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0],
-                          npy.dot(npy.dot(b_plane_vector.T, m_matrix), b_plane_vector)[0][0]]])
-        q_1 = 2 * npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), delta)[0][0]],
-                             [npy.dot(npy.dot(b_plane_vector.T, m_matrix), delta)[0][0]]])
-        k_vector = - npy.dot(npy.linalg.inv(q_2), q_1)
-        q_0 = npy.dot(npy.dot(delta.T, m_matrix), delta) - self.radius ** 2
-        s_matrix = q_2 / (npy.dot(npy.dot(k_vector.T, q_2), k_vector) - q_0)
-        _, eigenvectors = npy.linalg.eig(s_matrix)
-        k_0, k_1 = k_vector[0][0], k_vector[1][0]
-        ellipse_center = point_on_plane + k_0 * a_plane_vector + k_1 * b_plane_vector
-        ellipse_center = volmdlr.Point3D(ellipse_center[0][0], ellipse_center[1][0], ellipse_center[2][0])
-        major_dir = eigenvectors[0][0] * a_plane_vector + eigenvectors[1][0] * b_plane_vector
-        major_dir = volmdlr.Point3D(major_dir[0][0], major_dir[1][0], major_dir[2][0]).unit_vector()
-        minor_dir = eigenvectors[0][1] * a_plane_vector + eigenvectors[1][1] * b_plane_vector
-        minor_dir = volmdlr.Point3D(minor_dir[0][0], minor_dir[1][0], minor_dir[2][0]).unit_vector()
-        lineseg1 = edges.LineSegment3D(ellipse_center, ellipse_center + major_dir * 10 * self.radius)
-        lineseg2 = edges.LineSegment3D(ellipse_center, ellipse_center + minor_dir * 10 * self.radius)
-        inters_lineseg1 = self.linesegment_intersections(lineseg1)
-        inters_lineseg2 = self.linesegment_intersections(lineseg2)
-        major_axis = ellipse_center.point_distance(inters_lineseg1[0])
-        minor_axis = ellipse_center.point_distance(inters_lineseg2[0])
+        plane_normal = self.frame.w.cross(plane3d.frame.w)
+        plane2 = Plane3D.from_normal(plane3d.frame.origin, plane_normal)
+        plane2_plane3d_intersections = plane3d.plane_intersections(plane2)
+        line_intersections = self.line_intersections(plane2_plane3d_intersections[0])
+        if not line_intersections:
+            return []
+        ellipse_center = (line_intersections[0] + line_intersections[1]) / 2
+        line2 = curves.Line3D.from_point_and_vector(ellipse_center, plane_normal)
+        line_intersections2 = self.line_intersections(line2)
+        major_dir = (line_intersections[0] - ellipse_center).unit_vector()
+        major_axis = ellipse_center.point_distance(line_intersections[0])
+        minor_dir = (line_intersections2[0] - ellipse_center).unit_vector()
+        minor_axis = ellipse_center.point_distance(line_intersections2[0])
         if minor_axis > major_axis:
             major_axis, minor_axis = minor_axis, major_axis
             major_dir, minor_dir = minor_dir, major_dir
