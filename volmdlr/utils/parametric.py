@@ -4,10 +4,10 @@ volmdlr utils for calculating 3D to surface parametric domain operation.
 """
 import bisect
 import math
-import warnings
 
 import volmdlr
 import volmdlr.edges as vme
+from volmdlr import curves
 
 
 def find_sign_changes(list_of_values):
@@ -43,9 +43,9 @@ def angle_discontinuity(angle_list):
     if indexes_sign_changes:
         for index in indexes_sign_changes:
             sign = round(angle_list[index - 1] / abs(angle_list[index - 1]), 2)
-            delta = abs(angle_list[index] + sign * volmdlr.TWO_PI - angle_list[index - 1])
-            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=delta) and \
-                    not math.isclose(abs(angle_list[index]), 0, abs_tol=delta):
+            delta = max(abs(angle_list[index] + sign * volmdlr.TWO_PI - angle_list[index - 1]), 1e-4)
+            if math.isclose(abs(angle_list[index]), math.pi, abs_tol=1.1 * delta) and \
+                    not math.isclose(abs(angle_list[index]), 0, abs_tol=1.1 * delta):
                 indexes_angle_discontinuity.append(index)
                 discontinuity = True
     return discontinuity, indexes_angle_discontinuity
@@ -186,11 +186,12 @@ def fullarc_to_cylindrical_coordinates_verification(start, end, normal_dot_produ
     """
     Verifies theta from start and end of a full arc after transformation from spatial to parametric coordinates.
     """
-    theta1, _ = start
+    theta1, z1 = start
     _, z2 = end
-
     if normal_dot_product > 0:
         end = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, z2)
+    elif normal_dot_product < 0 and math.isclose(theta1, -math.pi, abs_tol=1e-6):
+        start = volmdlr.Point2D(math.pi, z1)
     elif normal_dot_product < 0:
         end = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, z2)
     return [start, end]
@@ -305,22 +306,24 @@ def contour2d_healing(contour2d):
     Heals topologies incoherencies on the boundary representation.
     """
     contour2d = contour2d_healing_self_intersection(contour2d)
-    contour2d = contour2d_healing_close_gaps(contour2d)
+    # contour2d = contour2d_healing_close_gaps(contour2d, contour3d)
     return contour2d
 
 
-def contour2d_healing_close_gaps(contour2d):
+def contour2d_healing_close_gaps(contour2d, contour3d):
     """
     Heals topologies incoherencies on the boundary representation.
     """
-    new_primitives = [contour2d.primitives[0]]
-    for i, (prim1, prim2) in enumerate(
-            zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
+    new_primitives = []
+    for prim1_3d, prim2_3d, prim1, prim2 in zip(contour3d.primitives, contour3d.primitives[1:] +
+                                                [contour3d.primitives[0]],
+                                                contour2d.primitives, contour2d.primitives[1:] +
+                                                                      [contour2d.primitives[0]]):
         if prim1 and prim2:
-            if not prim1.end.is_close(prim2.start):
+            if not prim1_3d.end.is_close(prim2_3d.start) and not prim1.end.is_close(prim2.start):
                 new_primitives.append(vme.LineSegment2D(prim1.end, prim2.start))
-            if i < len(contour2d.primitives) - 1:
-                new_primitives.append(prim2)
+
+            new_primitives.append(prim2)
     contour2d.primitives = new_primitives
 
     return contour2d
@@ -337,8 +340,7 @@ def contour2d_healing_self_intersection(contour2d):
             intersections = prim1.intersections(prim2)
             if intersections:
                 if len(intersections) > 1:
-                    warnings.warn("More than one crossings found while detecting contour self intersection.")
-                    return contour2d
+                    intersections = prim1.sort_points_along_curve(intersections)
                 split_point = intersections[0]
                 if prim1.is_point_edge_extremity(split_point):
                     new_prim1 = prim1
@@ -351,3 +353,11 @@ def contour2d_healing_self_intersection(contour2d):
                 contour2d.primitives[i] = new_prim1
                 contour2d.primitives[(i + 1) % len(contour2d.primitives)] = new_prim2
     return contour2d
+
+
+def find_parametric_point_at_singularity(edge, reference_point, singularity_line):
+    """Uses tangent line to find real theta angle of the singularity point on parametric domain."""
+    abscissa_before_singularity = edge.abscissa(reference_point)
+    direction_vector = edge.direction_vector(abscissa_before_singularity)
+    direction_line = curves.Line2D(reference_point, reference_point + direction_vector)
+    return direction_line.line_intersections(singularity_line)[0]

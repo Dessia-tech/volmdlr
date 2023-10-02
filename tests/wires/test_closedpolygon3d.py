@@ -25,9 +25,10 @@ class TestClosedPolygon3D(unittest.TestCase):
         theta_r = volmdlr.TWO_PI / expected_number_points
         theta_end = theta0 + volmdlr.TWO_PI
         z = x.cross(y)
+        initial_point = x.to_point()
         while theta < theta_end:
             radius = mean_radius + 2*(random.random() - 0.5)*delta_radius
-            points.append(radius*x.rotation(volmdlr.O3D, z, theta))
+            points.append((radius * initial_point).rotation(volmdlr.O3D, z, theta))
             theta += theta_r + (random.random() - 0.5)*theta_r
         return vmw.ClosedPolygon3D(points)
 
