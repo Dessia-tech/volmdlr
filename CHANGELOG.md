@@ -19,15 +19,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection, parallel_plane_intersections, concurent_plane_intersections, plane_intersections.
 - Hyperbola2D/3D and Parabola2D/3D: split
 - PlaneFace3D: conicalface_intersections
+- BSplineCurve: point_to_parameter, abscissa_to_parameter.
 
 ### Fixed
-- add missing name attributes to classmethods
+- add missing name attributes to classmethods.
 - fixed circular imports
 - BSplineSurface3D: from_points_interpolation, from_points_approximation.
 - ConicalFace3D: point_belongs
 - nurbs.core: find_multiplicity, evaluate_curve.
 - LineSegment3d: line_intersections.
-- 
+- Circle2D: line_intersections
+- Step.read_lines: handles name with # character in name.
+- ExtrusionSurface3D: enhance 3D to parametric operations.
+- BSplineCurve: direction_vector, point_at_abscissa, abscissa, trim
+- ConicalSurface3D and RevolutionSurface3D: bsplinecurve3d_to_2d when start or and points are at surface singularity
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
 
@@ -35,7 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cache BSplineCurve points into a numpy array to reduce memory usage.
 - Vector2D, Vector3D: __repr__
 - core_compiled: cdef functions' names.
--
+- Vector2D, Vector3D, Point2D, Point3D: transformed into extension types for memory performance
+- limit warning on step reading
 
 ### Unittests
 - Hyperbola2D/3D: line_intersections
