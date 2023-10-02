@@ -26,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: from_points_interpolation, from_points_approximation.
 - ConicalFace3D: point_belongs
 - nurbs.core: find_multiplicity, evaluate_curve.
-
+- LineSegment3d: line_intersections.
+- 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
 
@@ -41,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parabola2D/3D: line_intersections
 - ConicalSurface3D: test_line_intersections, test_plane_intersections.
 
-## v0.13.0 [unreleased]
+## v0.13.0
 
 ### New Features
 - Line: reverse.

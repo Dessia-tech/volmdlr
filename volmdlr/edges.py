@@ -1560,6 +1560,7 @@ class BSplineCurve(Edge):
         :param line: line to verify intersections
         :return: list of intersections
         """
+        # if self.
         polygon_points = []
         for point in self.points:
             if not volmdlr.core.point_in_list(point, polygon_points):
@@ -4153,6 +4154,10 @@ class LineSegment3D(LineSegment):
         intersection = line_self.intersection(line)
         if intersection and self.point_belongs(intersection):
             return [intersection]
+        if line.point_belongs(self.start):
+            return [self.start]
+        if line.point_belongs(self.end):
+            return [self.end]
         return []
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
