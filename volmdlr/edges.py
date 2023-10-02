@@ -3458,7 +3458,7 @@ class ArcEllipse2D(Edge):
     @classmethod
     def from_3_points_and_center(cls, start, interior, end, center, name: str = ''):
         """
-        Creates an arcellipse using 3 points and a center.
+        Creates an arc ellipse using 3 points and a center.
 
         :param start: start point.
         :param interior: interior point.
@@ -4053,7 +4053,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        FullArcEllipse2D translation.
+        Full ArcEllipse 2D translation.
 
         :param offset: translation vector.
         :type offset: volmdlr.Vector2D
@@ -6065,7 +6065,7 @@ class ArcEllipse3D(Edge):
 
     def triangulation(self):
         """
-        Triangulation for an ArcEllipse3D.
+        Triangulation for an Arc Ellipse 3D.
 
         """
         return None
