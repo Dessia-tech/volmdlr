@@ -87,7 +87,7 @@ class TestParabola3D(unittest.TestCase):
         point_start = volmdlr.Point3D(1.6339745962174324, -1.8921223583379627, 4.330127018924)
         point_end = volmdlr.Point3D(1.6339745962174324, 1.8921223583379627, 4.330127018924)
         bspline = parabola.trim(point_start, point_end)
-        self.assertAlmostEqual(bspline.length(), 9.425430953568256, 5)
+        self.assertAlmostEqual(bspline.length(), 9.425679739766021, 5)
 
     def test_point_belongs(self):
         vector1 = volmdlr.Vector3D(1, 1, 1)

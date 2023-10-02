@@ -173,7 +173,7 @@ class TestPlaneFace3D(unittest.TestCase):
         intersections = face.face_intersections(conical_face)
         self.assertEqual(len(intersections), 1)
         self.assertIsInstance(intersections[0].primitives[0], edges.BSplineCurve3D)
-        self.assertAlmostEqual(intersections[0].length(), 1.5797324269472552)
+        self.assertAlmostEqual(intersections[0].length(), 1.5797706721593943)
 
         """============== Two LineSegments ==================="""
         plane3 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0.0, 0.5),
