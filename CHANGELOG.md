@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: from_points_interpolation, from_points_approximation.
 - ConicalFace3D: point_belongs
 - nurbs.core: find_multiplicity, evaluate_curve.
+- Circle2D: line_intersections
 - Step.read_lines: handles name with # character in name.
 - ExtrusionSurface3D: enhance 3D to parametric operations.
 - BSplineCurve: direction_vector, point_at_abscissa, abscissa, trim
