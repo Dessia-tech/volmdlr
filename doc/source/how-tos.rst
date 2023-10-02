@@ -226,6 +226,7 @@ How to create an Hyperbola
 ==========================
 
 A Hyperbola in defined by three arguments: a frame (2D or 3D), a semi major axis and a semi minor axis.
+For more details on Hyperbolas, you can search for the corresponding class in :ref:`curves`:.
 
 .. grid:: 1
 
@@ -254,6 +255,40 @@ A Hyperbola in defined by three arguments: a frame (2D or 3D), a semi major axis
 
             hyperberbola_3d = curves.Hyperbola3D(volmdlr.OXYZ, 1, 2)
             hyperberbola_3d.plot(edge_style=EdgeStyle(color='orange'))
+
+How to create an Parabola
+=========================
+
+A Parabola in defined by two arguments: a frame (2D or 3D) and the focal length value. There's also an optional name parameter.
+For more details on Parabolas, you can search for the corresponding class in :ref:`curves`:.
+
+.. grid:: 1
+
+    .. grid-item-card::  Parabola2D
+
+        .. plot::
+            :include-source:
+            :align: center
+
+            import volmdlr
+            from volmdlr import curves
+            from volmdlr.core import EdgeStyle
+
+            parabola_2d = curves.Parabola2D(volmdlr.OXY, 1)
+            parabola_2d.plot(edge_style=EdgeStyle(color='orange'))
+
+    .. grid-item-card::  Parabola3D
+
+        .. plot::
+            :include-source:
+            :align: center
+
+            import volmdlr
+            from volmdlr import curves
+            from volmdlr.core import EdgeStyle
+
+            parabola_3d = curves.Parabola3D(volmdlr.OXYZ, 2)
+            parabola_3d.plot(edge_style=EdgeStyle(color='orange'))
 
 
 Edges
