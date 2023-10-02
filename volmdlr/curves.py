@@ -41,8 +41,8 @@ def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_t
     u = a/(1.0 + a)
     num = ((1.0 - u)**2) * (point - start).dot(vector_p1) + u**2 * (point - end).dot(vector_p1)
     den = 2.0 * u * (1.0 - u) * vector_p1.dot(vector_p1)
-    w1 = num/den
-    return point1, w1
+    weight_1 = num/den
+    return point1, weight_1
 
 
 class Curve(DessiaObject):
@@ -1320,8 +1320,8 @@ class Circle2D(CircleMixin, ClosedCurve):
         :return: a list with all intersections between circle and hyperbola.
         """
         b_rectangle = self.bounding_rectangle
-        hyperbola_point1 = volmdlr.Point2D(hyperbola2d._get_x(b_rectangle.ymin), b_rectangle.ymin)
-        hyperbola_point2 = volmdlr.Point2D(hyperbola2d._get_x(b_rectangle.ymax), b_rectangle.ymax)
+        hyperbola_point1 = volmdlr.Point2D(hyperbola2d.get_x(b_rectangle.ymin), b_rectangle.ymin)
+        hyperbola_point2 = volmdlr.Point2D(hyperbola2d.get_x(b_rectangle.ymax), b_rectangle.ymax)
         hyperbola_bspline = hyperbola2d.trim(hyperbola_point1, hyperbola_point2)
         return self.bsplinecurve_intersections(hyperbola_bspline, abs_tol)
 
@@ -2462,7 +2462,7 @@ class HyperbolaMixin(Curve):
             return self.semi_minor_axis
         raise IndexError
 
-    def _get_x(self, y):
+    def get_x(self, y):
         """
         For given y component, get the corresponding hyperbola x component, in local coordinates.
 
@@ -2502,13 +2502,14 @@ class HyperbolaMixin(Curve):
         hyperbola_points = self.get_points(min_y, max_y, 3)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
-        p1, w1 = hyperbola_parabola_control_point_and_weight(hyperbola_points[0], self.tangent(hyperbola_points[0]),
-                                                             hyperbola_points[2], self.tangent(hyperbola_points[2]),
-                                                             hyperbola_points[1])
+        point, weight1 = hyperbola_parabola_control_point_and_weight(
+            hyperbola_points[0], self.tangent(hyperbola_points[0]),
+            hyperbola_points[2], self.tangent(hyperbola_points[2]),
+            hyperbola_points[1])
         knotvector = generate_knot_vector(2, 3)
         knot_multiplicity = [1] * len(knotvector)
 
-        bspline = _bspline_class(2, [point1, p1, point2], knot_multiplicity, knotvector, [1, w1, 1])
+        bspline = _bspline_class(2, [point1, point, point2], knot_multiplicity, knotvector, [1, weight1, 1])
         return bspline
 
 
@@ -2546,7 +2547,7 @@ class Hyperbola2D(HyperbolaMixin):
         if not min_y and not max_y:
             min_y, max_y = -self.semi_major_axis * 5, self.semi_major_axis * 5
         y_vals = npy.linspace(min_y, max_y, number_points)
-        x_positive_vals = self._get_x(y_vals)
+        x_positive_vals = self.get_x(y_vals)
         points_positive_branch = []
         for i, y in enumerate(y_vals):
             points_positive_branch.append(volmdlr.Point2D(x_positive_vals[i], y))
@@ -2693,7 +2694,7 @@ class Hyperbola3D(HyperbolaMixin):
         if not min_y and not max_y:
             min_y, max_y = -self.semi_major_axis * 5, self.semi_major_axis * 5
         y_vals = npy.linspace(min_y, max_y, number_points)
-        x_positive_vals = self._get_x(y_vals)
+        x_positive_vals = self.get_x(y_vals)
         points_positive_branch = []
         for i, y in enumerate(y_vals):
             points_positive_branch.append(volmdlr.Point3D(x_positive_vals[i], y, 0))
