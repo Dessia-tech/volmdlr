@@ -7,30 +7,31 @@ from volmdlr.models.curves import circle3d
 
 
 class TestCircle3D(unittest.TestCase):
-    list_points = circle3d.discretization_points(number_points=8)
+    list_points = circle3d.discretization_points(number_points=9)
 
     def test_discretization_points(self):
         expected_points = [volmdlr.Point3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
-                           volmdlr.Point3D(0.9855985596534886, 0.11957315586905015, 0.11957315586905015),
+                           volmdlr.Point3D(0.9855985596534886, 0.1195731558690501, 0.1195731558690501),
                            volmdlr.Point3D(0.8164965809277258, -0.4082482904638631, -0.4082482904638631),
                            volmdlr.Point3D(0.1691019787257626, -0.696923425058676, -0.696923425058676),
                            volmdlr.Point3D(-0.5773502691896257, -0.5773502691896258, -0.5773502691896258),
                            volmdlr.Point3D(-0.9855985596534886, -0.11957315586905026, -0.11957315586905026),
                            volmdlr.Point3D(-0.8164965809277259, 0.408248290463863, 0.408248290463863),
-                           volmdlr.Point3D(-0.1691019787257627, 0.696923425058676, 0.696923425058676)]
+                           volmdlr.Point3D(-0.16910197872576277, 0.696923425058676, 0.696923425058676),
+                           volmdlr.Point3D(0.5773502691896256, 0.577350269189626, 0.577350269189626)]
         for point, expected_point in zip(self.list_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
     def test_abscissa(self):
-        expected_abscissas = [2.1073424255447017e-08, 0.7853981633974484, 1.5707963267948966, 2.3561944901923444,
-                              3.1415926325163688, 3.926990816987241, 4.71238898038469, 5.497787143782138]
+        expected_abscissas = [0, math.pi/4, math.pi/2, 3 * math.pi / 4, math.pi,
+                              5 * math.pi / 4, 3 * math.pi / 2, 7 * math.pi / 4, 0]
         abscissas = [circle3d.abscissa(point) for point in self.list_points]
         for abscissa, expected_abscissa in zip(abscissas, expected_abscissas):
             self.assertAlmostEqual(abscissa, expected_abscissa)
 
     def test_point_at_abscissa(self):
-        abscissas = [0.0, 0.7853981633974484, 1.5707963267948966, 2.3561944901923444,
-                     3.1415926325163688, 3.926990816987241, 4.71238898038469, 5.497787143782138]
+        abscissas = [0, math.pi/4, math.pi/2, 3 * math.pi / 4, math.pi,
+                     5 * math.pi / 4, 3 * math.pi / 2, 7 * math.pi / 4, 0]
         points_at_abcscissas = [circle3d.point_at_abscissa(abscissa) for abscissa in abscissas]
         for point, expected_point in zip(points_at_abcscissas, self.list_points):
             self.assertTrue(point.is_close(expected_point))
@@ -39,13 +40,14 @@ class TestCircle3D(unittest.TestCase):
         self.assertAlmostEqual(circle3d.length(), 6.283185307179586)
 
     def test_rotation(self):
-        expected_points = [volmdlr.Point3D(-1.9127081796092275e-16, -0.7071067811865475, 0.7071067811865477),
+        expected_points = [volmdlr.Point3D(0.0, -0.7071067811865475, 0.7071067811865477),
                            volmdlr.Point3D(0.7765343938240264, -0.606775209136424, -0.1697591846876029),
                            volmdlr.Point3D(0.4799246488165452, 0.33209907840941155, -0.812023727225957),
                            volmdlr.Point3D(-0.4799246488165446, 0.8120237272259567, -0.33209907840941194),
-                           volmdlr.Point3D(-0.7765343938240268, 0.16975918468760318, 0.606775209136424)]
+                           volmdlr.Point3D(-0.7765343938240268, 0.16975918468760318, 0.606775209136424),
+                           volmdlr.Point3D(0.0, -0.7071067811865475, 0.7071067811865477)]
         rotated_circle3d = circle3d.rotation(volmdlr.O3D, circle3d.frame.v, math.pi / 2)
-        rotated_circle3d_points = rotated_circle3d.discretization_points(number_points=5)
+        rotated_circle3d_points = rotated_circle3d.discretization_points(number_points=6)
         for point, expected_point in zip(rotated_circle3d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
@@ -54,9 +56,10 @@ class TestCircle3D(unittest.TestCase):
                            volmdlr.Point3D(0.9549454387105718, 0.497250629161079, -0.9169629332120162),
                            volmdlr.Point3D(0.01283846933518723, 5.8277296916986465e-05, -1.414155285076178),
                            volmdlr.Point3D(-0.9470108282979028, 0.4799829261134622, -0.934230636259633),
-                           volmdlr.Point3D(-0.598123348937482, 1.2737850229851062, -0.140428539387989)]
+                           volmdlr.Point3D(-0.598123348937482, 1.2737850229851062, -0.140428539387989),
+                           volmdlr.Point3D(0.5773502691896258, 1.2844570503761734, -0.12975651199692173)]
         translated_circle3d = circle3d.translation(circle3d.frame.w)
-        translated_circle3d_points = translated_circle3d.discretization_points(number_points=5)
+        translated_circle3d_points = translated_circle3d.discretization_points(number_points=6)
         for point, expected_point in zip(translated_circle3d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
@@ -65,19 +68,21 @@ class TestCircle3D(unittest.TestCase):
                             volmdlr.Point3D(1.576, 0.07432543819998319, -0.22266191478555086),
                             volmdlr.Point3D(1.576, -0.28344543819998314, -0.3389087192664086),
                             volmdlr.Point3D(1.576, -0.28344543819998314, -0.7150912807335914),
-                            volmdlr.Point3D(1.576, 0.07432543819998312, -0.8313380852144492)],
+                            volmdlr.Point3D(1.576, 0.07432543819998312, -0.8313380852144492),
+                            volmdlr.Point3D(1.576, 0.29544000000000004, -0.527)],
                            [volmdlr.Point3D(1.3359999999999999, 0.09544, -0.387),
                             volmdlr.Point3D(1.3359999999999999, -0.12567456180001682, -0.08266191478555085),
                             volmdlr.Point3D(1.3359999999999999, -0.4834454381999832, -0.19890871926640857),
                             volmdlr.Point3D(1.3359999999999999, -0.4834454381999832, -0.5750912807335914),
-                            volmdlr.Point3D(1.3359999999999999, -0.1256745618000169, -0.6913380852144492)]]
+                            volmdlr.Point3D(1.3359999999999999, -0.1256745618000169, -0.6913380852144492),
+                            volmdlr.Point3D(1.3359999999999999, 0.09544, -0.387)]]
         for i, side in enumerate(['old', 'new']):
             circle = curves.Circle3D(volmdlr.Frame3D(volmdlr.Point3D(1.456, -0.12456, -0.457),
                                                      volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), 0.32)
             frame = volmdlr.Frame3D(volmdlr.Point3D(0.12, 0.1, -0.07), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
             framed_mapped_circle = circle.frame_mapping(frame, side)
             for expected_point, point in zip(expected_points[i],
-                                             framed_mapped_circle.discretization_points(number_points=5)):
+                                             framed_mapped_circle.discretization_points(number_points=6)):
                 self.assertTrue(expected_point.is_close(point))
 
     def test_to_2d(self):

@@ -1358,7 +1358,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         """
         if not number_points and angle_resolution:
             number_points = math.ceil(math.pi * angle_resolution) + 2
-        step = self.length() / number_points
+        step = self.length() / (number_points - 1)
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def get_geo_points(self):
@@ -1424,9 +1424,9 @@ class Circle3D(CircleMixin, ClosedCurve):
         """
         if number_points:
             angle_resolution = number_points
-        discretization_points_3d = [self.center + self.radius * math.cos(teta) * self.frame.u +
-                                    self.radius * math.sin(teta) * self.frame.v for teta in
-                                    npy.linspace(0, volmdlr.TWO_PI, angle_resolution + 1)][:-1]
+        discretization_points_3d = [self.center + self.radius * math.cos(theta) * self.frame.u +
+                                    self.radius * math.sin(theta) * self.frame.v for theta in
+                                    npy.linspace(0, volmdlr.TWO_PI, angle_resolution)]
         return discretization_points_3d
 
     def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
@@ -1988,7 +1988,7 @@ class Ellipse2D(ClosedCurve):
             angle_resolution = number_points
         discretization_points = [self.frame.local_to_global_coordinates(
             volmdlr.Point2D(self.major_axis * math.cos(theta), self.minor_axis * math.sin(theta)))
-            for theta in npy.linspace(self.angle_start, self.angle_end, angle_resolution + 1)]
+            for theta in npy.linspace(self.angle_start, self.angle_end, angle_resolution)]
         return discretization_points
 
     def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-6):
@@ -2194,7 +2194,7 @@ class Ellipse3D(ClosedCurve):
                                        + self.minor_axis * math.sin(
                                            theta) * self.minor_dir for theta in
                                        npy.linspace(0, volmdlr.TWO_PI,
-                                                    angle_resolution + 1)][:-1]
+                                                    angle_resolution)]
         return discretization_points_3d
 
     def to_2d(self, plane_origin, x, y):
