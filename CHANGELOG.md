@@ -29,11 +29,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: from_points_interpolation, from_points_approximation.
 - ConicalFace3D: point_belongs
 - nurbs.core: find_multiplicity, evaluate_curve.
+- LineSegment3d: line_intersections.
 - Circle2D: line_intersections
 - Step.read_lines: handles name with # character in name.
 - ExtrusionSurface3D: enhance 3D to parametric operations.
 - BSplineCurve: direction_vector, point_at_abscissa, abscissa, trim
 - ConicalSurface3D and RevolutionSurface3D: bsplinecurve3d_to_2d when start or and points are at surface singularity
+- ClosedCurves: discretization_points
 - ArcEllipse3D: is_close
 
 ### Refactor
@@ -51,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parabola2D/3D: line_intersections
 - ConicalSurface3D: test_line_intersections, test_plane_intersections.
 
-## v0.13.0 [unreleased]
+## v0.13.0
 
 ### New Features
 - Line: reverse.
