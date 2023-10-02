@@ -1,5 +1,4 @@
 Aabb
-arcellipse
 argmax
 args
 asarray
@@ -136,21 +135,6 @@ voxelized
 voxels
 vtk
 WireMixin
-BoundingRectangle
-EdgeStyle
-args
-Guldin
-nx
-VolumeModel
-discretizing
-argmax
-pre
-scipy
-ndim
-RGB
-planeface
-triangleface
-cylindricalface
 xmax
 xmin
 ymax
@@ -159,4 +143,3 @@ zmax
 zmin
 π
 Π
-
