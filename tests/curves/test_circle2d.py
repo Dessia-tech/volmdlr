@@ -85,6 +85,20 @@ class TestCircle2D(unittest.TestCase):
         line_intersections = self.circle2d.line_intersections(line)
         line_intersections[0].is_close(volmdlr.Point2D(0.7071067811865475, 0.7071067811865475))
         line_intersections[1].is_close(volmdlr.Point2D(-0.7071067811865476, -0.7071067811865476))
+        circle_ = curves.Circle2D(volmdlr.Point2D(0.8, -0.3), 0.3)
+        line_2 = curves.Line2D(volmdlr.Point2D(0.5599870479815988, -0.12053417263965237),
+                               volmdlr.Point2D(0.5593939842065143, -0.1196126662489295))
+        circle_line_intersections = circle_.line_intersections(line_2)
+        self.assertTrue(circle_line_intersections[0], volmdlr.Point2D(0.864102883983119, -0.5930713569509084))
+        self.assertTrue(circle_line_intersections[1], volmdlr.Point2D(0.5598081100790778, -0.12025613775092192))
+        line_2 = curves.Line2D(volmdlr.Point2D(.1, 0), volmdlr.Point2D(.1, .1))
+        circle_line_intersections_2 = circle.line_intersections(line_2)
+        self.assertTrue(circle_line_intersections_2[0].is_close(volmdlr.Point2D(0.1, -0.4898979485566356)))
+        self.assertTrue(circle_line_intersections_2[1].is_close(volmdlr.Point2D(0.1, 0.4898979485566356)))
+        line_3 = curves.Line2D(volmdlr.Point2D(0, 0.1), volmdlr.Point2D(.1, .1))
+        circle_line_intersections_3 = circle.line_intersections(line_3)
+        self.assertTrue(circle_line_intersections_3[0].is_close(volmdlr.Point2D(0.4898979485566356, 0.1)))
+        self.assertTrue(circle_line_intersections_3[1].is_close(volmdlr.Point2D(-0.4898979485566356, 0.1)))
 
     def test_linesegment_intersections(self):
         linesegment = volmdlr.edges.LineSegment2D(volmdlr.Point2D(-2.0, -2.0),
@@ -170,9 +184,9 @@ class TestCircle2D(unittest.TestCase):
     def test_split_by_line(self):
         list_arcs = circle.split_by_line(line=line)
         arc1_validate = volmdlr.edges.Arc2D.from_3_points(
-            volmdlr.Point2D(0, -0.5), volmdlr.Point2D(0.5, 0), volmdlr.Point2D(0, 0.5))
-        arc2_validate = volmdlr.edges.Arc2D.from_3_points(
             volmdlr.Point2D(0, 0.5), volmdlr.Point2D(-0.5, 0), volmdlr.Point2D(0, -0.5))
+        arc2_validate = volmdlr.edges.Arc2D.from_3_points(
+            volmdlr.Point2D(0, -0.5), volmdlr.Point2D(0.5, 0), volmdlr.Point2D(0, 0.5))
         self.assertEqual(list_arcs[0], arc1_validate)
         self.assertEqual(list_arcs[1], arc2_validate)
 
