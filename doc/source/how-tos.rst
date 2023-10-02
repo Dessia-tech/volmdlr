@@ -222,6 +222,40 @@ An ellipse in defined by three arguments: a major axis (A), e minor axis (B) and
            ellipse3d = curves.Ellipse3D(major_axis=2, minor_axis=1, frame=frame)
            ellipse3d.plot(edge_style=EdgeStyle('orange'))
 
+How to create an Hyperbola
+==========================
+
+A Hyperbola in defined by three arguments: a frame (2D or 3D), a semi major axis and a semi minor axis.
+
+.. grid:: 1
+
+    .. grid-item-card::  Hyperbola2D
+
+        .. plot::
+            :include-source:
+            :align: center
+
+            import volmdlr
+            from volmdlr import curves
+            from volmdlr.core import EdgeStyle
+
+            hyperberbola_2d = curves.Hyperbola2D(volmdlr.OXY, 1, 2)
+            hyperberbola_2d.plot(edge_style=EdgeStyle(color='orange'))
+
+    .. grid-item-card::  Hyperbola3D
+
+        .. plot::
+            :include-source:
+            :align: center
+
+            import volmdlr
+            from volmdlr import curves
+            from volmdlr.core import EdgeStyle
+
+            hyperberbola_3d = curves.Hyperbola3D(volmdlr.OXYZ, 1, 2)
+            hyperberbola_3d.plot(edge_style=EdgeStyle(color='orange'))
+
+
 Edges
 *****
 
