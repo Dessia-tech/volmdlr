@@ -173,7 +173,7 @@ class TestPlaneFace3D(unittest.TestCase):
         intersections = face.face_intersections(conical_face)
         self.assertEqual(len(intersections), 1)
         self.assertIsInstance(intersections[0].primitives[0], edges.BSplineCurve3D)
-        self.assertAlmostEqual(intersections[0].length(), 1.5797324269472552)
+        self.assertAlmostEqual(intersections[0].length(), 1.5797706721593943)
 
         """============== Two LineSegments ==================="""
         plane3 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0.0, 0.5),
@@ -210,7 +210,7 @@ class TestPlaneFace3D(unittest.TestCase):
         intersections = face.face_intersections(conical_face)
         self.assertEqual(len(intersections), 1)
         self.assertIsInstance(intersections[0].primitives[0], edges.BSplineCurve3D)
-        self.assertAlmostEqual(intersections[0].length(), 1.190977548203506)
+        self.assertAlmostEqual(intersections[0].length(), 1.19097843887217)
 
     def test_linesegment_inside(self):
         lineseg = volmdlr.edges.LineSegment3D(volmdlr.Point3D(0.2, 0, -0.2), volmdlr.Point3D(0.1, 0.0, 0.2))

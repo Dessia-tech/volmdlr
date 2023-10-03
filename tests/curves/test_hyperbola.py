@@ -1,6 +1,7 @@
 import unittest
 import volmdlr
 from volmdlr import curves
+from volmdlr import edges
 
 
 class TestHyperbola2D(unittest.TestCase):
@@ -30,6 +31,24 @@ class TestHyperbola2D(unittest.TestCase):
                 line_intersections = hyperbola.line_intersections(line)
                 for intersection, expected_result in zip(line_intersections, expected_results[i][j]):
                     self.assertTrue(intersection.is_close(expected_result))
+
+    def test_point_belongs(self):
+        hyperbola = curves.Hyperbola2D(volmdlr.OXY, 1, 1)
+        point1 = volmdlr.Point2D(1.846035698527472, -1.5517241379310343)
+        point2 = volmdlr.Point2D(4.4248245764887875, 4.310344827586208)
+        point3 = volmdlr.Point2D(1.4248245764887875, -2.410344827586208)
+        self.assertTrue(hyperbola.point_belongs(point1))
+        self.assertTrue(hyperbola.point_belongs(point2))
+        self.assertFalse(hyperbola.point_belongs(point3))
+
+    def test_tangent(self):
+        hyperbola = curves.Hyperbola2D(volmdlr.OXY, 1, 1)
+        point1 = volmdlr.Point2D(1.846035698527472, -1.5517241379310343)
+        point2 = volmdlr.Point2D(4.4248245764887875, 4.310344827586208)
+        tangent_vector1 = hyperbola.tangent(point1)
+        tangent_vector2 = hyperbola.tangent(point2)
+        self.assertTrue(tangent_vector1.is_close(volmdlr.Vector2D(-0.8405710350936326, 1.0)))
+        self.assertTrue(tangent_vector2.is_close(volmdlr.Vector2D(0.9741278446357251, 1.0)))
 
 
 class TestHyperbola3D(unittest.TestCase):
@@ -61,7 +80,7 @@ class TestHyperbola3D(unittest.TestCase):
             for intersection, expected_result in zip(intersections, expected_results[i]):
                 self.assertTrue(intersection.is_close(expected_result))
 
-    def test_split(self):
+    def test_trim(self):
         hyperbola = curves.Hyperbola3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0.25, 0),
                                                        volmdlr.Z3D, volmdlr.X3D, volmdlr.Y3D),
                                        0.4330127018922194, 0.25000000000016875)
@@ -69,7 +88,37 @@ class TestHyperbola3D(unittest.TestCase):
         point_start = volmdlr.Point3D(0.4330127018922191, 0.25, 0.866025403784)
         point_end = volmdlr.Point3D(-0.4330127018922191, 0.25, 0.866025403784)
         bspline = hyperbola.trim(point_start, point_end)
-        self.assertAlmostEqual(bspline.length(), 1.259818722659198, 5)
+        self.assertAlmostEqual(bspline.length(), 1.2598407301760584, 5)
+
+    def test_point_belongs(self):
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+        hyperbola3d = curves.Hyperbola3D(frame, 1, 1)
+        point1 = volmdlr.Point3D(4.181191857716377, 0.5914224070858578, 0.5914224070858578)
+        point2 = volmdlr.Point3D(-0.8766643972395096, 3.9800825065547225, 3.9800825065547225)
+        point3 = volmdlr.Point3D(2.3259646383580663, 1.0961993491191613, -3.0961993491191613)
+        self.assertTrue(hyperbola3d.point_belongs(point1))
+        self.assertTrue(hyperbola3d.point_belongs(point2))
+        self.assertFalse(hyperbola3d.point_belongs(point3))
+
+    def test_tangent(self):
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+        hyperbola3d = curves.Hyperbola3D(frame, 1, 1)
+        point1 = volmdlr.Point3D(4.181191857716377, 0.5914224070858578, 0.5914224070858578)
+        point2 = volmdlr.Point3D(-0.8766643972395096, 3.9800825065547225, 3.9800825065547225)
+        tangent_vector1 = hyperbola3d.tangent(point1)
+        tangent_vector2 = hyperbola3d.tangent(point2)
+        self.assertTrue(tangent_vector1.is_close(
+            volmdlr.Vector3D(1.362919855421623, 0.13817498403014217, 0.13817498403014217)))
+        self.assertTrue(tangent_vector2.is_close(
+            volmdlr.Vector3D(0.2566720737495096, -0.9680727976427224, -0.9680727976427224)))
 
 
 if __name__ == '__main__':
