@@ -9,6 +9,9 @@ root_folder = os.path.dirname(os.path.realpath(__file__))
 folder = os.path.join(root_folder, 'objects_cylindrical_tests')
 
 
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_cylindrical_tests')
+
+
 class TestCylindricalFace3D(unittest.TestCase):
     cylindrical_surface1 = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 0.32)
     cylindrical_face1 = faces.CylindricalFace3D.from_surface_rectangular_cut(
@@ -81,11 +84,11 @@ class TestCylindricalFace3D(unittest.TestCase):
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
         surface = DessiaObject.load_from_file(
-            os.path.join(folder, "surface3d_1.json"))
+            os.path.join(folder, 'surface3d_1.json'))
         contour0 = DessiaObject.load_from_file(
-            os.path.join(folder, "contour_1_0.json"))
+            os.path.join(folder, 'contour_1_0.json'))
         contour1 = DessiaObject.load_from_file(
-            os.path.join(folder, "contour_1_1.json"))
+            os.path.join(folder, 'contour_1_1.json'))
 
         face = faces.CylindricalFace3D.from_contours3d(surface, [contour0, contour1])
 
