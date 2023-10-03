@@ -2870,9 +2870,8 @@ class Basis3D(Basis):
         :return: True if the basis vectors are normalized, False otherwise.
         :rtype: bool
         """
-        return math.isclose(self.u.norm(), 1.0, abs_tol=tol) and \
-               math.isclose(self.v.norm(), 1.0, abs_tol=tol) and \
-               math.isclose(self.w.norm(), 1.0, abs_tol=tol)
+        return (math.isclose(self.u.norm(), 1.0, abs_tol=tol) and math.isclose(self.v.norm(), 1.0, abs_tol=tol) and
+                math.isclose(self.w.norm(), 1.0, abs_tol=tol))
 
     def is_orthonormal(self, tol: float = 1e-6):
         """
