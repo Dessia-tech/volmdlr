@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Curve: general_method curve_intersections
 - Parabola2d/3D / Hyperbola2D/3D: point_belongs, tangent
 - BSplineCurve: point_to_parameter, abscissa_to_parameter.
+- Basis3D: is_normilized, is_orthogonal, is_orthonormal.
 
 ### Fixed
 - add missing name attributes to classmethods.
@@ -35,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExtrusionSurface3D: enhance 3D to parametric operations.
 - BSplineCurve: direction_vector, point_at_abscissa, abscissa, trim
 - ConicalSurface3D and RevolutionSurface3D: bsplinecurve3d_to_2d when start or and points are at surface singularity
+
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
 
