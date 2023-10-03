@@ -2899,7 +2899,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def get_generatrixes(self, z: float = 1, number_lines: int = 36):
         """
-        Gets Conical Surface 3D generatix lines.
+        Gets Conical Surface 3D generatrix lines.
 
         :param z: cone's z height.
         :param number_lines: number of generatrix lines.
