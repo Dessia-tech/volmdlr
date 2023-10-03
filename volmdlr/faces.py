@@ -192,7 +192,7 @@ class Face3D(volmdlr.core.Primitive3D):
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
 
-        return face.from_contours3d(surface, contours, step_id)
+        return face.from_contours3d(surface, contours, name)
 
     @classmethod
     def from_contours3d(cls, surface, contours3d: List[volmdlr.wires.Contour3D], name: str = ''):
@@ -568,7 +568,7 @@ class Face3D(volmdlr.core.Primitive3D):
         method_name = f'{edge3d.__class__.__name__.lower()[:-2]}_inside'
         if hasattr(self, method_name):
             return getattr(self, method_name)(edge3d)
-        points = edge3d.discretization_points(number_points=5)
+        points = edge3d.discretization_points(number_points=10)
         for point in points[1:-1]:
             if not self.point_belongs(point):
                 return False

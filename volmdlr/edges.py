@@ -161,7 +161,6 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
-        step_id = kwargs.get("step_id")
         if obj.__class__.__name__ == 'LineSegment3D':
             return LineSegment3D(point1, point2, name=arguments[0][1:-1])
         if obj.__class__.__name__ == 'Line3D':
@@ -1103,7 +1102,7 @@ class BSplineCurve(Edge):
 
         :param point: The point where the B-spline curve is split
         :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
-        :param tol: The precision in terms of distance. Default value is 1e-4
+        :param tol: The precision in terms of distance. Default value is 1e-6
         :type tol: float, optional
         :return: A list containing the first and second split of the B-spline
             curve
@@ -1600,13 +1599,14 @@ class BSplineCurve(Edge):
         """Gets the points that define a BsplineCurve in a .geo file."""
         return list(self.discretization_points())
 
-    def line_intersections(self, line):
+    def line_intersections(self, line, tol: float = 1e-6):
         """
         Calculates the intersections of a BSplineCurve (2D or 3D) with a Line (2D or 3D).
 
         :param line: line to verify intersections
         :return: list of intersections
         """
+        # if self.
         polygon_points = []
         for point in self.points:
             if not volmdlr.core.point_in_list(point, polygon_points):
@@ -1619,10 +1619,10 @@ class BSplineCurve(Edge):
             intersections = linesegment.line_intersections(line)
 
             if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
-                if line.point_distance(linesegment.middle_point()) < 1e-8:
+                if line.point_distance(linesegment.middle_point()) < (tol * 0.01):
                     list_intersections.append(linesegment.middle_point())
             if intersections and intersections[0] not in list_intersections:
-                if self.point_belongs(intersections[0], 1e-6):
+                if self.point_belongs(intersections[0], tol):
                     list_intersections.append(intersections[0])
                     continue
                 abs1 = self.abscissa(linesegment.start)
@@ -1809,7 +1809,7 @@ class BSplineCurve(Edge):
         if isinstance(other_edge, self.__class__):
             if self.start.is_close(other_edge.start) and self.end.is_close(other_edge.end):
                 is_true = True
-                for point in other_edge.discretization_points(number_points=20):
+                for point in other_edge.discretization_points(number_points=10):
                     if not self.point_belongs(point):
                         is_true = False
                         break
@@ -3366,6 +3366,7 @@ class FullArc2D(FullArcMixin, Arc2D):
                            [self.circle, self.start]])
 
     def polygonization(self):
+        """Creates a Polygon from a full arc 2d."""
         return volmdlr.wires.ClosedPolygon2D(self.discretization_points(angle_resolution=15))
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
@@ -3444,6 +3445,7 @@ class ArcEllipse2D(Edge):
         self._reverse = None
 
     def get_start_end_angles(self):
+        """Gets start and end angles for start and end points, respectively."""
         local_start_point = self.ellipse.frame.global_to_local_coordinates(self.start)
         u1, u2 = local_start_point.x / self.ellipse.major_axis, local_start_point.y / self.ellipse.minor_axis
         start_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
@@ -3457,7 +3459,7 @@ class ArcEllipse2D(Edge):
     @classmethod
     def from_3_points_and_center(cls, start, interior, end, center, name: str = ''):
         """
-        Creates an arcellipse using 3 points and a center.
+        Creates an arc ellipse using 3 points and a center.
 
         :param start: start point.
         :param interior: interior point.
@@ -3779,6 +3781,7 @@ class ArcEllipse2D(Edge):
         return tangent_vector
 
     def get_reverse(self):
+        """Gets the arc ellipse in the reverse direction."""
         ellipse = self.ellipse.__class__(self.ellipse.major_axis, self.ellipse.minor_axis,
                                          volmdlr.Frame2D(self.ellipse.center, self.ellipse.frame.u,
                                                          -self.ellipse.frame.v))
@@ -4052,7 +4055,7 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
 
     def translation(self, offset: volmdlr.Vector2D):
         """
-        FullArcEllipse2D translation.
+        Full ArcEllipse 2D translation.
 
         :param offset: translation vector.
         :type offset: volmdlr.Vector2D
@@ -4192,6 +4195,10 @@ class LineSegment3D(LineSegment):
         intersection = line_self.intersection(line, tol=tol)
         if intersection and self.point_belongs(intersection):
             return [intersection]
+        if line.point_belongs(self.start):
+            return [self.start]
+        if line.point_belongs(self.end):
+            return [self.end]
         return []
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
@@ -5884,6 +5891,7 @@ class FullArc3D(FullArcMixin, Arc3D):
 
     @classmethod
     def from_3_points(cls, point1, point2, point3, name: str = ''):
+        """Creates a full arc 3D from 3 given points."""
         fullarc = cls(volmdlr_curves.Circle3D.from_3_points(point1, point2, point3), point1, name=name)
         return fullarc
 
@@ -6065,7 +6073,7 @@ class ArcEllipse3D(Edge):
 
     def triangulation(self):
         """
-        Triangulation for an ArcEllipse3D.
+        Triangulation for an Arc Ellipse 3D.
 
         """
         return None
@@ -6170,7 +6178,7 @@ class ArcEllipse3D(Edge):
 
         if isinstance(other_edge, self.__class__):
             if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
-                    and self.ellipse.center.is_close(other_edge.ellipse3d.center, tol)
+                    and self.ellipse.center.is_close(other_edge.ellipse.center, tol)
                     and self.point_belongs(other_edge.point_at_abscissa(other_edge.length() * 0.5), tol)):
                 return True
         return False

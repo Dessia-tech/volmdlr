@@ -178,7 +178,6 @@ class RoundedLineSegments:
                             a_ub[ieq_ub, dof[ip2]] = 1
                             b_ub[ieq_ub] = lines_length[ip1]
                             ieq_ub += 1
-
                     optimized_radius_solution = linprog(c, a_ub, b_ub, bounds=bounds)
 
                     for ipoint, dof_point in dof.items():

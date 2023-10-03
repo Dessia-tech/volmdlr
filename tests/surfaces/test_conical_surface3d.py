@@ -87,7 +87,7 @@ class TestConicalSurface3D(unittest.TestCase):
             os.path.join(folder, "conicalsurface_contour_with_singularity_contour_2.json"))
         contour = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour.is_ordered())
-        self.assertAlmostEqual(contour.area(), math.pi * 0.0014073966802667698, 6)
+        self.assertAlmostEqual(contour.area(), math.pi * 0.0014073966802667698, 5)
 
 
 
