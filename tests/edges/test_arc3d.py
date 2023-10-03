@@ -80,6 +80,9 @@ class TestArc3D(unittest.TestCase):
             if self.arc3d.point_belongs(point):
                 abscissa = self.arc3d.abscissa(point)
                 abscissas.append(abscissa)
+            else:
+                with self.assertRaises(ValueError):
+                    self.arc3d_2.abscissa(point)
 
         for abscissa, expected_abscissa in zip(abscissas, expected_abscissa):
             self.assertAlmostEqual(abscissa, expected_abscissa)
