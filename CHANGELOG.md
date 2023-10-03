@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
+
 ### Fixed
 - add missing name attributes to classmethods
 - fixed circular imports
