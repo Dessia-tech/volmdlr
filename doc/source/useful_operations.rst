@@ -50,5 +50,16 @@ To have a matplotlib visualization of a volmdlr object in 2D or 3D, you can call
 Model Visualization
 *******************
 
-To Have a 3D visulaization of your model, You can use the babylonjs() method in any 3D object.
-#tobe continued
+To have a 3D visulaization of your model, most of the 3d objects has a babylonjs() method, which you can use to do so.
+Babylon.js is an open-source, JavaScript framework and engine for creating and rendering 3D graphics and games in web browsers.
+Here is an example on how you can do it.
+
+.. code-block:: python
+
+    import volmdlr
+    from volmdlr import primitives3d
+
+    block = primitives3d.Block(volmdlr.OXYZ, color=(1, 0.1, 0.1), alpha=0.6)
+    block.babylonjs()
+
+.. figure:: ../source/_static/index-images/block_babylonjs.png
