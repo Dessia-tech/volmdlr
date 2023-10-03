@@ -179,10 +179,10 @@ class TestArcEllipse3D(unittest.TestCase):
             volmdlr.Point3D(1.255568331576755, 0.5696474190625116, 1.2109400610588277),
             volmdlr.Point3D(1.2199886174598773, 1.2728187935178512, 0.6943003434687043)
         )
-        expected_intersections1 = [volmdlr.Point3D(1.354577945354, 0.964620305776, 0.964620305776),
-                                   volmdlr.Point3D(1.393846845065, 0.527821422987, 0.527821422987),
-                                   volmdlr.Point3D(-0.23914628492, -1.105171705367, -1.105171705367),
-                                   volmdlr.Point3D(-0.834634425386, -1.224592065504, -1.224592065504)]
+        expected_intersections1 = [volmdlr.Point3D(1.354577390684, 0.96462133589, 0.96462133589),
+                                   volmdlr.Point3D(1.393846492347, 0.527819792968, 0.527819792968),
+                                   volmdlr.Point3D(-0.239143661231, -1.105170711828, -1.105170711828),
+                                   volmdlr.Point3D(-0.834635771305, -1.224592042695, -1.224592042695)]
         expected_intersections2 = [volmdlr.Point3D(1.3938468501173522, 0.5278214463329128, 0.5278214463329132),
                                    volmdlr.Point3D(1.1547005383792521, 1.1547005383792512, 1.1547005383792517)]
         intersections1 = arc1.arcellipse_intersections(self.arc_ellipse3d)

@@ -5,9 +5,6 @@ import volmdlr
 from volmdlr import edges, faces, surfaces, wires
 from dessia_common.core import DessiaObject
 
-root_folder = os.path.dirname(os.path.realpath(__file__))
-folder = os.path.join(root_folder, 'objects_cylindrical_tests')
-
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_cylindrical_tests')
 
@@ -136,7 +133,7 @@ class TestCylindricalFace3D(unittest.TestCase):
         cylindricalface = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindricalsurface, 0, volmdlr.TWO_PI,
                                                                                -.25, .25)
         plane_face_cylindricalface_intersec = DessiaObject.load_from_file(
-            os.path.join(root_folder, "plane_face_cylindrical_face_intersec.json"))
+            os.path.join(folder, "plane_face_cylindrical_face_intersec.json"))
         plane_face_3 = plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 7)
         split_by_plane = cylindricalface.split_by_plane(plane_face_3.surface3d)
         self.assertTrue(len(split_by_plane), 4)
@@ -202,7 +199,7 @@ class TestCylindricalFace3D(unittest.TestCase):
                     cylindrical_surface, 0, volmdlr.TWO_PI, z, 2)
                 list_curves = cyl_face.face_intersections(conical_face)
                 for curve_solution, expected_result in zip(list_curves, expected_results[i][j]):
-                    self.assertAlmostEqual(curve_solution.length(), expected_result)
+                    self.assertAlmostEqual(curve_solution.length(), expected_result, 6)
 
 
 if __name__ == '__main__':

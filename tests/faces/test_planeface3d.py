@@ -117,7 +117,7 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertEqual(face_intersections[0].primitives[0].ellipse.center, volmdlr.O3D)
         self.assertAlmostEqual(face_intersections[0].primitives[0].ellipse.major_axis, 0.21213203435596426)
         self.assertTrue(face_intersections[0].primitives[0].ellipse.major_dir.is_close(
-            volmdlr.Vector3D(0, 0.7071067811865475, -0.7071067811865475)))
+            volmdlr.Vector3D(0, -0.7071067811865475, 0.7071067811865475)))
         """ ========== THREE ARC ELLIPSES ========="""
         plane_face_3 = self.plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 7)
         face_intersections = plane_face_3.face_intersections(face)
@@ -126,17 +126,17 @@ class TestPlaneFace3D(unittest.TestCase):
             self.assertIsInstance(inter.primitives[0], edges.ArcEllipse3D)
         self.assertEqual(face_intersections[0].primitives[0].ellipse.center, volmdlr.O3D)
         self.assertTrue(face_intersections[0].primitives[0].ellipse.major_dir.is_close(volmdlr.Point3D(
-            2.6567716615652136e-17, 0.4338837391180807, -0.9009688679021675)))
+            2.6567716615652136e-17, -0.4338837391180807, 0.9009688679021675)))
         self.assertAlmostEqual(face_intersections[0].primitives[0].ellipse.major_axis, 0.3457147306439571)
-        list_expected_points = [[volmdlr.Point3D(0.08947272158306664, 0.12039365470206077, -0.25),
-                                 volmdlr.Point3D(0.136637076048, 0.061889493851, -0.128514858204),
-                                 volmdlr.Point3D(0.15, 0.0, 0.0)],
-                                [volmdlr.Point3D(0.15, 0.0, 0.0),
-                                 volmdlr.Point3D(0.136637075473, -0.06188949512, 0.128514860839),
-                                 volmdlr.Point3D(0.08947272158306664, -0.12039365470206077, 0.25)],
-                                [volmdlr.Point3D(-0.08947272158306664, -0.12039365470206077, 0.25),
+        list_expected_points = [[volmdlr.Point3D(0.08947272158306664, -0.12039365470206077, 0.25),
+                                 volmdlr.Point3D(0.136637076048, -0.061889493851, 0.128514858204),
+                                 volmdlr.Point3D(0.15, -0.0, 0.0)],
+                                [volmdlr.Point3D(0.15, -0.0, 0.0),
+                                 volmdlr.Point3D(0.136637075473, 0.06188949512, -0.128514860839),
+                                 volmdlr.Point3D(0.08947272158306664, 0.12039365470206077, -0.25)],
+                                [volmdlr.Point3D(-0.08947272158306664, 0.12039365470206077, -0.25),
                                  volmdlr.Point3D(-0.15, 0, 0),
-                                 volmdlr.Point3D(-0.08947272158306664, 0.12039365470206077, -0.25)]]
+                                 volmdlr.Point3D(-0.08947272158306664, -0.12039365470206077, 0.25)]]
         for expected_points, wire in zip(list_expected_points, face_intersections):
             arcellipse = wire.primitives[0]
             self.assertTrue(expected_points[0].is_close(arcellipse.start))

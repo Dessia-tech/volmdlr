@@ -248,7 +248,7 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
             intersection = primitive.linesegment_intersections(line_seg, 1e-6)
             if not intersection:
                 continue
-            if bsplinecurve.point_distance(intersection[0]) > 1e-8:
+            if bsplinecurve.point_distance(intersection[0]) > 1e-6:
                 param_intersections.insert(0, (abscissa_point1, abscissa_point2))
             elif not volmdlr.core.point_in_list(intersection[0], intersections):
                 intersections.append(intersection[0])

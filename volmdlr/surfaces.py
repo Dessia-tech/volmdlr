@@ -3268,7 +3268,7 @@ class ConicalSurface3D(PeriodicalSurface):
         plane2 = Plane3D.from_normal(plane3d.frame.origin, plane_normal)
         plane2_plane3d_intersections = plane3d.plane_intersections(plane2)
         line_intersections = self.line_intersections(plane2_plane3d_intersections[0])
-        if len(line_intersections) != 2:
+        if 1 > len(line_intersections) or len(line_intersections) > 2:
             return []
         angle_plane_cones_direction = volmdlr.geometry.vectors3d_angle(self.frame.w, plane3d.frame.w) - math.pi / 2
         if math.isclose(angle_plane_cones_direction, self.semi_angle, abs_tol=1e-8):
@@ -3289,6 +3289,8 @@ class ConicalSurface3D(PeriodicalSurface):
             parabola = curves.Parabola3D(frame, 1 / (4 * vrtx_equation_a))
             return [parabola]
 
+        if len(line_intersections) != 2:
+            return []
         ellipse_center = (line_intersections[0] + line_intersections[1]) / 2
         line2 = curves.Line3D.from_point_and_vector(ellipse_center, plane_normal)
         line_intersections2 = self.line_intersections(line2)

@@ -64,6 +64,11 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError(f'is_close method not implemented by {self.__class__.__name__}')
 
+    @property
+    def periodic(self):
+        """Return True if an edge is periodic."""
+        return False
+
     def get_reverse(self):
         """
         Gets the same edge, but in the opposite direction.
@@ -2708,6 +2713,11 @@ class FullArcMixin(ArcMixin):
         """Angle of Full Arc. """
         return volmdlr.TWO_PI
 
+    @property
+    def periodic(self):
+        """Return True if an edge is periodic."""
+        return True
+
     def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc at a given point.
@@ -3943,6 +3953,11 @@ class FullArcEllipse(Edge):
         self.center = ellipse.center
         self.angle_end = volmdlr.TWO_PI
         Edge.__init__(self, start=start_end, end=start_end, name=name)
+
+    @property
+    def periodic(self):
+        """Return True if an edge is periodic."""
+        return True
 
     def length(self):
         """
