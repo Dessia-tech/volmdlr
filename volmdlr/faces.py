@@ -1761,6 +1761,10 @@ class Triangle3D(PlaneFace3D):
         self._surface2d = new_surface2d
 
     def to_dict(self, *args, **kwargs):
+        """
+        Creates a Dictionary with the object's instance attributes.
+
+        """
         dict_ = {'object_class': 'volmdlr.faces.Triangle3D',
                  'point1': self.point1.to_dict(),
                  'point2': self.point2.to_dict(),
@@ -1800,6 +1804,10 @@ class Triangle3D(PlaneFace3D):
         return area
 
     def height(self):
+        """
+        Gets Triangle height.
+
+        """
         # Formula explained here: https://www.triangle-calculator.com/?what=vc
         # Basis = vector point1 to point 2d
         return 2 * self.area() / self.point1.point_distance(self.point2)
@@ -1959,6 +1967,9 @@ class Triangle3D(PlaneFace3D):
         return normal
 
     def triangle_minimum_distance(self, triangle_face, return_points=False):
+        """
+        Gets the minimum distance between two triangle.
+        """
         return self.planeface_minimum_distance(triangle_face, return_points)
 
 

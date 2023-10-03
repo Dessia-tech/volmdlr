@@ -2898,8 +2898,14 @@ class ConicalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def get_generatrixes(self, z: float = 1, number_lines: int = 36):
+        """
+        Gets Conical Surface 3D generatix lines.
+
+        :param z: cone's z height.
+        :param number_lines: number of generatrix lines.
+        :return:
+        """
         x = z * math.tan(self.semi_angle)
-        # point1 = self.frame.local_to_global_coordinates(volmdlr.Point3D(-x, 0, -z))
         point1 = self.frame.origin
         point2 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, z))
         generatrix = edges.LineSegment3D(point1, point2)
