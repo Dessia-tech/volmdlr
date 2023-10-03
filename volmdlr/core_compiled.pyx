@@ -1095,7 +1095,6 @@ cdef class Point2D(Vector2D):
         u = -u / denominateur
         return cls(x, y), t, u
 
-
     @classmethod
     def segment_intersection(cls, segment1: "volmdlr.edges.LineSegment2D",
                              segment2: "volmdlr.edges.LineSegment2D",
