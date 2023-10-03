@@ -729,16 +729,17 @@ class Line3D(Line):
 
         return core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
-    def point_belongs(self, point3d):
+    def point_belongs(self, point3d, tol: float = 1e-6):
         """
         Verifies if a point belongs to the Line 3D.
 
         :param point3d: point to be verified.
+        :param tol: tolerance.
         :return: returns True if point belongs to the line, and False otherwise.
         """
         if point3d.is_close(self.point1):
             return True
-        return self.direction_vector().is_colinear_to(point3d - self.point1)
+        return self.point_distance(point3d) < tol
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
