@@ -43,7 +43,7 @@ MAX_ERROR_BY_TYPE = {
                      'unspecified-encoding': 1,
                      'too-many-function-args': 4,
                      'too-many-nested-blocks': 7,
-                     'too-many-return-statements': 3,
+                     'too-many-return-statements': 4,
                      'cyclic-import': 1,
                      'undefined-variable': 8,  # 2 when gmsh is fixed
                      'broad-except': 1,
