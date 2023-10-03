@@ -1777,7 +1777,8 @@ class Circle3D(CircleMixin, ClosedCurve):
         return: A Circle3D object that represents the circle uniquely defined by the three input points.
 
         :raise ZeroDivisionError: If the three input points are not distinct, a ZeroDivisionError is raised.
-        :raise ZeroDivisionError: If the start, end, and interior points of the arc are not distinct, a ZeroDivisionError is raised.
+        :raise ZeroDivisionError: If the start, end, and interior points of the arc are not distinct,
+        a ZeroDivisionError is raised.
         """
         # The implementation details are not described in the docstring as they are quite involved.
         # The method calculates the center, radius, and frame of the circle from the three input points in 3D space.
@@ -1922,7 +1923,7 @@ class Ellipse2D(ClosedCurve):
     :type frame: volmdlr.Frame2D.
 
     :Example:
-    >>> ellipse2d = Ellipse2D(4, 2, volmdlr.O2D, volmdlr.OXY)
+    >>> ellipse2d = Ellipse2D(4, 2, volmdlr.OXY)
     """
 
     def __init__(self, major_axis, minor_axis, frame, name=''):
