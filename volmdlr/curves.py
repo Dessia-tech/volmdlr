@@ -998,7 +998,7 @@ class CircleMixin:
             ax = self.plot()
             point1.plot(ax=ax, color='r')
             point2.plot(ax=ax, color='b')
-            raise ValueError('Point not on circle for trim method')
+            return None
         if point1.is_close(point2):
             return fullar_arc_class_(circle, point1)
         return arc_class_(circle, point1, point2)

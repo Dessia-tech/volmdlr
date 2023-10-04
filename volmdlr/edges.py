@@ -161,8 +161,13 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
+        step_id = kwargs.get("step_id")
+        if step_id == 6483916:
+            print(True)
         if obj.__class__.__name__ == 'LineSegment3D':
-            return LineSegment3D(point1, point2, name=arguments[0][1:-1])
+            if not point1.is_close(point2):
+                return LineSegment3D(point1, point2, name=arguments[0][1:-1])
+            return None
         if obj.__class__.__name__ == 'Line3D':
             if not same_sense:
                 obj = obj.reverse()
@@ -172,7 +177,8 @@ class Edge(dc.DessiaObject):
 
         if hasattr(obj, 'trim'):
             trimmed_edge = obj.trim(point1, point2, same_sense)
-            trimmed_edge.name = arguments[0][1:-1]
+            if trimmed_edge:
+                trimmed_edge.name = arguments[0][1:-1]
             return trimmed_edge
 
         raise NotImplementedError(f'Unsupported #{arguments[3]}: {object_dict[arguments[3]]}')
