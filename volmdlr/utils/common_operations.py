@@ -291,7 +291,7 @@ def order_points_list_for_nearest_neighbor(points):
     """
     ordered_points = []
     remaining_points = collections.deque(points[:])
-    current_point = remaining_points.popleft  # Start with the first point
+    current_point = remaining_points.popleft()  # Start with the first point
 
     while remaining_points:
         nearest_point_idx = np.argmin([current_point.point_distance(p)for p in remaining_points])
