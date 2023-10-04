@@ -2,7 +2,6 @@
 Concatenate common operation for two or more objects.
 
 """
-import collections
 import math
 import random
 
