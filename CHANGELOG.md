@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Curve: general_method curve_intersections
 - Parabola2d/3D / Hyperbola2D/3D: point_belongs, tangent
 - BSplineCurve: point_to_parameter, abscissa_to_parameter.
+- Basis3D: is_normilized, is_orthogonal, is_orthonormal.
 
 ### Fixed
 - add missing name attributes to classmethods.
