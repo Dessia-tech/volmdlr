@@ -1,9 +1,13 @@
 import math
+import os
 import unittest
 from itertools import product
 
 import volmdlr
 from volmdlr import edges, curves
+
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'arcellipse_objects')
 
 
 class TestArcEllipse2D(unittest.TestCase):
@@ -14,7 +18,7 @@ class TestArcEllipse2D(unittest.TestCase):
     discretized_points = arc_ellipse2d.discretization_points(number_points=5)
 
     def test_init(self):
-        list_points = self.ellipse2d.discretization_points(number_points=8)
+        list_points = self.ellipse2d.discretization_points(number_points=9)
         list_lengths = []
         for point1, point2 in product(list_points, repeat=2):
             if not point1.is_close(point2):
@@ -129,7 +133,7 @@ class TestArcEllipse2D(unittest.TestCase):
         for point, expected_point in zip(list_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
-        arcellipse = edges.ArcEllipse2D.load_from_file("edges/arcellipse_objects/ellipse2d_point_at_abscissa.json")
+        arcellipse = edges.ArcEllipse2D.load_from_file(os.path.join(folder, "ellipse2d_point_at_abscissa.json"))
         abscissa = 1.4594044224379008
         point = arcellipse.point_at_abscissa(abscissa)
         self.assertTrue(point.is_close(volmdlr.Point2D(0.2409700344646443, -0.10841585996396141)))

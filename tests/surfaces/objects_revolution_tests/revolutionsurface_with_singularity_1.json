@@ -1,0 +1,100 @@
+{
+  "object_class": "volmdlr.surfaces.RevolutionSurface3D",
+  "name": "Surface of Revolution",
+  "edge": {
+    "object_class": "volmdlr.edges.BSplineCurve3D",
+    "name": "",
+    "degree": 5,
+    "control_points": [
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.07747556996919999,
+        "y": -0.70054003978,
+        "z": 0.6929040786790001
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.0775075956293,
+        "y": -0.699687285336,
+        "z": 0.6929149138699999
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.0775802522164,
+        "y": -0.6988294316770001,
+        "z": 0.6924905741149999
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.0776927308603,
+        "y": -0.697947651316,
+        "z": 0.69165033144
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.07778887144060001,
+        "y": -0.697497920132,
+        "z": 0.6908054595600001
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.0778686739575,
+        "y": -0.6974802381240001,
+        "z": 0.689955958477
+      }
+    ],
+    "knot_multiplicities": [
+      6,
+      6
+    ],
+    "knots": [
+      0.0,
+      1.0
+    ],
+    "weights": null
+  },
+  "axis_point": {
+    "object_class": "volmdlr.Point3D",
+    "x": -0.0777560957591,
+    "y": -0.7004778831039999,
+    "z": 0.689917870075,
+    "name": "Axis1P Location"
+  },
+  "axis": {
+    "object_class": "volmdlr.Vector3D",
+    "x": -0.0935085966183,
+    "y": 0.020718892188,
+    "z": -0.995402868122,
+    "name": "Axis1P Direction"
+  },
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.0777560957591,
+      "y": -0.7004778831039999,
+      "z": 0.689917870075,
+      "name": "Axis1P Location"
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.03642669739822275,
+      "y": 0.9990428680049379,
+      "z": 0.02421659771988675
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 0.994951877266001,
+      "y": 0.03852369913404953,
+      "z": -0.09266437573248025
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.09350859661827543,
+      "y": 0.020718892187994557,
+      "z": -0.9954028681217385
+    }
+  },
+  "_references": {}
+}
