@@ -2844,6 +2844,44 @@ class Basis3D(Basis):
             w = self.w.unit_vector()
         return Basis3D(u, v, w)
 
+    def is_orthogonal(self, tol: float = 1e-6):
+        """
+        Check if the basis vectors are orthogonal to each other.
+
+        :param tol: Tolerance for considering a dot product as zero.
+        :type tol: float
+        :return: True if the basis vectors are orthogonal, False otherwise.
+        :rtype: bool
+        """
+        dot_uv = self.u.dot(self.v)
+        dot_uw = self.u.dot(self.w)
+        dot_vw = self.v.dot(self.w)
+
+        return abs(dot_uv) < tol and abs(dot_uw) < tol and abs(dot_vw) < tol
+
+    def is_normalized(self, tol: float = 1e-6):
+        """
+        Check if the basis vectors are normal to each other.
+
+        :param tol: Tolerance for considering a unit vector.
+        :type tol: float
+        :return: True if the basis vectors are normalized, False otherwise.
+        :rtype: bool
+        """
+        return (math.isclose(self.u.norm(), 1.0, abs_tol=tol) and math.isclose(self.v.norm(), 1.0, abs_tol=tol) and
+                math.isclose(self.w.norm(), 1.0, abs_tol=tol))
+
+    def is_orthonormal(self, tol: float = 1e-6):
+        """
+        Check if the basis vectors are orthonormal to each other.
+
+        :param tol: Tolerance for considering an orthonormal basis.
+        :type tol: float
+        :return: True if the basis vectors are orthonormal, False otherwise.
+        :rtype: bool
+        """
+        return self.is_orthogonal(tol) and self.is_normalized(tol)
+
 
 class Frame2D(Basis2D):
     """
@@ -3111,9 +3149,7 @@ class Frame3D(Basis3D):
         self.name = name
 
     def __repr__(self):
-        return "{}: O={} U={}, V={}, W={}".format(self.__class__.__name__,
-                                                  self.origin,
-                                                  self.u, self.v, self.w)
+        return f"{self.__class__.__name__}(origin={self.origin}, u={self.u}, v={self.v}, w={self.w})"
 
     def __hash__(self):
         """
