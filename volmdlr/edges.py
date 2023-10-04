@@ -233,6 +233,21 @@ class Edge(dc.DessiaObject):
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
 
+    def point_belongs(self, point, abs_tol: float = 1e-6):
+        """
+        Checks if a point belongs to the edge.
+
+        :param point: The point to be checked
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param abs_tol: The precision in terms of distance.
+            Default value is 1e-6
+        :type abs_tol: float, optional
+        :return: `True` if the point belongs to the edge, `False` otherwise
+        :rtype: bool
+        """
+        raise NotImplementedError(f'the point_belongs method must be'
+                                  f' overloaded by {self.__class__.__name__}')
+
     def touching_points(self, edge2):
         """
         Verifies if two edges are touching each other.
@@ -2139,7 +2154,7 @@ class LineSegment2D(LineSegment):
         return self.start == other_object.start and self.end == other_object.end
 
     def to_dict(self, *args, **kwargs):
-        """Stores all Line Segment 2D in a dict object."""
+        """Stores all Line Segment 2D attributes in a dict object."""
         return {'object_class': 'volmdlr.edges.LineSegment2D',
                 'name': self.name,
                 'start': self.start.to_dict(),
@@ -3255,6 +3270,7 @@ class FullArc2D(FullArcMixin, Arc2D):
         self.angle2 = volmdlr.TWO_PI
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
+        """Stores all Full Arc 2D attributes in a dict object."""
         dict_ = self.base_dict()
         dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
                                               id_method=id_method, id_memo=id_memo, path=path + '/circle')
