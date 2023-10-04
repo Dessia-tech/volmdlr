@@ -1459,7 +1459,14 @@ class Sweep(shells.ClosedShell3D):
                 for prim in face.outer_contour3d.primitives:
                     if profile_section_face.edge3d_inside(prim):
                         primitives_on_section_face.append(prim)
-            contour3d_ = volmdlr.wires.Contour3D.contours_from_edges(primitives_on_section_face)[0]
+            try:
+                contour3d_ = volmdlr.wires.Contour3D.contours_from_edges(primitives_on_section_face)[0]
+            except IndexError:
+                for face in touching_faces:
+                    ax=profile_section_face.plot()
+                    face.plot(ax=ax)
+                    profile_section_face.surface3d.frame.plot(ax=ax)
+                raise IndexError
             return contour3d_
         if self.frames:
             if not self.wire3d.point_at_abscissa(0.).is_close(self.frames[0].origin):
