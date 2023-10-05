@@ -838,8 +838,7 @@ class Line3D(Line):
 
     def plane_projection2d(self, center, x, y):
         """
-        Project the 3D line onto a 2D plane defined by the center point and two
-        orthogonal vectors, x and y.
+        Project the 3D line onto a 2D plane defined by the center point and two orthogonal vectors, x and y.
 
         :param center: The center point of the plane.
         :param x: A tuple representing the first orthogonal vector (x-component, y-component, z-component).
