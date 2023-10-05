@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D and RevolutionSurface3D: bsplinecurve3d_to_2d when start or and points are at surface singularity
 - ClosedCurves: discretization_points
 - ArcEllipse3D: is_close
+- LineSegment3D: revolution
 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
