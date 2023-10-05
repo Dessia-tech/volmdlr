@@ -12,6 +12,7 @@ from volmdlr.models.contours import contour2d_1, contour2d_2, contour1_cut_by_wi
 
 folder = os.path.dirname(os.path.realpath(__file__))
 
+
 class TestContour2D(unittest.TestCase):
     contour1 = wires.Contour2D([edges.FullArc2D(circle=curves.Circle2D(volmdlr.O2D, 0.029999999),
                                                 start_end=volmdlr.Point2D(0.029999999, 0))])

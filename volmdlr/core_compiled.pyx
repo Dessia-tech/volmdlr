@@ -1083,19 +1083,17 @@ cdef class Point2D(Vector2D):
                 return None
             else:
                 return None, None, None
-        else:
-            x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
-            x = x / denominateur
-            y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)
-            y = y / denominateur
-            if not curvilinear_abscissa:
-                return cls(x, y)
-            else:
-                t = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
-                t = t / denominateur
-                u = (x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)
-                u = -u / denominateur
-                return cls(x, y), t, u
+        x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
+        x = x / denominateur
+        y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)
+        y = y / denominateur
+        if not curvilinear_abscissa:
+            return cls(x, y)
+        t = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
+        t = t / denominateur
+        u = (x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)
+        u = -u / denominateur
+        return cls(x, y), t, u
 
     @classmethod
     def segment_intersection(cls, segment1: "volmdlr.edges.LineSegment2D",

@@ -64,6 +64,11 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError(f'is_close method not implemented by {self.__class__.__name__}')
 
+    @property
+    def periodic(self):
+        """Return True if an edge is periodic."""
+        return False
+
     def get_reverse(self):
         """
         Gets the same edge, but in the opposite direction.
@@ -1423,7 +1428,6 @@ class BSplineCurve(Edge):
             otherwise
         :rtype: bool
         """
-
         if self.point_distance(point) < abs_tol:
             return True
         return False
@@ -1804,13 +1808,23 @@ class BSplineCurve(Edge):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         # special case periodical bsplinecurve
-        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=tol):
-            abscissa2 = self.length()
+        add_point_at_end = False
+        if self.periodic:
+            if math.isclose(abscissa2, 0.0, abs_tol=tol) or abscissa1 >= abscissa2:
+                abscissa2 += self.length()
+            if point1.is_close(point2):
+                add_point_at_end = True
+
         discretized_points_between_1_2 = []
+        length = self.length()
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
+            if self.periodic and abscissa > length:
+                abscissa -= length
             abscissa_point = self.point_at_abscissa(abscissa)
             if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2, tol=tol):
                 discretized_points_between_1_2.append(abscissa_point)
+        if add_point_at_end:
+            discretized_points_between_1_2 += [discretized_points_between_1_2[0]]
         return discretized_points_between_1_2
 
     def is_close(self, other_edge, tol: float = 1e-6):
@@ -2713,6 +2727,11 @@ class FullArcMixin(ArcMixin):
     def angle(self):
         """Angle of Full Arc. """
         return volmdlr.TWO_PI
+
+    @property
+    def periodic(self):
+        """Return True if an edge is periodic."""
+        return True
 
     def split(self, split_point, tol: float = 1e-6):
         """
@@ -3951,6 +3970,11 @@ class FullArcEllipse(Edge):
         self.angle_end = volmdlr.TWO_PI
         Edge.__init__(self, start=start_end, end=start_end, name=name)
 
+    @property
+    def periodic(self):
+        """Return True if an edge is periodic."""
+        return True
+
     def length(self):
         """
         Calculates the length of the ellipse.
@@ -4886,12 +4910,12 @@ class BSplineCurve3D(BSplineCurve):
 
         :param point1: point 1 used to trim.
         :param point2: point2 used to trim.
-        :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
         :return: New BSpline curve between these two points.
         """
-        # if self.periodic and not point1.is_close(point2):
-        #     return self.trim_with_interpolation(point1, point2, same_sense)
+        if self.periodic:
+            return self.trim_with_interpolation(point1, point2, same_sense)
         bsplinecurve = self
         if not same_sense:
             bsplinecurve = self.reverse()

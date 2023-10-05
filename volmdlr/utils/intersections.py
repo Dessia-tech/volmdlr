@@ -8,16 +8,17 @@ import volmdlr
 from volmdlr.utils.common_operations import get_abscissa_discretization, get_plane_equation_coefficients
 
 
-def circle_3d_line_intersections(circle_3d, line):
+def circle_3d_line_intersections(circle_3d, line, abs_tol: float = 1e-6):
     """
     Calculates the intersections between a Circle3D and a Line3D.
 
     :param circle_3d: Circle3D or Arc3D
     :param line: Line3D to verify intersections
+    :param abs_tol: Tolerance.
     :return: list of points intersecting Circle
     """
     intersections = []
-    if not math.isclose(abs(circle_3d.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=1e-6):
+    if not math.isclose(abs(circle_3d.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=abs_tol):
         frame_mapped_circle = circle_3d.frame_mapping(circle_3d.frame, 'new')
         frame_mapped_line = line.frame_mapping(circle_3d.frame, 'new')
         circle_linseg_intersections = circle_3d_line_intersections(frame_mapped_circle, frame_mapped_line)
@@ -29,7 +30,7 @@ def circle_3d_line_intersections(circle_3d, line):
         return []
     direction_vector = line.direction_vector()
     if math.isclose(line.point1.z, line.point2.z, abs_tol=1e-6) and \
-            math.isclose(line.point2.z, circle_3d.frame.origin.z, abs_tol=1e-6):
+            math.isclose(line.point2.z, circle_3d.frame.origin.z, abs_tol=abs_tol):
         if line.point1.is_close(circle_3d.center):
             point1 = line.point2
             vec = line.point1 - line.point2
@@ -193,6 +194,12 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
     abscissa2 = bsplinecurve.length()
     bspline_discretized_points, points_abscissas = get_abscissa_discretization(bsplinecurve, abscissa1, abscissa2,
                                                                                max_number_points=resolution)
+    if bsplinecurve.periodic:
+        bspline_discretized_points += [bspline_discretized_points[0]]
+        if points_abscissas[0] == 0.0:
+            points_abscissas += [bsplinecurve.length()]
+        else:
+            points_abscissas += [points_abscissas[0]]
     param_intersections = []
     for point1, point2, abscissa1, abscissa2 in zip(bspline_discretized_points[:-1], bspline_discretized_points[1:],
                                                     points_abscissas[:-1], points_abscissas[1:]):
@@ -241,7 +248,7 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
             intersection = primitive.linesegment_intersections(line_seg, 1e-6)
             if not intersection:
                 continue
-            if bsplinecurve.point_distance(intersection[0]) > abs_tol:
+            if bsplinecurve.point_distance(intersection[0]) > 1e-6:
                 param_intersections.insert(0, (abscissa_point1, abscissa_point2))
             elif not volmdlr.core.point_in_list(intersection[0], intersections):
                 intersections.append(intersection[0])
@@ -256,7 +263,7 @@ def conic_intersections(conic1, conic2, abs_tol: float = 1e-6):
     :param conic1: First conic curve 3D.
     :param conic2: Other conic curve 3D.
     :param abs_tol: tolerance.
-    :return: A list of points, containing all intersections between the two conics.
+    :return: A list of points, containing all intersections between the Line 3D and the Parabola3D.
     """
     intersections = []
     if conic1.frame.w.is_colinear_to(conic2.frame.w) and \

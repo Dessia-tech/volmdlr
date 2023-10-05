@@ -103,15 +103,15 @@ class TestCylindricalFace3D(unittest.TestCase):
         self.assertEqual(face.surface2d.area(), 0.2 * 2 * math.pi)
 
         surface = DessiaObject.load_from_file(
-            os.path.join(folder, 'cylindrical_surface_floating_point_error.json'))
+            os.path.join(folder, "cylindrical_surface_floating_point_error.json"))
         contour0 = DessiaObject.load_from_file(
-            os.path.join(folder, 'cylindrical_contour_floating_point_error.json'))
+            os.path.join(folder, "cylindrical_contour_floating_point_error.json"))
 
         face = faces.CylindricalFace3D.from_contours3d(surface, [contour0])
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
         self.assertAlmostEqual(face.surface2d.area(), 0.003143137591511259, 3)
 
-    def neutral_fiber(self):
+    def test_neutral_fiber(self):
         face = self.cylindrical_face1
         neutral_fiber = face.neutral_fiber()
         self.assertEqual(neutral_fiber.length(), 0.4)
@@ -133,13 +133,13 @@ class TestCylindricalFace3D(unittest.TestCase):
         cylindricalface = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindricalsurface, 0, volmdlr.TWO_PI,
                                                                                -.25, .25)
         plane_face_cylindricalface_intersec = DessiaObject.load_from_file(
-            os.path.join(folder, 'plane_face_cylindrical_face_intersec.json'))
+            os.path.join(folder, "plane_face_cylindrical_face_intersec.json"))
         plane_face_3 = plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 7)
         split_by_plane = cylindricalface.split_by_plane(plane_face_3.surface3d)
         self.assertTrue(len(split_by_plane), 4)
         list_expected_points = DessiaObject.load_from_file(
-            os.path.join(folder, 'test_cylindrical_faces_split_by_plane_'
-            'expected_discretization_points.json')).primitives
+            os.path.join(folder, "test_cylindrical_faces_split_by_plane_"
+            "expected_discretization_points.json")).primitives
         for i, face in enumerate(split_by_plane):
             points = face.outer_contour3d.discretization_points(number_points=10)
             for point, expected_point in zip(points, list_expected_points[i]):
@@ -147,9 +147,59 @@ class TestCylindricalFace3D(unittest.TestCase):
 
     def test_plane_intersections(self):
         face, plane = DessiaObject.load_from_file(
-            os.path.join(folder, 'test_buggy_split_by_plane12_07_2023.json')).primitives
+            os.path.join(folder, "test_buggy_split_by_plane12_07_2023.json")).primitives
         plane_intersections = face.plane_intersections(plane)
         self.assertAlmostEqual(plane_intersections[0].length(), 0.10485331158773475)
+
+    def test_conicalface_intersections(self):
+        expected_results = [[[3.7100023730194946], [2.7546701820620956, 0.7935213268610651],
+                             [2.075126659615459, 0.49133092704047093, 1.0377142604170027, 0.546420876091148],
+                             [2.5645345026338227, 2.5645345026338213],
+                             [0.5440554687692009, 0.04555235973550467, 1.2782307574829594, 0.2561660954971377]],
+                            [[0.9041805732366889, 1.3797833297570188], [2.7546701820620956, 0.7935213268610651],
+                             [0.9945099188452046, 0.01188579908949895, 0.49133092704047093, 1.0377142604170027,
+                              0.546420876091148],
+                             [0.2895638502980509, 0.9392209203732681, 2.5645345026338213],
+                             [0.2798809787659706, 0.0455523597355045, 0.757965635764069]],
+                            [[0.8560429119783949, 0.3222289760965774],
+                             [0.6888878304143008, 0.6888878304143, 0.19841549441745726, 0.19841549441745732],
+                             [0.49133092704047093, 1.0377142604170027, 0.546420876091148],
+                             [2.5645345026338213],
+                             []]]
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
+        conical_face = faces.ConicalFace3D.from_surface_rectangular_cut(
+            conical_surface, 0, volmdlr.TWO_PI, 0, 2)
+
+        cylindrical_surface1 = surfaces.CylindricalSurface3D(volmdlr.Frame3D(volmdlr.Point3D(.3, .3, 0.8),
+                                                                             volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D),
+                                                             0.3)
+        cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5),
+                                                                             volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D),
+                                                             0.3)
+        cylindrical_surface3 = surfaces.CylindricalSurface3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 1),
+                                                                             volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D),
+                                                             0.3)
+        point = volmdlr.Point3D(0, math.tan(conical_surface.semi_angle), 1)
+        normal = volmdlr.Vector3D(0.0, -0.5773502691896256, 1.0)
+        center = point + normal * math.tan(conical_surface.semi_angle) / 2
+        cylindrical_surface4 = surfaces.CylindricalSurface3D(volmdlr.Frame3D(center,
+                                                                             volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D),
+                                                             math.tan(conical_surface.semi_angle) / 2)
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+        cylindrical_surface5 = surfaces.CylindricalSurface3D(frame, math.tan(conical_surface.semi_angle) / 2)
+
+        for i, z in enumerate([-1, -0.5, 0]):
+            for j, cylindrical_surface in enumerate([cylindrical_surface1, cylindrical_surface2, cylindrical_surface3,
+                                                     cylindrical_surface4, cylindrical_surface5]):
+                cyl_face = faces.CylindricalFace3D.from_surface_rectangular_cut(
+                    cylindrical_surface, 0, volmdlr.TWO_PI, z, 2)
+                list_curves = cyl_face.face_intersections(conical_face)
+                for curve_solution, expected_result in zip(list_curves, expected_results[i][j]):
+                    self.assertAlmostEqual(curve_solution.length(), expected_result, 6)
 
 
 if __name__ == '__main__':

@@ -211,10 +211,10 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertTrue(ax)
 
     def test_coinicalsurface_intersections(self):
-        expected_slutions = [[3.709972658515683],
-                             [2.7546730734196863, 0.7935190805884883],
-                             [2.0751205716719796, 2.075120571671979],
-                             [2.567084829217128, 2.5670848292171287]]
+        expected_slutions = [[3.710032833168665],
+                             [2.754671034122705, 0.7935213452250598],
+                             [2.07512669883945, 2.075126698839449],
+                             [2.569944707187624, 2.569944707187624]]
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
         cylindrical_surface1 = surfaces.CylindricalSurface3D(
             volmdlr.Frame3D(volmdlr.Point3D(.3, .3, 0.8), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D),
