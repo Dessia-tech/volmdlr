@@ -813,7 +813,10 @@ class OpenShell3D(volmdlr.core.CompositePrimitive3D):
                     pass
                 else:
                     for _, primitive in enumerate(contour.primitives):
-                        index = get_edge_index_in_list(primitive, primitives)
+                        try:
+                            index = get_edge_index_in_list(primitive, primitives)
+                        except ValueError:
+                            index = get_edge_index_in_list(primitive.reverse(), primitives)
 
                         if primitives[index].is_close(primitive):
 
