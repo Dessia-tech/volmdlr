@@ -3125,6 +3125,11 @@ class Arc2D(ArcMixin, Edge):
                                             theta2=self.angle2 * 0.5 / math.pi * 360,
                                             color=edge_style.color,
                                             alpha=edge_style.alpha))
+        x_min, x_max = self.circle.center[0] - self.circle.radius*1.2, self.circle.center[0] + self.circle.radius*1.2
+        y_min, y_max = self.circle.center[1] - self.circle.radius*1.2, self.circle.center[1] + self.circle.radius*1.2
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(y_min, y_max)
+
         return ax
 
     def to_3d(self, plane_origin, x, y):
@@ -5129,7 +5134,7 @@ class BSplineCurve3D(BSplineCurve):
         :param abs_tol: tolerance.
         :return: list with the intersections points.
         """
-        if not self.bounding_box.bbox_intersection(linesegment3d.bounding_box):
+        if not self.bounding_box.bbox_intersection(linesegment3d.bounding_box, abs_tol):
             return []
         intersection_section_pairs = self._get_intersection_sections(linesegment3d)
         intersections = []
@@ -5460,7 +5465,8 @@ class Arc3D(ArcMixin, Edge):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plot method for Arc 3D using Matplotlib."""
         if ax is None:
-            ax = plt.figure().add_subplot(111, projection='3d')
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
         ax = vm_common_operations.plot_from_discretization_points(
             ax, edge_style=edge_style, element=self, number_points=25)
         if edge_style.edge_ends:
@@ -5610,6 +5616,13 @@ class Arc3D(ArcMixin, Edge):
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
                    angle: float):
+        """
+        Revolution of Arc 3D around an axis.
+
+        :param axis_point: revolution axis point.
+        :param axis: revolution axis.
+        :param angle: revolution angle.
+        """
         line3d = volmdlr_curves.Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.circle.center)
 
@@ -5853,6 +5866,9 @@ class FullArc3D(FullArcMixin, Arc3D):
         return content, edge_curve
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), show_frame=False):
+        """
+        Plot fullarc3d using matplotlib.
+        """
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         if show_frame:
@@ -5912,11 +5928,12 @@ class FullArc3D(FullArcMixin, Arc3D):
         new_start_end = self.start_end.frame_mapping(frame, side)
         return FullArc3D(new_circle, new_start_end, name=self.name)
 
-    def linesegment_intersections(self, linesegment3d: LineSegment3D):
+    def linesegment_intersections(self, linesegment3d: LineSegment3D, abs_tol=1e-6):
         """
         Calculates the intersections between a full arc 3d and a line segment 3d.
 
         :param linesegment3d: linesegment 3d to verify intersections.
+        :param abs_tol: tolerance.
         :return: list of points 3d, if there are any intersections, an empty list if otherwise.
         """
         distance_center_lineseg = linesegment3d.point_distance(self.circle.frame.origin)

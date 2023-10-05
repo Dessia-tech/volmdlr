@@ -1446,7 +1446,7 @@ class Plane3D(Surface3D):
             ax = fig.add_subplot(111, projection='3d')
             ax.set_aspect('auto')
 
-        self.frame.plot(ax=ax, color=edge_style.color, ratio=length)
+        self.frame.plot(ax=ax, ratio=length)
         for i in range(grid_size):
             for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
                 start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2

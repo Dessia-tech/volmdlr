@@ -1385,12 +1385,13 @@ class VolumeModel(dc.PhysicalObject):
             babylon_data=babylon_data)
         return script
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False, merge_meshes=True):
+    def babylonjs(self, page_name=None, use_cdn=True, debug=False, merge_meshes=True, dark_mode=False):
         """
-        Creates a HTML file using babylonjs to show a 3d model in the browser.
+        Creates an HTML file using babylonjs to show a 3d model in the browser.
 
         """
         babylon_data = self.babylon_data(merge_meshes=merge_meshes)
+        babylon_data['dark_mode'] = 1 if dark_mode else 0
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                        debug=debug)
         if page_name is None:

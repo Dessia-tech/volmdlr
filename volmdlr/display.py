@@ -35,6 +35,12 @@ class Node2D(volmdlr.Point2D):
 
     @classmethod
     def from_point(cls, point2d, name: str = ''):
+        """
+        Creates a Node 2D from a Point 2D.
+
+        :param point2d: 2d point.:
+        :param name: point's name.
+        """
         return cls(point2d.x, point2d.y, name=name)
 
 
@@ -61,8 +67,13 @@ class Node3D(volmdlr.Point3D):
             and math.isclose(self.z, other_node.z, abs_tol=1e-06)
 
     @classmethod
-    def from_point(cls, point3d, name: str = ''):
-        return cls(point3d.x, point3d.y, point3d.z, name=name)
+    def from_point(cls, point3d):
+        """
+        Creates a Node 3D from a Point 3D.
+
+        :param point3d: 3d point.
+        """
+        return cls(point3d.x, point3d.y, point3d.z)
 
 
 class DisplayMesh(dc.DessiaObject):
@@ -129,6 +140,12 @@ class DisplayMesh(dc.DessiaObject):
         return cls(points, triangles, name=name)
 
     def merge_mesh(self, other_mesh):
+        """
+        Merge two meshes.
+
+        :param other_mesh: other mesh.
+        :return:
+        """
         i_points = len(self.points)
         for point in other_mesh.points:
             if point not in self.point_index:
@@ -250,11 +267,19 @@ class DisplayMesh3D(DisplayMesh):
 
     @property
     def faces(self):
+        """
+        Gets the mesh's triangular faces.
+
+        """
         if not self._faces:
             self._faces = self.triangular_faces()
         return self._faces
 
     def triangular_faces(self):
+        """
+        Calculates the mesh's triangular faces.
+
+        """
         triangular_faces = []
         for (vertex1, vertex2, vertex3) in self.triangles:
             point1 = self.points[vertex1]

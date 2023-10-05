@@ -2752,7 +2752,7 @@ class ExtrusionFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self,
-                 surface3d: surfaces.RuledSurface3D,
+                 surface3d: surfaces.ExtrusionSurface3D,
                  surface2d: surfaces.Surface2D,
                  name: str = ''):
         Face3D.__init__(self, surface3d=surface3d,
@@ -2819,7 +2819,7 @@ class RevolutionFace3D(Face3D):
     min_y_density = 1
 
     def __init__(self,
-                 surface3d: surfaces.RuledSurface3D,
+                 surface3d: surfaces.RevolutionSurface3D,
                  surface2d: surfaces.Surface2D,
                  name: str = ''):
         Face3D.__init__(self, surface3d=surface3d,
