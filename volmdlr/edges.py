@@ -4499,7 +4499,6 @@ class LineSegment3D(LineSegment):
         direction_vector = direction_vector.unit_vector()
 
         semi_angle = math.atan2(direction_vector.dot(u), direction_vector.dot(axis))
-        # cone_origin = p1_proj - dist1 / math.tan(semi_angle) * axis
         if semi_angle > 0.5 * math.pi:
             semi_angle = math.pi - semi_angle
             cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
@@ -4560,22 +4559,6 @@ class LineSegment3D(LineSegment):
                                                               LineSegment2D(arc_point3, volmdlr.O2D)])
                     face = volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour, []))
                     faces.append(face)
-                # radius_1 = distance_1
-                # radius_2 = distance_2
-                # arc1_point1 = volmdlr.O2D + volmdlr.X2D*radius_1
-                # arc1_point2 = arc1_point1.rotation(volmdlr.O2D, angle / 2)
-                # arc1_point3 = arc1_point1.rotation(volmdlr.O2D, angle)
-                # arc1 = Arc2D.from_3_points(arc1_point1, arc1_point2, arc1_point3)
-                # outer_contour1 = volmdlr.wires.Contour2D([LineSegment2D(volmdlr.O2D, arc1_point1), arc1,
-                #                                          LineSegment2D(arc1_point3, volmdlr.O2D)])
-                # face1 = volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour1, []))
-                # arc2_point1 = volmdlr.O2D - volmdlr.X2D * radius_2
-                # arc2_point2 = arc2_point1.rotation(volmdlr.O2D, angle / 2)
-                # arc2_point3 = arc2_point1.rotation(volmdlr.O2D, angle)
-                # arc2 = Arc2D.from_3_points(arc2_point1, arc2_point2, arc2_point3)
-                # outer_contour2 = volmdlr.wires.Contour2D([LineSegment2D(volmdlr.O2D, arc2_point1), arc2,
-                #                                          LineSegment2D(arc2_point3, volmdlr.O2D)])
-                # face2 = volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour2, []))
                 return faces
             smaller_r, bigger_r = sorted([distance_1, distance_2])
 
