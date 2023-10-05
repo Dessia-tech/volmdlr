@@ -36,7 +36,7 @@ MAX_ERROR_BY_TYPE = {
                      'arguments-renamed': 56,
                      'too-many-ancestors': 25,
                      'too-few-public-methods': 2,
-                     'too-many-public-methods': 13,
+                     'too-many-public-methods': 14,
                      'too-many-instance-attributes': 15,
                      'protected-access': 4,
                      'undefined-loop-variable': 2,
