@@ -4478,7 +4478,6 @@ class LineSegment3D(LineSegment):
         cone_origin = p1_proj - dist1 / math.tan(semi_angle) * axis
         if semi_angle > 0.5 * math.pi:
             semi_angle = math.pi - semi_angle
-
             cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
             angle2 = - angle
         else:
@@ -4505,7 +4504,7 @@ class LineSegment3D(LineSegment):
         if axis_line3d.point_belongs(self.start) and axis_line3d.point_belongs(
                 self.end):
             return []
-
+        line_intersections = self.line_intersections(axis_line3d)
         p1_proj, _ = axis_line3d.point_projection(self.start)
         p2_proj, _ = axis_line3d.point_projection(self.end)
         distance_1 = self.start.point_distance(p1_proj)
