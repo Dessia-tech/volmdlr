@@ -559,7 +559,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
 
-    def edge3d_inside(self, edge3d):
+    def edge3d_inside(self, edge3d, abs_tol: float = 1e-6):
         """
         Returns True if edge 3d is coplanar to the face.
         """
@@ -568,7 +568,7 @@ class Face3D(volmdlr.core.Primitive3D):
             return getattr(self, method_name)(edge3d)
         points = edge3d.discretization_points(number_points=10)
         for point in points[1:-1]:
-            if not self.point_belongs(point):
+            if not self.point_belongs(point, abs_tol):
                 return False
         return True
 
@@ -610,7 +610,7 @@ class Face3D(volmdlr.core.Primitive3D):
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
                 for point in intersection_points:
-                    if point not in intersections_points:
+                    if not volmdlr.core.point_in_list(point, intersections_points):
                         intersections_points.append(point)
 
         return intersections_points
@@ -1761,6 +1761,10 @@ class Triangle3D(PlaneFace3D):
         self._surface2d = new_surface2d
 
     def to_dict(self, *args, **kwargs):
+        """
+        Creates a Dictionary with the object's instance attributes.
+
+        """
         dict_ = {'object_class': 'volmdlr.faces.Triangle3D',
                  'point1': self.point1.to_dict(),
                  'point2': self.point2.to_dict(),
@@ -1800,6 +1804,10 @@ class Triangle3D(PlaneFace3D):
         return area
 
     def height(self):
+        """
+        Gets Triangle height.
+
+        """
         # Formula explained here: https://www.triangle-calculator.com/?what=vc
         # Basis = vector point1 to point 2d
         return 2 * self.area() / self.point1.point_distance(self.point2)
@@ -1959,6 +1967,9 @@ class Triangle3D(PlaneFace3D):
         return normal
 
     def triangle_minimum_distance(self, triangle_face, return_points=False):
+        """
+        Gets the minimum distance between two triangle.
+        """
         return self.planeface_minimum_distance(triangle_face, return_points)
 
 
@@ -2030,10 +2041,10 @@ class CylindricalFace3D(Face3D):
         point2d = self.surface3d.point3d_to_2d(point3d)
         point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
         point2d_minus_2pi = point2d.translation(volmdlr.Point2D(-volmdlr.TWO_PI, 0))
-        check_point3d = self.surface3d.point2d_to_3d(point2d)
-        if check_point3d.point_distance(point3d) > tol:
+        # check_point3d = self.surface3d.point2d_to_3d(point2d)
+        # if check_point3d.point_distance(point3d) > tol:
+        if not self.surface3d.point_on_surface(point3d, tol):
             return False
-
         return any(self.surface2d.point_belongs(pt2d) for pt2d in [point2d, point2d_plus_2pi, point2d_minus_2pi])
 
     def parametrized_grid_size(self, angle_resolution, z_resolution):
@@ -2110,6 +2121,34 @@ class CylindricalFace3D(Face3D):
     def planeface_intersections(self, planeface: PlaneFace3D):
         planeface_intersections = planeface.cylindricalface_intersections(self)
         return planeface_intersections
+
+    def conicalface_intersections(self, conical_face: 'ConicalFace3D'):
+        """
+        Calculates the intersections between a plane face 3D and Conical Face3D.
+
+        :param conical_face: the Conical Face 3D to verify intersections with Plane Face 3D.
+        :return: list of intersecting wires.
+        """
+        surface_intersections = self.surface3d.surface_intersections(conical_face.surface3d)
+        intersections_points = self.face_intersections_outer_contour(conical_face)
+        for point in conical_face.face_intersections_outer_contour(self):
+            if not volmdlr.core.point_in_list(point, intersections_points):
+                intersections_points.append(point)
+        face_intersections = []
+        for primitive in surface_intersections:
+            points_on_primitive = []
+            for point in intersections_points:
+                if primitive.point_belongs(point, 1e-4):
+                    points_on_primitive.append(point)
+            if not points_on_primitive:
+                continue
+            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
+            points_on_primitive = points_on_primitive + [points_on_primitive[0]]
+            for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                edge = primitive.trim(point1, point2)
+                if self.edge3d_inside(edge, 1e-4) and conical_face.edge3d_inside(edge, 1e-3):
+                    face_intersections.append(volmdlr.wires.Wire3D([edge]))
+        return face_intersections
 
     @classmethod
     def from_surface_rectangular_cut(cls, cylindrical_surface, theta1: float, theta2: float,

@@ -19,9 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection, parallel_plane_intersections, concurent_plane_intersections, plane_intersections.
 - Hyperbola2D/3D and Parabola2D/3D: split
 - PlaneFace3D: conicalface_intersections
+- CylindricalSurface3D: conicalsurface_intersections
+- CylindricalFace3D: conicalface_intersections
 - Curve: general_method curve_intersections
 - Parabola2d/3D / Hyperbola2D/3D: point_belongs, tangent
 - BSplineCurve: point_to_parameter, abscissa_to_parameter.
+- Basis3D: is_normilized, is_orthogonal, is_orthonormal.
 
 ### Fixed
 - add missing name attributes to classmethods.
