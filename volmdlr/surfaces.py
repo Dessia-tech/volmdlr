@@ -5734,6 +5734,8 @@ class BSplineSurface3D(Surface3D):
         point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
         u, v, u_start, u_stop, v_start, v_stop, delta_u, delta_v, sample_size_u, sample_size_v, minimal_distance = \
             self._point_inversion_initialization(point3d_array)
+        if minimal_distance <= acceptable_distance:
+            return (u, v), minimal_distance
         datadict = {
             "degree": (self.degree_u, self.degree_v),
             "knotvector": self.knotvector,
@@ -5782,6 +5784,19 @@ class BSplineSurface3D(Surface3D):
         :return: The parametric coordinates (u, v) of the point.
         :rtype: :class:`volmdlr.Point2D`
         """
+        umin, umax, vmin, vmax = self.domain
+        p1 = volmdlr.Point2D(umin, vmax)
+        p2 = volmdlr.Point2D(umin, vmin)
+        p3 = volmdlr.Point2D(umax, vmin)
+        if self.u_closed_upper() and point3d.is_close(self.point2d_to_3d(p1)):
+            return p1
+        if self.u_closed_lower() and point3d.is_close(self.point2d_to_3d(p2)):
+            return p2
+        if self.v_closed_upper() and point3d.is_close(self.point2d_to_3d(p3)):
+            return p3
+        if self.v_closed_lower() and point3d.is_close(self.point2d_to_3d(p2)):
+            return p2
+
         def sort_func(x):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
 
@@ -5832,7 +5847,7 @@ class BSplineSurface3D(Surface3D):
         results = []
         for x0 in x0s:
             res = point_inversion(point3d_array, x0, bounds, [self.degree_u, self.degree_v],
-                                  self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational, tol)
+                                  self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational)
             if res.fun <= tol:
                 return volmdlr.Point2D(*res.x)
 
@@ -5940,11 +5955,17 @@ class BSplineSurface3D(Surface3D):
         if lth <= 1e-6:
             print('BSplineCurve3D skipped because it is too small')
             return []
-
+        # todo: how to ensure convergence of point3d_to_2d ?
         n = min(len(bspline_curve3d.control_points), 20)  # Limit points to avoid non-convergence
         points3d = bspline_curve3d.discretization_points(number_points=n)
-        tol = 1e-7 if lth > 5e-5 else 1e-9
-        points = [self.point3d_to_2d(p, tol) for p in points3d]
+        tol = 1e-7 if lth > 5e-5 else 1e-8
+        points = []
+        points_set = set()
+        for p in points3d:
+            point2d = self.point3d_to_2d(p, tol)
+            if point2d not in points_set:
+                points.append(point2d)
+                points_set.add(point2d)
 
         if self.u_closed() or self.v_closed():
             points = self.fix_start_end_singularity_point_at_parametric_domain(bspline_curve3d, points, points3d)
@@ -7742,14 +7763,19 @@ class BSplineSurface3D(Surface3D):
 
         def get_local_discretization_points(start_point, end_points):
             distance = start_point.point_distance(end_points)
-            maximum_linear_distance_reference_point = 1e-4
+            maximum_linear_distance_reference_point = 1e-5
             if distance < maximum_linear_distance_reference_point:
                 return []
             number_points = max(int(distance / maximum_linear_distance_reference_point), 2)
-
-            local_discretization = [self.point3d_to_2d(point, 1e-8)
-                                    for point in edge3d.local_discretization(
-                    start_point, end_points, number_points)]
+            points3d = edge3d.local_discretization(
+                    start_point, end_points, number_points)
+            points_set = set()
+            local_discretization = []
+            for point in points3d:
+                point2d = self.point3d_to_2d(point, 1e-8)
+                if point2d not in points_set:
+                    local_discretization.append(point2d)
+                    points_set.add(point2d)
             return local_discretization
 
         def get_singularity_line(a, b, c, d, test_point):
