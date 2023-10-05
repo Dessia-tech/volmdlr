@@ -83,4 +83,3 @@ modifications applied earlier.
 In summary, this script loads a 3D CAD model from a STEP file, converts it into a volume model, modifies the visual
 appearance of the model's first primitive (color and transparency), and then generates a 3D visualization using the
 Babylon.js format. The resulting visualization displays the modified CAD model with the specified color and transparency settings.
-

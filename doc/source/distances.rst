@@ -242,4 +242,3 @@ Likewise, you can calculate the distance between two shells as shown in the next
 
    print('minimum_distance_between_two_shells: ', minimum_distance_between_two_shells)
    >>> minimum_distance_between_two_shells: 0.3374259086917476
-
