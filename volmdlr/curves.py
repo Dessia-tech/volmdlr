@@ -50,6 +50,7 @@ class Curve(DessiaObject):
     """Abstract class for a curve object."""
 
     def __init__(self, name: str = ''):
+        self.periodic = False
         DessiaObject.__init__(self, name=name)
 
     def abscissa(self, point):
@@ -109,6 +110,9 @@ class Curve(DessiaObject):
 
 class ClosedCurve(Curve):
     """Abstract class for defining closed curves (Circle, Ellipse) properties."""
+    def __init__(self, name: str = ''):
+        Curve.__init__(self, name=name)
+        self.periodic = True
 
     def point_at_abscissa(self, abscissa):
         """
@@ -1562,14 +1566,15 @@ class Circle3D(CircleMixin, ClosedCurve):
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
 
-    def line_intersections(self, line: Line3D):
+    def line_intersections(self, line: Line3D, abs_tol: float = 1e-6):
         """
         Calculates the intersections between the Circle3D and a line 3D.
 
         :param line: line 3D to verify intersections
+        :param abs_tol: Tolerance.
         :return: list of points intersecting Circle
         """
-        circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, line)
+        circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, line, abs_tol)
         return circle3d_line_intersections
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment3D', abs_tol: float = 1e-6):
