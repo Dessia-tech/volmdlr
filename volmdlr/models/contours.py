@@ -155,7 +155,7 @@ line_segment4 = edges.LineSegment2D(volmdlr.Point2D(-2, 0.7), volmdlr.Point2D(-1
 points2d = [volmdlr.Point2D(-1, 1), volmdlr.Point2D(2, 2), volmdlr.Point2D(-2, -2), volmdlr.Point2D(1, -1)]
 bspline = edges.BSplineCurve2D(3, points2d, knot_multiplicities=[4, 4], knots=[0.0, 1.0])
 contour2_unittest = wires.Contour2D([bspline, line_segment1, arc, line_segment2, line_segment3, line_segment4])
-unordered_contour2_unittest = contour2 = wires.Contour2D([line_segment2, bspline.reverse(), arc.reverse(),
+unordered_contour2_unittest = wires.Contour2D([line_segment2, bspline.reverse(), arc.reverse(),
                                                           line_segment1, line_segment3, line_segment4])
 
 invalid_unordered_contour2_unittest = wires.Contour2D([line_segment2, bspline.reverse(), arc.reverse(),

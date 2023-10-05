@@ -89,7 +89,9 @@ BABYLON_UNPACKER_BODY_TEMPLATE = Template(
         // This creates a basic Babylon Scene object (non-mesh)
         var scene = new BABYLON.Scene(engine);
         scene.useRightHandedSystem = true;
-        scene.clearColor = new BABYLON.Color4(.9, .9, .9, .9);
+        if (babylon_data['dark_mode'] == 0) {
+            scene.clearColor = new BABYLON.Color4(.9, .9, .9, .9);
+        }
       	var camera = new BABYLON.ArcRotateCamera("ArcRotateCamera",
                                               0, 0, 2*babylon_data['max_length'],
                                               new BABYLON.Vector3(babylon_data['center'][0],

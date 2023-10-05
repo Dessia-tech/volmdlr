@@ -1,94 +1,63 @@
-.. Volmdlr documentation master file, created by
-   sphinx-quickstart on Fri Oct 12 11:25:44 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Volmdlr: A python volume modeler
-================================
-
-    Volmdlr is a volume modeler, which is used as a CAD plateform.
-It is simple to understand and operate.
-With it, you can create a lot of 3D Models easily. Check the follow examples
-to see what you can do with Volmdlr.
-    Volmdlr uses Babylonjs as a display.
+#####################
+Volmdlr Documentation
+#####################
 
 .. toctree::
-  :maxdepth: 1
+   :maxdepth: 1
+   :hidden:
 
-  intro
-  usage
-  core
-  edges
-  wires
-  faces
-  primitive2D
-  primitive3D
-  dev
-  reference
+   User Guide <user_guide>
+   About Dessia <about_dessia>
+   Authors <authors>
+   About the Package <about_the_package>
+   Roadmap <road_map_and_current_limitations>
+   Tutorials <tutorials>
 
 
+The volmdlr library is an open-source Python library primarily developed by Dessia Technologies,
+aimed at providing 3D modeling capabilities based on Boundary Representation (B-Rep) purely in Python.
+The library is designed to be easy to use, efficient, and customizable.
 
-Features
---------
-
- * A geometrical description of basis objects and primitives built on top: lines, points contours...
- * Computational tools for creating the geometry and to analyse it (area, second moment area, intersections, closest point, distance)
- * FreeCAD binding for exporting in .fcstd, .step, .stl
- * Volmdlr is able to read .step files (WIP)
-
-
-Galery
-------
-
-Casing
-~~~~~~
-.. image:: images/casing.jpg
-
-https://github.com/Dessia-tech/volmdlr/blob/master/scripts/casing.py
-
-A casing is defined by a 2Dcontour formed with the primitive RoundedLineSegment2D.
-This contour is offset by the casing width.
-
-.. image:: images/casing_contours.png
-
-These contours are extruded to form the side shell.
-A bottom is formed from an extrusion.
-
-Screw holes are placed at equal curvilign distance of the belt.
-
-All the primitives are fused together in a single volume.
-
-Sweep
-~~~~~
-.. image:: images/sweep1.jpg
-
-https://github.com/Dessia-tech/volmdlr/blob/master/scripts/sweep.py
-
-A Sweep is pipes, created with Circle2D/Arc2D which is contained in a Contour2D.
-You have to create the neutral fiber, i.e., the pipe's road, with the primitive RoundedLineSegment3D. 
-
-.. image:: images/sweepMPLPlot.jpg
-
-Polygon
-~~~~~~~
-https://github.com/Dessia-tech/volmdlr/blob/master/scripts/polygon2D.py
-
-A polygon is defined out of points.
-Random points are sampled and the tested whether they are inside or outside of
-the polygon. They are plotted with the Matplotlib binding MPLPlot with custom style:
-
-  * red if they are outside,
-  * blue if they are inside
-
-.. image:: images/polygon.jpg
+Boundary Representation is a technique used in computer-aided design (CAD) and computer-aided
+manufacturing (CAM) systems to represent the geometry of a solid object as a collection of surfaces
+and curves. B-Rep is widely used in CAD and CAM due to its ability to accurately represent complex
+shapes and to provide a rich set of operations for manipulating and analyzing these shapes.
 
 
+.. grid:: 2
 
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/getting_started.svg
 
+        Getting Started
+        ^^^^^^^^^^^^^^^
 
-Indices and tables
-==================
+        New to volmdlr? Check out the Absolute Beginner’s Guide. It contains an
+        introduction to volmdlr’s main concepts and links to additional tutorials.
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+        +++
+
+        .. button-ref:: getting_started
+            :expand:
+            :color: primary
+            :click-parent:
+
+            To absolute beginner’s guide
+
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/user_guide.svg
+
+        User Guide
+        ^^^^^^^^^^
+
+        The user guide provides in-depth information on the
+        key concepts of Volmdlr with useful background information and explanation.
+
+        +++
+
+        .. button-ref:: user_guide
+            :expand:
+            :color: primary
+            :click-parent:
+
+            To user guide
