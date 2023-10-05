@@ -57,6 +57,11 @@ class Edge(dc.DessiaObject):
             return self.end
         raise IndexError
 
+    @property
+    def periodic(self):
+        """Returns True if edge is periodic."""
+        return False
+
     def is_close(self, other_edge, tol: float = 1e-6):
         """
         Verify if two edges are equal, considering a certain tolerance.
@@ -3941,6 +3946,11 @@ class FullArcEllipse(Edge):
         self.center = ellipse.center
         self.angle_end = volmdlr.TWO_PI
         Edge.__init__(self, start=start_end, end=start_end, name=name)
+
+    @property
+    def periodic(self):
+        """Returns True if edge is periodic."""
+        return True
 
     def length(self):
         """

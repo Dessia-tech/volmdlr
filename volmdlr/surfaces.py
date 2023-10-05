@@ -5897,29 +5897,30 @@ class BSplineSurface3D(Surface3D):
             return None
         return [edges.LineSegment2D(start, end)]
 
-    def _repair_periodic_boundary_points(self, curve3d, points_2d, direction_periodicity):
+    def _repair_periodic_boundary_points(self, edge3d, points, direction_periodicity):
         """
         Verifies points at boundary on a periodic BSplineSurface3D.
 
-        :param points_2d: List of `volmdlr.Point2D` after transformation from 3D Cartesian coordinates
-        :type points_2d: List[volmdlr.Point2D]
+        :param points: List of `volmdlr.Point2D` after transformation from 3D Cartesian coordinates
+        :type points: List[volmdlr.Point2D]
         :param direction_periodicity: should be 'x' if x_periodicity or 'y' if y periodicity
         :type direction_periodicity: str
         """
-        lth = curve3d.length()
-        start = points_2d[0]
-        end = points_2d[-1]
-        points = points_2d
-        pt_after_start = self.point3d_to_2d(curve3d.point_at_abscissa(0.15 * lth))
-        pt_before_end = self.point3d_to_2d(curve3d.point_at_abscissa(0.85 * lth))
-
+        lth = edge3d.length()
+        pt_after_start = self.point3d_to_2d(edge3d.point_at_abscissa(0.15 * lth))
+        pt_before_end = self.point3d_to_2d(edge3d.point_at_abscissa(0.85 * lth))
+        min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         if direction_periodicity == 'x':
             i = 0
-            min_bound, max_bound, _, _ = self.domain
+            min_bound, max_bound = min_bound_x, max_bound_x
         else:
             i = 1
-            _, _, min_bound, max_bound = self.domain
+            min_bound, max_bound = min_bound_y, max_bound_y
 
+        points = self._repair_points_order(points, edge3d, [min_bound_x, max_bound_x, min_bound_y, max_bound_y],
+                                           direction_periodicity)
+        start = points[0]
+        end = points[-1]
         delta = max_bound + min_bound
 
         if math.isclose(start[i], min_bound, abs_tol=1e-4) and pt_after_start[i] > 0.5 * delta:
@@ -5943,6 +5944,45 @@ class BSplineSurface3D(Surface3D):
                 points = [volmdlr.Point2D(t_param, p[1]) for p in points]
             else:
                 points = [volmdlr.Point2D(p[0], t_param) for p in points]
+
+        return points
+
+    def _repair_points_order(self, points, edge3d, surface_domain, direction_periodicity):
+        """Helper function to reorder edge discretization points on parametric domain."""
+        min_bound_x, max_bound_x, min_bound_y, max_bound_y = surface_domain
+
+        def get_periodicity_point(line_direction):
+            line_at_periodicity = edges.LineSegment3D(
+                self.point2d_to_3d(volmdlr.Point2D(min_bound_x, min_bound_y)),
+                self.point2d_to_3d(volmdlr.Point2D(
+                    min_bound_x if line_direction == 'x' else max_bound_x,
+                    min_bound_y if line_direction == 'y' else max_bound_y
+                ))
+            )
+            return self.point3d_to_2d(edge3d.intersections(line_at_periodicity)[0])
+
+        point_at_periodicity = get_periodicity_point(direction_periodicity)
+        index_periodicity = volmdlr.core.get_point_index_in_list(point_at_periodicity, points)
+
+        if index_periodicity is not None:
+            if index_periodicity and index_periodicity != len(points) - 1:
+                if edge3d.periodic:
+                    points = [point_at_periodicity] + points[index_periodicity + 1:-1] + points[:index_periodicity + 1]
+                else:
+                    points = [point_at_periodicity] + points[index_periodicity + 1:] + points[:index_periodicity + 1]
+        else:
+            sign = points[1].x - points[0].x if direction_periodicity == 'x' else points[1].y - points[0].y
+            for i, (point, next_point) in enumerate(zip(points[:-1], points[1:])):
+                if sign * (next_point.x - point.x if direction_periodicity == 'x' else next_point.y - point.y) < 0:
+                    index_periodicity = i
+                    break
+            if index_periodicity and index_periodicity != len(points) - 1:
+                if edge3d.periodic:
+                    points = ([point_at_periodicity] + points[index_periodicity + 1: -1] +
+                              points[:index_periodicity + 1] + [point_at_periodicity])
+                else:
+                    points = ([point_at_periodicity] + points[index_periodicity + 1:] +
+                              points[:index_periodicity + 1] + [point_at_periodicity])
 
         return points
 
@@ -5983,6 +6023,33 @@ class BSplineSurface3D(Surface3D):
         if self._is_line_segment(points):
             return [edges.LineSegment2D(points[0], points[-1])]
         brep = edges.BSplineCurve2D.from_points_interpolation(points=points, degree=bspline_curve3d.degree)
+        if brep:
+            return [brep]
+        return None
+
+    def fullarcellipse3d_to_2d(self, fullarcellipse3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        number_points = max(self.nb_u, self.nb_v)
+        degree = max(self.degree_u, self.degree_v)
+        tol = 1e-7 if fullarcellipse3d.length() > 1e-5 else 1e-8
+        points3d = fullarcellipse3d.discretization_points(number_points=number_points)
+        points = [self.point3d_to_2d(point3d, tol) for point3d in points3d]
+        if self.u_closed() or self.v_closed():
+            points = self.fix_start_end_singularity_point_at_parametric_domain(fullarcellipse3d, points, points3d)
+
+        if self.x_periodicity:
+            points = self._repair_periodic_boundary_points(fullarcellipse3d, points, 'x')
+            # points = self._handle_periodic_curve(fullarcellipse3d.domain, points, 'x')
+
+        if self.y_periodicity:
+            points = self._repair_periodic_boundary_points(fullarcellipse3d, points, 'y')
+            # points = self._handle_periodic_curve(fullarcellipse3d.domain, points, 'y')
+
+        if self._is_line_segment(points):
+            return [edges.LineSegment2D(points[0], points[-1])]
+        brep = edges.BSplineCurve2D.from_points_interpolation(points=points, degree=degree)
         if brep:
             return [brep]
         return None
@@ -6108,7 +6175,7 @@ class BSplineSurface3D(Surface3D):
         # todo: Is this right? Needs detailed investigation
         number_points = max(self.nb_u, self.nb_v)
         degree = max(self.degree_u, self.degree_v)
-        tol = 1e-6 if arcellipse3d.length() > 1e-5 else 1e-8
+        tol = 1e-7 if arcellipse3d.length() > 1e-5 else 1e-8
         points = [self.point3d_to_2d(point3d, tol) for point3d in
                   arcellipse3d.discretization_points(number_points=number_points)]
         start = points[0]
