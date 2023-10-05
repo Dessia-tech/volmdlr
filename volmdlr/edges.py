@@ -4493,7 +4493,7 @@ class LineSegment3D(LineSegment):
 
     def _conical_revolution(self, params):
         """Creates a conical revolution of a Line Segment 3D."""
-        axis, u, p1_proj, dist1, dist2, angle, cone_origin = params
+        axis, u, dist1, dist2, angle, cone_origin = params
         v = axis.cross(u)
         direction_vector = self.direction_vector()
         direction_vector = direction_vector.unit_vector()
@@ -4545,9 +4545,11 @@ class LineSegment3D(LineSegment):
             v = axis.cross(u)
             surface = volmdlr.surfaces.Plane3D(
                 volmdlr.Frame3D(p1_proj, u, v, axis))
-            if self.point_belongs(line_intersection):
+            if self.point_belongs(line_intersection): #Linesegment intersects revolution axis
                 faces = []
                 for i, radius in enumerate([distance_1, distance_2]):
+                    if math.isclose(radius, 0, abs_tol=1e-9):
+                        continue
                     if i == 0:
                         arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
                     else:
@@ -4561,7 +4563,7 @@ class LineSegment3D(LineSegment):
                     faces.append(face)
                 return faces
             smaller_r, bigger_r = sorted([distance_1, distance_2])
-
+            inner_contours2d = []
             if angle == volmdlr.TWO_PI:
                 # Only 2 circles as contours
                 bigger_circle = volmdlr_curves.Circle2D(volmdlr.O2D, bigger_r)
@@ -4571,40 +4573,26 @@ class LineSegment3D(LineSegment):
                     smaller_circle = volmdlr_curves.Circle2D(volmdlr.O2D, smaller_r)
                     inner_contours2d = [volmdlr.wires.Contour2D(
                         smaller_circle.split_at_abscissa(smaller_circle.length() * 0.5))]
-                else:
-                    inner_contours2d = []
-            else:
-                inner_contours2d = []
-                if math.isclose(smaller_r, 0, abs_tol=1e-9):
-                    # One arc and 2 lines (pizza slice)
-                    arc2_e = volmdlr.Point2D(bigger_r, 0)
-                    arc2_i = arc2_e.rotation(center=volmdlr.O2D,
-                                             angle=0.5 * angle)
-                    arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
-                    arc2 = Arc2D.from_3_points(arc2_s, arc2_i, arc2_e)
-                    line1 = LineSegment2D(arc2_e, volmdlr.O2D)
-                    line2 = LineSegment2D(volmdlr.O2D, arc2_s)
-                    outer_contour2d = volmdlr.wires.Contour2D([arc2, line1, line2])
+                return [volmdlr.faces.PlaneFace3D(surface,
+                                                  volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
+            # Two arcs and lines
+            arc1_s = volmdlr.Point2D(bigger_r, 0)
+            arc1_i = arc1_s.rotation(center=volmdlr.O2D,
+                                     angle=0.5 * angle)
+            arc1_e = arc1_s.rotation(center=volmdlr.O2D, angle=angle)
+            arc1 = Arc2D.from_3_points(arc1_s, arc1_i, arc1_e)
 
-                else:
-                    # Two arcs and lines
-                    arc1_s = volmdlr.Point2D(bigger_r, 0)
-                    arc1_i = arc1_s.rotation(center=volmdlr.O2D,
-                                             angle=0.5 * angle)
-                    arc1_e = arc1_s.rotation(center=volmdlr.O2D, angle=angle)
-                    arc1 = Arc2D.from_3_points(arc1_s, arc1_i, arc1_e)
+            arc2_e = volmdlr.Point2D(smaller_r, 0)
+            arc2_i = arc2_e.rotation(center=volmdlr.O2D,
+                                     angle=0.5 * angle)
+            arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
+            arc2 = Arc2D.from_3_points(arc2_s, arc2_i, arc2_e)
 
-                    arc2_e = volmdlr.Point2D(smaller_r, 0)
-                    arc2_i = arc2_e.rotation(center=volmdlr.O2D,
-                                             angle=0.5 * angle)
-                    arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
-                    arc2 = Arc2D.from_3_points(arc2_s, arc2_i, arc2_e)
+            line1 = LineSegment2D(arc1_e, arc2_s)
+            line2 = LineSegment2D(arc2_e, arc1_s)
 
-                    line1 = LineSegment2D(arc1_e, arc2_s)
-                    line2 = LineSegment2D(arc2_e, arc1_s)
-
-                    outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
-                                                               arc2, line2])
+            outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
+                                                       arc2, line2])
 
             return [volmdlr.faces.PlaneFace3D(surface,
                                               volmdlr.surfaces.Surface2D(
@@ -4616,12 +4604,12 @@ class LineSegment3D(LineSegment):
                 u1 = u1.unit_vector()
                 u2 = self.end - p2_proj  # Unit vector from p1_proj to p1
                 u2 = u2.unit_vector()
-                faces = self._conical_revolution([axis, u1, p1_proj, 0, distance_1, angle, line_intersection]) + \
-                        self._conical_revolution([axis, u2, p2_proj, 0, distance_2, angle, line_intersection])
+                faces = self._conical_revolution([axis, u1, 0, distance_1, angle, line_intersection]) + \
+                        self._conical_revolution([axis, u2, 0, distance_2, angle, line_intersection])
                 return faces
         if not math.isclose(distance_1, distance_2, abs_tol=1e-9):
             # Conical
-            return self._conical_revolution([axis, u, p1_proj, distance_1, distance_2, angle, line_intersection])
+            return self._conical_revolution([axis, u, distance_1, distance_2, angle, line_intersection])
 
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
