@@ -5704,25 +5704,25 @@ class BSplineSurface3D(Surface3D):
         u, v = params
         if u == self.domain[0]:
             u_start = self.domain[0]
-            u_stop = self.domain[0]
-            sample_size_u = 1
+            u_stop = min(u + delta_u, self.domain[1])
+            sample_size_u = 2
 
         elif u == self.domain[1]:
-            u_start = self.domain[1]
+            u_start = max(u - delta_u, self.domain[0])
             u_stop = self.domain[1]
-            sample_size_u = 1
+            sample_size_u = 2
         else:
             u_start = max(u - delta_u, self.domain[0])
             u_stop = min(u + delta_u, self.domain[1])
 
         if v == self.domain[2]:
             v_start = self.domain[2]
-            v_stop = self.domain[2]
-            sample_size_v = 1
+            v_stop = min(v + delta_v, self.domain[3])
+            sample_size_v = 2
         elif v == self.domain[3]:
-            v_start = self.domain[3]
+            v_start = max(v - delta_v, self.domain[2])
             v_stop = self.domain[3]
-            sample_size_v = 1
+            sample_size_v = 2
         else:
             v_start = max(v - delta_v, self.domain[2])
             v_stop = min(v + delta_v, self.domain[3])
@@ -6091,11 +6091,11 @@ class BSplineSurface3D(Surface3D):
         if lth <= 1e-6:
             print('BSplineCurve3D skipped because it is too small')
             return []
-        # todo: how to ensure convergence of point3d_to_2d ?
-        n = min(len(bspline_curve3d.control_points), 20)  # Limit points to avoid non-convergence
+        n = min(len(bspline_curve3d.control_points), 25)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         tol = 1e-6 if lth > 5e-5 else 1e-8
-        points = [self.point3d_to_2d(point3d, tol) for point3d in points3d]
+        # todo: how to ensure convergence of point3d_to_2d ?
+        points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d])
         return self._edge3d_to_2d(bspline_curve3d, points3d, bspline_curve3d.degree, points)
 
     def fullarcellipse3d_to_2d(self, fullarcellipse3d):
@@ -6106,7 +6106,8 @@ class BSplineSurface3D(Surface3D):
         degree = max(self.degree_u, self.degree_v)
         tol = 1e-6 if fullarcellipse3d.length() > 1e-5 else 1e-8
         points3d = fullarcellipse3d.discretization_points(number_points=number_points)
-        points = [self.point3d_to_2d(point3d, tol) for point3d in points3d]
+        # todo: how to ensure convergence of point3d_to_2d ?
+        points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d])
         return self._edge3d_to_2d(fullarcellipse3d, points3d, degree, points)
 
     @staticmethod
@@ -6200,8 +6201,8 @@ class BSplineSurface3D(Surface3D):
         degree = max(self.degree_u, self.degree_v)
         points3d = arcellipse3d.discretization_points(number_points=number_points)
         tol = 1e-7 if arcellipse3d.length() > 1e-5 else 1e-8
-        points = [self.point3d_to_2d(point3d, tol) for point3d in points3d]
-        return  self._edge3d_to_2d(arcellipse3d, points3d, degree, points)
+        points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d])
+        return self._edge3d_to_2d(arcellipse3d, points3d, degree, points)
 
     def arc2d_to_3d(self, arc2d):
         number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
@@ -7854,6 +7855,7 @@ class BSplineSurface3D(Surface3D):
             return min(lines, key=lambda x: x.point_distance(test_point))
 
         def get_temp_edge2d(_points):
+            _points = self._verify_parametric_points(_points)
             if len(_points) == 2:
                 edge2d = edges.LineSegment2D(_points[0], _points[1])
             else:
@@ -7884,6 +7886,18 @@ class BSplineSurface3D(Surface3D):
             points[-1] = find_parametric_point_at_singularity(temp_edge2d,
                                                                                    reference_point=temp_points[-2],
                                                                                    singularity_line=singularity_line)
+        return points
+
+    @staticmethod
+    def _verify_parametric_points(points):
+        """Temporary method to deal with non converged parametric points from point3d_to_2d method."""
+        set_points = set(points)
+        if len(set_points) < len(points) - 1:
+            new_points = []
+            for point in points:
+                if not volmdlr.core.point_in_list(point, new_points):
+                    new_points.append(point)
+            return new_points
         return points
 
 
