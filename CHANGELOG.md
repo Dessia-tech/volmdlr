@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedCurves: discretization_points
 - ArcEllipse3D: is_close
 - LineSegment3D: revolution
+- FullArcEllipse3D, FullArcEllipse2D: discretization_points
 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
