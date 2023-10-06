@@ -1286,6 +1286,24 @@ class Wire2D(WireMixin, PhysicalObject):
         return self.__class__([primitive.frame_mapping(frame, side)
                                for primitive in self.primitives])
 
+    def plot(self, ax=None, edge_style=EdgeStyle()):
+        """Wire 2D plot using Matplotlib."""
+        if ax is None:
+            _, ax = plt.subplots()
+
+        if edge_style.equal_aspect:
+            ax.set_aspect('equal')
+
+        for element in self.primitives:
+            element.plot(ax=ax, edge_style=edge_style)
+
+        ax.margins(0.1)
+        b_rectangle = self.bounding_rectangle
+        xlim, ylim = (b_rectangle[0] - 0.1, b_rectangle[1] + 0.1), (b_rectangle[2] - 0.1, b_rectangle[3] + 0.1)
+        ax.set(xlim=xlim, ylim=ylim)
+        plt.show()
+        return ax
+
     def _get_plot_ax(self):
         _, ax = plt.subplots()
         return ax
@@ -2692,7 +2710,7 @@ class Contour2D(ContourMixin, Wire2D):
 
     def cut_by_wire(self, wire: Wire2D):
         """
-        Cut a contour2d with a wire2d and return a list of contours 2d.
+        Cut a contour 2d with a wire 2d and return a list of contours 2d.
 
         :param wire: volmdlr.wires.Wire2D
         :rtype: list[volmdlr.wires.Contour2D]

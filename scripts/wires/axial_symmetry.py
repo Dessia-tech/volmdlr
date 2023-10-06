@@ -13,7 +13,7 @@ import volmdlr as vm
 import volmdlr.edges
 import volmdlr.wires
 import volmdlr.curves
-
+from volmdlr.core import EdgeStyle
 # %% Initial Data
 
 points = [vm.Point2D(6, 0), vm.Point2D(6, 2),

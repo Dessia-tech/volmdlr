@@ -1083,19 +1083,17 @@ cdef class Point2D(Vector2D):
                 return None
             else:
                 return None, None, None
-        else:
-            x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
-            x = x / denominateur
-            y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)
-            y = y / denominateur
-            if not curvilinear_abscissa:
-                return cls(x, y)
-            else:
-                t = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
-                t = t / denominateur
-                u = (x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)
-                u = -u / denominateur
-                return cls(x, y), t, u
+        x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
+        x = x / denominateur
+        y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)
+        y = y / denominateur
+        if not curvilinear_abscissa:
+            return cls(x, y)
+        t = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
+        t = t / denominateur
+        u = (x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)
+        u = -u / denominateur
+        return cls(x, y), t, u
 
     @classmethod
     def segment_intersection(cls, segment1: "volmdlr.edges.LineSegment2D",
@@ -2846,6 +2844,44 @@ class Basis3D(Basis):
             w = self.w.unit_vector()
         return Basis3D(u, v, w)
 
+    def is_orthogonal(self, tol: float = 1e-6):
+        """
+        Check if the basis vectors are orthogonal to each other.
+
+        :param tol: Tolerance for considering a dot product as zero.
+        :type tol: float
+        :return: True if the basis vectors are orthogonal, False otherwise.
+        :rtype: bool
+        """
+        dot_uv = self.u.dot(self.v)
+        dot_uw = self.u.dot(self.w)
+        dot_vw = self.v.dot(self.w)
+
+        return abs(dot_uv) < tol and abs(dot_uw) < tol and abs(dot_vw) < tol
+
+    def is_normalized(self, tol: float = 1e-6):
+        """
+        Check if the basis vectors are normal to each other.
+
+        :param tol: Tolerance for considering a unit vector.
+        :type tol: float
+        :return: True if the basis vectors are normalized, False otherwise.
+        :rtype: bool
+        """
+        return (math.isclose(self.u.norm(), 1.0, abs_tol=tol) and math.isclose(self.v.norm(), 1.0, abs_tol=tol) and
+                math.isclose(self.w.norm(), 1.0, abs_tol=tol))
+
+    def is_orthonormal(self, tol: float = 1e-6):
+        """
+        Check if the basis vectors are orthonormal to each other.
+
+        :param tol: Tolerance for considering an orthonormal basis.
+        :type tol: float
+        :return: True if the basis vectors are orthonormal, False otherwise.
+        :rtype: bool
+        """
+        return self.is_orthogonal(tol) and self.is_normalized(tol)
+
 
 class Frame2D(Basis2D):
     """
@@ -3113,9 +3149,7 @@ class Frame3D(Basis3D):
         self.name = name
 
     def __repr__(self):
-        return "{}: O={} U={}, V={}, W={}".format(self.__class__.__name__,
-                                                  self.origin,
-                                                  self.u, self.v, self.w)
+        return f"{self.__class__.__name__}(origin={self.origin}, u={self.u}, v={self.v}, w={self.w})"
 
     def __hash__(self):
         """
