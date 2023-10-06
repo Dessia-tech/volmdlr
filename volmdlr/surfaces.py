@@ -3060,16 +3060,15 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         Converts the primitive from parametric space to 3D spatial coordinates.
         """
-        if linesegment2d.name == "construction":
-            return None
         theta1, param_z1 = linesegment2d.start
         theta2, param_z2 = linesegment2d.end
 
         if math.isclose(theta1, theta2, abs_tol=1e-4):
             return [edges.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
                                         self.point2d_to_3d(linesegment2d.end))]
-        if math.isclose(param_z1, param_z2, abs_tol=1e-4) and math.isclose(param_z1, 0., abs_tol=1e-6):
-            return []
+        if linesegment2d.name == "construction" or  (math.isclose(param_z1, param_z2, abs_tol=1e-4) and
+                                                     math.isclose(param_z1, 0., abs_tol=1e-6)):
+            return None
         start3d = self.point2d_to_3d(linesegment2d.start)
         center = self.frame.origin + param_z1 * self.frame.w
         if linesegment2d.unit_direction_vector().dot(volmdlr.X2D) > 0:
@@ -5863,17 +5862,16 @@ class BSplineSurface3D(Surface3D):
         :rtype: :class:`volmdlr.Point2D`
         """
         umin, umax, vmin, vmax = self.domain
-        p1 = volmdlr.Point2D(umin, vmax)
-        p2 = volmdlr.Point2D(umin, vmin)
-        p3 = volmdlr.Point2D(umax, vmin)
-        if self.u_closed_upper() and point3d.is_close(self.point2d_to_3d(p1)):
-            return p1
-        if self.u_closed_lower() and point3d.is_close(self.point2d_to_3d(p2)):
-            return p2
-        if self.v_closed_upper() and point3d.is_close(self.point2d_to_3d(p3)):
-            return p3
-        if self.v_closed_lower() and point3d.is_close(self.point2d_to_3d(p2)):
-            return p2
+        if self.is_singularity_point(point3d):
+            if self.u_closed_upper() and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmax))):
+                point = volmdlr.Point2D(umin, vmax)
+            if self.u_closed_lower() and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmin))):
+                point = volmdlr.Point2D(umin, vmin)
+            if self.v_closed_upper() and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umax, vmin))):
+                return volmdlr.Point2D(umax, vmin)
+            if self.v_closed_lower() and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmin))):
+                point = volmdlr.Point2D(umin, vmin)
+            return point
 
         def sort_func(x):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
