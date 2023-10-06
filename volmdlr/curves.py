@@ -50,6 +50,7 @@ class Curve(DessiaObject):
     """Abstract class for a curve object."""
 
     def __init__(self, name: str = ''):
+        self.periodic = False
         DessiaObject.__init__(self, name=name)
 
     def abscissa(self, point):
@@ -109,6 +110,9 @@ class Curve(DessiaObject):
 
 class ClosedCurve(Curve):
     """Abstract class for defining closed curves (Circle, Ellipse) properties."""
+    def __init__(self, name: str = ''):
+        Curve.__init__(self, name=name)
+        self.periodic = True
 
     def point_at_abscissa(self, abscissa):
         """
@@ -341,7 +345,7 @@ class Line(Curve):
 
 class Line2D(Line):
     """
-    Define an infinite line given by two points.
+    Define an infinite line given by two points in 2D.
 
     """
 
@@ -600,9 +604,6 @@ class Line2D(Line):
         """
         Computes the two circles that are tangent to 2 lines and intersect a point located on one of the two lines.
         """
-        # point will be called I(x_I, y_I)
-        # self will be (AB)
-        # line will be (CD)
         vector_i, vector_a, vector_b, vector_c, vector_d = self._compute_data_create_tangent_circle(
             self, point, other_line)
         # Basis change
@@ -837,7 +838,15 @@ class Line3D(Line):
         return ax
 
     def plane_projection2d(self, center, x, y):
-        """Line 3D plane projection in 2d."""
+        """
+        Project the 3D line onto a 2D plane defined by the center point and two orthogonal vectors, x and y.
+
+        :param center: The center point of the plane.
+        :param x: A tuple representing the first orthogonal vector (x-component, y-component, z-component).
+        :param y: A tuple representing the second orthogonal vector (x-component, y-component, z-component).
+
+        :return: A new 2D line resulting from the projection of the current 3D line onto the specified plane.
+        """
         return Line2D(self.point1.plane_projection2d(center, x, y),
                       self.point2.plane_projection2d(center, x, y))
 
@@ -918,7 +927,7 @@ class Line3D(Line):
         return volmdlr.edges.LineSegment3D(point1, point2)
 
     def copy(self, *args, **kwargs):
-        """Creates a copy of Line 3D."""
+        """Creates a Copy of Line3D and returns it."""
         return Line3D(*[point.copy() for point in [self.point1, self.point2]])
 
     @classmethod
@@ -1184,7 +1193,11 @@ class Circle2D(CircleMixin, ClosedCurve):
         return self._bounding_rectangle
 
     def get_bounding_rectangle(self):
-        """Calculates the bounding rectangle of the circle 2d."""
+        """
+        Calculates the circle's bounding rectangle.
+
+        :return: returns a Bounding Rectangle object.
+        """
         x_min = self.center.x - self.radius
         x_max = self.center.x + self.radius
         y_min = self.center.y - self.radius
@@ -1413,7 +1426,18 @@ class Circle2D(CircleMixin, ClosedCurve):
         return self.split(split_points[0], split_points[1])
 
     def split(self, split_start, split_end):
-        """Splits a Circle2D into two arcs 2d."""
+        """
+        Splits the current object into two Arc2D edges.
+
+        This method creates two Arc2D edges by splitting the current object between the specified start and end points.
+        The new Arc2D edges will connect the split_start and split_end points, and split_end and split_start points
+        respectively.
+
+        :param (Point2D) split_start: The starting point of the split.
+        :param (Point2D) split_end: The ending point of the split.
+
+        :return: A list containing the two newly created Arc2D edges resulting from the split.
+        """
         return [volmdlr.edges.Arc2D(self, split_start, split_end),
                 volmdlr.edges.Arc2D(self, split_end, split_start)]
 
@@ -1433,6 +1457,9 @@ class Circle2D(CircleMixin, ClosedCurve):
         return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def get_geo_points(self):
+        """
+        Represents the circle in 3D space.
+        """
         return [volmdlr.Point3D(self.radius, self.center.y, 0),
                 volmdlr.Point3D(self.center.x, self.center.y, 0),
                 volmdlr.Point3D(-self.radius, self.center.y, 0)]
@@ -1464,7 +1491,9 @@ class Circle3D(CircleMixin, ClosedCurve):
 
     @property
     def normal(self):
-        """Gets circle's normal."""
+        """
+        Gets the circle's normal.
+        """
         return self.frame.w
 
     def __hash__(self):
@@ -1563,14 +1592,15 @@ class Circle3D(CircleMixin, ClosedCurve):
         return start.rotation(self.frame.origin, self.frame.w,
                               curvilinear_abscissa / self.radius)
 
-    def line_intersections(self, line: Line3D):
+    def line_intersections(self, line: Line3D, abs_tol: float = 1e-6):
         """
         Calculates the intersections between the Circle3D and a line 3D.
 
         :param line: line 3D to verify intersections
+        :param abs_tol: Tolerance.
         :return: list of points intersecting Circle
         """
-        circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, line)
+        circle3d_line_intersections = volmdlr_intersections.circle_3d_line_intersections(self, line, abs_tol)
         return circle3d_line_intersections
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment3D', abs_tol: float = 1e-6):
@@ -1664,6 +1694,10 @@ class Circle3D(CircleMixin, ClosedCurve):
         return cls.from_center_normal(center, normal, radius, arguments[0][1:-1])
 
     def to_step(self, current_id, *args, **kwargs):
+        """
+        Exports the circle 3d to STEP.
+
+        """
         content, frame_id = self.frame.to_step(current_id)
         curve_id = frame_id + 1
         content += f"#{curve_id} = CIRCLE('{self.name}',#{frame_id},{self.radius * 1000});\n"
@@ -1736,9 +1770,25 @@ class Circle3D(CircleMixin, ClosedCurve):
     @classmethod
     def from_3_points(cls, point1, point2, point3, name: str = ''):
         """
-        Creates a circle from three points.
+        Create a Circle3D object from three points.
 
+        This class method constructs a Circle3D object given three 3D points (Point3D objects).
+        The three points are used to uniquely define a circle in 3D space.
+
+        :param (Point3D) point1: The first point on the circumference of the circle.
+        :param (Point3D) point2: The second point on the circumference of the circle.
+        :param (Point3D) point3: The third point on the circumference of the circle.
+
+        return: A Circle3D object that represents the circle uniquely defined by the three input points.
+
+        :raise ZeroDivisionError: If the three input points are not distinct, a ZeroDivisionError is raised.
+        :raise ZeroDivisionError: If the start, end, and interior points of the arc are not distinct,
+        a ZeroDivisionError is raised.
         """
+        # The implementation details are not described in the docstring as they are quite involved.
+        # The method calculates the center, radius, and frame of the circle from the three input points in 3D space.
+        # The frame represents the orientation of the circle in 3D space.
+        # The method uses various geometric calculations to find these properties.
         vector_u1 = point2 - point1
         vector_u2 = point2 - point3
         try:
@@ -1867,8 +1917,8 @@ class Ellipse2D(ClosedCurve):
     """
     Defines an Ellipse in two-dimensions.
 
-    Ellipse2D defined by a major axis (A), minor axis (B), a center and a vector
-    representing the direction of the major axis.
+    Ellipse2D defined by a major axis (A), minor axis (B), a center and a frame 2d where its u-component
+    represents the direction of the major axis.
 
     :param major_axis: ellipse's major axis (A)
     :type major_axis: float
@@ -1878,7 +1928,7 @@ class Ellipse2D(ClosedCurve):
     :type frame: volmdlr.Frame2D.
 
     :Example:
-    >>> ellipse2d = Ellipse2D(4, 2, volmdlr.O2D, volmdlr.Vector2D(1, 1))
+    >>> ellipse2d = Ellipse2D(4, 2, volmdlr.OXY)
     """
 
     def __init__(self, major_axis, minor_axis, frame, name=''):
@@ -2218,7 +2268,9 @@ class Ellipse3D(ClosedCurve):
 
     @property
     def self_2d(self):
-        """Version 2d of the ellipse 3d as a property."""
+        """
+        Version 2d of the ellipse 3d as a property.
+        """
         if not self._self_2d:
             self._self_2d = self.to_2d(self.center, self.frame.u, self.frame.v)
         return self._self_2d

@@ -1446,7 +1446,7 @@ class Plane3D(Surface3D):
             ax = fig.add_subplot(111, projection='3d')
             ax.set_aspect('auto')
 
-        self.frame.plot(ax=ax, color=edge_style.color, ratio=length)
+        self.frame.plot(ax=ax, ratio=length)
         for i in range(grid_size):
             for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
                 start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
@@ -2109,6 +2109,16 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.radius = radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
+    def get_generatrixes(self, length: float = 1, number_lines: int = 30):
+        list_generatrix = []
+        for i in range(number_lines):
+            theta = i / (number_lines - 1) * volmdlr.TWO_PI
+            start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
+            end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5 * length))
+            generatrix = edges.LineSegment3D(start, end)
+            list_generatrix.append(generatrix)
+        return list_generatrix
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5),
              length=None, **kwargs):
         """
@@ -2124,7 +2134,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :rtype: Axes3D
         """
         ncircles = 10
-        nlines = 30
+        nlines = 37
 
         if ax is None:
             fig = plt.figure()
@@ -2289,6 +2299,17 @@ class CylindricalSurface3D(PeriodicalSurface):
         linesegment_intersections = [inters for inters in line_intersections if linesegment.point_belongs(inters)]
         return linesegment_intersections
 
+    def fullarc_intersections(self, fullarc: edges.FullArc3D):
+        circle_plane = Plane3D(fullarc.circle.frame)
+        circle_plane_intersections = self.plane_intersections(circle_plane)
+        intersections = []
+        for circle_plane_intersection in circle_plane_intersections:
+            inters = circle_plane_intersection.curve_intersections(fullarc.circle)
+            for intersection in inters:
+                if not volmdlr.core.point_in_list(intersection, intersections):
+                    intersections.append(intersection)
+        return intersections
+
     def parallel_plane_intersection(self, plane3d):
         """
         Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis.
@@ -2322,57 +2343,26 @@ class CylindricalSurface3D(PeriodicalSurface):
                                                    plane3d.frame.v, plane3d.frame.w), self.radius)
         return [circle3d]
 
-    def concurrent_plane_intersection(self, plane3d):
+    def concurrent_plane_intersection(self, plane3d: Plane3D):
         """
-        Cylinder plane intersections when plane's normal is concurrent with the cylinder axis, but not orthogonal.
-
-        Heavily based on the implementation available in this link:
-        https://www.geometrictools.com/Documentation/IntersectionCylinderPlane.pdf
+        Cone plane intersections when plane's normal is concurrent with the cone's axis, but not orthogonal.
 
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        a_plane_vector = npy.array([[plane3d.frame.u.x],
-                                    [plane3d.frame.u.y],
-                                    [plane3d.frame.u.z]])
-        b_plane_vector = npy.array([[plane3d.frame.v.x],
-                                    [plane3d.frame.v.y],
-                                    [plane3d.frame.v.z]])
-        c_point = npy.array([[self.frame.origin.x],
-                             [self.frame.origin.y],
-                             [self.frame.origin.z]])
-        i_matrix = npy.identity(3)
-        w_vector = npy.array([[self.frame.w.x],
-                              [self.frame.w.y],
-                              [self.frame.w.z]])
-        point_on_plane = npy.array([[plane3d.frame.origin.x],
-                                    [plane3d.frame.origin.y],
-                                    [plane3d.frame.origin.z]])
-        delta = point_on_plane - c_point
-        m_matrix = i_matrix - npy.dot(w_vector, w_vector.T)
-        q_2 = npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), a_plane_vector)[0][0],
-                          npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0]],
-                         [npy.dot(npy.dot(a_plane_vector.T, m_matrix), b_plane_vector)[0][0],
-                          npy.dot(npy.dot(b_plane_vector.T, m_matrix), b_plane_vector)[0][0]]])
-        q_1 = 2 * npy.array([[npy.dot(npy.dot(a_plane_vector.T, m_matrix), delta)[0][0]],
-                             [npy.dot(npy.dot(b_plane_vector.T, m_matrix), delta)[0][0]]])
-        k_vector = - npy.dot(npy.linalg.inv(q_2), q_1)
-        q_0 = npy.dot(npy.dot(delta.T, m_matrix), delta) - self.radius ** 2
-        s_matrix = q_2 / (npy.dot(npy.dot(k_vector.T, q_2), k_vector) - q_0)
-        _, eigenvectors = npy.linalg.eig(s_matrix)
-        k_0, k_1 = k_vector[0][0], k_vector[1][0]
-        ellipse_center = point_on_plane + k_0 * a_plane_vector + k_1 * b_plane_vector
-        ellipse_center = volmdlr.Point3D(ellipse_center[0][0], ellipse_center[1][0], ellipse_center[2][0])
-        major_dir = eigenvectors[0][0] * a_plane_vector + eigenvectors[1][0] * b_plane_vector
-        major_dir = volmdlr.Point3D(major_dir[0][0], major_dir[1][0], major_dir[2][0]).unit_vector()
-        minor_dir = eigenvectors[0][1] * a_plane_vector + eigenvectors[1][1] * b_plane_vector
-        minor_dir = volmdlr.Point3D(minor_dir[0][0], minor_dir[1][0], minor_dir[2][0]).unit_vector()
-        lineseg1 = edges.LineSegment3D(ellipse_center, ellipse_center + major_dir * 10 * self.radius)
-        lineseg2 = edges.LineSegment3D(ellipse_center, ellipse_center + minor_dir * 10 * self.radius)
-        inters_lineseg1 = self.linesegment_intersections(lineseg1)
-        inters_lineseg2 = self.linesegment_intersections(lineseg2)
-        major_axis = ellipse_center.point_distance(inters_lineseg1[0])
-        minor_axis = ellipse_center.point_distance(inters_lineseg2[0])
+        plane_normal = self.frame.w.cross(plane3d.frame.w)
+        plane2 = Plane3D.from_normal(plane3d.frame.origin, plane_normal)
+        plane2_plane3d_intersections = plane3d.plane_intersections(plane2)
+        line_intersections = self.line_intersections(plane2_plane3d_intersections[0])
+        if not line_intersections:
+            return []
+        ellipse_center = (line_intersections[0] + line_intersections[1]) / 2
+        line2 = curves.Line3D.from_point_and_vector(ellipse_center, plane_normal)
+        line_intersections2 = self.line_intersections(line2)
+        major_dir = (line_intersections[0] - ellipse_center).unit_vector()
+        major_axis = ellipse_center.point_distance(line_intersections[0])
+        minor_dir = (line_intersections2[0] - ellipse_center).unit_vector()
+        minor_axis = ellipse_center.point_distance(line_intersections2[0])
         if minor_axis > major_axis:
             major_axis, minor_axis = minor_axis, major_axis
             major_dir, minor_dir = minor_dir, major_dir
@@ -2394,6 +2384,56 @@ class CylindricalSurface3D(PeriodicalSurface):
             return self.perpendicular_plane_intersection(plane3d)
         return self.concurrent_plane_intersection(plane3d)
 
+    def conicalsurface_intersections(self, conical_surface: 'ConicalSurface3D'):
+        """
+        Cylinder Surface intersections with a Conical surface.
+
+        :param conical_surface: intersecting plane.
+        :return: list of intersecting curves.
+        """
+        def _list_generatrix_intersections(surface, other_surface):
+            linesegments = other_surface.get_generatrixes(2, 50)
+            all_generatrixes_intersecting = True
+            lists_intersections = [[], []]
+            for generatrix in linesegments:
+                linseg_intersections = surface.line_intersections(generatrix.line)
+                if not linseg_intersections:
+                    all_generatrixes_intersecting = False
+                for index, point in enumerate(linseg_intersections):
+                    if other_surface.point_distance(point) < 1e-6 and \
+                            not volmdlr.core.point_in_list(point, lists_intersections[index]):
+                        lists_intersections[index].append(point)
+            return lists_intersections, all_generatrixes_intersecting
+
+        cone_generatrixes_point_intersections, all_cone_generatrixes_intersecting_cylinder = \
+            _list_generatrix_intersections(self, conical_surface)
+        cylinder_generatrixes_point_intersections, all_cylinder_generatrixes_intersecting_cone = \
+            _list_generatrix_intersections(conical_surface, self)
+        if all_cylinder_generatrixes_intersecting_cone:
+            intersections_points = cylinder_generatrixes_point_intersections
+        elif all_cone_generatrixes_intersecting_cylinder:
+            intersections_points = cone_generatrixes_point_intersections
+            if not cone_generatrixes_point_intersections[1]:
+                intersections_points = [[]]
+                for point in (
+                        cylinder_generatrixes_point_intersections[0] + cylinder_generatrixes_point_intersections[1] +
+                        cone_generatrixes_point_intersections[0] + cone_generatrixes_point_intersections[1]):
+                    if not volmdlr.core.point_in_list(point, intersections_points[0]):
+                        intersections_points[0].append(point)
+        elif not all_cone_generatrixes_intersecting_cylinder:
+            intersections_points = [[]]
+            for point in (cylinder_generatrixes_point_intersections[0] + cylinder_generatrixes_point_intersections[1] +
+                          cone_generatrixes_point_intersections[0] + cone_generatrixes_point_intersections[1]):
+                if not volmdlr.core.point_in_list(point, intersections_points[0]):
+                    intersections_points[0].append(point)
+        list_curves = []
+        for list_points in intersections_points:
+            order_ed_points = vm_common_operations.order_points_list_for_nearest_neighbor(list_points)
+            bspline = edges.BSplineCurve3D.from_points_interpolation(order_ed_points + [order_ed_points[0]], 4,
+                                                                     centripetal=False)
+            list_curves.append(bspline)
+        return list_curves
+
     def is_coincident(self, surface3d):
         """
         Verifies if two CylindricalSurfaces are coincident.
@@ -2408,15 +2448,16 @@ class CylindricalSurface3D(PeriodicalSurface):
             return True
         return False
 
-    def point_on_surface(self, point3d):
+    def point_on_surface(self, point3d, abs_tol: float = 1e-5):
         """
         Verifies if a given point is on the CylindricalSurface3D.
 
-        :param point3d: point to verify.
+        :param point3d: Point to verify.
+        :param abs_tol: Tolerance.
         :return: True if point on surface, False otherwise.
         """
         new_point = self.frame.global_to_local_coordinates(point3d)
-        if math.isclose(new_point.x ** 2 + new_point.y ** 2, self.radius ** 2, abs_tol=1e-6):
+        if math.isclose(new_point.x ** 2 + new_point.y ** 2, self.radius ** 2, abs_tol=abs_tol):
             return True
         return False
 
@@ -2859,6 +2900,25 @@ class ConicalSurface3D(PeriodicalSurface):
         self.semi_angle = semi_angle
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
+    def get_generatrixes(self, z: float = 1, number_lines: int = 36):
+        """
+        Gets Conical Surface 3D generatrix lines.
+
+        :param z: cone's z height.
+        :param number_lines: number of generatrix lines.
+        :return:
+        """
+        x = z * math.tan(self.semi_angle)
+        point1 = self.frame.origin
+        point2 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, z))
+        generatrix = edges.LineSegment3D(point1, point2)
+        list_generatrix = [generatrix]
+        for i in range(number_lines+1):
+            theta = i / number_lines * volmdlr.TWO_PI
+            wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
+            list_generatrix.append(wire)
+        return list_generatrix
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
         """
         Plots the ConicalSurface3D.
@@ -3125,7 +3185,7 @@ class ConicalSurface3D(PeriodicalSurface):
                 if local_point.z < 0:
                     continue
                 intersections.append(line_inter)
-            return intersections
+            return line.sort_points_along_curve(intersections)
         return []
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
@@ -3141,6 +3201,17 @@ class ConicalSurface3D(PeriodicalSurface):
         for intersection in line_intersections:
             if linesegment.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
+        return intersections
+
+    def fullarc_intersections(self, fullarc: edges.FullArc3D):
+        circle_plane = Plane3D(fullarc.circle.frame)
+        circle_plane_intersections = self.plane_intersections(circle_plane)
+        intersections = []
+        for circle_plane_intersection in circle_plane_intersections:
+            inters = circle_plane_intersection.curve_intersections(fullarc.circle)
+            for intersection in inters:
+                if not volmdlr.core.point_in_list(intersection, intersections):
+                    intersections.append(intersection)
         return intersections
 
     def parallel_plane_intersection(self, plane3d: Plane3D):
@@ -3182,7 +3253,7 @@ class ConicalSurface3D(PeriodicalSurface):
                                 plane3d.frame.w.cross(semi_major_dir), plane3d.frame.w)
         local_point = frame.global_to_local_coordinates(hyperbola_points[0])
         return [curves.Hyperbola3D(frame, semi_major_axis,
-                                       math.sqrt((local_point.y ** 2)/(local_point.x**2/semi_major_axis**2 - 1)))]
+                                   math.sqrt((local_point.y ** 2)/(local_point.x**2/semi_major_axis**2 - 1)))]
 
     def perpendicular_plane_intersection(self, plane3d):
         """
@@ -3214,6 +3285,8 @@ class ConicalSurface3D(PeriodicalSurface):
         plane2 = Plane3D.from_normal(plane3d.frame.origin, plane_normal)
         plane2_plane3d_intersections = plane3d.plane_intersections(plane2)
         line_intersections = self.line_intersections(plane2_plane3d_intersections[0])
+        if 1 > len(line_intersections) or len(line_intersections) > 2:
+            return []
         angle_plane_cones_direction = volmdlr.geometry.vectors3d_angle(self.frame.w, plane3d.frame.w) - math.pi / 2
         if math.isclose(angle_plane_cones_direction, self.semi_angle, abs_tol=1e-8):
             parabola_vertex = line_intersections[0]
@@ -3233,6 +3306,8 @@ class ConicalSurface3D(PeriodicalSurface):
             parabola = curves.Parabola3D(frame, 1 / (4 * vrtx_equation_a))
             return [parabola]
 
+        if len(line_intersections) != 2:
+            return []
         ellipse_center = (line_intersections[0] + line_intersections[1]) / 2
         line2 = curves.Line3D.from_point_and_vector(ellipse_center, plane_normal)
         line_intersections2 = self.line_intersections(line2)

@@ -69,6 +69,11 @@ class Edge(dc.DessiaObject):
         """
         raise NotImplementedError(f'is_close method not implemented by {self.__class__.__name__}')
 
+    @property
+    def periodic(self):
+        """Return True if an edge is periodic."""
+        return False
+
     def get_reverse(self):
         """
         Gets the same edge, but in the opposite direction.
@@ -239,6 +244,21 @@ class Edge(dc.DessiaObject):
             or False otherwise
         """
         raise NotImplementedError(f'the straight_line_point_belongs method must be'
+                                  f' overloaded by {self.__class__.__name__}')
+
+    def point_belongs(self, point, abs_tol: float = 1e-6):
+        """
+        Checks if a point belongs to the edge.
+
+        :param point: The point to be checked
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param abs_tol: The precision in terms of distance.
+            Default value is 1e-6
+        :type abs_tol: float, optional
+        :return: `True` if the point belongs to the edge, `False` otherwise
+        :rtype: bool
+        """
+        raise NotImplementedError(f'the point_belongs method must be'
                                   f' overloaded by {self.__class__.__name__}')
 
     def touching_points(self, edge2):
@@ -1416,7 +1436,6 @@ class BSplineCurve(Edge):
             otherwise
         :rtype: bool
         """
-
         if self.point_distance(point) < abs_tol:
             return True
         return False
@@ -1797,13 +1816,23 @@ class BSplineCurve(Edge):
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
         # special case periodical bsplinecurve
-        if self.periodic and math.isclose(abscissa2, 0.0, abs_tol=tol):
-            abscissa2 = self.length()
+        add_point_at_end = False
+        if self.periodic:
+            if math.isclose(abscissa2, 0.0, abs_tol=tol) or abscissa1 >= abscissa2:
+                abscissa2 += self.length()
+            if point1.is_close(point2):
+                add_point_at_end = True
+
         discretized_points_between_1_2 = []
+        length = self.length()
         for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
+            if self.periodic and abscissa > length:
+                abscissa -= length
             abscissa_point = self.point_at_abscissa(abscissa)
             if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2, tol=tol):
                 discretized_points_between_1_2.append(abscissa_point)
+        if add_point_at_end:
+            discretized_points_between_1_2 += [discretized_points_between_1_2[0]]
         return discretized_points_between_1_2
 
     def is_close(self, other_edge, tol: float = 1e-6):
@@ -2147,7 +2176,7 @@ class LineSegment2D(LineSegment):
         return self.start == other_object.start and self.end == other_object.end
 
     def to_dict(self, *args, **kwargs):
-        """Stores all Line Segment 2D in a dict object."""
+        """Stores all Line Segment 2D attributes in a dict object."""
         return {'object_class': 'volmdlr.edges.LineSegment2D',
                 'name': self.name,
                 'start': self.start.to_dict(),
@@ -2707,6 +2736,11 @@ class FullArcMixin(ArcMixin):
         """Angle of Full Arc. """
         return volmdlr.TWO_PI
 
+    @property
+    def periodic(self):
+        """Return True if an edge is periodic."""
+        return True
+
     def split(self, split_point, tol: float = 1e-6):
         """
         Splits arc at a given point.
@@ -3099,6 +3133,11 @@ class Arc2D(ArcMixin, Edge):
                                             theta2=self.angle2 * 0.5 / math.pi * 360,
                                             color=edge_style.color,
                                             alpha=edge_style.alpha))
+        x_min, x_max = self.circle.center[0] - self.circle.radius*1.2, self.circle.center[0] + self.circle.radius*1.2
+        y_min, y_max = self.circle.center[1] - self.circle.radius*1.2, self.circle.center[1] + self.circle.radius*1.2
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(y_min, y_max)
+
         return ax
 
     def to_3d(self, plane_origin, x, y):
@@ -3263,6 +3302,7 @@ class FullArc2D(FullArcMixin, Arc2D):
         self.angle2 = volmdlr.TWO_PI
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
+        """Stores all Full Arc 2D attributes in a dict object."""
         dict_ = self.base_dict()
         dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
                                               id_method=id_method, id_memo=id_memo, path=path + '/circle')
@@ -4468,16 +4508,14 @@ class LineSegment3D(LineSegment):
 
     def _conical_revolution(self, params):
         """Creates a conical revolution of a Line Segment 3D."""
-        axis, u, p1_proj, dist1, dist2, angle = params
+        axis, u, dist1, dist2, angle, cone_origin = params
         v = axis.cross(u)
         direction_vector = self.direction_vector()
         direction_vector = direction_vector.unit_vector()
 
         semi_angle = math.atan2(direction_vector.dot(u), direction_vector.dot(axis))
-        cone_origin = p1_proj - dist1 / math.tan(semi_angle) * axis
         if semi_angle > 0.5 * math.pi:
             semi_angle = math.pi - semi_angle
-
             cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
             angle2 = - angle
         else:
@@ -4496,6 +4534,68 @@ class LineSegment3D(LineSegment):
         return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
             surface, 0, angle, 0, (self.end - self.start).dot(axis))]
 
+    def _plane_revolution(self, params):
+        """
+        Creates Plane Revolution of a Line Segment 3D.
+
+        :param params: needed parameters.
+        :return: List of plane revolution faces.
+        """
+        axis, angle, p1_proj, u, distance_1, distance_2, line_intersection = params
+        v = axis.cross(u)
+        surface = volmdlr.surfaces.Plane3D(
+            volmdlr.Frame3D(p1_proj, u, v, axis))
+        if self.point_belongs(line_intersection):  # Linesegment intersects revolution axis
+            faces = []
+            for i, radius in enumerate([distance_1, distance_2]):
+                if math.isclose(radius, 0, abs_tol=1e-9):
+                    continue
+                if i == 0:
+                    arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
+                else:
+                    arc_point1 = volmdlr.O2D - volmdlr.X2D * radius
+                arc_point2 = arc_point1.rotation(volmdlr.O2D, angle / 2)
+                arc_point3 = arc_point1.rotation(volmdlr.O2D, angle)
+                arc = Arc2D.from_3_points(arc_point1, arc_point2, arc_point3)
+                outer_contour = volmdlr.wires.Contour2D([LineSegment2D(volmdlr.O2D, arc_point1), arc,
+                                                         LineSegment2D(arc_point3, volmdlr.O2D)])
+                face = volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour, []))
+                faces.append(face)
+            return faces
+        smaller_r, bigger_r = sorted([distance_1, distance_2])
+        inner_contours2d = []
+        if angle == volmdlr.TWO_PI:
+            # Only 2 circles as contours
+            bigger_circle = volmdlr_curves.Circle2D(volmdlr.O2D, bigger_r)
+            outer_contour2d = volmdlr.wires.Contour2D(
+                bigger_circle.split_at_abscissa(bigger_circle.length() * 0.5))
+            if not math.isclose(smaller_r, 0, abs_tol=1e-9):
+                smaller_circle = volmdlr_curves.Circle2D(volmdlr.O2D, smaller_r)
+                inner_contours2d = [volmdlr.wires.Contour2D(
+                    smaller_circle.split_at_abscissa(smaller_circle.length() * 0.5))]
+            return [volmdlr.faces.PlaneFace3D(surface,
+                                              volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
+        # Two arcs and lines
+        arc1_s = volmdlr.Point2D(bigger_r, 0)
+        arc1_i = arc1_s.rotation(center=volmdlr.O2D,
+                                 angle=0.5 * angle)
+        arc1_e = arc1_s.rotation(center=volmdlr.O2D, angle=angle)
+        arc1 = Arc2D.from_3_points(arc1_s, arc1_i, arc1_e)
+
+        arc2_e = volmdlr.Point2D(smaller_r, 0)
+        arc2_i = arc2_e.rotation(center=volmdlr.O2D,
+                                 angle=0.5 * angle)
+        arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
+        arc2 = Arc2D.from_3_points(arc2_s, arc2_i, arc2_e)
+
+        line1 = LineSegment2D(arc1_e, arc2_s)
+        line2 = LineSegment2D(arc2_e, arc1_s)
+
+        outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
+                                                   arc2, line2])
+
+        return [volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
+
     def revolution(self, axis_point, axis, angle):
         """
         Returns the face generated by the revolution of the line segments.
@@ -4504,7 +4604,7 @@ class LineSegment3D(LineSegment):
         if axis_line3d.point_belongs(self.start) and axis_line3d.point_belongs(
                 self.end):
             return []
-
+        line_intersection = self.line.intersection(axis_line3d)
         p1_proj, _ = axis_line3d.point_projection(self.start)
         p2_proj, _ = axis_line3d.point_projection(self.end)
         distance_1 = self.start.point_distance(p1_proj)
@@ -4519,63 +4619,19 @@ class LineSegment3D(LineSegment):
             return []
         if u.is_colinear_to(self.direction_vector()):
             # Planar face
-            v = axis.cross(u)
-            surface = volmdlr.surfaces.Plane3D(
-                volmdlr.Frame3D(p1_proj, u, v, axis))
-            smaller_r, bigger_r = sorted([distance_1, distance_2])
-            if angle == volmdlr.TWO_PI:
-                # Only 2 circles as contours
-                bigger_circle = volmdlr_curves.Circle2D(volmdlr.O2D, bigger_r)
-                outer_contour2d = volmdlr.wires.Contour2D(
-                    bigger_circle.split_at_abscissa(bigger_circle.length() * 0.5))
-                if not math.isclose(smaller_r, 0, abs_tol=1e-9):
-                    smaller_circle = volmdlr_curves.Circle2D(volmdlr.O2D, smaller_r)
-                    inner_contours2d = [volmdlr.wires.Contour2D(
-                        smaller_circle.split_at_abscissa(smaller_circle.length() * 0.5))]
-                else:
-                    inner_contours2d = []
-            else:
-                inner_contours2d = []
-                if math.isclose(smaller_r, 0, abs_tol=1e-9):
-                    # One arc and 2 lines (pizza slice)
-                    arc2_e = volmdlr.Point2D(bigger_r, 0)
-                    arc2_i = arc2_e.rotation(center=volmdlr.O2D,
-                                             angle=0.5 * angle)
-                    arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
-                    arc2 = Arc2D.from_3_points(arc2_s, arc2_i, arc2_e)
-                    line1 = LineSegment2D(arc2_e, volmdlr.O2D)
-                    line2 = LineSegment2D(volmdlr.O2D, arc2_s)
-                    outer_contour2d = volmdlr.wires.Contour2D([arc2, line1, line2])
-
-                else:
-                    # Two arcs and lines
-                    arc1_s = volmdlr.Point2D(bigger_r, 0)
-                    arc1_i = arc1_s.rotation(center=volmdlr.O2D,
-                                             angle=0.5 * angle)
-                    arc1_e = arc1_s.rotation(center=volmdlr.O2D, angle=angle)
-                    arc1 = Arc2D.from_3_points(arc1_s, arc1_i, arc1_e)
-
-                    arc2_e = volmdlr.Point2D(smaller_r, 0)
-                    arc2_i = arc2_e.rotation(center=volmdlr.O2D,
-                                             angle=0.5 * angle)
-                    arc2_s = arc2_e.rotation(center=volmdlr.O2D, angle=angle)
-                    arc2 = Arc2D.from_3_points(arc2_s, arc2_i, arc2_e)
-
-                    line1 = LineSegment2D(arc1_e, arc2_s)
-                    line2 = LineSegment2D(arc2_e, arc1_s)
-
-                    outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
-                                                               arc2, line2])
-
-            return [volmdlr.faces.PlaneFace3D(surface,
-                                              volmdlr.surfaces.Surface2D(
-                                                  outer_contour2d,
-                                                  inner_contours2d))]
-
+            return self._plane_revolution([axis, angle, p1_proj, u, distance_1, distance_2, line_intersection])
+        if line_intersection and self.point_belongs(line_intersection):
+            if not math.isclose(distance_1, 0., abs_tol=1e-9) and not math.isclose(distance_2, 0., abs_tol=1e-9):
+                u1 = self.start - p1_proj  # Unit vector from p1_proj to p1
+                u1 = u1.unit_vector()
+                u2 = self.end - p2_proj  # Unit vector from p1_proj to p1
+                u2 = u2.unit_vector()
+                faces = self._conical_revolution([axis, u1, 0, distance_1, angle, line_intersection]) + \
+                        self._conical_revolution([axis, u2, 0, distance_2, angle, line_intersection])
+                return faces
         if not math.isclose(distance_1, distance_2, abs_tol=1e-9):
             # Conical
-            return self._conical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
-
+            return self._conical_revolution([axis, u, distance_1, distance_2, angle, line_intersection])
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
 
@@ -4846,12 +4902,12 @@ class BSplineCurve3D(BSplineCurve):
 
         :param point1: point 1 used to trim.
         :param point2: point2 used to trim.
-        :same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
         :return: New BSpline curve between these two points.
         """
-        # if self.periodic and not point1.is_close(point2):
-        #     return self.trim_with_interpolation(point1, point2, same_sense)
+        if self.periodic:
+            return self.trim_with_interpolation(point1, point2, same_sense)
         bsplinecurve = self
         if not same_sense:
             bsplinecurve = self.reverse()
@@ -5088,7 +5144,7 @@ class BSplineCurve3D(BSplineCurve):
         :param abs_tol: tolerance.
         :return: list with the intersections points.
         """
-        if not self.bounding_box.bbox_intersection(linesegment3d.bounding_box):
+        if not self.bounding_box.bbox_intersection(linesegment3d.bounding_box, abs_tol):
             return []
         intersection_section_pairs = self._get_intersection_sections(linesegment3d)
         intersections = []
@@ -5428,7 +5484,8 @@ class Arc3D(ArcMixin, Edge):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plot method for Arc 3D using Matplotlib."""
         if ax is None:
-            ax = plt.figure().add_subplot(111, projection='3d')
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
         ax = vm_common_operations.plot_from_discretization_points(
             ax, edge_style=edge_style, element=self, number_points=25)
         if edge_style.edge_ends:
@@ -5578,6 +5635,13 @@ class Arc3D(ArcMixin, Edge):
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
                    angle: float):
+        """
+        Revolution of Arc 3D around an axis.
+
+        :param axis_point: revolution axis point.
+        :param axis: revolution axis.
+        :param angle: revolution angle.
+        """
         line3d = volmdlr_curves.Line3D(axis_point, axis_point + axis)
         tore_center, _ = line3d.point_projection(self.circle.center)
 
@@ -5822,6 +5886,9 @@ class FullArc3D(FullArcMixin, Arc3D):
         return content, edge_curve
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), show_frame=False):
+        """
+        Plot fullarc3d using matplotlib.
+        """
         if ax is None:
             ax = plt.figure().add_subplot(111, projection='3d')
         if show_frame:
@@ -5881,11 +5948,12 @@ class FullArc3D(FullArcMixin, Arc3D):
         new_start_end = self.start_end.frame_mapping(frame, side)
         return FullArc3D(new_circle, new_start_end, name=self.name)
 
-    def linesegment_intersections(self, linesegment3d: LineSegment3D):
+    def linesegment_intersections(self, linesegment3d: LineSegment3D, abs_tol=1e-6):
         """
         Calculates the intersections between a full arc 3d and a line segment 3d.
 
         :param linesegment3d: linesegment 3d to verify intersections.
+        :param abs_tol: tolerance.
         :return: list of points 3d, if there are any intersections, an empty list if otherwise.
         """
         distance_center_lineseg = linesegment3d.point_distance(self.circle.frame.origin)
