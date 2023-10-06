@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parabola2d/3D / Hyperbola2D/3D: point_belongs, tangent
 - BSplineCurve: point_to_parameter, abscissa_to_parameter.
 - Basis3D: is_normilized, is_orthogonal, is_orthonormal.
+- BSplineSurface3D: fullarcellipse3d_to_2d
 
 ### Fixed
 - add missing name attributes to classmethods.
@@ -42,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse3D: is_close
 - LineSegment3D: revolution
 - FullArcEllipse3D, FullArcEllipse2D: discretization_points
+- ConicalSurface3D: linesegment2d_to_3d
 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
