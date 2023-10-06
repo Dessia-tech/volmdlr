@@ -166,9 +166,6 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
-        step_id = kwargs.get("step_id")
-        if step_id == 6483916:
-            print(True)
         if obj.__class__.__name__ == 'LineSegment3D':
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, name=arguments[0][1:-1])
@@ -5096,8 +5093,6 @@ class BSplineCurve3D(BSplineCurve):
         intersection_section_pairs = self._get_intersection_sections(linesegment3d)
         intersections = []
         for bspline, edge2_ in intersection_section_pairs:
-            if bspline is None:
-                print(True)
             intersections_points = bspline.get_linesegment_intersections(edge2_)
             for inter in intersections_points:
                 if not volmdlr.core.point_in_list(inter, intersections, abs_tol):
