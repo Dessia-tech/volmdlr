@@ -3725,8 +3725,8 @@ class ArcEllipse2D(Edge):
             angle_end = self.angle_end + volmdlr.TWO_PI
             angle_start = self.angle_start
         elif self.angle_start == self.angle_end:
-            angle_start = 0
-            angle_end = 2 * math.pi
+            angle_start = self.angle_start
+            angle_end = angle_start + 2 * math.pi
         else:
             angle_end = self.angle_end
             angle_start = self.angle_start
@@ -4054,16 +4054,6 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         if self.theta == math.pi * 2:
             self.theta = 0.0
         self._bounding_rectangle = None
-
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
-        """
-        Calculates the discretized points for the ellipse.
-
-        :param number_points: number of point to have in the discretized points.
-        :param angle_resolution: the angle resolution to be used to discretize points.
-        :return: discretized points.
-        """
-        return self.ellipse.discretization_points(number_points=number_points, angle_resolution=angle_resolution)
 
     def to_3d(self, plane_origin, x, y):
         """
@@ -6050,8 +6040,7 @@ class ArcEllipse3D(Edge):
         angle_end = self.angle_end
         angle_start = self.angle_start
         if self.angle_start == self.angle_end:
-            angle_start = 0
-            angle_end = 2 * math.pi
+            angle_end = angle_start + 2 * math.pi
         else:
             if angle_end < angle_start:
                 angle_end = self.angle_end + volmdlr.TWO_PI
@@ -6354,18 +6343,6 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         start_end = volmdlr.Point3D.dict_to_object(dict_['start_end'])
 
         return cls(ellipse, start_end, name=dict_['name'])
-
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
-        """
-        Discretize a Contour to have "n" points.
-
-        :param number_points: the number of points (including start and end points)
-             if unset, only start and end will be returned.
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
-            to mesh an arc.
-        :return: a list of sampled points.
-        """
-        return self.ellipse.discretization_points(number_points=number_points, angle_resolution=angle_resolution)
 
     def to_2d(self, plane_origin, x, y):
         """
