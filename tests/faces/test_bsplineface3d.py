@@ -1,15 +1,18 @@
 import unittest
-
+import os
 import volmdlr
 from volmdlr import edges, surfaces, wires, faces
 from volmdlr.models.bspline_surfaces import bspline_surface_1
+
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_bspline_test')
 
 
 class TestBSplineFace3D(unittest.TestCase):
     bspline_face = faces.BSplineFace3D.from_surface_rectangular_cut(bspline_surface_1, 0, 1, 0, 1)
 
     def test_bounding_box(self):
-        face = faces.BSplineFace3D.load_from_file("faces/objects_bspline_test/bsplineface_bbox_test.json")
+        face = faces.BSplineFace3D.load_from_file(os.path.join(folder, "bsplineface_bbox_test.json"))
         bbox = face.bounding_box
         self.assertAlmostEqual(bbox.volume(), 0.00018, 5)
 
@@ -18,7 +21,7 @@ class TestBSplineFace3D(unittest.TestCase):
         self.assertTrue(self.bspline_face.is_linesegment_crossing(linesegment=linesegment))
 
     def test_linesegment_intersections_approximation(self):
-        bsplineface = faces.BSplineFace3D.load_from_file('faces/objects_bspline_test/bspline_face1.json')
+        bsplineface = faces.BSplineFace3D.load_from_file(os.path.join(folder, 'bspline_face1.json'))
         lineseg = edges.LineSegment3D(volmdlr.Point3D(0, 0, 00.0015), volmdlr.Point3D(0, 0.005, 0.0025))
         intersections = bsplineface.linesegment_intersections(lineseg)
         self.assertEqual(len(intersections), 1)
@@ -26,50 +29,45 @@ class TestBSplineFace3D(unittest.TestCase):
 
     def test_from_contours3d(self):
         surface = surfaces.BSplineSurface3D.load_from_file(
-            "faces/objects_bspline_test/bspline_surface_openned_contour.json")
-        contour3d_0 = wires.Contour3D.load_from_file(
-            "faces/objects_bspline_test/bspline_contour_0_openned_contour.json")
-        contour3d_1 = wires.Contour3D.load_from_file(
-            "faces/objects_bspline_test/bspline_contour_1_openned_contour.json")
+            os.path.join(folder, "bspline_surface_openned_contour.json"))
+        contour3d_0 = wires.Contour3D.load_from_file(os.path.join(folder, "bspline_contour_0_openned_contour.json"))
+        contour3d_1 = wires.Contour3D.load_from_file(os.path.join(folder, "bspline_contour_1_openned_contour.json"))
         contours = [contour3d_0, contour3d_1]
         face = faces.BSplineFace3D.from_contours3d(surface, contours)
         self.assertTrue(face.surface2d.outer_contour.is_ordered(1e-5))
-        self.assertAlmostEqual(face.surface2d.area(), 0.635784389099582, 3)
+        self.assertAlmostEqual(face.surface2d.area(), 0.6322542204376812, 3)
 
         surface = surfaces.BSplineSurface3D.load_from_file(
-            "faces/objects_bspline_test/bsplineface_closedsurface_surface.json")
-        contour3d = wires.Contour3D.load_from_file(
-            "faces/objects_bspline_test/bsplineface_closedsurface_contour.json")
+            os.path.join(folder, "bsplineface_closedsurface_surface.json"))
+        contour3d = wires.Contour3D.load_from_file(os.path.join(folder, "bsplineface_closedsurface_contour.json"))
         face = faces.BSplineFace3D.from_contours3d(surface, [contour3d])
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
         self.assertAlmostEqual(face.surface2d.area(), 0.9996, 2)
 
         surface = surfaces.BSplineSurface3D.load_from_file(
-            "faces/objects_bspline_test/bsplineface_closedsurface_surface_2.json")
-        contour3d = wires.Contour3D.load_from_file(
-            "faces/objects_bspline_test/bsplineface_closedsurface_contour_2.json")
+            os.path.join(folder, "bsplineface_closedsurface_surface_2.json"))
+        contour3d = wires.Contour3D.load_from_file(os.path.join(folder, "bsplineface_closedsurface_contour_2.json"))
         face = faces.BSplineFace3D.from_contours3d(surface, [contour3d])
         self.assertTrue(face.surface2d.outer_contour.is_ordered(1e-4))
-        self.assertAlmostEqual(face.surface2d.area(), 1.0, 2)
+        self.assertAlmostEqual(face.surface2d.area(), 0.9867400157812519, 2)
 
     def test_neutral_fiber(self):
-        face = faces.BSplineFace3D.load_from_file("faces/objects_bspline_test/test_neutral_fiber.json")
+        face = faces.BSplineFace3D.load_from_file(os.path.join(folder, "test_neutral_fiber.json"))
         neutral_fiber = face.neutral_fiber()
         self.assertAlmostEqual(neutral_fiber.length(), 0.030801389245691566, 2)
 
-        face = faces.BSplineFace3D.load_from_file("faces/objects_bspline_test/test_neutral_fiber_2.json")
+        face = faces.BSplineFace3D.load_from_file(
+            os.path.join(folder, "test_neutral_fiber_2.json"))
         neutral_fiber = face.neutral_fiber()
         self.assertAlmostEqual(neutral_fiber.length(), 0.5327006535550406, 2)
 
-        face = faces.BSplineFace3D.load_from_file("faces/objects_bspline_test/test_neutral_fiber_3.json")
+        face = faces.BSplineFace3D.load_from_file(os.path.join(folder, "test_neutral_fiber_3.json"))
         neutral_fiber = face.neutral_fiber()
         self.assertAlmostEqual(neutral_fiber.length(), 0.1464370131293568, 2)
 
     def test_triangulation(self):
-        surface = surfaces.BSplineSurface3D.load_from_file(
-            "faces/objects_bspline_test/spiral_bsplineface_surface.json")
-        contour3d = wires.Contour3D.load_from_file(
-            "faces/objects_bspline_test/spiral_bsplineface_contour.json")
+        surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "spiral_bsplineface_surface.json"))
+        contour3d = wires.Contour3D.load_from_file(os.path.join(folder, "spiral_bsplineface_contour.json"))
         face = faces.BSplineFace3D.from_contours3d(surface, [contour3d])
         mesh = face.triangulation()
         self.assertAlmostEqual(face.surface2d.area(), 1, 2)

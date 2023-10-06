@@ -5096,6 +5096,8 @@ class BSplineCurve3D(BSplineCurve):
         intersection_section_pairs = self._get_intersection_sections(linesegment3d)
         intersections = []
         for bspline, edge2_ in intersection_section_pairs:
+            if bspline is None:
+                print(True)
             intersections_points = bspline.get_linesegment_intersections(edge2_)
             for inter in intersections_points:
                 if not volmdlr.core.point_in_list(inter, intersections, abs_tol):
@@ -5179,6 +5181,15 @@ class BSplineCurve3D(BSplineCurve):
         face = volmdlr.faces.RevolutionFace3D.from_surface_rectangular_cut(surface, 0, angle, 0, self.length())
         return face
 
+    def split_between_two_points(self, point1, point2):
+        """
+        Split edge between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge split.
+        """
+        return self.trim(point1, point2)
 
 class BezierCurve3D(BSplineCurve3D):
     """
@@ -5996,8 +6007,7 @@ class ArcEllipse3D(Edge):
         angle_end = self.angle_end
         angle_start = self.angle_start
         if self.angle_start == self.angle_end:
-            angle_start = 0
-            angle_end = 2 * math.pi
+            angle_end = angle_start + 2 * math.pi
         else:
             if angle_end < angle_start:
                 angle_end = self.angle_end + volmdlr.TWO_PI
@@ -6300,18 +6310,6 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         start_end = volmdlr.Point3D.dict_to_object(dict_['start_end'])
 
         return cls(ellipse, start_end, name=dict_['name'])
-
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
-        """
-        Discretize a Contour to have "n" points.
-
-        :param number_points: the number of points (including start and end points)
-             if unset, only start and end will be returned.
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
-            to mesh an arc.
-        :return: a list of sampled points.
-        """
-        return self.ellipse.discretization_points(number_points=number_points, angle_resolution=angle_resolution)
 
     def to_2d(self, plane_origin, x, y):
         """
