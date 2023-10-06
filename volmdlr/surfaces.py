@@ -6091,10 +6091,10 @@ class BSplineSurface3D(Surface3D):
         if lth <= 1e-6:
             print('BSplineCurve3D skipped because it is too small')
             return []
-        # todo: how to ensure convergence of point3d_to_2d ?
-        n = min(len(bspline_curve3d.control_points), 20)  # Limit points to avoid non-convergence
+        n = len(bspline_curve3d.control_points)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         tol = 1e-6 if lth > 5e-5 else 1e-8
+        # todo: how to ensure convergence of point3d_to_2d ?
         points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d])
         return self._edge3d_to_2d(bspline_curve3d, points3d, bspline_curve3d.degree, points)
 
@@ -6106,6 +6106,7 @@ class BSplineSurface3D(Surface3D):
         degree = max(self.degree_u, self.degree_v)
         tol = 1e-6 if fullarcellipse3d.length() > 1e-5 else 1e-8
         points3d = fullarcellipse3d.discretization_points(number_points=number_points)
+        # todo: how to ensure convergence of point3d_to_2d ?
         points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d])
         return self._edge3d_to_2d(fullarcellipse3d, points3d, degree, points)
 
