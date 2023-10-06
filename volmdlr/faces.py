@@ -2055,7 +2055,7 @@ class CylindricalFace3D(Face3D):
         number_points_x = max(angle_resolution, int(delta_theta * angle_resolution))
 
         delta_z = zmax - zmin
-        number_points_y = int(delta_z * z_resolution)
+        number_points_y = min(int(delta_z * z_resolution), 20)
         return number_points_x, number_points_y
 
     def grid_size(self):
