@@ -5850,7 +5850,7 @@ class BSplineSurface3D(Surface3D):
 
         return (u, v), minimal_distance
 
-    def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-7):
+    def point3d_to_2d(self, point3d: volmdlr.Point3D, tol=1e-6):
         """
         Evaluates the parametric coordinates (u, v) of a 3D point (x, y, z).
 
@@ -5992,8 +5992,9 @@ class BSplineSurface3D(Surface3D):
         else:
             i = 1
             min_bound, max_bound = min_bound_y, max_bound_y
-
-        points = self._repair_points_order(points, edge3d, [min_bound_x, max_bound_x, min_bound_y, max_bound_y],
+        if ((direction_periodicity == 'x' and  not self.u_closed()) or
+                (direction_periodicity == 'y' and not self.v_closed())):
+            points = self._repair_points_order(points, edge3d, [min_bound_x, max_bound_x, min_bound_y, max_bound_y],
                                            direction_periodicity)
         start = points[0]
         end = points[-1]
@@ -6053,7 +6054,8 @@ class BSplineSurface3D(Surface3D):
                 if sign * (next_point.x - point.x if direction_periodicity == 'x' else next_point.y - point.y) < 0:
                     index_periodicity = i
                     break
-
+            if index_periodicity is None:
+                print(True)
             if edge3d.periodic:
                 points = ([point_at_periodicity] + points[index_periodicity + 1: -1] +
                           points[:index_periodicity + 1] + [point_at_periodicity])
@@ -6094,7 +6096,7 @@ class BSplineSurface3D(Surface3D):
         # todo: how to ensure convergence of point3d_to_2d ?
         n = min(len(bspline_curve3d.control_points), 20)  # Limit points to avoid non-convergence
         points3d = bspline_curve3d.discretization_points(number_points=n)
-        tol = 1e-7 if lth > 5e-5 else 1e-8
+        tol = 1e-6 if lth > 5e-5 else 1e-8
         points = [self.point3d_to_2d(point3d, tol) for point3d in points3d]
         return self._edge3d_to_2d(bspline_curve3d, points3d, bspline_curve3d.degree, points)
 
@@ -6104,7 +6106,7 @@ class BSplineSurface3D(Surface3D):
         """
         number_points = max(self.nb_u, self.nb_v)
         degree = max(self.degree_u, self.degree_v)
-        tol = 1e-7 if fullarcellipse3d.length() > 1e-5 else 1e-8
+        tol = 1e-6 if fullarcellipse3d.length() > 1e-5 else 1e-8
         points3d = fullarcellipse3d.discretization_points(number_points=number_points)
         points = [self.point3d_to_2d(point3d, tol) for point3d in points3d]
         return self._edge3d_to_2d(fullarcellipse3d, points3d, degree, points)
