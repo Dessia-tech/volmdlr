@@ -2272,7 +2272,7 @@ class Matrix33:
         """
         det = self.determinent()
 
-        if not abs(det) <= 1e-18:
+        if not abs(det) <= 1e-12:
             det_inv = 1 / det
             return Matrix33(det_inv * (self.M22 * self.M33 - self.M23 * self.M32),  # a22a33−a23a32
                             det_inv * (self.M13 * self.M32 - self.M12 * self.M33),  # a13a32−a12a33
