@@ -6091,7 +6091,7 @@ class BSplineSurface3D(Surface3D):
         if lth <= 1e-6:
             print('BSplineCurve3D skipped because it is too small')
             return []
-        n = len(bspline_curve3d.control_points)
+        n = min(len(bspline_curve3d.control_points), 25)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         tol = 1e-6 if lth > 5e-5 else 1e-8
         # todo: how to ensure convergence of point3d_to_2d ?
