@@ -5992,7 +5992,7 @@ class BSplineSurface3D(Surface3D):
         else:
             i = 1
             min_bound, max_bound = min_bound_y, max_bound_y
-        if ((direction_periodicity == 'x' and  not self.u_closed()) or
+        if ((direction_periodicity == 'x' and not self.u_closed()) or
                 (direction_periodicity == 'y' and not self.v_closed())):
             points = self._repair_points_order(points, edge3d, [min_bound_x, max_bound_x, min_bound_y, max_bound_y],
                                            direction_periodicity)
@@ -6054,8 +6054,6 @@ class BSplineSurface3D(Surface3D):
                 if sign * (next_point.x - point.x if direction_periodicity == 'x' else next_point.y - point.y) < 0:
                     index_periodicity = i
                     break
-            if index_periodicity is None:
-                print(True)
             if edge3d.periodic:
                 points = ([point_at_periodicity] + points[index_periodicity + 1: -1] +
                           points[:index_periodicity + 1] + [point_at_periodicity])
