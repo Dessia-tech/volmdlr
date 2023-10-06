@@ -4,16 +4,16 @@ import random
 import traceback
 import warnings
 from itertools import chain, product
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
-import numpy as npy
+import numpy as np
 from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
+from numpy.typing import NDArray
 from trimesh import Trimesh
 
-import volmdlr.bspline_compiled
 import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.faces
@@ -657,23 +657,23 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         list_set_points1 = [{point for face in faces1
                              for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces1 in
                             shell_decomposition1.items()]
-        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in
+        list_set_points1 = [np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in
                             list_set_points1]
         list_set_points2 = [{point for face in faces2
                              for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces2 in
                             shell_decomposition2.items()]
-        list_set_points2 = [npy.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
+        list_set_points2 = [np.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
                             list_set_points2]
 
         minimum_distance = math.inf
         index1, index2 = None, None
         for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
-            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
-            sets_min_dist = npy.min(distances)
+            distances = np.linalg.norm(sets_points2[:, np.newaxis] - sets_points1, axis=2)
+            sets_min_dist = np.min(distances)
             if sets_min_dist < minimum_distance:
                 minimum_distance = sets_min_dist
-                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
-                index2 = next((i for i, x in enumerate(list_set_points2) if npy.array_equal(x, sets_points2)), -1)
+                index1 = next((i for i, x in enumerate(list_set_points1) if np.array_equal(x, sets_points1)), -1)
+                index2 = next((i for i, x in enumerate(list_set_points2) if np.array_equal(x, sets_points2)), -1)
         faces1 = list(shell_decomposition1.values())[index1]
         faces2 = list(shell_decomposition2.values())[index2]
 
@@ -783,7 +783,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             except Exception:
                 face_mesh = None
                 warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
-                              f"{self.name} faces. Probabaly because topology error in contour2d.")
+                              f"{self.name} faces. Probably because topology error in contour2d.")
                 print(traceback.format_exc())
                 continue
             if face_mesh:
@@ -897,9 +897,9 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                                     discretization_points[0], discretization_points[1])
                                 lines.append(primitive_linesegments.get_geo_lines(tag=line_account,
                                                                                   start_point_tag=start_point_tag
-                                                                                                  + point_account,
+                                                                                  + point_account,
                                                                                   end_point_tag=end_point_tag
-                                                                                                + point_account))
+                                                                                  + point_account))
 
                             if isinstance(primitive, volmdlr.edges.LineSegment):
 
@@ -975,7 +975,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         return False
 
     @classmethod
-    def from_faces(cls, faces):
+    def from_faces(cls, faces, name: str = ''):
         """
         Defines a List of separated OpenShell3D from a list of faces, based on the faces graph.
         """
@@ -984,12 +984,12 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         components = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
 
         shells_list = []
-        for _, graph_i in enumerate(components, start=1):
+        for index, graph_i in enumerate(components, start=1):
             faces_list = [faces[n_index] for n_index in graph_i.nodes]
             if cls.is_shell_open(faces, graph_i):
-                shells_list.append(OpenShell3D(faces_list))
+                shells_list.append(OpenShell3D(faces_list, name=name + f'_{index}'))
             else:
-                shells_list.append(ClosedShell3D(faces_list))
+                shells_list.append(ClosedShell3D(faces_list, name=name + f'_{index}'))
 
         return shells_list
 
@@ -1081,8 +1081,7 @@ class ClosedShell3D(Shell3D):
 
         """
         volume = 0
-        center = self.bounding_box.center
-        center_x, center_y, center_z = center
+        center_x, center_y, center_z = self.bounding_box.center
         for face in self.faces:
             display3d = face.triangulation()
             for triangle_index in display3d.triangles:
@@ -1750,94 +1749,87 @@ class OpenTriangleShell3D(OpenShell3D):
     :type name: str
     """
 
-    def __init__(self, faces: List[volmdlr.faces.Triangle3D],
-                 color: Tuple[float, float, float] = None,
-                 alpha: float = 1., name: str = ''):
+    def __init__(
+        self,
+        faces: List[volmdlr.faces.Triangle3D],
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1.0,
+        name: str = "",
+    ):
         OpenShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
 
-    def to_dict(self):
-        dict_ = self.base_dict()
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
+        """Gets the Shell bounding box."""
+        vertices = np.array(
+            [(face.points[i].x, face.points[i].y, face.points[i].z) for face in self.faces for i in range(3)]
+        )
+        bbox_min, bbox_max = np.min(vertices, axis=0), np.max(vertices, axis=0)
 
-        list_of_triangles = self.faces
+        return volmdlr.core.BoundingBox(bbox_min[0], bbox_max[0], bbox_min[1], bbox_max[1], bbox_min[2], bbox_max[2])
 
-        set_of_points = set()
+    def to_mesh_data(self, round_vertices: bool, n_decimals: int = 9) -> Tuple[NDArray[float], NDArray[int]]:
+        """
+        Convert the TriangleShell3D to mesh data: vertices and faces described as index of vertices.
 
-        for triangle in list_of_triangles:
-            set_of_points.update(triangle.points)
+        :param round_vertices: Allows to choose to round vertices coordinates or not.
+            Rounding vertices coordinates allows to prevent numerical imprecision, which allows vertex sharing between
+            adjacent triangles.
+        :type round_vertices: bool
+        :param n_decimals: int
+        :type n_decimals: float
 
-        index_of_points = {point: index for index, point in enumerate(set_of_points)}
-        list_of_unique_points = list(set_of_points)
+        :return: The vertices and faces composing the mesh data.
+        :rtype: Tuple[NDArray[float], NDArray[int]]
+        """
+        # Flatten and round the vertices array
+        vertices = np.array(
+            [(face.points[i].x, face.points[i].y, face.points[i].z) for face in self.faces for i in range(3)]
+        )
 
-        triangles_with_index = []
-        for triangle in list_of_triangles:
-            triangle_with_index = [index_of_points[point] for point in triangle.points]
-            triangles_with_index.append(triangle_with_index)
+        if round_vertices:
+            vertices = np.round(vertices, n_decimals)  # rounding to prevent numerical imprecision
 
-        dict_['unique_point'] = [pt.to_dict() for pt in list_of_unique_points]
-        dict_['faces'] = triangles_with_index
-        dict_['alpha'] = self.alpha
-        dict_['color'] = self.color
+        # Get unique vertices and their indices
+        vertices, unique_indices = np.unique(vertices, axis=0, return_inverse=True)
 
-        return dict_
+        # Create the triangle indices array using NumPy indexing
+        flattened_indices = unique_indices.reshape(-1, 3)
+        faces = flattened_indices[: len(self.faces)]
 
-    @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'SerializableObject':
-        t_points = dict_['unique_point']
-        faces = dict_['faces']
-        alpha = dict_['alpha']
-        color = dict_['color']
-
-        liste_triangles = []
-        for face in faces:
-            liste_triangles.append(volmdlr.faces.Triangle3D(point1=volmdlr.Point3D.dict_to_object(t_points[face[0]]),
-                                                            point2=volmdlr.Point3D.dict_to_object(t_points[face[1]]),
-                                                            point3=volmdlr.Point3D.dict_to_object(t_points[face[2]])
-                                                            ))
-
-        return cls(faces=liste_triangles, color=color, alpha=alpha)
-
-    def to_mesh_data(self):
-        """To mesh data for Open Triangle Shell."""
-        positions = npy.zeros((3 * len(self.faces), 3))
-        faces = npy.zeros((len(self.faces), 3))
-        for i, triangle_face in enumerate(self.faces):
-            i1 = 3 * i
-            i2 = i1 + 1
-            i3 = i1 + 2
-            positions[i1, 0] = triangle_face.points[0].x
-            positions[i1, 1] = triangle_face.points[0].y
-            positions[i1, 2] = triangle_face.points[0].z
-            positions[i2, 0] = triangle_face.points[1].x
-            positions[i2, 1] = triangle_face.points[1].y
-            positions[i2, 2] = triangle_face.points[1].z
-            positions[i3, 0] = triangle_face.points[2].x
-            positions[i3, 1] = triangle_face.points[2].y
-            positions[i3, 2] = triangle_face.points[2].z
-
-            faces[i, 0] = i1
-            faces[i, 1] = i2
-            faces[i, 2] = i3
-
-        return positions, faces
+        return vertices, faces
 
     @classmethod
-    def from_mesh_data(cls, positions, faces):
-        """Creates an Open Triangle Shell 3D from mesh data."""
+    def from_mesh_data(cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], name: str = ""):
+        """
+        Create a TriangleShell3D from mesh data: vertices and faces described as index of vertices.
+
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
+        :param name: A name for the TriangleShell3D, optional.
+        :type name: str
+
+        :return: The created TriangleShell3D.
+        :rtype: TriangleShell3D
+        """
         triangles = []
-        points = [volmdlr.Point3D(px, py, pz) for px, py, pz in positions]
+
+        points = [volmdlr.Point3D(px, py, pz) for px, py, pz in vertices]
+
         for i1, i2, i3 in faces:
             triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
-        return cls(triangles)
+
+        return cls(triangles, name=name)
 
     def to_trimesh(self):
-        """Creates a Trimesh from Open Triangle Shell 3D."""
-        return Trimesh(*self.to_mesh_data())
+        """Creates a Trimesh from a TriangleShell3D."""
+        return Trimesh(*self.to_mesh_data(round_vertices=True))
 
     @classmethod
-    def from_trimesh(cls, trimesh):
-        """Creates an Open Triangle Shell 3D from Trimesh."""
-        return cls.from_mesh_data(trimesh.vertices.tolist(), trimesh.faces.tolist())
+    def from_trimesh(cls, trimesh, name: str = ""):
+        """Creates a TriangleShell3D from Trimesh."""
+        return cls.from_mesh_data(trimesh.vertices, trimesh.faces, name=name)
 
     def triangulation(self):
         """Triangulation of an Open Triangle Shell 3D."""
@@ -1848,12 +1840,58 @@ class OpenTriangleShell3D(OpenShell3D):
             points.append(display.Node3D.from_point(triangle.point2))
             points.append(display.Node3D.from_point(triangle.point3))
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
+
         return display.DisplayMesh3D(points, triangles)
+
+    def to_dict(self, *args, **kwargs):
+        """Overload of 'to_dict' for performance."""
+        dict_ = self.base_dict()
+
+        # not rounding to make sure to retrieve the exact same object with 'dict_to_object'
+        vertices, faces = self.to_mesh_data(round_vertices=False)
+
+        dict_["vertices"] = vertices.tolist()
+        dict_["faces"] = faces.tolist()
+        dict_["alpha"] = self.alpha
+        dict_["color"] = self.color
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(
+        cls,
+        dict_: JsonSerializable,
+        force_generic: bool = False,
+        global_dict=None,
+        pointers_memo: Dict[str, Any] = None,
+        path: str = "#",
+        name: str = "",
+    ) -> "OpenTriangleShell3D":
+        """Overload of 'dict_to_object' for performance."""
+
+        vertices = dict_["vertices"]
+        faces = dict_["faces"]
+        name = dict_["name"]
+
+        triangle_shell = cls.from_mesh_data(vertices, faces, name)
+        triangle_shell.alpha = dict_["alpha"]
+        triangle_shell.color = dict_["color"]
+
+        return triangle_shell
+
+    def to_display_triangle_shell(self) -> "DisplayTriangleShell3D":
+        """
+        Create a DisplayTriangleShell3D from the current TriangleShell3D.
+
+        :return: The created DisplayTriangleShell3D.
+        :rtype: DisplayTriangleShell3D
+        """
+        return DisplayTriangleShell3D.from_triangle_shell(self)
 
 
 class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     """
-        A 3D closed shell composed of multiple triangle faces.
+    A 3D closed shell composed of multiple triangle faces.
 
     This class represents a 3D closed shell, which is a collection of connected
     triangle faces with a volume. It is a subclass of both the `ClosedShell3D`
@@ -1870,8 +1908,105 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
     :type name: str
     """
 
-    def __init__(self, faces: List[volmdlr.faces.Triangle3D],
-                 color: Tuple[float, float, float] = None,
-                 alpha: float = 1., name: str = ''):
+    def __init__(
+        self,
+        faces: List[volmdlr.faces.Triangle3D],
+        color: Tuple[float, float, float] = None,
+        alpha: float = 1.0,
+        name: str = "",
+    ):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
         ClosedShell3D.__init__(self, faces, color, alpha, name)
+
+
+class DisplayTriangleShell3D(Shell3D):
+    """
+    A Triangle Shell 3D optimized for display and saving purpose.
+
+    This shell has the particularity to not instantiate the Triangle3D objects, to reduce memory usage and improve
+    performance.
+    """
+
+    def __init__(self, positions: NDArray[float], indices: NDArray[int], name):
+        """
+        Instantiate the DisplayTriangleShell3D.
+
+        :param positions: A 3D numpy array of float representing the positions of the vertices of the triangles.
+        :param indices: A 3D numpy array of int representing the indices of the vertices representing the triangles.
+        :param name: A name for the DisplayTriangleShell3D, optional.
+        """
+        self.positions = positions
+        self.indices = indices
+
+        Shell3D.__init__(self, faces=[], name=name)  # avoid saving the faces for memory and performance
+
+    @classmethod
+    def from_triangle_shell(
+        cls, triangle_shell: Union["OpenTriangleShell3D", "ClosedTriangleShell3D"]
+    ) -> "DisplayTriangleShell3D":
+        """
+        Instantiate a DisplayTriangleShell3D from an OpenTriangleShell3D or a ClosedTriangleShell3D.
+
+        :param triangle_shell: The triangle shell to create the DisplayTriangleShell3D from.
+        :type triangle_shell: OpenTriangleShell3D | ClosedTriangleShell3D
+
+        :return: The created DisplayTriangleShell3D.
+        :rtype: DisplayTriangleShell3D
+        """
+        positions, indices = triangle_shell.to_mesh_data(round_vertices=True, n_decimals=6)
+        name = triangle_shell.name
+
+        display_triangle_shell = cls(positions, indices, name)
+
+        display_triangle_shell.alpha = triangle_shell.alpha
+        display_triangle_shell.color = triangle_shell.color
+
+        return display_triangle_shell
+
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
+        """Gets the Shell bounding box."""
+        bbox_min, bbox_max = np.min(self.positions, axis=0), np.max(self.positions, axis=0)
+
+        return volmdlr.core.BoundingBox(bbox_min[0], bbox_max[0], bbox_min[1], bbox_max[1], bbox_min[2], bbox_max[2])
+
+    def babylon_meshes(self, merge_meshes=True):
+        """Overload of 'babylon_meshes' for performance."""
+
+        babylon_mesh = {"positions": self.positions.flatten().tolist(), "indices": self.indices.flatten().tolist()}
+        babylon_mesh.update(self.babylon_param())
+
+        return [babylon_mesh]
+
+    def to_dict(self, *args, **kwargs):
+        """Overload of 'to_dict' for performance."""
+        dict_ = self.base_dict()
+
+        dict_["positions"] = self.positions.tolist()
+        dict_["indices"] = self.indices.tolist()
+        dict_["alpha"] = self.alpha
+        dict_["color"] = self.color
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(
+        cls,
+        dict_: JsonSerializable,
+        force_generic: bool = False,
+        global_dict=None,
+        pointers_memo: Dict[str, Any] = None,
+        path: str = "#",
+        name: str = "",
+    ) -> "DisplayTriangleShell3D":
+        """Overload of 'dict_to_object' for performance."""
+
+        positions = np.array(dict_["positions"])
+        indices = np.array(dict_["indices"])
+        name = dict_["name"]
+
+        display_triangle_shell = cls(positions, indices, name)
+
+        display_triangle_shell.alpha = dict_["alpha"]
+        display_triangle_shell.color = dict_["color"]
+
+        return display_triangle_shell

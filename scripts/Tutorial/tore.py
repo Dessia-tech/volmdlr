@@ -17,7 +17,7 @@ r2 = 3e-3 #Radius of the arc3d generated
 
 center = vm.Point3D([0,0,0]) #Choose the coordinate of the center
 normal1 = vm.Vector3D([0,0,1]) #Choose the normal of the generative
-normal1.Normalize() #Normalize the normal if it is not the case
+normal1 = normal1.unit_vector() #Normalize the normal if it is not the case
 vec1 = normal1.deterministic_unit_normal_vector()
 
 

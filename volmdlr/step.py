@@ -72,7 +72,7 @@ class Step(dc.DessiaObject):
     _standalone_in_db = True
 
     def __init__(self, lines: List[str], name: str = ''):
-        self.functions, self.all_connections, self.connections = self.read_lines(lines)
+        self.functions, self.connections = self.read_lines(lines)
         self._graph = None
         self.global_uncertainty = 1e-6
         self.length_conversion_factor = 1
@@ -81,6 +81,15 @@ class Step(dc.DessiaObject):
         self._roots_nodes = None
 
         dc.DessiaObject.__init__(self, name=name)
+
+    @property
+    def all_connections(self):
+        """Returns all pairs of connections."""
+        list_connections = []
+        for key, values in self.connections.items():
+            for value in values:
+                list_connections.append((key, value))
+        return list_connections
 
     @property
     def root_nodes(self):
@@ -96,7 +105,7 @@ class Step(dc.DessiaObject):
         return self._graph
 
     @classmethod
-    def from_stream(cls, stream: BinaryFile):
+    def from_stream(cls, stream: BinaryFile, name: str = ''):
         """Instantiate a Step object from a stream."""
         stream.seek(0)
         lines = []
@@ -104,24 +113,22 @@ class Step(dc.DessiaObject):
             line = line.decode("ISO-8859-1")
             line = line.replace("\r", "")
             lines.append(line)
-        return cls(lines)
+        return cls(lines, name=name)
 
     @classmethod
-    def from_file(cls, filepath: str = None):
+    def from_file(cls, filepath: str = None, name: str = ''):
         """Instantiate a Step object from a step file."""
         with open(filepath, "r", encoding="ISO-8859-1") as file:
             lines = []
             for line in file:
                 lines.append(line)
-        return cls(lines)
+        return cls(lines, name=name)
 
     def read_lines(self, lines):
         """Translate the step file into step functions objects."""
-        all_connections = []
         dict_connections = {}
         previous_line = ""
         functions = {}
-
         for line in lines:
             # line = line.replace(" ", "")
             line = line.replace("\n", "")
@@ -146,8 +153,16 @@ class Step(dc.DessiaObject):
             function_id = int(function[0][1:].strip())
             function_name_arg = function[1].split("(", 1)
             function_name = function_name_arg[0].replace(" ", "")
-            function_arg = function_name_arg[1].split("#")
-            function_connections = []
+            start_index_name = function_name_arg[1].find("'")
+            if start_index_name != -1:
+                end_index_name = function_name_arg[1].find("'", start_index_name + 1)
+                if end_index_name != -1:
+                    function_arg_string = function_name_arg[1][end_index_name + 1:]
+                else:
+                    function_arg_string = function_name_arg[1]
+            else:
+                function_arg_string = function_name_arg[1]
+            function_arg = function_arg_string.split("#")
             connections = []
             for connec in function_arg[1:]:
                 connec = connec.split(",")
@@ -155,40 +170,45 @@ class Step(dc.DessiaObject):
                 if connec[0][-1] != "'":
                     function_connection = int(connec[0])
                     connections.append(function_connection)
-                    function_connections.append(
-                        (function_id, function_connection))
-            dict_connections[function_id] = connections
-            all_connections.extend(function_connections)
 
             previous_line = str()
 
             # FUNCTION ARGUMENTS
-            function_arg = function_name_arg[1]
-            arguments = step_reader.step_split_arguments(function_arg)
-            new_name = ''
-            new_arguments = []
-            if function_name == "":
-                name_arg = self.step_subfunctions(arguments)
-                for name, arg in name_arg:
-                    new_name += name + ', '
-                    new_arguments.extend(arg)
-                new_name = new_name[:-2]
-                function_name = new_name
-                arguments = new_arguments
-                for arg in arguments:
-                    if arg[0] == '#':
-                        function_connections.append(
-                            (function_id, int(arg[1:])))
+            functions, connections = self._helper_intantiate_step_functions(functions, connections,
+                                                                            [function_id, function_name,
+                                                                             function_name_arg])
 
-            for i, argument in enumerate(arguments):
-                if argument[:2] == '(#' and argument[-1] == ')':
-                    arg_list = step_reader.set_to_list(argument)
-                    arguments[i] = arg_list
+            dict_connections[function_id] = connections
 
-            function = StepFunction(function_id, function_name, arguments)
-            functions[function_id] = function
+        return functions, dict_connections
 
-        return functions, all_connections, dict_connections
+    def _helper_intantiate_step_functions(self, functions, connections, function_parameters):
+        """Helper function to read_lines."""
+        function_id, function_name, function_name_arg = function_parameters
+        function_arg = function_name_arg[1]
+        arguments = step_reader.step_split_arguments(function_arg)
+        new_name = ''
+        new_arguments = []
+        if function_name == "":
+            name_arg = self.step_subfunctions(arguments)
+            for name, arg in name_arg:
+                new_name += name + ', '
+                new_arguments.extend(arg)
+            new_name = new_name[:-2]
+            function_name = new_name
+            arguments = new_arguments
+            for arg in arguments:
+                if arg[0] == '#':
+                    connections.append(int(arg[1:]))
+
+        for i, argument in enumerate(arguments):
+            if argument[:2] == '(#' and argument[-1] == ')':
+                arg_list = step_reader.set_to_list(argument)
+                arguments[i] = arg_list
+
+        function = StepFunction(function_id, function_name, arguments)
+        functions[function_id] = function
+        return functions, connections
 
     def not_implemented(self):
         not_implemented = []
@@ -204,7 +224,7 @@ class Step(dc.DessiaObject):
         :return: A graph representation the step file structure.
         :rtype: networkx.DiGraph
         """
-        F = nx.DiGraph()
+        graph = nx.DiGraph()
         labels = {}
 
         for function in self.functions.values():
@@ -221,14 +241,14 @@ class Step(dc.DessiaObject):
                 self.functions[id1].arg.append(f'#{id2}')
 
             elif function.name in STEP_TO_VOLMDLR:
-                F.add_node(function.id,
-                           color='rgb(0, 0, 0)',
-                           shape='.',
-                           name=str(function.id))
+                graph.add_node(function.id,
+                               color='rgb(0, 0, 0)',
+                               shape='.',
+                               name=str(function.id))
                 labels[function.id] = str(function.id) + ' ' + function.name
 
         # Delete connection if node not found
-        node_list = list(F.nodes())
+        node_list = list(graph.nodes())
         delete_connection = []
         for connection in self.all_connections:
             if connection[0] not in node_list \
@@ -238,17 +258,17 @@ class Step(dc.DessiaObject):
             self.all_connections.remove(delete)
 
         # Create graph connections
-        F.add_edges_from(self.all_connections)
+        graph.add_edges_from(self.all_connections)
 
         # Remove single nodes
         delete_nodes = []
-        for node in F.nodes:
-            if F.degree(node) == 0:
+        for node in graph.nodes:
+            if graph.degree(node) == 0:
                 delete_nodes.append(node)
         for node in delete_nodes:
-            F.remove_node(node)
+            graph.remove_node(node)
             # G.remove_node(node)
-        return F
+        return graph
 
     def draw_graph(self, graph=None, reduced=False):
         """
@@ -539,7 +559,10 @@ class Step(dc.DessiaObject):
                 "GEOMETRIC_REPRESENTATION_CONTEXT": geometric_representation_context,
                 "SHELLS": shell_nodes}
 
-    def get_assembly_struct(self):
+    def get_assembly_structure(self):
+        """
+        Get assembly dependency structure.
+        """
         assemblies_structure = {}
         assemblies = set()
         shapes = set()
@@ -557,6 +580,9 @@ class Step(dc.DessiaObject):
         return assemblies_structure, valid_entities
 
     def get_assembly_data(self, assembly_usage_occurence, valid_entities, assembly_frame, object_dict):
+        """
+        Helper function to get assembly data.
+        """
         assembly_shapes = []
         assembly_positions = []
         for node in assembly_usage_occurence:
@@ -632,7 +658,7 @@ class Step(dc.DessiaObject):
             self.functions[next_assembly_usage_occurrence].arg.append(f'#{node}')
 
     def instatiate_assembly(self, object_dict):
-        assemblies_structure, valid_entities = self.get_assembly_struct()
+        assemblies_structure, valid_entities = self.get_assembly_structure()
 
         instantiate_ids = list(assemblies_structure.keys())
         error = True
@@ -644,7 +670,7 @@ class Step(dc.DessiaObject):
                 # here we invert instantiate_ids because if the code enter inside the except
                 # block, we want to loop from the last KeyError to the first. This avoids an infinite loop
                 for instantiate_id in reversed(instantiate_ids):
-                    if instantiate_id in object_dict:
+                    if instantiate_id in object_dict or instantiate_id in none_primitives:
                         instantiate_ids.pop()
                         continue
                     product_id = self.shape_definition_representation_to_product_node(instantiate_id)
@@ -656,8 +682,12 @@ class Step(dc.DessiaObject):
 
                     assembly_shape_ids, assembly_position_ids = self.get_assembly_data(
                         assemblies_structure[instantiate_id], valid_entities, assembly_frame, object_dict)
-                    assembly_positions = [object_dict[id_frame] for id_frame in assembly_position_ids]
-                    list_primitives = [object_dict[id_shape] for id_shape in assembly_shape_ids]
+                    assembly_positions = []
+                    list_primitives = []
+                    for id_shape, id_frame in zip(assembly_shape_ids, assembly_position_ids):
+                        if id_shape not in none_primitives:
+                            assembly_positions.append(object_dict[id_frame])
+                            list_primitives.append(object_dict[id_shape])
 
                     if not list_primitives:
                         none_primitives.add(instantiate_id)
@@ -669,7 +699,7 @@ class Step(dc.DessiaObject):
                     volmdlr_object = volmdlr.core.Assembly(list_primitives, assembly_frame,
                                                            name=name)
                     object_dict[instantiate_id] = volmdlr_object
-
+                    last_error = None
                 error = False
             except KeyError as key:
                 # Sometimes the search don't instantiate the nodes of a
@@ -712,7 +742,6 @@ class Step(dc.DessiaObject):
         nodes = self.create_node_list(shape_representations)
         errors = set()
         for node in nodes:
-
             if node is None:
                 continue
             object_dict, times = self._helper_instantiate(node, object_dict, times, show_times)
@@ -750,18 +779,18 @@ class Step(dc.DessiaObject):
                 # here we invert instantiate_ids because if the code enter inside the except
                 # block, we want to loop from the last KeyError to the first. This avoids an infinite loop
                 for instantiate_id in instantiate_ids[::-1]:
-                    t = time.time()
+                    t_tracker = time.time()
                     volmdlr_object = self.instantiate(
                         self.functions[instantiate_id].name,
                         self.functions[instantiate_id].arg[:], object_dict, instantiate_id)
-                    t = time.time() - t
+                    t_tracker = time.time() - t_tracker
                     object_dict[instantiate_id] = volmdlr_object
                     if show_times:
                         if volmdlr_object.__class__ not in times:
-                            times[volmdlr_object.__class__] = [1, t]
+                            times[volmdlr_object.__class__] = [1, t_tracker]
                         else:
                             times[volmdlr_object.__class__][0] += 1
-                            times[volmdlr_object.__class__][1] += t
+                            times[volmdlr_object.__class__][1] += t_tracker
                 error = False
             except KeyError as key:
                 # Sometimes the search don't instantiate the nodes of a

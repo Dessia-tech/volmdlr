@@ -31,20 +31,20 @@ def euler_angles_to_transfer_matrix(psi, theta, phi):
     return matrix
 
 
-def transfer_matrix_to_euler_angles(R):
+def transfer_matrix_to_euler_angles(r_matrix):
     """Returns the Euler angle from a transfer matrix."""
-    if (R[2, 2] != 1) and (R[2, 2] != -1):
-        theta = math.acos(R[2, 2])
-        psi = math.atan2(R[2, 0] / math.sin(theta), R[2, 1] / math.sin(theta))
-        phi = math.atan2(R[0, 2] / math.sin(theta), -R[1, 2] / math.sin(theta))
+    if (r_matrix[2, 2] != 1) and (r_matrix[2, 2] != -1):
+        theta = math.acos(r_matrix[2, 2])
+        psi = math.atan2(r_matrix[2, 0] / math.sin(theta), r_matrix[2, 1] / math.sin(theta))
+        phi = math.atan2(r_matrix[0, 2] / math.sin(theta), -r_matrix[1, 2] / math.sin(theta))
     else:
         phi = 0
-        if R[2, 2] == 1:
+        if r_matrix[2, 2] == 1:
             theta = 0
-            psi = math.atan2(R[1, 0], R[0, 0])
+            psi = math.atan2(r_matrix[1, 0], r_matrix[0, 0])
         else:
             theta = math.pi
-            psi = -math.atan2(R[1, 0], R[0, 0])
+            psi = -math.atan2(r_matrix[1, 0], r_matrix[0, 0])
     return psi, theta, phi
 
 
@@ -56,14 +56,14 @@ def direction_to_euler_angles(u: vm.Vector3D, v=None):
         v = vm.Vector3D.random(0, 1, 0, 1, 0, 1)
 
     u = u.copy()
-    u.normalize()
+    u = u.unit_vector()
     matrix_r = zeros((3, 3))
     matrix_r[0, 0] = u.x
     matrix_r[1, 0] = u.y
     matrix_r[2, 0] = u.z
 
     v = v - u.dot(v) * u
-    v.normalize()
+    v = v.unit_vector()
     w = u.cross(v)
     matrix_r[0, 1] = v.y
     matrix_r[1, 1] = v.y

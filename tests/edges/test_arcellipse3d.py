@@ -19,15 +19,17 @@ class TestArcEllipse3D(unittest.TestCase):
     discretization_points = arc_ellipse3d.discretization_points(number_points=6)
 
     def test_init(self):
-        expected_lengths = [8.7227845, 7.2663362, 5.8098879, 4.8442241, 3.8785604, 2.4221121, 0.9656637, 0.9656637,
-                            8.2319999, 6.7755516, 5.8098879, 4.8442241, 3.3877758, 1.9313275, 2.4221121, 1.4564483,
-                            8.2319999, 7.2663362, 6.3006724, 4.8442241, 3.3877758, 3.8785604, 2.9128966, 1.4564483,
-                            8.7227845, 7.7571207, 6.3006724, 4.8442241, 4.8442241, 3.8785604, 2.4221121, 0.9656637,
-                            8.7227845, 7.2663362, 5.8098879, 5.8098879, 4.8442241, 3.3877758, 1.9313275, 0.9656637,
-                            8.2319999, 6.7755516, 7.2663362, 6.3006724, 4.8442241, 3.3877758, 2.4221121, 1.4564483,
-                            8.2319999, 8.7227845, 7.7571207, 6.3006724, 4.8442241, 3.8785604, 2.9128966, 1.4564483]
+        expected_lengths = [0.9656637, 2.4221121, 3.8785604, 4.8442241, 5.8098879, 7.2663362, 8.7227845, 8.7227845,
+                            1.4564483, 2.9128966, 3.8785604, 4.8442241, 6.3006724, 7.7571207, 8.7227845, 7.2663362,
+                            8.2319999, 1.4564483, 2.4221121, 3.3877758, 4.8442241, 6.3006724, 7.2663362, 5.8098879,
+                            6.7755516, 8.2319999, 0.9656637, 1.9313275, 3.3877758, 4.8442241, 5.8098879, 4.8442241,
+                            5.8098879, 7.2663362, 8.7227845, 0.9656637, 2.4221121, 3.8785604, 4.8442241, 3.8785604,
+                            4.8442241, 6.3006724, 7.7571207, 8.7227845, 1.4564483, 2.9128966, 3.8785604, 2.4221121,
+                            3.3877758, 4.8442241, 6.3006724, 7.2663362, 8.2319999, 1.4564483, 2.4221121, 0.9656637,
+                            1.9313275, 3.3877758, 4.8442241, 5.8098879, 6.7755516, 8.2319999, 0.9656637, 0.9656637,
+                            2.4221121, 3.8785604, 4.8442241, 5.8098879, 7.2663362, 8.7227845]
         list_lengths = []
-        for point1, point2 in product(self.ellipse3d.discretization_points(number_points=8), repeat=2):
+        for point1, point2 in product(self.ellipse3d.discretization_points(number_points=9), repeat=2):
             if not point1.is_close(point2):
                 arc_ellipse3d = edges.ArcEllipse3D(self.ellipse3d, start=point1, end=point2)
                 list_lengths.append(round(arc_ellipse3d.length(), 7))
@@ -145,6 +147,61 @@ class TestArcEllipse3D(unittest.TestCase):
         self.assertTrue(split[0].end.is_close(self.discretization_points[2]))
         self.assertTrue(split[1].start.is_close(self.discretization_points[2]))
         self.assertTrue(split[1].end.is_close(self.arc_ellipse3d.end))
+
+    def test_linesegment_intersections(self):
+        lineseg1 = edges.LineSegment3D(
+            volmdlr.Point3D(2.548547388496604, 3.4145727922810423, 3.4145727922810423),
+            volmdlr.Point3D(-1.6329931618554527, -3.36504396942433, -3.36504396942433))
+        lineseg2 = edges.LineSegment3D(
+            volmdlr.Point3D(-0.5978657793452512, -2.7629292888063484, -1.2103434310450787),
+            volmdlr.Point3D(0.47829262347620083, 2.2103434310450787, -0.8948282844774607))
+        lineseg3 = edges.LineSegment3D(volmdlr.Point3D(3.0, 4.0, 2.5),
+                                       volmdlr.Point3D(-3.0, -5.0, -2.0))
+        expected_results = [
+            [volmdlr.Point3D(-0.23914631173810008, -1.105171715522539, -1.105171715522539),
+             volmdlr.Point3D(1.154700538379252, 1.1547005383792517, 1.1547005383792517)],
+            [volmdlr.Point3D(-0.2391463117381003, -1.1051717155225391, -1.1051717155225391)],
+            []
+        ]
+        for i, lineseg in enumerate([lineseg1, lineseg2, lineseg3]):
+            intersections = self.arc_ellipse3d.linesegment_intersections(lineseg)
+            for result, expected_result in zip(intersections, expected_results[i]):
+                self.assertTrue(result.is_close(expected_result))
+
+    def test_arc_intersections(self):
+        arc1 = edges.Arc3D.from_3_points(
+            volmdlr.Point3D(-3.3288684211090134, -0.5435060060274549, -0.5435060060274549),
+            volmdlr.Point3D(0.4007646643644225, -0.8377597481168791, -0.8377597481168791),
+            volmdlr.Point3D(0.8169022928215985, 1.799489070171162, 1.799489070171162)
+        )
+        arc2 = edges.Arc3D.from_3_points(
+            volmdlr.Point3D(1.3588246836111835, 0.8491831845891217, 0.39006834315301087),
+            volmdlr.Point3D(1.255568331576755, 0.5696474190625116, 1.2109400610588277),
+            volmdlr.Point3D(1.2199886174598773, 1.2728187935178512, 0.6943003434687043)
+        )
+        expected_intersections1 = [volmdlr.Point3D(1.354577390684, 0.96462133589, 0.96462133589),
+                                   volmdlr.Point3D(1.393846492347, 0.527819792968, 0.527819792968),
+                                   volmdlr.Point3D(-0.239143661231, -1.105170711828, -1.105170711828),
+                                   volmdlr.Point3D(-0.834635771305, -1.224592042695, -1.224592042695)]
+        expected_intersections2 = [volmdlr.Point3D(1.3938468501173522, 0.5278214463329128, 0.5278214463329132),
+                                   volmdlr.Point3D(1.1547005383792521, 1.1547005383792512, 1.1547005383792517)]
+        intersections1 = arc1.arcellipse_intersections(self.arc_ellipse3d)
+        intersections2 = arc2.arcellipse_intersections(self.arc_ellipse3d)
+        for result, expected_result in zip(intersections1, expected_intersections1):
+            self.assertTrue(result.is_close(expected_result))
+        for result, expected_result in zip(intersections2, expected_intersections2):
+            self.assertTrue(result.is_close(expected_result))
+
+    def test_arcellipse(self):
+        arc_ellipse3d_2 = self.arc_ellipse3d.translation(self.ellipse3d.frame.u * 0.2)
+        arc_ellipse3d_2 = arc_ellipse3d_2.rotation(self.ellipse3d.center, self.ellipse3d.frame.w, math.pi / 3)
+        arcellipse_intersections = self.arc_ellipse3d.arcellipse_intersections(arc_ellipse3d_2)
+        self.assertEqual(len(arcellipse_intersections), 1)
+        self.assertTrue(arcellipse_intersections[0].is_close(
+            volmdlr.Point3D(0.442026341769, -0.728884874076, -0.728884874076)))
+
+    def test_is_close(self):
+        self.assertTrue(self.arc_ellipse3d.is_close(self.arc_ellipse3d))
 
 
 if __name__ == '__main__':

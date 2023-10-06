@@ -430,12 +430,13 @@ class BoundingRectangle(dc.DessiaObject):
         return (dx ** 2 + dy ** 2) ** 0.5
 
     @classmethod
-    def from_points(cls, points: List[volmdlr.Point2D]) -> "BoundingRectangle":
+    def from_points(cls, points: List[volmdlr.Point2D], name: str = '') -> "BoundingRectangle":
         """
         Initializes a bounding rectangle from a list of points.
 
         :param points: The list of points to create the bounding rectangle from.
-        :type points: List[volmdlr.Point2D]
+        :type points: List[volmdlr.Point2D].
+        :param name: object's name.
         :return: The bounding rectangle initialized from the list of points.
         :rtype: BoundingRectangle
         """
@@ -443,7 +444,7 @@ class BoundingRectangle(dc.DessiaObject):
         xmax = max(pt.x for pt in points)
         ymin = min(pt.y for pt in points)
         ymax = max(pt.y for pt in points)
-        return cls(xmin, xmax, ymin, ymax)
+        return cls(xmin, xmax, ymin, ymax, name=name)
 
 
 class BoundingBox(dc.DessiaObject):
@@ -589,7 +590,7 @@ class BoundingBox(dc.DessiaObject):
         return ax
 
     @classmethod
-    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"]) -> "BoundingBox":
+    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"], name: str = '') -> "BoundingBox":
         """
         Creates a bounding box that contains multiple bounding boxes.
 
@@ -604,15 +605,16 @@ class BoundingBox(dc.DessiaObject):
         ymax = max(bb.ymax for bb in bounding_boxes)
         zmin = min(bb.zmin for bb in bounding_boxes)
         zmax = max(bb.zmax for bb in bounding_boxes)
-        return cls(xmin, xmax, ymin, ymax, zmin, zmax)
+        return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     @classmethod
-    def from_points(cls, points: List[volmdlr.Point3D]) -> "BoundingBox":
+    def from_points(cls, points: List[volmdlr.Point3D], name: str = '') -> "BoundingBox":
         """
         Initializes a bounding box from a list of points.
 
         :param points: The list of points to create the bounding box from.
-        :type points: List[volmdlr.Point3D]
+        :type points: List[volmdlr.Point3D].
+        :param name: object's name.
         :return: The bounding box initialized from the list of points.
         :rtype: BoundingBox
         """
@@ -624,7 +626,7 @@ class BoundingBox(dc.DessiaObject):
         ymax = max(pt.y for pt in points)
         zmin = min(pt.z for pt in points)
         zmax = max(pt.z for pt in points)
-        return cls(xmin, xmax, ymin, ymax, zmin, zmax)
+        return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     def to_frame(self) -> volmdlr.Frame3D:
         """
@@ -888,7 +890,7 @@ class Compound(dc.PhysicalObject):
             if all(primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or
                    hasattr(primitive, "shell_faces") for primitive in self.primitives):
                 self._type = "manifold_solid_brep"
-            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edges, volmdlr.Point3D)) or
+            elif all(isinstance(primitive, (volmdlr.wires.Wire3D, volmdlr.edges.Edge, volmdlr.Point3D)) or
                      hasattr(primitive, "shell_faces") for primitive in self.primitives):
                 self._type = "geometric_curve_set"
             else:
@@ -897,7 +899,7 @@ class Compound(dc.PhysicalObject):
 
     @compound_type.setter
     def compound_type(self, value):
-        """Compound type setter."""
+        """Compound typesetter."""
         self._type = value
 
     def _bounding_box(self) -> BoundingBox:
@@ -1271,12 +1273,13 @@ class VolumeModel(dc.PhysicalObject):
             babylon_data=babylon_data)
         return script
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False, merge_meshes=True):
+    def babylonjs(self, page_name=None, use_cdn=True, debug=False, merge_meshes=True, dark_mode=False):
         """
-        Creates a HTML file using babylonjs to show a 3d model in the browser.
+        Creates an HTML file using babylonjs to show a 3d model in the browser.
 
         """
         babylon_data = self.babylon_data(merge_meshes=merge_meshes)
+        babylon_data['dark_mode'] = 1 if dark_mode else 0
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
                                        debug=debug)
         if page_name is None:

@@ -63,9 +63,9 @@ class RoundedLineSegments2D(RoundedLineSegments):
         p3 = pti + u1 * point_distance
         p4 = pti + u2 * point_distance
 
-        w = u1 + u2
+        w = (u1 + u2).to_vector()
         if not w.is_close(volmdlr.Vector2D(0, 0)):
-            w.normalize()
+            w = w.unit_vector()
 
         v1 = u1.deterministic_unit_normal_vector()
         if v1.dot(w) < 0:
@@ -107,16 +107,16 @@ class RoundedLineSegments2D(RoundedLineSegments):
         for i in range(number_points - 1):
             v1 = self.points[i + 1] - self.points[i]
             v2 = self.points[i] - self.points[i + 1]
-            v1.normalize()
-            v2.normalize()
+            v1 = v1.unit_vector()
+            v2 = v2.unit_vector()
             vectors.append(v1)
             vectors.append(v2)
 
         if self.closed:
             v1 = self.points[0] - self.points[-1]
             v2 = self.points[-1] - self.points[0]
-            v1.normalize()
-            v2.normalize()
+            v1 = v1.unit_vector()
+            v2 = v2.unit_vector()
             vectors.append(v1)
             vectors.append(v2)
 
@@ -133,7 +133,7 @@ class RoundedLineSegments2D(RoundedLineSegments):
                 normal_i = normal_i.normal_vector()
                 offset_vectors.append(normal_i)
             else:
-                normal_i.normalize()
+                normal_i = normal_i.unit_vector()
                 if normal_i.dot(vectors[2 * i - 1].normal_vector()) > 0:
                     normal_i = - normal_i
                     check = True
@@ -152,12 +152,12 @@ class RoundedLineSegments2D(RoundedLineSegments):
 
             normal_vector1 = - vectors[2 * i - 1].normal_vector()
             normal_vector2 = vectors[2 * i].normal_vector()
-            normal_vector1.normalize()
-            normal_vector2.normalize()
+            normal_vector1 = normal_vector1.unit_vector()
+            normal_vector2 = normal_vector2.unit_vector()
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-                           offset_vectors[i - (not self.closed)]
+                offset_vectors[i - (not self.closed)]
             offset_points.append(offset_point)
 
         if not self.closed:
@@ -190,34 +190,34 @@ class RoundedLineSegments2D(RoundedLineSegments):
                 # Not closed RLS2D and the offset line is the last one
                 if i == len(self.points) - 2:
                     dir_vec_1 = volmdlr.Vector2D(point - self.points[i - 1])
-                    dir_vec_1.normalize()
+                    dir_vec_1 = dir_vec_1.unit_vector()
                     dir_vec_2 = dir_vec_1
                     dont_add_last_point = True
                 # The offset line is the first one
                 elif i == 0:
                     dir_vec_2 = volmdlr.Vector2D(
                         self.points[i + 1] - self.points[i + 2])
-                    dir_vec_2.normalize()
+                    dir_vec_2 = dir_vec_2.unit_vector()
                     if not self.closed:
                         dir_vec_1 = dir_vec_2
                     else:
                         dir_vec_1 = volmdlr.Vector2D(
                             point - self.points[i - 1])
-                        dir_vec_1.normalize()
+                        dir_vec_1 = dir_vec_1.unit_vector()
                 # Closed RLS2D and the offset line is the last one
                 elif i == len(self.points) - 1:
                     dir_vec_1 = volmdlr.Vector2D(point - self.points[i - 1])
-                    dir_vec_1.normalize()
+                    dir_vec_1 = dir_vec_1.unit_vector()
                     dir_vec_2 = volmdlr.Vector2D(
                         self.points[0] - self.points[1])
-                    dir_vec_2.normalize()
+                    dir_vec_2 = dir_vec_2.unit_vector()
                     dont_add_last_point = True
                 else:
                     dir_vec_1 = volmdlr.Vector2D(point - self.points[i - 1])
-                    dir_vec_1.normalize()
+                    dir_vec_1 = dir_vec_1.unit_vector()
                     dir_vec_2 = volmdlr.Vector2D(
                         self.points[i + 1] - self.points[i + 2])
-                    dir_vec_2.normalize()
+                    dir_vec_2 = dir_vec_2.unit_vector()
 
                 if self.closed and line_index == len(self.points) - 1:
                     normal_vector = volmdlr.Vector2D(
@@ -303,8 +303,8 @@ class RoundedLineSegments2D(RoundedLineSegments):
         if dir_vec_2 is None:
             dir_vec_2 = dir_vec_1
 
-        dir_vec_1.normalize()
-        dir_vec_2.normalize()
+        dir_vec_1 = dir_vec_1.unit_vector()
+        dir_vec_2 = dir_vec_2.unit_vector()
 
         # =============================================================================
         # COMPUTES THE ANGLE BETWEEN THE NORMAL VECTOR OF THE SURFACE TO OFFSET AND
@@ -420,6 +420,7 @@ class ClosedRoundedLineSegments2D(RoundedLineSegments2D, wires.Contour2D):
     :param radius: Radius used to connect different parts of the wire
     :type radius: {position1(n): float which is the radius linked the n-1 and n+1 points, position2(n+1):...}
     """
+
     def __init__(self, points: List[volmdlr.Point2D], radius: Dict[int, float],
                  adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments2D.__init__(self, points, radius, adapt_radius=adapt_radius, name='')

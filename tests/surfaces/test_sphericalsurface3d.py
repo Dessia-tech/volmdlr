@@ -106,12 +106,12 @@ class TestSphericalSurface3D(unittest.TestCase):
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 2.1665348983853794, 2)
 
-    def test_plane_intersection(self):
+    def test_plane_intersections(self):
         frame = volmdlr.Frame3D.from_point_and_vector(volmdlr.Point3D(0, 0.5, 0.5),
                                                       volmdlr.Vector3D(0, 1 / math.sqrt(2), 1 / math.sqrt(2)),
                                                       volmdlr.Z3D)
         plane = surfaces.Plane3D(frame)
-        fullarc = self.surface3d.plane_intersection(plane)[0]
+        fullarc = self.surface3d.plane_intersections(plane)[0]
         self.assertAlmostEqual(fullarc.circle.radius, 1/math.sqrt(2))
         self.assertTrue(fullarc.circle.normal.is_colinear_to(frame.w))
 

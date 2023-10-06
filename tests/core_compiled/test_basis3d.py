@@ -6,6 +6,9 @@ import volmdlr
 class TestBasis3D(unittest.TestCase):
     local_basis = volmdlr.Basis3D(volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D)
 
+    def test_is_orthonormal(self):
+        self.assertTrue(self.local_basis.is_orthonormal())
+
     def test_global_to_local_coordinates(self):
         vector_global = volmdlr.Vector3D(3, 4, 5)
         vector_local = self.local_basis.global_to_local_coordinates(vector_global)

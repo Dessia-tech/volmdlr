@@ -30,7 +30,7 @@ xn, yn, zn = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, p
 xc, yc, zc = random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100, random.randrange(posmin, posmax, 1)/100
 
 n = volmdlr.Vector3D([xn,yn,zn])
-n.Normalize()
+n = n.unit_vector()
 c = volmdlr.Point3D((xc,yc,zc))
 
 #Plane to place your PlaneFace3D

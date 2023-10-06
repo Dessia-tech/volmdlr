@@ -5,8 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.14.0 [future]
 
-## v0.13.0 [future]
+### New Features
+- DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
+- BSplineSurface3D: from_points_interpolation, from_points_approximation.
+- nurbs module.
+- New curves classes: Hyperbola2D and Hyperbola3D.
+- Line: closest_point_on_line, from_point_and_vector
+- Line2D: get_slope, get_y_intersection.
+- New curves classes: Parabola2D/3D.
+- ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection
+- ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection, parallel_plane_intersections, concurent_plane_intersections, plane_intersections.
+- Hyperbola2D/3D and Parabola2D/3D: split
+- PlaneFace3D: conicalface_intersections
+- CylindricalSurface3D: conicalsurface_intersections
+- CylindricalFace3D: conicalface_intersections
+- Curve: general_method curve_intersections
+- Parabola2d/3D / Hyperbola2D/3D: point_belongs, tangent
+- BSplineCurve: point_to_parameter, abscissa_to_parameter.
+- Basis3D: is_normilized, is_orthogonal, is_orthonormal.
+
+### Fixed
+- add missing name attributes to classmethods.
+- fixed circular imports
+- BSplineSurface3D: from_points_interpolation, from_points_approximation.
+- ConicalFace3D: point_belongs
+- nurbs.core: find_multiplicity, evaluate_curve.
+- LineSegment3d: line_intersections.
+- Circle2D: line_intersections
+- Step.read_lines: handles name with # character in name.
+- ExtrusionSurface3D: enhance 3D to parametric operations.
+- BSplineCurve: direction_vector, point_at_abscissa, abscissa, trim
+- ConicalSurface3D and RevolutionSurface3D: bsplinecurve3d_to_2d when start or and points are at surface singularity
+- ClosedCurves: discretization_points
+- ArcEllipse3D: is_close
+- LineSegment3D: revolution
+
+### Refactor
+- TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
+
+### Changed
+- Cache BSplineCurve points into a numpy array to reduce memory usage.
+- Vector2D, Vector3D: __repr__
+- core_compiled: cdef functions' names.
+- Vector2D, Vector3D, Point2D, Point3D: transformed into extension types for memory performance
+- limit warning on step reading
+
+### Unittests
+- Hyperbola2D/3D: line_intersections
+- Parabola2D/3D: line_intersections
+- ConicalSurface3D: test_line_intersections, test_plane_intersections.
+
+## v0.13.0
 
 ### New Features
 - Line: reverse.
@@ -14,6 +65,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - perf: to_dict/dict_to_obj of OpenTriangleShell3D
 - Cylinder / Cone / HollowCylinder: from_center_point_and_axis
 - Cone: remove inheritance from RevolvedProfile
+- Ellipse2D: point_distance, bounding rectangle, ellipse_intersections
+- Curve: local_discretization
+- Ellipse3D: line_intersections, linesegment_intersections, ellipse_intersections
+- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections, ellipse_intersections
+- Circle2D: ellipse_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections
+- Wire3D/Contour3D: edge_intersections, wire_intersections
+- BSpline3D: arc_intersections
+- New module: discrete_representation for voxelization of 3D geometries and pixelization of 2D geometries
+- BSplineSurface3D: partial removal of dependencies on geomdl objects
 
 ### Fixed
 - Sweep with non smoth path
@@ -38,6 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Line3D: fix Line3D plot()
 - Vector2D: plot()
 - fix RevolutionFace3D init parameter wire to edge.
+- Update documentation
 - fix Sweep: bug when first primitive is an arc.
 - fix closedshell3d volume
 - Step.py: enhance step import/export
@@ -47,7 +110,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add error protection stl
 - Sweep - add raise ValueError if section too big in comparision to arc radiuses
 - Update cython version requirement in setup.py
-- 
+- Step import: handles when there is an empty assembly in the file.
+- Ellipse2D: point_at_abscissa
+- ultis.common_operations: get_edge_distance_to_point and get_get_abscissa_discretization from edges so it can be used in curves too.
+- edges.Edge._generic_minimum_distance
+- LineSegment3D: distance_linesegment
+- BSpline3D: linesegment_intersections
+
 ### Refactor
 - refator some classes' init in primitives3D. 
 - Shells: refactor.
@@ -63,7 +132,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: transform some attributs into lazy evaluation and Caching
 - BSplineSurface3D: store control_points as numpy array for memory efficiency
 - PlaneFace3D: distance_to_point -> point_distance
+- remove normalize() methods
 - Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
+- BSplineSurface3D: point3d_to_2d performance improvements.
+
 
 ### Changed
 - Moves functions from step.py to volmdlr.utils.step_reader
@@ -71,6 +143,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 - Cylinder / Cone / HollowCylinder
+- Ellipse2D: point_distance
+- Ellipse3D: test_ellipse_intersections, test_linesegment_intersections
+- ArcEllipse3D : Linesegment_intersections, arcellipse_intersections
+- Circle3D: circle_intersections.
+- Arc3D: arc_intersections, arcellipse_intersections, test_minimum_distance_bspline
+- BSplineCurve3D: test_bspline_linesegment_minimum_distance, test_bspline_linesegment_intersections
+- Contour3D: test_edge_intersections
 
 ## v0.12.0
 
@@ -95,6 +174,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: Translation
 - wires.WireMixin: from_circle
 - curves.CircleMixin: trim
+- Face3D: point_distance
+- BSplineCurve3D: revolution method.
 
 ### Fixed
 - ClosedShell3D: is_face_inside, get_subtraction_valid_faces, valid_intersection_faces, point_belongs

@@ -12,7 +12,7 @@ class TestEllipse2D(unittest.TestCase):
     ellipse2d = curves.Ellipse2D(4, 2, volmdlr.Frame2D(volmdlr.O2D,
                                                        volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475),
                                                        volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)))
-    discretized_points = ellipse2d.discretization_points(number_points=10)
+    discretized_points = ellipse2d.discretization_points(number_points=11)
 
     def test_length(self):
         self.assertAlmostEqual(self.ellipse2d.length(), 19.376896441095354)
@@ -72,6 +72,14 @@ class TestEllipse2D(unittest.TestCase):
         frame_mapped_ellipse_major_axis_point = frame_mapped_ellipse.center +\
             frame_mapped_ellipse.major_axis * frame_mapped_ellipse.major_dir
         self.assertTrue(frame_mapped_ellipse_major_axis_point.is_close(volmdlr.Point2D(2.585786437626905, 0.0)))
+
+    def test_point_distance(self):
+        ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, volmdlr.X2D, -volmdlr.Y2D))
+
+        point2d = volmdlr.Point2D(1.6, 0.7)
+
+        point_distance = ellipse2d.point_distance(point2d)
+        self.assertAlmostEqual(point_distance, 0.08415399818595351)
 
 
 if __name__ == '__main__':
