@@ -128,7 +128,7 @@ setup(
         "packaging",
         "dessia_common>=0.10.0",
         "Cython>=3.0.0",
-        "numpy",
+        "numpy<1.26.0", #  Wheels of 1.26.0 were not ready
         "matplotlib",
         "scipy<=1.11.1",
         "geomdl",
