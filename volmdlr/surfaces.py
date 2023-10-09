@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as npy
 import triangle as triangle_lib
 from geomdl import NURBS, BSpline
-from scipy.optimize import least_squares, minimize
+from scipy.optimize import least_squares, minimize, fsolve
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
@@ -2342,7 +2342,7 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def concurrent_plane_intersection(self, plane3d: Plane3D):
         """
-        Cone plane intersections when plane's normal is concurrent with the cone's axis, but not orthogonal.
+        Cylindrical plane intersections when plane's normal is concurrent with the cone's axis, but not orthogonal.
 
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
@@ -2483,6 +2483,17 @@ class ToroidalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
         self._bbox = None
+
+    def _torus_arcs(self, number_arcs: int = 50):
+        arcs = []
+        for i in range(number_arcs):
+            theta = i / number_arcs * volmdlr.TWO_PI
+            t_points = []
+            for j in range(number_arcs):
+                phi = j / number_arcs * volmdlr.TWO_PI
+                t_points.append(self.point2d_to_3d(volmdlr.Point2D(theta, phi)))
+            arcs.append(wires.ClosedPolygon3D(t_points))
+        return arcs
 
     @property
     def bounding_box(self):
@@ -2878,6 +2889,99 @@ class ToroidalSurface3D(PeriodicalSurface):
                 abs(phi4) == math.pi or abs(phi4) == 0.5 * math.pi:
             point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
         return point_after_start, point_before_end
+
+    def line_intersections(self, line: curves.Line3D):
+        vector = line.unit_direction_vector()
+        A = vector.x**2 + vector.y**2 + vector.z**2
+        B = 2 * (line.point1.x * vector.x + line.point1.y * vector.y + line.point1.z * vector.z)
+        C = line.point1.x**2 + line.point1.y**2 + line.point1.z**2 + self.tore_radius**2 - self.small_radius**2
+        D = vector.x**2 + vector.y**2
+        E = 2 * (line.point1.x * vector.x + line.point1.y * vector.y)
+        F = line.point1.x**2 + line.point1.y**2
+        # def equation(x):
+        #     return ((A**2)*x**4 + 2*A*B*x**3 + (2*A*C + B**2 - 4*D*self.tore_radius**2)*x**2 +
+        #             (2*B*C - 4*self.tore_radius**2*E)*x + C**2 - 4*self.tore_radius**2*F)
+        # solutions = fsolve(equation, [-2, 2, 5, 8])
+        solutions = npy.roots([(A**2), 2*A*B, (2*A*C + B**2 - 4*D*self.tore_radius**2), (2*B*C - 4*self.tore_radius**2*E),
+                               C**2 - 4*self.tore_radius**2*F])
+        intersections = []
+        for sol_param in sorted(solutions):
+            intersections.append(line.point1 + sol_param*vector)
+        return intersections
+
+    def linesegment_intersections(self, linesegment:edges.LineSegment3D, abs_tol: float = 1e-6):
+        line_intersections = self.line_intersections(linesegment.line)
+        intersections = []
+        for intersection in line_intersections:
+            if linesegment.point_belongs(intersection, abs_tol):
+                intersections.append(intersection)
+        return intersections
+
+    def parallel_plane_intersection(self, plane3d):
+        """
+        Toroidal plane intersections when plane's normal is perpendicular with the cylinder axis.
+
+        :param plane3d: intersecting plane.
+        :return: list of intersecting curves.
+        """
+        distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
+        if distance_plane_cylinder_axis > self.tore_radius:
+            return []
+        plane1 = Plane3D(self.frame)
+        plane_intersections = plane1.plane_intersections(plane3d)
+        if plane3d.point_on_surface(self.frame.origin):
+            center1 = self.frame.origin + plane_intersections[0].unit_direction_vector() * self.tore_radius
+            center2 = self.frame.origin - plane_intersections[0].unit_direction_vector() * self.tore_radius
+            circle1 = curves.Circle3D(
+                volmdlr.Frame3D(center1, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
+                self.tore_radius - self.small_radius)
+            circle2 = curves.Circle3D(
+                volmdlr.Frame3D(center2, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
+                self.tore_radius - self.small_radius)
+            return [circle1, circle2]
+        print(True)
+
+    def perpendicular_plane_intersection(self, plane3d):
+        """
+        Toroidal plane intersections when plane's normal is parallel with the cylinder axis.
+
+        :param plane3d: intersecting plane.
+        :return: list of intersecting curves.
+        """
+        distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
+        if distance_plane_cylinder_axis > self.tore_radius - self.small_radius:
+            return []
+
+
+    def concurrent_plane_intersection(self, plane3d):
+        """
+        Toroidal plane intersections when plane's normal is concurrent with the cone's axis, but not orthogonal.
+
+        :param plane3d: intersecting plane.
+        :return: list of intersecting curves.
+        """
+        plane1 = Plane3D(self.frame)
+        plane_intersections = plane1.plane_intersections(plane3d)
+        arcs = self._torus_arcs(100)
+        points_intersections = []
+        for arc in arcs:
+            intersections = plane3d.contour_intersections(arc)
+            points_intersections.extend(intersections)
+
+        print(True)
+
+    def plane_intersections(self, plane3d):
+        """
+        Toroidal intersections with a plane.
+
+        :param plane3d: intersecting plane.
+        :return: list of intersecting curves.
+        """
+        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
+            return self.parallel_plane_intersection(plane3d)
+        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
+            return self.perpendicular_plane_intersection(plane3d)
+        return self.concurrent_plane_intersection(plane3d)
 
 
 class ConicalSurface3D(PeriodicalSurface):
