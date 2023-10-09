@@ -1,5 +1,6 @@
 import unittest
 import os
+from time import perf_counter
 import volmdlr
 from volmdlr import edges, surfaces, wires, faces
 from volmdlr.models.bspline_surfaces import bspline_surface_1
@@ -68,12 +69,15 @@ class TestBSplineFace3D(unittest.TestCase):
     def test_triangulation(self):
         surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "spiral_bsplineface_surface.json"))
         contour3d = wires.Contour3D.load_from_file(os.path.join(folder, "spiral_bsplineface_contour.json"))
+        start = perf_counter()
         face = faces.BSplineFace3D.from_contours3d(surface, [contour3d])
+        end = perf_counter()
+        total_time = end - start
         mesh = face.triangulation()
         self.assertAlmostEqual(face.surface2d.area(), 1, 2)
         self.assertGreaterEqual(len(mesh.points), 650)
         self.assertLessEqual(len(mesh.points), 1300)
-
+        self.assertLessEqual(total_time, 0.05)
 
 if __name__ == '__main__':
     unittest.main()

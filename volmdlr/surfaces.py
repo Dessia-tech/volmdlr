@@ -7327,7 +7327,6 @@ class BSplineSurface3D(Surface3D):
         solutions = []
         for x0 in x_init:
             z = least_squares(fun, x0=x0, bounds=([0, 1]))
-            # print(z.cost)
             if z.fun < 1e-5:
                 solution = z.x
                 if solution not in solutions:
