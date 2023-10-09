@@ -3015,7 +3015,7 @@ class BSplineFace3D(Face3D):
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_uu(self, other_bspline_face3d, corresponding_directions):
-        """Returns the side of the faces that are adjacents."""
+        """Returns the side of the faces that are adjacent."""
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0),
@@ -3052,7 +3052,7 @@ class BSplineFace3D(Face3D):
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_vv(self, other_bspline_face3d, corresponding_directions):
-        """Returns the side of the faces that are adjacents."""
+        """Returns the side of the faces that are adjacent."""
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0),
