@@ -5,12 +5,14 @@ from itertools import chain
 from typing import List, Union
 import traceback
 from collections import deque
+from functools import cached_property
 
 import matplotlib.pyplot as plt
 import numpy as npy
 import triangle as triangle_lib
 from geomdl import NURBS, BSpline
 from scipy.optimize import least_squares, minimize
+from scipy.linalg import lu_factor, lu_solve
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
@@ -5326,7 +5328,7 @@ class BSplineSurface3D(Surface3D):
             a, b, c, d = self.domain
             point_at_a = self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (d - c)))
             point_at_b = self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (d - c)))
-            if point_at_b.is_close(point_at_a) or self.u_closed():
+            if point_at_b.is_close(point_at_a) or self.u_closed:
                 self._x_periodicity = b - a
             else:
                 self._x_periodicity = None
@@ -5341,7 +5343,7 @@ class BSplineSurface3D(Surface3D):
             a, b, c, d = self.domain
             point_at_c = self.point2d_to_3d(volmdlr.Point2D(0.5 * (b - a), c))
             point_at_d = self.point2d_to_3d(volmdlr.Point2D(0.5 * (b - a), d))
-            if point_at_d.is_close(point_at_c) or self.v_closed():
+            if point_at_d.is_close(point_at_c) or self.v_closed:
                 self._y_periodicity = d - c
             else:
                 self._y_periodicity = None
@@ -5887,14 +5889,18 @@ class BSplineSurface3D(Surface3D):
                                       vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
 
-        x0, distance = self.point_inversion_grid_search(point3d, tol)
+        x0, distance = self.point_inversion_grid_search(point3d, 1e-4)
         if distance < tol:
             return volmdlr.Point2D(*x0)
+        x0, check = self.point_invertion(x0, point3d, tol)
+        if check:
+            return volmdlr.Point2D(*x0)
+        # x0, check = self.point_invertion(x0, point3d)
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         res = minimize(fun, x0=npy.array(x0), jac=True,
                        bounds=[(min_bound_x, max_bound_x),
                                (min_bound_y, max_bound_y)])
-        if res.fun <= tol:
+        if res.fun <= 1e-6:
             return volmdlr.Point2D(*res.x)
 
         point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
@@ -5921,7 +5927,7 @@ class BSplineSurface3D(Surface3D):
             control_points = self.ctrlpts
         bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
         results = []
-        for x0 in x0s:
+        for x0 in x0s[:2]:
             res = point_inversion(point3d_array, x0, bounds, [self.degree_u, self.degree_v],
                                   self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational)
             if res.fun <= tol:
@@ -5930,6 +5936,87 @@ class BSplineSurface3D(Surface3D):
             results.append((res.x, res.fun))
 
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
+
+    def point_invertion(self, x, point3d, tol, maxiter: int = 50):
+        if maxiter == 1:
+            return x, False
+        jacobian, k, surface_derivatives, distance_vector = self.point_inversion_funcs(x, point3d)
+        if self.check_convergence(surface_derivatives, distance_vector, tol1=tol):
+            return x, True
+        lu, piv = lu_factor(jacobian)
+        delta = lu_solve((lu, piv), k)
+        new_x = [delta[0][0] + x[0], delta[1][0] + x[1]]
+        new_x = self.check_bounds(new_x)
+        residual = (new_x[0] - x[0]) * surface_derivatives[1][0] + (new_x[1] - x[1]) * surface_derivatives[0][1]
+        if residual.norm() <= 1e-12:
+            return x, False
+        x = new_x
+        return self.point_invertion(x, point3d, tol, maxiter=maxiter - 1)
+
+    def point_inversion_funcs(self, x, point3d):
+        surface_derivatives = self.derivatives(x[0], x[1], 2)
+        distance_vector = surface_derivatives[0][0] - point3d
+        common_term = (surface_derivatives[1][0].dot(surface_derivatives[0][1]) +
+                       distance_vector.dot(surface_derivatives[1][1]))
+        jacobian = npy.array(
+            [[surface_derivatives[1][0].norm() ** 2 + distance_vector.dot(surface_derivatives[2][0]),
+              common_term],
+             [common_term,
+              surface_derivatives[0][1].norm() ** 2 + distance_vector.dot(surface_derivatives[0][2])]])
+        k = npy.array(
+            [[-(distance_vector.dot(surface_derivatives[1][0]))], [-(distance_vector.dot(surface_derivatives[0][1]))]])
+
+        return jacobian, k, surface_derivatives, distance_vector
+
+    @staticmethod
+    def check_convergence(surf_derivatives, distance_vector, tol1: float = 1e-6, tol2: float = 1e-8):
+
+        dist = distance_vector.norm()
+        if dist <= tol1:
+            return True
+        zero_cos_u = abs(surf_derivatives[1][0].dot(distance_vector)) / (
+                    (surf_derivatives[1][0].norm() + 1e-12) * dist)
+        zero_cos_v = abs(surf_derivatives[0][1].dot(distance_vector)) / (
+                    (surf_derivatives[0][1].norm() + 1e-12) * dist)
+
+        if zero_cos_u <= tol2 and zero_cos_v <= tol2:
+            return True
+        return False
+
+    def check_bounds(self, x):
+        u, v = x
+        a, b, c, d = self.domain
+        x_periodicity = self.x_periodicity
+        y_periodicity = self.y_periodicity
+
+        if x_periodicity:
+            if u < a:
+                u = b
+            elif u > b:
+                u = a
+
+        if u < a:
+            u = a
+
+        elif u > b:
+            u = b
+
+        if y_periodicity:
+            if v < c:
+                v = d
+
+            elif v > d:
+                v = c
+
+        if v < c:
+            v = c
+
+        elif v > d:
+            v = d
+
+        x[0] = u
+        x[1] = v
+        return x
 
     def linesegment2d_to_3d(self, linesegment2d):
         """Evaluates the Euclidean form for the parametric line segment."""
@@ -5992,8 +6079,8 @@ class BSplineSurface3D(Surface3D):
         else:
             i = 1
             min_bound, max_bound = min_bound_y, max_bound_y
-        if ((direction_periodicity == 'x' and not self.u_closed()) or
-                (direction_periodicity == 'y' and not self.v_closed())):
+        if ((direction_periodicity == 'x' and not self.u_closed) or
+                (direction_periodicity == 'y' and not self.v_closed)):
             points = self._repair_points_order(points, edge3d, [min_bound_x, max_bound_x, min_bound_y, max_bound_y],
                                            direction_periodicity)
         start = points[0]
@@ -6064,7 +6151,7 @@ class BSplineSurface3D(Surface3D):
         return points
 
     def _edge3d_to_2d(self, edge3d, discretization_points, interpolation_degree,  parametric_points):
-        if self.u_closed() or self.v_closed():
+        if self.u_closed or self.v_closed:
             parametric_points = self.fix_start_end_singularity_point_at_parametric_domain(edge3d,
                                                                                           parametric_points,
                                                                                           discretization_points)
@@ -6091,7 +6178,7 @@ class BSplineSurface3D(Surface3D):
         if lth <= 1e-6:
             print('BSplineCurve3D skipped because it is too small')
             return []
-        n = min(len(bspline_curve3d.control_points), 25)
+        n = min(len(bspline_curve3d.control_points), 20)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         tol = 1e-6 if lth > 5e-5 else 1e-8
         # todo: how to ensure convergence of point3d_to_2d ?
@@ -7775,12 +7862,14 @@ class BSplineSurface3D(Surface3D):
             return True
         return False
 
+    @cached_property
     def u_closed(self):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
         return bool(self.u_closed_lower() or self.u_closed_upper())
 
+    @cached_property
     def v_closed(self):
         """
         Returns True if the surface is close in any of the u boundaries.
@@ -7789,7 +7878,7 @@ class BSplineSurface3D(Surface3D):
 
     def is_singularity_point(self, point, *args):
         """Returns True if the point belongs to the surface singularity and False otherwise."""
-        if not self.u_closed() and not self.v_closed():
+        if not self.u_closed and not self.v_closed:
             return False
         u_min, u_max, v_min, v_max = self.domain
         delta_u = u_max - u_min
@@ -7823,7 +7912,7 @@ class BSplineSurface3D(Surface3D):
 
         def get_local_discretization_points(start_point, end_points):
             distance = start_point.point_distance(end_points)
-            maximum_linear_distance_reference_point = 1e-5
+            maximum_linear_distance_reference_point = 1e-4
             if distance < maximum_linear_distance_reference_point:
                 return []
             number_points = max(int(distance / maximum_linear_distance_reference_point), 2)
@@ -7832,7 +7921,7 @@ class BSplineSurface3D(Surface3D):
             points_set = set()
             local_discretization = []
             for point in points3d:
-                point2d = self.point3d_to_2d(point, 1e-8)
+                point2d = self.point3d_to_2d(point, 1e-6)
                 if point2d not in points_set:
                     local_discretization.append(point2d)
                     points_set.add(point2d)
@@ -7840,7 +7929,7 @@ class BSplineSurface3D(Surface3D):
 
         def get_singularity_line(a, b, c, d, test_point):
             lines = []
-            if self.u_closed():
+            if self.u_closed:
                 if self.u_closed_lower():
                     lines.append(curves.Line2D(volmdlr.Point2D(a, c), volmdlr.Point2D(b, c)))
                 if self.u_closed_upper():
