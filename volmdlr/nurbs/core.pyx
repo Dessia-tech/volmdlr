@@ -884,8 +884,8 @@ def derivatives_surface(list degree, list knotvector, cnp.ndarray[cnp.double_t, 
     cdef double[2] _parpos = parpos
 
     if rational:
-        return derivatives_surface_rational(_degree, knotvector, ctrlpts, _size, dimension, _parpos, deriv_order)
-    return derivatives_surface_c(_degree, knotvector, ctrlpts, _size, dimension, _parpos, deriv_order)
+        return derivatives_surface_rational(_degree, _knotvector, ctrlpts, _size, dimension, _parpos, deriv_order)
+    return derivatives_surface_c(_degree, _knotvector, ctrlpts, _size, dimension, _parpos, deriv_order)
 
 
 @boundscheck(False)
@@ -916,7 +916,7 @@ cdef vector[vector[vector[double]]] derivatives_surface_c(int[2] degree, vector[
 
     cdef int k, li, s, r, i, dd, cu, cv
     # Algorithm A3.6
-    cdef int[2] d = [min(degree_u, deriv_order), min(degree_u, deriv_order)]
+    cdef int[2] d = [min(degree_u, deriv_order), min(degree_v, deriv_order)]
 
     cdef vector[vector[vector[double]]] SKL = vector[vector[vector[double]]](deriv_order + 1,
                                                                              vector[vector[double]](deriv_order + 1,
