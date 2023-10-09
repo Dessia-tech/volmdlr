@@ -1,8 +1,12 @@
 import math
+import os
 import unittest
 import volmdlr
 import volmdlr.edges as vme
 from volmdlr import curves
+
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'fullarcellipse_objects')
 
 
 class TestFullArcEllipse3D(unittest.TestCase):
@@ -77,6 +81,14 @@ class TestFullArcEllipse3D(unittest.TestCase):
         self.assertTrue(result[0].end.is_close(split_point))
         self.assertTrue(result[1].start.is_close(split_point))
         self.assertTrue(result[1].end.is_close(fullarcellipse.start_end))
+
+    def test_discretization_points(self):
+        fullarcellipse = vme.FullArcEllipse3D.load_from_file(
+            os.path.join(folder, "fullarcellipse3d_discretization_points.json"))
+        discretization_points = fullarcellipse.discretization_points(number_points=9)
+        self.assertEqual(len(discretization_points), 9)
+        self.assertTrue(discretization_points[0].is_close(fullarcellipse.start))
+        self.assertTrue(discretization_points[-1].is_close(fullarcellipse.end))
 
 
 if __name__ == '__main__':

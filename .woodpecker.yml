@@ -9,8 +9,8 @@ pipeline:
     image: dessia/python-ci:3.9
     commands:
       - git fetch --tags
-      - pip install Cython
-      - pip install 'numpy<1.24.0'
+      - pip install Cython>3
+      - pip install numpy
       - python setup.py build_ext --inplace
       - python setup.py install
       - pip install pylint==2.17.3 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
@@ -36,7 +36,7 @@ pipeline:
   install-doc-coverage:
     image: python:3.9
     commands:
-      - pip install Cython sphinx sphinx_rtd_theme coverage nbformat nbconvert 'numpy<1.24.0'
+      - pip install Cython>3 sphinx pydata_sphinx_theme nbsphinx sphinx_copybutton sphinx_design coverage nbformat nbconvert numpy
       - python setup.py build_ext --inplace
       - python setup.py install
       - cd doc
@@ -57,6 +57,6 @@ pipeline:
     image: python:3.9
     commands:
       - git fetch --tags
-      - pip install Cython
-      - pip install 'numpy<1.24.0'
+      - pip install Cython>3
+      - pip install numpy
       - python setup.py sdist

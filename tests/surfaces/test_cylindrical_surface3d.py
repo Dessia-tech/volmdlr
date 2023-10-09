@@ -37,26 +37,26 @@ class TestCylindricalSurface3D(unittest.TestCase):
         cylinder_concurrent_plane = plane_surface.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 4)
         cylinder_perpendicular_plane = plane_surface.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2)
 
-        cylinder_surface_secant_parallel_plane_intersec = self.cylindrical_surface.plane_intersection(
+        cylinder_surface_secant_parallel_plane_intersec = self.cylindrical_surface.plane_intersections(
             parallel_plane_secant_cylinder)
         self.assertEqual(len(cylinder_surface_secant_parallel_plane_intersec), 2)
         self.assertTrue(isinstance(cylinder_surface_secant_parallel_plane_intersec[0], curves.Line3D))
         self.assertTrue(isinstance(cylinder_surface_secant_parallel_plane_intersec[1], curves.Line3D))
 
-        cylinder_surface_tangent_plane = self.cylindrical_surface.plane_intersection(
+        cylinder_surface_tangent_plane = self.cylindrical_surface.plane_intersections(
             cylinder_tanget_plane)
         self.assertEqual(len(cylinder_surface_tangent_plane), 1)
         self.assertTrue(isinstance(cylinder_surface_tangent_plane[0], curves.Line3D))
 
-        cylinder_surface_tangent_plane_not_intersecting = self.cylindrical_surface.plane_intersection(
+        cylinder_surface_tangent_plane_not_intersecting = self.cylindrical_surface.plane_intersections(
             not_intersecting_cylinder_parallel_plane)
         self.assertEqual(len(cylinder_surface_tangent_plane_not_intersecting), 0)
 
-        cylinder_surface_concurrent_plane_intersec = self.cylindrical_surface.plane_intersection(
+        cylinder_surface_concurrent_plane_intersec = self.cylindrical_surface.plane_intersections(
             cylinder_concurrent_plane)
         self.assertTrue(isinstance(cylinder_surface_concurrent_plane_intersec[0], curves.Ellipse3D))
 
-        cylinder_surface_perpendicular_plane_intersec = self.cylindrical_surface.plane_intersection(
+        cylinder_surface_perpendicular_plane_intersec = self.cylindrical_surface.plane_intersections(
             cylinder_perpendicular_plane)
         self.assertTrue(isinstance(cylinder_surface_perpendicular_plane_intersec[0], curves.Circle3D))
 
@@ -209,6 +209,31 @@ class TestCylindricalSurface3D(unittest.TestCase):
     def test_plot(self):
         ax = self.cylindrical_surface.plot()
         self.assertTrue(ax)
+
+    def test_coinicalsurface_intersections(self):
+        expected_slutions = [[3.710032833168665],
+                             [2.754671034122705, 0.7935213452250598],
+                             [2.07512669883945, 2.075126698839449],
+                             [2.569944707187624, 2.569944707187624]]
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
+        cylindrical_surface1 = surfaces.CylindricalSurface3D(
+            volmdlr.Frame3D(volmdlr.Point3D(.3, .3, 0.8), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D),
+            0.3)
+        cylindrical_surface2 = surfaces.CylindricalSurface3D(
+            volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D),
+           0.3)
+        cylindrical_surface3 = surfaces.CylindricalSurface3D(
+            volmdlr.Frame3D(volmdlr.Point3D(0, 0, 1), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D),
+            0.3)
+        cylindrical_surface4 = surfaces.CylindricalSurface3D(
+            volmdlr.Frame3D(volmdlr.Point3D(0.0, 0.41068360252295905, 1.2886751345948129),
+                            volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), math.tan(conical_surface.semi_angle) / 2)
+        listsolutions = []
+        for i, cylindrical_surface in enumerate([cylindrical_surface1, cylindrical_surface2, cylindrical_surface3,
+                                    cylindrical_surface4]):
+            list_curves = cylindrical_surface.conicalsurface_intersections(conical_surface)
+            for curve, expected_length in zip(list_curves, expected_slutions[i]):
+                self.assertAlmostEqual(curve.length(), expected_length)
 
 
 if __name__ == '__main__':

@@ -288,6 +288,8 @@ def trimmed_curve(arguments, object_dict):
     curve = object_dict[arguments[1]]
     point1 = object_dict[int(arguments[2][0][1:])]
     point2 = object_dict[int(arguments[3][0][1:])]
+    if curve.__class__.__name__ == "Line3D" and point1.is_close(point2):
+        return None
     return curve.trim(point1=point1, point2=point2)
 
 
@@ -569,6 +571,28 @@ def geometrically_bounded_surface_shape_representation(arguments, object_dict):
     return primitives[0]
 
 
+def geometrically_bounded_wireframe_shape_representation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    primitives = []
+    for arg in arguments[1]:
+        primitives.extend(object_dict[int(arg[1:])])
+    if len(primitives) > 1:
+        compound = volmdlr.core.Compound(primitives, name=arguments[0])
+        compound.compound_type = "geometric_curve_set"
+        return compound
+    return primitives[0]
+
+
 def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, shape_representation_frames):
     """
     Frame maps a closed shell in an assembly to its good position.
@@ -602,10 +626,8 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
                        [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
                        [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
         transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
-        u_vector = volmdlr.Vector3D(*transfer_matrix[0])
-        v_vector = volmdlr.Vector3D(*transfer_matrix[1])
-        w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
+        new_frame = volmdlr.Frame3D(transformed_frame.origin, volmdlr.Vector3D(*transfer_matrix[0]),
+                                    volmdlr.Vector3D(*transfer_matrix[1]), volmdlr.Vector3D(*transfer_matrix[2]))
         new_closedshells.append(shell3d.frame_mapping(new_frame, 'old'))
     return new_closedshells
 

@@ -57,7 +57,7 @@ class GmshParser(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
     @classmethod
-    def from_file(cls, file_stream: BinaryFile):
+    def from_file(cls, file_stream: BinaryFile, name: str = ''):
         """
         Defines a gmsh object from .msh file.
         """
@@ -86,7 +86,7 @@ class GmshParser(DessiaObject):
                    node_data=node_data,
                    element_data=element_data,
                    element_node_data=element_node_data,
-                   name='')
+                   name=name)
 
     @staticmethod
     def from_file_elements(lines):
@@ -437,21 +437,21 @@ class GmshParser(DessiaObject):
                 'ElementNodeData': [],
                 'InterpolationScheme': []}
 
-        f = open(file_path, "r", encoding="utf-8")
-        # lines = []
-        while True:
-            line = f.readline().strip()
-            if not line:
-                break
-            if line[0] == '$':
-                data_type = line[1::]
-                line = f.readline().strip()
-                while line[0:4] != '$End':
-                    # lines.append(line)
-                    data[data_type].append(line)
-                    line = f.readline().strip()
-                # data[data_type] = lines
-                # lines = []
+        with open(file_path, "r", encoding="utf-8") as file:
+            # lines = []
+            while True:
+                line = file.readline().strip()
+                if not line:
+                    break
+                if line[0] == '$':
+                    data_type = line[1::]
+                    line = file.readline().strip()
+                    while line[0:4] != '$End':
+                        # lines.append(line)
+                        data[data_type].append(line)
+                        line = file.readline().strip()
+                    # data[data_type] = lines
+                    # lines = []
 
         return data
 

@@ -212,7 +212,7 @@ class Stl(dc.DessiaObject):
                 return cls.from_binary_stream(
                     file, distance_multiplier=distance_multiplier)
 
-        with open(filepath, 'r', errors='ignore') as file:
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
             return cls.from_text_stream(
                 file, distance_multiplier=distance_multiplier)
 
@@ -247,11 +247,11 @@ class Stl(dc.DessiaObject):
         """
         stream.seek(0)
 
-        BINARY_HEADER = "80sI"
-        BINARY_FACET = "12fH"
+        binary_header = "80sI"
+        binary_facet = "12fH"
 
         # counter = 0
-        stream.write(struct.pack(BINARY_HEADER, self.name.encode('utf8'),
+        stream.write(struct.pack(binary_header, self.name.encode('utf8'),
                                  len(self.triangles)))
         # counter += 1
         for triangle in self.triangles:
@@ -267,7 +267,7 @@ class Stl(dc.DessiaObject):
                 distance_multiplier * triangle.point3.y,
                 distance_multiplier * triangle.point3.z,
                 0]
-            stream.write(struct.pack(BINARY_FACET, *data))
+            stream.write(struct.pack(binary_facet, *data))
 
     def to_closed_shell(self):
         """
@@ -312,7 +312,7 @@ class Stl(dc.DessiaObject):
         return valid_points
 
     # TODO: decide which algorithm to be used (no _BIS)
-    def extract_points_BIS(self, min_distance: float = 0.001):
+    def extract_points_bis(self, min_distance: float = 0.001):
         points = []
         for triangle in self.triangles:
             distance12 = triangle.point1.point_distance(triangle.point2)

@@ -17,6 +17,7 @@ class Node2D(volmdlr.Point2D):
     """
     A node is a point with some hash capabilities for performance.
     """
+
     def __init__(self, x: float, y: float, name: str = ""):
         self.x = x
         self.y = y
@@ -33,14 +34,21 @@ class Node2D(volmdlr.Point2D):
             and math.isclose(self.y, other_node.y, abs_tol=1e-06)
 
     @classmethod
-    def from_point(cls, point2d):
-        return cls(point2d.x, point2d.y)
+    def from_point(cls, point2d, name: str = ''):
+        """
+        Creates a Node 2D from a Point 2D.
+
+        :param point2d: 2d point.:
+        :param name: point's name.
+        """
+        return cls(point2d.x, point2d.y, name=name)
 
 
 class Node3D(volmdlr.Point3D):
     """
     A node is a point with some hash capabilities for performance.
     """
+
     def __init__(self, x: float, y: float, z: float, name: str = ""):
         self.x = x
         self.y = y
@@ -60,6 +68,11 @@ class Node3D(volmdlr.Point3D):
 
     @classmethod
     def from_point(cls, point3d):
+        """
+        Creates a Node 3D from a Point 3D.
+
+        :param point3d: 3d point.
+        """
         return cls(point3d.x, point3d.y, point3d.z)
 
 
@@ -94,7 +107,7 @@ class DisplayMesh(dc.DessiaObject):
         return self._point_index
 
     @classmethod
-    def merge_meshes(cls, meshes: List['DisplayMesh']):
+    def merge_meshes(cls, meshes: List['DisplayMesh'], name: str = ''):
         """
         Merge several meshes into one.
         """
@@ -103,7 +116,7 @@ class DisplayMesh(dc.DessiaObject):
         point_index = {}
         points = []
         if len(meshes) == 1:
-            return cls(meshes[0].points, meshes[0].triangles)
+            return cls(meshes[0].points, meshes[0].triangles, name=name)
         for mesh in meshes:
             if not mesh:
                 continue
@@ -124,9 +137,15 @@ class DisplayMesh(dc.DessiaObject):
                 triangles.append((point_index[point1],
                                   point_index[point2],
                                   point_index[point3]))
-        return cls(points, triangles)
+        return cls(points, triangles, name=name)
 
     def merge_mesh(self, other_mesh):
+        """
+        Merge two meshes.
+
+        :param other_mesh: other mesh.
+        :return:
+        """
         i_points = len(self.points)
         for point in other_mesh.points:
             if point not in self.point_index:
@@ -248,11 +267,19 @@ class DisplayMesh3D(DisplayMesh):
 
     @property
     def faces(self):
+        """
+        Gets the mesh's triangular faces.
+
+        """
         if not self._faces:
             self._faces = self.triangular_faces()
         return self._faces
 
     def triangular_faces(self):
+        """
+        Calculates the mesh's triangular faces.
+
+        """
         triangular_faces = []
         for (vertex1, vertex2, vertex3) in self.triangles:
             point1 = self.points[vertex1]

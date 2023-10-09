@@ -204,7 +204,7 @@ class Block(shells.ClosedShell3D):
         return self.size[0] * self.size[1] * self.size[2]
 
     @classmethod
-    def from_bounding_box(cls, bounding_box):
+    def from_bounding_box(cls, bounding_box, name: str = ''):
         """
         Transform a bounding box into a block.
         """
@@ -213,7 +213,7 @@ class Block(shells.ClosedShell3D):
         frame = volmdlr.Frame3D(origin, bbox_size[0] * volmdlr.Vector3D(1, 0, 0),
                                 bbox_size[1] * volmdlr.Vector3D(0, 1, 0),
                                 bbox_size[2] * volmdlr.Vector3D(0, 0, 1))
-        return cls(frame=frame)
+        return cls(frame=frame, name=name)
 
     def vertices(self):
         """Computes the vertices of the block."""
@@ -398,7 +398,7 @@ class Block(shells.ClosedShell3D):
         return Block(new_frame, color=self.color,
                      alpha=self.alpha, name=self.name)
 
-    def plot_data(self, x3d, y3d, edge_style = plot_data.EdgeStyle):
+    def plot_data(self, x3d, y3d, edge_style=plot_data.EdgeStyle):
         """Plot the 2D projections of a block."""
         lines = []
         for edge3d in self.edges():
@@ -552,7 +552,7 @@ class ExtrudedProfile(shells.ClosedShell3D):
     def area(self):
         """Returns the area of the extruded 2D surface."""
         areas = self.outer_contour2d.area()
-        areas -= sum([contour.area() for contour in self.inner_contours2d])
+        areas -= sum(contour.area() for contour in self.inner_contours2d)
         return areas
 
     def volume(self):
@@ -930,7 +930,7 @@ class Cylinder(shells.ClosedShell3D):
         alpha: float = 1,
         name: str = "",
     ):
-        """Deprecated classmethod. Use 'from_end_points' instead."""
+        """Deprecated class method. Use 'from_end_points' instead."""
         warnings.warn("Deprecated classmethod. Use 'from_end_points' instead.", DeprecationWarning)
 
         return cls.from_end_points(point1, point2, radius, color, alpha, name)
@@ -1694,7 +1694,7 @@ class HollowCylinder(shells.ClosedShell3D):
         alpha: float = 1,
         name: str = "",
     ):
-        """Deprecated classmethod. Use 'from_end_points' instead."""
+        """Deprecated class method. Use 'from_end_points' instead."""
         warnings.warn("Deprecated classmethod. Use 'from_end_points' instead.", DeprecationWarning)
 
         return cls.from_end_points(point1, point2, inner_radius, outer_radius, color, alpha, name)
@@ -1840,10 +1840,6 @@ class Sweep(shells.ClosedShell3D):
         self.contour2d = contour2d
         self.wire3d = wire3d
         self.frames = []
-        arc_radius = [prim.circle.radius for prim in self.wire3d.primitives if isinstance(prim, volmdlr.edges.Arc3D)]
-        if arc_radius and min(arc_radius) <= max(self.contour2d.bounding_rectangle.bounds()) / 2:
-            raise ValueError(f'Section too big in comparison to path curvature radiuses. All radiuses should be > '
-                             f'{max(self.contour2d.bounding_rectangle.bounds()) / 2}')
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces, color=color,
                                       alpha=alpha, name=name)

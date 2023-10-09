@@ -1,0 +1,145 @@
+{
+  "object_class": "volmdlr.wires.Contour3D",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.edges.LineSegment3D",
+      "name": "",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.00638000000048,
+        "y": 0.00185000000033,
+        "z": -0.00122,
+        "name": "Vertex"
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.00638502666194,
+        "y": 0.010394892247399999,
+        "z": -0.00121999999943,
+        "name": "Vertex"
+      }
+    },
+    {
+      "object_class": "volmdlr.edges.LineSegment3D",
+      "name": "",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.00638502666194,
+        "y": 0.010394892247399999,
+        "z": -0.00121999999943
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.00639,
+        "y": 0.010400000000000001,
+        "z": -0.002
+      }
+    },
+    {
+      "object_class": "volmdlr.edges.Arc3D",
+      "name": "",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle3D",
+        "name": "generated circle",
+        "radius": 0.00315,
+        "frame": {
+          "object_class": "volmdlr.Frame3D",
+          "name": "",
+          "origin": {
+            "object_class": "volmdlr.Point3D",
+            "x": -0.0032400000000000003,
+            "y": 0.010400000000000001,
+            "z": -0.002,
+            "name": "Axis2P3D Location"
+          },
+          "u": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 1.0,
+            "y": -6.12323399574e-17,
+            "z": 3.749399456656625e-33
+          },
+          "v": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.0,
+            "y": 6.123233995736766e-17,
+            "z": 1.0
+          },
+          "w": {
+            "object_class": "volmdlr.Vector3D",
+            "x": -6.12323399574e-17,
+            "y": -1.0,
+            "z": 6.123233995736766e-17
+          }
+        },
+        "angle": 6.283185307179586
+      },
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.00639,
+        "y": 0.010400000000000001,
+        "z": -0.002,
+        "name": "Vertex"
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.00638303243491,
+        "y": 0.010397562387400002,
+        "z": -0.00216999972583,
+        "name": "Vertex"
+      }
+    },
+    {
+      "object_class": "volmdlr.edges.LineSegment3D",
+      "name": "",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.00638303243491,
+        "y": 0.010397562387400002,
+        "z": -0.00216999972583
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.00637999999944,
+        "y": 0.00860000000022,
+        "z": -0.00217
+      }
+    },
+    {
+      "object_class": "volmdlr.edges.LineSegment3D",
+      "name": "",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.00637999999944,
+        "y": 0.00860000000022,
+        "z": -0.00217
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.006375394712660001,
+        "y": 0.00185,
+        "z": -0.0021699999994
+      }
+    },
+    {
+      "object_class": "volmdlr.edges.LineSegment3D",
+      "name": "",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.006375394712660001,
+        "y": 0.00185,
+        "z": -0.0021699999994,
+        "name": "Vertex"
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": -0.00638000000048,
+        "y": 0.00185000000033,
+        "z": -0.00122,
+        "name": "Vertex"
+      }
+    }
+  ],
+  "color": null,
+  "alpha": 1.0
+}
