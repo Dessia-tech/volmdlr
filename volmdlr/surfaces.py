@@ -5892,10 +5892,10 @@ class BSplineSurface3D(Surface3D):
         x0, distance = self.point_inversion_grid_search(point3d, 1e-4)
         if distance < tol:
             return volmdlr.Point2D(*x0)
-        x0, check = self.point_invertion(x0, point3d, tol)
+        x0, check = self.point_inversion(x0, point3d, tol)
         if check:
             return volmdlr.Point2D(*x0)
-        # x0, check = self.point_invertion(x0, point3d)
+        x0, check = self.point_inversion(x0, point3d, tol)
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         res = minimize(fun, x0=npy.array(x0), jac=True,
                        bounds=[(min_bound_x, max_bound_x),
@@ -5937,23 +5937,41 @@ class BSplineSurface3D(Surface3D):
 
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
-    def point_invertion(self, x, point3d, tol, maxiter: int = 50):
+    def point_inversion(self, x, point3d, tol, maxiter: int = 50):
+        """
+        Performs point inversion.
+
+        Given a point P = (x, y, z) assumed to lie on the NURBS surface S(u, v), point inversion is
+        the problem of finding the corresponding parameters u, v that S(u, v) = P.
+        """
         if maxiter == 1:
             return x, False
         jacobian, k, surface_derivatives, distance_vector = self.point_inversion_funcs(x, point3d)
         if self.check_convergence(surface_derivatives, distance_vector, tol1=tol):
             return x, True
-        lu, piv = lu_factor(jacobian)
-        delta = lu_solve((lu, piv), k)
-        new_x = [delta[0][0] + x[0], delta[1][0] + x[1]]
-        new_x = self.check_bounds(new_x)
+        # if jacobian[1][1]:
+        #     delta_u = k[0][0]/(jacobian[0][0] + jacobian[0][1] * (k[1][0] - jacobian[1][0])/jacobian[1][1])
+        #     delta_v = (k[1][0] - jacobian[1][0]) / jacobian[1][1] * delta_u
+        # else:
+        #     delta_u = 0.0
+        #     delta_v = 0.0
+        #
+        # new_x = [delta_u + x[0], delta_v + x[1]]
+        if jacobian[1][1]:
+            lu, piv = lu_factor(jacobian)
+            delta = lu_solve((lu, piv), k)
+            new_x = [delta[0][0] + x[0], delta[1][0] + x[1]]
+            new_x = self.check_bounds(new_x)
+        else:
+            new_x = x
         residual = (new_x[0] - x[0]) * surface_derivatives[1][0] + (new_x[1] - x[1]) * surface_derivatives[0][1]
-        if residual.norm() <= 1e-12:
+        if residual.norm() <= 1e-10:
             return x, False
         x = new_x
-        return self.point_invertion(x, point3d, tol, maxiter=maxiter - 1)
+        return self.point_inversion(x, point3d, tol, maxiter=maxiter - 1)
 
     def point_inversion_funcs(self, x, point3d):
+        """Returns functions evaluated at x."""
         surface_derivatives = self.derivatives(x[0], x[1], 2)
         distance_vector = surface_derivatives[0][0] - point3d
         common_term = (surface_derivatives[1][0].dot(surface_derivatives[0][1]) +
@@ -5970,7 +5988,7 @@ class BSplineSurface3D(Surface3D):
 
     @staticmethod
     def check_convergence(surf_derivatives, distance_vector, tol1: float = 1e-6, tol2: float = 1e-8):
-
+        """Check convergence of point inversion method."""
         dist = distance_vector.norm()
         if dist <= tol1:
             return True
@@ -5984,16 +6002,15 @@ class BSplineSurface3D(Surface3D):
         return False
 
     def check_bounds(self, x):
+        """Check surface bounds."""
         u, v = x
         a, b, c, d = self.domain
-        x_periodicity = self.x_periodicity
-        y_periodicity = self.y_periodicity
 
-        if x_periodicity:
+        if self.u_closed:
             if u < a:
-                u = b
+                u = b - (a - u)
             elif u > b:
-                u = a
+                u = a + (u - b)
 
         if u < a:
             u = a
@@ -6001,12 +6018,12 @@ class BSplineSurface3D(Surface3D):
         elif u > b:
             u = b
 
-        if y_periodicity:
+        if self.v_closed:
             if v < c:
-                v = d
+                v = d - (c - v)
 
             elif v > d:
-                v = c
+                v = c + (v - d)
 
         if v < c:
             v = c
