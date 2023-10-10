@@ -13,11 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - BSplineSurface3D: derivatives
 
+
 ### Refactor
 -
 
 ### Changed
-- BSplineSurface3D
+- BSplineSurface3D: point3d_to_2d
 
 ### Unittests
 -

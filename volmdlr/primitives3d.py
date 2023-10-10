@@ -745,6 +745,7 @@ class RevolvedProfile(shells.ClosedShell3D):
             color=self.color, alpha=self.alpha)
 
     def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
+        """Apply transformation to object's parameters."""
         basis = frame.Basis()
         if side == 'old':
             axis = basis.local_to_global_coordinates(self.axis)
