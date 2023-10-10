@@ -5895,7 +5895,7 @@ class BSplineSurface3D(Surface3D):
         x0, check = self.point_inversion(x0, point3d, tol)
         if check:
             return volmdlr.Point2D(*x0)
-        x0, check = self.point_inversion(x0, point3d, tol)
+
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         res = minimize(fun, x0=npy.array(x0), jac=True,
                        bounds=[(min_bound_x, max_bound_x),
@@ -5949,14 +5949,6 @@ class BSplineSurface3D(Surface3D):
         jacobian, k, surface_derivatives, distance_vector = self.point_inversion_funcs(x, point3d)
         if self.check_convergence(surface_derivatives, distance_vector, tol1=tol):
             return x, True
-        # if jacobian[1][1]:
-        #     delta_u = k[0][0]/(jacobian[0][0] + jacobian[0][1] * (k[1][0] - jacobian[1][0])/jacobian[1][1])
-        #     delta_v = (k[1][0] - jacobian[1][0]) / jacobian[1][1] * delta_u
-        # else:
-        #     delta_u = 0.0
-        #     delta_v = 0.0
-        #
-        # new_x = [delta_u + x[0], delta_v + x[1]]
         if jacobian[1][1]:
             lu, piv = lu_factor(jacobian)
             delta = lu_solve((lu, piv), k)
