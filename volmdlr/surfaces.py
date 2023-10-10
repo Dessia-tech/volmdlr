@@ -7,6 +7,7 @@ import traceback
 from collections import deque
 
 import matplotlib.pyplot as plt
+import numpy
 import numpy as npy
 import triangle as triangle_lib
 from geomdl import NURBS, BSpline
@@ -1426,6 +1427,19 @@ class Plane3D(Surface3D):
         new_frame = self.frame.copy(deep, memo)
         return Plane3D(new_frame, self.name)
 
+    def plane_grid(self, grid_size: int, length: float = 1.):
+        """
+        Plane's grid.
+
+        """
+        grid = []
+        for i in range(grid_size):
+            for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
+                start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
+                end = self.frame.origin + 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
+                grid.append(edges.LineSegment3D(start, end))
+        return grid
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey'), length: float = 1., **kwargs):
         """
         Plot the cylindrical surface in the local frame normal direction.
@@ -1447,11 +1461,8 @@ class Plane3D(Surface3D):
             ax.set_aspect('auto')
 
         self.frame.plot(ax=ax, ratio=length)
-        for i in range(grid_size):
-            for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
-                start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
-                end = self.frame.origin + 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
-                edges.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
+        for edge in self.plane_grid(grid_size, length):
+            edge.plot(ax, edge_style=edge_style)
         return ax
 
     def point2d_to_3d(self, point2d):
@@ -2906,7 +2917,11 @@ class ToroidalSurface3D(PeriodicalSurface):
                                C**2 - 4*self.tore_radius**2*F])
         intersections = []
         for sol_param in sorted(solutions):
-            intersections.append(line.point1 + sol_param*vector)
+            if type(sol_param) == numpy.complex128:
+                if sol_param.imag == 0.0:
+                    intersections.append(line.point1 + sol_param.real*vector)
+            else:
+                intersections.append(line.point1 + sol_param*vector)
         return intersections
 
     def linesegment_intersections(self, linesegment:edges.LineSegment3D, abs_tol: float = 1e-6):
@@ -2939,7 +2954,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 volmdlr.Frame3D(center2, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
                 self.tore_radius - self.small_radius)
             return [circle1, circle2]
-        print(True)
+        return self.concurrent_plane_intersection(plane3d)
 
     def perpendicular_plane_intersection(self, plane3d):
         """
@@ -2951,7 +2966,25 @@ class ToroidalSurface3D(PeriodicalSurface):
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis > self.tore_radius - self.small_radius:
             return []
-
+        if plane3d.point_on_surface(self.frame.origin):
+            circle1 = curves.Circle3D(self.frame, 2*self.tore_radius - self.small_radius)
+            circle2 = curves.Circle3D(self.frame, self.small_radius)
+            return [circle1, circle2]
+        plane1 = plane3d.rotation(plane3d.frame.origin, plane3d.frame.u, math.pi/4)
+        plane_intersections = plane3d.plane_intersections(plane1)
+        torus_line_intersections = self.line_intersections(plane_intersections[0])
+        torus_line_intersections = plane_intersections[0].sort_points_along_curve(torus_line_intersections)
+        radius1 = torus_line_intersections[0].point_distance(torus_line_intersections[-1]) / 2
+        circle1 = curves.Circle3D(
+            volmdlr.Frame3D((torus_line_intersections[0] + torus_line_intersections[-1]) / 2,
+                            plane3d.frame.u, plane3d.frame.v, plane3d.frame.w), radius1)
+        if len(torus_line_intersections) == 4:
+            radius2 = torus_line_intersections[1].point_distance(torus_line_intersections[2]) / 2
+            circle2 = curves.Circle3D(
+                volmdlr.Frame3D((torus_line_intersections[1]+torus_line_intersections[2]) / 2,
+                                plane3d.frame.u, plane3d.frame.v, plane3d.frame.w), radius2)
+            return [circle1, circle2]
+        return [circle1]
 
     def concurrent_plane_intersection(self, plane3d):
         """
@@ -2960,15 +2993,43 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        plane1 = Plane3D(self.frame)
-        plane_intersections = plane1.plane_intersections(plane3d)
+
         arcs = self._torus_arcs(100)
         points_intersections = []
         for arc in arcs:
             intersections = plane3d.contour_intersections(arc)
             points_intersections.extend(intersections)
+        points_intersections_ = []
+        for edge in plane3d.plane_grid(50, self.tore_radius*4):
+            intersections = self.line_intersections(edge.line)
+            points_intersections_.extend(intersections)
 
-        print(True)
+        inters_points = vm_common_operations.separate_points_by_closeness(points_intersections+points_intersections_)
+        if len(inters_points) == 1 and plane3d.point_on_surface(self.frame.origin):
+            plane1 = Plane3D(self.frame)
+            plane_intersections1 = plane1.plane_intersections(plane3d)
+            torus_line_interections1 = self.line_intersections(plane_intersections1[0])
+            # plane2 = plane3d.rotation(plane3d.frame.origin, plane3d.frame.u, math.pi / 2)
+            # plane_intersections2 = plane2.plane_intersections(plane3d)
+            # plane3 = plane3d.rotation(plane3d.frame.origin, plane3d.frame.v, math.pi / 2)
+            # plane_intersections3 = plane3.plane_intersections(plane3d)
+            # torus_line_interections1 = self.line_intersections(plane_intersections1[0])
+            # torus_line_interections2 = self.line_intersections(plane_intersections2[0])
+            # torus_line_interections3 = self.line_intersections(plane_intersections3[0])
+            # points = torus_line_interections2 if len(torus_line_interections2) == 4 else torus_line_interections3
+            points = torus_line_interections1
+            radius1 = points[0].point_distance(points[2]) / 2
+            circle1 = curves.Circle3D(volmdlr.Frame3D((points[0] + points[2]) / 2, plane3d.frame.u,
+                                                      plane3d.frame.v, plane3d.frame.w), radius1)
+            radius2 = points[1].point_distance(points[3]) / 2
+            circle2 = curves.Circle3D(volmdlr.Frame3D((points[1] + points[3]) / 2, plane3d.frame.u,
+                                                      plane3d.frame.v, plane3d.frame.w), radius2)
+            return [circle1, circle2]
+        curves_ = []
+        for list_points in inters_points:
+            curves_.append(edges.BSplineCurve3D.from_points_interpolation(list_points, 4))
+
+        return curves_
 
     def plane_intersections(self, plane3d):
         """
