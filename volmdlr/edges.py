@@ -682,6 +682,7 @@ class LineSegment(Edge):
         return 'Line(' + str(tag) + ') = {' + str(start_point_tag) + ', ' + str(end_point_tag) + '};'
 
     def get_geo_points(self):
+        """Returns geo points."""
         return [self.start, self.end]
 
     def get_shared_section(self, other_linesegment, abs_tol: float = 1e-6):
@@ -4737,6 +4738,7 @@ class BSplineCurve3D(BSplineCurve):
                 yield param2, distance
 
     def normal(self, position: float = 0.0):
+        """Returns the normal vector at a given parameter of the curve."""
         der = self.derivatives(position, 1)
         point1 = self.evaluate_single(0.0)
         points = [point1]
@@ -5488,6 +5490,7 @@ class Arc3D(ArcMixin, Edge):
     def plot2d(self, center: volmdlr.Point3D = volmdlr.O3D,
                x3d: volmdlr.Vector3D = volmdlr.X3D, y3d: volmdlr.Vector3D = volmdlr.Y3D,
                ax=None, color='k'):
+        """Plot data."""
 
         if ax is None:
             fig = plt.figure()
@@ -5826,9 +5829,11 @@ class FullArc3D(FullArcMixin, Arc3D):
             and (self.start == other_arc.start)
 
     def copy(self, *args, **kwargs):
+        """Returns a new instance with the same parameters."""
         return FullArc3D(self.circle.copy(), self.end.copy())
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """Object serialization."""
         dict_ = self.base_dict()
         dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/circle')
         dict_['angle'] = self.angle
@@ -6087,9 +6092,11 @@ class ArcEllipse3D(Edge):
         return self._length
 
     def normal_vector(self, abscissa):
+        """Returns the normal vector at a given abscissa."""
         return self.direction_vector(abscissa).deterministic_normal_vector()
 
     def direction_vector(self, abscissa):
+        """Returns the tangent vector at a given abscissa."""
         direction_vector_2d = self.self_2d.direction_vector(abscissa)
         direction_vector_3d = direction_vector_2d.to_3d(
             self.ellipse.center, self.ellipse.frame.u, self.ellipse.frame.v)

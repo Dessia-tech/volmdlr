@@ -172,6 +172,25 @@ class TestBSplineSurface3D(unittest.TestCase):
                     for c, e in zip(computed[idx], expected[idx]):
                         self.assertAlmostEqual(c, e, delta=DELTA)
 
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "bsplinesurface_derivatives_v_degree_1.json"))
+        test_data = [((0.0, 0.41570203515189436), 2,
+                     [[(2.686370456553301, -0.6157625276711683, 0.5584759391609816),
+                       (0.04588611491000005, 0.02975096368800001, 0.05838959340700001),
+                       (0.0, 0.0, 0.0)],
+                      [(0.0, 0.11254942676189417, -0.05734675845308533),
+                       (0.0, 0.06422355115999956, -0.03272351170500043),
+                       (0.0, 0.0, 0.0)],
+                      [(0.0, -0.06309176181313551, -0.12378660622984707),
+                       (0.0, -0.035946467299996954, -0.07066413869999799), (0.0, 0.0, 0.0)]])]
+        for param, order, res in test_data:
+            deriv = surface.derivatives(*param, order=order)
+            for computed, expected in zip(deriv, res):
+                for idx in range(order + 1):
+                    for c, e in zip(computed[idx], expected[idx]):
+                        self.assertAlmostEqual(c, e, delta=DELTA)
+
+
     def test_interpolate_surface(self):
         points = [volmdlr.Point3D(1.0, 0.0, 0.0), volmdlr.Point3D(0.70710678, 0.70710678, 0.0),
                   volmdlr.Point3D(0.0, 1.0, 0.0), volmdlr.Point3D(-0.70710678, 0.70710678, 0.0),

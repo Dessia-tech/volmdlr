@@ -5864,6 +5864,7 @@ class BSplineSurface3D(Surface3D):
         :rtype: :class:`volmdlr.Point2D`
         """
         umin, umax, vmin, vmax = self.domain
+        point = None
         if self.is_singularity_point(point3d):
             if self.u_closed_upper() and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmax))):
                 point = volmdlr.Point2D(umin, vmax)
@@ -5875,6 +5876,17 @@ class BSplineSurface3D(Surface3D):
                 point = volmdlr.Point2D(umin, vmin)
             return point
 
+        x0, distance = self.point_inversion_grid_search(point3d, 1e-4)
+        if distance < tol:
+            return volmdlr.Point2D(*x0)
+        x0, check = self.point_inversion(x0, point3d, tol)
+        if check:
+            return volmdlr.Point2D(*x0)
+
+        return self.point3d_to_2d_minimize(point3d, x0)
+
+    def point3d_to_2d_minimize(self, point3d, x0, tol: float =1e-6):
+        """Auxiliary function for point3d_to_2d in case the point inversion does not converge."""
         def sort_func(x):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
 
@@ -5889,12 +5901,6 @@ class BSplineSurface3D(Surface3D):
                                       vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
 
-        x0, distance = self.point_inversion_grid_search(point3d, 1e-4)
-        if distance < tol:
-            return volmdlr.Point2D(*x0)
-        x0, check = self.point_inversion(x0, point3d, tol)
-        if check:
-            return volmdlr.Point2D(*x0)
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         res = minimize(fun, x0=npy.array(x0), jac=True,
                        bounds=[(min_bound_x, max_bound_x),
@@ -5926,8 +5932,8 @@ class BSplineSurface3D(Surface3D):
             control_points = self.ctrlpts
         bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
         results = []
-        for x0 in x0s[:2]:
-            res = point_inversion(point3d_array, x0, bounds, [self.degree_u, self.degree_v],
+        for x in x0s[:2]:
+            res = point_inversion(point3d_array, x, bounds, [self.degree_u, self.degree_v],
                                   self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational)
             if res.fun <= tol:
                 return volmdlr.Point2D(*res.x)
@@ -5948,14 +5954,6 @@ class BSplineSurface3D(Surface3D):
         jacobian, k, surface_derivatives, distance_vector = self.point_inversion_funcs(x, point3d)
         if self.check_convergence(surface_derivatives, distance_vector, tol1=tol):
             return x, True
-        # if jacobian[1][1]:
-        #     delta_u = k[0][0]/(jacobian[0][0] + jacobian[0][1] * (k[1][0] - jacobian[1][0])/jacobian[1][1])
-        #     delta_v = (k[1][0] - jacobian[1][0]) / jacobian[1][1] * delta_u
-        # else:
-        #     delta_u = 0.0
-        #     delta_v = 0.0
-        #
-        # new_x = [delta_u + x[0], delta_v + x[1]]
         if jacobian[1][1]:
             lu, piv = lu_factor(jacobian)
             delta = lu_solve((lu, piv), k)
@@ -6308,6 +6306,7 @@ class BSplineSurface3D(Surface3D):
         return self._edge3d_to_2d(arcellipse3d, points3d, degree, points)
 
     def arc2d_to_3d(self, arc2d):
+        """Evaluates the Euclidean form for the parametric arc."""
         number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
         length = arc2d.length()
         points = [self.point2d_to_3d(arc2d.point_at_abscissa(i * length / (number_points - 1)))
