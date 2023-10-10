@@ -5864,6 +5864,7 @@ class BSplineSurface3D(Surface3D):
         :rtype: :class:`volmdlr.Point2D`
         """
         umin, umax, vmin, vmax = self.domain
+        point = None
         if self.is_singularity_point(point3d):
             if self.u_closed_upper() and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmax))):
                 point = volmdlr.Point2D(umin, vmax)
@@ -5875,6 +5876,16 @@ class BSplineSurface3D(Surface3D):
                 point = volmdlr.Point2D(umin, vmin)
             return point
 
+        x0, distance = self.point_inversion_grid_search(point3d, 1e-4)
+        if distance < tol:
+            return volmdlr.Point2D(*x0)
+        x0, check = self.point_inversion(x0, point3d, tol)
+        if check:
+            return volmdlr.Point2D(*x0)
+
+        return self.point3d_to_2d_minimize(point3d, x0)
+
+    def point3d_to_2d_minimize(self, point3d, x0, tol: float =1e-6):
         def sort_func(x):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
 
@@ -5888,14 +5899,6 @@ class BSplineSurface3D(Surface3D):
                 jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
                                       vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
-
-        x0, distance = self.point_inversion_grid_search(point3d, 1e-4)
-        if distance < tol:
-            return volmdlr.Point2D(*x0)
-        x0, check = self.point_inversion(x0, point3d, tol)
-        if check:
-            return volmdlr.Point2D(*x0)
-
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         res = minimize(fun, x0=npy.array(x0), jac=True,
                        bounds=[(min_bound_x, max_bound_x),
