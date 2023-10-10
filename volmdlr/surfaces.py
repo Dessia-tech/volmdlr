@@ -6205,6 +6205,7 @@ class BSplineSurface3D(Surface3D):
         return self._edge3d_to_2d(arcellipse3d, points3d, degree, points)
 
     def arc2d_to_3d(self, arc2d):
+        """Evaluates the Euclidean form for the parametric arc."""
         number_points = math.ceil(arc2d.angle * 7) + 1  # 7 points per radian
         length = arc2d.length()
         points = [self.point2d_to_3d(arc2d.point_at_abscissa(i * length / (number_points - 1)))
