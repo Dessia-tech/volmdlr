@@ -5930,8 +5930,8 @@ class BSplineSurface3D(Surface3D):
             control_points = self.ctrlpts
         bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
         results = []
-        for x0 in x0s[:2]:
-            res = point_inversion(point3d_array, x0, bounds, [self.degree_u, self.degree_v],
+        for x in x0s[:2]:
+            res = point_inversion(point3d_array, x, bounds, [self.degree_u, self.degree_v],
                                   self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational)
             if res.fun <= tol:
                 return volmdlr.Point2D(*res.x)
