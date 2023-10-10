@@ -7,7 +7,9 @@
 Cython functions
 
 """
+import cython
 import cython.cimports.libc.math as math_c
+from cython.parallel import prange
 import math
 import random
 import sys
@@ -16,6 +18,7 @@ from typing import List, Text, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as npy
+cimport numpy as np
 import plot_data
 import volmdlr
 from dessia_common.core import DessiaObject
@@ -168,8 +171,9 @@ cdef (double, (double, double, double)) c_linesegment3d_point_distance((double, 
 
 # =============================================================================
 
-
-def polygon_point_belongs(point, points, include_edge_points: bool = False, tol: float = 1e-6):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef bint polygon_point_belongs(point, points, bint include_edge_points=False, double tol= 1e-6):
     cdef int i
     cdef int n = len(points)
     cdef bint inside = False
@@ -177,8 +181,10 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False, tol:
     cdef double[2] u, v, projection_vector, projection_point
     x, y = point
     for i in range(n):
-        p1x, p1y = points[i]
-        p2x, p2y = points[(i + 1) % n]
+        p1x = points[i][0]
+        p1y = points[i][1]
+        p2x = points[(i + 1) % n][0]
+        p2y = points[(i + 1) % n][1]
         v = [p2x - p1x, p2y - p1y]
         u = [x - p1x, y - p1y]
         dot_product = u[0] * v[0] + u[1] * v[1]
@@ -206,6 +212,67 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False, tol:
             if p1x == p2x or x < xints:
                 inside = not inside
     return inside
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon, double[:, ::1] points, bint include_edge_points = False, double tol = 1e-6):
+    cdef int n = polygon.shape[0]
+    cdef int m = points.shape[0]
+    cdef int i, j
+    cdef double x, y, p1x, p1y, p2x, p2y, xints, dot_product, length_squared, t, distance_projection_to_point
+    cdef double[2] u, v, projection_vector, projection_point
+    cdef np.ndarray[np.uint8_t, ndim = 1] results = npy.zeros(m, dtype=npy.uint8)
+    cdef bint inside
+
+    for i in prange(m, nogil=True):
+        x = points[i][0]
+        y = points[i][1]
+        inside = False
+        for j in range(n):
+            p1x = polygon[j][0]
+            p1y = polygon[j][1]
+            p2x = polygon[(j + 1) % n][0]
+            p2y = polygon[(j + 1) % n][1]
+            v[0] = p2x - p1x
+            v[1] = p2y - p1y
+            u[0] = x - p1x
+            u[1] = y - p1y
+            dot_product = u[0] * v[0] + u[1] * v[1]
+            length_squared = v[0] * v[0] + v[1] * v[1]
+            t = dot_product / length_squared
+            if 0.0 <= t <= 1.0:
+                projection_vector[0] = v[0] * t
+                projection_vector[1] = v[1] * t
+                projection_point[0] = p1x + projection_vector[0]
+                projection_point[1] = p1y + projection_vector[1]
+                distance_projection_to_point = math_c.sqrt((projection_point[0] - x) ** 2 + (projection_point[1] - y) ** 2)
+                if distance_projection_to_point <= tol:
+                    if include_edge_points:
+                        results[i] = True
+                        break
+                    else:
+                        results[i] = False
+                        break
+            xints = math_c.HUGE_VAL
+            if min(p1y, p2y) <= y <= max(p1y, p2y) and min(p1x, p2x) <= x <= max(p1x, p2x):
+                if p1y != p2y:
+                    xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                if p1y == p2y or x == xints:
+                    if include_edge_points:
+                        results[i] = True
+                        break
+                    else:
+                        results[i] = False
+                        break
+            if min(p1y, p2y) < y <= max(p1y, p2y) and x <= max(p1x, p2x):
+                if p1y != p2y:
+                    xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                if p1x == p2x or x < xints:
+                    inside = not inside
+        results[i] = inside
+
+    return results
 
 
 # =============================================================================

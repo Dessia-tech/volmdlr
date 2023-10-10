@@ -26,7 +26,7 @@ import volmdlr.core
 import volmdlr.display as vmd
 import volmdlr.geometry
 from volmdlr import curves, edges
-from volmdlr.core_compiled import polygon_point_belongs
+from volmdlr.core_compiled import polygon_point_belongs, points_in_polygon
 from volmdlr.core import EdgeStyle
 
 
@@ -2981,6 +2981,24 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         return polygon_point_belongs((point.x, point.y), [(point_.x, point_.y) for point_ in self.points],
                                      include_edge_points=include_edge_points, tol=tol)
 
+    def points_in_polygon(self, points, include_edge_points: bool = False, tol: float = 1e-6):
+        """
+        Check if a list of points is inside the polygon using parallel computing.
+
+        :param points: List of points in the form [(x1, y1), (x2, y2), ...]
+        :type points: list or numpy.ndarray
+        :param include_edge_points: Flag to include edge points as inside the polygon
+        :type include_edge_points: bool, optional
+        :param tol: Tolerance for numerical comparisons, defaults to 1e-6
+        :type tol: float, optional
+        :return: List of boolean values indicating whether each point is inside the polygon
+        :rtype: numpy.ndarray
+        """
+        if isinstance(points, list):
+            points = npy.array([(point[0], point[1]) for point in points], dtype=npy.float64)
+        polygon = npy.array([(point_[0], point_[1]) for point_ in self.points], dtype=npy.float64)
+        return points_in_polygon(polygon, points, include_edge_points=include_edge_points, tol=tol)
+
     def second_moment_area(self, point):
         second_moment_area_x, second_moment_area_y, second_moment_area_xy = 0., 0., 0.
         for point_i, point_j in zip(self.points, self.points[1:] + [self.points[0]]):
@@ -3586,6 +3604,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         :type number_points_x: int
         :param number_points_y: Number of discretization points in y direction.
         :type number_points_y: int
+        :param include_edge_points: Flag to include edge points as inside the polygon
+        :type include_edge_points: bool, optional
         :return: Discretization data.
         :rtype: list
         """
@@ -3597,13 +3617,23 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         grid_point_index = {}
 
         polygon_points = {vmd.Node2D.from_point(point) for point in self.points}
+
+        # Generate all points in the grid
+        grid_points = npy.array([(xi, yi) for xi in x for yi in y], dtype=npy.float64)
+
+        # Use self.points_in_polygon to check if each point is inside the polygon
+        points_in_polygon_ = self.points_in_polygon(grid_points, include_edge_points=include_edge_points)
+
+        # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
+        indices = npy.where(points_in_polygon_)[0]
+
         points = []
-        for i, xi in enumerate(x):
-            for j, yi in enumerate(y):
-                point = vmd.Node2D(xi, yi)
-                if self.point_belongs(point, include_edge_points=include_edge_points) and point not in polygon_points:
-                    grid_point_index[(i, j)] = point
-                    points.append(point)
+
+        for i in indices:
+            point = vmd.Node2D(*grid_points[i])
+            if point not in polygon_points:
+                grid_point_index[(i // (number_points_y + 2), i % (number_points_y + 2))] = point
+                points.append(point)
 
         return points, x, y, grid_point_index
 
@@ -4265,7 +4295,7 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
         contour = cls(raw_edges, name=name)
-        if contour.is_ordered(1e-6):
+        if contour.is_ordered(1e-5):
             return contour
         list_contours = cls.contours_from_edges(raw_edges.copy())
         for contour_reordered in list_contours:
