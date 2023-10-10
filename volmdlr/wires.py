@@ -4295,9 +4295,9 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
         contour = cls(raw_edges, name=name)
-        if contour.is_ordered(1e-5):
+        if contour.is_ordered():
             return contour
-        list_contours = cls.contours_from_edges(raw_edges.copy())
+        list_contours = cls.contours_from_edges(raw_edges.copy(), tol=5e-6)
         for contour_reordered in list_contours:
             if contour_reordered.is_ordered():
                 return contour_reordered
