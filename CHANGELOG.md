@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.14.0 [future]
+## v0.15.0 [future]
+
+### New Features
+-
+
+### Fixed
+- BSplineSurface3D: derivatives
+
+
+### Refactor
+-
+
+### Changed
+- BSplineSurface3D: point3d_to_2d
+
+### Unittests
+-
+
+## v0.14.0
 
 ### New Features
 - DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
@@ -25,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Parabola2d/3D / Hyperbola2D/3D: point_belongs, tangent
 - BSplineCurve: point_to_parameter, abscissa_to_parameter.
 - Basis3D: is_normilized, is_orthogonal, is_orthonormal.
+- BSplineSurface3D: fullarcellipse3d_to_2d
 
 ### Fixed
 - add missing name attributes to classmethods.
@@ -41,7 +60,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ClosedCurves: discretization_points
 - ArcEllipse3D: is_close
 - LineSegment3D: revolution
-
+- FullArcEllipse3D, FullArcEllipse2D: discretization_points
+- ConicalSurface3D: linesegment2d_to_3d
+- BSplineSurface3D: bsplinecurve3d_to_2d, prevents code execution from stopping when point3d_to_2d does not converge
+- BSplineSurface3D: derivatives
+- 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
 

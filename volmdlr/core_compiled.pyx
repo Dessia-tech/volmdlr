@@ -2241,11 +2241,11 @@ class Matrix33:
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
-        if abs(u1) < 1e-9:
+        if abs(u1) < 1e-12:
             u1 = 0.
-        if abs(u2) < 1e-9:
+        if abs(u2) < 1e-12:
             u2 = 0.
-        if abs(u3) < 1e-9:
+        if abs(u3) < 1e-12:
             u3 = 0.
         return vector.__class__(u1, u2, u3)
 
@@ -2270,7 +2270,7 @@ class Matrix33:
         """
         det = self.determinent()
 
-        if not math.isclose(det, 0, abs_tol=1e-10):
+        if not abs(det) <= 1e-12:
             det_inv = 1 / det
             return Matrix33(det_inv * (self.M22 * self.M33 - self.M23 * self.M32),  # a22a33−a23a32
                             det_inv * (self.M13 * self.M32 - self.M12 * self.M33),  # a13a32−a12a33

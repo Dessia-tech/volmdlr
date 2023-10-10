@@ -1104,6 +1104,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return plane_intersections
 
     def split_by_plane(self, plane3d: surfaces.Plane3D):
+        """Split face with a plane."""
         intersections_with_plane = self.plane_intersections(plane3d)
         intersections_with_plane2d = [self.surface3d.contour3d_to_2d(intersection_wire)
                                       for intersection_wire in intersections_with_plane]
@@ -1744,6 +1745,7 @@ class Triangle3D(PlaneFace3D):
 
     @property
     def surface2d(self):
+        """Boundary representation of the face."""
         if self._surface2d is None:
             plane3d = self.surface3d
             contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(self.point1, self.point2),
@@ -2055,7 +2057,7 @@ class CylindricalFace3D(Face3D):
         number_points_x = max(angle_resolution, int(delta_theta * angle_resolution))
 
         delta_z = zmax - zmin
-        number_points_y = int(delta_z * z_resolution)
+        number_points_y = min(int(delta_z * z_resolution), 20)
         return number_points_x, number_points_y
 
     def grid_size(self):
@@ -3013,7 +3015,7 @@ class BSplineFace3D(Face3D):
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_uu(self, other_bspline_face3d, corresponding_directions):
-
+        """Returns the side of the faces that are adjacent."""
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0),
@@ -3050,7 +3052,7 @@ class BSplineFace3D(Face3D):
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_vv(self, other_bspline_face3d, corresponding_directions):
-
+        """Returns the side of the faces that are adjacent."""
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0),

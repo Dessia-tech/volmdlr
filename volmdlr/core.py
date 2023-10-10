@@ -79,7 +79,7 @@ def get_element_index_in_list(element, list_elements, tol: float = 1e-6):
     """
     Gets the index an element inside a list of elements, considering a certain tolerance.
 
-    :param point: Element to be verified inside list.
+    :param element: Element to be verified inside list.
     :param list_elements: List of elements to be used.
     :param tol: Tolerance to consider if two elements are the same.
     :return: The element index.
@@ -87,7 +87,7 @@ def get_element_index_in_list(element, list_elements, tol: float = 1e-6):
     for i, element_i in enumerate(list_elements):
         if element_i.is_close(element, tol):
             return i
-    raise ValueError(f'{element} is not in list')
+    return None
 
 
 def get_point_index_in_list(point, list_points, tol: float = 1e-6):
