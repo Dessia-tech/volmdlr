@@ -5,7 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.14.0 [future]
+## v0.15.0 [future]
+
+### New Features
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
+
+### Fixed
+- 
+
+### Refactor
+-
+
+### Changed
+-
+
+### Unittests
+- ToroidalSurface3D: line_intersections, plane_intersections
+
+## v0.14.0 [Unreleased]
 
 ### New Features
 - DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
