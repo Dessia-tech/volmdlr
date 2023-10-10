@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 ### Changed
--
+- BSplineSurface3D: point3d_to_2d
 
 ### Unittests
 - ToroidalSurface3D: line_intersections, plane_intersections
