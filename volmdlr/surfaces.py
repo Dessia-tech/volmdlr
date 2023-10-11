@@ -5886,6 +5886,7 @@ class BSplineSurface3D(Surface3D):
         return self.point3d_to_2d_minimize(point3d, x0)
 
     def point3d_to_2d_minimize(self, point3d, x0, tol: float =1e-6):
+        """Auxiliary function for point3d_to_2d in case the point inversion does not converge."""
         def sort_func(x):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
 
@@ -5899,6 +5900,7 @@ class BSplineSurface3D(Surface3D):
                 jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
                                       vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
+
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         res = minimize(fun, x0=npy.array(x0), jac=True,
                        bounds=[(min_bound_x, max_bound_x),
@@ -6192,7 +6194,7 @@ class BSplineSurface3D(Surface3D):
             return []
         n = min(len(bspline_curve3d.control_points), 20)
         points3d = bspline_curve3d.discretization_points(number_points=n)
-        tol = 1e-6 if lth > 5e-5 else 1e-8
+        tol = 5e-7 if lth > 5e-5 else 1e-8
         # todo: how to ensure convergence of point3d_to_2d ?
         points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d])
         return self._edge3d_to_2d(bspline_curve3d, points3d, bspline_curve3d.degree, points)
