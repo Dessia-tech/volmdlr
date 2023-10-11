@@ -2927,18 +2927,26 @@ class ToroidalSurface3D(PeriodicalSurface):
         return point_after_start, point_before_end
 
     def line_intersections(self, line: curves.Line3D):
+        """
+        Calculates the intersections between the toroidal surface and an infinit line.
+
+        :param line: other line.
+        :return: intersections.
+        """
         vector = line.unit_direction_vector()
-        A = vector.x**2 + vector.y**2 + vector.z**2
-        B = 2 * (line.point1.x * vector.x + line.point1.y * vector.y + line.point1.z * vector.z)
-        C = line.point1.x**2 + line.point1.y**2 + line.point1.z**2 + self.tore_radius**2 - self.small_radius**2
-        D = vector.x**2 + vector.y**2
-        E = 2 * (line.point1.x * vector.x + line.point1.y * vector.y)
-        F = line.point1.x**2 + line.point1.y**2
-        solutions = npy.roots([(A**2), 2*A*B, (2*A*C + B**2 - 4*D*self.tore_radius**2), (2*B*C - 4*self.tore_radius**2*E),
-                               C**2 - 4*self.tore_radius**2*F])
+        coeff_a = vector.x**2 + vector.y**2 + vector.z**2
+        coeff_b = 2 * (line.point1.x * vector.x + line.point1.y * vector.y + line.point1.z * vector.z)
+        coeff_c = line.point1.x**2 + line.point1.y**2 + line.point1.z**2 + self.tore_radius**2 - self.small_radius**2
+        coeff_d = vector.x**2 + vector.y**2
+        coeff_e = 2 * (line.point1.x * vector.x + line.point1.y * vector.y)
+        coeff_f = line.point1.x**2 + line.point1.y**2
+        solutions = npy.roots([(coeff_a**2), 2*coeff_a*coeff_b,
+                               (2*coeff_a*coeff_c + coeff_b**2 - 4*coeff_d*self.tore_radius**2),
+                               (2*coeff_b*coeff_c - 4*self.tore_radius**2*coeff_e),
+                               coeff_c**2 - 4*self.tore_radius**2*coeff_f])
         intersections = []
         for sol_param in sorted(solutions):
-            if type(sol_param) == npy.complex128:
+            if isinstance(sol_param, npy.complex128):
                 if sol_param.imag == 0.0:
                     intersections.append(line.point1 + sol_param.real*vector)
             else:
@@ -3019,6 +3027,12 @@ class ToroidalSurface3D(PeriodicalSurface):
         return [circle1]
 
     def _plane_intersection_points(self, plane3d):
+        """
+        Gets the points of intersections between the plane and the toroidal surface.
+
+        :param plane3d: other plane 3d.
+        :return: points of intersections.
+        """
         arcs = self._torus_arcs(100)
         points_intersections = []
         for arc in arcs:
