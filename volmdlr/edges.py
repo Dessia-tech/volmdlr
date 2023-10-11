@@ -84,6 +84,7 @@ class Edge(dc.DessiaObject):
         raise NotImplementedError(f'split method not implemented by {self.__class__.__name__}')
 
     def reverse(self):
+        """Gets the edge in the reverse direction."""
         if self._reverse is None:
             self._reverse = self.get_reverse()
         return self._reverse
