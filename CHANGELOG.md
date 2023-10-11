@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: point_to_parameter, abscissa_to_parameter.
 - Basis3D: is_normilized, is_orthogonal, is_orthonormal.
 - BSplineSurface3D: fullarcellipse3d_to_2d
+- ClosedPolygon2D: points_in_polygon
 
 ### Fixed
 - add missing name attributes to classmethods.
