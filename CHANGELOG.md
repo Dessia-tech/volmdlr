@@ -8,11 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.15.0 [future]
 
 ### New Features
-- ClosedPolygon2D: points_in_polygon
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
 
 ### Fixed
-- BSplineSurface3D: derivatives
-
+- 
 
 ### Refactor
 -
@@ -21,9 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: point3d_to_2d
 
 ### Unittests
--
+- ToroidalSurface3D: line_intersections, plane_intersections
 
-## v0.14.0
+## v0.14.0 [Unreleased]
 
 ### New Features
 - DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
@@ -44,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: point_to_parameter, abscissa_to_parameter.
 - Basis3D: is_normilized, is_orthogonal, is_orthonormal.
 - BSplineSurface3D: fullarcellipse3d_to_2d
+- ClosedPolygon2D: points_in_polygon
 
 ### Fixed
 - add missing name attributes to classmethods.
