@@ -216,7 +216,8 @@ cpdef bint polygon_point_belongs(point, points, bint include_edge_points=False, 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon, double[:, ::1] points, bint include_edge_points = False, double tol = 1e-6):
+cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon, double[:, ::1] points,
+                                                         bint include_edge_points = False, double tol = 1e-6):
     cdef int n = polygon.shape[0]
     cdef int m = points.shape[0]
     cdef int i, j
@@ -246,7 +247,8 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
                 projection_vector[1] = v[1] * t
                 projection_point[0] = p1x + projection_vector[0]
                 projection_point[1] = p1y + projection_vector[1]
-                distance_projection_to_point = math_c.sqrt((projection_point[0] - x) ** 2 + (projection_point[1] - y) ** 2)
+                distance_projection_to_point = math_c.sqrt((projection_point[0] - x) ** 2 + (projection_point[1]
+                                                                                             - y) ** 2)
                 if distance_projection_to_point <= tol:
                     if include_edge_points:
                         results[i] = True
