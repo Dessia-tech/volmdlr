@@ -1106,6 +1106,34 @@ class Surface3D(DessiaObject):
         raise (f'No method available for calculating intersections between {self.__class__} and '
                f'{other_surface.__class__}')
 
+    def line_intersections(self, line: curves.Line3D):
+        """Gets intersections between a line and a Surface 3D."""
+        raise NotImplementedError(f'line_intersections method not implemented by {self.__class__.__name__}')
+
+    def linesegment_intersections(self, linesegment3d: edges.LineSegment3D, abs_tol: float = 1e-6):
+        """
+        Calculates the intersection points between a 3D line segment and a surface 3D.
+
+        The method calculates the intersection points between a 3D line segment and a 3d Surface by first
+        finding the intersection points between the infinite line containing the line segment and the Surface,
+        and then filtering out the points that are not within the line segment. It returns a list of intersection
+        points, which can be empty if there are no intersections. The intersection points are represented as
+        3D points using the `volmdlr.Point3D` class.
+        Note: The method assumes that the line segment and the Surface are in the same coordinate system.
+
+        :param linesegment3d: The 3D line segment object to intersect with the Surface.
+        :type linesegment3d: edges.LineSegment3D.
+        :param abs_tol: tolerance.
+        :type abs_tol: float.
+        :return: A list of intersection points between the line segment and the Surface.
+        The list may be empty if there are no intersections.
+        :rtype: List[volmdlr.Point3D]:
+        """
+        line_intersections = self.line_intersections(linesegment3d.line)
+        linesegment_intersections = [inters for inters in line_intersections
+                                     if linesegment3d.point_belongs(inters, abs_tol)]
+        return linesegment_intersections
+
 
 class Plane3D(Surface3D):
     """
@@ -2304,13 +2332,6 @@ class CylindricalSurface3D(PeriodicalSurface):
 
         return [intersection1, intersection2]
 
-    def linesegment_intersections(self, linesegment: edges.LineSegment3D):
-        """Gets intersections between a line segment and a Cylindrical Surface 3D."""
-        line = linesegment.line
-        line_intersections = self.line_intersections(line)
-        linesegment_intersections = [inters for inters in line_intersections if linesegment.point_belongs(inters)]
-        return linesegment_intersections
-
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
         circle_plane = Plane3D(fullarc.circle.frame)
         circle_plane_intersections = self.plane_intersections(circle_plane)
@@ -2924,14 +2945,6 @@ class ToroidalSurface3D(PeriodicalSurface):
                 intersections.append(line.point1 + sol_param*vector)
         return intersections
 
-    def linesegment_intersections(self, linesegment:edges.LineSegment3D, abs_tol: float = 1e-6):
-        line_intersections = self.line_intersections(linesegment.line)
-        intersections = []
-        for intersection in line_intersections:
-            if linesegment.point_belongs(intersection, abs_tol):
-                intersections.append(intersection)
-        return intersections
-
     def parallel_plane_intersection(self, plane3d):
         """
         Toroidal plane intersections when plane's normal is perpendicular with the cylinder axis.
@@ -3340,21 +3353,6 @@ class ConicalSurface3D(PeriodicalSurface):
                 intersections.append(line_inter)
             return line.sort_points_along_curve(intersections)
         return []
-
-    def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
-        """
-        Calculates the intersections between a conical surface and a Line Segment 3D.
-
-        :param linesegment: other line to verify intersections.
-        :param abs_tol: tolerance.
-        :return: a list of intersection points, if there exists any.
-        """
-        line_intersections = self.line_intersections(linesegment.line)
-        intersections = []
-        for intersection in line_intersections:
-            if linesegment.point_belongs(intersection, abs_tol):
-                intersections.append(intersection)
-        return intersections
 
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
         circle_plane = Plane3D(fullarc.circle.frame)
@@ -4309,38 +4307,6 @@ class SphericalSurface3D(PeriodicalSurface):
         t_param1 = (-b_param + math.sqrt(b2_minus4ac)) / (2 * a_param)
         t_param2 = (-b_param - math.sqrt(b2_minus4ac)) / (2 * a_param)
         return line3d.point1 + line_direction_vector * t_param1, line3d.point1 + line_direction_vector * t_param2
-
-    def linesegment_intersections(self, linesegment3d: edges.LineSegment3D):
-        """
-        Calculates the intersection points between a 3D line segment and a spherical surface.
-
-        The method calculates the intersection points between a 3D line segment and a sphere by first
-        finding the intersection points between the infinite line containing the line segment and the sphere,
-        and then filtering out the points that are not within the line segment. It returns a list of intersection
-        points, which can be empty if there are no intersections. The intersection points are represented as
-        3D points using the `volmdlr.Point3D` class.
-        Note: The method assumes that the line segment and the sphere are in the same coordinate system.
-
-        :param linesegment3d: The 3D line segment object to intersect with the sphere.
-        :type linesegment3d: edges.LineSegment3D.
-        :return: A list of intersection points between the line segment and the sphere.
-        The list may be empty if there are no intersections.
-        :rtype: List[volmdlr.Point3D]:
-
-        :Example:
-        >>> from volmdlr import Point3D, edges, surfaces, OXYZ
-        >>> spherical_surface3d = SphericalSurface3D(OXYZ, 1)
-        >>> linesegment2 = edges.LineSegment3D(Point3D(-0.8, -0.8, -0.8), Point3D(0.8, 0.8, 0.8))
-        >>> linesegment2_intersections = spherical_surface3d.linesegment_intersections(linesegment2)
-            '[Point3D: [0.5773502691896257, 0.5773502691896257, 0.5773502691896257],
-              Point3D: [-0.5773502691896257, -0.5773502691896257, -0.5773502691896257]]'
-        """
-        line_intersections = self.line_intersections(linesegment3d.line)
-        intersections = []
-        for intersection in line_intersections:
-            if linesegment3d.point_belongs(intersection):
-                intersections.append(intersection)
-        return intersections
 
 
 class RuledSurface3D(Surface3D):
