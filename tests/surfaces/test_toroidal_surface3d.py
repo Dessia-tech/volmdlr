@@ -150,6 +150,12 @@ class TestToroidalSurface3D(unittest.TestCase):
             for intersection, expected_result in zip(plane_intersections, expected_results3[i]):
                 self.assertAlmostEqual(intersection.length(), expected_result)
 
+        plane4 = surfaces.Plane3D(volmdlr.OYZX)
+        plane4 = plane4.translation(volmdlr.X3D)
+        plane_intersections = toroidal_surface.plane_intersections(plane4)
+        for intersection, expected_result in zip(plane_intersections, [7.414151683870966, 7.41405837962727]):
+            self.assertAlmostEqual(intersection.length(), expected_result)
+
 
 if __name__ == '__main__':
     unittest.main()

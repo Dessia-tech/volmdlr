@@ -2945,7 +2945,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 intersections.append(line.point1 + sol_param*vector)
         return intersections
 
-    def parallel_plane_intersection(self, plane3d):
+    def parallel_plane_intersection(self, plane3d: Plane3D):
         """
         Toroidal plane intersections when plane's normal is perpendicular with the cylinder axis.
 
@@ -2967,6 +2967,25 @@ class ToroidalSurface3D(PeriodicalSurface):
                 volmdlr.Frame3D(center2, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
                 self.tore_radius - self.small_radius)
             return [circle1, circle2]
+        if math.isclose(plane3d.point_distance(self.frame.origin), self.small_radius, abs_tol=1e-6):
+            point_projection = plane3d.point_projection(self.frame.origin)
+            vector = (point_projection - self.frame.origin).unit_vector()
+            points = self._plane_intersection_points(plane3d)
+            frame = volmdlr.Frame3D(point_projection, vector, self.frame.w, vector.cross(self.frame.w))
+            local_points = [frame.global_to_local_coordinates(point) for point in points]
+            lists_points = [[], []]
+            for i, local_point in enumerate(local_points):
+                if local_point.z > 0:
+                    lists_points[0].append(points[i])
+                elif local_point.z < 0:
+                    lists_points[1].append(points[i])
+            curves_ = []
+            for points in lists_points:
+                points_ = vm_common_operations.order_points_list_for_nearest_neighbor(points+[point_projection])
+                points_ = points_[points_.index(point_projection):] + points_[:points_.index(point_projection)]
+                edge = edges.BSplineCurve3D.from_points_interpolation(points_+ [points_[0]], 3)
+                curves_.append(edge)
+            return curves_
         return self.concurrent_plane_intersection(plane3d)
 
     def perpendicular_plane_intersection(self, plane3d):
@@ -2999,6 +3018,17 @@ class ToroidalSurface3D(PeriodicalSurface):
             return [circle1, circle2]
         return [circle1]
 
+    def _plane_intersection_points(self, plane3d):
+        arcs = self._torus_arcs(100)
+        points_intersections = []
+        for arc in arcs:
+            intersections = plane3d.contour_intersections(arc)
+            points_intersections.extend(intersections)
+        for edge in plane3d.plane_grid(50, self.tore_radius * 4):
+            intersections = self.line_intersections(edge.line)
+            points_intersections.extend(intersections)
+        return points_intersections
+
     def concurrent_plane_intersection(self, plane3d):
         """
         Toroidal plane intersections when plane's normal is concurrent with the cone's axis, but not orthogonal.
@@ -3006,18 +3036,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-
-        arcs = self._torus_arcs(100)
-        points_intersections = []
-        for arc in arcs:
-            intersections = plane3d.contour_intersections(arc)
-            points_intersections.extend(intersections)
-        points_intersections_ = []
-        for edge in plane3d.plane_grid(50, self.tore_radius*4):
-            intersections = self.line_intersections(edge.line)
-            points_intersections_.extend(intersections)
-
-        inters_points = vm_common_operations.separate_points_by_closeness(points_intersections+points_intersections_)
+        points_intersections = self._plane_intersection_points(plane3d)
+        inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
         if len(inters_points) == 1 and plane3d.point_on_surface(self.frame.origin):
             plane1 = Plane3D(self.frame)
             plane_intersections1 = plane1.plane_intersections(plane3d)
@@ -3033,7 +3053,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         curves_ = []
         for list_points in inters_points:
             curves_.append(edges.BSplineCurve3D.from_points_interpolation(list_points, 4))
-
         return curves_
 
     def plane_intersections(self, plane3d):
