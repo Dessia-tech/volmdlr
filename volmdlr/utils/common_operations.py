@@ -229,6 +229,8 @@ def get_point_distance_to_edge(edge, point, start, end):
             break
         distance = point.point_distance(discretized_points_between_1_2[0])
         for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
+            if point1.is_close(point2):
+                print(True)
             line = linesegment_class_(point1, point2)
             dist = line.point_distance(point)
             if dist < distance:
