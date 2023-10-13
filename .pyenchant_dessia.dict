@@ -43,6 +43,7 @@ discretizing
 distutils
 dof
 EdgeStyle
+eps
 euler
 facecolor
 filepath
