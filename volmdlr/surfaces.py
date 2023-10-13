@@ -1273,7 +1273,7 @@ class Plane3D(Surface3D):
         angle = math.acos(self.frame.w.dot(plane2.frame.w))
         return angle
 
-    def point_on_surface(self, point):
+    def point_on_surface(self, point, abs_tol: float = 1e-6):
         """
         Return if the point belongs to the plane at a tolerance of 1e-6.
 
@@ -3066,7 +3066,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             return [circle1, circle2]
         curves_ = []
         for list_points in inters_points:
-            curves_.append(edges.BSplineCurve3D.from_points_interpolation(list_points, 4))
+            curves_.append(edges.BSplineCurve3D.from_points_interpolation(list_points, 3))
         return curves_
 
     def plane_intersections(self, plane3d):
@@ -3081,6 +3081,34 @@ class ToroidalSurface3D(PeriodicalSurface):
         if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
             return self.perpendicular_plane_intersection(plane3d)
         return self.concurrent_plane_intersection(plane3d)
+
+    def is_coincident(self, surface3d):
+        """
+        Verifies if two ToroidalSurfaces are coincident.
+
+        :param surface3d: surface to verify.
+        :return: True if they are coincident, False otherwise.
+        """
+        if not isinstance(self, surface3d.__class__):
+            return False
+        if math.isclose(abs(self.frame.w.dot(surface3d.frame.w)), 1.0, abs_tol=1e-6) and \
+                math.isclose(self.tore_radius, surface3d.tore_radius, abs_tol=1e-6) and \
+                math.isclose(self.small_radius, surface3d.small_radius, abs_tol=1e-6):
+            return True
+        return False
+
+    def point_on_surface(self, point3d, abs_tol: float = 1e-6):
+        """
+        Verifies if point is on Toroidal Surface 3D.
+
+        :param point3d: other point.
+        :param abs_tol: tolerance.
+        :return: True or False.
+        """
+        if math.isclose((point3d.x**2 + point3d.y**2 + point3d.z**3 + self.tore_radius**2 - self.small_radius**2)**2,
+                        4 * self.tore_radius**2*(point3d.x**2 + point3d.y**2), abs_tol=abs_tol):
+            return True
+        return False
 
 
 class ConicalSurface3D(PeriodicalSurface):
