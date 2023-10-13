@@ -288,6 +288,8 @@ def trimmed_curve(arguments, object_dict):
     curve = object_dict[arguments[1]]
     point1 = object_dict[int(arguments[2][0][1:])]
     point2 = object_dict[int(arguments[3][0][1:])]
+    if curve.__class__.__name__ == "Line3D" and point1.is_close(point2):
+        return None
     return curve.trim(point1=point1, point2=point2)
 
 
@@ -600,6 +602,28 @@ def map_primitive(primitive, global_frame, transformed_frame):
         return primitive
     new_primitive = primitive.frame_mapping(new_frame, 'old')
     return new_primitive
+
+  
+def geometrically_bounded_wireframe_shape_representation(arguments, object_dict):
+    """
+    Returns xx.
+
+    :param arguments: DESCRIPTION
+    :type arguments: TYPE
+    :param object_dict: DESCRIPTION
+    :type object_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    primitives = []
+    for arg in arguments[1]:
+        primitives.extend(object_dict[int(arg[1:])])
+    if len(primitives) > 1:
+        compound = volmdlr.core.Compound(primitives, name=arguments[0])
+        compound.compound_type = "geometric_curve_set"
+        return compound
+    return primitives[0]
 
 
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(

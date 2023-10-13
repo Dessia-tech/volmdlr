@@ -2,7 +2,7 @@
 Unit tests for volmdlr.faces.BSplineSurface3D
 """
 import unittest
-
+import os
 import volmdlr.edges as vme
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
@@ -11,7 +11,8 @@ from volmdlr.models import bspline_surfaces
 from volmdlr import surfaces
 
 
-GEOMDL_DELTA = 0.001
+DELTA = 0.001
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_bspline_test')
 
 
 class TestBSplineSurface3D(unittest.TestCase):
@@ -70,9 +71,9 @@ class TestBSplineSurface3D(unittest.TestCase):
 
         for param, res in test_cases:
             evalpt = self.spline_surf.point2d_to_3d(param)
-            self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
-            self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
-            self.assertAlmostEqual(evalpt[2], res[2], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(evalpt[0], res[0], delta=DELTA)
+            self.assertAlmostEqual(evalpt[1], res[1], delta=DELTA)
+            self.assertAlmostEqual(evalpt[2], res[2], delta=DELTA)
 
         test_data = [
             (volmdlr.Point2D(0.0, 0.0), (-25.0, -25.0, -10.0)),
@@ -90,9 +91,9 @@ class TestBSplineSurface3D(unittest.TestCase):
         ]
         for param, res in test_data:
             evalpt = self.nurbs_surf.point2d_to_3d(param)
-            self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
-            self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
-            self.assertAlmostEqual(evalpt[2], res[2], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(evalpt[0], res[0], delta=DELTA)
+            self.assertAlmostEqual(evalpt[1], res[1], delta=DELTA)
+            self.assertAlmostEqual(evalpt[2], res[2], delta=DELTA)
 
     def test_derivatives(self):
         test_data = [
@@ -131,7 +132,7 @@ class TestBSplineSurface3D(unittest.TestCase):
             for computed, expected in zip(deriv, res):
                 for idx in range(order + 1):
                     for c, e in zip(computed[idx], expected[idx]):
-                        self.assertAlmostEqual(c, e, delta=GEOMDL_DELTA)
+                        self.assertAlmostEqual(c, e, delta=DELTA)
 
         test_data = [
             (
@@ -169,7 +170,26 @@ class TestBSplineSurface3D(unittest.TestCase):
             for computed, expected in zip(deriv, res):
                 for idx in range(order + 1):
                     for c, e in zip(computed[idx], expected[idx]):
-                        self.assertAlmostEqual(c, e, delta=GEOMDL_DELTA)
+                        self.assertAlmostEqual(c, e, delta=DELTA)
+
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "bsplinesurface_derivatives_v_degree_1.json"))
+        test_data = [((0.0, 0.41570203515189436), 2,
+                     [[(2.686370456553301, -0.6157625276711683, 0.5584759391609816),
+                       (0.04588611491000005, 0.02975096368800001, 0.05838959340700001),
+                       (0.0, 0.0, 0.0)],
+                      [(0.0, 0.11254942676189417, -0.05734675845308533),
+                       (0.0, 0.06422355115999956, -0.03272351170500043),
+                       (0.0, 0.0, 0.0)],
+                      [(0.0, -0.06309176181313551, -0.12378660622984707),
+                       (0.0, -0.035946467299996954, -0.07066413869999799), (0.0, 0.0, 0.0)]])]
+        for param, order, res in test_data:
+            deriv = surface.derivatives(*param, order=order)
+            for computed, expected in zip(deriv, res):
+                for idx in range(order + 1):
+                    for c, e in zip(computed[idx], expected[idx]):
+                        self.assertAlmostEqual(c, e, delta=DELTA)
+
 
     def test_interpolate_surface(self):
         points = [volmdlr.Point3D(1.0, 0.0, 0.0), volmdlr.Point3D(0.70710678, 0.70710678, 0.0),
@@ -288,7 +308,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(contour2d_dim.length(), 16.823814079415172, places=2)
 
     def test_periodicity(self):
-        bspline_suface = surfaces.BSplineSurface3D.load_from_file('surfaces/surface3d_8.json')
+        bspline_suface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, 'surface3d_8.json'))
         self.assertAlmostEqual(bspline_suface.x_periodicity,  0.8888888888888888)
         self.assertFalse(bspline_suface.y_periodicity)
 
@@ -301,7 +321,8 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(volume, 3.97787, 2)
 
     def test_arc3d_to_2d(self):
-        bspline_surface = surfaces.BSplineSurface3D.load_from_file('surfaces/BSplineSurface3D_with_Arc3D.json')
+        bspline_surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, 'BSplineSurface3D_with_Arc3D.json'))
         arc = vme.Arc3D.from_3_points(volmdlr.Point3D(-0.01, -0.013722146986970815, 0.026677756316261864),
                         volmdlr.Point3D(-0.01, 0.013517082603, 0.026782241839),
                         volmdlr.Point3D(-0.01, 0.029612430603, 0.004806657236))
@@ -318,8 +339,8 @@ class TestBSplineSurface3D(unittest.TestCase):
 
         # Strange case from step file
         bspline_surface = surfaces.BSplineSurface3D.load_from_file(
-            'surfaces/objects_bspline_test/bsplinesurface_arc3d_to_2d_surface.json')
-        arc = vme.Arc3D.load_from_file("surfaces/objects_bspline_test/bsplinesurface_arc3d_to_2d_arc3d.json")
+            os.path.join(folder, 'bsplinesurface_arc3d_to_2d_surface.json'))
+        arc = vme.Arc3D.load_from_file(os.path.join(folder, "bsplinesurface_arc3d_to_2d_arc3d.json"))
         brep = bspline_surface.arc3d_to_2d(arc)[0]
         self.assertTrue(brep.start.is_close(volmdlr.Point2D(1, 0)))
 
@@ -341,8 +362,8 @@ class TestBSplineSurface3D(unittest.TestCase):
         # self.assertTrue(point.is_close(point_test, 1e-6))
 
     def test_bsplinecurve2d_to_3d(self):
-        surface = surfaces.BSplineSurface3D.load_from_file("surfaces/objects_bspline_test/bspline_surface_with_arcs.json")
-        contour3d = vmw.Contour3D.load_from_file("surfaces/objects_bspline_test/bspline_contour_with_arcs.json")
+        surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "bspline_surface_with_arcs.json"))
+        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "bspline_contour_with_arcs.json"))
 
         contour2d = surface.contour3d_to_2d(contour3d)
         bspline_1 = contour2d.primitives[0]
@@ -351,9 +372,9 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertTrue(isinstance(arc3d, vme.Arc3D))
 
     def test_arcellipse3d_to_2d(self):
-        arcellipse = vme.ArcEllipse3D.load_from_file("surfaces/objects_bspline_test/arcellipse_on_bsplinesurface.json")
+        arcellipse = vme.ArcEllipse3D.load_from_file(os.path.join(folder, "arcellipse_on_bsplinesurface.json"))
         bsplinesurface = surfaces.BSplineSurface3D.load_from_file(
-            "surfaces/objects_bspline_test/bsplinesurface_with_arcellipse.json")
+            os.path.join(folder, "bsplinesurface_with_arcellipse.json"))
         test = bsplinesurface.arcellipse3d_to_2d(arcellipse)[0]
         self.assertTrue(isinstance(test, vme.LineSegment2D))
         self.assertTrue(test.start.is_close(volmdlr.Point2D(0.5, 0.0), 1e-4))
@@ -367,26 +388,38 @@ class TestBSplineSurface3D(unittest.TestCase):
         # face = surface.face_from_contours3d([contour3d])
         # self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
+    def test_fullarcellipse3d_to_2d(self):
+        ellipse = vme.FullArcEllipse3D.load_from_file(
+            os.path.join(folder, "bsplinesurface_with_fullarcellipse_fullarcellipse3d.json"))
+        bsplinesurface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "bsplinesurface_with_fullarcellipse.json"))
+        test = bsplinesurface.fullarcellipse3d_to_2d(ellipse)[0]
+        self.assertAlmostEqual(test.length(), 1.0, 2)
+
     def test_contour3d_to_2d(self):
-        surface = surfaces.BSplineSurface3D.load_from_file("surfaces/objects_bspline_test/periodicalsurface.json")
-        contour3d = vmw.Contour3D.load_from_file("surfaces/objects_bspline_test/periodicalsurface_contour.json")
+        surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "periodicalsurface.json"))
+        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "periodicalsurface_contour.json"))
         contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1/6, 5)
 
         surface = surfaces.BSplineSurface3D.load_from_file(
-            "surfaces/objects_bspline_test/contour3d_to_2d_small_primitives_surface.json")
-        contour3d = vmw.Contour3D.load_from_file(
-            "surfaces/objects_bspline_test/contour3d_to_2d_small_primitives_contour.json")
+            os.path.join(folder, "contour3d_to_2d_small_primitives_surface.json"))
+        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "contour3d_to_2d_small_primitives_contour.json"))
         contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered(1e-2)) # 1e-2 is an acceptable value, because this is parametric dimension
 
-        surface = surfaces.BSplineSurface3D.load_from_file(
-            "surfaces/objects_bspline_test/surface_with_singularity.json")
-        contour3d = vmw.Contour3D.load_from_file(
-            "surfaces/objects_bspline_test/surface_with_singularity_contour.json")
+        surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "surface_with_singularity.json"))
+        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "surface_with_singularity_contour.json"))
         contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered())
+
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "bsplinesurface_with_singularity_point3d_to_2d.json"))
+        contour3d = vmw.Contour3D.load_from_file(
+            os.path.join(folder, "bsplinesurface_with_singularity_point3d_to_2d_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour3d)
+        self.assertIsNotNone(contour2d)
 
     def test_split_surface_u(self):
         surf1, surf2 = self.spline_surf.split_surface_u(0.33)
