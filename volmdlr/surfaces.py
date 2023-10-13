@@ -3346,10 +3346,6 @@ class ConicalSurface3D(PeriodicalSurface):
         new_frame = self.frame.rotation(center=center, axis=axis, angle=angle)
         return self.__class__(new_frame, self.semi_angle)
 
-    def face_from_base_and_vertex(self, contour: wires.Contour3D, vertex: volmdlr.Point3D, name: str = ''):
-
-        raise AttributeError(f'Use method from ConicalFace3D{volmdlr.faces.ConicalFace3D.from_base_and_vertex}')
-
     def line_intersections(self, line: curves.Line3D):
         """
         Calculates the intersections between a conical surface and a Line 3D.
