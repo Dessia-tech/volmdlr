@@ -3315,6 +3315,20 @@ class FullArc2D(FullArcMixin, Arc2D):
 
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
+        """
+        Create a FullArc2D object from a dictionary representation.
+
+        This class method takes a dictionary containing the necessary data for
+        creating a FullArc2D object and returns an instance of the FullArc2D class.
+        It expects the dictionary to have the following keys:
+
+        :param cls: The FullArc2D class itself (automatically passed).
+        :param dict_: A dictionary containing the required data for object creation.
+        :param args: Additional positional arguments (if any).
+        :param kwargs: Additional keyword arguments (if any).
+
+        :return: FullArc2D: An instance of the FullArc2D class created from the provided dictionary.
+        """
         circle = volmdlr_curves.Circle2D.dict_to_object(dict_['circle'])
         start_end = volmdlr.Point2D.dict_to_object(dict_['start_end'])
 
@@ -6027,6 +6041,16 @@ class ArcEllipse3D(Edge):
         self._bbox = None
 
     def get_start_end_angles(self):
+        """
+        Calculate the start and end angles of the ArcEllipse3D in radians.
+
+        This method computes the start and end angles of the ArcEllipse3D, which represent
+        the angles, in radians, between the major axis of the ellipse and the start and end points
+        on the ellipse's boundary.
+
+        :return: tuple of floats
+            A tuple containing the start and end angles in radians.
+        """
         local_start_point = self.ellipse.frame.global_to_local_coordinates(self.start)
         u1, u2 = local_start_point.x / self.ellipse.major_axis, local_start_point.y / self.ellipse.minor_axis
         start_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
@@ -6097,7 +6121,23 @@ class ArcEllipse3D(Edge):
         return self.direction_vector(abscissa).deterministic_normal_vector()
 
     def direction_vector(self, abscissa):
-        """Returns the tangent vector at a given abscissa."""
+        """
+        Returns the tangent vector at a given abscissa along the ArcEllipse3D.
+
+        This method calculates and returns the tangent vector at a specific abscissa
+        along the ArcEllipse3D, which represents the direction of the curve at that point.
+
+        :param abscissa: The parameter value (abscissa) along the curve.
+        :type abscissa: float
+
+        :return: Vector3D
+            A Vector3D object representing the tangent vector at the given abscissa.
+
+        :raises:
+            - ValueError: If the abscissa is out of the valid range of the curve.
+        """
+        if abscissa > self.length():
+            raise ValueError('The abscissa is out of the valid range of the curve.')
         direction_vector_2d = self.self_2d.direction_vector(abscissa)
         direction_vector_3d = direction_vector_2d.to_3d(
             self.ellipse.center, self.ellipse.frame.u, self.ellipse.frame.v)
@@ -6361,7 +6401,21 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         return dict_
 
     @classmethod
-    def dict_to_object(cls, dict_, global_dict=None, pointers_memo: Dict[str, Any] = None, path: str = '#'):
+    def dict_to_object(cls, dict_, *args, **kwargs):
+        """
+        Create a FullArcEllipse3D object from a dictionary representation.
+
+        This class method takes a dictionary containing the necessary data for
+        creating a FullArcEllipse3D object and returns an instance of the FullArcEllipse3D class.
+        It expects the dictionary to have the following keys:
+
+        :param cls: The FullArcEllipse3D class itself (automatically passed).
+        :param dict_: A dictionary containing the required data for object creation.
+        :param args: Additional positional arguments (if any).
+        :param kwargs: Additional keyword arguments (if any).
+
+        :return: FullArcEllipse3D: An instance of the FullArcEllipse3D class created from the provided dictionary.
+        """
         ellipse = volmdlr_curves.Ellipse3D.dict_to_object(dict_['ellipse'])
         start_end = volmdlr.Point3D.dict_to_object(dict_['start_end'])
 
