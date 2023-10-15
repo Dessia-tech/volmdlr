@@ -23,6 +23,7 @@ BSpline's
 bsplinesurface
 cartesian
 classmethod
+cls
 cosinus
 ctrlpts
 ctrlptsw
