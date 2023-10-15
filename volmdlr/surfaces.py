@@ -3066,7 +3066,11 @@ class ToroidalSurface3D(PeriodicalSurface):
             return [circle1, circle2]
         curves_ = []
         for list_points in inters_points:
-            curves_.append(edges.BSplineCurve3D.from_points_interpolation(list_points, 3))
+            list_points_ = []
+            factor = int(len(list_points) / 10)
+            for n in range(factor):
+                list_points_.append(list_points[n*10])
+            curves_.append(edges.BSplineCurve3D.from_points_interpolation(list_points_, 3))
         return curves_
 
     def plane_intersections(self, plane3d):
