@@ -1475,13 +1475,13 @@ class Plane3D(Surface3D):
         Plane's grid.
 
         """
-        grid = []
+        plane_grid = []
         for i in range(grid_size):
             for v1, v2 in [(self.frame.u, self.frame.v), (self.frame.v, self.frame.u)]:
                 start = self.frame.origin - 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
                 end = self.frame.origin + 0.5 * length * v1 + (-0.5 + i / (grid_size - 1)) * length * v2
-                grid.append(edges.LineSegment3D(start, end))
-        return grid
+                plane_grid.append(edges.LineSegment3D(start, end))
+        return plane_grid
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey'), length: float = 1., **kwargs):
         """
@@ -2948,7 +2948,7 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     def line_intersections(self, line: curves.Line3D):
         """
-        Calculates the intersections between the toroidal surface and an infinit line.
+        Calculates the intersections between the toroidal surface and an infinite line.
 
         :param line: other line.
         :return: intersections.
@@ -3341,20 +3341,16 @@ class ConicalSurface3D(PeriodicalSurface):
                 arc = edges.Arc3D(circle, start3d, end3d)
             return [arc]
         points = [self.point2d_to_3d(p) for p in linesegment2d.discretization_points(number_points=3)]
-        plane = Plane3D.from_3_points(*points)
-        curve = self.plane_intersections(plane)[0]
+        curve = self.plane_intersections(Plane3D.from_3_points(*points))[0]
         if curve.point_belongs(points[0]) and curve.point_belongs(points[2]):
             edge = curve.trim(points[0], points[2])
             if not edge.point_belongs(points[1]):
                 curve = curve.reverse()
                 edge = curve.trim(points[0], points[2])
             return [edge]
-        n = 10
         points = [self.point2d_to_3d(p)
-                  for p in linesegment2d.discretization_points(number_points=n)]
+                  for p in linesegment2d.discretization_points(number_points=10)]
         return [edges.BSplineCurve3D.from_points_interpolation(points, 3)]
-
-
 
     def contour3d_to_2d(self, contour3d):
         """
@@ -3402,10 +3398,6 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         new_frame = self.frame.rotation(center=center, axis=axis, angle=angle)
         return self.__class__(new_frame, self.semi_angle)
-
-    def face_from_base_and_vertex(self, contour: wires.Contour3D, vertex: volmdlr.Point3D, name: str = ''):
-
-        raise AttributeError(f'Use method from ConicalFace3D{volmdlr.faces.ConicalFace3D.from_base_and_vertex}')
 
     def line_intersections(self, line: curves.Line3D):
         """

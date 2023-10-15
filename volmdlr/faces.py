@@ -417,8 +417,6 @@ class Face3D(volmdlr.core.Primitive3D):
         linesegment_intersections = []
         if not self.bounding_box.is_intersecting(linesegment.bounding_box):
             return []
-        if not hasattr(self.surface3d, 'linesegment_intersections'):
-            return self.linesegment_intersections_approximation(linesegment)
         for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 linesegment_intersections.append(intersection)
@@ -3466,3 +3464,12 @@ class BSplineFace3D(Face3D):
         else:
             point2 = neutral_fiber.end
         return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, point2)])
+
+    def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+        """
+        Get intersections between a BSpline face 3d and a Line Segment 3D.
+
+        :param linesegment: other linesegment.
+        :return: a list of intersections.
+        """
+        return self.linesegment_intersections_approximation(linesegment)
