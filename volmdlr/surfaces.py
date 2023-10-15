@@ -1316,6 +1316,25 @@ class Plane3D(Surface3D):
         """
         return vm_utils_intersections.get_plane_linesegment_intersections(self.frame, linesegment, abs_tol)
 
+    def circle_intersections(self, circle: curves.Circle3D):
+        """
+        Calculates the intersections between a Plane 3D and a FullArc 3D.
+
+        :param circle: circle to verify intersections.
+        :return: list of intersections: List[volmdlr.Point3D].
+        """
+        circle_plane = Plane3D(circle.frame)
+        plane_intersections = self.plane_intersections(circle_plane)
+        if not plane_intersections:
+            return []
+        circle2d = circle.to_2d(circle.center, circle_plane.frame.u, circle_plane.frame.v)
+        line2d = plane_intersections[0].to_2d(circle.center, circle_plane.frame.u, circle_plane.frame.v)
+        circle2d_inters_line2d = circle2d.line_intersections(line2d)
+        intersections = []
+        for inter in circle2d_inters_line2d:
+            intersections.append(inter.to_3d(circle.center, circle_plane.frame.u, circle_plane.frame.v))
+        return intersections
+
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
         """
         Calculates the intersections between a Plane 3D and a FullArc 3D.
@@ -1323,26 +1342,21 @@ class Plane3D(Surface3D):
         :param fullarc: full arc to verify intersections.
         :return: list of intersections: List[volmdlr.Point3D].
         """
-        fullarc_plane = Plane3D(fullarc.circle.frame)
-        plane_intersections = self.plane_intersections(fullarc_plane)
-        if not plane_intersections:
-            return []
-        fullarc2d = fullarc.to_2d(fullarc.circle.center, fullarc_plane.frame.u, fullarc_plane.frame.v)
-        line2d = plane_intersections[0].to_2d(fullarc.circle.center, fullarc_plane.frame.u, fullarc_plane.frame.v)
-        fullarc2d_inters_line2d = fullarc2d.line_intersections(line2d)
-        intersections = []
-        for inter in fullarc2d_inters_line2d:
-            intersections.append(inter.to_3d(fullarc.circle.center, fullarc_plane.frame.u, fullarc_plane.frame.v))
-        return intersections
+        return self.circle_intersections(fullarc.circle)
 
-    def arc_intersections(self, arc):
+    def arc_intersections(self, arc: edges.Arc3D):
         """
         Calculates the intersections between a Plane 3D and an Arc 3D.
 
         :param arc: arc to verify intersections.
         :return: list of intersections: List[volmdlr.Point3D].
         """
-        return self.fullarc_intersections(arc)
+        circle_intersections = self.circle_intersections(arc.circle)
+        arc_intersections = []
+        for intersection in circle_intersections:
+            if arc.point_belongs(intersection):
+                arc_intersections.append(intersection)
+        return arc_intersections
 
     def bsplinecurve_intersections(self, bspline_curve):
         """
@@ -2522,13 +2536,19 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     def _torus_arcs(self, number_arcs: int = 50):
         arcs = []
+        center = self.frame.origin + self.frame.u * (self.tore_radius)
+        radius = self.tore_radius - self.small_radius
         for i in range(number_arcs):
             theta = i / number_arcs * volmdlr.TWO_PI
-            t_points = []
-            for j in range(number_arcs):
-                phi = j / number_arcs * volmdlr.TWO_PI
-                t_points.append(self.point2d_to_3d(volmdlr.Point2D(theta, phi)))
-            arcs.append(wires.ClosedPolygon3D(t_points))
+            i_center = center.rotation(self.frame.origin, self.frame.w, theta)
+            u_vector = (i_center - self.frame.origin).unit_vector()
+            i_frame = volmdlr.Frame3D(i_center, u_vector, self.frame.w, u_vector.cross(self.frame.w))
+            circle = curves.Circle3D(i_frame, radius)
+            # t_points = []
+            # for j in range(number_arcs):
+            #     phi = j / number_arcs * volmdlr.TWO_PI
+            #     t_points.append(self.point2d_to_3d(volmdlr.Point2D(theta, phi)))
+            arcs.append(circle)
         return arcs
 
     @property
@@ -2991,7 +3011,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             for points in lists_points:
                 points_ = vm_common_operations.order_points_list_for_nearest_neighbor(points+[point_projection])
                 points_ = points_[points_.index(point_projection):] + points_[:points_.index(point_projection)]
-                edge = edges.BSplineCurve3D.from_points_interpolation(points_+ [points_[0]], 3)
+                edge = edges.BSplineCurve3D.from_points_interpolation(points_ + [points_[0]], 5)
                 curves_.append(edge)
             return curves_
         return self.concurrent_plane_intersection(plane3d)
@@ -3036,7 +3056,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         arcs = self._torus_arcs(100)
         points_intersections = []
         for arc in arcs:
-            intersections = plane3d.contour_intersections(arc)
+            intersections = plane3d.circle_intersections(arc)
             points_intersections.extend(intersections)
         for edge in plane3d.plane_grid(50, self.tore_radius * 4):
             intersections = self.line_intersections(edge.line)
@@ -3066,11 +3086,11 @@ class ToroidalSurface3D(PeriodicalSurface):
             return [circle1, circle2]
         curves_ = []
         for list_points in inters_points:
-            list_points_ = []
-            factor = int(len(list_points) / 10)
-            for n in range(factor):
-                list_points_.append(list_points[n*10])
-            curves_.append(edges.BSplineCurve3D.from_points_interpolation(list_points_, 3))
+            # list_points_ = []
+            # factor = int(len(list_points) / 10)
+            # for n in range(factor):
+            #     list_points_.append(list_points[n*10])
+            curves_.append(edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False))
         return curves_
 
     def plane_intersections(self, plane3d):
@@ -3109,8 +3129,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param abs_tol: tolerance.
         :return: True or False.
         """
-        if math.isclose((point3d.x**2 + point3d.y**2 + point3d.z**3 + self.tore_radius**2 - self.small_radius**2)**2,
-                        4 * self.tore_radius**2*(point3d.x**2 + point3d.y**2), abs_tol=abs_tol):
+        if self.point_distance(point3d) < abs_tol:
             return True
         return False
 

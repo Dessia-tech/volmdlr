@@ -599,12 +599,13 @@ class BoundingBox(dc.DessiaObject):
         :return: A new bounding box that contains all the input bounding boxes.
         :rtype: BoundingBox
         """
-        xmin = min(bb.xmin for bb in bounding_boxes)
-        xmax = max(bb.xmax for bb in bounding_boxes)
-        ymin = min(bb.ymin for bb in bounding_boxes)
-        ymax = max(bb.ymax for bb in bounding_boxes)
-        zmin = min(bb.zmin for bb in bounding_boxes)
-        zmax = max(bb.zmax for bb in bounding_boxes)
+        security_param = 1e-3
+        xmin = min(bb.xmin for bb in bounding_boxes) - security_param
+        xmax = max(bb.xmax for bb in bounding_boxes) + security_param
+        ymin = min(bb.ymin for bb in bounding_boxes) - security_param
+        ymax = max(bb.ymax for bb in bounding_boxes) + security_param
+        zmin = min(bb.zmin for bb in bounding_boxes) - security_param
+        zmax = max(bb.zmax for bb in bounding_boxes) + security_param
         return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     @classmethod

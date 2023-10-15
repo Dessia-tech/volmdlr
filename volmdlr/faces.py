@@ -95,9 +95,9 @@ class Face3D(volmdlr.core.Primitive3D):
         if not self.bounding_box.point_belongs(point3d):
             return False
         point2d = self.surface3d.point3d_to_2d(point3d)
-        check_point3d = self.surface3d.point2d_to_3d(point2d)
-        if check_point3d.point_distance(point3d) > tol:
-        # if not self.surface3d.point_on_surface(point3d, tol):
+        # check_point3d = self.surface3d.point2d_to_3d(point2d)
+        # if check_point3d.point_distance(point3d) > tol:
+        if not self.surface3d.point_on_surface(point3d, tol):
             return False
 
         return self.surface2d.point_belongs(point2d)
@@ -1457,7 +1457,7 @@ class PlaneFace3D(Face3D):
         for primitive in surface_intersections:
             points_on_primitive = []
             for point in intersections_points:
-                if primitive.point_belongs(point):
+                if primitive.point_belongs(point, 1e-5):
                     points_on_primitive.append(point)
             if not points_on_primitive:
                 continue
