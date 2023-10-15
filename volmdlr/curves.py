@@ -1239,6 +1239,8 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param tol: tolerance to consider in calculations.
         :return: circle and line intersections.
         """
+        if line2d.point_distance(self.center) > self.radius + tol:
+            return []
         if line2d.point_belongs(self.center):
             direction_vector = line2d.unit_direction_vector()
             return [self.center + self.radius * direction_vector, self.center - self.radius * direction_vector]

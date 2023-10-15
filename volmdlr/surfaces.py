@@ -3056,6 +3056,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         arcs = self._torus_arcs(100)
         points_intersections = []
         for arc in arcs:
+            if plane3d.frame.w.dot(arc.frame.w) == 1.0:
+                continue
             intersections = plane3d.circle_intersections(arc)
             points_intersections.extend(intersections)
         for edge in plane3d.plane_grid(50, self.tore_radius * 4):
