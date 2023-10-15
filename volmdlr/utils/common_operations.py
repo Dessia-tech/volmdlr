@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import least_squares
 import scipy.integrate as scipy_integrate
+from sklearn.cluster import DBSCAN
 
 import volmdlr.core
 from volmdlr.core import EdgeStyle
@@ -304,3 +305,45 @@ def order_points_list_for_nearest_neighbor(points):
     ordered_points.append(current_point)
 
     return ordered_points
+
+
+def separate_points_by_closeness(points):
+    """
+    Separates a list of 3D Cartesian points into two groups based on their spatial closeness using DBSCAN.
+
+    This function applies the DBSCAN (Density-Based Spatial Clustering of Applications with Noise) algorithm to
+    the given list of 3D Cartesian points. DBSCAN clusters the points based on their spatial proximity.
+    The points are separated into two groups, 'group1' and 'group2', depending on their spatial closeness
+    as determined by the DBSCAN clustering.
+
+    Please note that the 'eps' parameter inside the function can be adjusted to control the closeness threshold.
+
+    :param points: A list of 3D Cartesian points, where each point is represented as a list of three coordinates.
+
+    :return:
+    - group1 (list of lists): The first group of points based on their closeness.
+    - group2 (list of lists): The second group of points based on their closeness.
+    """
+    points_ = np.array([[point[0], point[1], point[2]] for point in points])
+
+    # Apply DBSCAN clustering with a small epsilon to separate close points
+    eps = 0.5
+    dbscan = DBSCAN(eps=eps, min_samples=1)
+    labels = dbscan.fit_predict(points_)
+
+    # Initialize two empty lists for the two groups
+    group1, group2 = [], []
+
+    # Assign points to group1 or group2 based on DBSCAN labels
+    for i, label in enumerate(labels):
+        if label == 0:
+            group1.append(points[i])
+        else:
+            group2.append(points[i])
+    group1 = order_points_list_for_nearest_neighbor(group1)
+    group1.append(group1[0])
+    if not group2:
+        return [group1]
+    group2 = order_points_list_for_nearest_neighbor(group2)
+    group2.append(group2[0])
+    return [group1, group2]
