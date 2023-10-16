@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
+- cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify
 
 ### Fixed
 - 
