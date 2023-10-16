@@ -54,6 +54,7 @@ scripts = [
 
             # Shells
             'shells/operations.py',
+            'shells/decimation.py',
 
             # Cloud
             'cloud/sewing_two_polygons.py',
@@ -97,8 +98,6 @@ scripts = [
             'discrete_representation/pixelization/pixelization_filling.py',
             'discrete_representation/pixelization/pixelization_from_closed_polygon.py',
             'discrete_representation/pixelization/pixelization_inverse.py',
-            # Decimation
-            'shells/decimation.py',
             # Others
             'grid.py'
             ]
