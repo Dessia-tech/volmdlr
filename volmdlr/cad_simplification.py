@@ -146,7 +146,8 @@ class TriangleDecimationSimplify(Simplify):
         :type target_ratio: float
         :param update_rate: Number of iterations between each update. If `lossless` flag is set to True, rate is 1.
         :type update_rate: int
-        :param aggressiveness: Parameter controlling the growth rate of the threshold at each iteration when `lossless` is False.
+        :param aggressiveness: Parameter controlling the growth rate of the threshold at each iteration when `lossless`
+            is False.
         :type aggressiveness: float
         :param max_iterations: Maximal number of iterations.
         :type max_iterations: int
