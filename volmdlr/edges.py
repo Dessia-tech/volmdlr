@@ -4897,13 +4897,13 @@ class BSplineCurve3D(BSplineCurve):
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
         :return: New BSpline curve between these two points.
         """
+        if self.periodic:
+            return self.trim_with_interpolation(point1, point2, same_sense)
         bsplinecurve = self
         if not same_sense:
             bsplinecurve = self.reverse()
         parameter1 = bsplinecurve.point_to_parameter(point1)
         parameter2 = bsplinecurve.point_to_parameter(point2)
-        if self.periodic and (point1.is_close(point2) or parameter1 > parameter2):
-            return self.trim_with_interpolation(point1, point2, same_sense)
 
         if (point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end)) \
                 or (point1.is_close(bsplinecurve.end) and point2.is_close(bsplinecurve.start)):
@@ -4913,24 +4913,16 @@ class BSplineCurve3D(BSplineCurve):
             return bsplinecurve.cut_after(parameter2)
 
         if point2.is_close(bsplinecurve.start) and not point1.is_close(bsplinecurve.end):
-            if self.periodic:
-                bsplinecurve = bsplinecurve.cut_before(parameter1)
-            else:
-                bsplinecurve = bsplinecurve.cut_after(parameter1)
+            bsplinecurve = bsplinecurve.cut_after(parameter1)
             return bsplinecurve
 
         if not point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end):
             return bsplinecurve.cut_before(parameter1)
 
         if not point2.is_close(bsplinecurve.start) and point1.is_close(bsplinecurve.end):
-            if self.periodic:
-                bsplinecurve = bsplinecurve.cut_after(parameter2)
-            else:
-                bsplinecurve = bsplinecurve.cut_before(parameter2)
+            bsplinecurve = bsplinecurve.cut_before(parameter2)
             return bsplinecurve
 
-        parameter1 = bsplinecurve.point_to_parameter(point1)
-        parameter2 = bsplinecurve.point_to_parameter(point2)
         if parameter1 is None or parameter2 is None:
             raise ValueError('Point not on BSplineCurve for trim method')
 

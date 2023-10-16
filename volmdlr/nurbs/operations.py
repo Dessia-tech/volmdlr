@@ -182,9 +182,8 @@ def insert_knot_curve(obj, param, num, **kwargs):
         knots, knot_multiplicities = get_knots_and_multiplicities(kv_new)
         point_name = "Point" + obj.__class__.__name__[-2:]
         cpts_tmp = [getattr(volmdlr, point_name)(*point) for point in cpts_tmp]
-        obj = obj.__class__(obj.degree, cpts_tmp, knot_multiplicities, knots, weights)
     # Return new spline geometry
-    return obj
+    return obj.__class__(obj.degree, cpts_tmp, knot_multiplicities, knots, weights)
 
 
 def split_curve(obj, param, **kwargs):
@@ -206,12 +205,14 @@ def split_curve(obj, param, **kwargs):
     :rtype: list
 
     """
+    param = round(param, 12)
     if param in set(obj.domain):
         raise ValueError("Cannot split from the domain edge")
 
     # Find multiplicity of the knot and define how many times we need to add the knot
     knot_multiplicity = core.find_multiplicity(param, obj.knotvector)
     insertion_count = obj.degree - knot_multiplicity
+    knot_span = core.find_span_linear(obj.degree, obj.knotvector, len(obj.ctrlpts), param) - obj.degree + 1
 
     # Insert knot
     temp_obj = insert_knot_curve(obj, [param], num=[insertion_count], check_num=False)
@@ -221,7 +222,6 @@ def split_curve(obj, param, **kwargs):
                                                      param,
                                                      core.find_span_linear)
 
-    knot_span = core.find_span_linear(obj.degree, obj.knotvector, len(obj.ctrlpts), param) - obj.degree + 1
     return construct_split_curve(temp_obj, curve1_kv, curve2_kv, knot_span, insertion_count)
 
 
@@ -503,7 +503,8 @@ def get_knots_and_multiplicities(knotvector):
     """
     Get knots and multiplicities from knotvector in u and v direction.
     """
-    knots = list(sorted(set(round(knot, 18) for knot in knotvector)))
+    knotvector = np.round(knotvector, decimals=17)
+    knots = np.unique(knotvector).tolist()
     multiplicities = [core.find_multiplicity(knot, knotvector) for knot in knots]
     return knots, multiplicities
 

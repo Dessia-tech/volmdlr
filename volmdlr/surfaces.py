@@ -878,10 +878,7 @@ class Surface3D(DessiaObject):
         if not is_connected and self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                 self.is_singularity_point(self.point2d_to_3d(primitives2d[0].start)):
             primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start,
-                                                    name="construction"))
-        elif not is_connected:
-            primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start))
-
+                                                name="construction"))
         return primitives2d
 
     def connect_contours(self, outer_contour, inner_contours):
