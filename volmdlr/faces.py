@@ -95,8 +95,9 @@ class Face3D(volmdlr.core.Primitive3D):
         if not self.bounding_box.point_belongs(point3d):
             return False
         point2d = self.surface3d.point3d_to_2d(point3d)
-        check_point3d = self.surface3d.point2d_to_3d(point2d)
-        if check_point3d.point_distance(point3d) > tol:
+        # check_point3d = self.surface3d.point2d_to_3d(point2d)
+        # if check_point3d.point_distance(point3d) > tol:
+        if not self.surface3d.point_on_surface(point3d, tol):
             return False
 
         return self.surface2d.point_belongs(point2d)
@@ -996,7 +997,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if math.isclose(self.area(), 0.0, abs_tol=1e-10):
             return False
         bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
-        if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
+        if not any(bbox_face.line_intersections(linesegment.line) for bbox_face in bbox_block_faces):
             return False
         return True
 
@@ -1430,6 +1431,36 @@ class PlaneFace3D(Face3D):
             for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
                 edge = primitive.trim(point1, point2)
                 if self.edge3d_inside(edge) and conical_face.edge3d_inside(edge):
+                    face_intersections.append(volmdlr.wires.Wire3D([edge]))
+        return face_intersections
+
+    def toroidalface_intersections(self, toroidal_face):
+        """
+        Calculates the intersections between a plane face 3D and Conical Face3D.
+
+        :param toroidal_face: the Toroidal Face 3D to verify intersections with Plane Face 3D.
+        :return: list of intersecting wires.
+        """
+        surface_intersections = self.surface3d.surface_intersections(toroidal_face.surface3d)
+        intersections_points = self.face_intersections_outer_contour(toroidal_face)
+        for point in toroidal_face.face_intersections_outer_contour(self):
+            if not volmdlr.core.point_in_list(point, intersections_points):
+                intersections_points.append(point)
+        face_intersections = []
+        for primitive in surface_intersections:
+            points_on_primitive = []
+            for point in intersections_points:
+                if primitive.point_belongs(point, 1e-5):
+                    points_on_primitive.append(point)
+            if not points_on_primitive:
+                continue
+            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
+            if primitive.periodic:
+                # if isinstance(primitive, volmdlr_curves.Ellipse3D) or isinstance(primitive, volmdlr_curves.Circle3D):
+                points_on_primitive = points_on_primitive + [points_on_primitive[0]]
+            for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                edge = primitive.trim(point1, point2)
+                if self.edge3d_inside(edge) and toroidal_face.edge3d_inside(edge, 1e-3):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
         return face_intersections
 
@@ -2338,6 +2369,16 @@ class ToroidalFace3D(Face3D):
                           circle.radius * math.sin(theta) * circle.frame.v for theta in
                           [theta_min, theta_max]]
         return volmdlr.wires.Wire3D([circle.trim(point1, point2)])
+
+    def planeface_intersections(self, planeface: PlaneFace3D):
+        """
+        Gets intersections between a Toroidal Face 3D and a Plane Face 3D.
+
+        :param planeface: other plane face.
+        :return: intersections.
+        """
+        planeface_intersections = planeface.toroidalface_intersections(self)
+        return planeface_intersections
 
 
 class ConicalFace3D(Face3D):

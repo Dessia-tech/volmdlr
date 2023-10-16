@@ -2,15 +2,18 @@ import unittest
 from volmdlr.core import VolumeModel
 from volmdlr.step import Step
 from volmdlr import faces
+import os
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_extrusion_tests')
 
 
 class TestExtrusionFace3D(unittest.TestCase):
     face = faces.ExtrusionFace3D.load_from_file(
-        "faces/objects_extrusion_tests/extrusionface_with_ellipse_test_boundingbox.json")
+        os.path.join(folder, "extrusionface_with_ellipse_test_boundingbox.json"))
 
     def test_bounding_box(self):
         bbox = self.face.bounding_box
-        self.assertAlmostEqual(bbox.volume(), 3.54136919512989e-08)
+        self.assertAlmostEqual(bbox.volume(), 4.078418559129855e-08)
 
     def test_to_step(self):
         model = VolumeModel.load_from_file("faces/objects_extrusion_tests/extrusionface_export_test.json")

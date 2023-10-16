@@ -140,7 +140,7 @@ class TestClosedShell3D(unittest.TestCase):
         plane = surfaces.Plane3D.from_normal(center, volmdlr.Y3D)
         cut_by_plane = union.cut_by_plane(plane)
         self.assertEqual(len(cut_by_plane), 1)
-        self.assertEqual(cut_by_plane[0].area(), 0.254)
+        self.assertAlmostEqual(cut_by_plane[0].area(), 0.254)
 
     def test_intersection(self):
         box1 = primitives3d.Block(
