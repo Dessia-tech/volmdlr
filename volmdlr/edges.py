@@ -166,6 +166,7 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
+        step_id = kwargs.get("step_id")
         if obj.__class__.__name__ == 'LineSegment3D':
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, name=arguments[0][1:-1])
@@ -1136,8 +1137,8 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if point.is_close(self.end, tol):
             return [self.copy(), None]
-        adim_abscissa = min(1.0, max(0.0, round(self.abscissa(point) / self.length(), 7)))
-        return split_curve(self, adim_abscissa)
+        parameter = self.point_to_parameter(point)
+        return split_curve(self, parameter)
 
     def get_reverse(self):
         """
@@ -1235,7 +1236,7 @@ class BSplineCurve(Edge):
 
             squared_distances = npy.sum(differences ** 2, axis=1)
 
-            self._length = npy.sum(npy.sqrt(squared_distances))
+            self._length = float(npy.sum(npy.sqrt(squared_distances)))
             # self._length = length_curve(self.curve)
         return self._length
 
@@ -1310,7 +1311,7 @@ class BSplineCurve(Edge):
             u = (u - u_min) / (u_max - u_min)
         abscissa = u * length
         if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
-            return abscissa
+            return float(abscissa)
 
         def evaluate_point_distance(u_param):
             return (point - self.evaluate_single(u_param)).norm()
@@ -1320,16 +1321,18 @@ class BSplineCurve(Edge):
         for u0 in initial_condition_list[:2]:
             u, convergence_sucess = self.point_invertion(u0, point)
             if u_min != 0 or u_max != 1.0:
+                if (u_max - u_min) == 0:
+                    print(True)
                 u = (u - u_min) / (u_max - u_min)
             abscissa = u * length
             if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
-                return abscissa
+                return float(abscissa)
             dist = evaluate_point_distance(u)
             if dist < tol:
-                return abscissa
+                return float(abscissa)
             results.append((abscissa, dist))
         result = min(results, key=lambda r: r[1])[0]
-        return result
+        return float(result)
 
     def _point_inversion_funcs(self, u, point):
         """
@@ -1564,6 +1567,8 @@ class BSplineCurve(Edge):
         :return: A B-spline curve from points interpolation
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
+        if degree >= len(points):
+            raise ValueError("Number of points for interpolation must be at least degree + 1")
         set_points = set(points)
         if len(set_points) < len(points) - 1:
             warnings.warn("Not able to perform point interpolation."
@@ -4893,33 +4898,36 @@ class BSplineCurve3D(BSplineCurve):
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
         :return: New BSpline curve between these two points.
         """
-        if self.periodic:
-            return self.trim_with_interpolation(point1, point2, same_sense)
         bsplinecurve = self
         if not same_sense:
             bsplinecurve = self.reverse()
+        parameter1 = bsplinecurve.point_to_parameter(point1)
+        parameter2 = bsplinecurve.point_to_parameter(point2)
+        if self.periodic and (point1.is_close(point2) or parameter1 > parameter2):
+            return self.trim_with_interpolation(point1, point2, same_sense)
+
         if (point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end)) \
                 or (point1.is_close(bsplinecurve.end) and point2.is_close(bsplinecurve.start)):
             return bsplinecurve
 
         if point1.is_close(bsplinecurve.start) and not point2.is_close(bsplinecurve.end):
-            return bsplinecurve.cut_after(bsplinecurve.point_to_parameter(point2))
+            return bsplinecurve.cut_after(parameter2)
 
         if point2.is_close(bsplinecurve.start) and not point1.is_close(bsplinecurve.end):
             if self.periodic:
-                bsplinecurve = bsplinecurve.cut_before(bsplinecurve.point_to_parameter(point1))
+                bsplinecurve = bsplinecurve.cut_before(parameter1)
             else:
-                bsplinecurve = bsplinecurve.cut_after(bsplinecurve.point_to_parameter(point1))
+                bsplinecurve = bsplinecurve.cut_after(parameter1)
             return bsplinecurve
 
         if not point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end):
-            return bsplinecurve.cut_before(bsplinecurve.point_to_parameter(point1))
+            return bsplinecurve.cut_before(parameter1)
 
         if not point2.is_close(bsplinecurve.start) and point1.is_close(bsplinecurve.end):
             if self.periodic:
-                bsplinecurve = bsplinecurve.cut_after(bsplinecurve.point_to_parameter(point2))
+                bsplinecurve = bsplinecurve.cut_after(parameter2)
             else:
-                bsplinecurve = bsplinecurve.cut_before(bsplinecurve.point_to_parameter(point2))
+                bsplinecurve = bsplinecurve.cut_before(parameter2)
             return bsplinecurve
 
         parameter1 = bsplinecurve.point_to_parameter(point1)
@@ -5002,13 +5010,11 @@ class BSplineCurve3D(BSplineCurve):
         :param parameter: parameter value that specifies where to split the curve.
         :type parameter: float
         """
-        # Is a value of parameter below 4e-3 a real need for precision ?
-        a, b = self.domain
-        if math.isclose(parameter, a, abs_tol=1e-6):
-            return self
-        if math.isclose(parameter, b, abs_tol=1e-6):
+        point3d = self.evaluate_single(parameter)
+        if self.start.is_close(point3d):
+            return self.copy()
+        if self.end.is_close(point3d):
             return self.reverse()
-        #     raise ValueError('Nothing will be left from the BSplineCurve3D')
 
         curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
         return curves[1]
@@ -5020,12 +5026,12 @@ class BSplineCurve3D(BSplineCurve):
         :param parameter: parameter value that specifies where to split the curve.
         :type parameter: float
         """
-        # Is a value of parameter below 4e-3 a real need for precision ?
-        a, b = self.domain
-        if math.isclose(parameter, a, abs_tol=1e-6):
+        # Is a value of parameter below 5e-6 a real need for precision ?
+        point3d = self.evaluate_single(parameter)
+        if self.start.is_close(point3d):
             return self.reverse()
-        if math.isclose(parameter, b, abs_tol=1e-6):
-            return self
+        if self.end.is_close(point3d):
+            return self.copy()
         curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
         return curves[0]
 

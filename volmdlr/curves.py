@@ -1003,11 +1003,12 @@ class CircleMixin:
         circle = self
         if not same_sense:
             circle = self.reverse()
-        if not self.point_belongs(point1, 1e-4) or not self.point_belongs(point2, 1e-4):
-            ax = self.plot()
-            point1.plot(ax=ax, color='r')
-            point2.plot(ax=ax, color='b')
-            return None
+        if not self.point_belongs(point1, 1e-5):
+            angle = circle.get_arc_point_angle(point1)
+            point1 = circle.point_at_abscissa(angle * self.radius)
+        if not self.point_belongs(point2, 1e-5):
+            angle = circle.get_arc_point_angle(point2)
+            point2 = circle.point_at_abscissa(angle * self.radius)
         if point1.is_close(point2):
             return fullar_arc_class_(circle, point1)
         return arc_class_(circle, point1, point2)
@@ -1911,6 +1912,13 @@ class Circle3D(CircleMixin, ClosedCurve):
         if return_points:
             return point1.point_distance(point2), point1, point2
         return point1.point_distance(point2)
+
+    def get_arc_point_angle(self, point):
+        """Returns the angle of point on the circle."""
+        local_start_point = self.frame.global_to_local_coordinates(point)
+        u1, u2 = local_start_point.x / self.radius, local_start_point.y / self.radius
+        point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        return point_angle
 
 
 class Ellipse2D(ClosedCurve):

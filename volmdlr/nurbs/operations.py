@@ -111,14 +111,16 @@ def knot_insertion_kv(knotvector, u, span, num_insertions):
     :return: updated knot vector
     :rtype: list
     """
-    # Initialize variables
     kv_size = len(knotvector)
-    kv_updated = np.zeros(kv_size + num_insertions)
+    kv_updated = [0.0 for _ in range(kv_size + num_insertions)]
 
     # Compute new knot vector
-    kv_updated[:span + 1] = knotvector[:span + 1]
-    kv_updated[span + 1:span + num_insertions + 1] = u
-    kv_updated[span + num_insertions + 1:] = knotvector[span + 1:]
+    for i in range(0, span + 1):
+        kv_updated[i] = knotvector[i]
+    for i in range(1, num_insertions + 1):
+        kv_updated[span + i] = u
+    for i in range(span + 1, kv_size):
+        kv_updated[i + num_insertions] = knotvector[i]
 
     # Return the new knot vector
     return kv_updated
@@ -177,8 +179,7 @@ def insert_knot_curve(obj, param, num, **kwargs):
             cpts_tmp, weights = separate_ctrlpts_weights(cpts_tmp)
 
         # Create new curve
-        knots = list(sorted(set(kv_new)))
-        knot_multiplicities = [core.find_multiplicity(knot, kv_new) for knot in knots]
+        knots, knot_multiplicities = get_knots_and_multiplicities(kv_new)
         point_name = "Point" + obj.__class__.__name__[-2:]
         cpts_tmp = [getattr(volmdlr, point_name)(*point) for point in cpts_tmp]
         obj = obj.__class__(obj.degree, cpts_tmp, knot_multiplicities, knots, weights)
@@ -238,11 +239,9 @@ def construct_split_curve(obj, curve1_kv, curve2_kv, knot_span, insertion_count)
         curve1_weights = None
         curve2_weights = None
 
-    knots_1 = list(sorted(set(curve1_kv)))
-    knot_multiplicities_1 = [core.find_multiplicity(knot, curve1_kv) for knot in knots_1]
+    knots_1, knot_multiplicities_1 = get_knots_and_multiplicities(curve1_kv)
 
-    knots_2 = list(sorted(set(curve2_kv)))
-    knot_multiplicities_2 = [core.find_multiplicity(knot, curve2_kv) for knot in knots_2]
+    knots_2, knot_multiplicities_2 = get_knots_and_multiplicities(curve2_kv)
 
     # Return the split curves
     return [obj.__class__(obj.degree, curve1_ctrlpts, knot_multiplicities_1, knots_1, curve1_weights),
@@ -292,8 +291,7 @@ def insert_knot_surface(obj, param, num, **kwargs):
             cpts_tmp += ctrlpts_tmp
 
         # Update the surface after knot insertion
-        knots = np.unique(new_kv)
-        multiplicities = [core.find_multiplicity(knot, new_kv) for knot in knots]
+        knots, multiplicities = get_knots_and_multiplicities(new_kv)
         cpts_tmp = flip_ctrlpts_u(cpts_tmp, obj.nb_u + num[0], obj.nb_v)
         weights = None
         if obj.rational:
@@ -328,8 +326,7 @@ def insert_knot_surface(obj, param, num, **kwargs):
                                          num=num[1], s=param_multiplicity, span=span)
             cpts_tmp += ctrlpts_tmp
 
-        knots = np.unique(new_kv)
-        multiplicities = [core.find_multiplicity(knot, new_kv) for knot in knots]
+        knots, multiplicities = get_knots_and_multiplicities(new_kv)
         weights = None
         if obj.rational:
             cpts_tmp, weights = separate_ctrlpts_weights(cpts_tmp)
@@ -502,15 +499,13 @@ def helper_split_knot_vectors(degree, knotvector, num_ctrlpts, param, span_func)
     return kv_1, kv_2
 
 
-def get_knots_and_multiplicities(knotvector_u, knotvector_v):
+def get_knots_and_multiplicities(knotvector):
     """
     Get knots and multiplicities from knotvector in u and v direction.
     """
-    u_knots = np.unique(knotvector_u)
-    u_multiplicities = [core.find_multiplicity(knot, knotvector_u) for knot in u_knots]
-    v_knots = np.unique(knotvector_v)
-    v_multiplicities = [core.find_multiplicity(knot, knotvector_v) for knot in v_knots]
-    return u_knots, u_multiplicities, v_knots, v_multiplicities
+    knots = list(sorted(set(round(knot, 18) for knot in knotvector)))
+    multiplicities = [core.find_multiplicity(knot, knotvector) for knot in knots]
+    return knots, multiplicities
 
 
 def construct_split_surfaces(obj, knotvectors, direction, knot_span, insertion_count):
@@ -522,8 +517,8 @@ def construct_split_surfaces(obj, knotvectors, direction, knot_span, insertion_c
         ctrlpts2d = obj.ctrlpts2d()
         surf1_ctrlpts = ctrlpts2d_to_ctrlpts(ctrlpts2d[0:knot_span + insertion_count])
         surf2_ctrlpts = ctrlpts2d_to_ctrlpts(ctrlpts2d[knot_span + insertion_count - 1:])
-        u_knots, u_multiplicities, v_knots, v_multiplicities = get_knots_and_multiplicities(surf1_kv,
-                                                                                            obj.knots_vector_v)
+        u_knots, u_multiplicities = get_knots_and_multiplicities(surf1_kv)
+        v_knots, v_multiplicities = get_knots_and_multiplicities(obj.knots_vector_v)
         surf1_nb_u = knot_span + insertion_count
         surf1_nb_v = obj.nb_v
         surf2_nb_u = obj.nb_u - (knot_span + insertion_count - 1)
@@ -536,8 +531,8 @@ def construct_split_surfaces(obj, knotvectors, direction, knot_span, insertion_c
             surf1_ctrlpts.extend(temp)
             temp = v_row[knot_span + insertion_count - 1:]
             surf2_ctrlpts.extend(temp)
-        u_knots, u_multiplicities, v_knots, v_multiplicities = get_knots_and_multiplicities(obj.knots_vector_u,
-                                                                                            surf1_kv)
+        u_knots, u_multiplicities = get_knots_and_multiplicities(obj.knots_vector_u)
+        v_knots, v_multiplicities = get_knots_and_multiplicities(surf1_kv)
         surf1_nb_u = obj.nb_u
         surf1_nb_v = knot_span + insertion_count
         surf2_nb_u = obj.nb_u
@@ -551,11 +546,9 @@ def construct_split_surfaces(obj, knotvectors, direction, knot_span, insertion_c
 
     # knots
     if direction == "u":
-        u_knots = np.unique(surf2_kv)
-        u_multiplicities = [core.find_multiplicity(knot, surf2_kv) for knot in u_knots]
+        u_knots, u_multiplicities = get_knots_and_multiplicities(surf2_kv)
     else:
-        v_knots = np.unique(surf2_kv)
-        v_multiplicities = [core.find_multiplicity(knot, surf2_kv) for knot in v_knots]
+        v_knots, v_multiplicities = get_knots_and_multiplicities(surf2_kv)
     weights = None
     if obj.rational:
         surf2_ctrlpts, weights = separate_ctrlpts_weights(surf2_ctrlpts)

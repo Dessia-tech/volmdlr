@@ -2995,7 +2995,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         Ray casting algorithm copied from internet.
         """
-        return polygon_point_belongs((point.x, point.y), [(point_.x, point_.y) for point_ in self.points],
+        return polygon_point_belongs(npy.array([point.x, point.y], dtype=npy.float64),
+                                     npy.array([(point_.x, point_.y) for point_ in self.points], dtype=npy.float64),
                                      include_edge_points=include_edge_points, tol=tol)
 
     def points_in_polygon(self, points, include_edge_points: bool = False, tol: float = 1e-6):
@@ -4316,9 +4317,11 @@ class Contour3D(ContourMixin, Wire3D):
                 return raw_edges[0]
             return cls(raw_edges, name=name)
         contour = cls(raw_edges, name=name)
+        if step_id in (523351, 406883, 189178):
+            print(True)
         if contour.is_ordered():
             return contour
-        list_contours = cls.contours_from_edges(raw_edges.copy(), tol=5e-6)
+        list_contours = cls.contours_from_edges(raw_edges.copy())
         for contour_reordered in list_contours:
             if contour_reordered.is_ordered():
                 return contour_reordered
