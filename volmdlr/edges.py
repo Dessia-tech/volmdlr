@@ -1136,7 +1136,7 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if point.is_close(self.end, tol):
             return [self.copy(), None]
-        parameter = self.point_to_parameter(point)
+        parameter = round(self.point_to_parameter(point), 12)
         return split_curve(self, parameter)
 
     def get_reverse(self):
@@ -1320,8 +1320,6 @@ class BSplineCurve(Edge):
         for u0 in initial_condition_list[:2]:
             u, convergence_sucess = self.point_invertion(u0, point)
             if u_min != 0 or u_max != 1.0:
-                if (u_max - u_min) == 0:
-                    print(True)
                 u = (u - u_min) / (u_max - u_min)
             abscissa = u * length
             if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess

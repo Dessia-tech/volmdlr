@@ -205,7 +205,6 @@ def split_curve(obj, param, **kwargs):
     :rtype: list
 
     """
-    param = round(param, 12)
     if param in set(obj.domain):
         raise ValueError("Cannot split from the domain edge")
 

@@ -8,18 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.15.0 [future]
 
 ### New Features
-- ClosedPolygon2D: points_in_polygon
+-
 
 ### Fixed
-- BSplineSurface3D: derivatives
-- BSplineCurve: split
-
+-
 
 ### Refactor
 -
 
 ### Changed
-- BSplineSurface3D: point3d_to_2d
+-
 
 ### Unittests
 - 
@@ -45,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: point_to_parameter, abscissa_to_parameter.
 - Basis3D: is_normilized, is_orthogonal, is_orthonormal.
 - BSplineSurface3D: fullarcellipse3d_to_2d
+- ClosedPolygon2D: points_in_polygon
 
 ### Fixed
 - add missing name attributes to classmethods.
@@ -65,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: linesegment2d_to_3d
 - BSplineSurface3D: bsplinecurve3d_to_2d, prevents code execution from stopping when point3d_to_2d does not converge
 - BSplineSurface3D: derivatives
+- BSplineCurve: split
 - 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - core_compiled: cdef functions' names.
 - Vector2D, Vector3D, Point2D, Point3D: transformed into extension types for memory performance
 - limit warning on step reading
+- BSplineSurface3D: point3d_to_2d
 
 ### Unittests
 - Hyperbola2D/3D: line_intersections
