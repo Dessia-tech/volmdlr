@@ -2,7 +2,7 @@
 Unit tests for volmdlr.faces.BSplineCurve
 """
 import unittest
-
+import os
 from dessia_common.core import DessiaObject
 from geomdl import BSpline
 
@@ -13,7 +13,8 @@ from volmdlr.models import bspline_curves
 import volmdlr.nurbs.helpers as nurbs_helpers
 
 
-GEOMDL_DELTA = 0.001
+DELTA = 0.001
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'bsplinecurve_objects')
 
 
 class TestBSplineCurve2D(unittest.TestCase):
@@ -53,8 +54,8 @@ class TestBSplineCurve2D(unittest.TestCase):
         for param, res in test_cases:
             with self.subTest(param=param):
                 evalpt = self.bspline2d.evaluate_single(param)
-                self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
-                self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
+                self.assertAlmostEqual(evalpt[0], res[0], delta=DELTA)
+                self.assertAlmostEqual(evalpt[1], res[1], delta=DELTA)
 
         test_cases = [
             (0.0, (5.0, 5.0)),
@@ -66,15 +67,15 @@ class TestBSplineCurve2D(unittest.TestCase):
             with self.subTest(param=param):
                 evalpt = self.bspline2d_rational.evaluate_single(param)
 
-                self.assertAlmostEqual(evalpt[0], res[0], delta=GEOMDL_DELTA)
-                self.assertAlmostEqual(evalpt[1], res[1], delta=GEOMDL_DELTA)
+                self.assertAlmostEqual(evalpt[0], res[0], delta=DELTA)
+                self.assertAlmostEqual(evalpt[1], res[1], delta=DELTA)
 
     def test_derivatives(self):
         derivatives = self.bspline2d.derivatives(u=0.35, order=2)
         expected_result = [[20.879272837543425, 13.96350686701158], [45.20015428165102, 9.987462558623653], [-1.334434093851499, -68.74685708529317]]
         for der, res in zip(derivatives, expected_result):
-            self.assertAlmostEqual(der[0], res[0], delta=GEOMDL_DELTA)
-            self.assertAlmostEqual(der[1], res[1], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(der[0], res[0], delta=DELTA)
+            self.assertAlmostEqual(der[1], res[1], delta=DELTA)
 
         test_cases = [
             (0.0, 1, ((5.0, 5.0), (90.9090, 90.9090))),
@@ -87,7 +88,7 @@ class TestBSplineCurve2D(unittest.TestCase):
 
             for computed, expected in zip(deriv, res):
                 for c, e in zip(computed, expected):
-                    self.assertAlmostEqual(c, e, delta=GEOMDL_DELTA)
+                    self.assertAlmostEqual(c, e, delta=DELTA)
 
     def test_interpolate_curve(self):
         # The NURBS Book Ex9.1
@@ -105,8 +106,8 @@ class TestBSplineCurve2D(unittest.TestCase):
             [-4.0, -3.0],
         ]
         for point, expected_point in zip(curve.control_points, expected_ctrlpts):
-            self.assertAlmostEqual(point[0], expected_point[0], delta=GEOMDL_DELTA)
-            self.assertAlmostEqual(point[1], expected_point[1], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(point[0], expected_point[0], delta=DELTA)
+            self.assertAlmostEqual(point[1], expected_point[1], delta=DELTA)
 
     def test_approximate_curve(self):
         # The NURBS Book Ex9.1
@@ -123,8 +124,8 @@ class TestBSplineCurve2D(unittest.TestCase):
             [-4.0, -3.0],
         ]
         for point, expected_point in zip(curve.control_points, expected_ctrlpts):
-            self.assertAlmostEqual(point[0], expected_point[0], delta=GEOMDL_DELTA)
-            self.assertAlmostEqual(point[1], expected_point[1], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(point[0], expected_point[0], delta=DELTA)
+            self.assertAlmostEqual(point[1], expected_point[1], delta=DELTA)
 
         points2d = [volmdlr.Point2D(0, 0.1),
                     volmdlr.Point2D(0.2, 0.3),
@@ -140,18 +141,18 @@ class TestBSplineCurve2D(unittest.TestCase):
                             volmdlr.Point2D(0.466545895266623, 0.5077440536607246),
                             volmdlr.Point2D(0.7432185866086097, 0.852531277025759), volmdlr.Point2D(1.0, 0.9)]
         for point, expected_point in zip(bspline_curve2d_approximated.control_points, expected_ctrlpts):
-            self.assertAlmostEqual(point[0], expected_point[0], delta=GEOMDL_DELTA)
-            self.assertAlmostEqual(point[1], expected_point[1], delta=GEOMDL_DELTA)
+            self.assertAlmostEqual(point[0], expected_point[0], delta=DELTA)
+            self.assertAlmostEqual(point[1], expected_point[1], delta=DELTA)
 
     def test_length(self):
         total_length = self.bspline2d.length()
-        self.assertAlmostEqual(total_length, 50.33433959792692, delta=GEOMDL_DELTA)
+        self.assertAlmostEqual(total_length, 50.33433959792692, delta=DELTA)
 
     def test_abscissa(self):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
         point = volmdlr.Point2D(-0.31240117104573617, -2.8555856978321796)
 
-        bspline = vme.BSplineCurve2D.load_from_file("edges/bg_bspline5_.json")
+        bspline = vme.BSplineCurve2D.load_from_file(os.path.join(folder, "bg_bspline5_.json"))
         point1 = bspline.points[25]
         point2 = bspline.points[75]
 
@@ -179,7 +180,7 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertAlmostEqual(bspline_curve2d.abscissa(point), 7.747599410268476)
 
     def test_line_intersections(self):
-        bspline_curve2d = DessiaObject.load_from_file('edges/bsplinecurve2d_1.json')
+        bspline_curve2d = DessiaObject.load_from_file(os.path.join(folder, "bsplinecurve2d_1.json"))
         line = curves.Line2D(volmdlr.Point2D(1.263163105753452, -0.002645572020392778),
                           volmdlr.Point2D(1.263163105753452, -0.001820963841291406))
 
@@ -311,22 +312,32 @@ class TestBSplineCurve2D(unittest.TestCase):
             self.assertTrue(point1.is_close(point2))
 
     def test_simplify(self):
-        bsplinecurve = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_fullarc.json")
+        bsplinecurve = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bsplinecurve_fullarc.json"))
         fullarc = bsplinecurve.simplify
         self.assertTrue(isinstance(fullarc, vme.FullArc3D))
 
     def test_direction_independent_is_close(self):
-        bsplinecurve1 = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_objects/bspline_curve1.json")
-        bsplinecurve2 = vme.BSplineCurve3D.load_from_file("edges/bsplinecurve_objects/bspline_curve2.json")
+        bsplinecurve1 = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bspline_curve1.json"))
+        bsplinecurve2 = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bspline_curve2.json"))
         self.assertTrue(bsplinecurve1.direction_independent_is_close(bsplinecurve2))
 
     def test_split_curve(self):
         split_point = volmdlr.Point2D(28.1775252667145, 14.785855215217019)
-        curves = self.bspline2d_rational.split(split_point)
-        self.assertTrue(curves[0].start.is_close(volmdlr.Point2D(5.0, 5.0)))
-        self.assertTrue(curves[0].end.is_close(split_point))
-        self.assertTrue(curves[1].start.is_close(split_point))
-        self.assertTrue(curves[1].end.is_close(volmdlr.Point2D(50.0, 5.0)))
+        splitted_curves = self.bspline2d_rational.split(split_point)
+        self.assertTrue(splitted_curves[0].start.is_close(volmdlr.Point2D(5.0, 5.0)))
+        self.assertTrue(splitted_curves[0].end.is_close(split_point))
+        self.assertTrue(splitted_curves[1].start.is_close(split_point))
+        self.assertTrue(splitted_curves[1].end.is_close(volmdlr.Point2D(50.0, 5.0)))
+
+        split_point = volmdlr.Point2D(0.04820589473987067, 0.011936395549382077)
+        bsplinecurve = vme.BSplineCurve2D.load_from_file(os.path.join(folder, "bsplinecurve_split_bug.json"))
+        splitted_curves = bsplinecurve.split(split_point)
+        self.assertTrue(splitted_curves[0].start.is_close(volmdlr.Point2D(0.04873977000999985, 0.011815456390639745)))
+        self.assertTrue(splitted_curves[0].end.is_close(split_point))
+        self.assertTrue(splitted_curves[1].start.is_close(split_point))
+        self.assertTrue(splitted_curves[1].end.is_close(volmdlr.Point2D(0.04793931370999993, 0.011891887758212483)))
+        self.assertAlmostEqual(splitted_curves[0].length(), 0.0005535177002044544, 5)
+        self.assertAlmostEqual(splitted_curves[1].length(), 0.0002710315376536523, 5)
 
     def test_tangent(self):
         tangent = self.bspline1.tangent(0.5)
