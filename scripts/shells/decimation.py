@@ -19,8 +19,8 @@ else:
 
 # Load STL model using volmdlr
 stl_model = Stl.load_from_file(FILE_NAME)
-closed_shell = stl_model.to_closed_shell()
+closed_triangle_shell = stl_model.to_closed_shell()
 
 # Decimate and show model
-decimated_shell = closed_shell.decimate(1000, verbose=True)
-decimated_shell.babylonjs()
+decimated_closed_triangle_shell = closed_triangle_shell.decimate(50, verbose=True)
+decimated_closed_triangle_shell.babylonjs()
