@@ -7,7 +7,7 @@ from volmdlr.cad_simplification import TripleExtrusionSimplify
 from volmdlr.step import Step
 
 # Load
-volume_model = Step.from_file("engine.step").to_volume_model()
+volume_model = Step.from_file("./engine.step").to_volume_model()
 
 # Simplify
 start = time.perf_counter()
