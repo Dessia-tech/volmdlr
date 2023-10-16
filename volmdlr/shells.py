@@ -800,13 +800,12 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         if "Triangle" in self.__class__.__name__:
             return self
 
-        else:
-            triangles = self.triangulation().faces
+        triangles = self.triangulation().faces
 
-            if "Closed" in self.__class__.__name__:
-                return ClosedTriangleShell3D(faces=triangles, color=self.color, alpha=self.alpha, name=self.name)
-            else:
-                return OpenTriangleShell3D(faces=triangles, color=self.color, alpha=self.alpha, name=self.name)
+        if "Closed" in self.__class__.__name__:
+            return ClosedTriangleShell3D(faces=triangles, color=self.color, alpha=self.alpha, name=self.name)
+
+        return OpenTriangleShell3D(faces=triangles, color=self.color, alpha=self.alpha, name=self.name)
 
     def babylon_meshes(self, merge_meshes=True):
         """
