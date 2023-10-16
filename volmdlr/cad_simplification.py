@@ -3,10 +3,8 @@ volmdlr cad simplification module.
 """
 from abc import ABC
 
-import numpy as np
 import pyfqmr
 from dessia_common.core import DessiaObject
-from typing import Tuple
 
 import volmdlr
 from volmdlr.cloud import PointCloud3D
@@ -83,7 +81,7 @@ class TripleExtrusionSimplify(Simplify):
             polygon2d = cloud2d.to_polygon(convex=True)
             contour2d = Contour2D(polygon2d.line_segments)
 
-            frame = volmdlr.Frame3D((center - 0.5 * length) * w_vector, u_vector, v_vector, w_vector)
+            frame = volmdlr.Frame3D(((center - 0.5 * length) * w_vector).to_point(), u_vector, v_vector, w_vector)
             dir_shell = ExtrudedProfile(frame, contour2d, [], length)
             dir_shell.merge_faces()
 

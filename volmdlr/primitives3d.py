@@ -552,7 +552,7 @@ class ExtrudedProfile(shells.ClosedShell3D):
     def area(self):
         """Returns the area of the extruded 2D surface."""
         areas = self.outer_contour2d.area()
-        areas -= sum([contour.area() for contour in self.inner_contours2d])
+        areas -= sum(contour.area() for contour in self.inner_contours2d)
         return areas
 
     def volume(self):
@@ -745,6 +745,7 @@ class RevolvedProfile(shells.ClosedShell3D):
             color=self.color, alpha=self.alpha)
 
     def frame_mapping_parameters(self, frame: volmdlr.Frame3D, side: str):
+        """Apply transformation to object's parameters."""
         basis = frame.Basis()
         if side == 'old':
             axis = basis.local_to_global_coordinates(self.axis)
@@ -1840,10 +1841,6 @@ class Sweep(shells.ClosedShell3D):
         self.contour2d = contour2d
         self.wire3d = wire3d
         self.frames = []
-        arc_radius = [prim.circle.radius for prim in self.wire3d.primitives if isinstance(prim, volmdlr.edges.Arc3D)]
-        if arc_radius and min(arc_radius) <= max(self.contour2d.bounding_rectangle.bounds()) / 2:
-            raise ValueError(f'Section too big in comparison to path curvature radiuses. All radiuses should be > '
-                             f'{max(self.contour2d.bounding_rectangle.bounds()) / 2}')
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces, color=color,
                                       alpha=alpha, name=name)

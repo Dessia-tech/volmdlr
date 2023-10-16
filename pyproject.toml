@@ -1,2 +1,7 @@
 [build-system]
-requires = ["setuptools", "Cython"]
+requires = ["setuptools", "Cython>=3", "numpy<1.26.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel]
+# Skip building on CPython 3.12 on all platforms. remove in the future
+skip = "cp312-*"

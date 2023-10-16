@@ -25,7 +25,7 @@ MAX_ERROR_BY_TYPE = {
     # If the error code is not in this dict, then there is no tolerance on the error.
     # http://www.pydocstyle.org/en/stable/error_codes.html
     "D101": 53,
-    "D102": 402,
+    "D102": 354,
 
     "D205": 77,
 
@@ -44,7 +44,7 @@ if os.environ.get('DRONE_BRANCH', '') in ['master', 'testing']:
 
 if os.environ.get('DRONE_TARGET_BRANCH', '') in ['master', 'testing']:
     limit_time_effect = True
-    print(f"Limiting time effect of 21 days as we are targetting {os.environ['DRONE_TARGET_BRANCH']}")
+    print(f"Limiting time effect of 21 days as we are targeting {os.environ['DRONE_TARGET_BRANCH']}")
 
 if limit_time_effect:
     EFFECTIVE_DATE += timedelta(days=21)

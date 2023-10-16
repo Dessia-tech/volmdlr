@@ -12,7 +12,7 @@ class TestEllipse2D(unittest.TestCase):
     ellipse2d = curves.Ellipse2D(4, 2, volmdlr.Frame2D(volmdlr.O2D,
                                                        volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475),
                                                        volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)))
-    discretized_points = ellipse2d.discretization_points(number_points=10)
+    discretized_points = ellipse2d.discretization_points(number_points=11)
 
     def test_length(self):
         self.assertAlmostEqual(self.ellipse2d.length(), 19.376896441095354)
