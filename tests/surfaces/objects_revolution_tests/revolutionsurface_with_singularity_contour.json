@@ -1,0 +1,165 @@
+{
+  "object_class": "volmdlr.wires.Contour3D",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "name": "",
+      "degree": 5,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.18072760356,
+          "y": 0.731438470224,
+          "z": 0.21241735694600003
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.1798103882300004,
+          "y": 0.731550360854,
+          "z": 0.21203500041
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.1787515290000004,
+          "y": 0.73206399374,
+          "z": 0.21210998965900002
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.17785676432,
+          "y": 0.7329420720050001,
+          "z": 0.212769776869
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.17729606685,
+          "y": 0.7337025049420001,
+          "z": 0.213465547101
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.17706943662,
+          "y": 0.7343452925520001,
+          "z": 0.214197300355
+        }
+      ],
+      "knot_multiplicities": [
+        6,
+        6
+      ],
+      "knots": [
+        0.0,
+        1.0
+      ],
+      "weights": null
+    },
+    {
+      "object_class": "volmdlr.edges.Arc3D",
+      "name": "_reverse",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle3D",
+        "name": "",
+        "radius": 0.003,
+        "frame": {
+          "object_class": "volmdlr.Frame3D",
+          "name": "",
+          "origin": {
+            "object_class": "volmdlr.Point3D",
+            "x": 2.17982108262,
+            "y": 0.734009620663,
+            "z": 0.215344369961,
+            "name": "Axis2P3D Location"
+          },
+          "u": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.9739808702421053,
+            "y": 0.14956670391369667,
+            "z": 0.1702676289927824
+          },
+          "v": {
+            "object_class": "volmdlr.Vector3D",
+            "x": -0.0,
+            "y": -0.7513014640697946,
+            "z": 0.6599591730452598
+          },
+          "w": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.22663023717595848,
+            "y": -0.6427876096868823,
+            "z": -0.7317532537888664
+          }
+        },
+        "angle": 6.283185307179586
+      },
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": 2.17706943662,
+        "y": 0.7343452925520001,
+        "z": 0.214197300355,
+        "name": "Vertex"
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 2.18257272861,
+        "y": 0.733673948774,
+        "z": 0.21649143956699998,
+        "name": "Vertex"
+      }
+    },
+    {
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "name": "",
+      "degree": 5,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.18257272861,
+          "y": 0.733673948774,
+          "z": 0.21649143956699998
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.18279935885,
+          "y": 0.733031161164,
+          "z": 0.21575968631300002
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.18274857942,
+          "y": 0.73234532198,
+          "z": 0.214809011724
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.18242039033,
+          "y": 0.731616431221,
+          "z": 0.2136394158
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.1816448188999997,
+          "y": 0.731326579594,
+          "z": 0.212799713481
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 2.18072760356,
+          "y": 0.731438470224,
+          "z": 0.21241735694600003
+        }
+      ],
+      "knot_multiplicities": [
+        6,
+        6
+      ],
+      "knots": [
+        -0.0,
+        1.0
+      ],
+      "weights": null
+    }
+  ],
+  "color": null,
+  "alpha": 1.0
+}

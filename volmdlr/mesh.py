@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-unary-operand-type
 """
 Module containing mesh and relative objects.
 """
@@ -564,6 +565,7 @@ class ElementsGroup(DessiaObject):
 
     @property
     def elements_per_node(self):
+        """Maps the elements of each node."""
         if self._elements_per_node is not None:
             return self._elements_per_node
 
@@ -709,7 +711,7 @@ class Mesh(DessiaObject):
         return self._nodes_correction
 
     def delete_duplicated_nodes(self, reference_index, tol=1e-4):
-
+        """Delete duplicated nodes."""
         groups = self.elements_groups[:]
         groups.pop(reference_index)
 

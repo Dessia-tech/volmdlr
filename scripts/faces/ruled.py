@@ -48,8 +48,8 @@ wire2.plot(ax=ax)
 face = volmdlr.faces.RuledFace3D.from_surface_rectangular_cut(ruled_surface, 0, 1,0, 1)
 face.babylonjs()
 
-circle1 = volmdlr.wires.Circle3D(volmdlr.OXYZ, 0.1)
-circle2 = volmdlr.wires.Circle3D(volmdlr.Frame3D(0.1*volmdlr.Z3D,
+circle1 = volmdlr.curves.Circle3D(volmdlr.OXYZ, 0.1)
+circle2 = volmdlr.curves.Circle3D(volmdlr.Frame3D(0.1*volmdlr.Z3D,
                                                  volmdlr.X3D,
                                                  volmdlr.Y3D,
                                                  volmdlr.Z3D),

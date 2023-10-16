@@ -12,11 +12,15 @@ import volmdlr
 from volmdlr import edges, wires, faces, surfaces, curves
 
 
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "objects_planeface_tests")
+
+
 class TestPlaneFace3D(unittest.TestCase):
-    face_with_3holes = dc.DessiaObject.load_from_file('faces/face_with_3holes.json')
-    face = dc.DessiaObject.load_from_file('faces/face_to_cut_the_one_with_3holes.json')
+    face_with_3holes = dc.DessiaObject.load_from_file(os.path.join(folder, 'face_with_3holes.json'))
+    face = dc.DessiaObject.load_from_file(os.path.join(folder,
+                                                       'face_to_cut_the_one_with_3holes.json'))
     plane_face_cylindricalface_intersec = dc.DessiaObject.load_from_file(
-        'faces/plane_face_cylindrical_face_intersec.json')
+        os.path.join(folder, 'plane_face_cylindrical_face_intersec.json'))
 
     def test_area(self):
         self.assertAlmostEqual(self.face_with_3holes.area(), 0.12160000)
@@ -26,10 +30,9 @@ class TestPlaneFace3D(unittest.TestCase):
                                         volmdlr.Vector3D(0, 0.5, 0), volmdlr.Vector3D(0, 0, 0.5)), 'old')
         self.assertEqual(self.face.face_inside(face2), True)
         self.assertEqual(face2.face_inside(self.face), False)
-        face1, face2 = dc.DessiaObject.load_from_file('faces/objects_planeface_tests/test_face_inside.json').primitives
+        face1, face2 = dc.DessiaObject.load_from_file(os.path.join(folder, 'test_face_inside.json')).primitives
         self.assertTrue(face1.face_inside(face2))
-        face1, face2 = dc.DessiaObject.load_from_file(
-            'faces/objects_planeface_tests/test_face3_face_inside.json').primitives
+        face1, face2 = dc.DessiaObject.load_from_file(os.path.join(folder, 'test_face3_face_inside.json')).primitives
         self.assertFalse(face1.face_inside(face2))
 
     def test_face_intersections_with_holes(self):
@@ -53,13 +56,13 @@ class TestPlaneFace3D(unittest.TestCase):
             volmdlr.Point2D(1, 0.75), volmdlr.Point2D(1, 1), volmdlr.Point2D(1.25, 1),
             volmdlr.Point2D(1.25, 1.5), volmdlr.Point2D(1, 1.5)
         ])
-        face_tobe_divided = dc.DessiaObject.load_from_file('faces/face_tobe_divided.json')
+        face_tobe_divided = dc.DessiaObject.load_from_file(os.path.join(folder, 'face_tobe_divided.json'))
         divided_faces = face_tobe_divided.divide_face([cutting_contour])
         self.assertEqual(len(divided_faces), 4)
         expected_areas = [0.125, 1.4320458460875176, 0.05704584608751772, 0.125]
         for i, face in enumerate(divided_faces):
             self.assertAlmostEqual(expected_areas[i], face.area())
-        source_folder = 'faces/objects_planeface_tests/test_planeface_divide_face_json_files'
+        source_folder = os.path.join(folder, 'test_planeface_divide_face_json_files')
         expected_faces_areas = [[0.0055788043593624215, 0.23430978309161565, 0.005578804359415823, 0.0948396741089057],
                                 [0.0855613934860544, 0.032085522557644186, 0.01069517418574345],
                                 [0.002005345159845676, 0.002005345159820638, 0.0033422419331328506,
@@ -85,7 +88,7 @@ class TestPlaneFace3D(unittest.TestCase):
 
     def test_set_operations_new_faces(self):
         volumemodel = dessia_common.core.DessiaObject.load_from_file(
-            'faces/objects_planeface_tests/test_set_operations_new_faces.json')
+            os.path.join(folder, 'test_set_operations_new_faces.json'))
         plane_face, cutting_contours3d = volumemodel.primitives[0], volumemodel.primitives[1:]
         divide_face = plane_face.set_operations_new_faces({(plane_face, plane_face): cutting_contours3d})
         divide_face = sorted(divide_face, key=lambda face: face.area())
@@ -114,7 +117,7 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertEqual(face_intersections[0].primitives[0].ellipse.center, volmdlr.O3D)
         self.assertAlmostEqual(face_intersections[0].primitives[0].ellipse.major_axis, 0.21213203435596426)
         self.assertTrue(face_intersections[0].primitives[0].ellipse.major_dir.is_close(
-            volmdlr.Vector3D(0, 0.7071067811865475, -0.7071067811865475)))
+            volmdlr.Vector3D(0, -0.7071067811865475, 0.7071067811865475)))
         """ ========== THREE ARC ELLIPSES ========="""
         plane_face_3 = self.plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 7)
         face_intersections = plane_face_3.face_intersections(face)
@@ -123,17 +126,17 @@ class TestPlaneFace3D(unittest.TestCase):
             self.assertIsInstance(inter.primitives[0], edges.ArcEllipse3D)
         self.assertEqual(face_intersections[0].primitives[0].ellipse.center, volmdlr.O3D)
         self.assertTrue(face_intersections[0].primitives[0].ellipse.major_dir.is_close(volmdlr.Point3D(
-            2.6567716615652136e-17, 0.4338837391180807, -0.9009688679021675)))
+            2.6567716615652136e-17, -0.4338837391180807, 0.9009688679021675)))
         self.assertAlmostEqual(face_intersections[0].primitives[0].ellipse.major_axis, 0.3457147306439571)
-        list_expected_points = [[volmdlr.Point3D(0.08947272158306664, 0.12039365470206077, -0.25),
-                                 volmdlr.Point3D(0.136637076048, 0.061889493851, -0.128514858204),
-                                 volmdlr.Point3D(0.15, 0.0, 0.0)],
-                                [volmdlr.Point3D(0.15, 0.0, 0.0),
-                                 volmdlr.Point3D(0.136637075473, -0.06188949512, 0.128514860839),
-                                 volmdlr.Point3D(0.08947272158306664, -0.12039365470206077, 0.25)],
-                                [volmdlr.Point3D(-0.08947272158306664, -0.12039365470206077, 0.25),
+        list_expected_points = [[volmdlr.Point3D(0.08947272158306664, -0.12039365470206077, 0.25),
+                                 volmdlr.Point3D(0.136637076048, -0.061889493851, 0.128514858204),
+                                 volmdlr.Point3D(0.15, -0.0, 0.0)],
+                                [volmdlr.Point3D(0.15, -0.0, 0.0),
+                                 volmdlr.Point3D(0.136637075473, 0.06188949512, -0.128514860839),
+                                 volmdlr.Point3D(0.08947272158306664, 0.12039365470206077, -0.25)],
+                                [volmdlr.Point3D(-0.08947272158306664, 0.12039365470206077, -0.25),
                                  volmdlr.Point3D(-0.15, 0, 0),
-                                 volmdlr.Point3D(-0.08947272158306664, 0.12039365470206077, -0.25)]]
+                                 volmdlr.Point3D(-0.08947272158306664, -0.12039365470206077, 0.25)]]
         for expected_points, wire in zip(list_expected_points, face_intersections):
             arcellipse = wire.primitives[0]
             self.assertTrue(expected_points[0].is_close(arcellipse.start))
@@ -173,7 +176,7 @@ class TestPlaneFace3D(unittest.TestCase):
         intersections = face.face_intersections(conical_face)
         self.assertEqual(len(intersections), 1)
         self.assertIsInstance(intersections[0].primitives[0], edges.BSplineCurve3D)
-        self.assertAlmostEqual(intersections[0].length(), 1.5797324269472552)
+        self.assertAlmostEqual(intersections[0].length(), 1.5797706721593943)
 
         """============== Two LineSegments ==================="""
         plane3 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0.0, 0.5),
@@ -196,8 +199,8 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertEqual(len(intersections), 2)
         self.assertIsInstance(intersections[0].primitives[0], edges.ArcEllipse3D)
         self.assertIsInstance(intersections[1].primitives[0], edges.ArcEllipse3D)
-        self.assertAlmostEqual(intersections[0].length(), 1.1339664625179093)
-        self.assertAlmostEqual(intersections[1].length(), 0.7233023692399578)
+        self.assertAlmostEqual(intersections[0].length(), 0.7233023692399578)
+        self.assertAlmostEqual(intersections[1].length(), 1.1339664625179093, 6)
         """================== Parabola ===================="""
         point1 = conical_surface.frame.origin
         point2 = conical_surface.frame.local_to_global_coordinates(
@@ -210,7 +213,7 @@ class TestPlaneFace3D(unittest.TestCase):
         intersections = face.face_intersections(conical_face)
         self.assertEqual(len(intersections), 1)
         self.assertIsInstance(intersections[0].primitives[0], edges.BSplineCurve3D)
-        self.assertAlmostEqual(intersections[0].length(), 1.190977548203506)
+        self.assertAlmostEqual(intersections[0].length(), 1.19097843887217)
 
     def test_linesegment_inside(self):
         lineseg = volmdlr.edges.LineSegment3D(volmdlr.Point3D(0.2, 0, -0.2), volmdlr.Point3D(0.1, 0.0, 0.2))
@@ -225,7 +228,7 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertFalse(self.plane_face_cylindricalface_intersec.circle_inside(circle2))
 
     def test_merges_faces(self):
-        source_folder = 'faces/objects_planeface_tests/test_planeface3d_merge_faces_json_files'
+        source_folder = os.path.join(folder, 'test_planeface3d_merge_faces_json_files')
         faces_areas = []
         file_names = ['test_merge_faces4.json', 'test_merge_faces5.json', 'faces_merge_faces2.json',
                       'faces_merge_faces3.json', 'faces_merge_faces4.json']

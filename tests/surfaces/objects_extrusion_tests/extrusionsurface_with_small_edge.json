@@ -1,0 +1,73 @@
+{
+  "object_class": "volmdlr.surfaces.ExtrusionSurface3D",
+  "name": "",
+  "edge": {
+    "object_class": "volmdlr.edges.BSplineCurve3D",
+    "name": "",
+    "degree": 2,
+    "control_points": [
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.184090654814,
+        "y": -0.169101150513,
+        "z": 0.26405261230500005
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.184091215668,
+        "y": -0.169101150513,
+        "z": 0.264051155502
+      },
+      {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.184091776566,
+        "y": -0.169101151574,
+        "z": 0.26404969871600004
+      }
+    ],
+    "knot_multiplicities": [
+      3,
+      3
+    ],
+    "knots": [
+      0.0,
+      1.0
+    ],
+    "weights": null
+  },
+  "direction": {
+    "object_class": "volmdlr.Vector3D",
+    "x": 0.9317915231792292,
+    "y": 0.0,
+    "z": 0.36299388057008924
+  },
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.184090654814,
+      "y": -0.169101150513,
+      "z": 0.26405261230500005
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 0.36299388057008936,
+      "y": 0.0,
+      "z": -0.931791523179229
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 0.0,
+      "y": 1.0,
+      "z": 0.0
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 0.931791523179229,
+      "y": 0.0,
+      "z": 0.36299388057008936
+    }
+  },
+  "_references": {}
+}

@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # cython: language_level=3
+# cython: c_string_type=str, c_string_encoding=ascii
 """
 
 Cython functions
 
 """
+import cython
 import cython.cimports.libc.math as math_c
+from cython.parallel import prange
 import math
 import random
 import sys
@@ -15,6 +18,7 @@ from typing import List, Text, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as npy
+cimport numpy as np
 import plot_data
 import volmdlr
 from dessia_common.core import DessiaObject
@@ -167,8 +171,9 @@ cdef (double, (double, double, double)) c_linesegment3d_point_distance((double, 
 
 # =============================================================================
 
-
-def polygon_point_belongs(point, points, include_edge_points: bool = False, tol: float = 1e-6):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef bint polygon_point_belongs(point, points, bint include_edge_points=False, double tol= 1e-6):
     cdef int i
     cdef int n = len(points)
     cdef bint inside = False
@@ -176,8 +181,10 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False, tol:
     cdef double[2] u, v, projection_vector, projection_point
     x, y = point
     for i in range(n):
-        p1x, p1y = points[i]
-        p2x, p2y = points[(i + 1) % n]
+        p1x = points[i][0]
+        p1y = points[i][1]
+        p2x = points[(i + 1) % n][0]
+        p2y = points[(i + 1) % n][1]
         v = [p2x - p1x, p2y - p1y]
         u = [x - p1x, y - p1y]
         dot_product = u[0] * v[0] + u[1] * v[1]
@@ -207,9 +214,72 @@ def polygon_point_belongs(point, points, include_edge_points: bool = False, tol:
     return inside
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon, double[:, ::1] points,
+                                                         bint include_edge_points = False, double tol = 1e-6):
+    cdef int n = polygon.shape[0]
+    cdef int m = points.shape[0]
+    cdef int i, j
+    cdef double x, y, p1x, p1y, p2x, p2y, xints, dot_product, length_squared, t, distance_projection_to_point
+    cdef double[2] u, v, projection_vector, projection_point
+    cdef np.ndarray[np.uint8_t, ndim = 1] results = npy.zeros(m, dtype=npy.uint8)
+    cdef bint inside
+
+    for i in prange(m, nogil=True):
+        x = points[i][0]
+        y = points[i][1]
+        inside = False
+        for j in range(n):
+            p1x = polygon[j][0]
+            p1y = polygon[j][1]
+            p2x = polygon[(j + 1) % n][0]
+            p2y = polygon[(j + 1) % n][1]
+            v[0] = p2x - p1x
+            v[1] = p2y - p1y
+            u[0] = x - p1x
+            u[1] = y - p1y
+            dot_product = u[0] * v[0] + u[1] * v[1]
+            length_squared = v[0] * v[0] + v[1] * v[1]
+            t = dot_product / length_squared
+            if 0.0 <= t <= 1.0:
+                projection_vector[0] = v[0] * t
+                projection_vector[1] = v[1] * t
+                projection_point[0] = p1x + projection_vector[0]
+                projection_point[1] = p1y + projection_vector[1]
+                distance_projection_to_point = math_c.sqrt((projection_point[0] - x) ** 2 + (projection_point[1]
+                                                                                             - y) ** 2)
+                if distance_projection_to_point <= tol:
+                    if include_edge_points:
+                        results[i] = True
+                        break
+                    else:
+                        results[i] = False
+                        break
+            xints = math_c.HUGE_VAL
+            if min(p1y, p2y) <= y <= max(p1y, p2y) and min(p1x, p2x) <= x <= max(p1x, p2x):
+                if p1y != p2y:
+                    xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                if p1y == p2y or x == xints:
+                    if include_edge_points:
+                        results[i] = True
+                        break
+                    else:
+                        results[i] = False
+                        break
+            if min(p1y, p2y) < y <= max(p1y, p2y) and x <= max(p1x, p2x):
+                if p1y != p2y:
+                    xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                if p1x == p2x or x < xints:
+                    inside = not inside
+        results[i] = inside
+
+    return results
+
+
 # =============================================================================
 def bbox_is_intersecting(bbox1, bbox2, tol):
-    """Verifies if the two bouding boxes are intersecting, or touching."""
+    """Verifies if the two bounding boxes are intersecting, or touching."""
     cdef double x1_min, x1_max, y1_min, y1_max, z1_min, z1_max, x2_min, x2_max, y2_min, y2_max, z2_min, z2_max
     x1_min = bbox1.xmin - tol
     x1_max = bbox1.xmax + tol
@@ -396,10 +466,12 @@ class Arrow3D(FancyArrowPatch):
         return ax
 
 
-class Vector(DessiaObject):
+cdef class Vector:
     """
     Abstract class of vector
     """
+    def __init__(self, name = ""):
+        self.name = name
 
     def __radd__(self, other_vector):
         return self + other_vector
@@ -419,7 +491,7 @@ class Vector(DessiaObject):
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector: "Vector", abs_tol: float = 1e-6):
+    def is_colinear_to(self, other_vector: Vector, abs_tol: float = 1e-6):
         """
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.
@@ -439,7 +511,7 @@ class Vector(DessiaObject):
         except ZeroDivisionError:
             return False
 
-    def is_perpendicular_to(self, other_vector: "Vector", abs_tol: float = 1e-5):
+    def is_perpendicular_to(self, other_vector: Vector, abs_tol: float = 1e-5):
         """
         Checks if two vectors are perpendicular.
         The two vectors should be of same dimension.
@@ -454,7 +526,7 @@ class Vector(DessiaObject):
         return math.isclose(abs(self.dot(other_vector)), 0, abs_tol=abs_tol)
 
     @classmethod
-    def mean_point(cls, points: List["Vector"], name: str = ""):
+    def mean_point(cls, points: List["Vector"], name = ""):
         """
         Find the mean point from a list of points. All the objects of this list
         should be of same dimension.
@@ -500,7 +572,7 @@ class Vector(DessiaObject):
         return self
 
 
-class Vector2D(Vector):
+cdef class Vector2D(Vector):
     """
     Class representing a 2-dimensional vector.
 
@@ -508,13 +580,12 @@ class Vector2D(Vector):
     :type x: float
     :param y: The vector's ordinate
     :type y: float
-    :param name: The vector's name
-    :type name: str
+
     """
-    def __init__(self, x: float, y: float, name=""):
+    def __init__(self, x: float, y: float, name: str = ""):
         self.x = x
         self.y = y
-        self.name = name
+        Vector.__init__(self, name=name)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.x}, {self.y})"
@@ -566,7 +637,10 @@ class Vector2D(Vector):
             return self.x == other.x and self.y == other.y
         return False
 
-    def is_close(self, other_vector: "Vector2D", tol: float = 1e-6):
+    def _data_eq(self, other):
+        return self == other
+
+    def is_close(self, other_vector: Vector2D, tol: float = 1e-6):
         """
         Checks if two vectors are close to each other considering the
         Euclidean distance. The tolerance can be modified. The two vectors
@@ -754,7 +828,7 @@ class Vector2D(Vector):
             new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
-    def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
+    def to_3d(self, plane_origin: Point3D, vx: Vector3D, vy: Vector3D):
         """
         Returns the 3-dimensional vector corresponding to the 2-dimensional
         vector placed on the 3-dimensional plane (XY) of the 3-dimensional
@@ -906,7 +980,7 @@ X2D = Vector2D(1, 0)
 Y2D = Vector2D(0, 1)
 
 
-class Point2D(Vector2D):
+cdef class Point2D(Vector2D):
     """
     Class representing a 2-dimensional point.
 
@@ -918,10 +992,10 @@ class Point2D(Vector2D):
     :type name: str
     """
 
-    def __init__(self, x: float, y: float, name: Text = ""):
+    def __init__(self, x, y, name = ""):
         self.x = x
         self.y = y
-        Vector2D.__init__(self, x=x, y=y, name=name)
+        self.name = name
 
     def __add__(self, other_vector):
         return Point2D(*c_add_2d(self.x, self.y, other_vector.x, other_vector.y))
@@ -944,6 +1018,15 @@ class Point2D(Vector2D):
     def __hash__(self):
         """Return a hash value for the point 2d."""
         return hash(("point", self.x, self.y))
+
+    def __eq__(self, other):
+        """Return True if the other point has the same x and y coordinates, False otherwise."""
+        if isinstance(other, self.__class__):
+            return self.x == other.x and self.y == other.y
+        return False
+
+    def _data_eq(self, other):
+        return self == other
 
     def to_dict(self, *args, **kwargs):
         """
@@ -1069,19 +1152,17 @@ class Point2D(Vector2D):
                 return None
             else:
                 return None, None, None
-        else:
-            x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
-            x = x / denominateur
-            y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)
-            y = y / denominateur
-            if not curvilinear_abscissa:
-                return cls(x, y)
-            else:
-                t = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
-                t = t / denominateur
-                u = (x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)
-                u = -u / denominateur
-                return cls(x, y), t, u
+        x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
+        x = x / denominateur
+        y = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)
+        y = y / denominateur
+        if not curvilinear_abscissa:
+            return cls(x, y)
+        t = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
+        t = t / denominateur
+        u = (x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)
+        u = -u / denominateur
+        return cls(x, y), t, u
 
     @classmethod
     def segment_intersection(cls, segment1: "volmdlr.edges.LineSegment2D",
@@ -1156,7 +1237,7 @@ class Point2D(Vector2D):
         return plot_data.Point2D(self.x, self.y)
 
     @classmethod
-    def middle_point(cls, point1: Vector2D, point2: Vector2D, name: str = ""):
+    def middle_point(cls, point1: Vector2D, point2: Vector2D, name = ""):
         """
         Computes the middle point between two two-dimensional vector-like objects.
 
@@ -1174,7 +1255,7 @@ class Point2D(Vector2D):
 
     @classmethod
     def line_projection(cls, point: Vector2D,
-                        line: "volmdlr.edges.Line2D", name: str = ""):
+                        line: "volmdlr.edges.Line2D", name = ""):
         """
         Computes the projection of a two-dimensional vector-like object on an
         infinite two-dimensional line
@@ -1256,7 +1337,7 @@ class Point2D(Vector2D):
 O2D = Point2D(0, 0)
 
 
-class Vector3D(Vector):
+cdef class Vector3D(Vector):
     """
     Class representing a 3-dimensional vector.
 
@@ -1270,11 +1351,11 @@ class Vector3D(Vector):
     :type name: str
     """
 
-    def __init__(self, x: float, y: float, z: float, name: Text = ""):
+    def __init__(self, double x, double y, double z, name: str = ""):
         self.x = x
         self.y = y
         self.z = z
-        self.name = name
+        Vector.__init__(self, name=name)
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.x}, {self.y}, {self.z})"
@@ -1332,6 +1413,9 @@ class Vector3D(Vector):
         if isinstance(other, self.__class__):
             return self.x == other.x and self.y == other.y and self.z == other.z
         return False
+
+    def _data_eq(self, other):
+        return self == other
 
     def is_close(self, other_vector, tol=1e-6):
         """
@@ -1574,7 +1658,7 @@ class Vector3D(Vector):
             new_vector = frame.global_to_local_coordinates(self)
         return new_vector
 
-    def plane_projection3d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
+    def plane_projection3d(self, plane_origin: Vector3D, x: Vector3D, y: Vector3D):
         """
         Projects a Vector3D-like object on a 3D plane.
 
@@ -1591,7 +1675,7 @@ class Vector3D(Vector):
         z = z.unit_vector()
         return self - z.dot(self - plane_origin) * z
 
-    def plane_projection2d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
+    def plane_projection2d(self, plane_origin: Vector3D, x: Vector3D, y: Vector3D):
         """
         Projects a Vector3D-like object on a 2D plane.
 
@@ -1609,7 +1693,7 @@ class Vector3D(Vector):
         u2 = p3d.dot(y)
         return Point2D(u1, u2)
 
-    def to_2d(self, plane_origin: "Vector3D", x: "Vector3D", y: "Vector3D"):
+    def to_2d(self, plane_origin: Point3D, x: Vector3D, y: Vector3D):
         """
         # TODO: difference with plane_projection2d needs details
         Transforms a Vector3D-like object to a Point2D.
@@ -1626,7 +1710,9 @@ class Vector3D(Vector):
         x2d = self.dot(x) - plane_origin.dot(x)
         y2d = self.dot(y) - plane_origin.dot(y)
         class_name = self.__class__.__name__[:-2] + "2D"
-        return getattr(sys.modules[self.__module__], class_name)(x2d, y2d)
+        if class_name in ("Vector2D", "Point2D"):
+            return getattr(sys.modules["volmdlr.core_compiled"], class_name)(x2d, y2d)
+        return getattr(sys.modules["volmdlr.display"], class_name)(x2d, y2d)
 
     def random_unit_normal_vector(self):
         """
@@ -1699,7 +1785,7 @@ class Vector3D(Vector):
         """
         return cls(random.uniform(xmin, xmax),
                    random.uniform(ymin, ymax),
-                   random.uniform(zmin, zmax), name=name)
+                   random.uniform(zmin, zmax))
 
     def to_point(self):
         """
@@ -1718,7 +1804,7 @@ class Vector3D(Vector):
         :param arguments: The arguments of the step primitive.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
-            that have already been instanciated
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Vector3D object
         :rtype: :class:`volmdlr.Vector3D`
@@ -1800,7 +1886,7 @@ Y3D = Vector3D(0, 1, 0)
 Z3D = Vector3D(0, 0, 1)
 
 
-class Point3D(Vector3D):
+cdef class Point3D(Vector3D):
     """
     Class representing a 3-dimensional point.
 
@@ -1814,13 +1900,11 @@ class Point3D(Vector3D):
     :type name: str
     """
 
-    _standalone_in_db = False
-
-    def __init__(self, x: float, y: float, z: float, name: Text = ""):
+    def __init__(self, x, y, z, name = ""):
         self.x = x
         self.y = y
         self.z = z
-        Vector3D.__init__(self, x, y, z, name)
+        self.name = name
 
     def __add__(self, other_vector):
         return Point3D(*c_add_3d(self.x, self.y, self.z, other_vector.x, other_vector.y, other_vector.z))
@@ -1844,6 +1928,15 @@ class Point3D(Vector3D):
     def __hash__(self):
         """Return a hash value for the point 3d."""
         return hash(("point", self.x, self.y, self.z))
+
+    def __eq__(self, other):
+        """Return True if the other point has the same x, y and z coordinates, False otherwise."""
+        if isinstance(other, self.__class__):
+            return self.x == other.x and self.y == other.y and self.z == other.z
+        return False
+
+    def _data_eq(self, other):
+        return self == other
 
     def to_dict(self, *args, **kwargs):
         """
@@ -1907,7 +2000,7 @@ class Point3D(Vector3D):
         :param arguments: The arguments of the step primitive
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
-            that have already been instanciated
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Point3D object
         :rtype: :class:`volmdlr.Point3D`
@@ -1938,7 +2031,7 @@ class Point3D(Vector3D):
         return (self - point2).norm()
 
     @classmethod
-    def middle_point(cls, point1: "Point3D", point2: "Point3D", name: str = ""):
+    def middle_point(cls, point1: "Point3D", point2: "Point3D", name = ""):
         """
         Computes the middle point between two 3-dimensional points.
 
@@ -2217,11 +2310,11 @@ class Matrix33:
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
-        if abs(u1) < 1e-9:
+        if abs(u1) < 1e-12:
             u1 = 0.
-        if abs(u2) < 1e-9:
+        if abs(u2) < 1e-12:
             u2 = 0.
-        if abs(u3) < 1e-9:
+        if abs(u3) < 1e-12:
             u3 = 0.
         return vector.__class__(u1, u2, u3)
 
@@ -2246,7 +2339,7 @@ class Matrix33:
         """
         det = self.determinent()
 
-        if not math.isclose(det, 0, abs_tol=1e-10):
+        if not abs(det) <= 1e-12:
             det_inv = 1 / det
             return Matrix33(det_inv * (self.M22 * self.M33 - self.M23 * self.M32),  # a22a33−a23a32
                             det_inv * (self.M13 * self.M32 - self.M12 * self.M33),  # a13a32−a12a33
@@ -2586,7 +2679,7 @@ class Basis3D(Basis):
     def from_two_vectors(cls, vector1: Vector3D, vector2: Vector3D, name: str = "") -> "Basis3D":
         """
         Creates a basis with first vector1 adimensionned, as u, v is the
-        vector2 substracted of u component, w is the cross product of u and v.
+        vector2 subtracted of u component, w is the cross product of u and v.
 
         :param vector1: The first vector of the Basis3D
         :type vector1: :class:`volmdlr.Vector3D`.
@@ -2819,6 +2912,44 @@ class Basis3D(Basis):
         if not math.isclose(self.w.norm(), 0.0, abs_tol=1e-10):
             w = self.w.unit_vector()
         return Basis3D(u, v, w)
+
+    def is_orthogonal(self, tol: float = 1e-6):
+        """
+        Check if the basis vectors are orthogonal to each other.
+
+        :param tol: Tolerance for considering a dot product as zero.
+        :type tol: float
+        :return: True if the basis vectors are orthogonal, False otherwise.
+        :rtype: bool
+        """
+        dot_uv = self.u.dot(self.v)
+        dot_uw = self.u.dot(self.w)
+        dot_vw = self.v.dot(self.w)
+
+        return abs(dot_uv) < tol and abs(dot_uw) < tol and abs(dot_vw) < tol
+
+    def is_normalized(self, tol: float = 1e-6):
+        """
+        Check if the basis vectors are normal to each other.
+
+        :param tol: Tolerance for considering a unit vector.
+        :type tol: float
+        :return: True if the basis vectors are normalized, False otherwise.
+        :rtype: bool
+        """
+        return (math.isclose(self.u.norm(), 1.0, abs_tol=tol) and math.isclose(self.v.norm(), 1.0, abs_tol=tol) and
+                math.isclose(self.w.norm(), 1.0, abs_tol=tol))
+
+    def is_orthonormal(self, tol: float = 1e-6):
+        """
+        Check if the basis vectors are orthonormal to each other.
+
+        :param tol: Tolerance for considering an orthonormal basis.
+        :type tol: float
+        :return: True if the basis vectors are orthonormal, False otherwise.
+        :rtype: bool
+        """
+        return self.is_orthogonal(tol) and self.is_normalized(tol)
 
 
 class Frame2D(Basis2D):
@@ -3087,9 +3218,7 @@ class Frame3D(Basis3D):
         self.name = name
 
     def __repr__(self):
-        return "{}: O={} U={}, V={}, W={}".format(self.__class__.__name__,
-                                                  self.origin,
-                                                  self.u, self.v, self.w)
+        return f"{self.__class__.__name__}(origin={self.origin}, u={self.u}, v={self.v}, w={self.w})"
 
     def __hash__(self):
         """
@@ -3403,7 +3532,7 @@ class Frame3D(Basis3D):
         :param arguments: The arguments of the step primitive. The last element represents the unit_conversion_factor.
         :type arguments: list
         :param object_dict: The dictionary containing all the step primitives
-            that have already been instanciated
+            that have already been instantiated
         :type object_dict: dict
         :return: The corresponding Frame3D object
         :rtype: :class:`volmdlr.Frame3D`

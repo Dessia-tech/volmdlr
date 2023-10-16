@@ -74,7 +74,7 @@ class TestConicalFace3D(unittest.TestCase):
         circle_radius = 0.5 * math.tan(conical_surface.semi_angle)
         circle = curves.Circle3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5),
                                                  volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D), radius=circle_radius)
-        points = circle.discretization_points(number_points=20)
+        points = circle.discretization_points(number_points=21)
         for i, (theta1, theta2) in enumerate(theta_ranges):
             conical_face = faces.ConicalFace3D.from_surface_rectangular_cut(
                 conical_surface, theta1, theta2, 0., 1)

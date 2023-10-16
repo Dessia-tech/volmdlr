@@ -1,13 +1,16 @@
 import math
 import unittest
+import os
 
-import dessia_common.core
 import volmdlr
 import volmdlr.edges as vme
 from volmdlr import curves, surfaces, edges
 import volmdlr.wires as vmw
 from volmdlr import O3D, X3D, Y3D, Z3D, Point2D, Point3D
 from volmdlr.models import conical_surfaces
+
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_conical_tests')
 
 
 class TestConicalSurface3D(unittest.TestCase):
@@ -46,7 +49,7 @@ class TestConicalSurface3D(unittest.TestCase):
         primitives_demi_cone = [primitives_cone[0],
                                 vme.Arc3D.from_3_points(Point3D(0.035, 0, 0),
                                                         Point3D(0, 0.035, 0), Point3D(-0.035, 0, 0)),
-                                primitives_cone[2]
+                                vme.LineSegment3D(Point3D(-0.035, 0, 0.0), Point3D(0, 0, 0.1))
                                 ]
 
         contour_cone = vmw.Contour3D(primitives_cone)
@@ -57,8 +60,8 @@ class TestConicalSurface3D(unittest.TestCase):
 
         area_cone = contour2d_cone.area()
         area_demi_cone = contour2d_demi_cone.area()
-        fullarc2d = contour2d_cone.primitives[0]
-        linesegment2d_cone = contour2d_cone.primitives[1]
+        fullarc2d = contour2d_cone.primitives[1]
+        linesegment2d_cone = contour2d_cone.primitives[2]
 
         # Assert that the returned object is an edges.LineSegment2D
         self.assertIsInstance(fullarc2d, vme.LineSegment2D)
@@ -71,6 +74,22 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertEqual(fullarc2d.length(), 2 * math.pi)
         self.assertEqual(linesegment2d_cone.start, Point2D(-2 * math.pi, 0.1))
         self.assertEqual(linesegment2d_cone.end, Point2D(-2 * math.pi, 0.0))
+
+        surface = surfaces.ConicalSurface3D.load_from_file(os.path.join(folder, "conical_singularity_suface.json"))
+        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "conical_singularity_contour.json"))
+        contour = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour.is_ordered())
+        self.assertAlmostEqual(contour.area(), 0.0025393181156878604, 6)
+
+        surface = surfaces.ConicalSurface3D.load_from_file(
+            os.path.join(folder, "conicalsurface_contour_with_singularity_2.json"))
+        contour3d = vmw.Contour3D.load_from_file(
+            os.path.join(folder, "conicalsurface_contour_with_singularity_contour_2.json"))
+        contour = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour.is_ordered())
+        self.assertAlmostEqual(contour.area(), math.pi * 0.0014073966802667698, 5)
+
+
 
     def test_bsplinecurve3d_to_2d(self):
         conical_surface3 = conical_surfaces.conical_surface3
@@ -102,15 +121,15 @@ class TestConicalSurface3D(unittest.TestCase):
                  curves.Line3D(volmdlr.Point3D(1, 1, 0), volmdlr.Point3D(0.0, 3.920784075149046, 4.801960187872612)),
                  curves.Line3D(volmdlr.Point3D(1.960392037574523, 1.960392037574523, 4.801960187872612),
                                volmdlr.Point3D(0.0, 3.920784075149046, 4.801960187872612))]
-        list_intersections = [[volmdlr.Point3D(1.1409943273101928, 1.1409943273101928, 2.7948539013201095),
-                               volmdlr.Point3D(-0.7093396510512004, -0.7093396510512004, 1.7375201993993143)],
-                              [volmdlr.Point3D(-1.443803221499384, 0.7205333909643816, 2.794853901319333),
-                               volmdlr.Point3D(1.1409943273076404, 1.1409943273121101, 2.7948539013193323)],
-                              [volmdlr.Point3D(1.7101020514359682, -1.1303061543105355, 3.550510257187456),
-                               volmdlr.Point3D(2.6898979485879435, -4.06969384577009, 8.449489742957839)],
-                              [volmdlr.Point3D(1.960392037574523, 1.960392037574523, 4.801960187872612)],
+        list_intersections = [[Point3D(-0.7093396510512004, -0.7093396510512004, 1.7375201993993143),
+                               Point3D(1.1409943273101928, 1.1409943273101928, 2.7948539013201095)],
+                              [Point3D(1.1409943273076404, 1.1409943273121101, 2.7948539013193323),
+                               Point3D(-1.443803221499384, 0.7205333909643816, 2.794853901319333)],
+                              [Point3D(1.7101020514359682, -1.1303061543105355, 3.550510257187456),
+                               Point3D(2.6898979485879435, -4.06969384577009, 8.449489742957839)],
+                              [Point3D(1.960392037574523, 1.960392037574523, 4.801960187872612)],
                               [],
-                              [volmdlr.Point3D(1.9603920375740307, 1.9603920375740307, 4.801960187873013)]]
+                              [Point3D(1.9603920375740307, 1.9603920375740307, 4.801960187873013)]]
 
         for i, line in enumerate(lines):
             line_intersections = conical_surface.line_intersections(line)
