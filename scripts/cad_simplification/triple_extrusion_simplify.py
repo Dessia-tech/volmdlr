@@ -1,5 +1,5 @@
 """
-Showcase of the 'OctreBlockSimplify'
+Showcase of the 'OctreBlockSimplify' class.
 """
 import time
 

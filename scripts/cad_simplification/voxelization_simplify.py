@@ -1,5 +1,5 @@
 """
-Showcase of the 'VoxelizationSimplify'
+Showcase of the 'VoxelizationSimplify' class.
 """
 import time
 

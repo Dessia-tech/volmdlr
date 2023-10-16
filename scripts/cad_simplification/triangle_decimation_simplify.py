@@ -1,5 +1,5 @@
 """
-Showcase of the 'TriangleDecimationSimplify'
+Showcase of the 'TriangleDecimationSimplify' class.
 """
 import time
 
