@@ -1,14 +1,26 @@
 """
-Showcase of decimation of an STL file.
+Showcase of decimation of a STL file.
 """
+import os
+import urllib.request
+
 from volmdlr.stl import Stl
 
-STL_FILE = "../stl/Stanford_Bunny_sample.stl"
-# STL_FILE = "../stl/simple.stl"
+# Stanfrod Bunny model
+MODEL_URL = "https://upload.wikimedia.org/wikipedia/commons/4/43/Stanford_Bunny.stl"
+FILE_NAME = "Stanford_Bunny.stl"
 
-stl_model = Stl.load_from_file(STL_FILE)
+# Check if the STL file already exists
+if not os.path.exists(FILE_NAME):
+    urllib.request.urlretrieve(MODEL_URL, FILE_NAME)
+    print(f"File downloaded to {FILE_NAME}")
+else:
+    print(f"File already exists at {FILE_NAME}. Skipping download.")
+
+# Load STL model using volmdlr
+stl_model = Stl.load_from_file(FILE_NAME)
 closed_shell = stl_model.to_closed_shell()
 
+# Decimate and show model
 decimated_shell = closed_shell.decimate(1000, verbose=True)
-
 decimated_shell.babylonjs()
