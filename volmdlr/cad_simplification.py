@@ -166,6 +166,8 @@ class TriangleDecimationSimplify(Simplify):
         :return: The decimated VolumeModel.
         :rtype: VolumeModel
         """
+        # pylint: disable=too-many-arguments
+
         decimated_shells = []
         simplifier = pyfqmr.Simplify()
 
