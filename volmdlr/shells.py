@@ -1866,6 +1866,7 @@ class OpenTriangleShell3D(OpenShell3D):
         :return: The decimated triangle shell.
         :rtype: OpenTriangleShell3D
         """
+        # pylint: disable=too-many-arguments
 
         vertices, triangles = self.to_mesh_data(round_vertices=True, n_decimals=9)
 
