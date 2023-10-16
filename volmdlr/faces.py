@@ -1442,11 +1442,6 @@ class PlaneFace3D(Face3D):
         :return: list of intersecting wires.
         """
         surface_intersections = self.surface3d.surface_intersections(toroidal_face.surface3d)
-        # if isinstance(surface_intersections[0], volmdlr_curves.Circle3D):
-        #     if self.edge3d_inside(surface_intersections[0]) and toroidal_face.edge3d_inside(surface_intersections[0]):
-        #         contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArc3D.from_curve(
-        #             surface_intersections[0])])
-        #         return [contour3d]
         intersections_points = self.face_intersections_outer_contour(toroidal_face)
         for point in toroidal_face.face_intersections_outer_contour(self):
             if not volmdlr.core.point_in_list(point, intersections_points):
