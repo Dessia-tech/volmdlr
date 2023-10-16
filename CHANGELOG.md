@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
+- ToroidalFace3D: PlaneFace3D intersectios.
+- PlaneFace3D: circle_intersections.
 
 ### Fixed
 - 
@@ -21,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 - ToroidalSurface3D: line_intersections, plane_intersections
+- ToroidalFace3D: PlaneFace3D intersectios.
 
 ## v0.14.0 [Unreleased]
 
