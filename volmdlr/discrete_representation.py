@@ -1482,6 +1482,7 @@ class OctreeBasedVoxelization(Voxelization):
         octree: List,
         min_grid_center: _Point3D,
         voxel_size: float,
+        triangles: List[_Triangle3D] = None,
         name: str = "",
     ):
         """
@@ -1499,6 +1500,7 @@ class OctreeBasedVoxelization(Voxelization):
 
         self._octree = octree
         self._min_grid_center = min_grid_center
+        self._triangles = triangles
 
         Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
