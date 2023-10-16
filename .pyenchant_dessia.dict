@@ -23,6 +23,7 @@ BSpline's
 bsplinesurface
 cartesian
 classmethod
+cls
 cosinus
 ctrlpts
 ctrlptsw
@@ -43,6 +44,7 @@ discretizing
 distutils
 dof
 EdgeStyle
+eps
 euler
 facecolor
 filepath
