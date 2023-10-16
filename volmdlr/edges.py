@@ -166,7 +166,6 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
-        step_id = kwargs.get("step_id")
         if obj.__class__.__name__ == 'LineSegment3D':
             if not point1.is_close(point2):
                 return LineSegment3D(point1, point2, name=arguments[0][1:-1])
