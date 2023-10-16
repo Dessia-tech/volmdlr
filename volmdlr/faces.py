@@ -21,7 +21,7 @@ import volmdlr.curves as volmdlr_curves
 import volmdlr.geometry
 import volmdlr.grid
 from volmdlr import surfaces
-from volmdlr.utils.parametric import array_range_search, contour2d_healing
+from volmdlr.utils.parametric import array_range_search
 import volmdlr.wires
 
 warnings.simplefilter("once")
