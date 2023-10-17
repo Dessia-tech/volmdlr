@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 ### Fixed
--
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
+- ToroidalFace3D: PlaneFace3D intersectios.
+- PlaneFace3D: circle_intersections.
 
 ### Refactor
 -
@@ -20,9 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 ### Unittests
-- 
+- ToroidalSurface3D: line_intersections, plane_intersections
+- ToroidalFace3D: PlaneFace3D intersectios.
 
-## v0.14.0
+## v0.14.0 [Unreleased]
 
 ### New Features
 - DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.

@@ -1240,6 +1240,8 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param tol: tolerance to consider in calculations.
         :return: circle and line intersections.
         """
+        if line2d.point_distance(self.center) > self.radius + tol:
+            return []
         if line2d.point_belongs(self.center):
             direction_vector = line2d.unit_direction_vector()
             return [self.center + self.radius * direction_vector, self.center - self.radius * direction_vector]
@@ -2158,9 +2160,9 @@ class Ellipse2D(ClosedCurve):
         angle_start = 0
         abscissa_angle = vm_common_operations.ellipse_abscissa_angle_integration(
             self, abscissa, angle_start, initial_angle)
-        x = self.major_axis * math.cos(abscissa_angle)
-        y = self.minor_axis * math.sin(abscissa_angle)
-        return self.frame.local_to_global_coordinates(volmdlr.Point2D(x, y))
+        return self.frame.local_to_global_coordinates(
+            volmdlr.Point2D(self.major_axis * math.cos(abscissa_angle),
+                            self.minor_axis * math.sin(abscissa_angle)))
 
     def point_distance(self, point):
         """
