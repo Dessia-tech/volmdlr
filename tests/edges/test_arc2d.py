@@ -163,10 +163,30 @@ class TestArc2D(unittest.TestCase):
         self.assertTrue(rotated_arc2d.start.is_close(volmdlr.Point2D(0.9999999999999999, -1.1102230246251565e-16)))
         self.assertTrue(rotated_arc2d.end.is_close(volmdlr.Point2D(1.1102230246251565e-16, 0.9999999999999999)))
 
+        # Test on non trigo Arc2D
+        rotated_arc2d = self.arc9.rotation(volmdlr.O2D, math.pi / 4)
+        rotated_arc2d = rotated_arc2d.rotation(volmdlr.O2D, -math.pi / 4)
+        self.assertTrue(rotated_arc2d.is_close(self.arc9))
+
+        # Test on trigo Arc2D
+        rotated_arc2d = self.arc2.rotation(volmdlr.O2D, math.pi / 2)
+        rotated_arc2d = rotated_arc2d.rotation(volmdlr.O2D, -math.pi / 2)
+        self.assertTrue(rotated_arc2d.is_close(self.arc2))
+
     def test_translation(self):
         translated_arc2d = self.arc4.translation(volmdlr.Vector2D(1, 1))
         self.assertTrue(translated_arc2d.start.is_close(volmdlr.Point2D(1.7071067811865475, 0.29289321881345254)))
         self.assertTrue(translated_arc2d.end.is_close(volmdlr.Point2D(1.7071067811865475, 1.7071067811865475)))
+
+        # Test on non trigo Arc2D
+        translated_arc2d = self.arc9.translation(volmdlr.Vector2D(1, 1))
+        translated_arc2d = translated_arc2d.translation(volmdlr.Vector2D(-1, -1))
+        self.assertTrue(translated_arc2d.is_close(self.arc9))
+
+        # Test on trigo Arc2D
+        translated_arc2d = self.arc2.translation(volmdlr.Vector2D(1, 1))
+        translated_arc2d = translated_arc2d.translation(volmdlr.Vector2D(-1, -1))
+        self.assertTrue(translated_arc2d.is_close(self.arc2))
 
     def test_frame_mapping(self):
         u_vector = volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475)
@@ -175,6 +195,16 @@ class TestArc2D(unittest.TestCase):
         frame_mapped_arc2d = self.arc4.frame_mapping(frame, 'new')
         self.assertTrue(frame_mapped_arc2d.start.is_close(volmdlr.Point2D(0.0, -1.0)))
         self.assertTrue(frame_mapped_arc2d.end.is_close(volmdlr.Point2D(1.0, 0.0)))
+
+        # Test on non trigo Arc2D
+        frame_mapped_arc2d = self.arc9.frame_mapping(frame, 'new')
+        frame_mapped_arc2d = frame_mapped_arc2d.frame_mapping(frame, 'old')
+        self.assertTrue(frame_mapped_arc2d.is_close(self.arc9))
+
+        # Test on trigo Arc2D
+        frame_mapped_arc2d = self.arc2.frame_mapping(frame, 'new')
+        frame_mapped_arc2d = frame_mapped_arc2d.frame_mapping(frame, 'old')
+        self.assertTrue(frame_mapped_arc2d.is_close(self.arc2))
 
     def test_reverse(self):
         reverse = self.arc4.reverse()
