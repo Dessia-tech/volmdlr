@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
-- ToroidalFace3D: PlaneFace3D intersectios.
+- ToroidalFace3D: PlaneFace3D intersections.
 - PlaneFace3D: circle_intersections.
+- Arc2D: is_trigo in rotation / translation / frame_mapping.
 
 ### Refactor
 -
