@@ -1356,17 +1356,6 @@ class Wire3D(WireMixin, PhysicalObject):
             new_wire.append(primitive.frame_mapping(frame, side))
         return Wire3D(new_wire)
 
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated in-place.
-
-        :param side: 'old' or 'new'
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for primitive in self.primitives:
-            primitive.frame_mapping_inplace(frame, side)
-
     def minimum_distance(self, wire2):
         distance = []
         for element in self.primitives:
@@ -3054,18 +3043,6 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         return ClosedPolygon2D(
             [point.rotation(center, angle) for point in self.points])
 
-    def rotation_inplace(self, center: volmdlr.Point2D, angle: float):
-        """
-        Line2D rotation, Object is updated in-place.
-
-        :param center: rotation center
-        :param angle: rotation angle
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for point in self.points:
-            point.rotation_inplace(center, angle)
-
     def translation(self, offset: volmdlr.Vector2D):
         """
         ClosedPolygon2D translation.
@@ -3076,26 +3053,9 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         return ClosedPolygon2D(
             [point.translation(offset) for point in self.points])
 
-    def translation_inplace(self, offset: volmdlr.Vector2D):
-        """
-        ClosedPolygon2D translation. Object is updated in-place.
-
-        :param offset: translation vector
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for point in self.points:
-            point.translation_inplace(offset)
-
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """Apply transformation to the object."""
         return self.__class__([point.frame_mapping(frame, side) for point in self.points])
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame2D, side: str):
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for point in self.points:
-            point.frame_mapping_inplace(frame, side)
 
     def polygon_distance(self, polygon: 'ClosedPolygon2D') -> float:
         """Returns the minimum distance to other given polygon."""
@@ -4390,20 +4350,6 @@ class Contour3D(ContourMixin, Wire3D):
                      in self.primitives]
         return Contour3D(new_edges, self.name)
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        Contour3D rotation. Object is updated in-place.
-
-        :param center: rotation center.
-        :param axis: rotation axis.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for edge in self.primitives:
-            edge.rotation_inplace(center, axis, angle)
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         Contour3D translation.
@@ -4415,17 +4361,6 @@ class Contour3D(ContourMixin, Wire3D):
                      self.primitives]
         return Contour3D(new_edges, self.name)
 
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        Contour3D translation. Object is updated in-place.
-
-        :param offset: translation vector.
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for edge in self.primitives:
-            edge.translation_inplace(offset)
-
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
         Changes frame_mapping and return a new Contour3D.
@@ -4435,17 +4370,6 @@ class Contour3D(ContourMixin, Wire3D):
         new_edges = [edge.frame_mapping(frame, side) for edge in
                      self.primitives]
         return Contour3D(new_edges, self.name)
-
-    def frame_mapping_inplace(self, frame: volmdlr.Frame3D, side: str):
-        """
-        Changes frame_mapping and the object is updated in-place.
-
-        :param side: 'old' or 'new'
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for edge in self.primitives:
-            edge.frame_mapping_inplace(frame, side)
 
     def copy(self, deep=True, memo=None):
         """
@@ -4617,20 +4541,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             [point.rotation(center, axis, angle) for point in
              self.points])
 
-    def rotation_inplace(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                         angle: float):
-        """
-        ClosedPolygon3D rotation. Object is updated in-place.
-
-        :param center: rotation center.
-        :param axis: rotation axis.
-        :param angle: rotation angle.
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for point in self.points:
-            point.rotation_inplace(center, axis, angle)
-
     def translation(self, offset: volmdlr.Vector3D):
         """
         ClosedPolygon3D translation.
@@ -4641,17 +4551,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         new_points = [point.translation(offset) for point in
                       self.points]
         return ClosedPolygon3D(new_points, self.name)
-
-    def translation_inplace(self, offset: volmdlr.Vector3D):
-        """
-        ClosedPolygon3D translation. Object is updated in-place.
-
-        :param offset: translation vector.
-        """
-        warnings.warn("'in-place' methods are deprecated. Use a not in-place method instead.", DeprecationWarning)
-
-        for point in self.points:
-            point.translation_inplace(offset)
 
     def to_2d(self, plane_origin, x, y):
         """
@@ -4673,8 +4572,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             other_poly3d.to_2d(other_center, x, y)
         self_center2d, other_center2d = self_poly2d.center_of_mass(), \
             other_poly2d.center_of_mass()
-        self_poly2d.translation_inplace(-self_center2d)
-        other_poly2d.translation_inplace(-other_center2d)
+        self_poly2d = self_poly2d.translation(-self_center2d)
+        other_poly2d = other_poly2d.translation(-other_center2d)
 
         bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle.bounds(), \
             other_poly2d.bounding_rectangle.bounds()
@@ -4703,8 +4602,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
         new_self_poly2d, new_other_poly2d = ClosedPolygon2D(
             self_new_points), ClosedPolygon2D(other_new_points)
-        new_self_poly2d.translation_inplace(self_center2d)
-        new_other_poly2d.translation_inplace(other_center2d)
+        new_self_poly2d = new_self_poly2d.translation(self_center2d)
+        new_other_poly2d = new_other_poly2d.translation(other_center2d)
 
         new_poly1, new_poly2 = new_self_poly2d.to_3d(self_center, x, y), \
             new_other_poly2d.to_3d(other_center, x, y)

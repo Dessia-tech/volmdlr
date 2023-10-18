@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
 - ToroidalFace3D: PlaneFace3D intersectios.
 - PlaneFace3D: circle_intersections.
+- delete remaining inplace methods in wires.py
 
 ### Refactor
 -
