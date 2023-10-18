@@ -878,8 +878,7 @@ class Surface3D(DessiaObject):
         if not is_connected and self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                 self.is_singularity_point(self.point2d_to_3d(primitives2d[0].start)):
             primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start,
-                                                    name="construction"))
-
+                                                name="construction"))
         return primitives2d
 
     def connect_contours(self, outer_contour, inner_contours):
@@ -4749,12 +4748,11 @@ class RevolutionSurface3D(PeriodicalSurface):
                  axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D, name: str = ''):
         self.edge = edge
         self.axis_point = axis_point
-        self.axis = axis
+        self.axis = axis.unit_vector()
 
         point1 = edge.point_at_abscissa(0)
         vector1 = point1 - axis_point
-        w_vector = axis
-        w_vector = w_vector.unit_vector()
+        w_vector = self.axis
         if point1.is_close(axis_point) or w_vector.is_colinear_to(vector1):
             if edge.__class__.__name__ != "Line3D":
                 point1 = edge.point_at_abscissa(0.5 * edge.length())
@@ -4795,8 +4793,11 @@ class RevolutionSurface3D(PeriodicalSurface):
         """
         u, v = point2d
         point_at_curve = self.edge.point_at_abscissa(v)
-        point = point_at_curve.rotation(self.axis_point, self.axis, u)
-        return point
+        point_vector = point_at_curve - self.axis_point
+        point3d = (self.axis_point + point_vector * math.cos(u) +
+                   point_vector.dot(self.axis) * self.axis * (1 - math.cos(u)) +
+                   self.axis.cross(point_vector) * math.sin(u))
+        return point3d
 
     def point3d_to_2d(self, point3d):
         """
@@ -5898,25 +5899,25 @@ class BSplineSurface3D(Surface3D):
         u, v = params
         if u == self.domain[0]:
             u_start = self.domain[0]
-            u_stop = min(u + delta_u, self.domain[1])
-            sample_size_u = 2
+            u_stop = self.domain[0]
+            sample_size_u = 1
 
         elif u == self.domain[1]:
-            u_start = max(u - delta_u, self.domain[0])
+            u_start = self.domain[1]
             u_stop = self.domain[1]
-            sample_size_u = 2
+            sample_size_u = 1
         else:
             u_start = max(u - delta_u, self.domain[0])
             u_stop = min(u + delta_u, self.domain[1])
 
         if v == self.domain[2]:
             v_start = self.domain[2]
-            v_stop = min(v + delta_v, self.domain[3])
-            sample_size_v = 2
+            v_stop = self.domain[2]
+            sample_size_v = 1
         elif v == self.domain[3]:
-            v_start = max(v - delta_v, self.domain[2])
+            v_start = self.domain[3]
             v_stop = self.domain[3]
-            sample_size_v = 2
+            sample_size_v = 1
         else:
             v_start = max(v - delta_v, self.domain[2])
             v_stop = min(v + delta_v, self.domain[3])
@@ -6074,10 +6075,9 @@ class BSplineSurface3D(Surface3D):
         x0, check = self.point_inversion(x0, point3d, tol)
         if check:
             return volmdlr.Point2D(*x0)
+        return self.point3d_to_2d_minimize(point3d, x0, tol)
 
-        return self.point3d_to_2d_minimize(point3d, x0)
-
-    def point3d_to_2d_minimize(self, point3d, x0, tol: float =1e-6):
+    def point3d_to_2d_minimize(self, point3d, x0, tol: float = 1e-6):
         """Auxiliary function for point3d_to_2d in case the point inversion does not converge."""
         def sort_func(x):
             return point3d.point_distance(self.point2d_to_3d(volmdlr.Point2D(x[0], x[1])))
@@ -6096,7 +6096,7 @@ class BSplineSurface3D(Surface3D):
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         res = minimize(fun, x0=npy.array(x0), jac=True,
                        bounds=[(min_bound_x, max_bound_x),
-                               (min_bound_y, max_bound_y)])
+                               (min_bound_y, max_bound_y)], tol=tol)
         if res.fun <= 1e-6:
             return volmdlr.Point2D(*res.x)
 
@@ -6154,7 +6154,7 @@ class BSplineSurface3D(Surface3D):
         else:
             new_x = x
         residual = (new_x[0] - x[0]) * surface_derivatives[1][0] + (new_x[1] - x[1]) * surface_derivatives[0][1]
-        if residual.norm() <= 1e-10:
+        if residual.norm() <= 1e-12:
             return x, False
         x = new_x
         return self.point_inversion(x, point3d, tol, maxiter=maxiter - 1)
@@ -6247,7 +6247,7 @@ class BSplineSurface3D(Surface3D):
         A line segment on a BSplineSurface3D will be in any case a line in 2D?.
 
         """
-        tol = 1e-6 if linesegment3d.length() > 1e-5 else 1e-8
+        tol = 1e-6 if linesegment3d.length() > 1e-5 else 1e-7
         start = self.point3d_to_2d(linesegment3d.start, tol)
         end = self.point3d_to_2d(linesegment3d.end, tol)
         if self.x_periodicity:
@@ -6370,6 +6370,8 @@ class BSplineSurface3D(Surface3D):
 
         if self._is_line_segment(parametric_points):
             return [edges.LineSegment2D(parametric_points[0], parametric_points[-1])]
+        if interpolation_degree >= len(parametric_points):
+            interpolation_degree = len(parametric_points) - 1
         brep = edges.BSplineCurve2D.from_points_interpolation(points=parametric_points, degree=interpolation_degree)
         if brep:
             return [brep]
@@ -6386,9 +6388,12 @@ class BSplineSurface3D(Surface3D):
             return []
         n = min(len(bspline_curve3d.control_points), 20)
         points3d = bspline_curve3d.discretization_points(number_points=n)
-        tol = 5e-7 if lth > 5e-5 else 1e-8
+        tol = 1e-6 if lth > 5e-5 else 5e-7
         # todo: how to ensure convergence of point3d_to_2d ?
-        points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d])
+        points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d],
+                                                bspline_curve3d.periodic)
+        if len(points) < 2:
+            return None
         return self._edge3d_to_2d(bspline_curve3d, points3d, bspline_curve3d.degree, points)
 
     def fullarcellipse3d_to_2d(self, fullarcellipse3d):
@@ -6397,10 +6402,10 @@ class BSplineSurface3D(Surface3D):
         """
         number_points = max(self.nb_u, self.nb_v)
         degree = max(self.degree_u, self.degree_v)
-        tol = 1e-6 if fullarcellipse3d.length() > 1e-5 else 1e-8
+        tol = 1e-6 if fullarcellipse3d.length() > 1e-5 else 1e-7
         points3d = fullarcellipse3d.discretization_points(number_points=number_points)
         # todo: how to ensure convergence of point3d_to_2d ?
-        points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d])
+        points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d], True)
         return self._edge3d_to_2d(fullarcellipse3d, points3d, degree, points)
 
     @staticmethod
@@ -6493,7 +6498,7 @@ class BSplineSurface3D(Surface3D):
         number_points = max(self.nb_u, self.nb_v)
         degree = max(self.degree_u, self.degree_v)
         points3d = arcellipse3d.discretization_points(number_points=number_points)
-        tol = 1e-7 if arcellipse3d.length() > 1e-5 else 1e-8
+        tol = 1e-6 if arcellipse3d.length() > 1e-5 else 1e-7
         points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d])
         return self._edge3d_to_2d(arcellipse3d, points3d, degree, points)
 
@@ -8184,10 +8189,10 @@ class BSplineSurface3D(Surface3D):
         return points
 
     @staticmethod
-    def _verify_parametric_points(points):
+    def _verify_parametric_points(points, periodic=False):
         """Temporary method to deal with non converged parametric points from point3d_to_2d method."""
         set_points = set(points)
-        if len(set_points) < len(points) - 1:
+        if (len(set_points) < len(points) - 1 and periodic) or (len(set_points) < len(points) and not periodic):
             new_points = []
             for point in points:
                 if not volmdlr.core.point_in_list(point, new_points):

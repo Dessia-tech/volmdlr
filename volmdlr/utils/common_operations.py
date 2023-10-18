@@ -222,15 +222,16 @@ def get_point_distance_to_edge(edge, point, start, end):
     distance = best_distance
     point1_ = start
     point2_ = end
+    number_points = 10 if abs(abscissa2 - abscissa1) > 5e-6 else 2
     linesegment_class_ = getattr(volmdlr.edges, 'LineSegment' + edge.__class__.__name__[-2:])
     while True:
-        discretized_points_between_1_2 = edge.local_discretization(point1_, point2_)
+        discretized_points_between_1_2 = edge.local_discretization(point1_, point2_, number_points)
         if not discretized_points_between_1_2:
             break
         distance = point.point_distance(discretized_points_between_1_2[0])
         for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
             if point1.is_close(point2):
-                print(True)
+                continue
             line = linesegment_class_(point1, point2)
             dist = line.point_distance(point)
             if dist < distance:

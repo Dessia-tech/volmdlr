@@ -333,6 +333,7 @@ def contour2d_healing_self_intersection(contour2d):
     """
     Heals topologies incoherencies on the boundary representation.
     """
+    primitives = contour2d.primitives
     for i, (prim1, prim2) in enumerate(
             zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
         if not prim1.end.is_close(prim2.start):
@@ -350,8 +351,9 @@ def contour2d_healing_self_intersection(contour2d):
                     new_prim2 = prim2
                 else:
                     new_prim2 = prim2.split(split_point)[1]
-                contour2d.primitives[i] = new_prim1
-                contour2d.primitives[(i + 1) % len(contour2d.primitives)] = new_prim2
+                primitives[i] = new_prim1
+                primitives[(i + 1) % len(contour2d.primitives)] = new_prim2
+    contour2d.primitives = primitives
     return contour2d
 
 
