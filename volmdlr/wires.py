@@ -409,6 +409,8 @@ class WireMixin:
         :return: True or False
         """
         points = primitive.discretization_points(number_points=10)
+        points.extend([primitive.point_at_abscissa(primitive.length()*0.001),
+                       primitive.point_at_abscissa(primitive.length()*0.999)])
         if all(self.point_over_wire(point, tol) for point in points):
             return True
         return False
@@ -603,6 +605,8 @@ class WireMixin:
         connecting_contour_start = self.primitives[0].start
         connected_contour = None
         for contour in list_wires:
+            if self.is_sharing_primitives_with(contour):
+                continue
             if connecting_contour_end.is_close(contour.primitives[0].start) or\
                     connecting_contour_end.is_close(contour.primitives[-1].end):
                 connected_contour = contour
@@ -2282,7 +2286,10 @@ class Contour2D(ContourMixin, Wire2D):
         :param edge: other edge to verify if inside contour.
         :returns: True or False.
         """
-        for point in edge.discretization_points(number_points=5):
+        points = edge.discretization_points(number_points=5)
+        points.extend([edge.point_at_abscissa(edge.length() * 0.001),
+                       edge.point_at_abscissa(edge.length() * 0.999)])
+        for point in points:
             if not self.point_belongs(point, include_edge_points=True):
                 return False
         return True
@@ -2799,6 +2806,41 @@ class Contour2D(ContourMixin, Wire2D):
                 closest_distance = distance
                 closest_point = prim.end
         return closest_point
+
+    @staticmethod
+    def split_lists_intersecting_contours(list_contours1, list_contours2):
+        list_split_inner_contours = []
+        # possible_inner_contours = [contour for contour in list_cutting_contours if contour.is_contour_closed()]
+        for contour1 in list_contours1:
+            list_intersecting_points_with_contour1 = []
+            for cutting_contour in list_contours2:
+                if contour1 == cutting_contour:
+                    continue
+                contour_intersection_points = contour1.intersection_points(cutting_contour)
+                if not contour_intersection_points:
+                    continue
+                list_intersecting_points_with_contour1.extend(contour_intersection_points)
+            sorted_intersections_points_along_contour1 = contour1.sort_points_along_wire(
+                list_intersecting_points_with_contour1)
+            if sorted_intersections_points_along_contour1:
+                list_split_inner_contours.extend(contour1.split_with_sorted_points(
+                    sorted_intersections_points_along_contour1))
+        return list_split_inner_contours
+
+    def merge_not_adjcent_contour(self, other_contour):
+        contour_intersection_points = self.intersection_points(other_contour)
+        sorted_intersections_points_along_contour1 = self.sort_points_along_wire(
+            contour_intersection_points)
+        split_with_sorted_points = self.split_with_sorted_points(
+            sorted_intersections_points_along_contour1)
+        new_contours = [
+            volmdlr.wires.Contour2D.contours_from_edges(contour.primitives + other_contour.primitives)[0]
+            for contour in split_with_sorted_points]
+        if self.bounding_rectangle.is_inside_b_rectangle(other_contour.bounding_rectangle):
+            new_contour = sorted(new_contours, key=lambda contour: contour.area())[0]
+        else:
+            new_contour = sorted(new_contours, key=lambda contour: contour.area())[-1]
+        return new_contour
 
 
 class ClosedPolygonMixin:
