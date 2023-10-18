@@ -658,8 +658,6 @@ class Face3D(volmdlr.core.Primitive3D):
         for inner_contour in self.surface2d.inner_contours:
             list_intersecting_points_with_inner_contour = []
             for cutting_contour in list_cutting_contours:
-                if inner_contour == cutting_contour:
-                    continue
                 contour_intersection_points = inner_contour.intersection_points(cutting_contour)
                 if not contour_intersection_points:
                     continue
@@ -709,25 +707,21 @@ class Face3D(volmdlr.core.Primitive3D):
                 new_contour = current_cutting_contour.merge_not_adjcent_contour(connected_contour)
                 list_cutting_contours.append(new_contour)
             list_cutting_contours = cutting_contours
-        # if not self.surface2d.inner_contours:
-        #     return list_cutting_contours
+
         list_split_inner_contours = self.split_inner_contour_intersecting_cutting_contours(list_cutting_contours)
-        # if not list_split_inner_contours:
-        #     return list_cutting_contours
+
         valid_cutting_contours = []
 
         # remove split_inner_contour connected to a cutting_contour at two points.
         connected_at_two_ends = []
         for cutting_contour in list_cutting_contours:
             for split_contour in list_split_inner_contours:
-            # for split_contour in list_split_inner_contours + list_split_cutting_contours:
                 if split_contour.point_over_wire(cutting_contour.primitives[0].start) and \
                         split_contour.point_over_wire(cutting_contour.primitives[-1].end):
                     connected_at_two_ends.append(split_contour)
                     break
         list_split_inner_contours = [split_contour for split_contour in list_split_inner_contours
                                      if split_contour not in connected_at_two_ends]
-                                     # list_split_cutting_contours if split_contour not in connected_at_two_ends]
         while list_cutting_contours:
             for i, cutting_contour in enumerate(list_cutting_contours[:]):
                 if (self.surface2d.outer_contour.point_over_contour(cutting_contour.primitives[0].start) and

@@ -2807,27 +2807,13 @@ class Contour2D(ContourMixin, Wire2D):
                 closest_point = prim.end
         return closest_point
 
-    @staticmethod
-    def split_lists_intersecting_contours(list_contours1, list_contours2):
-        list_split_inner_contours = []
-        # possible_inner_contours = [contour for contour in list_cutting_contours if contour.is_contour_closed()]
-        for contour1 in list_contours1:
-            list_intersecting_points_with_contour1 = []
-            for cutting_contour in list_contours2:
-                if contour1 == cutting_contour:
-                    continue
-                contour_intersection_points = contour1.intersection_points(cutting_contour)
-                if not contour_intersection_points:
-                    continue
-                list_intersecting_points_with_contour1.extend(contour_intersection_points)
-            sorted_intersections_points_along_contour1 = contour1.sort_points_along_wire(
-                list_intersecting_points_with_contour1)
-            if sorted_intersections_points_along_contour1:
-                list_split_inner_contours.extend(contour1.split_with_sorted_points(
-                    sorted_intersections_points_along_contour1))
-        return list_split_inner_contours
+    def merge_not_adjacent_contour(self, other_contour):
+        """
+        Merge two connected but not adjacent contours.
 
-    def merge_not_adjcent_contour(self, other_contour):
+        :param other_contour: other contour to be merged.
+        :return: medreg contour.
+        """
         contour_intersection_points = self.intersection_points(other_contour)
         sorted_intersections_points_along_contour1 = self.sort_points_along_wire(
             contour_intersection_points)
