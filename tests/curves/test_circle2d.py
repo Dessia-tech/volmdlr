@@ -8,13 +8,20 @@ import volmdlr.edges
 from volmdlr import curves, wires
 
 
-circle = curves.Circle2D(volmdlr.O2D, 0.50)
+circle = curves.Circle2D(volmdlr.OXY, 0.50)
 line = curves.Line2D(volmdlr.O2D, volmdlr.Point2D(0, 1))
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)))
 
 
 class TestCircle2D(unittest.TestCase):
-    circle2d = curves.Circle2D(volmdlr.O2D, 1)
+    circle2d = curves.Circle2D(volmdlr.OXY, 1)
+
+    def test_discretization_points(self):
+        points = self.circle2d.discretization_points(number_points=5)
+        expected_points = [volmdlr.Point2D(1.0, 0.0), volmdlr.Point2D(0, 1.0),
+                           volmdlr.Point2D(-1.0, 0), volmdlr.Point2D(0, -1.0), volmdlr.Point2D(1.0, 0)]
+        for point, expected_point in zip(points, expected_points):
+            self.assertTrue(point.is_close(expected_point))
 
     def test_area(self):
         area = self.circle2d.area()
@@ -138,6 +145,16 @@ class TestCircle2D(unittest.TestCase):
                            volmdlr.Point2D(-0.516123775561495, -1.2948920334790204),
                            volmdlr.Point2D(0.6019102131883997, -1.658163297481701),
                            volmdlr.Point2D(1.2928932188134525, -0.7071067811865475)]
+        for point, expected_point in zip(circle2d_points, expected_points):
+            self.assertTrue(point.is_close(expected_point))
+
+        rotated_arc2d = self.circle2d.rotation(self.circle2d.center, math.pi / 4)
+        circle2d_points = rotated_arc2d.discretization_points(number_points=5)
+        expected_points = [volmdlr.Point2D(1/math.sqrt(2), 1/math.sqrt(2)),
+                           volmdlr.Point2D(-1/math.sqrt(2), 1/math.sqrt(2)),
+                           volmdlr.Point2D(-1/math.sqrt(2), -1/math.sqrt(2)),
+                           volmdlr.Point2D(1/math.sqrt(2), -1/math.sqrt(2)),
+                           volmdlr.Point2D(1/math.sqrt(2), 1/math.sqrt(2))]
         for point, expected_point in zip(circle2d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
