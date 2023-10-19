@@ -640,6 +640,12 @@ class Face3D(volmdlr.core.Primitive3D):
         return intersections
 
     def set_operations_new_faces(self, intersecting_combinations):
+        """
+        Gets boolean operations new faces after splitting.
+
+        :param intersecting_combinations: faces intersecting combinations dictionnary.
+        :return: new split faces.
+        """
         self_copy = self.copy(deep=True)
         list_cutting_contours = self_copy.get_face_cutting_contours(intersecting_combinations)
         if not list_cutting_contours:
