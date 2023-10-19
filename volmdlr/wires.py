@@ -2814,15 +2814,18 @@ class Contour2D(ContourMixin, Wire2D):
         :param other_contour: other contour to be merged.
         :return: medreg contour.
         """
-        contour_intersection_points = self.intersection_points(other_contour)
-        sorted_intersections_points_along_contour1 = self.sort_points_along_wire(
+        contour1, contour2 = self, other_contour
+        if not self.is_contour_closed() and other_contour.is_contour_closed():
+            contour1, contour2 = other_contour, self
+        contour_intersection_points = contour1.intersection_points(contour2)
+        sorted_intersections_points_along_contour1 = contour1.sort_points_along_wire(
             contour_intersection_points)
-        split_with_sorted_points = self.split_with_sorted_points(
+        split_with_sorted_points = contour1.split_with_sorted_points(
             sorted_intersections_points_along_contour1)
         new_contours = [
-            volmdlr.wires.Contour2D.contours_from_edges(contour.primitives + other_contour.primitives)[0]
+            volmdlr.wires.Contour2D.contours_from_edges(contour.primitives + contour2.primitives)[0]
             for contour in split_with_sorted_points]
-        if self.bounding_rectangle.is_inside_b_rectangle(other_contour.bounding_rectangle):
+        if contour1.bounding_rectangle.is_inside_b_rectangle(contour2.bounding_rectangle):
             new_contour = sorted(new_contours, key=lambda contour: contour.area())[0]
         else:
             new_contour = sorted(new_contours, key=lambda contour: contour.area())[-1]
