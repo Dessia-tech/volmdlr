@@ -1549,9 +1549,9 @@ class Plane3D(Surface3D):
 
     def arc3d_to_2d(self, arc3d):
         """Converts primitive from 3D cartesian space to surface parametric space."""
-        arc = None
         if arc3d.circle.frame.w.is_colinear_to(self.frame.w, 1e-5):
             arc = [arc3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)]
+            arc[0].angle
         else:
             start = self.point3d_to_2d(arc3d.start)
             end = self.point3d_to_2d(arc3d.end)
