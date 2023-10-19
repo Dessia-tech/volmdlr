@@ -3135,11 +3135,9 @@ class Frame2D(Basis2D):
         :return: New rotated frame
         :rtype: :class:`volmdlr.Frame2D`
         """
-        if center.is_close(self.origin):
-            new_base = Basis2D.rotation(self, angle)
-            return Frame2D(self.origin, new_base.u, new_base.v)
+        new_base = Basis2D.rotation(self, angle)
         new_origin = self.origin.rotation(center, angle)
-        return Frame2D(new_origin, self.u, self.v)
+        return Frame2D(new_origin, new_base.u, new_base.v)
 
     def Draw(self, ax=None, style="ok"):
         """
@@ -3405,18 +3403,9 @@ class Frame3D(Basis3D):
         :return: New rotated frame
         :rtype: :class:`volmdlr.Frame3D`
         """
-        if center.is_close(self.origin):
-            new_base = Basis3D.rotation(self, axis, angle)
-            return Frame3D(self.origin, new_base.u, new_base.v, new_base.w, self.name)
+        new_base = Basis3D.rotation(self, axis, angle)
         new_origin = self.origin.rotation(center, axis, angle)
-        point_u = self.origin + self.u
-        point_v = self.origin + self.v
-        point_u_rot = point_u.rotation(center, axis, angle)
-        point_v_rot = point_v.rotation(center, axis, angle)
-        new_u = (point_u_rot - new_origin).unit_vector()
-        new_v = (point_v_rot - new_origin).unit_vector()
-        new_w = new_u.cross(new_v)
-        return Frame3D(new_origin, new_u, new_v, new_w, self.name)
+        return Frame3D(new_origin, new_base.u, new_base.v, new_base.w, self.name)
 
     def translation(self, offset: Vector3D):
         """
