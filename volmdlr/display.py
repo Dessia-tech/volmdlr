@@ -281,14 +281,19 @@ class DisplayMesh3D(DisplayMesh):
 
         """
         triangular_faces = []
-        for (vertex1, vertex2, vertex3) in self.triangles:
-            point1 = self.points[vertex1]
-            point2 = self.points[vertex2]
-            point3 = self.points[vertex3]
-            if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3):
-                face = volmdlr.faces.Triangle3D(point1, point2, point3)
-                if face.area() >= 1e-11:
-                    triangular_faces.append(face)
+        try:
+            for (vertex1, vertex2, vertex3) in self.triangles:
+                point1 = self.points[vertex1]
+                point2 = self.points[vertex2]
+                point3 = self.points[vertex3]
+                if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3):
+                    if point2 == point3:
+                        print(True)
+                    face = volmdlr.faces.Triangle3D(point1, point2, point3)
+                    if face.area() >= 1e-11:
+                        triangular_faces.append(face)
+        except TypeError:
+            print(True)
         return triangular_faces
 
     def to_stl(self):

@@ -3637,7 +3637,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         grid_point_index = {}
 
-        polygon_points = {vmd.Node2D.from_point(point) for point in self.points}
+        polygon_points = {point for point in self.points}
 
         # Generate all points in the grid
         grid_points = npy.array([(xi, yi) for xi in x for yi in y], dtype=npy.float64)
@@ -3651,7 +3651,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         points = []
 
         for i in indices:
-            point = vmd.Node2D(*grid_points[i])
+            point = volmdlr.Point2D(*grid_points[i])
             if point not in polygon_points:
                 grid_point_index[(i // (number_points_y + 2), i % (number_points_y + 2))] = point
                 points.append(point)
@@ -4304,6 +4304,8 @@ class Contour3D(ContourMixin, Wire3D):
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
+        if step_id in (949245, 948889):
+            print(True)
         for edge_id in arguments[1]:
             edge = object_dict[int(edge_id[1:])]
             if edge:

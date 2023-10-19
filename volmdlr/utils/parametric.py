@@ -357,9 +357,17 @@ def contour2d_healing_self_intersection(contour2d):
     return contour2d
 
 
-def find_parametric_point_at_singularity(edge, reference_point, singularity_line):
+def find_parametric_point_at_singularity(edge, abscissa, singularity_line, domain):
     """Uses tangent line to find real theta angle of the singularity point on parametric domain."""
-    abscissa_before_singularity = edge.abscissa(reference_point)
-    direction_vector = edge.direction_vector(abscissa_before_singularity)
+    direction_vector = edge.direction_vector(abscissa)
+    reference_point = edge.point_at_abscissa(abscissa)
     direction_line = curves.Line2D(reference_point, reference_point + direction_vector)
-    return direction_line.line_intersections(singularity_line)[0]
+    intersections = direction_line.line_intersections(singularity_line)
+    if intersections:
+        point = intersections[0]
+        umin, umax, vmin, vmax = domain
+        point.x = min(umax, max(point.x, umin))
+        point.y = min(vmax, max(point.y, vmin))
+        return point
+    else:
+        return None
