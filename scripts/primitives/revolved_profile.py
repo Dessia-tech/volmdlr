@@ -84,8 +84,8 @@ c5 = vm.wires.Contour2D([cbi1] + bi1.primitives)
 
 y = vm.X3D.random_unit_normal_vector()
 z = vm.X3D.cross(y)
-frame2 = vm.Frame3D(0.15*vm.Y3D, vm.X3D, z, vm.X3D.cross(z))
-profile5 = RevolvedProfile(frame2, c5, 0.15*vm.Y3D, vm.X3D,
+frame2 = vm.Frame3D(0.15*vm.Y3D.to_point(), vm.X3D, z, vm.X3D.cross(z))
+profile5 = RevolvedProfile(frame2, c5, 0.15*vm.Y3D.to_point(), vm.X3D,
                            angle=0.7, name='strange part')
 
 # model = vm.VolumeModel([profile1, profile2, profile3, profile4, profile5])
@@ -108,15 +108,15 @@ rim_contour = vmw.ClosedPolygon2D([vm.Point2D(-0.5*w, Rb),
                                    ])
 
 rim_contour.plot()
-frame2 = vm.Frame3D(0.5*vm.X3D, vm.X3D, z, vm.X3D.cross(z))
-conical_rim = RevolvedProfile(frame2, rim_contour, 0.5*vm.X3D, vm.X3D,
+frame2 = vm.Frame3D(0.5*vm.X3D.to_point(), vm.X3D, z, vm.X3D.cross(z))
+conical_rim = RevolvedProfile(frame2, rim_contour, 0.5*vm.X3D.to_point(), vm.X3D,
                               angle=3.14, name='conical rim')
 
 
 model = vm.core.VolumeModel([profile1, profile5, conical_rim])
 
 translated_model = model.translation(vm.Point3D.random(0, 1, 0, 1, 0, 1))
-turned_model = model.rotation(0.3*vm.X3D, vm.Z3D, 0.4)
+turned_model = model.rotation(0.3*vm.X3D.to_point(), vm.Z3D, 0.4)
 
 # model.primitives.extend(translated_model.primitives+turned_model.primitives)
 model.babylonjs()

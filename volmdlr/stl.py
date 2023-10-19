@@ -212,7 +212,7 @@ class Stl(dc.DessiaObject):
                 return cls.from_binary_stream(
                     file, distance_multiplier=distance_multiplier)
 
-        with open(filepath, 'r', errors='ignore') as file:
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
             return cls.from_text_stream(
                 file, distance_multiplier=distance_multiplier)
 

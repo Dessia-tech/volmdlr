@@ -5,7 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.14.0 [future]
+## v0.15.0 [future]
+
+### New Features
+-
+
+### Fixed
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
+- ToroidalFace3D: PlaneFace3D intersectios.
+- PlaneFace3D: circle_intersections.
+
+### Refactor
+-
+
+### Changed
+-
+
+### Unittests
+- ToroidalSurface3D: line_intersections, plane_intersections
+- ToroidalFace3D: PlaneFace3D intersectios.
+
+## v0.14.0 [Unreleased]
 
 ### New Features
 - DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
@@ -19,6 +39,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: line/line_segment intersections, perpendicular_plane_intersection, parallel_plane_intersections, concurent_plane_intersections, plane_intersections.
 - Hyperbola2D/3D and Parabola2D/3D: split
 - PlaneFace3D: conicalface_intersections
+- CylindricalSurface3D: conicalsurface_intersections
+- CylindricalFace3D: conicalface_intersections
+- Curve: general_method curve_intersections
+- Parabola2d/3D / Hyperbola2D/3D: point_belongs, tangent
+- BSplineCurve: point_to_parameter, abscissa_to_parameter.
+- Basis3D: is_normilized, is_orthogonal, is_orthonormal.
+- BSplineSurface3D: fullarcellipse3d_to_2d
+- ClosedPolygon2D: points_in_polygon
 
 ### Fixed
 - add missing name attributes to classmethods.
@@ -26,7 +54,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: from_points_interpolation, from_points_approximation.
 - ConicalFace3D: point_belongs
 - nurbs.core: find_multiplicity, evaluate_curve.
-
+- LineSegment3d: line_intersections.
+- Circle2D: line_intersections
+- Step.read_lines: handles name with # character in name.
+- ExtrusionSurface3D: enhance 3D to parametric operations.
+- BSplineCurve: direction_vector, point_at_abscissa, abscissa, trim
+- ConicalSurface3D and RevolutionSurface3D: bsplinecurve3d_to_2d when start or and points are at surface singularity
+- ClosedCurves: discretization_points
+- ArcEllipse3D: is_close
+- LineSegment3D: revolution
+- FullArcEllipse3D, FullArcEllipse2D: discretization_points
+- ConicalSurface3D: linesegment2d_to_3d
+- BSplineSurface3D: bsplinecurve3d_to_2d, prevents code execution from stopping when point3d_to_2d does not converge
+- BSplineSurface3D: derivatives
+- BSplineCurve: split
+- 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
 
@@ -34,14 +76,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cache BSplineCurve points into a numpy array to reduce memory usage.
 - Vector2D, Vector3D: __repr__
 - core_compiled: cdef functions' names.
--
+- Vector2D, Vector3D, Point2D, Point3D: transformed into extension types for memory performance
+- limit warning on step reading
+- BSplineSurface3D: point3d_to_2d
 
 ### Unittests
 - Hyperbola2D/3D: line_intersections
 - Parabola2D/3D: line_intersections
 - ConicalSurface3D: test_line_intersections, test_plane_intersections.
 
-## v0.13.0 [unreleased]
+## v0.13.0
 
 ### New Features
 - Line: reverse.
@@ -84,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Line3D: fix Line3D plot()
 - Vector2D: plot()
 - fix RevolutionFace3D init parameter wire to edge.
+- Update documentation
 - fix Sweep: bug when first primitive is an arc.
 - fix closedshell3d volume
 - Step.py: enhance step import/export

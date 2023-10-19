@@ -783,7 +783,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             except Exception:
                 face_mesh = None
                 warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
-                              f"{self.name} faces. Probabaly because topology error in contour2d.")
+                              f"{self.name} faces. Probably because topology error in contour2d.")
                 print(traceback.format_exc())
                 continue
             if face_mesh:
@@ -961,6 +961,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
     @staticmethod
     def is_shell_open(faces, faces_graph=None):
+        """Returns True if shell is an open shell."""
         if faces_graph is None:
             vertices_points = Shell3D._helper_getter_vertices_points(faces)
             faces_graph = Shell3D._helper_create_faces_graph(faces, vertices_points, False)
