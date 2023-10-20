@@ -186,16 +186,16 @@ class TestArc3D(unittest.TestCase):
         revolution_point = self.arc3d.circle.center + self.arc3d.circle.frame.u * 4 * self.arc3d.circle.radius
         revolution = self.arc3d.revolution(revolution_point, self.arc3d.circle.normal, math.pi / 4)
         rev_points = revolution[0].outer_contour3d.discretization_points(number_points=10)
-        expected_points = [volmdlr.Point3D(-0.5773502691896257, -0.5773502691896257, -0.5773502691896257),
-                           volmdlr.Point3D(-1.5908072005465637, 0.09711996966100678, 0.09711996966100678),
-                           volmdlr.Point3D(-2.3020892306514145, 0.9429902409070772, 0.9429902409070772),
-                           volmdlr.Point3D(-2.5850082506429826, 1.8986223959112984, 1.5325969153619727),
-                           volmdlr.Point3D(-1.5470925482550173, 2.545945969185909, 1.1371139212866739),
-                           volmdlr.Point3D(-0.6511451002704305, 2.011854997659544, 1.888598197214789),
-                           volmdlr.Point3D(-0.1559690908243554, 1.1006931019373574, 1.1006931019373574),
-                           volmdlr.Point3D(0.5425317810931582, 0.7843765655228172, 0.30068699666349935),
-                           volmdlr.Point3D(-0.10025583143955093, 0.5961084068679217, -0.7966200697470236),
-                           volmdlr.Point3D(-0.5773502691896257, -0.5773502691896257, -0.5773502691896257)]
+        expected_points = [volmdlr.Point3D(-0.5773502691896257, -0.5773502542884645, -0.5773502840907869),
+                           volmdlr.Point3D(-1.7128546560602396, 0.20922742981563003, 0.20922740001330764),
+                           volmdlr.Point3D(-2.4418249710742326, 1.208072112109111, 1.2080720823067885),
+                           volmdlr.Point3D(-2.2744814433746345, 2.2901157830674514, 1.21644996609037),
+                           volmdlr.Point3D(-0.868580219121219, 2.370205820293332, 1.4774887679391826),
+                           volmdlr.Point3D(-0.9120201767463221, 1.326912290373256, 2.3269122903732553),
+                           volmdlr.Point3D(-0.2228416766318695, 0.3209635758184126, 1.320963575818412),
+                           volmdlr.Point3D(0.5765960663641192, 0.5404648557542268, 0.6127272769740117),
+                           volmdlr.Point3D(0.014755330617462037, 0.7216311473827227, -0.6921204861477986),
+                           volmdlr.Point3D(-0.5773502691896257, -0.5773502542884645, -0.5773502840907869)]
         for point, expected_point in zip(rev_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 

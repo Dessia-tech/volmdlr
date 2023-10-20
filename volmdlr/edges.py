@@ -2495,14 +2495,62 @@ class ArcMixin:
     """
 
     def __init__(self, circle, start, end, is_trigo: bool = True, name: str = ''):
-        # Edge.__init__(self, start=start, end=end, name=name)
         self.start = start
         self.end = end
         self.circle = circle
-        self.center = circle.center
         self.is_trigo = is_trigo
-        self._length = None
         self.name = name
+        self._length = None
+        self._angle = None
+        self.angle_start, self.angle_end = self.get_start_end_angles()
+
+    @property
+    def center(self):
+        """Gets arc center."""
+        return self.circle.center
+
+    @property
+    def radius(self):
+        """Gets arc radius."""
+        return self.circle.radius
+
+    @property
+    def angle(self):
+        """
+        Arc angle property.
+
+        :return: arc angle.
+        """
+        if not self._angle:
+            self._angle = self.angle_end - self.angle_start
+        return self._angle
+
+    @property
+    def frame(self):
+        """Gets the arc frame."""
+        return self.circle.frame
+
+    def _arc_point_angle(self, point):
+        """Helper function to calculate the angle of point on a trigonometric arc."""
+        local_start_point = self.circle.frame.global_to_local_coordinates(point)
+        u1, u2 = local_start_point.x / self.radius, local_start_point.y / self.radius
+        point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        return point_angle
+
+    def get_arc_point_angle(self, point):
+        """Returns the angle of point on a trigonometric arc."""
+        point_theta = self._arc_point_angle(point)
+        if self.angle_start > point_theta:
+            point_theta += volmdlr.TWO_PI
+        return point_theta
+
+    def get_start_end_angles(self):
+        """Returns the start and end angle of the arc."""
+        start_angle = self._arc_point_angle(self.start)
+        end_angle = self._arc_point_angle(self.end)
+        if start_angle >= end_angle:
+            end_angle += volmdlr.TWO_PI
+        return start_angle, end_angle
 
     def length(self):
         """
@@ -2774,25 +2822,9 @@ class Arc2D(ArcMixin, Edge):
                  end: volmdlr.Point2D,
                  is_trigo: bool = True,
                  name: str = ''):
-        # self._center = center
-        self.circle = circle
-        self.is_trigo = is_trigo
-        self._angle = None
         self._bounding_rectangle = None
         ArcMixin.__init__(self, circle, start, end, is_trigo, name=name)
         Edge.__init__(self, start=start, end=end, name=name)
-        start_to_center = start - self.circle.center
-        end_to_center = end - self.circle.center
-        angle1 = math.atan2(start_to_center.y, start_to_center.x)
-        angle2 = math.atan2(end_to_center.y, end_to_center.x)
-        if self.is_trigo:
-            self.angle1 = angle1
-            self.angle2 = angle2
-            if self.angle2 == 0.0:
-                self.angle2 = volmdlr.TWO_PI
-        else:
-            self.angle1 = angle2
-            self.angle2 = angle1
 
     def __hash__(self):
         return hash(('arc2d', self.circle, self.start, self.end, self.is_trigo))
@@ -2802,6 +2834,20 @@ class Arc2D(ArcMixin, Edge):
             return False
         return (self.circle == other_arc.circle and self.start == other_arc.start
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
+
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
+        """Stores all Arc 2D attributes in a dict object."""
+        dict_ = self.base_dict()
+        dict_['circle'] = self.circle.to_dict(use_pointers=use_pointers, memo=memo,
+                                              id_method=id_method, id_memo=id_memo, path=path + '/circle')
+        dict_['start'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
+                                                id_method=id_method, id_memo=id_memo, path=path + '/start')
+        dict_['end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
+                                                id_method=id_method, id_memo=id_memo, path=path + '/end')
+        dict_['is_trigo'] = self.is_trigo
+        dict_['name'] = self.name
+        return dict_
 
     @classmethod
     def from_3_points(cls, point1, point2, point3, name: str = ''):
@@ -2815,26 +2861,6 @@ class Arc2D(ArcMixin, Edge):
         if not arc.point_belongs(point2):
             return cls(circle, point1, point3, False, name=name)
         return arc
-
-    @property
-    def angle(self):
-        """
-        Returns the angle in radians of the arc.
-        """
-        if not self._angle:
-            self._angle = self.get_angle()
-        return self._angle
-
-    def get_angle(self):
-        """
-        Gets arc angle.
-
-        """
-        clockwise_arc = self.reverse() if self.is_trigo else self
-        vector_start = clockwise_arc.start - clockwise_arc.circle.center
-        vector_end = clockwise_arc.end - clockwise_arc.circle.center
-        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
-        return arc_angle
 
     def _get_points(self):
         return [self.start, self.end]
@@ -3128,8 +3154,8 @@ class Arc2D(ArcMixin, Edge):
 
         ax.add_patch(matplotlib.patches.Arc((self.circle.center.x, self.circle.center.y), 2 * self.circle.radius,
                                             2 * self.circle.radius, angle=0,
-                                            theta1=self.angle1 * 0.5 / math.pi * 360,
-                                            theta2=self.angle2 * 0.5 / math.pi * 360,
+                                            theta1=self.angle_start * 0.5 / math.pi * 360,
+                                            theta2=self.angle_end * 0.5 / math.pi * 360,
                                             color=edge_style.color,
                                             alpha=edge_style.alpha))
         x_min, x_max = self.circle.center[0] - self.circle.radius*1.2, self.circle.center[0] + self.circle.radius*1.2
@@ -3271,7 +3297,7 @@ class Arc2D(ArcMixin, Edge):
             if radius < 0:
                 return None
             center = self.circle.center
-        new_circle = volmdlr_curves.Circle2D(center, radius)
+        new_circle = volmdlr_curves.Circle2D(self.circle.frame, radius)
         start = center + radius * vector_start_center
         end = center + radius * vector_end_center
         return Arc2D(new_circle, start, end, self.is_trigo)
@@ -4569,11 +4595,11 @@ class LineSegment3D(LineSegment):
         inner_contours2d = []
         if angle == volmdlr.TWO_PI:
             # Only 2 circles as contours
-            bigger_circle = volmdlr_curves.Circle2D(volmdlr.O2D, bigger_r)
+            bigger_circle = volmdlr_curves.Circle2D(volmdlr.OXY, bigger_r)
             outer_contour2d = volmdlr.wires.Contour2D(
                 bigger_circle.split_at_abscissa(bigger_circle.length() * 0.5))
             if not math.isclose(smaller_r, 0, abs_tol=1e-9):
-                smaller_circle = volmdlr_curves.Circle2D(volmdlr.O2D, smaller_r)
+                smaller_circle = volmdlr_curves.Circle2D(volmdlr.OYX, smaller_r)
                 inner_contours2d = [volmdlr.wires.Contour2D(
                     smaller_circle.split_at_abscissa(smaller_circle.length() * 0.5))]
             return [volmdlr.faces.PlaneFace3D(surface,
@@ -5272,9 +5298,6 @@ class Arc3D(ArcMixin, Edge):
         ArcMixin.__init__(self, circle, start=start, end=end, name=name)
         Edge.__init__(self, start=start, end=end, name=name)
         self._angle = None
-        self.frame = self.circle.frame
-        self.radius = self.circle.radius
-        self.angle_start, self.angle_end = self.get_start_end_angles()
         self._bbox = None
 
     def __hash__(self):
@@ -5296,28 +5319,6 @@ class Arc3D(ArcMixin, Edge):
         dict_['end'] = self.end.to_dict(use_pointers=use_pointers, memo=memo,
                                         id_method=id_method, id_memo=id_memo, path=path + '/end')
         return dict_
-
-    def _arc_point_angle(self, point):
-        """Helper function to calculate the angle of point on a trigonometric arc."""
-        local_start_point = self.circle.frame.global_to_local_coordinates(point)
-        u1, u2 = local_start_point.x / self.radius, local_start_point.y / self.radius
-        point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
-        return point_angle
-
-    def get_arc_point_angle(self, point):
-        """Returns the angle of point on a trigonometric arc."""
-        point_theta = self._arc_point_angle(point)
-        if self.angle_start > point_theta:
-            point_theta += volmdlr.TWO_PI
-        return point_theta
-
-    def get_start_end_angles(self):
-        """Returns the start and end angle of the arc."""
-        start_angle = self._arc_point_angle(self.start)
-        end_angle = self._arc_point_angle(self.end)
-        if start_angle >= end_angle:
-            end_angle += volmdlr.TWO_PI
-        return start_angle, end_angle
 
     @property
     def bounding_box(self):
@@ -5377,17 +5378,6 @@ class Arc3D(ArcMixin, Edge):
         circle = volmdlr_curves.Circle3D.from_3_points(point1, point2, point3)
         arc = cls(circle, point1, point3, name=name)
         return arc
-
-    @property
-    def angle(self):
-        """
-        Arc angle property.
-
-        :return: arc angle.
-        """
-        if not self._angle:
-            self._angle = self.angle_end - self.angle_start
-        return self._angle
 
     @property
     def points(self):
@@ -5536,6 +5526,7 @@ class Arc3D(ArcMixin, Edge):
         point_interior = self.middle_point().to_2d(plane_origin, x, y)
         point_end = self.end.to_2d(plane_origin, x, y)
         arc = Arc2D(circle2d, point_start, point_end, self.is_trigo, name=self.name)
+        arc.angle
         if not arc.point_belongs(point_interior):
             arc = Arc2D(circle2d, point_start, point_end, False, name=self.name)
         return arc
@@ -5620,7 +5611,7 @@ class Arc3D(ArcMixin, Edge):
             w = w.unit_vector()
             v = w.cross(u)
             arc2d = self.to_2d(self.circle.center, u, v)
-            angle1, angle2 = arc2d.angle1, arc2d.angle2
+            angle1, angle2 = arc2d.angle_start, arc2d.angle_end
             if angle2 < angle1:
                 angle2 += volmdlr.TWO_PI
             cylinder = volmdlr.surfaces.CylindricalSurface3D(
@@ -5680,9 +5671,9 @@ class Arc3D(ArcMixin, Edge):
         surface = volmdlr.surfaces.ToroidalSurface3D(
             volmdlr.Frame3D(tore_center, u, v, axis), radius,
             self.radius)
-        arc2d = self.to_2d(tore_center, u, axis)
+        phi_angles = sorted([self.angle_start, self.angle_end])
         return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(
-            surface, 0, angle, arc2d.angle1, arc2d.angle2)]
+            surface, 0, angle, phi_angles[0], phi_angles[1])]
 
     def to_step(self, current_id, *args, **kwargs):
         """

@@ -1108,6 +1108,14 @@ class Circle2D(CircleMixin, ClosedCurve):
         raise IndexError
 
     @property
+    def is_trigo(self):
+        """Return True if circle is counterclockwise."""
+        cross = self.frame.u.cross(self.frame.v)
+        if cross > 0:
+            return True
+        return False
+
+    @property
     def bounding_rectangle(self):
         """
         Gets the bounding rectangle for the circle.
@@ -1436,19 +1444,13 @@ class Circle2D(CircleMixin, ClosedCurve):
         """
         return Circle2D(self.frame.translation(offset), self.radius)
 
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new Circle2D.
 
         side = 'old' or 'new'
         """
-        if side == 'old':
-            return Circle2D(frame.local_to_global_coordinates(self.center),
-                            self.radius)
-        if side == 'new':
-            return Circle2D(frame.global_to_local_coordinates(self.center),
-                            self.radius)
-        raise ValueError('Side should be \'new\' \'old\'')
+        return Circle2D(self.frame.frame_mapping(frame, side), self.radius)
 
     def split_by_line(self, line: Line2D):
         """

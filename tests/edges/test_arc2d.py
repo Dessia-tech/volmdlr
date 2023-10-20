@@ -1,16 +1,19 @@
 import math
 import unittest
-
+import os
 import volmdlr
 from volmdlr.edges import Arc2D
 from volmdlr import curves
 
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'arc_objects')
+
 class TestArc2D(unittest.TestCase):
-    circle2d = curves.Circle2D(volmdlr.O2D, 1)
+    circle2d = curves.Circle2D(volmdlr.OXY, 1)
     arc2d = Arc2D(circle2d, volmdlr.Point2D(-1, 0), volmdlr.Point2D(1, 0), True)
     arc1 = Arc2D(circle2d, volmdlr.Point2D(0, -1), volmdlr.Point2D(0, 1), True)
     arc2 = Arc2D(circle2d, volmdlr.Point2D(1, 0), volmdlr.Point2D(-1, 0), True)
-    arc3 = Arc2D(curves.Circle2D(volmdlr.O2D, 1.5), 1.5 * volmdlr.Point2D(0, -1), 1.5 * volmdlr.Point2D(0, 1), True)
+    arc3 = Arc2D(curves.Circle2D(volmdlr.OXY, 1.5), 1.5 * volmdlr.Point2D(0, -1), 1.5 * volmdlr.Point2D(0, 1), True)
     arc4 = Arc2D(circle2d, volmdlr.Point2D(0.7071067811865475, -0.7071067811865475),
                  volmdlr.Point2D(0.7071067811865475, 0.7071067811865475))
     arc5 = Arc2D(circle2d, volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475),
@@ -45,7 +48,7 @@ class TestArc2D(unittest.TestCase):
         self.assertTrue(arc_split3[1].end.is_close(self.arc2d.end))
 
     def test_arc_intersections(self):
-        arc2 = Arc2D(curves.Circle2D(volmdlr.Point2D(0, 1.5), 1), volmdlr.Point2D(-1, 1.5),
+        arc2 = Arc2D(curves.Circle2D(volmdlr.OXY.translation(volmdlr.Point2D(0, 1.5)), 1), volmdlr.Point2D(-1, 1.5),
                      volmdlr.Point2D(1, 1.5), True)
         arc_intersections = self.arc1.arc_intersections(arc2)
         self.assertEqual(len(arc_intersections), 1)
@@ -101,11 +104,11 @@ class TestArc2D(unittest.TestCase):
         for result_list, expected_result_list in zip(list_point_belongs, expected_results):
             self.assertEqual(result_list, expected_result_list)
 
-        arc = Arc2D.load_from_file("edges/arc_objects/arc2d_bug_point_belongs.json")
+        arc = Arc2D.load_from_file(os.path.join(folder, "arc2d_bug_point_belongs.json"))
         point = volmdlr.Point2D(0.01330629098214331, 0.0032923224261096617)
         self.assertTrue(arc.point_belongs(point))
 
-        arc = Arc2D.load_from_file("edges/arc_objects/arc2d_point_belongs.json")
+        arc = Arc2D.load_from_file(os.path.join(folder, "arc2d_point_belongs.json"))
         point = volmdlr.Point2D(0.0007151488183559929, 0.007258543823331798)
         self.assertTrue(arc.point_belongs(point))
 
@@ -131,7 +134,7 @@ class TestArc2D(unittest.TestCase):
 
     def test_delete_shared_section(self):
         remaining_arc1 = self.arc1.delete_shared_section(self.arc2)
-        self.assertEqual(remaining_arc1, [Arc2D(curves.Circle2D(volmdlr.O2D, 1), volmdlr.Point2D(0.0, -1.0),
+        self.assertEqual(remaining_arc1, [Arc2D(curves.Circle2D(volmdlr.OXY, 1), volmdlr.Point2D(0.0, -1.0),
                                                 volmdlr.Point2D(1.0, 0.0), True)])
         self.assertEqual(self.arc2.delete_shared_section(self.arc3), [self.arc2])
         remaining_arc2 = self.arc1.delete_shared_section(self.arc4)
@@ -213,7 +216,7 @@ class TestArc2D(unittest.TestCase):
         point3d_ = self.arc4.middle_point().to_3d(volmdlr.O3D, vector1, vector2)
         self.assertTrue(arc3d.point_belongs(point3d_))
         arc = volmdlr.edges.Arc2D(
-            curves.Circle2D(volmdlr.Point2D(0.2068381066975619, 0.1167563813274402), 0.01500000000000002),
+            curves.Circle2D(volmdlr.OXY.translation(volmdlr.Vector2D(0.2068381066975619, 0.1167563813274402)), 0.01500000000000002),
             volmdlr.Point2D(0.21783000907195643, 0.10654961483693107),
             volmdlr.Point2D(0.19291095633428304, 0.11118552118212867), False)
         point3d = arc.middle_point().to_3d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)

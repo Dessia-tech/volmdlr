@@ -14,7 +14,7 @@ folder = os.path.dirname(os.path.realpath(__file__))
 
 
 class TestContour2D(unittest.TestCase):
-    contour1 = wires.Contour2D([edges.FullArc2D(circle=curves.Circle2D(volmdlr.O2D, 0.029999999),
+    contour1 = wires.Contour2D([edges.FullArc2D(circle=curves.Circle2D(volmdlr.OXY, 0.029999999),
                                                 start_end=volmdlr.Point2D(0.029999999, 0))])
     not_ordered_contour = DessiaObject.load_from_file(os.path.join(folder, "contour_not_ordered.json"))
     # ordered_contour = DessiaObject.load_from_file('wires/contour_ordered.json')
