@@ -102,6 +102,18 @@ class RoundedLineSegments2D(RoundedLineSegments):
             self.radius, adapt_radius=self.adapt_radius, name=self.name)
 
     def offset(self, offset):
+        """
+        Return a new rounded line segment with the specified offset.
+
+        This method creates a new rounded line segment by offsetting the current one by a given distance.
+        The offset can be both positive and negative, moving the line segments outward or inward.
+
+        :param offset: The offset distance for the new rounded line segment.
+        :type offset: float
+
+        :return: A new RoundedLineSegments2D instance with the specified offset.
+        :rtype: RoundedLineSegments2D
+        """
         number_points = len(self.points)
         vectors = []
         for i in range(number_points - 1):
