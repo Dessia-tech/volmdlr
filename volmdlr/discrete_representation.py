@@ -1574,7 +1574,8 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A voxelization created from the Shell3D.
         :rtype: OctreeBasedVoxelization
         """
-        pass
+        triangles = cls._shell_to_triangles(shell)
+
 
     @classmethod
     def from_volume_model(
