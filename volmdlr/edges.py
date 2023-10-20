@@ -3033,12 +3033,12 @@ class Arc2D(ArcMixin, Edge):
 
     def straight_line_second_moment_area(self, point: volmdlr.Point2D):
         """Straight line second moment area for an Arc 2D."""
-        if self.angle2 < self.angle1:
-            angle2 = self.angle2 + volmdlr.TWO_PI
+        if self.angle_end < self.angle_start:
+            angle2 = self.angle_end + volmdlr.TWO_PI
 
         else:
-            angle2 = self.angle2
-        angle1 = self.angle1
+            angle2 = self.angle_end
+        angle1 = self.angle_start
 
         # Full arc section
         moment_area_x1 = self.circle.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
@@ -3225,12 +3225,12 @@ class Arc2D(ArcMixin, Edge):
         Second moment area of part of disk.
 
         """
-        if self.angle2 < self.angle1:
-            angle2 = self.angle2 + volmdlr.TWO_PI
+        if self.angle_end < self.angle_start:
+            angle2 = self.angle_end + volmdlr.TWO_PI
 
         else:
-            angle2 = self.angle2
-        angle1 = self.angle1
+            angle2 = self.angle_end
+        angle1 = self.angle_start
         moment_area_x = self.circle.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
                 math.sin(2 * angle1) - math.sin(2 * angle2)))
         moment_area_y = self.circle.radius ** 4 / 8 * (angle2 - angle1 + 0.5 * (
@@ -3256,8 +3256,8 @@ class Arc2D(ArcMixin, Edge):
         return plot_data.Arc2D(cx=self.circle.center.x,
                                cy=self.circle.center.y,
                                r=self.circle.radius,
-                               start_angle=self.angle1,
-                               end_angle=self.angle2,
+                               start_angle=self.angle_start,
+                               end_angle=self.angle_end,
                                edge_style=edge_style,
                                data=data,
                                anticlockwise=anticlockwise,
@@ -5526,7 +5526,6 @@ class Arc3D(ArcMixin, Edge):
         point_interior = self.middle_point().to_2d(plane_origin, x, y)
         point_end = self.end.to_2d(plane_origin, x, y)
         arc = Arc2D(circle2d, point_start, point_end, self.is_trigo, name=self.name)
-        arc.angle
         if not arc.point_belongs(point_interior):
             arc = Arc2D(circle2d, point_start, point_end, False, name=self.name)
         return arc
@@ -5650,13 +5649,14 @@ class Arc3D(ArcMixin, Edge):
 
             u = u.unit_vector()
             v = axis.cross(u)
-            arc2d = self.to_2d(self.circle.center, u, axis)
 
             surface = volmdlr.surfaces.SphericalSurface3D(
                 volmdlr.Frame3D(self.circle.center, u, v, axis), self.radius)
-
+            start2d = surface.point3d_to_2d(self.start)
+            end2d = surface.point3d_to_2d(self.end)
+            phi_angles = sorted([start2d.y, end2d.y])
             return [volmdlr.faces.SphericalFace3D.from_surface_rectangular_cut(surface, 0, angle,
-                                                                               arc2d.angle1, arc2d.angle2)]
+                                                                               phi_angles[0], phi_angles[1])]
 
         # Toroidal
         u = self.circle.center - tore_center
@@ -5671,7 +5671,9 @@ class Arc3D(ArcMixin, Edge):
         surface = volmdlr.surfaces.ToroidalSurface3D(
             volmdlr.Frame3D(tore_center, u, v, axis), radius,
             self.radius)
-        phi_angles = sorted([self.angle_start, self.angle_end])
+        start2d = surface.point3d_to_2d(self.start)
+        end2d = surface.point3d_to_2d(self.end)
+        phi_angles = sorted([start2d.y, end2d.y])
         return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(
             surface, 0, angle, phi_angles[0], phi_angles[1])]
 

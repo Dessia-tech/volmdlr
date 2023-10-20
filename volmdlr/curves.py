@@ -50,8 +50,12 @@ class Curve(DessiaObject):
     """Abstract class for a curve object."""
 
     def __init__(self, name: str = ''):
-        self.periodic = False
         DessiaObject.__init__(self, name=name)
+
+    @property
+    def periodic(self):
+        """Returns True if the curve is closed."""
+        return False
 
     def abscissa(self, point):
         """
@@ -112,7 +116,11 @@ class ClosedCurve(Curve):
     """Abstract class for defining closed curves (Circle, Ellipse) properties."""
     def __init__(self, name: str = ''):
         Curve.__init__(self, name=name)
-        self.periodic = True
+
+    @property
+    def periodic(self):
+        """Returns True if the curve is closed."""
+        return True
 
     def point_at_abscissa(self, abscissa):
         """
@@ -1733,12 +1741,14 @@ class Circle3D(CircleMixin, ClosedCurve):
         :return: Circle2D.
         """
         center_2d = self.center.to_2d(plane_origin, x, y)
-        point1_3d = self.frame.origin + self.frame.u
-        point2_3d = self.frame.origin + self.frame.v
-        point1_2d = point1_3d.to_2d(plane_origin, x, y)
-        point2_2d = point2_3d.to_2d(plane_origin, x, y)
-        u_2d = (point1_2d - center_2d).unit_vector()
-        v_2d = (point2_2d - center_2d).unit_vector()
+        # point1_3d = self.frame.origin + self.frame.u
+        # point2_3d = self.frame.origin + self.frame.v
+        # point1_2d = point1_3d.to_2d(plane_origin, x, y)
+        # point2_2d = point2_3d.to_2d(plane_origin, x, y)
+        # u_2d = (point1_2d - center_2d).unit_vector()
+        # v_2d = (point2_2d - center_2d).unit_vector()
+        u_2d = self.frame.u.to_2d(plane_origin, x, y)
+        v_2d = self.frame.v.to_2d(plane_origin, x, y)
         frame2d = volmdlr.Frame2D(center_2d, u_2d, v_2d)
         return Circle2D(frame2d, self.radius)
 
