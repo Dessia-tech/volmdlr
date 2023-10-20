@@ -87,7 +87,7 @@ class TestMatrixBasedVoxelizationBooleanOperation(unittest.TestCase):
             self.volume_model, 0.01, name="volume model voxelization"
         )
 
-    def test_union(self):
+    def test_union_1(self):
         union_1 = self.sphere_voxelization.union(self.cylinder_voxelization)
         union_2 = self.cylinder_voxelization.union(self.sphere_voxelization)
 
@@ -98,6 +98,22 @@ class TestMatrixBasedVoxelizationBooleanOperation(unittest.TestCase):
         if SHOW_BABYLONJS:
             volume_model = VolumeModel([self.sphere, self.cylinder, union_1.to_closed_triangle_shell()])
             volume_model.babylonjs()
+
+    def test_union_2(self):
+        block_1 = Block(frame=volmdlr.OXYZ)
+        block_2 = block_1.translation(volmdlr.Vector3D(0.5, 0.5, 0.5))
+
+        voxelization_1 = MatrixBasedVoxelization.from_shell(block_1, 0.1)
+        voxelization_2 = MatrixBasedVoxelization.from_shell(block_2, 0.1)
+
+        union_3 = voxelization_1.union(voxelization_2)
+        self.assertEqual(2312, len(union_3))
+
+        if SHOW_BABYLONJS:
+            VolumeModel(
+                [voxelization_1.to_closed_triangle_shell(), voxelization_2.to_closed_triangle_shell()]
+            ).babylonjs()
+            union_3.babylonjs()
 
     def test_intersection(self):
         intersection_1 = self.sphere_voxelization.intersection(self.cylinder_voxelization)
