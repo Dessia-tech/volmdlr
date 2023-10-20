@@ -1090,8 +1090,8 @@ class Circle2D(CircleMixin, ClosedCurve):
 
     def __init__(self, frame: volmdlr.Frame2D, radius: float, name: str = ''):
         self.radius = radius
-        self._bounding_rectangle = None
         self.frame = frame
+        self._bounding_rectangle = None
         ClosedCurve.__init__(self, name=name)
 
     def __hash__(self):
@@ -1210,6 +1210,12 @@ class Circle2D(CircleMixin, ClosedCurve):
         :return: copied circle 2d.
         """
         return Circle2D(self.frame.copy(), self.radius)
+
+    def reverse(self):
+        """Gets the circle in the reverse direction."""
+        frame = self.frame.copy()
+        frame.v = - frame.v
+        return Circle2D(frame, self.radius)
 
     def point_belongs(self, point, include_edge_points: bool = True, tol: float = 1e-6):
         """

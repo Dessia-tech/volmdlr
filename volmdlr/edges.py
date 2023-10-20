@@ -2494,11 +2494,10 @@ class ArcMixin:
     # :type name: str, optional
     """
 
-    def __init__(self, circle, start, end, is_trigo: bool = True, name: str = ''):
+    def __init__(self, circle, start, end, name: str = ''):
         self.start = start
         self.end = end
         self.circle = circle
-        self.is_trigo = is_trigo
         self.name = name
         self._length = None
         self._angle = None
@@ -2672,8 +2671,8 @@ class ArcMixin:
 
         :return: An arc
         """
-
-        return self.__class__(self.circle, start=self.end, end=self.start, is_trigo=not self.is_trigo)
+        circle = self.circle.reverse()
+        return self.__class__(circle, start=self.end, end=self.start)
 
     def split(self, split_point, tol: float = 1e-6):
         """
@@ -2820,10 +2819,9 @@ class Arc2D(ArcMixin, Edge):
     def __init__(self, circle: 'volmdlr.curves.Circle2D',
                  start: volmdlr.Point2D,
                  end: volmdlr.Point2D,
-                 is_trigo: bool = True,
                  name: str = ''):
         self._bounding_rectangle = None
-        ArcMixin.__init__(self, circle, start, end, is_trigo, name=name)
+        ArcMixin.__init__(self, circle, start, end, name=name)
         Edge.__init__(self, start=start, end=end, name=name)
 
     def __hash__(self):
@@ -2861,6 +2859,31 @@ class Arc2D(ArcMixin, Edge):
         if not arc.point_belongs(point2):
             return cls(circle, point1, point3, False, name=name)
         return arc
+
+    @property
+    def angle(self):
+        """
+        Returns the angle in radians of the arc.
+        """
+        if not self._angle:
+            self._angle = self.get_angle()
+        return self._angle
+
+    def get_angle(self):
+        """
+        Gets arc angle.
+
+        """
+        clockwise_arc = self.reverse() if self.circle.is_trigo else self
+        vector_start = clockwise_arc.start - clockwise_arc.circle.center
+        vector_end = clockwise_arc.end - clockwise_arc.circle.center
+        arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
+        return arc_angle
+
+    @property
+    def is_trigo(self):
+        """Return True if circle is counterclockwise."""
+        return self.circle.is_trigo
 
     def _get_points(self):
         return [self.start, self.end]
@@ -2987,7 +3010,7 @@ class Arc2D(ArcMixin, Edge):
 
         :return: the area of the Arc2D.
         """
-        return self.circle.radius ** 2 * self.angle / 2
+        return (self.circle.radius ** 2) * self.angle / 2
 
     def center_of_mass(self):
         """
@@ -5308,6 +5331,11 @@ class Arc3D(ArcMixin, Edge):
             return False
         return (self.circle == other_arc.circle and self.start == other_arc.start
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
+
+    @property
+    def is_trigo(self):
+        """Return True if circle is counterclockwise."""
+        return True
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
         """Saves the object parameters into a dictionary."""
