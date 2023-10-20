@@ -3135,8 +3135,10 @@ class Frame2D(Basis2D):
         :return: New rotated frame
         :rtype: :class:`volmdlr.Frame2D`
         """
+        new_origin = self.origin
+        if not center.is_close(new_origin):
+            new_origin = self.origin.rotation(center, angle)
         new_base = Basis2D.rotation(self, angle)
-        new_origin = self.origin.rotation(center, angle)
         return Frame2D(new_origin, new_base.u, new_base.v)
 
     def Draw(self, ax=None, style="ok"):
@@ -3404,6 +3406,8 @@ class Frame3D(Basis3D):
         :rtype: :class:`volmdlr.Frame3D`
         """
         new_base = Basis3D.rotation(self, axis, angle)
+        if center.is_close(self.origin):
+            return Frame3D(self.origin, new_base.u, new_base.v, new_base.w, self.name)
         new_origin = self.origin.rotation(center, axis, angle)
         return Frame3D(new_origin, new_base.u, new_base.v, new_base.w, self.name)
 
