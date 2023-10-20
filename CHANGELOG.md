@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frame2D/3D: fix rotation
 
 ### Refactor
--
+- Circle2D
 
 ### Changed
 -
