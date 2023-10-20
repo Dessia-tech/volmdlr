@@ -756,13 +756,14 @@ class PointBasedVoxelization(Voxelization):
 
     @classmethod
     def from_matrix_based_voxelization(
-        cls, matrix_based_voxelization: "MatrixBasedVoxelization"
+        cls, matrix_based_voxelization: "MatrixBasedVoxelization",
     ) -> "PointBasedVoxelization":
         """
         Create a PointBasedVoxelization object from a MatrixBasedVoxelization.
 
         :param matrix_based_voxelization: The MatrixBasedVoxelization object representing the voxelization.
         :type matrix_based_voxelization: MatrixBasedVoxelization
+        :param name: object's name.
 
         :return: A PointBasedVoxelization object created from the MatrixBasedVoxelization.
         :rtype: PointBasedVoxelization
@@ -771,7 +772,7 @@ class PointBasedVoxelization(Voxelization):
             matrix_based_voxelization.min_grid_center, matrix_based_voxelization.voxel_size
         ):
             warnings.warn(
-                """This matrix based voxelization is not defined in the implicit grid defined by the voxel_size. 
+                """This matrix based voxelization is not defined in the implicit grid defined by the voxel_size.
             Some methods like boolean operation or interference computing may not work as expected."""
             )
 
@@ -1417,7 +1418,7 @@ class MatrixBasedVoxelization(Voxelization):
         global_min = np.min([self_min, other_min], axis=0)
         global_max = np.max([self_max, other_max], axis=0)
 
-        new_shape = np.round((global_max - global_min) / self.voxel_size, DECIMALS).astype(int)
+        new_shape = np.round((global_max - global_min) / self.voxel_size, DECIMALS).astype(int) + 2
 
         new_self = np.zeros(new_shape, dtype=np.bool_)
         new_other = np.zeros(new_shape, dtype=np.bool_)
@@ -1426,15 +1427,15 @@ class MatrixBasedVoxelization(Voxelization):
         other_start = np.round((other_min - global_min) / self.voxel_size, DECIMALS).astype(int)
 
         new_self[
-            self_start[0] : self_start[0] + self.matrix.shape[0],
-            self_start[1] : self_start[1] + self.matrix.shape[1],
-            self_start[2] : self_start[2] + self.matrix.shape[2],
+            self_start[0]: self_start[0] + self.matrix.shape[0],
+            self_start[1]: self_start[1] + self.matrix.shape[1],
+            self_start[2]: self_start[2] + self.matrix.shape[2],
         ] = self.matrix
 
         new_other[
-            other_start[0] : other_start[0] + other.matrix.shape[0],
-            other_start[1] : other_start[1] + other.matrix.shape[1],
-            other_start[2] : other_start[2] + other.matrix.shape[2],
+            other_start[0]: other_start[0] + other.matrix.shape[0],
+            other_start[1]: other_start[1] + other.matrix.shape[1],
+            other_start[2]: other_start[2] + other.matrix.shape[2],
         ] = other.matrix
 
         result_matrix = logical_operation(new_self, new_other)
@@ -1462,9 +1463,9 @@ class MatrixBasedVoxelization(Voxelization):
 
         # Crop the matrix to the smallest possible size
         cropped_matrix = self.matrix[
-            min_voxel_coords[0] : max_voxel_coords[0] + 1,
-            min_voxel_coords[1] : max_voxel_coords[1] + 1,
-            min_voxel_coords[2] : max_voxel_coords[2] + 1,
+            min_voxel_coords[0]: max_voxel_coords[0] + 1,
+            min_voxel_coords[1]: max_voxel_coords[1] + 1,
+            min_voxel_coords[2]: max_voxel_coords[2] + 1,
         ]
 
         # Calculate new matrix_origin_center
@@ -1831,7 +1832,7 @@ class PointBasedPixelization(Pixelization):
             matrix_based_pixelization.min_grid_center, matrix_based_pixelization.pixel_size
         ):
             warnings.warn(
-                """This matrix based pixelization is not defined in the implicit grid defined by the pixel_size. 
+                """This matrix based pixelization is not defined in the implicit grid defined by the pixel_size.
             Some methods like boolean operation or interference computing may not work as expected."""
             )
 
@@ -2375,7 +2376,7 @@ class MatrixBasedPixelization(Pixelization):
         global_min = np.min([self_min, other_min], axis=0)
         global_max = np.max([self_max, other_max], axis=0)
 
-        new_shape = np.round((global_max - global_min) / self.pixel_size, DECIMALS).astype(int)
+        new_shape = np.round((global_max - global_min) / self.pixel_size, DECIMALS).astype(int) + 2
 
         new_self = np.zeros(new_shape, dtype=np.bool_)
         new_other = np.zeros(new_shape, dtype=np.bool_)
@@ -2384,13 +2385,13 @@ class MatrixBasedPixelization(Pixelization):
         other_start = np.round((other_min - global_min) / self.pixel_size, DECIMALS).astype(int)
 
         new_self[
-            self_start[0] : self_start[0] + self.matrix.shape[0],
-            self_start[1] : self_start[1] + self.matrix.shape[1],
+            self_start[0]: self_start[0] + self.matrix.shape[0],
+            self_start[1]: self_start[1] + self.matrix.shape[1],
         ] = self.matrix
 
         new_other[
-            other_start[0] : other_start[0] + other.matrix.shape[0],
-            other_start[1] : other_start[1] + other.matrix.shape[1],
+            other_start[0]: other_start[0] + other.matrix.shape[0],
+            other_start[1]: other_start[1] + other.matrix.shape[1],
         ] = other.matrix
 
         result_matrix = logical_operation(new_self, new_other)
@@ -2418,8 +2419,8 @@ class MatrixBasedPixelization(Pixelization):
 
         # Crop the matrix to the smallest possible size
         cropped_matrix = self.matrix[
-            min_pixel_coords[0] : max_pixel_coords[0] + 1,
-            min_pixel_coords[1] : max_pixel_coords[1] + 1,
+            min_pixel_coords[0]: max_pixel_coords[0] + 1,
+            min_pixel_coords[1]: max_pixel_coords[1] + 1,
         ]
 
         # Calculate new matrix_origin_center

@@ -1,0 +1,70 @@
+{
+  "object_class": "volmdlr.edges.FullArcEllipse3D",
+  "name": "",
+  "ellipse": {
+    "object_class": "volmdlr.curves.Ellipse3D",
+    "name": "",
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
+      "name": "",
+      "origin": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.0166079903437833,
+        "y": -0.00699997138677766,
+        "z": 0.0085,
+        "name": "Origin"
+      },
+      "u": {
+        "object_class": "volmdlr.Vector3D",
+        "x": 1.0,
+        "y": 6.12323399573677e-17,
+        "z": 1.0637030135915698e-18
+      },
+      "v": {
+        "object_class": "volmdlr.Vector3D",
+        "x": -1.0637030135915835e-18,
+        "y": 2.22044604925031e-16,
+        "z": 1.0
+      },
+      "w": {
+        "object_class": "volmdlr.Vector3D",
+        "x": 6.12323399573677e-17,
+        "y": -1.0,
+        "z": 2.22044604925031e-16
+      }
+    },
+    "major_axis": 0.00550901596158934,
+    "minor_axis": 0.0055084999999999995,
+    "center": {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.0166079903437833,
+      "y": -0.00699997138677766,
+      "z": 0.0085,
+      "name": "Origin"
+    },
+    "normal": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 6.12323399573677e-17,
+      "y": -1.0,
+      "z": 2.22044604925031e-16
+    },
+    "major_dir": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 1.0,
+      "y": 6.12323399573677e-17,
+      "z": 1.0637030135915698e-18
+    },
+    "minor_dir": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -1.0637030135915835e-18,
+      "y": 2.22044604925031e-16,
+      "z": 1.0
+    }
+  },
+  "start_end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.0166079903437833,
+    "y": -0.00699997138677766,
+    "z": 0.0029915
+  }
+}

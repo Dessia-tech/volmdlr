@@ -46,10 +46,10 @@ faces1 = [faces.Triangle3D(*points)
 
 # # faces1 = [faces.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles_1]
 #
-plane3d_1 = surfaces.Plane3D.from_plane_vectors(-0.2*vm.Z3D, vm.X3D, vm.Y3D)
+plane3d_1 = surfaces.Plane3D.from_plane_vectors(-0.2*vm.Z3D.to_point(), vm.X3D, vm.Y3D)
 surf2d_1 = surfaces.Surface2D(new_poly_11.to_2d(vm.O3D, vm.X3D, vm.Y3D),[])
 
-plane3d_2 = surfaces.Plane3D.from_plane_vectors(0.35*vm.Z3D, vm.X3D, vm.Y3D)
+plane3d_2 = surfaces.Plane3D.from_plane_vectors(0.35*vm.Z3D.to_point(), vm.X3D, vm.Y3D)
 surf2d_2 = surfaces.Surface2D(new_poly_14.to_2d(vm.O3D, vm.X3D, vm.Y3D),[])
 faces1 += [faces.PlaneFace3D(plane3d_1, surf2d_1), faces.PlaneFace3D(plane3d_2, surf2d_2)]
 
@@ -83,10 +83,10 @@ faces2 = [faces.Triangle3D(*points)
 
 # faces2 = [faces.Triangle3D(trio[0], trio[1], trio[2]) for trio in points_triangles_2]
 
-plane3d_3 = surfaces.Plane3D.from_plane_vectors(0.05*vm.Y3D, vm.Z3D, vm.X3D)
+plane3d_3 = surfaces.Plane3D.from_plane_vectors(0.05*vm.Y3D.to_point(), vm.Z3D, vm.X3D)
 surf2d_3 = surfaces.Surface2D(new_poly_21.to_2d(vm.O3D, vm.Z3D, vm.X3D),[])
 
-plane3d_4 = surfaces.Plane3D.from_plane_vectors(0.4*vm.Y3D, vm.Z3D, vm.X3D)
+plane3d_4 = surfaces.Plane3D.from_plane_vectors(0.4*vm.Y3D.to_point(), vm.Z3D, vm.X3D)
 surf2d_4 = surfaces.Surface2D(new_poly_24.to_2d(vm.O3D, vm.Z3D, vm.X3D),[])
 faces2 += [faces.PlaneFace3D(plane3d_3, surf2d_3), faces.PlaneFace3D(plane3d_4, surf2d_4)]
 

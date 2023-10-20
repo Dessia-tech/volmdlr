@@ -96,8 +96,8 @@ class TestPoint2D(unittest.TestCase):
         self.assertTrue(self.point1.is_close(self.point1))
         self.assertTrue(self.point1.is_close(self.point3))
         self.assertFalse(self.point1.is_close(self.point2))
-        self.assertFalse(self.point1.is_close(self.vector1))
-        self.assertFalse(self.point1.is_close(self.vector2))
+        self.assertFalse(self.point1.is_close(self.vector1.to_point()))
+        self.assertFalse(self.point1.is_close(self.vector2.to_point()))
         self.assertTrue(self.point1.is_close(self.point2, tol=3.6))
 
     def test_nearest_point(self):

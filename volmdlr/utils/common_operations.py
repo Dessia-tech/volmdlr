@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import least_squares
 import scipy.integrate as scipy_integrate
+from sklearn.cluster import DBSCAN
 
 import volmdlr.core
 from volmdlr.core import EdgeStyle
@@ -96,6 +97,27 @@ def split_wire_by_plane(wire, plane3d):
     return wire1, wire2
 
 
+def plot_components_from_points(points, close_plot: bool = False):
+    """
+    Gets Matplotlib components from points.
+
+    :param points: given points.
+    :param close_plot: Weather to close the plot or not.
+    :return:
+    """
+    components = [[], [], []]
+    for point in points:
+        for i, component in enumerate(point):
+            components[i].append(component)
+    valid_components = []
+    for list_components in components:
+        if list_components:
+            if close_plot:
+                list_components.append(list_components[0])
+            valid_components.append(list_components)
+    return valid_components
+
+
 def plot_from_discretization_points(ax, edge_style, element, number_points: int = None, close_plot: bool = False):
     """
     General plot method using discretization_points method to generate points.
@@ -107,16 +129,8 @@ def plot_from_discretization_points(ax, edge_style, element, number_points: int 
     :param close_plot: specifies if plot is to be closed or not.
     :return: Matplotlib plot axis.
     """
-    components = [[], [], []]
-    for point in element.discretization_points(number_points=number_points):
-        for i, component in enumerate(point):
-            components[i].append(component)
-    valid_components = []
-    for list_components in components:
-        if list_components:
-            if close_plot:
-                list_components.append(list_components[0])
-            valid_components.append(list_components)
+    points = element.discretization_points(number_points=number_points)
+    valid_components = plot_components_from_points(points, close_plot)
     ax.plot(*valid_components, color=edge_style.color, alpha=edge_style.alpha)
     return ax
 
@@ -199,7 +213,7 @@ def get_point_distance_to_edge(edge, point, start, end):
     :param edge: Edge to calculate distance to point.
     :param point: Point to calculate the distance to edge.
     :param start: Edge's start point.
-    :param edge: Edge's end point.
+    :param end: Edge's end point.
     :return: distance to edge.
     """
     best_distance = math.inf
@@ -208,20 +222,23 @@ def get_point_distance_to_edge(edge, point, start, end):
     distance = best_distance
     point1_ = start
     point2_ = end
+    number_points = 10 if abs(abscissa2 - abscissa1) > 5e-6 else 2
     linesegment_class_ = getattr(volmdlr.edges, 'LineSegment' + edge.__class__.__name__[-2:])
     while True:
-        discretized_points_between_1_2 = edge.local_discretization(point1_, point2_)
+        discretized_points_between_1_2 = edge.local_discretization(point1_, point2_, number_points)
         if not discretized_points_between_1_2:
             break
         distance = point.point_distance(discretized_points_between_1_2[0])
         for point1, point2 in zip(discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:]):
+            if point1.is_close(point2):
+                continue
             line = linesegment_class_(point1, point2)
             dist = line.point_distance(point)
             if dist < distance:
                 point1_ = point1
                 point2_ = point2
                 distance = dist
-        if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-6):
+        if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-7):
             break
         best_distance = distance
         if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
@@ -229,12 +246,12 @@ def get_point_distance_to_edge(edge, point, start, end):
     return distance
 
 
-def ellipse_abscissa_angle_integration(ellipse3d, point_abcissa, angle_start, initial_angle):
+def ellipse_abscissa_angle_integration(ellipse3d, point_abscissa, angle_start, initial_angle):
     """
-    Calculates the angle for a given abcissa point by integrating the ellipse.
+    Calculates the angle for a given abscissa point by integrating the ellipse.
 
     :param ellipse3d: the Ellipse3D.
-    :param point_abcissa: the given abscissa for given point.
+    :param point_abscissa: the given abscissa for given point.
     :param angle_start: Ellipse3D / ArcEllipse3D start angle. (0 for Ellipse3D).
     :param initial_angle: angle abscissa's initial value.
     :return: final angle abscissa's value.
@@ -246,15 +263,88 @@ def ellipse_abscissa_angle_integration(ellipse3d, point_abcissa, angle_start, in
     iter_counter = 0
     while True:
         res, _ = scipy_integrate.quad(ellipse_arc_length, angle_start, initial_angle)
-        if math.isclose(res, point_abcissa, abs_tol=1e-8):
+        if math.isclose(res, point_abscissa, abs_tol=1e-8):
             abscissa_angle = initial_angle
             break
-        if res > point_abcissa:
-            increment_factor = (abs(initial_angle - angle_start) * (point_abcissa - res)) / (2 * abs(res))
+        if res > point_abscissa:
+            increment_factor = (abs(initial_angle - angle_start) * (point_abscissa - res)) / (2 * abs(res))
         elif res == 0.0:
             increment_factor = 1e-5
         else:
-            increment_factor = (abs(initial_angle - angle_start) * (point_abcissa - res)) / abs(res)
+            increment_factor = (abs(initial_angle - angle_start) * (point_abscissa - res)) / abs(res)
         initial_angle += increment_factor
         iter_counter += 1
     return abscissa_angle
+
+
+def get_plane_equation_coefficients(plane_frame):
+    """
+    Returns the a,b,c,d coefficient from equation ax+by+cz+d = 0.
+
+    """
+    a, b, c = plane_frame.w
+    d = -plane_frame.origin.dot(plane_frame.w)
+    return round(a, 12), round(b, 12), round(c, 12), round(d, 12)
+
+
+def order_points_list_for_nearest_neighbor(points):
+    """
+    Given a list of unordered points defining a path, it will order these points considering the nearest neighbor.
+
+    """
+    ordered_points = []
+    remaining_points = points[:]
+    current_point = remaining_points.pop(0)
+
+    while remaining_points:
+        nearest_point_idx = np.argmin([current_point.point_distance(p)for p in remaining_points])
+        nearest_point = remaining_points.pop(nearest_point_idx)
+        ordered_points.append(current_point)
+        current_point = nearest_point
+
+    # Add the last point to complete the loop
+    ordered_points.append(current_point)
+
+    return ordered_points
+
+
+def separate_points_by_closeness(points):
+    """
+    Separates a list of 3D Cartesian points into two groups based on their spatial closeness using DBSCAN.
+
+    This function applies the DBSCAN (Density-Based Spatial Clustering of Applications with Noise) algorithm to
+    the given list of 3D Cartesian points. DBSCAN clusters the points based on their spatial proximity.
+    The points are separated into two groups, 'group1' and 'group2', depending on their spatial closeness
+    as determined by the DBSCAN clustering.
+
+    Please note that the 'eps' parameter inside the function can be adjusted to control the closeness threshold.
+
+    :param points: A list of 3D Cartesian points, where each point is represented as a list of three coordinates.
+
+    :return:
+    - group1 (list of lists): The first group of points based on their closeness.
+    - group2 (list of lists): The second group of points based on their closeness.
+    """
+    points_ = np.array([[point[0], point[1], point[2]] for point in points])
+
+    # Apply DBSCAN clustering with a small epsilon to separate close points
+    eps = 0.5
+    dbscan = DBSCAN(eps=eps, min_samples=1)
+    labels = dbscan.fit_predict(points_)
+
+    # Initialize two empty lists for the two groups
+    group1, group2 = [], []
+
+    # Assign points to group1 or group2 based on DBSCAN labels
+    for i, label in enumerate(labels):
+        if label == 0:
+            group1.append(points[i])
+        else:
+            group2.append(points[i])
+    group1 = order_points_list_for_nearest_neighbor(group1)
+    group1.append(group1[0])
+    if not group2:
+        return [group1]
+    group2 = order_points_list_for_nearest_neighbor(group2)
+    group2.append(group2[0])
+    return [group1, group2]
