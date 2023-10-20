@@ -107,6 +107,7 @@ class TestMatrixBasedVoxelizationBooleanOperation(unittest.TestCase):
         voxelization_2 = MatrixBasedVoxelization.from_shell(block_2, 0.1)
 
         union_3 = voxelization_1.union(voxelization_2)
+        self.assertEqual(2312, len(union_3))
 
         if SHOW_BABYLONJS:
             VolumeModel(
