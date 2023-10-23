@@ -5169,6 +5169,13 @@ class BSplineCurve3D(BSplineCurve):
             return []
         return self._generic_edge_intersections(arc, abs_tol)
 
+    def circle_intersections(self, circle, abs_tol: float = 1e-6):
+        if self.bounding_box.distance_to_bbox(circle.bounding_box) > abs_tol:
+            return []
+        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(
+            circle, self, abs_tol=abs_tol)
+        return intersections_points
+
     def is_shared_section_possible(self, other_bspline2, tol):
         """
         Verifies if it there is any possibility of the two bsplines share a section.

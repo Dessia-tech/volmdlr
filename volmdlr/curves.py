@@ -1628,6 +1628,15 @@ class Circle3D(CircleMixin, ClosedCurve):
         :param abs_tol: tolerance.
         :return: list of points intersecting Circle
         """
+        intersections = []
+        if self.frame.w.is_colinear_to(other_circle.frame.w) and \
+                math.isclose(self.frame.w.dot(other_circle.frame.origin - self.frame.origin), 0, abs_tol=1e-6):
+            other_circle2d = other_circle.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+            circle2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+            intersections_2d = circle2d.circle_intersections(other_circle2d)
+            for intersection in intersections_2d:
+                intersections.append(intersection.to_3d(self.frame.origin, self.frame.u, self.frame.v))
+            return intersections
         plane_intersections = volmdlr_intersections.get_two_planes_intersections(self.frame, other_circle.frame)
         if not plane_intersections:
             return []

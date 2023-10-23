@@ -185,6 +185,21 @@ class TestCircle3D(unittest.TestCase):
         for intersection, expected_result in zip(intersections, expected_results):
             self.assertTrue(intersection.is_close(expected_result))
 
+        circle1 = curves.Circle3D(volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, -0.9595959595959596),
+                                                  u=volmdlr.Vector3D(1.0, 0.0, 0.0),
+                                                  v=volmdlr.Vector3D(0.0, 1.0, 0.0),
+                                                  w=volmdlr.Vector3D(0.0, 0.0, 1.0)), 1)
+        circle2 = curves.Circle3D(volmdlr.Frame3D(
+            origin=volmdlr.Point3D(-3.3306690738754696e-16, 0.9999999999986168, -0.959595959596),
+            u=volmdlr.Vector3D(1.0, 0.0, 0.0),
+            v=volmdlr.Vector3D(0.0, 1.0, 0.0),
+            w=volmdlr.Vector3D(0.0, 0.0, 1.0)), 1.3977300414963283)
+        circle_intersections = circle1.circle_intersections(circle2)
+        self.assertTrue(circle_intersections[0].is_close(
+            volmdlr.Point3D(0.976824634449, 1.999731415147, -0.959595959596)))
+        self.assertTrue(circle_intersections[1].is_close(
+            volmdlr.Point3D(0.976824634452, 0.000268584853, -0.959595959596)))
+
 
 if __name__ == '__main__':
     unittest.main()
