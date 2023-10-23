@@ -14,7 +14,6 @@ from statistics import mean
 from typing import List
 
 import matplotlib.pyplot as plt
-import networkx as nx
 import numpy as npy
 import plot_data.core as plot_data
 from scipy.spatial.qhull import ConvexHull, Delaunay
