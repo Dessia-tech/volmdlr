@@ -2812,7 +2812,7 @@ class Contour2D(ContourMixin, Wire2D):
         Merge two connected but not adjacent contours.
 
         :param other_contour: other contour to be merged.
-        :return: medreg contour.
+        :return: merged contour.
         """
         contour1, contour2 = self, other_contour
         if not self.is_contour_closed() and other_contour.is_contour_closed():

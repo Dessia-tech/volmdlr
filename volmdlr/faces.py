@@ -643,7 +643,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         Gets boolean operations new faces after splitting.
 
-        :param intersecting_combinations: faces intersecting combinations dictionnary.
+        :param intersecting_combinations: faces intersecting combinations dictionary.
         :return: new split faces.
         """
         self_copy = self.copy(deep=True)
