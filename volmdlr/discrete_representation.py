@@ -758,7 +758,8 @@ class PointBasedVoxelization(Voxelization):
 
     @classmethod
     def from_matrix_based_voxelization(
-        cls, matrix_based_voxelization: "MatrixBasedVoxelization",
+        cls,
+        matrix_based_voxelization: "MatrixBasedVoxelization",
     ) -> "PointBasedVoxelization":
         """
         Create a PointBasedVoxelization object from a MatrixBasedVoxelization.
@@ -1429,15 +1430,15 @@ class MatrixBasedVoxelization(Voxelization):
         other_start = np.round((other_min - global_min) / self.voxel_size, DECIMALS).astype(int)
 
         new_self[
-            self_start[0]: self_start[0] + self.matrix.shape[0],
-            self_start[1]: self_start[1] + self.matrix.shape[1],
-            self_start[2]: self_start[2] + self.matrix.shape[2],
+            self_start[0] : self_start[0] + self.matrix.shape[0],
+            self_start[1] : self_start[1] + self.matrix.shape[1],
+            self_start[2] : self_start[2] + self.matrix.shape[2],
         ] = self.matrix
 
         new_other[
-            other_start[0]: other_start[0] + other.matrix.shape[0],
-            other_start[1]: other_start[1] + other.matrix.shape[1],
-            other_start[2]: other_start[2] + other.matrix.shape[2],
+            other_start[0] : other_start[0] + other.matrix.shape[0],
+            other_start[1] : other_start[1] + other.matrix.shape[1],
+            other_start[2] : other_start[2] + other.matrix.shape[2],
         ] = other.matrix
 
         result_matrix = logical_operation(new_self, new_other)
@@ -1465,9 +1466,9 @@ class MatrixBasedVoxelization(Voxelization):
 
         # Crop the matrix to the smallest possible size
         cropped_matrix = self.matrix[
-            min_voxel_coords[0]: max_voxel_coords[0] + 1,
-            min_voxel_coords[1]: max_voxel_coords[1] + 1,
-            min_voxel_coords[2]: max_voxel_coords[2] + 1,
+            min_voxel_coords[0] : max_voxel_coords[0] + 1,
+            min_voxel_coords[1] : max_voxel_coords[1] + 1,
+            min_voxel_coords[2] : max_voxel_coords[2] + 1,
         ]
 
         # Calculate new matrix_origin_center
@@ -1482,7 +1483,8 @@ class OctreeBasedVoxelization(Voxelization):
     def __init__(
         self,
         octree: List,
-        min_grid_center: _Point3D,
+        root_center: _Point3D,
+        octree_depth: int,
         voxel_size: float,
         triangles: List[_Triangle3D] = None,
         name: str = "",
@@ -1494,14 +1496,15 @@ class OctreeBasedVoxelization(Voxelization):
         # :type voxel_matrix: np.ndarray[np.bool_, np.ndim == 3]
         :param voxel_size: The size of the voxel edges.
         :type voxel_size: float
-        :param min_grid_center: Minimum voxel center point of the voxel grid matrix, i.e 'matrix[0][0][0]'.
+        # :param min_grid_center: Minimum voxel center point of the voxel grid matrix, i.e 'matrix[0][0][0]'.
         This point may not be a voxel of the voxelization, because it's the minimum center in each direction (X, Y, Z).
-        :type min_grid_center: tuple[float, float, float]
+        # :type min_grid_center: tuple[float, float, float]
         """
         self._check_element_size_number_of_decimals(voxel_size)
 
         self._octree = octree
-        self._min_grid_center = min_grid_center
+        self._root_center = root_center
+        self._octree_depth = octree_depth
         self._triangles = triangles
 
         Voxelization.__init__(self, voxel_size=voxel_size, name=name)
@@ -1513,7 +1516,9 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The center point of each voxel.
         :rtype: set[tuple[float, float, float]]
         """
-        pass
+        return self._get_leaf_centers(
+            0, round(self.voxel_size * 2**self._octree_depth, 6), self._root_center, self._octree
+        )
 
     def __eq__(self, other: "OctreeBasedVoxelization") -> bool:
         """
@@ -1577,7 +1582,6 @@ class OctreeBasedVoxelization(Voxelization):
         :rtype: OctreeBasedVoxelization
         """
         triangles = cls._shell_to_triangles(shell)
-
 
     @classmethod
     def from_volume_model(
@@ -1719,6 +1723,121 @@ class OctreeBasedVoxelization(Voxelization):
         path: str = "#",
     ) -> "OctreeBasedVoxelization":
         pass
+
+    # HELPER METHODS
+    @classmethod
+    def _from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float) -> "OctreeBasedVoxelization":
+        """Create a voxelization based on the size of the voxel."""
+        min_corner = np.min([np.min(triangle, axis=0) for triangle in triangles], axis=0)
+        max_corner = np.max([np.max(triangle, axis=0) for triangle in triangles], axis=0)
+
+        # Compute the corners in the implicit grid defined by the voxel size
+        min_corner = (min_corner // voxel_size - 2) * voxel_size
+        max_corner = (max_corner // voxel_size + 2) * voxel_size
+
+        root_size = max(max_corner - min_corner)
+
+        # Compute the max depth corresponding the voxel_size
+        max_depth = math.ceil(math.log2(root_size // voxel_size))
+
+        # Compute the max corner to have voxel of given voxel size with the octree process
+        max_corner = min_corner + ((2**max_depth) * voxel_size)
+        root_size = max(max_corner - min_corner)
+
+        corners = np.stack([min_corner, max_corner])
+        center = tuple(np.round(corners.mean(axis=0), 6).tolist())
+
+        octree = cls._subdivide(triangles, [i for i in range(len(triangles))], center, root_size, 0, max_depth)
+
+        return cls(octree, center, max_depth, voxel_size, triangles)
+
+    @staticmethod
+    def _subdivide(
+        triangles: List[_Triangle3D],
+        intersecting_indices: List[int],
+        center: _Point3D,
+        size: float,
+        depth: int,
+        max_depth: int,
+    ):
+        """Recursive method to subdivide the voxelization in 8 until the wanted tree depth is reached."""
+        if depth < max_depth:  # not yet reached max depth
+            half_size = round(size / 2, 6)
+            quarter_size = round(half_size / 2, 6)
+
+            sub_voxels = []
+
+            for i in range(2):
+                for j in range(2):
+                    for k in range(2):
+                        # calculate the center of the sub-voxel
+                        sub_voxel_center = (
+                            round(center[0] + (i - 0.5) * half_size, 6),
+                            round(center[1] + (j - 0.5) * half_size, 6),
+                            round(center[2] + (k - 0.5) * half_size, 6),
+                        )
+
+                        # check for intersecting triangle with the sub-voxel
+                        sub_voxel_intersecting_indices = [
+                            i
+                            for i in intersecting_indices
+                            if triangle_intersects_voxel(
+                                triangles[i], sub_voxel_center, (quarter_size, quarter_size, quarter_size)
+                            )
+                        ]
+
+                        # Recursive process
+                        if len(sub_voxel_intersecting_indices) == 0:
+                            # If sub-voxel not intersecting
+                            sub_voxels.append([])
+
+                        else:
+                            # If sub-voxel intersecting
+                            sub_voxels.append(
+                                OctreeBasedVoxelization._subdivide(
+                                    triangles=triangles,
+                                    intersecting_indices=sub_voxel_intersecting_indices,
+                                    center=sub_voxel_center,
+                                    size=half_size,
+                                    depth=depth + 1,
+                                    max_depth=max_depth,
+                                )
+                            )
+
+            if all(not sub_voxel for sub_voxel in sub_voxels):
+                return []
+            return sub_voxels
+
+        else:  # reached max depth
+            return intersecting_indices
+
+    def _get_leaf_centers(
+        self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
+    ) -> List[_Point3D]:
+        """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
+        if current_depth == self._octree_depth:  # if _octree_depth reached, it is a leaf node
+            return [current_center]
+
+        centers = []
+        half_size = round(current_size / 2, 6)
+
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    # if it is the octree
+                    if len(current_octree[i * 4 + j * 2 + k]) > 0:
+                        # calculate the center of the sub-voxel
+                        sub_voxel_center = (
+                            round(current_center[0] + (i - 0.5) * half_size, 6),
+                            round(current_center[1] + (j - 0.5) * half_size, 6),
+                            round(current_center[2] + (k - 0.5) * half_size, 6),
+                        )
+
+                        centers += self._get_leaf_centers(
+                            current_depth + 1, half_size, sub_voxel_center, current_octree[i * 4 + j * 2 + k]
+                        )
+
+        return centers
 
 
 class Pixelization(DiscreteRepresentation, DessiaObject):
@@ -2632,13 +2751,13 @@ class MatrixBasedPixelization(Pixelization):
         other_start = np.round((other_min - global_min) / self.pixel_size, DECIMALS).astype(int)
 
         new_self[
-            self_start[0]: self_start[0] + self.matrix.shape[0],
-            self_start[1]: self_start[1] + self.matrix.shape[1],
+            self_start[0] : self_start[0] + self.matrix.shape[0],
+            self_start[1] : self_start[1] + self.matrix.shape[1],
         ] = self.matrix
 
         new_other[
-            other_start[0]: other_start[0] + other.matrix.shape[0],
-            other_start[1]: other_start[1] + other.matrix.shape[1],
+            other_start[0] : other_start[0] + other.matrix.shape[0],
+            other_start[1] : other_start[1] + other.matrix.shape[1],
         ] = other.matrix
 
         result_matrix = logical_operation(new_self, new_other)
@@ -2666,8 +2785,8 @@ class MatrixBasedPixelization(Pixelization):
 
         # Crop the matrix to the smallest possible size
         cropped_matrix = self.matrix[
-            min_pixel_coords[0]: max_pixel_coords[0] + 1,
-            min_pixel_coords[1]: max_pixel_coords[1] + 1,
+            min_pixel_coords[0] : max_pixel_coords[0] + 1,
+            min_pixel_coords[1] : max_pixel_coords[1] + 1,
         ]
 
         # Calculate new matrix_origin_center
