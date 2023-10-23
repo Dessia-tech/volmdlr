@@ -1729,6 +1729,15 @@ class OctreeBasedVoxelization(Voxelization):
         pass
 
     # HELPER METHODS
+    def to_point_based_voxelization(self) -> "PointBasedVoxelization":
+        """
+        Convert the OctreeBasedVoxelization to a PointBasedVoxelization.
+
+        :return: A PointBasedVoxelization representation of the current voxelization.
+        :rtype: PointBasedVoxelization
+        """
+        return PointBasedVoxelization(self.get_voxel_centers(), self.voxel_size, self.name)
+
     @classmethod
     def _from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float) -> "OctreeBasedVoxelization":
         """Create a voxelization based on the size of the voxel."""
