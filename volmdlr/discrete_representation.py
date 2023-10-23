@@ -1583,6 +1583,8 @@ class OctreeBasedVoxelization(Voxelization):
         """
         triangles = cls._shell_to_triangles(shell)
 
+        return cls._from_triangles(triangles, voxel_size)
+
     @classmethod
     def from_volume_model(
         cls, volume_model: VolumeModel, voxel_size: float, name: str = ""
@@ -1600,7 +1602,9 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A voxelization created from the VolumeModel.
         :rtype: OctreeBasedVoxelization
         """
-        pass
+        triangles = cls._volume_model_to_triangles(volume_model)
+
+        return cls._from_triangles(triangles, voxel_size)
 
     @classmethod
     def from_point_based_voxelization(
@@ -1813,12 +1817,12 @@ class OctreeBasedVoxelization(Voxelization):
 
     def _get_leaf_centers(
         self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
-    ) -> List[_Point3D]:
+    ) -> Set[_Point3D]:
         """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
         if current_depth == self._octree_depth:  # if _octree_depth reached, it is a leaf node
-            return [current_center]
+            return {current_center}
 
-        centers = []
+        centers = set()
         half_size = round(current_size / 2, 6)
 
         for i in range(2):
@@ -1833,9 +1837,9 @@ class OctreeBasedVoxelization(Voxelization):
                             round(current_center[2] + (k - 0.5) * half_size, 6),
                         )
 
-                        centers += self._get_leaf_centers(
+                        centers = centers.union(self._get_leaf_centers(
                             current_depth + 1, half_size, sub_voxel_center, current_octree[i * 4 + j * 2 + k]
-                        )
+                        ))
 
         return centers
 
