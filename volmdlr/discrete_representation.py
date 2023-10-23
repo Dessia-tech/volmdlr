@@ -6,6 +6,7 @@ Class for discrete representations of volmdlr models (voxelization for 3D geomet
 import warnings
 from abc import ABC, abstractmethod
 from typing import List, Set, Tuple, TypeVar, Dict, Any
+import math
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,6 +23,7 @@ from volmdlr.discrete_representation_compiled import (
     line_segments_to_pixels,
     triangles_to_voxel_matrix,
     voxel_triangular_faces,
+    triangle_intersects_voxel,
 )
 from volmdlr.edges import LineSegment2D
 from volmdlr.faces import Triangle3D
