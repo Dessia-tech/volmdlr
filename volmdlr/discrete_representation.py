@@ -1741,12 +1741,13 @@ class OctreeBasedVoxelization(Voxelization):
     @classmethod
     def _from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float) -> "OctreeBasedVoxelization":
         """Create a voxelization based on the size of the voxel."""
-        min_corner = np.min([np.min(triangle, axis=0) for triangle in triangles], axis=0)
-        max_corner = np.max([np.max(triangle, axis=0) for triangle in triangles], axis=0)
+        triangles_np = np.array(triangles)
+        min_corner = np.min(np.min(triangles_np, axis=1), axis=0)
+        max_corner = np.max(np.max(triangles_np, axis=1), axis=0)
 
         # Compute the corners in the implicit grid defined by the voxel size
-        min_corner = (min_corner // voxel_size - 2) * voxel_size
-        max_corner = (max_corner // voxel_size + 2) * voxel_size
+        min_corner = (np.floor_divide(min_corner, voxel_size) - 2) * voxel_size
+        max_corner = (np.floor_divide(max_corner, voxel_size) + 2) * voxel_size
 
         root_size = max(max_corner - min_corner)
 
