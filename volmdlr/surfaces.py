@@ -2177,14 +2177,13 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def get_circle_generatrixes(self, number_circles: int = 10, length: float = 1.0):
         circles = []
-        # start = self.frame.origin - length * 0.5 * self.frame.w
         for j in range(number_circles):
-            # step = j / (number_circles - 1) * length
             circle_frame = self.frame.copy()
-            # circle_frame = self.frame.translation(start + step*self.frame.w)
             circle_frame.origin += (-0.5 + j / (number_circles - 1)) * length * circle_frame.w
             circle = curves.Circle3D(circle_frame, self.radius)
+            # fullarc = edges.FullArc3D.from_curve(circle)
             circles.append(circle)
+            # circles.append(fullarc)
         return circles
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5),
@@ -2571,10 +2570,8 @@ class ToroidalSurface3D(PeriodicalSurface):
             u_vector = (i_center - self.frame.origin).unit_vector()
             i_frame = volmdlr.Frame3D(i_center, u_vector, self.frame.w, u_vector.cross(self.frame.w))
             circle = curves.Circle3D(i_frame, self.minor_radius)
-            # t_points = []
-            # for j in range(number_arcs):
-            #     phi = j / number_arcs * volmdlr.TWO_PI
-            #     t_points.append(self.point2d_to_3d(volmdlr.Point2D(theta, phi)))
+            # fullarc = edges.FullArc3D.from_curve(circle)
+            # arcs.append(fullarc)
             arcs.append(circle)
         return arcs
 
@@ -3016,6 +3013,19 @@ class ToroidalSurface3D(PeriodicalSurface):
                     intersection_points.append(inter)
         return intersection_points
 
+    def fullarc_intersections(self, fullarc: edges.FullArc3D):
+        if self.point_distance(fullarc.circle.center) > fullarc.circle.radius:
+            return []
+        circle_plane = Plane3D(fullarc.circle.frame)
+        plane_intersections = self.plane_intersections(circle_plane)
+        intersection_points = []
+        for intersection in plane_intersections:
+            inters = intersection.intersections(fullarc)
+            for inter in inters:
+                if not volmdlr.core.point_in_list(inter, intersection_points):
+                    intersection_points.append(inter)
+        return intersection_points
+
     def parallel_plane_intersection(self, plane3d: Plane3D):
         """
         Toroidal plane intersections when plane's normal is perpendicular with the cylinder axis.
@@ -3169,8 +3179,10 @@ class ToroidalSurface3D(PeriodicalSurface):
         arcs = self._torus_arcs(100)
         points_intersections = []
         for arc in arcs:
-            intersections = cylindrical_surface.circle_intersections(arc)
+            intersections = cylindrical_surface.edge_intersections(arc)
+            # intersections = cylindrical_surface.circle_intersections(arc)
             points_intersections.extend(intersections)
+        print(True)
         for edge in cylindrical_surface.get_generatrixes(self.outer_radius * 3, 100):
             # + \
             #     cylindrical_surface.get_circle_generatrixes(100, self.outer_radius * 3):

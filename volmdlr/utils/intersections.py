@@ -120,10 +120,13 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
         m = (line2d.point2.y - line2d.point1.y) / (line2d.point2.x - line2d.point1.x)
         c = - m * (line2d.point1.x + ellipse2d.center.x) + line2d.point1.y + ellipse2d.center.y
         if ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2 > c ** 2:
-            x1 = - (2 * (ellipse2d.major_axis ** 2) * m * c + math.sqrt(
-                (2 * (ellipse2d.major_axis ** 2) * m * c) ** 2 - 4 * (
-                        ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2) *
-                ellipse2d.major_axis ** 2 * (c ** 2 - ellipse2d.minor_axis ** 2))) / (
+            sxcp = (2 * (ellipse2d.major_axis ** 2) * m * c) ** 2 - 4 * (
+                        ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2) *\
+                ellipse2d.major_axis ** 2 * (c ** 2 - ellipse2d.minor_axis ** 2)
+            if sxcp < 0:
+                print(True)
+            x1 = - (2 * (ellipse2d.major_axis ** 2) * m * c + math.sqrt(sxcp
+                )) / (
                          2 * (ellipse2d.major_axis ** 2 * (m ** 2) +
                               ellipse2d.minor_axis ** 2))
 

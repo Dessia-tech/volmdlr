@@ -283,7 +283,7 @@ class Edge(dc.DessiaObject):
         :return: list containing the sections pairs to further search for intersections.
         """
         def edge3d_section_validator(line_seg1, line_seg2):
-            return line_seg1.bounding_box.bbox_intersection(line_seg2.bounding_box)
+            return line_seg1.bounding_box.is_intersecting(line_seg2.bounding_box)
 
         def edge2d_section_validator(line_seg1, line_seg2):
             return line_seg1.linesegment_intersections(line_seg2)
@@ -419,7 +419,10 @@ class Edge(dc.DessiaObject):
         :param point2: point 2.
         :return: edge split.
         """
-        split1 = self.split(point1)
+        if point1.is_close(self.start) or point1.is_close(self.end):
+            split1 = [self, None]
+        else:
+            split1 = self.split(point1)
         if split1[0] and split1[0].point_belongs(point2, abs_tol=1e-6):
             split2 = split1[0].split(point2)
         else:
@@ -2052,7 +2055,7 @@ class BSplineCurve2D(BSplineCurve):
 
     def bsplinecurve_intersections(self, bspline, abs_tol=1e-6):
         """
-        Calculates intersections between a two BSpline Curve 2D.
+        Calculates intersections between two BSpline Curve 2D.
 
         :param bspline: bspline to verify intersections.
         :param abs_tol: tolerance.
@@ -5146,7 +5149,7 @@ class BSplineCurve3D(BSplineCurve):
         :param abs_tol: tolerance.
         :return: list with the intersections points.
         """
-        if not self.bounding_box.bbox_intersection(linesegment3d.bounding_box, abs_tol):
+        if not self.bounding_box.is_intersecting(linesegment3d.bounding_box, abs_tol):
             return []
         intersection_section_pairs = self._get_intersection_sections(linesegment3d)
         intersections = []
