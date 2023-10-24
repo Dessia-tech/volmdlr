@@ -8,6 +8,7 @@ import re
 from os.path import dirname, isdir, join
 from subprocess import CalledProcessError, check_output
 
+import numpy as np
 from setuptools import setup
 
 from Cython.Build import cythonize  # isort: skip This prevent a build bug
@@ -107,7 +108,6 @@ def get_version():
 setup(
     name="volmdlr",
     version=get_version(),
-    #      setup_requires=['setuptools_scm'],
     description=" A volume modeler computation-oriented. Include rendering bindings.",
     long_description=readme(),
     long_description_content_type="text/markdown",
@@ -126,10 +126,10 @@ setup(
     install_requires=[
         "packaging",
         "dessia_common>=0.10.0",
-        "Cython",
-        "numpy<=1.24.0",
+        "Cython>=3.0.0",
+        "numpy<1.26.0",
         "matplotlib",  # remove when https://github.com/DanPorter/Dans_Diffraction/pull/11 available
-        "scipy",
+        "scipy<=1.11.1",
         "geomdl",
         "networkx",
         "triangle",
