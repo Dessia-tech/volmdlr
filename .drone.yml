@@ -50,12 +50,6 @@ steps:
       from_secret: email_password
     from: technical@dessia.tech
 
-- name: pip local install
-  image: python:3.9
-  commands:
-  - git fetch --tags
-  - pip install .
-
 - name: check code complexity
   image: dessia/python-ci:3.9
   when:
