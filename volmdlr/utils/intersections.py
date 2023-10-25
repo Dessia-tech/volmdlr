@@ -3,6 +3,7 @@ volmdlr utils for calculating curves intersections.
 
 """
 import math
+import time
 
 import volmdlr
 from volmdlr.utils.common_operations import get_abscissa_discretization, get_plane_equation_coefficients
@@ -104,14 +105,15 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
     if line2d.point_distance(ellipse2d.center) > ellipse2d.major_axis + 1e-6:
         return []
     theta = volmdlr.geometry.clockwise_angle(ellipse2d.major_dir, volmdlr.X2D)
-    if not math.isclose(theta, 0.0, abs_tol=1e-6) and not math.isclose(theta, 2 * math.pi, abs_tol=1e-6):
+    if (not math.isclose(theta, 0.0, abs_tol=1e-6) and not math.isclose(theta, 2 * math.pi, abs_tol=1e-6)) or\
+            not ellipse2d.center.is_close(volmdlr.O2D):
         frame = volmdlr.Frame2D(ellipse2d.center, ellipse2d.major_dir, ellipse2d.minor_dir)
         frame_mapped_ellipse = ellipse2d.frame_mapping(frame, 'new')
         line_inters = frame_mapped_ellipse.line_intersections(line2d.frame_mapping(frame, 'new'))
         line_intersections = [frame.local_to_global_coordinates(point) for point in line_inters]
         return line_intersections
 
-    if line2d.point2.x == line2d.point1.x:
+    if math.isclose(line2d.point2.x, line2d.point1.x, abs_tol=1e-6):
         x1 = line2d.point1.x
         x2 = x1
         y1 = ellipse2d.minor_axis * math.sqrt((1 - x1 ** 2 / ellipse2d.major_axis ** 2))
@@ -120,12 +122,10 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
         m = (line2d.point2.y - line2d.point1.y) / (line2d.point2.x - line2d.point1.x)
         c = - m * (line2d.point1.x + ellipse2d.center.x) + line2d.point1.y + ellipse2d.center.y
         if ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2 > c ** 2:
-            sxcp = (2 * (ellipse2d.major_axis ** 2) * m * c) ** 2 - 4 * (
-                        ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2) *\
+            x1 = - (2 * (ellipse2d.major_axis ** 2) * m * c + math.sqrt(
+                (2 * (ellipse2d.major_axis ** 2) * m * c) ** 2 - 4 * (
+                        ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2) *
                 ellipse2d.major_axis ** 2 * (c ** 2 - ellipse2d.minor_axis ** 2)
-            if sxcp < 0:
-                print(True)
-            x1 = - (2 * (ellipse2d.major_axis ** 2) * m * c + math.sqrt(sxcp
                 )) / (
                          2 * (ellipse2d.major_axis ** 2 * (m ** 2) +
                               ellipse2d.minor_axis ** 2))
@@ -183,7 +183,7 @@ def get_circle_intersections(circle1, circle2):
     return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]
 
 
-def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution: float = 10):
+def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution: float = 100):
     """
     Gets the initial conditions to calculate intersections between a bspline curve 2d and another edge 2d.
 
@@ -210,8 +210,8 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
         intersection = primitive.linesegment_intersections(line_seg)
         if intersection:
             param_intersections.append((abscissa1, abscissa2))
-    if not param_intersections:
-        param_intersections.append((0.0, bsplinecurve.length()))
+    # if not param_intersections:
+    #     param_intersections.append((0.0, bsplinecurve.length()))
     return param_intersections
 
 
@@ -235,9 +235,12 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
     :return: A list with all intersections between the edge and BSpline Curve.
     :rtype: [volmdlr.Point3D].
     """
+    time_s = time.time()
     param_intersections = bspline_intersections_initial_conditions(primitive, bsplinecurve)
     line_seg_class_ = getattr(volmdlr.edges, 'LineSegment' + bsplinecurve.__class__.__name__[-2:])
     intersections = []
+    if not param_intersections:
+        return []
     while True:
         if not param_intersections:
             break
@@ -256,6 +259,9 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
             elif not volmdlr.core.point_in_list(intersection[0], intersections):
                 intersections.append(intersection[0])
         param_intersections.remove((abscissa1, abscissa2))
+    if not intersections:
+        time_e = time.time()
+        print(f'no intersections and it took {time_e - time_s} seconds')
     return intersections
 
 

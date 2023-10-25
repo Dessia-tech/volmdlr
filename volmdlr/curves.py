@@ -1317,7 +1317,7 @@ class Circle2D(CircleMixin, ClosedCurve):
                 intersections.append(inter)
         return intersections
 
-    def ellipse_intersections(self, ellipse2d, abs_tol: float = 1e-7):
+    def ellipse_intersections(self, ellipse2d: 'Ellipse2D', abs_tol: float = 1e-7):
         """
         Finds the intersection points between this circle and an arc 2d.
 
@@ -1329,6 +1329,8 @@ class Circle2D(CircleMixin, ClosedCurve):
         """
         if self.bounding_rectangle.distance_to_b_rectangle(ellipse2d.bounding_rectangle) > abs_tol:
             return []
+        # if ellipse2d.point_distance(self.center) > self.radius:
+        #     return []
         intersections = volmdlr_intersections.get_bsplinecurve_intersections(ellipse2d, self, abs_tol)
         return intersections
 

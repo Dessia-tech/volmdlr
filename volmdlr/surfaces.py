@@ -3011,6 +3011,8 @@ class ToroidalSurface3D(PeriodicalSurface):
             for inter in inters:
                 if not volmdlr.core.point_in_list(inter, intersection_points):
                     intersection_points.append(inter)
+        if not intersection_points:
+            print(True)
         return intersection_points
 
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
@@ -3176,14 +3178,14 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param cylindrical_surface: other Cylindrical 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(100)
+        arcs = self._torus_arcs(150)
         points_intersections = []
         for arc in arcs:
             intersections = cylindrical_surface.edge_intersections(arc)
             # intersections = cylindrical_surface.circle_intersections(arc)
             points_intersections.extend(intersections)
         print(True)
-        for edge in cylindrical_surface.get_generatrixes(self.outer_radius * 3, 100):
+        for edge in cylindrical_surface.get_generatrixes(self.outer_radius * 3, 200):
             # + \
             #     cylindrical_surface.get_circle_generatrixes(100, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
