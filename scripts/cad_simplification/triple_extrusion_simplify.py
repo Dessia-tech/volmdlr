@@ -1,13 +1,22 @@
 """
-Showcase of the 'OctreBlockSimplify' class.
+Showcase of the 'TripleExtrusionSimplify' class.
 """
+import math
 import time
 
+import volmdlr
 from volmdlr.cad_simplification import TripleExtrusionSimplify
-from volmdlr.step import Step
+from volmdlr.core import VolumeModel
+from volmdlr.primitives3d import HollowCylinder
 
-# Load
-volume_model = Step.from_file("../step/tore1.step").to_volume_model()
+# Create volume model
+hollow_cylinder = HollowCylinder.from_center_point_and_axis(volmdlr.O3D, volmdlr.Z3D, 0.1, 0.2, 1.0)
+volume_model = VolumeModel(
+    [
+        hollow_cylinder.rotation(volmdlr.O3D, volmdlr.X3D, -math.pi / 4),
+        hollow_cylinder.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 4),
+    ]
+)
 
 # Simplify
 start = time.perf_counter()
