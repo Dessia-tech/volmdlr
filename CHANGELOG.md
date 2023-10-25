@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalFace3D: PlaneFace3D intersectios.
 - PlaneFace3D: circle_intersections.
 - cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify
+- delete remaining inplace methods in wires.py
+- Fixes to boolean operations.
 
 ### Refactor
 -
@@ -25,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 - ToroidalSurface3D: line_intersections, plane_intersections
 
-## v0.14.0 [Unreleased]
+## v0.14.0
 
 ### New Features
 - DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
@@ -68,7 +70,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: bsplinecurve3d_to_2d, prevents code execution from stopping when point3d_to_2d does not converge
 - BSplineSurface3D: derivatives
 - BSplineCurve: split
-- 
+- Matrix based discrete representation: boolean operations
+- read the docs settings
+
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
 

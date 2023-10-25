@@ -1418,7 +1418,7 @@ class MatrixBasedVoxelization(Voxelization):
         global_min = np.min([self_min, other_min], axis=0)
         global_max = np.max([self_max, other_max], axis=0)
 
-        new_shape = np.round((global_max - global_min) / self.voxel_size, DECIMALS).astype(int)
+        new_shape = np.round((global_max - global_min) / self.voxel_size, DECIMALS).astype(int) + 2
 
         new_self = np.zeros(new_shape, dtype=np.bool_)
         new_other = np.zeros(new_shape, dtype=np.bool_)
@@ -2376,7 +2376,7 @@ class MatrixBasedPixelization(Pixelization):
         global_min = np.min([self_min, other_min], axis=0)
         global_max = np.max([self_max, other_max], axis=0)
 
-        new_shape = np.round((global_max - global_min) / self.pixel_size, DECIMALS).astype(int)
+        new_shape = np.round((global_max - global_min) / self.pixel_size, DECIMALS).astype(int) + 2
 
         new_self = np.zeros(new_shape, dtype=np.bool_)
         new_other = np.zeros(new_shape, dtype=np.bool_)
