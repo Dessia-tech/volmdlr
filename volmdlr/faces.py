@@ -662,8 +662,34 @@ class Face3D(volmdlr.core.Primitive3D):
             return []
         list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
 
-        if not self.surface2d.inner_contours:
-            return list_cutting_contours
+        # MODIFICATIONS FROM fix_bo FOR SED USE
+
+        # if not self.surface2d.inner_contours:
+        #     return list_cutting_contours
+
+        cutting_contours = []
+        if len(list_cutting_contours) > 1:
+            while list_cutting_contours:
+                closed_contours = []
+                opened_contours = []
+                for contour in list_cutting_contours:
+                    if contour.is_contour_closed():
+                        closed_contours.append(contour)
+                    else:
+                        opened_contours.append(contour)
+                list_cutting_contours = closed_contours + opened_contours
+                current_cutting_contour = list_cutting_contours.pop(0)
+                connected_contour = current_cutting_contour.get_connected_wire(list_cutting_contours)
+                if connected_contour in list_cutting_contours:
+                    list_cutting_contours.remove(connected_contour)
+                if not connected_contour:
+                    cutting_contours.append(current_cutting_contour)
+                    continue
+                new_contour = current_cutting_contour.merge_not_adjcent_contour(connected_contour)
+                list_cutting_contours.append(new_contour)
+            list_cutting_contours = cutting_contours
+        # END OF MODIFICATIONS
+
         list_split_inner_contours = self.split_inner_contour_intersecting_cutting_contours(list_cutting_contours)
 
         valid_cutting_contours = []
@@ -689,6 +715,13 @@ class Face3D(volmdlr.core.Primitive3D):
                 list_cutting_contours.pop(i)
                 while True:
                     connecting_split_contour = cutting_contour.get_connected_wire(list_split_inner_contours)
+
+                    # MODIFS SED
+                    if not connecting_split_contour:
+                        valid_cutting_contours.append(cutting_contour)
+                        break
+                    # END OF MODIFS
+
                     list_split_inner_contours.remove(connecting_split_contour)
                     new_contour = volmdlr.wires.Contour2D.contours_from_edges(
                         cutting_contour.primitives + connecting_split_contour.primitives)[0]
@@ -1113,8 +1146,15 @@ class PlaneFace3D(Face3D):
         return min_distance
 
     def linesegment_inside(self, linesegment: vme.LineSegment3D):
-        direction_vector = linesegment.unit_direction_vector()
-        if not math.isclose(abs(direction_vector.dot(self.surface3d.frame.w)), 0.0, abs_tol=1e-6):
+
+        # MODIFS SED
+
+        # direction_vector = linesegment.unit_direction_vector()
+        # if not math.isclose(abs(direction_vector.dot(self.surface3d.frame.w)), 0.0, abs_tol=1e-6):
+        if not linesegment.direction_vector().is_perpendicular_to(self.surface3d.frame.w, 1e-6):
+
+        # END OF MODIFS
+
             return False
         for point in [linesegment.start, linesegment.middle_point(), linesegment.end]:
             if not self.point_belongs(point):
@@ -1157,7 +1197,12 @@ class PlaneFace3D(Face3D):
             if over_self_outer_contour and over_planeface_outer_contour:
                 continue
             if self.edge3d_inside(linesegment3d) or over_self_outer_contour:
-                if planeface.edge3d_inside(linesegment3d):
+
+                # MODIFS SED
+                # if planeface.edge3d_inside(linesegment3d):
+                if planeface.edge3d_inside(linesegment3d) and not over_planeface_inner_contour:
+                # END MODIFS
+
                     planeface_intersections.append(volmdlr.wires.Wire3D([linesegment3d]))
                 elif over_planeface_outer_contour:
                     planeface_intersections.append(volmdlr.wires.Wire3D([linesegment3d]))

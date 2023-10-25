@@ -2390,7 +2390,7 @@ class MovingVolumeModel(VolumeModel):
                 primitive.frame_mapping(frame, side='old'))
         return VolumeModel(primitives)
 
-    def babylon_data(self):
+    def babylon_data(self, merge_meshes=True):
         """
         Get babylonjs data.
 
@@ -2400,7 +2400,7 @@ class MovingVolumeModel(VolumeModel):
         primitives_to_meshes = []
         for i_prim, primitive in enumerate(self.primitives):
             if hasattr(primitive, 'babylon_meshes'):
-                meshes.extend(primitive.babylon_meshes())
+                meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 primitives_to_meshes.append(i_prim)
 
         bbox = self._bounding_box()
@@ -2430,3 +2430,44 @@ class MovingVolumeModel(VolumeModel):
                         'center': list(bbox.center),
                         'steps': steps}
         return babylon_data
+
+    # def babylon_data(self):
+    #     """
+    #     Get babylonjs data.
+    #
+    #     :return: Dictionary with babylonjs data.
+    #     """
+    #     meshes = []
+    #     primitives_to_meshes = []
+    #     for i_prim, primitive in enumerate(self.primitives):
+    #         if hasattr(primitive, 'babylon_meshes'):
+    #             meshes.extend(primitive.babylon_meshes())
+    #             primitives_to_meshes.append(i_prim)
+    #
+    #     bbox = self._bounding_box()
+    #     max_length = max([bbox.xmax - bbox.xmin,
+    #                       bbox.ymax - bbox.ymin,
+    #                       bbox.zmax - bbox.zmin])
+    #
+    #     steps = []
+    #     for istep, frames in enumerate(self.step_frames):
+    #
+    #         # step_positions = []
+    #         # step_orientations = []
+    #         step = {'time': istep}
+    #         for iframe, frame in enumerate(frames):
+    #             if iframe in primitives_to_meshes:
+    #                 imesh = primitives_to_meshes.index(iframe)
+    #                 step[imesh] = {}
+    #                 step[imesh]['position'] = list(round(frame.origin, 6))
+    #                 step[imesh]['orientations'] = [list(round(frame.u, 6)),
+    #                                                list(round(frame.v, 6)),
+    #                                                list(round(frame.w, 6))]
+    #
+    #         steps.append(step)
+    #
+    #     babylon_data = {'meshes': meshes,
+    #                     'max_length': max_length,
+    #                     'center': list(bbox.center),
+    #                     'steps': steps}
+    #     return babylon_data

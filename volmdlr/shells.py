@@ -1536,9 +1536,13 @@ class ClosedShell3D(OpenShell3D):
         faces += shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
         new_valid_faces = self.subtraction_faces(shell2, intersecting_faces, intersecting_combinations)
         faces += new_valid_faces
-        # new_shell = ClosedShell3D(faces)
+
+        # MODIFS SED
+        new_shell = ClosedShell3D(faces)
         # new_shell.eliminate_not_valid_closedshell_faces()
-        return self.from_faces(faces)
+        # return self.from_faces(faces)
+        return [new_shell]
+        # END MODIFS
 
     def validate_intersection_operation(self, shell2):
         """
