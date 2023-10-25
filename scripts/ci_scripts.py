@@ -4,6 +4,10 @@ import time
 import matplotlib.pyplot as _plt
 
 scripts = [
+            # cad_simplification
+            'cad_simplification/voxelization_simplify.py',
+            'cad_simplification/triple_extrusion_simplify.py',
+            'cad_simplification/triangle_decimation_simplify.py',
             # Core.py
             'core/points.py',
             'core/frames.py',
@@ -80,10 +84,6 @@ scripts = [
             # 'mesh/geo_file_1.py',
             # 'mesh/geo_file_2.py',
             # 'mesh/geo_file_3.py',
-            # cad_simplification
-            'cad_simplification/voxelization_simplify.py',
-            'cad_simplification/triple_extrusion_simplify.py',
-            'cad_simplification/triangle_decimation_simplify.py',
             # Voxelization
             'discrete_representation/voxelization/interference_surface_showcase.py',
             'discrete_representation/voxelization/interference_volume_showcase.py',
