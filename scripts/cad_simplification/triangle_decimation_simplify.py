@@ -9,7 +9,7 @@ from volmdlr.step import Step
 VOXEL_SIZE = 0.005
 
 # Load
-volume_model = Step.from_file("../step/engine.step").to_volume_model()
+volume_model = Step.from_file("../step/tormach_wrench.step").to_volume_model()
 
 # Simplify
 start = time.perf_counter()
