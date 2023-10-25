@@ -72,29 +72,6 @@ steps:
       path: /root/.cache
 
 
-- name: check pep8 formatting
-  image: python:3.9
-  when:
-    event:
-      exclude:
-      - tag
-  commands:
-    - git fetch --tags
-    - pip3 install -U pip autopep8==2.0.0
-    - bash code_pep8.sh
-
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
-
-- name: check changelog update
-  image: python:3.9
-  when:
-    event: pull_request
-  commands:
-    - bash code_changelog.sh
-
 - name: install, build doc run scripts and tutorials
   image: python:3.9
   commands:
@@ -126,14 +103,48 @@ steps:
   image: python:3.9
   commands:
   - git fetch --tags
-  - pip install numpy
-  - pip install Cython>3
   - python setup.py sdist
 
   volumes:
     # Mount pip cache from host
     - name: pip_cache
       path: /root/.cache/pip
+
+- name: generate bdist_wheel
+  image: python:3.9
+  commands:
+  - git fetch --tags
+  - pip install wheel
+  - python setup.py bdist_wheel
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+- name: check pep8 formatting
+  image: python:3.9
+  when:
+    event:
+      exclude:
+      - tag
+  commands:
+    - git fetch --tags
+    - pip3 install -U pip autopep8==2.0.0
+    - bash code_pep8.sh
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+- name: check changelog update
+  image: python:3.9
+  when:
+    event: pull_request
+  commands:
+    - bash code_changelog.sh
+
 
 
 - name: upload to pypi
