@@ -5,6 +5,7 @@ Edges related classes.
 """
 import math
 import sys
+import time
 import warnings
 from itertools import product
 from typing import List, Union
@@ -1811,6 +1812,7 @@ class BSplineCurve(Edge):
         :param point1: point 1 on edge.
         :param point2: point 2 on edge.
         :param number_points: number of points to discretize locally.
+        :param tol: tolerance.
         :return: list of locally discretized points.
         """
         abscissa1 = self.abscissa(point1)
@@ -5175,8 +5177,7 @@ class BSplineCurve3D(BSplineCurve):
     def circle_intersections(self, circle, abs_tol: float = 1e-6):
         if self.bounding_box.distance_to_bbox(circle.bounding_box) > abs_tol:
             return []
-        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(
-            circle, self, abs_tol=abs_tol)
+        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(circle, self, abs_tol=abs_tol)
         return intersections_points
 
     def is_shared_section_possible(self, other_bspline2, tol):

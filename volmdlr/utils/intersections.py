@@ -235,7 +235,6 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
     :return: A list with all intersections between the edge and BSpline Curve.
     :rtype: [volmdlr.Point3D].
     """
-    time_s = time.time()
     param_intersections = bspline_intersections_initial_conditions(primitive, bsplinecurve)
     line_seg_class_ = getattr(volmdlr.edges, 'LineSegment' + bsplinecurve.__class__.__name__[-2:])
     intersections = []
@@ -259,9 +258,6 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
             elif not volmdlr.core.point_in_list(intersection[0], intersections):
                 intersections.append(intersection[0])
         param_intersections.remove((abscissa1, abscissa2))
-    if not intersections:
-        time_e = time.time()
-        print(f'no intersections and it took {time_e - time_s} seconds')
     return intersections
 
 

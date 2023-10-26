@@ -2556,7 +2556,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         self.minor_radius = minor_radius
         self.outer_radius = self.major_radius + self.minor_radius
         self.inner_radius = self.major_radius - self.minor_radius
-
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
         self._bbox = None
@@ -3001,8 +3000,10 @@ class ToroidalSurface3D(PeriodicalSurface):
         return intersections
 
     def circle_intersections(self, circle: curves.Circle3D):
-        if self.point_distance(circle.center) > circle.radius:
+        if not self.bounding_box.is_intersecting(circle.bounding_box):
             return []
+        # if self.point_distance(circle.center) > circle.radius:
+        #     return []
         circle_plane = Plane3D(circle.frame)
         plane_intersections = self.plane_intersections(circle_plane)
         intersection_points = []
@@ -3011,8 +3012,6 @@ class ToroidalSurface3D(PeriodicalSurface):
             for inter in inters:
                 if not volmdlr.core.point_in_list(inter, intersection_points):
                     intersection_points.append(inter)
-        if not intersection_points:
-            print(True)
         return intersection_points
 
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
@@ -3132,7 +3131,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        if plane3d.point_distance(self.frame.origin) > 1e-6:
+        if plane3d.point_distance(self.frame.origin) > self.inner_radius:
             torus_origin_plane = Plane3D(self.frame)
             projected_point_plane3d = plane3d.point_projection(self.frame.origin)
             torus_plane_projection = torus_origin_plane.point_projection(projected_point_plane3d)
@@ -3181,19 +3180,10 @@ class ToroidalSurface3D(PeriodicalSurface):
         arcs = self._torus_arcs(150)
         points_intersections = []
         for arc in arcs:
-            intersections = cylindrical_surface.edge_intersections(arc)
-            # intersections = cylindrical_surface.circle_intersections(arc)
+            intersections = cylindrical_surface.circle_intersections(arc)
             points_intersections.extend(intersections)
-        print(True)
-        for edge in cylindrical_surface.get_generatrixes(self.outer_radius * 3, 200):
-            # + \
-            #     cylindrical_surface.get_circle_generatrixes(100, self.outer_radius * 3):
-            intersections = self.edge_intersections(edge)
-            for point in intersections:
-                if not volmdlr.core.point_in_list(point, points_intersections):
-                    points_intersections.append(point)
-        print(True)
-        for edge in cylindrical_surface.get_circle_generatrixes(100, self.outer_radius * 3):
+        for edge in cylindrical_surface.get_generatrixes(self.outer_radius * 3, 200) + \
+                cylindrical_surface.get_circle_generatrixes(50, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not volmdlr.core.point_in_list(point, points_intersections):

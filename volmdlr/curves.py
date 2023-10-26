@@ -1925,6 +1925,17 @@ class Circle3D(CircleMixin, ClosedCurve):
             return point1.point_distance(point2), point1, point2
         return point1.point_distance(point2)
 
+    def point_distance(self, point3d):
+        point2d = point3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        projected_point3d = point2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+        line = Line3D(self.frame.origin, projected_point3d)
+        line_intersections = self.line_intersections(line)
+        distance1 = line_intersections[0].point_distance(point3d)
+        distance2 = line_intersections[1].point_distance(point3d)
+        if distance1 > distance2:
+            return distance2
+        return distance1
+
 
 class Ellipse2D(ClosedCurve):
     """
