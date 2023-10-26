@@ -546,7 +546,7 @@ def _triangle_2d_intersects_pixel(
     min_triangle, max_triangle = _triangle_2d_min_max_points(triangle_2d)
 
     # Check if the bounding boxes intersect
-    if not _bounding_rectangles_overlap(min_triangle, max_triangle, left_top_corner, right_top_corner):
+    if not _bounding_rectangles_overlap(min_triangle, max_triangle, left_bottom_corner, right_top_corner):
         return False
 
     # Check if a point of the triangle is in the pixel
@@ -612,7 +612,7 @@ def _bounding_rectangles_overlap(
     max_rect2: Tuple[cython.double, cython.double],
 ) -> bool_C:
     # Check if rect1 is to the left of rect2 or rect2 is to the left of rect1
-    if max_rect1[0] < max_rect2[0] or max_rect2[0] < min_rect1[0]:
+    if max_rect1[0] < min_rect2[0] or max_rect2[0] < min_rect1[0]:
         return False
 
     # Check if rect1 is below rect2 or rect2 is below rect1
