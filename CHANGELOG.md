@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.15.0 [future]
 
 ### New Features
+#### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
+- SphericalSurface3D: circle_intersections
+
+#### shells.py
 - OpenTriangleShell3D: triangle decimation
 
 ### Fixed

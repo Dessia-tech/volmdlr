@@ -155,6 +155,21 @@ class TestSphericalSurface3D(unittest.TestCase):
         linesegment4 = edges.LineSegment3D(volmdlr.Point3D(-.01, -1.5, -.01), volmdlr.Point3D(0.3, -1.3, 0.5))
         self.assertFalse(spherical_surface3d.linesegment_intersections(linesegment4))
 
+    def test_circle_intersections(self):
+        spherical_surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
+
+        # test1
+        circle = curves.Circle3D(volmdlr.OXYZ.translation(volmdlr.Vector3D(.5, .5, 2)), .5)
+        circle_intersections = spherical_surface3d.circle_intersections(circle)
+        self.assertFalse(circle_intersections)
+
+        # test2
+        circle = curves.Circle3D(volmdlr.OXYZ.translation(volmdlr.Vector3D(.5, .5, .5)), .5)
+        circle_intersections = spherical_surface3d.circle_intersections(circle)
+        self.assertEqual(len(circle_intersections), 2)
+        self.assertTrue(circle_intersections[0], volmdlr.Point3D(0.853553390593, 0.146446609407, 0.5))
+        self.assertTrue(circle_intersections[1], volmdlr.Point3D(0.146446609407, 0.853553390593, 0.5))
+
 
 if __name__ == '__main__':
     unittest.main()

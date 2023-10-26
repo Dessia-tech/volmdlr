@@ -4390,6 +4390,14 @@ class SphericalSurface3D(PeriodicalSurface):
         t_param2 = (-b_param - math.sqrt(b2_minus4ac)) / (2 * a_param)
         return line3d.point1 + line_direction_vector * t_param1, line3d.point1 + line_direction_vector * t_param2
 
+    def circle_intersections(self, circle: curves.Circle3D):
+        circle_plane = Plane3D(circle.frame)
+        if circle_plane.point_distance(self.frame.origin) > self.radius:
+            return []
+        circle_plane_intersections = self.plane_intersections(circle_plane)
+        intersections = circle_plane_intersections[0].circle.circle_intersections(circle)
+        return intersections
+
 
 class RuledSurface3D(Surface3D):
     """
