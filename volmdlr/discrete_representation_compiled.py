@@ -22,6 +22,7 @@ _Triangle3D = Tuple[_Point3D, _Point3D, _Point3D]
 
 _Point2D = Tuple[float, float]
 _Segment2D = Tuple[_Point2D, _Point2D]
+_Triangle2D = Tuple[_Point2D, _Point2D, _Point2D]
 
 
 # PYTHON FUNCTIONS
