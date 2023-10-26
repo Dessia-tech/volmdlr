@@ -166,7 +166,9 @@ def triangle_intersects_voxel(
     :return: True if there is an intersection, False otherwise.
     :rtype: bool
     """
-    return _triangle_intersects_voxel(triangle, voxel_center, voxel_extents)
+    return _triangle_intersects_voxel(triangle, voxel_center, voxel_extents) or _triangle_interfaces_voxel(
+        triangle, voxel_center, voxel_extents
+    )
 
 
 def voxel_triangular_faces(voxel_center: _Point3D, voxel_size: float) -> List[_Triangle3D]:
