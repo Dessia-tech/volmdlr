@@ -515,6 +515,7 @@ def _triangle_interfaces_voxel(
 
 
 @cython.cfunc
+@cython.exceptval(check=False)
 def _triangle_2d_intersects_pixel(
     triangle_2d: Tuple[
         Tuple[cython.double, cython.double],
@@ -543,6 +544,8 @@ def _triangle_2d_intersects_pixel(
         _round_to_digits(pixel_center[1] + pixel_extents[1], 9),
     )
 
+    min_triangle: Tuple[cython.double, cython.double]
+    max_triangle: Tuple[cython.double, cython.double]
     min_triangle, max_triangle = _triangle_2d_min_max_points(triangle_2d)
 
     # Check if the bounding boxes intersect
@@ -605,6 +608,7 @@ def _triangle_2d_intersects_pixel(
 
 
 @cython.cfunc
+@cython.exceptval(check=False)
 def _bounding_rectangles_overlap(
     min_rect1: Tuple[cython.double, cython.double],
     max_rect1: Tuple[cython.double, cython.double],
@@ -623,6 +627,7 @@ def _bounding_rectangles_overlap(
 
 
 @cython.cfunc
+@cython.exceptval(check=False)
 def _point_in_triangle_2d(
     point: Tuple[cython.double, cython.double],
     triangle_2d: Tuple[
@@ -631,21 +636,25 @@ def _point_in_triangle_2d(
 ) -> bool_C:
     """Check if a point is in a 2D triangle."""
 
-    def sign(
-        p1: Tuple[cython.double, cython.double],
-        p2: Tuple[cython.double, cython.double],
-        p3: Tuple[cython.double, cython.double],
-    ) -> cython.double:
-        return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1])
-
-    b1 = sign(point, triangle_2d[0], triangle_2d[1]) < 0.0
-    b2 = sign(point, triangle_2d[1], triangle_2d[2]) < 0.0
-    b3 = sign(point, triangle_2d[2], triangle_2d[0]) < 0.0
+    b1: cython.double = __sign(point, triangle_2d[0], triangle_2d[1]) < 0.0
+    b2: cython.double = __sign(point, triangle_2d[1], triangle_2d[2]) < 0.0
+    b3: cython.double = __sign(point, triangle_2d[2], triangle_2d[0]) < 0.0
 
     return (b1 == b2) and (b2 == b3)
 
 
 @cython.cfunc
+@cython.exceptval(check=False)
+def __sign(
+    p1: Tuple[cython.double, cython.double],
+    p2: Tuple[cython.double, cython.double],
+    p3: Tuple[cython.double, cython.double],
+) -> cython.double:
+    return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1])
+
+
+@cython.cfunc
+@cython.exceptval(check=False)
 def _point_in_pixel(
     point: Tuple[cython.double, cython.double],
     left_bottom_corner: Tuple[cython.double, cython.double],
