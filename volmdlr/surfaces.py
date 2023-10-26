@@ -62,6 +62,22 @@ class Surface2D(PhysicalObject):
         PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
+        """
+        Calculate the hash value for Surface2D.
+
+        This method is used to generate a hash value for instances of the
+        current class, which can be used for hash-based data structures like
+        dictionaries and sets.
+
+        The hash value is computed based on the combined hash of the outer
+        contour and a tuple of hash values for the inner contours. This
+        ensures that objects with equivalent contours will have the same
+        hash value, allowing them to be efficiently compared and retrieved
+        from hash-based collections.
+
+        :return: A hash value representing the object's state.
+        :rtype: int
+        """
         return hash((self.outer_contour, tuple(self.inner_contours)))
 
     def _data_hash(self):
@@ -391,6 +407,7 @@ class Surface2D(PhysicalObject):
         """
         Cuts a Surface2D with line (2).
 
+        # TODO: is it used? Is not there already a method doing the same thing in wires.py?
         :param line: DESCRIPTION
         :type line: TYPE
         :raises NotImplementedError: DESCRIPTION
@@ -1073,6 +1090,12 @@ class Surface3D(DessiaObject):
         return intersections
 
     def contour_intersections(self, contour3d: wires.Contour3D):
+        """
+        Gets intersections between surface 3d and a contour 3d.
+
+        :param contour3d: other contour to get intersections with.
+        :return: list of intesection points.
+        """
         outer_contour_intersections_with_plane = []
         for primitive in contour3d.primitives:
             primitive_plane_intersections = self.edge_intersections(primitive)
@@ -2354,6 +2377,12 @@ class CylindricalSurface3D(PeriodicalSurface):
         return [intersection1, intersection2]
 
     def circle_intersections(self, circle: curves.Circle3D):
+        """
+        Gets intersections between a Cylindrical Surface 3D and a circle 3D.
+
+        :param circle: other circle 3D.
+        :return: list containing the intersection points.
+        """
         circle_plane = Plane3D(circle.frame)
         circle_plane_intersections = self.plane_intersections(circle_plane)
         intersections = []
@@ -2365,6 +2394,12 @@ class CylindricalSurface3D(PeriodicalSurface):
         return intersections
 
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
+        """
+        Gets intersections between a Cylindrical Surface 3D and a fullarc 3D.
+
+        :param fullarc: other fullarc 3D.
+        :return: list containing the intersection points.
+        """
         return self.circle_intersections(fullarc.circle)
 
     def parallel_plane_intersection(self, plane3d):
@@ -2564,6 +2599,7 @@ class ToroidalSurface3D(PeriodicalSurface):
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
                        pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'SerializableObject':
+        """Creates a ToroidalSurface3D from a dictionary."""
         frame = volmdlr.Frame3D.dict_to_object(dict_['frame'])
         name = dict_['name']
         if 'tore_radius' in dict_:
@@ -2585,6 +2621,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         return self._bbox
 
     def _bounding_box(self):
+        """
+        Calculates the BoundingBox for the complete Toroidal Surface 3D.
+
+        :return: surface bounding box.
+        """
         distance = self.major_radius + self.minor_radius
         point1 = self.frame.origin + \
             self.frame.u * distance + self.frame.v * distance + self.frame.w * self.minor_radius
@@ -2993,6 +3034,12 @@ class ToroidalSurface3D(PeriodicalSurface):
         return intersections
 
     def circle_intersections(self, circle: curves.Circle3D):
+        """
+        Gets intersections between a ToroidalSurface3D Surface 3D and a circle 3D.
+
+        :param circle: other circle 3D.
+        :return: list containing the intersection points.
+        """
         if not self.bounding_box.is_intersecting(circle.bounding_box):
             return []
         circle_plane = Plane3D(circle.frame)
@@ -3006,6 +3053,12 @@ class ToroidalSurface3D(PeriodicalSurface):
         return intersection_points
 
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
+        """
+        Gets intersections between a ToroidalSurface3D Surface 3D and a circle 3D.
+
+        :param fullarc: other fullarc 3D.
+        :return: list containing the intersection points.
+        """
         if self.point_distance(fullarc.circle.center) > fullarc.circle.radius:
             return []
         circle_plane = Plane3D(fullarc.circle.frame)
