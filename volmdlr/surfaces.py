@@ -2181,9 +2181,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             circle_frame = self.frame.copy()
             circle_frame.origin += (-0.5 + j / (number_circles - 1)) * length * circle_frame.w
             circle = curves.Circle3D(circle_frame, self.radius)
-            # fullarc = edges.FullArc3D.from_curve(circle)
             circles.append(circle)
-            # circles.append(fullarc)
         return circles
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5),
@@ -2212,20 +2210,10 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.frame.plot(ax=ax, color=edge_style.color, ratio=self.radius)
         for edge in self.get_generatrixes(length, nlines):
             edge.plot(ax=ax, edge_style=edge_style)
-        # for i in range(nlines):
-        #     theta = i / (nlines - 1) * volmdlr.TWO_PI
-        #     start = self.point2d_to_3d(volmdlr.Point2D(theta, -.5 * length))
-        #     end = self.point2d_to_3d(volmdlr.Point2D(theta, .5 *length))
-        #     edges.LineSegment3D(start, end).plot(ax=ax, edge_style=edge_style)
 
         circles = self.get_circle_generatrixes(ncircles, length)
         for circle in circles:
             circle.plot(ax=ax, edge_style=edge_style)
-        # for j in range(ncircles):
-        #     circle_frame = self.frame.copy()
-        #     circle_frame.origin += (-0.5 + j / (ncircles - 1)) * length * circle_frame.w
-        #     circle = curves.Circle3D(circle_frame, self.radius)
-        #     circle.plot(ax=ax, edge_style=edge_style)
         return ax
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
@@ -2569,8 +2557,6 @@ class ToroidalSurface3D(PeriodicalSurface):
             u_vector = (i_center - self.frame.origin).unit_vector()
             i_frame = volmdlr.Frame3D(i_center, u_vector, self.frame.w, u_vector.cross(self.frame.w))
             circle = curves.Circle3D(i_frame, self.minor_radius)
-            # fullarc = edges.FullArc3D.from_curve(circle)
-            # arcs.append(fullarc)
             arcs.append(circle)
         return arcs
 
@@ -2914,14 +2900,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         circles = self._torus_arcs(100)
         for circle in circles:
             circle.plot(ax=ax, edge_style=edge_style)
-        # number_arcs = 50
-        # for i in range(number_arcs):
-        #     theta = i / number_arcs * volmdlr.TWO_PI
-        #     t_points = []
-        #     for j in range(number_arcs):
-        #         phi = j / number_arcs * volmdlr.TWO_PI
-        #         t_points.append(self.point2d_to_3d(volmdlr.Point2D(theta, phi)))
-        #     ax = wires.ClosedPolygon3D(t_points).plot(ax=ax, edge_style=edge_style)
 
         return ax
 
@@ -3002,8 +2980,6 @@ class ToroidalSurface3D(PeriodicalSurface):
     def circle_intersections(self, circle: curves.Circle3D):
         if not self.bounding_box.is_intersecting(circle.bounding_box):
             return []
-        # if self.point_distance(circle.center) > circle.radius:
-        #     return []
         circle_plane = Plane3D(circle.frame)
         plane_intersections = self.plane_intersections(circle_plane)
         intersection_points = []

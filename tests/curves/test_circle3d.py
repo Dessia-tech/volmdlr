@@ -200,6 +200,19 @@ class TestCircle3D(unittest.TestCase):
         self.assertTrue(circle_intersections[1].is_close(
             volmdlr.Point3D(0.976824634452, 0.000268584853, -0.959595959596)))
 
+    def test_point_distance(self):
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+
+        circle = curves.Circle3D(frame, 2)
+        point = volmdlr.Point3D(3, -2.5, 2)
+
+        point_distance = circle.point_distance(point)
+        self.assertAlmostEqual(point_distance, 3.341699272287294)
+
 
 if __name__ == '__main__':
     unittest.main()

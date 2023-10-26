@@ -1329,8 +1329,6 @@ class Circle2D(CircleMixin, ClosedCurve):
         """
         if self.bounding_rectangle.distance_to_b_rectangle(ellipse2d.bounding_rectangle) > abs_tol:
             return []
-        # if ellipse2d.point_distance(self.center) > self.radius:
-        #     return []
         intersections = volmdlr_intersections.get_bsplinecurve_intersections(ellipse2d, self, abs_tol)
         return intersections
 
