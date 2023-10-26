@@ -2355,6 +2355,12 @@ class CylindricalSurface3D(PeriodicalSurface):
         return [intersection1, intersection2]
 
     def circle_intersections(self, circle: curves.Circle3D):
+        """
+        Get intersections between the Cylindrical Surface 3D and a Circle 3D.
+
+        :param circle: other circle.
+        :return: list containing the intersection points.
+        """
         circle_plane = Plane3D(circle.frame)
         circle_plane_intersections = self.plane_intersections(circle_plane)
         intersections = []
@@ -2366,7 +2372,24 @@ class CylindricalSurface3D(PeriodicalSurface):
         return intersections
 
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
+        """
+        Get intersections between the Cylindrical Surface 3D and a FullArc 3D.
+
+        :param fullarc: other fullarc.
+        :return: list containing the intersection points.
+        """
         return self.circle_intersections(fullarc.circle)
+
+    def arc_intersections(self, arc: edges.Arc3D):
+        """
+        Get intersections between the Cylindrical Surface 3D and an Arc 3D.
+
+        :param arc: other arc.
+        :return: list containing the intersection points.
+        """
+        circle_intersections = self.circle_intersections(arc.circle)
+        intersections = [intersection for intersection in circle_intersections if arc.point_belongs(intersection)]
+        return intersections
 
     def parallel_plane_intersection(self, plane3d):
         """
@@ -3182,7 +3205,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                     points_intersections.append(point)
         return points_intersections
 
-    def cylindrical_surface_intersections(self, cylindrical_surface: CylindricalSurface3D):
+    def cylindricalsurface_intersections(self, cylindrical_surface: CylindricalSurface3D):
         """
         Gets the intersections between a toroidal surface and cylindrical surface.
 
