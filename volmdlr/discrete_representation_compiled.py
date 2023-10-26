@@ -414,6 +414,124 @@ def _calculate_axis_values(
 
 
 @cython.cfunc
+def _triangle_interfaces_voxel(
+    triangle: Tuple[
+        Tuple[cython.double, cython.double, cython.double],
+        Tuple[cython.double, cython.double, cython.double],
+        Tuple[cython.double, cython.double, cython.double],
+    ],
+    voxel_center: Tuple[cython.double, cython.double, cython.double],
+    voxel_extents: Tuple[cython.double, cython.double, cython.double],
+) -> bool_C:
+    """Check if a 3D triangle is at the interface of a voxel defined by its center and extents."""
+
+    # Check if the triangle is in the Y-Z plane at the interface of the voxel
+    if (
+        _round_to_digits(triangle[0][0], 9)
+        == _round_to_digits(triangle[1][0], 9)
+        == _round_to_digits(triangle[2][0], 9)
+        == (
+            _round_to_digits(voxel_center[0] - voxel_extents[0], 9)
+            or _round_to_digits(voxel_center[0] + voxel_extents[0], 9)
+        )
+    ):
+        # Define the 3D triangle in 2D
+        p0: Tuple[cython.double, cython.double] = (triangle[0][1], triangle[0][2])
+        p1: Tuple[cython.double, cython.double] = (triangle[1][1], triangle[1][2])
+        p2: Tuple[cython.double, cython.double] = (triangle[2][1], triangle[2][2])
+
+        triangle_2d: Tuple[
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+        ] = (p0, p1, p2)
+
+        # Define the voxel in 2D
+        pixel_center: Tuple[cython.double, cython.double] = (voxel_center[1], voxel_center[2])
+        pixel_extents: Tuple[cython.double, cython.double] = (voxel_extents[1], voxel_extents[2])
+
+        # Check for intersection with the voxel
+        if _triangle_2D_intersects_pixel(triangle_2d, pixel_center, pixel_extents):
+            return True
+
+    # Check if the triangle is in the X-Z plane at the interface of the voxel
+    if (
+        _round_to_digits(triangle[0][1], 9)
+        == _round_to_digits(triangle[1][1], 9)
+        == _round_to_digits(triangle[2][1], 9)
+        == (
+            _round_to_digits(voxel_center[1] - voxel_extents[1], 9)
+            or _round_to_digits(voxel_center[1] + voxel_extents[1], 9)
+        )
+    ):
+        # Define the 3D triangle in 2D
+        p0: Tuple[cython.double, cython.double] = (triangle[0][0], triangle[0][2])
+        p1: Tuple[cython.double, cython.double] = (triangle[1][0], triangle[1][2])
+        p2: Tuple[cython.double, cython.double] = (triangle[2][0], triangle[2][2])
+
+        triangle_2d: Tuple[
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+        ] = (p0, p1, p2)
+
+        # Define the voxel in 2D
+        pixel_center: Tuple[cython.double, cython.double] = (voxel_center[0], voxel_center[2])
+        pixel_extents: Tuple[cython.double, cython.double] = (voxel_extents[0], voxel_extents[2])
+
+        # Check for intersection with the voxel
+        if _triangle_2D_intersects_pixel(triangle_2d, pixel_center, pixel_extents):
+            return True
+
+    # Check if the triangle is in the X-Y plane at the interface of the voxel
+    if (
+        _round_to_digits(triangle[0][2], 9)
+        == _round_to_digits(triangle[1][2], 9)
+        == _round_to_digits(triangle[2][2], 9)
+        == (
+            _round_to_digits(voxel_center[2] - voxel_extents[2], 9)
+            or _round_to_digits(voxel_center[2] + voxel_extents[2], 9)
+        )
+    ):
+        # Define the 3D triangle in 2D
+        p0: Tuple[cython.double, cython.double] = (triangle[0][1], triangle[0][2])
+        p1: Tuple[cython.double, cython.double] = (triangle[1][1], triangle[1][2])
+        p2: Tuple[cython.double, cython.double] = (triangle[2][1], triangle[2][2])
+
+        triangle_2d: Tuple[
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+            Tuple[cython.double, cython.double],
+        ] = (p0, p1, p2)
+
+        # Define the voxel in 2D
+        pixel_center: Tuple[cython.double, cython.double] = (voxel_center[1], voxel_center[2])
+        pixel_extents: Tuple[cython.double, cython.double] = (voxel_extents[1], voxel_extents[2])
+
+        # Check for intersection with the voxel
+        if _triangle_2D_intersects_pixel(triangle_2d, pixel_center, pixel_extents):
+            return True
+
+    return False
+
+
+@cython.cfunc
+def _triangle_2D_intersects_pixel(
+    triangle_2d: Tuple[
+        Tuple[cython.double, cython.double, cython.double],
+        Tuple[cython.double, cython.double, cython.double],
+    ],
+    pixel_center: Tuple[cython.double, cython.double],
+    pixel_extents: Tuple[cython.double, cython.double],
+) -> bool_C:
+    """Check if a triangle defined in 2D intersects with a pixel defined by its center and extents."""
+
+    # Check if a point of the triangle is in the pixel
+    # if
+    pass
+
+
+@cython.cfunc
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
