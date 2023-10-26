@@ -601,10 +601,21 @@ class BoundingBox(dc.DessiaObject):
         """
         xmin = min(bb.xmin for bb in bounding_boxes)
         xmax = max(bb.xmax for bb in bounding_boxes)
+        x_length = xmax - xmin
+        xmin -= x_length * 0.001
+        xmax += x_length * 0.001
+
         ymin = min(bb.ymin for bb in bounding_boxes)
         ymax = max(bb.ymax for bb in bounding_boxes)
+        y_length = ymax - ymin
+        ymin -= y_length * 0.001
+        ymax += y_length * 0.001
+
         zmin = min(bb.zmin for bb in bounding_boxes)
         zmax = max(bb.zmax for bb in bounding_boxes)
+        z_length = zmax - zmin
+        zmin -= z_length * 0.001
+        zmax += z_length * 0.001
         return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     @classmethod

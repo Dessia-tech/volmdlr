@@ -50,7 +50,7 @@ class TestBoundingBox(unittest.TestCase):
     def test_from_bounding_boxes(self):
         self.assertEqual(
             BoundingBox.from_bounding_boxes([self.bbox1, self.bbox2, self.bbox3]),
-            BoundingBox(0.0, 5.0, 0.0, 5.0, -1.0, 5.0),
+            BoundingBox(-0.005, 5.005, -0.005, 5.005, -1.006, 5.006),
         )
 
     def test_from_points(self):
