@@ -632,7 +632,6 @@ def _point_in_triangle_2d(
 ) -> bool_C:
     """Check if a point is in a 2D triangle."""
 
-    @cython.cfunc
     def sign(
         p1: Tuple[cython.double, cython.double],
         p2: Tuple[cython.double, cython.double],
