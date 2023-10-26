@@ -432,10 +432,9 @@ def _triangle_interfaces_voxel(
         _round_to_digits(triangle[0][0], 9)
         == _round_to_digits(triangle[1][0], 9)
         == _round_to_digits(triangle[2][0], 9)
-        == (
-            _round_to_digits(voxel_center[0] - voxel_extents[0], 9)
-            or _round_to_digits(voxel_center[0] + voxel_extents[0], 9)
-        )
+    ) and (
+        (_round_to_digits(triangle[0][0], 9) == _round_to_digits(voxel_center[0] - voxel_extents[0], 9))
+        or (_round_to_digits(triangle[0][0], 9) == _round_to_digits(voxel_center[0] + voxel_extents[0], 9))
     ):
         # Define the 3D triangle in 2D
         p0: Tuple[cython.double, cython.double] = (triangle[0][1], triangle[0][2])
@@ -461,10 +460,9 @@ def _triangle_interfaces_voxel(
         _round_to_digits(triangle[0][1], 9)
         == _round_to_digits(triangle[1][1], 9)
         == _round_to_digits(triangle[2][1], 9)
-        == (
-            _round_to_digits(voxel_center[1] - voxel_extents[1], 9)
-            or _round_to_digits(voxel_center[1] + voxel_extents[1], 9)
-        )
+    ) and (
+        (_round_to_digits(triangle[0][1], 9) == _round_to_digits(voxel_center[1] - voxel_extents[1], 9))
+        or (_round_to_digits(triangle[0][1], 9) == _round_to_digits(voxel_center[1] + voxel_extents[1], 9))
     ):
         # Define the 3D triangle in 2D
         p0: Tuple[cython.double, cython.double] = (triangle[0][0], triangle[0][2])
@@ -490,15 +488,14 @@ def _triangle_interfaces_voxel(
         _round_to_digits(triangle[0][2], 9)
         == _round_to_digits(triangle[1][2], 9)
         == _round_to_digits(triangle[2][2], 9)
-        == (
-            _round_to_digits(voxel_center[2] - voxel_extents[2], 9)
-            or _round_to_digits(voxel_center[2] + voxel_extents[2], 9)
-        )
+    ) and (
+        (_round_to_digits(triangle[0][2], 9) == _round_to_digits(voxel_center[2] - voxel_extents[2], 9))
+        or (_round_to_digits(triangle[0][2], 9) == _round_to_digits(voxel_center[2] + voxel_extents[2], 9))
     ):
         # Define the 3D triangle in 2D
-        p0: Tuple[cython.double, cython.double] = (triangle[0][1], triangle[0][2])
-        p1: Tuple[cython.double, cython.double] = (triangle[1][1], triangle[1][2])
-        p2: Tuple[cython.double, cython.double] = (triangle[2][1], triangle[2][2])
+        p0: Tuple[cython.double, cython.double] = (triangle[0][0], triangle[0][1])
+        p1: Tuple[cython.double, cython.double] = (triangle[1][0], triangle[1][1])
+        p2: Tuple[cython.double, cython.double] = (triangle[2][0], triangle[2][1])
 
         triangle_2d: Tuple[
             Tuple[cython.double, cython.double],
@@ -507,8 +504,8 @@ def _triangle_interfaces_voxel(
         ] = (p0, p1, p2)
 
         # Define the voxel in 2D
-        pixel_center: Tuple[cython.double, cython.double] = (voxel_center[1], voxel_center[2])
-        pixel_extents: Tuple[cython.double, cython.double] = (voxel_extents[1], voxel_extents[2])
+        pixel_center: Tuple[cython.double, cython.double] = (voxel_center[0], voxel_center[1])
+        pixel_extents: Tuple[cython.double, cython.double] = (voxel_extents[0], voxel_extents[1])
 
         # Check for intersection with the voxel
         if _triangle_2d_intersects_pixel(triangle_2d, pixel_center, pixel_extents):
@@ -530,33 +527,33 @@ def _triangle_2d_intersects_pixel(
     """Check if a triangle defined in 2D intersects with a pixel defined by its center and extents."""
 
     left_bottom_corner: Tuple[cython.double, cython.double] = (
-        pixel_center[0] - pixel_extents[0],
-        pixel_center[1] - pixel_extents[1],
+        _round_to_digits(pixel_center[0] - pixel_extents[0], 9),
+        _round_to_digits(pixel_center[1] - pixel_extents[1], 9),
     )
     right_bottom_corner: Tuple[cython.double, cython.double] = (
-        pixel_center[0] + pixel_extents[0],
-        pixel_center[1] - pixel_extents[1],
+        _round_to_digits(pixel_center[0] + pixel_extents[0], 9),
+        _round_to_digits(pixel_center[1] - pixel_extents[1], 9),
     )
     left_top_corner: Tuple[cython.double, cython.double] = (
-        pixel_center[0] - pixel_extents[0],
-        pixel_center[1] + pixel_extents[1],
+        _round_to_digits(pixel_center[0] - pixel_extents[0], 9),
+        _round_to_digits(pixel_center[1] + pixel_extents[1], 9),
     )
     right_top_corner: Tuple[cython.double, cython.double] = (
-        pixel_center[0] + pixel_extents[0],
-        pixel_center[1] + pixel_extents[1],
+        _round_to_digits(pixel_center[0] + pixel_extents[0], 9),
+        _round_to_digits(pixel_center[1] + pixel_extents[1], 9),
     )
 
     min_triangle, max_triangle = _triangle_2d_min_max_points(triangle_2d)
 
     # Check if the bounding boxes intersect
-    if not _bounding_rectangles_overlap(min_triangle, max_triangle, left_top_corner, right_top_corner):
-        return False
+    # if not _bounding_rectangles_overlap(min_triangle, max_triangle, left_top_corner, right_top_corner):
+    #     return False
 
     # Check if a point of the triangle is in the pixel
     if (
-        _point_in_pixel(triangle_2d[0], pixel_center, pixel_extents)
-        or _point_in_pixel(triangle_2d[0], pixel_center, pixel_extents)
-        or _point_in_pixel(triangle_2d[0], pixel_center, pixel_extents)
+        _point_in_pixel(triangle_2d[0], left_bottom_corner, right_top_corner)
+        or _point_in_pixel(triangle_2d[1], left_bottom_corner, right_top_corner)
+        or _point_in_pixel(triangle_2d[2], left_bottom_corner, right_top_corner)
     ):
         return True
 
@@ -577,8 +574,8 @@ def _triangle_2d_intersects_pixel(
             triangle_2d[1][0],
             triangle_2d[1][1],
             left_bottom_corner[0],
-            left_bottom_corner[1],
             right_top_corner[0],
+            left_bottom_corner[1],
             right_top_corner[1],
         )
         or _line_segment_intersects_pixel(
@@ -587,8 +584,8 @@ def _triangle_2d_intersects_pixel(
             triangle_2d[2][0],
             triangle_2d[2][1],
             left_bottom_corner[0],
-            left_bottom_corner[1],
             right_top_corner[0],
+            left_bottom_corner[1],
             right_top_corner[1],
         )
         or _line_segment_intersects_pixel(
@@ -597,8 +594,8 @@ def _triangle_2d_intersects_pixel(
             triangle_2d[2][0],
             triangle_2d[2][1],
             left_bottom_corner[0],
-            left_bottom_corner[1],
             right_top_corner[0],
+            left_bottom_corner[1],
             right_top_corner[1],
         )
     ):
