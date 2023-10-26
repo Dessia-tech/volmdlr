@@ -2,7 +2,7 @@
 import math
 import warnings
 from itertools import chain
-from typing import List, Union
+from typing import List, Union, Dict, Any
 import traceback
 from collections import deque
 from functools import cached_property
@@ -16,6 +16,8 @@ from scipy.linalg import lu_factor, lu_solve
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
+
+from dessia_common.typings import JsonSerializable
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
 from volmdlr.nurbs.helpers import generate_knot_vector
 from volmdlr.nurbs.operations import split_surface_u, split_surface_v
@@ -2560,6 +2562,20 @@ class ToroidalSurface3D(PeriodicalSurface):
             arcs.append(circle)
         return arcs
 
+    @classmethod
+    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
+                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'SerializableObject':
+        frame = volmdlr.Frame3D.dict_to_object(dict_['frame'])
+        name = dict_['name']
+        if 'tore_radius' in dict_:
+            # fix done 26/10/2023
+            major_radius = dict_['tore_radius']
+            minor_radius = dict_['small_radius']
+        else:
+            major_radius = dict_['major_radius']
+            minor_radius = dict_['minor_radius']
+        return cls(frame, major_radius, minor_radius, name)
+
     @property
     def bounding_box(self):
         """
@@ -3146,7 +3162,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             return self.perpendicular_plane_intersection(plane3d)
         return self.concurrent_plane_intersection(plane3d)
 
-    def _cylider_intersection_points(self, cylindrical_surface: CylindricalSurface3D):
+    def _cylinder_intersection_points(self, cylindrical_surface: CylindricalSurface3D):
         """
         Gets the points of intersections between the cylindrical surface and the toroidal surface.
 
@@ -3159,7 +3175,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             intersections = cylindrical_surface.circle_intersections(arc)
             points_intersections.extend(intersections)
         for edge in cylindrical_surface.get_generatrixes(self.outer_radius * 3, 200) + \
-                cylindrical_surface.get_circle_generatrixes(50, self.outer_radius * 3):
+                cylindrical_surface.get_circle_generatrixes(72, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not volmdlr.core.point_in_list(point, points_intersections):
@@ -3182,7 +3198,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 return []
             elif math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
                 return [curves.Circle3D(self.frame, self.minor_radius)]
-        intersection_points = self._cylider_intersection_points(cylindrical_surface)
+        intersection_points = self._cylinder_intersection_points(cylindrical_surface)
         inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
         curves_ = []
         for list_points in inters_points:

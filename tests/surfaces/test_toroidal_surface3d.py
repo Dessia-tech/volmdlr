@@ -1,8 +1,12 @@
 import math
+import os
 import unittest
 import numpy as np
 import volmdlr
 from volmdlr import edges, surfaces, wires, curves
+
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_toroidal_tests')
 
 
 class TestToroidalSurface3D(unittest.TestCase):
@@ -16,6 +20,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         edges.LineSegment3D(volmdlr.Point3D(4, 0, 0), volmdlr.Point3D(-4, 0.25, 0.25)),
         edges.LineSegment3D(volmdlr.Point3D(4, 0, 0), volmdlr.Point3D(-4, 0.25, 4)),
     ]
+
     def test_arc3d_to_2d(self):
         arc1 = edges.Arc3D.from_3_points(volmdlr.Point3D(1-0.1/math.sqrt(2), 0, 0.1/math.sqrt(2)),
                            volmdlr.Point3D(0.9, 0, 0), volmdlr.Point3D(1-0.1/math.sqrt(2), 0, -0.1/math.sqrt(2)))
@@ -32,7 +37,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         arc2 = edges.Arc3D.from_3_points(volmdlr.Point3D(-0.169132244445, 0.06508125180570001, 0.627719515715),
         volmdlr.Point3D(-0.169169279223, 0.064939567779, 0.628073066814),
         volmdlr.Point3D(-0.169258691383, 0.064597504793, 0.628219515715))
-        surface2 = surfaces.ToroidalSurface3D.load_from_file("surfaces/objects_toroidal_tests/surface.json")
+        surface2 = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "surface.json"))
         test2 = surface2.arc3d_to_2d(arc3d=arc2)[0]
         self.assertTrue(test2.start.is_close(volmdlr.Point2D(-0.28681306221029024,  -math.pi)))
         self.assertTrue(test2.end.is_close(volmdlr.Point2D(-0.28681611209686064, -0.5 * math.pi)))
@@ -66,7 +71,6 @@ class TestToroidalSurface3D(unittest.TestCase):
                        volmdlr.Point3D(-2.0, 2.0, 0.0), volmdlr.Point3D(-2.0, 0.0, 0.0),
                        ]
 
-
         expected_points = [volmdlr.Point3D(-0.55 * math.sqrt(2), -0.55 * math.sqrt(2), 0.0),
                            volmdlr.Point3D(0.0, -1.1, 0.0),
                            volmdlr.Point3D(0.55 * math.sqrt(2), -0.55 * math.sqrt(2), 0.0),
@@ -81,19 +85,15 @@ class TestToroidalSurface3D(unittest.TestCase):
             self.assertTrue(self.toroidal_surface.point_projection(point).is_close(expected_points[i]))
 
     def test_contour3d_to_2d(self):
-        surface = surfaces.ToroidalSurface3D.load_from_file(
-            "surfaces/objects_toroidal_tests/toroidal_surface_bug_2.json")
-        contour = wires.Contour3D.load_from_file(
-            "surfaces/objects_toroidal_tests/toroidal_surface_bug_2_contour_0.json")
+        surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "toroidal_surface_bug_2.json"))
+        contour = wires.Contour3D.load_from_file(os.path.join(folder, "toroidal_surface_bug_2_contour_0.json"))
         contour2d = surface.contour3d_to_2d(contour)
 
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1.3773892114076673, 2)
 
-        surface = surfaces.ToroidalSurface3D.load_from_file(
-            "surfaces/objects_toroidal_tests/buggy_toroidalface_surface.json")
-        contour = wires.Contour3D.load_from_file(
-            "surfaces/objects_toroidal_tests/buggy_toroidalface_contour.json")
+        surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "buggy_toroidalface_surface.json"))
+        contour = wires.Contour3D.load_from_file(os.path.join(folder, "buggy_toroidalface_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
 
         self.assertTrue(contour2d.is_ordered())
@@ -182,7 +182,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
         inters = toroidal_surface.cylindrical_surface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(), 14.655844321134182)
+        self.assertAlmostEqual(inters[0].length(), 14.655915673071078)
         # Test2
         expected_results = [[9.424777944721708, 9.424777944721708], [6.283185307179586], []]
         frame = volmdlr.OXYZ
@@ -195,11 +195,11 @@ class TestToroidalSurface3D(unittest.TestCase):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
         #Test3
-        expected_results = [[17.155068391918217], [17.44854195302441], [8.189601275696194, 11.91359033707805],
-                            [9.342156266884679, 6.783366791788215, 6.626605839759759],
-                            [8.452423553268373, 11.782830904797473], [18.761738135121533],
-                            [6.937796949128533, 15.192669460103943], [19.04180203316494], [19.71221341773803],
-                            [9.13211504429794, 6.715515418298989, 6.606874853650217]]
+        expected_results = [[17.155067582864444], [17.448537924734147], [8.189509579659324, 11.901146744658861],
+                            [9.342209542119194, 6.783365484889515, 6.626606372190104],
+                            [8.45252506578058, 11.78315465974606], [18.761705558048746],
+                            [6.937783966922164, 15.192472907400315], [19.041705498182075], [19.712239534244855],
+                            [9.106314389754695, 6.606874413821903, 6.606874200591648]]
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)

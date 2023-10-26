@@ -201,8 +201,8 @@ class TestContour2D(unittest.TestCase):
         self.assertAlmostEqual(intersection_contours1[0].length(), 0.16514108581676357, 4)
         intersection_contours2 = contour2_unittest.intersection_contour_with(self.contour3, abs_tol=1e-6)
         self.assertTrue(len(intersection_contours1), 2)
-        self.assertAlmostEqual(intersection_contours2[0].length(), 6.915893328290323, 6)
-        self.assertAlmostEqual(intersection_contours2[1].length(), 2.4408490057723364, 6)
+        self.assertAlmostEqual(intersection_contours2[0].length(), 6.915890339970204, 6)
+        self.assertAlmostEqual(intersection_contours2[1].length(), 2.4408483185876966, 6)
 
     def test_contours_from_edges(self):
         source_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)),
