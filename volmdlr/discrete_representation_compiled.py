@@ -546,8 +546,8 @@ def _triangle_2d_intersects_pixel(
     min_triangle, max_triangle = _triangle_2d_min_max_points(triangle_2d)
 
     # Check if the bounding boxes intersect
-    # if not _bounding_rectangles_overlap(min_triangle, max_triangle, left_top_corner, right_top_corner):
-    #     return False
+    if not _bounding_rectangles_overlap(min_triangle, max_triangle, left_top_corner, right_top_corner):
+        return False
 
     # Check if a point of the triangle is in the pixel
     if (
