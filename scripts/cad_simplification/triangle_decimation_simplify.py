@@ -1,24 +1,13 @@
 """
 Showcase of the 'TriangleDecimationSimplify' class.
 """
-import math
 import time
 
-import volmdlr
 from volmdlr.cad_simplification import TriangleDecimationSimplify
-from volmdlr.core import VolumeModel
-from volmdlr.primitives3d import HollowCylinder
+from volmdlr.step import Step
 
-VOXEL_SIZE = 0.005
-
-# Create volume model
-hollow_cylinder = HollowCylinder.from_center_point_and_axis(volmdlr.O3D, volmdlr.Z3D, 0.1, 0.2, 1.0)
-volume_model = VolumeModel(
-    [
-        hollow_cylinder.rotation(volmdlr.O3D, volmdlr.X3D, -math.pi / 4),
-        hollow_cylinder.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 4),
-    ]
-)
+# Load
+volume_model = Step.from_file("../step/engine.step").to_volume_model()
 
 # Simplify
 start = time.perf_counter()
