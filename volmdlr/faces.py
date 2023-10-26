@@ -640,6 +640,12 @@ class Face3D(volmdlr.core.Primitive3D):
         return intersections
 
     def set_operations_new_faces(self, intersecting_combinations):
+        """
+        Gets boolean operations new faces after splitting.
+
+        :param intersecting_combinations: faces intersecting combinations dictionary.
+        :return: new split faces.
+        """
         self_copy = self.copy(deep=True)
         list_cutting_contours = self_copy.get_face_cutting_contours(intersecting_combinations)
         if not list_cutting_contours:
@@ -686,8 +692,28 @@ class Face3D(volmdlr.core.Primitive3D):
             return []
         list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
 
-        if not self.surface2d.inner_contours:
-            return list_cutting_contours
+        cutting_contours = []
+        if len(list_cutting_contours) > 1:
+            while list_cutting_contours:
+                closed_contours = []
+                opened_contours = []
+                for contour in list_cutting_contours:
+                    if contour.is_contour_closed():
+                        closed_contours.append(contour)
+                    else:
+                        opened_contours.append(contour)
+                list_cutting_contours = closed_contours + opened_contours
+                current_cutting_contour = list_cutting_contours.pop(0)
+                connected_contour = current_cutting_contour.get_connected_wire(list_cutting_contours)
+                if connected_contour in list_cutting_contours:
+                    list_cutting_contours.remove(connected_contour)
+                if not connected_contour:
+                    cutting_contours.append(current_cutting_contour)
+                    continue
+                new_contour = current_cutting_contour.merge_not_adjcent_contour(connected_contour)
+                list_cutting_contours.append(new_contour)
+            list_cutting_contours = cutting_contours
+
         list_split_inner_contours = self.split_inner_contour_intersecting_cutting_contours(list_cutting_contours)
 
         valid_cutting_contours = []
@@ -713,6 +739,9 @@ class Face3D(volmdlr.core.Primitive3D):
                 list_cutting_contours.pop(i)
                 while True:
                     connecting_split_contour = cutting_contour.get_connected_wire(list_split_inner_contours)
+                    if not connecting_split_contour:
+                        valid_cutting_contours.append(cutting_contour)
+                        break
                     list_split_inner_contours.remove(connecting_split_contour)
                     new_contour = volmdlr.wires.Contour2D.contours_from_edges(
                         cutting_contour.primitives + connecting_split_contour.primitives)[0]
@@ -731,7 +760,6 @@ class Face3D(volmdlr.core.Primitive3D):
                                     point in [new_contour.primitives[0].start, new_contour.primitives[-1].end]):
                             valid_cutting_contours.append(new_contour)
                         break
-
                     new_contour = volmdlr.wires.Contour2D.contours_from_edges(
                         new_contour.primitives + connecting_cutting_contour.primitives)[0]
                     list_cutting_contours.remove(connecting_cutting_contour)
@@ -1283,8 +1311,7 @@ class PlaneFace3D(Face3D):
         :param linesegment: the line segment to verify.
         :return: True if circle is inside False otherwise.
         """
-        direction_vector = linesegment.unit_direction_vector()
-        if not math.isclose(abs(direction_vector.dot(self.surface3d.frame.w)), 0.0, abs_tol=1e-6):
+        if not linesegment.direction_vector().is_perpendicular_to(self.surface3d.frame.w, 1e-6):
             return False
         for point in [linesegment.start, linesegment.middle_point(), linesegment.end]:
             if not self.point_belongs(point):
@@ -1313,16 +1340,16 @@ class PlaneFace3D(Face3D):
         :param planeface: the other Plane Face 3D to verify intersections with Plane Face 3D.
         :return: list of intersecting wires.
         """
-        face2_plane_interections = planeface.surface3d.plane_intersections(self.surface3d)
-        if not face2_plane_interections:
+        face2_plane_intersections = planeface.surface3d.plane_intersections(self.surface3d)
+        if not face2_plane_intersections:
             return []
         points_intersections = []
         for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d + \
                 planeface.inner_contours3d:
-            for intersection in contour.line_intersections(face2_plane_interections[0]):
+            for intersection in contour.line_intersections(face2_plane_intersections[0]):
                 if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
                     points_intersections.append(intersection)
-        points_intersections = face2_plane_interections[0].sort_points_along_curve(points_intersections)
+        points_intersections = face2_plane_intersections[0].sort_points_along_curve(points_intersections)
         planeface_intersections = []
         for point1, point2 in zip(points_intersections[:-1], points_intersections[1:]):
             linesegment3d = vme.LineSegment3D(point1, point2)
@@ -1338,11 +1365,13 @@ class PlaneFace3D(Face3D):
                 continue
             if over_self_outer_contour and over_planeface_outer_contour:
                 continue
+
             if self.edge3d_inside(linesegment3d) or over_self_outer_contour:
-                if planeface.edge3d_inside(linesegment3d):
+                if planeface.edge3d_inside(linesegment3d) and not over_planeface_inner_contour:
                     planeface_intersections.append(volmdlr.wires.Wire3D([linesegment3d]))
                 elif over_planeface_outer_contour:
                     planeface_intersections.append(volmdlr.wires.Wire3D([linesegment3d]))
+
         return planeface_intersections
 
     def triangle_intersections(self, triangleface):
