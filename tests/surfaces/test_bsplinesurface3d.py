@@ -414,6 +414,11 @@ class TestBSplineSurface3D(unittest.TestCase):
         contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered())
 
+        surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "bsplinesurface_nan_bug.json"))
+        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder,"bsplinesurface_nan_bug_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour2d.is_ordered())
+
         surface = surfaces.BSplineSurface3D.load_from_file(
             os.path.join(folder, "bsplinesurface_with_singularity_point3d_to_2d.json"))
         contour3d = vmw.Contour3D.load_from_file(

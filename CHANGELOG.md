@@ -8,24 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.15.0 [future]
 
 ### New Features
+-
+
+### Fixed
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
 - ToroidalFace3D: PlaneFace3D intersectios.
 - PlaneFace3D: circle_intersections.
-
-### Fixed
-- 
-
+- delete remaining inplace methods in wires.py
+- Fixes to boolean operations.
 ### Refactor
 -
 
 ### Changed
-- BSplineSurface3D: point3d_to_2d
+-
 
 ### Unittests
 - ToroidalSurface3D: line_intersections, plane_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
 
-## v0.14.0 [Unreleased]
+## v0.14.0
 
 ### New Features
 - DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
@@ -67,7 +68,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: linesegment2d_to_3d
 - BSplineSurface3D: bsplinecurve3d_to_2d, prevents code execution from stopping when point3d_to_2d does not converge
 - BSplineSurface3D: derivatives
-- 
+- BSplineCurve: split
+- Matrix based discrete representation: boolean operations
+- read the docs settings
+
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
 
@@ -77,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - core_compiled: cdef functions' names.
 - Vector2D, Vector3D, Point2D, Point3D: transformed into extension types for memory performance
 - limit warning on step reading
+- BSplineSurface3D: point3d_to_2d
 
 ### Unittests
 - Hyperbola2D/3D: line_intersections
