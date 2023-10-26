@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PlaneFace3D: circle_intersections.
 - delete remaining inplace methods in wires.py
 - Fixes to boolean operations.
+- SphericalSurface3D: use circle 3d instead of polygon3D. 
+
 ### Refactor
 -
 
