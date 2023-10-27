@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
-- SphericalSurface3D: circle_intersections
+- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections
 
 #### shells.py
 - OpenTriangleShell3D: triangle decimation
@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 - ToroidalSurface3D: line_intersections, plane_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
-
+- SphericalSurface3D: circle_intersections, arc_intersections, arcellipse_intersections
 ## v0.14.0
 
 ### New Features
