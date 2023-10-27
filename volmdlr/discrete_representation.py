@@ -1738,7 +1738,7 @@ class OctreeBasedVoxelization(Voxelization):
         """
         return PointBasedVoxelization(self.get_voxel_centers(), self.voxel_size, self.name)
 
-    def to_multiple_point_based_voxelizations(self) -> List["PointBasedVoxelization"]:
+    def to_non_homogeneous_point_based_voxelizations(self) -> List["PointBasedVoxelization"]:
         """
         Convert the OctreeBasedVoxelization to multiiple PointBasedVoxelization, with different size.
 
