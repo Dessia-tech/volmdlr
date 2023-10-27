@@ -1847,9 +1847,11 @@ class OctreeBasedVoxelization(Voxelization):
                             round(current_center[2] + (k - 0.5) * half_size, 6),
                         )
 
-                        centers = centers.union(self._get_homogeneous_leaf_centers(
-                            current_depth + 1, half_size, sub_voxel_center, current_octree[i * 4 + j * 2 + k]
-                        ))
+                        centers = centers.union(
+                            self._get_homogeneous_leaf_centers(
+                                current_depth + 1, half_size, sub_voxel_center, current_octree[i * 4 + j * 2 + k]
+                            )
+                        )
 
         return centers
 
@@ -1861,7 +1863,7 @@ class OctreeBasedVoxelization(Voxelization):
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
         return self._get_non_homogeneous_leaf_centers(
-            0, round(self.voxel_size * 2 ** self._octree_depth, 6), self._root_center, self._octree
+            0, round(self.voxel_size * 2**self._octree_depth, 6), self._root_center, self._octree
         )
 
     def _get_non_homogeneous_leaf_centers(
