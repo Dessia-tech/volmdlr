@@ -1738,6 +1738,20 @@ class OctreeBasedVoxelization(Voxelization):
         """
         return PointBasedVoxelization(self.get_voxel_centers(), self.voxel_size, self.name)
 
+    def to_multiple_point_based_voxelizations(self) -> List["PointBasedVoxelization"]:
+        """
+        Convert the OctreeBasedVoxelization to multiiple PointBasedVoxelization, with different size.
+
+        :return: A PointBasedVoxelization representation of the current voxelization.
+        :rtype: PointBasedVoxelization
+        """
+        point_based_voxelizations = []
+
+        for voxel_size, voxel_centers in self._get_non_homogeneous_voxel_centers():
+            point_based_voxelizations.append(PointBasedVoxelization(voxel_centers, voxel_size))
+
+        return point_based_voxelizations
+
     @classmethod
     def _from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float) -> "OctreeBasedVoxelization":
         """Create a voxelization based on the size of the voxel."""
