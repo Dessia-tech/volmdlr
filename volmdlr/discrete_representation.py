@@ -1878,8 +1878,9 @@ class OctreeBasedVoxelization(Voxelization):
         centers_by_voxel_size = {}
 
         if current_depth == self._octree_depth:
-            # Reached a leaf node, so we store the center for the current voxel size
+            # Return leaf nodes
             centers_by_voxel_size[current_size] = {current_center}
+
         else:
             half_size = round(current_size / 2, 6)
 
@@ -1905,6 +1906,12 @@ class OctreeBasedVoxelization(Voxelization):
                                 if size not in centers_by_voxel_size:
                                     centers_by_voxel_size[size] = set()
                                 centers_by_voxel_size[size].update(sub_voxel_centers)
+
+            if len(centers_by_voxel_size.get(half_size, [])) == 8:
+                # Merge voxels if possible
+                print(centers_by_voxel_size)
+                del centers_by_voxel_size[half_size]
+                centers_by_voxel_size[current_size] = {current_center}
 
         return centers_by_voxel_size
 
