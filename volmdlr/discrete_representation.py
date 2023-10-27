@@ -355,16 +355,13 @@ class DiscreteRepresentation(ABC):
         :raises ValueError: If element_size is not a float.
         """
         if isinstance(element_size, float):
-            decimal_part = abs(element_size - int(element_size))
-            if decimal_part == 0:
-                pass
-            else:
-                decimals = len(str(decimal_part).split(".")[1])
-                if decimals >= DECIMALS:
-                    warnings.warn(
-                        f"""Element size has too many decimals: some functions may not work as intended.
-                        Consider using an element size with less than {DECIMALS}."""
-                    )
+            decimals = len(str(element_size).split(".")[1])
+
+            if decimals >= DECIMALS:
+                warnings.warn(
+                    f"""Element size has too many decimals: some functions may not work as intended.
+                    Consider using an element size with less than {DECIMALS}."""
+                )
         else:
             raise ValueError("Element size is not a float")
 
@@ -1747,7 +1744,7 @@ class OctreeBasedVoxelization(Voxelization):
         """
         point_based_voxelizations = []
 
-        for voxel_size, voxel_centers in self._get_non_homogeneous_voxel_centers():
+        for voxel_size, voxel_centers in self._get_non_homogeneous_voxel_centers().items():
             point_based_voxelizations.append(PointBasedVoxelization(voxel_centers, voxel_size))
 
         return point_based_voxelizations
@@ -1923,7 +1920,6 @@ class OctreeBasedVoxelization(Voxelization):
 
             if len(centers_by_voxel_size.get(half_size, [])) == 8:
                 # Merge voxels if possible
-                print(centers_by_voxel_size)
                 del centers_by_voxel_size[half_size]
                 centers_by_voxel_size[current_size] = {current_center}
 
