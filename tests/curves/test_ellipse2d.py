@@ -24,10 +24,26 @@ class TestEllipse2D(unittest.TestCase):
         line = curves.Line2D(volmdlr.O2D, volmdlr.Point2D(2, 3))
         line_intersections = self.ellipse2d.line_intersections(line)
         self.assertEqual(len(line_intersections), 2)
-        self.assertTrue(line_intersections[0].is_close(volmdlr.Point2D(-2.1009029257555607,
+        self.assertTrue(line_intersections[1].is_close(volmdlr.Point2D(-2.1009029257555607,
                                                                        -3.151354388633341)))
-        self.assertTrue(line_intersections[1].is_close(volmdlr.Point2D(2.1009029257555607,
+        self.assertTrue(line_intersections[0].is_close(volmdlr.Point2D(2.1009029257555607,
                                                                        3.151354388633341)))
+
+        ellipse2d = curves.Ellipse2D(1, 0.5,
+                                     volmdlr.Frame2D(
+                                         origin=volmdlr.Point2D(0.8660254037844388, -2.220446049250313e-16),
+                                         u=volmdlr.Vector2D(1.0, -2.220446049250313e-16),
+                                         v=volmdlr.Vector2D(-4.440892098500627e-16, 1.0)))
+        line2d = curves.Line2D(volmdlr.Point2D(1.0, 0.0), volmdlr.Point2D(0.7660444431189781, 0.6427876096865393))
+        intersections = ellipse2d.line_intersections(line2d)
+        self.assertTrue(len(intersections), 2)
+        self.assertTrue(intersections[0].is_close(volmdlr.Point2D(1.173187451788891, -0.47582861312286373)))
+        self.assertTrue(intersections[1].is_close(volmdlr.Point2D(0.8182229267692979, 0.4994284040759036)))
+        line2d = curves.Line2D(volmdlr.Point2D(.25, -1), volmdlr.Point2D(0.25, 1))
+        intersections = ellipse2d.line_intersections(line2d)
+        self.assertTrue(len(intersections), 2)
+        self.assertTrue(intersections[0].is_close(volmdlr.Point2D(0.24999999999999933, 0.39386314307517345)))
+        self.assertTrue(intersections[1].is_close(volmdlr.Point2D(0.24999999999999978, -0.39386314307517367)))
 
     def test_linesegment_intersections(self):
         line_segment = edges.LineSegment2D(volmdlr.O2D, volmdlr.Point2D(4, 4))

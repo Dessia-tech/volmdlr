@@ -104,43 +104,65 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
     if line2d.point_distance(ellipse2d.center) > ellipse2d.major_axis + 1e-6:
         return []
     theta = volmdlr.geometry.clockwise_angle(ellipse2d.major_dir, volmdlr.X2D)
-    if not math.isclose(theta, 0.0, abs_tol=1e-6) and not math.isclose(theta, 2 * math.pi, abs_tol=1e-6):
+    if (not math.isclose(theta, 0.0, abs_tol=1e-6) and not math.isclose(theta, 2 * math.pi, abs_tol=1e-6)) or \
+            not ellipse2d.center.is_close(volmdlr.O2D):
         frame = volmdlr.Frame2D(ellipse2d.center, ellipse2d.major_dir, ellipse2d.minor_dir)
         frame_mapped_ellipse = ellipse2d.frame_mapping(frame, 'new')
         line_inters = frame_mapped_ellipse.line_intersections(line2d.frame_mapping(frame, 'new'))
         line_intersections = [frame.local_to_global_coordinates(point) for point in line_inters]
         return line_intersections
 
-    if line2d.point2.x == line2d.point1.x:
+    if math.isclose(line2d.point2.x, line2d.point1.x, abs_tol=1e-6):
         x1 = line2d.point1.x
         x2 = x1
         y1 = ellipse2d.minor_axis * math.sqrt((1 - x1 ** 2 / ellipse2d.major_axis ** 2))
         y2 = -y1
-    else:
-        m = (line2d.point2.y - line2d.point1.y) / (line2d.point2.x - line2d.point1.x)
-        c = - m * (line2d.point1.x + ellipse2d.center.x) + line2d.point1.y + ellipse2d.center.y
-        if ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2 > c ** 2:
-            x1 = - (2 * (ellipse2d.major_axis ** 2) * m * c + math.sqrt(
-                (2 * (ellipse2d.major_axis ** 2) * m * c) ** 2 - 4 * (
-                        ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2) *
-                ellipse2d.major_axis ** 2 * (c ** 2 - ellipse2d.minor_axis ** 2))) / (
-                         2 * (ellipse2d.major_axis ** 2 * (m ** 2) +
-                              ellipse2d.minor_axis ** 2))
+        point1 = volmdlr.Point2D(x1, y1)
+        point2 = volmdlr.Point2D(x2, y2)
+        if point1.is_close(point2):
+            return [point1]
+        return [point1, point2]
+    line_slope = line2d.get_slope()
+    line_y_intersection = line2d.get_y_intersection()
+    a_param = (1 / ellipse2d.major_axis**2 + line_slope**2 / ellipse2d.minor_axis**2)
+    b_param = 2 * line_slope * line_y_intersection / ellipse2d.minor_axis**2
+    c_param = line_y_intersection**2 / ellipse2d.minor_axis**2 - 1
 
-            x2 = - (2 * (ellipse2d.major_axis ** 2) * m * c - math.sqrt(
-                (2 * (ellipse2d.major_axis ** 2) * m * c) ** 2 - 4 * (
-                        ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2) *
-                ellipse2d.major_axis ** 2 * (c ** 2 - ellipse2d.minor_axis ** 2))) / (
-                         2 * (ellipse2d.major_axis ** 2 * (m ** 2) +
-                              ellipse2d.minor_axis ** 2))
-            y1 = m * x1 + c
-            y2 = m * x2 + c
-            point1 = volmdlr.Point2D(x1, y1)
-            point2 = volmdlr.Point2D(x2, y2)
-            if point1 == point2:
-                return [point1]
-            return [point1, point2]
-    return []
+    if b_param**2 > 4*a_param*c_param:
+        x1 = (-b_param + math.sqrt(b_param ** 2 - 4 * a_param * c_param)) / (2 * a_param)
+        x2 = (-b_param - math.sqrt(b_param ** 2 - 4 * a_param * c_param)) / (2 * a_param)
+        y1 = line_slope * x1 + line_y_intersection
+        y2 = line_slope * x2 + line_y_intersection
+        point1 = volmdlr.Point2D(x1, y1)
+        point2 = volmdlr.Point2D(x2, y2)
+        if point1.is_close(point2):
+            return [point1]
+        return [point1, point2]
+    raise NotImplementedError
+    # if math.isclose(line2d.point2.x, line2d.point1.x, abs_tol=1e-6):
+    #     x1 = line2d.point1.x
+    #     x2 = x1
+    #     y1 = ellipse2d.minor_axis * math.sqrt((1 - x1 ** 2 / ellipse2d.major_axis ** 2))
+    #     y2 = -y1
+    #     point1 = volmdlr.Point2D(x1, y1)
+    #     point2 = volmdlr.Point2D(x2, y2)
+    # else:
+    #     m = (line2d.point2.y - line2d.point1.y) / (line2d.point2.x - line2d.point1.x)
+    #     c = - m * (line2d.point1.x + ellipse2d.center.x) + line2d.point1.y + ellipse2d.center.y
+    #     if ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2 > c ** 2:
+    #         a_param = ellipse2d.major_axis ** 2 * m ** 2 + ellipse2d.minor_axis ** 2
+    #         b_param = 2 * (ellipse2d.major_axis ** 2) * m * c
+    #         c_param = ellipse2d.major_axis ** 2 * (c ** 2 - ellipse2d.minor_axis ** 2)
+    #         x1 = (-b_param + math.sqrt(b_param ** 2 - 4 * a_param * c_param)) / (2 * a_param)
+    #         x2 = (-b_param - math.sqrt(b_param ** 2 - 4 * a_param * c_param)) / (2 * a_param)
+    #         y1 = m * x1 + c
+    #         y2 = m * x2 + c
+    #         point1 = volmdlr.Point2D(x1, y1)
+    #         point2 = volmdlr.Point2D(x2, y2)
+    #         if point1 == point2:
+    #             return [point1]
+    #         return [point1, point2]
+    # return []
 
 
 def get_circle_intersections(circle1, circle2):

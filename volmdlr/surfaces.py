@@ -4391,12 +4391,73 @@ class SphericalSurface3D(PeriodicalSurface):
         return line3d.point1 + line_direction_vector * t_param1, line3d.point1 + line_direction_vector * t_param2
 
     def circle_intersections(self, circle: curves.Circle3D):
+        """
+        Gets intersections between a circle 3D and a SphericalSurface3D.
+
+        :param circle: other circle to search intersections with.
+        :return: list containing the intersection points.
+        """
         circle_plane = Plane3D(circle.frame)
         if circle_plane.point_distance(self.frame.origin) > self.radius:
             return []
         circle_plane_intersections = self.plane_intersections(circle_plane)
         intersections = circle_plane_intersections[0].circle.circle_intersections(circle)
         return intersections
+
+    def arc_intersections(self, arc: edges.Arc3D):
+        """
+        Gets intersections between an arc 3D and a SphericalSurface3D.
+
+        :param arc: other arc to search intersections with.
+        :return: list containing the intersection points.
+        """
+        circle_intersections = self.circle_intersections(arc.circle)
+        intersections = [intersection for intersection in circle_intersections if arc.point_belongs(intersection)]
+        return intersections
+
+    def fullarc_intersections(self, fullarc: edges.Arc3D):
+        """
+        Gets intersections between a fullarc 3D and a SphericalSurface3D.
+
+        :param fullarc: other fullarc to search intersections with.
+        :return: list containing the intersection points.
+        """
+        return self.circle_intersections(fullarc.circle)
+
+    def ellipse_intersections(self, ellipse: curves.Ellipse3D):
+        """
+        Gets intersections between an ellipse 3D and a SphericalSurface3D.
+
+        :param ellipse: other ellipse to search intersections with.
+        :return: list containing the intersection points.
+        """
+        ellipse_plane = Plane3D(ellipse.frame)
+        if ellipse_plane.point_distance(self.frame.origin) > self.radius:
+            return []
+        ellipse_plane_intersections = self.plane_intersections(ellipse_plane)
+        intersections = ellipse_plane_intersections[0].circle.ellipse_intersections(ellipse)
+        return intersections
+
+    def arcellipse_intersections(self, arcellipse: edges.ArcEllipse3D):
+        """
+        Gets intersections between an arcellipse 3D and a SphericalSurface3D.
+
+        :param arcellipse: other arcellipse to search intersections with.
+        :return: list containing the intersection points.
+        """
+        circle_intersections = self.ellipse_intersections(arcellipse.ellipse)
+        intersections = [intersection for intersection in circle_intersections
+                         if arcellipse.point_belongs(intersection)]
+        return intersections
+
+    def fullarcellipse_intersections(self, fullarcellipse: edges.FullArcEllipse3D):
+        """
+        Gets intersections between a fullarcellipse 3D and a SphericalSurface3D.
+
+        :param fullarcellipse: other fullarcellipse to search intersections with.
+        :return: list containing the intersection points.
+        """
+        return self.circle_intersections(fullarcellipse.ellipse)
 
 
 class RuledSurface3D(Surface3D):

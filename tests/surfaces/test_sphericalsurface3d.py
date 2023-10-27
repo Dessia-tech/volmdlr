@@ -170,6 +170,58 @@ class TestSphericalSurface3D(unittest.TestCase):
         self.assertTrue(circle_intersections[0], volmdlr.Point3D(0.853553390593, 0.146446609407, 0.5))
         self.assertTrue(circle_intersections[1], volmdlr.Point3D(0.146446609407, 0.853553390593, 0.5))
 
+    def test_arc_intersections(self):
+        # test1
+        spherical_surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+        circle = curves.Circle3D(frame.translation(volmdlr.Vector3D(.5, .5, .5)), .5)
+
+        point1 = circle.point_at_abscissa(0.2)
+        point2 = circle.point_at_abscissa(1.5)
+        arc = edges.Arc3D(circle, point1, point2)
+        arc_intersections = spherical_surface3d.arc_intersections(arc)
+        self.assertEqual(len(arc_intersections), 1)
+        self.assertTrue(arc_intersections[0].is_close(volmdlr.Point3D(0.908248290464, 0.295875854768, 0.295875854768)))
+        # test 2:
+        point2 = circle.point_at_abscissa(2.5)
+        arc = edges.Arc3D(circle, point1, point2)
+        arc_intersections = spherical_surface3d.arc_intersections(arc)
+        self.assertEqual(len(arc_intersections), 2)
+        self.assertTrue(arc_intersections[0].is_close(volmdlr.Point3D(0.091751709536, 0.704124145232, 0.704124145232)))
+        self.assertTrue(arc_intersections[1].is_close(volmdlr.Point3D(0.908248290464, 0.295875854768, 0.295875854768)))
+
+    def test_arcellipse_intersections(self):
+        spherical_surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+        ellipse = curves.Ellipse3D(1, .5, frame.translation(volmdlr.Vector3D(.5, .5, .5)))
+
+        point1 = ellipse.point_at_abscissa(0.2)
+        # test 2
+        point2 = ellipse.point_at_abscissa(2.5)
+        arcellipse = edges.ArcEllipse3D(ellipse, point1, point2)
+        arcellipse_intersections = spherical_surface3d.arcellipse_intersections(arcellipse)
+        self.assertEqual(len(arcellipse_intersections), 1)
+        self.assertTrue(arcellipse_intersections[0].is_close(
+            volmdlr.Point3D(0.908248233153, 0.295875797457, 0.295875797457)))
+
+        # test 3
+        point2 = ellipse.point_at_abscissa(4.5)
+        arcellipse = edges.ArcEllipse3D(ellipse, point1, point2)
+        arcellipse_intersections = spherical_surface3d.arcellipse_intersections(arcellipse)
+        self.assertEqual(len(arcellipse_intersections), 2)
+        self.assertTrue(arcellipse_intersections[0].is_close(
+            volmdlr.Point3D(0.908248233153, 0.295875797457, 0.295875797457)))
+        self.assertTrue(arcellipse_intersections[1].is_close(
+            volmdlr.Point3D(0.091751652225, 0.704124087921, 0.704124087921)))
+
 
 if __name__ == '__main__':
     unittest.main()
