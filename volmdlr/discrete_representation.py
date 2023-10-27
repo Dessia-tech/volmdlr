@@ -1473,6 +1473,73 @@ class MatrixBasedVoxelization(Voxelization):
 
         return self.__class__(cropped_matrix, tuple(new_origin_center), self.voxel_size, self.name)
 
+    def layers_to_voxel_centers(self) -> Dict[_Point3D, int]:
+        """
+        Get a dictionary with voxel centers as keys and their layers_to_false_or_edge values as values.
+
+        :return: Dictionary with voxel centers and their corresponding layers_to_false_or_edge values.
+        :rtype: dict[tuple[float, float, float], int]
+        """
+
+        # Get layer values using layers_to_false_or_edge function
+        layer_values = self._layers_matrix()
+
+        # Get the indices of True voxels
+        indices = np.argwhere(self.matrix)
+
+        # Calculate voxel centers based on indices
+        voxel_centers = self.min_grid_center + indices * self.voxel_size
+        rounded_voxel_centers = map(tuple, np.round(voxel_centers, DECIMALS))
+
+        # Fetch the layer value for each voxel center using indices and create the dictionary
+        layers_dict = {center: layer_values[tuple(ind)] for center, ind in zip(rounded_voxel_centers, indices)}
+
+        return layers_dict
+
+    def _count_layer_in_direction(self, x, y, z, dx, dy, dz):
+        count = 0
+        while True:
+            x += dx
+            y += dy
+            z += dz
+
+            # If the position is outside of the matrix boundaries
+            if (
+                x < 0
+                or x >= self.matrix.shape[0]
+                or y < 0
+                or y >= self.matrix.shape[1]
+                or z < 0
+                or z >= self.matrix.shape[2]
+            ):
+                break
+
+            # If the current position is False
+            if not self.matrix[x, y, z]:
+                break
+
+            count += 1
+        return count
+
+    def _layers_matrix(self):
+        result = np.zeros_like(self.matrix, dtype=int)
+
+        for x in range(self.matrix.shape[0]):
+            for y in range(self.matrix.shape[1]):
+                for z in range(self.matrix.shape[2]):
+                    if self.matrix[x, y, z]:
+                        counts = [
+                            self._count_layer_in_direction(x, y, z, 1, 0, 0),  # positive x
+                            self._count_layer_in_direction(x, y, z, -1, 0, 0),  # negative x
+                            self._count_layer_in_direction(x, y, z, 0, 1, 0),  # positive y
+                            self._count_layer_in_direction(x, y, z, 0, -1, 0),  # negative y
+                            self._count_layer_in_direction(x, y, z, 0, 0, 1),  # positive z
+                            self._count_layer_in_direction(x, y, z, 0, 0, -1),  # negative z
+                        ]
+                        result[x, y, z] = min(counts)
+
+        return result
+
 
 class OctreeBasedVoxelization(Voxelization):
     """Voxelization implemented as an octree."""
