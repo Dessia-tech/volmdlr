@@ -1516,7 +1516,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The center point of each voxel.
         :rtype: set[tuple[float, float, float]]
         """
-        return self._get_leaf_centers(
+        return self._get_homogeneous_leaf_centers(
             0, round(self.voxel_size * 2**self._octree_depth, 6), self._root_center, self._octree
         )
 
@@ -1825,7 +1825,7 @@ class OctreeBasedVoxelization(Voxelization):
         else:  # reached max depth
             return intersecting_indices
 
-    def _get_leaf_centers(
+    def _get_homogeneous_leaf_centers(
         self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
     ) -> Set[_Point3D]:
         """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
@@ -1847,11 +1847,64 @@ class OctreeBasedVoxelization(Voxelization):
                             round(current_center[2] + (k - 0.5) * half_size, 6),
                         )
 
-                        centers = centers.union(self._get_leaf_centers(
+                        centers = centers.union(self._get_homogeneous_leaf_centers(
                             current_depth + 1, half_size, sub_voxel_center, current_octree[i * 4 + j * 2 + k]
                         ))
 
         return centers
+
+    def _get_non_homogeneous_voxel_centers(self) -> Dict[float, Set[_Point3D]]:
+        """
+        Get the center points of non-homogeneous voxels and organize them by voxel size.
+
+        :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
+        :rtype: dict[float, set[tuple[float, float, float]]]
+        """
+        return self._get_non_homogeneous_leaf_centers(
+            0, round(self.voxel_size * 2 ** self._octree_depth, 6), self._root_center, self._octree
+        )
+
+    def _get_non_homogeneous_leaf_centers(
+        self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
+    ) -> Dict[float, Set[_Point3D]]:
+        """
+        Recursive method to extract all the non-homogeneous voxel centers.
+
+        :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
+        :rtype: dict[float, set[tuple[float, float, float]]]
+        """
+        centers_by_voxel_size = {}
+
+        if current_depth == self._octree_depth:
+            # Reached a leaf node, so we store the center for the current voxel size
+            centers_by_voxel_size[current_size] = {current_center}
+        else:
+            half_size = round(current_size / 2, 6)
+
+            for i in range(2):
+                for j in range(2):
+                    for k in range(2):
+                        # if it is the octree
+                        if len(current_octree[i * 4 + j * 2 + k]) > 0:
+                            # calculate the center of the sub-voxel
+                            sub_voxel_center = (
+                                round(current_center[0] + (i - 0.5) * half_size, 6),
+                                round(current_center[1] + (j - 0.5) * half_size, 6),
+                                round(current_center[2] + (k - 0.5) * half_size, 6),
+                            )
+
+                            # Recursive process
+                            sub_centers = self._get_non_homogeneous_leaf_centers(
+                                current_depth + 1, half_size, sub_voxel_center, current_octree[i * 4 + j * 2 + k]
+                            )
+
+                            # Merge sub-centers into the result dictionary, keeping track of voxel sizes
+                            for size, sub_voxel_centers in sub_centers.items():
+                                if size not in centers_by_voxel_size:
+                                    centers_by_voxel_size[size] = set()
+                                centers_by_voxel_size[size].update(sub_voxel_centers)
+
+        return centers_by_voxel_size
 
 
 class Pixelization(DiscreteRepresentation, DessiaObject):
