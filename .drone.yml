@@ -87,6 +87,7 @@ steps:
   image: python:3.9
   commands:
   - git fetch --tags
+  - pip install .
   - python setup.py sdist
 
   volumes:
@@ -99,6 +100,7 @@ steps:
   commands:
   - git fetch --tags
   - pip install wheel
+  - pip install .
   - python setup.py bdist_wheel
 
   volumes:
