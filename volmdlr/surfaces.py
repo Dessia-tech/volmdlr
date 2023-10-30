@@ -4463,7 +4463,7 @@ class SphericalSurface3D(PeriodicalSurface):
         :param fullarcellipse: other full arcellipse to search intersections with.
         :return: list containing the intersection points.
         """
-        return self.circle_intersections(fullarcellipse.ellipse)
+        return self.ellipse_intersections(fullarcellipse.ellipse)
 
 
 class RuledSurface3D(Surface3D):
