@@ -1158,7 +1158,7 @@ class Circle2D(CircleMixin, ClosedCurve):
     @classmethod
     def from_center_and_radius(cls, center: volmdlr.Point2D, radius: float, is_trigo: bool = True, name: str = ""):
         """
-        Instatiate a 2D circle using a center and a radius.
+        Instantiate a 2D circle using a center and a radius.
 
         :param center: The center point of the circle.
         :type center: volmdlr.Point2D
@@ -1183,6 +1183,20 @@ class Circle2D(CircleMixin, ClosedCurve):
 
         :return: circle 2d.
         """
+        center = cls.find_circle_center_from_3_points(point1, point2, point3)
+        if is_trigo:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)
+        else:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)
+
+        circle = cls(frame, point1.point_distance(center), name=name)
+        return circle
+
+    @staticmethod
+    def find_circle_center_from_3_points(point1, point2, point3):
+        """
+        Finds the center of the circle passing through the three given points
+        """
         x_interior, y_interior = point2.x, point2.y
         x_end, y_end = point3.x, point3.y
         x_start, y_start = point1.x, point1.y
@@ -1199,13 +1213,7 @@ class Circle2D(CircleMixin, ClosedCurve):
             matrix_a = npy.array(matrix1)
             b_vector = - npy.array(b_vector_components)
             center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
-        if is_trigo:
-            frame = volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)
-        else:
-            frame = volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)
-
-        circle = cls(frame, point1.point_distance(center), name=name)
-        return circle
+        return center
 
     def area(self):
         """
