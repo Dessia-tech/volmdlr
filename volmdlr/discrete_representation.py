@@ -1816,6 +1816,20 @@ class OctreeBasedVoxelization(Voxelization):
 
         return point_based_voxelizations
 
+    def to_inner_growing_point_based_voxelizations(self, min_outer_layer: int) -> List["PointBasedVoxelization"]:
+        """
+        Convert the OctreeBasedVoxelization to multiiple PointBasedVoxelization, with different size.
+
+        :return: A PointBasedVoxelization representation of the current voxelization.
+        :rtype: PointBasedVoxelization
+        """
+        point_based_voxelizations = []
+
+        for voxel_size, voxel_centers in self._get_inner_growing_voxel_centers(min_outer_layer).items():
+            point_based_voxelizations.append(PointBasedVoxelization(voxel_centers, voxel_size))
+
+        return point_based_voxelizations
+
     @classmethod
     def _from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float) -> "OctreeBasedVoxelization":
         """Create a voxelization based on the size of the voxel."""
@@ -1989,6 +2003,79 @@ class OctreeBasedVoxelization(Voxelization):
                 # Merge voxels if possible
                 del centers_by_voxel_size[half_size]
                 centers_by_voxel_size[current_size] = {current_center}
+
+        return centers_by_voxel_size
+
+    def _get_inner_growing_voxel_centers(self, min_layer: int) -> Dict[float, Set[_Point3D]]:
+        """
+        Get the center points of non-homogeneous voxels and organize them by voxel size.
+
+        :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
+        :rtype: dict[float, set[tuple[float, float, float]]]
+        """
+        layer_dict = self.to_point_based_voxelization().to_matrix_based_voxelization().layers_to_voxel_centers()
+
+        return self._get_inner_growing_leaf_centers(
+            0, round(self.voxel_size * 2**self._octree_depth, 6), self._root_center, self._octree, layer_dict, min_layer
+        )
+
+    def _get_inner_growing_leaf_centers(
+        self, current_depth: int, current_size: float, current_center: _Point3D, current_octree, layer_dict, min_layer
+    ) -> Dict[float, Set[_Point3D]]:
+        """
+        Recursive method to extract all the non-homogeneous voxel centers.
+
+        :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
+        :rtype: dict[float, set[tuple[float, float, float]]]
+        """
+        centers_by_voxel_size = {}
+
+        if current_depth == self._octree_depth:
+            # Return leaf nodes
+            centers_by_voxel_size[current_size] = {current_center}
+
+        else:
+            half_size = round(current_size / 2, 6)
+
+            for i in range(2):
+                for j in range(2):
+                    for k in range(2):
+                        # if it is the octree
+                        if len(current_octree[i * 4 + j * 2 + k]) > 0:
+                            # calculate the center of the sub-voxel
+                            sub_voxel_center = (
+                                round(current_center[0] + (i - 0.5) * half_size, 6),
+                                round(current_center[1] + (j - 0.5) * half_size, 6),
+                                round(current_center[2] + (k - 0.5) * half_size, 6),
+                            )
+
+                            # Recursive process
+                            sub_centers = self._get_inner_growing_leaf_centers(
+                                current_depth + 1,
+                                half_size,
+                                sub_voxel_center,
+                                current_octree[i * 4 + j * 2 + k],
+                                layer_dict,
+                                min_layer,
+                            )
+
+                            # Merge sub-centers into the result dictionary, keeping track of voxel sizes
+                            for size, sub_voxel_centers in sub_centers.items():
+                                if size not in centers_by_voxel_size:
+                                    centers_by_voxel_size[size] = set()
+                                centers_by_voxel_size[size].update(sub_voxel_centers)
+
+            if len(centers_by_voxel_size.get(half_size, [])) == 8:
+                if current_depth == self._octree_depth - 1:
+                    if all([layer_dict[voxel_center] >= min_layer for voxel_center in centers_by_voxel_size[half_size]]):
+                        # Merge voxels
+                        del centers_by_voxel_size[half_size]
+                        centers_by_voxel_size[current_size] = {current_center}
+
+                else:
+                    # Merge voxels
+                    del centers_by_voxel_size[half_size]
+                    centers_by_voxel_size[current_size] = {current_center}
 
         return centers_by_voxel_size
 
