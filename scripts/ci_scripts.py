@@ -129,10 +129,7 @@ for script_name in scripts:
     file_name = script_name.split('/')[-1]
     time_start_script = time.time()
     with open(file_name, 'r', encoding='utf-8') as script:
-        try:
-            exec(script.read())
-        except Exception:
-            print(f"error: {script_name}")
+        exec(script.read())
     time_start_script = time.time() - time_start_script
     times[script_name] = time_start_script
     _plt.close('all')

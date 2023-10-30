@@ -38,7 +38,7 @@ contour = vmw.Contour2D(circle.split_at_abscissa(circle.length()*.5))
 sweep = primitives3d.Sweep(contour, vmw.Wire3D([bspline_curve3d]), name='Random pipe')
 
 model = vm.core.VolumeModel([sweep])
-model._check_platform()
+# model._check_platform()
 model.babylonjs()
 
 model.to_step('bspline_sweep.step')

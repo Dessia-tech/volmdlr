@@ -2858,26 +2858,6 @@ class Arc2D(ArcMixin, Edge):
             return cls(circle.reverse(), point1, point3, name=name)
         return arc
 
-    # @property
-    # def angle(self):
-    #     """
-    #     Returns the angle in radians of the arc.
-    #     """
-    #     if not self._angle:
-    #         self._angle = self.get_angle()
-    #     return self._angle
-    #
-    # def get_angle(self):
-    #     """
-    #     Gets arc angle.
-    #
-    #     """
-    #     clockwise_arc = self.reverse() if self.circle.is_trigo else self
-    #     vector_start = clockwise_arc.start - clockwise_arc.circle.center
-    #     vector_end = clockwise_arc.end - clockwise_arc.circle.center
-    #     arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
-    #     return arc_angle
-
     @property
     def is_trigo(self):
         """Return True if circle is counterclockwise."""
@@ -5639,21 +5619,15 @@ class Arc3D(ArcMixin, Edge):
     def extrusion(self, extrusion_vector):
         """Extrudes an arc 3d in the given extrusion vector direction."""
         if self.circle.normal.is_colinear_to(extrusion_vector):
-            u = self.start - self.circle.center
-            u = u.unit_vector()
             w = extrusion_vector.copy()
             w = w.unit_vector()
-            v = w.cross(u)
-            arc2d = self.to_2d(self.circle.center, u, v)
+            arc2d = self.to_2d(self.circle.center, self.frame.u, self.frame.v)
             angle1, angle2 = arc2d.angle_start, arc2d.angle_end
             if angle2 < angle1:
                 angle2 += volmdlr.TWO_PI
-            cylinder = volmdlr.surfaces.CylindricalSurface3D(
-                volmdlr.Frame3D(self.circle.center, u, v, w),
-                self.radius
-            )
+            cylinder = volmdlr.surfaces.CylindricalSurface3D(self.frame, self.radius)
             return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
-                cylinder, angle1, angle2, 0., extrusion_vector.norm())]
+                cylinder, angle1, angle2, 0., w.dot(self.frame.w) * extrusion_vector.norm())]
         raise NotImplementedError(f'Elliptic faces not handled: dot={self.circle.normal.dot(extrusion_vector)}')
 
     def revolution(self, axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D,
@@ -5688,8 +5662,7 @@ class Arc3D(ArcMixin, Edge):
             surface = volmdlr.surfaces.SphericalSurface3D(
                 volmdlr.Frame3D(self.circle.center, u, v, axis), self.radius)
             start2d = surface.point3d_to_2d(self.start)
-            end2d = surface.point3d_to_2d(self.end)
-            phi_angles = sorted([start2d.y, end2d.y])
+            phi_angles = sorted([start2d.y, start2d.y + self.angle * v.dot(self.frame.w)])
             return [volmdlr.faces.SphericalFace3D.from_surface_rectangular_cut(surface, 0, angle,
                                                                                phi_angles[0], phi_angles[1])]
 
@@ -5707,8 +5680,7 @@ class Arc3D(ArcMixin, Edge):
             volmdlr.Frame3D(tore_center, u, v, axis), radius,
             self.radius)
         start2d = surface.point3d_to_2d(self.start)
-        end2d = surface.point3d_to_2d(self.end)
-        phi_angles = sorted([start2d.y, end2d.y])
+        phi_angles = sorted([start2d.y, start2d.y - self.angle * v.dot(self.frame.w)])
         return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(
             surface, 0, angle, phi_angles[0], phi_angles[1])]
 

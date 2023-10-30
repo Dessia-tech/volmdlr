@@ -1177,7 +1177,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         return cls(frame=frame, radius=radius, name=name)
 
     @classmethod
-    def from_3_points(cls, point1, point2, point3, name: str = ''):
+    def from_3_points(cls, point1, point2, point3, is_trigo: bool = True, name: str = ''):
         """
         Creates a circle 2d from 3 points.
 
@@ -1199,7 +1199,12 @@ class Circle2D(CircleMixin, ClosedCurve):
             matrix_a = npy.array(matrix1)
             b_vector = - npy.array(b_vector_components)
             center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
-        circle = cls(volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D), point1.point_distance(center), name=name)
+        if is_trigo:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)
+        else:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)
+
+        circle = cls(frame, point1.point_distance(center), name=name)
         return circle
 
     def area(self):
