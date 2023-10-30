@@ -3591,6 +3591,7 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         return [curves.Line2D(volmdlr.Point2D(-math.pi, 0), volmdlr.Point2D(math.pi, 0))]
 
+
 class SphericalSurface3D(PeriodicalSurface):
     """
     Defines a spherical surface.
