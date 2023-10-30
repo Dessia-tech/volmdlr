@@ -3259,6 +3259,53 @@ class ToroidalSurface3D(PeriodicalSurface):
             return True
         return False
 
+    def _conical_intersection_points(self, conical_surface: 'ConicalSurface3D'):
+        """
+        Gets the points of intersections between the cylindrical surface and the toroidal surface.
+
+        :param conical_surface: other Conical Surface 3d.
+        :return: points of intersections.
+        """
+        arcs = self._torus_arcs(150)
+        points_intersections = []
+        for arc in arcs:
+            intersections = conical_surface.circle_intersections(arc)
+            points_intersections.extend(intersections)
+        for edge in conical_surface.get_generatrices(self.outer_radius * 3, 200):
+            intersections = self.edge_intersections(edge)
+            for point in intersections:
+                if not volmdlr.core.point_in_list(point, points_intersections):
+                    points_intersections.append(point)
+        return points_intersections
+
+    def conicalsurface_intersections(self, conical_surface: 'ConicalSurface3D'):
+        """
+        Gets the intersections between a toroidal surface and cylindrical surface.
+
+        :param conical_surface: other Conical Surface 3d.
+        :return: List os curves intersecting Torus.
+        """
+        # line = curves.Line3D.from_point_and_vector(cylindrical_surface.frame.origin, cylindrical_surface.frame.w)
+        # distance_to_self_origin = line.point_distance(self.frame.origin)
+
+        # if math.isclose(abs(self.frame.w.dot(cylindrical_surface.frame.w)), 1.0, abs_tol=1e-6) and \
+        #         math.isclose(distance_to_self_origin, 0.0, abs_tol=1e-6):
+        #     if cylindrical_surface.radius < self.minor_radius:
+        #         return []
+        #     elif math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
+        #         return [curves.Circle3D(self.frame, self.minor_radius)]
+        intersection_points = self._conical_intersection_points(conical_surface)
+        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
+        curves_ = []
+        for list_points in inters_points:
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
+            if isinstance(bspline.simplify, edges.FullArc3D):
+                curves_.append(bspline.simplify)
+                continue
+            curves_.append(bspline)
+
+        return curves_
+
 
 class ConicalSurface3D(PeriodicalSurface):
     """
