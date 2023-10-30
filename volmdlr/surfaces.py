@@ -3874,7 +3874,6 @@ class SphericalSurface3D(PeriodicalSurface):
         theta2, phi2 = end
         if arc3d.is_point_edge_extremity(point_singularity):
             return [edges.LineSegment2D(start, end)]
-        primitives = []
         if math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-2):
             if theta1 == math.pi and theta2 != math.pi:
                 theta1 = -math.pi
