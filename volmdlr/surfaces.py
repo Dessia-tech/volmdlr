@@ -1071,6 +1071,12 @@ class Surface3D(DessiaObject):
         return intersections
 
     def contour_intersections(self, contour3d: wires.Contour3D):
+        """
+        Gets intersections between a contour 3D and a Surface 3D.
+
+        :param contour3d: other contour get intersections with.
+        :return: list of intersecting points.
+        """
         outer_contour_intersections_with_plane = []
         for primitive in contour3d.primitives:
             primitive_plane_intersections = self.edge_intersections(primitive)
