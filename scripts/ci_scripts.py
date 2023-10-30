@@ -54,6 +54,7 @@ scripts = [
 
             # Shells
             'shells/operations.py',
+            'shells/decimation.py',
 
             # Cloud
             'cloud/sewing_two_polygons.py',
