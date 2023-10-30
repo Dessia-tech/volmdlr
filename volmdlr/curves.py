@@ -1129,7 +1129,8 @@ class Circle2D(CircleMixin, ClosedCurve):
 
     @is_trigo.setter
     def is_trigo(self, value):
-        """Set circle rotation direction.
+        """
+        Set circle rotation direction.
 
         :param value: True, if you want that the circle to be counterclockwise direction. False, otherwise.
         :type value: bool
@@ -1195,7 +1196,7 @@ class Circle2D(CircleMixin, ClosedCurve):
     @staticmethod
     def find_circle_center_from_3_points(point1, point2, point3):
         """
-        Finds the center of the circle passing through the three given points
+        Finds the center of the circle passing through the three given points.
         """
         x_interior, y_interior = point2.x, point2.y
         x_end, y_end = point3.x, point3.y
