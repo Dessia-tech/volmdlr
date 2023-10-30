@@ -249,6 +249,21 @@ class TestContour2D(unittest.TestCase):
             self.assertAlmostEqual(contour_.area(), expected_contour_areas[i])
             self.assertAlmostEqual(contour_.length(), expected_contour_lengths[i])
 
+    def test_merge_not_adjacent_contour(self):
+        contours = DessiaObject.load_from_file(os.path.join(folder, "test_merge_connected_contours.json")).primitives
+        contour1, contour2 = contours
+        merge_not_adjacent_contour = contour2.merge_not_adjacent_contour(contour1)
+        self.assertAlmostEqual(merge_not_adjacent_contour.length(), 0.1589126915239475)
+        merge_not_adjacent_contour = contour1.merge_not_adjacent_contour(contour2)
+        self.assertAlmostEqual(merge_not_adjacent_contour.length(), 0.1589126915239475)
+        contour2 = volmdlr.wires.Contour2D.from_points(
+            [volmdlr.Point2D(-0.014284827066811355, 0.00644881122080076), volmdlr.Point2D(-0.008, 0.0060),
+             volmdlr.Point2D(-0.01438263879891807, 0.005871523081583764)])
+        contours[0] = contour2
+        contour1, contour2 = contours
+        merge_not_adjacent_contour1 = contour2.merge_not_adjacent_contour(contour1)
+        self.assertAlmostEqual(merge_not_adjacent_contour1.length(), 0.15238337009535752)
+
 
 if __name__ == '__main__':
     unittest.main()

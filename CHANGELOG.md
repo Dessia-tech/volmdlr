@@ -8,13 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.15.0 [future]
 
 ### New Features
--
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
+- OpenTriangleShell3D: triangle decimation
 
 ### Fixed
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
 - ToroidalFace3D: PlaneFace3D intersectios.
 - PlaneFace3D: circle_intersections.
-- Frame2D/3D: fix rotation
+- delete remaining inplace methods in wires.py
+- Fixes to boolean operations.
 
 ### Refactor
 - Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
@@ -27,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: line_intersections, plane_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
 
-## v0.14.0 [Unreleased]
+## v0.14.0
 
 ### New Features
 - DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
@@ -71,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: derivatives
 - BSplineCurve: split
 - Matrix based discrete representation: boolean operations
+- read the docs settings
 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
