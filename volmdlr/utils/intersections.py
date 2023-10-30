@@ -119,12 +119,13 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
         y2 = -y1
         point1 = volmdlr.Point2D(x1, y1)
         point2 = volmdlr.Point2D(x2, y2)
+        intersections = [point1, point2]
         if point1.is_close(point2):
-            return [point1]
-        return [point1, point2]
+            intersections = [point1]
+        return intersections
     line_slope = line2d.get_slope()
     line_y_intersection = line2d.get_y_intersection()
-    a_param = (1 / ellipse2d.major_axis**2 + line_slope**2 / ellipse2d.minor_axis**2)
+    a_param = 1 / ellipse2d.major_axis**2 + line_slope**2 / ellipse2d.minor_axis**2
     b_param = 2 * line_slope * line_y_intersection / ellipse2d.minor_axis**2
     c_param = line_y_intersection**2 / ellipse2d.minor_axis**2 - 1
 
@@ -135,9 +136,10 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
         y2 = line_slope * x2 + line_y_intersection
         point1 = volmdlr.Point2D(x1, y1)
         point2 = volmdlr.Point2D(x2, y2)
+        intersections = [point1, point2]
         if point1.is_close(point2):
-            return [point1]
-        return [point1, point2]
+            intersections = [point1]
+        return intersections
     return []
 
 
