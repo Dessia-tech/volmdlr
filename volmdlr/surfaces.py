@@ -4676,6 +4676,7 @@ class ExtrusionSurface3D(Surface3D):
         raise AttributeError('Use ExtrusionFace3D from_surface_rectangular_cut method')
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), z: float = 0.5, **kwargs):
+        """Plot for extrusion surface using matplotlib."""
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -5452,6 +5453,7 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def control_points(self):
+        """Gets control points."""
         return [volmdlr.Point3D(*point) for point in self.ctrlpts]
 
     @property
