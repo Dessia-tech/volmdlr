@@ -3058,17 +3058,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param fullarc: other fullarc 3D.
         :return: list containing the intersection points.
         """
-        if self.point_distance(fullarc.circle.center) > fullarc.circle.radius:
-            return []
-        circle_plane = Plane3D(fullarc.circle.frame)
-        plane_intersections = self.plane_intersections(circle_plane)
-        intersection_points = []
-        for intersection in plane_intersections:
-            inters = intersection.intersections(fullarc)
-            for inter in inters:
-                if not volmdlr.core.point_in_list(inter, intersection_points):
-                    intersection_points.append(inter)
-        return intersection_points
+        return self.circle_intersections(fullarc.circle)
 
     def parallel_plane_intersection(self, plane3d: Plane3D):
         """
