@@ -3428,6 +3428,12 @@ class ConicalSurface3D(PeriodicalSurface):
         return []
 
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
+        """
+        Gets intersections between a ConicalSuface3D and a full arc 3D.
+
+        :param fullarc: other full arc.
+        :return: list with intersecting points.
+        """
         circle_plane = Plane3D(fullarc.circle.frame)
         circle_plane_intersections = self.plane_intersections(circle_plane)
         intersections = []
