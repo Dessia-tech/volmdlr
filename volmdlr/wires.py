@@ -482,7 +482,7 @@ class WireMixin:
             wires = [wire_class_(new_primitives, name=name)]
         return wires
 
-    def split_with_sorted_points(self, sorted_points, tol=1e-6):
+    def split_with_sorted_points(self, sorted_points):
         """
         Split contour in various sections using a list of sorted points along the contour.
 
@@ -506,10 +506,10 @@ class WireMixin:
                 zip(sorted_points, sorted_points[1:] + [sorted_points[0]])):
             if i == len_sorted_points - 1:
                 if self_start_equal_to_end:
-                    split_wires.extend([wire.order_wire(tol=tol) for wire in
+                    split_wires.extend([wire.order_wire() for wire in
                                         self.__class__.extract(self, point1, point2, False)])
             else:
-                split_wires.extend([wire.order_wire(tol=tol) for wire in
+                split_wires.extend([wire.order_wire() for wire in
                                     self.__class__.extract(self, point1, point2, True)])
         return split_wires
 
@@ -2719,7 +2719,7 @@ class Contour2D(ContourMixin, Wire2D):
                                  reverse=True)
         return merged_contours
 
-    def cut_by_wire(self, wire: Wire2D, tol=1e-6):
+    def cut_by_wire(self, wire: Wire2D):
         """
         Cut a contour 2d with a wire 2d and return a list of contours 2d.
 
@@ -2737,7 +2737,7 @@ class Contour2D(ContourMixin, Wire2D):
             raise NotImplementedError(
                 f'{len(points_intersections)} intersections not supported yet')
         sorted_points = wire.sort_points_along_wire(points_intersections)
-        split_wires = wire.split_with_sorted_points(sorted_points, tol)
+        split_wires = wire.split_with_sorted_points(sorted_points)
         valid_cutting_wires = []
         for split_wire in split_wires:
             if self.is_superposing(split_wire) or not self.is_inside(split_wire):
