@@ -1926,10 +1926,10 @@ class Circle3D(CircleMixin, ClosedCurve):
 
     def point_distance(self, point3d):
         """
-        Calculates the distance betweeen a Circle 3D and point 3D.
+        Calculates the distance between a Circle 3D and point 3D.
 
-        :param point3d: othe point.
-        :return: distance betweeen the two objects.
+        :param point3d: other point.
+        :return: distance between the two objects.
         """
         point2d = point3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
         projected_point3d = point2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)

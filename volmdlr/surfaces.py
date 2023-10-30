@@ -1,37 +1,36 @@
 """volmdlr module for 3D Surfaces."""
 import math
-import warnings
-from itertools import chain
-from typing import List, Union, Dict, Any
 import traceback
+import warnings
 from collections import deque
 from functools import cached_property
+from itertools import chain
+from typing import List, Union, Dict, Any
 
 import matplotlib.pyplot as plt
 import numpy as npy
 import triangle as triangle_lib
+
 from geomdl import NURBS, BSpline
-from scipy.optimize import least_squares, minimize
 from scipy.linalg import lu_factor, lu_solve
+from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
-from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
-
 from dessia_common.typings import JsonSerializable
-from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
-from volmdlr.nurbs.helpers import generate_knot_vector
-from volmdlr.nurbs.operations import split_surface_u, split_surface_v
-import volmdlr.core
-from volmdlr import display, edges, grid, wires, curves
-import volmdlr.geometry
-import volmdlr.utils.parametric as vm_parametric
-from volmdlr.core import EdgeStyle
-from volmdlr.core import point_in_list
 import volmdlr.nurbs.helpers as nurbs_helpers
+from volmdlr.nurbs.helpers import generate_knot_vector
+import volmdlr.core
+import volmdlr.geometry
+import volmdlr.utils.common_operations as vm_common_operations
+import volmdlr.utils.intersections as vm_utils_intersections
+import volmdlr.utils.parametric as vm_parametric
+from volmdlr import display, edges, grid, wires, curves
+from volmdlr.core import EdgeStyle, point_in_list
+from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
+from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
+from volmdlr.nurbs.operations import split_surface_u, split_surface_v
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity)
-import volmdlr.utils.intersections as vm_utils_intersections
-import volmdlr.utils.common_operations as vm_common_operations
 
 
 def knots_vector_inv(knots_vector):
@@ -407,7 +406,7 @@ class Surface2D(PhysicalObject):
         """
         Cuts a Surface2D with line (2).
 
-        # TODO: is it used? Is not there already a method doing the same thing in wires.py?
+        # TODO: is it used? Is not there already a method doing the same thing in wires?
         :param line: DESCRIPTION
         :type line: TYPE
         :raises NotImplementedError: DESCRIPTION
@@ -1094,7 +1093,7 @@ class Surface3D(DessiaObject):
         Gets intersections between surface 3d and a contour 3d.
 
         :param contour3d: other contour to get intersections with.
-        :return: list of intesection points.
+        :return: list of intersection points.
         """
         outer_contour_intersections_with_plane = []
         for primitive in contour3d.primitives:
@@ -3248,7 +3247,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 math.isclose(distance_to_self_origin, 0.0, abs_tol=1e-6):
             if cylindrical_surface.radius < self.minor_radius:
                 return []
-            elif math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
+            if math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
                 return [curves.Circle3D(self.frame, self.minor_radius)]
         intersection_points = self._cylinder_intersection_points(cylindrical_surface)
         inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
