@@ -1092,6 +1092,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         self.radius = radius
         self.frame = frame
         self._bounding_rectangle = None
+        self._is_trigo = None
         ClosedCurve.__init__(self, name=name)
 
     def __hash__(self):
@@ -1118,10 +1119,30 @@ class Circle2D(CircleMixin, ClosedCurve):
     @property
     def is_trigo(self):
         """Return True if circle is counterclockwise."""
+        if self._is_trigo is None:
+            cross = self.frame.u.cross(self.frame.v)
+            if cross > 0:
+                self._is_trigo = True
+            else:
+                self._is_trigo = False
+        return self._is_trigo
+
+    @is_trigo.setter
+    def is_trigo(self, value):
+        """Set circle rotation direction.
+
+        :param value: True, if you want that the circle to be counterclockwise direction. False, otherwise.
+        :type value: bool
+        """
         cross = self.frame.u.cross(self.frame.v)
-        if cross > 0:
-            return True
-        return False
+        if cross > 0 and not value:
+            self.frame.v = -self.frame.v
+            self._is_trigo = value
+        elif cross < 0 and value:
+            self.frame.v = -self.frame.v
+            self._is_trigo = value
+        elif self._is_trigo is None:
+            self._is_trigo = value
 
     @property
     def bounding_rectangle(self):
@@ -1133,6 +1154,27 @@ class Circle2D(CircleMixin, ClosedCurve):
         if not self._bounding_rectangle:
             self._bounding_rectangle = self.get_bounding_rectangle()
         return self._bounding_rectangle
+
+    @classmethod
+    def from_center_and_radius(cls, center: volmdlr.Point2D, radius: float, is_trigo: bool = True, name: str = ""):
+        """
+        Instatiate a 2D circle using a center and a radius.
+
+        :param center: The center point of the circle.
+        :type center: volmdlr.Point2D
+        :param radius: The radius of the circle.
+        :type radius: float.
+        :param is_trigo: (Optional) If False, the circle is in clockwise direction.
+        :type is_trigo: bool
+        :param name: The name of the circle. Defaults to ''.
+        :type name: str, optional
+        """
+
+        if is_trigo:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)
+        else:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)
+        return cls(frame=frame, radius=radius, name=name)
 
     @classmethod
     def from_3_points(cls, point1, point2, point3, name: str = ''):

@@ -117,12 +117,11 @@
           "v": {
             "object_class": "volmdlr.Vector2D",
             "x": 0.0,
-            "y": 1.0,
+            "y": -1.0,
             "name": ""
           }
         }
       },
-      "is_trigo": false,
       "start": {
         "object_class": "volmdlr.Point2D",
         "x": 9.5,
@@ -180,7 +179,6 @@
           }
         }
       },
-      "is_trigo": true,
       "start": {
         "object_class": "volmdlr.Point2D",
         "x": -10.0,
@@ -265,12 +263,11 @@
           "v": {
             "object_class": "volmdlr.Vector2D",
             "x": 0.0,
-            "y": 1.0,
+            "y": -1.0,
             "name": ""
           }
         }
       },
-      "is_trigo": false,
       "start": {
         "object_class": "volmdlr.Point2D",
         "x": -10.8,
