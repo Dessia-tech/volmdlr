@@ -309,7 +309,6 @@ def _helper_get_parameter_value(string):
     match = re.search(pattern, string)
 
     if match:
-        # Extract the numerical value from the matched group
         numerical_value = float(match.group(1))
         return numerical_value
     raise ValueError("No numerical value found in the input string.")
