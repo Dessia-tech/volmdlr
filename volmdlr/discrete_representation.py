@@ -1717,7 +1717,6 @@ class OctreeBasedVoxelization(Voxelization):
 
             if self_current_depth == self._octree_depth and other_current_depth == other._octree_depth:
                 # If the voxel are intersecting and are leaves voxel, we are sure the voxelizations are intersecting
-                print(self_current_center, other_current_center)
                 return True
 
             self_new_stack = []
@@ -1734,7 +1733,7 @@ class OctreeBasedVoxelization(Voxelization):
                 for i in range(2):
                     for j in range(2):
                         for k in range(2):
-                            if len(self_current_octree[i * 4 + j * 2 + k]) > 0:
+                            if self_current_octree[i * 4 + j * 2 + k]:
                                 # Check for child voxels
                                 sub_voxel_center = (
                                     round(self_current_center[0] + (i - 0.5) * half_size, 6),
@@ -1761,7 +1760,7 @@ class OctreeBasedVoxelization(Voxelization):
                 for i in range(2):
                     for j in range(2):
                         for k in range(2):
-                            if len(other_current_octree[i * 4 + j * 2 + k]) > 0:
+                            if other_current_octree[i * 4 + j * 2 + k]:
                                 sub_voxel_center = (
                                     round(other_current_center[0] + (i - 0.5) * half_size, 6),
                                     round(other_current_center[1] + (j - 0.5) * half_size, 6),
@@ -2077,7 +2076,7 @@ class OctreeBasedVoxelization(Voxelization):
             for j in range(2):
                 for k in range(2):
                     # if it is the octree
-                    if len(current_octree[i * 4 + j * 2 + k]) > 0:
+                    if current_octree[i * 4 + j * 2 + k]:
                         # calculate the center of the sub-voxel
                         sub_voxel_center = (
                             round(current_center[0] + (i - 0.5) * half_size, 6),
@@ -2126,7 +2125,7 @@ class OctreeBasedVoxelization(Voxelization):
                 for j in range(2):
                     for k in range(2):
                         # if it is the octree
-                        if len(current_octree[i * 4 + j * 2 + k]) > 0:
+                        if current_octree[i * 4 + j * 2 + k]:
                             # calculate the center of the sub-voxel
                             sub_voxel_center = (
                                 round(current_center[0] + (i - 0.5) * half_size, 6),
@@ -2192,7 +2191,7 @@ class OctreeBasedVoxelization(Voxelization):
                 for j in range(2):
                     for k in range(2):
                         # if it is the octree
-                        if len(current_octree[i * 4 + j * 2 + k]) > 0:
+                        if current_octree[i * 4 + j * 2 + k]:
                             # calculate the center of the sub-voxel
                             sub_voxel_center = (
                                 round(current_center[0] + (i - 0.5) * half_size, 6),
