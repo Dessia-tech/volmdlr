@@ -2001,12 +2001,15 @@ class OctreeBasedVoxelization(Voxelization):
 
         # Compute the max corner to have voxel of given voxel size with the octree process
         max_corner = min_corner + ((2**max_depth) * voxel_size)
-        root_size = max(max_corner - min_corner)
+        # root_size = max(max_corner - min_corner)
 
         corners = np.stack([min_corner, max_corner])
         center = tuple(np.round(corners.mean(axis=0), DECIMALS).tolist())
 
-        octree = cls._subdivide(triangles, [i for i in range(len(triangles))], center, root_size, 0, max_depth)
+        sizes = [round_to_digits(voxel_size * 2**i, DECIMALS) for i in range(max_depth, -1, -1)]
+        sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
+
+        octree = cls._subdivide(triangles, [i for i in range(len(triangles))], center, sizes, 0, max_depth)
 
         return cls(octree, center, max_depth, voxel_size, triangles)
 
@@ -2015,14 +2018,14 @@ class OctreeBasedVoxelization(Voxelization):
         triangles: List[_Triangle3D],
         intersecting_indices: List[int],
         center: _Point3D,
-        size: float,
+        sizes: List[float],
         depth: int,
         max_depth: int,
     ):
         """Recursive method to subdivide the voxelization in 8 until the wanted tree depth is reached."""
         if depth < max_depth:  # not yet reached max depth
-            half_size = round_to_digits(size / 2, DECIMALS)
-            quarter_size = round_to_digits(half_size / 2, DECIMALS)
+            half_size = sizes[depth + 1]
+            quarter_size = sizes[depth + 2]
 
             sub_voxels = []
 
@@ -2060,7 +2063,7 @@ class OctreeBasedVoxelization(Voxelization):
                                     triangles=triangles,
                                     intersecting_indices=sub_voxel_intersecting_indices,
                                     center=sub_voxel_center,
-                                    size=half_size,
+                                    sizes=sizes,
                                     depth=depth + 1,
                                     max_depth=max_depth,
                                 )
