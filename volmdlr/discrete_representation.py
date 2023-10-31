@@ -1694,7 +1694,7 @@ class OctreeBasedVoxelization(Voxelization):
         """
 
         self_root_size = round(self.voxel_size * 2**self._octree_depth, 6)
-        other_root_size = round(self.voxel_size * 2**self._octree_depth, 6)
+        other_root_size = round(other.voxel_size * 2**other._octree_depth, 6)
 
         self_stack = [(0, self_root_size, self._root_center, self._octree)]
         other_stack = [(0, other_root_size, other._root_center, other._octree)]
@@ -1704,14 +1704,15 @@ class OctreeBasedVoxelization(Voxelization):
             self_current_depth, self_current_size, self_current_center, self_current_octree = self_stack.pop()
             other_current_depth, other_current_size, other_current_center, other_current_octree = other_stack.pop()
 
-            if not self._voxel_to_bounding_box(self._root_center, self_root_size).is_intersecting(
-                self._voxel_to_bounding_box(other._root_center, other_root_size)
+            if not self._voxel_to_bounding_box(self_current_center, self_current_size).is_intersecting(
+                self._voxel_to_bounding_box(other_current_center, other_current_size)
             ):
                 # If these two voxels are not intersecting, we don't need to subdivide further
                 continue
 
             if self_current_depth == self._octree_depth and other_current_depth == other._octree_depth:
                 # If the voxel are intersecting and are leaves voxel, we are sure the voxelizations are intersecting
+                print(self_current_center, self_current_size, other_current_center, other_current_size)
                 return True
 
             self_new_stack = []
@@ -1722,7 +1723,7 @@ class OctreeBasedVoxelization(Voxelization):
                 self_new_stack.append((self_current_depth, self_current_size, self_current_center, self_current_octree))
 
             else:
-                # We subdive further
+                # We subdivide further
                 half_size = round(self_current_size / 2, 6)
 
                 for i in range(2):
@@ -1752,7 +1753,7 @@ class OctreeBasedVoxelization(Voxelization):
                 )
 
             else:
-                # We subdive further
+                # We subdivide further
                 half_size = round(other_current_size / 2, 6)
 
                 for i in range(2):
@@ -1795,7 +1796,7 @@ class OctreeBasedVoxelization(Voxelization):
         min_point = (voxel_center[0] - half_size, voxel_center[1] - half_size, voxel_center[2] - half_size)
         max_point = (voxel_center[0] + half_size, voxel_center[1] + half_size, voxel_center[2] + half_size)
 
-        return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[0], max_point[1])
+        return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
 
     def union(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
         """
