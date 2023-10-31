@@ -1,37 +1,36 @@
 """volmdlr module for 3D Surfaces."""
 import math
-import warnings
-from itertools import chain
-from typing import List, Union, Dict, Any
 import traceback
+import warnings
 from collections import deque
 from functools import cached_property
+from itertools import chain
+from typing import List, Union, Dict, Any
 
 import matplotlib.pyplot as plt
 import numpy as npy
 import triangle as triangle_lib
+
 from geomdl import NURBS, BSpline
-from scipy.optimize import least_squares, minimize
 from scipy.linalg import lu_factor, lu_solve
+from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
-from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
-
 from dessia_common.typings import JsonSerializable
-from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
-from volmdlr.nurbs.helpers import generate_knot_vector
-from volmdlr.nurbs.operations import split_surface_u, split_surface_v
-import volmdlr.core
-from volmdlr import display, edges, grid, wires, curves
-import volmdlr.geometry
-import volmdlr.utils.parametric as vm_parametric
-from volmdlr.core import EdgeStyle
-from volmdlr.core import point_in_list
 import volmdlr.nurbs.helpers as nurbs_helpers
+from volmdlr.nurbs.helpers import generate_knot_vector
+import volmdlr.core
+import volmdlr.geometry
+import volmdlr.utils.common_operations as vm_common_operations
+import volmdlr.utils.intersections as vm_utils_intersections
+import volmdlr.utils.parametric as vm_parametric
+from volmdlr import display, edges, grid, wires, curves
+from volmdlr.core import EdgeStyle, point_in_list
+from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
+from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
+from volmdlr.nurbs.operations import split_surface_u, split_surface_v
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity)
-import volmdlr.utils.intersections as vm_utils_intersections
-import volmdlr.utils.common_operations as vm_common_operations
 
 
 def knots_vector_inv(knots_vector):
@@ -62,6 +61,22 @@ class Surface2D(PhysicalObject):
         PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
+        """
+        Calculate the hash value for Surface2D.
+
+        This method is used to generate a hash value for instances of the
+        current class, which can be used for hash-based data structures like
+        dictionaries and sets.
+
+        The hash value is computed based on the combined hash of the outer
+        contour and a tuple of hash values for the inner contours. This
+        ensures that objects with equivalent contours will have the same
+        hash value, allowing them to be efficiently compared and retrieved
+        from hash-based collections.
+
+        :return: A hash value representing the object's state.
+        :rtype: int
+        """
         return hash((self.outer_contour, tuple(self.inner_contours)))
 
     def _data_hash(self):
@@ -391,6 +406,7 @@ class Surface2D(PhysicalObject):
         """
         Cuts a Surface2D with line (2).
 
+        # TODO: is it used? Is not there already a method doing the same thing in wires?
         :param line: DESCRIPTION
         :type line: TYPE
         :raises NotImplementedError: DESCRIPTION
@@ -1073,6 +1089,12 @@ class Surface3D(DessiaObject):
         return intersections
 
     def contour_intersections(self, contour3d: wires.Contour3D):
+        """
+        Gets intersections between surface 3d and a contour 3d.
+
+        :param contour3d: other contour to get intersections with.
+        :return: list of intersection points.
+        """
         outer_contour_intersections_with_plane = []
         for primitive in contour3d.primitives:
             primitive_plane_intersections = self.edge_intersections(primitive)
@@ -2587,6 +2609,7 @@ class ToroidalSurface3D(PeriodicalSurface):
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
                        pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'SerializableObject':
+        """Creates a ToroidalSurface3D from a dictionary."""
         frame = volmdlr.Frame3D.dict_to_object(dict_['frame'])
         name = dict_['name']
         if 'tore_radius' in dict_:
@@ -2608,6 +2631,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         return self._bbox
 
     def _bounding_box(self):
+        """
+        Calculates the BoundingBox for the complete Toroidal Surface 3D.
+
+        :return: surface bounding box.
+        """
         distance = self.major_radius + self.minor_radius
         point1 = self.frame.origin + \
             self.frame.u * distance + self.frame.v * distance + self.frame.w * self.minor_radius
@@ -3016,6 +3044,12 @@ class ToroidalSurface3D(PeriodicalSurface):
         return intersections
 
     def circle_intersections(self, circle: curves.Circle3D):
+        """
+        Gets intersections between a ToroidalSurface3D Surface 3D and a circle 3D.
+
+        :param circle: other circle 3D.
+        :return: list containing the intersection points.
+        """
         if not self.bounding_box.is_intersecting(circle.bounding_box):
             return []
         circle_plane = Plane3D(circle.frame)
@@ -3029,17 +3063,13 @@ class ToroidalSurface3D(PeriodicalSurface):
         return intersection_points
 
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
-        if self.point_distance(fullarc.circle.center) > fullarc.circle.radius:
-            return []
-        circle_plane = Plane3D(fullarc.circle.frame)
-        plane_intersections = self.plane_intersections(circle_plane)
-        intersection_points = []
-        for intersection in plane_intersections:
-            inters = intersection.intersections(fullarc)
-            for inter in inters:
-                if not volmdlr.core.point_in_list(inter, intersection_points):
-                    intersection_points.append(inter)
-        return intersection_points
+        """
+        Gets intersections between a ToroidalSurface3D Surface 3D and a circle 3D.
+
+        :param fullarc: other fullarc 3D.
+        :return: list containing the intersection points.
+        """
+        return self.circle_intersections(fullarc.circle)
 
     def parallel_plane_intersection(self, plane3d: Plane3D):
         """
@@ -3204,7 +3234,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                     points_intersections.append(point)
         return points_intersections
 
-    def cylindricalsurface_intersections(self, cylindrical_surface: CylindricalSurface3D):
+    def cylindrical_surface_intersections(self, cylindrical_surface: CylindricalSurface3D):
         """
         Gets the intersections between a toroidal surface and cylindrical surface.
 
@@ -3218,7 +3248,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 math.isclose(distance_to_self_origin, 0.0, abs_tol=1e-6):
             if cylindrical_surface.radius < self.minor_radius:
                 return []
-            elif math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
+            if math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
                 return [curves.Circle3D(self.frame, self.minor_radius)]
         intersection_points = self._cylinder_intersection_points(cylindrical_surface)
         inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
@@ -4657,6 +4687,7 @@ class ExtrusionSurface3D(Surface3D):
         raise AttributeError('Use ExtrusionFace3D from_surface_rectangular_cut method')
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), z: float = 0.5, **kwargs):
+        """Plot for extrusion surface using matplotlib."""
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -5433,6 +5464,7 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def control_points(self):
+        """Gets control points."""
         return [volmdlr.Point3D(*point) for point in self.ctrlpts]
 
     @property
