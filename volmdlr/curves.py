@@ -1309,7 +1309,7 @@ class Circle2D(CircleMixin, ClosedCurve):
                 intersections.append(inter)
         return intersections
 
-    def ellipse_intersections(self, ellipse2d, abs_tol: float = 1e-7):
+    def ellipse_intersections(self, ellipse2d: 'Ellipse2D', abs_tol: float = 1e-7):
         """
         Finds the intersection points between this circle and an arc 2d.
 
@@ -1620,6 +1620,15 @@ class Circle3D(CircleMixin, ClosedCurve):
         :param abs_tol: tolerance.
         :return: list of points intersecting Circle
         """
+        intersections = []
+        if self.frame.w.is_colinear_to(other_circle.frame.w) and \
+                math.isclose(self.frame.w.dot(other_circle.frame.origin - self.frame.origin), 0, abs_tol=1e-6):
+            other_circle2d = other_circle.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+            circle2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+            intersections_2d = circle2d.circle_intersections(other_circle2d)
+            for intersection in intersections_2d:
+                intersections.append(intersection.to_3d(self.frame.origin, self.frame.u, self.frame.v))
+            return intersections
         plane_intersections = volmdlr_intersections.get_two_planes_intersections(self.frame, other_circle.frame)
         if not plane_intersections:
             return []
@@ -1905,6 +1914,23 @@ class Circle3D(CircleMixin, ClosedCurve):
         if return_points:
             return point1.point_distance(point2), point1, point2
         return point1.point_distance(point2)
+
+    def point_distance(self, point3d):
+        """
+        Calculates the distance between a Circle 3D and point 3D.
+
+        :param point3d: other point.
+        :return: distance between the two objects.
+        """
+        point2d = point3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        projected_point3d = point2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+        line = Line3D(self.frame.origin, projected_point3d)
+        line_intersections = self.line_intersections(line)
+        distance1 = line_intersections[0].point_distance(point3d)
+        distance2 = line_intersections[1].point_distance(point3d)
+        if distance1 > distance2:
+            return distance2
+        return distance1
 
     def get_arc_point_angle(self, point):
         """Returns the angle of point on the circle."""

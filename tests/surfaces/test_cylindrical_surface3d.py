@@ -255,6 +255,23 @@ class TestCylindricalSurface3D(unittest.TestCase):
             for curve, expected_length in zip(list_curves, expected_slutions[i]):
                 self.assertAlmostEqual(curve.length(), expected_length)
 
+    def test_circle_intersections(self):
+        cylindrical_surface = surfaces.CylindricalSurface3D(
+            volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, 0.0),
+                            u=volmdlr.Vector3D(0.7071067811865476, 0.0, -0.7071067811865475),
+                            v=volmdlr.Vector3D(0.0, 1.0, 0.0),
+                            w=volmdlr.Vector3D(0.7071067811865475, 0.0, 0.7071067811865476)), 1.5)
+        circle = curves.Circle3D(
+            volmdlr.Frame3D(origin=volmdlr.Point3D(1.9960534568565431, 0.12558103905862675, 0.0),
+                            u=volmdlr.Vector3D(0.9980267284282716, 0.06279051952931337, 0.0),
+                            v=volmdlr.Vector3D(0.0, 0.0, 1.0),
+                            w=volmdlr.Vector3D(0.06279051952931337, -0.9980267284282716, 0.0)), 1)
+        circle_intersections = cylindrical_surface.circle_intersections(circle)
+        self.assertTrue(circle_intersections[0].is_close(
+            volmdlr.Point3D(2.975410303031, 0.187196949158, 0.19251871881)))
+        self.assertTrue(circle_intersections[1].is_close(
+            volmdlr.Point3D(1.740409914248, 0.10949731064, -0.966637220568)))
+
 
 if __name__ == '__main__':
     unittest.main()
