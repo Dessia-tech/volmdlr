@@ -2049,7 +2049,7 @@ class OctreeBasedVoxelization(Voxelization):
                         ]
 
                         # Recursive process
-                        if len(sub_voxel_intersecting_indices) == 0:
+                        if not sub_voxel_intersecting_indices:
                             # If sub-voxel not intersecting
                             sub_voxels.append([])
 
