@@ -2188,7 +2188,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.radius = radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
-    def get_generatrixes(self, length: float = 1, number_lines: int = 30):
+    def get_generatrices(self, length: float = 1, number_lines: int = 30):
         list_generatrix = []
         for i in range(number_lines):
             theta = i / (number_lines - 1) * volmdlr.TWO_PI
@@ -2198,7 +2198,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             list_generatrix.append(generatrix)
         return list_generatrix
 
-    def get_circle_generatrixes(self, number_circles: int = 10, length: float = 1.0):
+    def get_circle_generatrices(self, number_circles: int = 10, length: float = 1.0):
         circles = []
         for j in range(number_circles):
             circle_frame = self.frame.copy()
@@ -2231,10 +2231,10 @@ class CylindricalSurface3D(PeriodicalSurface):
             length = self.radius
 
         self.frame.plot(ax=ax, color=edge_style.color, ratio=self.radius)
-        for edge in self.get_generatrixes(length, nlines):
+        for edge in self.get_generatrices(length, nlines):
             edge.plot(ax=ax, edge_style=edge_style)
 
-        circles = self.get_circle_generatrixes(ncircles, length)
+        circles = self.get_circle_generatrices(ncircles, length)
         for circle in circles:
             circle.plot(ax=ax, edge_style=edge_style)
         return ax
@@ -2377,9 +2377,9 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def circle_intersections(self, circle: curves.Circle3D):
         """
-        Gets intersections between a Cylindrical Surface 3D and a circle 3D.
+        Get intersections between the Cylindrical Surface 3D and a Circle 3D.
 
-        :param circle: other circle 3D.
+        :param circle: other circle.
         :return: list containing the intersection points.
         """
         circle_plane = Plane3D(circle.frame)
@@ -2394,12 +2394,23 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
         """
-        Gets intersections between a Cylindrical Surface 3D and a fullarc 3D.
+        Get intersections between the Cylindrical Surface 3D and a FullArc 3D.
 
-        :param fullarc: other fullarc 3D.
+        :param fullarc: other fullarc.
         :return: list containing the intersection points.
         """
         return self.circle_intersections(fullarc.circle)
+
+    def arc_intersections(self, arc: edges.Arc3D):
+        """
+        Get intersections between the Cylindrical Surface 3D and an Arc 3D.
+
+        :param arc: other arc.
+        :return: list containing the intersection points.
+        """
+        circle_intersections = self.circle_intersections(arc.circle)
+        intersections = [intersection for intersection in circle_intersections if arc.point_belongs(intersection)]
+        return intersections
 
     def parallel_plane_intersection(self, plane3d):
         """
@@ -2483,38 +2494,38 @@ class CylindricalSurface3D(PeriodicalSurface):
         :return: list of intersecting curves.
         """
         def _list_generatrix_intersections(surface, other_surface):
-            linesegments = other_surface.get_generatrixes(2, 50)
-            all_generatrixes_intersecting = True
+            linesegments = other_surface.get_generatrices(2, 50)
+            all_generatrices_intersecting = True
             lists_intersections = [[], []]
             for generatrix in linesegments:
                 linseg_intersections = surface.line_intersections(generatrix.line)
                 if not linseg_intersections:
-                    all_generatrixes_intersecting = False
+                    all_generatrices_intersecting = False
                 for index, point in enumerate(linseg_intersections):
                     if other_surface.point_distance(point) < 1e-6 and \
                             not volmdlr.core.point_in_list(point, lists_intersections[index]):
                         lists_intersections[index].append(point)
-            return lists_intersections, all_generatrixes_intersecting
+            return lists_intersections, all_generatrices_intersecting
 
-        cone_generatrixes_point_intersections, all_cone_generatrixes_intersecting_cylinder = \
+        cone_generatrices_point_intersections, all_cone_generatrices_intersecting_cylinder = \
             _list_generatrix_intersections(self, conical_surface)
-        cylinder_generatrixes_point_intersections, all_cylinder_generatrixes_intersecting_cone = \
+        cylinder_generatrices_point_intersections, all_cylinder_generatrices_intersecting_cone = \
             _list_generatrix_intersections(conical_surface, self)
-        if all_cylinder_generatrixes_intersecting_cone:
-            intersections_points = cylinder_generatrixes_point_intersections
-        elif all_cone_generatrixes_intersecting_cylinder:
-            intersections_points = cone_generatrixes_point_intersections
-            if not cone_generatrixes_point_intersections[1]:
+        if all_cylinder_generatrices_intersecting_cone:
+            intersections_points = cylinder_generatrices_point_intersections
+        elif all_cone_generatrices_intersecting_cylinder:
+            intersections_points = cone_generatrices_point_intersections
+            if not cone_generatrices_point_intersections[1]:
                 intersections_points = [[]]
                 for point in (
-                        cylinder_generatrixes_point_intersections[0] + cylinder_generatrixes_point_intersections[1] +
-                        cone_generatrixes_point_intersections[0] + cone_generatrixes_point_intersections[1]):
+                        cylinder_generatrices_point_intersections[0] + cylinder_generatrices_point_intersections[1] +
+                        cone_generatrices_point_intersections[0] + cone_generatrices_point_intersections[1]):
                     if not volmdlr.core.point_in_list(point, intersections_points[0]):
                         intersections_points[0].append(point)
-        elif not all_cone_generatrixes_intersecting_cylinder:
+        elif not all_cone_generatrices_intersecting_cylinder:
             intersections_points = [[]]
-            for point in (cylinder_generatrixes_point_intersections[0] + cylinder_generatrixes_point_intersections[1] +
-                          cone_generatrixes_point_intersections[0] + cone_generatrixes_point_intersections[1]):
+            for point in (cylinder_generatrices_point_intersections[0] + cylinder_generatrices_point_intersections[1] +
+                          cone_generatrices_point_intersections[0] + cone_generatrices_point_intersections[1]):
                 if not volmdlr.core.point_in_list(point, intersections_points[0]):
                     intersections_points[0].append(point)
         list_curves = []
@@ -3215,15 +3226,15 @@ class ToroidalSurface3D(PeriodicalSurface):
         for arc in arcs:
             intersections = cylindrical_surface.circle_intersections(arc)
             points_intersections.extend(intersections)
-        for edge in cylindrical_surface.get_generatrixes(self.outer_radius * 3, 200) + \
-                cylindrical_surface.get_circle_generatrixes(72, self.outer_radius * 3):
+        for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 200) + \
+                cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not volmdlr.core.point_in_list(point, points_intersections):
                     points_intersections.append(point)
         return points_intersections
 
-    def cylindrical_surface_intersections(self, cylindrical_surface: CylindricalSurface3D):
+    def cylindricalsurface_intersections(self, cylindrical_surface: CylindricalSurface3D):
         """
         Gets the intersections between a toroidal surface and cylindrical surface.
 
@@ -3296,7 +3307,7 @@ class ConicalSurface3D(PeriodicalSurface):
         self.semi_angle = semi_angle
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
-    def get_generatrixes(self, z: float = 1, number_lines: int = 36):
+    def get_generatrices(self, z: float = 1, number_lines: int = 36):
         """
         Gets Conical Surface 3D generatrix lines.
 
