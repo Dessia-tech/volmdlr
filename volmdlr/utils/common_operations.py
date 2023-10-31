@@ -328,23 +328,20 @@ def separate_points_by_closeness(points):
     points_ = np.array([[point[0], point[1], point[2]] for point in points])
 
     # Apply DBSCAN clustering with a small epsilon to separate close points
-    eps = 0.5
+    eps = 0.25
     dbscan = DBSCAN(eps=eps, min_samples=1)
     labels = dbscan.fit_predict(points_)
 
     # Initialize two empty lists for the two groups
-    group1, group2 = [], []
-
+    groups = {}
     # Assign points to group1 or group2 based on DBSCAN labels
     for i, label in enumerate(labels):
-        if label == 0:
-            group1.append(points[i])
-        else:
-            group2.append(points[i])
-    group1 = order_points_list_for_nearest_neighbor(group1)
-    group1.append(group1[0])
-    if not group2:
-        return [group1]
-    group2 = order_points_list_for_nearest_neighbor(group2)
-    group2.append(group2[0])
-    return [group1, group2]
+        if label not in groups:
+            groups[label] = [points[i]]
+            continue
+        groups[label].append(points[i])
+    keys = list(groups.keys())
+    for key in keys:
+        groups[key] = order_points_list_for_nearest_neighbor(groups[key])
+        groups[key].append(groups[key][0])
+    return list(groups.values())
