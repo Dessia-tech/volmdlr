@@ -180,7 +180,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         frame = frame.rotation(volmdlr.Point3D(1, 1, 0), volmdlr.Y3D, math.pi / 4)
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
-        inters = toroidal_surface.cylindrical_surface_intersections(cylindrical_surface)
+        inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
         self.assertAlmostEqual(inters[0].length(), 14.655915673071078)
         # Test2
@@ -190,7 +190,7 @@ class TestToroidalSurface3D(unittest.TestCase):
                                 surfaces.CylindricalSurface3D(frame, 1),
                                 surfaces.CylindricalSurface3D(frame, 0.9)]
         for i, surface in enumerate(cylindrical_surfaces):
-            inters = toroidal_surface.cylindrical_surface_intersections(surface)
+            inters = toroidal_surface.cylindricalsurface_intersections(surface)
             for sol, expected_result in zip(inters, expected_results[i]):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
@@ -204,7 +204,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
             cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1.5)
-            inters = toroidal_surface.cylindrical_surface_intersections(cylindrical_surface)
+            inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
             for sol, expected_result in zip(inters, expected_results[i]):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
