@@ -9,7 +9,7 @@ from volmdlr.core import VolumeModel
 from volmdlr.discrete_representation import PointBasedVoxelization
 from volmdlr.step import Step
 
-STEP_MODEL_FILE_PATH = "../../../step/tore1.step"
+STEP_MODEL_FILE_PATH = "../../step/tore1.step"
 VOXEL_SIZE = 0.0001
 TRANSLATION_VECTOR = volmdlr.Vector3D(-0.0015, 0.005, 0.01)
 ROTATION_ANGLE = math.pi / 2
