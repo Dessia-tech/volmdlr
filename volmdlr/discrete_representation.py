@@ -325,7 +325,7 @@ class DiscreteRepresentation(ABC):
         :rtype: bool
         """
         for coord in element_center:
-            if not round((coord - 0.5 * element_size) / element_size, DECIMALS).is_integer():
+            if not round_to_digits((coord - 0.5 * element_size) / element_size, DECIMALS).is_integer():
                 return False
 
         return True
@@ -971,9 +971,9 @@ class PointBasedVoxelization(Voxelization):
         min_center = self.min_grid_center
         max_center = self.max_grid_center
 
-        dim_x = round((max_center[0] - min_center[0]) / self.voxel_size + 1)
-        dim_y = round((max_center[1] - min_center[1]) / self.voxel_size + 1)
-        dim_z = round((max_center[2] - min_center[2]) / self.voxel_size + 1)
+        dim_x = round_to_digits((max_center[0] - min_center[0]) / self.voxel_size + 1)
+        dim_y = round_to_digits((max_center[1] - min_center[1]) / self.voxel_size + 1)
+        dim_z = round_to_digits((max_center[2] - min_center[2]) / self.voxel_size + 1)
 
         indices = np.round((np.array(list(self.voxel_centers)) - min_center) / self.voxel_size).astype(int)
 
@@ -1582,7 +1582,7 @@ class OctreeBasedVoxelization(Voxelization):
         :rtype: set[tuple[float, float, float]]
         """
         return self._get_homogeneous_leaf_centers(
-            0, round(self.voxel_size * 2**self._octree_depth, 6), self._root_center, self._octree
+            0, round_to_digits(self.voxel_size * 2**self._octree_depth, DECIMALS), self._root_center, self._octree
         )
 
     def __eq__(self, other: "OctreeBasedVoxelization") -> bool:
@@ -1695,10 +1695,10 @@ class OctreeBasedVoxelization(Voxelization):
         :return:
         """
 
-        self_sizes = [round(self.voxel_size * 2**i, DECIMALS) for i in range(self._octree_depth, -1, -1)]
-        self_sizes.append(round(self.voxel_size * 1 / 2, DECIMALS))
-        other_sizes = [round(other.voxel_size * 2**i, DECIMALS) for i in range(other._octree_depth, -1, -1)]
-        other_sizes.append(round(other.voxel_size * 1 / 2, DECIMALS))
+        self_sizes = [round_to_digits(self.voxel_size * 2**i, DECIMALS) for i in range(self._octree_depth, -1, -1)]
+        self_sizes.append(round_to_digits(self.voxel_size * 1 / 2, DECIMALS))
+        other_sizes = [round_to_digits(other.voxel_size * 2**i, DECIMALS) for i in range(other._octree_depth, -1, -1)]
+        other_sizes.append(round_to_digits(other.voxel_size * 1 / 2, DECIMALS))
 
         self_stack = [(0, self._root_center, self._octree)]
         other_stack = [(0, other._root_center, other._octree)]
@@ -1737,10 +1737,13 @@ class OctreeBasedVoxelization(Voxelization):
                         for k in range(2):
                             if self_current_octree[i * 4 + j * 2 + k]:
                                 # Check for child voxels
-                                sub_voxel_center = (
-                                    round(self_current_center[0] + (i - 0.5) * half_size, 6),
-                                    round(self_current_center[1] + (j - 0.5) * half_size, 6),
-                                    round(self_current_center[2] + (k - 0.5) * half_size, 6),
+                                sub_voxel_center = round_point_3d_to_digits(
+                                    (
+                                        self_current_center[0] + (i - 0.5) * half_size,
+                                        self_current_center[1] + (j - 0.5) * half_size,
+                                        self_current_center[2] + (k - 0.5) * half_size,
+                                    ),
+                                    DECIMALS,
                                 )
 
                                 self_new_stack.append(
@@ -1763,10 +1766,13 @@ class OctreeBasedVoxelization(Voxelization):
                     for j in range(2):
                         for k in range(2):
                             if other_current_octree[i * 4 + j * 2 + k]:
-                                sub_voxel_center = (
-                                    round(other_current_center[0] + (i - 0.5) * half_size, 6),
-                                    round(other_current_center[1] + (j - 0.5) * half_size, 6),
-                                    round(other_current_center[2] + (k - 0.5) * half_size, 6),
+                                sub_voxel_center = round_point_3d_to_digits(
+                                    (
+                                        other_current_center[0] + (i - 0.5) * half_size,
+                                        other_current_center[1] + (j - 0.5) * half_size,
+                                        other_current_center[2] + (k - 0.5) * half_size,
+                                    ),
+                                    DECIMALS,
                                 )
 
                                 other_new_stack.append(
@@ -1794,7 +1800,7 @@ class OctreeBasedVoxelization(Voxelization):
         :param voxel_size:
         :return:
         """
-        half_size = round(voxel_size / 2, DECIMALS)
+        half_size = round_to_digits(voxel_size / 2, DECIMALS)
         min_point = (voxel_center[0] - half_size, voxel_center[1] - half_size, voxel_center[2] - half_size)
         max_point = (voxel_center[0] + half_size, voxel_center[1] + half_size, voxel_center[2] + half_size)
 
@@ -1998,7 +2004,7 @@ class OctreeBasedVoxelization(Voxelization):
         root_size = max(max_corner - min_corner)
 
         corners = np.stack([min_corner, max_corner])
-        center = tuple(np.round(corners.mean(axis=0), 6).tolist())
+        center = tuple(np.round(corners.mean(axis=0), DECIMALS).tolist())
 
         octree = cls._subdivide(triangles, [i for i in range(len(triangles))], center, root_size, 0, max_depth)
 
@@ -2075,7 +2081,7 @@ class OctreeBasedVoxelization(Voxelization):
             return {current_center}
 
         centers = set()
-        half_size = round(current_size / 2, DECIMALS)
+        half_size = round_to_digits(current_size / 2, DECIMALS)
 
         for i in range(2):
             for j in range(2):
@@ -2108,7 +2114,7 @@ class OctreeBasedVoxelization(Voxelization):
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
         return self._get_non_homogeneous_leaf_centers(
-            0, round(self.voxel_size * 2**self._octree_depth, 6), self._root_center, self._octree
+            0, round_to_digits(self.voxel_size * 2**self._octree_depth, DECIMALS), self._root_center, self._octree
         )
 
     def _get_non_homogeneous_leaf_centers(
@@ -2127,7 +2133,7 @@ class OctreeBasedVoxelization(Voxelization):
             centers_by_voxel_size[current_size] = {current_center}
 
         else:
-            half_size = round(current_size / 2, DECIMALS)
+            half_size = round_to_digits(current_size / 2, DECIMALS)
 
             for i in range(2):
                 for j in range(2):
@@ -2172,7 +2178,7 @@ class OctreeBasedVoxelization(Voxelization):
 
         return self._get_inner_growing_leaf_centers(
             0,
-            round(self.voxel_size * 2**self._octree_depth, 6),
+            round_to_digits(self.voxel_size * 2**self._octree_depth, DECIMALS),
             self._root_center,
             self._octree,
             layer_dict,
@@ -2195,7 +2201,7 @@ class OctreeBasedVoxelization(Voxelization):
             centers_by_voxel_size[current_size] = {current_center}
 
         else:
-            half_size = round(current_size / 2, DECIMALS)
+            half_size = round_to_digits(current_size / 2, DECIMALS)
 
             for i in range(2):
                 for j in range(2):
@@ -2761,8 +2767,8 @@ class PointBasedPixelization(Pixelization):
         min_center = self.min_grid_center
         max_center = self.max_grid_center
 
-        dim_x = round((max_center[0] - min_center[0]) / self.pixel_size + 1)
-        dim_y = round((max_center[1] - min_center[1]) / self.pixel_size + 1)
+        dim_x = round_to_digits((max_center[0] - min_center[0]) / self.pixel_size + 1)
+        dim_y = round_to_digits((max_center[1] - min_center[1]) / self.pixel_size + 1)
 
         indices = np.round((np.array(list(self.pixel_centers)) - min_center) / self.pixel_size).astype(int)
 

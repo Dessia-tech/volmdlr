@@ -185,7 +185,7 @@ def voxel_triangular_faces(voxel_center: _Point3D, voxel_size: float) -> List[_T
     return _voxel_triangular_faces(voxel_center[0], voxel_center[1], voxel_center[2], voxel_size)
 
 
-def round_to_digits(num: float, digits: int) -> float:
+def round_to_digits(num: float, digits: int = 0) -> float:
     """
     Helper function to round the given number to the specified number of digits after the decimal point.
 
@@ -200,7 +200,7 @@ def round_to_digits(num: float, digits: int) -> float:
     return _round_to_digits(num, digits)
 
 
-def round_point_3d_to_digits(point_3d: _Point3D, digits: int) -> _Point3D:
+def round_point_3d_to_digits(point_3d: _Point3D, digits: int = 0) -> _Point3D:
     """
     Helper function to round the given point to the specified number of digits after the decimal point.
 
@@ -221,7 +221,7 @@ def round_point_3d_to_digits(point_3d: _Point3D, digits: int) -> _Point3D:
 @cython.cfunc
 @cython.cdivision(True)
 @cython.exceptval(check=False)
-def _round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
+def _round_to_digits(num: cython.double, digits: cython.int = 0) -> cython.double:
     """Round the given number to the specified number of digits after the decimal point."""
     multiplier: cython.double = math_c.pow(10.0, digits)
     return math_c.round(num * multiplier) / multiplier
@@ -231,7 +231,7 @@ def _round_to_digits(num: cython.double, digits: cython.int) -> cython.double:
 @cython.cdivision(True)
 @cython.exceptval(check=False)
 def _round_point_3d_to_digits(
-    point_3d: Tuple[cython.double, cython.double, cython.double], digits: cython.int
+    point_3d: Tuple[cython.double, cython.double, cython.double], digits: cython.int = 0
 ) -> Tuple[cython.double, cython.double, cython.double]:
     """Round the given point to the specified number of digits after the decimal point."""
     return (
