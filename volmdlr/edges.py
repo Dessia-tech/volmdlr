@@ -2835,7 +2835,6 @@ class Arc2D(ArcMixin, Edge):
         return (self.circle == other_arc.circle and self.start == other_arc.start
                 and self.end == other_arc.end and self.is_trigo == other_arc.is_trigo)
 
-
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#', id_method=True, id_memo=None):
         """Stores all Arc 2D attributes in a dict object."""
         dict_ = self.base_dict()
@@ -2843,9 +2842,8 @@ class Arc2D(ArcMixin, Edge):
                                               id_method=id_method, id_memo=id_memo, path=path + '/circle')
         dict_['start'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
                                                 id_method=id_method, id_memo=id_memo, path=path + '/start')
-        dict_['end'] = self.start.to_dict(use_pointers=use_pointers, memo=memo,
+        dict_['end'] = self.end.to_dict(use_pointers=use_pointers, memo=memo,
                                                 id_method=id_method, id_memo=id_memo, path=path + '/end')
-        dict_['is_trigo'] = self.is_trigo
         dict_['name'] = self.name
         return dict_
 
@@ -5550,6 +5548,8 @@ class Arc3D(ArcMixin, Edge):
         point_start = self.start.to_2d(plane_origin, x, y)
         point_interior = self.middle_point().to_2d(plane_origin, x, y)
         point_end = self.end.to_2d(plane_origin, x, y)
+        if point_start == point_end:
+            print(True)
         arc = Arc2D(circle2d, point_start, point_end, name=self.name)
         if not arc.point_belongs(point_interior):
             arc = Arc2D(circle2d.reverse(), point_start, point_end, name=self.name)
