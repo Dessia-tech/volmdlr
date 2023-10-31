@@ -3,7 +3,6 @@ volmdlr utils for calculating curves intersections.
 
 """
 import math
-import time
 
 import volmdlr
 from volmdlr.utils.common_operations import get_abscissa_discretization, get_plane_equation_coefficients

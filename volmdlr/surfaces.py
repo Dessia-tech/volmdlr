@@ -3234,7 +3234,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                     points_intersections.append(point)
         return points_intersections
 
-    def cylindrical_surface_intersections(self, cylindrical_surface: CylindricalSurface3D):
+    def cylindricalsurface_intersections(self, cylindrical_surface: CylindricalSurface3D):
         """
         Gets the intersections between a toroidal surface and cylindrical surface.
 
