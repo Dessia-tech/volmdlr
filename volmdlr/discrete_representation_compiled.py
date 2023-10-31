@@ -185,6 +185,13 @@ def voxel_triangular_faces(voxel_center: _Point3D, voxel_size: float) -> List[_T
     return _voxel_triangular_faces(voxel_center[0], voxel_center[1], voxel_center[2], voxel_size)
 
 
+def round_to_digits(num: float, digits: int) -> float:
+    return _round_to_digits(num, digits)
+
+
+def round_point_3d_to_digits(point_3d: _Point3D, digits: int) -> _Point3D:
+    return _round_point_3d_to_digits(point_3d, digits)
+
 # CYTHON FUNCTIONS
 
 
