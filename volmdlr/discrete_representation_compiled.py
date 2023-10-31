@@ -186,10 +186,32 @@ def voxel_triangular_faces(voxel_center: _Point3D, voxel_size: float) -> List[_T
 
 
 def round_to_digits(num: float, digits: int) -> float:
+    """
+    Helper function to round the given number to the specified number of digits after the decimal point.
+
+    :param num: The number to round.
+    :type num: float
+    :param digits: The desired number of digits.
+    :type digits: int
+
+    :return: The rounded number.
+    :rtype: float
+    """
     return _round_to_digits(num, digits)
 
 
 def round_point_3d_to_digits(point_3d: _Point3D, digits: int) -> _Point3D:
+    """
+    Helper function to round the given point to the specified number of digits after the decimal point.
+
+    :param point_3d: The point to round.
+    :type point_3d: tuple[float, float, float]
+    :param digits: The desired number of digits.
+    :type digits: int
+
+    :return: The rounded point.
+    :rtype: tuple[float, float, float]
+    """
     return _round_point_3d_to_digits(point_3d, digits)
 
 # CYTHON FUNCTIONS

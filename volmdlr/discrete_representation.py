@@ -24,6 +24,8 @@ from volmdlr.discrete_representation_compiled import (
     triangles_to_voxel_matrix,
     voxel_triangular_faces,
     triangle_intersects_voxel,
+    round_to_digits,
+    round_point_3d_to_digits,
 )
 from volmdlr.edges import LineSegment2D
 from volmdlr.faces import Triangle3D
@@ -2013,8 +2015,8 @@ class OctreeBasedVoxelization(Voxelization):
     ):
         """Recursive method to subdivide the voxelization in 8 until the wanted tree depth is reached."""
         if depth < max_depth:  # not yet reached max depth
-            half_size = round(size / 2, 6)
-            quarter_size = round(half_size / 2, 6)
+            half_size = round_to_digits(size / 2, DECIMALS)
+            quarter_size = round_to_digits(half_size / 2, DECIMALS)
 
             sub_voxels = []
 
@@ -2022,10 +2024,13 @@ class OctreeBasedVoxelization(Voxelization):
                 for j in range(2):
                     for k in range(2):
                         # calculate the center of the sub-voxel
-                        sub_voxel_center = (
-                            round(center[0] + (i - 0.5) * half_size, 6),
-                            round(center[1] + (j - 0.5) * half_size, 6),
-                            round(center[2] + (k - 0.5) * half_size, 6),
+                        sub_voxel_center = round_point_3d_to_digits(
+                            (
+                                center[0] + (i - 0.5) * half_size,
+                                center[1] + (j - 0.5) * half_size,
+                                center[2] + (k - 0.5) * half_size,
+                            ),
+                            DECIMALS,
                         )
 
                         # check for intersecting triangle with the sub-voxel
@@ -2070,7 +2075,7 @@ class OctreeBasedVoxelization(Voxelization):
             return {current_center}
 
         centers = set()
-        half_size = round(current_size / 2, 6)
+        half_size = round(current_size / 2, DECIMALS)
 
         for i in range(2):
             for j in range(2):
@@ -2078,10 +2083,13 @@ class OctreeBasedVoxelization(Voxelization):
                     # if it is the octree
                     if current_octree[i * 4 + j * 2 + k]:
                         # calculate the center of the sub-voxel
-                        sub_voxel_center = (
-                            round(current_center[0] + (i - 0.5) * half_size, 6),
-                            round(current_center[1] + (j - 0.5) * half_size, 6),
-                            round(current_center[2] + (k - 0.5) * half_size, 6),
+                        sub_voxel_center = round_point_3d_to_digits(
+                            (
+                                current_center[0] + (i - 0.5) * half_size,
+                                current_center[1] + (j - 0.5) * half_size,
+                                current_center[2] + (k - 0.5) * half_size,
+                            ),
+                            DECIMALS,
                         )
 
                         centers = centers.union(
@@ -2119,7 +2127,7 @@ class OctreeBasedVoxelization(Voxelization):
             centers_by_voxel_size[current_size] = {current_center}
 
         else:
-            half_size = round(current_size / 2, 6)
+            half_size = round(current_size / 2, DECIMALS)
 
             for i in range(2):
                 for j in range(2):
@@ -2127,12 +2135,14 @@ class OctreeBasedVoxelization(Voxelization):
                         # if it is the octree
                         if current_octree[i * 4 + j * 2 + k]:
                             # calculate the center of the sub-voxel
-                            sub_voxel_center = (
-                                round(current_center[0] + (i - 0.5) * half_size, 6),
-                                round(current_center[1] + (j - 0.5) * half_size, 6),
-                                round(current_center[2] + (k - 0.5) * half_size, 6),
+                            sub_voxel_center = round_point_3d_to_digits(
+                                (
+                                    current_center[0] + (i - 0.5) * half_size,
+                                    current_center[1] + (j - 0.5) * half_size,
+                                    current_center[2] + (k - 0.5) * half_size,
+                                ),
+                                DECIMALS,
                             )
-
                             # Recursive process
                             sub_centers = self._get_non_homogeneous_leaf_centers(
                                 current_depth + 1, half_size, sub_voxel_center, current_octree[i * 4 + j * 2 + k]
@@ -2185,7 +2195,7 @@ class OctreeBasedVoxelization(Voxelization):
             centers_by_voxel_size[current_size] = {current_center}
 
         else:
-            half_size = round(current_size / 2, 6)
+            half_size = round(current_size / 2, DECIMALS)
 
             for i in range(2):
                 for j in range(2):
@@ -2193,10 +2203,13 @@ class OctreeBasedVoxelization(Voxelization):
                         # if it is the octree
                         if current_octree[i * 4 + j * 2 + k]:
                             # calculate the center of the sub-voxel
-                            sub_voxel_center = (
-                                round(current_center[0] + (i - 0.5) * half_size, 6),
-                                round(current_center[1] + (j - 0.5) * half_size, 6),
-                                round(current_center[2] + (k - 0.5) * half_size, 6),
+                            sub_voxel_center = round_point_3d_to_digits(
+                                (
+                                    current_center[0] + (i - 0.5) * half_size,
+                                    current_center[1] + (j - 0.5) * half_size,
+                                    current_center[2] + (k - 0.5) * half_size,
+                                ),
+                                DECIMALS,
                             )
 
                             # Recursive process
