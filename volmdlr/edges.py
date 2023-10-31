@@ -4669,6 +4669,15 @@ class LineSegment3D(LineSegment):
                                                          * self.unit_direction_vector()))
         return new_faces
 
+    def babylon_curves(self):
+        points = [[*self.start], [*self.end]]
+        babylon_lines = {'points': points,
+                         'alpha': 1.0,
+                         'name': self.name,
+                         'color': [0.2, 0.8, 0.2]
+                         }
+        return babylon_lines
+
 
 class BSplineCurve3D(BSplineCurve):
     """

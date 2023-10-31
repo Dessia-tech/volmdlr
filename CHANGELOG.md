@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
 
+#### step.py
+- Support to Datakit CrossCadWare STEP file format.
+
 ### Fixed
 
 #### faces.py
