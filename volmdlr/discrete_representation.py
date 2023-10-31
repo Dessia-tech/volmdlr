@@ -1686,51 +1686,50 @@ class OctreeBasedVoxelization(Voxelization):
 
     # BOOLEAN OPERATIONS
     def is_intersecting(self, other: "OctreeBasedVoxelization") -> bool:
-        depth = 0
-        #
+        """
+        Check is two OctreeBasedVoxelization are intersecting.
 
-        #     # Check for BoundingBox intersection
-        #     if
-        #
-        #
-        # return True
+        :param other:
+        :return:
+        """
 
         self_root_size = round(self.voxel_size * 2**self._octree_depth, 6)
         other_root_size = round(self.voxel_size * 2**self._octree_depth, 6)
 
-        # Check for root voxel intersection
-        if not self._voxel_to_bounding_box(self._root_center, self_root_size).is_intersecting(
-            self._voxel_to_bounding_box(other._root_center, other_root_size)
-        ):
-            return False
-
         self_stack = [(0, self_root_size, self._root_center, self._octree)]
         other_stack = [(0, other_root_size, other._root_center, other._octree)]
 
-        centers = set()
-
         while self_stack and other_stack:
+            # Check for intersection until were sure there is / there isn't one
             self_current_depth, self_current_size, self_current_center, self_current_octree = self_stack.pop()
             other_current_depth, other_current_size, other_current_center, other_current_octree = other_stack.pop()
 
             if not self._voxel_to_bounding_box(self._root_center, self_root_size).is_intersecting(
-                    self._voxel_to_bounding_box(other._root_center, other_root_size)
+                self._voxel_to_bounding_box(other._root_center, other_root_size)
             ):
+                # If these two voxels are not intersecting, we don't need to subdivide further
                 continue
+
+            if self_current_depth == self._octree_depth and other_current_depth == other._octree_depth:
+                # If the voxel are intersecting and are leaves voxel, we are sure the voxelizations are intersecting
+                return True
 
             self_new_stack = []
             other_new_stack = []
 
             if self_current_depth == self._octree_depth:
-                centers.add(self_current_depth)
+                # If it is a leaf voxel, we can't subdivide further, so we re-add it to the stack.
+                self_new_stack.append((self_current_depth, self_current_size, self_current_center, self_current_octree))
 
             else:
+                # We subdive further
                 half_size = round(self_current_size / 2, 6)
 
                 for i in range(2):
                     for j in range(2):
                         for k in range(2):
                             if len(self_current_center[i * 4 + j * 2 + k]) > 0:
+                                # Check for child voxels
                                 sub_voxel_center = (
                                     round(self_current_center[0] + (i - 0.5) * half_size, 6),
                                     round(self_current_center[1] + (j - 0.5) * half_size, 6),
@@ -1739,13 +1738,26 @@ class OctreeBasedVoxelization(Voxelization):
 
                                 self_new_stack.append(
                                     (
-                                        depth + 1,
+                                        self_current_depth + 1,
                                         half_size,
                                         sub_voxel_center,
                                         self_current_octree[i * 4 + j * 2 + k],
                                     )
                                 )
 
+            if other_current_depth == other._octree_depth:
+                # If it is a leaf voxel, we can't subdivide further, so we re-add it to the stack.
+                other_new_stack.append(
+                    (other_current_depth, other_current_size, other_current_center, other_current_octree)
+                )
+
+            else:
+                # We subdive further
+                half_size = round(other_current_size / 2, 6)
+
+                for i in range(2):
+                    for j in range(2):
+                        for k in range(2):
                             if len(other_current_center[i * 4 + j * 2 + k]) > 0:
                                 sub_voxel_center = (
                                     round(other_current_center[0] + (i - 0.5) * half_size, 6),
@@ -1755,12 +1767,18 @@ class OctreeBasedVoxelization(Voxelization):
 
                                 other_new_stack.append(
                                     (
-                                        depth + 1,
+                                        other_current_depth + 1,
                                         half_size,
                                         sub_voxel_center,
                                         other_current_octree[i * 4 + j * 2 + k],
                                     )
                                 )
+
+            # We need to add all the permutations to the stack, to check there intersection.
+            for self_voxel in self_new_stack:
+                for other_voxel in other_new_stack:
+                    self_stack.append(self_voxel)
+                    other_stack.append(other_voxel)
 
         return False
 
