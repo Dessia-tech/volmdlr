@@ -93,7 +93,7 @@ def conic3d_line_intersections(conic3d, line3d, abs_tol: float = 1e-6):
     return []
 
 
-def ellipse2d_line_intersections(ellipse2d, line2d):
+def ellipse2d_line_intersections(ellipse2d, line2d, abs_tol: float = 1e-6):
     """
     Calculates the intersections between a line and an ellipse.
 
@@ -101,10 +101,10 @@ def ellipse2d_line_intersections(ellipse2d, line2d):
     :param line2d: line to calculate intersections
     :return: list of points intersections, if there are any
     """
-    if line2d.point_distance(ellipse2d.center) > ellipse2d.major_axis + 1e-6:
+    if line2d.point_distance(ellipse2d.center) > ellipse2d.major_axis + abs_tol:
         return []
     theta = volmdlr.geometry.clockwise_angle(ellipse2d.major_dir, volmdlr.X2D)
-    if not math.isclose(theta, 0.0, abs_tol=1e-6) and not math.isclose(theta, 2 * math.pi, abs_tol=1e-6):
+    if not math.isclose(theta, 0.0, abs_tol=abs_tol) and not math.isclose(theta, 2 * math.pi, abs_tol=abs_tol):
         frame = volmdlr.Frame2D(ellipse2d.center, ellipse2d.major_dir, ellipse2d.minor_dir)
         frame_mapped_ellipse = ellipse2d.frame_mapping(frame, 'new')
         line_inters = frame_mapped_ellipse.line_intersections(line2d.frame_mapping(frame, 'new'))
