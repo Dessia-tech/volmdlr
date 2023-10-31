@@ -2844,7 +2844,6 @@ class Arc2D(ArcMixin, Edge):
                                                 id_method=id_method, id_memo=id_memo, path=path + '/start')
         dict_['end'] = self.end.to_dict(use_pointers=use_pointers, memo=memo,
                                                 id_method=id_method, id_memo=id_memo, path=path + '/end')
-        dict_['name'] = self.name
         return dict_
 
     @classmethod
