@@ -30,9 +30,9 @@ voxelization_moved = OctreeBasedVoxelization.from_volume_model(moved_volume_mode
 print(f"\nBoth voxelizations computing time: {(time.perf_counter() - start)*1000}ms")
 
 # Compute the intersection
-# start = time.perf_counter()
-# voxelization_intersection = voxelization.intersection(voxelization_moved)
-# print(f"\nIntersection computing time: {(time.perf_counter() - start)*1000}ms")
+start = time.perf_counter()
+voxelization_intersection = voxelization.is_intersecting(voxelization_moved)
+print(f"\nIntersection computing time: {(time.perf_counter() - start)*1000}ms")
 #
 # # Check if the voxelization are intersecting
 # start = time.perf_counter()
