@@ -3626,7 +3626,13 @@ class ConicalSurface3D(PeriodicalSurface):
             point2 = self.frame.local_to_global_coordinates(
                 volmdlr.Point3D(point2.x, point2.y,
                                 math.sqrt(point2.x ** 2 + point2.y ** 2) / math.tan(self.semi_angle)))
-            return [curves.Line3D(self.frame.origin, point1), curves.Line3D(self.frame.origin, point2)] 
+            return [curves.Line3D(self.frame.origin, point1), curves.Line3D(self.frame.origin, point2)]
+        if not self.frame.w.is_close(volmdlr.Z3D):
+            local_surface = self.frame_mapping(self.frame, 'new')
+            local_plane = plane3d.frame_mapping(self.frame, 'new')
+            local_intersections = local_surface.parallel_plane_intersection(local_plane)
+            global_intersections = [intersection.frame_mapping(self.frame, 'old') for intersection in local_intersections]
+            return global_intersections
         hyperbola_center = line_plane_intersections.closest_point_on_line(self.frame.origin)
         hyperbola_positive_vertex = self.frame.local_to_global_coordinates(
             volmdlr.Point3D(hyperbola_center.x, hyperbola_center.y,

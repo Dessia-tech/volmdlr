@@ -172,6 +172,25 @@ class TestConicalSurface3D(unittest.TestCase):
                 else:
                     self.assertAlmostEqual(intersection[1], expected_result[1])
 
+    def test_ellipse_intersections(self):
+        conical_surface = surfaces.ConicalSurface3D(
+            volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, 0.0),
+                            u=volmdlr.Vector3D(-5.551115123125783e-17, 0.0, 0.9999999999999998),
+                            v=volmdlr.Vector3D(0.0, 0.9999999999999998, 0.0),
+                            w=volmdlr.Vector3D(-0.9999999999999998, 0.0, -5.551115123125783e-17)), math.pi / 4)
+
+        frame = volmdlr.Frame3D(origin=volmdlr.Point3D(0.0, 0.0, 0.0),
+                                u=volmdlr.Vector3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+                                v=volmdlr.Vector3D(0.8164965809277258, -0.40824829046386313, -0.40824829046386313),
+                                w=volmdlr.Vector3D(0.0, 0.7071067811865476, -0.7071067811865476))
+        ellipse = curves.Ellipse3D(2, 1, frame)
+        ellipse_intersections = conical_surface.ellipse_intersections(ellipse)
+        self.assertEqual(len(ellipse_intersections), 2)
+        self.assertTrue(ellipse_intersections[0].is_close(
+            volmdlr.Point3D(-1.2979434653952304, -1.0460502895587362, -1.0460502895587362)))
+        self.assertTrue(ellipse_intersections[1].is_close(
+            volmdlr.Point3D(-5.967998071287894e-07, 0.9999997016000061, 0.9999997016000058)))
+
 
 if __name__ == '__main__':
     unittest.main()

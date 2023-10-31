@@ -105,7 +105,8 @@ class Curve(DessiaObject):
         if hasattr(other_curve, method_name):
             intersections = getattr(other_curve, method_name)(self, abs_tol)
             return intersections
-        raise NotImplementedError
+        intersections = volmdlr_intersections.get_bsplinecurve_intersections(other_curve, self, abs_tol)
+        return intersections
 
 
 class ClosedCurve(Curve):
@@ -2124,6 +2125,34 @@ class Ellipse2D(ClosedCurve):
             return []
         intersections = volmdlr_intersections.get_bsplinecurve_intersections(ellipse2d, self, abs_tol)
         return intersections
+
+    def hyperbola_intersections(self, hyperbola2d, abs_tol: float = 1e-6):
+        """
+        Calculates the intersections between a circle 2d and a Hyperbola 2D.
+
+        :param hyperbola2d: hyperbola to search for intersections with.
+        :param abs_tol: tolerance to be considered while validating an intersection.
+        :return: a list with all intersections between circle and hyperbola.
+        """
+        b_rectangle = self.bounding_rectangle
+        hyperbola_point1 = volmdlr.Point2D(hyperbola2d.get_x(b_rectangle.ymin), b_rectangle.ymin)
+        hyperbola_point2 = volmdlr.Point2D(hyperbola2d.get_x(b_rectangle.ymax), b_rectangle.ymax)
+        hyperbola_bspline = hyperbola2d.trim(hyperbola_point1, hyperbola_point2)
+        return volmdlr_intersections.get_bsplinecurve_intersections(self, hyperbola_bspline, abs_tol)
+
+    def parabola_intersections(self, parabola2d, abs_tol: float = 1e-6):
+        """
+        Calculates the intersections between a circle 2d and a Hyperbola 2D.
+
+        :param parabola2d: parabola to search for intersections with.
+        :param abs_tol: tolerance to be considered while validating an intersection.
+        :return: a list with all intersections between circle and hyperbola.
+        """
+        b_rectangle = self.bounding_rectangle
+        parabola2d_point1 = volmdlr.Point2D(b_rectangle.xmin, parabola2d.get_y(b_rectangle.xmin))
+        parabola2d_point2 = volmdlr.Point2D(b_rectangle.xmax, parabola2d.get_y(b_rectangle.xmax))
+        parabola2d_bspline = parabola2d.trim(parabola2d_point1, parabola2d_point2)
+        return volmdlr_intersections.get_bsplinecurve_intersections(self, parabola2d_bspline, abs_tol)
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
