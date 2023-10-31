@@ -775,7 +775,7 @@ class BoundingBox(dc.DessiaObject):
         :rtype: float
         """
 
-        if self.bbox_intersection(bbox2):
+        if self.is_intersecting(bbox2):
             return 0
 
         permute_bbox1 = self
