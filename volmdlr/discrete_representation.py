@@ -623,6 +623,25 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
 
         return triangles
 
+    @staticmethod
+    def voxel_to_bounding_box(voxel_center: _Point3D, voxel_size: float) -> BoundingBox:
+        """
+        Creates a bounding box from a voxel.
+
+        :param voxel_center: The center point of the voxel.
+        :type voxel_center: tuple[float, float, float]
+        :param voxel_size: The size of the voxel edge.
+        :type voxel_size: float
+
+        :return: The created bounding box.
+        :rtype: BoundingBox
+        """
+        half_size = round_to_digits(voxel_size / 2, DECIMALS)
+        min_point = (voxel_center[0] - half_size, voxel_center[1] - half_size, voxel_center[2] - half_size)
+        max_point = (voxel_center[0] + half_size, voxel_center[1] + half_size, voxel_center[2] + half_size)
+
+        return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
+
 
 class PointBasedVoxelization(Voxelization):
     """Voxelization implemented as a set of points, representing each voxel center."""
@@ -765,7 +784,6 @@ class PointBasedVoxelization(Voxelization):
 
         :param matrix_based_voxelization: The MatrixBasedVoxelization object representing the voxelization.
         :type matrix_based_voxelization: MatrixBasedVoxelization
-        :param name: object's name.
 
         :return: A PointBasedVoxelization object created from the MatrixBasedVoxelization.
         :rtype: PointBasedVoxelization
@@ -1790,21 +1808,6 @@ class OctreeBasedVoxelization(Voxelization):
                     other_stack.append(other_voxel)
 
         return False
-
-    @staticmethod
-    def _voxel_to_bounding_box(voxel_center: _Point3D, voxel_size: float) -> BoundingBox:
-        """
-        Creates a bounding box from a voxel.
-
-        :param voxel_center:
-        :param voxel_size:
-        :return:
-        """
-        half_size = round_to_digits(voxel_size / 2, DECIMALS)
-        min_point = (voxel_center[0] - half_size, voxel_center[1] - half_size, voxel_center[2] - half_size)
-        max_point = (voxel_center[0] + half_size, voxel_center[1] + half_size, voxel_center[2] + half_size)
-
-        return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
 
     @staticmethod
     def _check_voxel_intersection(
