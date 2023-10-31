@@ -1693,26 +1693,31 @@ class OctreeBasedVoxelization(Voxelization):
         :return:
         """
 
-        self_root_size = round(self.voxel_size * 2**self._octree_depth, 6)
-        other_root_size = round(other.voxel_size * 2**other._octree_depth, 6)
+        self_sizes = [round(self.voxel_size * 2**i, DECIMALS) for i in range(self._octree_depth, -1, -1)]
+        self_sizes.append(round(self.voxel_size * 1 / 2, DECIMALS))
+        other_sizes = [round(other.voxel_size * 2**i, DECIMALS) for i in range(other._octree_depth, -1, -1)]
+        other_sizes.append(round(other.voxel_size * 1 / 2, DECIMALS))
 
-        self_stack = [(0, self_root_size, self._root_center, self._octree)]
-        other_stack = [(0, other_root_size, other._root_center, other._octree)]
+        self_stack = [(0, self._root_center, self._octree)]
+        other_stack = [(0, other._root_center, other._octree)]
 
         while self_stack and other_stack:
             # Check for intersection until were sure there is / there isn't one
-            self_current_depth, self_current_size, self_current_center, self_current_octree = self_stack.pop()
-            other_current_depth, other_current_size, other_current_center, other_current_octree = other_stack.pop()
+            self_current_depth, self_current_center, self_current_octree = self_stack.pop()
+            other_current_depth, other_current_center, other_current_octree = other_stack.pop()
 
-            if not self._voxel_to_bounding_box(self_current_center, self_current_size).is_intersecting(
-                self._voxel_to_bounding_box(other_current_center, other_current_size)
+            if not self._check_voxel_intersection(
+                self_current_center,
+                self_sizes[self_current_depth + 1],
+                other_current_center,
+                other_sizes[other_current_depth + 1],
             ):
                 # If these two voxels are not intersecting, we don't need to subdivide further
                 continue
 
             if self_current_depth == self._octree_depth and other_current_depth == other._octree_depth:
                 # If the voxel are intersecting and are leaves voxel, we are sure the voxelizations are intersecting
-                print(self_current_center, self_current_size, other_current_center, other_current_size)
+                print(self_current_center, other_current_center)
                 return True
 
             self_new_stack = []
@@ -1720,11 +1725,11 @@ class OctreeBasedVoxelization(Voxelization):
 
             if self_current_depth == self._octree_depth:
                 # If it is a leaf voxel, we can't subdivide further, so we re-add it to the stack.
-                self_new_stack.append((self_current_depth, self_current_size, self_current_center, self_current_octree))
+                self_new_stack.append((self_current_depth, self_current_center, self_current_octree))
 
             else:
                 # We subdivide further
-                half_size = round(self_current_size / 2, 6)
+                half_size = self_sizes[self_current_depth + 1]
 
                 for i in range(2):
                     for j in range(2):
@@ -1740,7 +1745,6 @@ class OctreeBasedVoxelization(Voxelization):
                                 self_new_stack.append(
                                     (
                                         self_current_depth + 1,
-                                        half_size,
                                         sub_voxel_center,
                                         self_current_octree[i * 4 + j * 2 + k],
                                     )
@@ -1748,13 +1752,11 @@ class OctreeBasedVoxelization(Voxelization):
 
             if other_current_depth == other._octree_depth:
                 # If it is a leaf voxel, we can't subdivide further, so we re-add it to the stack.
-                other_new_stack.append(
-                    (other_current_depth, other_current_size, other_current_center, other_current_octree)
-                )
+                other_new_stack.append((other_current_depth, other_current_center, other_current_octree))
 
             else:
                 # We subdivide further
-                half_size = round(other_current_size / 2, 6)
+                half_size = other_sizes[other_current_depth + 1]
 
                 for i in range(2):
                     for j in range(2):
@@ -1769,7 +1771,6 @@ class OctreeBasedVoxelization(Voxelization):
                                 other_new_stack.append(
                                     (
                                         other_current_depth + 1,
-                                        half_size,
                                         sub_voxel_center,
                                         other_current_octree[i * 4 + j * 2 + k],
                                     )
@@ -1797,6 +1798,39 @@ class OctreeBasedVoxelization(Voxelization):
         max_point = (voxel_center[0] + half_size, voxel_center[1] + half_size, voxel_center[2] + half_size)
 
         return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[2], max_point[2])
+
+    @staticmethod
+    def _check_voxel_intersection(
+        voxel_center_1: _Point3D, half_size_1: float, voxel_centrer_2: _Point3D, half_size_2: float
+    ) -> bool:
+        """
+        Check if two voxels intersect.
+
+        Args:
+            voxel_center_1 (Tuple[float, float, float]): Center of the first cube as (x, y, z) coordinates.
+            half_size_1 (float): Size of the first cube (edge length).
+            voxel_centrer_2 (Tuple[float, float, float]): Center of the second cube as (x, y, z) coordinates.
+            half_size_2 (float): Size of the second cube (edge length).
+
+        Returns:
+            bool: True if the cubes intersect, False otherwise.
+        """
+        # Calculate the minimum and maximum coordinates of each cube along each axis
+        min_x1, max_x1 = voxel_center_1[0] - half_size_1, voxel_center_1[0] + half_size_1
+        min_y1, max_y1 = voxel_center_1[1] - half_size_1, voxel_center_1[1] + half_size_1
+        min_z1, max_z1 = voxel_center_1[2] - half_size_1, voxel_center_1[2] + half_size_1
+
+        min_x2, max_x2 = voxel_centrer_2[0] - half_size_2, voxel_centrer_2[0] + half_size_2
+        min_y2, max_y2 = voxel_centrer_2[1] - half_size_2, voxel_centrer_2[1] + half_size_2
+        min_z2, max_z2 = voxel_centrer_2[2] - half_size_2, voxel_centrer_2[2] + half_size_2
+
+        # Check for intersection along each axis
+        x_intersect = max(min_x1, min_x2) < min(max_x1, max_x2)
+        y_intersect = max(min_y1, min_y2) < min(max_y1, max_y2)
+        z_intersect = max(min_z1, min_z2) < min(max_z1, max_z2)
+
+        # The cubes intersect if they intersect along all three axes
+        return x_intersect and y_intersect and z_intersect
 
     def union(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
         """
