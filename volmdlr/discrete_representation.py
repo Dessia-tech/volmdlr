@@ -357,7 +357,7 @@ class DiscreteRepresentation(ABC):
         :raises ValueError: If element_size is not a float.
         """
         if isinstance(element_size, float):
-            decimals = len(str(element_size).split(".")[1])
+            decimals = len(str(element_size + 1).split(".")[1])
 
             if decimals >= DECIMALS:
                 warnings.warn(
