@@ -214,6 +214,7 @@ def round_point_3d_to_digits(point_3d: _Point3D, digits: int) -> _Point3D:
     """
     return _round_point_3d_to_digits(point_3d, digits)
 
+
 # CYTHON FUNCTIONS
 
 
