@@ -1554,15 +1554,14 @@ class OctreeBasedVoxelization(Voxelization):
         name: str = "",
     ):
         """
-        Initialize a OctreeBasedVoxelization.
+        Initialize an OctreeBasedVoxelization.
 
-        # :param voxel_matrix: The voxel numpy matrix object representing the voxelization.
-        # :type voxel_matrix: np.ndarray[np.bool_, np.ndim == 3]
-        :param voxel_size: The size of the voxel edges.
-        :type voxel_size: float
-        # :param min_grid_center: Minimum voxel center point of the voxel grid matrix, i.e 'matrix[0][0][0]'.
-        This point may not be a voxel of the voxelization, because it's the minimum center in each direction (X, Y, Z).
-        # :type min_grid_center: tuple[float, float, float]
+        :param octree:
+        :param root_center:
+        :param octree_depth:
+        :param voxel_size:
+        :param triangles:
+        :param name:
         """
         self._check_element_size_number_of_decimals(voxel_size)
 
@@ -1594,7 +1593,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: True if the OctreeBasedVoxelization are equal, False otherwise.
         :rtype: bool
         """
-        pass
+        return self.get_voxel_centers() == other.get_voxel_centers()
 
     def __len__(self) -> int:
         """
@@ -1686,6 +1685,100 @@ class OctreeBasedVoxelization(Voxelization):
         pass
 
     # BOOLEAN OPERATIONS
+    def is_intersecting(self, other: "OctreeBasedVoxelization") -> bool:
+        depth = 0
+        #
+
+        #     # Check for BoundingBox intersection
+        #     if
+        #
+        #
+        # return True
+
+        self_root_size = round(self.voxel_size * 2**self._octree_depth, 6)
+        other_root_size = round(self.voxel_size * 2**self._octree_depth, 6)
+
+        # Check for root voxel intersection
+        if not self._voxel_to_bounding_box(self._root_center, self_root_size).is_intersecting(
+            self._voxel_to_bounding_box(other._root_center, other_root_size)
+        ):
+            return False
+
+        self_stack = [(0, self_root_size, self._root_center, self._octree)]
+        other_stack = [(0, other_root_size, other._root_center, other._octree)]
+
+        centers = set()
+
+        while self_stack and other_stack:
+            self_current_depth, self_current_size, self_current_center, self_current_octree = self_stack.pop()
+            other_current_depth, other_current_size, other_current_center, other_current_octree = other_stack.pop()
+
+            if not self._voxel_to_bounding_box(self._root_center, self_root_size).is_intersecting(
+                    self._voxel_to_bounding_box(other._root_center, other_root_size)
+            ):
+                continue
+
+            self_new_stack = []
+            other_new_stack = []
+
+            if self_current_depth == self._octree_depth:
+                centers.add(self_current_depth)
+
+            else:
+                half_size = round(self_current_size / 2, 6)
+
+                for i in range(2):
+                    for j in range(2):
+                        for k in range(2):
+                            if len(self_current_center[i * 4 + j * 2 + k]) > 0:
+                                sub_voxel_center = (
+                                    round(self_current_center[0] + (i - 0.5) * half_size, 6),
+                                    round(self_current_center[1] + (j - 0.5) * half_size, 6),
+                                    round(self_current_center[2] + (k - 0.5) * half_size, 6),
+                                )
+
+                                self_new_stack.append(
+                                    (
+                                        depth + 1,
+                                        half_size,
+                                        sub_voxel_center,
+                                        self_current_octree[i * 4 + j * 2 + k],
+                                    )
+                                )
+
+                            if len(other_current_center[i * 4 + j * 2 + k]) > 0:
+                                sub_voxel_center = (
+                                    round(other_current_center[0] + (i - 0.5) * half_size, 6),
+                                    round(other_current_center[1] + (j - 0.5) * half_size, 6),
+                                    round(other_current_center[2] + (k - 0.5) * half_size, 6),
+                                )
+
+                                other_new_stack.append(
+                                    (
+                                        depth + 1,
+                                        half_size,
+                                        sub_voxel_center,
+                                        other_current_octree[i * 4 + j * 2 + k],
+                                    )
+                                )
+
+        return False
+
+    @staticmethod
+    def _voxel_to_bounding_box(voxel_center: _Point3D, voxel_size: float) -> BoundingBox:
+        """
+        Creates a bounding box from a voxel.
+
+        :param voxel_center:
+        :param voxel_size:
+        :return:
+        """
+        half_size = round(voxel_size / 2, DECIMALS)
+        min_point = (voxel_center[0] - half_size, voxel_center[1] - half_size, voxel_center[2] - half_size)
+        max_point = (voxel_center[0] + half_size, voxel_center[1] + half_size, voxel_center[2] + half_size)
+
+        return BoundingBox(min_point[0], max_point[0], min_point[1], max_point[1], min_point[0], max_point[1])
+
     def union(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
         """
         Perform a union operation with another OctreeBasedVoxelization.
@@ -2016,7 +2109,12 @@ class OctreeBasedVoxelization(Voxelization):
         layer_dict = self.to_point_based_voxelization().to_matrix_based_voxelization().layers_to_voxel_centers()
 
         return self._get_inner_growing_leaf_centers(
-            0, round(self.voxel_size * 2**self._octree_depth, 6), self._root_center, self._octree, layer_dict, min_layer
+            0,
+            round(self.voxel_size * 2**self._octree_depth, 6),
+            self._root_center,
+            self._octree,
+            layer_dict,
+            min_layer,
         )
 
     def _get_inner_growing_leaf_centers(
@@ -2067,7 +2165,9 @@ class OctreeBasedVoxelization(Voxelization):
 
             if len(centers_by_voxel_size.get(half_size, [])) == 8:
                 if current_depth == self._octree_depth - 1:
-                    if all([layer_dict[voxel_center] >= min_layer for voxel_center in centers_by_voxel_size[half_size]]):
+                    if all(
+                        [layer_dict[voxel_center] >= min_layer for voxel_center in centers_by_voxel_size[half_size]]
+                    ):
                         # Merge voxels
                         del centers_by_voxel_size[half_size]
                         centers_by_voxel_size[current_size] = {current_center}
