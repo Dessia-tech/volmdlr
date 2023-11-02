@@ -989,9 +989,9 @@ class PointBasedVoxelization(Voxelization):
         min_center = self.min_grid_center
         max_center = self.max_grid_center
 
-        dim_x = round_to_digits((max_center[0] - min_center[0]) / self.voxel_size + 1)
-        dim_y = round_to_digits((max_center[1] - min_center[1]) / self.voxel_size + 1)
-        dim_z = round_to_digits((max_center[2] - min_center[2]) / self.voxel_size + 1)
+        dim_x = round((max_center[0] - min_center[0]) / self.voxel_size + 1)
+        dim_y = round((max_center[1] - min_center[1]) / self.voxel_size + 1)
+        dim_z = round((max_center[2] - min_center[2]) / self.voxel_size + 1)
 
         indices = np.round((np.array(list(self.voxel_centers)) - min_center) / self.voxel_size).astype(int)
 
@@ -2839,8 +2839,8 @@ class PointBasedPixelization(Pixelization):
         min_center = self.min_grid_center
         max_center = self.max_grid_center
 
-        dim_x = round_to_digits((max_center[0] - min_center[0]) / self.pixel_size + 1)
-        dim_y = round_to_digits((max_center[1] - min_center[1]) / self.pixel_size + 1)
+        dim_x = round((max_center[0] - min_center[0]) / self.pixel_size + 1)
+        dim_y = round((max_center[1] - min_center[1]) / self.pixel_size + 1)
 
         indices = np.round((np.array(list(self.pixel_centers)) - min_center) / self.pixel_size).astype(int)
 
