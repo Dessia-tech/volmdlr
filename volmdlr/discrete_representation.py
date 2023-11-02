@@ -1880,15 +1880,56 @@ class OctreeBasedVoxelization(Voxelization):
         for i in range(2):
             for j in range(2):
                 for k in range(2):
-                    # if it is in both octrees
                     if current_octree_1[i * 4 + j * 2 + k] and current_octree_2[i * 4 + j * 2 + k]:
-                        sub_voxels += OctreeBasedVoxelization._recursive_intersection(
-                            current_depth + 1,
-                            max_depth,
-                            n_triangles_1,
-                            current_octree_1[i * 4 + j * 2 + k],
-                            current_octree_2[i * 4 + j * 2 + k],
+                        # if it is in both octrees
+                        sub_voxels.append(
+                            OctreeBasedVoxelization._recursive_union(
+                                current_depth + 1,
+                                max_depth,
+                                n_triangles_1,
+                                current_octree_1[i * 4 + j * 2 + k],
+                                current_octree_2[i * 4 + j * 2 + k],
+                            )
                         )
+
+                    elif current_octree_1[i * 4 + j * 2 + k]:
+                        # if it is in first octree only
+
+                        if current_depth + 1 == max_depth:
+                            _current_octree_2 = []
+                        else:
+                            _current_octree_2 = [[], [], [], [], [], [], [], []]
+
+                        sub_voxels.append(
+                            OctreeBasedVoxelization._recursive_union(
+                                current_depth + 1,
+                                max_depth,
+                                n_triangles_1,
+                                current_octree_1[i * 4 + j * 2 + k],
+                                _current_octree_2,
+                            )
+                        )
+
+                    elif current_octree_2[i * 4 + j * 2 + k]:
+                        # if it is in second octree only
+
+                        if current_depth + 1 == max_depth:
+                            _current_octree_1 = []
+                        else:
+                            _current_octree_1 = [[], [], [], [], [], [], [], []]
+
+                        sub_voxels.append(
+                            OctreeBasedVoxelization._recursive_union(
+                                current_depth + 1,
+                                max_depth,
+                                n_triangles_1,
+                                _current_octree_1,
+                                current_octree_2[i * 4 + j * 2 + k],
+                            )
+                        )
+
+                    else:
+                        sub_voxels.append([])
 
         return sub_voxels
 
