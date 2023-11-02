@@ -1812,14 +1812,12 @@ class Circle3D(CircleMixin, ClosedCurve):
         :return: Circle2D.
         """
         center_2d = self.center.to_2d(plane_origin, x, y)
-        # point1_3d = self.frame.origin + self.frame.u
-        # point2_3d = self.frame.origin + self.frame.v
-        # point1_2d = point1_3d.to_2d(plane_origin, x, y)
-        # point2_2d = point2_3d.to_2d(plane_origin, x, y)
-        # u_2d = (point1_2d - center_2d).unit_vector()
-        # v_2d = (point2_2d - center_2d).unit_vector()
-        u_2d = self.frame.u.to_2d(plane_origin, x, y)
-        v_2d = self.frame.v.to_2d(plane_origin, x, y)
+        point1_3d = self.frame.origin + self.frame.u
+        point2_3d = self.frame.origin + self.frame.v
+        point1_2d = point1_3d.to_2d(plane_origin, x, y)
+        point2_2d = point2_3d.to_2d(plane_origin, x, y)
+        u_2d = (point1_2d - center_2d).unit_vector()
+        v_2d = (point2_2d - center_2d).unit_vector()
         frame2d = volmdlr.Frame2D(center_2d, u_2d, v_2d)
         return Circle2D(frame2d, self.radius)
 
