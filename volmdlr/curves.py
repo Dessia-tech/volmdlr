@@ -455,6 +455,13 @@ class Line2D(Line):
                                 [self.point2.x, self.point2.y],
                                 edge_style=edge_style)
 
+    def line_distance(self, other_line):
+        intersections = self.line_intersections(other_line)
+        if intersections:
+            return 0.0
+        distance, point = self.point_projection(other_line.point1)
+        return distance
+
     def line_intersections(self, line):
         """
         Calculate the intersection between the two lines.
