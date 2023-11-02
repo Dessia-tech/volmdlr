@@ -39,6 +39,21 @@ class TestToroidalFace3D(unittest.TestCase):
             for result, expected_result in zip(plane_intersections, expected_results[i]):
                 self.assertAlmostEqual(result.length(), expected_result)
 
+    def test_cylindricalface_intersections(self):
+        expected_results = [[2.5461207980560485], [2.454557959936191], [2.767950454333099], [2.8109131068618605],
+                            [1.3806998377604578, 3.0341016797202873], [2.1248777973309823], [1.7368914447612895],
+                            [2.5583377804228014], [1.3899444850660725, 2.812800677753292], [2.4475236530517783]]
+        toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
+        tf = faces.ToroidalFace3D.from_surface_rectangular_cut(toroidal_surface, 0, 3, 1, 3)
+        frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
+        for i, theta in enumerate(npy.linspace(0, math.pi * .7, 10)):
+            frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
+            cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1.5)
+            cylface = faces.CylindricalFace3D.from_surface_rectangular_cut(cylindrical_surface, 0, 4, -4, 4)
+            inters = tf.face_intersections(cylface)
+            for inter, expected_result in zip(inters, expected_results[i]):
+                self.assertAlmostEqual(inter.length(), expected_result)
+
 
 if __name__ == '__main__':
     unittest.main()
