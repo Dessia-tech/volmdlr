@@ -1861,9 +1861,7 @@ class OctreeBasedVoxelization(Voxelization):
         )
         triangles = self._triangles + other._triangles
 
-        return self.__class__(
-            octree_union, (0.0, 0.0, 0.0), octree_1._octree_depth, octree_1.voxel_size, triangles
-        )
+        return self.__class__(octree_union, (0.0, 0.0, 0.0), octree_1._octree_depth, octree_1.voxel_size, triangles)
 
     @staticmethod
     def _recursive_union(
@@ -1946,13 +1944,18 @@ class OctreeBasedVoxelization(Voxelization):
                 for k in range(2):
                     # if it is in both octrees
                     if current_octree_1[i * 4 + j * 2 + k] and current_octree_2[i * 4 + j * 2 + k]:
-                        sub_voxels += OctreeBasedVoxelization._recursive_intersection(
-                            current_depth + 1,
-                            max_depth,
-                            n_triangles_1,
-                            current_octree_1[i * 4 + j * 2 + k],
-                            current_octree_2[i * 4 + j * 2 + k],
+                        sub_voxels.append(
+                            OctreeBasedVoxelization._recursive_intersection(
+                                current_depth + 1,
+                                max_depth,
+                                n_triangles_1,
+                                current_octree_1[i * 4 + j * 2 + k],
+                                current_octree_2[i * 4 + j * 2 + k],
+                            )
                         )
+
+                    else:
+                        sub_voxels.append([])
 
         return sub_voxels
 
