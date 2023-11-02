@@ -806,7 +806,7 @@ class Line3D(Line):
         """
         return [self.intersection(line, abs_tol)]
 
-    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), length: float = 1.0):
         """Plot method for Line 3D using Matplotlib."""
         if ax is None:
             fig = plt.figure()
@@ -818,9 +818,9 @@ class Line3D(Line):
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
-        v1 = self.point1 - u * 3
+        v1 = self.point1 - u * length
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = self.point2 - u * 3
+        v2 = self.point2 - u * length
         x2, y2, z2 = v2.x, v2.y, v2.z
         if edge_style.dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color,
@@ -2312,6 +2312,7 @@ class Ellipse3D(ClosedCurve):
         self.major_dir = frame.u
         self.minor_dir = frame.v
         self._self_2d = None
+        self._bbox = None
         ClosedCurve.__init__(self, name=name)
 
     def __getitem__(self, key):
@@ -2331,6 +2332,24 @@ class Ellipse3D(ClosedCurve):
         if not self._self_2d:
             self._self_2d = self.to_2d(self.center, self.frame.u, self.frame.v)
         return self._self_2d
+
+    @property
+    def bounding_box(self):
+        """Bounding box for Arc 3D."""
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    def _bounding_box(self):
+        """
+        Computes the bounding box.
+
+        """
+        points = [self.frame.origin + self.major_axis * self.frame.u,
+                  self.frame.origin - self.major_axis * self.frame.u,
+                  self.frame.origin + self.minor_axis * self.frame.v,
+                  self.frame.origin - self.minor_axis * self.frame.v]
+        return core.BoundingBox.from_points(points)
 
     def point_belongs(self, point, tol: float = 1e-6):
         """

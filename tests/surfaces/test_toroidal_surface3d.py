@@ -220,6 +220,38 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertTrue(circle_intersections[0].is_close(expected_point1))
         self.assertTrue(circle_intersections[1].is_close(expected_point2))
 
+    def test_ellipse_intersections(self):
+        toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, 0.0),
+                                                                      u=volmdlr.Vector3D(-5.551115123125783e-17, 0.0,
+                                                                                         0.9999999999999998),
+                                                                      v=volmdlr.Vector3D(0.0, 0.9999999999999998, 0.0),
+                                                                      w=volmdlr.Vector3D(-0.9999999999999998, 0.0,
+                                                                                         -5.551115123125783e-17)), 3,
+                                                      1)
+
+        frame = volmdlr.Frame3D(origin=volmdlr.Point3D(0.0, 0.0, 0.0),
+                                u=volmdlr.Vector3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+                                v=volmdlr.Vector3D(0.8164965809277258, -0.40824829046386313, -0.40824829046386313),
+                                w=volmdlr.Vector3D(0.0, 0.7071067811865476, -0.7071067811865476))
+
+        ellipse = curves.Ellipse3D(2, 1, frame)
+        ellipse_intersections = toroidal_surface.ellipse_intersections(ellipse)
+        self.assertFalse(ellipse_intersections)
+
+        frame1 = frame.translation(volmdlr.Vector3D(3, 0.0, 0.0))
+        ellipse = curves.Ellipse3D(7, 2.5, frame1)
+        ellipse_intersections = toroidal_surface.ellipse_intersections(ellipse)
+        self.assertFalse(ellipse_intersections)
+
+        frame = frame.translation(volmdlr.Vector3D(3, 0.0, 0.0))
+        ellipse = curves.Ellipse3D(2, 1, frame)
+        ellipse_intersections = toroidal_surface.ellipse_intersections(ellipse)
+        self.assertEqual(len(ellipse_intersections), 2)
+        self.assertTrue(ellipse_intersections[0].is_close(
+            volmdlr.Point3D(1.686564519293097, -1.027451632802102, -1.027451632802102)))
+        self.assertTrue(ellipse_intersections[1].is_close(
+            volmdlr.Point3D(1.8179453474500284, -1.1400021883520102, -1.1400021883520102)))
+
 
 if __name__ == '__main__':
     unittest.main()
