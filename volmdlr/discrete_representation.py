@@ -1599,9 +1599,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The center point of each voxel.
         :rtype: set[tuple[float, float, float]]
         """
-        return self._get_homogeneous_leaf_centers(
-            0, self._root_voxel_size, self._root_center, self._octree
-        )
+        return self._get_homogeneous_leaf_centers(0, self._root_voxel_size, self._root_center, self._octree)
 
     @property
     def _root_voxel_size(self):
@@ -2136,9 +2134,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
-        return self._get_non_homogeneous_leaf_centers(
-            0, self._root_voxel_size, self._root_center, self._octree
-        )
+        return self._get_non_homogeneous_leaf_centers(0, self._root_voxel_size, self._root_center, self._octree)
 
     def _get_non_homogeneous_leaf_centers(
         self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
@@ -2272,6 +2268,33 @@ class OctreeBasedVoxelization(Voxelization):
                     centers_by_voxel_size[current_size] = {current_center}
 
         return centers_by_voxel_size
+
+    def _bury_root(self):
+        """
+        Bury the octree root to add one level to the octree depth.
+
+        :return:
+        """
+        x, y, z = self._root_center
+        half_size = round_to_digits(self._root_voxel_size / 2, DECIMALS)
+        double_size = round_to_digits(self._root_voxel_size * 2, DECIMALS)
+
+        for i, (dx, dy, dz) in enumerate(
+                [
+                    (1, 1, 1),
+                    (1, 1, -1),
+                    (1, -1, 1),
+                    (1, -1, -1),
+                    (-1, 1, 1),
+                    (-1, 1, -1),
+                    (-1, -1, 1),
+                    (-1, -1, -1),
+                ]
+        ):
+            corner = (x + dx * half_size, y + dy * half_size, z + dz * half_size)
+
+            if self.check_center_is_in_implicit_grid(corner, double_size):
+                print("a")
 
 
 class Pixelization(DiscreteRepresentation, DessiaObject):
