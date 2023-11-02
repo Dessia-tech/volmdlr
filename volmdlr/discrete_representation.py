@@ -1854,20 +1854,45 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new OctreeBasedVoxelization resulting from the union operation.
         :rtype: OctreeBasedVoxelization
         """
-        self._check_other_type(other)
-        self._check_other_element_size(other)
+        octree_1, octree_2 = self._make_octrees_same_depth(self, other)
 
-        while self._octree_depth != other._octree_depth:
-            # Expand the less depth one
-            pass
+        octree_union = self._recursive_union(
+            0, octree_1._octree_depth, len(octree_1._triangles), octree_1._octree, octree_2._octree
+        )
+        triangles = self._triangles + other._triangles
 
-        while self._root_center != other._root_center:
-            # Expand both
-            pass
+        return self.__class__(
+            octree_union, (0.0, 0.0, 0.0), octree_1._octree_depth, octree_1.voxel_size, triangles
+        )
 
-        # Discover tree and add triangles id from both
+    @staticmethod
+    def _recursive_union(
+        current_depth: int,
+        max_depth: int,
+        n_triangles_1: int,
+        current_octree_1,
+        current_octree_2,
+    ):
+        """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
+        if current_depth == max_depth:  # if _octree_depth reached, it is a leaf node
+            return current_octree_1 + [i_triangle + n_triangles_1 for i_triangle in current_octree_2]
 
-        pass
+        sub_voxels = []
+
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    # if it is in both octrees
+                    if current_octree_1[i * 4 + j * 2 + k] and current_octree_2[i * 4 + j * 2 + k]:
+                        sub_voxels += OctreeBasedVoxelization._recursive_intersection(
+                            current_depth + 1,
+                            max_depth,
+                            n_triangles_1,
+                            current_octree_1[i * 4 + j * 2 + k],
+                            current_octree_2[i * 4 + j * 2 + k],
+                        )
+
+        return sub_voxels
 
     def difference(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
         """
@@ -1891,7 +1916,45 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new OctreeBasedVoxelization resulting from the intersection operation.
         :rtype: OctreeBasedVoxelization
         """
-        pass
+        octree_1, octree_2 = self._make_octrees_same_depth(self, other)
+
+        octree_intersection = self._recursive_intersection(
+            0, octree_1._octree_depth, len(octree_1._triangles), octree_1._octree, octree_2._octree
+        )
+        triangles = self._triangles + other._triangles
+
+        return self.__class__(
+            octree_intersection, (0.0, 0.0, 0.0), octree_1._octree_depth, octree_1.voxel_size, triangles
+        )
+
+    @staticmethod
+    def _recursive_intersection(
+        current_depth: int,
+        max_depth: int,
+        n_triangles_1: int,
+        current_octree_1,
+        current_octree_2,
+    ):
+        """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
+        if current_depth == max_depth:  # if _octree_depth reached, it is a leaf node
+            return current_octree_1 + [i_triangle + n_triangles_1 for i_triangle in current_octree_2]
+
+        sub_voxels = []
+
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    # if it is in both octrees
+                    if current_octree_1[i * 4 + j * 2 + k] and current_octree_2[i * 4 + j * 2 + k]:
+                        sub_voxels += OctreeBasedVoxelization._recursive_intersection(
+                            current_depth + 1,
+                            max_depth,
+                            n_triangles_1,
+                            current_octree_1[i * 4 + j * 2 + k],
+                            current_octree_2[i * 4 + j * 2 + k],
+                        )
+
+        return sub_voxels
 
     def symmetric_difference(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
         """
@@ -2263,7 +2326,7 @@ class OctreeBasedVoxelization(Voxelization):
 
         return centers_by_voxel_size
 
-    def _increment_octree_depth(self) -> 'OctreeBasedVoxelization':
+    def _increment_octree_depth(self) -> "OctreeBasedVoxelization":
         """
         Increment the octree depth by doubling the size of the root voxel.
 
@@ -2287,6 +2350,27 @@ class OctreeBasedVoxelization(Voxelization):
         return self.__class__(
             new_octree, self._root_center, self._octree_depth + 1, self.voxel_size, self._triangles, self.name
         )
+
+    @staticmethod
+    def _make_octrees_same_depth(
+        octree_1: "OctreeBasedVoxelization", octree_2: "OctreeBasedVoxelization"
+    ) -> Tuple["OctreeBasedVoxelization", "OctreeBasedVoxelization"]:
+        """
+        :param octree_1:
+        :param octree_2:
+        :return:
+        """
+        octree_1._check_other_type(octree_2)
+        octree_1._check_other_element_size(octree_2)
+
+        # Make the octree have the same depth
+        while octree_1._octree_depth < octree_2._octree_depth:
+            octree_1 = octree_1._increment_octree_depth()
+
+        while octree_2._octree_depth < octree_1._octree_depth:
+            octree_2 = octree_2._increment_octree_depth()
+
+        return octree_1, octree_2
 
 
 class Pixelization(DiscreteRepresentation, DessiaObject):
