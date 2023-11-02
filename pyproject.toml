@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "Cython>=3", "numpy<1.26.0"]
+requires = ["setuptools", "Cython>=3", "numpy"]
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]

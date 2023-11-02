@@ -36,6 +36,16 @@ class TestEllipse2D(unittest.TestCase):
         self.assertTrue(linesegment_intersections[0].is_close(volmdlr.Point2D(2.82842712474619,
                                                                               2.82842712474619)))
 
+        ellipse2d = curves.Ellipse2D(
+            1.5029657596067132, 1.4999999999999993,
+            volmdlr.Frame2D(origin=volmdlr.Point2D(-0.9980228269288582, -8.858169481883975e-16),
+                            u=volmdlr.Vector2D(1.0, -8.840689907867823e-16), v=volmdlr.Vector2D(0.0, -1.0)))
+        lineseg2d = edges.LineSegment2D(volmdlr.Point2D(0.17364817766693041, 0.984807753012208),
+                                        volmdlr.Point2D(-0.4999999999999998, 0.8660254037844388))
+        lineseg_intersections = ellipse2d.linesegment_intersections(lineseg2d)
+        self.assertEqual(len(lineseg_intersections), 1)
+        self.assertTrue(lineseg_intersections[0].is_close(volmdlr.Point2D(0.1406944277231128, 0.9789971177815928)))
+
     def test_discretization_points(self):
         self.assertTrue(self.discretized_points[0].is_close(volmdlr.Point2D(2.8284271247461903, 2.82842712474619)))
         self.assertTrue(self.discretized_points[5].is_close(volmdlr.Point2D(-2.8284271247461903, -2.82842712474619)))

@@ -8,24 +8,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.15.0 [future]
 
 ### New Features
--
+#### surfaces.py
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
+- ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object,
+- CylindricalSurface3D: circle_intersections
+- ToroidalFace3D: PlaneFace3D intersectios.
+#### edges.py
+- BsplineCurve3D: circle_intersections.
+#### curves.py
+- Circle3D: point_distance.
+#### shell.py
+- OpenTriangleShell3D: triangle decimation
 
 ### Fixed
-- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
-- ToroidalFace3D: PlaneFace3D intersectios.
+
+#### faces.py
 - PlaneFace3D: circle_intersections.
+#### wires.py
+- delete remaining inplace methods in wires.py
+#### shells.py
+- Fixes to boolean operations.
+#### utils
+- common_operations separate_points_by_closeness: consider more than two cluster groups.
+#### curves
+- Circle3D: circle_intersectios when the circle are coplanar.
 
 ### Refactor
--
+- Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
 
 ### Changed
--
+- ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
+- ToroidalSurface3D: plots now use Circles 3D instead of ClosedPolygon3D. Performance improved.
+- CylindricalSurface3D: More comprehesive plot
 
 ### Unittests
-- ToroidalSurface3D: line_intersections, plane_intersections
+#### curves 
+- Circle3D: new case to test_circle_intersections, new test: test_point_distance.
+#### surfaces
+- ToroidalSurface3D: test_line_intersections, test_plane_intersections, test_cylindrical_surface_intersections, test_circle_intersections
+- CylindricalSurface3D:  test_circle_intersections.
+#### faces
 - ToroidalFace3D: PlaneFace3D intersectios.
 
-## v0.14.0 [Unreleased]
+## v0.14.0
 
 ### New Features
 - DisplayTriangleShell3D: a TriangleShell3D optimized for performance of display / saving / loading.
@@ -68,6 +93,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: bsplinecurve3d_to_2d, prevents code execution from stopping when point3d_to_2d does not converge
 - BSplineSurface3D: derivatives
 - BSplineCurve: split
+- Matrix based discrete representation: boolean operations
+- read the docs settings
+- fix: move code complexity at end
 - 
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
@@ -160,7 +188,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: transform some attributs into lazy evaluation and Caching
 - BSplineSurface3D: store control_points as numpy array for memory efficiency
 - PlaneFace3D: distance_to_point -> point_distance
-- remove normalize() methods
+- remove normalize() methods for Vectors. Replaced by unit_vector(), it returns a new normalized vector.
 - Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
 - BSplineSurface3D: point3d_to_2d performance improvements.
 
@@ -254,7 +282,7 @@ All adequations have been done for all tests and existing scripts.
 
 - bspline_compiled: refactor binomial_coefficient for performance.
 - Improve step translator.
-- Delete inplace methods: rotation, translation and frame_mapping
+- Delete inplace methods: rotation, translation and frame_mapping. replace by juste the rotation, translation and frame_mapping. objects are no longer changed inplace, a new transformed object is returned each time.
 - OpenShell3D: faces_graph.
 - RevolutionSurface3D: Improve init and methods
 
