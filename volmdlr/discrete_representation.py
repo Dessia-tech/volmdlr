@@ -1600,8 +1600,12 @@ class OctreeBasedVoxelization(Voxelization):
         :rtype: set[tuple[float, float, float]]
         """
         return self._get_homogeneous_leaf_centers(
-            0, round_to_digits(self.voxel_size * 2**self._octree_depth, DECIMALS), self._root_center, self._octree
+            0, self._root_voxel_size, self._root_center, self._octree
         )
+
+    @property
+    def _root_voxel_size(self):
+        return round_to_digits(self.voxel_size * 2**self._octree_depth, DECIMALS)
 
     def __eq__(self, other: "OctreeBasedVoxelization") -> bool:
         """
@@ -1852,6 +1856,19 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new OctreeBasedVoxelization resulting from the union operation.
         :rtype: OctreeBasedVoxelization
         """
+        self._check_other_type(other)
+        self._check_other_element_size(other)
+
+        while self._octree_depth != other._octree_depth:
+            # Expand the less depth one
+            pass
+
+        while self._root_center != other._root_center:
+            # Expand both
+            pass
+
+        # Discover tree and add triangles id from both
+
         pass
 
     def difference(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
@@ -2120,7 +2137,7 @@ class OctreeBasedVoxelization(Voxelization):
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
         return self._get_non_homogeneous_leaf_centers(
-            0, round_to_digits(self.voxel_size * 2**self._octree_depth, DECIMALS), self._root_center, self._octree
+            0, self._root_voxel_size, self._root_center, self._octree
         )
 
     def _get_non_homogeneous_leaf_centers(
@@ -2184,7 +2201,7 @@ class OctreeBasedVoxelization(Voxelization):
 
         return self._get_inner_growing_leaf_centers(
             0,
-            round_to_digits(self.voxel_size * 2**self._octree_depth, DECIMALS),
+            self._root_voxel_size,
             self._root_center,
             self._octree,
             layer_dict,
