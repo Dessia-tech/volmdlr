@@ -2,7 +2,7 @@
 volmdlr utils for importing step files.
 """
 import numpy as npy
-import re
+from re import search as re_search
 import volmdlr
 import volmdlr.shells as vmshells
 from volmdlr import surfaces
@@ -306,7 +306,7 @@ def _helper_get_parameter_value(string):
     pattern = r'\((-?\d+\.\d+)\)'
 
     # Use re.search to find the match
-    match = re.search(pattern, string)
+    match = re_search(pattern, string)
 
     if match:
         numerical_value = float(match.group(1))
