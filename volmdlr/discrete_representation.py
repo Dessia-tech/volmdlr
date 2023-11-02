@@ -2048,7 +2048,7 @@ class OctreeBasedVoxelization(Voxelization):
         max_depth = math.ceil(math.log2(root_size // voxel_size))
         center = (0.0, 0.0, 0.0)
 
-        sizes = [round_to_digits(voxel_size * 2 ** i, DECIMALS) for i in range(max_depth, -1, -1)]
+        sizes = [round_to_digits(voxel_size * 2**i, DECIMALS) for i in range(max_depth, -1, -1)]
         sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
 
         octree = cls._subdivide(triangles, [i for i in range(len(triangles))], center, sizes, 0, max_depth)
@@ -2293,34 +2293,30 @@ class OctreeBasedVoxelization(Voxelization):
 
         return centers_by_voxel_size
 
-    def _bury_root(self):
+    def _increment_octree_depth(self) -> 'OctreeBasedVoxelization':
         """
-        Bury the octree root to add one level to the octree depth.
+        Increment the octree depth by doubling the size of the root voxel.
 
-        :return:
+        :return: The modified octree based voxeliation.
+        :rtype: OctreeBasedVoxelization
         """
-        x, y, z = self._root_center
-        half_size = round_to_digits(self._root_voxel_size / 2, DECIMALS)
-        double_size = round_to_digits(self._root_voxel_size * 2, DECIMALS)
+        if self._root_center != (0.0, 0.0, 0.0):
+            raise NotImplementedError
 
-        for i, (dx, dy, dz) in enumerate(
-                [
-                    (1, 1, 1),
-                    (1, 1, -1),
-                    (1, -1, 1),
-                    (1, -1, -1),
-                    (-1, 1, 1),
-                    (-1, 1, -1),
-                    (-1, -1, 1),
-                    (-1, -1, -1),
-                ]
-        ):
-            corner = (x + dx * half_size, y + dy * half_size, z + dz * half_size)
+        new_octree = [
+            [[], [], [], [], [], [], [], self._octree[0]],
+            [[], [], [], [], [], [], self._octree[1], []],
+            [[], [], [], [], [], self._octree[2], [], []],
+            [[], [], [], [], self._octree[3], [], [], []],
+            [[], [], [], self._octree[4], [], [], [], []],
+            [[], [], self._octree[5], [], [], [], [], []],
+            [[], self._octree[6], [], [], [], [], [], []],
+            [self._octree[7], [], [], [], [], [], [], []],
+        ]
 
-            print(corner)
-
-            if self.check_center_is_in_implicit_grid(corner, double_size):
-                print("a")
+        return self.__class__(
+            new_octree, self._root_center, self._octree_depth + 1, self.voxel_size, self._triangles, self.name
+        )
 
 
 class Pixelization(DiscreteRepresentation, DessiaObject):
