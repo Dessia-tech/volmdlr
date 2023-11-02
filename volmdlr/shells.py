@@ -791,6 +791,23 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 meshes.append(face_mesh)
         return display.DisplayMesh3D.merge_meshes(meshes)
 
+    def to_triangle_shell(self) -> Union["OpenTriangleShell3D", "ClosedTriangleShell3D"]:
+        """
+        Convert the current shell to a triangle shell.
+
+        If the current shell is already a triangle shell, return it "as is".
+        This conversion conserves the Open / Closed specification.
+        """
+        if "Triangle" in self.__class__.__name__:
+            return self
+
+        triangles = self.triangulation().faces
+
+        if "Closed" in self.__class__.__name__:
+            return ClosedTriangleShell3D(faces=triangles, color=self.color, alpha=self.alpha, name=self.name)
+
+        return OpenTriangleShell3D(faces=triangles, color=self.color, alpha=self.alpha, name=self.name)
+
     def babylon_meshes(self, merge_meshes=True):
         """
         Returns the babylonjs mesh.
