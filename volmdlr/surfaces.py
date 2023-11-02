@@ -30,7 +30,7 @@ from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inve
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
 from volmdlr.nurbs.operations import split_surface_u, split_surface_v
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
-                                      find_parametric_point_at_singularity)
+                                      find_parametric_point_at_singularity, is_isocurve)
 
 
 def knots_vector_inv(knots_vector):
@@ -4615,7 +4615,8 @@ class ExtrusionSurface3D(Surface3D):
         start = self.edge.start
         end = self.edge.end
         if start.is_close(end, 1e-4):
-            return 1
+            self._x_periodicity = 1
+            return self._x_periodicity
         return None
 
     @x_periodicity.setter
@@ -4634,7 +4635,11 @@ class ExtrusionSurface3D(Surface3D):
             u = 0.0
         if abs(v) < 1e-7:
             v = 0.0
-
+        if self.x_periodicity:
+            if u > self.x_periodicity:
+                u -= self.x_periodicity
+            elif u < 0:
+                u += self.x_periodicity
         point_at_curve = self.edge.point_at_abscissa(u * self.edge.length())
         point = point_at_curve.translation(self.frame.w * v)
         return point
@@ -4666,6 +4671,8 @@ class ExtrusionSurface3D(Surface3D):
                 point_at_curve = self.frame.local_to_global_coordinates(point_at_curve_local)
 
         u = self.edge.abscissa(point_at_curve, tol=1e-6) / self.edge.length()
+        if u < 0:
+            print(True)
         v = z - point_at_curve_local.z
 
         return volmdlr.Point2D(u, v)
@@ -4683,6 +4690,10 @@ class ExtrusionSurface3D(Surface3D):
         self.frame.plot(ax=ax, ratio=self.edge.length())
         for i in range(21):
             step = i / 20. * z
+            wire = self.edge.translation(step * self.frame.w)
+            wire.plot(ax=ax, edge_style=edge_style)
+        for i in range(21):
+            step = -i / 20. * z
             wire = self.edge.translation(step * self.frame.w)
             wire.plot(ax=ax, edge_style=edge_style)
 
@@ -4727,13 +4738,13 @@ class ExtrusionSurface3D(Surface3D):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
-        # todo: needs detailed investigation
         start = self.point3d_to_2d(arc3d.start)
         end = self.point3d_to_2d(arc3d.end)
-        if start.is_close(end):
-            print("surfaces.py")
         if self.x_periodicity:
             start, end = self._verify_start_end_parametric_points(start, end, arc3d)
+            point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.02 * arc3d.length()))
+            point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * arc3d.length()))
+            start, _, _, end = self._repair_points_order([start, point_after_start, point_before_end, end], arc3d)
         return [edges.LineSegment2D(start, end, name="arc")]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
@@ -4743,18 +4754,11 @@ class ExtrusionSurface3D(Surface3D):
         """
         start2d = self.point3d_to_2d(arcellipse3d.start)
         end2d = self.point3d_to_2d(arcellipse3d.end)
-        if isinstance(self.edge, edges.FullArcEllipse3D):
-            return [edges.LineSegment2D(start2d, end2d)]
-        if self.is_isocurve(arcellipse3d, start2d.y):
+        if isinstance(self.edge, edges.ArcEllipse3D):
             return [edges.LineSegment2D(start2d, end2d)]
         points = [self.point3d_to_2d(p)
                   for p in arcellipse3d.discretization_points(number_points=15)]
-        if self.x_periodicity:
-            start, end = self._verify_start_end_parametric_points(points[0], points[-1], arcellipse3d)
-            points[0] = start
-            points[-1] = end
-        bsplinecurve2d = edges.BSplineCurve2D.from_points_interpolation(points, degree=2)
-        return [bsplinecurve2d]
+        return self._edge3d_to_2d(points, arcellipse3d)
 
     def fullarcellipse3d_to_2d(self, fullarcellipse3d):
         """
@@ -4818,17 +4822,10 @@ class ExtrusionSurface3D(Surface3D):
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         n = len(bspline_curve3d.control_points)
-        start = self.point3d_to_2d(bspline_curve3d.start)
-        end = self.point3d_to_2d(bspline_curve3d.end)
-        if self.is_isocurve(bspline_curve3d, start.y):
-            return [edges.LineSegment2D(start, end)]
+
         points = [self.point3d_to_2d(point)
                   for point in bspline_curve3d.discretization_points(number_points=n)]
-        if self.x_periodicity:
-            start, end = self._verify_start_end_parametric_points(points[0], points[-1], bspline_curve3d)
-            points[0] = start
-            points[-1] = end
-        return [edges.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree)]
+        return self._edge3d_to_2d(points, bspline_curve3d)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -4873,10 +4870,40 @@ class ExtrusionSurface3D(Surface3D):
                 end.x = self.x_periodicity
         return start, end
 
-    def is_isocurve(self, edge, v):
-        """Test if 3D curve at v is a surface isocurve."""
-        return self.edge.direction_independent_is_close(edge.translation(-self.frame.w * v))
+    def _repair_points_order(self, points, edge3d):
+        """Helper function to reorder edge discretization points on parametric domain."""
+        #Todo: enhance this method when intersections beteween edges is finished.
+        if len(points) > 2:
+            point_after_start = points[1].x
+        else:
+            point_after_start = self.point3d_to_2d(edge3d.point_at_abscissa(0.01 * edge3d.length()))
+        sign = (point_after_start - points[0].x)/abs(point_after_start - points[0].x)
+        passes_through_periodicity = False
+        for i, (point, next_point) in enumerate(zip(points[:-1], points[1:])):
+            if sign * (next_point.x - point.x) < 0:
+                passes_through_periodicity = True
+                break
+        if passes_through_periodicity:
+            for point in points[i + 1:]:
+                point.x = point.x + sign * self.x_periodicity
+        return points
 
+    def _edge3d_to_2d(self, points, edge3d):
+        """Helper to get parametric representation of edges on the surface."""
+        if self.x_periodicity:
+            start, end = self._verify_start_end_parametric_points(points[0], points[-1], edge3d)
+            points[0] = start
+            points[-1] = end
+            points = self._repair_points_order(points, edge3d)
+        start = points[0]
+        end = points[-1]
+        if is_isocurve(points, 1e-3):
+            return [edges.LineSegment2D(start, end)]
+        if hasattr(edge3d, "degree"):
+            degree = edge3d.degree
+        else:
+            degree = 2
+        return [edges.BSplineCurve2D.from_points_interpolation(points, degree)]
 
 class RevolutionSurface3D(PeriodicalSurface):
     """

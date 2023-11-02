@@ -1,0 +1,346 @@
+{
+  "object_class": "volmdlr.wires.Contour3D",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.edges.LineSegment3D",
+      "name": "",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": 51.939,
+        "y": 2.694246,
+        "z": 2.107526,
+        "name": "Vertex"
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 51.925000000000004,
+        "y": 2.694246,
+        "z": 2.107526,
+        "name": "Vertex"
+      }
+    },
+    {
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "name": "",
+      "degree": 5,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 2.694246,
+          "z": 2.107526
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 2.694246,
+          "z": 2.14528492261
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 2.6991964730599998,
+          "z": 2.1830438447000002
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 2.7090994197800002,
+          "z": 2.21972500536
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 2.73612222514,
+          "z": 2.2830543051200003
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 2.7777806161100003,
+          "z": 2.3349381791400003
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 2.79956375183,
+          "z": 2.35555677443
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 2.8456649409400003,
+          "z": 2.3878363018199997
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 2.89771114734,
+          "z": 2.4046966471599998
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 2.92338769999,
+          "z": 2.40887680998
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 2.97546768234,
+          "z": 2.4091960435
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 3.02572716749,
+          "z": 2.39371370755
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 3.04991102987,
+          "z": 2.3820436260299997
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 3.09928442673,
+          "z": 2.34881760183
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 3.13868991598,
+          "z": 2.3012450753300002
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 3.1565176896700002,
+          "z": 2.2719428588699997
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 3.1783815581,
+          "z": 2.2219031686600004
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 3.1899854378700003,
+          "z": 2.16802936345
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 3.1928258230299997,
+          "z": 2.1479740387699997
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 3.194246,
+          "z": 2.12775001946
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.925000000000004,
+          "y": 3.194246,
+          "z": 2.107526
+        }
+      ],
+      "knot_multiplicities": [
+        6,
+        3,
+        3,
+        3,
+        3,
+        3,
+        6
+      ],
+      "knots": [
+        0.0,
+        0.20630087075763062,
+        0.3794503782959622,
+        0.5376567662632622,
+        0.6980469759976377,
+        0.8895033931941734,
+        1.0
+      ],
+      "weights": null
+    },
+    {
+      "object_class": "volmdlr.edges.LineSegment3D",
+      "name": "",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": 51.925000000000004,
+        "y": 3.194246,
+        "z": 2.107526
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 51.939,
+        "y": 3.194246,
+        "z": 2.107526
+      }
+    },
+    {
+      "object_class": "volmdlr.edges.BSplineCurve3D",
+      "name": "",
+      "degree": 5,
+      "control_points": [
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 3.194246,
+          "z": 2.107526
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 3.194246,
+          "z": 2.12775001946
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 3.1928258230299997,
+          "z": 2.1479740387699997
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 3.1899854378700003,
+          "z": 2.16802936345
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 3.1783815581,
+          "z": 2.2219031686600004
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 3.1565176896700002,
+          "z": 2.2719428588699997
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 3.13868991598,
+          "z": 2.3012450753300002
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 3.09928442673,
+          "z": 2.34881760183
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 3.04991102987,
+          "z": 2.3820436260299997
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 3.02572716749,
+          "z": 2.39371370755
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 2.97546768234,
+          "z": 2.4091960435
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 2.92338769999,
+          "z": 2.40887680998
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 2.89771114734,
+          "z": 2.4046966471599998
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 2.8456649409400003,
+          "z": 2.3878363018199997
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 2.79956375183,
+          "z": 2.35555677443
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 2.7777806161100003,
+          "z": 2.3349381791400003
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 2.73612222514,
+          "z": 2.2830543051200003
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 2.7090994197800002,
+          "z": 2.21972500536
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 2.6991964730599998,
+          "z": 2.1830438447000002
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 2.694246,
+          "z": 2.14528492261
+        },
+        {
+          "object_class": "volmdlr.Point3D",
+          "x": 51.939,
+          "y": 2.694246,
+          "z": 2.107526
+        }
+      ],
+      "knot_multiplicities": [
+        6,
+        3,
+        3,
+        3,
+        3,
+        3,
+        6
+      ],
+      "knots": [
+        -0.0,
+        0.11049660680582662,
+        0.30195302400236235,
+        0.4623432337367378,
+        0.6205496217040378,
+        0.7936991292423694,
+        1.0
+      ],
+      "weights": null
+    }
+  ],
+  "color": null,
+  "alpha": 1.0
+}
