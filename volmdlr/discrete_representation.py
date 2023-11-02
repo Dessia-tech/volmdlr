@@ -2002,36 +2002,6 @@ class OctreeBasedVoxelization(Voxelization):
         return point_based_voxelizations
 
     @classmethod
-    def __from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float) -> "OctreeBasedVoxelization":
-        """Create a voxelization based on the size of the voxel."""
-        triangles_np = np.array(triangles)
-        min_corner = np.min(np.min(triangles_np, axis=1), axis=0)
-        max_corner = np.max(np.max(triangles_np, axis=1), axis=0)
-
-        # Compute the corners in the implicit grid defined by the voxel size
-        min_corner = (np.floor_divide(min_corner, voxel_size) - 2) * voxel_size
-        max_corner = (np.floor_divide(max_corner, voxel_size) + 2) * voxel_size
-
-        root_size = max(max_corner - min_corner)
-
-        # Compute the max depth corresponding the voxel_size
-        max_depth = math.ceil(math.log2(root_size // voxel_size))
-
-        # Compute the max corner to have voxel of given voxel size with the octree process
-        max_corner = min_corner + ((2**max_depth) * voxel_size)
-        # root_size = max(max_corner - min_corner)
-
-        corners = np.stack([min_corner, max_corner])
-        center = tuple(np.round(corners.mean(axis=0), DECIMALS).tolist())
-
-        sizes = [round_to_digits(voxel_size * 2**i, DECIMALS) for i in range(max_depth, -1, -1)]
-        sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
-
-        octree = cls._subdivide(triangles, [i for i in range(len(triangles))], center, sizes, 0, max_depth)
-
-        return cls(octree, center, max_depth, voxel_size, triangles)
-
-    @classmethod
     def _from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float) -> "OctreeBasedVoxelization":
         """Create a voxelization based on the size of the voxel."""
         triangles_np = np.array(triangles)
