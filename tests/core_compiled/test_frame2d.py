@@ -1,5 +1,5 @@
 import unittest
-
+import math
 import volmdlr
 
 
@@ -21,6 +21,19 @@ class TestFrame2D(unittest.TestCase):
         # Check that the converted vector has the expected coordinates
         self.assertEqual(vector_global.x, 3)
         self.assertEqual(vector_global.y, 4)
+
+
+    def test_rotation(self):
+        center = volmdlr.Point2D(-1, 0)
+        rot1 = volmdlr.OXY.rotation(center, 0.5 * math.pi)
+        self.assertTrue(rot1.origin.is_close(volmdlr.Point2D(-1, 1)))
+        self.assertTrue(rot1.u.is_close(volmdlr.Y2D))
+        self.assertTrue(rot1.v.is_close(-volmdlr.X2D))
+
+        center = volmdlr.Point2D(-1, 0)
+        rot2 = volmdlr.OXY.rotation(center, 0.25 * math.pi)
+        self.assertTrue(rot2.origin.is_close(volmdlr.Point2D(1/math.sqrt(2) - 1, 1/math.sqrt(2))))
+        self.assertTrue(rot2.u.is_close(volmdlr.Vector2D(1/math.sqrt(2), 1/math.sqrt(2))))
 
 
 if __name__ == "__main__":

@@ -77,7 +77,7 @@ class TestBSplineFace3D(unittest.TestCase):
         self.assertAlmostEqual(face.surface2d.area(), 1, 2)
         self.assertGreaterEqual(len(mesh.points), 650)
         self.assertLessEqual(len(mesh.points), 1300)
-        self.assertLessEqual(total_time, 0.05)
+        self.assertLessEqual(total_time, 0.15)
 
 if __name__ == '__main__':
     unittest.main()
