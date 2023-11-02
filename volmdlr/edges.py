@@ -1613,10 +1613,6 @@ class BSplineCurve(Edge):
 
         :param tag: The BsplineCurve index
         :type tag: int
-        :param start_point_tag: The linesegment' start point index
-        :type start_point_tag: int
-        :param end_point_tag: The linesegment' end point index
-        :type end_point_tag: int
 
         :return: A line
         :rtype: str
