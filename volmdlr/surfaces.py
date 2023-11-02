@@ -4871,19 +4871,20 @@ class ExtrusionSurface3D(Surface3D):
     def _repair_points_order(self, points, edge3d):
         """Helper function to reorder edge discretization points on parametric domain."""
         #Todo: enhance this method when intersections beteween edges is finished.
-        if len(points) > 2:
-            point_after_start = points[1].x
-        else:
-            point_after_start = self.point3d_to_2d(edge3d.point_at_abscissa(0.01 * edge3d.length()))
-        sign = (point_after_start - points[0].x)/abs(point_after_start - points[0].x)
-        passes_through_periodicity = False
-        for i, (point, next_point) in enumerate(zip(points[:-1], points[1:])):
-            if sign * (next_point.x - point.x) < 0:
-                passes_through_periodicity = True
-                break
-        if passes_through_periodicity:
-            for point in points[i + 1:]:
-                point.x = point.x + sign * self.x_periodicity
+        point_after_start = self.point3d_to_2d(edge3d.point_at_abscissa(0.01 * edge3d.length()))
+        if point_after_start.x == points[0].x:
+            point_after_start = self.point3d_to_2d(edge3d.point_at_abscissa(0.05 * edge3d.length()))
+        diff = point_after_start.x - points[0].x
+        if diff:
+            sign = diff / abs(diff)
+            passes_through_periodicity = False
+            for i, (point, next_point) in enumerate(zip(points[:-1], points[1:])):
+                if sign * (next_point.x - point.x) < 0:
+                    passes_through_periodicity = True
+                    break
+            if passes_through_periodicity:
+                for point in points[i + 1:]:
+                    point.x = point.x + sign * self.x_periodicity
         return points
 
     def _edge3d_to_2d(self, points, edge3d):

@@ -31,8 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixes to boolean operations.
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
-#### curves
+#### curves.py
 - Circle3D: circle_intersectios when the circle are coplanar.
+#### surfaces.py
+- ExtrusionSurface3D: enhance parametric operations.
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.

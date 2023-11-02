@@ -121,8 +121,14 @@ class TestExtrusionSurface3D(unittest.TestCase):
         contour = vmw.Contour3D.load_from_file(os.path.join(folder, "extrusionsurface_fullarcellipse_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
-        self.assertAlmostEqual(contour2d.area(), 0.006999999999999673, 2)
+        self.assertAlmostEqual(contour2d.area(), 0.006999999999999673, 6)
 
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
+            os.path.join(folder, "extrusionsurface_fullarc.json"))
+        contour = vmw.Contour3D.load_from_file(os.path.join(folder, "extrusionsurface_fullarc_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 0.0006595292003795769, 6)
 
 if __name__ == '__main__':
     unittest.main()
