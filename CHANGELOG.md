@@ -24,22 +24,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### faces.py
 - PlaneFace3D: circle_intersections.
+
 #### wires.py
 - delete remaining inplace methods in wires.py
+
 #### shells.py
 - Fixes to boolean operations.
 
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
+
 #### curves
 - Circle3D: circle_intersectios when the circle are coplanar.
 
 #### core_compiled
 - Frame2D: fix rotation
 
-
 ### Refactor
+
+#### faces.py
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
+#### curves.py
+- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
+#### edges.py
+- Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 
 ### Changed
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
