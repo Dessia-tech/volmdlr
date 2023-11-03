@@ -836,6 +836,9 @@ class Surface3D(DessiaObject):
         :return: A list of primitives.
         :rtype: list
         """
+        tol = 1e-2
+        if self.__class__.__name__ == "ExtrusionSurface3D":
+            tol = 5e-6
         x_periodicity = self.x_periodicity
         y_periodicity = self.y_periodicity
 
@@ -853,11 +856,11 @@ class Surface3D(DessiaObject):
             current_primitive = primitives2d[i]
             delta = previous_primitive.end - current_primitive.start
             distance = delta.norm()
-            is_connected = math.isclose(distance, 0, abs_tol=1e-2)
+            is_connected = math.isclose(distance, 0, abs_tol=tol)
 
             if not is_connected:
-                if math.isclose(current_primitive.length(), x_periodicity, abs_tol=1e-2) or \
-                        math.isclose(current_primitive.length(), y_periodicity, abs_tol=1e-2):
+                if math.isclose(current_primitive.length(), x_periodicity, abs_tol=tol) or \
+                        math.isclose(current_primitive.length(), y_periodicity, abs_tol=tol):
                     delta_end = previous_primitive.end - current_primitive.end
                     delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
                     if self.is_undefined_brep(primitives2d[i]):
@@ -875,7 +878,7 @@ class Surface3D(DessiaObject):
                                                                    name="construction"))
                         if i < len(primitives2d):
                             i += 1
-                    elif current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
+                    elif current_primitive.end.is_close(previous_primitive.end, tol=tol):
                         primitives2d[i] = current_primitive.reverse()
                     elif delta_min_index == 0:
                         primitives2d[i] = current_primitive.translation(delta)
@@ -883,7 +886,7 @@ class Surface3D(DessiaObject):
                         new_primitive = current_primitive.reverse()
                         primitives2d[i] = new_primitive.translation(delta_end)
 
-                elif current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
+                elif current_primitive.end.is_close(previous_primitive.end, tol=tol):
                     primitives2d[i] = current_primitive.reverse()
                 elif self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                         self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
@@ -896,7 +899,7 @@ class Surface3D(DessiaObject):
         previous_primitive = primitives2d[-1]
         delta = previous_primitive.end - primitives2d[0].start
         distance = delta.norm()
-        is_connected = math.isclose(distance, 0, abs_tol=1e-2)
+        is_connected = math.isclose(distance, 0, abs_tol=tol)
         if not is_connected and self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                 self.is_singularity_point(self.point2d_to_3d(primitives2d[0].start)):
             primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start,

@@ -36,8 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
 
-#### curves
+#### curves.py
 - Circle3D: circle_intersectios when the circle are coplanar.
+
+#### surfaces.py
+- ExtrusionSurface3D: enhance parametric operations.
 
 #### core_compiled
 - Frame2D: fix rotation
@@ -50,6 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
 #### edges.py
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
+
+#### surfaces.py
+- ExtrusionSurface3D: Uses edge abscissa as u parameter.
 
 ### Changed
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.

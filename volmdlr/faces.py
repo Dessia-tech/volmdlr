@@ -2914,14 +2914,14 @@ class ExtrusionFace3D(Face3D):
         return number_points_x, number_points_y
 
     @classmethod
-    def from_surface_rectangular_cut(cls, extrusion_surface3d, x1: float = 0.0, x2: float = 1.0,
-                                     y1: float = 0.0, y2: float = 0.0, name: str = ''):
+    def from_surface_rectangular_cut(cls, extrusion_surface3d: surfaces.ExtrusionSurface3D, x1: float = 0.0,
+                                     x2: float = 0.0, y1: float = 0.0, y2: float = 1.0, name: str = ''):
         """
         Cut a rectangular piece of the ExtrusionSurface3D object and return a ExtrusionFace3D object.
 
         """
-        if not y2:
-            y2 = extrusion_surface3d.edge.length()
+        if not x2:
+            x2 = extrusion_surface3d.edge.length()
         p1 = volmdlr.Point2D(x1, y1)
         p2 = volmdlr.Point2D(x2, y1)
         p3 = volmdlr.Point2D(x2, y2)
