@@ -1723,8 +1723,7 @@ class OctreeBasedVoxelization(Voxelization):
         sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
 
         octree = cls._subdivide_from_points(
-            # np.array([voxel_center for voxel_center in point_based_voxelization.voxel_centers]),
-            point_based_voxelization.voxel_centers,
+            list(point_based_voxelization.voxel_centers),
             center,
             sizes,
             0,
@@ -2231,7 +2230,7 @@ class OctreeBasedVoxelization(Voxelization):
 
     @staticmethod
     def _subdivide_from_points(
-        points: Set[_Point3D],
+        points: List[_Point3D],
         center: _Point3D,
         sizes: List[float],
         depth: int,
@@ -2245,7 +2244,7 @@ class OctreeBasedVoxelization(Voxelization):
             sub_voxels = []
 
             # Initialize lists for sub-voxel points
-            sub_voxel_points = [set() for _ in range(8)]
+            sub_voxel_points = [[] for _ in range(8)]
 
             # Check each point and determine which sub-voxel it belongs to
             for point in points:
@@ -2258,7 +2257,7 @@ class OctreeBasedVoxelization(Voxelization):
                 if point[2] > center[2]:
                     idx |= 1
 
-                sub_voxel_points[idx].add(point)
+                sub_voxel_points[idx].append(point)
 
             for i in range(2):
                 for j in range(2):
@@ -2274,6 +2273,7 @@ class OctreeBasedVoxelization(Voxelization):
                         )
 
                         idx = (i << 2) + (j << 1) + k
+
                         if not sub_voxel_points[idx]:
                             sub_voxels.append([])
 
