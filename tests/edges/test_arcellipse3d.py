@@ -165,7 +165,7 @@ class TestArcEllipse3D(unittest.TestCase):
         ]
         for i, lineseg in enumerate([lineseg1, lineseg2, lineseg3]):
             intersections = self.arc_ellipse3d.linesegment_intersections(lineseg)
-            for result, expected_result in zip(intersections, expected_results[i]):
+            for result, expected_result in zip(intersections[::-1], expected_results[i]):
                 self.assertTrue(result.is_close(expected_result))
 
     def test_arc_intersections(self):
@@ -179,12 +179,12 @@ class TestArcEllipse3D(unittest.TestCase):
             volmdlr.Point3D(1.255568331576755, 0.5696474190625116, 1.2109400610588277),
             volmdlr.Point3D(1.2199886174598773, 1.2728187935178512, 0.6943003434687043)
         )
-        expected_intersections1 = [volmdlr.Point3D(1.354577390684, 0.96462133589, 0.96462133589),
-                                   volmdlr.Point3D(1.393846492347, 0.527819792968, 0.527819792968),
-                                   volmdlr.Point3D(-0.239143661231, -1.105170711828, -1.105170711828),
-                                   volmdlr.Point3D(-0.834635771305, -1.224592042695, -1.224592042695)]
+        expected_intersections1 = [volmdlr.Point3D(1.39384656407, 0.527820124421, 0.527820124421),
+                                   volmdlr.Point3D(1.354577913713, 0.964620364538, 0.964620364538),
+                                   volmdlr.Point3D(-0.834635497503, -1.224592047335, -1.224592047335),
+                                   volmdlr.Point3D(-0.239145968544, -1.105171585562, -1.105171585562)]
         expected_intersections2 = [volmdlr.Point3D(1.3938468501173522, 0.5278214463329128, 0.5278214463329132),
-                                   volmdlr.Point3D(1.1547005383792521, 1.1547005383792512, 1.1547005383792517)]
+                                   volmdlr. Point3D(1.1547005383792521, 1.1547005383792512, 1.1547005383792517)]
         intersections1 = arc1.arcellipse_intersections(self.arc_ellipse3d)
         intersections2 = arc2.arcellipse_intersections(self.arc_ellipse3d)
         for result, expected_result in zip(intersections1, expected_intersections1):

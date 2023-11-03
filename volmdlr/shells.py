@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import pyfqmr
 from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
 from numpy.typing import NDArray
@@ -789,6 +790,23 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             if face_mesh:
                 meshes.append(face_mesh)
         return display.DisplayMesh3D.merge_meshes(meshes)
+
+    def to_triangle_shell(self) -> Union["OpenTriangleShell3D", "ClosedTriangleShell3D"]:
+        """
+        Convert the current shell to a triangle shell.
+
+        If the current shell is already a triangle shell, return it "as is".
+        This conversion conserves the Open / Closed specification.
+        """
+        if "Triangle" in self.__class__.__name__:
+            return self
+
+        triangles = self.triangulation().faces
+
+        if "Closed" in self.__class__.__name__:
+            return ClosedTriangleShell3D(faces=triangles, color=self.color, alpha=self.alpha, name=self.name)
+
+        return OpenTriangleShell3D(faces=triangles, color=self.color, alpha=self.alpha, name=self.name)
 
     def babylon_meshes(self, merge_meshes=True):
         """
@@ -1679,9 +1697,10 @@ class ClosedShell3D(Shell3D):
         faces += shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
         new_valid_faces = self.subtraction_faces(shell2, intersecting_faces, intersecting_combinations)
         faces += new_valid_faces
-        # new_shell = ClosedShell3D(faces)
+        new_shell = ClosedShell3D(faces)
         # new_shell.eliminate_not_valid_closedshell_faces()
-        return self.from_faces(faces)
+        # return self.from_faces(faces)
+        return [new_shell]
 
     def validate_intersection_operation(self, shell2):
         """
@@ -1822,6 +1841,72 @@ class OpenTriangleShell3D(OpenShell3D):
             triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
 
         return cls(triangles, name=name)
+
+    def decimate(
+        self,
+        target_count: int,
+        update_rate: int = 5,
+        aggressiveness: float = 7.0,
+        max_iterations: int = 100,
+        verbose: bool = False,
+        lossless: bool = False,
+        threshold_lossless: float = 1e-3,
+        alpha: float = 1e-9,
+        k: int = 3,
+        preserve_border: bool = True,
+    ):
+        """
+        Decimate the triangle shell, and return it.
+
+        Note: threshold = alpha * pow(iteration + k, aggressiveness)
+
+        :param target_count: Target number of triangles. Not used if `lossless` is True.
+        :type target_count: int
+        :param update_rate: Number of iterations between each update. If `lossless` flag is set to True, rate is 1.
+        :type update_rate: int
+        :param aggressiveness: Parameter controlling the growth rate of the threshold at each iteration when `lossless`
+            is False.
+        :type aggressiveness: float
+        :param max_iterations: Maximal number of iterations.
+        :type max_iterations: int
+        :param verbose: Control verbosity.
+        :type verbose: bool
+        :param lossless: Use the lossless simplification method.
+        :type lossless: bool
+        :param threshold_lossless: Maximal error after which a vertex is not deleted. Only for `lossless` method.
+        :type threshold_lossless: float
+        :param alpha: Parameter for controlling the threshold growth.
+        :type alpha: float
+        :param k: Parameter for controlling the threshold growth.
+        :type k: int
+        :param preserve_border: Flag for preserving vertices on open border.
+        :type preserve_border: bool
+
+        :return: The decimated triangle shell.
+        :rtype: OpenTriangleShell3D
+        """
+        # pylint: disable=too-many-arguments
+
+        vertices, triangles = self.to_mesh_data(round_vertices=True, n_decimals=9)
+
+        simplifier = pyfqmr.Simplify()
+        simplifier.setMesh(vertices, triangles)
+        simplifier.simplify_mesh(
+            target_count=target_count,
+            update_rate=update_rate,
+            aggressiveness=aggressiveness,
+            max_iterations=max_iterations,
+            verbose=verbose,
+            lossless=lossless,
+            threshold_lossless=threshold_lossless,
+            alpha=alpha,
+            K=k,
+            preserve_border=preserve_border,
+        )
+
+        vertices, faces, _ = simplifier.getMesh()
+
+        return self.__class__.from_mesh_data(vertices, faces)
 
     def to_trimesh(self):
         """Creates a Trimesh from a TriangleShell3D."""
