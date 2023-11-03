@@ -1090,10 +1090,10 @@ class Surface3D(DessiaObject):
 
     def contour_intersections(self, contour3d: wires.Contour3D):
         """
-        Gets intersections between surface 3d and a contour 3d.
+        Gets intersections between a contour 3D and a Surface 3D.
 
-        :param contour3d: other contour to get intersections with.
-        :return: list of intersection points.
+        :param contour3d: other contour get intersections with.
+        :return: list of intersecting points.
         """
         outer_contour_intersections_with_plane = []
         for primitive in contour3d.primitives:
@@ -4040,7 +4040,6 @@ class SphericalSurface3D(PeriodicalSurface):
         theta2, phi2 = end
         if arc3d.is_point_edge_extremity(point_singularity):
             return [edges.LineSegment2D(start, end)]
-        primitives = []
         if math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-2):
             if theta1 == math.pi and theta2 != math.pi:
                 theta1 = -math.pi
