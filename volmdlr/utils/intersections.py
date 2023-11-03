@@ -279,6 +279,8 @@ def conic_intersections(conic1, conic2, abs_tol: float = 1e-6):
         conic2_2d = frame_mapped_conic2.to_2d(frame_mapped_conic1.frame.origin,
                                               frame_mapped_conic1.frame.u, frame_mapped_conic1.frame.v)
         intersections_2d = conic1_2d.curve_intersections(conic2_2d, abs_tol)
+        if not intersections_2d:
+            return []
         local_intersections = []
         for intersection in intersections_2d:
             local_intersections.append(volmdlr.Point3D(intersection[0], intersection[1], 0.0))

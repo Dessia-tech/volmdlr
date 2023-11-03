@@ -1164,13 +1164,21 @@ class Surface3D(DessiaObject):
         :param curve: other circle to verify intersections.
         :return: a list of intersection points, if there exists any.
         """
+        if not self.frame.origin.is_close(volmdlr.O3D) or not self.frame.w.is_close(volmdlr.Z3D):
+            local_surface = self.frame_mapping(self.frame, 'new')
+            local_curve = curve.frame_mapping(self.frame, 'new')
+            local_intersections = local_surface.curve_intersections(local_curve)
+            global_intersections = []
+            for intersection in local_intersections:
+                global_intersections.append(self.frame.local_to_global_coordinates(intersection))
+            return global_intersections
         curve_plane = Plane3D(curve.frame)
         curve_plane_intersections = self.plane_intersections(curve_plane)
         if not curve_plane_intersections:
             return []
         intersections = []
-        for circle_plane_intersection in curve_plane_intersections:
-            inters = circle_plane_intersection.curve_intersections(curve)
+        for curve_plane_intersection in curve_plane_intersections:
+            inters = curve_plane_intersection.curve_intersections(curve)
             for intersection in inters:
                 if not volmdlr.core.point_in_list(intersection, intersections):
                     intersections.append(intersection)
@@ -3076,52 +3084,6 @@ class ToroidalSurface3D(PeriodicalSurface):
                 intersections.append(line.point1 + sol_param*vector)
         return intersections
 
-    # def circle_intersections(self, circle: curves.Circle3D):
-    #     """
-    #     Gets intersections between a ToroidalSurface3D Surface 3D and a circle 3D.
-    #
-    #     :param circle: other circle 3D.
-    #     :return: list containing the intersection points.
-    #     """
-    #     if not self.bounding_box.is_intersecting(circle.bounding_box):
-    #         return []
-    #     circle_plane = Plane3D(circle.frame)
-    #     plane_intersections = self.plane_intersections(circle_plane)
-    #     intersection_points = []
-    #     for intersection in plane_intersections:
-    #         inters = intersection.circle_intersections(circle)
-    #         for inter in inters:
-    #             if not volmdlr.core.point_in_list(inter, intersection_points):
-    #                 intersection_points.append(inter)
-    #     return intersection_points
-    #
-    # def fullarc_intersections(self, fullarc: edges.FullArc3D):
-    #     """
-    #     Gets intersections between a ToroidalSurface3D Surface 3D and a circle 3D.
-    #
-    #     :param fullarc: other fullarc 3D.
-    #     :return: list containing the intersection points.
-    #     """
-    #     return self.circle_intersections(fullarc.circle)
-
-    def ellipse_intersections(self, ellipse: curves.Ellipse3D):
-        """
-        Calculates the intersections between a conical surface and an ellipse 3D.
-
-        :param ellipse: other ellipse to verify intersections.
-        :return: a list of intersection points, if there exists any.
-        """
-        # self_plane = Plane3D(self.frame)
-        # ellipse_plane = Plane3D(ellipse.frame)
-        # plane_intersections = self_plane.plane_intersections(ellipse_plane)
-        # ellipse_line_intersections = ellipse.line_intersections(plane_intersections[0])
-        # if ellipse_line_intersections:
-        #     if all(self.frame.origin.point_distance(intersection) < self.inner_radius or
-        #            self.frame.origin.point_distance(intersection) > self.outer_radius
-        #            for intersection in ellipse_line_intersections):
-        #         return []
-        return self.curve_intersections(ellipse)
-
     def parallel_plane_intersection(self, plane3d: Plane3D):
         """
         Toroidal plane intersections when plane's normal is perpendicular with the cylinder axis.
@@ -3347,12 +3309,12 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param conical_surface: other Conical Surface 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(150)
+        arcs = self._torus_arcs(200)
         points_intersections = []
         for arc in arcs:
             intersections = conical_surface.circle_intersections(arc)
             points_intersections.extend(intersections)
-        for edge in conical_surface.get_generatrices(self.outer_radius * 3, 200):
+        for edge in conical_surface.get_generatrices(self.outer_radius * 3, 300):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not volmdlr.core.point_in_list(point, points_intersections):
@@ -3376,6 +3338,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         #     elif math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
         #         return [curves.Circle3D(self.frame, self.minor_radius)]
         intersection_points = self._conical_intersection_points(conical_surface)
+        if not intersection_points:
+            return []
         inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
         curves_ = []
         for list_points in inters_points:
@@ -3651,6 +3615,30 @@ class ConicalSurface3D(PeriodicalSurface):
         new_frame = self.frame.rotation(center=center, axis=axis, angle=angle)
         return self.__class__(new_frame, self.semi_angle)
 
+    def circle_intersections(self, circle: curves.Circle3D):
+        """
+        Calculates the intersections between a conical surface and a Circle 3D.
+
+        :param circle: other circle to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        if not self.frame.origin.is_close(volmdlr.O3D) or not self.frame.w.is_close(volmdlr.Z3D):
+            local_surface = self.frame_mapping(self.frame, 'new')
+            local_curve = circle.frame_mapping(self.frame, 'new')
+            local_intersections = local_surface.circle_intersections(local_curve)
+            global_intersections = []
+            for intersection in local_intersections:
+                global_intersections.append(self.frame.local_to_global_coordinates(intersection))
+            return global_intersections
+        if circle.bounding_box.zmax < self.frame.origin.z:
+            return []
+        z_max = circle.bounding_box.zmax
+        radius = z_max * math.tan(self.semi_angle)
+        line = curves.Line3D.from_point_and_vector(self.frame.origin, self.frame.w)
+        if line.point_distance(circle.center) > radius + circle.radius:
+            return []
+        return self.curve_intersections(circle)
+
     def line_intersections(self, line: curves.Line3D):
         """
         Calculates the intersections between a conical surface and a Line 3D.
@@ -3724,6 +3712,8 @@ class ConicalSurface3D(PeriodicalSurface):
         line_circle_intersecting_plane = curves.Line3D(line_circle_intersecting_plane[0],
                                                        line_circle_intersecting_plane[1])
         hyperbola_points = circle.line_intersections(line_circle_intersecting_plane)
+        if not hyperbola_points:
+            return []
         semi_major_dir = (hyperbola_positive_vertex - hyperbola_center).unit_vector()
         frame = volmdlr.Frame3D(hyperbola_center, semi_major_dir,
                                 plane3d.frame.w.cross(semi_major_dir), plane3d.frame.w)
