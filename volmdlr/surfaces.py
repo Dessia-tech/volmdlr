@@ -832,6 +832,9 @@ class Surface3D(DessiaObject):
         :return: A list of primitives.
         :rtype: list
         """
+        tol = 1e-2
+        if self.__class__.__name__ == "ExtrusionSurface3D":
+            tol = 5e-6
         x_periodicity = self.x_periodicity
         y_periodicity = self.y_periodicity
 
@@ -849,11 +852,11 @@ class Surface3D(DessiaObject):
             current_primitive = primitives2d[i]
             delta = previous_primitive.end - current_primitive.start
             distance = delta.norm()
-            is_connected = math.isclose(distance, 0, abs_tol=1e-2)
+            is_connected = math.isclose(distance, 0, abs_tol=tol)
 
             if not is_connected:
-                if math.isclose(current_primitive.length(), x_periodicity, abs_tol=1e-2) or \
-                        math.isclose(current_primitive.length(), y_periodicity, abs_tol=1e-2):
+                if math.isclose(current_primitive.length(), x_periodicity, abs_tol=tol) or \
+                        math.isclose(current_primitive.length(), y_periodicity, abs_tol=tol):
                     delta_end = previous_primitive.end - current_primitive.end
                     delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
                     if self.is_undefined_brep(primitives2d[i]):
@@ -871,7 +874,7 @@ class Surface3D(DessiaObject):
                                                                    name="construction"))
                         if i < len(primitives2d):
                             i += 1
-                    elif current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
+                    elif current_primitive.end.is_close(previous_primitive.end, tol=tol):
                         primitives2d[i] = current_primitive.reverse()
                     elif delta_min_index == 0:
                         primitives2d[i] = current_primitive.translation(delta)
@@ -879,7 +882,7 @@ class Surface3D(DessiaObject):
                         new_primitive = current_primitive.reverse()
                         primitives2d[i] = new_primitive.translation(delta_end)
 
-                elif current_primitive.end.is_close(previous_primitive.end, tol=1e-2):
+                elif current_primitive.end.is_close(previous_primitive.end, tol=tol):
                     primitives2d[i] = current_primitive.reverse()
                 elif self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                         self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
@@ -892,7 +895,7 @@ class Surface3D(DessiaObject):
         previous_primitive = primitives2d[-1]
         delta = previous_primitive.end - primitives2d[0].start
         distance = delta.norm()
-        is_connected = math.isclose(distance, 0, abs_tol=1e-2)
+        is_connected = math.isclose(distance, 0, abs_tol=tol)
         if not is_connected and self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                 self.is_singularity_point(self.point2d_to_3d(primitives2d[0].start)):
             primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start,
@@ -4626,7 +4629,7 @@ class ExtrusionSurface3D(Surface3D):
         start = self.edge.start
         end = self.edge.end
         if start.is_close(end, 1e-4):
-            self._x_periodicity = 1
+            self._x_periodicity = self.edge.length()
             return self._x_periodicity
         return None
 
@@ -4651,7 +4654,7 @@ class ExtrusionSurface3D(Surface3D):
                 u -= self.x_periodicity
             elif u < 0:
                 u += self.x_periodicity
-        point_at_curve = self.edge.point_at_abscissa(u * self.edge.length())
+        point_at_curve = self.edge.point_at_abscissa(u)
         point = point_at_curve.translation(self.frame.w * v)
         return point
 
@@ -4681,7 +4684,7 @@ class ExtrusionSurface3D(Surface3D):
                 point_at_curve_local = volmdlr.Point3D(x, y, 0)
                 point_at_curve = self.frame.local_to_global_coordinates(point_at_curve_local)
 
-        u = self.edge.abscissa(point_at_curve, tol=1e-6) / self.edge.length()
+        u = self.edge.abscissa(point_at_curve, tol=1e-6)
         v = z - point_at_curve_local.z
 
         return volmdlr.Point2D(u, v)
@@ -4718,13 +4721,13 @@ class ExtrusionSurface3D(Surface3D):
             fullarcellipse = edges.FullArcEllipse3D(edge, start_end, edge.name)
             direction = -object_dict[arguments[2]]
             surface = cls(edge=fullarcellipse, direction=direction, name=name)
-            surface.x_periodicity = 1
+            surface.x_periodicity = fullarcellipse.length()
         elif edge.__class__ is curves.Circle3D:
             start_end = edge.center + edge.frame.u * edge.radius
             fullarc = edges.FullArc3D(edge, start_end)
             direction = object_dict[arguments[2]]
             surface = cls(edge=fullarc, direction=direction, name=name)
-            surface.x_periodicity = 1
+            surface.x_periodicity = fullarc.length()
 
         else:
             direction = object_dict[arguments[2]]
@@ -4907,7 +4910,7 @@ class ExtrusionSurface3D(Surface3D):
             points = self._repair_points_order(points, edge3d)
         start = points[0]
         end = points[-1]
-        if is_isocurve(points, 1e-3):
+        if is_isocurve(points, 1e-5):
             return [edges.LineSegment2D(start, end)]
         if hasattr(edge3d, "degree"):
             degree = edge3d.degree
