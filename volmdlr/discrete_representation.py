@@ -1704,7 +1704,27 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A OctreeBasedVoxelization created from the PointBasedVoxelization.
         :rtype: OctreeBasedVoxelization
         """
-        pass
+        min_corner = np.min(np.array(point_based_voxelization.min_grid_center), axis=0)
+        max_corner = np.max(np.array(point_based_voxelization.max_grid_center), axis=0)
+
+        voxel_size = point_based_voxelization.voxel_size
+
+        # Compute the corners in the implicit grid defined by the voxel size
+        min_corner = (np.floor_divide(min_corner, voxel_size) - 2) * voxel_size
+        max_corner = (np.floor_divide(max_corner, voxel_size) + 2) * voxel_size
+
+        root_size = round_to_digits(np.max(np.maximum(np.abs(min_corner), np.abs(max_corner))) * 2, DECIMALS)
+
+        # Compute the max depth corresponding the voxel_size
+        max_depth = math.ceil(math.log2(root_size // voxel_size))
+        center = (0.0, 0.0, 0.0)
+
+        sizes = [round_to_digits(voxel_size * 2 ** i, DECIMALS) for i in range(max_depth, -1, -1)]
+        sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
+
+        octree = cls._subdivide_from_points(point_based_voxelization.voxel_centers, center, sizes, 0, max_depth)
+
+        return cls(octree, center, max_depth, voxel_size)
 
     # BOOLEAN OPERATIONS
     def is_intersecting(self, other: "OctreeBasedVoxelization") -> bool:
@@ -2201,6 +2221,55 @@ class OctreeBasedVoxelization(Voxelization):
 
         else:  # reached max depth
             return intersecting_indices
+
+    @staticmethod
+    def _subdivide_from_points(
+        points: Set[_Point3D],
+        center: _Point3D,
+        sizes: List[float],
+        depth: int,
+        max_depth: int,
+    ):
+        """Recursive method to subdivide the voxelization in 8 until the wanted tree depth is reached."""
+        # TODO: improve by making bbox checks
+
+        if depth < max_depth:  # not yet reached max depth
+            half_size = sizes[depth + 1]
+
+            sub_voxels = []
+
+            for i in range(2):
+                for j in range(2):
+                    for k in range(2):
+                        # calculate the center of the sub-voxel
+                        sub_voxel_center = round_point_3d_to_digits(
+                            (
+                                center[0] + (i - 0.5) * half_size,
+                                center[1] + (j - 0.5) * half_size,
+                                center[2] + (k - 0.5) * half_size,
+                            ),
+                            DECIMALS,
+                        )
+
+                        sub_voxels.append(
+                            OctreeBasedVoxelization._subdivide_from_points(
+                                points=points,
+                                center=sub_voxel_center,
+                                sizes=sizes,
+                                depth=depth + 1,
+                                max_depth=max_depth,
+                            )
+                        )
+
+            if all(not sub_voxel for sub_voxel in sub_voxels):
+                return []
+            return sub_voxels
+
+        else:  # reached max depth
+            if center in points:
+                return [1]
+            else:
+                return []
 
     def _get_homogeneous_leaf_centers(
         self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
