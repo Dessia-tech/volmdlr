@@ -109,37 +109,6 @@ class TestEllipse3D(unittest.TestCase):
         self.assertEqual(ellipse.normal, volmdlr.Z3D)
         self.assertEqual(ellipse.major_axis, 5.0)
         self.assertEqual(ellipse.minor_axis, 3.0)
-        
-    def test_linesegment_intersections(self):
-        line1 = edges.LineSegment3D(volmdlr.Point3D(2.548547388496604, 3.4145727922810423, 3.4145727922810423),
-                                    volmdlr.Point3D(-1.6329931618554527, -3.36504396942433, -3.36504396942433))
-        line2 = edges.LineSegment3D(volmdlr.Point3D(-0.5978657793452512, -2.7629292888063484, -1.2103434310450787),
-                                    volmdlr.Point3D(0.47829262347620083, 2.2103434310450787, -0.8948282844774607))
-        line3 = edges.LineSegment3D(volmdlr.Point3D(3.0, 4.0, 2.5),
-                                    volmdlr.Point3D(-3.0, -5.0, -2.0))
-        lists_expected_intersections = [[volmdlr.Point3D(-0.23914631173810008, -1.105171715522539, -1.105171715522539),
-                                         volmdlr.Point3D(1.154700538379252, 1.1547005383792517, 1.1547005383792517)],
-                                        [volmdlr.Point3D(-0.2391463117381003, -1.1051717155225391, -1.1051717155225391)],
-                                        []]
-        for i, lineseg in enumerate([line1, line2, line3]):
-            inters = self.ellipse3d.linesegment_intersections(lineseg)
-            for intersection, expected_result in zip(inters, lists_expected_intersections[i]):
-                self.assertTrue(intersection.is_close(expected_result))
-
-    def test_ellipse_intersections(self):
-        ellipse3d_2 = self.ellipse3d.translation(self.ellipse3d.frame.u * 0.2)
-        ellipse3d_2 = ellipse3d_2.rotation(self.ellipse3d.center, self.ellipse3d.frame.w, math.pi / 3)
-
-        ellipse_intersections = self.ellipse3d.ellipse_intersections(ellipse3d_2)
-        expected_results = [volmdlr.Point3D(1.387122270021, 0.498764319098, 0.498764319098),
-
-                            volmdlr.Point3D(0.442026341769, -0.728884874076, -0.728884874076),
-
-                            volmdlr.Point3D(-1.352092241872, -0.382919522276, -0.382919522276),
-
-                            volmdlr.Point3D(-0.499996156401, 0.685417254467, 0.685417254467)]
-        for intersection, expected_result in zip(ellipse_intersections, expected_results):
-            self.assertTrue(intersection.is_close(expected_result))
 
     def test_linesegment_intersections(self):
         line1 = edges.LineSegment3D(volmdlr.Point3D(2.548547388496604, 3.4145727922810423, 3.4145727922810423),
@@ -154,7 +123,7 @@ class TestEllipse3D(unittest.TestCase):
                                         []]
         for i, lineseg in enumerate([line1, line2, line3]):
             inters = self.ellipse3d.linesegment_intersections(lineseg)
-            for intersection, expected_result in zip(inters, lists_expected_intersections[i]):
+            for intersection, expected_result in zip(inters[::-1], lists_expected_intersections[i]):
                 self.assertTrue(intersection.is_close(expected_result))
 
     def test_ellipse_intersections(self):

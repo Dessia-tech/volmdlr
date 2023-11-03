@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object,
 - CylindricalSurface3D: circle_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
+- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections
 #### edges.py
 - BsplineCurve3D: circle_intersections.
 #### curves.py
@@ -25,13 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 #### faces.py
-- PlaneFace3D: circle_intersections.
+- PlaneFace3D: circle_intersections. planeface_intersections
 #### wires.py
 - delete remaining inplace methods in wires.py
 #### shells.py
 - Fixes to boolean operations.
 
-### Refactor
+### surfaces.py 
+- SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
 
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
@@ -40,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
 #### edges.py
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
+
+#### core_compiled
+- Frame2D: fix rotation
+
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
 
@@ -56,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CylindricalSurface3D:  test_circle_intersections.
 #### faces
 - ToroidalFace3D: PlaneFace3D intersectios.
-
+- SphericalSurface3D: circle_intersections, arc_intersections, arcellipse_intersections
 ## v0.14.0
 
 ### New Features
