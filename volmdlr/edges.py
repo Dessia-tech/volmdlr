@@ -5,7 +5,6 @@ Edges related classes.
 """
 import math
 import sys
-import time
 import warnings
 from itertools import product
 from typing import List, Union
@@ -1614,10 +1613,6 @@ class BSplineCurve(Edge):
 
         :param tag: The BsplineCurve index
         :type tag: int
-        :param start_point_tag: The linesegment' start point index
-        :type start_point_tag: int
-        :param end_point_tag: The linesegment' end point index
-        :type end_point_tag: int
 
         :return: A line
         :rtype: str
@@ -5168,6 +5163,15 @@ class BSplineCurve3D(BSplineCurve):
         if self.bounding_box.distance_to_bbox(arc.bounding_box) > abs_tol:
             return []
         return self._generic_edge_intersections(arc, abs_tol)
+
+    def curve_intersections(self, curve, abs_tol: float = 1e-6):
+        if self.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
+            return []
+        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(curve, self, abs_tol=abs_tol)
+        # return intersections_points
+        # method_name = f'{curve.__class__.__name__.lower()[:-2]}_intersections'
+        # return getattr(self, method_name)(curve, abs_tol)
+        return intersections_points
 
     def circle_intersections(self, circle, abs_tol: float = 1e-6):
         if self.bounding_box.distance_to_bbox(circle.bounding_box) > abs_tol:

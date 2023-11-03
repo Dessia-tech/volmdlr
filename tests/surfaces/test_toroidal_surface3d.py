@@ -180,7 +180,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         frame = frame.rotation(volmdlr.Point3D(1, 1, 0), volmdlr.Y3D, math.pi / 4)
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
-        inters = toroidal_surface.cylindrical_surface_intersections(cylindrical_surface)
+        inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
         self.assertAlmostEqual(inters[0].length(), 14.655915673071078)
         # Test2
@@ -190,7 +190,7 @@ class TestToroidalSurface3D(unittest.TestCase):
                                 surfaces.CylindricalSurface3D(frame, 1),
                                 surfaces.CylindricalSurface3D(frame, 0.9)]
         for i, surface in enumerate(cylindrical_surfaces):
-            inters = toroidal_surface.cylindrical_surface_intersections(surface)
+            inters = toroidal_surface.cylindricalsurface_intersections(surface)
             for sol, expected_result in zip(inters, expected_results[i]):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
@@ -204,7 +204,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
             cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1.5)
-            inters = toroidal_surface.cylindrical_surface_intersections(cylindrical_surface)
+            inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
             for sol, expected_result in zip(inters, expected_results[i]):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
@@ -219,6 +219,38 @@ class TestToroidalSurface3D(unittest.TestCase):
         expected_point2 = volmdlr.Point3D(0.161552737537, 1.544982741074, -0.894736842105)
         self.assertTrue(circle_intersections[0].is_close(expected_point1))
         self.assertTrue(circle_intersections[1].is_close(expected_point2))
+
+    def test_ellipse_intersections(self):
+        toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, 0.0),
+                                                                      u=volmdlr.Vector3D(-5.551115123125783e-17, 0.0,
+                                                                                         0.9999999999999998),
+                                                                      v=volmdlr.Vector3D(0.0, 0.9999999999999998, 0.0),
+                                                                      w=volmdlr.Vector3D(-0.9999999999999998, 0.0,
+                                                                                         -5.551115123125783e-17)), 3,
+                                                      1)
+
+        frame = volmdlr.Frame3D(origin=volmdlr.Point3D(0.0, 0.0, 0.0),
+                                u=volmdlr.Vector3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+                                v=volmdlr.Vector3D(0.8164965809277258, -0.40824829046386313, -0.40824829046386313),
+                                w=volmdlr.Vector3D(0.0, 0.7071067811865476, -0.7071067811865476))
+
+        ellipse = curves.Ellipse3D(2, 1, frame)
+        ellipse_intersections = toroidal_surface.ellipse_intersections(ellipse)
+        self.assertFalse(ellipse_intersections)
+
+        frame1 = frame.translation(volmdlr.Vector3D(3, 0.0, 0.0))
+        ellipse = curves.Ellipse3D(7, 2.5, frame1)
+        ellipse_intersections = toroidal_surface.ellipse_intersections(ellipse)
+        self.assertFalse(ellipse_intersections)
+
+        frame = frame.translation(volmdlr.Vector3D(3, 0.0, 0.0))
+        ellipse = curves.Ellipse3D(2, 1, frame)
+        ellipse_intersections = toroidal_surface.ellipse_intersections(ellipse)
+        self.assertEqual(len(ellipse_intersections), 2)
+        self.assertTrue(ellipse_intersections[0].is_close(
+            volmdlr.Point3D(1.686564519293097, -1.027451632802102, -1.027451632802102)))
+        self.assertTrue(ellipse_intersections[1].is_close(
+            volmdlr.Point3D(1.8179453474500284, -1.1400021883520102, -1.1400021883520102)))
 
 
 if __name__ == '__main__':

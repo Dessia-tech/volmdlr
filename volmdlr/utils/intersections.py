@@ -3,7 +3,6 @@ volmdlr utils for calculating curves intersections.
 
 """
 import math
-import time
 
 import volmdlr
 from volmdlr.utils.common_operations import get_abscissa_discretization, get_plane_equation_coefficients
@@ -89,20 +88,21 @@ def conic3d_line_intersections(conic3d, line3d, abs_tol: float = 1e-6):
             intersections.append(volmdlr.Point3D(intersection[0], intersection[1], conic3d.frame.origin.z))
         return intersections
     plane_lineseg_intersections = get_plane_line_intersections(conic3d.frame, line3d)
-    if conic3d.point_belongs(plane_lineseg_intersections[0]):
+    if plane_lineseg_intersections and conic3d.point_belongs(plane_lineseg_intersections[0]):
         return plane_lineseg_intersections
     return []
 
 
-def ellipse2d_line_intersections(ellipse2d, line2d):
+def ellipse2d_line_intersections(ellipse2d, line2d, abs_tol: float = 1e-6):
     """
     Calculates the intersections between a line and an ellipse.
 
     :param ellipse2d: Ellipse to calculate intersections
     :param line2d: line to calculate intersections
+    :param abs_tol: tolerance.
     :return: list of points intersections, if there are any
     """
-    if line2d.point_distance(ellipse2d.center) > ellipse2d.major_axis + 1e-6:
+    if line2d.point_distance(ellipse2d.center) > ellipse2d.major_axis + abs_tol:
         return []
     theta = volmdlr.geometry.clockwise_angle(ellipse2d.major_dir, volmdlr.X2D)
     if (not math.isclose(theta, 0.0, abs_tol=1e-6) and not math.isclose(theta, 2 * math.pi, abs_tol=1e-6)) or\
@@ -277,11 +277,11 @@ def conic_intersections(conic1, conic2, abs_tol: float = 1e-6):
         frame_mapped_conic2 = conic2.frame_mapping(conic1.frame, 'new')
         conic1_2d = frame_mapped_conic1.self_2d
         conic2_2d = frame_mapped_conic2.to_2d(frame_mapped_conic1.frame.origin,
-                                              frame_mapped_conic1.frame.u,frame_mapped_conic1.frame.v)
+                                              frame_mapped_conic1.frame.u, frame_mapped_conic1.frame.v)
         intersections_2d = conic1_2d.curve_intersections(conic2_2d, abs_tol)
         local_intersections = []
         for intersection in intersections_2d:
-            local_intersections.append(volmdlr.Point3D(intersection[0], intersection[1], conic1.frame.origin.z))
+            local_intersections.append(volmdlr.Point3D(intersection[0], intersection[1], 0.0))
         # circle_linseg_intersections = conic3d_line_intersections(frame_mapped_conic1, frame_mapped_conic2, abs_tol)
         for inter in local_intersections:
             intersections.append(conic1.frame.local_to_global_coordinates(inter))

@@ -1,37 +1,36 @@
 """volmdlr module for 3D Surfaces."""
 import math
-import warnings
-from itertools import chain
-from typing import List, Union, Dict, Any
 import traceback
+import warnings
 from collections import deque
 from functools import cached_property
+from itertools import chain
+from typing import List, Union, Dict, Any
 
 import matplotlib.pyplot as plt
 import numpy as npy
 import triangle as triangle_lib
+
 from geomdl import NURBS, BSpline
-from scipy.optimize import least_squares, minimize
 from scipy.linalg import lu_factor, lu_solve
+from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
-from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
-
 from dessia_common.typings import JsonSerializable
-from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
-from volmdlr.nurbs.helpers import generate_knot_vector
-from volmdlr.nurbs.operations import split_surface_u, split_surface_v
-import volmdlr.core
-from volmdlr import display, edges, grid, wires, curves
-import volmdlr.geometry
-import volmdlr.utils.parametric as vm_parametric
-from volmdlr.core import EdgeStyle
-from volmdlr.core import point_in_list
 import volmdlr.nurbs.helpers as nurbs_helpers
+from volmdlr.nurbs.helpers import generate_knot_vector
+import volmdlr.core
+import volmdlr.geometry
+import volmdlr.utils.common_operations as vm_common_operations
+import volmdlr.utils.intersections as vm_utils_intersections
+import volmdlr.utils.parametric as vm_parametric
+from volmdlr import display, edges, grid, wires, curves
+from volmdlr.core import EdgeStyle, point_in_list
+from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
+from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
+from volmdlr.nurbs.operations import split_surface_u, split_surface_v
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity)
-import volmdlr.utils.intersections as vm_utils_intersections
-import volmdlr.utils.common_operations as vm_common_operations
 
 
 def knots_vector_inv(knots_vector):
@@ -62,6 +61,22 @@ class Surface2D(PhysicalObject):
         PhysicalObject.__init__(self, name=name)
 
     def __hash__(self):
+        """
+        Calculate the hash value for Surface2D.
+
+        This method is used to generate a hash value for instances of the
+        current class, which can be used for hash-based data structures like
+        dictionaries and sets.
+
+        The hash value is computed based on the combined hash of the outer
+        contour and a tuple of hash values for the inner contours. This
+        ensures that objects with equivalent contours will have the same
+        hash value, allowing them to be efficiently compared and retrieved
+        from hash-based collections.
+
+        :return: A hash value representing the object's state.
+        :rtype: int
+        """
         return hash((self.outer_contour, tuple(self.inner_contours)))
 
     def _data_hash(self):
@@ -391,6 +406,7 @@ class Surface2D(PhysicalObject):
         """
         Cuts a Surface2D with line (2).
 
+        # TODO: is it used? Is not there already a method doing the same thing in wires?
         :param line: DESCRIPTION
         :type line: TYPE
         :raises NotImplementedError: DESCRIPTION
@@ -1073,6 +1089,12 @@ class Surface3D(DessiaObject):
         return intersections
 
     def contour_intersections(self, contour3d: wires.Contour3D):
+        """
+        Gets intersections between surface 3d and a contour 3d.
+
+        :param contour3d: other contour to get intersections with.
+        :return: list of intersection points.
+        """
         outer_contour_intersections_with_plane = []
         for primitive in contour3d.primitives:
             primitive_plane_intersections = self.edge_intersections(primitive)
@@ -1134,6 +1156,107 @@ class Surface3D(DessiaObject):
         linesegment_intersections = [inters for inters in line_intersections
                                      if linesegment3d.point_belongs(inters, abs_tol)]
         return linesegment_intersections
+
+    def curve_intersections(self, curve):
+        """
+        Calculates the intersections between a conical surface and a curve 3D.
+
+        :param curve: other circle to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        curve_plane = Plane3D(curve.frame)
+        curve_plane_intersections = self.plane_intersections(curve_plane)
+        if not curve_plane_intersections:
+            return []
+        intersections = []
+        for circle_plane_intersection in curve_plane_intersections:
+            inters = circle_plane_intersection.curve_intersections(curve)
+            for intersection in inters:
+                if not volmdlr.core.point_in_list(intersection, intersections):
+                    intersections.append(intersection)
+        return intersections
+
+    def circle_intersections(self, circle: curves.Circle3D):
+        """
+        Calculates the intersections between a conical surface and a Circle 3D.
+
+        :param circle: other circle to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        return self.curve_intersections(circle)
+
+    def ellipse_intersections(self, ellipse: curves.Ellipse3D):
+        """
+        Calculates the intersections between a conical surface and an ellipse 3D.
+
+        :param ellipse: other ellipse to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        return self.curve_intersections(ellipse)
+
+    def hyperbola_intersections(self, hyperbola: curves.Hyperbola3D):
+        """
+        Calculates the intersections between a conical surface and a hyperbola 3D.
+
+        :param hyperbola: other hyperbola to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        return self.curve_intersections(hyperbola)
+
+    def parabola_intersections(self, parabola: curves.Parabola3D):
+        """
+        Calculates the intersections between a conical surface and a parabola 3D.
+
+        :param parabola: other parabola to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        return self.curve_intersections(parabola)
+
+    def fullarc_intersections(self, fullarc: edges.FullArc3D):
+        """
+        Calculates the intersections between a conical surface and a full arc 3D.
+
+        :param fullarc: other fullarc to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        return self.curve_intersections(fullarc.circle)
+
+    def arc_intersections(self, arc3d: edges.Arc3D):
+        """
+        Calculates the intersections between a conical surface and an arc 3D.
+
+        :param arc3d: other arc to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        circle_intersections = self.curve_intersections(arc3d.circle)
+        intersections = []
+        for intersection in circle_intersections:
+            if arc3d.point_belongs(intersection):
+                intersections.append(intersection)
+        return intersections
+
+    def fullarcellipse_intersections(self, fullarcellipse: edges.FullArcEllipse3D):
+        """
+        Calculates the intersections between a conical surface and a fullarcellipse 3D.
+
+        :param fullarcellipse: other fullarcellipse to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        return self.ellipse_intersections(fullarcellipse.ellipse)
+
+    def arcellipse_intersections(self, arcellipse: edges.ArcEllipse3D):
+        """
+        Calculates the intersections between a conical surface and an arcellipse 3D.
+
+        :param arcellipse: other arcellipse to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        ellipse_intersections = self.curve_intersections(arcellipse.ellipse)
+        intersections = []
+        for intersection in ellipse_intersections:
+            if arcellipse.point_belongs(intersection):
+                intersections.append(intersection)
+        return intersections
 
 
 class Plane3D(Surface3D):
@@ -1316,50 +1439,6 @@ class Plane3D(Surface3D):
         :return: a list with the intersecting point.
         """
         return vm_utils_intersections.get_plane_linesegment_intersections(self.frame, linesegment, abs_tol)
-
-    def circle_intersections(self, circle: curves.Circle3D):
-        """
-        Calculates the intersections between a Plane 3D and a FullArc 3D.
-
-        :param circle: circle to verify intersections.
-        :return: list of intersections: List[volmdlr.Point3D].
-        """
-        if self.point_distance(circle.center) > circle.radius:
-            return []
-        circle_plane = Plane3D(circle.frame)
-        plane_intersections = self.plane_intersections(circle_plane)
-        if not plane_intersections:
-            return []
-        circle2d = circle.to_2d(circle.center, circle_plane.frame.u, circle_plane.frame.v)
-        line2d = plane_intersections[0].to_2d(circle.center, circle_plane.frame.u, circle_plane.frame.v)
-        circle2d_inters_line2d = circle2d.line_intersections(line2d)
-        intersections = []
-        for inter in circle2d_inters_line2d:
-            intersections.append(inter.to_3d(circle.center, circle_plane.frame.u, circle_plane.frame.v))
-        return intersections
-
-    def fullarc_intersections(self, fullarc: edges.FullArc3D):
-        """
-        Calculates the intersections between a Plane 3D and a FullArc 3D.
-
-        :param fullarc: full arc to verify intersections.
-        :return: list of intersections: List[volmdlr.Point3D].
-        """
-        return self.circle_intersections(fullarc.circle)
-
-    def arc_intersections(self, arc: edges.Arc3D):
-        """
-        Calculates the intersections between a Plane 3D and an Arc 3D.
-
-        :param arc: arc to verify intersections.
-        :return: list of intersections: List[volmdlr.Point3D].
-        """
-        circle_intersections = self.circle_intersections(arc.circle)
-        arc_intersections = []
-        for intersection in circle_intersections:
-            if arc.point_belongs(intersection):
-                arc_intersections.append(intersection)
-        return arc_intersections
 
     def bsplinecurve_intersections(self, bspline_curve):
         """
@@ -2353,43 +2432,6 @@ class CylindricalSurface3D(PeriodicalSurface):
 
         return [intersection1, intersection2]
 
-    def circle_intersections(self, circle: curves.Circle3D):
-        """
-        Get intersections between the Cylindrical Surface 3D and a Circle 3D.
-
-        :param circle: other circle.
-        :return: list containing the intersection points.
-        """
-        circle_plane = Plane3D(circle.frame)
-        circle_plane_intersections = self.plane_intersections(circle_plane)
-        intersections = []
-        for circle_plane_intersection in circle_plane_intersections:
-            inters = circle_plane_intersection.curve_intersections(circle)
-            for intersection in inters:
-                if not volmdlr.core.point_in_list(intersection, intersections):
-                    intersections.append(intersection)
-        return intersections
-
-    def fullarc_intersections(self, fullarc: edges.FullArc3D):
-        """
-        Get intersections between the Cylindrical Surface 3D and a FullArc 3D.
-
-        :param fullarc: other fullarc.
-        :return: list containing the intersection points.
-        """
-        return self.circle_intersections(fullarc.circle)
-
-    def arc_intersections(self, arc: edges.Arc3D):
-        """
-        Get intersections between the Cylindrical Surface 3D and an Arc 3D.
-
-        :param arc: other arc.
-        :return: list containing the intersection points.
-        """
-        circle_intersections = self.circle_intersections(arc.circle)
-        intersections = [intersection for intersection in circle_intersections if arc.point_belongs(intersection)]
-        return intersections
-
     def parallel_plane_intersection(self, plane3d):
         """
         Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis.
@@ -2587,6 +2629,7 @@ class ToroidalSurface3D(PeriodicalSurface):
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
                        pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'SerializableObject':
+        """Creates a ToroidalSurface3D from a dictionary."""
         frame = volmdlr.Frame3D.dict_to_object(dict_['frame'])
         name = dict_['name']
         if 'tore_radius' in dict_:
@@ -2608,6 +2651,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         return self._bbox
 
     def _bounding_box(self):
+        """
+        Calculates the BoundingBox for the complete Toroidal Surface 3D.
+
+        :return: surface bounding box.
+        """
         distance = self.major_radius + self.minor_radius
         point1 = self.frame.origin + \
             self.frame.u * distance + self.frame.v * distance + self.frame.w * self.minor_radius
@@ -2995,6 +3043,19 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param line: other line.
         :return: intersections.
         """
+        if line.point_distance(self.frame.origin) > self.inner_radius:
+            torus_origin_plane = Plane3D(self.frame)
+            projected_point_plane3d, _ = line.point_projection(self.frame.origin)
+            torus_plane_projection = torus_origin_plane.point_projection(projected_point_plane3d)
+            point = self.frame.origin + (torus_plane_projection - self.frame.origin).unit_vector() * self.major_radius
+            if line.point_distance(point) > self.minor_radius:
+                return []
+        if not self.frame.origin.is_close(volmdlr.O3D) or not self.frame.w.is_close(volmdlr.Z3D):
+            frame_mapped_surface = self.frame_mapping(self.frame, 'new')
+            frame_mapped_line = line.frame_mapping(self.frame, 'new')
+            local_intersections = frame_mapped_surface.line_intersections(frame_mapped_line)
+            global_intersections = [self.frame.local_to_global_coordinates(point) for point in local_intersections]
+            return global_intersections
         vector = line.unit_direction_vector()
         coeff_a = vector.x**2 + vector.y**2 + vector.z**2
         coeff_b = 2 * (line.point1.x * vector.x + line.point1.y * vector.y + line.point1.z * vector.z)
@@ -3015,31 +3076,51 @@ class ToroidalSurface3D(PeriodicalSurface):
                 intersections.append(line.point1 + sol_param*vector)
         return intersections
 
-    def circle_intersections(self, circle: curves.Circle3D):
-        if not self.bounding_box.is_intersecting(circle.bounding_box):
-            return []
-        circle_plane = Plane3D(circle.frame)
-        plane_intersections = self.plane_intersections(circle_plane)
-        intersection_points = []
-        for intersection in plane_intersections:
-            inters = intersection.circle_intersections(circle)
-            for inter in inters:
-                if not volmdlr.core.point_in_list(inter, intersection_points):
-                    intersection_points.append(inter)
-        return intersection_points
+    # def circle_intersections(self, circle: curves.Circle3D):
+    #     """
+    #     Gets intersections between a ToroidalSurface3D Surface 3D and a circle 3D.
+    #
+    #     :param circle: other circle 3D.
+    #     :return: list containing the intersection points.
+    #     """
+    #     if not self.bounding_box.is_intersecting(circle.bounding_box):
+    #         return []
+    #     circle_plane = Plane3D(circle.frame)
+    #     plane_intersections = self.plane_intersections(circle_plane)
+    #     intersection_points = []
+    #     for intersection in plane_intersections:
+    #         inters = intersection.circle_intersections(circle)
+    #         for inter in inters:
+    #             if not volmdlr.core.point_in_list(inter, intersection_points):
+    #                 intersection_points.append(inter)
+    #     return intersection_points
+    #
+    # def fullarc_intersections(self, fullarc: edges.FullArc3D):
+    #     """
+    #     Gets intersections between a ToroidalSurface3D Surface 3D and a circle 3D.
+    #
+    #     :param fullarc: other fullarc 3D.
+    #     :return: list containing the intersection points.
+    #     """
+    #     return self.circle_intersections(fullarc.circle)
 
-    def fullarc_intersections(self, fullarc: edges.FullArc3D):
-        if self.point_distance(fullarc.circle.center) > fullarc.circle.radius:
-            return []
-        circle_plane = Plane3D(fullarc.circle.frame)
-        plane_intersections = self.plane_intersections(circle_plane)
-        intersection_points = []
-        for intersection in plane_intersections:
-            inters = intersection.intersections(fullarc)
-            for inter in inters:
-                if not volmdlr.core.point_in_list(inter, intersection_points):
-                    intersection_points.append(inter)
-        return intersection_points
+    def ellipse_intersections(self, ellipse: curves.Ellipse3D):
+        """
+        Calculates the intersections between a conical surface and an ellipse 3D.
+
+        :param ellipse: other ellipse to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        # self_plane = Plane3D(self.frame)
+        # ellipse_plane = Plane3D(ellipse.frame)
+        # plane_intersections = self_plane.plane_intersections(ellipse_plane)
+        # ellipse_line_intersections = ellipse.line_intersections(plane_intersections[0])
+        # if ellipse_line_intersections:
+        #     if all(self.frame.origin.point_distance(intersection) < self.inner_radius or
+        #            self.frame.origin.point_distance(intersection) > self.outer_radius
+        #            for intersection in ellipse_line_intersections):
+        #         return []
+        return self.curve_intersections(ellipse)
 
     def parallel_plane_intersection(self, plane3d: Plane3D):
         """
@@ -3133,7 +3214,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 continue
             intersections = plane3d.circle_intersections(arc)
             points_intersections.extend(intersections)
-        for edge in plane3d.plane_grid(50, self.major_radius * 4):
+        for edge in plane3d.plane_grid(200, self.major_radius * 4):
             intersections = self.line_intersections(edge.line)
             points_intersections.extend(intersections)
         return points_intersections
@@ -3218,7 +3299,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 math.isclose(distance_to_self_origin, 0.0, abs_tol=1e-6):
             if cylindrical_surface.radius < self.minor_radius:
                 return []
-            elif math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
+            if math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
                 return [curves.Circle3D(self.frame, self.minor_radius)]
         intersection_points = self._cylinder_intersection_points(cylindrical_surface)
         inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
@@ -3603,17 +3684,6 @@ class ConicalSurface3D(PeriodicalSurface):
             return line.sort_points_along_curve(intersections)
         return []
 
-    def fullarc_intersections(self, fullarc: edges.FullArc3D):
-        circle_plane = Plane3D(fullarc.circle.frame)
-        circle_plane_intersections = self.plane_intersections(circle_plane)
-        intersections = []
-        for circle_plane_intersection in circle_plane_intersections:
-            inters = circle_plane_intersection.curve_intersections(fullarc.circle)
-            for intersection in inters:
-                if not volmdlr.core.point_in_list(intersection, intersections):
-                    intersections.append(intersection)
-        return intersections
-
     def parallel_plane_intersection(self, plane3d: Plane3D):
         """
         Cylinder plane intersections when plane's normal is perpendicular with the cylinder axis.
@@ -3634,7 +3704,13 @@ class ConicalSurface3D(PeriodicalSurface):
             point2 = self.frame.local_to_global_coordinates(
                 volmdlr.Point3D(point2.x, point2.y,
                                 math.sqrt(point2.x ** 2 + point2.y ** 2) / math.tan(self.semi_angle)))
-            return [curves.Line3D(self.frame.origin, point1), curves.Line3D(self.frame.origin, point2)] 
+            return [curves.Line3D(self.frame.origin, point1), curves.Line3D(self.frame.origin, point2)]
+        if not self.frame.w.is_close(volmdlr.Z3D):
+            local_surface = self.frame_mapping(self.frame, 'new')
+            local_plane = plane3d.frame_mapping(self.frame, 'new')
+            local_intersections = local_surface.parallel_plane_intersection(local_plane)
+            global_intersections = [intersection.frame_mapping(self.frame, 'old') for intersection in local_intersections]
+            return global_intersections
         hyperbola_center = line_plane_intersections.closest_point_on_line(self.frame.origin)
         hyperbola_positive_vertex = self.frame.local_to_global_coordinates(
             volmdlr.Point3D(hyperbola_center.x, hyperbola_center.y,
@@ -4704,6 +4780,7 @@ class ExtrusionSurface3D(Surface3D):
         raise AttributeError('Use ExtrusionFace3D from_surface_rectangular_cut method')
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), z: float = 0.5, **kwargs):
+        """Plot for extrusion surface using matplotlib."""
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -5480,6 +5557,7 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def control_points(self):
+        """Gets control points."""
         return [volmdlr.Point3D(*point) for point in self.ctrlpts]
 
     @property
