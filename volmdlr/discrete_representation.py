@@ -1723,7 +1723,8 @@ class OctreeBasedVoxelization(Voxelization):
         sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
 
         octree = cls._subdivide_from_points(
-            np.array([voxel_center for voxel_center in point_based_voxelization.voxel_centers]),
+            # np.array([voxel_center for voxel_center in point_based_voxelization.voxel_centers]),
+            point_based_voxelization.voxel_centers,
             center,
             sizes,
             0,
@@ -2230,7 +2231,7 @@ class OctreeBasedVoxelization(Voxelization):
 
     @staticmethod
     def _subdivide_from_points(
-        points: NDArray,
+        points: Set[_Point3D],
         center: _Point3D,
         sizes: List[float],
         depth: int,
@@ -2240,9 +2241,24 @@ class OctreeBasedVoxelization(Voxelization):
 
         if depth < max_depth:  # not yet reached max depth
             half_size = sizes[depth + 1]
-            quarter_size = sizes[depth + 2]
 
             sub_voxels = []
+
+            # Initialize lists for sub-voxel points
+            sub_voxel_points = [set() for _ in range(8)]
+
+            # Check each point and determine which sub-voxel it belongs to
+            for point in points:
+                # Relative position to the center
+                idx = 0
+                if point[0] > center[0]:
+                    idx |= 4
+                if point[1] > center[1]:
+                    idx |= 2
+                if point[2] > center[2]:
+                    idx |= 1
+
+                sub_voxel_points[idx].add(point)
 
             for i in range(2):
                 for j in range(2):
@@ -2257,24 +2273,14 @@ class OctreeBasedVoxelization(Voxelization):
                             DECIMALS,
                         )
 
-                        # check for points in the sub-voxel
-                        # calculate the lower and upper bounds of the bounding box
-                        lower_bounds = np.array(sub_voxel_center) - quarter_size
-                        upper_bounds = np.array(sub_voxel_center) + quarter_size
-
-                        # Use boolean indexing to filter points inside the sub-voxel
-                        mask = np.all((points >= lower_bounds) & (points <= upper_bounds), axis=1)
-                        points_inside_sub_voxel = points[mask]
-
-                        # Recursive process
-                        if points_inside_sub_voxel.size == 0:
-                            # If sub-voxel not contains any voxel of the point based voxelization
+                        idx = (i << 2) + (j << 1) + k
+                        if not sub_voxel_points[idx]:
                             sub_voxels.append([])
 
                         else:
                             sub_voxels.append(
                                 OctreeBasedVoxelization._subdivide_from_points(
-                                    points=points_inside_sub_voxel,
+                                    points=sub_voxel_points[idx],
                                     center=sub_voxel_center,
                                     sizes=sizes,
                                     depth=depth + 1,
