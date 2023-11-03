@@ -6,10 +6,10 @@ import random
 from volmdlr.discrete_representation import OctreeBasedVoxelization
 from volmdlr.core import VolumeModel
 
-LAYERS_MINIMAL_THICKNESS = 5
+LAYERS_MINIMAL_THICKNESS = 3
 
 octree = [[[[[[1] for _ in range(8)] for _ in range(8)] for _ in range(8)] for _ in range(8)] for _ in range(8)]
-# octree[0][0][0][0][0] = []
+octree[0][0][0][0][0] = []
 
 
 # Create the voxelization

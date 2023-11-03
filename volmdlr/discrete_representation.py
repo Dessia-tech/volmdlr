@@ -1719,10 +1719,16 @@ class OctreeBasedVoxelization(Voxelization):
         max_depth = math.ceil(math.log2(root_size // voxel_size))
         center = (0.0, 0.0, 0.0)
 
-        sizes = [round_to_digits(voxel_size * 2 ** i, DECIMALS) for i in range(max_depth, -1, -1)]
+        sizes = [round_to_digits(voxel_size * 2**i, DECIMALS) for i in range(max_depth, -1, -1)]
         sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
 
-        octree = cls._subdivide_from_points(point_based_voxelization.voxel_centers, center, sizes, 0, max_depth)
+        octree = cls._subdivide_from_points(
+            np.array([voxel_center for voxel_center in point_based_voxelization.voxel_centers]),
+            center,
+            sizes,
+            0,
+            max_depth,
+        )
 
         return cls(octree, center, max_depth, voxel_size)
 
@@ -2224,17 +2230,17 @@ class OctreeBasedVoxelization(Voxelization):
 
     @staticmethod
     def _subdivide_from_points(
-        points: Set[_Point3D],
+        points: NDArray,
         center: _Point3D,
         sizes: List[float],
         depth: int,
         max_depth: int,
     ):
         """Recursive method to subdivide the voxelization in 8 until the wanted tree depth is reached."""
-        # TODO: improve by making bbox checks
 
         if depth < max_depth:  # not yet reached max depth
             half_size = sizes[depth + 1]
+            quarter_size = sizes[depth + 2]
 
             sub_voxels = []
 
@@ -2251,25 +2257,37 @@ class OctreeBasedVoxelization(Voxelization):
                             DECIMALS,
                         )
 
-                        sub_voxels.append(
-                            OctreeBasedVoxelization._subdivide_from_points(
-                                points=points,
-                                center=sub_voxel_center,
-                                sizes=sizes,
-                                depth=depth + 1,
-                                max_depth=max_depth,
+                        # check for points in the sub-voxel
+                        # calculate the lower and upper bounds of the bounding box
+                        lower_bounds = np.array(sub_voxel_center) - quarter_size
+                        upper_bounds = np.array(sub_voxel_center) + quarter_size
+
+                        # Use boolean indexing to filter points inside the sub-voxel
+                        mask = np.all((points >= lower_bounds) & (points <= upper_bounds), axis=1)
+                        points_inside_sub_voxel = points[mask]
+
+                        # Recursive process
+                        if points_inside_sub_voxel.size == 0:
+                            # If sub-voxel not contains any voxel of the point based voxelization
+                            sub_voxels.append([])
+
+                        else:
+                            sub_voxels.append(
+                                OctreeBasedVoxelization._subdivide_from_points(
+                                    points=points_inside_sub_voxel,
+                                    center=sub_voxel_center,
+                                    sizes=sizes,
+                                    depth=depth + 1,
+                                    max_depth=max_depth,
+                                )
                             )
-                        )
 
             if all(not sub_voxel for sub_voxel in sub_voxels):
                 return []
             return sub_voxels
 
         else:  # reached max depth
-            if center in points:
-                return [1]
-            else:
-                return []
+            return [1]
 
     def _get_homogeneous_leaf_centers(
         self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
