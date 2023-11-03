@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.15.0 [future]
 
 ### New Features
+
+- cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
 - ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object,
 - CylindricalSurface3D: circle_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
+- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections
 #### edges.py
 - BsplineCurve3D: circle_intersections.
 #### curves.py
@@ -28,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - delete remaining inplace methods in wires.py
 #### shells.py
 - Fixes to boolean operations.
+### surfaces.py 
+- SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
 #### curves.py
@@ -51,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CylindricalSurface3D:  test_circle_intersections.
 #### faces
 - ToroidalFace3D: PlaneFace3D intersectios.
-
+- SphericalSurface3D: circle_intersections, arc_intersections, arcellipse_intersections
 ## v0.14.0
 
 ### New Features
