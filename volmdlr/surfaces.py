@@ -2189,14 +2189,14 @@ class CylindricalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def get_generatrices(self, length: float = 1, number_lines: int = 30):
-        list_generatrix = []
+        list_generatrices = []
         for i in range(number_lines):
             theta = i / (number_lines - 1) * volmdlr.TWO_PI
             start = self.point2d_to_3d(volmdlr.Point2D(theta, -0.5 * length))
             end = self.point2d_to_3d(volmdlr.Point2D(theta, 0.5 * length))
             generatrix = edges.LineSegment3D(start, end)
-            list_generatrix.append(generatrix)
-        return list_generatrix
+            list_generatrices.append(generatrix)
+        return list_generatrices
 
     def get_circle_generatrices(self, number_circles: int = 10, length: float = 1.0):
         circles = []
@@ -2493,7 +2493,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :param conical_surface: intersecting plane.
         :return: list of intersecting curves.
         """
-        def _list_generatrix_intersections(surface, other_surface):
+        def _list_generatrices_intersections(surface, other_surface):
             linesegments = other_surface.get_generatrices(2, 50)
             all_generatrices_intersecting = True
             lists_intersections = [[], []]
@@ -2508,9 +2508,9 @@ class CylindricalSurface3D(PeriodicalSurface):
             return lists_intersections, all_generatrices_intersecting
 
         cone_generatrices_point_intersections, all_cone_generatrices_intersecting_cylinder = \
-            _list_generatrix_intersections(self, conical_surface)
+            _list_generatrices_intersections(self, conical_surface)
         cylinder_generatrices_point_intersections, all_cylinder_generatrices_intersecting_cone = \
-            _list_generatrix_intersections(conical_surface, self)
+            _list_generatrices_intersections(conical_surface, self)
         if all_cylinder_generatrices_intersecting_cone:
             intersections_points = cylinder_generatrices_point_intersections
         elif all_cone_generatrices_intersecting_cylinder:
@@ -3319,12 +3319,12 @@ class ConicalSurface3D(PeriodicalSurface):
         point1 = self.frame.origin
         point2 = self.frame.local_to_global_coordinates(volmdlr.Point3D(x, 0, z))
         generatrix = edges.LineSegment3D(point1, point2)
-        list_generatrix = [generatrix]
+        list_generatrices = [generatrix]
         for i in range(number_lines+1):
             theta = i / number_lines * volmdlr.TWO_PI
             wire = generatrix.rotation(self.frame.origin, self.frame.w, theta)
-            list_generatrix.append(wire)
-        return list_generatrix
+            list_generatrices.append(wire)
+        return list_generatrices
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
         """
@@ -3587,6 +3587,12 @@ class ConicalSurface3D(PeriodicalSurface):
         return []
 
     def fullarc_intersections(self, fullarc: edges.FullArc3D):
+        """
+        Gets intersections between a ConicalSuface3D and a full arc 3D.
+
+        :param fullarc: other full arc.
+        :return: list with intersecting points.
+        """
         circle_plane = Plane3D(fullarc.circle.frame)
         circle_plane_intersections = self.plane_intersections(circle_plane)
         intersections = []
@@ -3743,6 +3749,7 @@ class ConicalSurface3D(PeriodicalSurface):
         Return lines that are parallel and coincident with surface singularity at parametric domain.
         """
         return [curves.Line2D(volmdlr.Point2D(-math.pi, 0), volmdlr.Point2D(math.pi, 0))]
+
 
 class SphericalSurface3D(PeriodicalSurface):
     """
@@ -4547,6 +4554,75 @@ class SphericalSurface3D(PeriodicalSurface):
         t_param1 = (-b_param + math.sqrt(b2_minus4ac)) / (2 * a_param)
         t_param2 = (-b_param - math.sqrt(b2_minus4ac)) / (2 * a_param)
         return line3d.point1 + line_direction_vector * t_param1, line3d.point1 + line_direction_vector * t_param2
+
+    def circle_intersections(self, circle: curves.Circle3D):
+        """
+        Gets intersections between a circle 3D and a SphericalSurface3D.
+
+        :param circle: other circle to search intersections with.
+        :return: list containing the intersection points.
+        """
+        circle_plane = Plane3D(circle.frame)
+        if circle_plane.point_distance(self.frame.origin) > self.radius:
+            return []
+        circle_plane_intersections = self.plane_intersections(circle_plane)
+        intersections = circle_plane_intersections[0].circle.circle_intersections(circle)
+        return intersections
+
+    def arc_intersections(self, arc: edges.Arc3D):
+        """
+        Gets intersections between an arc 3D and a SphericalSurface3D.
+
+        :param arc: other arc to search intersections with.
+        :return: list containing the intersection points.
+        """
+        circle_intersections = self.circle_intersections(arc.circle)
+        intersections = [intersection for intersection in circle_intersections if arc.point_belongs(intersection)]
+        return intersections
+
+    def fullarc_intersections(self, fullarc: edges.Arc3D):
+        """
+        Gets intersections between a fullarc 3D and a SphericalSurface3D.
+
+        :param fullarc: other fullarc to search intersections with.
+        :return: list containing the intersection points.
+        """
+        return self.circle_intersections(fullarc.circle)
+
+    def ellipse_intersections(self, ellipse: curves.Ellipse3D):
+        """
+        Gets intersections between an ellipse 3D and a SphericalSurface3D.
+
+        :param ellipse: other ellipse to search intersections with.
+        :return: list containing the intersection points.
+        """
+        ellipse_plane = Plane3D(ellipse.frame)
+        if ellipse_plane.point_distance(self.frame.origin) > self.radius:
+            return []
+        ellipse_plane_intersections = self.plane_intersections(ellipse_plane)
+        intersections = ellipse_plane_intersections[0].circle.ellipse_intersections(ellipse)
+        return intersections
+
+    def arcellipse_intersections(self, arcellipse: edges.ArcEllipse3D):
+        """
+        Gets intersections between an arcellipse 3D and a SphericalSurface3D.
+
+        :param arcellipse: other arcellipse to search intersections with.
+        :return: list containing the intersection points.
+        """
+        circle_intersections = self.ellipse_intersections(arcellipse.ellipse)
+        intersections = [intersection for intersection in circle_intersections
+                         if arcellipse.point_belongs(intersection)]
+        return intersections
+
+    def fullarcellipse_intersections(self, fullarcellipse: edges.FullArcEllipse3D):
+        """
+        Gets intersections between a full arcellipse 3D and a SphericalSurface3D.
+
+        :param fullarcellipse: other full arcellipse to search intersections with.
+        :return: list containing the intersection points.
+        """
+        return self.ellipse_intersections(fullarcellipse.ellipse)
 
 
 class RuledSurface3D(Surface3D):
