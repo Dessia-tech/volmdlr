@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 #### faces.py
-- PlaneFace3D: circle_intersections.
+- PlaneFace3D: circle_intersections. planeface_intersections
 #### wires.py
 - delete remaining inplace methods in wires.py
 #### shells.py
