@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle3D: circle_intersectios when the circle are coplanar.
 
 #### core_compiled
-- Frame2D: fix rotation.
+- Frame2D: fix rotation
 
 
 ### Refactor
