@@ -4646,7 +4646,7 @@ class ExtrusionSurface3D(Surface3D):
         start = self.edge.start
         end = self.edge.end
         if start.is_close(end, 1e-4):
-            self._x_periodicity = 1
+            self._x_periodicity = self.edge.length()
             return self._x_periodicity
         return None
 
@@ -4671,7 +4671,7 @@ class ExtrusionSurface3D(Surface3D):
                 u -= self.x_periodicity
             elif u < 0:
                 u += self.x_periodicity
-        point_at_curve = self.edge.point_at_abscissa(u * self.edge.length())
+        point_at_curve = self.edge.point_at_abscissa(u)
         point = point_at_curve.translation(self.frame.w * v)
         return point
 
@@ -4701,7 +4701,7 @@ class ExtrusionSurface3D(Surface3D):
                 point_at_curve_local = volmdlr.Point3D(x, y, 0)
                 point_at_curve = self.frame.local_to_global_coordinates(point_at_curve_local)
 
-        u = self.edge.abscissa(point_at_curve, tol=1e-6) / self.edge.length()
+        u = self.edge.abscissa(point_at_curve, tol=1e-6)
         v = z - point_at_curve_local.z
 
         return volmdlr.Point2D(u, v)
@@ -4738,13 +4738,13 @@ class ExtrusionSurface3D(Surface3D):
             fullarcellipse = edges.FullArcEllipse3D(edge, start_end, edge.name)
             direction = -object_dict[arguments[2]]
             surface = cls(edge=fullarcellipse, direction=direction, name=name)
-            surface.x_periodicity = 1
+            surface.x_periodicity = fullarcellipse.length()
         elif edge.__class__ is curves.Circle3D:
             start_end = edge.center + edge.frame.u * edge.radius
             fullarc = edges.FullArc3D(edge, start_end)
             direction = object_dict[arguments[2]]
             surface = cls(edge=fullarc, direction=direction, name=name)
-            surface.x_periodicity = 1
+            surface.x_periodicity = fullarc.length()
 
         else:
             direction = object_dict[arguments[2]]
@@ -4927,7 +4927,7 @@ class ExtrusionSurface3D(Surface3D):
             points = self._repair_points_order(points, edge3d)
         start = points[0]
         end = points[-1]
-        if is_isocurve(points, 1e-3):
+        if is_isocurve(points, 1e-5):
             return [edges.LineSegment2D(start, end)]
         if hasattr(edge3d, "degree"):
             degree = edge3d.degree
