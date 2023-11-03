@@ -30,7 +30,8 @@ from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inve
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
 from volmdlr.nurbs.operations import split_surface_u, split_surface_v
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
-                                      find_parametric_point_at_singularity, is_isocurve)
+                                      find_parametric_point_at_singularity, is_isocurve,
+                                      verify_repeated_parametric_points)
 
 
 def knots_vector_inv(knots_vector):
@@ -2919,7 +2920,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         if phi_discontinuity:
             points = self._fix_angle_discontinuity_on_discretization_points(points,
                                                                             indexes_phi_discontinuity, "y")
-
+        points = verify_repeated_parametric_points(points)
         return [edges.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree)]
 
     def triangulation(self):
@@ -4902,16 +4903,19 @@ class ExtrusionSurface3D(Surface3D):
         """Helper function to reorder edge discretization points on parametric domain."""
         #Todo: enhance this method when intersections beteween edges is finished.
         point_after_start = self.point3d_to_2d(edge3d.point_at_abscissa(0.01 * edge3d.length()))
+        if point_after_start.x == points[0].x:
+            point_after_start = self.point3d_to_2d(edge3d.point_at_abscissa(0.05 * edge3d.length()))
         diff = point_after_start.x - points[0].x
-        sign = (diff) / abs(diff)
-        passes_through_periodicity = False
-        for i, (point, next_point) in enumerate(zip(points[:-1], points[1:])):
-            if sign * (next_point.x - point.x) < 0:
-                passes_through_periodicity = True
-                break
-        if passes_through_periodicity:
-            for point in points[i + 1:]:
-                point.x = point.x + sign * self.x_periodicity
+        if diff:
+            sign = diff / abs(diff)
+            passes_through_periodicity = False
+            for i, (point, next_point) in enumerate(zip(points[:-1], points[1:])):
+                if sign * (next_point.x - point.x) < 0:
+                    passes_through_periodicity = True
+                    break
+            if passes_through_periodicity:
+                for point in points[i + 1:]:
+                    point.x = point.x + sign * self.x_periodicity
         return points
 
     def _edge3d_to_2d(self, points, edge3d):
@@ -6570,6 +6574,7 @@ class BSplineSurface3D(Surface3D):
             return [edges.LineSegment2D(parametric_points[0], parametric_points[-1])]
         if interpolation_degree >= len(parametric_points):
             interpolation_degree = len(parametric_points) - 1
+        parametric_points = verify_repeated_parametric_points(parametric_points)
         brep = edges.BSplineCurve2D.from_points_interpolation(points=parametric_points, degree=interpolation_degree)
         if brep:
             return [brep]
@@ -6586,10 +6591,9 @@ class BSplineSurface3D(Surface3D):
             return []
         n = min(len(bspline_curve3d.control_points), 20)
         points3d = bspline_curve3d.discretization_points(number_points=n)
-        tol = 1e-6 if lth > 5e-4 else 5e-7
+        tol = 1e-6 if lth > 5e-4 else 1e-7
         # todo: how to ensure convergence of point3d_to_2d ?
-        points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d],
-                                                bspline_curve3d.periodic)
+        points = [self.point3d_to_2d(point3d, tol) for point3d in points3d]
         if len(points) < 2:
             return None
         return self._edge3d_to_2d(bspline_curve3d, points3d, bspline_curve3d.degree, points)
@@ -6603,7 +6607,7 @@ class BSplineSurface3D(Surface3D):
         tol = 1e-6 if fullarcellipse3d.length() > 1e-5 else 1e-7
         points3d = fullarcellipse3d.discretization_points(number_points=number_points)
         # todo: how to ensure convergence of point3d_to_2d ?
-        points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d], True)
+        points = [self.point3d_to_2d(point3d, tol) for point3d in points3d]
         return self._edge3d_to_2d(fullarcellipse3d, points3d, degree, points)
 
     @staticmethod
@@ -6697,7 +6701,7 @@ class BSplineSurface3D(Surface3D):
         degree = max(self.degree_u, self.degree_v)
         points3d = arcellipse3d.discretization_points(number_points=number_points)
         tol = 1e-6 if arcellipse3d.length() > 1e-5 else 1e-7
-        points = self._verify_parametric_points([self.point3d_to_2d(point3d, tol) for point3d in points3d])
+        points = [self.point3d_to_2d(point3d, tol) for point3d in points3d]
         return self._edge3d_to_2d(arcellipse3d, points3d, degree, points)
 
     def arc2d_to_3d(self, arc2d):
@@ -8354,7 +8358,7 @@ class BSplineSurface3D(Surface3D):
             return line
 
         def get_temp_edge2d(_points):
-            _points = self._verify_parametric_points(_points)
+            _points = verify_repeated_parametric_points(_points)
             if len(_points) == 2:
                 edge2d = edges.LineSegment2D(_points[0], _points[1])
             else:
@@ -8390,18 +8394,6 @@ class BSplineSurface3D(Surface3D):
                                                          domain=[umin, umax, vmin, vmax])
             if not point.is_close(points[-1], 1e-3):
                 points[-1] = point
-        return points
-
-    @staticmethod
-    def _verify_parametric_points(points, periodic=False):
-        """Temporary method to deal with non converged parametric points from point3d_to_2d method."""
-        set_points = set(points)
-        if (len(set_points) < len(points) - 1 and periodic) or (len(set_points) < len(points) and not periodic):
-            new_points = []
-            for point in points:
-                if not volmdlr.core.point_in_list(point, new_points):
-                    new_points.append(point)
-            return new_points
         return points
 
 
