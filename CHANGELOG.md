@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### shells.py
 - Fixes to boolean operations.
 
+### surfaces.py 
+- SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
+
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
 #### curves

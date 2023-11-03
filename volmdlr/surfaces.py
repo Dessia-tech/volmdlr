@@ -1090,10 +1090,10 @@ class Surface3D(DessiaObject):
 
     def contour_intersections(self, contour3d: wires.Contour3D):
         """
-        Gets intersections between surface 3d and a contour 3d.
+        Gets intersections between a contour 3D and a Surface 3D.
 
-        :param contour3d: other contour to get intersections with.
-        :return: list of intersection points.
+        :param contour3d: other contour get intersections with.
+        :return: list of intersecting points.
         """
         outer_contour_intersections_with_plane = []
         for primitive in contour3d.primitives:
@@ -3765,6 +3765,21 @@ class SphericalSurface3D(PeriodicalSurface):
         # Hidden Attributes
         self._bbox = None
 
+    def _circle_generatrices(self, number_circles: int):
+        """
+        Gets the sphere circle generatrices.
+
+        :param number_circles: number of circles to be created.
+        :return: List of Circle 3D.
+        """
+        circles = []
+        i_frame = volmdlr.Frame3D(self.frame.origin, self.frame.v, self.frame.w, self.frame.u)
+        for theta in npy.linspace(0, volmdlr.TWO_PI / 2, number_circles):
+            i_frame_ = i_frame.rotation(self.frame.origin, self.frame.w, theta)
+            circle = curves.Circle3D(i_frame_, self.radius)
+            circles.append(circle)
+        return circles
+
     @property
     def bounding_box(self):
         """Bounding Box for Spherical Surface 3D."""
@@ -4018,7 +4033,6 @@ class SphericalSurface3D(PeriodicalSurface):
         theta2, phi2 = end
         if arc3d.is_point_edge_extremity(point_singularity):
             return [edges.LineSegment2D(start, end)]
-        primitives = []
         if math.isclose(abs(theta2 - theta1), math.pi, abs_tol=1e-2):
             if theta1 == math.pi and theta2 != math.pi:
                 theta1 = -math.pi
@@ -4365,14 +4379,8 @@ class SphericalSurface3D(PeriodicalSurface):
             ax = fig.add_subplot(111, projection='3d')
 
         self.frame.plot(ax=ax, ratio=self.radius)
-        for i in range(20):
-            theta = i / 20. * volmdlr.TWO_PI
-            t_points = []
-            for j in range(20):
-                phi = j / 20. * volmdlr.TWO_PI
-                t_points.append(self.point2d_to_3d(volmdlr.Point2D(theta, phi)))
-            ax = wires.ClosedPolygon3D(t_points).plot(ax=ax, edge_style=edge_style)
-
+        for circle in self._circle_generatrices(50):
+            circle.plot(ax, edge_style)
         return ax
 
     def rectangular_cut(self, theta1, theta2, phi1, phi2, name=''):
