@@ -31,12 +31,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - delete remaining inplace methods in wires.py
 #### shells.py
 - Fixes to boolean operations.
+
 ### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
+
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
 #### curves
 - Circle3D: circle_intersectios when the circle are coplanar.
+
+#### core_compiled
+- Frame2D: fix rotation
+
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
