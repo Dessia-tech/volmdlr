@@ -1626,26 +1626,20 @@ class BSplineCurve(Edge):
 
     def local_intersections_search(self, line, point1, point2, abs_tol: float = 1e-6):
         """
-        Gets the minimum distance between two elements.
-
-        This is a generalized method in a case an analytical method has not yet been defined.
+        Gets local intersections, between a BSpline and an infinit line.
 
         :param line: other line.
-        :param return_points: Weather to return the corresponding points or not.
+        :param point1: local point 1.
+        :param point2: local point 2.
+        :param abs_tol: tolerance.
         :return: distance to edge.
         """
-        # n = max(1, int(self.length() / element.length()))
         best_distance = math.inf
         distance_points = None
-        # distance = best_distance
 
         point1_edge1_ = point1
         point2_edge1_ = point2
 
-        # point1_edge2_ = element.start
-        # point2_edge2_ = element.end
-        # min_dist_point1 = None
-        # min_dist_point2 = None
         intersections = []
         linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
         while True:
@@ -1654,25 +1648,22 @@ class BSplineCurve(Edge):
             if not edge1_discretized_points_between_1_2:
                 break
             distance = line.point_distance(edge1_discretized_points_between_1_2[0])
+            if distance == 0.0:
+                intersections.append(edge1_discretized_points_between_1_2[0])
+                break
             for point1_edge1, point2_edge1 in zip(edge1_discretized_points_between_1_2[:-1],
                                                   edge1_discretized_points_between_1_2[1:]):
                 lineseg1 = linesegment_class_(point1_edge1, point2_edge1)
                 dist, min_dist_point1_, min_dist_point2_ = lineseg1.line_distance(line, True)
-                # dist = min_dist_point1_.point_distance(min_dist_point2_)
-                if dist < distance:
+                if dist < distance or math.isclose(dist, distance, abs_tol=abs_tol):
                     point1_edge1_, point2_edge1_ = point1_edge1, point2_edge1
                     distance = dist
                     distance_points = [min_dist_point1_, min_dist_point2_]
             if math.isclose(distance, best_distance, abs_tol=1e-6):
-                intersections.append(distance_points[0])
+                if distance_points[0].is_close(distance_points[1], abs_tol):
+                    intersections.append(distance_points[0])
                 break
             best_distance = distance
-            # best_distance_points = distance_points
-            # n = 1
-        # if return_points:
-        #     return distance, distance_points[0], distance_points[1]
-        # return distance
-        # if not
         return intersections
 
     def line_intersections(self, line, tol: float = 1e-6):
@@ -1680,14 +1671,10 @@ class BSplineCurve(Edge):
         Calculates the intersections of a BSplineCurve (2D or 3D) with a Line (2D or 3D).
 
         :param line: line to verify intersections
+        :param tol: tolerance.
         :return: list of intersections
         """
         linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
-        # def local_intersections_search(point1, point2):
-        #     local_discretization = self.local_discretization(point1, point2)
-        #     for points in zip(local_discretization[:-1], local_discretization[1:]):
-        #         linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
-        #         intersections = linesegment.line_intersections(line)
         polygon_points = []
         for point in self.points:
             if not volmdlr.core.point_in_list(point, polygon_points):
@@ -1714,29 +1701,29 @@ class BSplineCurve(Edge):
             initial_abscissa += linesegment.length()
         return list_intersections
 
-    def select_intersection_point(self, list_abscissas, intersections, line, abs_tol: float = 1e-7):
-        """
-        Select closest point in curve to intersection point obtained with discretized linesegment.
-
-        :param list_abscissas: list of abscissas to verify the closest point.
-        :param intersections: intersection with discretized line.
-        :param line: other line.
-        :param abs_tol: tolerance allowed.
-        :return:
-        """
-        distance = npy.inf
-        intersection = None
-        for i_abscissa in list_abscissas:
-            point_in_curve = BSplineCurve.point_at_abscissa(self, i_abscissa)
-            if line.point_distance(point_in_curve) <= abs_tol:
-                return point_in_curve
-            dist = point_in_curve.point_distance(intersections[0])
-            if dist < distance:
-                distance = dist
-                intersection = point_in_curve
-            else:
-                break
-        return intersection
+    # def select_intersection_point(self, list_abscissas, intersections, line, abs_tol: float = 1e-7):
+    #     """
+    #     Select closest point in curve to intersection point obtained with discretized linesegment.
+    #
+    #     :param list_abscissas: list of abscissas to verify the closest point.
+    #     :param intersections: intersection with discretized line.
+    #     :param line: other line.
+    #     :param abs_tol: tolerance allowed.
+    #     :return:
+    #     """
+    #     distance = npy.inf
+    #     intersection = None
+    #     for i_abscissa in list_abscissas:
+    #         point_in_curve = BSplineCurve.point_at_abscissa(self, i_abscissa)
+    #         if line.point_distance(point_in_curve) <= abs_tol:
+    #             return point_in_curve
+    #         dist = point_in_curve.point_distance(intersections[0])
+    #         if dist < distance:
+    #             distance = dist
+    #             intersection = point_in_curve
+    #         else:
+    #             break
+    #     return intersection
 
     def get_linesegment_intersections(self, linesegment):
         """
@@ -2536,6 +2523,13 @@ class LineSegment2D(LineSegment):
         return min_dist
 
     def line_distance(self, line, return_points: bool = False):
+        """
+        Calculates the distance between a Line Segment and an infinit Line.
+
+        :param line: other line.
+        :param return_points: weather to return corresponding points or not.
+        :return: distance between line and line segment.
+        """
         line_intersections = line.line_intersections(self.line)
         if not line_intersections:
             line_closest_point1 = line.closest_point_on_line(self.start)
@@ -4745,6 +4739,13 @@ class LineSegment3D(LineSegment):
         return new_faces
 
     def line_distance(self, line, return_points: bool = False):
+        """
+        Calculates the distance between a Line Segment and an infinit Line.
+
+        :param line: other line.
+        :param return_points: weather to return corresponding points or not.
+        :return: distance between line and line segment.
+        """
         line_min_distance_points = line.minimum_distance_points(self.line)
         if self.point_belongs(line_min_distance_points[1]):
             if return_points:

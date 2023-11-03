@@ -456,6 +456,12 @@ class Line2D(Line):
                                 edge_style=edge_style)
 
     def line_distance(self, other_line):
+        """
+        Calculates the distance between infinit Lines in 2D.
+
+        :param other_line: other line.
+        :return: distance between line and line segment.
+        """
         intersections = self.line_intersections(other_line)
         if intersections:
             return 0.0
