@@ -355,8 +355,8 @@ class Block(shells.ClosedShell3D):
 
         return volmdlr.faces.PlaneFace3D(plane_3d, contour_2d)
 
-    def frame_mapping_parametres(self, frame: volmdlr.Frame3D,
-                                 side: str):
+    def frame_mapping_parametres(self, frame: volmdlr.Frame3D, side: str):
+        """Helper function to frame mapping."""
         basis = frame.basis()
         if side == 'new':
             new_origin = frame.global_to_local_coordinates(self.frame.origin)
