@@ -26,19 +26,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 #### faces.py
-- PlaneFace3D: circle_intersections.
+- PlaneFace3D: circle_intersections. planeface_intersections
 #### wires.py
 - delete remaining inplace methods in wires.py
 #### shells.py
 - Fixes to boolean operations.
+
 ### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
+
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
 #### curves.py
 - Circle3D: circle_intersectios when the circle are coplanar.
 #### surfaces.py
 - ExtrusionSurface3D: enhance parametric operations.
+
+#### core_compiled
+- Frame2D: fix rotation
+
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
