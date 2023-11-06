@@ -42,9 +42,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### surfaces.py
 - ExtrusionSurface3D: enhance parametric operations.
 
+#### edges.py
+- bsplineCurve: line_intersections.
+
+- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
+#### edges.py
+- Arc2D: Arc 2D now must follow the same rotation direction of its circle.
+
 #### core_compiled
 - Frame2D: fix rotation
-
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.

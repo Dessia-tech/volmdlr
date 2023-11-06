@@ -41,7 +41,7 @@ length = screw_holes_rl.length()
 for i in range(N_SCREWS):
     s = i * length / N_SCREWS
     p = screw_holes_rl.point_at_abscissa(s)
-    circle = curves.Circle2D(p, SCREW_HOLES_DIAMETER*0.5)
+    circle = curves.Circle2D(volmdlr.Frame2D(p, volmdlr.X2D, volmdlr.Y2D), SCREW_HOLES_DIAMETER*0.5)
     screw_holes.append(volmdlr.wires.Contour2D([edges.FullArc2D.from_curve(circle)]))
 
 belt_outer_contour = inner_contour.offset(-(2*SCREW_HOLES_CLEARANCE + SCREW_HOLES_DIAMETER+THICKNESS))
