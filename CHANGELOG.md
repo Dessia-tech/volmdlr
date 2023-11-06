@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExtrusionSurface3D: enhance parametric operations.
 
 #### edges.py
-- bsplineCurve: line_intersections.
+- bsplineCurve: line_intersections. 
 
 - Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
 #### edges.py

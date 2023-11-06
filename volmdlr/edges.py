@@ -1660,7 +1660,7 @@ class BSplineCurve(Edge):
                     distance = dist
                     distance_points = [min_dist_point1_, min_dist_point2_]
             if math.isclose(distance, best_distance, abs_tol=1e-6):
-                if distance_points[0].is_close(distance_points[1], abs_tol):
+                if distance_points and distance_points[0].is_close(distance_points[1], abs_tol):
                     intersections.append(distance_points[0])
                 break
             best_distance = distance
@@ -1690,45 +1690,8 @@ class BSplineCurve(Edge):
                         list_intersections.append(linesegment.middle_point())
                         continue
                 list_intersections.extend(intersections)
-            # intersections = linesegment.line_intersections(line)
-            # if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
-            #     if line.point_distance(linesegment.middle_point()) < (tol * 0.01):
-            #         list_intersections.append(linesegment.middle_point())
-            # if intersections and intersections[0] not in list_intersections:
-            #     if self.point_belongs(intersections[0], tol):
-            #         list_intersections.append(intersections[0])
-            #         continue
-            #     abs1 = self.abscissa(linesegment.start)
-            #     abs2 = self.abscissa(linesegment.end)
-            #     list_abscissas = list(new_abscissa for new_abscissa in npy.linspace(abs1, abs2, 1000))
-            #     intersection = self.select_intersection_point(list_abscissas, intersections, line)
-            #     list_intersections.append(intersection)
             initial_abscissa += linesegment.length()
         return list_intersections
-
-    # def select_intersection_point(self, list_abscissas, intersections, line, abs_tol: float = 1e-7):
-    #     """
-    #     Select closest point in curve to intersection point obtained with discretized linesegment.
-    #
-    #     :param list_abscissas: list of abscissas to verify the closest point.
-    #     :param intersections: intersection with discretized line.
-    #     :param line: other line.
-    #     :param abs_tol: tolerance allowed.
-    #     :return:
-    #     """
-    #     distance = npy.inf
-    #     intersection = None
-    #     for i_abscissa in list_abscissas:
-    #         point_in_curve = BSplineCurve.point_at_abscissa(self, i_abscissa)
-    #         if line.point_distance(point_in_curve) <= abs_tol:
-    #             return point_in_curve
-    #         dist = point_in_curve.point_distance(intersections[0])
-    #         if dist < distance:
-    #             distance = dist
-    #             intersection = point_in_curve
-    #         else:
-    #             break
-    #     return intersection
 
     def get_linesegment_intersections(self, linesegment):
         """
