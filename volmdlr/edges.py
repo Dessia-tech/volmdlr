@@ -1626,7 +1626,7 @@ class BSplineCurve(Edge):
 
     def local_intersections_search(self, line, point1, point2, abs_tol: float = 1e-6):
         """
-        Gets local intersections, between a BSpline and an infinit line.
+        Gets local intersections, between a BSpline and an infinite line.
 
         :param line: other line.
         :param point1: local point 1.
@@ -2529,33 +2529,34 @@ class LineSegment2D(LineSegment):
 
     def line_distance(self, line, return_points: bool = False):
         """
-        Calculates the distance between a Line Segment and an infinit Line.
+        Calculates the distance between a Line Segment and an infinite Line.
 
         :param line: other line.
         :param return_points: weather to return corresponding points or not.
         :return: distance between line and line segment.
         """
+        distance = 0.0
         line_intersections = line.line_intersections(self.line)
         if not line_intersections:
             line_closest_point1 = line.closest_point_on_line(self.start)
-            if return_points:
-                return line_closest_point1.point_distance(self.start), self.start, line_closest_point1
-            return line_closest_point1.point_distance(self.start)
-        if not self.point_belongs(line_intersections[0]):
+            point1, point2 = self.start, line_closest_point1
+            distance = line_closest_point1.point_distance(self.start)
+        elif not self.point_belongs(line_intersections[0]):
             line_closest_point1 = line.closest_point_on_line(self.start)
             line_closest_point2 = line.closest_point_on_line(self.end)
             distance1 = line_closest_point1.point_distance(self.start)
             distance2 = line_closest_point2.point_distance(self.end)
             if distance1 < distance2:
-                if return_points:
-                    return distance1, self.start, line_closest_point1
-                return distance1
-            if return_points:
-                return distance2, self.end, line_closest_point2
-            return distance2
+                distance = distance1
+                point1, point2 = self.start, line_closest_point1
+            else:
+                distance = distance2
+                point1, point2 = self.end, line_closest_point2
+        else:
+            point1, point2 = line_intersections[0], line_intersections[0]
         if return_points:
-            return 0.0, line_intersections[0], line_intersections[0]
-        return 0.0
+            return distance, point1, point2
+        return distance
 
 
 class ArcMixin:
@@ -4778,7 +4779,7 @@ class LineSegment3D(LineSegment):
 
     def line_distance(self, line, return_points: bool = False):
         """
-        Calculates the distance between a Line Segment and an infinit Line.
+        Calculates the distance between a Line Segment and an infinite Line.
 
         :param line: other line.
         :param return_points: weather to return corresponding points or not.
