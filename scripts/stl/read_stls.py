@@ -15,7 +15,7 @@ for stl_file in [
                   ]:
 
     shells = []
-    stl = vmstl.Stl.from_file(stl_file)
+    stl = vmstl.Stl.load_from_file(stl_file)
     shell = stl.to_closed_shell()
     shell.alpha = 0.3
     assert len(shell.faces)

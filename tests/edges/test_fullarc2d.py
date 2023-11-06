@@ -9,7 +9,7 @@ from volmdlr import edges, curves
 
 
 class TestFullArc2D(unittest.TestCase):
-    circle2d = curves.Circle2D(volmdlr.O2D, 1)
+    circle2d = curves.Circle2D(volmdlr.OXY, 1)
     fullarc2d = edges.FullArc2D(circle2d, volmdlr.Point2D(-1, 0))
 
     def test_split_between_two_points(self):
