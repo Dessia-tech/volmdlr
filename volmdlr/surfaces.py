@@ -2586,12 +2586,11 @@ class ToroidalSurface3D(PeriodicalSurface):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = volmdlr.TWO_PI
 
+
     def __init__(self, frame: volmdlr.Frame3D, major_radius: float, minor_radius: float, name: str = ''):
         self.frame = frame
         self.major_radius = major_radius
         self.minor_radius = minor_radius
-        self.outer_radius = self.major_radius + self.minor_radius
-        self.inner_radius = self.major_radius - self.minor_radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
         self._bbox = None
@@ -2607,6 +2606,16 @@ class ToroidalSurface3D(PeriodicalSurface):
             circle = curves.Circle3D(i_frame, self.minor_radius)
             arcs.append(circle)
         return arcs
+
+    @cached_property
+    def outer_radius(self):
+        """Get torus outer radius"""
+        return self.major_radius + self.minor_radius
+
+    @cached_property
+    def inner_radius(self):
+        """Get torus inner radius"""
+        return self.major_radius - self.minor_radius
 
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
@@ -2683,11 +2692,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         # Generally this is related to uncertainty of step files.
 
         if abs(x) < 1e-6:
-            x = 0
+            x = 0.0
         if abs(y) < 1e-6:
-            y = 0
+            y = 0.0
         if abs(z) < 1e-6:
-            z = 0
+            z = 0.0
 
         z_r = z / self.minor_radius
         phi = math.asin(z_r)
@@ -2698,8 +2707,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         u1, u2 = round(x / u, 5), round(y / u, 5)
         theta = math.atan2(u2, u1)
 
-        vector_to_tube_center = volmdlr.Vector3D(self.major_radius * math.cos(theta),
-                                                 self.major_radius * math.sin(theta), 0)
+        vector_to_tube_center = volmdlr.Vector3D(abs(self.major_radius) * math.cos(theta),
+                                                 abs(self.major_radius) * math.sin(theta), 0)
         vector_from_tube_center_to_point = volmdlr.Vector3D(x, y, z) - vector_to_tube_center
         phi2 = volmdlr.geometry.vectors3d_angle(vector_to_tube_center, vector_from_tube_center_to_point)
 
@@ -2731,7 +2740,11 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         frame = object_dict[arguments[1]]
         rcenter = float(arguments[2]) * length_conversion_factor
-        rcircle = float(arguments[3]) * length_conversion_factor
+        # if rcenter < 0:
+        #     rcenter = abs(rcenter)
+            # frame.u = -frame.u
+            # frame.v = frame.w.cross(frame.u)
+        rcircle = abs(float(arguments[3])) * length_conversion_factor
         return cls(frame, rcenter, rcircle, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -2814,7 +2827,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                   for p in bspline_curve2d.discretization_points(number_points=n)]
         return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree)]
 
-    def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start):
+    def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start, end):
         """
         Verifies if arc 3D contains discontinuity and undefined start/end points on parametric domain.
         """
@@ -2827,8 +2840,8 @@ class ToroidalSurface3D(PeriodicalSurface):
             not arc3d.is_point_edge_extremity(point_phi_discontinuity)
         undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
         undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
-        undefined_start_phi = arc3d.start.is_close(point_phi_discontinuity)
-        undefined_end_phi = arc3d.end.is_close(point_phi_discontinuity)
+        undefined_start_phi = arc3d.start.is_close(point_phi_discontinuity)  or start.y == math.pi
+        undefined_end_phi = arc3d.end.is_close(point_phi_discontinuity) or end.y == math.pi
 
         return theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
             undefined_start_phi, undefined_end_phi
@@ -2842,7 +2855,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         point_after_start, point_before_end = self._reference_points(fullarc3d)
         theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
             undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(
-                fullarc3d, start)
+                fullarc3d, start, end)
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(
             [start, end],
             [undefined_start_theta, undefined_end_theta, undefined_start_phi, undefined_end_phi],
@@ -2876,7 +2889,8 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         point_after_start, point_before_end = self._reference_points(arc3d)
         theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
-            undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(arc3d, start)
+            undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(arc3d,
+                                                                                                        start, end)
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(
             [start, end],
             [undefined_start_theta, undefined_end_theta, undefined_start_phi, undefined_end_phi],
@@ -4703,8 +4717,7 @@ class ExtrusionSurface3D(Surface3D):
             else:
                 point_at_curve_local = volmdlr.Point3D(x, y, 0)
                 point_at_curve = self.frame.local_to_global_coordinates(point_at_curve_local)
-
-        u = self.edge.abscissa(point_at_curve, tol=1e-2)
+        u = self.edge.abscissa(point_at_curve)
         v = z - point_at_curve_local.z
 
         return volmdlr.Point2D(u, v)
@@ -4835,12 +4848,12 @@ class ExtrusionSurface3D(Surface3D):
         end3d = self.point2d_to_3d(linesegment2d.end)
         u1, param_z1 = linesegment2d.start
         u2, param_z2 = linesegment2d.end
-        if math.isclose(u1, u2, abs_tol=1e-4):
+        if math.isclose(u1, u2, abs_tol=1e-6):
             return [edges.LineSegment3D(start3d, end3d)]
         if math.isclose(param_z1, param_z2, abs_tol=1e-6):
             primitive = self.edge.translation(self.direction * (param_z1 + param_z2) * 0.5)
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-4):
+                if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-6):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
                         return [primitive]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):

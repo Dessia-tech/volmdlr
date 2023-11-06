@@ -4061,12 +4061,12 @@ class FullArcEllipse(Edge):
         """
         return self.ellipse.length()
 
-    def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-6):
+    def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-2):
         """
         Verifies if a given point lies on the ellipse.
 
         :param point: point to be verified.
-        :param abs_tol: Absolute tolerance to consider the point on the ellipse.
+        :param abs_tol: Absolute tolerance to consider the point on the ellipse (0.99 should be considered True).
         :return: True is point lies on the ellipse, False otherwise
         """
         new_point = self.ellipse.frame.global_to_local_coordinates(point)

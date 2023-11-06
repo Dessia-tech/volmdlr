@@ -2122,12 +2122,12 @@ class Ellipse2D(ClosedCurve):
         frame3d = volmdlr.Frame3D(center3d, u_vector, v_vector, w_vector)
         return Ellipse3D(self.major_axis, self.minor_axis, frame3d)
 
-    def point_over_ellipse(self, point, abs_tol=1e-6):
+    def point_over_ellipse(self, point, abs_tol=1e-2):
         """
         Verifies if a point is on the ellipse.
 
         :param point: point to be verified.
-         :param abs_tol: tolerance.
+         :param abs_tol: tolerance (0.99 should be considered True).
         :return: True or False.
         """
         return math.isclose(
@@ -2208,7 +2208,7 @@ class Ellipse2D(ClosedCurve):
         :param tol: tolerance.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
-        if self.point_over_ellipse(point, tol):
+        if self.point_over_ellipse(point):
             angle_abscissa = self.point_angle_with_major_dir(point)
 
             def arc_length(theta):

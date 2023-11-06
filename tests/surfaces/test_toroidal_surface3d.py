@@ -42,6 +42,19 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertTrue(test2.start.is_close(volmdlr.Point2D(-0.28681306221029024,  -math.pi)))
         self.assertTrue(test2.end.is_close(volmdlr.Point2D(-0.28681611209686064, -0.5 * math.pi)))
 
+        surface = surfaces.ToroidalSurface3D.load_from_file(
+            os.path.join(folder, "degenerated_toroidalsurface.json"))
+        # surface.major_radius = -surface.major_radius
+        arc3d = edges.Arc3D.load_from_file(
+            os.path.join(folder, "degenerated_toroidalsurface_arc3d_undefined_end.json"))
+        brep_primitive = surface.arc3d_to_2d(arc3d)[0]
+        inverse_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
+        self.assertAlmostEqual(brep_primitive.length(), 0.1993422098906592, 3)
+        self.assertEqual(brep_primitive.end.y, -math.pi)
+        self.assertAlmostEqual(arc3d.length(), inverse_prof.length(), 5)
+        self.assertTrue(arc3d.start.is_close(inverse_prof.start))
+        self.assertTrue(arc3d.end.is_close(inverse_prof.end))
+
     def test_bsplinecurve3d_to_2d(self):
         control_points = [volmdlr.Point3D(-0.006429000000000001, 0.000765110438227, -0.0002349369830163),
                           volmdlr.Point3D(-0.006429000000000001, 0.0007527699876436001, -0.0002071780906932),
