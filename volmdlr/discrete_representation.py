@@ -2,6 +2,7 @@
 Class for discrete representations of volmdlr models (voxelization for 3D geometries, pixelization for 2D geometries).
 """
 import itertools
+
 # pylint: disable=no-name-in-module
 
 import warnings
@@ -2388,23 +2389,36 @@ class OctreeBasedVoxelization(Voxelization):
 
         return centers_by_voxel_size
 
-    def _get_intersections_voxel_centers(self) -> Dict[Tuple[int, int], Set[_Point3D]]:
+    def _get_intersections_voxel_centers(self, threshold: int = None) -> Dict[Tuple[int, int], Set[_Point3D]]:
         """
         Get the center points of non-homogeneous voxels and organize them by voxel size.
 
         :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
-        return self._get_intersections_leaf_centers(0, self._root_voxel_size, self._root_center, self._octree)
+        return self._get_intersections_leaf_centers(
+            0, self._root_voxel_size, self._root_center, self._octree, threshold
+        )
 
     def _get_intersections_leaf_centers(
-        self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
+        self,
+        current_depth: int,
+        current_size: float,
+        current_center: _Point3D,
+        current_octree,
+        threshold: int = None,
     ) -> Dict[Tuple[int, int], Set[_Point3D]]:
         """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
         intersections_locations = {}
 
         if current_depth == self._octree_depth:  # if _octree_depth reached, it is a leaf node
             for combination in itertools.combinations(current_octree, 2):
+                combination = tuple(sorted(combination))
+
+                if threshold:
+                    if not (combination[0] < threshold <= combination[1]):
+                        continue
+
                 intersections_locations[combination] = {current_center}
 
         else:
@@ -2427,7 +2441,11 @@ class OctreeBasedVoxelization(Voxelization):
 
                             # Recursive process
                             sub_intersections_locations = self._get_intersections_leaf_centers(
-                                current_depth + 1, half_size, sub_voxel_center, current_octree[i * 4 + j * 2 + k]
+                                current_depth + 1,
+                                half_size,
+                                sub_voxel_center,
+                                current_octree[i * 4 + j * 2 + k],
+                                threshold,
                             )
 
                             # Merge sub-centers into the result dictionary, keeping track of voxel sizes
