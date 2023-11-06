@@ -252,6 +252,22 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertTrue(ellipse_intersections[1].is_close(
             volmdlr.Point3D(1.8179453474500284, -1.1400021883520102, -1.1400021883520102)))
 
+    def test_conicalsurface_intersections(self):
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 7)
+        conical_surface = conical_surface.translation(volmdlr.Vector3D(2, 2, -3))
+        toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 1)
+        list_curves = toroidal_surface1.conicalsurface_intersections(conical_surface)
+        self.assertEqual(len(list_curves), 2)
+        self.assertAlmostEqual(list_curves[0].length(), 7.290725626581458)
+        self.assertAlmostEqual(list_curves[1].length(), 7.290865143142663)
+
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 8)
+        conical_surface = conical_surface.translation(volmdlr.Vector3D(2, 2, -3))
+        toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 1)
+        list_curves = toroidal_surface1.conicalsurface_intersections(conical_surface)
+        self.assertEqual(len(list_curves), 1)
+        self.assertAlmostEqual(list_curves[0].length(), 15.266474391697773)
+
 
 if __name__ == '__main__':
     unittest.main()

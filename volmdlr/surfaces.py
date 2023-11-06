@@ -3328,15 +3328,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param conical_surface: other Conical Surface 3d.
         :return: List os curves intersecting Torus.
         """
-        # line = curves.Line3D.from_point_and_vector(cylindrical_surface.frame.origin, cylindrical_surface.frame.w)
-        # distance_to_self_origin = line.point_distance(self.frame.origin)
-
-        # if math.isclose(abs(self.frame.w.dot(cylindrical_surface.frame.w)), 1.0, abs_tol=1e-6) and \
-        #         math.isclose(distance_to_self_origin, 0.0, abs_tol=1e-6):
-        #     if cylindrical_surface.radius < self.minor_radius:
-        #         return []
-        #     elif math.isclose(cylindrical_surface.radius, self.minor_radius, abs_tol=1e-6):
-        #         return [curves.Circle3D(self.frame, self.minor_radius)]
         intersection_points = self._conical_intersection_points(conical_surface)
         if not intersection_points:
             return []
