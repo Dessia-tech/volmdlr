@@ -2613,19 +2613,19 @@ class OctreeBasedVoxelization(Voxelization):
 
         for triangles_idx, voxel_centers in triangle_combinations.items():
             face_1 = face_by_triangle_1[shell_triangles_1[triangles_idx[0]]]
-            face_2 = face_by_triangle_2[shell_triangles_2[triangles_idx[1]]]
+            face_2 = face_by_triangle_2[shell_triangles_2[triangles_idx[1] - len(shell_triangles_1)]]
 
             if (face_1, face_2) not in face_combinations:
                 face_combinations[(face_1, face_2)] = PointBasedVoxelization(set(), voxel_size)
-            face_combinations[(face_1, face_2)].union(PointBasedVoxelization(voxel_centers, voxel_size))
+            face_combinations[(face_1, face_2)] = face_combinations[(face_1, face_2)].union(
+                PointBasedVoxelization(voxel_centers, voxel_size)
+            )
 
         return face_combinations
 
     @staticmethod
     def _shell_to_face_by_triangle(shell: Shell3D):
-        """
-
-        """
+        """ """
         face_by_triangle = {}
         shell_triangles = []
 
