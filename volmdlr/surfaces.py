@@ -1182,6 +1182,8 @@ class Surface3D(DessiaObject):
             for intersection in inters:
                 if not volmdlr.core.point_in_list(intersection, intersections):
                     intersections.append(intersection)
+        if intersections:
+            print(True)
         return intersections
 
     def circle_intersections(self, circle: curves.Circle3D):
@@ -3176,6 +3178,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 continue
             intersections = plane3d.circle_intersections(arc)
             points_intersections.extend(intersections)
+        print(True)
         for edge in plane3d.plane_grid(200, self.major_radius * 4):
             intersections = self.line_intersections(edge.line)
             points_intersections.extend(intersections)
@@ -3236,12 +3239,17 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         arcs = self._torus_arcs(150)
         points_intersections = []
-        for arc in arcs:
-            intersections = cylindrical_surface.circle_intersections(arc)
-            points_intersections.extend(intersections)
-        for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 200) + \
-                cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
+        # for arc in arcs:
+        #     intersections = cylindrical_surface.circle_intersections(arc)
+        #     points_intersections.extend(intersections)
+        # for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 200):
+        #     intersections = self.edge_intersections(edge)
+        #     for point in intersections:
+        #         if not volmdlr.core.point_in_list(point, points_intersections):
+        #             points_intersections.append(point)
+        for edge in cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
+            print(True)
             for point in intersections:
                 if not volmdlr.core.point_in_list(point, points_intersections):
                     points_intersections.append(point)

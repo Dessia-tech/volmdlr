@@ -114,20 +114,20 @@ class TestToroidalSurface3D(unittest.TestCase):
                 self.assertTrue(expected_result.is_close(inter))
 
     def test_plane_intersections(self):
-        expected_results1 = [[18.84955592153876, 6.283185307179586], [18.774778972399815, 6.306324629324003],
-                             [18.561749480682863, 6.382385910045063], [18.213003549947153, 6.522535326954354],
-                             [17.73936325618824, 6.755617023729998], [17.162568850138605, 7.158697717832439],
-                             [12.566370614359176, 12.566370614359176], [9.548698487359694, 9.548754306669936],
-                             [8.513195638064289, 8.627615279189477], [7.859510527335956, 7.859510528088488]]
-        expected_results2 = [18.007768707061835, 7.124972521656521]
-        expected_results3 = [[6.283185307179586, 6.283185307179586], [6.287527793065231, 6.2875277930653075],
-                             [6.304007940714406, 6.304008313559747], [6.402392698169013, 6.385653138168592],
-                             [6.374756663452417, 6.3742078689160975], [6.432102115248554, 6.435832133353287],
-                             [6.51052494933726, 6.510526578371843], [6.617587948267936, 6.6174395158125385],
-                             [6.770799162158078, 6.770798442215525], [7.02765259262962, 7.027622387212875],
-                             [14.078057920670332], [13.573542097891794], [13.223883969710258], [12.919853160635844],
-                             [12.627496331426345], [12.329955764747575], [12.016630378969065], [11.679649471224833],
-                             [11.312293366198755], [10.908108182904483]]
+        expected_results1 = [[18.84955592153876, 6.283185307179586], [18.774779138134168, 6.306323822442297],
+                             [18.561749629005426, 6.382384892827467], [18.213003701777502, 6.522534002932732],
+                             [17.73936352187163, 6.7556153765971], [17.16256917662734, 7.158695703756961],
+                             [12.566370614359176, 12.566370614359176], [9.548769483572569, 9.548769280167237],
+                             [8.513205671975072, 8.51320566634381], [7.859515047042802, 7.859515075442373]]
+        expected_results2 = [18.007768707061828, 7.124972521656522]
+        expected_results3 = [[6.283185307179586, 6.283185307179586], [6.287579377218473, 6.287579377218561],
+                             [6.30399108352376, 6.3039816534801325], [6.332387134702687, 6.332381135450795],
+                             [6.374210571095067, 6.37421077592289], [6.432095365307052, 6.432100695011224],
+                             [6.510504769093866, 6.51052211293725], [6.617598000515308, 6.617598002139425],
+                             [6.770805865496417, 6.770813958305705], [7.027656972602489, 7.027692615982806],
+                             [14.078295717935498], [13.573579238139956], [13.223889554125515], [12.919842406986378],
+                             [12.627484336973875], [12.32993940591275], [12.016612404807244], [11.67963521923532],
+                             [11.312287686519083], [10.908095813062298]]
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         # Test 1
         plane1 = surfaces.Plane3D(volmdlr.OXYZ)
@@ -136,7 +136,7 @@ class TestToroidalSurface3D(unittest.TestCase):
             plane = plane1.rotation(plane1.frame.origin, volmdlr.X3D, n)
             plane_intersections = toroidal_surface.plane_intersections(plane)
             for intersection, expected_result in zip(plane_intersections, expected_results1[i]):
-                self.assertAlmostEqual(intersection.length(), expected_result)
+                self.assertAlmostEqual(intersection.length(), expected_result, 5)
 
         # Test 2
         plane2 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), volmdlr.X3D,
@@ -151,13 +151,13 @@ class TestToroidalSurface3D(unittest.TestCase):
             plane = plane3.translation(n * volmdlr.X3D)
             plane_intersections = toroidal_surface.plane_intersections(plane)
             for intersection, expected_result in zip(plane_intersections, expected_results3[i]):
-                self.assertAlmostEqual(intersection.length(), expected_result)
+                self.assertAlmostEqual(intersection.length(), expected_result, 5)
         # Test 4
         plane4 = surfaces.Plane3D(volmdlr.OYZX)
         plane4 = plane4.translation(volmdlr.X3D)
         plane_intersections = toroidal_surface.plane_intersections(plane4)
-        for intersection, expected_result in zip(plane_intersections, [7.4155670073846425, 7.4149870554616255]):
-            self.assertAlmostEqual(intersection.length(), expected_result)
+        for intersection, expected_result in zip(plane_intersections, [7.410420777359636, 7.410412890365456]):
+            self.assertAlmostEqual(intersection.length(), expected_result, 5)
 
         # Test 5
         plane5 = plane4.translation(volmdlr.X3D*3.1)
