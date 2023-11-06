@@ -1,6 +1,7 @@
 """
 Class for discrete representations of volmdlr models (voxelization for 3D geometries, pixelization for 2D geometries).
 """
+import itertools
 # pylint: disable=no-name-in-module
 
 import warnings
@@ -2386,6 +2387,56 @@ class OctreeBasedVoxelization(Voxelization):
                 centers_by_voxel_size[current_size] = {current_center}
 
         return centers_by_voxel_size
+
+    def _get_intersections_voxel_centers(self) -> Dict[Tuple[int, int], Set[_Point3D]]:
+        """
+        Get the center points of non-homogeneous voxels and organize them by voxel size.
+
+        :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
+        :rtype: dict[float, set[tuple[float, float, float]]]
+        """
+        return self._get_intersections_leaf_centers(0, self._root_voxel_size, self._root_center, self._octree)
+
+    def _get_intersections_leaf_centers(
+        self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
+    ) -> Dict[Tuple[int, int], Set[_Point3D]]:
+        """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
+        intersections_locations = {}
+
+        if current_depth == self._octree_depth:  # if _octree_depth reached, it is a leaf node
+            for combination in itertools.combinations(current_octree, 2):
+                intersections_locations[combination] = {current_center}
+
+        else:
+            half_size = round_to_digits(current_size / 2, DECIMALS)
+
+            for i in range(2):
+                for j in range(2):
+                    for k in range(2):
+                        # if it is the octree
+                        if current_octree[i * 4 + j * 2 + k]:
+                            # calculate the center of the sub-voxel
+                            sub_voxel_center = round_point_3d_to_digits(
+                                (
+                                    current_center[0] + (i - 0.5) * half_size,
+                                    current_center[1] + (j - 0.5) * half_size,
+                                    current_center[2] + (k - 0.5) * half_size,
+                                ),
+                                DECIMALS,
+                            )
+
+                            # Recursive process
+                            sub_intersections_locations = self._get_intersections_leaf_centers(
+                                current_depth + 1, half_size, sub_voxel_center, current_octree[i * 4 + j * 2 + k]
+                            )
+
+                            # Merge sub-centers into the result dictionary, keeping track of voxel sizes
+                            for intersection, location in sub_intersections_locations.items():
+                                if intersection not in intersections_locations:
+                                    intersections_locations[intersection] = set()
+                                intersections_locations[intersection].update(location)
+
+        return intersections_locations
 
     def _get_inner_growing_voxel_centers(self, layers_minimal_thickness: int) -> Dict[float, Set[_Point3D]]:
         """
