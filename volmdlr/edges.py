@@ -1684,7 +1684,12 @@ class BSplineCurve(Edge):
         for points in zip(polygon_points[:-1], polygon_points[1:]):
             linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
             if linesegment.line_distance(line) < tol * 100:
-                list_intersections.extend(self.local_intersections_search(line, points[0], points[1], tol))
+                intersections = self.local_intersections_search(line, points[0], points[1], tol)
+                if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
+                    if line.point_distance(linesegment.middle_point()) < (tol * 0.01):
+                        list_intersections.append(linesegment.middle_point())
+                        continue
+                list_intersections.extend(intersections)
             # intersections = linesegment.line_intersections(line)
             # if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
             #     if line.point_distance(linesegment.middle_point()) < (tol * 0.01):
