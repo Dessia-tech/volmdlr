@@ -2600,8 +2600,8 @@ class OctreeBasedVoxelization(Voxelization):
         Compute the intersecting faces combinations and where the faces are located.
 
         """
-        face_by_triangle_1, shell_triangles_1 = cls._shell_to_face_by_triangle(shell_1)
-        face_by_triangle_2, shell_triangles_2 = cls._shell_to_face_by_triangle(shell_2)
+        face_idx_by_triangle_1, shell_triangles_1 = cls._shell_to_face_idx_by_triangle(shell_1)
+        face_idx_by_triangle_2, shell_triangles_2 = cls._shell_to_face_idx_by_triangle(shell_2)
 
         voxelization_1 = cls._from_triangles(shell_triangles_1, voxel_size)
         voxelization_2 = cls._from_triangles(shell_triangles_2, voxel_size)
@@ -2609,27 +2609,32 @@ class OctreeBasedVoxelization(Voxelization):
         intersection = voxelization_1.intersection(voxelization_2)
         triangle_combinations = intersection._get_intersections_voxel_centers(len(voxelization_1._triangles))
 
-        face_combinations = {}
+        face_id_combinations = {}
 
-        for triangles_idx, voxel_centers in triangle_combinations.items():
-            face_1 = face_by_triangle_1[shell_triangles_1[triangles_idx[0]]]
-            face_2 = face_by_triangle_2[shell_triangles_2[triangles_idx[1] - len(shell_triangles_1)]]
+        for (i, j), voxel_centers in triangle_combinations.items():
+            face_1 = face_idx_by_triangle_1[shell_triangles_1[i]]
+            face_2 = face_idx_by_triangle_2[shell_triangles_2[j - len(shell_triangles_1)]]
 
-            if (face_1, face_2) not in face_combinations:
-                face_combinations[(face_1, face_2)] = PointBasedVoxelization(set(), voxel_size)
-            face_combinations[(face_1, face_2)] = face_combinations[(face_1, face_2)].union(
-                PointBasedVoxelization(voxel_centers, voxel_size)
+            if (face_1, face_2) not in face_id_combinations:
+                face_id_combinations[(face_1, face_2)] = set()
+            face_id_combinations[(face_1, face_2)].update(voxel_centers)
+
+        face_combinations = []
+
+        for (i, j), voxel_centers in face_id_combinations.items():
+            face_combinations.append(
+                ((shell_1.faces[i], shell_2.faces[j]), PointBasedVoxelization(voxel_centers, voxel_size))
             )
 
         return face_combinations
 
     @staticmethod
-    def _shell_to_face_by_triangle(shell: Shell3D):
+    def _shell_to_face_idx_by_triangle(shell: Shell3D):
         """ """
-        face_by_triangle = {}
+        face_idx_by_triangle = {}
         shell_triangles = []
 
-        for face in shell.faces:
+        for i, face in enumerate(shell.faces):
             triangulation = face.triangulation()
 
             face_triangles = [
@@ -2654,11 +2659,11 @@ class OctreeBasedVoxelization(Voxelization):
             ]
 
             for triangle in face_triangles:
-                face_by_triangle[triangle] = face
+                face_idx_by_triangle[triangle] = i
 
             shell_triangles.extend(face_triangles)
 
-        return face_by_triangle, shell_triangles
+        return face_idx_by_triangle, shell_triangles
 
 
 class Pixelization(DiscreteRepresentation, DessiaObject):

@@ -72,7 +72,7 @@ volume_model = VolumeModel([shell_1, shell_2])
 #
 # print(f"Shell3D.intersecting_faces_combinations: {(t1 - t0) * 1000:.3f}ms")
 
-VOXEL_SIZE = 0.001
+VOXEL_SIZE = 0.01
 
 t0 = time.perf_counter()
 face_combinations_octree = OctreeBasedVoxelization.intersecting_faces_combinations(shell_1, shell_2, VOXEL_SIZE)
