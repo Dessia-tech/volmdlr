@@ -50,8 +50,12 @@ class Curve(DessiaObject):
     """Abstract class for a curve object."""
 
     def __init__(self, name: str = ''):
-        self.periodic = False
         DessiaObject.__init__(self, name=name)
+
+    @property
+    def periodic(self):
+        """Returns True if the curve is closed."""
+        return False
 
     def abscissa(self, point):
         """
@@ -113,7 +117,11 @@ class ClosedCurve(Curve):
     """Abstract class for defining closed curves (Circle, Ellipse) properties."""
     def __init__(self, name: str = ''):
         Curve.__init__(self, name=name)
-        self.periodic = True
+
+    @property
+    def periodic(self):
+        """Returns True if the curve is closed."""
+        return True
 
     def point_at_abscissa(self, abscissa):
         """
@@ -958,6 +966,11 @@ class Line3D(Line):
 class CircleMixin:
     """Circle abstract class."""
 
+    @property
+    def center(self):
+        """Gets circle's center point ."""
+        return self.frame.origin
+
     def split_at_abscissa(self, abscissa):
         """
         Splits a Circle into two at a given fraction of its length (abscissa parameter).
@@ -1005,6 +1018,52 @@ class CircleMixin:
             return fullar_arc_class_(circle, point1)
         return arc_class_(circle, point1, point2)
 
+    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
+        """
+        Calculates the abscissa a given point.
+
+        :param point: point to calculate abscissa.
+        :param tol: tolerance.
+        :return: abscissa
+        """
+        if not math.isclose(self.center.point_distance(point), self.radius, abs_tol=tol):
+            raise ValueError('Point is not on circle')
+        dimension = self.__class__.__name__[-2:]
+        if dimension == "2D":
+            x, y = self.frame.global_to_local_coordinates(point)
+        else:
+            x, y, _ = self.frame.global_to_local_coordinates(point)
+        u1 = x / self.radius
+        u2 = y / self.radius
+        theta = geometry.sin_cos_angle(u1, u2)
+
+        return self.radius * abs(theta)
+
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
+        """
+        Discretize a Circle to have "n" points.
+
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
+            to mesh an arc
+        :return: a list of sampled points
+        """
+        if number_points:
+            angle_resolution = number_points
+        discretization_points = [self.center + self.radius * math.cos(theta) * self.frame.u +
+                                 self.radius * math.sin(theta) * self.frame.v for theta in
+                                 npy.linspace(0, volmdlr.TWO_PI, angle_resolution, dtype=npy.float64)]
+        return discretization_points
+
+    def point_at_abscissa(self, curvilinear_abscissa):
+        """Start point is at intersection of frame.u axis."""
+        start = self.frame.origin + self.radius * self.frame.u
+        dimension = self.__class__.__name__[-2:]
+        if dimension == "2D":
+            return start.rotation(self.center, curvilinear_abscissa / self.radius)
+        return start.rotation(self.frame.origin, self.frame.w, curvilinear_abscissa / self.radius)
+
 
 class Circle2D(CircleMixin, ClosedCurve):
     """
@@ -1021,11 +1080,11 @@ class Circle2D(CircleMixin, ClosedCurve):
     :type name: str, optional
     """
 
-    def __init__(self, center: volmdlr.Point2D, radius: float, name: str = ''):
-        self.center = center
+    def __init__(self, frame: volmdlr.Frame2D, radius: float, name: str = ''):
         self.radius = radius
+        self.frame = frame
         self._bounding_rectangle = None
-        self.frame = volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)
+        self._is_trigo = None
         ClosedCurve.__init__(self, name=name)
 
     def __hash__(self):
@@ -1049,12 +1108,87 @@ class Circle2D(CircleMixin, ClosedCurve):
             return self.radius
         raise IndexError
 
+    @property
+    def is_trigo(self):
+        """Return True if circle is counterclockwise."""
+        if self._is_trigo is None:
+            cross = self.frame.u.cross(self.frame.v)
+            if cross > 0:
+                self._is_trigo = True
+            else:
+                self._is_trigo = False
+        return self._is_trigo
+
+    @is_trigo.setter
+    def is_trigo(self, value):
+        """
+        Set circle rotation direction.
+
+        :param value: True, if you want that the circle to be counterclockwise direction. False, otherwise.
+        :type value: bool
+        """
+        cross = self.frame.u.cross(self.frame.v)
+        if cross > 0 and not value:
+            self.frame.v = -self.frame.v
+            self._is_trigo = value
+        elif cross < 0 and value:
+            self.frame.v = -self.frame.v
+            self._is_trigo = value
+        elif self._is_trigo is None:
+            self._is_trigo = value
+
+    @property
+    def bounding_rectangle(self):
+        """
+        Gets the bounding rectangle for the circle.
+
+        :return: bounding rectangle.
+        """
+        if not self._bounding_rectangle:
+            self._bounding_rectangle = self.get_bounding_rectangle()
+        return self._bounding_rectangle
+
     @classmethod
-    def from_3_points(cls, point1, point2, point3, name: str = ''):
+    def from_center_and_radius(cls, center: volmdlr.Point2D, radius: float, is_trigo: bool = True, name: str = ""):
+        """
+        Instantiate a 2D circle using a center and a radius.
+
+        :param center: The center point of the circle.
+        :type center: volmdlr.Point2D
+        :param radius: The radius of the circle.
+        :type radius: float.
+        :param is_trigo: (Optional) If False, the circle is in clockwise direction.
+        :type is_trigo: bool
+        :param name: The name of the circle. Defaults to ''.
+        :type name: str, optional
+        """
+
+        if is_trigo:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)
+        else:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)
+        return cls(frame=frame, radius=radius, name=name)
+
+    @classmethod
+    def from_3_points(cls, point1, point2, point3, is_trigo: bool = True, name: str = ''):
         """
         Creates a circle 2d from 3 points.
 
         :return: circle 2d.
+        """
+        center = cls.find_circle_center_from_3_points(point1, point2, point3)
+        if is_trigo:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)
+        else:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)
+
+        circle = cls(frame, point1.point_distance(center), name=name)
+        return circle
+
+    @staticmethod
+    def find_circle_center_from_3_points(point1, point2, point3):
+        """
+        Finds the center of the circle passing through the three given points.
         """
         x_interior, y_interior = point2.x, point2.y
         x_end, y_end = point3.x, point3.y
@@ -1072,8 +1206,7 @@ class Circle2D(CircleMixin, ClosedCurve):
             matrix_a = npy.array(matrix1)
             b_vector = - npy.array(b_vector_components)
             center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
-        circle = cls(center, point1.point_distance(center), name=name)
-        return circle
+        return center
 
     def area(self):
         """
@@ -1108,44 +1241,29 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param point: symmetry point.
         :return: Circle 2D symmetric to point.
         """
-        center = 2 * point - self.center
-        return Circle2D(center, self.radius)
+        offset = 2 * point - self.center
+        return self.translation(offset)
 
     def axial_symmetry(self, line):
         """
         Finds out the symmetric circle 2d according to a line.
         """
-        return self.__class__(center=self.center.axial_symmetry(line),
-                              radius=self.radius)
-
+        axial_symmetric_center = self.center.axial_symmetry(line)
+        offset = axial_symmetric_center - self.center
+        return self.translation(offset)
     def copy(self, *args, **kwargs):
         """
         Create a copy of the arc 2d.
 
         :return: copied circle 2d.
         """
-        return Circle2D(self.center.copy(), self.radius)
+        return Circle2D(self.frame.copy(), self.radius)
 
-    def point_at_abscissa(self, curvilinear_abscissa):
-        """
-        Gets the point at a given abscissa.
-
-        :param curvilinear_abscissa: a portion of the circle's length - (0, length).
-        :return: Point found at given abscissa.
-        """
-        start = self.center + self.radius * volmdlr.X3D
-        return start.rotation(self.center, curvilinear_abscissa / self.radius)
-
-    def abscissa(self, point: volmdlr.Point2D, tol=1e-6):
-        """
-        Returns the abscissa of a given point 2d.
-
-        """
-        if not math.isclose(point.point_distance(self.center), self.radius, abs_tol=tol):
-            raise ValueError('Point not in arc')
-        u1, u2 = point.x / self.radius, point.y / self.radius
-        point_angle = geometry.sin_cos_angle(u1, u2)
-        return self.radius * point_angle
+    def reverse(self):
+        """Gets the circle in the reverse direction."""
+        frame = self.frame.copy()
+        frame.v = - frame.v
+        return Circle2D(frame, self.radius)
 
     def point_belongs(self, point, include_edge_points: bool = True, tol: float = 1e-6):
         """
@@ -1173,17 +1291,6 @@ class Circle2D(CircleMixin, ClosedCurve):
         :return: the distance from the point to the circle 2D.
         """
         return abs(point.point_distance(self.center) - self.radius)
-
-    @property
-    def bounding_rectangle(self):
-        """
-        Gets the bounding rectangle for the circle.
-
-        :return: bounding rectangle.
-        """
-        if not self._bounding_rectangle:
-            self._bounding_rectangle = self.get_bounding_rectangle()
-        return self._bounding_rectangle
 
     def get_bounding_rectangle(self):
         """
@@ -1388,7 +1495,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param angle: angle rotation.
         :return: a new rotated Circle2D.
         """
-        return Circle2D(self.center.rotation(center, angle), self.radius)
+        return Circle2D(self.frame.rotation(center, angle), self.radius)
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -1397,21 +1504,15 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param offset: translation vector
         :return: A new translated Circle2D
         """
-        return Circle2D(self.center.translation(offset), self.radius)
+        return Circle2D(self.frame.translation(offset), self.radius)
 
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new Circle2D.
 
         side = 'old' or 'new'
         """
-        if side == 'old':
-            return Circle2D(frame.local_to_global_coordinates(self.center),
-                            self.radius)
-        if side == 'new':
-            return Circle2D(frame.global_to_local_coordinates(self.center),
-                            self.radius)
-        raise ValueError('Side should be \'new\' \'old\'')
+        return Circle2D(self.frame.frame_mapping(frame, side), self.radius)
 
     def split_by_line(self, line: Line2D):
         """
@@ -1435,21 +1536,6 @@ class Circle2D(CircleMixin, ClosedCurve):
         """
         return [volmdlr.edges.Arc2D(self, split_start, split_end),
                 volmdlr.edges.Arc2D(self, split_end, split_start)]
-
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 40):
-        """
-        Discretize a Contour to have "n" points.
-
-        :param number_points: the number of points (including start and end points)
-             if unset, only start and end will be returned
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
-            to mesh an arc
-        :return: a list of sampled points
-        """
-        if not number_points and angle_resolution:
-            number_points = math.ceil(math.pi * angle_resolution) + 2
-        step = self.length() / (number_points - 1)
-        return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def get_geo_points(self):
         """
@@ -1479,10 +1565,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         self.angle = 2 * math.pi
         ClosedCurve.__init__(self, name=name)
 
-    @property
-    def center(self):
-        """Gets the center point of the circle 3d."""
-        return self.frame.origin
+
 
     @property
     def normal(self):
@@ -1506,40 +1589,6 @@ class Circle3D(CircleMixin, ClosedCurve):
         if key == 1:
             return self.radius
         raise IndexError
-
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
-        """
-        Discretize a Circle to have "n" points.
-
-        :param number_points: the number of points (including start and end points)
-             if unset, only start and end will be returned
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
-            to mesh an arc
-        :return: a list of sampled points
-        """
-        if number_points:
-            angle_resolution = number_points
-        discretization_points_3d = [self.center + self.radius * math.cos(theta) * self.frame.u +
-                                    self.radius * math.sin(theta) * self.frame.v for theta in
-                                    npy.linspace(0, volmdlr.TWO_PI, angle_resolution)]
-        return discretization_points_3d
-
-    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
-        """
-        Calculates the abscissa a given point.
-
-        :param point: point to calculate abscissa.
-        :param tol: tolerance.
-        :return: abscissa
-        """
-        if not math.isclose(self.center.point_distance(point), self.radius, abs_tol=tol):
-            raise ValueError('Point is not on circle')
-        x, y, _ = self.frame.global_to_local_coordinates(point)
-        u1 = x / self.radius
-        u2 = y / self.radius
-        theta = geometry.sin_cos_angle(u1, u2)
-
-        return self.radius * abs(theta)
 
     def length(self):
         """Calculates the arc length of the circle."""
@@ -1581,11 +1630,7 @@ class Circle3D(CircleMixin, ClosedCurve):
             ax = fig.add_subplot(111, projection='3d')
         return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
 
-    def point_at_abscissa(self, curvilinear_abscissa):
-        """ Start point is at intersection of frame.u axis. """
-        start = self.frame.origin + self.radius * self.frame.u
-        return start.rotation(self.frame.origin, self.frame.w,
-                              curvilinear_abscissa / self.radius)
+
 
     def line_intersections(self, line: Line3D, abs_tol: float = 1e-6):
         """
@@ -1758,8 +1803,15 @@ class Circle3D(CircleMixin, ClosedCurve):
         :param y: plane v vector.
         :return: Circle2D.
         """
-        center = self.center.to_2d(plane_origin, x, y)
-        return Circle2D(center, self.radius)
+        center_2d = self.center.to_2d(plane_origin, x, y)
+        point1_3d = self.frame.origin + self.frame.u
+        point2_3d = self.frame.origin + self.frame.v
+        point1_2d = point1_3d.to_2d(plane_origin, x, y)
+        point2_2d = point2_3d.to_2d(plane_origin, x, y)
+        u_2d = (point1_2d - center_2d).unit_vector()
+        v_2d = (point2_2d - center_2d).unit_vector()
+        frame2d = volmdlr.Frame2D(center_2d, u_2d, v_2d)
+        return Circle2D(frame2d, self.radius)
 
     @classmethod
     def from_center_normal(cls, center: volmdlr.Point3D,
