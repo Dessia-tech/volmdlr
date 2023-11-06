@@ -1,8 +1,10 @@
 """
 volmdlr utils for importing step files.
 """
-import numpy as npy
 from re import search as re_search
+
+import numpy as npy
+
 import volmdlr
 import volmdlr.shells as vmshells
 from volmdlr import surfaces
