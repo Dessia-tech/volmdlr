@@ -1840,6 +1840,7 @@ class ContourMixin(WireMixin):
         return False
 
     def point_over_contour(self, point, abs_tol=1e-6):
+        """Verifies if point is over the contour."""
         return self.point_over_wire(point, abs_tol)
 
     def get_geo_lines(self, tag: int, primitives_tags: List[int]):
