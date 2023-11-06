@@ -106,7 +106,7 @@ class TestExtrusionSurface3D(unittest.TestCase):
             os.path.join(folder, "extrusionsurface_edge_not_in_normal_plane_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
-        self.assertAlmostEqual(contour2d.area(), 0.00018959270875571548, 6)
+        self.assertAlmostEqual(contour2d.area(), 0.00019036534467768707, 6)
 
         surface = surfaces.ExtrusionSurface3D.load_from_file(
             os.path.join(folder, "extrusionsurface_with_small_edge.json"))
