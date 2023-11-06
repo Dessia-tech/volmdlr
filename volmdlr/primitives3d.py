@@ -355,8 +355,8 @@ class Block(shells.ClosedShell3D):
 
         return volmdlr.faces.PlaneFace3D(plane_3d, contour_2d)
 
-    def frame_mapping_parametres(self, frame: volmdlr.Frame3D,
-                                 side: str):
+    def frame_mapping_parametres(self, frame: volmdlr.Frame3D, side: str):
+        """Helper function to frame mapping."""
         basis = frame.basis()
         if side == 'new':
             new_origin = frame.global_to_local_coordinates(self.frame.origin)
@@ -829,7 +829,7 @@ class Cylinder(shells.ClosedShell3D):
             self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v
         )
         circle = volmdlr.curves.Circle2D(
-            self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v), self.radius
+            volmdlr.OXY.translation(self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v)), self.radius
         )
         lower_face = volmdlr.faces.PlaneFace3D(
             lower_plane, surfaces.Surface2D(volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(circle)]), [])
@@ -1375,7 +1375,7 @@ class Cone(shells.ClosedShell3D):
             self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v
         )
         circle = volmdlr.curves.Circle2D(
-            self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v), self.radius
+            volmdlr.OXY.translation(self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v)), self.radius
         )
         lower_face = volmdlr.faces.PlaneFace3D(
             lower_plane, surfaces.Surface2D(volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(circle)]), [])
@@ -1577,8 +1577,8 @@ class HollowCylinder(shells.ClosedShell3D):
         )
 
         position_2d = self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v)
-        outer_circle = volmdlr.curves.Circle2D(position_2d, self.outer_radius)
-        inner_circle = volmdlr.curves.Circle2D(position_2d, self.inner_radius)
+        outer_circle = volmdlr.curves.Circle2D(volmdlr.OXY.translation(position_2d), self.outer_radius)
+        inner_circle = volmdlr.curves.Circle2D(volmdlr.OXY.translation(position_2d), self.inner_radius)
 
         lower_face = volmdlr.faces.PlaneFace3D(
             lower_plane,
