@@ -366,6 +366,6 @@ def find_parametric_point_at_singularity(edge, reference_point, singularity_line
 
 
 def is_isocurve(points, tol: float = 1e-6):
-    """Test if the parametric points of the edge fits into a line segmenent."""
+    """Test if the parametric points of the edge fits into a line segment."""
     linesegment = vme.LineSegment2D(points[0], points[-1])
     return all(linesegment.point_belongs(point, tol) for point in points)

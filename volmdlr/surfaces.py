@@ -4975,12 +4975,12 @@ class ExtrusionSurface3D(Surface3D):
         diff = point_after_start.x - points[0].x
         if diff:
             sign = diff / abs(diff)
-            passes_through_periodicity = False
+            index_periodicity = 0
             for i, (point, next_point) in enumerate(zip(points[:-1], points[1:])):
                 if sign * (next_point.x - point.x) < 0:
-                    passes_through_periodicity = True
+                    index_periodicity = i + 1
                     break
-            if passes_through_periodicity:
+            if index_periodicity:
                 for point in points[i + 1:]:
                     point.x = point.x + sign * self.x_periodicity
         return points
