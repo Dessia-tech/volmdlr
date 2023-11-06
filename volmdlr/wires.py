@@ -2086,21 +2086,29 @@ class Contour2D(ContourMixin, Wire2D):
 
     def area(self):
         """Returns the area of the contour."""
+        #todo: use the sum of straight_line_area for all cases to avoid triangulation.
         if not self._area:
             area = self.edge_polygon.area()
             classes = {prim.__class__ for prim in self.primitives}
             verify_classes = classes.issubset({volmdlr.edges.LineSegment2D, volmdlr.edges.Arc2D})
+            if self.edge_polygon.is_trigo:
+                trigo = 1
+            else:
+                trigo = -1
             if verify_classes:
-                if self.edge_polygon.is_trigo:
-                    trigo = 1
-                else:
-                    trigo = -1
                 for edge in self.primitives:
                     area += trigo * edge.straight_line_area()
                 self._area = abs(area)
             else:
                 polygon = self.to_polygon(angle_resolution=50)
-                self._area = polygon.triangulation().area()
+                points_set = set(polygon.points)
+                if len(points_set) < len(polygon.points):
+                    # This prevents segmentation fault from contours coming from step files
+                    for edge in self.primitives:
+                        area += trigo * edge.straight_line_area()
+                    self._area = abs(area)
+                else:
+                    self._area = polygon.triangulation().area()
         return self._area
 
     def center_of_mass(self):
@@ -3464,7 +3472,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         return ax
 
-    def triangulation(self, tri_opt: str = 'pd'):
+    def triangulation(self, tri_opt: str = 'p'):
         """
         Perform triangulation on the polygon.
 

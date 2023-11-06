@@ -4704,7 +4704,7 @@ class ExtrusionSurface3D(Surface3D):
                 point_at_curve_local = volmdlr.Point3D(x, y, 0)
                 point_at_curve = self.frame.local_to_global_coordinates(point_at_curve_local)
 
-        u = self.edge.abscissa(point_at_curve, tol=1e-6)
+        u = self.edge.abscissa(point_at_curve, tol=1e-2)
         v = z - point_at_curve_local.z
 
         return volmdlr.Point2D(u, v)
