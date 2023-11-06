@@ -1,0 +1,34 @@
+{
+  "object_class": "volmdlr.surfaces.Plane3D",
+  "name": "",
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": -0.629312525372,
+      "y": 0.035503877863,
+      "z": 0.30347321389000004,
+      "name": "Axis2P3D Location"
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 0.0,
+      "y": 1.0,
+      "z": 0.0
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 0.0,
+      "y": 0.0,
+      "z": -1.0
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -1.0,
+      "y": 0.0,
+      "z": 0.0
+    }
+  },
+  "_references": {}
+}
