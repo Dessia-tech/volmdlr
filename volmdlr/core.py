@@ -3,7 +3,7 @@
 """
 Base classes.
 """
-
+import math
 import os
 import tempfile
 import warnings
@@ -846,6 +846,27 @@ class BoundingBox(dc.DessiaObject):
         else:
             dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
+
+    def is_close(self, other_bounding_box: "BoundingBox", tol: float = 1e-6) -> bool:
+        """
+        Check if two bounding boxes are close to each other considering the Euclidean distance of their corners points.
+
+        The tolerance can be modified.
+
+        :param other_bounding_box: the other bounding box.
+        :type other_bounding_box: BoundingBox
+        :param tol: The tolerance under which the Euclidean distance is considered equal to 0.
+        :type tol: float
+
+        :return: True if the bounding boxes are equal at the given tolerance, False otherwise.
+        :rtype: bool
+        """
+        self_corner_min = volmdlr.Point3D(self.xmin, self.ymin, self.zmin)
+        self_conrer_max = volmdlr.Point3D(self.xmax, self.ymax, self.zmax)
+        other_corner_min = volmdlr.Point3D(other_bounding_box.xmin, other_bounding_box.ymin, other_bounding_box.zmin)
+        other_corner_max = volmdlr.Point3D(other_bounding_box.xmax, other_bounding_box.ymax, other_bounding_box.zmax)
+
+        return self_corner_min.is_close(other_corner_min, tol) and self_conrer_max.is_close(other_corner_max, tol)
 
     def octree(self):
         """Creates a simple octree structure for a bounding box."""
