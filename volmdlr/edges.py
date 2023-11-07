@@ -1651,7 +1651,7 @@ class BSplineCurve(Edge):
                     distance = dist
                     distance_points = [min_dist_point1_, min_dist_point2_]
             if math.isclose(distance, best_distance, abs_tol=1e-6):
-                if distance_points[0].is_close(distance_points[1], abs_tol):
+                if distance_points and distance_points[0].is_close(distance_points[1], abs_tol):
                     intersections.append(distance_points[0])
                 break
             best_distance = distance
