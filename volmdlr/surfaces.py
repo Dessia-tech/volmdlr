@@ -4981,7 +4981,7 @@ class ExtrusionSurface3D(Surface3D):
                     index_periodicity = i + 1
                     break
             if index_periodicity:
-                for point in points[i + 1:]:
+                for point in points[index_periodicity:]:
                     point.x = point.x + sign * self.x_periodicity
         return points
 
