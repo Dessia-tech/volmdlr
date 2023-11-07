@@ -204,15 +204,27 @@ class Block(shells.ClosedShell3D):
         return self.size[0] * self.size[1] * self.size[2]
 
     @classmethod
-    def from_bounding_box(cls, bounding_box, name: str = ''):
+    def from_bounding_box(cls, bounding_box: volmdlr.core.BoundingBox, name: str = ""):
         """
-        Transform a bounding box into a block.
+        Create a block from a bounding box.
+
+        :param bounding_box: the bounding box sued to create the block.
+        :type bounding_box: BoundingBox
+        :param name: the name of the block, optional.
+        :type name: str
+
+        :return: the created block.
+        :rtype: Block
         """
         origin = bounding_box.center
         bbox_size = bounding_box.size
-        frame = volmdlr.Frame3D(origin, bbox_size[0] * volmdlr.Vector3D(1, 0, 0),
-                                bbox_size[1] * volmdlr.Vector3D(0, 1, 0),
-                                bbox_size[2] * volmdlr.Vector3D(0, 0, 1))
+        frame = volmdlr.Frame3D(
+            origin,
+            volmdlr.Vector3D(bbox_size[0], 0, 0),
+            volmdlr.Vector3D(0, bbox_size[1], 0),
+            volmdlr.Vector3D(0, 0, bbox_size[2]),
+        )
+
         return cls(frame=frame, name=name)
 
     def get_bounding_box(self) -> volmdlr.core.BoundingBox:
