@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 
 #### core_compiled
-- Frame2D: fix rotation
+- Frame2D: fix rotation.
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
