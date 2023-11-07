@@ -5370,7 +5370,7 @@ class BSplineCurve3D(BSplineCurve):
         v = w.cross(u)
 
         local_frame_b = volmdlr.Frame3D(origin, u, v, w)
-        return vm_common_operations.map_primitive_with_initial_and_final_frames(frame, local_frame_a, local_frame_b)
+        return volmdlr.core.map_primitive_with_initial_and_final_frames(frame, local_frame_a, local_frame_b)
 
 
 class BezierCurve3D(BSplineCurve3D):

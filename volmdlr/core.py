@@ -26,7 +26,6 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
-from volmdlr.utils.common_operations import map_primitive_with_initial_and_final_frames
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
 
@@ -146,6 +145,41 @@ def delete_double_point(list_point):
         else:
             continue
     return points
+
+
+def map_primitive_with_initial_and_final_frames(primitive, initial_frame, final_frame):
+    """
+    Frame maps a primitive in an assembly to its good position.
+
+    :param primitive: primitive to map
+    :type primitive: Primitive3D
+    :param initial_frame: Initial frame
+    :type initial_frame: volmdlr.Frame3D
+    :param final_frame: The frame resulted after applying a transformation to the initial frame
+    :type final_frame: volmdlr.Frame3D
+    :return: A new positioned primitive
+    :rtype: Primitive3D
+
+    """
+    if initial_frame == final_frame:
+        return primitive
+    basis_a = initial_frame.basis()
+    basis_b = final_frame.basis()
+    matrix_a = np.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+                          [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                          [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+    matrix_b = np.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+                          [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                          [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+    transfer_matrix = np.linalg.solve(matrix_a, matrix_b)
+    u_vector = volmdlr.Vector3D(*transfer_matrix[0])
+    v_vector = volmdlr.Vector3D(*transfer_matrix[1])
+    w_vector = volmdlr.Vector3D(*transfer_matrix[2])
+    new_frame = volmdlr.Frame3D(final_frame.origin, u_vector, v_vector, w_vector)
+    if new_frame == volmdlr.OXYZ:
+        return primitive
+    new_primitive = primitive.frame_mapping(new_frame, 'old')
+    return new_primitive
 
 
 @dataclass
