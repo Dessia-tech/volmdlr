@@ -216,16 +216,7 @@ class Block(shells.ClosedShell3D):
         :return: the created block.
         :rtype: Block
         """
-        origin = bounding_box.center
-        bbox_size = bounding_box.size
-        frame = volmdlr.Frame3D(
-            origin,
-            volmdlr.Vector3D(bbox_size[0], 0, 0),
-            volmdlr.Vector3D(0, bbox_size[1], 0),
-            volmdlr.Vector3D(0, 0, bbox_size[2]),
-        )
-
-        return cls(frame=frame, name=name)
+        return cls(frame=bounding_box.to_frame(), name=name)
 
     def get_bounding_box(self) -> volmdlr.core.BoundingBox:
         """
