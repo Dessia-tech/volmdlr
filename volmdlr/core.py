@@ -3,7 +3,6 @@
 """
 Base classes.
 """
-import math
 import os
 import tempfile
 import warnings
