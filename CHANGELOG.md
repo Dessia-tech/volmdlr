@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
 #### curves
 - Circle3D: circle_intersectios when the circle are coplanar.
+
+#### edges.py
+- bsplineCurve: line_intersections. 
+
 - Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
 #### edges.py
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.

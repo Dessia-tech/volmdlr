@@ -78,7 +78,7 @@ class TestExtrusionSurface3D(unittest.TestCase):
         arc3d = contour3d.primitives[2]
         result = surface.arc3d_to_2d(arc3d)[0]
         self.assertTrue(result.start.is_close(volmdlr.Point2D(1.0, 0.0032000000499998738)))
-        self.assertTrue(result.end.is_close(volmdlr.Point2D(0.13555464614559587, 0.0032000000499998738)))
+        self.assertTrue(result.end.is_close(volmdlr.Point2D(0.135802469143211, 0.0032000000499998738)))
 
     def test_frame_mapping(self):
         surface = self.surface
