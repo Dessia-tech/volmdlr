@@ -1133,6 +1133,10 @@ class Surface3D(DessiaObject):
         """Gets intersections between a line and a Surface 3D."""
         raise NotImplementedError(f'line_intersections method not implemented by {self.__class__.__name__}')
 
+    def frame_mapping(self, frame, side: str):
+        """Frame mapping for Surface 3D."""
+        raise NotImplementedError(f'frame_mapping method not implemented by {self.__class__.__name__}')
+
     def linesegment_intersections(self, linesegment3d: edges.LineSegment3D, abs_tol: float = 1e-6):
         """
         Calculates the intersection points between a 3D line segment and a surface 3D.
@@ -1156,6 +1160,10 @@ class Surface3D(DessiaObject):
         linesegment_intersections = [inters for inters in line_intersections
                                      if linesegment3d.point_belongs(inters, abs_tol)]
         return linesegment_intersections
+
+    def plane_intersections(self, plane3d: 'Plane3D'):
+        """Gets intersections between a line and a Surface 3D."""
+        raise NotImplementedError(f'line_intersections method not implemented by {self.__class__.__name__}')
 
     def curve_intersections(self, curve):
         """
@@ -1464,12 +1472,12 @@ class Plane3D(Surface3D):
         """
         return vm_common_operations.get_plane_equation_coefficients(self.frame)
 
-    def plane_intersections(self, other_plane):
+    def plane_intersections(self, plane3d):
         """
         Computes intersection points between two Planes 3D.
 
         """
-        plane_intersections = vm_utils_intersections.get_two_planes_intersections(self.frame, other_plane.frame)
+        plane_intersections = vm_utils_intersections.get_two_planes_intersections(self.frame, plane3d.frame)
         if plane_intersections:
             return [curves.Line3D(plane_intersections[0], plane_intersections[1])]
         return []
@@ -3693,7 +3701,8 @@ class ConicalSurface3D(PeriodicalSurface):
             local_surface = self.frame_mapping(self.frame, 'new')
             local_plane = plane3d.frame_mapping(self.frame, 'new')
             local_intersections = local_surface.parallel_plane_intersection(local_plane)
-            global_intersections = [intersection.frame_mapping(self.frame, 'old') for intersection in local_intersections]
+            global_intersections = [intersection.frame_mapping(self.frame, 'old')
+                                    for intersection in local_intersections]
             return global_intersections
         hyperbola_center = line_plane_intersections.closest_point_on_line(self.frame.origin)
         hyperbola_positive_vertex = self.frame.local_to_global_coordinates(

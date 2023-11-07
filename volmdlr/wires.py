@@ -3037,10 +3037,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             vectors.append(vector1)
             vectors.append(vector2)
 
-        vector1 = self.points[0] - self.points[-1]
-        vector2 = self.points[-1] - self.points[0]
-        vector1 = vector1.unit_vector()
-        vector2 = vector2.unit_vector()
+        vector1 = (self.points[0] - self.points[-1]).unit_vector()
+        vector2 = (self.points[-1] - self.points[0]).unit_vector()
         vectors.append(vector1)
         vectors.append(vector2)
 
