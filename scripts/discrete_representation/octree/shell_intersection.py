@@ -72,13 +72,29 @@ volume_model = VolumeModel([shell_1, shell_2])
 #
 # print(f"Shell3D.intersecting_faces_combinations: {(t1 - t0) * 1000:.3f}ms")
 
-VOXEL_SIZE = 0.01
+VOXEL_SIZE = 0.00005
 
 t0 = time.perf_counter()
 face_combinations_octree = OctreeBasedVoxelization.intersecting_faces_combinations(shell_1, shell_2, VOXEL_SIZE)
 t1 = time.perf_counter()
 
 print(f"OctreeBasedVoxelization.intersecting_faces_combinations: {(t1 - t0) * 1000:.3f}ms")
+
+
+def display_face_combination(face_combination):
+    location = face_combination[1]
+    location_shell = location.to_closed_triangle_shell()
+    location_shell.color = (1, 0, 0)
+    location_shell.alpha = 0.5
+
+    face_1 = face_combination[0][0]
+    face_1.color = (0, 1, 0)
+
+    face_2 = face_combination[0][1]
+    face_2.color = (0, 0, 1)
+
+    intersection_volume_model = VolumeModel([location_shell, face_1, face_2])
+    intersection_volume_model.babylonjs()
 
 # voxelization_1 = OctreeBasedVoxelization.from_shell(shell_1, VOXEL_SIZE)
 # voxelization_2 = OctreeBasedVoxelization.from_shell(shell_2, VOXEL_SIZE)
