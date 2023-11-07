@@ -269,6 +269,29 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertEqual(len(list_curves), 1)
         self.assertAlmostEqual(list_curves[0].length(), 15.266474391697773)
 
+    def test_sphericalsurface_intersections(self):
+        spherical_surface = surfaces.SphericalSurface3D(
+            volmdlr.OXYZ.translation(volmdlr.Vector3D(0.5, 0.5, 0)), 2)
+        frame = volmdlr.OXYZ
+        toroidal_surface1 = surfaces.ToroidalSurface3D(frame, 2, 1)
+
+        intersections = toroidal_surface1.sphericalsurface_intersections(spherical_surface)
+        self.assertEqual(len(intersections), 2)
+        self.assertAlmostEqual(intersections[0].length(), 11.364812376610685)
+        self.assertAlmostEqual(intersections[1].length(), 11.364812376610685)
+        frame = frame.rotation(frame.origin, volmdlr.Y3D, math.pi / 5)
+        toroidal_surface2 = surfaces.ToroidalSurface3D(frame, 2, 1)
+        intersections = toroidal_surface2.sphericalsurface_intersections(spherical_surface)
+        self.assertEqual(len(intersections), 2)
+        self.assertAlmostEqual(intersections[0].length(), 10.264046962680238)
+        self.assertAlmostEqual(intersections[1].length(), 12.024102432013244)
+        frame = volmdlr.OXYZ.rotation(frame.origin, volmdlr.Y3D, math.pi / 5)
+        frame = frame.translation(volmdlr.X3D * 1.6)
+        toroidal_surface3 = surfaces.ToroidalSurface3D(frame, 2, 1)
+        intersections = toroidal_surface3.sphericalsurface_intersections(spherical_surface)
+        self.assertEqual(len(intersections), 1)
+        self.assertAlmostEqual(intersections[0].length(), 20.514870931932112)
+
 
 if __name__ == '__main__':
     unittest.main()

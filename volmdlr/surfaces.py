@@ -2634,6 +2634,24 @@ class ToroidalSurface3D(PeriodicalSurface):
             arcs.append(circle)
         return arcs
 
+    def _torus_circle_generatrices_xy(self, number_arcs: int = 50):
+        center = self.frame.origin + self.frame.u * self.major_radius
+        u_vector = (center - self.frame.origin).unit_vector()
+        i_frame = volmdlr.Frame3D(center, u_vector, self.frame.w, u_vector.cross(self.frame.w))
+        circle = curves.Circle3D(i_frame, self.minor_radius)
+        initial_point = self.frame.origin.translation(-self.frame.w * self.minor_radius)
+        circles = []
+        for i in npy.linspace(0, 2*self.minor_radius, number_arcs):
+            i_center = initial_point.translation(self.frame.w * i)
+            line = curves.Line3D.from_point_and_vector(i_center, u_vector)
+            line_circle_intersections = circle.line_intersections(line)
+            for intersection in line_circle_intersections:
+                radius = intersection.point_distance(i_center)
+                frame = volmdlr.Frame3D(i_center, self.frame.u, self.frame.v, self.frame.w)
+                i_circle = curves.Circle3D(frame, radius)
+                circles.append(i_circle)
+        return circles
+
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
                        pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'SerializableObject':
@@ -3240,12 +3258,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         for arc in arcs:
             intersections = cylindrical_surface.circle_intersections(arc)
             points_intersections.extend(intersections)
-        for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 200):
-            intersections = self.edge_intersections(edge)
-            for point in intersections:
-                if not volmdlr.core.point_in_list(point, points_intersections):
-                    points_intersections.append(point)
-        for edge in cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
+        for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 200) +\
+                cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not volmdlr.core.point_in_list(point, points_intersections):
@@ -3354,18 +3368,18 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param spherical_surface: other Conical Surface 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(300)
-        points_intersections = []
+        arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
+        intersection_points = []
         for arc in arcs:
             intersections = spherical_surface.circle_intersections(arc)
-            points_intersections.extend(intersections)
-        print(True)
-        for edge in spherical_surface._circle_generatrices(50):
-            intersections = self.circle_intersections(edge)
-            for point in intersections:
-                if not volmdlr.core.point_in_list(point, points_intersections):
-                    points_intersections.append(point)
-        return points_intersections
+            intersection_points.extend(intersections)
+        # print(True)
+        # for edge in spherical_surface._circle_generatrices(50):
+        #     intersections = self.circle_intersections(edge)
+        #     for point in intersections:
+        #         if not volmdlr.core.point_in_list(point, intersection_points):
+        #             intersection_points.append(point)
+        return intersection_points
 
     def sphericalsurface_intersections(self, spherical_surface: 'SphericalSurface3D'):
         """
