@@ -978,8 +978,8 @@ class Face3D(volmdlr.core.Primitive3D):
                     if len(intersection_wire.primitives) != 1:
                         raise NotImplementedError
                     primitive2_2d = self.surface3d.contour3d_to_2d(intersection_wire).primitives[0]
-                    if volmdlr.core.edge_in_list(primitive2_2d, face_intersecting_primitives2d) or \
-                            volmdlr.core.edge_in_list(primitive2_2d.reverse(), face_intersecting_primitives2d):
+                    if volmdlr.utils.common_operations.edge_in_list(primitive2_2d, face_intersecting_primitives2d) or \
+                            volmdlr.utils.common_operations.edge_in_list(primitive2_2d.reverse(), face_intersecting_primitives2d):
                         continue
                     if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d, tol=1e-7):
                         face_intersecting_primitives2d.append(primitive2_2d)
