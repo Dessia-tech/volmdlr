@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle3D: point_distance.
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
+#### core.py
+- BoundingBox: is_close
 
 ### Fixed
 
@@ -32,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### shells.py
 - Fixes to boolean operations.
 
-### surfaces.py 
+#### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
 
 #### utils
@@ -49,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### core_compiled
 - Frame2D: fix rotation
+
+#### primitives3d
+- Block: get_bounding_box
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
@@ -67,6 +72,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces
 - ToroidalFace3D: PlaneFace3D intersectios.
 - SphericalSurface3D: circle_intersections, arc_intersections, arcellipse_intersections
+#### core
+- BoundingBox: is_close
+#### primitives3d
+- Block: from_bounding_box, get_bounding_box
+
 ## v0.14.0
 
 ### New Features
