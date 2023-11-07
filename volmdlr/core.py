@@ -165,13 +165,13 @@ def map_primitive_with_initial_and_final_frames(primitive, initial_frame, final_
         return primitive
     basis_a = initial_frame.basis()
     basis_b = final_frame.basis()
-    matrix_a = np.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+    matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
                           [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
                           [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
-    matrix_b = np.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+    matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
                           [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
                           [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
-    transfer_matrix = np.linalg.solve(matrix_a, matrix_b)
+    transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
     u_vector = volmdlr.Vector3D(*transfer_matrix[0])
     v_vector = volmdlr.Vector3D(*transfer_matrix[1])
     w_vector = volmdlr.Vector3D(*transfer_matrix[2])
