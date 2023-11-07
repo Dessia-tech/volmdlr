@@ -1,3 +1,4 @@
+import os
 import math
 import numpy as npy
 import unittest
@@ -5,26 +6,29 @@ import volmdlr
 from volmdlr import faces, surfaces, wires
 
 
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_toroidal_tests')
+
+
 class TestToroidalFace3D(unittest.TestCase):
     def test_from_contours3d(self):
-        surface = surfaces.ToroidalSurface3D.load_from_file("faces/objects_toroidal_tests/surface_4.json")
-        contour = wires.Contour3D.load_from_file("faces/objects_toroidal_tests/contour_4_0.json")
+        surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "surface_4.json"))
+        contour = wires.Contour3D.load_from_file(os.path.join(folder, "contour_4_0.json"))
         face = faces.ToroidalFace3D.from_contours3d(surface, [contour])
         self.assertAlmostEqual(face.surface2d.area(), 0.07116351378250674, 4)
 
         surface = surfaces.ToroidalSurface3D.load_from_file(
-            "faces/objects_toroidal_tests/repair_periodicity_toroidal_surface.json")
+            os.path.join(folder,"repair_periodicity_toroidal_surface.json"))
         contour = wires.Contour3D.load_from_file(
-            "faces/objects_toroidal_tests/repair_periodicity_toroidal_surface_contour.json")
+            os.path.join(folder, "repair_periodicity_toroidal_surface_contour.json"))
         face = faces.ToroidalFace3D.from_contours3d(surface, [contour])
         self.assertAlmostEqual(face.surface2d.area(), math.pi**2, 4)
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
     def test_planeface_intersections(self):
-        expected_results = [[14.700000000000001], [9.388571408528646], [9.282044462349342], [9.107655321473693],
-                            [8.870824383893368], [8.582455379382449], [4.9999999999983755, 4.9999999999983755],
-                            [3.7175380418398443, 3.717538025078572], [3.325530314317449, 3.3255303255139186],
-                            [3.081960732019063, 3.0819607320979014]]
+        expected_results = [[14.700000000000001],  [9.388571408528646],  [9.282044462248724], [9.107655321906881],
+                            [8.870824383909802],  [8.582455379786497], [4.9999999999983755, 4.9999999999983755],
+                            [3.7175380570270273, 3.7175380399697526], [3.325530329813784, 3.3255303441834996],
+                            [3.0819608449886826, 3.0819608451041365]]
         ts = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         tf = faces.ToroidalFace3D.from_surface_rectangular_cut(ts, -1.4, 3.5, 0., 2.5)
 
@@ -40,9 +44,9 @@ class TestToroidalFace3D(unittest.TestCase):
                 self.assertAlmostEqual(result.length(), expected_result)
 
     def test_cylindricalface_intersections(self):
-        expected_results = [[2.5461207980560485], [2.454557959936191], [2.767950454333099], [2.8109131068618605],
-                            [1.3806998377604578, 3.0341016797202873], [2.1248777973309823], [1.7368914447612895],
-                            [2.5583377804228014], [1.3899444850660725, 2.812800677753292], [2.4475236530517783]]
+        expected_results = [[2.5461207980560214], [2.4545583898623864], [2.767947231461576], [2.8109172014167774],
+                            [1.3806998322117046, 3.028334302435715], [2.124878153093919], [1.736847617491884],
+                            [2.558338060282495], [1.3899449645035344, 2.8123613764774835], [2.4475156522215995]]
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         tf = faces.ToroidalFace3D.from_surface_rectangular_cut(toroidal_surface, 0, 3, 1, 3)
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))

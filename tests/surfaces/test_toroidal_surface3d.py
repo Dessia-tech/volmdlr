@@ -120,14 +120,15 @@ class TestToroidalSurface3D(unittest.TestCase):
                              [12.566370614359176, 12.566370614359176], [9.548769483572569, 9.548769280167237],
                              [8.513205671975072, 8.51320566634381], [7.859515047042802, 7.859515075442373]]
         expected_results2 = [18.007768707061828, 7.124972521656522]
-        expected_results3 = [[6.283185307179586, 6.283185307179586], [6.287579377218473, 6.287579377218561],
-                             [6.30399108352376, 6.3039816534801325], [6.332387134702687, 6.332381135450795],
-                             [6.374210571095067, 6.37421077592289], [6.432095365307052, 6.432100695011224],
-                             [6.510504769093866, 6.51052211293725], [6.617598000515308, 6.617598002139425],
-                             [6.770805865496417, 6.770813958305705], [7.027656972602489, 7.027692615982806],
-                             [14.078295717935498], [13.573579238139956], [13.223889554125515], [12.919842406986378],
-                             [12.627484336973875], [12.32993940591275], [12.016612404807244], [11.67963521923532],
-                             [11.312287686519083], [10.908095813062298]]
+        expected_results3 = [[6.283185307179586, 6.283185307179586], [6.2875793772184725, 6.287579377218557],
+                             [6.303991082454418, 6.303981654363125], [6.332387134923383, 6.3323811326087585],
+                             [6.374210571790631, 6.374210774528401], [6.432095361630922, 6.4321006924390485],
+                             [6.51050477556268, 6.510529664273063], [6.617597989403093, 6.617597989793687],
+                             [6.770805854337385, 6.770800285176702], [7.027657015730458, 7.027692648394045],
+                             [14.078296063569498], [13.573578763858913], [13.223889549839548],
+                             [12.919842407404978], [12.62748433654155], [12.329939405268325], [12.016612404313642],
+                             [11.679635218929635], [11.312287686519104], [10.908095813062381]]
+
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         # Test 1
         plane1 = surfaces.Plane3D(volmdlr.OXYZ)
@@ -156,7 +157,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         plane4 = surfaces.Plane3D(volmdlr.OYZX)
         plane4 = plane4.translation(volmdlr.X3D)
         plane_intersections = toroidal_surface.plane_intersections(plane4)
-        for intersection, expected_result in zip(plane_intersections, [7.410420777359636, 7.410412890365456]):
+        for intersection, expected_result in zip(plane_intersections, [7.41522411794327, 7.415221958099495]):
             self.assertAlmostEqual(intersection.length(), expected_result, 5)
 
         # Test 5
@@ -182,7 +183,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
         inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(), 14.655915673071078)
+        self.assertAlmostEqual(inters[0].length(), 14.655782729046713)
         # Test2
         expected_results = [[9.424777944721708, 9.424777944721708], [6.283185307179586], []]
         frame = volmdlr.OXYZ
@@ -195,11 +196,11 @@ class TestToroidalSurface3D(unittest.TestCase):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
         #Test3
-        expected_results = [[17.155067582864444], [17.448537924734147], [8.189509579659324, 11.901146744658861],
-                            [9.342209542119194, 6.783365484889515, 6.626606372190104],
-                            [8.45252506578058, 11.78315465974606], [18.761705558048746],
-                            [6.937783966922164, 15.192472907400315], [19.041705498182075], [19.712239534244855],
-                            [9.106314389754695, 6.606874413821903, 6.606874200591648]]
+        expected_results = [[17.15506758286444], [17.448540558220706], [8.189484417240463, 11.901169177182348],
+                            [9.342190109936682, 6.783364128923859, 6.626602826338277],
+                            [8.452553763402701, 11.78286992164854], [18.761707374808136],
+                            [6.937784444208925, 15.192487360871866], [19.041784163073043], [19.71219867853983],
+                            [9.106328823638846, 6.606873888481998, 6.606873993867185]]
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
@@ -248,9 +249,9 @@ class TestToroidalSurface3D(unittest.TestCase):
         ellipse_intersections = toroidal_surface.ellipse_intersections(ellipse)
         self.assertEqual(len(ellipse_intersections), 2)
         self.assertTrue(ellipse_intersections[0].is_close(
-            volmdlr.Point3D(1.686564519293097, -1.027451632802102, -1.027451632802102)))
+            volmdlr.Point3D(1.6865642161149017, -1.0274512473410842, -1.0274512473410844)))
         self.assertTrue(ellipse_intersections[1].is_close(
-            volmdlr.Point3D(1.8179453474500284, -1.1400021883520102, -1.1400021883520102)))
+            volmdlr.Point3D(1.817953260018375, -1.1400067506585763, -1.1400067506585763)))
 
     def test_conicalsurface_intersections(self):
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 7)
@@ -258,8 +259,8 @@ class TestToroidalSurface3D(unittest.TestCase):
         toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 1)
         list_curves = toroidal_surface1.conicalsurface_intersections(conical_surface)
         self.assertEqual(len(list_curves), 2)
-        self.assertAlmostEqual(list_curves[0].length(), 7.290725626581458)
-        self.assertAlmostEqual(list_curves[1].length(), 7.290865143142663)
+        self.assertAlmostEqual(list_curves[0].length(), 7.29076995096902)
+        self.assertAlmostEqual(list_curves[1].length(), 7.29079325787365)
 
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 8)
         conical_surface = conical_surface.translation(volmdlr.Vector3D(2, 2, -3))
