@@ -372,7 +372,7 @@ def is_isocurve(points, tol: float = 1e-6):
 
 
 def verify_repeated_parametric_points(points):
-    """Verify repeatead parametric points from point3d_to_2d method."""
+    """Verify repeated parametric points from point3d_to_2d method."""
     set_points = set(points)
     if len(set_points) < len(points):
         if points[0].is_close(points[-1]):
