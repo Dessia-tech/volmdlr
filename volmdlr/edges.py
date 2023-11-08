@@ -3246,9 +3246,10 @@ class Arc2D(ArcMixin, Edge):
         :return: a new rotated Arc2D.
         """
         return Arc2D(
-            *[point.rotation(center, angle) if point else point for point in [self.circle, self.start, self.end]],
-            is_trigo=self.is_trigo,
-            name=self.name
+            circle=self.circle.rotation(center, angle),
+            start=self.start.rotation(center, angle),
+            end=self.end.rotation(center, angle),
+            name=self.name,
         )
 
     def translation(self, offset: volmdlr.Vector2D):
@@ -3259,9 +3260,10 @@ class Arc2D(ArcMixin, Edge):
         :return: A new translated Arc2D.
         """
         return Arc2D(
-            *[point.translation(offset) if point else point for point in [self.circle, self.start, self.end]],
-            is_trigo=self.is_trigo,
-            name=self.name
+            circle=self.circle.translation(offset),
+            start=self.start.translation(offset),
+            end=self.end.translation(offset),
+            name=self.name,
         )
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
@@ -3271,10 +3273,9 @@ class Arc2D(ArcMixin, Edge):
         side = 'old' or 'new'
         """
         return Arc2D(
-            self.circle.frame_mapping(frame, side),
-            self.start.frame_mapping(frame, side),
-            self.end.frame_mapping(frame, side),
-            is_trigo=self.is_trigo,
+            circle=self.circle.frame_mapping(frame, side),
+            start=self.start.frame_mapping(frame, side),
+            end=self.end.frame_mapping(frame, side),
             name=self.name,
         )
 
