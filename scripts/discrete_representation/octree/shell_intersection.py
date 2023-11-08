@@ -26,7 +26,7 @@ volume_model = VolumeModel([shell_1, shell_2])
 #
 # print(f"Shell3D.intersecting_faces_combinations: {(t1 - t0) * 1000:.3f}ms")
 
-VOXEL_SIZE = 0.00005
+VOXEL_SIZE = 0.0005
 
 t0 = time.perf_counter()
 face_combinations_octree = OctreeBasedVoxelization.intersecting_faces_combinations(shell_1, shell_2, VOXEL_SIZE)
@@ -49,3 +49,35 @@ def display_face_combination(face_combination):
 
     intersection_volume_model = VolumeModel([location_shell, face_1, face_2])
     intersection_volume_model.babylonjs()
+
+
+def search_not_intersecting_bbox(faces_combinations):
+    not_intersecting_faces_combinations = []
+    for (face1, face2), location in faces_combinations:
+        if not face1.bounding_box.is_intersecting(face2.bounding_box):
+            not_intersecting_faces_combinations.append(((face1, face2), location))
+
+    return not_intersecting_faces_combinations
+
+
+def search_intersecting_bbox_shell(shell1, shell2):
+    intersecting_faces_combinations = []
+    for face1 in shell1.faces:
+        for face2 in shell2.faces:
+            if face1.bounding_box.is_intersecting(face2.bounding_box):
+                intersecting_faces_combinations.append((face1, face2))
+
+    return intersecting_faces_combinations
+
+
+def identify_intersecting_bbox_shell(shell1, shell2):
+    shell1_faces_idx = set()
+    shell2_faces_idx = set()
+
+    for i, face1 in enumerate(shell1.faces):
+        for j, face2 in enumerate(shell2.faces):
+            if face1.bounding_box.is_intersecting(face2.bounding_box):
+                shell1_faces_idx.add(i)
+                shell2_faces_idx.add(j)
+
+    return shell1_faces_idx, shell2_faces_idx
