@@ -269,6 +269,11 @@ class TestArc2D(unittest.TestCase):
             for point in points_:
                 self.assertTrue(arc.point_belongs(point))
 
+        self.assertEqual(arc_from_3_points.rotation(volmdlr.O2D, 10).rotation(volmdlr.O2D, -10), arc_from_3_points)
+        self.assertEqual(arc_from_3_points2.rotation(volmdlr.O2D, 10).rotation(volmdlr.O2D, -10), arc_from_3_points2)
+        self.assertEqual(arc_from_3_points.translation(volmdlr.X2D).translation(-volmdlr.X2D), arc_from_3_points)
+        self.assertEqual(arc_from_3_points2.translation(volmdlr.X2D).translation(-volmdlr.X2D), arc_from_3_points2)
+
 
 if __name__ == '__main__':
     unittest.main()
