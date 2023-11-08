@@ -1781,6 +1781,7 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def update_surfaces_list(face_contours, surfaces, contours, i):
+        """Update surfaces list."""
         for k_f, face_c in enumerate(face_contours):
             for l_c, contour_l in enumerate(contours):
                 for c_c, contour in enumerate(contour_l):
@@ -1977,6 +1978,7 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def get_nodes_lines(gmsh_model):
+        """Get nodes lines."""
         lines_nodes = []
         lines_nodes.append('$Nodes')
 

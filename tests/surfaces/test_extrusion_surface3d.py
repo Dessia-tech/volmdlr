@@ -22,23 +22,23 @@ class TestExtrusionSurface3D(unittest.TestCase):
     surface = surfaces.ExtrusionSurface3D(edge, -volmdlr.Z3D)
 
     def test_point2d_to_3d(self):
-        point3d = self.surface.point2d_to_3d(volmdlr.Point2D(0.5, 0.5))
+        point3d = self.surface.point2d_to_3d(volmdlr.Point2D(0.5 * self.edge.length(), 0.5))
         self.assertTrue(point3d.is_close(volmdlr.Point3D(0.002252005, -0.002475453, -0.5)))
 
     def test_point3d_to_2d(self):
         point2d_1 = self.surface.point3d_to_2d(self.edge.start)
         self.assertEqual(point2d_1, volmdlr.Point2D(0, 0))
         point2d_2 = self.surface.point3d_to_2d(self.edge.end)
-        self.assertEqual(point2d_2, volmdlr.Point2D(1.0, 0))
+        self.assertEqual(point2d_2, volmdlr.Point2D(self.edge.length(), 0))
 
         surface = surfaces.ExtrusionSurface3D.load_from_file(os.path.join(folder, "point3d_to_2d_surface.json"))
         point3d = volmdlr.Point3D(-0.1322515585788849, -0.14157776310991646, 0.0)
         point2d_3 = surface.point3d_to_2d(point3d)
-        self.assertTrue(point2d_3.is_close(volmdlr.Point2D(0.6406891276879707, 0.0), 1e-3))
+        self.assertTrue(point2d_3.is_close(volmdlr.Point2D(0.8082617614489124, 0.0), 1e-3))
 
     def test_rectangular_cut(self):
-        face = vmf.ExtrusionFace3D.from_surface_rectangular_cut(self.surface, 0, 1, 0, 2)
-        self.assertEqual(face.surface2d.area(), 2)
+        face = vmf.ExtrusionFace3D.from_surface_rectangular_cut(self.surface, 0, self.edge.length(), 0, 2)
+        self.assertEqual(face.surface2d.area(), 2 * self.edge.length())
 
     def test_from_step(self):
         step = vms.Step.from_file(os.path.join(folder, "bspline_extruded_simple.step"))
@@ -77,8 +77,8 @@ class TestExtrusionSurface3D(unittest.TestCase):
         contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "extrusion_contour_test_arc3d_to_2d.json"))
         arc3d = contour3d.primitives[2]
         result = surface.arc3d_to_2d(arc3d)[0]
-        self.assertTrue(result.start.is_close(volmdlr.Point2D(1.0, 0.0032000000499998738)))
-        self.assertTrue(result.end.is_close(volmdlr.Point2D(0.135802469143211, 0.0032000000499998738)))
+        self.assertTrue(result.start.is_close(volmdlr.Point2D(0.0034138143320201525, 0.0032000000499998738)))
+        self.assertTrue(result.end.is_close(volmdlr.Point2D(0.00046275860846800896, 0.0032000000499998738)))
 
     def test_frame_mapping(self):
         surface = self.surface
@@ -88,33 +88,47 @@ class TestExtrusionSurface3D(unittest.TestCase):
         self.assertTrue(new_surface.frame.origin.is_close(volmdlr.Point3D(-0.025917292, 0.002544355, 1.0)))
 
     def test_contour3d_to_2d(self):
-        surface = surfaces.SphericalSurface3D.load_from_file(os.path.join(folder, "contour3d_to_2d_surface.json"))
+        surface = surfaces.ExtrusionSurface3D.load_from_file(os.path.join(folder, "contour3d_to_2d_surface.json"))
         contour = vmw.Contour3D.load_from_file(os.path.join(folder, "contour3d_to_2d_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
-        self.assertAlmostEqual(contour2d.area(), 0.0036995357929908313, 2)
+        self.assertAlmostEqual(contour2d.area(), 0.00032168769592775094, 6)
 
-        surface = surfaces.SphericalSurface3D.load_from_file(os.path.join(folder, "contour3d_to_2d_surface_2.json"))
+        surface = surfaces.ExtrusionSurface3D.load_from_file(os.path.join(folder, "contour3d_to_2d_surface_2.json"))
         contour = vmw.Contour3D.load_from_file(os.path.join(folder, "contour3d_to_2d_contour_2.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
-        self.assertAlmostEqual(contour2d.area(), 0.0475, 2)
+        self.assertAlmostEqual(contour2d.area(), 0.05992365409316021, 6)
 
-        surface = surfaces.SphericalSurface3D.load_from_file(
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
             os.path.join(folder, "extrusionsurface_edge_not_in_normal_plane.json"))
         contour = vmw.Contour3D.load_from_file(
             os.path.join(folder, "extrusionsurface_edge_not_in_normal_plane_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
-        self.assertAlmostEqual(contour2d.area(), 0.005, 2)
+        self.assertAlmostEqual(contour2d.area(), 0.00019036534467768707, 6)
 
-        surface = surfaces.SphericalSurface3D.load_from_file(
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
             os.path.join(folder, "extrusionsurface_with_small_edge.json"))
         contour = vmw.Contour3D.load_from_file(
             os.path.join(folder, "extrusionsurface_with_small_edge_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
-        self.assertAlmostEqual(contour2d.area(), 0.00120000, 4)
+        self.assertAlmostEqual(contour2d.area(), 3.74649557711703e-09, 10)
+
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
+            os.path.join(folder, "extrusionsurface_fullarcellipse.json"))
+        contour = vmw.Contour3D.load_from_file(os.path.join(folder, "extrusionsurface_fullarcellipse_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 0.012120134592666365, 6)
+
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
+            os.path.join(folder, "extrusionsurface_fullarc.json"))
+        contour = vmw.Contour3D.load_from_file(os.path.join(folder, "extrusionsurface_fullarc_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 2.0719721732132054e-06, 8)
 
 
 if __name__ == '__main__':
