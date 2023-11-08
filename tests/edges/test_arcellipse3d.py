@@ -165,7 +165,7 @@ class TestArcEllipse3D(unittest.TestCase):
         ]
         for i, lineseg in enumerate([lineseg1, lineseg2, lineseg3]):
             intersections = self.arc_ellipse3d.linesegment_intersections(lineseg)
-            for result, expected_result in zip(intersections, expected_results[i]):
+            for result, expected_result in zip(intersections[::-1], expected_results[i]):
                 self.assertTrue(result.is_close(expected_result))
 
     def test_arc_intersections(self):

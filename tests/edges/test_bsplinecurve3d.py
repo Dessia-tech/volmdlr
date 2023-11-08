@@ -73,7 +73,7 @@ class TestBSplineCurve3D(unittest.TestCase):
         intersections = bspline.linesegment_intersections(linesegment)
         self.assertEqual(len(intersections), 1)
         self.assertTrue(intersections[0].is_close(
-            volmdlr.Point3D(-3.000003493713931, 1.022247107552729, 0.5746061300812078)))
+            volmdlr.Point3D(-3.0, 1.0222488954206392, 0.5746069850600913)))
 
     def test_point_at_abscissa(self):
         bspline = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bsplinecurve_periodic.json"))

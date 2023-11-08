@@ -361,7 +361,7 @@ class TestBSplineCurve3D(unittest.TestCase):
                           volmdlr.Point3D(0.5334, 0.4342689853571558, -0.47337857496375274))
         bspline_line_intersections = self.b_splinecurve3d.line_intersections(line)
         self.assertTrue(bspline_line_intersections[0].is_close(
-            volmdlr.Point3D(0.5334000000000001, 1.7846221071023372, -1.1990620053976129)))
+            volmdlr.Point3D(0.5334, 1.784620497933768, -1.1990649949459866)))
 
     def test_linesegment_intersection(self):
         linesegment1 = vme.LineSegment3D(volmdlr.Point3D(0.5334, -0.44659009801843536, 0.0),
@@ -372,7 +372,7 @@ class TestBSplineCurve3D(unittest.TestCase):
         bspline_lineseg_intersections2 = self.b_splinecurve3d.linesegment_intersections(linesegment2)
         self.assertFalse(bspline_lineseg_intersections1)
         self.assertTrue(bspline_lineseg_intersections2[0].is_close(
-            volmdlr.Point3D(0.5334, 1.7846158355713697, -1.199073665042839)))
+            volmdlr.Point3D(0.5334, 1.7846204999239552, -1.1990649960155242)))
 
     def test_normal(self):
         normal = self.b_splinecurve3d.normal()

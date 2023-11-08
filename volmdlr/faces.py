@@ -615,6 +615,20 @@ class Face3D(volmdlr.core.Primitive3D):
 
         return intersections_points
 
+    def face_border_intersections(self, face2):
+        """
+        Returns the intersections of the face outer and inner contour with other given face.
+        """
+        intersections_points = []
+        for contour in [self.outer_contour3d] + self.inner_contours3d:
+            for edge1 in contour.primitives:
+                intersection_points = face2.edge_intersections(edge1)
+                for point in intersection_points:
+                    if not volmdlr.core.point_in_list(point, intersections_points):
+                        intersections_points.append(point)
+
+        return intersections_points
+
     def face_intersections(self, face2, tol=1e-6) -> List[volmdlr.wires.Wire3D]:
         """
         Calculates the intersections between two Face3D.
@@ -1376,12 +1390,10 @@ class PlaneFace3D(Face3D):
         face2_plane_intersections = planeface.surface3d.plane_intersections(self.surface3d)
         if not face2_plane_intersections:
             return []
-        points_intersections = []
-        for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d + \
-                planeface.inner_contours3d:
-            for intersection in contour.line_intersections(face2_plane_intersections[0]):
-                if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
-                    points_intersections.append(intersection)
+        points_intersections = self.face_border_intersections(planeface)
+        for point in planeface.face_border_intersections(self):
+            if not volmdlr.core.point_in_list(point, points_intersections):
+                points_intersections.append(point)
         points_intersections = face2_plane_intersections[0].sort_points_along_curve(points_intersections)
         planeface_intersections = []
         for point1, point2 in zip(points_intersections[:-1], points_intersections[1:]):
