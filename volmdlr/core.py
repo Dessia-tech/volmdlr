@@ -782,7 +782,7 @@ class BoundingBox(dc.DessiaObject):
             return False
         return True
 
-    def is_intersecting_triangle(self, triangle: 'Triangle3D') -> bool:
+    def is_intersecting_triangle(self, triangle: "Triangle3D") -> bool:
         """
         Check if the bounding box and a triangle are intersecting or touching.
 
