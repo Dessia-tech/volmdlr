@@ -179,7 +179,7 @@ cpdef bint polygon_point_belongs(double[:, ::1] polygon, double[:] point,
     cdef int n = polygon.shape[0]
     cdef bint inside = False
     cdef double x, y, p1x, p1y, p2x, p2y, xints, dot_product, length_squared, t, distance_projection_to_point
-    cdef double[2] u, v, projection_vector, projection_point
+    cdef double[2] u, v, projection_point
     x, y = point
     for i in range(n):
         p1x = polygon[i][0]
@@ -192,8 +192,7 @@ cpdef bint polygon_point_belongs(double[:, ::1] polygon, double[:] point,
         length_squared = v[0] ** 2 + v[1] ** 2
         t = (dot_product / length_squared)
         if 0.0 <= t <= 1.0:
-            projection_vector = [v[0] * t, v[1] * t]
-            projection_point = [p1x + projection_vector[0], p1y + projection_vector[1]]
+            projection_point = [p1x + v[0] * t, p1y + v[1] * t]
             distance_projection_to_point = math_c.sqrt((projection_point[0] - x) ** 2 + (projection_point[1] - y) ** 2)
             if distance_projection_to_point <= tol:
                 if include_edge_points:
@@ -223,14 +222,16 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
     cdef int m = points.shape[0]
     cdef int i, j
     cdef double x, y, p1x, p1y, p2x, p2y, xints, dot_product, length_squared, t, distance_projection_to_point
-    cdef double[2] u, v, projection_vector, projection_point
+    cdef double[2] u, v, projection_point
     cdef np.ndarray[np.uint8_t, ndim = 1] results = npy.zeros(m, dtype=npy.uint8)
     cdef bint inside
+    cdef bint over_edge
 
     for i in prange(m, nogil=True):
         x = points[i][0]
         y = points[i][1]
         inside = False
+        over_edge = False
         for j in range(n):
             p1x = polygon[j][0]
             p1y = polygon[j][1]
@@ -244,18 +245,18 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
             length_squared = v[0] * v[0] + v[1] * v[1]
             t = dot_product / length_squared
             if 0.0 <= t <= 1.0:
-                projection_vector[0] = v[0] * t
-                projection_vector[1] = v[1] * t
-                projection_point[0] = p1x + projection_vector[0]
-                projection_point[1] = p1y + projection_vector[1]
+                projection_point[0] = p1x + v[0] * t
+                projection_point[1] = p1y + v[1] * t
                 distance_projection_to_point = math_c.sqrt((projection_point[0] - x) ** 2 + (projection_point[1]
                                                                                              - y) ** 2)
                 if distance_projection_to_point <= tol:
                     if include_edge_points:
                         results[i] = True
+                        over_edge = True
                         break
                     else:
                         results[i] = False
+                        over_edge = True
                         break
             xints = math_c.HUGE_VAL
             if min(p1y, p2y) <= y <= max(p1y, p2y) and min(p1x, p2x) <= x <= max(p1x, p2x):
@@ -264,16 +265,19 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
                 if p1y == p2y or x == xints:
                     if include_edge_points:
                         results[i] = True
+                        over_edge = True
                         break
                     else:
                         results[i] = False
+                        over_edge = True
                         break
             if min(p1y, p2y) < y <= max(p1y, p2y) and x <= max(p1x, p2x):
                 if p1y != p2y:
                     xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
                 if p1x == p2x or x < xints:
                     inside = not inside
-        results[i] = inside
+        if not over_edge:
+            results[i] = inside
 
     return results
 
@@ -3124,17 +3128,22 @@ class Frame2D(Basis2D):
         new_origin = self.origin.translation(vector)
         return Frame2D(new_origin, self.u, self.v)
 
-    def rotation(self, angle):
+    def rotation(self, center: Point2D, angle: float):
         """
         Returns a rotated 2-dimensional frame.
 
+        :param center: The center of rotation
+        :type center: :class:`volmdlr.Point2D`
         :param angle: The rotation angle
         :type angle: float
         :return: New rotated frame
         :rtype: :class:`volmdlr.Frame2D`
         """
+        new_origin = self.origin
+        if not center.is_close(new_origin):
+            new_origin = self.origin.rotation(center, angle)
         new_base = Basis2D.rotation(self, angle)
-        return Frame2D(self.origin, new_base.u, new_base.v)
+        return Frame2D(new_origin, new_base.u, new_base.v)
 
     def Draw(self, ax=None, style="ok"):
         """
@@ -3401,10 +3410,10 @@ class Frame3D(Basis3D):
         :rtype: :class:`volmdlr.Frame3D`
         """
         new_base = Basis3D.rotation(self, axis, angle)
+        if center.is_close(self.origin):
+            return Frame3D(self.origin, new_base.u, new_base.v, new_base.w, self.name)
         new_origin = self.origin.rotation(center, axis, angle)
-        return Frame3D(new_origin,
-                       new_base.u, new_base.v, new_base.w,
-                       self.name)
+        return Frame3D(new_origin, new_base.u, new_base.v, new_base.w, self.name)
 
     def translation(self, offset: Vector3D):
         """

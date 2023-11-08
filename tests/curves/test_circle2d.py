@@ -8,13 +8,20 @@ import volmdlr.edges
 from volmdlr import curves, wires
 
 
-circle = curves.Circle2D(volmdlr.O2D, 0.50)
+circle = curves.Circle2D(volmdlr.OXY, 0.50)
 line = curves.Line2D(volmdlr.O2D, volmdlr.Point2D(0, 1))
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)))
 
 
 class TestCircle2D(unittest.TestCase):
-    circle2d = curves.Circle2D(volmdlr.O2D, 1)
+    circle2d = curves.Circle2D(volmdlr.OXY, 1)
+
+    def test_discretization_points(self):
+        points = self.circle2d.discretization_points(number_points=5)
+        expected_points = [volmdlr.Point2D(1.0, 0.0), volmdlr.Point2D(0, 1.0),
+                           volmdlr.Point2D(-1.0, 0), volmdlr.Point2D(0, -1.0), volmdlr.Point2D(1.0, 0)]
+        for point, expected_point in zip(points, expected_points):
+            self.assertTrue(point.is_close(expected_point))
 
     def test_area(self):
         area = self.circle2d.area()
@@ -85,7 +92,7 @@ class TestCircle2D(unittest.TestCase):
         line_intersections = self.circle2d.line_intersections(line)
         line_intersections[0].is_close(volmdlr.Point2D(0.7071067811865475, 0.7071067811865475))
         line_intersections[1].is_close(volmdlr.Point2D(-0.7071067811865476, -0.7071067811865476))
-        circle_ = curves.Circle2D(volmdlr.Point2D(0.8, -0.3), 0.3)
+        circle_ = curves.Circle2D(volmdlr.OXY.translation(volmdlr.Vector2D(0.8, -0.3)), 0.3)
         line_2 = curves.Line2D(volmdlr.Point2D(0.5599870479815988, -0.12053417263965237),
                                volmdlr.Point2D(0.5593939842065143, -0.1196126662489295))
         circle_line_intersections = circle_.line_intersections(line_2)
@@ -108,7 +115,7 @@ class TestCircle2D(unittest.TestCase):
         linesegment_intersections[1].is_close(volmdlr.Point2D(-0.7071067811865476, -0.7071067811865476))
 
     def test_arc_intersections(self):
-        arc = volmdlr.edges.Arc2D(curves.Circle2D(volmdlr.Point2D(2, 0), 2),
+        arc = volmdlr.edges.Arc2D(curves.Circle2D(volmdlr.OXY.translation(volmdlr.Vector2D(2, 0)), 2),
                                   volmdlr.Point2D(2, 3), volmdlr.Point2D(2, -3))
         arc_intersections = self.circle2d.arc_intersections(arc)
         arc_intersections[0].is_close(volmdlr.Point2D(0.25, -0.9682458365518543))
@@ -132,12 +139,22 @@ class TestCircle2D(unittest.TestCase):
     def test_rotation(self):
         rotated_arc2d = self.circle2d.rotation(volmdlr.Point2D(1, 0), math.pi / 4)
         circle2d_points = rotated_arc2d.discretization_points(number_points=6)
-        expected_points = [volmdlr.Point2D(1.2928932188134525, -0.7071067811865475),
-                           volmdlr.Point2D(0.6019102131883999, 0.24394973510860607),
-                           volmdlr.Point2D(-0.5161237755614949, -0.11932152889407421),
-                           volmdlr.Point2D(-0.516123775561495, -1.2948920334790204),
-                           volmdlr.Point2D(0.6019102131883997, -1.658163297481701),
-                           volmdlr.Point2D(1.2928932188134525, -0.7071067811865475)]
+        expected_points = [volmdlr.Point2D(1.0, 0.0),
+                           volmdlr.Point2D(-0.16109728092609432, 0.18389974300182038),
+                           volmdlr.Point2D(-0.6947951217816853, -0.8635412462267782),
+                           volmdlr.Point2D(0.13645875377322148, -1.6947951217816852),
+                           volmdlr.Point2D(1.1838997430018203, -1.1610972809260947),
+                           volmdlr.Point2D(1.0, 0.0)]
+        for point, expected_point in zip(circle2d_points, expected_points):
+            self.assertTrue(point.is_close(expected_point))
+
+        rotated_arc2d = self.circle2d.rotation(self.circle2d.center, math.pi / 4)
+        circle2d_points = rotated_arc2d.discretization_points(number_points=5)
+        expected_points = [volmdlr.Point2D(1/math.sqrt(2), 1/math.sqrt(2)),
+                           volmdlr.Point2D(-1/math.sqrt(2), 1/math.sqrt(2)),
+                           volmdlr.Point2D(-1/math.sqrt(2), -1/math.sqrt(2)),
+                           volmdlr.Point2D(1/math.sqrt(2), -1/math.sqrt(2)),
+                           volmdlr.Point2D(1/math.sqrt(2), 1/math.sqrt(2))]
         for point, expected_point in zip(circle2d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
@@ -165,12 +182,12 @@ class TestCircle2D(unittest.TestCase):
         frame = volmdlr.Frame2D(volmdlr.Point2D(0, 1), u_vector, v_vector)
         frame_mapped_arc2d = self.circle2d.frame_mapping(frame, 'new')
         circle2d_points = frame_mapped_arc2d.discretization_points(number_points=6)
-        expected_points = [volmdlr.Point2D(0.2928932188134524, -0.7071067811865476),
-                           volmdlr.Point2D(-0.3980897868116001, 0.24394973510860596),
-                           volmdlr.Point2D(-1.516123775561495, -0.11932152889407432),
-                           volmdlr.Point2D(-1.516123775561495, -1.2948920334790206),
-                           volmdlr.Point2D(-0.39808978681160034, -1.658163297481701),
-                           volmdlr.Point2D(0.2928932188134524, -0.7071067811865476)]
+        expected_points = [volmdlr.Point2D(0.0, -1.4142135623730951),
+                           volmdlr.Point2D(0.18389974300182038, -0.2531162814470008),
+                           volmdlr.Point2D(-0.8635412462267782, 0.2805815594085902),
+                           volmdlr.Point2D(-1.6947951217816852, -0.5506723161463166),
+                           volmdlr.Point2D(-1.1610972809260947, -1.5981133053749152),
+                           volmdlr.Point2D(0.0, -1.4142135623730954)]
         for point, expected_point in zip(circle2d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
@@ -191,7 +208,7 @@ class TestCircle2D(unittest.TestCase):
         self.assertEqual(list_arcs[1], arc2_validate)
 
     def test_point_distance(self):
-        circle_ = curves.Circle2D(volmdlr.Point2D(1.5, 0), 1)
+        circle_ = curves.Circle2D(volmdlr.OXY.translation(volmdlr.Vector2D(1.5, 0)), 1)
         point1 = volmdlr.Point2D(0.5410304786421145, 0.2835091834608327)
         self.assertEqual(circle_.point_distance(point1), 0.0)
         point2 = volmdlr.Point2D(2, 1.5)
@@ -203,21 +220,22 @@ class TestCircle2D(unittest.TestCase):
         knotvector = utilities.generate_knot_vector(degree, len(points))
         knot_multiplicity = [1] * len(knotvector)
         bspline = volmdlr.edges.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
-        circle_ = curves.Circle2D(volmdlr.Point2D(1.5, 0), 1)
+        circle_ = curves.Circle2D(volmdlr.OXY.translation(volmdlr.Vector2D(1.5, 0)), 1)
         circle_intersections = circle_.bsplinecurve_intersections(bspline)
         expected_intersections = [volmdlr.Point2D(0.5410304786421145, 0.2835091834608327),
                                   volmdlr.Point2D(2.4589695213572873, -0.2835091834628551)]
         for intersection, expected_intersection in zip(circle_intersections, expected_intersections):
             self.assertTrue(intersection.is_close(expected_intersection))
-        circle_2 = curves.Circle2D(volmdlr.Point2D(4.257776625181402, -2.6149184392658222), 1.1791034225674362)
+        circle_2 = curves.Circle2D(volmdlr.OXY.translation(volmdlr.Vector2D(4.257776625181402, -2.6149184392658222)),
+                                   1.1791034225674362)
         bspline = volmdlr.edges.BSplineCurve2D.load_from_file(os.path.join(folder, 'bspline.json'))
         intersections = circle_2.bsplinecurve_intersections(bspline, 1e-6)
         self.assertEqual(len(intersections), 1)
         self.assertTrue(intersections[0], volmdlr.Point2D(3.218528920632699, -3.1719185197869))
 
     def test_circle_intersections(self):
-        circle1 = curves.Circle2D(volmdlr.Point2D(0, 0), 1)
-        circle2 = curves.Circle2D(volmdlr.Point2D(1, 1), 1)
+        circle1 = curves.Circle2D(volmdlr.OXY.translation(volmdlr.Vector2D(0, 0)), 1)
+        circle2 = curves.Circle2D(volmdlr.OXY.translation(volmdlr.Vector2D(1, 1)), 1)
         circle_intersections = circle1.circle_intersections(circle2)
         self.assertEqual(len(circle_intersections), 2)
         self.assertTrue(circle_intersections[0].is_close(volmdlr.Point2D(1.0, 0.0)))
