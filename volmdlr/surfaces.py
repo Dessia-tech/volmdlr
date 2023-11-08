@@ -2676,13 +2676,12 @@ class ToroidalSurface3D(PeriodicalSurface):
         :type point2d: `volmdlr.`Point2D`
         """
         theta, phi = point2d
-        return self.frame.origin + (self.major_radius + self.minor_radius * math.cos(phi)) * ((math.cos(theta) * self.frame.u) + (math.sin(theta) * self.frame.v)) + self.minor_radius * math.sin(phi) * self.frame.w
-        # return self.frame.origin + (self.major_radius + self.minor_radius * math.cos(theta)) * (math.cos(theta) * self.frame.u + (math.sin(theta) * self.frame.v)
+        # return self.frame.origin + (self.major_radius + self.minor_radius * math.cos(phi)) * ((math.cos(theta) * self.frame.u) + (math.sin(theta) * self.frame.v)) + self.minor_radius * math.sin(phi) * self.frame.w
 
-        # x = (self.major_radius + self.minor_radius * math.cos(phi)) * math.cos(theta)
-        # y = (self.major_radius + self.minor_radius * math.cos(phi)) * math.sin(theta)
-        # z = self.minor_radius * math.sin(phi)
-        # return self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, z))
+        x = (self.major_radius + self.minor_radius * math.cos(phi)) * math.cos(theta)
+        y = (self.major_radius + self.minor_radius * math.cos(phi)) * math.sin(theta)
+        z = self.minor_radius * math.sin(phi)
+        return self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
         """
@@ -2723,6 +2722,13 @@ class ToroidalSurface3D(PeriodicalSurface):
             theta = 0.0
         if abs(phi) < 1e-9:
             phi = 0.0
+        if self.major_radius < self.minor_radius:
+            phi_self_intersection = math.acos(-self.major_radius / self.minor_radius)
+            if abs(phi) > phi_self_intersection:
+                if theta >= 0.0:
+                    theta -= math.pi
+                else:
+                    theta += math.pi
         return volmdlr.Point2D(theta, phi)
 
     @classmethod
@@ -2742,7 +2748,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
         frame = object_dict[arguments[1]]
-        rcenter = float(arguments[2]) * length_conversion_factor
+        rcenter = abs(float(arguments[2])) * length_conversion_factor
         # if rcenter < 0:
         #     rcenter = abs(rcenter)
             # frame.u = -frame.u
@@ -2836,14 +2842,16 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
 
         point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
-        theta_discontinuity = arc3d.point_belongs(point_theta_discontinuity) and \
-            not arc3d.is_point_edge_extremity(point_theta_discontinuity)
+        theta_discontinuity = (arc3d.point_belongs(point_theta_discontinuity) and
+                               not arc3d.is_point_edge_extremity(point_theta_discontinuity) and
+                               not self.frame.w.is_perpendicular_to(arc3d.frame.w))
         point_phi_discontinuity = self.point2d_to_3d(volmdlr.Point2D(start.x, math.pi))
-        phi_discontinuity = arc3d.point_belongs(point_phi_discontinuity) and \
-            not arc3d.is_point_edge_extremity(point_phi_discontinuity)
-        undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
-        undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
-        undefined_start_phi = arc3d.start.is_close(point_phi_discontinuity)  or start.y == math.pi
+        phi_discontinuity = (arc3d.point_belongs(point_phi_discontinuity) and
+                             not arc3d.is_point_edge_extremity(point_phi_discontinuity) and
+                             not self.frame.w.is_colinear_to(arc3d.frame.w))
+        undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity) or abs(start.x) == math.pi
+        undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity) or abs(end.x) == math.pi
+        undefined_start_phi = arc3d.start.is_close(point_phi_discontinuity) or start.y == math.pi
         undefined_end_phi = arc3d.end.is_close(point_phi_discontinuity) or end.y == math.pi
 
         return theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \

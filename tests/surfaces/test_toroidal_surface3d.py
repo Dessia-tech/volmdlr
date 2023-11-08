@@ -44,7 +44,6 @@ class TestToroidalSurface3D(unittest.TestCase):
 
         surface = surfaces.ToroidalSurface3D.load_from_file(
             os.path.join(folder, "degenerated_toroidalsurface.json"))
-        # surface.major_radius = -surface.major_radius
         arc3d = edges.Arc3D.load_from_file(
             os.path.join(folder, "degenerated_toroidalsurface_arc3d_undefined_end.json"))
         brep_primitive = surface.arc3d_to_2d(arc3d)[0]
@@ -53,6 +52,18 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertEqual(brep_primitive.end.y, -math.pi)
         self.assertAlmostEqual(arc3d.length(), inverse_prof.length(), 5)
         self.assertTrue(arc3d.start.is_close(inverse_prof.start))
+        self.assertTrue(arc3d.end.is_close(inverse_prof.end))
+
+        surface = surfaces.ToroidalSurface3D.load_from_file(
+            os.path.join(folder, "degenerated_toroidalsurface_2.json"))
+        arc3d = edges.Arc3D.load_from_file(
+            os.path.join(folder, "degenerated_toroidalsurface_2_arc3d_undefined_end.json"))
+        brep_primitive = surface.arc3d_to_2d(arc3d)[0]
+        inverse_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
+        self.assertAlmostEqual(brep_primitive.length(), 0.5 * math.pi, 3)
+        self.assertEqual(brep_primitive.end.y, math.pi)
+        self.assertAlmostEqual(arc3d.length(), inverse_prof.length(), 4)
+        self.assertTrue(arc3d.start.is_close(inverse_prof.start, 5e-5))
         self.assertTrue(arc3d.end.is_close(inverse_prof.end))
 
     def test_bsplinecurve3d_to_2d(self):
