@@ -761,6 +761,25 @@ class BoundingBox(dc.DessiaObject):
 
         return lx * ly * lz
 
+    def triangle_intersection(self, triangle: 'Triangle3D'):
+        # Check if any vertex of the triangle is inside the BoundingBox
+        for point in triangle.points:
+            if self.point_belongs(point):
+                return True
+
+        # Check if the triangle is completely outside any of the six planes of the box
+        # This can be done by comparing the triangle's coordinates with the box's boundaries
+        if (
+                triangle.points[0][0] < self.xmin and triangle.points[1][0] < self.xmin and triangle.points[2][0] < self.xmin or
+                triangle.points[0][0] > self.xmax and triangle.points[1][0] > self.xmax and triangle.points[2][0] > self.xmax or
+                triangle.points[0][1] < self.ymin and triangle.points[1][1] < self.ymin and triangle.points[2][1] < self.ymin or
+                triangle.points[0][1] > self.ymax and triangle.points[1][1] > self.ymax and triangle.points[2][1] > self.ymax or
+                triangle.points[0][2] < self.zmin and triangle.points[1][2] < self.zmin and triangle.points[2][2] < self.zmin or
+                triangle.points[0][2] > self.zmax and triangle.points[1][2] > self.zmax and triangle.points[2][2] > self.zmax
+        ):
+            return False
+        return True
+
     def distance_to_bbox(self, bbox2: "BoundingBox") -> float:
         """
         Calculates the distance between the bounding box and another bounding box.
@@ -1801,6 +1820,7 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def update_surfaces_list(face_contours, surfaces, contours, i):
+        """Update surfaces list."""
         for k_f, face_c in enumerate(face_contours):
             for l_c, contour_l in enumerate(contours):
                 for c_c, contour in enumerate(contour_l):
@@ -1997,6 +2017,7 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def get_nodes_lines(gmsh_model):
+        """Get nodes lines."""
         lines_nodes = []
         lines_nodes.append('$Nodes')
 
