@@ -5958,7 +5958,7 @@ class FullArc3D(FullArcMixin, Arc3D):
         if show_frame:
             self.circle.frame.plot(ax, ratio=self.radius)
         ax = vm_common_operations.plot_from_discretization_points(
-            ax, edge_style=edge_style, element=self, number_points=25, close_plot=True)
+            ax, edge_style=edge_style, element=self, number_points=100, close_plot=True)
         if edge_style.edge_ends:
             self.start.plot(ax=ax)
             self.end.plot(ax=ax)

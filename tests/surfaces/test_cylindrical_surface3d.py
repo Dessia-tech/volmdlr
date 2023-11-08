@@ -271,6 +271,23 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertTrue(circle_intersections[1].is_close(
             volmdlr.Point3D(1.740409914248, 0.10949731064, -0.966637220568)))
 
+    def test_sphericalsurface_intersections(self):
+        spherical_surface = surfaces.SphericalSurface3D(
+            volmdlr.OXYZ.translation(volmdlr.Vector3D(0.5, 0.5, 0)), 2)
+
+        # test 1
+        cylindrical_surface = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 1)
+        inters = spherical_surface.surface_intersections(cylindrical_surface)
+        self.assertEqual(len(inters), 2)
+        self.assertAlmostEqual(inters[0].length(), 6.613411150146185)
+        self.assertAlmostEqual(inters[1].length(), 6.613411150146188)
+
+        #test2
+        cylindrical_surface = surfaces.CylindricalSurface3D(volmdlr.OXYZ.translation(volmdlr.X3D * 1.5), 1)
+        inters = spherical_surface.surface_intersections(cylindrical_surface)
+        self.assertEqual(len(inters), 1)
+        self.assertAlmostEqual(inters[0].length(), 13.535607072731064)
+
 
 if __name__ == '__main__':
     unittest.main()

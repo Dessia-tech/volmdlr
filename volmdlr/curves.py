@@ -1642,9 +1642,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
-
-
+        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, 100, close_plot=True)
 
     def line_intersections(self, line: Line3D, abs_tol: float = 1e-6):
         """
