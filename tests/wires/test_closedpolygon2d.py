@@ -2,22 +2,23 @@
 Unittest for ClosedPolygon2D class
 """
 import unittest
-
+import numpy as np
 import volmdlr
 import volmdlr.display as vmd
 import volmdlr.wires as vmw
 
 
 class TestClosedPolygon2D(unittest.TestCase):
+    # Create a ClosedPolygon2D object with a list of points
+    points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
+    polygon = vmw.ClosedPolygon2D(points)
     def test_triangulation(self):
-        # Create a ClosedPolygon2D object with a list of points
-        points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
-        polygon = vmw.ClosedPolygon2D(points)
+
 
         # Call the triangulation method with different options
-        mesh1 = polygon.triangulation()
-        mesh2 = polygon.triangulation('p')
-        mesh3 = polygon.triangulation('pa0.25')  # No triangles with area greter than 0.25
+        mesh1 = self.polygon.triangulation()
+        mesh2 = self.polygon.triangulation('p')
+        mesh3 = self.polygon.triangulation('pa0.25')  # No triangles with area greter than 0.25
 
         # Assert that the returned object is a vmd.DisplayMesh2D
         self.assertIsInstance(mesh1, vmd.DisplayMesh2D)
@@ -65,6 +66,15 @@ class TestClosedPolygon2D(unittest.TestCase):
         point = volmdlr.Point2D(0.027822689953649605, 0.02627283447706946)
         self.assertTrue(polygon.point_belongs(point, True))
         self.assertFalse(polygon.point_belongs(point, False))
+
+    def test_points_in_polygon(self):
+        x = np.linspace(0, 1, num=12, dtype=np.float64)
+        y = np.linspace(0, 1, num=4, dtype=np.float64)
+        # Generate all points in the grid
+        grid_points = np.array([[xi, yi] for xi in x for yi in y], dtype=np.float64)
+        test = self.polygon.points_in_polygon(grid_points, include_edge_points=True)
+        for value in test:
+            self.assertTrue(value)
 
 
 if __name__ == '__main__':

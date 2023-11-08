@@ -39,7 +39,7 @@ class RoundedLineSegments2D(RoundedLineSegments):
                  adapt_radius: bool = False, name: str = ''):
         RoundedLineSegments.__init__(self, points, radius,
                                      adapt_radius=adapt_radius,
-                                     name='')
+                                     name=name)
 
     def arc_features(self, point_index: int):
         """

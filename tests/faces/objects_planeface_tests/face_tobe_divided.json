@@ -227,12 +227,28 @@
       "circle": {
         "object_class": "volmdlr.curves.Circle2D",
         "name": "",
-        "center": {
+        "radius": 0.041666666666666664,
+        "frame": {
+          "object_class": "volmdlr.Frame2D",
+          "name": "",
+          "origin": {
           "object_class": "volmdlr.Point2D",
           "x": 1.125,
           "y": 0.875
-        },
-        "radius": 0.041666666666666664
+          },
+          "u": {
+            "object_class": "volmdlr.Vector2D",
+            "x": 1.0,
+            "y": 0.0,
+            "name": ""
+          },
+          "v": {
+            "object_class": "volmdlr.Vector2D",
+            "x": 0.0,
+            "y": 1.0,
+            "name": ""
+          }
+        }
       },
       "is_trigo": true,
       "start": {
@@ -244,9 +260,7 @@
         "object_class": "volmdlr.Point2D",
         "x": 1.0833333333333333,
         "y": 0.875
-      },
-      "angle1": 0.0,
-      "angle2": 3.141592653589793
+      }
     },
     {
       "object_class": "volmdlr.edges.Arc2D",
@@ -254,12 +268,28 @@
       "circle": {
         "object_class": "volmdlr.curves.Circle2D",
         "name": "",
-        "center": {
+        "radius": 0.041666666666666664,
+        "frame": {
+          "object_class": "volmdlr.Frame2D",
+          "name": "",
+          "origin": {
           "object_class": "volmdlr.Point2D",
           "x": 1.125,
           "y": 0.875
-        },
-        "radius": 0.041666666666666664
+          },
+          "u": {
+            "object_class": "volmdlr.Vector2D",
+            "x": 1.0,
+            "y": 0.0,
+            "name": ""
+          },
+          "v": {
+            "object_class": "volmdlr.Vector2D",
+            "x": 0.0,
+            "y": 1.0,
+            "name": ""
+          }
+        }
       },
       "is_trigo": true,
       "start": {
@@ -271,9 +301,7 @@
         "object_class": "volmdlr.Point2D",
         "x": 1.1666666666666667,
         "y": 0.875
-      },
-      "angle1": 3.141592653589793,
-      "angle2": 6.283185307179586
+      }
     }
   ]
 },
@@ -287,12 +315,28 @@
       "circle": {
         "object_class": "volmdlr.curves.Circle2D",
         "name": "",
-        "center": {
+        "radius": 0.041666666666666664,
+        "frame": {
+          "object_class": "volmdlr.Frame2D",
+          "name": "",
+          "origin": {
           "object_class": "volmdlr.Point2D",
           "x": 1.875,
           "y": 0.125
-        },
-        "radius": 0.041666666666666664
+          },
+          "u": {
+            "object_class": "volmdlr.Vector2D",
+            "x": 1.0,
+            "y": 0.0,
+            "name": ""
+          },
+          "v": {
+            "object_class": "volmdlr.Vector2D",
+            "x": 0.0,
+            "y": 1.0,
+            "name": ""
+          }
+        }
       },
       "is_trigo": true,
       "start": {
@@ -304,9 +348,7 @@
         "object_class": "volmdlr.Point2D",
         "x": 1.8333333333333333,
         "y": 0.125
-      },
-      "angle1": 0.0,
-      "angle2": 3.141592653589793
+      }
     },
     {
       "object_class": "volmdlr.edges.Arc2D",
@@ -314,12 +356,28 @@
       "circle": {
         "object_class": "volmdlr.curves.Circle2D",
         "name": "",
-        "center": {
+        "radius": 0.041666666666666664,
+        "frame": {
+          "object_class": "volmdlr.Frame2D",
+          "name": "",
+          "origin": {
           "object_class": "volmdlr.Point2D",
           "x": 1.875,
           "y": 0.125
-        },
-        "radius": 0.041666666666666664
+          },
+          "u": {
+            "object_class": "volmdlr.Vector2D",
+            "x": 1.0,
+            "y": 0.0,
+            "name": ""
+          },
+          "v": {
+            "object_class": "volmdlr.Vector2D",
+            "x": 0.0,
+            "y": 1.0,
+            "name": ""
+          }
+        }
       },
       "is_trigo": true,
       "start": {
@@ -331,9 +389,7 @@
         "object_class": "volmdlr.Point2D",
         "x": 1.9166666666666667,
         "y": 0.125
-      },
-      "angle1": 3.141592653589793,
-      "angle2": 6.283185307179586
+      }
     }
   ]
 }
