@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 #### edges.py 
-- Arc2D: is_trigo in rotation / translation / frame_mapping.
+- Arc2D: direction conservation in rotation / translation / frame_mapping.
 
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
