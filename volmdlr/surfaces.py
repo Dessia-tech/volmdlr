@@ -2676,10 +2676,13 @@ class ToroidalSurface3D(PeriodicalSurface):
         :type point2d: `volmdlr.`Point2D`
         """
         theta, phi = point2d
-        x = (self.major_radius + self.minor_radius * math.cos(phi)) * math.cos(theta)
-        y = (self.major_radius + self.minor_radius * math.cos(phi)) * math.sin(theta)
-        z = self.minor_radius * math.sin(phi)
-        return self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, z))
+        return self.frame.origin + (self.major_radius + self.minor_radius * math.cos(phi)) * ((math.cos(theta) * self.frame.u) + (math.sin(theta) * self.frame.v)) + self.minor_radius * math.sin(phi) * self.frame.w
+        # return self.frame.origin + (self.major_radius + self.minor_radius * math.cos(theta)) * (math.cos(theta) * self.frame.u + (math.sin(theta) * self.frame.v)
+
+        # x = (self.major_radius + self.minor_radius * math.cos(phi)) * math.cos(theta)
+        # y = (self.major_radius + self.minor_radius * math.cos(phi)) * math.sin(theta)
+        # z = self.minor_radius * math.sin(phi)
+        # return self.frame.local_to_global_coordinates(volmdlr.Point3D(x, y, z))
 
     def point3d_to_2d(self, point3d):
         """
