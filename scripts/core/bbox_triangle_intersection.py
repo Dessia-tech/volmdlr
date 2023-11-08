@@ -16,4 +16,3 @@ ax = bounding_box.plot()
 triangle.plot(ax=ax)
 
 print(bounding_box.is_intersecting_triangle(triangle))
-Uni
