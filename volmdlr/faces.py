@@ -152,7 +152,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.outer_contour3d.bounding_box
 
     def area(self):
-        """Computes the area of the surface2d."""
+        """Computes the area of the surface 2d."""
         return self.surface2d.area()
 
     @classmethod
