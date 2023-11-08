@@ -122,6 +122,16 @@ class TestBoundingBox(unittest.TestCase):
         ax = self.bbox1.plot()
         self.assertEqual(len(ax.lines), 12)
 
+    def test_is_close(self):
+        self.assertTrue(self.bbox1.is_close(self.bbox1))
+
+        bbox_almost_equal_1 = BoundingBox(0, 1, 0, 1, 0, 1)
+        bbox_almost_equal_2 = BoundingBox(0 + 1e-9, 1 + 1e-9, 0 + 1e-9, 1 + 1e-9, 0 + 1e-9, 1 + 1e-9)
+
+        self.assertTrue(bbox_almost_equal_1.is_close(bbox_almost_equal_2))
+        self.assertFalse(bbox_almost_equal_1.is_close(bbox_almost_equal_2, tol=1e-10))
+        self.assertNotEquals(bbox_almost_equal_1, bbox_almost_equal_2)
+
 
 if __name__ == "__main__":
     unittest.main()
