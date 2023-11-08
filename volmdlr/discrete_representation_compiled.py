@@ -666,11 +666,11 @@ def _point_in_triangle_2d(
 ) -> bool_C:
     """Check if a point is in a 2D triangle."""
 
-    b1: cython.double = __sign(point, triangle_2d[0], triangle_2d[1]) < 0.0
-    b2: cython.double = __sign(point, triangle_2d[1], triangle_2d[2]) < 0.0
-    b3: cython.double = __sign(point, triangle_2d[2], triangle_2d[0]) < 0.0
+    inside_edge1: cython.double = __sign(point, triangle_2d[0], triangle_2d[1]) < 0.0
+    inside_edge2: cython.double = __sign(point, triangle_2d[1], triangle_2d[2]) < 0.0
+    inside_edge3: cython.double = __sign(point, triangle_2d[2], triangle_2d[0]) < 0.0
 
-    return (b1 == b2) and (b2 == b3)
+    return (inside_edge1 == inside_edge2) and (inside_edge2 == inside_edge3)
 
 
 @cython.cfunc
