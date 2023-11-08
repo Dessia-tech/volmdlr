@@ -4666,6 +4666,7 @@ class LineSegment3D(LineSegment):
         return new_faces
 
     def babylon_curves(self):
+        """Returns the babylon representation of the edge."""
         points = [[*self.start], [*self.end]]
         babylon_lines = {'points': points,
                          'alpha': 1.0,
