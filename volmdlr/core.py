@@ -967,6 +967,18 @@ class Assembly(dc.PhysicalObject):
         self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)
 
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#',
+                id_method=True, id_memo=None):
+        dict_ = self.base_dict()
+
+        dict_["components"] = [component.to_dict() for component in self.components]
+        dict_["frame"] = self.frame.to_dict()
+        dict_["positions"] = [position.to_dict() for position in self.positions]
+        dict_["primitives"] = [prim.to_dict() for prim in self.primitives]
+        dict_["_bbox"] = self._bbox.to_dict() if self._bbox else None
+
+        return dict_
+
     @property
     def bounding_box(self):
         """
@@ -1123,6 +1135,15 @@ class Compound(dc.PhysicalObject):
         self._bbox = None
         self._type = None
         dc.PhysicalObject.__init__(self, name=name)
+
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#',
+                id_method=True, id_memo=None):
+        dict_ = self.base_dict()
+
+        dict_["primitives"] = [prim.to_dict() for prim in self.primitives]
+
+        return dict_
+
 
     @property
     def bounding_box(self):
