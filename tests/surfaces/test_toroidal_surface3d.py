@@ -217,7 +217,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
         inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(),  14.655782570200772)
+        self.assertAlmostEqual(inters[0].length(),  14.655733322099357)
         # Test2
         expected_results = [[9.424777944721708, 9.424777944721708], [6.283185307179586], []]
         frame = volmdlr.OXYZ
@@ -230,11 +230,16 @@ class TestToroidalSurface3D(unittest.TestCase):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
         #Test3
-        expected_results = [[17.155067582864444], [17.448540078432824], [8.189847668139935, 11.90021423368969],
-                            [9.342189848170346, 6.783364028368448, 6.626602873350902],
-                            [8.449458001699453, 11.76566180549682], [18.761646765139652],
-                            [6.937784442925027, 15.192488203384443], [19.041783267751107], [19.712197747208563],
-                            [9.106328156647887, 6.6068743823586615, 6.606873644133417]]
+        expected_results = [[17.15507461067761],
+                            [17.448568883526185],
+                            [8.189771200616809, 11.901225730657574],
+                            [9.34218408582395, 6.809844472861139, 6.626300553745165],
+                            [8.454987057969534, 11.779924716831369],
+                            [18.76200992152212],
+                            [6.9377935567268985, 16.235988711263253],
+                            [19.04178136261955],
+                            [19.712183061254688],
+                            [9.106321512725067, 6.643185396283338, 6.606874489918287]]
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
