@@ -688,8 +688,37 @@ class BoundingBox(dc.DessiaObject):
         :return: The volume of the bounding box.
         :rtype: float
         """
-        return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
-                self.zmax - self.zmin)
+        return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (self.zmax - self.zmin)
+
+    def scale(self, factor: float) -> "BoundingBox":
+        """
+        Scales the bounding box by a given factor and returns a new BoundingBox.
+
+        :param factor: The scaling factor.
+        :type factor: float
+
+        :return: A new scaled BoundingBox.
+        :rtype: BoundingBox
+        """
+        x_center = (self.xmin + self.xmax) / 2
+        y_center = (self.ymin + self.ymax) / 2
+        z_center = (self.zmin + self.zmax) / 2
+        x_size, y_size, z_size = self.size
+
+        scaled_half_x_size = (x_size * factor) / 2
+        scaled_half_y_size = (y_size * factor) / 2
+        scaled_half_z_size = (z_size * factor) / 2
+
+        # Calculate new min and max values
+        new_xmin = x_center - scaled_half_x_size
+        new_xmax = x_center + scaled_half_x_size
+        new_ymin = y_center - scaled_half_y_size
+        new_ymax = y_center + scaled_half_y_size
+        new_zmin = z_center - scaled_half_z_size
+        new_zmax = z_center + scaled_half_z_size
+
+        # Return a new BoundingBox object
+        return BoundingBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax, self.name)
 
     def bbox_intersection(self, bbox2: "BoundingBox", tol: float = 1e-6) -> bool:
         """
