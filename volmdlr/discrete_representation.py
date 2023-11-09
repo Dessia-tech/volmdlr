@@ -31,7 +31,7 @@ from volmdlr.discrete_representation_compiled import (
 )
 from volmdlr.edges import LineSegment2D
 from volmdlr.faces import Triangle3D
-from volmdlr.shells import ClosedTriangleShell3D, Shell3D
+from volmdlr.shells import ClosedTriangleShell3D, Shell3D, DisplayTriangleShell3D
 from volmdlr.wires import ClosedPolygon2D
 
 # CUSTOM TYPES
@@ -557,6 +557,28 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         shell = ClosedTriangleShell3D(triangles3d, name=self.name)
 
         return shell
+
+    def to_display_triangle_shell(self) -> DisplayTriangleShell3D:
+        """
+        Generate a closed triangle shell representing the voxelization.
+
+        :return: A closed triangle shell representation of the voxelization.
+        :rtype: ClosedTriangleShell3D
+        """
+        # Flatten and round the vertices array
+        faces = self.to_triangles()
+        vertices = np.array(
+            [(face[i][0], face[i][0], face[i][0]) for face in faces for i in range(3)]
+        )
+
+        # Get unique vertices and their indices
+        vertices, unique_indices = np.unique(vertices, axis=0, return_inverse=True)
+
+        # Create the triangle indices array using NumPy indexing
+        flattened_indices = unique_indices.reshape(-1, 3)
+        faces = flattened_indices[: len(faces)]
+
+        return DisplayTriangleShell3D(vertices, faces, name=self.name)
 
     def volmdlr_primitives(self, **kwargs):
         """
