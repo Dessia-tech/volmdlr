@@ -589,32 +589,29 @@ class BoundingBox(dc.DessiaObject):
         return ax
 
     @classmethod
-    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"], name: str = '') -> "BoundingBox":
+    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"], name: str = "") -> "BoundingBox":
         """
-        Creates a bounding box that contains multiple bounding boxes.
+        Create a bounding box that contains multiple bounding boxes.
 
         :param bounding_boxes: A list of bounding boxes that need to be contained.
-        :type bounding_boxes: list of BoundingBox
+        :type bounding_boxes: List[BoundingBox]
+        :param name: A name for the bounding box, optional.
+        :type name: str
+
         :return: A new bounding box that contains all the input bounding boxes.
         :rtype: BoundingBox
         """
-        xmin = min(bb.xmin for bb in bounding_boxes)
-        xmax = max(bb.xmax for bb in bounding_boxes)
-        x_length = xmax - xmin
-        xmin -= x_length * 0.001
-        xmax += x_length * 0.001
+        # Create a 2D NumPy array where each row corresponds to the coordinates of a bounding box
+        # [xmin, xmax, ymin, ymax, zmin, zmax]
+        coords = npy.array([[bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax] for bb in bounding_boxes])
 
-        ymin = min(bb.ymin for bb in bounding_boxes)
-        ymax = max(bb.ymax for bb in bounding_boxes)
-        y_length = ymax - ymin
-        ymin -= y_length * 0.001
-        ymax += y_length * 0.001
+        # Find the global minimum and maximum for each axis
+        mins = npy.amin(coords, axis=0)
+        maxs = npy.amax(coords, axis=0)
 
-        zmin = min(bb.zmin for bb in bounding_boxes)
-        zmax = max(bb.zmax for bb in bounding_boxes)
-        z_length = zmax - zmin
-        zmin -= z_length * 0.001
-        zmax += z_length * 0.001
+        # Assign min and max for each axis
+        xmin, xmax, ymin, ymax, zmin, zmax = mins[0], maxs[1], mins[2], maxs[3], mins[4], maxs[5]
+
         return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     @classmethod
