@@ -568,7 +568,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         # Flatten and round the vertices array
         faces = self.to_triangles()
         vertices = np.array(
-            [(face[i][0], face[i][0], face[i][0]) for face in faces for i in range(3)]
+            [(face[i][0], face[i][1], face[i][2]) for face in faces for i in range(3)]
         )
 
         # Get unique vertices and their indices
