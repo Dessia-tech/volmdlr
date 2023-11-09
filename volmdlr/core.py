@@ -26,6 +26,7 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
+from volmdlr.discrete_representation_compiled import triangle_intersects_voxel
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
 
@@ -796,6 +797,22 @@ class BoundingBox(dc.DessiaObject):
         lz = min(self.zmax, bbox2.zmax) - max(self.zmin, bbox2.zmin)
 
         return lx * ly * lz
+
+    def is_intersecting_triangle(self, triangle: "Triangle3D") -> bool:
+        """
+        Check if the bounding box and a triangle are intersecting or touching.
+
+        :param triangle: the triangle to check if there is an intersection with.
+        :type triangle: Triangle3D
+
+        :return: True if the bounding box and the triangle are intersecting or touching, False otherwise.
+        :rtype: bool
+        """
+        _triangle = tuple((point.x, point.y, point.z) for point in triangle.points)
+        _center = (self.center[0], self.center[1], self.center[2])
+        _extents = tuple(size / 2 for size in self.size)
+
+        return triangle_intersects_voxel(_triangle, _center, _extents)
 
     def distance_to_bbox(self, bbox2: "BoundingBox") -> float:
         """

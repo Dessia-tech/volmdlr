@@ -30,7 +30,8 @@ from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inve
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
 from volmdlr.nurbs.operations import split_surface_u, split_surface_v
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
-                                      find_parametric_point_at_singularity, is_isocurve)
+                                      find_parametric_point_at_singularity, is_isocurve,
+                                      verify_repeated_parametric_points)
 
 
 def knots_vector_inv(knots_vector):
@@ -2591,8 +2592,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         self.frame = frame
         self.major_radius = major_radius
         self.minor_radius = minor_radius
-        self.outer_radius = self.major_radius + self.minor_radius
-        self.inner_radius = self.major_radius - self.minor_radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
         self._bbox = None
@@ -2608,6 +2607,16 @@ class ToroidalSurface3D(PeriodicalSurface):
             circle = curves.Circle3D(i_frame, self.minor_radius)
             arcs.append(circle)
         return arcs
+
+    @cached_property
+    def outer_radius(self):
+        """Get torus outer radius."""
+        return self.major_radius + self.minor_radius
+
+    @cached_property
+    def inner_radius(self):
+        """Get torus inner radius."""
+        return self.major_radius - self.minor_radius
 
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
@@ -2712,6 +2721,13 @@ class ToroidalSurface3D(PeriodicalSurface):
             theta = 0.0
         if abs(phi) < 1e-9:
             phi = 0.0
+        if self.major_radius < self.minor_radius:
+            phi_self_intersection = math.acos(-self.major_radius / self.minor_radius)
+            if abs(phi) > phi_self_intersection:
+                if theta >= 0.0:
+                    theta -= math.pi
+                else:
+                    theta += math.pi
         return volmdlr.Point2D(theta, phi)
 
     @classmethod
@@ -2731,8 +2747,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         length_conversion_factor = kwargs.get("length_conversion_factor", 1)
 
         frame = object_dict[arguments[1]]
-        rcenter = float(arguments[2]) * length_conversion_factor
-        rcircle = float(arguments[3]) * length_conversion_factor
+        rcenter = abs(float(arguments[2])) * length_conversion_factor
+        rcircle = abs(float(arguments[3])) * length_conversion_factor
         return cls(frame, rcenter, rcircle, arguments[0][1:-1])
 
     def to_step(self, current_id):
@@ -2815,21 +2831,23 @@ class ToroidalSurface3D(PeriodicalSurface):
                   for p in bspline_curve2d.discretization_points(number_points=n)]
         return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree)]
 
-    def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start):
+    def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start, end):
         """
         Verifies if arc 3D contains discontinuity and undefined start/end points on parametric domain.
         """
 
         point_theta_discontinuity = self.point2d_to_3d(volmdlr.Point2D(math.pi, start.y))
-        theta_discontinuity = arc3d.point_belongs(point_theta_discontinuity) and \
-            not arc3d.is_point_edge_extremity(point_theta_discontinuity)
+        theta_discontinuity = (arc3d.point_belongs(point_theta_discontinuity) and
+                               not arc3d.is_point_edge_extremity(point_theta_discontinuity) and
+                               not self.frame.w.is_perpendicular_to(arc3d.frame.w))
         point_phi_discontinuity = self.point2d_to_3d(volmdlr.Point2D(start.x, math.pi))
-        phi_discontinuity = arc3d.point_belongs(point_phi_discontinuity) and \
-            not arc3d.is_point_edge_extremity(point_phi_discontinuity)
-        undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity)
-        undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity)
-        undefined_start_phi = arc3d.start.is_close(point_phi_discontinuity)
-        undefined_end_phi = arc3d.end.is_close(point_phi_discontinuity)
+        phi_discontinuity = (arc3d.point_belongs(point_phi_discontinuity) and
+                             not arc3d.is_point_edge_extremity(point_phi_discontinuity) and
+                             not self.frame.w.is_colinear_to(arc3d.frame.w))
+        undefined_start_theta = arc3d.start.is_close(point_theta_discontinuity) or abs(start.x) == math.pi
+        undefined_end_theta = arc3d.end.is_close(point_theta_discontinuity) or abs(end.x) == math.pi
+        undefined_start_phi = arc3d.start.is_close(point_phi_discontinuity) or start.y == math.pi
+        undefined_end_phi = arc3d.end.is_close(point_phi_discontinuity) or end.y == math.pi
 
         return theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
             undefined_start_phi, undefined_end_phi
@@ -2843,7 +2861,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         point_after_start, point_before_end = self._reference_points(fullarc3d)
         theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
             undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(
-                fullarc3d, start)
+                fullarc3d, start, end)
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(
             [start, end],
             [undefined_start_theta, undefined_end_theta, undefined_start_phi, undefined_end_phi],
@@ -2877,7 +2895,8 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         point_after_start, point_before_end = self._reference_points(arc3d)
         theta_discontinuity, phi_discontinuity, undefined_start_theta, undefined_end_theta, \
-            undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(arc3d, start)
+            undefined_start_phi, undefined_end_phi = self._helper_arc3d_to_2d_periodicity_verifications(arc3d,
+                                                                                                        start, end)
         start, end = vm_parametric.arc3d_to_toroidal_coordinates_verification(
             [start, end],
             [undefined_start_theta, undefined_end_theta, undefined_start_phi, undefined_end_phi],
@@ -2924,7 +2943,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         if phi_discontinuity:
             points = self._fix_angle_discontinuity_on_discretization_points(points,
                                                                             indexes_phi_discontinuity, "y")
-
+        points = verify_repeated_parametric_points(points)
         return [edges.BSplineCurve2D.from_points_interpolation(points, bspline_curve3d.degree)]
 
     def triangulation(self):
