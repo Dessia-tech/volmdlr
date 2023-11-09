@@ -1,5 +1,6 @@
 import os
 import math
+import os
 import numpy as npy
 import unittest
 import volmdlr
@@ -17,7 +18,7 @@ class TestToroidalFace3D(unittest.TestCase):
         self.assertAlmostEqual(face.surface2d.area(), 0.07116351378250674, 4)
 
         surface = surfaces.ToroidalSurface3D.load_from_file(
-            os.path.join(folder,"repair_periodicity_toroidal_surface.json"))
+            os.path.join(folder, "repair_periodicity_toroidal_surface.json"))
         contour = wires.Contour3D.load_from_file(
             os.path.join(folder, "repair_periodicity_toroidal_surface_contour.json"))
         face = faces.ToroidalFace3D.from_contours3d(surface, [contour])

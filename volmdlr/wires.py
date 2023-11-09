@@ -3508,15 +3508,15 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
 
-        x = npy.linspace(x_min, x_max, num=number_points_x + 2)
-        y = npy.linspace(y_min, y_max, num=number_points_y + 2)
+        x = npy.linspace(x_min, x_max, num=number_points_x + 2, dtype=npy.float64)
+        y = npy.linspace(y_min, y_max, num=number_points_y + 2, dtype=npy.float64)
 
         grid_point_index = {}
 
         polygon_points = {vmd.Node2D.from_point(point) for point in self.points}
 
         # Generate all points in the grid
-        grid_points = npy.array([(xi, yi) for xi in x for yi in y], dtype=npy.float64)
+        grid_points = npy.array([[xi, yi] for xi in x for yi in y], dtype=npy.float64)
 
         # Use self.points_in_polygon to check if each point is inside the polygon
         points_in_polygon_ = self.points_in_polygon(grid_points, include_edge_points=include_edge_points)
