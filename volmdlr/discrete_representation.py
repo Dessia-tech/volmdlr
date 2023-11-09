@@ -1084,6 +1084,18 @@ class PointBasedVoxelization(Voxelization):
 
         return set(tuple(center) for center in centers)
 
+    def voxel_centers_distances_to_faces(self):
+        points_coords = np.array(list(self.voxel_centers))
+
+        from igl import signed_distance
+        vertices, faces = self.to_closed_triangle_shell().to_mesh_data(round_vertices=True)
+        distances_array = signed_distance(points_coords, vertices, faces.astype(int), sign_type=3)[0]
+
+        # Creating a dictionary to map each point to its distance
+        distances_dict = {point: distance for point, distance in zip(self.voxel_centers, distances_array)}
+
+        return distances_dict
+
 
 class MatrixBasedVoxelization(Voxelization):
     """Voxelization implemented as a 3D matrix."""
