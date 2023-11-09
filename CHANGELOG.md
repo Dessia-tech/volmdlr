@@ -24,13 +24,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle3D: point_distance.
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
+#### core.py
+- BoundingBox: triangle_intersects_voxel
 
 ### Fixed
+#### edges.py 
+- Arc2D: direction conservation in rotation / translation / frame_mapping.
+
+#### surfaces.py
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
 
 #### faces.py
+- ToroidalFace3D: PlaneFace3D intersections.
 - PlaneFace3D: circle_intersections. planeface_intersections
 #### wires.py
 - delete remaining inplace methods in wires.py
+
 #### shells.py
 - Fixes to boolean operations.
 
@@ -39,8 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
-#### curves
+
+#### curves.py
 - Circle3D: circle_intersectios when the circle are coplanar.
+
+#### surfaces.py
+- ExtrusionSurface3D: enhance parametric operations.
 
 #### edges.py
 - bsplineCurve: line_intersections. 
@@ -50,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 
 #### core_compiled
-- Frame2D: fix rotation
+- Frame2D: fix rotation.
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
@@ -115,7 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Matrix based discrete representation: boolean operations
 - read the docs settings
 - fix: move code complexity at end
-- 
+- ClosedPolygon2D: points_in_polygon, fix include_edge_points
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
 
