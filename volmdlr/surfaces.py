@@ -1160,6 +1160,10 @@ class Surface3D(DessiaObject):
                                      if linesegment3d.point_belongs(inters, abs_tol)]
         return linesegment_intersections
 
+    def plane_intersections(self, plane3d: 'Plane3D'):
+        """Gets intersections between a line and a Surface 3D."""
+        raise NotImplementedError(f'line_intersections method not implemented by {self.__class__.__name__}')
+
     def curve_intersections(self, curve):
         """
         Calculates the intersections between a conical surface and a curve 3D.
@@ -3622,7 +3626,8 @@ class ConicalSurface3D(PeriodicalSurface):
             local_surface = self.frame_mapping(self.frame, 'new')
             local_plane = plane3d.frame_mapping(self.frame, 'new')
             local_intersections = local_surface.parallel_plane_intersection(local_plane)
-            global_intersections = [intersection.frame_mapping(self.frame, 'old') for intersection in local_intersections]
+            global_intersections = [intersection.frame_mapping(self.frame, 'old')
+                                    for intersection in local_intersections]
             return global_intersections
         hyperbola_center = line_plane_intersections.closest_point_on_line(self.frame.origin)
         hyperbola_positive_vertex = self.frame.local_to_global_coordinates(
