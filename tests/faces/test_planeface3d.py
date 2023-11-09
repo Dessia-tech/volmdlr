@@ -29,6 +29,13 @@ class TestPlaneFace3D(unittest.TestCase):
         volume_model = dc.DessiaObject.load_from_file(os.path.join(folder, 'test_planeface_point_belongs.json'))
         self.assertTrue(volume_model.primitives[0].point_belongs(volume_model.primitives[1]))
 
+    def test_plane_face_intersection(self):
+        face1, face2 = dc.DessiaObject.load_from_file(os.path.join(folder, 'test_planeface_intersections.json')).primitives
+        face_intersections = face1.face_intersections(face2)
+
+        self.assertEqual(1, len(face_intersections))
+        self.assertAlmostEqual(0.003600000000881293, face_intersections[0].length())
+
     def test_face_inside(self):
         face2 = self.face.frame_mapping(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(0.5, 0, 0),
                                         volmdlr.Vector3D(0, 0.5, 0), volmdlr.Vector3D(0, 0, 0.5)), 'old')
