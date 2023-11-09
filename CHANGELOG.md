@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
-- ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object,
+- ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object
+- ToroidalSurface3D: Handles degenerated surfaces (major_radius < minor_radius).
 - CylindricalSurface3D: circle_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
 - SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections
@@ -22,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle3D: point_distance.
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
+#### core.py
+- BoundingBox: triangle_intersects_voxel
 
 #### step.py
 - Support to Datakit CrossCadWare STEP file format.
