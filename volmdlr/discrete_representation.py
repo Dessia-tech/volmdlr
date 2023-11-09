@@ -1088,6 +1088,7 @@ class PointBasedVoxelization(Voxelization):
         points_coords = np.array(list(self.voxel_centers))
 
         from igl import signed_distance
+
         vertices, faces = self.to_closed_triangle_shell().to_mesh_data(round_vertices=True)
         distances_array = signed_distance(points_coords, vertices, faces.astype(int), sign_type=3)[0]
 
@@ -1531,11 +1532,13 @@ class MatrixBasedVoxelization(Voxelization):
         return layers_dict
 
     def _count_cubic_layer(self, x: int, y: int, z: int) -> int:
-        max_layers = min(x, y, z, self.matrix.shape[0] - 1 - x, self.matrix.shape[1] - 1 - y, self.matrix.shape[2] - 1 - z)
+        max_layers = min(
+            x, y, z, self.matrix.shape[0] - 1 - x, self.matrix.shape[1] - 1 - y, self.matrix.shape[2] - 1 - z
+        )
 
         for layer in range(1, max_layers + 1):
             # Extract the cube of interest
-            cube = self.matrix[x - layer:x + layer + 1, y - layer:y + layer + 1, z - layer:z + layer + 1]
+            cube = self.matrix[x - layer : x + layer + 1, y - layer : y + layer + 1, z - layer : z + layer + 1]
 
             # If any value in the cube's surface is False, stop
             if not cube[[0, -1], :, :].all() or not cube[:, [0, -1], :].all() or not cube[:, :, [0, -1]].all():
@@ -2129,6 +2132,7 @@ class OctreeBasedVoxelization(Voxelization):
         :rtype: PointBasedVoxelization
         """
         point_based_voxelizations = []
+        layers_minimal_thickness = layers_minimal_thickness + round_to_digits(0.5 * layers_minimal_thickness, DECIMALS)
 
         for voxel_size, voxel_centers in self._get_inner_growing_voxel_centers(layers_minimal_thickness).items():
             point_based_voxelizations.append(PointBasedVoxelization(voxel_centers, voxel_size))
