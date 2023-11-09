@@ -49,8 +49,8 @@ class TestBoundingBox(unittest.TestCase):
 
     def test_from_bounding_boxes(self):
         self.assertEqual(
+            BoundingBox(0.0, 5.0, 0.0, 5.0, -1.0, 5.0),
             BoundingBox.from_bounding_boxes([self.bbox1, self.bbox2, self.bbox3]),
-            BoundingBox(-0.005, 5.005, -0.005, 5.005, -1.006, 5.006),
         )
 
     def test_from_points(self):
@@ -130,7 +130,7 @@ class TestBoundingBox(unittest.TestCase):
 
         self.assertTrue(bbox_almost_equal_1.is_close(bbox_almost_equal_2))
         self.assertFalse(bbox_almost_equal_1.is_close(bbox_almost_equal_2, tol=1e-10))
-        self.assertNotEquals(bbox_almost_equal_1, bbox_almost_equal_2)
+        self.assertNotEqual(bbox_almost_equal_1, bbox_almost_equal_2)
 
 
 if __name__ == "__main__":
