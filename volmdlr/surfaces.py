@@ -2610,12 +2610,12 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     @cached_property
     def outer_radius(self):
-        """Get torus outer radius"""
+        """Get torus outer radius."""
         return self.major_radius + self.minor_radius
 
     @cached_property
     def inner_radius(self):
-        """Get torus inner radius"""
+        """Get torus inner radius."""
         return self.major_radius - self.minor_radius
 
     @classmethod
