@@ -1865,7 +1865,7 @@ class BSplineCurve(Edge):
         :param abscissa1: Starting abscissa.
         :param abscissa2: Ending abscissa edge.
         :param number_points: number of points to discretize locally.
-        :param return_abscissas: If True, returns the list of abcissas of the discretization points.
+        :param return_abscissas: If True, returns the list of abscissas of the discretization points.
         :return: list of locally discretized points.
         """
 
@@ -1877,7 +1877,7 @@ class BSplineCurve(Edge):
         point_name = 'Point' + self.__class__.__name__[-2:]
         if return_abscissas:
             return ([getattr(volmdlr, point_name)(*point) for point in points],
-                    npy.linspace(u1, u2, number_points).tolist())
+                    npy.linspace(u1, u2, number_points, dtype=npy.float64).tolist())
         return [getattr(volmdlr, point_name)(*point) for point in points]
 
     def is_close(self, other_edge, tol: float = 1e-6):
