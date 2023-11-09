@@ -24,10 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenTriangleShell3D: triangle decimation
 
 ### Fixed
+
 #### core_compiled
 - Frame2D: fix rotation.
 
+#### edges.py 
+- Arc2D: direction conservation in rotation / translation / frame_mapping.
+
+#### surfaces.py
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
+
+
 #### faces.py
+- ToroidalFace3D: PlaneFace3D intersections.
 - PlaneFace3D: circle_intersections. planeface_intersections
 
 #### wires.py
