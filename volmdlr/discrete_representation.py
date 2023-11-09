@@ -2131,10 +2131,26 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A list of PointBasedVoxelization representing the inner growing voxelization.
         :rtype: PointBasedVoxelization
         """
-        point_based_voxelizations = []
-        layers_minimal_thickness = layers_minimal_thickness + round_to_digits(0.5 * layers_minimal_thickness, DECIMALS)
+        i = 2
+        inner_growing_voxel_centers = self._get_inner_growing_voxel_centers(layers_minimal_thickness)
 
-        for voxel_size, voxel_centers in self._get_inner_growing_voxel_centers(layers_minimal_thickness).items():
+        while len(inner_growing_voxel_centers.keys()) == i:
+            # Still making the voxelization inner growing
+            max_voxel_size = max(inner_growing_voxel_centers.keys())
+            i += 1
+
+            for voxel_size, voxel_centers in (
+                OctreeBasedVoxelization.from_point_based_voxelization(
+                    PointBasedVoxelization(inner_growing_voxel_centers[max_voxel_size], max_voxel_size)
+                )
+                ._get_inner_growing_voxel_centers(layers_minimal_thickness)
+                .items()
+            ):
+                inner_growing_voxel_centers[voxel_size] = voxel_centers
+
+        point_based_voxelizations = []
+
+        for voxel_size, voxel_centers in inner_growing_voxel_centers.items():
             point_based_voxelizations.append(PointBasedVoxelization(voxel_centers, voxel_size))
 
         return point_based_voxelizations
@@ -2463,6 +2479,7 @@ class OctreeBasedVoxelization(Voxelization):
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
         layer_dict = self.to_point_based_voxelization().voxel_centers_distances_to_faces()
+        layers_minimal_thickness = layers_minimal_thickness + round_to_digits(0.5 * self.voxel_size, DECIMALS)
 
         return self._get_inner_growing_leaf_centers(
             0,
@@ -2529,17 +2546,18 @@ class OctreeBasedVoxelization(Voxelization):
                                 centers_by_voxel_size[size].update(sub_voxel_centers)
 
             if len(centers_by_voxel_size.get(half_size, [])) == 8:
-                if all(
+                if current_depth + 1 == self._octree_depth and all(
                     [
-                        layer_dict[voxel_center] >= (min_layer_thickness * (self._octree_depth - current_depth))
+                        # layer_dict[voxel_center] >= (min_layer_thickness * (self._octree_depth - current_depth))
+                        layer_dict[voxel_center] >= min_layer_thickness
                         for voxel_center in centers_by_voxel_size[half_size]
                     ]
                 ):
                     # Merge voxels
                     centers_by_voxel_size[current_size] = {current_center}
-                    layer_dict[current_center] = min(
-                        [layer_dict[voxel_center] for voxel_center in centers_by_voxel_size[half_size]]
-                    )
+                    # layer_dict[current_center] = min(
+                    #     [layer_dict[voxel_center] for voxel_center in centers_by_voxel_size[half_size]]
+                    # )
                     del centers_by_voxel_size[half_size]
 
         return centers_by_voxel_size
