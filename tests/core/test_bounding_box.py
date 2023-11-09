@@ -132,6 +132,10 @@ class TestBoundingBox(unittest.TestCase):
         self.assertFalse(bbox_almost_equal_1.is_close(bbox_almost_equal_2, tol=1e-10))
         self.assertNotEqual(bbox_almost_equal_1, bbox_almost_equal_2)
 
+    def test_scale(self):
+        scaled_bbox = self.bbox1.scale(2)
+        self.assertEqual(BoundingBox(-1.0, 3.0, -1.0, 3.0, -1.0, 3.0), scaled_bbox)
+
 
 if __name__ == "__main__":
     unittest.main()
