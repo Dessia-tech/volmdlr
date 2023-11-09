@@ -41,7 +41,7 @@ class TestToroidalFace3D(unittest.TestCase):
 
     def test_cylindricalface_intersections(self):
         expected_results = [[2.5461207980560485], [2.454557959936191], [2.767950454333099], [2.8109131068618605],
-                            [1.3806998377604578, 3.0341016797202873], [2.1248777973309823], [1.7368914447612895],
+                            [3.03410167972021, 1.3806998377604578], [2.1248777973309823], [1.7368914447612895],
                             [2.5583377804228014], [1.3899444850660725, 2.812800677753292], [2.4475236530517783]]
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         tf = faces.ToroidalFace3D.from_surface_rectangular_cut(toroidal_surface, 0, 3, 1, 3)
