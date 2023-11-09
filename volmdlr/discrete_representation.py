@@ -1443,10 +1443,10 @@ class MatrixBasedVoxelization(Voxelization):
         if self.voxel_size != other.voxel_size:
             raise ValueError("Voxel sizes must be the same to perform boolean operations.")
 
-        self_min, self_max = np.array(self.min_grid_center), np.array(self.min_grid_center) + 1
+        self_min, self_max = np.array(self.min_grid_center), np.array(self.max_grid_center) + 1
         other_min, other_max = (
             np.array(other.min_grid_center),
-            np.array(other.min_grid_center) + 1,
+            np.array(other.max_grid_center) + 1,
         )
 
         global_min = np.min([self_min, other_min], axis=0)
@@ -1530,30 +1530,18 @@ class MatrixBasedVoxelization(Voxelization):
 
         return layers_dict
 
-    def _count_layer_in_direction(self, x, y, z, dx, dy, dz):
-        count = 0
-        while True:
-            x += dx
-            y += dy
-            z += dz
+    def _count_cubic_layer(self, x: int, y: int, z: int) -> int:
+        max_layers = min(x, y, z, self.matrix.shape[0] - 1 - x, self.matrix.shape[1] - 1 - y, self.matrix.shape[2] - 1 - z)
 
-            # If the position is outside of the matrix boundaries
-            if (
-                x < 0
-                or x >= self.matrix.shape[0]
-                or y < 0
-                or y >= self.matrix.shape[1]
-                or z < 0
-                or z >= self.matrix.shape[2]
-            ):
-                break
+        for layer in range(1, max_layers + 1):
+            # Extract the cube of interest
+            cube = self.matrix[x - layer:x + layer + 1, y - layer:y + layer + 1, z - layer:z + layer + 1]
 
-            # If the current position is False
-            if not self.matrix[x, y, z]:
-                break
+            # If any value in the cube's surface is False, stop
+            if not cube[[0, -1], :, :].all() or not cube[:, [0, -1], :].all() or not cube[:, :, [0, -1]].all():
+                return layer - 1
 
-            count += 1
-        return count
+        return max_layers
 
     def _layers_matrix(self):
         result = np.zeros_like(self.matrix, dtype=int)
@@ -1562,15 +1550,7 @@ class MatrixBasedVoxelization(Voxelization):
             for y in range(self.matrix.shape[1]):
                 for z in range(self.matrix.shape[2]):
                     if self.matrix[x, y, z]:
-                        counts = [
-                            self._count_layer_in_direction(x, y, z, 1, 0, 0),  # positive x
-                            self._count_layer_in_direction(x, y, z, -1, 0, 0),  # negative x
-                            self._count_layer_in_direction(x, y, z, 0, 1, 0),  # positive y
-                            self._count_layer_in_direction(x, y, z, 0, -1, 0),  # negative y
-                            self._count_layer_in_direction(x, y, z, 0, 0, 1),  # positive z
-                            self._count_layer_in_direction(x, y, z, 0, 0, -1),  # negative z
-                        ]
-                        result[x, y, z] = min(counts)
+                        result[x, y, z] = self._count_cubic_layer(x, y, z)
 
         return result
 
@@ -2135,15 +2115,15 @@ class OctreeBasedVoxelization(Voxelization):
         return point_based_voxelizations
 
     def to_inner_growing_point_based_voxelizations(
-        self, layers_minimal_thickness: int
+        self, layers_minimal_thickness: float
     ) -> List["PointBasedVoxelization"]:
         """
         Convert the OctreeBasedVoxelization to multiple PointBasedVoxelization, with different size.
 
         The more the voxelization is inside, the more its voxel size become bigger.
 
-        :param layers_minimal_thickness: The minimal thickness of each layer, in number of voxel of minimal size.
-        :type layers_minimal_thickness: int
+        :param layers_minimal_thickness: The minimal thickness of each layer.
+        :type layers_minimal_thickness: float
 
         :return: A list of PointBasedVoxelization representing the inner growing voxelization.
         :rtype: PointBasedVoxelization
@@ -2468,17 +2448,17 @@ class OctreeBasedVoxelization(Voxelization):
 
         return intersections_locations
 
-    def _get_inner_growing_voxel_centers(self, layers_minimal_thickness: int) -> Dict[float, Set[_Point3D]]:
+    def _get_inner_growing_voxel_centers(self, layers_minimal_thickness: float) -> Dict[float, Set[_Point3D]]:
         """
         Get the center points of inner growing voxels and organize them by voxel size.
 
-        :param layers_minimal_thickness: The minimal thickness of each layer, in number of voxel of minimal size.
+        :param layers_minimal_thickness: The minimal thickness of each layer.
         :type layers_minimal_thickness: int
 
         :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
-        layer_dict = self.to_point_based_voxelization().to_matrix_based_voxelization().layers_to_voxel_centers()
+        layer_dict = self.to_point_based_voxelization().voxel_centers_distances_to_faces()
 
         return self._get_inner_growing_leaf_centers(
             0,
@@ -2496,7 +2476,7 @@ class OctreeBasedVoxelization(Voxelization):
         current_center: _Point3D,
         current_octree,
         layer_dict: Dict[_Point3D, int],
-        min_layer: int,
+        min_layer_thickness: float,
     ) -> Dict[float, Set[_Point3D]]:
         """
         Recursive method to extract all the non-homogeneous voxel centers.
@@ -2535,7 +2515,7 @@ class OctreeBasedVoxelization(Voxelization):
                                 sub_voxel_center,
                                 current_octree[i * 4 + j * 2 + k],
                                 layer_dict,
-                                min_layer,
+                                min_layer_thickness,
                             )
 
                             # Merge sub-centers into the result dictionary, keeping track of voxel sizes
@@ -2547,7 +2527,7 @@ class OctreeBasedVoxelization(Voxelization):
             if len(centers_by_voxel_size.get(half_size, [])) == 8:
                 if all(
                     [
-                        layer_dict[voxel_center] >= (min_layer * (self._octree_depth - current_depth))
+                        layer_dict[voxel_center] >= (min_layer_thickness * (self._octree_depth - current_depth))
                         for voxel_center in centers_by_voxel_size[half_size]
                     ]
                 ):
