@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle3D: point_distance.
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
+#### core.py
+- BoundingBox: triangle_intersects_voxel
 
 ### Fixed
 #### edges.py 
