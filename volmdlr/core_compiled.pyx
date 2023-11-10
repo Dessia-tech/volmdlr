@@ -3128,7 +3128,7 @@ class Frame2D(Basis2D):
         new_origin = self.origin.translation(vector)
         return Frame2D(new_origin, self.u, self.v)
 
-    def rotation(self, center: Point2D, angle: float):
+    def rotation(self, center: Point2D, angle: float, rotate_basis: bool = False):
         """
         Returns a rotated 2-dimensional frame.
 
@@ -3142,8 +3142,10 @@ class Frame2D(Basis2D):
         new_origin = self.origin
         if not center.is_close(new_origin):
             new_origin = self.origin.rotation(center, angle)
-        new_base = Basis2D.rotation(self, angle)
-        return Frame2D(new_origin, new_base.u, new_base.v)
+        new_basis = self.basis()
+        if rotate_basis:
+            new_basis = new_basis.rotation(angle)
+        return Frame2D(new_origin, new_basis.u, new_basis.v)
 
     def Draw(self, ax=None, style="ok"):
         """

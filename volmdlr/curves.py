@@ -1508,6 +1508,8 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param angle: angle rotation.
         :return: a new rotated Circle2D.
         """
+        if center.is_close(self.center):
+            return Circle2D(self.frame.rotation(center, angle, rotate_basis=True), self.radius)
         return Circle2D(self.frame.rotation(center, angle), self.radius)
 
     def translation(self, offset: volmdlr.Vector2D):
