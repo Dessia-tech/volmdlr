@@ -24,7 +24,7 @@ from volmdlr.discrete_representation_compiled import (
     flood_fill_matrix_3d,
     line_segments_to_pixels,
     triangles_to_voxel_matrix,
-    voxel_triangular_faces,
+    voxel_centers_to_triangles,
     triangle_intersects_voxel,
     round_to_digits,
     round_point_3d_to_digits,
@@ -532,16 +532,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :return: The triangles representing the voxelization.
         :rtype: set[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
         """
-        triangles = set()
-
-        for voxel in self.get_voxel_centers():
-            for triangle in voxel_triangular_faces(voxel, self.voxel_size):
-                if triangle not in triangles:
-                    triangles.add(triangle)
-                else:
-                    triangles.remove(triangle)
-
-        return triangles
+        return voxel_centers_to_triangles(self.get_voxel_centers(), self.voxel_size)
 
     def to_closed_triangle_shell(self) -> ClosedTriangleShell3D:
         """

@@ -184,6 +184,33 @@ def voxel_triangular_faces(voxel_center: _Point3D, voxel_size: float) -> List[_T
     """
     return _voxel_triangular_faces(voxel_center[0], voxel_center[1], voxel_center[2], voxel_size)
 
+def voxel_centers_to_triangles(voxel_centers: Set[_Point3D], voxel_size: float) -> Set[_Triangle3D]:
+    """
+    Convert the voxelization to triangles for display purpose.
+
+    Only the relevant faces are returned (i.e. the faces that are not at the interface of two different voxel,
+    i.e. the faces that are only present once in the list of triangles representing the triangulated voxels).
+
+    :param voxel_centers: The voxels center points.
+    :type voxel_centers: set[tuple[float, float, float]]
+    :param voxel_size: The voxel edges size.
+    :type voxel_size: float
+
+
+    :return: The triangles representing the voxelization.
+    :rtype: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+    """
+    triangles = set()
+
+    for voxel in voxel_centers:
+        for triangle in _voxel_triangular_faces(voxel[0], voxel[1], voxel[2], voxel_size):
+            if triangle not in triangles:
+                triangles.add(triangle)
+            else:
+                triangles.remove(triangle)
+
+    return triangles
+
 
 def round_to_digits(num: float, digits: int = 0) -> float:
     """
@@ -1521,76 +1548,3 @@ def _voxel_triangular_faces(
     )
 
     return faces
-
-
-@cython.cfunc
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.exceptval(check=False)
-def _triangle_in_triangles(
-    triangle: Tuple[
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-    ],
-    triangles: vector[
-        Tuple[
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-        ]
-    ],
-) -> cython.int:
-    """Helper method to check if a specific triangle is in a triangle list."""
-
-    for i in range(triangles.size()):
-        if (
-            triangle[0][0] == triangles[i][0][0]
-            and triangle[0][1] == triangles[i][0][1]
-            and triangle[0][2] == triangles[i][0][2]
-            and triangle[1][0] == triangles[i][1][0]
-            and triangle[1][0] == triangles[i][1][1]
-            and triangle[1][0] == triangles[i][1][2]
-            and triangle[2][0] == triangles[i][2][0]
-            and triangle[2][0] == triangles[i][2][1]
-            and triangle[2][0] == triangles[i][2][2]
-        ):
-            return i
-
-    return -1
-
-
-@cython.cfunc
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def _voxel_center_to_triangles(
-    voxel_centers: vector[Tuple[cython.double, cython.double, cython.double]], voxel_size: cython.double
-) -> vector[
-    Tuple[
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-        Tuple[cython.double, cython.double, cython.double],
-    ]
-]:
-    triangles: vector[
-        Tuple[
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-            Tuple[cython.double, cython.double, cython.double],
-        ]
-    ]
-
-    for i in range(voxel_centers.size()):
-        current_triangles = _voxel_triangular_faces(
-            voxel_centers[i][0], voxel_centers[i][1], voxel_centers[i][2], voxel_size
-        )
-
-        for j in range(current_triangles.size()):
-            index: cython.int = _triangle_in_triangles(current_triangles[j], triangles)
-            if index == -1:
-                # Triangle not already in all triangles
-                triangles.push_back(current_triangles[j])
-            else:
-                triangles.erase(triangles.begin() + index)
-
-    return triangles
