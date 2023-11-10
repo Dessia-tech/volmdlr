@@ -1013,6 +1013,58 @@ class PointBasedVoxelization(Voxelization):
 
         return MatrixBasedVoxelization(matrix, min_center, self.voxel_size, self.name)
 
+    def to_octree_based_voxelization(self) -> "OctreeBasedVoxelization":
+        """
+        Convert the point based voxelization to an octree based voxelization.
+
+        :return: The octree based voxelization.
+        :rtype: OctreeBasedVoxelization
+        """
+        return OctreeBasedVoxelization.from_point_based_voxelization(self)
+
+    def to_inner_growing_point_based_voxelizations(
+        self, layers_minimal_thickness: float
+    ) -> List["PointBasedVoxelization"]:
+        """
+        Convert the PointBasedVoxelization to multiple PointBasedVoxelization, with different size.
+
+        The more the voxelization is inside, the more its voxel size become bigger.
+
+        :param layers_minimal_thickness: The minimal thickness of each layer.
+        :type layers_minimal_thickness: float
+
+        :return: A list of PointBasedVoxelization representing the inner growing voxelization.
+        :rtype: List[PointBasedVoxelization]
+        """
+        i = 2
+        inner_growing_voxel_centers = self.to_octree_based_voxelization()._get_inner_growing_voxel_centers(
+            layers_minimal_thickness, self.voxel_centers_distances_to_faces()
+        )
+
+        while len(inner_growing_voxel_centers.keys()) == i:
+            # Still making the voxelization inner growing
+            max_voxel_size = max(inner_growing_voxel_centers.keys())
+            i += 1
+
+            new_point_based_voxelization = PointBasedVoxelization(
+                inner_growing_voxel_centers[max_voxel_size], max_voxel_size
+            )
+            for voxel_size, voxel_centers in (
+                new_point_based_voxelization.to_octree_based_voxelization()
+                ._get_inner_growing_voxel_centers(
+                    layers_minimal_thickness, new_point_based_voxelization.voxel_centers_distances_to_faces()
+                )
+                .items()
+            ):
+                inner_growing_voxel_centers[voxel_size] = voxel_centers
+
+        point_based_voxelizations = []
+
+        for voxel_size, voxel_centers in inner_growing_voxel_centers.items():
+            point_based_voxelizations.append(PointBasedVoxelization(voxel_centers, voxel_size))
+
+        return point_based_voxelizations
+
     def _point_to_local_grid_index(self, point: _Point3D) -> Tuple[int, int, int]:
         """
         Convert a point to the local grid index within the voxelization.
