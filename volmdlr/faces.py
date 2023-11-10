@@ -1650,7 +1650,7 @@ class PlaneFace3D(Face3D):
 
     def check_inner_contours(self, face):
         """
-        checks face inner contours.
+        Checks face inner contours.
 
         """
         c_inners_1 = self.surface2d.inner_contours
