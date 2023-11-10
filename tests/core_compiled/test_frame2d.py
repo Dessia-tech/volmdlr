@@ -25,15 +25,21 @@ class TestFrame2D(unittest.TestCase):
 
     def test_rotation(self):
         center = volmdlr.Point2D(-1, 0)
-        rot1 = volmdlr.OXY.rotation(center, 0.5 * math.pi)
+        rot1 = volmdlr.OXY.rotation(center, 0.5 * math.pi, rotate_basis=True)
         self.assertTrue(rot1.origin.is_close(volmdlr.Point2D(-1, 1)))
         self.assertTrue(rot1.u.is_close(volmdlr.Y2D))
         self.assertTrue(rot1.v.is_close(-volmdlr.X2D))
 
         center = volmdlr.Point2D(-1, 0)
-        rot2 = volmdlr.OXY.rotation(center, 0.25 * math.pi)
+        rot2 = volmdlr.OXY.rotation(center, 0.25 * math.pi, rotate_basis=True)
         self.assertTrue(rot2.origin.is_close(volmdlr.Point2D(1/math.sqrt(2) - 1, 1/math.sqrt(2))))
         self.assertTrue(rot2.u.is_close(volmdlr.Vector2D(1/math.sqrt(2), 1/math.sqrt(2))))
+
+        center = volmdlr.Point2D(-1, 0)
+        rot2 = volmdlr.OXY.rotation(center, 0.25 * math.pi, rotate_basis=False)
+        self.assertTrue(rot2.origin.is_close(volmdlr.Point2D(1/math.sqrt(2) - 1, 1/math.sqrt(2))))
+        self.assertEqual(rot2.u, rot2.u)
+        self.assertEqual(rot2.v, rot2.v)
 
 
 if __name__ == "__main__":

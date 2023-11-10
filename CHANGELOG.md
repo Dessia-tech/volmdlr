@@ -63,13 +63,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 
 #### core_compiled
-- Frame2D: fix rotation.
+- Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
 
 #### primitives3d
 - Block: get_bounding_box
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
+
+#### primitives3d.py
+- Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
 
 ### Changed
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
