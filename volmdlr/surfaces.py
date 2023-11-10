@@ -2632,6 +2632,16 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         self._bbox = None
 
+    @cached_property
+    def outer_radius(self):
+        """Get torus outer radius."""
+        return self.major_radius + self.minor_radius
+
+    @cached_property
+    def inner_radius(self):
+        """Get torus inner radius."""
+        return self.major_radius - self.minor_radius
+
     def _torus_arcs(self, number_arcs: int = 50):
         arcs = []
         center = self.frame.origin + self.frame.u * self.major_radius
@@ -2644,15 +2654,23 @@ class ToroidalSurface3D(PeriodicalSurface):
             arcs.append(circle)
         return arcs
 
-    @cached_property
-    def outer_radius(self):
-        """Get torus outer radius."""
-        return self.major_radius + self.minor_radius
-
-    @cached_property
-    def inner_radius(self):
-        """Get torus inner radius."""
-        return self.major_radius - self.minor_radius
+    def _torus_circle_generatrices_xy(self, number_arcs: int = 50):
+        center = self.frame.origin + self.frame.u * self.major_radius
+        u_vector = (center - self.frame.origin).unit_vector()
+        i_frame = volmdlr.Frame3D(center, u_vector, self.frame.w, u_vector.cross(self.frame.w))
+        circle = curves.Circle3D(i_frame, self.minor_radius)
+        initial_point = self.frame.origin.translation(-self.frame.w * self.minor_radius)
+        circles = []
+        for i in npy.linspace(0, 2 * self.minor_radius, number_arcs):
+            i_center = initial_point.translation(self.frame.w * i)
+            line = curves.Line3D.from_point_and_vector(i_center, u_vector)
+            line_circle_intersections = circle.line_intersections(line)
+            for intersection in line_circle_intersections:
+                radius = intersection.point_distance(i_center)
+                frame = volmdlr.Frame3D(i_center, self.frame.u, self.frame.v, self.frame.w)
+                i_circle = curves.Circle3D(frame, radius)
+                circles.append(i_circle)
+        return circles
 
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
@@ -3081,14 +3099,16 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param line: other line.
         :return: intersections.
         """
-        if line.point_distance(self.frame.origin) > self.outer_radius:
-            # torus_origin_plane = Plane3D(self.frame)
-            # projected_point_plane3d, _ = line.point_projection(self.frame.origin)
-            # torus_plane_projection = torus_origin_plane.point_projection(projected_point_plane3d)
-            # point = self.frame.origin + (torus_plane_projection - self.frame.origin).unit_vector() * self.major_radius
-            # if line.point_distance(point) > self.minor_radius:
-            #     return []
-            return []
+        if line.point_distance(self.frame.origin) > self.inner_radius:
+            torus_origin_plane = Plane3D(self.frame)
+            projected_point_plane3d, _ = line.point_projection(self.frame.origin)
+            torus_plane_projection = torus_origin_plane.point_projection(projected_point_plane3d)
+            point = self.frame.origin + (torus_plane_projection - self.frame.origin).unit_vector() * self.major_radius
+            if math.sqrt(torus_plane_projection.point_distance(self.frame.origin)**2 +
+                         projected_point_plane3d.point_distance(torus_plane_projection)**2) >\
+                math.sqrt(self.major_radius**2 + self.minor_radius**2) and\
+                    line.point_distance(point) > self.minor_radius:
+                return []
         if not self.frame.origin.is_close(volmdlr.O3D) or not self.frame.w.is_close(volmdlr.Z3D):
             frame_mapped_surface = self.frame_mapping(self.frame, 'new')
             frame_mapped_line = line.frame_mapping(self.frame, 'new')
@@ -3265,17 +3285,16 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param cylindrical_surface: other Cylindrical 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(150)
+        arcs = self._torus_arcs(100) + self._torus_circle_generatrices_xy(100)
         points_intersections = []
         for arc in arcs:
             intersections = cylindrical_surface.circle_intersections(arc)
-            points_intersections.extend(intersections)
-        for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 200):
-            intersections = self.edge_intersections(edge)
-            for point in intersections:
-                if not volmdlr.core.point_in_list(point, points_intersections):
-                    points_intersections.append(point)
-        for edge in cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
+            for intersection in intersections:
+                if not volmdlr.core.point_in_list(intersection, points_intersections):
+                    points_intersections.append(intersection)
+        for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 300):
+            # \
+            #     cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not volmdlr.core.point_in_list(point, points_intersections):
@@ -3302,7 +3321,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
         curves_ = []
         for list_points in inters_points:
-            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 7, centripetal=False)
             if isinstance(bspline.simplify, edges.FullArc3D):
                 curves_.append(bspline.simplify)
                 continue

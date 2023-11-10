@@ -5,7 +5,8 @@ volmdlr utils for calculating curves intersections.
 import math
 
 import volmdlr
-from volmdlr.utils.common_operations import get_abscissa_discretization, get_plane_equation_coefficients
+from volmdlr.utils.common_operations import get_abscissa_discretization, get_plane_equation_coefficients,\
+    get_point_distance_to_edge
 
 
 def circle_3d_line_intersections(circle_3d, line, abs_tol: float = 1e-6):
@@ -233,7 +234,7 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
     :return: A list with all intersections between the edge and BSpline Curve.
     :rtype: [volmdlr.Point3D].
     """
-    param_intersections = bspline_intersections_initial_conditions(primitive, bsplinecurve)
+    param_intersections = bspline_intersections_initial_conditions(primitive, bsplinecurve, 100)
     line_seg_class_ = getattr(volmdlr.edges, 'LineSegment' + bsplinecurve.__class__.__name__[-2:])
     intersections = []
     if not param_intersections:
@@ -251,7 +252,9 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
             intersection = primitive.linesegment_intersections(line_seg, abs_tol)
             if not intersection:
                 continue
-            if bsplinecurve.point_distance(intersection[0]) > abs_tol:
+            if get_point_distance_to_edge(bsplinecurve, intersection[0], point1, point2) > 1e-7 and not\
+                    (abscissa_point1 == abscissa1 and abscissa_point2 == abscissa2):
+            # if bsplinecurve.point_distance(intersection[0]) > 1e-6:
                 param_intersections.insert(0, (abscissa_point1, abscissa_point2))
             elif not volmdlr.core.point_in_list(intersection[0], intersections):
                 intersections.append(intersection[0])

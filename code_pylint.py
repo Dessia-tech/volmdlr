@@ -31,7 +31,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-statements': 14,
                      'super-init-not-called': 5,
                      'no-name-in-module': 14,
-                     'abstract-method': 45,
+                     'abstract-method': 47,
                      'duplicate-code': 10,
                      'arguments-renamed': 56,
                      'too-many-ancestors': 25,

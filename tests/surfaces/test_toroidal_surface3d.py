@@ -178,8 +178,8 @@ class TestToroidalSurface3D(unittest.TestCase):
         plane2 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), volmdlr.X3D,
                                                   volmdlr.Y3D, volmdlr.Z3D))
         plane_intersections = toroidal_surface.plane_intersections(plane2)
-        self.assertAlmostEqual(plane_intersections[0].length(), expected_results2[0])
-        self.assertAlmostEqual(plane_intersections[1].length(), expected_results2[1])
+        self.assertAlmostEqual(plane_intersections[0].length(), expected_results2[0], 6)
+        self.assertAlmostEqual(plane_intersections[1].length(), expected_results2[1], 6)
 
         # Test 3
         plane3 = surfaces.Plane3D(volmdlr.OYZX)
@@ -187,13 +187,13 @@ class TestToroidalSurface3D(unittest.TestCase):
             plane = plane3.translation(n * volmdlr.X3D)
             plane_intersections = toroidal_surface.plane_intersections(plane)
             for intersection, expected_result in zip(plane_intersections, expected_results3[i]):
-                self.assertAlmostEqual(intersection.length(), expected_result, 5)
+                self.assertAlmostEqual(intersection.length(), expected_result, 6)
         # Test 4
         plane4 = surfaces.Plane3D(volmdlr.OYZX)
         plane4 = plane4.translation(volmdlr.X3D)
         plane_intersections = toroidal_surface.plane_intersections(plane4)
         for intersection, expected_result in zip(plane_intersections, [7.41522411794327, 7.415221958099495]):
-            self.assertAlmostEqual(intersection.length(), expected_result, 5)
+            self.assertAlmostEqual(intersection.length(), expected_result, 6)
 
         # Test 5
         plane5 = plane4.translation(volmdlr.X3D*3.1)
@@ -218,7 +218,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
         inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(), 14.655782729046713)
+        self.assertAlmostEqual(inters[0].length(),  14.655770008132851)
         # Test2
         expected_results = [[9.424777944721708, 9.424777944721708], [6.283185307179586], []]
         frame = volmdlr.OXYZ
@@ -231,11 +231,11 @@ class TestToroidalSurface3D(unittest.TestCase):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
         #Test3
-        expected_results = [[17.15506758286444], [17.448540558220706], [8.189484417240463, 11.901169177182348],
-                            [9.342190109936682, 6.783364128923859, 6.626602826338277],
-                            [8.452553763402701, 11.78286992164854], [18.761707374808136],
-                            [6.937784444208925, 15.192487360871866], [19.041784163073043], [19.71219867853983],
-                            [9.106328823638846, 6.606873888481998, 6.606873993867185]]
+        expected_results = [[17.155074987011552], [17.44853787952674], [8.189772236153868, 11.901224672056669],
+                            [9.342187578574018, 6.783271713898256, 6.626623383909723],
+                            [8.456050528910787, 11.779922655342526], [18.761709126656164],
+                            [6.937785638349316, 15.19780774312511], [19.041791161138732], [19.71218041317398],
+                            [9.106324562479454, 6.606638965616053, 6.606876915155911]]
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
