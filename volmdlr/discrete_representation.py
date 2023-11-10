@@ -1111,7 +1111,8 @@ class PointBasedVoxelization(Voxelization):
 
         from igl import signed_distance
 
-        vertices, faces = self.to_closed_triangle_shell().to_mesh_data(round_vertices=True)
+        display_triangle_shell = self.to_display_triangle_shell()
+        vertices, faces = display_triangle_shell.positions, display_triangle_shell.indices
         distances_array = signed_distance(points_coords, vertices, faces.astype(int), sign_type=3)[0]
 
         # Creating a dictionary to map each point to its distance
