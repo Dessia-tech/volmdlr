@@ -145,10 +145,12 @@ class TestPlaneFace3D(unittest.TestCase):
         """ ========== TWO PARALLEL LINES ========="""
         plane_face_3 = self.plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi)
         face_intersections = plane_face_3.face_intersections(face)
-        self.assertEqual(face_intersections[0].primitives[0], edges.LineSegment3D(volmdlr.Point3D(0.15, 0.0, -0.25),
-                                                                                  volmdlr.Point3D(0.15, 0.0, 0.25)))
-        self.assertEqual(face_intersections[1].primitives[0], edges.LineSegment3D(volmdlr.Point3D(-0.15, 0.0, -0.25),
-                                                                                  volmdlr.Point3D(-0.15, 0.0, 0.25)))
+        self.assertTrue(face_intersections[0].primitives[0].is_close(
+            edges.LineSegment3D(volmdlr.Point3D(0.15, 0.0, -0.25),
+                                volmdlr.Point3D(0.15, 0.0, 0.25))))
+        self.assertTrue(face_intersections[1].primitives[0].is_close(
+            edges.LineSegment3D(volmdlr.Point3D(-0.15, 0.0, -0.25),
+                                volmdlr.Point3D(-0.15, 0.0, 0.25))))
         """ ========== ONE LINE ========="""
         plane_face_3 = self.plane_face_cylindricalface_intersec.translation(R * volmdlr.Y3D)
         face_intersections = plane_face_3.face_intersections(face)
