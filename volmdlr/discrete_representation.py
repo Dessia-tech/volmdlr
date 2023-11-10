@@ -2532,7 +2532,9 @@ class OctreeBasedVoxelization(Voxelization):
 
         return intersections_locations
 
-    def _get_inner_growing_voxel_centers(self, layers_minimal_thickness: float) -> Dict[float, Set[_Point3D]]:
+    def _get_inner_growing_voxel_centers(
+        self, layers_minimal_thickness: float, layer_dict: Dict[_Point3D, float] = None
+    ) -> Dict[float, Set[_Point3D]]:
         """
         Get the center points of inner growing voxels and organize them by voxel size.
 
@@ -2542,7 +2544,8 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
-        layer_dict = self.to_point_based_voxelization().voxel_centers_distances_to_faces()
+        if not layer_dict:
+            layer_dict = self.to_point_based_voxelization().voxel_centers_distances_to_faces()
         layers_minimal_thickness = layers_minimal_thickness + round_to_digits(0.5 * self.voxel_size, DECIMALS)
 
         return self._get_inner_growing_leaf_centers(
