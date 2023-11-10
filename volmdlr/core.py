@@ -25,6 +25,7 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
+from volmdlr.discrete_representation_compiled import triangle_intersects_voxel
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
 
@@ -796,24 +797,21 @@ class BoundingBox(dc.DessiaObject):
 
         return lx * ly * lz
 
-    def triangle_intersection(self, triangle: 'Triangle3D'):
-        # Check if any vertex of the triangle is inside the BoundingBox
-        for point in triangle.points:
-            if self.point_belongs(point):
-                return True
+    def is_intersecting_triangle(self, triangle: "Triangle3D") -> bool:
+        """
+        Check if the bounding box and a triangle are intersecting or touching.
 
-        # Check if the triangle is completely outside any of the six planes of the box
-        # This can be done by comparing the triangle's coordinates with the box's boundaries
-        if (
-                triangle.points[0][0] < self.xmin and triangle.points[1][0] < self.xmin and triangle.points[2][0] < self.xmin or
-                triangle.points[0][0] > self.xmax and triangle.points[1][0] > self.xmax and triangle.points[2][0] > self.xmax or
-                triangle.points[0][1] < self.ymin and triangle.points[1][1] < self.ymin and triangle.points[2][1] < self.ymin or
-                triangle.points[0][1] > self.ymax and triangle.points[1][1] > self.ymax and triangle.points[2][1] > self.ymax or
-                triangle.points[0][2] < self.zmin and triangle.points[1][2] < self.zmin and triangle.points[2][2] < self.zmin or
-                triangle.points[0][2] > self.zmax and triangle.points[1][2] > self.zmax and triangle.points[2][2] > self.zmax
-        ):
-            return False
-        return True
+        :param triangle: the triangle to check if there is an intersection with.
+        :type triangle: Triangle3D
+
+        :return: True if the bounding box and the triangle are intersecting or touching, False otherwise.
+        :rtype: bool
+        """
+        _triangle = tuple((point.x, point.y, point.z) for point in triangle.points)
+        _center = (self.center[0], self.center[1], self.center[2])
+        _extents = tuple(size / 2 for size in self.size)
+
+        return triangle_intersects_voxel(_triangle, _center, _extents)
 
     def distance_to_bbox(self, bbox2: "BoundingBox") -> float:
         """

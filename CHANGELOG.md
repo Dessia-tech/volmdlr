@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
-- ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object,
+- ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object
+- ToroidalSurface3D: Handles degenerated surfaces (major_radius < minor_radius).
 - CylindricalSurface3D: circle_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
 - SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections
@@ -23,14 +24,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
 #### core.py
-- BoundingBox: is_close
+- BoundingBox: triangle_intersects_voxel
 
 ### Fixed
+#### edges.py 
+- Arc2D: direction conservation in rotation / translation / frame_mapping.
+
+#### surfaces.py
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
 
 #### faces.py
+- ToroidalFace3D: PlaneFace3D intersections.
 - PlaneFace3D: circle_intersections. planeface_intersections
 #### wires.py
 - delete remaining inplace methods in wires.py
+
 #### shells.py
 - Fixes to boolean operations.
 
@@ -39,8 +47,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
+
 #### curves.py
 - Circle3D: circle_intersectios when the circle are coplanar.
+
 #### surfaces.py
 - ExtrusionSurface3D: enhance parametric operations.
 
