@@ -28,6 +28,7 @@ import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
 from volmdlr import curves as volmdlr_curves
+from volmdlr import get_minimum_distance_points_lines
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
@@ -1640,26 +1641,29 @@ class BSplineCurve(Edge):
         best_distance = math.inf
         distance_points = None
 
-        point1_edge1_ = point1
-        point2_edge1_ = point2
+        abscissa1 = self.abscissa(point1)
+        abscissa2 = self.abscissa(point2)
 
         intersections = []
         linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
+        number_points = 5
         while True:
-            edge1_discretized_points_between_1_2 = self.local_discretization(point1_edge1_, point2_edge1_,
-                                                                             number_points=10)
+            edge1_discretized_points_between_1_2, abscissas_between_1_2 = self.get_abscissa_discretization(
+                abscissa1, abscissa2, number_points=number_points, return_abscissas=True)
             if not edge1_discretized_points_between_1_2:
                 break
             distance = line.point_distance(edge1_discretized_points_between_1_2[0])
             if distance == 0.0:
                 intersections.append(edge1_discretized_points_between_1_2[0])
                 break
-            for point1_edge1, point2_edge1 in zip(edge1_discretized_points_between_1_2[:-1],
-                                                  edge1_discretized_points_between_1_2[1:]):
+            for point1_edge1, point2_edge1, abscissa1_, abscissa2_ in zip(edge1_discretized_points_between_1_2[:-1],
+                                                                          edge1_discretized_points_between_1_2[1:],
+                                                                          abscissas_between_1_2[:-1],
+                                                                          abscissas_between_1_2[1:]):
                 lineseg1 = linesegment_class_(point1_edge1, point2_edge1)
                 dist, min_dist_point1_, min_dist_point2_ = lineseg1.line_distance(line, True)
                 if dist < distance or math.isclose(dist, distance, abs_tol=abs_tol):
-                    point1_edge1_, point2_edge1_ = point1_edge1, point2_edge1
+                    abscissa1, abscissa2 = abscissa1_, abscissa2_
                     distance = dist
                     distance_points = [min_dist_point1_, min_dist_point2_]
             if math.isclose(distance, best_distance, abs_tol=1e-6):
@@ -1667,6 +1671,7 @@ class BSplineCurve(Edge):
                     intersections.append(distance_points[0])
                 break
             best_distance = distance
+            number_points += 5
         return intersections
 
     def line_intersections(self, line, tol: float = 1e-6):
@@ -4518,21 +4523,8 @@ class LineSegment3D(LineSegment):
         """
         Returns the points on this line and on the other line that are the closest of lines.
         """
-        u = self.end - self.start
-        v = other_line.end - other_line.start
-        w = self.start - other_line.start
-        u_dot_u = u.dot(u)
-        u_dot_v = u.dot(v)
-        v_dot_v = v.dot(v)
-        u_dot_w = u.dot(w)
-        v_dot_w = v.dot(w)
-        if (u_dot_u * v_dot_v - u_dot_v ** 2) != 0:
-            s_param = (u_dot_v * v_dot_w - v_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
-            t_param = (u_dot_u * v_dot_w - u_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
-            point1 = self.start + s_param * u
-            point2 = other_line.start + t_param * v
-            return point1, point2
-        return self.start, other_line.start
+        return volmdlr.core_compiled.get_minimum_distance_points_lines(self.start, self.end,
+                                                                       other_line.start, other_line.end)
 
     def matrix_distance(self, other_line):
         """
