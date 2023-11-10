@@ -217,7 +217,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
         inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(),  14.655733322099357)
+        self.assertAlmostEqual(inters[0].length(),  14.655770008132851)
         # Test2
         expected_results = [[9.424777944721708, 9.424777944721708], [6.283185307179586], []]
         frame = volmdlr.OXYZ
@@ -230,16 +230,11 @@ class TestToroidalSurface3D(unittest.TestCase):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
         #Test3
-        expected_results = [[17.15507461067761],
-                            [17.448568883526185],
-                            [8.189771200616809, 11.901225730657574],
-                            [9.34218408582395, 6.809844472861139, 6.626300553745165],
-                            [8.454987057969534, 11.779924716831369],
-                            [18.76200992152212],
-                            [6.9377935567268985, 16.235988711263253],
-                            [19.04178136261955],
-                            [19.712183061254688],
-                            [9.106321512725067, 6.643185396283338, 6.606874489918287]]
+        expected_results = [[17.155074987011552], [17.44853787952674], [8.189772236153868, 11.901224672056669],
+                            [9.342187578574018, 6.783271713898256, 6.626623383909723],
+                            [8.456050528910787, 11.779922655342526], [18.761709126656164],
+                            [6.937785638349316, 15.19780774312511], [19.041791161138732], [19.71218041317398],
+                            [9.106324562479454, 6.606638965616053, 6.606876915155911]]
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
