@@ -3,6 +3,7 @@
 """
 A sweep using a bspline.
 """
+import math
 
 import matplotlib.pyplot as plt
 
