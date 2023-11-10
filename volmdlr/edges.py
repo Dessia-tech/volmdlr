@@ -861,6 +861,7 @@ class BSplineCurve(Edge):
         self._delta = 0.01
         self._length = None
         self._eval_points = None
+        self._knotvector = None
         self.ctrlptsw = None
         self.rational = False
         if self.weights:
@@ -906,10 +907,12 @@ class BSplineCurve(Edge):
     @property
     def knotvector(self):
         """Return the knot vector."""
-        knot_vector = []
-        for knot, knot_mut in zip(self.knots, self.knot_multiplicities):
-            knot_vector.extend([knot] * knot_mut)
-        return knot_vector
+        if self._knotvector is None:
+            knot_vector = []
+            for knot, knot_mut in zip(self.knots, self.knot_multiplicities):
+                knot_vector.extend([knot] * knot_mut)
+            self._knotvector = knot_vector
+        return self._knotvector
 
     @property
     def periodic(self):
@@ -1825,25 +1828,58 @@ class BSplineCurve(Edge):
         """
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
-        # special case periodical bsplinecurve
-        add_point_at_end = False
-        if self.periodic:
-            if math.isclose(abscissa2, 0.0, abs_tol=tol) or abscissa1 >= abscissa2:
-                abscissa2 += self.length()
-            if point1.is_close(point2):
-                add_point_at_end = True
 
-        discretized_points_between_1_2 = []
-        length = self.length()
-        for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
-            if self.periodic and abscissa > length:
-                abscissa -= length
-            abscissa_point = self.point_at_abscissa(abscissa)
-            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2, tol=tol):
-                discretized_points_between_1_2.append(abscissa_point)
-        if add_point_at_end:
-            discretized_points_between_1_2 += [discretized_points_between_1_2[0]]
-        return discretized_points_between_1_2
+        return self.get_abscissa_discretization(abscissa1, abscissa2, number_points)
+
+    def get_abscissa_discretization(self, abscissa1, abscissa2, number_points: int = 10,
+                                    return_abscissas: bool = False):
+        """
+        Gets n discretization points between two given points of the edge.
+
+        :param abscissa1: Starting abscissa.
+        :param abscissa2: Ending abscissa edge.
+        :param number_points: number of points to discretize locally.
+        :param return_abscissas: If True, returns the list of abscissas of the discretization points.
+        :return: list of locally discretized points.
+        """
+        data = self.data
+        point_name = 'Point' + self.__class__.__name__[-2:]
+        # special case periodical bsplinecurve
+        if self.periodic and abscissa1 == abscissa2 and (not math.isclose(abscissa1, 0.0, abs_tol=1e-6) or
+                        not math.isclose(abscissa1, self.length(), abs_tol=1e-6)):
+            umin, umax = self.domain
+            number_points1 = int((abscissa1 / self.length()) * number_points)
+            max_number_points = math.ceil((self.length() - abscissa1) / 5e-6)
+            if number_points1 > max_number_points:
+                number_points1 = max(max_number_points, 2)
+            number_points2 = number_points - number_points1
+            max_number_points = math.ceil(abscissa1 / 5e-6)
+            if number_points2 > max_number_points:
+                number_points2 = max(max_number_points, 2)
+            u_start_end = self.abscissa_to_parameter(abscissa1)
+            data["sample_size"] = number_points1
+            points1 = evaluate_curve(data, start=u_start_end, stop=umax)
+            data["sample_size"] = number_points2
+            points2 = evaluate_curve(data, start=umin, stop=u_start_end)
+            points = points1 + points2[1:]
+        else:
+            if math.isclose(abscissa2, 0.0, abs_tol=1e-6):
+                abscissa2 += self.length()
+            if abscissa1 >= abscissa2:
+                abscissa2, abscissa1 = abscissa1, abscissa2
+            u1 = self.abscissa_to_parameter(abscissa1)
+            u2 = self.abscissa_to_parameter(abscissa2)
+            # todo: improve intersections so we don't need to worry about limiting the precision?
+            max_number_points = math.ceil(abs(abscissa1 - abscissa2) / 5e-6)
+            if number_points > max_number_points:
+                number_points = max(max_number_points, 2)
+            data["sample_size"] = number_points
+            points = evaluate_curve(data, start=u1, stop=u2)
+
+        if return_abscissas:
+            return ([getattr(volmdlr, point_name)(*point) for point in points],
+                    npy.linspace(abscissa1, abscissa2, number_points, dtype=npy.float64).tolist())
+        return [getattr(volmdlr, point_name)(*point) for point in points]
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
@@ -4239,7 +4275,7 @@ class LineSegment3D(LineSegment):
 
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D, line: volmdlr_curves.Line3D = None,
                  name: str = ''):
-        if start.is_close(end):
+        if start == end:
             raise NotImplementedError('Start and end of Linesegment3D are equal')
         self.line = line
         if not line:
