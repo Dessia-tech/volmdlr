@@ -625,32 +625,29 @@ class BoundingBox(dc.DessiaObject):
         return ax
 
     @classmethod
-    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"], name: str = '') -> "BoundingBox":
+    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"], name: str = "") -> "BoundingBox":
         """
-        Creates a bounding box that contains multiple bounding boxes.
+        Create a bounding box that contains multiple bounding boxes.
 
         :param bounding_boxes: A list of bounding boxes that need to be contained.
-        :type bounding_boxes: list of BoundingBox
+        :type bounding_boxes: List[BoundingBox]
+        :param name: A name for the bounding box, optional.
+        :type name: str
+
         :return: A new bounding box that contains all the input bounding boxes.
         :rtype: BoundingBox
         """
-        xmin = min(bb.xmin for bb in bounding_boxes)
-        xmax = max(bb.xmax for bb in bounding_boxes)
-        x_length = xmax - xmin
-        xmin -= x_length * 0.001
-        xmax += x_length * 0.001
+        # Create a 2D NumPy array where each row corresponds to the coordinates of a bounding box
+        # [xmin, xmax, ymin, ymax, zmin, zmax]
+        coords = npy.array([[bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax] for bb in bounding_boxes])
 
-        ymin = min(bb.ymin for bb in bounding_boxes)
-        ymax = max(bb.ymax for bb in bounding_boxes)
-        y_length = ymax - ymin
-        ymin -= y_length * 0.001
-        ymax += y_length * 0.001
+        # Find the global minimum and maximum for each axis
+        mins = npy.amin(coords, axis=0)
+        maxs = npy.amax(coords, axis=0)
 
-        zmin = min(bb.zmin for bb in bounding_boxes)
-        zmax = max(bb.zmax for bb in bounding_boxes)
-        z_length = zmax - zmin
-        zmin -= z_length * 0.001
-        zmax += z_length * 0.001
+        # Assign min and max for each axis
+        xmin, xmax, ymin, ymax, zmin, zmax = mins[0], maxs[1], mins[2], maxs[3], mins[4], maxs[5]
+
         return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     @classmethod
@@ -727,8 +724,37 @@ class BoundingBox(dc.DessiaObject):
         :return: The volume of the bounding box.
         :rtype: float
         """
-        return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
-                self.zmax - self.zmin)
+        return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (self.zmax - self.zmin)
+
+    def scale(self, factor: float) -> "BoundingBox":
+        """
+        Scales the bounding box by a given factor and returns a new BoundingBox.
+
+        :param factor: The scaling factor.
+        :type factor: float
+
+        :return: A new scaled BoundingBox.
+        :rtype: BoundingBox
+        """
+        x_center = (self.xmin + self.xmax) / 2
+        y_center = (self.ymin + self.ymax) / 2
+        z_center = (self.zmin + self.zmax) / 2
+        x_size, y_size, z_size = self.size
+
+        scaled_half_x_size = (x_size * factor) / 2
+        scaled_half_y_size = (y_size * factor) / 2
+        scaled_half_z_size = (z_size * factor) / 2
+
+        # Calculate new min and max values
+        new_xmin = x_center - scaled_half_x_size
+        new_xmax = x_center + scaled_half_x_size
+        new_ymin = y_center - scaled_half_y_size
+        new_ymax = y_center + scaled_half_y_size
+        new_zmin = z_center - scaled_half_z_size
+        new_zmax = z_center + scaled_half_z_size
+
+        # Return a new BoundingBox object
+        return BoundingBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax, self.name)
 
     def bbox_intersection(self, bbox2: "BoundingBox", tol: float = 1e-6) -> bool:
         """

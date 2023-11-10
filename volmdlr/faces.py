@@ -3052,18 +3052,21 @@ class BSplineFace3D(Face3D):
             else:
                 number_points_x, number_points_y = 3, 5
             outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
-            points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x,
-                                                                                          number_points_y,
-                                                                                          include_edge_points=False)
+            points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(
+                number_points_x, number_points_y, include_edge_points=False
+            )
             if self.surface2d.inner_contours:
                 points_grid = self._get_bbox_inner_contours_points(points_grid, x, y, grid_point_index)
             points3d = [self.surface3d.point2d_to_3d(point) for point in points_grid]
         except ZeroDivisionError:
             points3d = []
+
         if not points3d:
             return self.outer_contour3d.bounding_box
-        return volmdlr.core.BoundingBox.from_bounding_boxes([volmdlr.core.BoundingBox.from_points(points3d),
-                                                            self.outer_contour3d.bounding_box])
+
+        return volmdlr.core.BoundingBox.from_bounding_boxes(
+            [volmdlr.core.BoundingBox.from_points(points3d), self.outer_contour3d.bounding_box]
+        ).scale(1.001)
 
     def _get_bbox_inner_contours_points(self, points_grid, x, y, grid_point_index):
         """Helper function to get_bounding_box."""

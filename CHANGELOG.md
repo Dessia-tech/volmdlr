@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
 #### core.py
+- BoundingBox: is_close, scale
 - BoundingBox: triangle_intersects_voxel
 
 ### Fixed
@@ -77,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
 - ToroidalSurface3D: plots now use Circles 3D instead of ClosedPolygon3D. Performance improved.
 - CylindricalSurface3D: More comprehesive plot
+- BoundingBox: from_bounding_boxes
 
 ### Unittests
 #### curves 
@@ -87,8 +89,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces
 - ToroidalFace3D: PlaneFace3D intersectios.
 - SphericalSurface3D: circle_intersections, arc_intersections, arcellipse_intersections
+- PlaneFace3D: point_belongs
 #### core
-- BoundingBox: is_close
+- BoundingBox: is_close, scale
 #### primitives3d
 - Block: from_bounding_box, get_bounding_box
 
