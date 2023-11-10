@@ -2546,7 +2546,7 @@ class OctreeBasedVoxelization(Voxelization):
         """
         if not layer_dict:
             layer_dict = self.to_point_based_voxelization().voxel_centers_distances_to_faces()
-        layers_minimal_thickness = layers_minimal_thickness + round_to_digits(0.5 * self.voxel_size, DECIMALS)
+        layers_minimal_thickness = round_to_digits(layers_minimal_thickness + 0.49 * self.voxel_size, DECIMALS)
 
         return self._get_inner_growing_leaf_centers(
             0,
