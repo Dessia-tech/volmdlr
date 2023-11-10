@@ -1646,7 +1646,7 @@ class BSplineCurve(Edge):
 
         intersections = []
         linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
-        number_points = 5
+        number_points = 10
         while True:
             edge1_discretized_points_between_1_2, abscissas_between_1_2 = self.get_abscissa_discretization(
                 abscissa1, abscissa2, number_points=number_points, return_abscissas=True)
