@@ -2193,7 +2193,7 @@ class OctreeBasedVoxelization(Voxelization):
         :type layers_minimal_thickness: float
 
         :return: A list of PointBasedVoxelization representing the inner growing voxelization.
-        :rtype: PointBasedVoxelization
+        :rtype: List[PointBasedVoxelization]
         """
         i = 2
         inner_growing_voxel_centers = self._get_inner_growing_voxel_centers(layers_minimal_thickness)
