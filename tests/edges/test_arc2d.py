@@ -177,6 +177,14 @@ class TestArc2D(unittest.TestCase):
         rotated_arc2d = rotated_arc2d.rotation(volmdlr.O2D, -math.pi / 2)
         self.assertTrue(rotated_arc2d.is_close(self.arc2))
 
+        arc2d = Arc2D.load_from_file(os.path.join(folder, "arc2d_rotation_test.json"))
+        rotated_arc2d = arc2d.rotation(volmdlr.Point2D(0.5, 0.5), math.pi / 1.5)
+        self.assertEqual(arc2d.frame.u, rotated_arc2d.frame.u)
+        self.assertEqual(arc2d.frame.v, rotated_arc2d.frame.v)
+        self.assertTrue(rotated_arc2d.center.is_close(volmdlr.Point2D(-0.17631397208144173, 0.5714101615137755)))
+        self.assertTrue(rotated_arc2d.start.is_close(volmdlr.Point2D(-0.4330127018922192, 1.1160254037844388)))
+        self.assertTrue(rotated_arc2d.end.is_close(volmdlr.Point2D(-0.3660254037844387, 2.220446049250313e-16)))
+
     def test_translation(self):
         translated_arc2d = self.arc4.translation(volmdlr.Vector2D(1, 1))
         self.assertTrue(translated_arc2d.start.is_close(volmdlr.Point2D(1.7071067811865475, 0.29289321881345254)))
