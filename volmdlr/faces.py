@@ -1649,6 +1649,10 @@ class PlaneFace3D(Face3D):
         return [self.__class__(self.surface3d, surface2d) for surface2d in list_surfaces]
 
     def check_inner_contours(self, face):
+        """
+        checks face inner contours.
+
+        """
         c_inners_1 = self.surface2d.inner_contours
         c_inners_2 = [self.surface3d.contour3d_to_2d(inner) for inner in face.inner_contours3d]
         inside = set()
