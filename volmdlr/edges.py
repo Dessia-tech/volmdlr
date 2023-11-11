@@ -4523,7 +4523,7 @@ class LineSegment3D(LineSegment):
         """
         Returns the points on this line and on the other line that are the closest of lines.
         """
-        return volmdlr.core_compiled.get_minimum_distance_points_lines(self.start, self.end,
+        return get_minimum_distance_points_lines(self.start, self.end,
                                                                        other_line.start, other_line.end)
 
     def matrix_distance(self, other_line):
