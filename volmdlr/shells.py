@@ -2005,8 +2005,12 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
         ClosedShell3D.__init__(self, faces, color, alpha, name)
 
     def are_normals_pointing_outwards(self):
-        """Verifies if all face's normal are poiting outwards the closed shell."""
+        """Verifies if all face's normal are pointing outwards the closed shell."""
         return not any(self.point_belongs(face.middle() + face.normal() * 1e-4) for face in self.faces)
+
+    def are_normals_pointing_inwards(self):
+        """Verifies if all face's normal are pointing inwards the closed shell."""
+        return not any(not self.point_belongs(face.middle() + face.normal() * 1e-4) for face in self.faces)
 
     def turn_normals_outwards(self):
         """
@@ -2016,10 +2020,21 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
         """
         new_faces = []
         for face in self.faces:
-            middle = face.middle()
-            normal = face.normal()
-            point = middle + normal * 1e-4
-            if self.point_belongs(point):
+            if self.point_belongs(face.middle() + face.normal() * 1e-5):
+                new_faces.append(volmdlr.faces.Triangle3D(*face.points[::-1]))
+            else:
+                new_faces.append(face)
+        return ClosedTriangleShell3D(new_faces)
+
+    def turn_normals_inwards(self):
+        """
+        Turns the normals of the closed shells faces always inwards.
+
+        :return: A new ClosedTriangleShell3D obejct having all faces normals pointing inwards.
+        """
+        new_faces = []
+        for face in self.faces:
+            if not self.point_belongs(face.middle() + face.normal() * 1e-5):
                 new_faces.append(volmdlr.faces.Triangle3D(*face.points[::-1]))
             else:
                 new_faces.append(face)

@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle3D: point_distance.
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
-- ClosedTriangleShell3D: turn_normals_outwards, are_normals_pointing_outwards
+- ClosedTriangleShell3D: turn_normals_outwards, are_normals_pointing_outwards, turn_normals_inwards, are_normals_pointing_inwards
 
 #### core.py
 - BoundingBox: triangle_intersects_voxel

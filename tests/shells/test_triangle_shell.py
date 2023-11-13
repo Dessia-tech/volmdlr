@@ -46,6 +46,12 @@ class TestTrianglShell3D(unittest.TestCase):
         new_closed_shell = closed_shell.turn_normals_outwards()
         self.assertTrue(new_closed_shell.are_normals_pointing_outwards())
 
+    def test_turn_normals_inwards(self):
+        closed_shell = DessiaObject.load_from_file(os.path.join(folder, 'closedtriangleshell3d.json'))
+        self.assertFalse(closed_shell.are_normals_pointing_inwards())
+        new_closed_shell = closed_shell.turn_normals_inwards()
+        self.assertTrue(new_closed_shell.are_normals_pointing_inwards())
+
 
 if __name__ == '__main__':
     unittest.main()
