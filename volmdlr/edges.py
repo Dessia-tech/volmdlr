@@ -28,6 +28,7 @@ import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
 from volmdlr import curves as volmdlr_curves
+from volmdlr import get_minimum_distance_points_lines
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
@@ -861,6 +862,7 @@ class BSplineCurve(Edge):
         self._delta = 0.01
         self._length = None
         self._eval_points = None
+        self._knotvector = None
         self.ctrlptsw = None
         self.rational = False
         if self.weights:
@@ -906,10 +908,12 @@ class BSplineCurve(Edge):
     @property
     def knotvector(self):
         """Return the knot vector."""
-        knot_vector = []
-        for knot, knot_mut in zip(self.knots, self.knot_multiplicities):
-            knot_vector.extend([knot] * knot_mut)
-        return knot_vector
+        if self._knotvector is None:
+            knot_vector = []
+            for knot, knot_mut in zip(self.knots, self.knot_multiplicities):
+                knot_vector.extend([knot] * knot_mut)
+            self._knotvector = knot_vector
+        return self._knotvector
 
     @property
     def periodic(self):
@@ -1637,26 +1641,29 @@ class BSplineCurve(Edge):
         best_distance = math.inf
         distance_points = None
 
-        point1_edge1_ = point1
-        point2_edge1_ = point2
+        abscissa1 = self.abscissa(point1)
+        abscissa2 = self.abscissa(point2)
 
         intersections = []
         linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
+        number_points = 10
         while True:
-            edge1_discretized_points_between_1_2 = self.local_discretization(point1_edge1_, point2_edge1_,
-                                                                             number_points=10)
+            edge1_discretized_points_between_1_2, abscissas_between_1_2 = self.get_abscissa_discretization(
+                abscissa1, abscissa2, number_points=number_points, return_abscissas=True)
             if not edge1_discretized_points_between_1_2:
                 break
             distance = line.point_distance(edge1_discretized_points_between_1_2[0])
             if distance == 0.0:
                 intersections.append(edge1_discretized_points_between_1_2[0])
                 break
-            for point1_edge1, point2_edge1 in zip(edge1_discretized_points_between_1_2[:-1],
-                                                  edge1_discretized_points_between_1_2[1:]):
+            for point1_edge1, point2_edge1, abscissa1_, abscissa2_ in zip(edge1_discretized_points_between_1_2[:-1],
+                                                                          edge1_discretized_points_between_1_2[1:],
+                                                                          abscissas_between_1_2[:-1],
+                                                                          abscissas_between_1_2[1:]):
                 lineseg1 = linesegment_class_(point1_edge1, point2_edge1)
                 dist, min_dist_point1_, min_dist_point2_ = lineseg1.line_distance(line, True)
                 if dist < distance or math.isclose(dist, distance, abs_tol=abs_tol):
-                    point1_edge1_, point2_edge1_ = point1_edge1, point2_edge1
+                    abscissa1, abscissa2 = abscissa1_, abscissa2_
                     distance = dist
                     distance_points = [min_dist_point1_, min_dist_point2_]
             if math.isclose(distance, best_distance, abs_tol=1e-6):
@@ -1664,6 +1671,7 @@ class BSplineCurve(Edge):
                     intersections.append(distance_points[0])
                 break
             best_distance = distance
+            number_points += 5
         return intersections
 
     def line_intersections(self, line, tol: float = 1e-6):
@@ -1825,25 +1833,58 @@ class BSplineCurve(Edge):
         """
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
-        # special case periodical bsplinecurve
-        add_point_at_end = False
-        if self.periodic:
-            if math.isclose(abscissa2, 0.0, abs_tol=tol) or abscissa1 >= abscissa2:
-                abscissa2 += self.length()
-            if point1.is_close(point2):
-                add_point_at_end = True
 
-        discretized_points_between_1_2 = []
-        length = self.length()
-        for abscissa in npy.linspace(abscissa1, abscissa2, num=number_points):
-            if self.periodic and abscissa > length:
-                abscissa -= length
-            abscissa_point = self.point_at_abscissa(abscissa)
-            if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2, tol=tol):
-                discretized_points_between_1_2.append(abscissa_point)
-        if add_point_at_end:
-            discretized_points_between_1_2 += [discretized_points_between_1_2[0]]
-        return discretized_points_between_1_2
+        return self.get_abscissa_discretization(abscissa1, abscissa2, number_points)
+
+    def get_abscissa_discretization(self, abscissa1, abscissa2, number_points: int = 10,
+                                    return_abscissas: bool = False):
+        """
+        Gets n discretization points between two given points of the edge.
+
+        :param abscissa1: Starting abscissa.
+        :param abscissa2: Ending abscissa edge.
+        :param number_points: number of points to discretize locally.
+        :param return_abscissas: If True, returns the list of abscissas of the discretization points.
+        :return: list of locally discretized points.
+        """
+        data = self.data
+        point_name = 'Point' + self.__class__.__name__[-2:]
+        # special case periodical bsplinecurve
+        if self.periodic and abscissa1 == abscissa2 and (not math.isclose(abscissa1, 0.0, abs_tol=1e-6) or
+                        not math.isclose(abscissa1, self.length(), abs_tol=1e-6)):
+            umin, umax = self.domain
+            number_points1 = int((abscissa1 / self.length()) * number_points)
+            max_number_points = math.ceil((self.length() - abscissa1) / 5e-6)
+            if number_points1 > max_number_points:
+                number_points1 = max(max_number_points, 2)
+            number_points2 = number_points - number_points1
+            max_number_points = math.ceil(abscissa1 / 5e-6)
+            if number_points2 > max_number_points:
+                number_points2 = max(max_number_points, 2)
+            u_start_end = self.abscissa_to_parameter(abscissa1)
+            data["sample_size"] = number_points1
+            points1 = evaluate_curve(data, start=u_start_end, stop=umax)
+            data["sample_size"] = number_points2
+            points2 = evaluate_curve(data, start=umin, stop=u_start_end)
+            points = points1 + points2[1:]
+        else:
+            if math.isclose(abscissa2, 0.0, abs_tol=1e-6):
+                abscissa2 += self.length()
+            if abscissa1 >= abscissa2:
+                abscissa2, abscissa1 = abscissa1, abscissa2
+            u1 = self.abscissa_to_parameter(abscissa1)
+            u2 = self.abscissa_to_parameter(abscissa2)
+            # todo: improve intersections so we don't need to worry about limiting the precision?
+            max_number_points = math.ceil(abs(abscissa1 - abscissa2) / 5e-6)
+            if number_points > max_number_points:
+                number_points = max(max_number_points, 2)
+            data["sample_size"] = number_points
+            points = evaluate_curve(data, start=u1, stop=u2)
+
+        if return_abscissas:
+            return ([getattr(volmdlr, point_name)(*point) for point in points],
+                    npy.linspace(abscissa1, abscissa2, number_points, dtype=npy.float64).tolist())
+        return [getattr(volmdlr, point_name)(*point) for point in points]
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
@@ -4482,21 +4523,8 @@ class LineSegment3D(LineSegment):
         """
         Returns the points on this line and on the other line that are the closest of lines.
         """
-        u = self.end - self.start
-        v = other_line.end - other_line.start
-        w = self.start - other_line.start
-        u_dot_u = u.dot(u)
-        u_dot_v = u.dot(v)
-        v_dot_v = v.dot(v)
-        u_dot_w = u.dot(w)
-        v_dot_w = v.dot(w)
-        if (u_dot_u * v_dot_v - u_dot_v ** 2) != 0:
-            s_param = (u_dot_v * v_dot_w - v_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
-            t_param = (u_dot_u * v_dot_w - u_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
-            point1 = self.start + s_param * u
-            point2 = other_line.start + t_param * v
-            return point1, point2
-        return self.start, other_line.start
+        return get_minimum_distance_points_lines(self.start, self.end,
+                                                                       other_line.start, other_line.end)
 
     def matrix_distance(self, other_line):
         """
@@ -4821,12 +4849,14 @@ class BSplineCurve3D(BSplineCurve):
 
     @property
     def bounding_box(self):
+        """Returns bounding box."""
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
+        """Sets bounding box."""
         self._bbox = new_bounding_box
 
     def _bounding_box(self):
@@ -5277,12 +5307,14 @@ class BSplineCurve3D(BSplineCurve):
         return self._generic_edge_intersections(arc, abs_tol)
 
     def curve_intersections(self, curve, abs_tol: float = 1e-6):
+        """Get the intersections with the specified curve."""
         if self.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
             return []
         intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(curve, self, abs_tol=abs_tol)
         return intersections_points
 
     def circle_intersections(self, circle, abs_tol: float = 1e-6):
+        """Get the intersections with the specified circle."""
         if self.bounding_box.distance_to_bbox(circle.bounding_box) > abs_tol:
             return []
         intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(circle, self, abs_tol=abs_tol)
