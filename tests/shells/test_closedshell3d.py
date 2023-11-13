@@ -8,7 +8,7 @@ import volmdlr
 from volmdlr import edges, faces, primitives3d, wires, surfaces, shells
 
 
-folder = os.path.dirname(os.path.realpath(__file__))
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)))
 
 
 class TestClosedShell3D(unittest.TestCase):
