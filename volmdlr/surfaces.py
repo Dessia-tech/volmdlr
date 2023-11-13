@@ -3538,7 +3538,7 @@ class ConicalSurface3D(PeriodicalSurface):
             end = volmdlr.Point2D(start.x, 0)
         elif start.x != end.x:
             end = volmdlr.Point2D(start.x, end.y)
-        if not start.is_close(end):
+        if start != end:
             return [edges.LineSegment2D(start, end)]
         return None
 
