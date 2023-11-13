@@ -3515,7 +3515,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         grid_point_index = {}
 
-        polygon_points = {point for point in self.points}
+        polygon_points = set(self.points)
 
         # Generate all points in the grid
         grid_points = npy.array([[xi, yi] for xi in x for yi in y], dtype=npy.float64)

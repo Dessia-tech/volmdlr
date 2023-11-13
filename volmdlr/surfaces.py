@@ -4984,6 +4984,9 @@ class ExtrusionSurface3D(Surface3D):
         return [edges.BSplineCurve3D.from_points_interpolation(points, degree)]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         n = len(bspline_curve3d.control_points)
 
         points = [self.point3d_to_2d(point)
@@ -6913,6 +6916,7 @@ class BSplineSurface3D(Surface3D):
         return new_bsplinesurface3d
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
+        """Plot representation of the surface."""
         u_curves = self.surface_curves['u']
         v_curves = self.surface_curves['v']
         if ax is None:
@@ -6996,6 +7000,7 @@ class BSplineSurface3D(Surface3D):
         return bsplinesurface
 
     def to_step(self, current_id):
+        """Converts object into a step entity."""
         content = ''
         point_matrix_ids = '('
         for points in self.control_points_table:
