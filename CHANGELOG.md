@@ -81,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: plots now use Circles 3D instead of ClosedPolygon3D. Performance improved.
 - CylindricalSurface3D: More comprehesive plot
 - BoundingBox: from_bounding_boxes
+- BSplineCurve: improve line_intersections performance.
 
 ### Unittests
 #### curves 
