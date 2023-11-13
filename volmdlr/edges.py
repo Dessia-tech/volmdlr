@@ -6458,6 +6458,17 @@ class ArcEllipse3D(Edge):
         ellipse3d = volmdlr_curves.Ellipse3D(self.ellipse.major_axis, self.ellipse.minor_axis, new_frame)
         return self.__class__(ellipse3d, self.end, self.start, self.name + '_reverse')
 
+    def line_intersections(self, line, abs_tol: float = 1e-6):
+        """
+        Gets the intersections between an Ellipse 3D and a Line 3D.
+
+        :param line: The intersecting lines.
+        :param abs_tol: The absolute tolerance.
+        :return: A list with the intersections points between the two edges.
+        """
+        ellipse_linesegment_intersections = self.ellipse.line_intersections(line, abs_tol)
+        return self.validate_intersections(ellipse_linesegment_intersections, abs_tol)
+
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
         Gets the intersections between an Ellipse 3D and a Line Segment 3D.
@@ -6467,11 +6478,15 @@ class ArcEllipse3D(Edge):
         :return: A list with the intersections points between the two edges.
         """
         ellipse_linesegment_intersections = self.ellipse.linesegment_intersections(linesegment, abs_tol)
-        intersections = []
-        for intersection in ellipse_linesegment_intersections:
+        return self.validate_intersections(ellipse_linesegment_intersections, abs_tol)
+
+    def validate_intersections(self, intersections: List[volmdlr.Point3D], abs_tol: float = 1e-6):
+        """Helper function to validate edge intersections"""
+        valid_intersections = []
+        for intersection in intersections:
             if self.point_belongs(intersection, abs_tol):
-                intersections.append(intersection)
-        return intersections
+                valid_intersections.append(intersection)
+        return valid_intersections
 
     def arcellipse_intersections(self, arcellipse3d, abs_tol: float = 1e-6):
         """
@@ -6606,3 +6621,13 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Ellipse plot."""
         return self.ellipse.plot(ax, edge_style)
+
+    def line_intersections(self, line, abs_tol: float = 1e-6):
+        """
+        Gets intersections between an Ellipse 3D and a Line3D.
+
+        :param line: Other Line 3D.
+        :param abs_tol: tolerance.
+        :return: A list of points, containing all intersections between the Line 3D and the Ellipse3D.
+        """
+        return self.ellipse.line_intersections(line, abs_tol)
