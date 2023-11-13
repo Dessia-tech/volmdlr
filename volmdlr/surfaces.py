@@ -3296,7 +3296,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                     points_intersections.append(intersection)
         for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 300):
             # \
-            #     cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
+            #    cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not volmdlr.core.point_in_list(point, points_intersections):
