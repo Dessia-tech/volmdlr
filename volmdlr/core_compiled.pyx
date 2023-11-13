@@ -3668,3 +3668,40 @@ class Frame3D(Basis3D):
     #         s += "line3.parent = {};\n".format(parent)
 
     #     return s
+
+
+cdef bint line_point_belongs_with_points(Point3D line_start, Point3D line_end, Point3D point):
+    """Defines a line from two points and verifies if point is over this line."""
+    cdef Vector3D vector1 = point - line_start
+    cdef Vector3D vector2 = line_end - line_start
+    cdef double dist = vector1.cross(vector2).norm() / vector2.norm()
+    if dist < 1e-6:
+        return True
+    return False
+
+
+cpdef get_minimum_distance_points_lines(Point3D linesegment1_start, Point3D linesegment1_end,
+                                        Point3D linesegment2_start, Point3D linesegment2_end):
+    """
+    Returns the points minimum distance points between two lines.
+    """
+    if line_point_belongs_with_points(linesegment1_start, linesegment1_end, linesegment2_start):
+        return linesegment2_start, linesegment2_start
+    if line_point_belongs_with_points(linesegment1_start, linesegment1_end, linesegment2_end):
+        return linesegment2_end, linesegment2_end
+
+    cdef Vector3D u = linesegment1_end - linesegment1_start
+    cdef Vector3D v = linesegment2_end - linesegment2_start
+    cdef Vector3D w = linesegment1_start - linesegment2_start
+    cdef double u_dot_u, u_dot_v, v_dot_v, u_dot_w, v_dot_w, s_param, t_param
+    u_dot_u = u.dot(u)
+    u_dot_v = u.dot(v)
+    v_dot_v = v.dot(v)
+    u_dot_w = u.dot(w)
+    v_dot_w = v.dot(w)
+    cdef double denominator = u_dot_u * v_dot_v - u_dot_v ** 2
+    if denominator != 0.0:
+        s_param = (u_dot_v * v_dot_w - v_dot_v * u_dot_w) / denominator
+        t_param = (u_dot_u * v_dot_w - u_dot_v * u_dot_w) / denominator
+        return linesegment1_start + s_param * u, linesegment2_start + t_param * v
+    return linesegment1_start, linesegment2_start
