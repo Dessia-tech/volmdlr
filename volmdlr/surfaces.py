@@ -1024,7 +1024,9 @@ class Surface3D(DessiaObject):
         return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree)]
 
     def normal_from_point2d(self, point2d):
-
+        """
+        Evaluates the normal vector of the bspline surface at this 2D point.
+        """
         raise NotImplementedError('NotImplemented')
 
     def normal_from_point3d(self, point3d):
@@ -1136,6 +1138,10 @@ class Surface3D(DessiaObject):
     def line_intersections(self, line: curves.Line3D):
         """Gets intersections between a line and a Surface 3D."""
         raise NotImplementedError(f'line_intersections method not implemented by {self.__class__.__name__}')
+
+    def frame_mapping(self, frame, side: str):
+        """Frame mapping for Surface 3D."""
+        raise NotImplementedError(f'frame_mapping method not implemented by {self.__class__.__name__}')
 
     def linesegment_intersections(self, linesegment3d: edges.LineSegment3D, abs_tol: float = 1e-6):
         """
@@ -1472,12 +1478,12 @@ class Plane3D(Surface3D):
         """
         return vm_common_operations.get_plane_equation_coefficients(self.frame)
 
-    def plane_intersections(self, other_plane):
+    def plane_intersections(self, plane3d):
         """
         Computes intersection points between two Planes 3D.
 
         """
-        plane_intersections = vm_utils_intersections.get_two_planes_intersections(self.frame, other_plane.frame)
+        plane_intersections = vm_utils_intersections.get_two_planes_intersections(self.frame, plane3d.frame)
         if plane_intersections:
             return [curves.Line3D(plane_intersections[0], plane_intersections[1])]
         return []
@@ -3290,7 +3296,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                     points_intersections.append(intersection)
         for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 300):
             # \
-            #     cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
+            #    cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not volmdlr.core.point_in_list(point, points_intersections):
@@ -3404,7 +3410,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         for arc in arcs:
             intersections = spherical_surface.circle_intersections(arc)
             intersection_points.extend(intersections)
-        # print(True)
         # for edge in spherical_surface._circle_generatrices(50):
         #     intersections = self.circle_intersections(edge)
         #     for point in intersections:
@@ -3432,7 +3437,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             curves_.append(bspline)
         return curves_
 
-
+      
 class ConicalSurface3D(PeriodicalSurface):
     """
     The local plane is defined by (theta, z).
@@ -4554,6 +4559,10 @@ class SphericalSurface3D(PeriodicalSurface):
         raise AttributeError('Use ShericalFace3D from_surface_rectangular_cut method')
 
     def triangulation(self):
+        """
+        Triangulation of Spherical Surface.
+
+        """
         face = self.rectangular_cut(0, volmdlr.TWO_PI, -0.5 * math.pi, 0.5 * math.pi)
         return face.triangulation()
 
@@ -5488,6 +5497,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         return RevolutionSurface3D(new_edge, new_axis_point, new_axis)
 
     def simplify(self):
+        """Gets the simplified version of the surface."""
         line3d = curves.Line3D(self.axis_point, self.axis_point + self.axis)
         if isinstance(self.edge, edges.Arc3D):
             tore_center, _ = line3d.point_projection(self.edge.center)
@@ -5974,6 +5984,7 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def bounding_box(self):
+        """Gets the Bounding box of the BSpline Surface 3d."""
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
