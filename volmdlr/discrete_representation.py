@@ -1607,29 +1607,36 @@ class MatrixBasedVoxelization(Voxelization):
 
         return layers_dict
 
-    def _count_cubic_layer(self, x: int, y: int, z: int) -> int:
-        max_layers = min(
-            x, y, z, self.matrix.shape[0] - 1 - x, self.matrix.shape[1] - 1 - y, self.matrix.shape[2] - 1 - z
-        )
-
-        for layer in range(1, max_layers + 1):
-            # Extract the cube of interest
-            cube = self.matrix[x - layer : x + layer + 1, y - layer : y + layer + 1, z - layer : z + layer + 1]
-
-            # If any value in the cube's surface is False, stop
-            if not cube[[0, -1], :, :].all() or not cube[:, [0, -1], :].all() or not cube[:, :, [0, -1]].all():
-                return layer - 1
-
-        return max_layers
-
     def _layers_matrix(self):
         result = np.zeros_like(self.matrix, dtype=int)
 
         for x in range(self.matrix.shape[0]):
             for y in range(self.matrix.shape[1]):
                 for z in range(self.matrix.shape[2]):
-                    if self.matrix[x, y, z]:
-                        result[x, y, z] = self._count_cubic_layer(x, y, z)
+                    count = 0
+
+                    if self.matrix[x][y][z]:
+                        while (
+                                0 <= x - count
+                                and x + count < self.matrix.shape[0]
+                                and 0 <= y - count
+                                and y + count < self.matrix.shape[1]
+                                and 0 <= z - count
+                                and z + count < self.matrix.shape[2]
+                        ):
+                            cube_slice = self.matrix[
+                                slice(x - count, x + count + 1),
+                                slice(y - count, y + count + 1),
+                                slice(z - count, z + count + 1),
+                            ]
+
+                            # If any False is found in the current cube, break the loop
+                            if not np.all(cube_slice):
+                                break
+
+                            count += 1
+
+                    result[x, y, z] = count
 
         return result
 
