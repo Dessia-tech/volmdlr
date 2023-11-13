@@ -17,7 +17,7 @@ from dessia_common.core import DessiaObject
 import plot_data.colors
 import plot_data.core as plot_data
 import volmdlr
-from volmdlr import core, geometry
+from volmdlr import core, geometry, get_minimum_distance_points_lines
 from volmdlr.nurbs.helpers import generate_knot_vector
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as volmdlr_intersections
@@ -867,24 +867,9 @@ class Line3D(Line):
         """
         Returns the points on this line and the other line that are the closest of lines.
         """
-        if self.point_belongs(other_line.point1):
-            return other_line.point1, other_line.point1
-        if self.point_belongs(other_line.point2):
-            return other_line.point2, other_line.point2
-        u = self.point2 - self.point1
-        v = other_line.point2 - other_line.point1
-        w = self.point1 - other_line.point1
-        u_dot_u = u.dot(u)
-        u_dot_v = u.dot(v)
-        v_dot_v = v.dot(v)
-        u_dot_w = u.dot(w)
-        v_dot_w = v.dot(w)
 
-        s_param = (u_dot_v * v_dot_w - v_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
-        t_param = (u_dot_u * v_dot_w - u_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
-        point1 = self.point1 + s_param * u
-        point2 = other_line.point1 + t_param * v
-        return point1, point2
+        return get_minimum_distance_points_lines(self.point1, self.point2, other_line.point1, other_line.point2)
+
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
