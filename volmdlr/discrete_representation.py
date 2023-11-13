@@ -1156,6 +1156,9 @@ class PointBasedVoxelization(Voxelization):
         vertices, faces = display_triangle_shell.positions, display_triangle_shell.indices
         distances_array = signed_distance(points_coords, vertices, faces.astype(int), sign_type=3)[0]
 
+        if self.__len__() == 1:
+            distances_array = np.array([distances_array])
+
         # Creating a dictionary to map each point to its distance
         distances_dict = {point: distance for point, distance in zip(self.voxel_centers, distances_array)}
 
