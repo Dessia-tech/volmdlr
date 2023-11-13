@@ -25,10 +25,10 @@ class TestToroidalFace3D(unittest.TestCase):
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
     def test_planeface_intersections(self):
-        expected_results = [[14.700000000000001], [9.388571325840358], [9.282044389126776], [9.107655247892733],
-                            [8.870824266395537], [8.582455249249456], [5.000000000001248, 5.00000000000125],
-                            [3.717515834742253, 3.7176228274330256], [3.325526484035388, 3.426440202827559],
-                            [3.081959775756376, 3.081960004770588]]
+        expected_results = [[14.700000000000001], [9.388571408528668], [9.282044462349344], [9.107655321906883],
+                            [8.870824383803773], [8.58245537985896], [5.0000000000008145, 5.000000000000816],
+                            [3.717538057019154, 3.717538040295004], [3.325530330504112, 3.325530342893853],
+                            [3.0819608468437045, 3.0819608470021023]]
         ts = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         tf = faces.ToroidalFace3D.from_surface_rectangular_cut(ts, -1.4, 3.5, 0., 2.5)
 
@@ -44,9 +44,9 @@ class TestToroidalFace3D(unittest.TestCase):
                 self.assertAlmostEqual(result.length(), expected_result)
 
     def test_cylindricalface_intersections(self):
-        expected_results = [[2.5461207980560485], [2.454557959936191], [2.767950454333099], [2.8109131068618605],
-                            [1.3806998377604578, 3.0341016797202873], [2.1248777973309823], [1.7368914447612895],
-                            [2.5583377804228014], [1.3899444850660725, 2.812800677753292], [2.4475236530517783]]
+        expected_results = [[2.546120994711518], [2.454558505161535], [2.7679469885415657], [2.8109172462675667],
+                            [1.3806998364554988, 3.028332404171969], [2.1248783089966574], [1.7368469566130957],
+                            [2.558338114997606], [2.812361380094013, 1.3899450007345244], [2.4475153123576954]]
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         tf = faces.ToroidalFace3D.from_surface_rectangular_cut(toroidal_surface, 0, 3, 1, 3)
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))

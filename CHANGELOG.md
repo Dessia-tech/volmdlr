@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
-- cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify
+- cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify.
+
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
 - ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object
@@ -69,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
+- babylon_data: avoid using bounding_box for performance
 
 #### primitives3d.py
 - Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
