@@ -4080,7 +4080,6 @@ class FullArcEllipse(Edge):
         self.ellipse = ellipse
         self.is_trigo = True
         self.angle_start = 0.0
-        self.center = ellipse.center
         self.angle_end = volmdlr.TWO_PI
         Edge.__init__(self, start=start_end, end=start_end, name=name)
 
