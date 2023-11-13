@@ -2141,7 +2141,7 @@ class Ellipse2D(ClosedCurve):
             round(((point.x - self.center.x) * math.cos(self.theta) +
                    (point.y - self.center.y) * math.sin(self.theta)) ** 2 / self.major_axis ** 2 +
                   ((point.x - self.center.x) * math.sin(self.theta) -
-                   (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 2), 1.0,
+                   (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 3), 1.0,
             abs_tol=abs_tol)
 
     def point_over_contour(self, point, abs_tol=1e-6):

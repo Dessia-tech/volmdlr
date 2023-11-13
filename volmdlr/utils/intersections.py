@@ -76,7 +76,7 @@ def conic3d_line_intersections(conic3d, line3d, abs_tol: float = 1e-6):
     if not math.isclose(abs(conic3d.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=abs_tol):
         frame_mapped_conic3d = conic3d.frame_mapping(conic3d.frame, 'new')
         frame_mapped_line = line3d.frame_mapping(conic3d.frame, 'new')
-        circle_linseg_intersections = conic3d_line_intersections(frame_mapped_conic3d, frame_mapped_line)
+        circle_linseg_intersections = conic3d_line_intersections(frame_mapped_conic3d, frame_mapped_line, abs_tol)
         for inter in circle_linseg_intersections:
             intersections.append(conic3d.frame.local_to_global_coordinates(inter))
         return intersections
@@ -89,7 +89,7 @@ def conic3d_line_intersections(conic3d, line3d, abs_tol: float = 1e-6):
             intersections.append(volmdlr.Point3D(intersection[0], intersection[1], conic3d.frame.origin.z))
         return intersections
     plane_lineseg_intersections = get_plane_line_intersections(conic3d.frame, line3d)
-    if plane_lineseg_intersections and conic3d.point_belongs(plane_lineseg_intersections[0]):
+    if plane_lineseg_intersections and conic3d.point_belongs(plane_lineseg_intersections[0], abs_tol):
         return plane_lineseg_intersections
     return []
 
