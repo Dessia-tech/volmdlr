@@ -365,8 +365,6 @@ class Step(dc.DessiaObject):
         self.parse_arguments(arguments)
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
-        if step_id == 1306139: #394704:
-            print(step_id)
         try:
             if hasattr(step_reader, fun_name):
                 volmdlr_object = getattr(step_reader, fun_name)(arguments, object_dict)
