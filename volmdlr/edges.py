@@ -1644,63 +1644,74 @@ class BSplineCurve(Edge):
         """Gets the points that define a BsplineCurve in a .geo file."""
         return list(self.discretization_points())
 
+    def local_intersections_search(self, line, point1, point2, abs_tol: float = 1e-6):
+        """
+        Gets local intersections, between a BSpline and an infinite line.
+
+        :param line: other line.
+        :param point1: local point 1.
+        :param point2: local point 2.
+        :param abs_tol: tolerance.
+        :return: distance to edge.
+        """
+        best_distance = math.inf
+        distance_points = None
+
+        point1_edge1_ = point1
+        point2_edge1_ = point2
+
+        intersections = []
+        linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
+        while True:
+            edge1_discretized_points_between_1_2 = self.local_discretization(point1_edge1_, point2_edge1_,
+                                                                             number_points=10)
+            if not edge1_discretized_points_between_1_2:
+                break
+            distance = line.point_distance(edge1_discretized_points_between_1_2[0])
+            if distance == 0.0:
+                intersections.append(edge1_discretized_points_between_1_2[0])
+                break
+            for point1_edge1, point2_edge1 in zip(edge1_discretized_points_between_1_2[:-1],
+                                                  edge1_discretized_points_between_1_2[1:]):
+                lineseg1 = linesegment_class_(point1_edge1, point2_edge1)
+                dist, min_dist_point1_, min_dist_point2_ = lineseg1.line_distance(line, True)
+                if dist < distance or math.isclose(dist, distance, abs_tol=abs_tol):
+                    point1_edge1_, point2_edge1_ = point1_edge1, point2_edge1
+                    distance = dist
+                    distance_points = [min_dist_point1_, min_dist_point2_]
+            if math.isclose(distance, best_distance, abs_tol=1e-6):
+                if distance_points and distance_points[0].is_close(distance_points[1], abs_tol):
+                    intersections.append(distance_points[0])
+                break
+            best_distance = distance
+        return intersections
+
     def line_intersections(self, line, tol: float = 1e-6):
         """
         Calculates the intersections of a BSplineCurve (2D or 3D) with a Line (2D or 3D).
 
         :param line: line to verify intersections
+        :param tol: tolerance.
         :return: list of intersections
         """
-        # if self.
+        linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
         polygon_points = []
         for point in self.points:
             if not volmdlr.core.point_in_list(point, polygon_points):
                 polygon_points.append(point)
         list_intersections = []
         initial_abscissa = 0
-        linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
         for points in zip(polygon_points[:-1], polygon_points[1:]):
             linesegment = getattr(sys.modules[__name__], linesegment_name)(points[0], points[1])
-            intersections = linesegment.line_intersections(line)
-
-            if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
-                if line.point_distance(linesegment.middle_point()) < (tol * 0.01):
-                    list_intersections.append(linesegment.middle_point())
-            if intersections and intersections[0] not in list_intersections:
-                if self.point_belongs(intersections[0], tol):
-                    list_intersections.append(intersections[0])
-                    continue
-                abs1 = self.abscissa(linesegment.start)
-                abs2 = self.abscissa(linesegment.end)
-                list_abscissas = list(new_abscissa for new_abscissa in npy.linspace(abs1, abs2, 1000))
-                intersection = self.select_intersection_point(list_abscissas, intersections, line)
-                list_intersections.append(intersection)
+            if linesegment.line_distance(line) < tol * 100:
+                intersections = self.local_intersections_search(line, points[0], points[1], tol)
+                if not intersections and linesegment.direction_vector().is_colinear_to(line.direction_vector()):
+                    if line.point_distance(linesegment.middle_point()) < (tol * 0.01):
+                        list_intersections.append(linesegment.middle_point())
+                        continue
+                list_intersections.extend(intersections)
             initial_abscissa += linesegment.length()
         return list_intersections
-
-    def select_intersection_point(self, list_abscissas, intersections, line, abs_tol: float = 1e-7):
-        """
-        Select closest point in curve to intersection point obtained with discretized linesegment.
-
-        :param list_abscissas: list of abscissas to verify the closest point.
-        :param intersections: intersection with discretized line.
-        :param line: other line.
-        :param abs_tol: tolerance allowed.
-        :return:
-        """
-        distance = npy.inf
-        intersection = None
-        for i_abscissa in list_abscissas:
-            point_in_curve = BSplineCurve.point_at_abscissa(self, i_abscissa)
-            if line.point_distance(point_in_curve) <= abs_tol:
-                return point_in_curve
-            dist = point_in_curve.point_distance(intersections[0])
-            if dist < distance:
-                distance = dist
-                intersection = point_in_curve
-            else:
-                break
-        return intersection
 
     def get_linesegment_intersections(self, linesegment):
         """
@@ -2493,6 +2504,37 @@ class LineSegment2D(LineSegment):
             return min_dist, min_dist_point1, min_dist_point2
         return min_dist
 
+    def line_distance(self, line, return_points: bool = False):
+        """
+        Calculates the distance between a Line Segment and an infinite Line.
+
+        :param line: other line.
+        :param return_points: weather to return corresponding points or not.
+        :return: distance between line and line segment.
+        """
+        distance = 0.0
+        line_intersections = line.line_intersections(self.line)
+        if not line_intersections:
+            line_closest_point1 = line.closest_point_on_line(self.start)
+            point1, point2 = self.start, line_closest_point1
+            distance = line_closest_point1.point_distance(self.start)
+        elif not self.point_belongs(line_intersections[0]):
+            line_closest_point1 = line.closest_point_on_line(self.start)
+            line_closest_point2 = line.closest_point_on_line(self.end)
+            distance1 = line_closest_point1.point_distance(self.start)
+            distance2 = line_closest_point2.point_distance(self.end)
+            if distance1 < distance2:
+                distance = distance1
+                point1, point2 = self.start, line_closest_point1
+            else:
+                distance = distance2
+                point1, point2 = self.end, line_closest_point2
+        else:
+            point1, point2 = line_intersections[0], line_intersections[0]
+        if return_points:
+            return distance, point1, point2
+        return distance
+
 
 class ArcMixin:
     """
@@ -3217,8 +3259,12 @@ class Arc2D(ArcMixin, Edge):
         :param angle: angle rotation.
         :return: a new rotated Arc2D.
         """
-        return Arc2D(*[point.rotation(center, angle) if point else point for point in
-                       [self.circle, self.start, self.end]])
+        return Arc2D(
+            circle=self.circle.rotation(center, angle),
+            start=self.start.rotation(center, angle),
+            end=self.end.rotation(center, angle),
+            name=self.name,
+        )
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -3227,8 +3273,12 @@ class Arc2D(ArcMixin, Edge):
         :param offset: translation vector.
         :return: A new translated Arc2D.
         """
-        return Arc2D(*[point.translation(offset) if point else point for point in
-                       [self.circle, self.start, self.end]])
+        return Arc2D(
+            circle=self.circle.translation(offset),
+            start=self.start.translation(offset),
+            end=self.end.translation(offset),
+            name=self.name,
+        )
 
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
@@ -3236,8 +3286,12 @@ class Arc2D(ArcMixin, Edge):
 
         side = 'old' or 'new'
         """
-        return Arc2D(self.circle.frame_mapping(frame, side), self.start.frame_mapping(frame, side),
-                     self.end.frame_mapping(frame, side))
+        return Arc2D(
+            circle=self.circle.frame_mapping(frame, side),
+            start=self.start.frame_mapping(frame, side),
+            end=self.end.frame_mapping(frame, side),
+            name=self.name,
+        )
 
     def second_moment_area(self, point):
         """
@@ -4693,19 +4747,44 @@ class LineSegment3D(LineSegment):
 
         :return:
         """
-        section_contour2d, section_contour3d = args
-        if section_contour3d is None:
-            start_tangent = self.unit_direction_vector(0.)
-            normal = self.unit_normal_vector(0.)
-            if normal is None:
-                normal = start_tangent.deterministic_unit_normal_vector()
-            tangent_normal_orthonormal = start_tangent.cross(normal)
-            section_contour3d = section_contour2d.to_3d(self.start, normal, tangent_normal_orthonormal)
+        section_contour2d, frame = args
+        section_contour3d = section_contour2d.to_3d(self.start, frame.u, frame.v)
         new_faces = []
         for contour_primitive in section_contour3d.primitives:
             new_faces.extend(contour_primitive.extrusion(self.length()
                                                          * self.unit_direction_vector()))
         return new_faces
+
+    def line_distance(self, line, return_points: bool = False):
+        """
+        Calculates the distance between a Line Segment and an infinite Line.
+
+        :param line: other line.
+        :param return_points: weather to return corresponding points or not.
+        :return: distance between line and line segment.
+        """
+        line_min_distance_points = line.minimum_distance_points(self.line)
+        if self.point_belongs(line_min_distance_points[1]):
+            if return_points:
+                return line_min_distance_points[0].point_distance(line_min_distance_points[1]),\
+                    line_min_distance_points[0], line_min_distance_points[1]
+            return line_min_distance_points[0].point_distance(line_min_distance_points[1])
+        distance1 = line_min_distance_points[0].point_distance(self.start)
+        distance2 = line_min_distance_points[0].point_distance(self.end)
+        if distance1 < distance2:
+            distance = distance1
+            points = [line_min_distance_points[0], self.start]
+        else:
+            distance = distance1
+            points = [line_min_distance_points[0], self.end]
+        if return_points:
+            return distance, points[0], points[1]
+        return distance
+
+    def move_frame_along(self, frame):
+        """Move frame along edge."""
+        new_frame = frame.translation(self.end - self.start)
+        return new_frame
 
 
 class BSplineCurve3D(BSplineCurve):
@@ -5206,6 +5285,12 @@ class BSplineCurve3D(BSplineCurve):
             return []
         return self._generic_edge_intersections(arc, abs_tol)
 
+    def curve_intersections(self, curve, abs_tol: float = 1e-6):
+        if self.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
+            return []
+        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(curve, self, abs_tol=abs_tol)
+        return intersections_points
+
     def circle_intersections(self, circle, abs_tol: float = 1e-6):
         if self.bounding_box.distance_to_bbox(circle.bounding_box) > abs_tol:
             return []
@@ -5224,22 +5309,29 @@ class BSplineCurve3D(BSplineCurve):
             return False
         return True
 
-    def sweep(self, *args):
+    def sweep(self, *args, **kwargs):
         """
         Bspline 3D is used as path for sweeping given section through it.
 
         :return:
         """
+        frenet = kwargs.get("frenet", False)
+        if frenet:
+            raise NotImplementedError
         new_faces = []
         tangents = []
-        section_contour2d, _ = args
+        section_contour2d, frame = args
+        section_contour3d = section_contour2d.to_3d(frame.origin, frame.u, frame.v)
+
         points = self.points
         for k, _ in enumerate(points):
             position = k / (len(points) - 1)
             tangents.append(self.unit_direction_vector(position * self.length()))
-
-        contours = []
-        for point, tan in zip(points, tangents):
+        normal = tangents[0].deterministic_unit_normal_vector()
+        v_vector = tangents[0].cross(normal)
+        section_contour2d = section_contour3d.to_2d(points[0], normal, v_vector)
+        contours = [section_contour2d.to_3d(points[0], normal, v_vector)]
+        for point, tan in zip(points[1:], tangents[1:]):
             normal = tan.deterministic_unit_normal_vector()
             v_vector = tan.cross(normal)
             section_contour3d = section_contour2d.to_3d(point, normal, v_vector)
@@ -5286,6 +5378,27 @@ class BSplineCurve3D(BSplineCurve):
         :return: edge split.
         """
         return self.trim(point1, point2)
+
+    def move_frame_along(self, frame, *args, **kwargs):
+        """Moves frame along the edge."""
+        origin = self.start
+        w = self.unit_direction_vector(0.0)
+        u = self.unit_normal_vector(0.0)
+        if not u:
+            u = w.deterministic_unit_normal_vector()
+        v = w.cross(u)
+        local_frame_a = volmdlr.Frame3D(origin, u, v, w)
+
+        origin = self.end
+        w = self.unit_direction_vector(self.length())
+        u = self.unit_normal_vector(self.length())
+        if not u:
+            u = w.deterministic_unit_normal_vector()
+        v = w.cross(u)
+
+        local_frame_b = volmdlr.Frame3D(origin, u, v, w)
+        return volmdlr.core.map_primitive_with_initial_and_final_frames(frame, local_frame_a, local_frame_b)
+
 
 class BezierCurve3D(BSplineCurve3D):
     """
@@ -5813,23 +5926,27 @@ class Arc3D(ArcMixin, Edge):
         """Creates the corresponding complementary arc."""
         return Arc3D(self.circle, self.end, self.start)
 
-    def sweep(self, *args):
+    def sweep(self, *args, **kwargs):
         """
         Arc 3D is used as path for sweeping given section through it.
 
         :return:
         """
+        frenet = kwargs.get("frenet", False)
+        if frenet:
+            raise NotImplementedError
         new_faces = []
-        section_contour2d, section_contour3d = args
-        if section_contour3d is None:
-            start_tangent = self.unit_direction_vector(0.)
-            normal = self.unit_normal_vector(0.)
-            tangent_normal_orthonormal = start_tangent.cross(normal)
-            section_contour3d = section_contour2d.to_3d(self.start, normal, tangent_normal_orthonormal)
+        section_contour2d, frame = args
+        section_contour3d = section_contour2d.to_3d(self.start, frame.u, frame.v)
         for contour_primitive in section_contour3d.primitives:
             new_faces.extend(contour_primitive.revolution(
                 self.circle.center, self.circle.normal, self.angle))
         return new_faces
+
+    def move_frame_along(self, frame):
+        """Move frame along edge."""
+        new_frame = frame.rotation(self.center, self.circle.normal, self.angle)
+        return new_frame
 
 
 class FullArc3D(FullArcMixin, Arc3D):

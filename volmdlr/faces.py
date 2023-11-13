@@ -152,7 +152,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.outer_contour3d.bounding_box
 
     def area(self):
-        """Computes the area of the surface2d."""
+        """Computes the area of the surface 2d."""
         return self.surface2d.area()
 
     @classmethod
@@ -609,6 +609,20 @@ class Face3D(volmdlr.core.Primitive3D):
         for edge1 in self.outer_contour3d.primitives:
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
+                for point in intersection_points:
+                    if not volmdlr.core.point_in_list(point, intersections_points):
+                        intersections_points.append(point)
+
+        return intersections_points
+
+    def face_border_intersections(self, face2):
+        """
+        Returns the intersections of the face outer and inner contour with other given face.
+        """
+        intersections_points = []
+        for contour in [self.outer_contour3d] + self.inner_contours3d:
+            for edge1 in contour.primitives:
+                intersection_points = face2.edge_intersections(edge1)
                 for point in intersection_points:
                     if not volmdlr.core.point_in_list(point, intersections_points):
                         intersections_points.append(point)
@@ -1376,12 +1390,10 @@ class PlaneFace3D(Face3D):
         face2_plane_intersections = planeface.surface3d.plane_intersections(self.surface3d)
         if not face2_plane_intersections:
             return []
-        points_intersections = []
-        for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d + \
-                planeface.inner_contours3d:
-            for intersection in contour.line_intersections(face2_plane_intersections[0]):
-                if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
-                    points_intersections.append(intersection)
+        points_intersections = self.face_border_intersections(planeface)
+        for point in planeface.face_border_intersections(self):
+            if not volmdlr.core.point_in_list(point, points_intersections):
+                points_intersections.append(point)
         points_intersections = face2_plane_intersections[0].sort_points_along_curve(points_intersections)
         planeface_intersections = []
         for point1, point2 in zip(points_intersections[:-1], points_intersections[1:]):
@@ -1639,6 +1651,10 @@ class PlaneFace3D(Face3D):
         return [self.__class__(self.surface3d, surface2d) for surface2d in list_surfaces]
 
     def check_inner_contours(self, face):
+        """
+        Checks face inner contours.
+
+        """
         c_inners_1 = self.surface2d.inner_contours
         c_inners_2 = [self.surface3d.contour3d_to_2d(inner) for inner in face.inner_contours3d]
         inside = set()
@@ -2914,12 +2930,14 @@ class ExtrusionFace3D(Face3D):
         return number_points_x, number_points_y
 
     @classmethod
-    def from_surface_rectangular_cut(cls, extrusion_surface3d, x1: float = 0.0, x2: float = 1.0,
-                                     y1: float = 0.0, y2: float = 1.0, name: str = ''):
+    def from_surface_rectangular_cut(cls, extrusion_surface3d: surfaces.ExtrusionSurface3D, x1: float = 0.0,
+                                     x2: float = 0.0, y1: float = 0.0, y2: float = 1.0, name: str = ''):
         """
         Cut a rectangular piece of the ExtrusionSurface3D object and return a ExtrusionFace3D object.
 
         """
+        if not x2:
+            x2 = extrusion_surface3d.edge.length()
         p1 = volmdlr.Point2D(x1, y1)
         p2 = volmdlr.Point2D(x2, y1)
         p3 = volmdlr.Point2D(x2, y2)

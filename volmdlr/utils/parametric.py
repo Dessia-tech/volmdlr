@@ -373,13 +373,13 @@ def find_parametric_point_at_singularity(edge, abscissa, singularity_line, domai
 
 
 def is_isocurve(points, tol: float = 1e-6):
-    """Test if the parametric points of the edge fits into a line segmenent."""
+    """Test if the parametric points of the edge fits into a line segment."""
     linesegment = vme.LineSegment2D(points[0], points[-1])
     return all(linesegment.point_belongs(point, tol) for point in points)
 
 
 def verify_repeated_parametric_points(points):
-    """Verify repeatead parametric points from point3d_to_2d method."""
+    """Verify repeated parametric points from point3d_to_2d method."""
     set_points = set(points)
     if len(set_points) < len(points):
         if points[0].is_close(points[-1]):

@@ -158,6 +158,16 @@ class TestCircle2D(unittest.TestCase):
         for point, expected_point in zip(circle2d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
+        rotated_arc2d = self.circle2d.rotation(self.circle2d.center, math.pi / 4)
+        circle2d_points = rotated_arc2d.discretization_points(number_points=5)
+        expected_points = [volmdlr.Point2D(1/math.sqrt(2), 1/math.sqrt(2)),
+                           volmdlr.Point2D(-1/math.sqrt(2), 1/math.sqrt(2)),
+                           volmdlr.Point2D(-1/math.sqrt(2), -1/math.sqrt(2)),
+                           volmdlr.Point2D(1/math.sqrt(2), -1/math.sqrt(2)),
+                           volmdlr.Point2D(1/math.sqrt(2), 1/math.sqrt(2))]
+        for point, expected_point in zip(circle2d_points, expected_points):
+            self.assertTrue(point.is_close(expected_point))
+
     def test_translation(self):
         translated_arc2d = self.circle2d.translation(volmdlr.Vector2D(1, 1))
         circle2d_points = translated_arc2d.discretization_points(number_points=5)

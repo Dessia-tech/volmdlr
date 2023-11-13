@@ -278,6 +278,18 @@ class TestArc3D(unittest.TestCase):
         self.assertTrue(min_dist_point2.is_close(
             volmdlr.Point3D(-1.2905737351257018, -5.9617650891813065, -0.9872550297271026)))
 
+    def test_move_frame_along(self):
+        origin = self.arc3d.start
+        w = self.arc3d.unit_direction_vector(0.)
+        u = self.arc3d.unit_normal_vector(0.)
+        if not u:
+            u = w.deterministic_unit_normal_vector()
+        v = w.cross(u)
+        starting_frame = volmdlr.Frame3D(origin, u, v, w)
+        ending_frame = self.arc3d.move_frame_along(starting_frame)
+        self.assertTrue(ending_frame.origin.is_close(self.arc3d.end))
+        self.assertTrue(ending_frame.w.is_close(self.arc3d.unit_direction_vector(self.arc3d.length())))
+
 
 if __name__ == '__main__':
     unittest.main()
