@@ -994,7 +994,9 @@ class Assembly(dc.PhysicalObject):
         for mesh in babylon_data["meshes"]:
             positions = mesh["positions"]
             all_positions.extend(positions)
-
+        for line in babylon_data["lines"]:
+            points = line["points"]
+            all_positions.extend(points)
         # Convert to a NumPy array and reshape
         positions_array = npy.array(all_positions).reshape(-1, 3)
 
@@ -1180,6 +1182,7 @@ class Compound(dc.PhysicalObject):
 
         babylon_data = {'meshes': [],
                         'lines': []}
+        display_points = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
@@ -1191,16 +1194,25 @@ class Compound(dc.PhysicalObject):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
+            elif isinstance(primitive, volmdlr.Point3D):
+                display_points.append([*primitive])
 
         # Compute max length in each direction
         all_positions = []
         for mesh in babylon_data["meshes"]:
             positions = mesh["positions"]
             all_positions.extend(positions)
-
+        for line in babylon_data["lines"]:
+            points = line["points"]
+            all_positions.extend(points)
+        if display_points:
+            all_positions.extend(display_points)
+        if not all_positions:
+            print(True)
         # Convert to a NumPy array and reshape
         positions_array = npy.array(all_positions).reshape(-1, 3)
-
+        if not positions_array:
+            print(True)
         # Compute min and max for each dimension
         min_vals = positions_array.min(axis=0)
         max_vals = positions_array.max(axis=0)
@@ -1401,6 +1413,7 @@ class VolumeModel(dc.PhysicalObject):
 
         babylon_data = {'meshes': [],
                         'lines': []}
+        display_points = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
@@ -1412,13 +1425,19 @@ class VolumeModel(dc.PhysicalObject):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
+            elif isinstance(primitive, volmdlr.Point3D):
+                display_points.append([*primitive])
 
         # Compute max length in each direction
         all_positions = []
         for mesh in babylon_data["meshes"]:
             positions = mesh["positions"]
             all_positions.extend(positions)
-
+        for line in babylon_data["lines"]:
+            points = line["points"]
+            all_positions.extend(points)
+        if display_points:
+            all_positions.extend(display_points)
         # Convert to a NumPy array and reshape
         positions_array = npy.array(all_positions).reshape(-1, 3)
 

@@ -4213,7 +4213,9 @@ class Contour3D(ContourMixin, Wire3D):
                 return contour_reordered
         list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         if list_edges:
-            return cls(list_edges, name=name)
+            contour = cls(list_edges, name=name)
+            if contour.is_ordered(1e-3):
+                return contour
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
