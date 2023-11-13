@@ -3680,7 +3680,7 @@ cdef bint line_point_belongs_with_points(Point3D line_start, Point3D line_end, P
     """Defines a line from two points and verifies if point is over this line."""
     cdef Vector3D vector1 = point - line_start
     cdef Vector3D vector2 = line_end - line_start
-    cdef double dist =  vector1.cross(vector2).norm() / vector2.norm()
+    cdef double dist = vector1.cross(vector2).norm() / vector2.norm()
     if dist < 1e-6:
         return True
     return False
