@@ -5276,6 +5276,12 @@ class BSplineCurve3D(BSplineCurve):
             return []
         return self._generic_edge_intersections(arc, abs_tol)
 
+    def curve_intersections(self, curve, abs_tol: float = 1e-6):
+        if self.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
+            return []
+        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(curve, self, abs_tol=abs_tol)
+        return intersections_points
+
     def circle_intersections(self, circle, abs_tol: float = 1e-6):
         if self.bounding_box.distance_to_bbox(circle.bounding_box) > abs_tol:
             return []
