@@ -173,8 +173,8 @@ class TestPlane3D(unittest.TestCase):
                            volmdlr.Point3D(2, 3, 2.5))
         arc_intersections2 = plane.arc_intersections(arc2)
         self.assertEqual(len(arc_intersections2), 2)
-        self.assertTrue(arc_intersections2[1].is_close(volmdlr.Point3D(2.0, 1.133974596216, 3.0)))
-        self.assertTrue(arc_intersections2[0].is_close(volmdlr.Point3D(2.0, 2.866025403784, 3.0)))
+        self.assertTrue(arc_intersections2[0].is_close(volmdlr.Point3D(2.0, 1.133974596216, 3.0)))
+        self.assertTrue(arc_intersections2[1].is_close(volmdlr.Point3D(2.0, 2.866025403784, 3.0)))
 
     def test_bspline_intersections(self):
         plane = Plane3D(volmdlr.OZXY)
@@ -224,14 +224,14 @@ class TestPlane3D(unittest.TestCase):
         self.assertEqual(rotated_plane1.frame, expected_frame)
 
     def test_contour3d_to_2d(self):
-        plane = surfaces.Plane3D.load_from_file(os.path.join(folder, "plane_parametric_operation_bug_surface.json"))
-        contour3d = wires.Contour3D.load_from_file(os.path.join(folder, "plane_parametric_operation_bug_contour.json"))
+        plane = surfaces.Plane3D.from_json(os.path.join(folder, "plane_parametric_operation_bug_surface.json"))
+        contour3d = wires.Contour3D.from_json(os.path.join(folder, "plane_parametric_operation_bug_contour.json"))
         contour = plane.contour3d_to_2d(contour3d)
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), 8.120300532917004e-06)
 
-        plane = surfaces.Plane3D.load_from_file(os.path.join(folder, "planesurface_arc3d_to_2d.json"))
-        contour3d = wires.Contour3D.load_from_file(os.path.join(folder, "planesurface_arc3d_to_2d_contour.json"))
+        plane = surfaces.Plane3D.from_json(os.path.join(folder, "planesurface_arc3d_to_2d.json"))
+        contour3d = wires.Contour3D.from_json(os.path.join(folder, "planesurface_arc3d_to_2d_contour.json"))
         contour = plane.contour3d_to_2d(contour3d)
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), math.pi * 0.202**2, 4)

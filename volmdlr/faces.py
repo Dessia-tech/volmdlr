@@ -152,7 +152,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.outer_contour3d.bounding_box
 
     def area(self):
-        """Computes the area of the surface2d."""
+        """Computes the area of the surface 2d."""
         return self.surface2d.area()
 
     @classmethod
@@ -190,9 +190,7 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
-        if step_id in (949272, 4093176):
-            print(True)
-        return face.from_contours3d(surface, contours, step_id)
+        return face.from_contours3d(surface, contours, name)
 
     @classmethod
     def from_contours3d(cls, surface, contours3d: List[volmdlr.wires.Contour3D], name: str = ''):
@@ -1651,6 +1649,10 @@ class PlaneFace3D(Face3D):
         return [self.__class__(self.surface3d, surface2d) for surface2d in list_surfaces]
 
     def check_inner_contours(self, face):
+        """
+        Checks face inner contours.
+
+        """
         c_inners_1 = self.surface2d.inner_contours
         c_inners_2 = [self.surface3d.contour3d_to_2d(inner) for inner in face.inner_contours3d]
         inside = set()
