@@ -1603,7 +1603,10 @@ class MatrixBasedVoxelization(Voxelization):
         rounded_voxel_centers = map(tuple, np.round(voxel_centers, DECIMALS))
 
         # Fetch the layer value for each voxel center using indices and create the dictionary
-        layers_dict = {center: layer_values[tuple(ind)] for center, ind in zip(rounded_voxel_centers, indices)}
+        layers_dict = {
+            center: round_to_digits(layer_values[tuple(ind)] * self.voxel_size, DECIMALS)
+            for center, ind in zip(rounded_voxel_centers, indices)
+        }
 
         return layers_dict
 
@@ -1617,12 +1620,12 @@ class MatrixBasedVoxelization(Voxelization):
 
                     if self.matrix[x][y][z]:
                         while (
-                                0 <= x - count
-                                and x + count < self.matrix.shape[0]
-                                and 0 <= y - count
-                                and y + count < self.matrix.shape[1]
-                                and 0 <= z - count
-                                and z + count < self.matrix.shape[2]
+                            0 <= x - count
+                            and x + count < self.matrix.shape[0]
+                            and 0 <= y - count
+                            and y + count < self.matrix.shape[1]
+                            and 0 <= z - count
+                            and z + count < self.matrix.shape[2]
                         ):
                             cube_slice = self.matrix[
                                 slice(x - count, x + count + 1),
@@ -1639,6 +1642,52 @@ class MatrixBasedVoxelization(Voxelization):
                     result[x, y, z] = count
 
         return result
+
+    def to_inner_growing_point_based_voxelizations(
+        self, layers_minimal_thickness: float
+    ) -> List["PointBasedVoxelization"]:
+        """
+        Convert the PointBasedVoxelization to multiple PointBasedVoxelization, with different size.
+
+        The more the voxelization is inside, the more its voxel size become bigger.
+
+        :param layers_minimal_thickness: The minimal thickness of each layer.
+        :type layers_minimal_thickness: float
+
+        :return: A list of PointBasedVoxelization representing the inner growing voxelization.
+        :rtype: List[PointBasedVoxelization]
+        """
+        i = 2
+        inner_growing_voxel_centers = (
+            self.to_point_based_voxelization()
+            .to_octree_based_voxelization()
+            ._get_inner_growing_voxel_centers(layers_minimal_thickness, self.layers_to_voxel_centers())
+        )
+
+        while len(inner_growing_voxel_centers.keys()) == i:
+            # Still making the voxelization inner growing
+            max_voxel_size = max(inner_growing_voxel_centers.keys())
+            i += 1
+
+            new_point_based_voxelization = PointBasedVoxelization(
+                inner_growing_voxel_centers[max_voxel_size], max_voxel_size
+            )
+            for voxel_size, voxel_centers in (
+                new_point_based_voxelization.to_octree_based_voxelization()
+                ._get_inner_growing_voxel_centers(
+                    layers_minimal_thickness,
+                    new_point_based_voxelization.to_matrix_based_voxelization().layers_to_voxel_centers(),
+                )
+                .items()
+            ):
+                inner_growing_voxel_centers[voxel_size] = voxel_centers
+
+        point_based_voxelizations = []
+
+        for voxel_size, voxel_centers in inner_growing_voxel_centers.items():
+            point_based_voxelizations.append(PointBasedVoxelization(voxel_centers, voxel_size))
+
+        return point_based_voxelizations
 
 
 class OctreeBasedVoxelization(Voxelization):
