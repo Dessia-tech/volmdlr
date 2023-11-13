@@ -66,21 +66,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### core_compiled
 - Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
 
-
 ### Refactor
-
-#### faces.py
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
-
-#### curves.py
-- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
-#### edges.py
-- Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 - babylon_data: avoid using bounding_box for performance
+- 
+#### edges.py
+- LineSegment2D/3D: For performance and memory efficiency reasons, the line attribute from which the line segment was defined was converted to a property.
 
 #### primitives3d.py
 - Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
-
 
 ### Changed
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
