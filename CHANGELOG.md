@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
+- babylon_data: avoid using bounding_box for performance
 
 #### primitives3d.py
 - Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
