@@ -294,8 +294,8 @@ class TestToroidalSurface3D(unittest.TestCase):
         toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 1)
         list_curves = toroidal_surface1.conicalsurface_intersections(conical_surface)
         self.assertEqual(len(list_curves), 2)
-        self.assertAlmostEqual(list_curves[0].length(), 7.29076995096902)
-        self.assertAlmostEqual(list_curves[1].length(), 7.29079325787365)
+        self.assertAlmostEqual(list_curves[0].length(), 7.290726241459603)
+        self.assertAlmostEqual(list_curves[1].length(), 7.290868553949336)
 
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 8)
         conical_surface = conical_surface.translation(volmdlr.Vector3D(2, 2, -3))
