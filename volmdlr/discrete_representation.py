@@ -1616,30 +1616,36 @@ class MatrixBasedVoxelization(Voxelization):
         for x in range(self.matrix.shape[0]):
             for y in range(self.matrix.shape[1]):
                 for z in range(self.matrix.shape[2]):
-                    count = 0
+                    if not self.matrix[x][y][z]:
+                        result[x, y, z] = 0
+                        continue
 
-                    if self.matrix[x][y][z]:
-                        while (
-                            0 <= x - count
-                            and x + count < self.matrix.shape[0]
-                            and 0 <= y - count
-                            and y + count < self.matrix.shape[1]
-                            and 0 <= z - count
-                            and z + count < self.matrix.shape[2]
-                        ):
-                            cube_slice = self.matrix[
-                                slice(x - count, x + count + 1),
-                                slice(y - count, y + count + 1),
-                                slice(z - count, z + count + 1),
-                            ]
+                    count = 1
+                    size = 1
 
-                            # If any False is found in the current cube, break the loop
-                            if not np.all(cube_slice):
-                                break
+                    while (
+                        0 <= x - count
+                        and x + count < self.matrix.shape[0]
+                        and 0 <= y - count
+                        and y + count < self.matrix.shape[1]
+                        and 0 <= z - count
+                        and z + count < self.matrix.shape[2]
+                    ):
+                        cube_slice = self.matrix[
+                            slice(x - count, x + count + 1),
+                            slice(y - count, y + count + 1),
+                            slice(z - count, z + count + 1),
+                        ]
 
-                            count += 1
+                        # If any False is found in the current cube, break the loop
+                        if not np.all(cube_slice):
+                            break
 
-                    result[x, y, z] = count
+
+                        count += 1
+                        size += 2
+
+                    result[x, y, z] = count - 1
 
         return result
 
@@ -2614,7 +2620,7 @@ class OctreeBasedVoxelization(Voxelization):
         """
         if not layer_dict:
             layer_dict = self.to_point_based_voxelization().voxel_centers_distances_to_faces()
-        layers_minimal_thickness = round_to_digits(layers_minimal_thickness + 0.49 * self.voxel_size, DECIMALS)
+        # layers_minimal_thickness = round_to_digits(layers_minimal_thickness + 0.49 * self.voxel_size, DECIMALS)
 
         return self._get_inner_growing_leaf_centers(
             0,
