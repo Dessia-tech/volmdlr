@@ -4849,12 +4849,14 @@ class BSplineCurve3D(BSplineCurve):
 
     @property
     def bounding_box(self):
+        """Returns bounding box."""
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
 
     @bounding_box.setter
     def bounding_box(self, new_bounding_box):
+        """Sets bounding box."""
         self._bbox = new_bounding_box
 
     def _bounding_box(self):
