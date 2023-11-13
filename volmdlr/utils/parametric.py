@@ -363,3 +363,25 @@ def find_parametric_point_at_singularity(edge, reference_point, singularity_line
     direction_vector = edge.direction_vector(abscissa_before_singularity)
     direction_line = curves.Line2D(reference_point, reference_point + direction_vector)
     return direction_line.line_intersections(singularity_line)[0]
+
+
+def is_isocurve(points, tol: float = 1e-6):
+    """Test if the parametric points of the edge fits into a line segment."""
+    linesegment = vme.LineSegment2D(points[0], points[-1])
+    return all(linesegment.point_belongs(point, tol) for point in points)
+
+
+def verify_repeated_parametric_points(points):
+    """Verify repeated parametric points from point3d_to_2d method."""
+    set_points = set(points)
+    if len(set_points) < len(points):
+        if points[0].is_close(points[-1]):
+            print("Periodic brep? NotImplemented in utils.parametric.py verify_repeated_parametric_points.")
+        new_points = []
+        verification_set = set()
+        for point in points:
+            if point not in verification_set:
+                new_points.append(point)
+                verification_set.add(point)
+        return new_points
+    return points

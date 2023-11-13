@@ -152,7 +152,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.outer_contour3d.bounding_box
 
     def area(self):
-        """Computes the area of the surface2d."""
+        """Computes the area of the surface 2d."""
         return self.surface2d.area()
 
     @classmethod
@@ -1649,6 +1649,10 @@ class PlaneFace3D(Face3D):
         return [self.__class__(self.surface3d, surface2d) for surface2d in list_surfaces]
 
     def check_inner_contours(self, face):
+        """
+        Checks face inner contours.
+
+        """
         c_inners_1 = self.surface2d.inner_contours
         c_inners_2 = [self.surface3d.contour3d_to_2d(inner) for inner in face.inner_contours3d]
         inside = set()
@@ -2924,12 +2928,14 @@ class ExtrusionFace3D(Face3D):
         return number_points_x, number_points_y
 
     @classmethod
-    def from_surface_rectangular_cut(cls, extrusion_surface3d, x1: float = 0.0, x2: float = 1.0,
-                                     y1: float = 0.0, y2: float = 1.0, name: str = ''):
+    def from_surface_rectangular_cut(cls, extrusion_surface3d: surfaces.ExtrusionSurface3D, x1: float = 0.0,
+                                     x2: float = 0.0, y1: float = 0.0, y2: float = 1.0, name: str = ''):
         """
         Cut a rectangular piece of the ExtrusionSurface3D object and return a ExtrusionFace3D object.
 
         """
+        if not x2:
+            x2 = extrusion_surface3d.edge.length()
         p1 = volmdlr.Point2D(x1, y1)
         p2 = volmdlr.Point2D(x2, y1)
         p3 = volmdlr.Point2D(x2, y2)

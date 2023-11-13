@@ -1086,8 +1086,8 @@ class Circle2D(CircleMixin, ClosedCurve):
     This class inherits from `CircleMixin` and `Curve` classes,
     and provides methods to work with 2D circles.
 
-    :param center: The center point of the circle.
-    :type center: volmdlr.Point2D
+    :param frame: The 2D frame for the circle.
+    :type frame: volmdlr.Frame2D
     :param radius: The radius of the circle.
     :type radius: float.
     :param name: The name of the circle. Defaults to ''.
@@ -1509,6 +1509,8 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param angle: angle rotation.
         :return: a new rotated Circle2D.
         """
+        if center.is_close(self.center):
+            return Circle2D(self.frame.rotation(center, angle, rotate_basis=True), self.radius)
         return Circle2D(self.frame.rotation(center, angle), self.radius)
 
     def translation(self, offset: volmdlr.Vector2D):

@@ -42,6 +42,30 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertTrue(test2.start.is_close(volmdlr.Point2D(-0.28681306221029024,  -math.pi)))
         self.assertTrue(test2.end.is_close(volmdlr.Point2D(-0.28681611209686064, -0.5 * math.pi)))
 
+        surface = surfaces.ToroidalSurface3D.load_from_file(
+            os.path.join(folder, "degenerated_toroidalsurface.json"))
+        arc3d = edges.Arc3D.load_from_file(
+            os.path.join(folder, "degenerated_toroidalsurface_arc3d_undefined_end.json"))
+        brep_primitive = surface.arc3d_to_2d(arc3d)[0]
+        inverse_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
+        self.assertAlmostEqual(brep_primitive.length(), 0.1993422098906592, 3)
+        self.assertEqual(brep_primitive.end.y, -math.pi)
+        self.assertAlmostEqual(arc3d.length(), inverse_prof.length(), 5)
+        self.assertTrue(arc3d.start.is_close(inverse_prof.start))
+        self.assertTrue(arc3d.end.is_close(inverse_prof.end))
+
+        surface = surfaces.ToroidalSurface3D.load_from_file(
+            os.path.join(folder, "degenerated_toroidalsurface_2.json"))
+        arc3d = edges.Arc3D.load_from_file(
+            os.path.join(folder, "degenerated_toroidalsurface_2_arc3d_undefined_end.json"))
+        brep_primitive = surface.arc3d_to_2d(arc3d)[0]
+        inverse_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
+        self.assertAlmostEqual(brep_primitive.length(), 0.5 * math.pi, 3)
+        self.assertEqual(brep_primitive.end.y, math.pi)
+        self.assertAlmostEqual(arc3d.length(), inverse_prof.length(), 4)
+        self.assertTrue(arc3d.start.is_close(inverse_prof.start, 5e-5))
+        self.assertTrue(arc3d.end.is_close(inverse_prof.end))
+
     def test_bsplinecurve3d_to_2d(self):
         control_points = [volmdlr.Point3D(-0.006429000000000001, 0.000765110438227, -0.0002349369830163),
                           volmdlr.Point3D(-0.006429000000000001, 0.0007527699876436001, -0.0002071780906932),
@@ -63,6 +87,17 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertTrue(test.end.is_close(volmdlr.Point2D(1.4449243890313308, 1.5707974196708867)))
 
         self.assertTrue(inv_prof.end.is_close(bspline_curve3d.end))
+
+        surface = surfaces.ToroidalSurface3D.load_from_file(
+            os.path.join(folder, "toroidalsurface_bsplinecurve3d_to_2d.json"))
+        bspline_curve3d = edges.BSplineCurve3D.load_from_file(
+            os.path.join(folder, "toroidalsurface_bsplinecurve3d_to_2d_curve.json"))
+        brep_primitive = surface.bsplinecurve3d_to_2d(bspline_curve3d)[0]
+        inverse_prof = surface.bsplinecurve2d_to_3d(brep_primitive)[0]
+        self.assertAlmostEqual(brep_primitive.length(), 0.013265398542202636, 3)
+        self.assertAlmostEqual(bspline_curve3d.length(), inverse_prof.length(), 5)
+        self.assertTrue(bspline_curve3d.start.is_close(inverse_prof.start))
+        self.assertTrue(bspline_curve3d.end.is_close(inverse_prof.end))
 
     def test_point_projection(self):
         test_points = [volmdlr.Point3D(-2.0, -2.0, 0.0), volmdlr.Point3D(0.0, -2.0, 0.0),
@@ -120,15 +155,14 @@ class TestToroidalSurface3D(unittest.TestCase):
                              [12.566370614359176, 12.566370614359176], [9.548769483572569, 9.548769280167237],
                              [8.513205671975072, 8.51320566634381], [7.859515047042802, 7.859515075442373]]
         expected_results2 = [18.007768707061828, 7.124972521656522]
-        expected_results3 = [[6.283185307179586, 6.283185307179586], [6.2875793772184725, 6.287579377218557],
-                             [6.303991082454418, 6.303981654363125], [6.332387134923383, 6.3323811326087585],
-                             [6.374210571790631, 6.374210774528401], [6.432095361630922, 6.4321006924390485],
-                             [6.51050477556268, 6.510529664273063], [6.617597989403093, 6.617597989793687],
-                             [6.770805854337385, 6.770800285176702], [7.027657015730458, 7.027692648394045],
-                             [14.078296063569498], [13.573578763858913], [13.223889549839548],
-                             [12.919842407404978], [12.62748433654155], [12.329939405268325], [12.016612404313642],
-                             [11.679635218929635], [11.312287686519104], [10.908095813062381]]
-
+        expected_results3 = [[6.283185307179586, 6.283185307179586], [6.287579377218473, 6.287579377218561],
+                             [6.303991082454401, 6.303981654363132], [6.332387134923383, 6.332381132608756],
+                             [6.374210571790677, 6.3742107745283585], [6.432095361630874, 6.432100692438905],
+                             [6.510504775562589, 6.510529664273001], [6.617597989401415, 6.617597989788317],
+                             [6.770805854338129, 6.770800285177503], [7.027657015729542, 7.027692648393067],
+                             [14.07829606357036], [13.573578763860883], [13.223889549839656], [12.919842407403317],
+                             [12.627484336541986], [12.329939405268362], [12.016612404313376], [11.679635218929377],
+                             [11.312287686519083], [10.908095813062298]]
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         # Test 1
         plane1 = surfaces.Plane3D(volmdlr.OXYZ)
@@ -143,8 +177,8 @@ class TestToroidalSurface3D(unittest.TestCase):
         plane2 = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0.5), volmdlr.X3D,
                                                   volmdlr.Y3D, volmdlr.Z3D))
         plane_intersections = toroidal_surface.plane_intersections(plane2)
-        self.assertAlmostEqual(plane_intersections[0].length(), expected_results2[0])
-        self.assertAlmostEqual(plane_intersections[1].length(), expected_results2[1])
+        self.assertAlmostEqual(plane_intersections[0].length(), expected_results2[0], 6)
+        self.assertAlmostEqual(plane_intersections[1].length(), expected_results2[1], 6)
 
         # Test 3
         plane3 = surfaces.Plane3D(volmdlr.OYZX)
@@ -152,13 +186,13 @@ class TestToroidalSurface3D(unittest.TestCase):
             plane = plane3.translation(n * volmdlr.X3D)
             plane_intersections = toroidal_surface.plane_intersections(plane)
             for intersection, expected_result in zip(plane_intersections, expected_results3[i]):
-                self.assertAlmostEqual(intersection.length(), expected_result, 5)
+                self.assertAlmostEqual(intersection.length(), expected_result, 6)
         # Test 4
         plane4 = surfaces.Plane3D(volmdlr.OYZX)
         plane4 = plane4.translation(volmdlr.X3D)
         plane_intersections = toroidal_surface.plane_intersections(plane4)
         for intersection, expected_result in zip(plane_intersections, [7.41522411794327, 7.415221958099495]):
-            self.assertAlmostEqual(intersection.length(), expected_result, 5)
+            self.assertAlmostEqual(intersection.length(), expected_result, 6)
 
         # Test 5
         plane5 = plane4.translation(volmdlr.X3D*3.1)
@@ -183,7 +217,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
         inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(), 14.655782729046713)
+        self.assertAlmostEqual(inters[0].length(),  14.655770008132851)
         # Test2
         expected_results = [[9.424777944721708, 9.424777944721708], [6.283185307179586], []]
         frame = volmdlr.OXYZ
@@ -196,11 +230,11 @@ class TestToroidalSurface3D(unittest.TestCase):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
         #Test3
-        expected_results = [[17.15506758286444], [17.448540558220706], [8.189484417240463, 11.901169177182348],
-                            [9.342190109936682, 6.783364128923859, 6.626602826338277],
-                            [8.452553763402701, 11.78286992164854], [18.761707374808136],
-                            [6.937784444208925, 15.192487360871866], [19.041784163073043], [19.71219867853983],
-                            [9.106328823638846, 6.606873888481998, 6.606873993867185]]
+        expected_results = [[17.155074987011552], [17.44853787952674], [8.189772236153868, 11.901224672056669],
+                            [9.342187578574018, 6.783271713898256, 6.626623383909723],
+                            [8.456050528910787, 11.779922655342526], [18.761709126656164],
+                            [6.937785638349316, 15.19780774312511], [19.041791161138732], [19.71218041317398],
+                            [9.106324562479454, 6.606638965616053, 6.606876915155911]]
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
