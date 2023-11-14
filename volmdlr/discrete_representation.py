@@ -779,6 +779,29 @@ class PointBasedVoxelization(Voxelization):
         return cls(voxel_centers=voxels, voxel_size=voxel_size, name=name)
 
     @classmethod
+    def from_mesh_data(
+        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
+    ) -> "PointBasedVoxelization":
+        """
+        Create a PointBasedVoxelization from mesh data.
+
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
+        :param voxel_size: The size of each voxel.
+        :type voxel_size: float
+        :param name: Optional name for the voxelization.
+        :type name: str
+
+        :return: A voxelization created from the mesh data.
+        :rtype: PointBasedVoxelization
+        """
+        voxels = MatrixBasedVoxelization.from_mesh_data(vertices, faces, voxel_size).get_voxel_centers()
+
+        return cls(voxel_centers=voxels, voxel_size=voxel_size, name=name)
+
+    @classmethod
     def from_matrix_based_voxelization(
         cls,
         matrix_based_voxelization: "MatrixBasedVoxelization",
@@ -1221,6 +1244,30 @@ class MatrixBasedVoxelization(Voxelization):
         :rtype: MatrixBasedVoxelization
         """
         triangles = Voxelization._volume_model_to_triangles(volume_model)
+        matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
+
+        return cls(matrix, matrix_origin_center, voxel_size, name).crop_matrix()
+
+    @classmethod
+    def from_mesh_data(
+        cls, vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]], voxel_size: float, name: str = ""
+    ) -> "MatrixBasedVoxelization":
+        """
+        Create a MatrixBasedVoxelization from mesh data.
+
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
+        :param voxel_size: The size of each voxel.
+        :type voxel_size: float
+        :param name: Optional name for the voxelization.
+        :type name: str
+
+        :return: A voxelization created from the mesh data.
+        :rtype: MatrixBasedVoxelization
+        """
+        triangles = Voxelization._mesh_data_to_triangles(vertices, faces)
         matrix, matrix_origin_center = triangles_to_voxel_matrix(triangles, voxel_size)
 
         return cls(matrix, matrix_origin_center, voxel_size, name).crop_matrix()
