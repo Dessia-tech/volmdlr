@@ -1046,8 +1046,8 @@ class PointBasedVoxelization(Voxelization):
         :rtype: List[PointBasedVoxelization]
         """
         i = 2
-        inner_growing_voxel_centers = self.to_octree_based_voxelization()._get_inner_growing_voxel_centers(
-            layers_minimal_thickness, self.voxel_centers_distances_to_faces()
+        inner_growing_voxel_centers = self.to_octree_based_voxelization().get_inner_growing_voxel_centers(
+            layers_minimal_thickness, self.to_matrix_based_voxelization().layers_to_voxel_centers()
         )
 
         while len(inner_growing_voxel_centers.keys()) == i:
@@ -1060,8 +1060,9 @@ class PointBasedVoxelization(Voxelization):
             )
             for voxel_size, voxel_centers in (
                 new_point_based_voxelization.to_octree_based_voxelization()
-                ._get_inner_growing_voxel_centers(
-                    layers_minimal_thickness, new_point_based_voxelization.voxel_centers_distances_to_faces()
+                .get_inner_growing_voxel_centers(
+                    layers_minimal_thickness,
+                    new_point_based_voxelization.to_matrix_based_voxelization().layers_to_voxel_centers(),
                 )
                 .items()
             ):
@@ -1069,6 +1070,7 @@ class PointBasedVoxelization(Voxelization):
 
         point_based_voxelizations = []
 
+        # Create a list of PointBasedVoxelization using the inner growing voxel centers
         for voxel_size, voxel_centers in inner_growing_voxel_centers.items():
             point_based_voxelizations.append(PointBasedVoxelization(voxel_centers, voxel_size))
 
@@ -1672,7 +1674,7 @@ class MatrixBasedVoxelization(Voxelization):
         inner_growing_voxel_centers = (
             self.to_point_based_voxelization()
             .to_octree_based_voxelization()
-            ._get_inner_growing_voxel_centers(layers_minimal_thickness, self.layers_to_voxel_centers())
+            .get_inner_growing_voxel_centers(layers_minimal_thickness, self.layers_to_voxel_centers())
         )
 
         while len(inner_growing_voxel_centers.keys()) == i:
@@ -1685,7 +1687,7 @@ class MatrixBasedVoxelization(Voxelization):
             )
             for voxel_size, voxel_centers in (
                 new_point_based_voxelization.to_octree_based_voxelization()
-                ._get_inner_growing_voxel_centers(
+                .get_inner_growing_voxel_centers(
                     layers_minimal_thickness,
                     new_point_based_voxelization.to_matrix_based_voxelization().layers_to_voxel_centers(),
                 )
@@ -2275,7 +2277,7 @@ class OctreeBasedVoxelization(Voxelization):
         :rtype: List[PointBasedVoxelization]
         """
         i = 2
-        inner_growing_voxel_centers = self._get_inner_growing_voxel_centers(layers_minimal_thickness)
+        inner_growing_voxel_centers = self.get_inner_growing_voxel_centers(layers_minimal_thickness)
 
         while len(inner_growing_voxel_centers.keys()) == i:
             # Still making the voxelization inner growing
@@ -2286,7 +2288,7 @@ class OctreeBasedVoxelization(Voxelization):
                 OctreeBasedVoxelization.from_point_based_voxelization(
                     PointBasedVoxelization(inner_growing_voxel_centers[max_voxel_size], max_voxel_size)
                 )
-                ._get_inner_growing_voxel_centers(layers_minimal_thickness)
+                .get_inner_growing_voxel_centers(layers_minimal_thickness)
                 .items()
             ):
                 inner_growing_voxel_centers[voxel_size] = voxel_centers
@@ -2611,7 +2613,7 @@ class OctreeBasedVoxelization(Voxelization):
 
         return intersections_locations
 
-    def _get_inner_growing_voxel_centers(
+    def get_inner_growing_voxel_centers(
         self, layers_minimal_thickness: float, layer_dict: Dict[_Point3D, float] = None
     ) -> Dict[float, Set[_Point3D]]:
         """
