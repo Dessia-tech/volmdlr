@@ -70,7 +70,7 @@ class TestPointBasedVoxelizationCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_from_mesh_data(self):
-        stanford_bunny = DisplayTriangleShell3D.load_from_file("stanford_bunny.json")
+        stanford_bunny = DisplayTriangleShell3D.load_from_file("./stanford_bunny.json")
         voxelization = PointBasedVoxelization.from_mesh_data(stanford_bunny.positions, stanford_bunny.indices, 0.005)
 
         self.assertEqual(1735, len(voxelization))
