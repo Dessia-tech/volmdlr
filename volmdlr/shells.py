@@ -2016,7 +2016,7 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
         """
         Turns the normals of the closed shells faces always outwards.
 
-        :return: A new ClosedTriangleShell3D obejct having all faces normals pointing outwards.
+        :return: A new ClosedTriangleShell3D object having all faces normals pointing outwards.
         """
         new_faces = []
         for face in self.faces:
@@ -2030,7 +2030,7 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
         """
         Turns the normals of the closed shells faces always inwards.
 
-        :return: A new ClosedTriangleShell3D obejct having all faces normals pointing inwards.
+        :return: A new ClosedTriangleShell3D object having all faces normals pointing inwards.
         """
         new_faces = []
         for face in self.faces:
