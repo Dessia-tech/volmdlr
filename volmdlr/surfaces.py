@@ -4298,12 +4298,18 @@ class SphericalSurface3D(PeriodicalSurface):
         if phi > 0:
             line_positive_singularity = curves.Line2D(volmdlr.Point2D(-math.pi, 0.5 * math.pi),
                                                       volmdlr.Point2D(math.pi, 0.5 * math.pi))
-            return direction_line.line_intersections(line_positive_singularity)[0]
+            intersections = direction_line.line_intersections(line_positive_singularity)
+            if intersections:
+                return intersections[0]
+            return intersections
 
         line_negative_singularity = curves.Line2D(volmdlr.Point2D(-math.pi, -0.5 * math.pi),
                                                   volmdlr.Point2D(math.pi, -0.5 * math.pi))
 
-        return direction_line.line_intersections(line_negative_singularity)[0]
+        intersections = direction_line.line_intersections(line_negative_singularity)[0]
+        if intersections:
+            return intersections[0]
+        return intersections
 
     def is_point2d_on_sphere_singularity(self, point2d, tol=1e-5):
         """Verifies if point is on the spherical singularity point on parametric domain."""
@@ -4331,6 +4337,13 @@ class SphericalSurface3D(PeriodicalSurface):
         Uses local discretization and line intersection with the tangent line at the point just before the undefined
         point on the BREP of the 3D edge to find the real value of theta on the sphere parametric domain.
         """
+        def get_temp_edge2d(_points):
+            if len(_points) == 2:
+                edge2d = edges.LineSegment2D(_points[0], _points[1])
+            else:
+                edge2d = edges.BSplineCurve2D.from_points_interpolation(_points, 2)
+            return edge2d
+
         if self.is_point3d_on_sphere_singularity(points3d[0]):
             distance = points3d[0].point_distance(points3d[1])
             maximum_linear_distance_reference_point = 1e-5
@@ -4351,10 +4364,20 @@ class SphericalSurface3D(PeriodicalSurface):
                 temp_points = self._fix_angle_discontinuity_on_discretization_points(temp_points,
                                                                                      indexes_theta_discontinuity, "x")
 
-            edge = edges.BSplineCurve2D.from_points_interpolation(temp_points, 2)
-            points[0] = self.fix_start_end_singularity_point_at_parametric_domain(edge,
+            edge = get_temp_edge2d(temp_points)
+            point = self.fix_start_end_singularity_point_at_parametric_domain(edge,
                                                                                   reference_point=temp_points[1],
                                                                                   point_at_singularity=points[0])
+            if point:
+                points[0] = point
+            else:
+                per = 0.001
+                while per < 0.05:
+                    point = self.point3d_to_2d(edge3d.point_at_abscissa(per * edge3d.length()))
+                    if point != points[0]:
+                        break
+                    per += 0.0025
+                points[0] = point
         if self.is_point3d_on_sphere_singularity(points3d[-1]):
             distance = points3d[-2].point_distance(points3d[-1])
             maximum_linear_distance_reference_point = 1e-5
@@ -4375,10 +4398,19 @@ class SphericalSurface3D(PeriodicalSurface):
                 temp_points = self._fix_angle_discontinuity_on_discretization_points(temp_points,
                                                                                      indexes_theta_discontinuity, "x")
 
-            edge = edges.BSplineCurve2D.from_points_interpolation(temp_points, 2)
-            points[-1] = self.fix_start_end_singularity_point_at_parametric_domain(edge,
-                                                                                   reference_point=temp_points[-2],
-                                                                                   point_at_singularity=points[-1])
+            edge = get_temp_edge2d(temp_points)
+            point = self.fix_start_end_singularity_point_at_parametric_domain(edge, reference_point=temp_points[-2],
+                                                                              point_at_singularity=points[-1])
+            if point:
+                points[-1] = point
+            else:
+                per = 0.999
+                while per > 0.95:
+                    point = self.point3d_to_2d(edge3d.point_at_abscissa(per * edge3d.length()))
+                    if point != points[-1]:
+                        break
+                    per -= 0.0025
+                points[-1] = point
         return points
 
     def arc3d_to_2d_any_direction(self, arc3d):
@@ -4449,8 +4481,10 @@ class SphericalSurface3D(PeriodicalSurface):
         if theta_discontinuity:
             points = self._fix_angle_discontinuity_on_discretization_points(points,
                                                                             indexes_theta_discontinuity, "x")
-
-        return [edges.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree).simplify]
+        degree = bspline_curve3d.degree
+        if degree > len(points) - 1:
+            degree = len(points) - 1
+        return [edges.BSplineCurve2D.from_points_interpolation(points, degree=degree).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
