@@ -1031,9 +1031,7 @@ class PointBasedVoxelization(Voxelization):
         """
         return OctreeBasedVoxelization.from_point_based_voxelization(self)
 
-    def to_inner_growing_voxelizations(
-        self, layers_minimal_thickness: float
-    ) -> List["PointBasedVoxelization"]:
+    def to_inner_growing_voxelizations(self, layers_minimal_thickness: float) -> List["PointBasedVoxelization"]:
         """
         Convert the PointBasedVoxelization to multiple PointBasedVoxelization, with different voxel size.
 
@@ -1042,12 +1040,12 @@ class PointBasedVoxelization(Voxelization):
         :param layers_minimal_thickness: The minimal thickness of each layer.
         :type layers_minimal_thickness: float
 
-        :return: A list of PointBasedVoxelization representing the inner growing voxelization.
+        :return: A list of PointBasedVoxelization representing the inner growing voxelizations.
         :rtype: List[PointBasedVoxelization]
         """
         i = 2
         inner_growing_voxel_centers = self.to_octree_based_voxelization().get_inner_growing_voxel_centers(
-            layers_minimal_thickness, self.to_matrix_based_voxelization().layers_to_voxel_centers()
+            layers_minimal_thickness, self.to_matrix_based_voxelization().layers_thickness_to_voxel_centers()
         )
 
         while len(inner_growing_voxel_centers.keys()) == i:
@@ -1062,7 +1060,7 @@ class PointBasedVoxelization(Voxelization):
                 new_point_based_voxelization.to_octree_based_voxelization()
                 .get_inner_growing_voxel_centers(
                     layers_minimal_thickness,
-                    new_point_based_voxelization.to_matrix_based_voxelization().layers_to_voxel_centers(),
+                    new_point_based_voxelization.to_matrix_based_voxelization().layers_thickness_to_voxel_centers(),
                 )
                 .items()
             ):
@@ -1488,9 +1486,7 @@ class MatrixBasedVoxelization(Voxelization):
         """
         return OctreeBasedVoxelization.from_point_based_voxelization(self.to_point_based_voxelization())
 
-    def to_inner_growing_voxelizations(
-        self, layers_minimal_thickness: float
-    ) -> List["MatrixBasedVoxelization"]:
+    def to_inner_growing_voxelizations(self, layers_minimal_thickness: float) -> List["MatrixBasedVoxelization"]:
         """
         Convert the MatrixBasedVoxelization to multiple MatrixBasedVoxelization, with different voxel size.
 
@@ -1499,14 +1495,12 @@ class MatrixBasedVoxelization(Voxelization):
         :param layers_minimal_thickness: The minimal thickness of each layer.
         :type layers_minimal_thickness: float
 
-        :return: A list of MatrixBasedVoxelization representing the inner growing voxelization.
+        :return: A list of MatrixBasedVoxelization representing the inner growing voxelizations.
         :rtype: List[MatrixBasedVoxelization]
         """
         i = 2
-        inner_growing_voxel_centers = (
-            self.to_point_based_voxelization()
-            .to_octree_based_voxelization()
-            .get_inner_growing_voxel_centers(layers_minimal_thickness, self.layers_to_voxel_centers())
+        inner_growing_voxel_centers = self.to_octree_based_voxelization().get_inner_growing_voxel_centers(
+            layers_minimal_thickness, self.layers_thickness_to_voxel_centers()
         )
 
         while len(inner_growing_voxel_centers.keys()) == i:
@@ -1521,7 +1515,7 @@ class MatrixBasedVoxelization(Voxelization):
                 new_point_based_voxelization.to_octree_based_voxelization()
                 .get_inner_growing_voxel_centers(
                     layers_minimal_thickness,
-                    new_point_based_voxelization.to_matrix_based_voxelization().layers_to_voxel_centers(),
+                    new_point_based_voxelization.to_matrix_based_voxelization().layers_thickness_to_voxel_centers(),
                 )
                 .items()
             ):
@@ -1652,12 +1646,12 @@ class MatrixBasedVoxelization(Voxelization):
 
         return self.__class__(cropped_matrix, tuple(new_origin_center), self.voxel_size, self.name)
 
-    def layers_to_voxel_centers(self) -> Dict[_Point3D, int]:
+    def layers_thickness_to_voxel_centers(self) -> Dict[_Point3D, float]:
         """
-        Get a dictionary with voxel centers as keys and their layers_to_false_or_edge values as values.
+        Get a dictionary with voxel centers as keys and their layers thickness to false or edge values as values.
 
-        :return: Dictionary with voxel centers and their corresponding layers_to_false_or_edge values.
-        :rtype: dict[tuple[float, float, float], int]
+        :return: Dictionary with voxel centers and their corresponding layers thickness to false or edge values.
+        :rtype: dict[tuple[float, float, float], float]
         """
 
         # Get layer values using layers_to_false_or_edge function
@@ -1678,7 +1672,15 @@ class MatrixBasedVoxelization(Voxelization):
 
         return layers_dict
 
-    def _layers_matrix(self):
+    def _layers_matrix(self) -> NDArray(int):
+        """
+        Compute for each voxel of the matrix the number of layer there is until an edge or a False value is reached.
+
+        The layers are cubic, i.e. for one voxel, we check the 26 surrounding voxels.
+
+        :return: The computer layer matrix.
+        :rtype: np.ndarray[float, np.ndim == 3]
+        """
         result = np.zeros_like(self.matrix, dtype=int)
 
         for x in range(self.matrix.shape[0]):
