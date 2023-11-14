@@ -1000,7 +1000,7 @@ class PointBasedVoxelization(Voxelization):
 
         return cls(voxel_centers, voxel_size, name)
 
-    # HELPER METHODS
+    # EXPORT METHOD
     def to_matrix_based_voxelization(self) -> "MatrixBasedVoxelization":
         """
         Convert the point based voxelization to a matrix based voxelization.
@@ -1035,7 +1035,7 @@ class PointBasedVoxelization(Voxelization):
         self, layers_minimal_thickness: float
     ) -> List["PointBasedVoxelization"]:
         """
-        Convert the PointBasedVoxelization to multiple PointBasedVoxelization, with different size.
+        Convert the PointBasedVoxelization to multiple PointBasedVoxelization, with different voxel size.
 
         The more the voxelization is inside, the more its voxel size become bigger.
 
@@ -1076,6 +1076,7 @@ class PointBasedVoxelization(Voxelization):
 
         return point_based_voxelizations
 
+    # HELPER METHOD
     def _point_to_local_grid_index(self, point: _Point3D) -> Tuple[int, int, int]:
         """
         Convert a point to the local grid index within the voxelization.
