@@ -5,7 +5,7 @@ Class for discrete representations of volmdlr models (voxelization for 3D geomet
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import List, Set, Tuple, TypeVar, Dict, Any
+from typing import List, Set, Tuple, TypeVar, Dict, Any, Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -622,6 +622,30 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
 
         return triangles
 
+    @staticmethod
+    def _mesh_data_to_triangles(
+        vertices: Iterable[Iterable[float]], faces: Iterable[Iterable[int]]
+    ) -> List[_Triangle3D]:
+        """
+        Helper method to convert mesh data to a list of triangles.
+
+        :param vertices: The vertices of the mesh.
+        :type vertices: Iterable[Iterable[float]]
+        :param faces: The faces of the mesh, using vertices indexes.
+        :type faces: Iterable[Iterable[int]]
+
+        :return: The list of triangles extracted from the triangulated primitives of the VolumeModel.
+        :rtype: List[Triangle]
+        """
+        triangles = []
+
+        points = [(px, py, pz) for px, py, pz in vertices]
+
+        for i1, i2, i3 in faces:
+            triangles.append((points[i1], points[i2], points[i3]))
+
+        return triangles
+
 
 class PointBasedVoxelization(Voxelization):
     """Voxelization implemented as a set of points, representing each voxel center."""
@@ -756,7 +780,8 @@ class PointBasedVoxelization(Voxelization):
 
     @classmethod
     def from_matrix_based_voxelization(
-        cls, matrix_based_voxelization: "MatrixBasedVoxelization",
+        cls,
+        matrix_based_voxelization: "MatrixBasedVoxelization",
     ) -> "PointBasedVoxelization":
         """
         Create a PointBasedVoxelization object from a MatrixBasedVoxelization.
@@ -1427,15 +1452,15 @@ class MatrixBasedVoxelization(Voxelization):
         other_start = np.round((other_min - global_min) / self.voxel_size, DECIMALS).astype(int)
 
         new_self[
-            self_start[0]: self_start[0] + self.matrix.shape[0],
-            self_start[1]: self_start[1] + self.matrix.shape[1],
-            self_start[2]: self_start[2] + self.matrix.shape[2],
+            self_start[0] : self_start[0] + self.matrix.shape[0],
+            self_start[1] : self_start[1] + self.matrix.shape[1],
+            self_start[2] : self_start[2] + self.matrix.shape[2],
         ] = self.matrix
 
         new_other[
-            other_start[0]: other_start[0] + other.matrix.shape[0],
-            other_start[1]: other_start[1] + other.matrix.shape[1],
-            other_start[2]: other_start[2] + other.matrix.shape[2],
+            other_start[0] : other_start[0] + other.matrix.shape[0],
+            other_start[1] : other_start[1] + other.matrix.shape[1],
+            other_start[2] : other_start[2] + other.matrix.shape[2],
         ] = other.matrix
 
         result_matrix = logical_operation(new_self, new_other)
@@ -1463,9 +1488,9 @@ class MatrixBasedVoxelization(Voxelization):
 
         # Crop the matrix to the smallest possible size
         cropped_matrix = self.matrix[
-            min_voxel_coords[0]: max_voxel_coords[0] + 1,
-            min_voxel_coords[1]: max_voxel_coords[1] + 1,
-            min_voxel_coords[2]: max_voxel_coords[2] + 1,
+            min_voxel_coords[0] : max_voxel_coords[0] + 1,
+            min_voxel_coords[1] : max_voxel_coords[1] + 1,
+            min_voxel_coords[2] : max_voxel_coords[2] + 1,
         ]
 
         # Calculate new matrix_origin_center
@@ -2385,13 +2410,13 @@ class MatrixBasedPixelization(Pixelization):
         other_start = np.round((other_min - global_min) / self.pixel_size, DECIMALS).astype(int)
 
         new_self[
-            self_start[0]: self_start[0] + self.matrix.shape[0],
-            self_start[1]: self_start[1] + self.matrix.shape[1],
+            self_start[0] : self_start[0] + self.matrix.shape[0],
+            self_start[1] : self_start[1] + self.matrix.shape[1],
         ] = self.matrix
 
         new_other[
-            other_start[0]: other_start[0] + other.matrix.shape[0],
-            other_start[1]: other_start[1] + other.matrix.shape[1],
+            other_start[0] : other_start[0] + other.matrix.shape[0],
+            other_start[1] : other_start[1] + other.matrix.shape[1],
         ] = other.matrix
 
         result_matrix = logical_operation(new_self, new_other)
@@ -2419,8 +2444,8 @@ class MatrixBasedPixelization(Pixelization):
 
         # Crop the matrix to the smallest possible size
         cropped_matrix = self.matrix[
-            min_pixel_coords[0]: max_pixel_coords[0] + 1,
-            min_pixel_coords[1]: max_pixel_coords[1] + 1,
+            min_pixel_coords[0] : max_pixel_coords[0] + 1,
+            min_pixel_coords[1] : max_pixel_coords[1] + 1,
         ]
 
         # Calculate new matrix_origin_center
