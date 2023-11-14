@@ -4182,8 +4182,6 @@ class Contour3D(ContourMixin, Wire3D):
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
-        if step_id in (949245, 948889):
-            print(True)
         for edge_id in arguments[1]:
             edge = object_dict[int(edge_id[1:])]
             if edge:
