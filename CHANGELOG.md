@@ -25,7 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
 #### core.py
-- BoundingBox: triangle_intersects_voxel
+- BoundingBox: is_intersecting_triangle
+#### discrete_representation.py
+- Voxelization: from_mesh_data
 
 ### Fixed
 #### edges.py 
