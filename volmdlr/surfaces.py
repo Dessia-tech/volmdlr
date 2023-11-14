@@ -3398,7 +3398,46 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         return curves_
 
+    def _spherical_intersection_points(self, spherical_surface: 'SphericalSurface3D'):
+        """
+        Gets the points of intersections between the spherical surface and the toroidal surface.
 
+        :param spherical_surface: other Conical Surface 3d.
+        :return: points of intersections.
+        """
+        arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
+        intersection_points = []
+        for arc in arcs:
+            intersections = spherical_surface.circle_intersections(arc)
+            intersection_points.extend(intersections)
+        # for edge in spherical_surface._circle_generatrices(50):
+        #     intersections = self.circle_intersections(edge)
+        #     for point in intersections:
+        #         if not volmdlr.core.point_in_list(point, intersection_points):
+        #             intersection_points.append(point)
+        return intersection_points
+
+    def sphericalsurface_intersections(self, spherical_surface: 'SphericalSurface3D'):
+        """
+        Gets the intersections between a toroidal surface and spherical surface.
+
+        :param spherical_surface: other spherical Surface 3d.
+        :return: List os curves intersecting Torus.
+        """
+        intersection_points = self._spherical_intersection_points(spherical_surface)
+        if not intersection_points:
+            return []
+        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
+        curves_ = []
+        for list_points in inters_points:
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
+            if isinstance(bspline.simplify, edges.FullArc3D):
+                curves_.append(bspline.simplify)
+                continue
+            curves_.append(bspline)
+        return curves_
+
+      
 class ConicalSurface3D(PeriodicalSurface):
     """
     The local plane is defined by (theta, z).
