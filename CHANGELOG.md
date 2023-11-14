@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections
 #### edges.py
 - BsplineCurve3D: circle_intersections.
+- ArcEllipse3D/FullArcEllipse3D: line_intersections.
 #### curves.py
 - Circle3D: point_distance.
 #### shell.py
