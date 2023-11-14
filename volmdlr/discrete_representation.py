@@ -1163,9 +1163,9 @@ class PointBasedVoxelization(Voxelization):
         :return: The distance to surface for each voxel center.
         :rtype: dict[tuple(float, float, float): float]
         """
-        points_coords = np.array(list(self.voxel_centers))
-
         from igl import signed_distance
+
+        points_coords = np.array(list(self.voxel_centers))
 
         display_triangle_shell = self.to_display_triangle_shell()
         vertices, faces = display_triangle_shell.positions, display_triangle_shell.indices
