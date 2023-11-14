@@ -80,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
 - ToroidalSurface3D: plots now use Circles 3D instead of ClosedPolygon3D. Performance improved.
 - CylindricalSurface3D: More comprehesive plot
+- BSplineCurve: improve line_intersections performance.
 
 ### Unittests
 #### curves 
