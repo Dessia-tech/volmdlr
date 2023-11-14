@@ -8,7 +8,7 @@ import volmdlr
 from volmdlr.core import BoundingBox, VolumeModel
 from volmdlr.discrete_representation import PointBasedVoxelization
 from volmdlr.primitives3d import Block, Cylinder, Sphere
-from volmdlr.shells import ClosedTriangleShell3D
+from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D
 
 SHOW_BABYLONJS = False
 
@@ -68,6 +68,12 @@ class TestPointBasedVoxelizationCreation(unittest.TestCase):
                 self.volume_model.primitives + [volume_model_voxelization.to_closed_triangle_shell()]
             )
             volume_model.babylonjs()
+
+    def test_from_mesh_data(self):
+        stanford_bunny = DisplayTriangleShell3D.load_from_file("stanford_bunny.json")
+        voxelization = PointBasedVoxelization.from_mesh_data(stanford_bunny.positions, stanford_bunny.indices, 0.005)
+
+        self.assertEqual(1735, len(voxelization))
 
 
 class TestPointBasedVoxelizationBooleanOperation(unittest.TestCase):
