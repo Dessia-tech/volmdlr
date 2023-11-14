@@ -1156,7 +1156,13 @@ class PointBasedVoxelization(Voxelization):
 
         return set(tuple(center) for center in centers)
 
-    def voxel_centers_distances_to_faces(self):
+    def _voxel_centers_distances_to_faces(self) -> Dict[_Point3D:float]:
+        """
+        Helper method to compute the minimal distance between the voxel centers and the surface of the voxelization.
+
+        :return: The distance to surface for each voxel center.
+        :rtype: dict[tuple(float, float, float): float]
+        """
         points_coords = np.array(list(self.voxel_centers))
 
         from igl import signed_distance
@@ -1640,7 +1646,6 @@ class MatrixBasedVoxelization(Voxelization):
                         # If any False is found in the current cube, break the loop
                         if not np.all(cube_slice):
                             break
-
 
                         count += 1
                         size += 2
