@@ -1488,6 +1488,55 @@ class MatrixBasedVoxelization(Voxelization):
         """
         return OctreeBasedVoxelization.from_point_based_voxelization(self.to_point_based_voxelization())
 
+    def to_inner_growing_point_based_voxelizations(
+        self, layers_minimal_thickness: float
+    ) -> List["MatrixBasedVoxelization"]:
+        """
+        Convert the MatrixBasedVoxelization to multiple MatrixBasedVoxelization, with different voxel size.
+
+        The more the voxelization is inside, the more its voxel size become bigger.
+
+        :param layers_minimal_thickness: The minimal thickness of each layer.
+        :type layers_minimal_thickness: float
+
+        :return: A list of MatrixBasedVoxelization representing the inner growing voxelization.
+        :rtype: List[MatrixBasedVoxelization]
+        """
+        i = 2
+        inner_growing_voxel_centers = (
+            self.to_point_based_voxelization()
+            .to_octree_based_voxelization()
+            .get_inner_growing_voxel_centers(layers_minimal_thickness, self.layers_to_voxel_centers())
+        )
+
+        while len(inner_growing_voxel_centers.keys()) == i:
+            # Still making the voxelization inner growing
+            max_voxel_size = max(inner_growing_voxel_centers.keys())
+            i += 1
+
+            new_point_based_voxelization = PointBasedVoxelization(
+                inner_growing_voxel_centers[max_voxel_size], max_voxel_size
+            )
+            for voxel_size, voxel_centers in (
+                new_point_based_voxelization.to_octree_based_voxelization()
+                .get_inner_growing_voxel_centers(
+                    layers_minimal_thickness,
+                    new_point_based_voxelization.to_matrix_based_voxelization().layers_to_voxel_centers(),
+                )
+                .items()
+            ):
+                inner_growing_voxel_centers[voxel_size] = voxel_centers
+
+        matrix_based_voxelizations = []
+
+        # Create a list of MatrixBasedVoxelization using the inner growing voxel centers
+        for voxel_size, voxel_centers in inner_growing_voxel_centers.items():
+            matrix_based_voxelizations.append(
+                PointBasedVoxelization(voxel_centers, voxel_size).to_matrix_based_voxelization()
+            )
+
+        return matrix_based_voxelizations
+
     # HELPER METHODS
     def _expand(self) -> "MatrixBasedVoxelization":
         """
@@ -1666,52 +1715,6 @@ class MatrixBasedVoxelization(Voxelization):
                     result[x, y, z] = count - 1
 
         return result
-
-    def to_inner_growing_point_based_voxelizations(
-        self, layers_minimal_thickness: float
-    ) -> List["PointBasedVoxelization"]:
-        """
-        Convert the PointBasedVoxelization to multiple PointBasedVoxelization, with different size.
-
-        The more the voxelization is inside, the more its voxel size become bigger.
-
-        :param layers_minimal_thickness: The minimal thickness of each layer.
-        :type layers_minimal_thickness: float
-
-        :return: A list of PointBasedVoxelization representing the inner growing voxelization.
-        :rtype: List[PointBasedVoxelization]
-        """
-        i = 2
-        inner_growing_voxel_centers = (
-            self.to_point_based_voxelization()
-            .to_octree_based_voxelization()
-            .get_inner_growing_voxel_centers(layers_minimal_thickness, self.layers_to_voxel_centers())
-        )
-
-        while len(inner_growing_voxel_centers.keys()) == i:
-            # Still making the voxelization inner growing
-            max_voxel_size = max(inner_growing_voxel_centers.keys())
-            i += 1
-
-            new_point_based_voxelization = PointBasedVoxelization(
-                inner_growing_voxel_centers[max_voxel_size], max_voxel_size
-            )
-            for voxel_size, voxel_centers in (
-                new_point_based_voxelization.to_octree_based_voxelization()
-                .get_inner_growing_voxel_centers(
-                    layers_minimal_thickness,
-                    new_point_based_voxelization.to_matrix_based_voxelization().layers_to_voxel_centers(),
-                )
-                .items()
-            ):
-                inner_growing_voxel_centers[voxel_size] = voxel_centers
-
-        point_based_voxelizations = []
-
-        for voxel_size, voxel_centers in inner_growing_voxel_centers.items():
-            point_based_voxelizations.append(PointBasedVoxelization(voxel_centers, voxel_size))
-
-        return point_based_voxelizations
 
 
 class OctreeBasedVoxelization(Voxelization):
