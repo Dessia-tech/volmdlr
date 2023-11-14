@@ -2049,28 +2049,6 @@ class DisplayTriangleShell3D(Shell3D):
 
         return display_triangle_shell
 
-    def find_face_from_indices(self):
-        positions, indices = self.positions, self.indices
-        list_face=[]
-        for i in range(len(indices)):
-            vertex_indices = indices[i]
-            vertices = positions[vertex_indices]
-            face = volmdlr.faces.Triangle3D(point1=volmdlr.Point3D(*vertices[0]), point2=volmdlr.Point3D(*vertices[1]),
-                                            point3=volmdlr.Point3D(*vertices[2]))
-            list_face.append(face)
-
-        return list_face
-
-    def to_triangle_shell(self, closed_shell: bool = False):
-        faces = self.find_face_from_indices()
-        if closed_shell:
-            triangle_shell = ClosedTriangleShell3D(faces)
-        else:
-            triangle_shell = OpenTriangleShell3D(faces)
-        triangle_shell.alpha = self.alpha
-        triangle_shell.color = self.color
-        return triangle_shell
-
     def get_bounding_box(self) -> volmdlr.core.BoundingBox:
         """Gets the Shell bounding box."""
         bbox_min, bbox_max = np.min(self.positions, axis=0), np.max(self.positions, axis=0)
