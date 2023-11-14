@@ -67,7 +67,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
+
+#### core.py
 - babylon_data: avoid using bounding_box for performance
+- BoundingBox: uses numpy to improve performance.
+
+#### edges.py
+- BSplineCurve: improve line_intersections performance.
 
 #### primitives3d.py
 - Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
@@ -76,7 +82,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
 - ToroidalSurface3D: plots now use Circles 3D instead of ClosedPolygon3D. Performance improved.
 - CylindricalSurface3D: More comprehesive plot
-- BSplineCurve: improve line_intersections performance.
 
 ### Unittests
 #### curves 
