@@ -225,9 +225,10 @@ def face_outer_bound(arguments, object_dict):
     :rtype: volmdlr.wires.Contour3D
     """
     contour = object_dict[arguments[1]]
-    if arguments[2] == '.F.':
+    if contour and arguments[2] == '.F.':
         contour = object_dict[arguments[1]].invert()
-    contour.name = "face_outer_bound"
+    if contour:
+        contour.name = "face_outer_bound"
     return contour
 
 
