@@ -173,8 +173,8 @@ class TestPlane3D(unittest.TestCase):
                            volmdlr.Point3D(2, 3, 2.5))
         arc_intersections2 = plane.arc_intersections(arc2)
         self.assertEqual(len(arc_intersections2), 2)
-        self.assertTrue(arc_intersections2[0].is_close(volmdlr.Point3D(2.0, 1.133974596216, 3.0)))
-        self.assertTrue(arc_intersections2[1].is_close(volmdlr.Point3D(2.0, 2.866025403784, 3.0)))
+        self.assertTrue(arc_intersections2[0].is_close(volmdlr.Point3D(2.0, 1.1339745962155614, 3.0)))
+        self.assertTrue(arc_intersections2[1].is_close(volmdlr.Point3D(2.0, 2.8660254037844384, 3.0)))
 
     def test_bspline_intersections(self):
         plane = Plane3D(volmdlr.OZXY)
