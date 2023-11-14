@@ -440,13 +440,15 @@ class Edge(dc.DessiaObject):
                 break
         return new_split_edge
 
-    def point_distance_to_edge(self, point):
+    def point_distance(self, point: Union[volmdlr.Point2D, volmdlr.Point3D]):
         """
-        Calculates the distance from a given point to an edge.
+        Calculates the distance from a given point.
 
-        :param point: point.
-        :return: distance to edge.
+        :param point: The point to be checked.
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :return: distance.
         """
+
         return vm_common_operations.get_point_distance_to_edge(self, point, self.start, self.end)
 
     @property
@@ -1463,17 +1465,6 @@ class BSplineCurve(Edge):
         if self.point_distance(point) < abs_tol:
             return True
         return False
-
-    def point_distance(self, point: Union[volmdlr.Point2D, volmdlr.Point3D]):
-        """
-        Calculates the distance from a given point to a BSplineCurve2D or 3D.
-
-        :param point: The point to be checked.
-        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
-        :return: distance.
-        """
-
-        return self.point_distance_to_edge(point)
 
     def merge_with(self, bspline_curve: 'BSplineCurve'):
         """
@@ -4067,15 +4058,6 @@ class ArcEllipse2D(Edge):
         return ArcEllipse2D(self.ellipse.translation(offset),
                             self.start.translation(offset),
                             self.end.translation(offset))
-
-    def point_distance(self, point):
-        """
-        Calculates the distance from a given point to an Arc Ellipse 2d.
-
-        :param point: point 2d.
-        :return: distance.
-        """
-        return self.point_distance_to_edge(point)
 
     def straight_line_point_belongs(self, point):
         """

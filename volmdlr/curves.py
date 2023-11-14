@@ -34,7 +34,8 @@ def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_t
 
     line0 = line_class.from_point_and_vector(start, start_tangent)
     line2 = line_class.from_point_and_vector(end, end_tangent)
-    point1 = line0.line_intersections(line2)[0]
+    line_intersections = line0.line_intersections(line2)
+    point1 = line_intersections[0]
     vector_p1 = point1 - point
     line1p = line_class.from_point_and_vector(point1, vector_p1)
     point_q = line02.line_intersections(line1p)[0]
@@ -1630,8 +1631,6 @@ class Circle3D(CircleMixin, ClosedCurve):
             ax = fig.add_subplot(111, projection='3d')
         return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
 
-
-
     def line_intersections(self, line: Line3D, abs_tol: float = 1e-6):
         """
         Calculates the intersections between the Circle3D and a line 3D.
@@ -2691,6 +2690,7 @@ class HyperbolaMixin(Curve):
         :param point2: point2 used to trim circle.
         """
         _bspline_class = getattr(volmdlr.edges, 'BSplineCurve'+self.__class__.__name__[-2:])
+        _lineseg_class = getattr(volmdlr.edges, 'LineSegment'+self.__class__.__name__[-2:])
         local_split_start = self.frame.global_to_local_coordinates(point1)
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_y = max(local_split_start.y, local_split_end.y)
@@ -2698,10 +2698,13 @@ class HyperbolaMixin(Curve):
         hyperbola_points = self.get_points(min_y, max_y, 3)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
+        start_tangent = self.tangent(hyperbola_points[0])
+        end_tangent = self.tangent(hyperbola_points[2])
+        if start_tangent.is_colinear_to(end_tangent):
+            lineseg = _lineseg_class(hyperbola_points[0], hyperbola_points[2])
+            return lineseg
         point, weight1 = hyperbola_parabola_control_point_and_weight(
-            hyperbola_points[0], self.tangent(hyperbola_points[0]),
-            hyperbola_points[2], self.tangent(hyperbola_points[2]),
-            hyperbola_points[1])
+            hyperbola_points[0], start_tangent, hyperbola_points[2], end_tangent, hyperbola_points[1])
         knotvector = generate_knot_vector(2, 3)
         knot_multiplicity = [1] * len(knotvector)
 
