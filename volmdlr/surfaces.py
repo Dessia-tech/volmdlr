@@ -2645,37 +2645,6 @@ class CylindricalSurface3D(PeriodicalSurface):
             curves_.append(bspline)
         return curves_
 
-    def _cylindrical_intersection_points(self, cylindricalsurface: 'SphericalSurface3D'):
-        """
-        Gets the points of intersections between two cylindrical surfaces.
-
-        :param cylindricalsurface: other Cylindrical surface 3d.
-        :return: points of intersections.
-        """
-        cyl_generatrices = self.get_generatrices(self.radius*10, 200) +\
-                           self.get_circle_generatrices(200, self.radius*10)
-        intersection_points = []
-        for gene in cyl_generatrices:
-            intersections = cylindricalsurface.edge_intersections(gene)
-            for intersection in intersections:
-                if not volmdlr.core.point_in_list(intersection, intersection_points):
-                    intersection_points.append(intersection)
-        return intersection_points
-
-    def cylindricalsurface_intersections(self, cylindricalsurface: 'CylindricalSurface3D'):
-        intersection_points = self._spherical_intersection_points(cylindricalsurface)
-        if not intersection_points:
-            return []
-        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
-        curves_ = []
-        for list_points in inters_points:
-            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
-            if isinstance(bspline.simplify, edges.FullArc3D):
-                curves_.append(bspline.simplify)
-                continue
-            curves_.append(bspline)
-        return curves_
-
 
 class ToroidalSurface3D(PeriodicalSurface):
     """
