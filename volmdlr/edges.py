@@ -4782,6 +4782,16 @@ class LineSegment3D(LineSegment):
             return distance, points[0], points[1]
         return distance
 
+    def babylon_curves(self):
+        """Returns the babylon representation of the edge."""
+        points = [[*self.start], [*self.end]]
+        babylon_lines = {'points': points,
+                         'alpha': 1.0,
+                         'name': self.name,
+                         'color': [0.2, 0.8, 0.2]
+                         }
+        return babylon_lines
+
     def move_frame_along(self, frame):
         """Move frame along edge."""
         new_frame = frame.translation(self.end - self.start)
