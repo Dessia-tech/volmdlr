@@ -2061,9 +2061,12 @@ class DisplayTriangleShell3D(Shell3D):
 
         return list_face
 
-    def to_triangle_shell(self):
+    def to_triangle_shell(self, closed_shell: bool = False):
         faces = self.find_face_from_indices()
-        triangle_shell = OpenTriangleShell3D(faces)
+        if closed_shell:
+            triangle_shell = ClosedTriangleShell3D(faces)
+        else:
+            triangle_shell = OpenTriangleShell3D(faces)
         triangle_shell.alpha = self.alpha
         triangle_shell.color = self.color
         return triangle_shell
