@@ -259,7 +259,7 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
                 discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:],
                 points_abscissas[:-1], points_abscissas[1:]):
             line_seg = line_seg_class_(point1, point2)
-            intersection = primitive.linesegment_intersections(line_seg, 1e-6)
+            intersection = primitive.linesegment_intersections(line_seg, abs_tol)
             if not intersection:
                 continue
             if get_point_distance_to_edge(bsplinecurve, intersection[0], point1, point2) > 1e-7 and not\
@@ -290,6 +290,8 @@ def conic_intersections(conic1, conic2, abs_tol: float = 1e-6):
         conic2_2d = frame_mapped_conic2.to_2d(frame_mapped_conic1.frame.origin,
                                               frame_mapped_conic1.frame.u, frame_mapped_conic1.frame.v)
         intersections_2d = conic1_2d.curve_intersections(conic2_2d, abs_tol)
+        if not intersections_2d:
+            return []
         local_intersections = []
         for intersection in intersections_2d:
             local_intersections.append(volmdlr.Point3D(intersection[0], intersection[1], 0.0))

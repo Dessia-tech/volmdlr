@@ -1024,7 +1024,9 @@ class Surface3D(DessiaObject):
         return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree)]
 
     def normal_from_point2d(self, point2d):
-
+        """
+        Evaluates the normal vector of the bspline surface at this 2D point.
+        """
         raise NotImplementedError('NotImplemented')
 
     def normal_from_point3d(self, point3d):
@@ -1137,6 +1139,10 @@ class Surface3D(DessiaObject):
         """Gets intersections between a line and a Surface 3D."""
         raise NotImplementedError(f'line_intersections method not implemented by {self.__class__.__name__}')
 
+    def frame_mapping(self, frame, side: str):
+        """Frame mapping for Surface 3D."""
+        raise NotImplementedError(f'frame_mapping method not implemented by {self.__class__.__name__}')
+
     def linesegment_intersections(self, linesegment3d: edges.LineSegment3D, abs_tol: float = 1e-6):
         """
         Calculates the intersection points between a 3D line segment and a surface 3D.
@@ -1172,13 +1178,21 @@ class Surface3D(DessiaObject):
         :param curve: other circle to verify intersections.
         :return: a list of intersection points, if there exists any.
         """
+        if not self.frame.origin.is_close(volmdlr.O3D) or not self.frame.w.is_close(volmdlr.Z3D):
+            local_surface = self.frame_mapping(self.frame, 'new')
+            local_curve = curve.frame_mapping(self.frame, 'new')
+            local_intersections = local_surface.curve_intersections(local_curve)
+            global_intersections = []
+            for intersection in local_intersections:
+                global_intersections.append(self.frame.local_to_global_coordinates(intersection))
+            return global_intersections
         curve_plane = Plane3D(curve.frame)
         curve_plane_intersections = self.plane_intersections(curve_plane)
         if not curve_plane_intersections:
             return []
         intersections = []
-        for circle_plane_intersection in curve_plane_intersections:
-            inters = circle_plane_intersection.curve_intersections(curve)
+        for curve_plane_intersection in curve_plane_intersections:
+            inters = curve_plane_intersection.curve_intersections(curve)
             for intersection in inters:
                 if not volmdlr.core.point_in_list(intersection, intersections):
                     intersections.append(intersection)
@@ -1464,12 +1478,12 @@ class Plane3D(Surface3D):
         """
         return vm_common_operations.get_plane_equation_coefficients(self.frame)
 
-    def plane_intersections(self, other_plane):
+    def plane_intersections(self, plane3d):
         """
         Computes intersection points between two Planes 3D.
 
         """
-        plane_intersections = vm_utils_intersections.get_two_planes_intersections(self.frame, other_plane.frame)
+        plane_intersections = vm_utils_intersections.get_two_planes_intersections(self.frame, plane3d.frame)
         if plane_intersections:
             return [curves.Line3D(plane_intersections[0], plane_intersections[1])]
         return []
@@ -3344,7 +3358,86 @@ class ToroidalSurface3D(PeriodicalSurface):
             return True
         return False
 
+    def _conical_intersection_points(self, conical_surface: 'ConicalSurface3D'):
+        """
+        Gets the points of intersections between the cylindrical surface and the toroidal surface.
 
+        :param conical_surface: other Conical Surface 3d.
+        :return: points of intersections.
+        """
+        arcs = self._torus_arcs(200)
+        points_intersections = []
+        for arc in arcs:
+            intersections = conical_surface.circle_intersections(arc)
+            points_intersections.extend(intersections)
+        for edge in conical_surface.get_generatrices(self.outer_radius * 3, 300):
+            intersections = self.edge_intersections(edge)
+            for point in intersections:
+                if not volmdlr.core.point_in_list(point, points_intersections):
+                    points_intersections.append(point)
+        return points_intersections
+
+    def conicalsurface_intersections(self, conical_surface: 'ConicalSurface3D'):
+        """
+        Gets the intersections between a toroidal surface and cylindrical surface.
+
+        :param conical_surface: other Conical Surface 3d.
+        :return: List os curves intersecting Torus.
+        """
+        intersection_points = self._conical_intersection_points(conical_surface)
+        if not intersection_points:
+            return []
+        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
+        curves_ = []
+        for list_points in inters_points:
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
+            if isinstance(bspline.simplify, edges.FullArc3D):
+                curves_.append(bspline.simplify)
+                continue
+            curves_.append(bspline)
+
+        return curves_
+
+    def _spherical_intersection_points(self, spherical_surface: 'SphericalSurface3D'):
+        """
+        Gets the points of intersections between the spherical surface and the toroidal surface.
+
+        :param spherical_surface: other Conical Surface 3d.
+        :return: points of intersections.
+        """
+        arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
+        intersection_points = []
+        for arc in arcs:
+            intersections = spherical_surface.circle_intersections(arc)
+            intersection_points.extend(intersections)
+        # for edge in spherical_surface._circle_generatrices(50):
+        #     intersections = self.circle_intersections(edge)
+        #     for point in intersections:
+        #         if not volmdlr.core.point_in_list(point, intersection_points):
+        #             intersection_points.append(point)
+        return intersection_points
+
+    def sphericalsurface_intersections(self, spherical_surface: 'SphericalSurface3D'):
+        """
+        Gets the intersections between a toroidal surface and spherical surface.
+
+        :param spherical_surface: other spherical Surface 3d.
+        :return: List os curves intersecting Torus.
+        """
+        intersection_points = self._spherical_intersection_points(spherical_surface)
+        if not intersection_points:
+            return []
+        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
+        curves_ = []
+        for list_points in inters_points:
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
+            if isinstance(bspline.simplify, edges.FullArc3D):
+                curves_.append(bspline.simplify)
+                continue
+            curves_.append(bspline)
+        return curves_
+
+      
 class ConicalSurface3D(PeriodicalSurface):
     """
     The local plane is defined by (theta, z).
@@ -3608,6 +3701,30 @@ class ConicalSurface3D(PeriodicalSurface):
         new_frame = self.frame.rotation(center=center, axis=axis, angle=angle)
         return self.__class__(new_frame, self.semi_angle)
 
+    def circle_intersections(self, circle: curves.Circle3D):
+        """
+        Calculates the intersections between a conical surface and a Circle 3D.
+
+        :param circle: other circle to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        if not self.frame.origin.is_close(volmdlr.O3D) or not self.frame.w.is_close(volmdlr.Z3D):
+            local_surface = self.frame_mapping(self.frame, 'new')
+            local_curve = circle.frame_mapping(self.frame, 'new')
+            local_intersections = local_surface.circle_intersections(local_curve)
+            global_intersections = []
+            for intersection in local_intersections:
+                global_intersections.append(self.frame.local_to_global_coordinates(intersection))
+            return global_intersections
+        if circle.bounding_box.zmax < self.frame.origin.z:
+            return []
+        z_max = circle.bounding_box.zmax
+        radius = z_max * math.tan(self.semi_angle)
+        line = curves.Line3D.from_point_and_vector(self.frame.origin, self.frame.w)
+        if line.point_distance(circle.center) > radius + circle.radius:
+            return []
+        return self.curve_intersections(circle)
+
     def line_intersections(self, line: curves.Line3D):
         """
         Calculates the intersections between a conical surface and a Line 3D.
@@ -3682,6 +3799,8 @@ class ConicalSurface3D(PeriodicalSurface):
         line_circle_intersecting_plane = curves.Line3D(line_circle_intersecting_plane[0],
                                                        line_circle_intersecting_plane[1])
         hyperbola_points = circle.line_intersections(line_circle_intersecting_plane)
+        if not hyperbola_points:
+            return []
         semi_major_dir = (hyperbola_positive_vertex - hyperbola_center).unit_vector()
         frame = volmdlr.Frame3D(hyperbola_center, semi_major_dir,
                                 plane3d.frame.w.cross(semi_major_dir), plane3d.frame.w)
@@ -4440,6 +4559,10 @@ class SphericalSurface3D(PeriodicalSurface):
         raise AttributeError('Use ShericalFace3D from_surface_rectangular_cut method')
 
     def triangulation(self):
+        """
+        Triangulation of Spherical Surface.
+
+        """
         face = self.rectangular_cut(0, volmdlr.TWO_PI, -0.5 * math.pi, 0.5 * math.pi)
         return face.triangulation()
 
@@ -5374,6 +5497,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         return RevolutionSurface3D(new_edge, new_axis_point, new_axis)
 
     def simplify(self):
+        """Gets the simplified version of the surface."""
         line3d = curves.Line3D(self.axis_point, self.axis_point + self.axis)
         if isinstance(self.edge, edges.Arc3D):
             tore_center, _ = line3d.point_projection(self.edge.center)
@@ -5860,6 +5984,7 @@ class BSplineSurface3D(Surface3D):
 
     @property
     def bounding_box(self):
+        """Gets the Bounding box of the BSpline Surface 3d."""
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
