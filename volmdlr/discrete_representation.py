@@ -1031,7 +1031,7 @@ class PointBasedVoxelization(Voxelization):
         """
         return OctreeBasedVoxelization.from_point_based_voxelization(self)
 
-    def to_inner_growing_point_based_voxelizations(
+    def to_inner_growing_voxelizations(
         self, layers_minimal_thickness: float
     ) -> List["PointBasedVoxelization"]:
         """
@@ -1488,7 +1488,7 @@ class MatrixBasedVoxelization(Voxelization):
         """
         return OctreeBasedVoxelization.from_point_based_voxelization(self.to_point_based_voxelization())
 
-    def to_inner_growing_point_based_voxelizations(
+    def to_inner_growing_voxelizations(
         self, layers_minimal_thickness: float
     ) -> List["MatrixBasedVoxelization"]:
         """
