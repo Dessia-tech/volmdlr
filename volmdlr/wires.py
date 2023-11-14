@@ -2087,21 +2087,29 @@ class Contour2D(ContourMixin, Wire2D):
 
     def area(self):
         """Returns the area of the contour."""
+        #todo: use the sum of straight_line_area for all cases to avoid triangulation.
         if not self._area:
             area = self.edge_polygon.area()
             classes = {prim.__class__ for prim in self.primitives}
             verify_classes = classes.issubset({volmdlr.edges.LineSegment2D, volmdlr.edges.Arc2D})
+            if self.edge_polygon.is_trigo:
+                trigo = 1
+            else:
+                trigo = -1
             if verify_classes:
-                if self.edge_polygon.is_trigo:
-                    trigo = 1
-                else:
-                    trigo = -1
                 for edge in self.primitives:
                     area += trigo * edge.straight_line_area()
                 self._area = abs(area)
             else:
                 polygon = self.to_polygon(angle_resolution=50)
-                self._area = polygon.triangulation().area()
+                points_set = set(polygon.points)
+                if len(points_set) < len(polygon.points):
+                    # This prevents segmentation fault from contours coming from step files
+                    for edge in self.primitives:
+                        area += trigo * edge.straight_line_area()
+                    self._area = abs(area)
+                else:
+                    self._area = polygon.triangulation().area()
         return self._area
 
     def center_of_mass(self):
@@ -3513,7 +3521,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         grid_point_index = {}
 
-        polygon_points = {vmd.Node2D.from_point(point) for point in self.points}
+        polygon_points = set(self.points)
 
         # Generate all points in the grid
         grid_points = npy.array([[xi, yi] for xi in x for yi in y], dtype=npy.float64)
@@ -3527,7 +3535,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         points = []
 
         for i in indices:
-            point = vmd.Node2D(*grid_points[i])
+            point = volmdlr.Point2D(*grid_points[i])
             if point not in polygon_points:
                 grid_point_index[(i // (number_points_y + 2), i % (number_points_y + 2))] = point
                 points.append(point)
@@ -4180,6 +4188,8 @@ class Contour3D(ContourMixin, Wire3D):
         step_name = kwargs.get("name", "EDGE_LOOP")
         name = arguments[0][1:-1]
         raw_edges = []
+        if step_id in (949245, 948889):
+            print(True)
         for edge_id in arguments[1]:
             edge = object_dict[int(edge_id[1:])]
             if edge:
@@ -4201,7 +4211,9 @@ class Contour3D(ContourMixin, Wire3D):
                 return contour_reordered
         list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         if list_edges:
-            return cls(list_edges, name=name)
+            contour = cls(list_edges, name=name)
+            if contour.is_ordered(1e-3):
+                return contour
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):

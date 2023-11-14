@@ -3,7 +3,7 @@ import unittest
 import volmdlr
 from volmdlr.wires import Contour3D
 from volmdlr.step import Step
-from volmdlr import edges
+from volmdlr import edges, core
 from volmdlr.models.contours import contour3d
 
 
@@ -57,6 +57,15 @@ class TestContour3D(unittest.TestCase):
         face = model.primitives[0].primitives[0]
         self.assertEqual(len(face.outer_contour3d.primitives), 5)
         self.assertTrue(face.outer_contour3d.is_ordered())
+
+        arguments = ["", ["#2518728", "#2518729"]]
+        primitives = core.VolumeModel.load_from_file(
+                os.path.join(folder, "strange_contour_from_step_primitives.json")).primitives
+        object_dict = {2518728: primitives[0], 2518729: primitives[1]}
+
+        contour = Contour3D.from_step(arguments, object_dict)
+
+        self.assertFalse(contour)
 
     def test_edge_intersections(self):
         points = [volmdlr.Point3D(1.2918566581549966, 2.3839907440191492, 0.5678759590090421),

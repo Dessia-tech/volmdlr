@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BoundingBox: triangle_intersects_voxel
 
 ### Fixed
+
+#### core_compiled
+- Frame2D: fix rotation.
+
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
 
@@ -37,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - ToroidalFace3D: PlaneFace3D intersections.
 - PlaneFace3D: circle_intersections. planeface_intersections
+
 #### wires.py
 - delete remaining inplace methods in wires.py
 
@@ -58,19 +63,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - bsplineCurve: line_intersections. 
 
-- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
-#### edges.py
-- Arc2D: Arc 2D now must follow the same rotation direction of its circle.
+### Refactor
+#### core.py
+- babylon_data: avoid using bounding_box for performance
 
 #### core_compiled
 - Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
 
-### Refactor
+#### curves.py
+- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
+
+#### edges.py
+- Arc2D: Arc 2D now must follow the same rotation direction of its circle.
+- LineSegment2D/3D: For performance and memory efficiency reasons, the line attribute from which the line segment was defined was converted to a property.
+
+#### faces.py
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
-- babylon_data: avoid using bounding_box for performance
 
 #### primitives3d.py
 - Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
+
+#### surfaces.py
+- ExtrusionSurface3D: Uses edge abscissa as u parameter.
+
 
 ### Changed
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.

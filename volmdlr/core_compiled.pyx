@@ -2315,12 +2315,6 @@ class Matrix33:
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
-        if abs(u1) < 1e-12:
-            u1 = 0.
-        if abs(u2) < 1e-12:
-            u2 = 0.
-        if abs(u3) < 1e-12:
-            u3 = 0.
         return vector.__class__(u1, u2, u3)
 
     def determinent(self):

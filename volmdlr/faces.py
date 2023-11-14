@@ -190,7 +190,9 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
-        return face.from_contours3d(surface, contours, name)
+        if step_id in (5902979, 2518731):
+            print(True)
+        return face.from_contours3d(surface, contours, step_id)
 
     @classmethod
     def from_contours3d(cls, surface, contours3d: List[volmdlr.wires.Contour3D], name: str = ''):
@@ -205,7 +207,7 @@ class Face3D(volmdlr.core.Primitive3D):
         outer_contour3d, inner_contours3d = None, []
         if len(contours3d) == 1:
             outer_contour2d = surface.contour3d_to_2d(contours3d[0])
-            outer_contour3d = surface.contour2d_to_3d(outer_contour2d)
+            outer_contour3d = contours3d[0]
             inner_contours2d = []
 
         elif len(contours3d) > 1:
@@ -222,18 +224,22 @@ class Face3D(volmdlr.core.Primitive3D):
                 outer_contour3d = surface.contour2d_to_3d(outer_contour2d)
                 inner_contours3d = [surface.contour2d_to_3d(contour) for contour in inner_contours2d]
             else:
-                for contour2d, contour3d in zip(contours2d, contours3d):
-                    # if not contour2d.is_ordered(1e-4):
-                    #     contour2d = vm_parametric.contour2d_healing(contour2d)
-                    inner_contours2d.append(contour2d)
-                    inner_contours3d.append(contour3d)
-                    contour_area = contour2d.area()
-                    if contour_area > area:
-                        area = contour_area
-                        outer_contour2d = contour2d
-                        outer_contour3d = contour3d
-                inner_contours2d.remove(outer_contour2d)
-                inner_contours3d.remove(outer_contour3d)
+                if contours3d[0].name == "face_outer_bound":
+                    outer_contour2d, inner_contours2d = contours2d[0], contours2d[1:]
+                    outer_contour3d, inner_contours3d = contours3d[0], contours3d[1:]
+                else:
+                    for contour2d, contour3d in zip(contours2d, contours3d):
+                        # if not contour2d.is_ordered(1e-4):
+                        #     contour2d = vm_parametric.contour2d_healing(contour2d)
+                        inner_contours2d.append(contour2d)
+                        inner_contours3d.append(contour3d)
+                        contour_area = contour2d.area()
+                        if contour_area > area:
+                            area = contour_area
+                            outer_contour2d = contour2d
+                            outer_contour3d = contour3d
+                    inner_contours2d.remove(outer_contour2d)
+                    inner_contours3d.remove(outer_contour3d)
         else:
             raise ValueError('Must have at least one contour')
         if (not outer_contour2d) or (not all(outer_contour2d.primitives)) or (not outer_contour2d.is_ordered(1e-2)):
@@ -257,7 +263,7 @@ class Face3D(volmdlr.core.Primitive3D):
         outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(
             current_id, surface_id=surface3d_ids[0], surface3d=self.surface3d)
         content += outer_contour_content
-        content += f"#{outer_contour_id + 1} = FACE_BOUND('{self.name}',#{outer_contour_id},.T.);\n"
+        content += f"#{outer_contour_id + 1} = FACE_OUTER_BOUND('{self.name}',#{outer_contour_id},.T.);\n"
         contours_ids = [outer_contour_id + 1]
         current_id = outer_contour_id + 2
         for inner_contour3d in self.inner_contours3d:
@@ -295,7 +301,7 @@ class Face3D(volmdlr.core.Primitive3D):
         mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
         if mesh2d is None:
             return None
-        return vmd.DisplayMesh3D([vmd.Node3D(*self.surface3d.point2d_to_3d(point)) for point in mesh2d.points],
+        return vmd.DisplayMesh3D([self.surface3d.point2d_to_3d(point) for point in mesh2d.points],
                                  mesh2d.triangles)
 
     def plot2d(self, ax=None, color='k', alpha=1):

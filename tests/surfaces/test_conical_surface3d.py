@@ -75,19 +75,26 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertEqual(linesegment2d_cone.start, Point2D(-2 * math.pi, 0.1))
         self.assertEqual(linesegment2d_cone.end, Point2D(-2 * math.pi, 0.0))
 
-        surface = surfaces.ConicalSurface3D.load_from_file(os.path.join(folder, "conical_singularity_suface.json"))
-        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "conical_singularity_contour.json"))
+        surface = surfaces.ConicalSurface3D.from_json(os.path.join(folder, "conical_singularity_suface.json"))
+        contour3d = vmw.Contour3D.from_json(os.path.join(folder, "conical_singularity_contour.json"))
         contour = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), 0.0025393181156878604, 6)
 
-        surface = surfaces.ConicalSurface3D.load_from_file(
+        surface = surfaces.ConicalSurface3D.from_json(
             os.path.join(folder, "conicalsurface_contour_with_singularity_2.json"))
-        contour3d = vmw.Contour3D.load_from_file(
+        contour3d = vmw.Contour3D.from_json(
             os.path.join(folder, "conicalsurface_contour_with_singularity_contour_2.json"))
         contour = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), math.pi * 0.0014073966802667698, 5)
+
+        surface = surfaces.ConicalSurface3D.from_json(
+            os.path.join(folder, "conicalsurface_linesegment3d_to_2d.json"))
+        contour3d = vmw.Contour3D.from_json(
+            os.path.join(folder, "conicalsurface_linesegment3d_to_2d_contour.json"))
+        contour = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour.is_ordered())
 
 
 

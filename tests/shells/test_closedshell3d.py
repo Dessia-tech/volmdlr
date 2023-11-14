@@ -70,7 +70,8 @@ class TestClosedShell3D(unittest.TestCase):
                             volmdlr.Vector3D(0, 0.1, 0), volmdlr.Vector3D(0, 0, 1)),
             alpha=0.6)
         box_blue2 = box_blue.frame_mapping(volmdlr.Frame3D(volmdlr.Point3D(0.2, 0, 0), volmdlr.Vector3D(1, 0, 0),
-                                                           volmdlr.Vector3D(0, 1.8, 0), volmdlr.Vector3D(0, 0, 1)), 'old')
+                                                           volmdlr.Vector3D(0, 1.8, 0), volmdlr.Vector3D(0, 0, 1)),
+                                           'old')
         union_blue_blue2_boxes = box_blue.union(box_blue2)[0]
         union_blue_blue2_boxes.merge_faces()
         self.assertEqual(len(union_blue_blue2_boxes.faces), 10)
