@@ -611,10 +611,6 @@ class BoundingBox(dc.DessiaObject):
                       [self.points[6], self.points[7]],
                       [self.points[7], self.points[4]]]
 
-        # x = [p[0] for p in self.points]
-        # y = [p[1] for p in self.points]
-        # z = [p[2] for p in self.points]
-        # ax.scatter(x, y, z, color)
         for edge in bbox_edges:
             ax.plot3D([edge[0][0], edge[1][0]],
                       [edge[0][1], edge[1][1]],
@@ -665,14 +661,11 @@ class BoundingBox(dc.DessiaObject):
         :return: The bounding box initialized from the list of points.
         :rtype: BoundingBox
         """
-        # if len(points) == 0:
-        #     return (0, 0, 0, 0, 0, 0)
-        xmin = min(pt.x for pt in points)
-        xmax = max(pt.x for pt in points)
-        ymin = min(pt.y for pt in points)
-        ymax = max(pt.y for pt in points)
-        zmin = min(pt.z for pt in points)
-        zmax = max(pt.z for pt in points)
+        points_array = npy.array([[*point] for point in points])
+        # Compute min and max for each dimension
+        xmin, ymin, zmin = points_array.min(axis=0)
+        xmax, ymax, zmax = points_array.max(axis=0)
+
         return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     def to_frame(self) -> volmdlr.Frame3D:
@@ -741,15 +734,6 @@ class BoundingBox(dc.DessiaObject):
         :return: A boolean value indicating whether the two bounding boxes intersect (True) or not (False).
         :rtype: bool
         """
-        # if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
-        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-        #         return True
-        # if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
-        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-        #         return True
-        # return False
         warnings.warn('bbox_intersection is deprecated, please use is_intersecting instead')
         return self.is_intersecting(bbox2, tol)
 
