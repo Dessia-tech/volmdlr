@@ -183,6 +183,43 @@ def map_primitive_with_initial_and_final_frames(primitive, initial_frame, final_
     return new_primitive
 
 
+def helper_babylon_data(babylon_data, display_points):
+    """Helper function to babylon_data."""
+    # Compute max length in each direction
+    all_positions = []
+    all_points = []
+    for mesh in babylon_data["meshes"]:
+        positions = mesh["positions"]
+        all_positions.extend(positions)
+    for line in babylon_data["lines"]:
+        points = line["points"]
+        all_points.extend(points)
+    if display_points:
+        all_points.extend(display_points)
+    # Convert to a NumPy array and reshape
+    positions_array = npy.array([])
+    if all_points and all_positions:
+        positions_array = npy.concatenate((npy.array(all_positions).reshape(-1, 3), npy.array(all_points)))
+    elif all_positions:
+        positions_array = npy.array(all_positions).reshape(-1, 3)
+    elif all_points:
+        positions_array = npy.array(all_points)
+    # Compute min and max for each dimension
+    min_vals = positions_array.min(axis=0)
+    max_vals = positions_array.max(axis=0)
+
+    # Calculate max length of the bounding box
+    max_length = npy.max(max_vals - min_vals)
+
+    # Calculate center point of the bounding box
+    center = (0.5 * (min_vals + max_vals)).tolist()
+
+    babylon_data['max_length'] = max_length
+    babylon_data['center'] = center
+
+    return babylon_data
+
+
 @dataclass
 class EdgeStyle:
     """
@@ -975,40 +1012,7 @@ class Assembly(dc.PhysicalObject):
                 babylon_data['lines'].extend(line for line in data.get("lines"))
             elif isinstance(primitive, volmdlr.Point3D):
                 display_points.append([*primitive])
-
-        # Compute max length in each direction
-        all_positions = []
-        all_points = []
-        for mesh in babylon_data["meshes"]:
-            positions = mesh["positions"]
-            all_positions.extend(positions)
-        for line in babylon_data["lines"]:
-            points = line["points"]
-            all_points.extend(points)
-        if display_points:
-            all_points.extend(display_points)
-        # Convert to a NumPy array and reshape
-        positions_array = npy.array([])
-        if all_points and all_positions:
-            positions_array = npy.concatenate((npy.array(all_positions).reshape(-1, 3), npy.array(all_points)))
-        elif all_positions:
-            positions_array = npy.array(all_positions).reshape(-1, 3)
-        elif all_points:
-            positions_array = npy.array(all_points)
-        # Compute min and max for each dimension
-        min_vals = positions_array.min(axis=0)
-        max_vals = positions_array.max(axis=0)
-
-        # Calculate max length of the bounding box
-        max_length = npy.max(max_vals - min_vals)
-
-        # Calculate center point of the bounding box
-        center = (0.5 * (min_vals + max_vals)).tolist()
-
-        babylon_data['max_length'] = max_length
-        babylon_data['center'] = center
-
-        return babylon_data
+        return helper_babylon_data(babylon_data, display_points)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -1191,40 +1195,7 @@ class Compound(dc.PhysicalObject):
                 babylon_data['lines'].extend(line for line in data.get("lines"))
             elif isinstance(primitive, volmdlr.Point3D):
                 display_points.append([*primitive])
-
-        # Compute max length in each direction
-        all_positions = []
-        all_points = []
-        for mesh in babylon_data["meshes"]:
-            positions = mesh["positions"]
-            all_positions.extend(positions)
-        for line in babylon_data["lines"]:
-            points = line["points"]
-            all_points.extend(points)
-        if display_points:
-            all_points.extend(display_points)
-        # Convert to a NumPy array and reshape
-        positions_array = npy.array([])
-        if all_points and all_positions:
-            positions_array = npy.concatenate((npy.array(all_positions).reshape(-1, 3), npy.array(all_points)))
-        elif all_positions:
-            positions_array = npy.array(all_positions).reshape(-1, 3)
-        elif all_points:
-            positions_array = npy.array(all_points)
-        # Compute min and max for each dimension
-        min_vals = positions_array.min(axis=0)
-        max_vals = positions_array.max(axis=0)
-
-        # Calculate max length of the bounding box
-        max_length = npy.max(max_vals - min_vals)
-
-        # Calculate center point of the bounding box
-        center = (0.5 * (min_vals + max_vals)).tolist()
-
-        babylon_data['max_length'] = max_length
-        babylon_data['center'] = center
-
-        return babylon_data
+        return helper_babylon_data(babylon_data, display_points)
 
     def volmdlr_primitives(self):
         """Return primitives."""
@@ -1425,40 +1396,7 @@ class VolumeModel(dc.PhysicalObject):
                 babylon_data['lines'].extend(line for line in data.get("lines"))
             elif isinstance(primitive, volmdlr.Point3D):
                 display_points.append([*primitive])
-
-        # Compute max length in each direction
-        all_positions = []
-        all_points = []
-        for mesh in babylon_data["meshes"]:
-            positions = mesh["positions"]
-            all_positions.extend(positions)
-        for line in babylon_data["lines"]:
-            points = line["points"]
-            all_points.extend(points)
-        if display_points:
-            all_points.extend(display_points)
-        # Convert to a NumPy array and reshape
-        positions_array = npy.array([])
-        if all_points and all_positions:
-            positions_array = npy.concatenate((npy.array(all_positions).reshape(-1, 3), npy.array(all_points)))
-        elif all_positions:
-            positions_array = npy.array(all_positions).reshape(-1, 3)
-        elif all_points:
-            positions_array = npy.array(all_points)
-        # Compute min and max for each dimension
-        min_vals = positions_array.min(axis=0)
-        max_vals = positions_array.max(axis=0)
-
-        # Calculate max length of the bounding box
-        max_length = npy.max(max_vals - min_vals)
-
-        # Calculate center point of the bounding box
-        center = (0.5 * (min_vals + max_vals)).tolist()
-
-        babylon_data['max_length'] = max_length
-        babylon_data['center'] = center
-
-        return babylon_data
+        return helper_babylon_data(babylon_data, display_points)
 
     @classmethod
     def babylonjs_script(cls, babylon_data, use_cdn=True, **kwargs):
