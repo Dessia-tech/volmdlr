@@ -1024,7 +1024,7 @@ class PointBasedVoxelization(Voxelization):
 
     def to_octree_based_voxelization(self) -> "OctreeBasedVoxelization":
         """
-        Convert the point based voxelization to an octree based voxelization.
+        Convert the PointBasedVoxelization to an OctreeBasedVoxelization.
 
         :return: The octree based voxelization.
         :rtype: OctreeBasedVoxelization
@@ -1469,7 +1469,7 @@ class MatrixBasedVoxelization(Voxelization):
 
         return cls(matrix, min_grid_center, voxel_size, name)
 
-    # HELPER METHODS
+    # EXPORT METHODS
     def to_point_based_voxelization(self) -> "PointBasedVoxelization":
         """
         Convert the MatrixBasedVoxelization to a PointBasedVoxelization.
@@ -1479,6 +1479,16 @@ class MatrixBasedVoxelization(Voxelization):
         """
         return PointBasedVoxelization(self.get_voxel_centers(), self.voxel_size, self.name)
 
+    def to_octree_based_voxelization(self) -> "OctreeBasedVoxelization":
+        """
+        Convert the MatrixBasedVoxelization to an OctreeBasedVoxelization.
+
+        :return: The octree based voxelization.
+        :rtype: OctreeBasedVoxelization
+        """
+        return OctreeBasedVoxelization.from_point_based_voxelization(self.to_point_based_voxelization())
+
+    # HELPER METHODS
     def _expand(self) -> "MatrixBasedVoxelization":
         """
         Expand the voxelization matrix by adding a single layer of False voxels around the existing matrix.
