@@ -4081,7 +4081,7 @@ class SphericalSurface3D(PeriodicalSurface):
 
     def _circle_generatrices_xy(self, number_circles: int):
         """
-        Gets the sphere circle generatrices in the xy parallel planes.
+        Gets the sphere circle generatrices in the a parallel planes.
 
         :param number_circles: number of circles to be created.
         :return: List of Circle 3D.
