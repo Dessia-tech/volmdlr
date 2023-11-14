@@ -24,8 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle3D: point_distance.
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
+- ClosedTriangleShell3D: turn_normals_outwards, are_normals_pointing_outwards, turn_normals_inwards, are_normals_pointing_inwards
+
 #### core.py
 - BoundingBox: triangle_intersects_voxel
+
+#### step.py
+- Support to Datakit CrossCadWare STEP file format.
 
 ### Fixed
 #### edges.py 
@@ -37,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - ToroidalFace3D: PlaneFace3D intersections.
 - PlaneFace3D: circle_intersections. planeface_intersections
+
 #### wires.py
 - delete remaining inplace methods in wires.py
 
@@ -74,6 +80,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### edges.py
 - BSplineCurve: improve line_intersections performance.
+- 
+#### edges.py
+- LineSegment2D/3D: The line attribute from which the line segment was defined was converted to a property, for performance and memory efficiency reasons.
 
 #### primitives3d.py
 - Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
