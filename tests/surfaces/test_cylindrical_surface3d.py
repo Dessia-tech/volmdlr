@@ -282,7 +282,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertAlmostEqual(inters[0].length(), 6.613411150146185)
         self.assertAlmostEqual(inters[1].length(), 6.613411150146188)
 
-        #test2
+        # test 2
         cylindrical_surface = surfaces.CylindricalSurface3D(volmdlr.OXYZ.translation(volmdlr.X3D * 1.5), 1)
         inters = spherical_surface.surface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
@@ -298,10 +298,25 @@ class TestCylindricalSurface3D(unittest.TestCase):
         cylindrical_surface2 = surfaces.CylindricalSurface3D(
             volmdlr.OYZX.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 4), 1)
 
+        # test 2
         inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
         expected_lengths2 = [7.767042433585131, 7.767042217039914]
         for intersection, expected_length in zip(inters, expected_lengths2):
             self.assertAlmostEqual(intersection.length(), expected_length)
+
+        # test 3
+        cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.OXYZ.translation(volmdlr.X3D * .5), 2)
+        inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
+        self.assertTrue(len(inters), 2)
+        self.assertTrue(inters[0].point1.is_close(volmdlr.Point3D(0.25, -1.984313483298, 0.0)))
+        self.assertTrue(inters[0].point2.is_close(volmdlr.Point3D(0.25, -1.984313483298, 1.0)))
+        self.assertTrue(inters[1].point1.is_close(volmdlr.Point3D(0.25, 1.984313483298, 0.0)))
+        self.assertTrue(inters[1].point2.is_close(volmdlr.Point3D(0.25, 1.984313483298, 1.0)))
+
+        # test 4
+        cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.OXYZ.translation(volmdlr.X3D * .5), .8)
+        inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
+        self.assertFalse(inters)
 
 
 if __name__ == '__main__':

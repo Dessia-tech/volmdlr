@@ -2663,16 +2663,29 @@ class CylindricalSurface3D(PeriodicalSurface):
         return intersection_points
 
     def cylindricalsurface_intersections(self, cylindricalsurface: 'CylindricalSurface3D'):
+        """
+        Gets intersections betweeen two cylindrical surfaces 3d.
+
+        :param cylindricalsurface: other cylindrical surface.
+        :return: a list contanting the resulting intersectios, if there are any.
+        """
+        curves_ = []
+        if self.frame.w.is_colinear_to(cylindricalsurface.frame.w):
+            circle1 = curves.Circle3D(self.frame, self.radius).to_2d(self.frame.origin, self.frame.u, self.frame.v)
+            circle2 = curves.Circle3D(cylindricalsurface.frame, cylindricalsurface.radius).to_2d(
+                self.frame.origin, self.frame.u, self.frame.v)
+            circle2d_intersections = circle1.circle_intersections(circle2)
+            for point in circle2d_intersections:
+                point3d = point.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+                curves_.append(curves.Line3D.from_point_and_vector(point3d, self.frame.w))
+            return curves_
+
         intersection_points = self._cylindrical_intersection_points(cylindricalsurface)
         if not intersection_points:
             return []
         inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
-        curves_ = []
         for list_points in inters_points:
             bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
-            if isinstance(bspline.simplify, edges.FullArc3D):
-                curves_.append(bspline.simplify)
-                continue
             curves_.append(bspline)
         return curves_
 
