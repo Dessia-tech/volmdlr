@@ -3469,7 +3469,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             curves_.append(bspline)
         return curves_
 
-
+      
 class ConicalSurface3D(PeriodicalSurface):
     """
     The local plane is defined by (theta, z).
