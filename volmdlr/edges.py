@@ -3634,9 +3634,13 @@ class ArcEllipse2D(Edge):
         self.ellipse = ellipse
         self.angle_start, self.angle_end = self.get_start_end_angles()
         self.angle = self.angle_end - self.angle_start
-        self.center = ellipse.center
         self._bounding_rectangle = None
         self._reverse = None
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.ellipse.frame.origin
 
     def get_start_end_angles(self):
         """Gets start and end angles for start and end points, respectively."""
@@ -3693,6 +3697,8 @@ class ArcEllipse2D(Edge):
                 major_axis, minor_axis, volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)), start, end, name=name)
 
         return arcellipse
+
+
 
     def _get_points(self):
         return self.discretization_points(number_points=20)
@@ -4117,7 +4123,6 @@ class FullArcEllipse(Edge):
         self.ellipse = ellipse
         self.is_trigo = True
         self.angle_start = 0.0
-        self.center = ellipse.center
         self.angle_end = volmdlr.TWO_PI
         Edge.__init__(self, start=start_end, end=start_end, name=name)
 
@@ -4125,6 +4130,11 @@ class FullArcEllipse(Edge):
     def periodic(self):
         """Returns True if edge is periodic."""
         return True
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.ellipse.frame.origin
 
     def length(self):
         """
@@ -6185,10 +6195,19 @@ class ArcEllipse3D(Edge):
         self.ellipse = ellipse
         self.angle_start, self.angle_end = self.get_start_end_angles()
         self.angle = self.angle_end - self.angle_start
-        self.center = ellipse.center
         self._self_2d = None
         self._length = None
         self._bbox = None
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.ellipse.frame.origin
+
+    @property
+    def normal(self):
+        """Gets ellipse's normal direction."""
+        return self.ellipse.frame.w
 
     def get_start_end_angles(self):
         """
@@ -6491,6 +6510,17 @@ class ArcEllipse3D(Edge):
         ellipse3d = volmdlr_curves.Ellipse3D(self.ellipse.major_axis, self.ellipse.minor_axis, new_frame)
         return self.__class__(ellipse3d, self.end, self.start, self.name + '_reverse')
 
+    def line_intersections(self, line, abs_tol: float = 1e-6):
+        """
+        Gets the intersections between an Ellipse 3D and a Line 3D.
+
+        :param line: The intersecting lines.
+        :param abs_tol: The absolute tolerance.
+        :return: A list with the intersections points between the two edges.
+        """
+        ellipse_linesegment_intersections = self.ellipse.line_intersections(line, abs_tol)
+        return self.validate_intersections(ellipse_linesegment_intersections, abs_tol)
+
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
         Gets the intersections between an Ellipse 3D and a Line Segment 3D.
@@ -6500,11 +6530,15 @@ class ArcEllipse3D(Edge):
         :return: A list with the intersections points between the two edges.
         """
         ellipse_linesegment_intersections = self.ellipse.linesegment_intersections(linesegment, abs_tol)
-        intersections = []
-        for intersection in ellipse_linesegment_intersections:
+        return self.validate_intersections(ellipse_linesegment_intersections, abs_tol)
+
+    def validate_intersections(self, intersections: List[volmdlr.Point3D], abs_tol: float = 1e-6):
+        """Helper function to validate edge intersections."""
+        valid_intersections = []
+        for intersection in intersections:
             if self.point_belongs(intersection, abs_tol):
-                intersections.append(intersection)
-        return intersections
+                valid_intersections.append(intersection)
+        return valid_intersections
 
     def arcellipse_intersections(self, arcellipse3d, abs_tol: float = 1e-6):
         """
@@ -6529,7 +6563,6 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
 
     def __init__(self, ellipse: volmdlr_curves.Ellipse3D, start_end: volmdlr.Point3D, name: str = ''):
         self.ellipse = ellipse
-        self.normal = self.ellipse.normal
         center2d = self.ellipse.center.to_2d(self.ellipse.center,
                                              self.ellipse.major_dir, self.ellipse.minor_dir)
         point_major_dir = self.ellipse.center + self.ellipse.major_axis * self.ellipse.major_dir
@@ -6639,3 +6672,13 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Ellipse plot."""
         return self.ellipse.plot(ax, edge_style)
+
+    def line_intersections(self, line, abs_tol: float = 1e-6):
+        """
+        Gets intersections between an Ellipse 3D and a Line3D.
+
+        :param line: Other Line 3D.
+        :param abs_tol: tolerance.
+        :return: A list of points, containing all intersections between the Line 3D and the Ellipse3D.
+        """
+        return self.ellipse.line_intersections(line, abs_tol)

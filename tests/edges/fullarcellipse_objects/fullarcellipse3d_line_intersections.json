@@ -1,0 +1,46 @@
+{
+  "object_class": "volmdlr.edges.FullArcEllipse3D",
+  "name": "",
+  "ellipse": {
+    "object_class": "volmdlr.curves.Ellipse3D",
+    "name": "Ellipse",
+    "frame": {
+      "object_class": "volmdlr.Frame3D",
+      "name": "",
+      "origin": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.332389686562,
+        "y": -0.107656238899,
+        "z": 0.49727502274900004,
+        "name": "Axis2P3D Location"
+      },
+      "u": {
+        "object_class": "volmdlr.Vector3D",
+        "x": 0.07966182573645927,
+        "y": -0.9953075360873,
+        "z": 0.05492633364936751
+      },
+      "v": {
+        "object_class": "volmdlr.Vector3D",
+        "x": -0.8082619902568307,
+        "y": -0.09674396737971236,
+        "z": -0.5808211083307145
+      },
+      "w": {
+        "object_class": "volmdlr.Vector3D",
+        "x": 0.583409417671,
+        "y": 0.00187440216295,
+        "z": -0.812176051106,
+        "name": "Axis2P3D Direction"
+      }
+    },
+    "major_axis": 0.010905671323,
+    "minor_axis": 0.010500000115100001
+  },
+  "start_end": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.33325845225047196,
+    "y": -0.11851073575287306,
+    "z": 0.49787403129075747
+  }
+}
