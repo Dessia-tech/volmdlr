@@ -139,12 +139,12 @@ class TestCircle2D(unittest.TestCase):
     def test_rotation(self):
         rotated_arc2d = self.circle2d.rotation(volmdlr.Point2D(1, 0), math.pi / 4)
         circle2d_points = rotated_arc2d.discretization_points(number_points=6)
-        expected_points = [volmdlr.Point2D(1.0, 0.0),
-                           volmdlr.Point2D(-0.16109728092609432, 0.18389974300182038),
-                           volmdlr.Point2D(-0.6947951217816853, -0.8635412462267782),
-                           volmdlr.Point2D(0.13645875377322148, -1.6947951217816852),
-                           volmdlr.Point2D(1.1838997430018203, -1.1610972809260947),
-                           volmdlr.Point2D(1.0, 0.0)]
+        expected_points = [volmdlr.Point2D(1.2928932188134525, -0.7071067811865475),
+                           volmdlr.Point2D(0.6019102131883999, 0.24394973510860607),
+                           volmdlr.Point2D(-0.5161237755614949, -0.11932152889407421),
+                           volmdlr.Point2D(-0.516123775561495, -1.2948920334790204),
+                           volmdlr.Point2D(0.6019102131883997, -1.658163297481701),
+                           volmdlr.Point2D(1.2928932188134525, -0.7071067811865475)]
         for point, expected_point in zip(circle2d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 

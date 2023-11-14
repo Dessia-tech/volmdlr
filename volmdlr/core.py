@@ -1035,14 +1035,27 @@ class Assembly(dc.PhysicalObject):
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
 
-        bbox = self.bounding_box
-        center = bbox.center
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
+        # Compute max length in each direction
+        all_positions = []
+        for mesh in babylon_data["meshes"]:
+            positions = mesh["positions"]
+            all_positions.extend(positions)
+
+        # Convert to a NumPy array and reshape
+        positions_array = npy.array(all_positions).reshape(-1, 3)
+
+        # Compute min and max for each dimension
+        min_vals = positions_array.min(axis=0)
+        max_vals = positions_array.max(axis=0)
+
+        # Calculate max length of the bounding box
+        max_length = npy.max(max_vals - min_vals)
+
+        # Calculate center point of the bounding box
+        center = (0.5 * (min_vals + max_vals)).tolist()
 
         babylon_data['max_length'] = max_length
-        babylon_data['center'] = list(center)
+        babylon_data['center'] = center
 
         return babylon_data
 
@@ -1225,14 +1238,27 @@ class Compound(dc.PhysicalObject):
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
 
-        bbox = self.bounding_box
-        center = bbox.center
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
+        # Compute max length in each direction
+        all_positions = []
+        for mesh in babylon_data["meshes"]:
+            positions = mesh["positions"]
+            all_positions.extend(positions)
+
+        # Convert to a NumPy array and reshape
+        positions_array = npy.array(all_positions).reshape(-1, 3)
+
+        # Compute min and max for each dimension
+        min_vals = positions_array.min(axis=0)
+        max_vals = positions_array.max(axis=0)
+
+        # Calculate max length of the bounding box
+        max_length = npy.max(max_vals - min_vals)
+
+        # Calculate center point of the bounding box
+        center = (0.5 * (min_vals + max_vals)).tolist()
 
         babylon_data['max_length'] = max_length
-        babylon_data['center'] = list(center)
+        babylon_data['center'] = center
 
         return babylon_data
 
@@ -1433,14 +1459,27 @@ class VolumeModel(dc.PhysicalObject):
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
 
-        bbox = self.bounding_box
-        center = bbox.center
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
+        # Compute max length in each direction
+        all_positions = []
+        for mesh in babylon_data["meshes"]:
+            positions = mesh["positions"]
+            all_positions.extend(positions)
+
+        # Convert to a NumPy array and reshape
+        positions_array = npy.array(all_positions).reshape(-1, 3)
+
+        # Compute min and max for each dimension
+        min_vals = positions_array.min(axis=0)
+        max_vals = positions_array.max(axis=0)
+
+        # Calculate max length of the bounding box
+        max_length = npy.max(max_vals - min_vals)
+
+        # Calculate center point of the bounding box
+        center = (0.5 * (min_vals + max_vals)).tolist()
 
         babylon_data['max_length'] = max_length
-        babylon_data['center'] = list(center)
+        babylon_data['center'] = center
 
         return babylon_data
 
@@ -2148,10 +2187,24 @@ class MovingVolumeModel(VolumeModel):
                 meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 primitives_to_meshes.append(i_prim)
 
-        bbox = self._bounding_box()
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
+        # Compute max length in each direction
+        all_positions = []
+        for mesh in meshes:
+            positions = mesh["positions"]
+            all_positions.extend(positions)
+
+        # Convert to a NumPy array and reshape
+        positions_array = npy.array(all_positions).reshape(-1, 3)
+
+        # Compute min and max for each dimension
+        min_vals = positions_array.min(axis=0)
+        max_vals = positions_array.max(axis=0)
+
+        # Calculate max length of the bounding box
+        max_length = npy.max(max_vals - min_vals)
+
+        # Calculate center point of the bounding box
+        center = (0.5 * (min_vals + max_vals)).tolist()
 
         steps = []
         for istep, frames in enumerate(self.step_frames):
@@ -2172,6 +2225,6 @@ class MovingVolumeModel(VolumeModel):
 
         babylon_data = {'meshes': meshes,
                         'max_length': max_length,
-                        'center': list(bbox.center),
+                        'center': center,
                         'steps': steps}
         return babylon_data

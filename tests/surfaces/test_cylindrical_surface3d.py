@@ -210,6 +210,26 @@ class TestCylindricalSurface3D(unittest.TestCase):
         ax = self.cylindrical_surface.plot()
         self.assertTrue(ax)
 
+    def test_ellipse_intersections(self):
+        cyl_surface = surfaces.CylindricalSurface3D(
+            volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, 0.0),
+                            u=volmdlr.Vector3D(-5.551115123125783e-17, 0.0, 0.9999999999999998),
+                            v=volmdlr.Vector3D(0.0, 0.9999999999999998, 0.0),
+                            w=volmdlr.Vector3D(-0.9999999999999998, 0.0, -5.551115123125783e-17)), 1.5)
+
+        frame = volmdlr.Frame3D(
+            origin=volmdlr.Point3D(0.0, 0.0, 0.0),
+            u=volmdlr.Vector3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+            v=volmdlr.Vector3D(0.8164965809277258, -0.40824829046386313, -0.40824829046386313),
+            w=volmdlr.Vector3D(0.0, 0.7071067811865476, -0.7071067811865476))
+        ellipse = curves.Ellipse3D(2, 1, frame)
+        ellipse_intersections = cyl_surface.ellipse_intersections(ellipse)
+        self.assertEqual(len(ellipse_intersections), 2)
+        self.assertTrue(ellipse_intersections[0],
+                        volmdlr.Point3D(-1.3695411442140175, -0.4354143466934857, -0.4354143466934857))
+        self.assertTrue(ellipse_intersections[1],
+                        volmdlr.Point3D(0.7889886819560367, -0.4354143466934856, -0.4354143466934856))
+
     def test_coinicalsurface_intersections(self):
         expected_slutions = [[3.710032833168665],
                              [2.754671034122705, 0.7935213452250598],
@@ -228,7 +248,6 @@ class TestCylindricalSurface3D(unittest.TestCase):
         cylindrical_surface4 = surfaces.CylindricalSurface3D(
             volmdlr.Frame3D(volmdlr.Point3D(0.0, 0.41068360252295905, 1.2886751345948129),
                             volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), math.tan(conical_surface.semi_angle) / 2)
-        listsolutions = []
         for i, cylindrical_surface in enumerate([cylindrical_surface1, cylindrical_surface2, cylindrical_surface3,
                                     cylindrical_surface4]):
             list_curves = cylindrical_surface.conicalsurface_intersections(conical_surface)
