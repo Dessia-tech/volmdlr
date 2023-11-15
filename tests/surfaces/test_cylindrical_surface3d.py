@@ -160,14 +160,13 @@ class TestCylindricalSurface3D(unittest.TestCase):
             os.path.join(folder, "cylindrical_surface_bspline_openned_contour.json"))
         contour = dessia_common.core.DessiaObject.load_from_file(
             os.path.join(folder,"cylindrical_contour_bspline_openned_contour.json"))
-
         contour2d = surface.contour3d_to_2d(contour)
         self.assertEqual(len(contour2d.primitives), 2)
         self.assertFalse(contour2d.is_ordered())
 
+
         surface = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "test_contour3d_to_2d_surface.json"))
         contour = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "test_contour3d_to_2d_contour.json"))
-
         contour2d = surface.contour3d_to_2d(contour)
         self.assertAlmostEqual(contour2d.area(), 0.29361767646954695, 2)
         self.assertTrue(contour2d.is_ordered())

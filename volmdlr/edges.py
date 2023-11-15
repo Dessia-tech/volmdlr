@@ -438,13 +438,15 @@ class Edge(dc.DessiaObject):
                 break
         return new_split_edge
 
-    def point_distance_to_edge(self, point):
+    def point_distance(self, point: Union[volmdlr.Point2D, volmdlr.Point3D]):
         """
-        Calculates the distance from a given point to an edge.
+        Calculates the distance from a given point.
 
-        :param point: point.
-        :return: distance to edge.
+        :param point: The point to be checked.
+        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :return: distance.
         """
+
         return vm_common_operations.get_point_distance_to_edge(self, point, self.start, self.end)
 
     @property
@@ -1461,17 +1463,6 @@ class BSplineCurve(Edge):
         if self.point_distance(point) < abs_tol:
             return True
         return False
-
-    def point_distance(self, point: Union[volmdlr.Point2D, volmdlr.Point3D]):
-        """
-        Calculates the distance from a given point to a BSplineCurve2D or 3D.
-
-        :param point: The point to be checked.
-        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
-        :return: distance.
-        """
-
-        return self.point_distance_to_edge(point)
 
     def merge_with(self, bspline_curve: 'BSplineCurve'):
         """
@@ -3640,9 +3631,13 @@ class ArcEllipse2D(Edge):
         self.ellipse = ellipse
         self.angle_start, self.angle_end = self.get_start_end_angles()
         self.angle = self.angle_end - self.angle_start
-        self.center = ellipse.center
         self._bounding_rectangle = None
         self._reverse = None
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.ellipse.frame.origin
 
     def get_start_end_angles(self):
         """Gets start and end angles for start and end points, respectively."""
@@ -3699,6 +3694,8 @@ class ArcEllipse2D(Edge):
                 major_axis, minor_axis, volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)), start, end, name=name)
 
         return arcellipse
+
+
 
     def _get_points(self):
         return self.discretization_points(number_points=20)
@@ -4065,15 +4062,6 @@ class ArcEllipse2D(Edge):
                             self.start.translation(offset),
                             self.end.translation(offset))
 
-    def point_distance(self, point):
-        """
-        Calculates the distance from a given point to an Arc Ellipse 2d.
-
-        :param point: point 2d.
-        :return: distance.
-        """
-        return self.point_distance_to_edge(point)
-
     def straight_line_point_belongs(self, point):
         """
         Verifies if a point belongs to the surface created by closing the edge.
@@ -4132,7 +4120,6 @@ class FullArcEllipse(Edge):
         self.ellipse = ellipse
         self.is_trigo = True
         self.angle_start = 0.0
-        self.center = ellipse.center
         self.angle_end = volmdlr.TWO_PI
         Edge.__init__(self, start=start_end, end=start_end, name=name)
 
@@ -4140,6 +4127,11 @@ class FullArcEllipse(Edge):
     def periodic(self):
         """Returns True if edge is periodic."""
         return True
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.ellipse.frame.origin
 
     def length(self):
         """
@@ -4539,7 +4531,7 @@ class LineSegment3D(LineSegment):
         :param other_line: Other line.
         :return: Two points corresponding to the distance between to lines.
         """
-        return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
+        return volmdlr.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
         """Calculates the parallel distance between two Line Segments 3D."""
@@ -4805,6 +4797,16 @@ class LineSegment3D(LineSegment):
         if return_points:
             return distance, points[0], points[1]
         return distance
+
+    def babylon_curves(self):
+        """Returns the babylon representation of the edge."""
+        points = [[*self.start], [*self.end]]
+        babylon_lines = {'points': points,
+                         'alpha': 1.0,
+                         'name': self.name,
+                         'color': [0.2, 0.8, 0.2]
+                         }
+        return babylon_lines
 
     def move_frame_along(self, frame):
         """Move frame along edge."""
@@ -6190,10 +6192,19 @@ class ArcEllipse3D(Edge):
         self.ellipse = ellipse
         self.angle_start, self.angle_end = self.get_start_end_angles()
         self.angle = self.angle_end - self.angle_start
-        self.center = ellipse.center
         self._self_2d = None
         self._length = None
         self._bbox = None
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.ellipse.frame.origin
+
+    @property
+    def normal(self):
+        """Gets ellipse's normal direction."""
+        return self.ellipse.frame.w
 
     def get_start_end_angles(self):
         """
@@ -6519,7 +6530,7 @@ class ArcEllipse3D(Edge):
         return self.validate_intersections(ellipse_linesegment_intersections, abs_tol)
 
     def validate_intersections(self, intersections: List[volmdlr.Point3D], abs_tol: float = 1e-6):
-        """Helper function to validate edge intersections"""
+        """Helper function to validate edge intersections."""
         valid_intersections = []
         for intersection in intersections:
             if self.point_belongs(intersection, abs_tol):
@@ -6549,7 +6560,6 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
 
     def __init__(self, ellipse: volmdlr_curves.Ellipse3D, start_end: volmdlr.Point3D, name: str = ''):
         self.ellipse = ellipse
-        self.normal = self.ellipse.normal
         center2d = self.ellipse.center.to_2d(self.ellipse.center,
                                              self.ellipse.major_dir, self.ellipse.minor_dir)
         point_major_dir = self.ellipse.center + self.ellipse.major_axis * self.ellipse.major_dir

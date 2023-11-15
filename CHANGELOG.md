@@ -13,19 +13,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
-- ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object
+- ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object, conicalsurface_intersections, sphericalsurface_intersections
 - ToroidalSurface3D: Handles degenerated surfaces (major_radius < minor_radius).
 - CylindricalSurface3D: circle_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
 - SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections
 #### edges.py
 - BsplineCurve3D: circle_intersections.
+- ArcEllipse3D/FullArcEllipse3D: line_intersections.
 #### curves.py
 - Circle3D: point_distance.
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
+- ClosedTriangleShell3D: turn_normals_outwards, are_normals_pointing_outwards, turn_normals_inwards, are_normals_pointing_inwards
+
 #### core.py
 - BoundingBox: triangle_intersects_voxel
+
+#### step.py
+- Support to Datakit CrossCadWare STEP file format.
 
 ### Fixed
 
@@ -64,18 +70,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bsplineCurve: line_intersections. 
 
 ### Refactor
+- Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
+
 #### core.py
 - babylon_data: avoid using bounding_box for performance
+- BoundingBox: uses numpy to improve performance.
 
 #### core_compiled
 - Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
 
-#### curves.py
-- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
-
 #### edges.py
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
-- LineSegment2D/3D: For performance and memory efficiency reasons, the line attribute from which the line segment was defined was converted to a property.
+- LineSegment2D/3D: The line attribute from which the line segment was defined was converted to a property, for performance and memory efficiency reasons.
+- BSplineCurve: improve line_intersections performance.
 
 #### faces.py
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
