@@ -4,9 +4,9 @@ Compare memory usage of differents voxelization.
 import math
 import time
 
-from pympler.asizeof import asizeof
 import volmdlr
-from volmdlr.discrete_representation import PointBasedVoxelization, MatrixBasedVoxelization, OctreeBasedVoxelization
+from pympler.asizeof import asizeof
+from volmdlr.discrete_representation import MatrixBasedVoxelization, OctreeBasedVoxelization, PointBasedVoxelization
 from volmdlr.step import Step
 
 STEP_MODEL_FILE_PATH = "../../step/tore1.step"
