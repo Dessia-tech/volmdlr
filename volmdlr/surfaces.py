@@ -2611,42 +2611,26 @@ class CylindricalSurface3D(PeriodicalSurface):
             return True
         return False
 
-    def _sphere_cylinder_tangent_intersections(self, spherical_surface, frame, distance_axis_sphere_center):
+    def _sphere_cylinder_tangent_intersections(self, frame, distance_axis_sphere_center):
         """
         Gets the intersections between a sphere tangent to the cylinder.
 
-        :param spherical_surface: other spherical surface.
-        :param frame: frame for local calculations.
+        :param frame: frame for local calculations. Frame is such that w is the cylinder axis,
+        and u passes through the sphere's center.
         :param distance_axis_sphere_center: distance of sphere's center to cylinder axis.
         :return: return a list with the intersecting curves.
         """
-        phi = npy.linspace(0.0, 4 * math.pi, 400)
-        intersection_points = [volmdlr.Point3D(x_comp, y_comp, z_comp)
-                               for x_comp, y_comp, z_comp in zip(
-                                   self.radius * npy.cos(phi), self.radius * npy.sin(phi),
-                                   2 * math.sqrt(distance_axis_sphere_center*self.radius)*npy.cos(phi / 2))]
-        intersection_points.pop(-1)
-        local_spherical_surface = spherical_surface.frame_mapping(frame, 'new')
         curves_ = []
-        lineseg = edges.LineSegment3D(local_spherical_surface.frame.origin,
-                                      local_spherical_surface.frame.origin + frame.u * spherical_surface.radius * 2)
-        sphere_lineseg_intersections = local_spherical_surface.linesegment_intersections(lineseg)
-        point = sphere_lineseg_intersections[0]
-        local_points = [frame.global_to_local_coordinates(point)
-                        for point in intersection_points]
-        lists_points = [[], []]
-        for i, local_point in enumerate(local_points):
-            if local_point.z > 0:
-                lists_points[0].append(intersection_points[i])
-            elif local_point.z < 0:
-                lists_points[1].append(intersection_points[i])
-        for points in lists_points:
-            points_ = vm_common_operations.order_points_list_for_nearest_neighbor(points+[point])
-            points_ = points_[points_.index(point):] + points_[:points_.index(point)]
-            points_ = [frame.local_to_global_coordinates(point_) for point_ in points_]
-            edge = edges.BSplineCurve3D.from_points_interpolation(points_ + [points_[0]], 6)
-            curves_.append(edge)
-        return curves_
+        for phi_range in [(0, math.pi), (math.pi, 2*math.pi), (2*math.pi, 3*math.pi), (3*math.pi, 4*math.pi)]:
+            phi = npy.linspace(phi_range[0], phi_range[1], 100)
+            intersection_points = [volmdlr.Point3D(x_comp, y_comp, z_comp)
+                                   for x_comp, y_comp, z_comp in zip(
+                                       self.radius * npy.cos(phi), self.radius * npy.sin(phi),
+                                       2 * math.sqrt(distance_axis_sphere_center*self.radius)*npy.cos(phi / 2))]
+            bspline = edges.BSplineCurve3D.from_points_interpolation(intersection_points, 4, centripetal=False)
+            curves_.append(bspline)
+        global_intersections = [edge.frame_mapping(frame, 'old') for edge in curves_]
+        return global_intersections
 
     def sphericalsurface_intersections(self, spherical_surface: 'SphericalSurface3D'):
         """
@@ -2674,8 +2658,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         vector = (spherical_surface.frame.origin - point_projection).unit_vector()
         frame = volmdlr.Frame3D(point_projection, vector, self.frame.w.cross(vector), self.frame.w)
         if math.isclose(distance_axis_sphere_center + self.radius, spherical_surface.radius, abs_tol=1e-6):
-
-            return self._sphere_cylinder_tangent_intersections(spherical_surface, frame, distance_axis_sphere_center)
+            return self._sphere_cylinder_tangent_intersections(frame, distance_axis_sphere_center)
         b = (spherical_surface.radius**2 - self.radius**2 -
              distance_axis_sphere_center**2) / (2*distance_axis_sphere_center)
         if spherical_surface.radius > self.radius + distance_axis_sphere_center:

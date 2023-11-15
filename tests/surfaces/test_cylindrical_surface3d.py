@@ -499,8 +499,10 @@ class TestCylindricalSurface3D(unittest.TestCase):
             volmdlr.OXYZ.translation(volmdlr.X3D), 2
         )
         inters7 = spherical_surface.surface_intersections(cylindrical_surface)
-        self.assertAlmostEqual(inters7[0].length(), 14.012130843957015)
-        self.assertAlmostEqual(inters7[1].length(), 14.01213101287799)
+        self.assertAlmostEqual(inters7[0].length(), 7.006825334082508)
+        self.assertAlmostEqual(inters7[1].length(), 7.006825334082508)
+        self.assertAlmostEqual(inters7[2].length(), 7.006825334082508)
+        self.assertAlmostEqual(inters7[3].length(), 7.006825334082508)
 
 
 if __name__ == "__main__":
