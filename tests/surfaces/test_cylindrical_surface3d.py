@@ -450,7 +450,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
         )
         inters = spherical_surface.surface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(), 13.535607072731064)
+        self.assertAlmostEqual(inters[0].length(), 13.535573972180183)
 
         # test 3 - sphere inside the cylinder, sphere radius < cylinder radius.
         spherical_surface = surfaces.SphericalSurface3D(
@@ -499,8 +499,8 @@ class TestCylindricalSurface3D(unittest.TestCase):
             volmdlr.OXYZ.translation(volmdlr.X3D), 2
         )
         inters7 = spherical_surface.surface_intersections(cylindrical_surface)
-        self.assertAlmostEqual(inters7[0].length(), 14.011747265304246)
-        self.assertAlmostEqual(inters7[1].length(), 14.011747265304246)
+        self.assertAlmostEqual(inters7[0].length(), 14.012130843957015)
+        self.assertAlmostEqual(inters7[1].length(), 14.01213101287799)
 
 
 if __name__ == "__main__":

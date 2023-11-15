@@ -2611,38 +2611,28 @@ class CylindricalSurface3D(PeriodicalSurface):
             return True
         return False
 
-    def _spherical_intersection_points(self, spherical_surface: 'SphericalSurface3D'):
-        """
-        Gets the points of intersections between the spherical surface and the toroidal surface.
-
-        :param spherical_surface: other Conical Surface 3d.
-        :return: points of intersections.
-        """
-        cyl_generatrices = self.get_generatrices(spherical_surface.radius*4, 200) +\
-                           self.get_circle_generatrices(200, spherical_surface.radius*4)
-        intersection_points = []
-        for gene in cyl_generatrices:
-            intersections = spherical_surface.edge_intersections(gene)
-            for intersection in intersections:
-                if not volmdlr.core.point_in_list(intersection, intersection_points):
-                    intersection_points.append(intersection)
-        return intersection_points
-
-    def _sphere_cylinder_tangent_intersections(self, spherical_surface):
+    def _sphere_cylinder_tangent_intersections(self, spherical_surface, frame, distance_axis_sphere_center):
         """
         Gets the intersections between a sphere tangent to the cylinder.
 
         :param spherical_surface: other spherical surface.
+        :param frame: frame for local calculations.
+        :param distance_axis_sphere_center: distance of sphere's center to cylinder axis.
         :return: return a list with the intersecting curves.
         """
+        phi = npy.linspace(0.0, 4 * math.pi, 400)
+        intersection_points = [volmdlr.Point3D(x_comp, y_comp, z_comp)
+                               for x_comp, y_comp, z_comp in zip(
+                                   self.radius * npy.cos(phi), self.radius * npy.sin(phi),
+                                   2 * math.sqrt(distance_axis_sphere_center*self.radius)*npy.cos(phi / 2))]
+        intersection_points.pop(-1)
+        local_spherical_surface = spherical_surface.frame_mapping(frame, 'new')
         curves_ = []
-        intersection_points = self._spherical_intersection_points(spherical_surface)
-        vector = (self.frame.origin - spherical_surface.frame.origin).unit_vector()
-        lineseg = edges.LineSegment3D(spherical_surface.frame.origin,
-                                      spherical_surface.frame.origin + vector * spherical_surface.radius * 2)
-        sphere_lineseg_intersections = spherical_surface.linesegment_intersections(lineseg)
+        lineseg = edges.LineSegment3D(local_spherical_surface.frame.origin,
+                                      local_spherical_surface.frame.origin + frame.u * spherical_surface.radius * 2)
+        sphere_lineseg_intersections = local_spherical_surface.linesegment_intersections(lineseg)
         point = sphere_lineseg_intersections[0]
-        local_points = [spherical_surface.frame.global_to_local_coordinates(point)
+        local_points = [frame.global_to_local_coordinates(point)
                         for point in intersection_points]
         lists_points = [[], []]
         for i, local_point in enumerate(local_points):
@@ -2653,7 +2643,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         for points in lists_points:
             points_ = vm_common_operations.order_points_list_for_nearest_neighbor(points+[point])
             points_ = points_[points_.index(point):] + points_[:points_.index(point)]
-            edge = edges.BSplineCurve3D.from_points_interpolation(points_ + [points_[0]], 5)
+            points_ = [frame.local_to_global_coordinates(point_) for point_ in points_]
+            edge = edges.BSplineCurve3D.from_points_interpolation(points_ + [points_[0]], 6)
             curves_.append(edge)
         return curves_
 
@@ -2679,17 +2670,40 @@ class CylindricalSurface3D(PeriodicalSurface):
                 return [circle1, circle2]
         if distance_axis_sphere_center - spherical_surface.radius > self.radius:
             return []
+        point_projection, _ = line_axis.point_projection(spherical_surface.frame.origin)
+        vector = (spherical_surface.frame.origin - point_projection).unit_vector()
+        frame = volmdlr.Frame3D(point_projection, vector, self.frame.w.cross(vector), self.frame.w)
         if math.isclose(distance_axis_sphere_center + self.radius, spherical_surface.radius, abs_tol=1e-6):
-            return self._sphere_cylinder_tangent_intersections(spherical_surface)
-        intersection_points = self._spherical_intersection_points(spherical_surface)
-        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
+
+            return self._sphere_cylinder_tangent_intersections(spherical_surface, frame, distance_axis_sphere_center)
+        b = (spherical_surface.radius**2 - self.radius**2 -
+             distance_axis_sphere_center**2) / (2*distance_axis_sphere_center)
+        if spherical_surface.radius > self.radius + distance_axis_sphere_center:
+            phi_0 = 0
+            phi_1 = 2*math.pi
+            two_curves = True
+        else:
+            phi_0 = math.acos(-b/self.radius)
+            phi_1 = phi_0-0.000001
+            phi_0 = -phi_0+0.000001
+            two_curves = False
+        inters_points = [[], []]
+        for phi in npy.linspace(phi_0, phi_1, 400):
+            x_comp = self.radius*math.cos(phi)
+            y_comp = self.radius*math.sin(phi)
+            z_comp1 = math.sqrt(2*distance_axis_sphere_center*(b + self.radius*math.cos(phi)))
+            z_comp2 = - z_comp1
+            point1 = volmdlr.Point3D(x_comp, y_comp, z_comp1)
+            point2 = volmdlr.Point3D(x_comp, y_comp, z_comp2)
+            inters_points[0].append(point1)
+            inters_points[1].append(point2)
+        if not two_curves:
+            inters_points = vm_common_operations.separate_points_by_closeness(inters_points[0]+inters_points[1])
         for list_points in inters_points:
             bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
-            if isinstance(bspline.simplify, edges.FullArc3D):
-                curves_.append(bspline.simplify)
-                continue
             curves_.append(bspline)
-        return curves_
+        global_intersections = [edge.frame_mapping(frame, 'old') for edge in curves_]
+        return global_intersections
 
 
 class ToroidalSurface3D(PeriodicalSurface):
