@@ -152,7 +152,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.outer_contour3d.bounding_box
 
     def area(self):
-        """Computes the area of the surface2d."""
+        """Computes the area of the surface 2d."""
         return self.surface2d.area()
 
     @classmethod
@@ -295,7 +295,7 @@ class Face3D(volmdlr.core.Primitive3D):
         mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
         if mesh2d is None:
             return None
-        return vmd.DisplayMesh3D([vmd.Node3D(*self.surface3d.point2d_to_3d(point)) for point in mesh2d.points],
+        return vmd.DisplayMesh3D([self.surface3d.point2d_to_3d(point) for point in mesh2d.points],
                                  mesh2d.triangles)
 
     def plot2d(self, ax=None, color='k', alpha=1):
@@ -1649,6 +1649,10 @@ class PlaneFace3D(Face3D):
         return [self.__class__(self.surface3d, surface2d) for surface2d in list_surfaces]
 
     def check_inner_contours(self, face):
+        """
+        Checks face inner contours.
+
+        """
         c_inners_1 = self.surface2d.inner_contours
         c_inners_2 = [self.surface3d.contour3d_to_2d(inner) for inner in face.inner_contours3d]
         inside = set()
