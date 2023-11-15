@@ -2163,7 +2163,9 @@ class OctreeBasedVoxelization(Voxelization):
         )
         triangles = self._triangles
 
-        return self.__class__(octree_difference, (0.0, 0.0, 0.0), octree_1._octree_depth, octree_1.voxel_size, triangles)
+        return self.__class__(
+            octree_difference, (0.0, 0.0, 0.0), octree_1._octree_depth, octree_1.voxel_size, triangles
+        )
 
     @staticmethod
     def _recursive_difference(
