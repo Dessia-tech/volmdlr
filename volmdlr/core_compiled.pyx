@@ -496,7 +496,7 @@ cdef class Vector:
     def __le__(self, other_vector):
         return self.norm() <= other_vector.norm()
 
-    def is_colinear_to(self, other_vector: Vector, abs_tol: float = 1e-6) -> bool:
+    def is_colinear_to(self, other_vector: Vector, abs_tol: float = 1e-6):
         """
         Checks if two vectors are colinear.
         The two vectors should be of same dimension.
@@ -516,7 +516,7 @@ cdef class Vector:
         except ZeroDivisionError:
             return False
 
-    def is_perpendicular_to(self, other_vector: Vector, abs_tol: float = 1e-5) -> bool:
+    def is_perpendicular_to(self, other_vector: Vector, abs_tol: float = 1e-5):
         """
         Checks if two vectors are perpendicular.
         The two vectors should be of same dimension.
@@ -531,7 +531,7 @@ cdef class Vector:
         return math.isclose(abs(self.dot(other_vector)), 0, abs_tol=abs_tol)
 
     @classmethod
-    def mean_point(cls, points: List[Vector], name = ""):
+    def mean_point(cls, points: List["Vector"], name = ""):
         """
         Find the mean point from a list of points. All the objects of this list
         should be of same dimension.
@@ -560,7 +560,7 @@ cdef class Vector:
         return (self.dot(other_vector) / other_vector.dot(other_vector)) * other_vector
 
     @classmethod
-    def remove_duplicate(cls, points: List[Vector]):
+    def remove_duplicate(cls, points: List["Vector"]):
         """
         An approximative method to remove duplicated points from a list.
         All the objects of this list should be of same dimension.
@@ -645,7 +645,7 @@ cdef class Vector2D(Vector):
     def _data_eq(self, other):
         return self == other
 
-    def is_close(self, other_vector: Vector2D, tol: float = 1e-6) -> bool:
+    def is_close(self, other_vector: Vector2D, tol: float = 1e-6):
         """
         Checks if two vectors are close to each other considering the
         Euclidean distance. The tolerance can be modified. The two vectors
@@ -673,7 +673,7 @@ cdef class Vector2D(Vector):
         """
         return round(1e6 * (self.x + self.y))
 
-    def to_dict(self, *args, **kwargs) -> dict:
+    def to_dict(self, *args, **kwargs):
         """
         Serializes a 2-dimensional vector into a dictionary.
 
@@ -719,7 +719,7 @@ cdef class Vector2D(Vector):
         """
         return self.__class__(self.x, self.y)
 
-    def norm(self) -> float:
+    def norm(self):
         """
         Computes the euclidiean norm of a 2-dimensional vector.
 
@@ -728,14 +728,14 @@ cdef class Vector2D(Vector):
         """
         return c_vector2d_norm(self.x, self.y)
 
-    def unit_vector(self) -> Vector2D:
+    def unit_vector(self):
         """Calculates the unit vector."""
         n = self.norm()
         if n == 0:
             raise ZeroDivisionError
         return Vector2D(self.x / n, self.y / n)
 
-    def dot(self, other_vector: Vector2D) -> float:
+    def dot(self, other_vector: Vector2D):
         """
         Computes the dot product (scalar product) of two 2-dimensional vectors.
 
@@ -746,7 +746,7 @@ cdef class Vector2D(Vector):
         """
         return c_vector2d_dot(self.x, self.y, other_vector.x, other_vector.y)
 
-    def cross(self, other_vector: Vector2D) -> Vector2D:
+    def cross(self, other_vector: Vector2D):
         """
         Computes the cross product of two 2-dimensional vectors.
 
@@ -757,7 +757,7 @@ cdef class Vector2D(Vector):
         """
         return self.x * other_vector.y - self.y * other_vector.x
 
-    def point_distance(self, other_vector: Vector2D) -> float:
+    def point_distance(self, other_vector: Vector2D):
         """
         Computes the euclidiean distance between two Vector2D objects.
 
@@ -798,7 +798,7 @@ cdef class Vector2D(Vector):
         v2x, v2y = self.rotation_parameters(center, angle)
         return self.__class__(v2x, v2y)
 
-    def translation(self, offset: Vector2D) -> Vector2D:
+    def translation(self, offset: Vector2D):
         """
         Translates the 2-dimensional vector and returns a new translated vector
 
@@ -811,7 +811,7 @@ cdef class Vector2D(Vector):
         v2y = self.y + offset.y
         return self.__class__(v2x, v2y)
 
-    def frame_mapping(self, frame: Frame2D, side: str):
+    def frame_mapping(self, frame: "Frame2D", side: str):
         """
         # TODO: Needs correction. Add an example ?
         Transforms a 2-dimensional vector from the current reference frame to a
@@ -2093,7 +2093,7 @@ cdef class Point3D(Vector3D):
         s += "sphere.material = mat;\n"
         return s
 
-    def nearest_point(self, points: List[Point3D]):
+    def nearest_point(self, points: List["Point3D"]):
         """
         Returns the nearest 3-dimensional point out of the list.
 

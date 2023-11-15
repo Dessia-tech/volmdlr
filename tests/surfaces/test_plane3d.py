@@ -219,8 +219,8 @@ class TestPlane3D(unittest.TestCase):
         plane1 = Plane3D(volmdlr.OXYZ)
         rotated_plane1 = plane1.rotation(volmdlr.O3D, volmdlr.Vector3D(0, 1, 0), math.pi / 4)
         expected_frame = volmdlr.Frame3D(
-            volmdlr.O3D, volmdlr.Vector3D(0.7071067811865476, 0.0, -0.7071067811865475),
-            volmdlr.Vector3D(0, 1, 0), volmdlr.Vector3D(0.7071067811865475, 0.0, 0.7071067811865476))
+            volmdlr.O3D, volmdlr.Vector3D(0.7071067811865476, 0.0, -0.7071067811865476),
+            volmdlr.Vector3D(0.0, 1.0, 0.0), volmdlr.Vector3D(0.7071067811865476, 0.0, 0.7071067811865476))
         self.assertEqual(rotated_plane1.frame, expected_frame)
 
     def test_contour3d_to_2d(self):
