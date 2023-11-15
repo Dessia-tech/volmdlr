@@ -76,6 +76,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### primitives3d
 - Block: get_bounding_box
 
+#### discrete_representation.py
+- MatrixBasedVoxelization: _logical_operation
+
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
 
