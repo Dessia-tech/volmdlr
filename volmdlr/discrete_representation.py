@@ -31,7 +31,7 @@ from volmdlr.faces import Face3D, Triangle3D
 from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, Shell3D
 from volmdlr.wires import ClosedPolygon2D
 
-# pylint: disable=no-name-in-module
+# pylint: disable=no-name-in-module,too-many-lines
 
 
 # CUSTOM TYPES
@@ -1727,7 +1727,7 @@ class MatrixBasedVoxelization(Voxelization):
 class OctreeBasedVoxelization(Voxelization):
     """Voxelization implemented as an octree."""
 
-    # pylint: disable=protected-access
+    # pylint: disable=protected-access,too-many-arguments,too-many-locals,too-many-nested-blocks,too-many-branches
 
     def __init__(
         self,
@@ -1805,7 +1805,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The number of voxels in the voxelization.
         :rtype: int
         """
-        return len(self.get_voxel_centers())  # TODO: optimize that
+        return len(self.get_voxel_centers())
 
     @property
     def min_grid_center(self) -> _Point3D:
@@ -1924,7 +1924,6 @@ class OctreeBasedVoxelization(Voxelization):
         :return: True if the voxelizations are intersecting, False otherwise.
         :rtype: bool
         """
-
         self_sizes = [round_to_digits(self.voxel_size * 2**i, DECIMALS) for i in range(self._octree_depth, -1, -1)]
         self_sizes.append(round_to_digits(self.voxel_size * 1 / 2, DECIMALS))
         other_sizes = [round_to_digits(other.voxel_size * 2**i, DECIMALS) for i in range(other._octree_depth, -1, -1)]
@@ -2309,7 +2308,7 @@ class OctreeBasedVoxelization(Voxelization):
         if current_depth == max_depth:  # if _octree_depth reached, it is a leaf node
             if not current_octree_2:
                 return current_octree_1
-            elif not current_octree_1:
+            if not current_octree_1:
                 return [i_triangle + n_triangles_1 for i_triangle in current_octree_2]
             return []
 
