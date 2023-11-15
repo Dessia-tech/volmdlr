@@ -69,6 +69,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - bsplineCurve: line_intersections. 
 
+#### discrete_representation.py
+- MatrixBasedVoxelization: _logical_operation
+
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
 
@@ -80,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
 
 #### edges.py
+- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 - LineSegment2D/3D: The line attribute from which the line segment was defined was converted to a property, for performance and memory efficiency reasons.
 - BSplineCurve: improve line_intersections performance.
