@@ -2,13 +2,10 @@
 Class for discrete representations of volmdlr models (voxelization for 3D geometries, pixelization for 2D geometries).
 """
 import itertools
-
-# pylint: disable=no-name-in-module
-
+import math
 import warnings
 from abc import ABC, abstractmethod
-from typing import List, Set, Tuple, TypeVar, Dict, Any, Union
-import math
+from typing import Any, Dict, List, Set, Tuple, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,16 +20,19 @@ from volmdlr.discrete_representation_compiled import (
     flood_fill_matrix_2d,
     flood_fill_matrix_3d,
     line_segments_to_pixels,
+    round_point_3d_to_digits,
+    round_to_digits,
+    triangle_intersects_voxel,
     triangles_to_voxel_matrix,
     voxel_triangular_faces,
-    triangle_intersects_voxel,
-    round_to_digits,
-    round_point_3d_to_digits,
 )
 from volmdlr.edges import LineSegment2D
-from volmdlr.faces import Triangle3D, Face3D
-from volmdlr.shells import ClosedTriangleShell3D, Shell3D, DisplayTriangleShell3D
+from volmdlr.faces import Face3D, Triangle3D
+from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, Shell3D
 from volmdlr.wires import ClosedPolygon2D
+
+# pylint: disable=no-name-in-module
+
 
 # CUSTOM TYPES
 _Point3D = Tuple[float, float, float]
