@@ -1159,7 +1159,7 @@ class PointBasedVoxelization(Voxelization):
 
         return set(tuple(center) for center in centers)
 
-    def _voxel_centers_distances_to_faces(self) -> Dict[_Point3D:float]:
+    def _voxel_centers_distances_to_faces(self) -> Dict[_Point3D, float]:
         """
         Helper method to compute the minimal distance between the voxel centers and the surface of the voxelization.
 
@@ -1677,7 +1677,7 @@ class MatrixBasedVoxelization(Voxelization):
 
         return layers_dict
 
-    def _layers_matrix(self) -> NDArray(int):
+    def _layers_matrix(self) -> NDArray[int]:
         """
         Compute for each voxel of the matrix the number of layer there is until an edge or a False value is reached.
 
@@ -2791,33 +2791,37 @@ class OctreeBasedVoxelization(Voxelization):
         shell_triangles = []
 
         for i, face in enumerate(shell.faces):
-            triangulation = face.triangulation()
+            try:
+                triangulation = face.triangulation()
 
-            face_triangles = [
-                (
+                face_triangles = [
                     (
-                        float(triangulation.points[triangle[0]].x),
-                        float(triangulation.points[triangle[0]].y),
-                        float(triangulation.points[triangle[0]].z),
-                    ),
-                    (
-                        float(triangulation.points[triangle[1]].x),
-                        float(triangulation.points[triangle[1]].y),
-                        float(triangulation.points[triangle[1]].z),
-                    ),
-                    (
-                        float(triangulation.points[triangle[2]].x),
-                        float(triangulation.points[triangle[2]].y),
-                        float(triangulation.points[triangle[2]].z),
-                    ),
-                )
-                for triangle in triangulation.triangles
-            ]
+                        (
+                            float(triangulation.points[triangle[0]].x),
+                            float(triangulation.points[triangle[0]].y),
+                            float(triangulation.points[triangle[0]].z),
+                        ),
+                        (
+                            float(triangulation.points[triangle[1]].x),
+                            float(triangulation.points[triangle[1]].y),
+                            float(triangulation.points[triangle[1]].z),
+                        ),
+                        (
+                            float(triangulation.points[triangle[2]].x),
+                            float(triangulation.points[triangle[2]].y),
+                            float(triangulation.points[triangle[2]].z),
+                        ),
+                    )
+                    for triangle in triangulation.triangles
+                ]
 
-            for triangle in face_triangles:
-                face_idx_by_triangle[triangle] = i
+                for triangle in face_triangles:
+                    face_idx_by_triangle[triangle] = i
 
-            shell_triangles.extend(face_triangles)
+                shell_triangles.extend(face_triangles)
+
+            except RuntimeError:
+                warnings.warn(f"Failed triangulation of {face}.")
 
         return face_idx_by_triangle, shell_triangles
 

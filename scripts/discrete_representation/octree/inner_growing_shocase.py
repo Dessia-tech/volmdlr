@@ -3,28 +3,21 @@ Showcase of inner growing voxelization.
 """
 import random
 
-from volmdlr.discrete_representation import OctreeBasedVoxelization
+from volmdlr.discrete_representation import MatrixBasedVoxelization
+from volmdlr.primitives3d import Block
 from volmdlr.core import VolumeModel
+import volmdlr
 
-LAYERS_MINIMAL_THICKNESS = 3
-
-octree = [[[[[[1] for _ in range(8)] for _ in range(8)] for _ in range(8)] for _ in range(8)] for _ in range(8)]
-octree[0][0][0][0][0] = []
+VOXEL_SIZE = 0.05
+LAYERS_MINIMAL_THICKNESS = 2 * VOXEL_SIZE
 
 
-# Create the voxelization
-octree_based_voxelization = OctreeBasedVoxelization(
-    octree=octree,
-    root_center=(0, 0, 0),
-    octree_depth=5,
-    voxel_size=0.1,
-    triangles=[],
-)
+# Create the geometry
+block = Block(volmdlr.OXYZ)
 
-# Get inner growing point based voxelization
-inner_growing_voxelization = octree_based_voxelization.to_inner_growing_point_based_voxelizations(
-    LAYERS_MINIMAL_THICKNESS
-)
+# Create the inner grwoing voxelization
+inner_growing_voxelization = MatrixBasedVoxelization.from_shell(block, VOXEL_SIZE).fill_enclosed_voxels().to_inner_growing_voxelizations(LAYERS_MINIMAL_THICKNESS)
+
 
 primitives = []
 for vox in inner_growing_voxelization:
