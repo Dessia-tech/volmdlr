@@ -16,8 +16,8 @@ code for any particular purpose.
 import numpy as np
 cimport numpy as cnp
 from scipy.optimize import minimize
-from cython cimport cdivision
-from cython cimport boundscheck, wraparound
+from cython cimport cdivision, boundscheck, wraparound
+from cython.parallel import prange
 from volmdlr.nurbs.helpers cimport linspace, binomial_coefficient
 from libcpp.vector cimport vector
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
@@ -444,7 +444,7 @@ cpdef vector[vector[double]] basis_function_ders(int degree, vector[double] knot
             s2 = j
 
     # Multiply through by the correct factors
-    cdef double f = float(degree)
+    cdef double f = <double>degree
     for k in range(1, order + 1):
         for j in range(0, degree + 1):
             ders[k][j] *= f
@@ -656,7 +656,7 @@ cdef vector[vector[double]] evaluate_curve_c(int degree, vector[double] knotvect
     eval_points.reserve(dimension * sample_size)
     cdef int i, j, idx
     cdef vector[double] crvpt = vector[double](dimension, 0.0)
-    for idx in range(knots.size()):
+    for idx in prange(knots.size(), nogil=True):
         crvpt = vector[double](dimension, 0.0)
         for i in range(0, degree + 1):
             for j in range(dimension):
@@ -739,7 +739,7 @@ cdef vector[vector[double]] evaluate_curve_rational(int degree, vector[double] k
     cdef int i, j
     for i in range(crvptw.size()):
         for j in range(dimension - 1):
-            cpt[j] = float(crvptw[i][j] / crvptw[i][dimension - 1])
+            cpt[j] = <double>(crvptw[i][j] / crvptw[i][dimension - 1])
         eval_points.push_back(cpt)
 
     return eval_points

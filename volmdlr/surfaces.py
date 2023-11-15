@@ -4505,8 +4505,8 @@ class SphericalSurface3D(PeriodicalSurface):
             points[0], points[-1], point_after_start, point_before_end)
         points[0] = start
         points[-1] = end
-
-        points = self.find_edge_start_end_undefined_parametric_points(bspline_curve3d, points, points3d)
+        if start.x == 0.0 or end.x == 0.0:
+            points = self.find_edge_start_end_undefined_parametric_points(bspline_curve3d, points, points3d)
         theta_list = [point.x for point in points]
         theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
         if theta_discontinuity:

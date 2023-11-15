@@ -1880,7 +1880,7 @@ class BSplineCurve(Edge):
         else:
             if math.isclose(abscissa2, 0.0, abs_tol=1e-6):
                 abscissa2 += self.length()
-            if abscissa1 >= abscissa2:
+            if abscissa1 > abscissa2:
                 abscissa2, abscissa1 = abscissa1, abscissa2
             u1 = self.abscissa_to_parameter(abscissa1)
             u2 = self.abscissa_to_parameter(abscissa2)
