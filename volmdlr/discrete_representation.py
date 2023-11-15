@@ -2161,7 +2161,7 @@ class OctreeBasedVoxelization(Voxelization):
         octree_difference = self._recursive_difference(
             0, octree_1._octree_depth, len(octree_1._triangles), octree_1._octree, octree_2._octree
         )
-        triangles = self._triangles + other._triangles
+        triangles = self._triangles
 
         return self.__class__(octree_difference, (0.0, 0.0, 0.0), octree_1._octree_depth, octree_1.voxel_size, triangles)
 
@@ -2177,8 +2177,7 @@ class OctreeBasedVoxelization(Voxelization):
         if current_depth == max_depth:  # if _octree_depth reached, it is a leaf node
             if not current_octree_2:
                 return current_octree_1
-            else:
-                return []
+            return []
 
         sub_voxels = []
 
@@ -2197,7 +2196,7 @@ class OctreeBasedVoxelization(Voxelization):
                             )
                         )
 
-                    elif current_octree_1[i * 4 + j * 2 + k] and not current_octree_2[i * 4 + j * 2 + k]:
+                    elif current_octree_1[i * 4 + j * 2 + k]:
                         # if it is in first octree only
 
                         if current_depth + 1 == max_depth:
@@ -2285,7 +2284,90 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new OctreeBasedVoxelization resulting from the symmetric difference operation.
         :rtype: OctreeBasedVoxelization
         """
-        raise NotImplementedError
+        octree_1, octree_2 = self._make_octrees_same_depth(self, other)
+
+        octree_symmetric_difference = self._recursive_symmetric_difference(
+            0, octree_1._octree_depth, len(octree_1._triangles), octree_1._octree, octree_2._octree
+        )
+        triangles = self._triangles + other._triangles
+
+        return self.__class__(
+            octree_symmetric_difference, (0.0, 0.0, 0.0), octree_1._octree_depth, octree_1.voxel_size, triangles
+        )
+
+    @staticmethod
+    def _recursive_symmetric_difference(
+        current_depth: int,
+        max_depth: int,
+        n_triangles_1: int,
+        current_octree_1,
+        current_octree_2,
+    ):
+        """Recursive method to perform a symmetric difference between two octree based voxelizations."""
+        if current_depth == max_depth:  # if _octree_depth reached, it is a leaf node
+            if not current_octree_2:
+                return current_octree_1
+            elif not current_octree_1:
+                return [i_triangle + n_triangles_1 for i_triangle in current_octree_2]
+            return []
+
+        sub_voxels = []
+
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    if current_octree_1[i * 4 + j * 2 + k] and current_octree_2[i * 4 + j * 2 + k]:
+                        # if it is in both octrees
+                        sub_voxels.append(
+                            OctreeBasedVoxelization._recursive_symmetric_difference(
+                                current_depth + 1,
+                                max_depth,
+                                n_triangles_1,
+                                current_octree_1[i * 4 + j * 2 + k],
+                                current_octree_2[i * 4 + j * 2 + k],
+                            )
+                        )
+
+                    elif current_octree_1[i * 4 + j * 2 + k]:
+                        # if it is in first octree only
+
+                        if current_depth + 1 == max_depth:
+                            _current_octree_2 = []
+                        else:
+                            _current_octree_2 = [[], [], [], [], [], [], [], []]
+
+                        sub_voxels.append(
+                            OctreeBasedVoxelization._recursive_symmetric_difference(
+                                current_depth + 1,
+                                max_depth,
+                                n_triangles_1,
+                                current_octree_1[i * 4 + j * 2 + k],
+                                _current_octree_2,
+                            )
+                        )
+
+                    elif current_octree_2[i * 4 + j * 2 + k]:
+                        # if it is in second octree only
+
+                        if current_depth + 1 == max_depth:
+                            _current_octree_1 = []
+                        else:
+                            _current_octree_1 = [[], [], [], [], [], [], [], []]
+
+                        sub_voxels.append(
+                            OctreeBasedVoxelization._recursive_symmetric_difference(
+                                current_depth + 1,
+                                max_depth,
+                                n_triangles_1,
+                                _current_octree_1,
+                                current_octree_2[i * 4 + j * 2 + k],
+                            )
+                        )
+
+                    else:
+                        sub_voxels.append([])
+
+        return sub_voxels
 
     def inverse(self) -> "OctreeBasedVoxelization":
         """
