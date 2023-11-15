@@ -1726,6 +1726,8 @@ class MatrixBasedVoxelization(Voxelization):
 class OctreeBasedVoxelization(Voxelization):
     """Voxelization implemented as an octree."""
 
+    # pylint: disable=protected-access
+
     def __init__(
         self,
         octree: Octree,
@@ -2280,7 +2282,7 @@ class OctreeBasedVoxelization(Voxelization):
 
     def to_non_homogeneous_point_based_voxelizations(self) -> List["PointBasedVoxelization"]:
         """
-        Convert the OctreeBasedVoxelization to multiiple PointBasedVoxelization, with different size.
+        Convert the OctreeBasedVoxelization to multiple PointBasedVoxelization, with different size.
 
         :return: A PointBasedVoxelization representation of the current voxelization.
         :rtype: PointBasedVoxelization
@@ -2591,7 +2593,7 @@ class OctreeBasedVoxelization(Voxelization):
         Get the center points of inner growing voxels and organize them by voxel size.
 
         :param layers_minimal_thickness: The minimal thickness of each layer.
-        :type layers_minimal_thickness: flaot
+        :type layers_minimal_thickness: float
         :param layer_dict: A dict with voxel centers and their corresponding layers thickness to false or edge values.
         :type layer_dict: dict[tuple[float, float, float], float]
 
@@ -2685,9 +2687,9 @@ class OctreeBasedVoxelization(Voxelization):
         """
         Compute the intersecting faces combinations and where the faces are located, as a PointBasedVoxelization.
 
-        :param shell_1: The first shell to find the intersectings faces with.
+        :param shell_1: The first shell to find the intersecting faces with.
         :type shell_1: Shell3D
-        :param shell_1: The second shell to find the intersectings faces with.
+        :param shell_1: The second shell to find the intersecting faces with.
         :type shell_2: Shell3D
         :param voxel_size: The voxel edges size.
         :type voxel_size: float
@@ -2792,7 +2794,7 @@ class OctreeBasedVoxelization(Voxelization):
 
     @staticmethod
     def _shell_to_face_idx_by_triangle(shell: Shell3D):
-        """Helper method to triangulate a Shell3D while keeping its faces correspondance with the triangles."""
+        """Helper method to triangulate a Shell3D while keeping its faces correspondence with the triangles."""
         face_idx_by_triangle = {}
         shell_triangles = []
 
@@ -2832,7 +2834,7 @@ class OctreeBasedVoxelization(Voxelization):
         """
         Increment the octree depth by doubling the size of the root voxel.
 
-        :return: The modified octree based voxeliation.
+        :return: The modified octree based voxelization.
         :rtype: OctreeBasedVoxelization
         """
         if self._root_center != (0.0, 0.0, 0.0):
