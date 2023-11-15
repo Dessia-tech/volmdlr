@@ -1,0 +1,17 @@
+{
+  "object_class": "volmdlr.curves.Line3D",
+  "name": "",
+  "point1": {
+    "object_class": "volmdlr.Point3D",
+    "x": 0.3433231732887762,
+    "y": -0.10837281809567849,
+    "z": 0.49957129590497185
+  },
+  "point2": {
+    "object_class": "volmdlr.Point3D",
+    "x": -0.19685916358316918,
+    "y": -0.3791181196186511,
+    "z": 1.296377435837891
+  },
+  "_references": {}
+}
