@@ -1201,6 +1201,8 @@ class MatrixBasedVoxelization(Voxelization):
         :param min_grid_center: Minimum voxel center point of the voxel grid matrix, i.e 'matrix[0][0][0]'.
         This point may not be a voxel of the voxelization, because it's the minimum center in each direction (X, Y, Z).
         :type min_grid_center: tuple[float, float, float]
+        :param name: The name of the voxelization.
+        :type name: str, optional
         """
         self._check_element_size_number_of_decimals(voxel_size)
 
@@ -1734,12 +1736,18 @@ class OctreeBasedVoxelization(Voxelization):
         """
         Initialize an OctreeBasedVoxelization.
 
-        :param octree:
-        :param root_center:
-        :param octree_depth:
-        :param voxel_size:
-        :param triangles:
-        :param name:
+        :param octree: The octree graph represented using lists.
+        :type octree: list[list...list[int]]
+        :param root_center: The position of the octree root center.
+        :type root_center: tuple[float, float, float]
+        :param octree_depth: The depth of the octree.
+        :type octree_depth: int
+        :param voxel_size: The size of the voxel edge.
+        :type voxel_size: float
+        :param triangles: The list of triangles used to create the voxelization.
+        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :param name: The name of the voxelization.
+        :type name: str, optional
         """
         self._check_element_size_number_of_decimals(voxel_size)
 
@@ -1782,7 +1790,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The number of voxels in the voxelization.
         :rtype: int
         """
-        pass
+        return NotImplemented
 
     @property
     def min_grid_center(self) -> _Point3D:
@@ -1794,7 +1802,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The minimum center point.
         :rtype: tuple[float, float, float]
         """
-        pass
+        return NotImplemented
 
     @property
     def max_grid_center(self) -> _Point3D:
@@ -1806,7 +1814,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The maximum center point.
         :rtype: tuple[float, float, float]
         """
-        pass
+        return NotImplemented
 
     # CLASS METHODS
     @classmethod
@@ -2127,7 +2135,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new OctreeBasedVoxelization resulting from the difference operation.
         :rtype: OctreeBasedVoxelization
         """
-        pass
+        return NotImplemented
 
     def intersection(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
         """
@@ -2194,7 +2202,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new OctreeBasedVoxelization resulting from the symmetric difference operation.
         :rtype: OctreeBasedVoxelization
         """
-        pass
+        return NotImplemented
 
     def inverse(self) -> "OctreeBasedVoxelization":
         """
@@ -2203,7 +2211,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization representing the inverse.
         :rtype: OctreeBasedVoxelization
         """
-        pass
+        return NotImplemented
 
     def flood_fill(self, start: Tuple[int, int, int], fill_with: bool) -> "OctreeBasedVoxelization":
         """
@@ -2217,7 +2225,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization resulting from the flood fill operation.
         :rtype: OctreeBasedVoxelization
         """
-        pass
+        return NotImplemented
 
     def _fill_outer_elements(self) -> "OctreeBasedVoxelization":
         """
@@ -2226,7 +2234,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization with outer voxels filled.
         :rtype: OctreeBasedVoxelization
         """
-        pass
+        return NotImplemented
 
     def _fill_enclosed_elements(self) -> "OctreeBasedVoxelization":
         """
@@ -2235,26 +2243,9 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization with enclosed voxels filled.
         :rtype: OctreeBasedVoxelization
         """
-        pass
+        return NotImplemented
 
-    # SERIALIZATION
-    def to_dict(
-        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
-    ) -> JsonSerializable:
-        pass
-
-    @classmethod
-    def dict_to_object(
-        cls,
-        dict_: JsonSerializable,
-        force_generic: bool = False,
-        global_dict=None,
-        pointers_memo: Dict[str, Any] = None,
-        path: str = "#",
-    ) -> "OctreeBasedVoxelization":
-        pass
-
-    # HELPER METHODS
+    # EXPORT METHODS
     def to_point_based_voxelization(self) -> "PointBasedVoxelization":
         """
         Convert the OctreeBasedVoxelization to a PointBasedVoxelization.
@@ -2316,6 +2307,7 @@ class OctreeBasedVoxelization(Voxelization):
 
         return point_based_voxelizations
 
+    # HELPER METHODS
     @classmethod
     def _from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float) -> "OctreeBasedVoxelization":
         """Create a voxelization based on the size of the voxel."""
