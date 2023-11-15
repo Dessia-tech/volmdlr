@@ -7,7 +7,7 @@ import itertools
 
 import warnings
 from abc import ABC, abstractmethod
-from typing import List, Set, Tuple, TypeVar, Dict, Any
+from typing import List, Set, Tuple, TypeVar, Dict, Any, Union
 import math
 
 import matplotlib.pyplot as plt
@@ -40,6 +40,8 @@ _Triangle3D = Tuple[_Point3D, _Point3D, _Point3D]
 
 _Point2D = Tuple[float, float]
 _Segment2D = Tuple[_Point2D, _Point2D]
+
+Octree = Union[int, List["Octree"]]
 
 
 # GLOBAL VARIABLE
@@ -1726,7 +1728,7 @@ class OctreeBasedVoxelization(Voxelization):
 
     def __init__(
         self,
-        octree: List,
+        octree: Octree,
         root_center: _Point3D,
         octree_depth: int,
         voxel_size: float,
@@ -1909,8 +1911,11 @@ class OctreeBasedVoxelization(Voxelization):
         """
         Check is two OctreeBasedVoxelization are intersecting.
 
-        :param other:
-        :return:
+        :param other: The other voxelization to check if there is an intersection with.
+        :type other: OctreeBasedVoxelization
+
+        :return: True if the voxelizations are intersecting, False otherwise.
+        :rtype: bool
         """
 
         self_sizes = [round_to_digits(self.voxel_size * 2**i, DECIMALS) for i in range(self._octree_depth, -1, -1)]
@@ -2072,7 +2077,7 @@ class OctreeBasedVoxelization(Voxelization):
         current_octree_1,
         current_octree_2,
     ):
-        """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
+        """Recursive method to perform a union between two octree based voxelizations."""
         if current_depth == max_depth:  # if _octree_depth reached, it is a leaf node
             return current_octree_1 + [i_triangle + n_triangles_1 for i_triangle in current_octree_2]
 
@@ -2175,7 +2180,7 @@ class OctreeBasedVoxelization(Voxelization):
         current_octree_1,
         current_octree_2,
     ):
-        """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
+        """Recursive method to perform a union between two octree based voxelizations."""
         if current_depth == max_depth:  # if _octree_depth reached, it is a leaf node
             return current_octree_1 + [i_triangle + n_triangles_1 for i_triangle in current_octree_2]
 
@@ -2316,7 +2321,7 @@ class OctreeBasedVoxelization(Voxelization):
 
         return point_based_voxelizations
 
-    # HELPER METHODS
+    # HELPER CREATION METHODS
     @classmethod
     def _from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float) -> "OctreeBasedVoxelization":
         """Create a voxelization based on the size of the voxel."""
@@ -2337,20 +2342,22 @@ class OctreeBasedVoxelization(Voxelization):
         sizes = [round_to_digits(voxel_size * 2**i, DECIMALS) for i in range(max_depth, -1, -1)]
         sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
 
-        octree = cls._subdivide(triangles, [i for i in range(len(triangles))], center, sizes, 0, max_depth)
+        octree = cls._subdivide_from_triangles(
+            triangles, [i for i in range(len(triangles))], center, sizes, 0, max_depth
+        )
 
         return cls(octree, center, max_depth, voxel_size, triangles)
 
     @staticmethod
-    def _subdivide(
+    def _subdivide_from_triangles(
         triangles: List[_Triangle3D],
         intersecting_indices: List[int],
         center: _Point3D,
         sizes: List[float],
         depth: int,
         max_depth: int,
-    ):
-        """Recursive method to subdivide the voxelization in 8 until the wanted tree depth is reached."""
+    ) -> Octree:
+        """Recursive method to create an OctreeBasedVoxelization from a list of triangles."""
         if depth < max_depth:  # not yet reached max depth
             half_size = sizes[depth + 1]
             quarter_size = sizes[depth + 2]
@@ -2387,7 +2394,7 @@ class OctreeBasedVoxelization(Voxelization):
                         else:
                             # If sub-voxel intersecting
                             sub_voxels.append(
-                                OctreeBasedVoxelization._subdivide(
+                                OctreeBasedVoxelization._subdivide_from_triangles(
                                     triangles=triangles,
                                     intersecting_indices=sub_voxel_intersecting_indices,
                                     center=sub_voxel_center,
@@ -2411,8 +2418,8 @@ class OctreeBasedVoxelization(Voxelization):
         sizes: List[float],
         depth: int,
         max_depth: int,
-    ):
-        """Recursive method to subdivide the voxelization in 8 until the wanted tree depth is reached."""
+    ) -> Octree:
+        """Recursive method to create an OctreeBasedVoxelization from a list of points."""
 
         if depth < max_depth:  # not yet reached max depth
             half_size = sizes[depth + 1]
@@ -2471,6 +2478,7 @@ class OctreeBasedVoxelization(Voxelization):
         else:  # reached max depth
             return [1]
 
+    # HELPER EXPORT METHODS
     def _get_homogeneous_leaf_centers(
         self, current_depth: int, current_size: float, current_center: _Point3D, current_octree
     ) -> Set[_Point3D]:
@@ -2562,73 +2570,6 @@ class OctreeBasedVoxelization(Voxelization):
                 centers_by_voxel_size[current_size] = {current_center}
 
         return centers_by_voxel_size
-
-    def _get_intersections_voxel_centers(self, threshold: int = None) -> Dict[Tuple[int, int], Set[_Point3D]]:
-        """
-        Get the center points of non-homogeneous voxels and organize them by voxel size.
-
-        :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
-        :rtype: dict[float, set[tuple[float, float, float]]]
-        """
-        return self._get_intersections_leaf_centers(
-            0, self._root_voxel_size, self._root_center, self._octree, threshold
-        )
-
-    def _get_intersections_leaf_centers(
-        self,
-        current_depth: int,
-        current_size: float,
-        current_center: _Point3D,
-        current_octree,
-        threshold: int = None,
-    ) -> Dict[Tuple[int, int], Set[_Point3D]]:
-        """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
-        intersections_locations = {}
-
-        if current_depth == self._octree_depth:  # if _octree_depth reached, it is a leaf node
-            for combination in itertools.combinations(current_octree, 2):
-                combination = tuple(sorted(combination))
-
-                if threshold:
-                    if not (combination[0] < threshold <= combination[1]):
-                        continue
-
-                intersections_locations[combination] = {current_center}
-
-        else:
-            half_size = round_to_digits(current_size / 2, DECIMALS)
-
-            for i in range(2):
-                for j in range(2):
-                    for k in range(2):
-                        # if it is the octree
-                        if current_octree[i * 4 + j * 2 + k]:
-                            # calculate the center of the sub-voxel
-                            sub_voxel_center = round_point_3d_to_digits(
-                                (
-                                    current_center[0] + (i - 0.5) * half_size,
-                                    current_center[1] + (j - 0.5) * half_size,
-                                    current_center[2] + (k - 0.5) * half_size,
-                                ),
-                                DECIMALS,
-                            )
-
-                            # Recursive process
-                            sub_intersections_locations = self._get_intersections_leaf_centers(
-                                current_depth + 1,
-                                half_size,
-                                sub_voxel_center,
-                                current_octree[i * 4 + j * 2 + k],
-                                threshold,
-                            )
-
-                            # Merge sub-centers into the result dictionary, keeping track of voxel sizes
-                            for intersection, location in sub_intersections_locations.items():
-                                if intersection not in intersections_locations:
-                                    intersections_locations[intersection] = set()
-                                intersections_locations[intersection].update(location)
-
-        return intersections_locations
 
     def get_inner_growing_voxel_centers(
         self, layers_minimal_thickness: float, layer_dict: Dict[_Point3D, float] = None
@@ -2727,6 +2668,146 @@ class OctreeBasedVoxelization(Voxelization):
 
         return centers_by_voxel_size
 
+    # FACES INTERSECIONS METHODS
+    @classmethod
+    def intersecting_faces_combinations(cls, shell_1: Shell3D, shell_2: Shell3D, voxel_size: float):
+        """
+        Compute the intersecting faces combinations and where the faces are located.
+
+        """
+        face_idx_by_triangle_1, shell_triangles_1 = cls._shell_to_face_idx_by_triangle(shell_1)
+        face_idx_by_triangle_2, shell_triangles_2 = cls._shell_to_face_idx_by_triangle(shell_2)
+
+        voxelization_1 = cls._from_triangles(shell_triangles_1, voxel_size)
+        voxelization_2 = cls._from_triangles(shell_triangles_2, voxel_size)
+
+        intersection = voxelization_1.intersection(voxelization_2)
+        triangle_combinations = intersection._get_intersections_voxel_centers(len(voxelization_1._triangles))
+
+        face_id_combinations = {}
+
+        for (i, j), voxel_centers in triangle_combinations.items():
+            face_1 = face_idx_by_triangle_1[shell_triangles_1[i]]
+            face_2 = face_idx_by_triangle_2[shell_triangles_2[j - len(shell_triangles_1)]]
+
+            if (face_1, face_2) not in face_id_combinations:
+                face_id_combinations[(face_1, face_2)] = set()
+            face_id_combinations[(face_1, face_2)].update(voxel_centers)
+
+        face_combinations = []
+
+        for (i, j), voxel_centers in face_id_combinations.items():
+            face_combinations.append(
+                ((shell_1.faces[i], shell_2.faces[j]), PointBasedVoxelization(voxel_centers, voxel_size))
+            )
+
+        return face_combinations
+
+    def _get_intersections_voxel_centers(self, threshold: int = None) -> Dict[Tuple[int, int], Set[_Point3D]]:
+        """
+        Get the center points of non-homogeneous voxels and organize them by voxel size.
+
+        :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
+        :rtype: dict[float, set[tuple[float, float, float]]]
+        """
+        return self._get_intersections_leaf_centers(
+            0, self._root_voxel_size, self._root_center, self._octree, threshold
+        )
+
+    def _get_intersections_leaf_centers(
+        self,
+        current_depth: int,
+        current_size: float,
+        current_center: _Point3D,
+        current_octree,
+        threshold: int = None,
+    ) -> Dict[Tuple[int, int], Set[_Point3D]]:
+        """Recursive method to extract all the leaf voxel center (voxels of minimal size)."""
+        intersections_locations = {}
+
+        if current_depth == self._octree_depth:  # if _octree_depth reached, it is a leaf node
+            for combination in itertools.combinations(current_octree, 2):
+                combination = tuple(sorted(combination))
+
+                if threshold:
+                    if not (combination[0] < threshold <= combination[1]):
+                        continue
+
+                intersections_locations[combination] = {current_center}
+
+        else:
+            half_size = round_to_digits(current_size / 2, DECIMALS)
+
+            for i in range(2):
+                for j in range(2):
+                    for k in range(2):
+                        # if it is the octree
+                        if current_octree[i * 4 + j * 2 + k]:
+                            # calculate the center of the sub-voxel
+                            sub_voxel_center = round_point_3d_to_digits(
+                                (
+                                    current_center[0] + (i - 0.5) * half_size,
+                                    current_center[1] + (j - 0.5) * half_size,
+                                    current_center[2] + (k - 0.5) * half_size,
+                                ),
+                                DECIMALS,
+                            )
+
+                            # Recursive process
+                            sub_intersections_locations = self._get_intersections_leaf_centers(
+                                current_depth + 1,
+                                half_size,
+                                sub_voxel_center,
+                                current_octree[i * 4 + j * 2 + k],
+                                threshold,
+                            )
+
+                            # Merge sub-centers into the result dictionary, keeping track of voxel sizes
+                            for intersection, location in sub_intersections_locations.items():
+                                if intersection not in intersections_locations:
+                                    intersections_locations[intersection] = set()
+                                intersections_locations[intersection].update(location)
+
+        return intersections_locations
+
+    @staticmethod
+    def _shell_to_face_idx_by_triangle(shell: Shell3D):
+        """ """
+        face_idx_by_triangle = {}
+        shell_triangles = []
+
+        for i, face in enumerate(shell.faces):
+            triangulation = face.triangulation()
+
+            face_triangles = [
+                (
+                    (
+                        float(triangulation.points[triangle[0]].x),
+                        float(triangulation.points[triangle[0]].y),
+                        float(triangulation.points[triangle[0]].z),
+                    ),
+                    (
+                        float(triangulation.points[triangle[1]].x),
+                        float(triangulation.points[triangle[1]].y),
+                        float(triangulation.points[triangle[1]].z),
+                    ),
+                    (
+                        float(triangulation.points[triangle[2]].x),
+                        float(triangulation.points[triangle[2]].y),
+                        float(triangulation.points[triangle[2]].z),
+                    ),
+                )
+                for triangle in triangulation.triangles
+            ]
+
+            for triangle in face_triangles:
+                face_idx_by_triangle[triangle] = i
+
+            shell_triangles.extend(face_triangles)
+
+        return face_idx_by_triangle, shell_triangles
+
+    # HELPER METHODS
     def _increment_octree_depth(self) -> "OctreeBasedVoxelization":
         """
         Increment the octree depth by doubling the size of the root voxel.
@@ -2772,77 +2853,6 @@ class OctreeBasedVoxelization(Voxelization):
             octree_2 = octree_2._increment_octree_depth()
 
         return octree_1, octree_2
-
-    @classmethod
-    def intersecting_faces_combinations(cls, shell_1: Shell3D, shell_2: Shell3D, voxel_size: float):
-        """
-        Compute the intersecting faces combinations and where the faces are located.
-
-        """
-        face_idx_by_triangle_1, shell_triangles_1 = cls._shell_to_face_idx_by_triangle(shell_1)
-        face_idx_by_triangle_2, shell_triangles_2 = cls._shell_to_face_idx_by_triangle(shell_2)
-
-        voxelization_1 = cls._from_triangles(shell_triangles_1, voxel_size)
-        voxelization_2 = cls._from_triangles(shell_triangles_2, voxel_size)
-
-        intersection = voxelization_1.intersection(voxelization_2)
-        triangle_combinations = intersection._get_intersections_voxel_centers(len(voxelization_1._triangles))
-
-        face_id_combinations = {}
-
-        for (i, j), voxel_centers in triangle_combinations.items():
-            face_1 = face_idx_by_triangle_1[shell_triangles_1[i]]
-            face_2 = face_idx_by_triangle_2[shell_triangles_2[j - len(shell_triangles_1)]]
-
-            if (face_1, face_2) not in face_id_combinations:
-                face_id_combinations[(face_1, face_2)] = set()
-            face_id_combinations[(face_1, face_2)].update(voxel_centers)
-
-        face_combinations = []
-
-        for (i, j), voxel_centers in face_id_combinations.items():
-            face_combinations.append(
-                ((shell_1.faces[i], shell_2.faces[j]), PointBasedVoxelization(voxel_centers, voxel_size))
-            )
-
-        return face_combinations
-
-    @staticmethod
-    def _shell_to_face_idx_by_triangle(shell: Shell3D):
-        """ """
-        face_idx_by_triangle = {}
-        shell_triangles = []
-
-        for i, face in enumerate(shell.faces):
-            triangulation = face.triangulation()
-
-            face_triangles = [
-                (
-                    (
-                        float(triangulation.points[triangle[0]].x),
-                        float(triangulation.points[triangle[0]].y),
-                        float(triangulation.points[triangle[0]].z),
-                    ),
-                    (
-                        float(triangulation.points[triangle[1]].x),
-                        float(triangulation.points[triangle[1]].y),
-                        float(triangulation.points[triangle[1]].z),
-                    ),
-                    (
-                        float(triangulation.points[triangle[2]].x),
-                        float(triangulation.points[triangle[2]].y),
-                        float(triangulation.points[triangle[2]].z),
-                    ),
-                )
-                for triangle in triangulation.triangles
-            ]
-
-            for triangle in face_triangles:
-                face_idx_by_triangle[triangle] = i
-
-            shell_triangles.extend(face_triangles)
-
-        return face_idx_by_triangle, shell_triangles
 
 
 class Pixelization(DiscreteRepresentation, DessiaObject):
