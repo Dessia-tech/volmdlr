@@ -30,7 +30,7 @@ from volmdlr.discrete_representation_compiled import (
     round_point_3d_to_digits,
 )
 from volmdlr.edges import LineSegment2D
-from volmdlr.faces import Triangle3D
+from volmdlr.faces import Triangle3D, Face3D
 from volmdlr.shells import ClosedTriangleShell3D, Shell3D, DisplayTriangleShell3D
 from volmdlr.wires import ClosedPolygon2D
 
@@ -1047,7 +1047,7 @@ class PointBasedVoxelization(Voxelization):
         """
         i = 2
         inner_growing_voxel_centers = self.to_octree_based_voxelization().get_inner_growing_voxel_centers(
-            layers_minimal_thickness, self.to_matrix_based_voxelization().layers_thickness_to_voxel_centers()
+            layers_minimal_thickness, self.to_matrix_based_voxelization().layers_thickness_by_voxel_centers()
         )
 
         while len(inner_growing_voxel_centers.keys()) == i:
@@ -1062,7 +1062,7 @@ class PointBasedVoxelization(Voxelization):
                 new_point_based_voxelization.to_octree_based_voxelization()
                 .get_inner_growing_voxel_centers(
                     layers_minimal_thickness,
-                    new_point_based_voxelization.to_matrix_based_voxelization().layers_thickness_to_voxel_centers(),
+                    new_point_based_voxelization.to_matrix_based_voxelization().layers_thickness_by_voxel_centers(),
                 )
                 .items()
             ):
@@ -1504,7 +1504,7 @@ class MatrixBasedVoxelization(Voxelization):
         """
         i = 2
         inner_growing_voxel_centers = self.to_octree_based_voxelization().get_inner_growing_voxel_centers(
-            layers_minimal_thickness, self.layers_thickness_to_voxel_centers()
+            layers_minimal_thickness, self.layers_thickness_by_voxel_centers()
         )
 
         while len(inner_growing_voxel_centers.keys()) == i:
@@ -1519,7 +1519,7 @@ class MatrixBasedVoxelization(Voxelization):
                 new_point_based_voxelization.to_octree_based_voxelization()
                 .get_inner_growing_voxel_centers(
                     layers_minimal_thickness,
-                    new_point_based_voxelization.to_matrix_based_voxelization().layers_thickness_to_voxel_centers(),
+                    new_point_based_voxelization.to_matrix_based_voxelization().layers_thickness_by_voxel_centers(),
                 )
                 .items()
             ):
@@ -1650,7 +1650,7 @@ class MatrixBasedVoxelization(Voxelization):
 
         return self.__class__(cropped_matrix, tuple(new_origin_center), self.voxel_size, self.name)
 
-    def layers_thickness_to_voxel_centers(self) -> Dict[_Point3D, float]:
+    def layers_thickness_by_voxel_centers(self) -> Dict[_Point3D, float]:
         """
         Get a dictionary with voxel centers as keys and their layers thickness to false or edge values as values.
 
@@ -2269,6 +2269,15 @@ class OctreeBasedVoxelization(Voxelization):
         """
         return PointBasedVoxelization(self.get_voxel_centers(), self.voxel_size, self.name)
 
+    def to_matrix_based_voxelization(self) -> "MatrixBasedVoxelization":
+        """
+        Convert the OctreeBasedVoxelization to a MatrixBasedVoxelization.
+
+        :return: A MatrixBasedVoxelization representation of the current voxelization.
+        :rtype: MatrixBasedVoxelization
+        """
+        return self.to_point_based_voxelization().to_matrix_based_voxelization()
+
     def to_non_homogeneous_point_based_voxelizations(self) -> List["PointBasedVoxelization"]:
         """
         Convert the OctreeBasedVoxelization to multiiple PointBasedVoxelization, with different size.
@@ -2516,6 +2525,8 @@ class OctreeBasedVoxelization(Voxelization):
         """
         Get the center points of non-homogeneous voxels and organize them by voxel size.
 
+        This method maximize the voxel size without any less of information.
+
         :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
@@ -2526,6 +2537,8 @@ class OctreeBasedVoxelization(Voxelization):
     ) -> Dict[float, Set[_Point3D]]:
         """
         Recursive method to extract all the non-homogeneous voxel centers.
+
+        This method maximize the voxel size without any less of information.
 
         :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
         :rtype: dict[float, set[tuple[float, float, float]]]
@@ -2578,14 +2591,15 @@ class OctreeBasedVoxelization(Voxelization):
         Get the center points of inner growing voxels and organize them by voxel size.
 
         :param layers_minimal_thickness: The minimal thickness of each layer.
-        :type layers_minimal_thickness: int
+        :type layers_minimal_thickness: flaot
+        :param layer_dict: A dict with voxel centers and their corresponding layers thickness to false or edge values.
+        :type layer_dict: dict[tuple[float, float, float], float]
 
         :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
         :rtype: dict[float, set[tuple[float, float, float]]]
         """
         if not layer_dict:
-            layer_dict = self.to_point_based_voxelization().voxel_centers_distances_to_faces()
-        # layers_minimal_thickness = round_to_digits(layers_minimal_thickness + 0.49 * self.voxel_size, DECIMALS)
+            layer_dict = self.to_matrix_based_voxelization().layers_thickness_by_voxel_centers()
 
         return self._get_inner_growing_leaf_centers(
             0,
@@ -2602,15 +2616,10 @@ class OctreeBasedVoxelization(Voxelization):
         current_size: float,
         current_center: _Point3D,
         current_octree,
-        layer_dict: Dict[_Point3D, int],
+        layer_dict: Dict[_Point3D, float],
         min_layer_thickness: float,
     ) -> Dict[float, Set[_Point3D]]:
-        """
-        Recursive method to extract all the non-homogeneous voxel centers.
-
-        :return: A dictionary where the keys are voxel sizes and the values are sets of voxel centers.
-        :rtype: dict[float, set[tuple[float, float, float]]]
-        """
+        """Recursive method to extract inner growing voxel centers."""
         centers_by_voxel_size = {}
 
         if current_depth == self._octree_depth:
@@ -2670,10 +2679,21 @@ class OctreeBasedVoxelization(Voxelization):
 
     # FACES INTERSECIONS METHODS
     @classmethod
-    def intersecting_faces_combinations(cls, shell_1: Shell3D, shell_2: Shell3D, voxel_size: float):
+    def intersecting_faces_combinations(
+        cls, shell_1: Shell3D, shell_2: Shell3D, voxel_size: float
+    ) -> List[Tuple[Tuple[Face3D, Face3D], PointBasedVoxelization]]:
         """
-        Compute the intersecting faces combinations and where the faces are located.
+        Compute the intersecting faces combinations and where the faces are located, as a PointBasedVoxelization.
 
+        :param shell_1: The first shell to find the intersectings faces with.
+        :type shell_1: Shell3D
+        :param shell_1: The second shell to find the intersectings faces with.
+        :type shell_2: Shell3D
+        :param voxel_size: The voxel edges size.
+        :type voxel_size: float
+
+        :return: The possibly intersecting face combinations.
+        :rtype: list[tuple[tuple[Face3D, Face3D], PointBasedVoxelization]]
         """
         face_idx_by_triangle_1, shell_triangles_1 = cls._shell_to_face_idx_by_triangle(shell_1)
         face_idx_by_triangle_2, shell_triangles_2 = cls._shell_to_face_idx_by_triangle(shell_2)
@@ -2772,7 +2792,7 @@ class OctreeBasedVoxelization(Voxelization):
 
     @staticmethod
     def _shell_to_face_idx_by_triangle(shell: Shell3D):
-        """ """
+        """Helper method to triangulate a Shell3D while keeping its faces correspondance with the triangles."""
         face_idx_by_triangle = {}
         shell_triangles = []
 
@@ -2838,9 +2858,17 @@ class OctreeBasedVoxelization(Voxelization):
         octree_1: "OctreeBasedVoxelization", octree_2: "OctreeBasedVoxelization"
     ) -> Tuple["OctreeBasedVoxelization", "OctreeBasedVoxelization"]:
         """
-        :param octree_1:
-        :param octree_2:
-        :return:
+        Helper method to make two OctreeBasedVoxelization having the same octree depth.
+
+        The OctreeBasedVoxelization must have same voxel size and octree root.
+
+        :param octree_1: The first OctreeBasedVoxelization.
+        :type octree_1: OctreeBasedVoxelization
+        :param octree_2: The second OctreeBasedVoxelization.
+        :type octree_2: OctreeBasedVoxelization
+
+        :return: The two OctreeBasedVoxelization modified to have the same depth.
+        :rtype: tuple[OctreeBasedVoxelization, OctreeBasedVoxelization]
         """
         octree_1._check_other_type(octree_2)
         octree_1._check_other_element_size(octree_2)
