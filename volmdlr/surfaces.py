@@ -2670,16 +2670,15 @@ class CylindricalSurface3D(PeriodicalSurface):
             phi_1 = phi_0-0.000001
             phi_0 = -phi_0+0.000001
             two_curves = False
-        inters_points = [[], []]
-        for phi in npy.linspace(phi_0, phi_1, 400):
-            x_comp = self.radius*math.cos(phi)
-            y_comp = self.radius*math.sin(phi)
-            z_comp1 = math.sqrt(2*distance_axis_sphere_center*(b + self.radius*math.cos(phi)))
-            z_comp2 = - z_comp1
-            point1 = volmdlr.Point3D(x_comp, y_comp, z_comp1)
-            point2 = volmdlr.Point3D(x_comp, y_comp, z_comp2)
-            inters_points[0].append(point1)
-            inters_points[1].append(point2)
+        phi = npy.linspace(phi_0, phi_1, 400)
+        x_components = self.radius*npy.cos(phi)
+        y_components = self.radius*npy.sin(phi)
+        z_components1 = npy.sqrt(2*distance_axis_sphere_center*(b + self.radius*npy.cos(phi)))
+        inters_points1 = [volmdlr.Point3D(x_comp, y_comp, z_comp)
+                          for x_comp, y_comp, z_comp in zip(x_components, y_components, z_components1)]
+        inters_points2 = [volmdlr.Point3D(x_comp, y_comp, -z_comp)
+                          for x_comp, y_comp, z_comp in zip(x_components, y_components, z_components1)]
+        inters_points = [inters_points1, inters_points2]
         if not two_curves:
             inters_points = vm_common_operations.separate_points_by_closeness(inters_points[0]+inters_points[1])
         for list_points in inters_points:
