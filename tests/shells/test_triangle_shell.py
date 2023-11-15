@@ -1,9 +1,14 @@
+import os
 import unittest
+from dessia_common.core import DessiaObject
 from volmdlr.shells import OpenTriangleShell3D, ClosedTriangleShell3D, DisplayTriangleShell3D
 from volmdlr.primitives3d import Block
 from volmdlr import OXYZ
 
 SHOW_BABYLONJS = True
+
+
+folder = os.path.dirname(os.path.realpath(__file__))
 
 
 class TestTrianglShell3D(unittest.TestCase):
@@ -34,3 +39,19 @@ class TestTrianglShell3D(unittest.TestCase):
 
         if SHOW_BABYLONJS:
             display_triangle_shell.babylonjs()
+
+    def test_turn_normals_outwards(self):
+        closed_shell = DessiaObject.load_from_file(os.path.join(folder, 'closedtriangleshell3d.json'))
+        self.assertFalse(closed_shell.are_normals_pointing_outwards())
+        new_closed_shell = closed_shell.turn_normals_outwards()
+        self.assertTrue(new_closed_shell.are_normals_pointing_outwards())
+
+    def test_turn_normals_inwards(self):
+        closed_shell = DessiaObject.load_from_file(os.path.join(folder, 'closedtriangleshell3d.json'))
+        self.assertFalse(closed_shell.are_normals_pointing_inwards())
+        new_closed_shell = closed_shell.turn_normals_inwards()
+        self.assertTrue(new_closed_shell.are_normals_pointing_inwards())
+
+
+if __name__ == '__main__':
+    unittest.main()
