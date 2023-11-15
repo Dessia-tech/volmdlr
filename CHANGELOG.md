@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 
 - cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify.
-- dicrete_representation: OctreeBasedVoxelization
 
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
@@ -32,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BoundingBox: is_intersecting_triangle
 #### discrete_representation.py
 - Voxelization: from_mesh_data
+- OctreeBasedVoxelization
 
 #### step.py
 - Support to Datakit CrossCadWare STEP file format.
@@ -80,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
+- Voxelization: refactor class methods
 
 #### core.py
 - babylon_data: avoid using bounding_box for performance
