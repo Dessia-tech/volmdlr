@@ -1428,7 +1428,7 @@ class Plane3D(Surface3D):
 
         """
         if math.isclose(self.frame.w.dot(point - self.frame.origin), 0,
-                        abs_tol=1e-6):
+                        abs_tol=abs_tol):
             return True
         return False
 
@@ -2660,16 +2660,6 @@ class ToroidalSurface3D(PeriodicalSurface):
             arcs.append(circle)
         return arcs
 
-    @cached_property
-    def outer_radius(self):
-        """Get torus outer radius"""
-        return self.major_radius + self.minor_radius
-
-    @cached_property
-    def inner_radius(self):
-        """Get torus inner radius"""
-        return self.major_radius - self.minor_radius
-
     def _torus_circle_generatrices_xy(self, number_arcs: int = 50):
         center = self.frame.origin + self.frame.u * self.major_radius
         u_vector = (center - self.frame.origin).unit_vector()
@@ -2747,7 +2737,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         :type point2d: `volmdlr.`Point2D`
         """
         theta, phi = point2d
-        # return self.frame.origin + (self.major_radius + self.minor_radius * math.cos(phi)) * ((math.cos(theta) * self.frame.u) + (math.sin(theta) * self.frame.v)) + self.minor_radius * math.sin(phi) * self.frame.w
 
         x = (self.major_radius + self.minor_radius * math.cos(phi)) * math.cos(theta)
         y = (self.major_radius + self.minor_radius * math.cos(phi)) * math.sin(theta)

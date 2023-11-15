@@ -168,7 +168,6 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
-        step_id = kwargs.get("step_id")
         if obj.__class__.__name__ == 'LineSegment3D':
             if point1 != point2:
                 return LineSegment3D(point1, point2, name=arguments[0][1:-1])
@@ -1830,14 +1829,13 @@ class BSplineCurve(Edge):
         """
         return [self.point_at_abscissa(self.abscissa(point))]
 
-    def local_discretization(self, point1, point2, number_points: int = 10, tol: float = 1e-6):
+    def local_discretization(self, point1, point2, number_points: int = 10):
         """
         Gets n discretization points between two given points of the edge.
 
         :param point1: point 1 on edge.
         :param point2: point 2 on edge.
         :param number_points: number of points to discretize locally.
-        :param tol: tolerance.
         :return: list of locally discretized points.
         """
         abscissa1 = self.abscissa(point1)
@@ -5106,7 +5104,7 @@ class BSplineCurve3D(BSplineCurve):
         if not same_sense:
             bspline_curve = self.reverse()
         n = len(bspline_curve.control_points)
-        local_discretization = bspline_curve.local_discretization(point1, point2, n, tol=1e-8)
+        local_discretization = bspline_curve.local_discretization(point1, point2, n)
         if len(local_discretization) <= bspline_curve.degree:
             return bspline_curve
         return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
