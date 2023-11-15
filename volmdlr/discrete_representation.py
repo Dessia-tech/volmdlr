@@ -840,7 +840,7 @@ class PointBasedVoxelization(Voxelization):
         :return: A PointBasedVoxelization created from the list of triangles.
         :rtype: PointBasedVoxelization
         """
-        return cls(MatrixBasedVoxelization.from_triangles(triangles, voxel_size).get_voxel_centers(), name)
+        return cls(MatrixBasedVoxelization.from_triangles(triangles, voxel_size).get_voxel_centers(), voxel_size, name)
 
     @classmethod
     def from_matrix_based_voxelization(
