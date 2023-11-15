@@ -1768,7 +1768,13 @@ class OctreeBasedVoxelization(Voxelization):
         return self._get_homogeneous_leaf_centers(0, self._root_voxel_size, self._root_center, self._octree)
 
     @property
-    def _root_voxel_size(self):
+    def _root_voxel_size(self) -> float:
+        """
+        Get the edge size of the root voxel.
+
+        :return: The edge size of the root voxel.
+        :rtype: float
+        """
         return round_to_digits(self.voxel_size * 2**self._octree_depth, DECIMALS)
 
     def __eq__(self, other: "OctreeBasedVoxelization") -> bool:
@@ -2005,28 +2011,31 @@ class OctreeBasedVoxelization(Voxelization):
 
     @staticmethod
     def _check_voxel_intersection(
-        voxel_center_1: _Point3D, half_size_1: float, voxel_centrer_2: _Point3D, half_size_2: float
+        voxel_center_1: _Point3D, half_size_1: float, voxel_center_2: _Point3D, half_size_2: float
     ) -> bool:
         """
-        Check if two voxels intersect.
+        Helper method to check if two voxels intersect.
 
-        Args:
-            voxel_center_1 (Tuple[float, float, float]): Center of the first cube as (x, y, z) coordinates.
-            half_size_1 (float): Size of the first cube (edge length).
-            voxel_centrer_2 (Tuple[float, float, float]): Center of the second cube as (x, y, z) coordinates.
-            half_size_2 (float): Size of the second cube (edge length).
+        :param voxel_center_1: Center of the first voxel as (x, y, z) coordinates.
+        :type voxel_center_1: tuple[float, float, float]
+        :param half_size_1: The half edge size of the first voxel.
+        :type half_size_1: float
+        :param voxel_center_2: Center of the second voxel as (x, y, z) coordinates.
+        :type voxel_center_2: tuple[float, float, float]
+        :param half_size_2: The half edge size of the second voxel.
+        :type half_size_2: float
 
-        Returns:
-            bool: True if the cubes intersect, False otherwise.
+        :return: True if the cubes intersect, False otherwise.
+        :rtype: bool
         """
         # Calculate the minimum and maximum coordinates of each cube along each axis
         min_x1, max_x1 = voxel_center_1[0] - half_size_1, voxel_center_1[0] + half_size_1
         min_y1, max_y1 = voxel_center_1[1] - half_size_1, voxel_center_1[1] + half_size_1
         min_z1, max_z1 = voxel_center_1[2] - half_size_1, voxel_center_1[2] + half_size_1
 
-        min_x2, max_x2 = voxel_centrer_2[0] - half_size_2, voxel_centrer_2[0] + half_size_2
-        min_y2, max_y2 = voxel_centrer_2[1] - half_size_2, voxel_centrer_2[1] + half_size_2
-        min_z2, max_z2 = voxel_centrer_2[2] - half_size_2, voxel_centrer_2[2] + half_size_2
+        min_x2, max_x2 = voxel_center_2[0] - half_size_2, voxel_center_2[0] + half_size_2
+        min_y2, max_y2 = voxel_center_2[1] - half_size_2, voxel_center_2[1] + half_size_2
+        min_z2, max_z2 = voxel_center_2[2] - half_size_2, voxel_center_2[2] + half_size_2
 
         # Check for intersection along each axis
         x_intersect = max(min_x1, min_x2) < min(max_x1, max_x2)
