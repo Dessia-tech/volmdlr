@@ -1759,7 +1759,11 @@ class OctreeBasedVoxelization(Voxelization):
         self._octree = octree
         self._root_center = root_center
         self._octree_depth = octree_depth
-        self._triangles = triangles
+
+        if triangles:
+            self._triangles = triangles
+        else:
+            self._triangles = []
 
         Voxelization.__init__(self, voxel_size=voxel_size, name=name)
 
@@ -1801,7 +1805,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The number of voxels in the voxelization.
         :rtype: int
         """
-        raise NotImplementedError
+        return len(self.get_voxel_centers())  # TODO: optimize that
 
     @property
     def min_grid_center(self) -> _Point3D:
@@ -2152,7 +2156,69 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new OctreeBasedVoxelization resulting from the difference operation.
         :rtype: OctreeBasedVoxelization
         """
-        raise NotImplementedError
+        octree_1, octree_2 = self._make_octrees_same_depth(self, other)
+
+        octree_difference = self._recursive_difference(
+            0, octree_1._octree_depth, len(octree_1._triangles), octree_1._octree, octree_2._octree
+        )
+        triangles = self._triangles + other._triangles
+
+        return self.__class__(octree_difference, (0.0, 0.0, 0.0), octree_1._octree_depth, octree_1.voxel_size, triangles)
+
+    @staticmethod
+    def _recursive_difference(
+        current_depth: int,
+        max_depth: int,
+        n_triangles_1: int,
+        current_octree_1,
+        current_octree_2,
+    ):
+        """Recursive method to perform a difference between two octree based voxelizations."""
+        if current_depth == max_depth:  # if _octree_depth reached, it is a leaf node
+            if not current_octree_2:
+                return current_octree_1
+            else:
+                return []
+
+        sub_voxels = []
+
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    if current_octree_1[i * 4 + j * 2 + k] and current_octree_2[i * 4 + j * 2 + k]:
+                        # if it is in both octrees
+                        sub_voxels.append(
+                            OctreeBasedVoxelization._recursive_difference(
+                                current_depth + 1,
+                                max_depth,
+                                n_triangles_1,
+                                current_octree_1[i * 4 + j * 2 + k],
+                                current_octree_2[i * 4 + j * 2 + k],
+                            )
+                        )
+
+                    elif current_octree_1[i * 4 + j * 2 + k] and not current_octree_2[i * 4 + j * 2 + k]:
+                        # if it is in first octree only
+
+                        if current_depth + 1 == max_depth:
+                            _current_octree_2 = []
+                        else:
+                            _current_octree_2 = [[], [], [], [], [], [], [], []]
+
+                        sub_voxels.append(
+                            OctreeBasedVoxelization._recursive_difference(
+                                current_depth + 1,
+                                max_depth,
+                                n_triangles_1,
+                                current_octree_1[i * 4 + j * 2 + k],
+                                _current_octree_2,
+                            )
+                        )
+
+                    else:
+                        sub_voxels.append([])
+
+        return sub_voxels
 
     def intersection(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
         """
@@ -2228,7 +2294,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization representing the inverse.
         :rtype: OctreeBasedVoxelization
         """
-        raise NotImplementedError
+        return self.to_matrix_based_voxelization().inverse().to_octree_based_voxelization()
 
     def flood_fill(self, start: Tuple[int, int, int], fill_with: bool) -> "OctreeBasedVoxelization":
         """
@@ -2242,7 +2308,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization resulting from the flood fill operation.
         :rtype: OctreeBasedVoxelization
         """
-        raise NotImplementedError
+        return self.to_matrix_based_voxelization().flood_fill(start, fill_with).to_octree_based_voxelization()
 
     def _fill_outer_elements(self) -> "OctreeBasedVoxelization":
         """
@@ -2251,7 +2317,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization with outer voxels filled.
         :rtype: OctreeBasedVoxelization
         """
-        raise NotImplementedError
+        return self.to_matrix_based_voxelization().fill_outer_voxels().to_octree_based_voxelization()
 
     def _fill_enclosed_elements(self) -> "OctreeBasedVoxelization":
         """
@@ -2260,7 +2326,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization with enclosed voxels filled.
         :rtype: OctreeBasedVoxelization
         """
-        raise NotImplementedError
+        return self.to_matrix_based_voxelization().fill_enclosed_voxels().to_octree_based_voxelization()
 
     # EXPORT METHODS
     def to_point_based_voxelization(self) -> "PointBasedVoxelization":
