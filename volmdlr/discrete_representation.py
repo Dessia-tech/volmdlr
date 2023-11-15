@@ -503,7 +503,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :rtype: VoxelizationType
         """
         if isinstance(shell, DisplayTriangleShell3D):
-            return cls.from_mesh_data(shell.positions, shell.indices)
+            return cls.from_mesh_data(shell.positions, shell.indices, voxel_size, name)
 
         return cls.from_triangles(cls._shell_to_triangles(shell), voxel_size, name)
 
@@ -1344,7 +1344,7 @@ class MatrixBasedVoxelization(Voxelization):
         """
         matrix, min_grid_center = triangles_to_voxel_matrix(triangles, voxel_size)
 
-        return cls(matrix, min_grid_center, voxel_size)
+        return cls(matrix, min_grid_center, voxel_size, name)
 
     @classmethod
     def from_point_based_voxelization(
@@ -1856,8 +1856,20 @@ class OctreeBasedVoxelization(Voxelization):
 
     # CLASS METHODS
     @classmethod
-    def from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float) -> "OctreeBasedVoxelization":
-        """Create a voxelization based on the size of the voxel."""
+    def from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float, name: str = "") -> "OctreeBasedVoxelization":
+        """
+        Create a OctreeBasedVoxelization from a list of triangles.
+
+        :param triangles: The list of triangles to create the OctreeBasedVoxelization from.
+        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :param voxel_size: The size of each voxel.
+        :type voxel_size: float
+        :param name: Optional name for the OctreeBasedVoxelization.
+        :type name: str
+
+        :return: A OctreeBasedVoxelization created from the list of triangles.
+        :rtype: OctreeBasedVoxelization
+        """
         triangles_np = np.array(triangles)
         min_corner = np.min(np.min(triangles_np, axis=1), axis=0)
         max_corner = np.max(np.max(triangles_np, axis=1), axis=0)
@@ -1877,7 +1889,7 @@ class OctreeBasedVoxelization(Voxelization):
 
         octree = cls._subdivide_from_triangles(triangles, list(range(len(triangles))), center, sizes, 0, max_depth)
 
-        return cls(octree, center, max_depth, voxel_size, triangles)
+        return cls(octree, center, max_depth, voxel_size, triangles, name)
 
     @classmethod
     def from_point_based_voxelization(
