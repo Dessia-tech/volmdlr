@@ -1817,7 +1817,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The minimum center point.
         :rtype: tuple[float, float, float]
         """
-        raise NotImplementedError
+        return self.to_point_based_voxelization().min_grid_center
 
     @property
     def max_grid_center(self) -> _Point3D:
@@ -1829,7 +1829,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The maximum center point.
         :rtype: tuple[float, float, float]
         """
-        raise NotImplementedError
+        return self.to_point_based_voxelization().max_grid_center
 
     # CLASS METHODS
     @classmethod
@@ -3029,6 +3029,42 @@ class OctreeBasedVoxelization(Voxelization):
             octree_2 = octree_2._increment_octree_depth()
 
         return octree_1, octree_2
+
+    # SERIALIZATION
+    def to_dict(
+        self, use_pointers: bool = True, memo=None, path: str = "#", id_method=True, id_memo=None
+    ) -> JsonSerializable:
+        """Specific 'to_dict' method."""
+        dict_ = self.base_dict()
+
+        dict_["octree"] = self._octree
+        dict_["root_center"] = self._root_center
+        dict_["octree_depth"] = self._octree_depth
+        dict_["voxel_size"] = self.voxel_size
+        dict_["triangles"] = self._triangles
+        dict_["name"] = self.name
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(
+        cls,
+        dict_: JsonSerializable,
+        force_generic: bool = False,
+        global_dict=None,
+        pointers_memo: Dict[str, Any] = None,
+        path: str = "#",
+    ) -> "OctreeBasedVoxelization":
+        """Specific 'dict_to_object' method."""
+
+        octree = dict_["octree"]
+        root_center = dict_["root_center"]
+        octree_depth = dict_["octree_depth"]
+        voxel_size = dict_["voxel_size"]
+        triangles = dict_["triangles"]
+        name = dict_["name"]
+
+        return cls(octree, root_center, octree_depth, voxel_size, triangles, name)
 
 
 class Pixelization(DiscreteRepresentation, DessiaObject):
