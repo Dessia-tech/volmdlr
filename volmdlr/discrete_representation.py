@@ -471,7 +471,6 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
 
     # CLASS METHODS
     @classmethod
-    @abstractmethod
     def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = "") -> VoxelizationType:
         """
         Create a voxelization from a Shell3D.
@@ -486,9 +485,9 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :return: A voxelization created from the Shell3D.
         :rtype: VoxelizationType
         """
+        return cls._from_triangles(cls._shell_to_triangles(shell), voxel_size)
 
     @classmethod
-    @abstractmethod
     def from_volume_model(cls, volume_model: VolumeModel, voxel_size: float, name: str = "") -> VoxelizationType:
         """
         Create a voxelization from a VolumeModel.
@@ -501,6 +500,24 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :type name: str
 
         :return: A voxelization created from the VolumeModel.
+        :rtype: VoxelizationType
+        """
+        return cls._from_triangles(cls._volume_model_to_triangles(volume_model), voxel_size)
+
+    @classmethod
+    @abstractmethod
+    def _from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float, name: str = "") -> VoxelizationType:
+        """
+        Create a voxelization from a list of triangles.
+
+        :param triangles: The list of triangles to create the voxelization from.
+        :type triangles: list[tuple[tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]]]
+        :param voxel_size: The size of each voxel.
+        :type voxel_size: float
+        :param name: Optional name for the voxelization.
+        :type name: str
+
+        :return: A voxelization created from the list of triangles.
         :rtype: VoxelizationType
         """
 
