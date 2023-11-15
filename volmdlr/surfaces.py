@@ -2673,7 +2673,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         phi = npy.linspace(phi_0, phi_1, 400)
         x_components = self.radius*npy.cos(phi)
         y_components = self.radius*npy.sin(phi)
-        z_components1 = npy.sqrt(2*distance_axis_sphere_center*(b + self.radius*npy.cos(phi)))
+        z_components1 = npy.sqrt(2*distance_axis_sphere_center*(b + x_components))
         inters_points1 = [volmdlr.Point3D(x_comp, y_comp, z_comp)
                           for x_comp, y_comp, z_comp in zip(x_components, y_components, z_components1)]
         inters_points2 = [volmdlr.Point3D(x_comp, y_comp, -z_comp)
