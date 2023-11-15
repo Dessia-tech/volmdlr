@@ -1,8 +1,8 @@
 """
 Unit testing of 'MatrixBasedVoxelization' class.
 """
-import unittest
 import os
+import unittest
 
 import volmdlr
 from volmdlr.core import BoundingBox, VolumeModel

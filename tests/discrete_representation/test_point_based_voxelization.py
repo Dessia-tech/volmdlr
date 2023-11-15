@@ -2,6 +2,7 @@
 Unit testing of 'PointBasedVoxelization' class.
 """
 import math
+import os
 import unittest
 
 import volmdlr
