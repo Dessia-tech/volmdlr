@@ -17,7 +17,7 @@ from dessia_common.core import DessiaObject
 import plot_data.colors
 import plot_data.core as plot_data
 import volmdlr
-from volmdlr import core, geometry
+from volmdlr import core, geometry, get_minimum_distance_points_lines
 from volmdlr.nurbs.helpers import generate_knot_vector
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as volmdlr_intersections
@@ -34,7 +34,8 @@ def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_t
 
     line0 = line_class.from_point_and_vector(start, start_tangent)
     line2 = line_class.from_point_and_vector(end, end_tangent)
-    point1 = line0.line_intersections(line2)[0]
+    line_intersections = line0.line_intersections(line2)
+    point1 = line_intersections[0]
     vector_p1 = point1 - point
     line1p = line_class.from_point_and_vector(point1, vector_p1)
     point_q = line02.line_intersections(line1p)[0]
@@ -867,24 +868,9 @@ class Line3D(Line):
         """
         Returns the points on this line and the other line that are the closest of lines.
         """
-        if self.point_belongs(other_line.point1):
-            return other_line.point1, other_line.point1
-        if self.point_belongs(other_line.point2):
-            return other_line.point2, other_line.point2
-        u = self.point2 - self.point1
-        v = other_line.point2 - other_line.point1
-        w = self.point1 - other_line.point1
-        u_dot_u = u.dot(u)
-        u_dot_v = u.dot(v)
-        v_dot_v = v.dot(v)
-        u_dot_w = u.dot(w)
-        v_dot_w = v.dot(w)
 
-        s_param = (u_dot_v * v_dot_w - v_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
-        t_param = (u_dot_u * v_dot_w - u_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
-        point1 = self.point1 + s_param * u
-        point2 = other_line.point1 + t_param * v
-        return point1, point2
+        return get_minimum_distance_points_lines(self.point1, self.point2, other_line.point1, other_line.point2)
+
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -981,7 +967,7 @@ class CircleMixin:
 
     @property
     def center(self):
-        """Gets circle's center point ."""
+        """Gets circle's center point."""
         return self.frame.origin
 
     def split_at_abscissa(self, abscissa):
@@ -1645,8 +1631,6 @@ class Circle3D(CircleMixin, ClosedCurve):
             ax = fig.add_subplot(111, projection='3d')
         return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
 
-
-
     def line_intersections(self, line: Line3D, abs_tol: float = 1e-6):
         """
         Calculates the intersections between the Circle3D and a line 3D.
@@ -2008,7 +1992,26 @@ class Circle3D(CircleMixin, ClosedCurve):
         return point_angle
 
 
-class Ellipse2D(ClosedCurve):
+class EllipseMixin:
+    """Ellipse abstract class."""
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.frame.origin
+
+    @property
+    def major_dir(self):
+        """Gets ellipse's major direction vector."""
+        return self.frame.u
+
+    @property
+    def minor_dir(self):
+        """Gets ellipse's minor direction vector."""
+        return self.frame.v
+
+
+class Ellipse2D(EllipseMixin, ClosedCurve):
     """
     Defines an Ellipse in two-dimensions.
 
@@ -2029,10 +2032,6 @@ class Ellipse2D(ClosedCurve):
     def __init__(self, major_axis, minor_axis, frame, name=''):
         self.major_axis = major_axis
         self.minor_axis = minor_axis
-        self.center = frame.origin
-        self.major_dir = frame.u
-        self.minor_dir = frame.v
-        # self.frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
         self.frame = frame
         if math.isclose(frame.u.cross(frame.v), 1.0, abs_tol=1e-6):
             self.angle_start = 0.0
@@ -2358,7 +2357,7 @@ class Ellipse2D(ClosedCurve):
         return Ellipse2D(self.major_axis, self.minor_axis, frame)
 
 
-class Ellipse3D(ClosedCurve):
+class Ellipse3D(EllipseMixin, ClosedCurve):
     """
     Defines a 3D ellipse.
 
@@ -2374,10 +2373,6 @@ class Ellipse3D(ClosedCurve):
         self.frame = frame
         self.major_axis = major_axis
         self.minor_axis = minor_axis
-        self.center = frame.origin
-        self.normal = frame.w
-        self.major_dir = frame.u
-        self.minor_dir = frame.v
         self._self_2d = None
         self._bbox = None
         ClosedCurve.__init__(self, name=name)
@@ -2406,6 +2401,11 @@ class Ellipse3D(ClosedCurve):
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
+
+    @property
+    def normal(self):
+        """Gets ellipse's normal vector."""
+        return self.frame.w
 
     def _bounding_box(self):
         """
@@ -2706,6 +2706,7 @@ class HyperbolaMixin(Curve):
         :param point2: point2 used to trim circle.
         """
         _bspline_class = getattr(volmdlr.edges, 'BSplineCurve'+self.__class__.__name__[-2:])
+        _lineseg_class = getattr(volmdlr.edges, 'LineSegment'+self.__class__.__name__[-2:])
         local_split_start = self.frame.global_to_local_coordinates(point1)
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_y = max(local_split_start.y, local_split_end.y)
@@ -2713,10 +2714,13 @@ class HyperbolaMixin(Curve):
         hyperbola_points = self.get_points(min_y, max_y, 3)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
+        start_tangent = self.tangent(hyperbola_points[0])
+        end_tangent = self.tangent(hyperbola_points[2])
+        if start_tangent.is_colinear_to(end_tangent):
+            lineseg = _lineseg_class(hyperbola_points[0], hyperbola_points[2])
+            return lineseg
         point, weight1 = hyperbola_parabola_control_point_and_weight(
-            hyperbola_points[0], self.tangent(hyperbola_points[0]),
-            hyperbola_points[2], self.tangent(hyperbola_points[2]),
-            hyperbola_points[1])
+            hyperbola_points[0], start_tangent, hyperbola_points[2], end_tangent, hyperbola_points[1])
         knotvector = generate_knot_vector(2, 3)
         knot_multiplicity = [1] * len(knotvector)
 

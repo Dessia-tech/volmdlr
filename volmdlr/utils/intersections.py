@@ -76,7 +76,7 @@ def conic3d_line_intersections(conic3d, line3d, abs_tol: float = 1e-6):
     if not math.isclose(abs(conic3d.frame.w.dot(volmdlr.Z3D)), 1, abs_tol=abs_tol):
         frame_mapped_conic3d = conic3d.frame_mapping(conic3d.frame, 'new')
         frame_mapped_line = line3d.frame_mapping(conic3d.frame, 'new')
-        circle_linseg_intersections = conic3d_line_intersections(frame_mapped_conic3d, frame_mapped_line)
+        circle_linseg_intersections = conic3d_line_intersections(frame_mapped_conic3d, frame_mapped_line, abs_tol)
         for inter in circle_linseg_intersections:
             intersections.append(conic3d.frame.local_to_global_coordinates(inter))
         return intersections
@@ -89,7 +89,7 @@ def conic3d_line_intersections(conic3d, line3d, abs_tol: float = 1e-6):
             intersections.append(volmdlr.Point3D(intersection[0], intersection[1], conic3d.frame.origin.z))
         return intersections
     plane_lineseg_intersections = get_plane_line_intersections(conic3d.frame, line3d)
-    if plane_lineseg_intersections and conic3d.point_belongs(plane_lineseg_intersections[0]):
+    if plane_lineseg_intersections and conic3d.point_belongs(plane_lineseg_intersections[0], abs_tol):
         return plane_lineseg_intersections
     return []
 
@@ -194,14 +194,19 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
     line_seg_class_ = getattr(volmdlr.edges, 'LineSegment'+bsplinecurve.__class__.__name__[-2:])
     abscissa1 = 0
     abscissa2 = bsplinecurve.length()
-    bspline_discretized_points, points_abscissas = get_abscissa_discretization(bsplinecurve, abscissa1, abscissa2,
+    if bsplinecurve.__class__.__name__ in ("BSplineCurve2D", "BSplineCurve3D"):
+        bspline_discretized_points, points_abscissas = bsplinecurve.get_abscissa_discretization(abscissa1, abscissa2,
+                                                                                            number_points=resolution,
+                                                                                            return_abscissas=True)
+    else:
+        bspline_discretized_points, points_abscissas = get_abscissa_discretization(bsplinecurve, abscissa1, abscissa2,
                                                                                max_number_points=resolution)
-    if bsplinecurve.periodic:
-        bspline_discretized_points += [bspline_discretized_points[0]]
-        if points_abscissas[0] == 0.0:
-            points_abscissas += [bsplinecurve.length()]
-        else:
-            points_abscissas += [points_abscissas[0]]
+        if bsplinecurve.periodic:
+            bspline_discretized_points += [bspline_discretized_points[0]]
+            if points_abscissas[0] == 0.0:
+                points_abscissas += [bsplinecurve.length()]
+            else:
+                points_abscissas += [points_abscissas[0]]
     param_intersections = []
     for point1, point2, abscissa1, abscissa2 in zip(bspline_discretized_points[:-1], bspline_discretized_points[1:],
                                                     points_abscissas[:-1], points_abscissas[1:]):
@@ -243,13 +248,18 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
         if not param_intersections:
             break
         abscissa1, abscissa2 = param_intersections[0]
-        discretized_points_between_1_2, points_abscissas = get_abscissa_discretization(bsplinecurve, abscissa1,
-                                                                                       abscissa2, max_number_points=10)
+        if bsplinecurve.__class__.__name__ in ("BSplineCurve2D", "BSplineCurve3D"):
+            discretized_points_between_1_2, points_abscissas = bsplinecurve.get_abscissa_discretization(abscissa1,
+                                                                    abscissa2, number_points=10, return_abscissas=True)
+        else:
+            discretized_points_between_1_2, points_abscissas = get_abscissa_discretization(bsplinecurve, abscissa1,
+                                                                                           abscissa2,
+                                                                                           max_number_points=10)
         for point1, point2, abscissa_point1, abscissa_point2 in zip(
                 discretized_points_between_1_2[:-1], discretized_points_between_1_2[1:],
                 points_abscissas[:-1], points_abscissas[1:]):
             line_seg = line_seg_class_(point1, point2)
-            intersection = primitive.linesegment_intersections(line_seg, 1e-6)
+            intersection = primitive.linesegment_intersections(line_seg, abs_tol)
             if not intersection:
                 continue
             if get_point_distance_to_edge(bsplinecurve, intersection[0], point1, point2) > 1e-7 and not\
@@ -280,6 +290,8 @@ def conic_intersections(conic1, conic2, abs_tol: float = 1e-6):
         conic2_2d = frame_mapped_conic2.to_2d(frame_mapped_conic1.frame.origin,
                                               frame_mapped_conic1.frame.u, frame_mapped_conic1.frame.v)
         intersections_2d = conic1_2d.curve_intersections(conic2_2d, abs_tol)
+        if not intersections_2d:
+            return []
         local_intersections = []
         for intersection in intersections_2d:
             local_intersections.append(volmdlr.Point3D(intersection[0], intersection[1], 0.0))

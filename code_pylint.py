@@ -7,7 +7,7 @@ import math
 from pylint import __version__
 from pylint.lint import Run
 
-MIN_NOTE = 9.5
+MIN_NOTE = 9.7
 
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
 
@@ -17,13 +17,9 @@ WEEKLY_DECREASE = 0.03
 
 MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 13,
-                     "wrong-spelling-in-docstring": 0,
                      'invalid-name': 1,
-                     'no-member': 1,
-                     'inconsistent-return-statements': 4,
-                     'unused-variable': 22,
                      'arguments-differ': 64,
-                     'too-many-locals': 96,
+                     'too-many-locals': 100,
                      'unused-argument': 8,
                      'too-many-arguments': 26,
                      'line-too-long': 12,
@@ -35,30 +31,17 @@ MAX_ERROR_BY_TYPE = {
                      'duplicate-code': 10,
                      'arguments-renamed': 56,
                      'too-many-ancestors': 25,
-                     'too-few-public-methods': 2,
                      'too-many-public-methods': 15,
                      'too-many-instance-attributes': 15,
                      'protected-access': 4,
-                     'undefined-loop-variable': 2,
-                     'unspecified-encoding': 1,
-                     'too-many-function-args': 4,
                      'too-many-nested-blocks': 7,
                      'too-many-return-statements': 5,
                      'cyclic-import': 1,
-                     'undefined-variable': 8,  # 2 when gmsh is fixed
-                     'broad-except': 1,
                      "broad-exception-caught": 1,
                      'too-many-boolean-expressions': 2,
                      'too-many-lines': 4,
-                     'consider-using-with': 1,
-                     'unnecessary-dunder-call': 2,
-                     'chained-comparison': 2,
-                     'consider-using-generator': 1,
-                     'import-outside-toplevel': 5,
-                     'unsubscriptable-object': 1,
                      'signature-differs': 1,
                      'consider-using-enumerate': 2,
-                     'unbalanced-tuple-unpacking': 1,
                     }
 
 ERRORS_WITHOUT_TIME_DECREASE = ["signature-differs", "broad-exception-caught", 'invalid-name', "too-many-locals",

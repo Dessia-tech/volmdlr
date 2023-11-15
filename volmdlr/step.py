@@ -367,7 +367,8 @@ class Step(dc.DessiaObject):
         fun_name = fun_name.lower()
         try:
             if hasattr(step_reader, fun_name):
-                volmdlr_object = getattr(step_reader, fun_name)(arguments, object_dict)
+                volmdlr_object = getattr(step_reader, fun_name)(arguments, object_dict,
+                                                                length_conversion_factor=self.length_conversion_factor)
 
             elif name in STEP_TO_VOLMDLR and hasattr(STEP_TO_VOLMDLR[name], "from_step"):
                 volmdlr_object = STEP_TO_VOLMDLR[name].from_step(
@@ -377,7 +378,7 @@ class Step(dc.DessiaObject):
 
             else:
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
-        except (ValueError, NotImplementedError) as error:
+        except (ValueError, NotImplementedError, IndexError) as error:
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
         return volmdlr_object
 
@@ -535,6 +536,10 @@ class Step(dc.DessiaObject):
                 shape_representation_relationship.append(function.id)
                 id_shape_representation = int(function.arg[3][1:])
                 shape_representations.append(id_shape_representation)
+                id_other_shape_representation = int(function.arg[2][1:])
+                other_shape_representation = self.functions[id_other_shape_representation]
+                if other_shape_representation.name in STEP_REPRESENTATION_ENTITIES:
+                    shape_representations.append(id_other_shape_representation)
             elif function.name == "SHAPE_DEFINITION_REPRESENTATION":
                 id_shape_representation = int(function.arg[1][1:])
                 shape_representations.append(id_shape_representation)
