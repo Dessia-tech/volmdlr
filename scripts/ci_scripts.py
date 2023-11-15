@@ -92,6 +92,8 @@ scripts = [
     "discrete_representation/voxelization/voxelization_filling.py",
     "discrete_representation/voxelization/voxelization_inverse.py",
     "discrete_representation/voxelization/voxelization_moving.py",
+    "discrete_representation/voxelization/octree/inner_growing_shocase.py",
+    "discrete_representation/voxelization/octree/intersecting_faces_combinations.py",
     # Pixelization
     "discrete_representation/pixelization/pixelization_boolean_operations.py",
     "discrete_representation/pixelization/pixelization_filling.py",
