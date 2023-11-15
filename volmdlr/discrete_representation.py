@@ -1344,7 +1344,7 @@ class MatrixBasedVoxelization(Voxelization):
         """
         matrix, min_grid_center = triangles_to_voxel_matrix(triangles, voxel_size)
 
-        return cls(matrix, min_grid_center, voxel_size, name)
+        return cls(matrix, min_grid_center, voxel_size, name).crop_matrix()
 
     @classmethod
     def from_point_based_voxelization(
