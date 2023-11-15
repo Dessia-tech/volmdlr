@@ -2444,11 +2444,9 @@ class OctreeBasedVoxelization(Voxelization):
 
         return point_based_voxelizations
 
-    def to_inner_growing_point_based_voxelizations(
-        self, layers_minimal_thickness: float
-    ) -> List["PointBasedVoxelization"]:
+    def to_inner_growing_voxelizations(self, layers_minimal_thickness: float) -> List["OctreeBasedVoxelization"]:
         """
-        Convert the OctreeBasedVoxelization to multiple PointBasedVoxelization, with different size.
+        Convert the OctreeBasedVoxelization to multiple OctreeBasedVoxelization, with different size.
 
         The more the voxelization is inside, the more its voxel size become bigger.
 
@@ -2475,12 +2473,14 @@ class OctreeBasedVoxelization(Voxelization):
             ):
                 inner_growing_voxel_centers[voxel_size] = voxel_centers
 
-        point_based_voxelizations = []
+        octree_based_voxelizations = []
 
         for voxel_size, voxel_centers in inner_growing_voxel_centers.items():
-            point_based_voxelizations.append(PointBasedVoxelization(voxel_centers, voxel_size))
+            octree_based_voxelizations.append(
+                PointBasedVoxelization(voxel_centers, voxel_size).to_octree_based_voxelization()
+            )
 
-        return point_based_voxelizations
+        return octree_based_voxelizations
 
     # HELPER CREATION METHODS
     @classmethod
