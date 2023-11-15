@@ -1166,6 +1166,7 @@ class PointBasedVoxelization(Voxelization):
         :return: The distance to surface for each voxel center.
         :rtype: dict[tuple(float, float, float): float]
         """
+        # pylint: disable=import-outside-toplevel
         from igl import signed_distance
 
         points_coords = np.array(list(self.voxel_centers))
@@ -1174,11 +1175,11 @@ class PointBasedVoxelization(Voxelization):
         vertices, faces = display_triangle_shell.positions, display_triangle_shell.indices
         distances_array = signed_distance(points_coords, vertices, faces.astype(int), sign_type=3)[0]
 
-        if self.__len__() == 1:
+        if len(self) == 1:
             distances_array = np.array([distances_array])
 
         # Creating a dictionary to map each point to its distance
-        distances_dict = {point: distance for point, distance in zip(self.voxel_centers, distances_array)}
+        distances_dict = dict(zip(self.voxel_centers, distances_array))
 
         return distances_dict
 
@@ -1800,7 +1801,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The number of voxels in the voxelization.
         :rtype: int
         """
-        return NotImplemented
+        raise NotImplementedError
 
     @property
     def min_grid_center(self) -> _Point3D:
@@ -1812,7 +1813,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The minimum center point.
         :rtype: tuple[float, float, float]
         """
-        return NotImplemented
+        raise NotImplementedError
 
     @property
     def max_grid_center(self) -> _Point3D:
@@ -1824,7 +1825,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: The maximum center point.
         :rtype: tuple[float, float, float]
         """
-        return NotImplemented
+        raise NotImplementedError
 
     # CLASS METHODS
     @classmethod
@@ -2151,7 +2152,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new OctreeBasedVoxelization resulting from the difference operation.
         :rtype: OctreeBasedVoxelization
         """
-        return NotImplemented
+        raise NotImplementedError
 
     def intersection(self, other: "OctreeBasedVoxelization") -> "OctreeBasedVoxelization":
         """
@@ -2218,7 +2219,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new OctreeBasedVoxelization resulting from the symmetric difference operation.
         :rtype: OctreeBasedVoxelization
         """
-        return NotImplemented
+        raise NotImplementedError
 
     def inverse(self) -> "OctreeBasedVoxelization":
         """
@@ -2227,7 +2228,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization representing the inverse.
         :rtype: OctreeBasedVoxelization
         """
-        return NotImplemented
+        raise NotImplementedError
 
     def flood_fill(self, start: Tuple[int, int, int], fill_with: bool) -> "OctreeBasedVoxelization":
         """
@@ -2241,7 +2242,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization resulting from the flood fill operation.
         :rtype: OctreeBasedVoxelization
         """
-        return NotImplemented
+        raise NotImplementedError
 
     def _fill_outer_elements(self) -> "OctreeBasedVoxelization":
         """
@@ -2250,7 +2251,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization with outer voxels filled.
         :rtype: OctreeBasedVoxelization
         """
-        return NotImplemented
+        raise NotImplementedError
 
     def _fill_enclosed_elements(self) -> "OctreeBasedVoxelization":
         """
@@ -2259,7 +2260,7 @@ class OctreeBasedVoxelization(Voxelization):
         :return: A new voxelization with enclosed voxels filled.
         :rtype: OctreeBasedVoxelization
         """
-        return NotImplemented
+        raise NotImplementedError
 
     # EXPORT METHODS
     def to_point_based_voxelization(self) -> "PointBasedVoxelization":
@@ -2353,9 +2354,7 @@ class OctreeBasedVoxelization(Voxelization):
         sizes = [round_to_digits(voxel_size * 2**i, DECIMALS) for i in range(max_depth, -1, -1)]
         sizes.append(round_to_digits(voxel_size * 1 / 2, DECIMALS))
 
-        octree = cls._subdivide_from_triangles(
-            triangles, [i for i in range(len(triangles))], center, sizes, 0, max_depth
-        )
+        octree = cls._subdivide_from_triangles(triangles, list(range(len(triangles))), center, sizes, 0, max_depth)
 
         return cls(octree, center, max_depth, voxel_size, triangles)
 
@@ -2419,8 +2418,8 @@ class OctreeBasedVoxelization(Voxelization):
                 return []
             return sub_voxels
 
-        else:  # reached max depth
-            return intersecting_indices
+        # reached max depth
+        return intersecting_indices
 
     @staticmethod
     def _subdivide_from_points(
@@ -2486,8 +2485,8 @@ class OctreeBasedVoxelization(Voxelization):
                 return []
             return sub_voxels
 
-        else:  # reached max depth
-            return [1]
+        # reached max depth
+        return [1]
 
     # HELPER EXPORT METHODS
     def _get_homogeneous_leaf_centers(
@@ -2664,17 +2663,10 @@ class OctreeBasedVoxelization(Voxelization):
 
             if len(centers_by_voxel_size.get(half_size, [])) == 8:
                 if current_depth + 1 == self._octree_depth and all(
-                    [
-                        # layer_dict[voxel_center] >= (min_layer_thickness * (self._octree_depth - current_depth))
-                        layer_dict[voxel_center] >= min_layer_thickness
-                        for voxel_center in centers_by_voxel_size[half_size]
-                    ]
+                    layer_dict[voxel_center] >= min_layer_thickness for voxel_center in centers_by_voxel_size[half_size]
                 ):
                     # Merge voxels
                     centers_by_voxel_size[current_size] = {current_center}
-                    # layer_dict[current_center] = min(
-                    #     [layer_dict[voxel_center] for voxel_center in centers_by_voxel_size[half_size]]
-                    # )
                     del centers_by_voxel_size[half_size]
 
         return centers_by_voxel_size
@@ -2752,7 +2744,7 @@ class OctreeBasedVoxelization(Voxelization):
                 combination = tuple(sorted(combination))
 
                 if threshold:
-                    if not (combination[0] < threshold <= combination[1]):
+                    if not combination[0] < threshold <= combination[1]:
                         continue
 
                 intersections_locations[combination] = {current_center}
