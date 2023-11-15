@@ -168,15 +168,20 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
+        step_id = kwargs.get("step_id")
+        if step_id == 4062779:
+            print(True)
         if obj.__class__.__name__ == 'LineSegment3D':
-            if not point1.is_close(point2):
+            if point1 != point2:
                 return LineSegment3D(point1, point2, name=arguments[0][1:-1])
             return None
         if obj.__class__.__name__ == 'Line3D':
             if not same_sense:
-                obj = obj.reverse()
-            if not point1.is_close(point2):
-                return LineSegment3D(point1, point2, obj, arguments[0][1:-1])
+                point1, point2 = point2, point1
+            if point1 != point2:
+                linesegment = LineSegment3D(point1, point2, arguments[0][1:-1])
+                linesegment.line = obj
+                return linesegment
             return None
 
         if hasattr(obj, 'trim'):
@@ -568,9 +573,24 @@ class LineSegment(Edge):
     """
 
     def __init__(self, start: Union[volmdlr.Point2D, volmdlr.Point3D], end: Union[volmdlr.Point2D, volmdlr.Point3D],
-                 line: [volmdlr_curves.Line2D, volmdlr_curves.Line3D] = None, name: str = ''):
-        self.line = line
+                 name: str = ''):
+        if start == end:
+            raise ValueError(f"Start & end of {self.__class__.__name__} can't be equal.")
+        self._line = None
         Edge.__init__(self, start, end, name)
+
+    @property
+    def line(self):
+        """Returns the line from which the line segment was extracted."""
+        if self._line is None:
+            line_class = getattr(volmdlr_curves, "Line" + self.__class__.__name__[-2:])
+            self._line = line_class(self.start, self.end)
+        return self._line
+
+    @line.setter
+    def line(self, value):
+        """Set the line from which the line segment was extracted."""
+        self._line = value
 
     def length(self):
         """Gets the length of a Line Segment."""
@@ -2185,15 +2205,9 @@ class LineSegment2D(LineSegment):
 
     """
 
-    def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, *,
-                 line: volmdlr_curves.Line2D = None, name: str = ''):
-        if start.is_close(end, 1e-6):
-            raise NotImplementedError('Start & end of linesegment2D are equal')
+    def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, name: str = ''):
         self._bounding_rectangle = None
-        self.line = line
-        if not line:
-            self.line = volmdlr_curves.Line2D(start, end)
-        LineSegment.__init__(self, start, end, self.line, name=name)
+        LineSegment.__init__(self, start, end, name=name)
 
     def copy(self, deep=True, memo=None):
         """
@@ -3620,9 +3634,13 @@ class ArcEllipse2D(Edge):
         self.ellipse = ellipse
         self.angle_start, self.angle_end = self.get_start_end_angles()
         self.angle = self.angle_end - self.angle_start
-        self.center = ellipse.center
         self._bounding_rectangle = None
         self._reverse = None
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.ellipse.frame.origin
 
     def get_start_end_angles(self):
         """Gets start and end angles for start and end points, respectively."""
@@ -3679,6 +3697,8 @@ class ArcEllipse2D(Edge):
                 major_axis, minor_axis, volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)), start, end, name=name)
 
         return arcellipse
+
+
 
     def _get_points(self):
         return self.discretization_points(number_points=20)
@@ -4103,7 +4123,6 @@ class FullArcEllipse(Edge):
         self.ellipse = ellipse
         self.is_trigo = True
         self.angle_start = 0.0
-        self.center = ellipse.center
         self.angle_end = volmdlr.TWO_PI
         Edge.__init__(self, start=start_end, end=start_end, name=name)
 
@@ -4111,6 +4130,11 @@ class FullArcEllipse(Edge):
     def periodic(self):
         """Returns True if edge is periodic."""
         return True
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.ellipse.frame.origin
 
     def length(self):
         """
@@ -4260,14 +4284,9 @@ class LineSegment3D(LineSegment):
 
     """
 
-    def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D, line: volmdlr_curves.Line3D = None,
+    def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
                  name: str = ''):
-        if start.is_close(end):
-            raise NotImplementedError('Start and end of Linesegment3D are equal')
-        self.line = line
-        if not line:
-            self.line = volmdlr_curves.Line3D(start, end)
-        LineSegment.__init__(self, start=start, end=end, line=self.line, name=name)
+        LineSegment.__init__(self, start=start, end=end, name=name)
         self._bbox = None
 
     @property
@@ -4515,7 +4534,7 @@ class LineSegment3D(LineSegment):
         :param other_line: Other line.
         :return: Two points corresponding to the distance between to lines.
         """
-        return volmdlr.core_compiled.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
+        return volmdlr.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
     def parallel_distance(self, other_linesegment):
         """Calculates the parallel distance between two Line Segments 3D."""
@@ -6176,10 +6195,19 @@ class ArcEllipse3D(Edge):
         self.ellipse = ellipse
         self.angle_start, self.angle_end = self.get_start_end_angles()
         self.angle = self.angle_end - self.angle_start
-        self.center = ellipse.center
         self._self_2d = None
         self._length = None
         self._bbox = None
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.ellipse.frame.origin
+
+    @property
+    def normal(self):
+        """Gets ellipse's normal direction."""
+        return self.ellipse.frame.w
 
     def get_start_end_angles(self):
         """
@@ -6482,6 +6510,17 @@ class ArcEllipse3D(Edge):
         ellipse3d = volmdlr_curves.Ellipse3D(self.ellipse.major_axis, self.ellipse.minor_axis, new_frame)
         return self.__class__(ellipse3d, self.end, self.start, self.name + '_reverse')
 
+    def line_intersections(self, line, abs_tol: float = 1e-6):
+        """
+        Gets the intersections between an Ellipse 3D and a Line 3D.
+
+        :param line: The intersecting lines.
+        :param abs_tol: The absolute tolerance.
+        :return: A list with the intersections points between the two edges.
+        """
+        ellipse_linesegment_intersections = self.ellipse.line_intersections(line, abs_tol)
+        return self.validate_intersections(ellipse_linesegment_intersections, abs_tol)
+
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
         Gets the intersections between an Ellipse 3D and a Line Segment 3D.
@@ -6491,11 +6530,15 @@ class ArcEllipse3D(Edge):
         :return: A list with the intersections points between the two edges.
         """
         ellipse_linesegment_intersections = self.ellipse.linesegment_intersections(linesegment, abs_tol)
-        intersections = []
-        for intersection in ellipse_linesegment_intersections:
+        return self.validate_intersections(ellipse_linesegment_intersections, abs_tol)
+
+    def validate_intersections(self, intersections: List[volmdlr.Point3D], abs_tol: float = 1e-6):
+        """Helper function to validate edge intersections."""
+        valid_intersections = []
+        for intersection in intersections:
             if self.point_belongs(intersection, abs_tol):
-                intersections.append(intersection)
-        return intersections
+                valid_intersections.append(intersection)
+        return valid_intersections
 
     def arcellipse_intersections(self, arcellipse3d, abs_tol: float = 1e-6):
         """
@@ -6520,7 +6563,6 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
 
     def __init__(self, ellipse: volmdlr_curves.Ellipse3D, start_end: volmdlr.Point3D, name: str = ''):
         self.ellipse = ellipse
-        self.normal = self.ellipse.normal
         center2d = self.ellipse.center.to_2d(self.ellipse.center,
                                              self.ellipse.major_dir, self.ellipse.minor_dir)
         point_major_dir = self.ellipse.center + self.ellipse.major_axis * self.ellipse.major_dir
@@ -6630,3 +6672,13 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Ellipse plot."""
         return self.ellipse.plot(ax, edge_style)
+
+    def line_intersections(self, line, abs_tol: float = 1e-6):
+        """
+        Gets intersections between an Ellipse 3D and a Line3D.
+
+        :param line: Other Line 3D.
+        :param abs_tol: tolerance.
+        :return: A list of points, containing all intersections between the Line 3D and the Ellipse3D.
+        """
+        return self.ellipse.line_intersections(line, abs_tol)
