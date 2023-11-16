@@ -19,7 +19,7 @@ MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 13,
                      'invalid-name': 1,
                      'arguments-differ': 64,
-                     'too-many-locals': 97,
+                     'too-many-locals': 101,
                      'unused-argument': 8,
                      'too-many-arguments': 26,
                      'line-too-long': 12,

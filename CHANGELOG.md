@@ -9,23 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
-- cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify.
+#### core_compiled.py
+- Point2D/Point3D: allow users to use a point or a list of points direct inside a numpy array. ex.: np.array(volmdlr.O3D)
+- cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify
 
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
 - ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object, conicalsurface_intersections, sphericalsurface_intersections
 - ToroidalSurface3D: Handles degenerated surfaces (major_radius < minor_radius).
-- CylindricalSurface3D: circle_intersections
+- CylindricalSurface3D: circle_intersections, sphericalsurface_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
-- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections
+- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
+- ConicalSurface3D: sphericalsurface_intersections
+- General improvements on sufaces' parametric operations.
+
 #### edges.py
 - BsplineCurve3D: circle_intersections.
+- ArcEllipse3D/FullArcEllipse3D: line_intersections.
 #### curves.py
 - Circle3D: point_distance.
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
+- ClosedTriangleShell3D: turn_normals_outwards, are_normals_pointing_outwards, turn_normals_inwards, are_normals_pointing_inwards
+
 #### core.py
 - BoundingBox: triangle_intersects_voxel
+
+#### step.py
+- Support to Datakit CrossCadWare STEP file format.
 
 ### Fixed
 
@@ -70,14 +81,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### core_compiled
 - Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
 
-#### curves.py
-- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
+#### discrete_representation.py
+- MatrixBasedVoxelization: _logical_operation
 
-#### edges.py
-- Arc2D: Arc 2D now must follow the same rotation direction of its circle.
-- LineSegment2D/3D: For performance and memory efficiency reasons, the line attribute from which the line segment was defined was converted to a property.
-
-#### faces.py
+### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
 
 #### core.py
@@ -86,6 +93,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### edges.py
 - BSplineCurve: improve line_intersections performance.
+- 
+#### edges.py
+- LineSegment2D/3D: The line attribute from which the line segment was defined was converted to a property, for performance and memory efficiency reasons.
 
 #### primitives3d.py
 - Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
@@ -98,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
 - ToroidalSurface3D: plots now use Circles 3D instead of ClosedPolygon3D. Performance improved.
 - CylindricalSurface3D: More comprehesive plot
+- core_compiled.pyx: update typing because Point2D, Point3D, Vector2D and Vector3D are now extension types (C structures.)
 
 ### Unittests
 #### curves 
