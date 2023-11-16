@@ -4324,7 +4324,7 @@ class SphericalSurface3D(PeriodicalSurface):
         line_negative_singularity = curves.Line2D(volmdlr.Point2D(-math.pi, -0.5 * math.pi),
                                                   volmdlr.Point2D(math.pi, -0.5 * math.pi))
 
-        intersections = direction_line.line_intersections(line_negative_singularity)[0]
+        intersections = direction_line.line_intersections(line_negative_singularity)
         if intersections:
             return intersections[0]
         return intersections
