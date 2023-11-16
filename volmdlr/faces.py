@@ -1238,6 +1238,24 @@ class Face3D(volmdlr.core.Primitive3D):
             return minimum_distance, best_distance_point
         return minimum_distance
 
+    def get_coincident_face_intersections(self, face):
+        """
+        Gets intersections for two faces which have coincident faces.
+
+        :param face: other face.
+        :return: two lists of intersections. one list contatining wires intersecting face1, the other those for face2.
+        """
+        points_intersections = self.face_border_intersections(face)
+        if not points_intersections:
+            return [], []
+        extracted_contours = self.outer_contour3d.split_with_sorted_points(points_intersections)
+        extracted_contours2 = face.outer_contour3d.split_with_sorted_points(points_intersections)
+        contours_in_self = [contour for contour in extracted_contours2
+                            if all(self.edge3d_inside(edge) for edge in contour.primitives)]
+        contours_in_other_face = [contour for contour in extracted_contours
+                                  if all(face.edge3d_inside(edge) for edge in contour.primitives)]
+        return contours_in_self, contours_in_other_face
+
 
 class PlaneFace3D(Face3D):
     """
@@ -1378,8 +1396,6 @@ class PlaneFace3D(Face3D):
                 return False
         return True
 
-    # def _get_coincident_face_intersections(self, plane_face):
-
     def planeface_intersections(self, planeface):
         """
         Calculates the intersections between two plane faces.
@@ -1389,18 +1405,6 @@ class PlaneFace3D(Face3D):
         """
         face2_plane_intersections = planeface.surface3d.plane_intersections(self.surface3d)
         if not face2_plane_intersections:
-            if planeface.surface3d.is_coincident(self.surface3d):
-                points_intersections = self.face_border_intersections(planeface)
-                extracted_contours = self.outer_contour3d.split_with_sorted_points(points_intersections)
-                extracted_contours2 = planeface.outer_contour3d.split_with_sorted_points(points_intersections)
-                contours_in_self = [contour for contour in extracted_contours2
-                                    if all(self.edge3d_inside(edge) for edge in contour.primitives)]
-                contours_in_other_face = [contour for contour in extracted_contours
-                                          if all(planeface.edge3d_inside(edge) for edge in contour.primitives)]
-                if len(points_intersections) <= 1:
-                    return []
-                print(True)
-
             return []
         points_intersections = self.face_border_intersections(planeface)
         for point in planeface.face_border_intersections(self):

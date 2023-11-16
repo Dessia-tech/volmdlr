@@ -1236,6 +1236,33 @@ class ClosedShell3D(Shell3D):
                     face_combinations[(face1, face2)] = face_intersections
         return face_combinations
 
+    def intersecting_faces_combinations2(self, shell2, tol=1e-8):
+        """
+        Gets intersecting faces combinations.
+
+        :param shell2: ClosedShell3D
+        :param tol: Corresponds to the tolerance to consider two faces as intersecting faces
+
+        :return: returns a dictionary containing as keys the combination of intersecting faces
+        and as the values the resulting primitive from the two intersecting faces.
+        It is done so it is not needed to calculate the same intersecting primitive twice.
+        """
+        face_combinations1 = {i: [] for i in range(len(self.faces))}
+        face_combinations2 = {i: [] for i in range(len(shell2.faces))}
+        for i, face1 in enumerate(self.faces):
+            for j, face2 in enumerate(shell2.faces):
+                if face1.surface3d.is_coincident(face2.surface3d):
+                    contours1, contours2 = face1.get_coincident_face_intersections(face2)
+                    face_combinations1[i].extend(contours1)
+                    face_combinations2[j].extend(contours2)
+
+                face_intersections = face1.face_intersections(face2, tol)
+                face_combinations1[i].extend(face_intersections)
+                face_combinations2[j].extend(face_intersections)
+                # if face_intersections:
+                #     face_combinations[(face1, face2)] = face_intersections
+        return face_combinations1, face_combinations2
+
     @staticmethod
     def get_intersecting_faces(dict_intersecting_combinations):
         """
@@ -1591,6 +1618,44 @@ class ClosedShell3D(Shell3D):
         faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
         faces += shell2.get_non_intersecting_faces(self, intersecting_faces)
         if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces:
+            return [self, shell2]
+        new_valid_faces = self.union_faces(shell2, intersecting_faces,
+                                           intersecting_combinations, list_coincident_faces)
+        faces += new_valid_faces
+        new_shell = ClosedShell3D(faces)
+        return [new_shell]
+
+    def union2(self, shell2: 'ClosedShell3D', tol: float = 1e-8):
+        """
+        Given Two closed shells, it returns a new united ClosedShell3D object.
+
+        """
+        validate_set_operation = self.validate_set_operation(shell2, tol)
+        if validate_set_operation:
+            return validate_set_operation
+        # list_coincident_faces = self.get_coincident_faces(shell2)
+        # intersecting_combinations = self.intersecting_faces_combinations(shell2, tol)
+        face_intersections1, face_intersections2 = self.intersecting_faces_combinations2(shell2, tol)
+        faces = []
+        intersecting_faces_indexes1 = []
+        intersecting_faces_indexes2 = []
+        for key, value in face_intersections1.items():
+            if value:
+                intersecting_faces_indexes1.append(key)
+                continue
+            faces.append(self.faces[key])
+        for key, value in face_intersections2.items():
+            if value:
+                intersecting_faces_indexes2.append(key)
+                continue
+            faces.append(shell2.faces[key])
+        # intersecting_faces1 = [self.faces[i] for key, value in face_intersections1.items() if value]
+        # intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
+        # intersecting_faces = intersecting_faces1 + intersecting_faces2
+        # faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
+        # faces += shell2.get_non_intersecting_faces(self, intersecting_faces)
+        if len(faces) == len(self.faces + shell2.faces) and not [intersecting_faces_indexes1 +
+                                                                 intersecting_faces_indexes2]:
             return [self, shell2]
         new_valid_faces = self.union_faces(shell2, intersecting_faces,
                                            intersecting_combinations, list_coincident_faces)
