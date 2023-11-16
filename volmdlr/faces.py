@@ -1378,6 +1378,8 @@ class PlaneFace3D(Face3D):
                 return False
         return True
 
+    # def _get_coincident_face_intersections(self, plane_face):
+
     def planeface_intersections(self, planeface):
         """
         Calculates the intersections between two plane faces.
@@ -1387,6 +1389,12 @@ class PlaneFace3D(Face3D):
         """
         face2_plane_intersections = planeface.surface3d.plane_intersections(self.surface3d)
         if not face2_plane_intersections:
+            if planeface.surface3d.is_coincident(self.surface3d):
+                points_intersections = self.face_border_intersections(planeface)
+                if len(points_intersections) <= 1:
+                    return []
+                print(True)
+
             return []
         points_intersections = self.face_border_intersections(planeface)
         for point in planeface.face_border_intersections(self):
