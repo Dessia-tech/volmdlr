@@ -83,7 +83,7 @@ class TestFullArcEllipse3D(unittest.TestCase):
         self.assertTrue(result[1].end.is_close(fullarcellipse.start_end))
 
     def test_discretization_points(self):
-        fullarcellipse = vme.FullArcEllipse3D.from_json(
+        fullarcellipse = vme.FullArcEllipse3D.load_from_file(
             os.path.join(folder, "fullarcellipse3d_discretization_points.json"))
         discretization_points = fullarcellipse.discretization_points(number_points=9)
         self.assertEqual(len(discretization_points), 9)

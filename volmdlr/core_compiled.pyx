@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
 # cython: c_string_type=str, c_string_encoding=ascii
-# distutils: language=c++
 """
 
 Cython functions
@@ -11,7 +10,6 @@ Cython functions
 import cython
 import cython.cimports.libc.math as math_c
 from cython.parallel import prange
-from libcpp.vector cimport vector
 import math
 import random
 import sys
