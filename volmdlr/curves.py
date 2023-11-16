@@ -967,7 +967,7 @@ class CircleMixin:
 
     @property
     def center(self):
-        """Gets circle's center point ."""
+        """Gets circle's center point."""
         return self.frame.origin
 
     def split_at_abscissa(self, abscissa):
@@ -1992,7 +1992,26 @@ class Circle3D(CircleMixin, ClosedCurve):
         return point_angle
 
 
-class Ellipse2D(ClosedCurve):
+class EllipseMixin:
+    """Ellipse abstract class."""
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.frame.origin
+
+    @property
+    def major_dir(self):
+        """Gets ellipse's major direction vector."""
+        return self.frame.u
+
+    @property
+    def minor_dir(self):
+        """Gets ellipse's minor direction vector."""
+        return self.frame.v
+
+
+class Ellipse2D(EllipseMixin, ClosedCurve):
     """
     Defines an Ellipse in two-dimensions.
 
@@ -2013,10 +2032,6 @@ class Ellipse2D(ClosedCurve):
     def __init__(self, major_axis, minor_axis, frame, name=''):
         self.major_axis = major_axis
         self.minor_axis = minor_axis
-        self.center = frame.origin
-        self.major_dir = frame.u
-        self.minor_dir = frame.v
-        # self.frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
         self.frame = frame
         if math.isclose(frame.u.cross(frame.v), 1.0, abs_tol=1e-6):
             self.angle_start = 0.0
@@ -2342,7 +2357,7 @@ class Ellipse2D(ClosedCurve):
         return Ellipse2D(self.major_axis, self.minor_axis, frame)
 
 
-class Ellipse3D(ClosedCurve):
+class Ellipse3D(EllipseMixin, ClosedCurve):
     """
     Defines a 3D ellipse.
 
@@ -2358,10 +2373,6 @@ class Ellipse3D(ClosedCurve):
         self.frame = frame
         self.major_axis = major_axis
         self.minor_axis = minor_axis
-        self.center = frame.origin
-        self.normal = frame.w
-        self.major_dir = frame.u
-        self.minor_dir = frame.v
         self._self_2d = None
         self._bbox = None
         ClosedCurve.__init__(self, name=name)
@@ -2390,6 +2401,11 @@ class Ellipse3D(ClosedCurve):
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
+
+    @property
+    def normal(self):
+        """Gets ellipse's normal vector."""
+        return self.frame.w
 
     def _bounding_box(self):
         """

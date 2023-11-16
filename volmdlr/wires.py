@@ -3513,7 +3513,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         grid_point_index = {}
 
-        polygon_points = {vmd.Node2D.from_point(point) for point in self.points}
+        polygon_points = set(self.points)
 
         # Generate all points in the grid
         grid_points = npy.array([[xi, yi] for xi in x for yi in y], dtype=npy.float64)
@@ -3527,7 +3527,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         points = []
 
         for i in indices:
-            point = vmd.Node2D(*grid_points[i])
+            point = volmdlr.Point2D(*grid_points[i])
             if point not in polygon_points:
                 grid_point_index[(i // (number_points_y + 2), i % (number_points_y + 2))] = point
                 points.append(point)
