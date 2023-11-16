@@ -664,10 +664,10 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         """
         triangles = []
 
-        points = [(px, py, pz) for px, py, pz in vertices]
+        points = list(vertices)
 
         for i1, i2, i3 in faces:
-            triangles.append((points[i1], points[i2], points[i3]))
+            triangles.append((tuple(points[i1]), tuple(points[i2]), tuple(points[i3])))
 
         return triangles
 
