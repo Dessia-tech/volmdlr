@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # cython: language_level=3
 # cython: c_string_type=str, c_string_encoding=ascii
+# distutils: language=c++
 """
 
 Cython functions
@@ -10,6 +11,7 @@ Cython functions
 import cython
 import cython.cimports.libc.math as math_c
 from cython.parallel import prange
+from libcpp.vector cimport vector
 import math
 import random
 import sys
@@ -48,6 +50,10 @@ cdef double c_vector2d_norm(double u1, double u2):
     return (u1 * u1 + u2 * u2)**0.5
 
 
+cdef double c_vector2d_squared_distance(double u1, double u2):
+    return (u1 * u1 + u2 * u2)
+
+
 cdef(double, double, double) c_sub_3d(double u1, double u2, double u3,
                                       double v1, double v2, double v3):
     return (u1 - v1, u2 - v2, u3 - v3)
@@ -69,6 +75,10 @@ cdef double c_vector3d_dot(double u1, double u2, double u3,
 
 cdef double c_vector3d_norm(double u1, double u2, double u3):
     return (u1 * u1 + u2 * u2 + u3 * u3)**0.5
+
+
+cdef double c_vector3d_squared_distance(double u1, double u2, double u3):
+    return (u1 * u1 + u2 * u2 + u3 * u3)
 
 
 cdef(double, double, double) c_vector3d_cross(double u1, double u2, double u3,
@@ -1341,6 +1351,10 @@ cdef class Point2D(Vector2D):
         else:
             return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+"};"
 
+    def in_list(self, list[Point2D] list_points, double tol: float = 1e-6):
+        """Return True if point is in the list with a given tolerance. Returns False otherwise."""
+        return point2d_in_list(self, list_points, tol)
+
 
 O2D = Point2D(0, 0)
 
@@ -2143,6 +2157,42 @@ cdef class Point3D(Vector3D):
             return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
         else:
             return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+"};"
+
+    def in_list(self, list[Point3D] list_points, double tol: float = 1e-6):
+        """Return True if point is in the list with a given tolerance. Returns False otherwise."""
+        return point3d_in_list(self, list_points, tol)
+
+cdef bint point3d_in_list(Point3D point, list[Point3D] list_points, double tol):
+    cdef size_t n = len(list_points)
+    if n == 0:
+        return False
+    cdef int i
+    cdef double squared_distance, squared_tol
+    squared_tol = tol * tol
+
+    for i in range(n):
+        squared_distance = c_vector3d_squared_distance(list_points[i].x - point.x,
+                                                       list_points[i].y - point.y,
+                                                       list_points[i].z - point.z)
+        if squared_distance <= squared_tol:
+            return True
+    return False
+
+
+cdef bint point2d_in_list(Point2D point, list[Point2D] list_points, double tol):
+    cdef size_t n = len(list_points)
+    if n == 0:
+        return False
+    cdef int i
+    cdef double squared_distance, squared_tol
+    squared_tol = tol * tol
+
+    for i in range(n):
+        squared_distance = c_vector2d_squared_distance(list_points[i].x - point.x,
+                                                       list_points[i].y - point.y)
+        if squared_distance <= squared_tol:
+            return True
+    return False
 
 
 O3D = Point3D(0, 0, 0)
