@@ -69,11 +69,70 @@ class TestDisplayTriangleShell3D(unittest.TestCase):
         self.indices2 = np.array([[0, 1, 2]])
         self.shell2 = DisplayTriangleShell3D(self.positions2, self.indices2, "Shell2")
 
+        self.positions3 = np.array(
+            [
+                [0.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 1.0, 1.0],
+                [1.0, 0.0, 0.0],
+                [1.0, 0.0, 1.0],
+                [1.0, 1.0, 0.0],
+                [1.0, 1.0, 1.0],
+            ]
+        )
+        self.indices3 = np.array(
+            [
+                [2, 6, 7],
+                [0, 4, 5],
+                [1, 7, 5],
+                [0, 2, 6],
+                [4, 6, 7],
+                [1, 3, 7],
+                [0, 2, 3],
+                [2, 7, 3],
+                [0, 6, 4],
+                [4, 7, 5],
+                [0, 5, 1],
+                [0, 3, 1],
+            ]
+        )
+        self.shell3 = DisplayTriangleShell3D(self.positions3, self.indices3, "Shell3")
+
+        self.positions4 = np.array(
+            [
+                [0.0, 0.0, 1.0],
+                [0.0, 0.0, 2.0],
+                [0.0, 1.0, 1.0],
+                [0.0, 1.0, 2.0],
+                [1.0, 0.0, 1.0],
+                [1.0, 0.0, 2.0],
+                [1.0, 1.0, 1.0],
+                [1.0, 1.0, 2.0],
+            ]
+        )
+        self.indices4 = np.array(
+            [
+                [2, 7, 3],
+                [1, 7, 5],
+                [0, 6, 4],
+                [4, 7, 5],
+                [0, 3, 1],
+                [0, 2, 6],
+                [4, 6, 7],
+                [2, 6, 7],
+                [0, 4, 5],
+                [1, 3, 7],
+                [0, 2, 3],
+                [0, 5, 1],
+            ]
+        )
+        self.shell4 = DisplayTriangleShell3D(self.positions4, self.indices4, "Shell4")
+
     def test_concatenate(self):
         concatenated_shell = self.shell1.concatenate(self.shell2)
 
         expected_positions = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]])
-        expected_indices = np.array([[0, 1, 2], [2, 3, 1]])
 
         np.testing.assert_array_equal(np.sort(concatenated_shell.positions, axis=0),
                                       np.sort(expected_positions, axis=0))
@@ -83,11 +142,16 @@ class TestDisplayTriangleShell3D(unittest.TestCase):
         combined_shell = self.shell1 + self.shell2
 
         expected_positions = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]])
-        expected_indices = np.array([[0, 1, 2], [2, 3, 1]])
 
         np.testing.assert_array_equal(np.sort(combined_shell.positions, axis=0),
                                       np.sort(expected_positions, axis=0))
         # Compare indices carefully since their correctness depends on the order of positions
+
+    def test_concatenate_cube(self):
+        combined_shell = self.shell3 + self.shell4
+
+        self.assertEqual(22, len(combined_shell.indices))
+        self.assertEqual(12, len(combined_shell.positions))
 
 
 if __name__ == '__main__':
