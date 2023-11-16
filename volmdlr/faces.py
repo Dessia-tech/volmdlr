@@ -620,7 +620,7 @@ class Face3D(volmdlr.core.Primitive3D):
         intersections_points = []
         for contour in [self.outer_contour3d] + self.inner_contours3d:
             for edge1 in contour.primitives:
-                intersection_points = face2.edge_intersections(edge1)
+                intersection_points = face2.outer_contour3d.edge_intersections(edge1)
                 for point in intersection_points:
                     if not volmdlr.core.point_in_list(point, intersections_points):
                         intersections_points.append(point)
@@ -1391,6 +1391,12 @@ class PlaneFace3D(Face3D):
         if not face2_plane_intersections:
             if planeface.surface3d.is_coincident(self.surface3d):
                 points_intersections = self.face_border_intersections(planeface)
+                extracted_contours = self.outer_contour3d.split_with_sorted_points(points_intersections)
+                extracted_contours2 = planeface.outer_contour3d.split_with_sorted_points(points_intersections)
+                contours_in_self = [contour for contour in extracted_contours2
+                                    if all(self.edge3d_inside(edge) for edge in contour.primitives)]
+                contours_in_other_face = [contour for contour in extracted_contours
+                                          if all(planeface.edge3d_inside(edge) for edge in contour.primitives)]
                 if len(points_intersections) <= 1:
                     return []
                 print(True)
