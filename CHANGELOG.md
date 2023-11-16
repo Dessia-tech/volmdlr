@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+#### core_compiled.py
+- Point2D/Point3D: allow users to use a point or a list of points direct inside a numpy array. ex.: np.array(volmdlr.O3D)
 - cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify.
 
 #### surfaces.py
