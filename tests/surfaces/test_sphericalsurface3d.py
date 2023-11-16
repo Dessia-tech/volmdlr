@@ -235,6 +235,25 @@ class TestSphericalSurface3D(unittest.TestCase):
         self.assertTrue(arcellipse_intersections[1].is_close(
             volmdlr.Point3D(0.091751652225, 0.704124087921, 0.704124087921)))
 
+    def test_sphericalsurface_intersections(self):
+        #test1
+        spherical_surface1 = surfaces.SphericalSurface3D(
+            volmdlr.OXYZ.translation(volmdlr.Vector3D(0.5, 0.5, 0)), 2)
+
+        spherical_surface2 = spherical_surface1.translation(volmdlr.Vector3D(1, 1, 1))
+
+        inters = spherical_surface1.surface_intersections(spherical_surface2)
+        self.assertEqual(len(inters), 1)
+        self.assertAlmostEqual(inters[0].length(), 11.327173398039175)
+
+        #test2
+        spherical_surface2 = surfaces.SphericalSurface3D(
+            volmdlr.OXYZ.translation(volmdlr.Vector3D(0.5, 0.5, 0)), 1)
+        spherical_surface2 = spherical_surface2.translation(volmdlr.Vector3D(1, 1, 1))
+        inters = spherical_surface1.surface_intersections(spherical_surface2)
+        self.assertEqual(len(inters), 1)
+        self.assertAlmostEqual(inters[0].length(), 6.283185306688713)
+
 
 if __name__ == '__main__':
     unittest.main()

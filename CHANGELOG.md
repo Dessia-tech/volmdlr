@@ -15,9 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
 - ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object, conicalsurface_intersections, sphericalsurface_intersections
 - ToroidalSurface3D: Handles degenerated surfaces (major_radius < minor_radius).
-- CylindricalSurface3D: circle_intersections
+- CylindricalSurface3D: circle_intersections, sphericalsurface_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
-- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections
+- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
+- ConicalSurface3D: sphericalsurface_intersections
+
 #### edges.py
 - BsplineCurve3D: circle_intersections.
 - ArcEllipse3D/FullArcEllipse3D: line_intersections.
@@ -72,6 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### core_compiled
 - Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
 
+#### discrete_representation.py
+- MatrixBasedVoxelization: _logical_operation
+
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
 
@@ -92,8 +97,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
 - ToroidalSurface3D: plots now use Circles 3D instead of ClosedPolygon3D. Performance improved.
 - CylindricalSurface3D: More comprehesive plot
+- core_compiled.pyx: update typing because Point2D, Point3D, Vector2D and Vector3D are now extension types (C structures.)
 - BSplineCurve: improve line_intersections performance.
 - SphericalSurface3D: enhance bsplinecurve3d_to_2d.
+
 
 ### Unittests
 #### curves 
