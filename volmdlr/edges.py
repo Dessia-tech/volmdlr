@@ -1841,6 +1841,8 @@ class BSplineCurve(Edge):
         """
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
+        if number_points <= 2:
+            return [point1, point2]
         return self.get_abscissa_discretization(abscissa1, abscissa2, number_points)
 
     def get_abscissa_discretization(self, abscissa1, abscissa2, number_points: int = 10,
