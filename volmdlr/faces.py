@@ -2004,8 +2004,16 @@ class Triangle3D(PlaneFace3D):
                 for i in range(nb_int):
                     if min(i * step_in, length_2_0) != 0:
                         points_in.append(p0_1 + vector_2_0 * min(i * step_in, length_2_0))
-
-        return npy.unique(points_0_1 + points_in).tolist()
+        points = points_0_1 + points_in
+        if len(set(points)) != len(points):
+            _points = []
+            set_points = set()
+            for point in points:
+                if point not in set_points:
+                    _points.append(point)
+                    set_points.add(point)
+            return _points
+        return points
 
     def subdescription(self, resolution=0.01):
         """
