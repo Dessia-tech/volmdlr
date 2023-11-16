@@ -2823,7 +2823,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         :type point2d: `volmdlr.`Point2D`
         """
         theta, phi = point2d
-        # return self.frame.origin + (self.major_radius + self.minor_radius * math.cos(phi)) * ((math.cos(theta) * self.frame.u) + (math.sin(theta) * self.frame.v)) + self.minor_radius * math.sin(phi) * self.frame.w
 
         x = (self.major_radius + self.minor_radius * math.cos(phi)) * math.cos(theta)
         y = (self.major_radius + self.minor_radius * math.cos(phi)) * math.sin(theta)
@@ -5163,9 +5162,11 @@ class ExtrusionSurface3D(Surface3D):
         if abs(z) < 1e-7:
             z = 0.0
         point_at_curve = []
+        tol = 1e-4 if self.edge.__class__.__name__ in ("FullArcEllipse3D", "ArcEllipse3D") else 1e-6
+
         if hasattr(self.edge, "line_intersections"):
             line = curves.Line3D(point3d, point3d.translation(self.frame.w))
-            point_at_curve = self.edge.line_intersections(line, 1e-4)
+            point_at_curve = self.edge.line_intersections(line, tol)
         if point_at_curve:
             point_at_curve = point_at_curve[0]
             point_at_curve_local = self.frame.global_to_local_coordinates(point_at_curve)

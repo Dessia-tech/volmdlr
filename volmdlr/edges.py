@@ -6532,11 +6532,7 @@ class ArcEllipse3D(Edge):
         return self.validate_intersections(ellipse_linesegment_intersections, abs_tol)
 
     def validate_intersections(self, intersections: List[volmdlr.Point3D], abs_tol: float = 1e-6):
-<<<<<<< HEAD
-        """Helper function to validate edge intersections"""
-=======
         """Helper function to validate edge intersections."""
->>>>>>> point3d_array
         valid_intersections = []
         for intersection in intersections:
             if self.point_belongs(intersection, abs_tol):
