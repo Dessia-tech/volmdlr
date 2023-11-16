@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
 - ClosedTriangleShell3D: turn_normals_outwards, are_normals_pointing_outwards, turn_normals_inwards, are_normals_pointing_inwards
+- DiplayTriangleShell3D: concatenate
 
 #### core.py
 - BoundingBox: triangle_intersects_voxel
