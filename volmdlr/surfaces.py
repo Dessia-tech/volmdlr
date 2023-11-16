@@ -4337,7 +4337,7 @@ class SphericalSurface3D(PeriodicalSurface):
         line_negative_singularity = curves.Line2D(volmdlr.Point2D(-math.pi, -0.5 * math.pi),
                                                   volmdlr.Point2D(math.pi, -0.5 * math.pi))
 
-        intersections = direction_line.line_intersections(line_negative_singularity)[0]
+        intersections = direction_line.line_intersections(line_negative_singularity)
         if intersections:
             return intersections[0]
         return intersections
@@ -4377,7 +4377,7 @@ class SphericalSurface3D(PeriodicalSurface):
 
         if self.is_point3d_on_sphere_singularity(points3d[0]):
             distance = points3d[0].point_distance(points3d[1])
-            maximum_linear_distance_reference_point = 1e-6
+            maximum_linear_distance_reference_point = 1e-5
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[1:]
             else:
@@ -4411,7 +4411,7 @@ class SphericalSurface3D(PeriodicalSurface):
                 points[0] = point
         if self.is_point3d_on_sphere_singularity(points3d[-1]):
             distance = points3d[-2].point_distance(points3d[-1])
-            maximum_linear_distance_reference_point = 1e-6
+            maximum_linear_distance_reference_point = 1e-5
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[:-1]
             else:
