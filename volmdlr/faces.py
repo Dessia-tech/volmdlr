@@ -620,7 +620,7 @@ class Face3D(volmdlr.core.Primitive3D):
         intersections_points = []
         for contour in [self.outer_contour3d] + self.inner_contours3d:
             for edge1 in contour.primitives:
-                intersection_points = face2.outer_contour3d.edge_intersections(edge1)
+                intersection_points = face2.edge_intersections(edge1)
                 for point in intersection_points:
                     if not volmdlr.core.point_in_list(point, intersections_points):
                         intersections_points.append(point)
@@ -691,11 +691,11 @@ class Face3D(volmdlr.core.Primitive3D):
         :param intersecting_combinations: faces intersecting combinations dictionary.
         :return: new split faces.
         """
-        self_copy = self.copy(deep=True)
-        list_cutting_contours = self_copy.get_face_cutting_contours(intersecting_combinations)
+        # self_copy = self.copy(deep=True)
+        list_cutting_contours = self.get_face_cutting_contours(intersecting_combinations)
         if not list_cutting_contours:
-            return [self_copy]
-        return self_copy.divide_face(list_cutting_contours)
+            return [self]
+        return self.divide_face(list_cutting_contours)
 
     def split_inner_contour_intersecting_cutting_contours(self, list_cutting_contours):
         """
@@ -732,7 +732,8 @@ class Face3D(volmdlr.core.Primitive3D):
         and as the values the resulting primitive from the intersection of these two faces
         return a list all contours cutting one particular face.
         """
-        face_intersecting_primitives2d = self.select_face_intersecting_primitives(dict_intersecting_combinations)
+        # face_intersecting_primitives2d = self.select_face_intersecting_primitives(dict_intersecting_combinations)
+        face_intersecting_primitives2d = self.select_face_intersecting_primitives2(dict_intersecting_combinations)
         if not face_intersecting_primitives2d:
             return []
         list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
@@ -1057,6 +1058,38 @@ class Face3D(volmdlr.core.Primitive3D):
                         face_intersecting_primitives2d.append(primitive2_2d)
         return face_intersecting_primitives2d
 
+    def select_face_intersecting_primitives2(self, dict_intersecting_combinations):
+        """
+        Select face intersecting primitives from a dictionary containing all intersection combinations.
+
+        :param dict_intersecting_combinations: dictionary containing all intersection combinations
+        :return: list of intersecting primitives for current face
+        """
+        face_intersecting_primitives2d = []
+        intersections = dict_intersecting_combinations[self]
+        for intersection_wire in intersections:
+            wire2d = self.surface3d.contour3d_to_2d(intersection_wire)
+            for primitive2d in wire2d.primitives:
+                if volmdlr.core.edge_in_list(primitive2d, face_intersecting_primitives2d) or \
+                        volmdlr.core.edge_in_list(primitive2d.reverse(), face_intersecting_primitives2d):
+                    continue
+                if not self.surface2d.outer_contour.primitive_over_contour(primitive2d, tol=1e-7):
+                    face_intersecting_primitives2d.append(primitive2d)
+        # for face, intersections in dict_intersecting_combinations.items():
+        #     if self == face:
+        #
+        #     if self in intersecting_combination:
+        #         for intersection_wire in intersections:
+        #             if len(intersection_wire.primitives) != 1:
+        #                 raise NotImplementedError
+        #             primitive2_2d = self.surface3d.contour3d_to_2d(intersection_wire).primitives[0]
+        #             if volmdlr.core.edge_in_list(primitive2_2d, face_intersecting_primitives2d) or \
+        #                     volmdlr.core.edge_in_list(primitive2_2d.reverse(), face_intersecting_primitives2d):
+        #                 continue
+        #             if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d, tol=1e-7):
+        #                 face_intersecting_primitives2d.append(primitive2_2d)
+        return face_intersecting_primitives2d
+
     def _is_linesegment_intersection_possible(self, linesegment: vme.LineSegment3D):
         """
         Verifies if intersection of face with line segment is possible or not.
@@ -1245,7 +1278,7 @@ class Face3D(volmdlr.core.Primitive3D):
         :param face: other face.
         :return: two lists of intersections. one list contatining wires intersecting face1, the other those for face2.
         """
-        points_intersections = self.face_border_intersections(face)
+        points_intersections = self.outer_contour3d.wire_intersections(face.outer_contour3d)
         if not points_intersections:
             return [], []
         extracted_contours = self.outer_contour3d.split_with_sorted_points(points_intersections)
