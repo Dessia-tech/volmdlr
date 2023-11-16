@@ -15,9 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
 - ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object, conicalsurface_intersections, sphericalsurface_intersections
 - ToroidalSurface3D: Handles degenerated surfaces (major_radius < minor_radius).
-- CylindricalSurface3D: circle_intersections
+- CylindricalSurface3D: circle_intersections, sphericalsurface_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
-- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections
+- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
+- ConicalSurface3D: sphericalsurface_intersections
+
 #### edges.py
 - BsplineCurve3D: circle_intersections.
 - ArcEllipse3D/FullArcEllipse3D: line_intersections.
