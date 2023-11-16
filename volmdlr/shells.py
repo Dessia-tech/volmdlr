@@ -2049,7 +2049,7 @@ class DisplayTriangleShell3D(Shell3D):
     performance.
     """
 
-    def __init__(self, positions: NDArray[float], indices: NDArray[int], name):
+    def __init__(self, positions: NDArray[float], indices: NDArray[int], name: str = ""):
         """
         Instantiate the DisplayTriangleShell3D.
 
@@ -2132,3 +2132,45 @@ class DisplayTriangleShell3D(Shell3D):
         display_triangle_shell.color = dict_["color"]
 
         return display_triangle_shell
+
+    def concatenate(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
+        """
+        Concatenates two DisplayTriangleShell3D instances into a single instance.
+
+        This method merges the positions and indices of both shells. If the same vertex exists in both shells,
+        it is only included once in the merged shell to optimize memory usage.
+
+        :param other: Another DisplayTriangleShell3D instance to concatenate with this instance.
+        :type other: DisplayTriangleShell3D
+
+        :return: A new DisplayTriangleShell3D instance representing the concatenated shells.
+        :rtype: DisplayTriangleShell3D
+        """
+        # Merge and remove duplicate vertices
+        merged_positions = np.vstack((self.positions, other.positions))
+        unique_positions, indices_map = np.unique(merged_positions, axis=0, return_inverse=True)
+
+        # Adjust indices to account for duplicates and offset from concatenation
+        self_indices_adjusted = self.indices
+        other_indices_adjusted = other.indices + len(self.positions)
+
+        # Re-map indices to unique vertices
+        all_indices = np.vstack((self_indices_adjusted, other_indices_adjusted))
+        final_indices = indices_map[all_indices]
+
+        # Create a new DisplayTriangleShell3D with merged data
+        return DisplayTriangleShell3D(
+            positions=unique_positions, indices=final_indices, name=self.name + '+' + other.name
+        )
+
+    def __add__(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
+        """
+        Overloads the + operator to concatenate two DisplayTriangleShell3D instances.
+
+        :param other: Another DisplayTriangleShell3D instance to concatenate with this instance.
+        :type other: DisplayTriangleShell3D
+
+        :return: A new DisplayTriangleShell3D instance representing the concatenated shells.
+        :rtype: DisplayTriangleShell3D
+        """
+        return self.concatenate(other)

@@ -89,6 +89,13 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), math.pi * 0.0014073966802667698, 5)
 
+        surface = surfaces.ConicalSurface3D.load_from_file(
+            os.path.join(folder, "conicalsurface_linesegment3d_to_2d.json"))
+        contour3d = vmw.Contour3D.load_from_file(
+            os.path.join(folder, "conicalsurface_linesegment3d_to_2d_contour.json"))
+        contour = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour.is_ordered())
+
 
 
     def test_bsplinecurve3d_to_2d(self):
