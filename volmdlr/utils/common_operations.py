@@ -325,6 +325,8 @@ def separate_points_by_closeness(points):
     - group1 (list of lists): The first group of points based on their closeness.
     - group2 (list of lists): The second group of points based on their closeness.
     """
+    if not points:
+        return []
     points_ = np.array([[*point] for point in points])
 
     # Apply DBSCAN clustering with a small epsilon to separate close points
