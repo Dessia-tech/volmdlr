@@ -1856,7 +1856,9 @@ class OctreeBasedVoxelization(Voxelization):
 
     # CLASS METHODS
     @classmethod
-    def from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float, name: str = "") -> "OctreeBasedVoxelization":
+    def from_triangles(
+        cls, triangles: List[_Triangle3D], voxel_size: float, name: str = ""
+    ) -> "OctreeBasedVoxelization":
         """
         Create a OctreeBasedVoxelization from a list of triangles.
 
