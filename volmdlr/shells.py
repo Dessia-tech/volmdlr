@@ -2157,7 +2157,7 @@ class DisplayTriangleShell3D(Shell3D):
         final_indices = indices_map[all_indices]
 
         # Use np.unique to find unique subarrays
-        _, unique_indices = np.unique(final_indices, axis=0, return_index=True)
+        _, unique_indices = np.unique(np.sort(final_indices, axis=1), axis=0, return_index=True)
 
         # Get the unique subarrays
         merged_indices = final_indices[unique_indices]
