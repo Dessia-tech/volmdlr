@@ -2138,13 +2138,11 @@ class DisplayTriangleShell3D(Shell3D):
         Concatenates two DisplayTriangleShell3D instances into a single instance.
 
         This method merges the positions and indices of both shells. If the same vertex exists in both shells,
-        it is only included once in the merged shell to optimize memory usage.
+        it is only included once in the merged shell to optimize memory usage. It also ensures that each face is
+        represented uniquely by sorting the vertices of each triangle.
 
         :param other: Another DisplayTriangleShell3D instance to concatenate with this instance.
-        :type other: DisplayTriangleShell3D
-
         :return: A new DisplayTriangleShell3D instance representing the concatenated shells.
-        :rtype: DisplayTriangleShell3D
         """
         # Merge and remove duplicate vertices
         merged_positions = np.vstack((self.positions, other.positions))
@@ -2158,9 +2156,15 @@ class DisplayTriangleShell3D(Shell3D):
         all_indices = np.vstack((self_indices_adjusted, other_indices_adjusted))
         final_indices = indices_map[all_indices]
 
+        # Use np.unique to find unique subarrays
+        _, unique_indices = np.unique(final_indices, axis=0, return_index=True)
+
+        # Get the unique subarrays
+        merged_indices = final_indices[unique_indices]
+
         # Create a new DisplayTriangleShell3D with merged data
         return DisplayTriangleShell3D(
-            positions=unique_positions, indices=final_indices, name=self.name + '+' + other.name
+            positions=unique_positions, indices=merged_indices, name=self.name + "+" + other.name
         )
 
     def __add__(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
