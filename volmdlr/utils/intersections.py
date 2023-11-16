@@ -266,7 +266,7 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
                     (abscissa_point1 == abscissa1 and abscissa_point2 == abscissa2):
             # if bsplinecurve.point_distance(intersection[0]) > 1e-6:
                 param_intersections.insert(0, (abscissa_point1, abscissa_point2))
-            elif not volmdlr.core.point_in_list(intersection[0], intersections):
+            elif not intersection.in_list(intersections):
                 intersections.append(intersection[0])
         param_intersections.remove((abscissa1, abscissa2))
     return intersections
@@ -307,7 +307,7 @@ def conic_intersections(conic1, conic2, abs_tol: float = 1e-6):
     self_ellipse3d_line_intersections = conic3d_line_intersections(conic1, plane_intersections)
     ellipse3d_line_intersections = conic3d_line_intersections(conic2, plane_intersections)
     for intersection in self_ellipse3d_line_intersections + ellipse3d_line_intersections:
-        if volmdlr.core.point_in_list(intersection, intersections):
+        if intersection.in_list(intersections):
             continue
         if conic1.point_belongs(intersection, abs_tol) and conic2.point_belongs(intersection, abs_tol):
             intersections.append(intersection)
