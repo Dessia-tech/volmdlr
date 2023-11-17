@@ -691,7 +691,6 @@ class Face3D(volmdlr.core.Primitive3D):
         :param intersecting_combinations: faces intersecting combinations dictionary.
         :return: new split faces.
         """
-        # self_copy = self.copy(deep=True)
         list_cutting_contours = self.get_face_cutting_contours(intersecting_combinations)
         if not list_cutting_contours:
             return [self]
@@ -732,8 +731,7 @@ class Face3D(volmdlr.core.Primitive3D):
         and as the values the resulting primitive from the intersection of these two faces
         return a list all contours cutting one particular face.
         """
-        # face_intersecting_primitives2d = self.select_face_intersecting_primitives(dict_intersecting_combinations)
-        face_intersecting_primitives2d = self.select_face_intersecting_primitives2(dict_intersecting_combinations)
+        face_intersecting_primitives2d = self.select_face_intersecting_primitives(dict_intersecting_combinations)
         if not face_intersecting_primitives2d:
             return []
         list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
@@ -1045,27 +1043,6 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: list of intersecting primitives for current face
         """
         face_intersecting_primitives2d = []
-        for intersecting_combination, intersections in dict_intersecting_combinations.items():
-            if self in intersecting_combination:
-                for intersection_wire in intersections:
-                    if len(intersection_wire.primitives) != 1:
-                        raise NotImplementedError
-                    primitive2_2d = self.surface3d.contour3d_to_2d(intersection_wire).primitives[0]
-                    if volmdlr.core.edge_in_list(primitive2_2d, face_intersecting_primitives2d) or \
-                            volmdlr.core.edge_in_list(primitive2_2d.reverse(), face_intersecting_primitives2d):
-                        continue
-                    if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d, tol=1e-7):
-                        face_intersecting_primitives2d.append(primitive2_2d)
-        return face_intersecting_primitives2d
-
-    def select_face_intersecting_primitives2(self, dict_intersecting_combinations):
-        """
-        Select face intersecting primitives from a dictionary containing all intersection combinations.
-
-        :param dict_intersecting_combinations: dictionary containing all intersection combinations
-        :return: list of intersecting primitives for current face
-        """
-        face_intersecting_primitives2d = []
         intersections = dict_intersecting_combinations[self]
         for intersection_wire in intersections:
             wire2d = self.surface3d.contour3d_to_2d(intersection_wire)
@@ -1075,19 +1052,6 @@ class Face3D(volmdlr.core.Primitive3D):
                     continue
                 if not self.surface2d.outer_contour.primitive_over_contour(primitive2d, tol=1e-7):
                     face_intersecting_primitives2d.append(primitive2d)
-        # for face, intersections in dict_intersecting_combinations.items():
-        #     if self == face:
-        #
-        #     if self in intersecting_combination:
-        #         for intersection_wire in intersections:
-        #             if len(intersection_wire.primitives) != 1:
-        #                 raise NotImplementedError
-        #             primitive2_2d = self.surface3d.contour3d_to_2d(intersection_wire).primitives[0]
-        #             if volmdlr.core.edge_in_list(primitive2_2d, face_intersecting_primitives2d) or \
-        #                     volmdlr.core.edge_in_list(primitive2_2d.reverse(), face_intersecting_primitives2d):
-        #                 continue
-        #             if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d, tol=1e-7):
-        #                 face_intersecting_primitives2d.append(primitive2_2d)
         return face_intersecting_primitives2d
 
     def _is_linesegment_intersection_possible(self, linesegment: vme.LineSegment3D):
