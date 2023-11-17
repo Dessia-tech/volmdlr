@@ -377,7 +377,7 @@ class Face3D(volmdlr.core.Primitive3D):
         elif hasattr(self.surface3d, method_name):
             edge_surface_intersections = getattr(self.surface3d, method_name)(edge)
             for intersection in edge_surface_intersections:
-                if self.point_belongs(intersection) and not volmdlr.core.point_in_list(intersection, intersections):
+                if self.point_belongs(intersection) and not intersection.in_list(intersections):
                     intersections.append(intersection)
         if not intersections:
             for point in [edge.start, edge.end]:
@@ -608,7 +608,7 @@ class Face3D(volmdlr.core.Primitive3D):
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
                 for point in intersection_points:
-                    if not volmdlr.core.point_in_list(point, intersections_points):
+                    if not point.in_list(intersections_points):
                         intersections_points.append(point)
 
         return intersections_points
@@ -622,7 +622,7 @@ class Face3D(volmdlr.core.Primitive3D):
             for edge1 in contour.primitives:
                 intersection_points = face2.edge_intersections(edge1)
                 for point in intersection_points:
-                    if not volmdlr.core.point_in_list(point, intersections_points):
+                    if not point.in_list(intersections_points):
                         intersections_points.append(point)
 
         return intersections_points
@@ -652,7 +652,7 @@ class Face3D(volmdlr.core.Primitive3D):
         surface_intersections = self.surface3d.surface_intersections(generic_face.surface3d)
         intersections_points = self.face_intersections_outer_contour(generic_face)
         for point in generic_face.face_intersections_outer_contour(self):
-            if not volmdlr.core.point_in_list(point, intersections_points):
+            if not point.in_list(intersections_points):
                 intersections_points.append(point)
         face_intersections = []
         for primitive in surface_intersections:
@@ -1097,7 +1097,7 @@ class Face3D(volmdlr.core.Primitive3D):
         linesegment_intersections = []
         for inters in self._get_linesegment_intersections_approximation(linesegment):
             for point in inters:
-                if not volmdlr.core.point_in_list(point, linesegment_intersections):
+                if not point.in_list(linesegment_intersections):
                     linesegment_intersections.append(point)
 
         return linesegment_intersections
@@ -1405,7 +1405,7 @@ class PlaneFace3D(Face3D):
             return []
         points_intersections = self.face_border_intersections(planeface)
         for point in planeface.face_border_intersections(self):
-            if not volmdlr.core.point_in_list(point, points_intersections):
+            if not point.in_list(points_intersections):
                 points_intersections.append(point)
         points_intersections = face2_plane_intersections[0].sort_points_along_curve(points_intersections)
         planeface_intersections = []
@@ -1500,7 +1500,7 @@ class PlaneFace3D(Face3D):
                 return [contour3d]
         intersections_points = self.face_intersections_outer_contour(conical_face)
         for point in conical_face.face_intersections_outer_contour(self):
-            if not volmdlr.core.point_in_list(point, intersections_points):
+            if not point.in_list(intersections_points):
                 intersections_points.append(point)
         face_intersections = []
         for primitive in surface_intersections:
@@ -1530,7 +1530,7 @@ class PlaneFace3D(Face3D):
         surface_intersections = self.surface3d.surface_intersections(toroidal_face.surface3d)
         intersections_points = self.face_intersections_outer_contour(toroidal_face)
         for point in toroidal_face.face_intersections_outer_contour(self):
-            if not volmdlr.core.point_in_list(point, intersections_points):
+            if not point.in_list(intersections_points):
                 intersections_points.append(point)
         face_intersections = []
         for primitive in surface_intersections:
@@ -2019,8 +2019,16 @@ class Triangle3D(PlaneFace3D):
                 for i in range(nb_int):
                     if min(i * step_in, length_2_0) != 0:
                         points_in.append(p0_1 + vector_2_0 * min(i * step_in, length_2_0))
-
-        return npy.unique(points_0_1 + points_in).tolist()
+        points = points_0_1 + points_in
+        if len(set(points)) != len(points):
+            _points = []
+            set_points = set()
+            for point in points:
+                if point not in set_points:
+                    _points.append(point)
+                    set_points.add(point)
+            return _points
+        return points
 
     def subdescription(self, resolution=0.01):
         """
@@ -2242,62 +2250,6 @@ class CylindricalFace3D(Face3D):
     def planeface_intersections(self, planeface: PlaneFace3D):
         planeface_intersections = planeface.cylindricalface_intersections(self)
         return planeface_intersections
-
-    # def conicalface_intersections(self, conical_face: 'ConicalFace3D'):
-    #     """
-    #     Calculates the intersections between a plane face 3D and Conical Face3D.
-    #
-    #     :param conical_face: the Conical Face 3D to verify intersections with Cylindrical Face 3D.
-    #     :return: list of intersecting wires.
-    #     """
-    #     surface_intersections = self.surface3d.surface_intersections(conical_face.surface3d)
-    #     intersections_points = self.face_intersections_outer_contour(conical_face)
-    #     for point in conical_face.face_intersections_outer_contour(self):
-    #         if not volmdlr.core.point_in_list(point, intersections_points):
-    #             intersections_points.append(point)
-    #     face_intersections = []
-    #     for primitive in surface_intersections:
-    #         points_on_primitive = []
-    #         for point in intersections_points:
-    #             if primitive.point_belongs(point, 1e-4):
-    #                 points_on_primitive.append(point)
-    #         if not points_on_primitive:
-    #             continue
-    #         points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
-    #         points_on_primitive = points_on_primitive + [points_on_primitive[0]]
-    #         for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
-    #             edge = primitive.trim(point1, point2)
-    #             if self.edge3d_inside(edge, 1e-4) and conical_face.edge3d_inside(edge, 1e-3):
-    #                 face_intersections.append(volmdlr.wires.Wire3D([edge]))
-    #     return face_intersections
-    #
-    # def toroidalface_intersections(self, toroidal_face: 'ToroidalFace3D'):
-    #     """
-    #     Calculates the intersections between a plane face 3D and Conical Face3D.
-    #
-    #     :param toroidal_face: the Toroidal Face 3D to verify intersections with Cylindrical Face 3D.
-    #     :return: list of intersecting wires.
-    #     """
-    #     surface_intersections = self.surface3d.surface_intersections(toroidal_face.surface3d)
-    #     intersections_points = self.face_intersections_outer_contour(toroidal_face)
-    #     for point in toroidal_face.face_intersections_outer_contour(self):
-    #         if not volmdlr.core.point_in_list(point, intersections_points):
-    #             intersections_points.append(point)
-    #     face_intersections = []
-    #     for primitive in surface_intersections:
-    #         points_on_primitive = []
-    #         for point in intersections_points:
-    #             if primitive.point_belongs(point, 1e-4):
-    #                 points_on_primitive.append(point)
-    #         if not points_on_primitive:
-    #             continue
-    #         points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
-    #         points_on_primitive = points_on_primitive + [points_on_primitive[0]]
-    #         for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
-    #             edge = primitive.trim(point1, point2)
-    #             if self.edge3d_inside(edge, 1e-4) and toroidal_face.edge3d_inside(edge, 1e-3):
-    #                 face_intersections.append(volmdlr.wires.Wire3D([edge]))
-    #     return face_intersections
 
     @classmethod
     def from_surface_rectangular_cut(cls, cylindrical_surface, theta1: float, theta2: float,
