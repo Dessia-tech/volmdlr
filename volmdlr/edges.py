@@ -298,13 +298,13 @@ class Edge(dc.DessiaObject):
             section_validor_ = edge3d_section_validator
         bspline_discretized_points1 = []
         for point in self.discretization_points(number_points=30):
-            if not volmdlr.core.point_in_list(point, bspline_discretized_points1):
+            if not point.in_list(bspline_discretized_points1):
                 bspline_discretized_points1.append(point)
         line_segments1 = [lineseg_class_(point1, point2) for point1, point2 in
                           zip(bspline_discretized_points1[:-1], bspline_discretized_points1[1:])]
         edge_discretized_points2 = []
         for point in edge2.discretization_points(number_points=30):
-            if not volmdlr.core.point_in_list(point, edge_discretized_points2):
+            if not point.in_list(edge_discretized_points2):
                 edge_discretized_points2.append(point)
         line_segments2 = [lineseg_class_(point1, point2) for point1, point2 in
                           zip(edge_discretized_points2[:-1], edge_discretized_points2[1:])]
@@ -341,7 +341,7 @@ class Edge(dc.DessiaObject):
             if not intersections_points:
                 intersections.append(point_min_dist_1)
             for intersection in intersections_points:
-                if not volmdlr.core.point_in_list(intersection, intersections):
+                if not intersection.in_list(intersections):
                     intersections.append(intersection)
             # intersections.extend(intersections_points)
         return intersections
@@ -366,7 +366,7 @@ class Edge(dc.DessiaObject):
 
     def validate_crossings(self, edge, intersection):
         """Validates the intersections as crossings: edge not touching the other at one end, or in a tangent point."""
-        if not volmdlr.core.point_in_list(intersection, [self.start, self.end, edge.start, edge.end]):
+        if not intersection.in_list([self.start, self.end, edge.start, edge.end]):
             tangent1 = self.unit_direction_vector(self.abscissa(intersection))
             tangent2 = edge.unit_direction_vector(edge.abscissa(intersection))
             if math.isclose(abs(tangent1.dot(tangent2)), 1, abs_tol=1e-6):
@@ -733,11 +733,11 @@ class LineSegment(Edge):
         new_linesegment_points = []
         for point in [self.start, self.end]:
             if other_linesegment.point_belongs(point, abs_tol=abs_tol) and\
-                    not volmdlr.core.point_in_list(point, new_linesegment_points):
+                    not point.in_list(new_linesegment_points):
                 new_linesegment_points.append(point)
         for point in [other_linesegment.start, other_linesegment.end]:
             if self.point_belongs(point, abs_tol=abs_tol) and\
-                    not volmdlr.core.point_in_list(point, new_linesegment_points):
+                    not point.in_list(new_linesegment_points):
                 new_linesegment_points.append(point)
         if len(new_linesegment_points) == 1:
             return []
@@ -759,7 +759,7 @@ class LineSegment(Edge):
             return [self]
         points = []
         for point in [self.start, self.end, shared_section[0].start, shared_section[0].end]:
-            if not volmdlr.core.point_in_list(point, points):
+            if not point.in_list(points):
                 points.append(point)
         points = sorted(points, key=self.start.point_distance)
         new_line_segments = []
@@ -1693,7 +1693,7 @@ class BSplineCurve(Edge):
         linesegment_name = 'LineSegment' + self.__class__.__name__[-2:]
         polygon_points = []
         for point in self.points:
-            if not volmdlr.core.point_in_list(point, polygon_points):
+            if not point.in_list(polygon_points):
                 polygon_points.append(point)
         list_intersections = []
         initial_abscissa = 0
@@ -4914,7 +4914,7 @@ class BSplineCurve3D(BSplineCurve):
         u = 0.1
         while count < 3 and u <= 0.9:
             point = self.evaluate_single(u)
-            if not volmdlr.core.point_in_list(point, points):
+            if not point.in_list(points):
                 points.append(point)
                 count += 1
             u += 0.1
@@ -5299,7 +5299,7 @@ class BSplineCurve3D(BSplineCurve):
         for bspline, edge2_ in intersection_section_pairs:
             intersections_points = bspline.get_linesegment_intersections(edge2_)
             for inter in intersections_points:
-                if not volmdlr.core.point_in_list(inter, intersections, abs_tol):
+                if not inter.in_list(intersections, abs_tol):
                     intersections.append(inter)
         return intersections
 
