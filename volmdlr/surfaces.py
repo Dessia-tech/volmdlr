@@ -4510,7 +4510,7 @@ class SphericalSurface3D(PeriodicalSurface):
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[1:]
             else:
-                number_points = int(distance / maximum_linear_distance_reference_point)
+                number_points = max(2, int(distance / maximum_linear_distance_reference_point))
 
                 local_discretization = [self.point3d_to_2d(point)
                                         for point in edge3d.local_discretization(
@@ -4544,7 +4544,7 @@ class SphericalSurface3D(PeriodicalSurface):
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[:-1]
             else:
-                number_points = int(distance / maximum_linear_distance_reference_point)
+                number_points = max(2, int(distance / maximum_linear_distance_reference_point))
 
                 local_discretization = [self.point3d_to_2d(point)
                                         for point in edge3d.local_discretization(
