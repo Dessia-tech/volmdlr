@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+#### core_compiled.py
+- Point2D/Point3D: allow users to use a point or a list of points direct inside a numpy array. ex.: np.array(volmdlr.O3D)
+- Point2D/Point3D: in_list. ** ATTENTION:** -> use in_list instead of volmdlr.core.point_in_list.
 - cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify.
 
 #### surfaces.py
@@ -31,12 +34,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DiplayTriangleShell3D: concatenate
 
 #### core.py
-- BoundingBox: triangle_intersects_voxel
+- BoundingBox: is_intersecting_triangle
+#### discrete_representation.py
+- Voxelization: from_mesh_data
+- OctreeBasedVoxelization
 
 #### step.py
 - Support to Datakit CrossCadWare STEP file format.
 
 ### Fixed
+- Drone : run generate sdist and generate bdist_wheel only on master
+
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
 
@@ -80,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
+- Voxelization: refactor class methods
 
 #### core.py
 - babylon_data: avoid using bounding_box for performance

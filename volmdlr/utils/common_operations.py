@@ -89,7 +89,7 @@ def split_wire_by_plane(wire, plane3d):
     for primitive in wire.primitives:
         intersections = plane3d.edge_intersections(primitive)
         for intersection in intersections:
-            if not volmdlr.core.point_in_list(intersection, wire_plane_intersections):
+            if not intersection.in_list(wire_plane_intersections):
                 wire_plane_intersections.append(intersection)
     if len(wire_plane_intersections) > 1:
         raise NotImplementedError
@@ -198,7 +198,7 @@ def get_abscissa_discretization(primitive, abscissa1, abscissa2, max_number_poin
         if abscissa > primitive.length() + 1e-6:
             continue
         abscissa_point = primitive.point_at_abscissa(abscissa)
-        if not volmdlr.core.point_in_list(abscissa_point, discretized_points_between_1_2):
+        if not abscissa_point.in_list(discretized_points_between_1_2):
             discretized_points_between_1_2.append(abscissa_point)
             points_abscissas.append(abscissa)
     if return_abscissas:
