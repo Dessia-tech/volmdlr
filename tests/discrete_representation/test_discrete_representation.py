@@ -1,10 +1,10 @@
 """
 Unit testing of 'DiscreteRepresentation' class.
 """
-import unittest
 import math
+import unittest
 
-from volmdlr.discrete_representation import DiscreteRepresentation, DECIMALS
+from volmdlr.discrete_representation import DECIMALS, DiscreteRepresentation
 
 
 class TestDiscreteRepresentation(unittest.TestCase):
