@@ -317,7 +317,8 @@ cpdef list basis_function_all(int degree, list knot_vector, int span, double kno
     :rtype: list
     """
     cdef list N = [[None for _ in range(degree + 1)] for _ in range(degree + 1)]
-    cdef size_t i, j
+    cdef size_t j
+    cdef int i
     cdef vector[double] b_func
     for i in range(0, degree + 1):
         b_func = basis_function_c(i, knot_vector, span, knot)
@@ -350,7 +351,7 @@ cdef vector[vector[double]] basis_function_ders(int degree, vector[double] knot_
     :rtype: list
     """
     # Initialize variables
-    cdef size_t i, j, k, r
+    cdef int i, j, k, r
     cdef int s1, s2, j1, j2, pk, rk
     cdef double saved, temp, d
     cdef double *left = <double *>PyMem_Malloc((degree + 1) * sizeof(double))
@@ -580,8 +581,8 @@ def build_coeff_matrix(int degree, vector[double] knotvector, double[:] params, 
     cdef double[:, :] matrix_a = np.zeros((num_points, num_points), dtype=np.double)
     cdef int span
     cdef vector[double] basis_func
+    cdef int j
     cdef size_t i
-    cdef size_t j
     for i in range(num_points):
         span = find_span_linear_c(degree, knotvector, num_points, params[i])
         basis_func = basis_function_c(degree, knotvector, span, params[i])
