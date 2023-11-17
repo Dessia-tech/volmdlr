@@ -67,7 +67,7 @@ def find_span_binsearch(int degree, vector[double] knot_vector, int num_ctrlpts,
     # The round function could return unexpected results, so we add the floating point with some small number
     # This addition would solve the issues caused by the division operation and how Python stores float numbers.
     # E.g. round(13/2) = 6 (expected to see 7)
-    mid = int(helpers.round_c(mid + tol))
+    mid = <int>helpers.round_c(mid + tol)
 
     # Search for the span
     while (knot < knot_vector[mid]) or (knot >= knot_vector[mid + 1]):
@@ -176,7 +176,7 @@ cdef vector[double] basis_function_c(int degree, vector[double] knot_vector, int
 
     N[0] = 1.0
 
-    cdef int j, r
+    cdef size_t j, r
     cdef double temp, saved
 
     for j in range(1, degree + 1):
@@ -194,36 +194,6 @@ cdef vector[double] basis_function_c(int degree, vector[double] knot_vector, int
     PyMem_Free(left)
     PyMem_Free(right)
     return N
-
-
-# @boundscheck(False)
-# @wraparound(False)
-# cdef vector[double] basis_function(int degree, vector[double] knot_vector, int span, double knot):
-#     """Computes the non-vanishing basis functions for a single parameter.
-#
-#     Implementation of Algorithm A2.2 from The NURBS Book by Piegl & Tiller.
-#     Uses recurrence to compute the basis functions, also known as Cox - de
-#     Boor recursion formula.
-#
-#     :param degree: degree, :math:`p`
-#     :type degree: int
-#     :param knot_vector: knot vector, :math:`U`
-#     :type knot_vector: list, tuple
-#     :param span: knot span, :math:`i`
-#     :type span: int
-#     :param knot: knot or parameter, :math:`u`
-#     :type knot: float
-#     :return: basis functions
-#     :rtype: list
-#     """
-#     cdef double *result = basis_function_c(degree, knot_vector, span, knot)
-#     # Convert the C array to a vector[double] before returning
-#     cdef vector[double] result_vector
-#     result_vector.resize(degree + 1)
-#     for i in range(degree + 1):
-#         result_vector[i] = result[i]
-#     PyMem_Free(result)  # Free the dynamically allocated memory
-#     return result_list
 
 
 cdef vector[double] basis_function_one_c(int degree, vector[double] knot_vector, int span, double knot):
@@ -347,7 +317,7 @@ cpdef list basis_function_all(int degree, list knot_vector, int span, double kno
     :rtype: list
     """
     cdef list N = [[None for _ in range(degree + 1)] for _ in range(degree + 1)]
-    cdef int i, j
+    cdef size_t i, j
     cdef vector[double] b_func
     for i in range(0, degree + 1):
         b_func = basis_function_c(i, knot_vector, span, knot)
@@ -380,7 +350,7 @@ cdef vector[vector[double]] basis_function_ders(int degree, vector[double] knot_
     :rtype: list
     """
     # Initialize variables
-    cdef int i, j, k, r
+    cdef size_t i, j, k, r
     cdef int s1, s2, j1, j2, pk, rk
     cdef double saved, temp, d
     cdef double *left = <double *>PyMem_Malloc((degree + 1) * sizeof(double))

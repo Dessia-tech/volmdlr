@@ -183,7 +183,7 @@ cdef (double, (double, double, double)) c_linesegment3d_point_distance((double, 
 @cython.wraparound(False)
 cpdef bint polygon_point_belongs(double[:, ::1] polygon, double[:] point,
                                  bint include_edge_points=False, double tol= 1e-6):
-    cdef int i
+    cdef size_t i
     cdef size_t n = polygon.shape[0]
     cdef bint inside = False
     cdef double x, y, p1x, p1y, p2x, p2y, xints, dot_product, length_squared, t, distance_projection_to_point
@@ -229,7 +229,7 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
                                                          bint include_edge_points = False, double tol = 1e-6):
     cdef size_t n = polygon.shape[0]
     cdef size_t m = points.shape[0]
-    cdef int i, j
+    cdef size_t i, j
     cdef double x, y, p1x, p1y, p2x, p2y, xints, dot_product, length_squared, t, distance_projection_to_point
     cdef double[2] u, v, projection_point
     cdef np.ndarray[np.uint8_t, ndim = 1] results = npy.zeros(m, dtype=npy.uint8)
@@ -2163,7 +2163,7 @@ cdef bint point3d_in_list(Point3D point, list[Point3D] list_points, double tol):
     cdef size_t n = len(list_points)
     if n == 0:
         return False
-    cdef int i
+    cdef size_t i
     cdef double squared_distance, squared_tol
     squared_tol = tol * tol
 
@@ -2182,7 +2182,7 @@ cdef bint point2d_in_list(Point2D point, list[Point2D] list_points, double tol):
     cdef size_t n = len(list_points)
     if n == 0:
         return False
-    cdef int i
+    cdef size_t i
     cdef double squared_distance, squared_tol
     squared_tol = tol * tol
 
