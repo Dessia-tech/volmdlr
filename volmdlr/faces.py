@@ -1240,7 +1240,7 @@ class Face3D(volmdlr.core.Primitive3D):
         Gets intersections for two faces which have coincident faces.
 
         :param face: other face.
-        :return: two lists of intersections. one list contatining wires intersecting face1, the other those for face2.
+        :return: two lists of intersections. one list containing wires intersecting face1, the other those for face2.
         """
         points_intersections = self.outer_contour3d.wire_intersections(face.outer_contour3d)
         if not points_intersections:
@@ -1937,6 +1937,7 @@ class Triangle3D(PlaneFace3D):
         """
         Changes frame_mapping and return a new Triangle3D.
 
+        :param frame: frame used.
         :param side: 'old' or 'new'.
         """
         np1 = self.point1.frame_mapping(frame, side)
@@ -2294,7 +2295,7 @@ class ToroidalFace3D(Face3D):
 
     contours 2d is rectangular and will create a classic tore with x:2*pi, y:2*pi
     x is for exterior, and y for the circle to revolute
-    points = [pi, 2*pi] for an half tore
+    points = [pi, 2*pi] for a half tore
     """
     min_x_density = 5
     min_y_density = 1
@@ -2329,10 +2330,9 @@ class ToroidalFace3D(Face3D):
         return ToroidalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
-    def points_resolution(self, line, pos,
-                          resolution):  # With a resolution wished
-        points = []
-        points.append(line.points[0])
+    @staticmethod
+    def points_resolution(line, pos, resolution):  # With a resolution wished
+        points = [line.points[0]]
         limit = line.points[1].vector[pos]
         start = line.points[0].vector[pos]
         vec = [0, 0]
@@ -3412,11 +3412,11 @@ class BSplineFace3D(Face3D):
 
     def to_planeface3d(self, plane3d: surfaces.Plane3D = None):
         """
-        Converts a Bspline face3d to a Plane face3d (using or without a reference Plane3D).
+        Converts a Bspline face 3d to a Plane face 3d (using or without a reference Plane3D).
 
         :param plane3d: A reference Plane3D, defaults to None
         :type plane3d: Plane3D, optional
-        :return: A Plane face3d
+        :return: A Plane face 3d.
         :rtype: PlaneFace3D
         """
 
