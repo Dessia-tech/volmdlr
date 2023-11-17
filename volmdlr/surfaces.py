@@ -1521,7 +1521,7 @@ class Plane3D(Surface3D):
         return False
 
     @classmethod
-    def plane_betweeen_two_planes(cls, plane1, plane2, name: str = ''):
+    def plane_between_two_planes(cls, plane1, plane2, name: str = ''):
         """
         Calculates a plane between two other planes.
 
@@ -2705,10 +2705,10 @@ class CylindricalSurface3D(PeriodicalSurface):
 
     def cylindricalsurface_intersections(self, cylindricalsurface: 'CylindricalSurface3D'):
         """
-        Gets intersections betweeen two cylindrical surfaces 3d.
+        Gets intersections between two cylindrical surfaces 3d.
 
         :param cylindricalsurface: other cylindrical surface.
-        :return: a list contanting the resulting intersectios, if there are any.
+        :return: a list containing the resulting intersections, if there are any.
         """
         curves_ = []
         if self.frame.w.is_colinear_to(cylindricalsurface.frame.w):
