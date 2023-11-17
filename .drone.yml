@@ -85,6 +85,8 @@ steps:
 
 - name: generate sdist
   image: python:3.9
+  when:
+    branch: master
   commands:
   - git fetch --tags
   - pip install .
@@ -97,6 +99,9 @@ steps:
 
 - name: generate bdist_wheel
   image: python:3.9
+  when:
+      branch: master
+
   commands:
   - git fetch --tags
   - pip install wheel
