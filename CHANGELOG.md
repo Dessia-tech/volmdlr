@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support to Datakit CrossCadWare STEP file format.
 
 ### Fixed
+- Drone : run generate sdist and generate bdist_wheel only on master
+
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
 
