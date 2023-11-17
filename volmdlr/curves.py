@@ -1683,7 +1683,7 @@ class Circle3D(CircleMixin, ClosedCurve):
                                                                                           plane_intersections)
         intersections = []
         for intersection in circle3d_line_intersections1 + circle3d_line_intersections2:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and other_circle.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
@@ -1715,7 +1715,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(
             ellipse, plane_intersections)
         for intersection in circle3d_line_intersections + ellipse3d_line_intersections:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and ellipse.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
@@ -2646,7 +2646,7 @@ class Ellipse3D(EllipseMixin, ClosedCurve):
                                                                                              plane_intersections)
         ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(ellipse, plane_intersections)
         for intersection in self_ellipse3d_line_intersections + ellipse3d_line_intersections:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and ellipse.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
@@ -3319,7 +3319,7 @@ class Parabola3D(ParabolaMixin):
                                                                                              plane_intersections)
         ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(conic, plane_intersections)
         for intersection in self_ellipse3d_line_intersections + ellipse3d_line_intersections:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and conic.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
