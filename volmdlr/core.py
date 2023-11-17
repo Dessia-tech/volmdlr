@@ -59,7 +59,9 @@ def point_in_list(point, list_points, tol: float = 1e-6):
     :return: True if there is a point inside the list close to the point to given tolerance.
     """
 
-    return element_in_list(point, list_points, tol)
+    if not list_points:
+        return False
+    return point.in_list(list_points, tol)
 
 
 def edge_in_list(edge, list_edges, tol: float = 1e-6):
@@ -1057,7 +1059,7 @@ class Assembly(dc.PhysicalObject):
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
             elif isinstance(primitive, volmdlr.Point3D):
-                display_points.append([*primitive])
+                display_points.append(primitive)
         return helper_babylon_data(babylon_data, display_points)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
@@ -1240,7 +1242,7 @@ class Compound(dc.PhysicalObject):
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
             elif isinstance(primitive, volmdlr.Point3D):
-                display_points.append([*primitive])
+                display_points.append(primitive)
         return helper_babylon_data(babylon_data, display_points)
 
     def volmdlr_primitives(self):
@@ -1441,7 +1443,7 @@ class VolumeModel(dc.PhysicalObject):
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
             elif isinstance(primitive, volmdlr.Point3D):
-                display_points.append([*primitive])
+                display_points.append(primitive)
         return helper_babylon_data(babylon_data, display_points)
 
     @classmethod

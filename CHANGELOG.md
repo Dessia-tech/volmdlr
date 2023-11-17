@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+#### core_compiled.py
+- Point2D/Point3D: allow users to use a point or a list of points direct inside a numpy array. ex.: np.array(volmdlr.O3D)
+- Point2D/Point3D: in_list. ** ATTENTION:** -> use in_list instead of volmdlr.core.point_in_list.
 - cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify.
 
 #### surfaces.py
@@ -31,7 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### core.py
 - BoundingBox: is_close, scale
-- BoundingBox: triangle_intersects_voxel
+- BoundingBox: triangle_intersects_voxel, is_intersecting_triangle
+#### discrete_representation.py
+- Voxelization: from_mesh_data
+
 
 #### step.py
 - Support to Datakit CrossCadWare STEP file format.

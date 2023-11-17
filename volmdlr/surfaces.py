@@ -25,7 +25,7 @@ import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 import volmdlr.utils.parametric as vm_parametric
 from volmdlr import display, edges, grid, wires, curves
-from volmdlr.core import EdgeStyle, point_in_list
+from volmdlr.core import EdgeStyle
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
 from volmdlr.nurbs.operations import split_surface_u, split_surface_v
@@ -1108,8 +1108,7 @@ class Surface3D(DessiaObject):
         for primitive in contour3d.primitives:
             primitive_plane_intersections = self.edge_intersections(primitive)
             for primitive_plane_intersection in primitive_plane_intersections:
-                if not volmdlr.core.point_in_list(primitive_plane_intersection,
-                                                  outer_contour_intersections_with_plane):
+                if not primitive_plane_intersection.in_list(outer_contour_intersections_with_plane):
                     outer_contour_intersections_with_plane.append(primitive_plane_intersection)
         return outer_contour_intersections_with_plane
 
@@ -1197,7 +1196,7 @@ class Surface3D(DessiaObject):
         for curve_plane_intersection in curve_plane_intersections:
             inters = curve_plane_intersection.curve_intersections(curve)
             for intersection in inters:
-                if not volmdlr.core.point_in_list(intersection, intersections):
+                if not intersection.in_list(intersections):
                     intersections.append(intersection)
         return intersections
 
@@ -2548,7 +2547,7 @@ class CylindricalSurface3D(PeriodicalSurface):
                     all_generatrices_intersecting = False
                 for index, point in enumerate(linseg_intersections):
                     if other_surface.point_distance(point) < 1e-6 and \
-                            not volmdlr.core.point_in_list(point, lists_intersections[index]):
+                            not point.in_list(lists_intersections[index]):
                         lists_intersections[index].append(point)
             return lists_intersections, all_generatrices_intersecting
 
@@ -2565,13 +2564,13 @@ class CylindricalSurface3D(PeriodicalSurface):
                 for point in (
                         cylinder_generatrices_point_intersections[0] + cylinder_generatrices_point_intersections[1] +
                         cone_generatrices_point_intersections[0] + cone_generatrices_point_intersections[1]):
-                    if not volmdlr.core.point_in_list(point, intersections_points[0]):
+                    if not point.in_list(intersections_points[0]):
                         intersections_points[0].append(point)
         elif not all_cone_generatrices_intersecting_cylinder:
             intersections_points = [[]]
             for point in (cylinder_generatrices_point_intersections[0] + cylinder_generatrices_point_intersections[1] +
                           cone_generatrices_point_intersections[0] + cone_generatrices_point_intersections[1]):
-                if not volmdlr.core.point_in_list(point, intersections_points[0]):
+                if not point.in_list(intersections_points[0]):
                     intersections_points[0].append(point)
         list_curves = []
         for list_points in intersections_points:
@@ -3371,14 +3370,14 @@ class ToroidalSurface3D(PeriodicalSurface):
         for arc in arcs:
             intersections = cylindrical_surface.circle_intersections(arc)
             for intersection in intersections:
-                if not volmdlr.core.point_in_list(intersection, points_intersections):
+                if not intersection.in_list(points_intersections):
                     points_intersections.append(intersection)
         for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 300):
             # \
             #    cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
             for point in intersections:
-                if not volmdlr.core.point_in_list(point, points_intersections):
+                if not point.in_list(points_intersections):
                     points_intersections.append(point)
         return points_intersections
 
@@ -3452,7 +3451,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         for edge in conical_surface.get_generatrices(self.outer_radius * 3, 300):
             intersections = self.edge_intersections(edge)
             for point in intersections:
-                if not volmdlr.core.point_in_list(point, points_intersections):
+                if not point.in_list(points_intersections):
                     points_intersections.append(point)
         return points_intersections
 
@@ -4014,7 +4013,7 @@ class ConicalSurface3D(PeriodicalSurface):
         for gene in cyl_generatrices:
             intersections = spherical_surface.edge_intersections(gene)
             for intersection in intersections:
-                if not volmdlr.core.point_in_list(intersection, intersection_points):
+                if not intersection.in_list(intersection_points):
                     intersection_points.append(intersection)
         return intersection_points
 
@@ -4972,7 +4971,7 @@ class SphericalSurface3D(PeriodicalSurface):
         for gene in cyl_generatrices:
             intersections = spherical_surface.edge_intersections(gene)
             for intersection in intersections:
-                if not volmdlr.core.point_in_list(intersection, intersection_points):
+                if not intersection.in_list(intersection_points):
                     intersection_points.append(intersection)
         return intersection_points
 
@@ -5837,8 +5836,7 @@ class BSplineSurface3D(Surface3D):
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
                  weights: List[float] = None, name: str = ''):
-        self.ctrlpts = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in control_points],
-                                   dtype=npy.float64)
+        self.ctrlpts = npy.asarray(control_points)
         self.degree_u = int(degree_u)
         self.degree_v = int(degree_v)
         self.nb_u = int(nb_u)
@@ -6748,7 +6746,7 @@ class BSplineSurface3D(Surface3D):
         if res.fun < 1e-6:
             return volmdlr.Point2D(*res.x)
 
-        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
+        point3d_array = npy.array(point3d)
         delta_bound_x = max_bound_x - min_bound_x
         delta_bound_y = max_bound_y - min_bound_y
         x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
@@ -6879,7 +6877,7 @@ class BSplineSurface3D(Surface3D):
         points = []
         for point in linesegment2d.discretization_points(number_points=20):
             point3d = self.point2d_to_3d(point)
-            if not volmdlr.core.point_in_list(point3d, points):
+            if not point3d.in_list(points):
                 points.append(point3d)
         if len(points) < 2:
             return None
@@ -7082,7 +7080,7 @@ class BSplineSurface3D(Surface3D):
         points = []
         for point in bspline_curve2d.discretization_points(number_points=number_points):
             point3d = self.point2d_to_3d(point)
-            if not volmdlr.core.point_in_list(point3d, points):
+            if not point3d.in_list(points):
                 points.append(point3d)
         if len(points) < bspline_curve2d.degree + 1:
             return None
@@ -7098,7 +7096,7 @@ class BSplineSurface3D(Surface3D):
         tol = 1e-6 if arc3d.length() > 1e-5 else 1e-8
         for point3d in arc3d.discretization_points(number_points=number_points):
             point2d = self.point3d_to_2d(point3d, tol)
-            if not volmdlr.core.point_in_list(point2d, points):
+            if not point2d.in_list(points):
                 points.append(point2d)
         start = points[0]
         end = points[-1]
@@ -7244,7 +7242,7 @@ class BSplineSurface3D(Surface3D):
         for point in self.control_points[1:]:
             vector = point - points[0]
             is_colinear = any(vector.is_colinear_to(other_vector) for other_vector in vector_list)
-            if not point_in_list(point, points) and not is_colinear:
+            if not point.in_list(points) and not is_colinear:
                 points.append(point)
                 vector_list.append(vector)
                 if len(points) == 3:
@@ -7964,7 +7962,7 @@ class BSplineSurface3D(Surface3D):
         :return: B-spline surface.
         :rtype: BSplineSurface3D
         """
-        points = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points_3d], dtype=npy.float64)
+        points = npy.asarray(points_3d)
 
         ctrlpts, knots_u, knot_multiplicities_u, knots_v, knot_multiplicities_v = \
             interpolate_surface(points, size_u, size_v, degree_u, degree_v)
@@ -8015,7 +8013,7 @@ class BSplineSurface3D(Surface3D):
         # number of data points, s + 1 > number of control points, m + 1
         num_cpts_v = kwargs.get('ctrlpts_size_v', size_v - 1)
 
-        points = npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points_3d], dtype=npy.float64)
+        points = npy.asarray(points_3d)
 
         ctrlpts, knots_u, knot_multiplicities_u, knots_v, knot_multiplicities_v = \
             approximate_surface(points, size_u, size_v, degree_u, degree_v,
