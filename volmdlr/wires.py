@@ -2946,10 +2946,9 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """Get polygon lines."""
         lines = []
         if len(self.points) > 1:
-            for point1, point2 in zip(self.points,
-                                      list(self.points[1:]) + [self.points[0]]):
-                if not point1.is_close(point2):
-                    lines.append(volmdlr.edges.LineSegment2D(point1, point2))
+            lines = [volmdlr.edges.LineSegment2D(point1, point2)
+                     for point1, point2 in zip(self.points, self.points[1:] + [self.points[0]])
+                     if point1 != point2]
         return lines
 
     def rotation(self, center: volmdlr.Point2D, angle: float):

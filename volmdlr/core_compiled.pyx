@@ -224,6 +224,7 @@ cpdef bint polygon_point_belongs(double[:, ::1] polygon, double[:] point,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.profile(True)
 cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon, double[:, ::1] points,
                                                          bint include_edge_points = False, double tol = 1e-6):
     cdef size_t n = polygon.shape[0]
@@ -239,7 +240,6 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
         x = points[i][0]
         y = points[i][1]
         inside = False
-        over_edge = False
         for j in range(n):
             p1x = polygon[j][0]
             p1y = polygon[j][1]
@@ -260,11 +260,9 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
                 if distance_projection_to_point <= tol:
                     if include_edge_points:
                         results[i] = True
-                        over_edge = True
                         break
                     else:
                         results[i] = False
-                        over_edge = True
                         break
             xints = math_c.HUGE_VAL
             if min(p1y, p2y) <= y <= max(p1y, p2y) and min(p1x, p2x) <= x <= max(p1x, p2x):
@@ -273,18 +271,16 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
                 if p1y == p2y or x == xints:
                     if include_edge_points:
                         results[i] = True
-                        over_edge = True
                         break
                     else:
                         results[i] = False
-                        over_edge = True
                         break
             if min(p1y, p2y) < y <= max(p1y, p2y) and x <= max(p1x, p2x):
                 if p1y != p2y:
                     xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
                 if p1x == p2x or x < xints:
                     inside = not inside
-        if not over_edge:
+        else:
             results[i] = inside
 
     return results
@@ -2160,6 +2156,9 @@ cdef class Point3D(Vector3D):
         """Return True if point is in the list with a given tolerance. Returns False otherwise."""
         return point3d_in_list(self, list_points, tol)
 
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef bint point3d_in_list(Point3D point, list[Point3D] list_points, double tol):
     cdef size_t n = len(list_points)
     if n == 0:
@@ -2177,6 +2176,8 @@ cdef bint point3d_in_list(Point3D point, list[Point3D] list_points, double tol):
     return False
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef bint point2d_in_list(Point2D point, list[Point2D] list_points, double tol):
     cdef size_t n = len(list_points)
     if n == 0:
