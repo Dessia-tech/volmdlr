@@ -2896,8 +2896,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         Ray casting algorithm copied from internet.
         """
-        return polygon_point_belongs(npy.array([(point_.x, point_.y) for point_ in self.points], dtype=npy.float64),
-                                     npy.array([point.x, point.y], dtype=npy.float64),
+        return polygon_point_belongs(npy.array(self.points),
+                                     npy.array(point),
                                      include_edge_points=include_edge_points, tol=tol)
 
     def points_in_polygon(self, points, include_edge_points: bool = False, tol: float = 1e-6):
@@ -2914,8 +2914,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         :rtype: numpy.ndarray
         """
         if isinstance(points, list):
-            points = npy.array([(point[0], point[1]) for point in points], dtype=npy.float64)
-        polygon = npy.array([(point_[0], point_[1]) for point_ in self.points], dtype=npy.float64)
+            points = npy.array(points)
+        polygon = npy.array(self.points)
         return points_in_polygon(polygon, points, include_edge_points=include_edge_points, tol=tol)
 
     def second_moment_area(self, point):
