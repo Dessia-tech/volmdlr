@@ -34,10 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DiplayTriangleShell3D: concatenate
 
 #### core.py
-- BoundingBox: is_intersecting_triangle
+- BoundingBox: is_close, scale
+- BoundingBox: triangle_intersects_voxel, is_intersecting_triangle
 #### discrete_representation.py
 - Voxelization: from_mesh_data
 - OctreeBasedVoxelization
+
 
 #### step.py
 - Support to Datakit CrossCadWare STEP file format.
@@ -61,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### shells.py
 - Fixes to boolean operations.
 
-### surfaces.py 
+#### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
 
 #### utils
@@ -82,6 +84,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### core_compiled
 - Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
+
+#### primitives3d
+- Block: get_bounding_box
 
 #### discrete_representation.py
 - MatrixBasedVoxelization: _logical_operation
@@ -107,6 +112,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
 - ToroidalSurface3D: plots now use Circles 3D instead of ClosedPolygon3D. Performance improved.
 - CylindricalSurface3D: More comprehesive plot
+- BoundingBox: from_bounding_boxes
+- BSplineCurve: improve line_intersections performance.
 - core_compiled.pyx: update typing because Point2D, Point3D, Vector2D and Vector3D are now extension types (C structures.)
 
 ### Unittests
@@ -118,6 +125,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces
 - ToroidalFace3D: PlaneFace3D intersectios.
 - SphericalSurface3D: circle_intersections, arc_intersections, arcellipse_intersections
+- PlaneFace3D: point_belongs
+#### core
+- BoundingBox: is_close, scale
+#### primitives3d
+- Block: from_bounding_box, get_bounding_box
+
 ## v0.14.0
 
 ### New Features

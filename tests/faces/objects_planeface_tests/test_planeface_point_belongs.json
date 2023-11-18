@@ -1,0 +1,118 @@
+{
+  "object_class": "volmdlr.core.VolumeModel",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.faces.PlaneFace3D",
+      "name": "",
+      "surface3d": {
+        "object_class": "volmdlr.surfaces.Plane3D",
+        "name": "",
+        "frame": {
+          "object_class": "volmdlr.Frame3D",
+          "name": "",
+          "origin": {
+            "object_class": "volmdlr.Point3D",
+            "x": -0.009405827471999993,
+            "y": 0.0099330909215,
+            "z": 0.05750573642699999
+          },
+          "u": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 1.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "v": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+          },
+          "w": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.0,
+            "y": 0.0,
+            "z": 1.0
+          }
+        }
+      },
+      "surface2d": {
+        "object_class": "volmdlr.surfaces.Surface2D",
+        "name": "name",
+        "outer_contour": {
+          "object_class": "volmdlr.wires.Contour2D",
+          "name": "",
+          "primitives": [
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -0.07861053900000001,
+                "y": -0.07476043723850001
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.07861053900000001,
+                "y": -0.07476043723850001
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.07861053900000001,
+                "y": -0.07476043723850001
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.07861053900000001,
+                "y": 0.07476043723850001
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": 0.07861053900000001,
+                "y": 0.07476043723850001
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -0.07861053900000001,
+                "y": 0.07476043723850001
+              }
+            },
+            {
+              "object_class": "volmdlr.edges.LineSegment2D",
+              "name": "",
+              "start": {
+                "object_class": "volmdlr.Point2D",
+                "x": -0.07861053900000001,
+                "y": 0.07476043723850001
+              },
+              "end": {
+                "object_class": "volmdlr.Point2D",
+                "x": -0.07861053900000001,
+                "y": -0.07476043723850001
+              }
+            }
+          ]
+        },
+        "inner_contours": []
+      },
+      "color": null,
+      "alpha": 1.0
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.03453274836192911,
+      "y": 0.007121124245313488,
+      "z": 0.05750573642699999
+    }
+  ],
+  "_references": {}
+}
