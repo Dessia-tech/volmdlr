@@ -50,8 +50,8 @@ class TestBoundingBox(unittest.TestCase):
 
     def test_from_bounding_boxes(self):
         self.assertEqual(
+            BoundingBox(0.0, 5.0, 0.0, 5.0, -1.0, 5.0),
             BoundingBox.from_bounding_boxes([self.bbox1, self.bbox2, self.bbox3]),
-            BoundingBox(-0.005, 5.005, -0.005, 5.005, -1.006, 5.006),
         )
 
     def test_from_points(self):
@@ -122,6 +122,20 @@ class TestBoundingBox(unittest.TestCase):
     def test_plot(self):
         ax = self.bbox1.plot()
         self.assertEqual(len(ax.lines), 12)
+
+    def test_is_close(self):
+        self.assertTrue(self.bbox1.is_close(self.bbox1))
+
+        bbox_almost_equal_1 = BoundingBox(0, 1, 0, 1, 0, 1)
+        bbox_almost_equal_2 = BoundingBox(0 + 1e-9, 1 + 1e-9, 0 + 1e-9, 1 + 1e-9, 0 + 1e-9, 1 + 1e-9)
+
+        self.assertTrue(bbox_almost_equal_1.is_close(bbox_almost_equal_2))
+        self.assertFalse(bbox_almost_equal_1.is_close(bbox_almost_equal_2, tol=1e-10))
+        self.assertNotEqual(bbox_almost_equal_1, bbox_almost_equal_2)
+
+    def test_scale(self):
+        scaled_bbox = self.bbox1.scale(2)
+        self.assertEqual(BoundingBox(-1.0, 3.0, -1.0, 3.0, -1.0, 3.0), scaled_bbox)
 
     def test_is_intersecting_triangle(self):
         # Triangle intersecting the bounding box
