@@ -4,11 +4,14 @@ Unit tests for CylindriSurface3D
 import unittest
 import math
 import numpy as npy
-
+import os
 import dessia_common.core
 import volmdlr
-from volmdlr import Z3D, Point2D, Point3D, edges, wires, surfaces, curves
+from volmdlr import Point2D, Point3D, edges, wires, surfaces, curves
 from volmdlr.models import cylindrical_surfaces
+
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_cylindrical_tests')
 
 
 class TestCylindricalSurface3D(unittest.TestCase):
@@ -131,11 +134,9 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
     def test_linesegment3d_to_2d(self):
         surface = surfaces.CylindricalSurface3D.load_from_file(
-            "surfaces/objects_cylindrical_tests/cylindricalsurface_with_linesegment3d.json"
-        )
+            os.path.join(folder, "cylindricalsurface_with_linesegment3d.json"))
         linesegment3d = edges.LineSegment3D.load_from_file(
-            "surfaces/objects_cylindrical_tests/cylindricalsurface_linesegment3d.json"
-        )
+            os.path.join(folder, "cylindricalsurface_linesegment3d.json"))
         linesegment2d = surface.linesegment3d_to_2d(linesegment3d)[0]
         self.assertTrue(
             linesegment2d.start.is_close(
@@ -232,34 +233,29 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertEqual(linesegment2d.end, Point2D(0, 0.013))
 
         surface = dessia_common.core.DessiaObject.load_from_file(
-            "surfaces/objects_cylindrical_tests/cylindrical_surface_bspline_openned_contour.json"
-        )
+            os.path.join(folder, "cylindrical_surface_bspline_openned_contour.json"))
         contour = dessia_common.core.DessiaObject.load_from_file(
-            "surfaces/objects_cylindrical_tests/cylindrical_contour_bspline_openned_contour.json"
-        )
-
+            os.path.join(folder,"cylindrical_contour_bspline_openned_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertEqual(len(contour2d.primitives), 2)
         self.assertFalse(contour2d.is_ordered())
 
         surface = dessia_common.core.DessiaObject.load_from_file(
-            "surfaces/objects_cylindrical_tests/test_contour3d_to_2d_surface.json"
-        )
+            os.path.join(folder, "test_contour3d_to_2d_surface.json"
+        ))
         contour = dessia_common.core.DessiaObject.load_from_file(
-            "surfaces/objects_cylindrical_tests/test_contour3d_to_2d_contour.json"
-        )
+            os.path.join(folder, "test_contour3d_to_2d_contour.json"
+        ))
 
+        surface = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "test_contour3d_to_2d_surface.json"))
+        contour = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "test_contour3d_to_2d_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertAlmostEqual(contour2d.area(), 0.29361767646954695, 2)
         self.assertTrue(contour2d.is_ordered())
 
     def test_bsplinecurve3d_to_2d(self):
-        surface = dessia_common.core.DessiaObject.load_from_file(
-            "surfaces/objects_cylindrical_tests/cylindrical_surf_bug.json"
-        )
-        bsplinecurve3d = dessia_common.core.DessiaObject.load_from_file(
-            "surfaces/objects_cylindrical_tests/bsplinecurve3d_bug.json"
-        )
+        surface = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "cylindrical_surf_bug.json"))
+        bsplinecurve3d = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "bsplinecurve3d_bug.json"))
         primitive2d = surface.bsplinecurve3d_to_2d(bsplinecurve3d)[0]
         self.assertTrue(
             primitive2d.start.is_close(
