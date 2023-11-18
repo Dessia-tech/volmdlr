@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
 - ClosedTriangleShell3D: turn_normals_outwards, are_normals_pointing_outwards, turn_normals_inwards, are_normals_pointing_inwards
+- DiplayTriangleShell3D: concatenate
 
 #### core.py
 - BoundingBox: is_close, scale
@@ -44,8 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support to Datakit CrossCadWare STEP file format.
 
 ### Fixed
-- Drone : run generate sdist and generate bdist_wheel only on master
 
+#### core_compiled
+- Frame2D: fix rotation.
+- Drone : run generate sdist and generate bdist_wheel only on master
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
 
@@ -70,15 +73,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### curves.py
 - Circle3D: circle_intersectios when the circle are coplanar.
+- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
 
 #### surfaces.py
 - ExtrusionSurface3D: enhance parametric operations.
 
 #### edges.py
 - bsplineCurve: line_intersections. 
-
-- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
-#### edges.py
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 
 #### core_compiled
@@ -98,14 +99,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - babylon_data: avoid using bounding_box for performance
 - BoundingBox: uses numpy to improve performance.
 
+#### core_compiled
+- Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
+
 #### edges.py
-- BSplineCurve: improve line_intersections performance.
-- 
-#### edges.py
+- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
+- Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 - LineSegment2D/3D: The line attribute from which the line segment was defined was converted to a property, for performance and memory efficiency reasons.
+- BSplineCurve: improve line_intersections performance.
+
+#### faces.py
+- Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
 
 #### primitives3d.py
 - Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
+
+#### surfaces.py
+- ExtrusionSurface3D: Uses edge abscissa as u parameter.
+- ExtrusionSurface3D: general improvements in parametric operations.
+
 
 ### Changed
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
