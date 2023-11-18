@@ -1,19 +1,18 @@
 """
-Unit testing of 'MatrixBasedVoxelization' class.
+Unit testing of 'OctreeBasedVoxelization' class.
 """
-import os
 import unittest
 
 import volmdlr
 from volmdlr.core import BoundingBox, VolumeModel
-from volmdlr.discrete_representation import MatrixBasedVoxelization
+from volmdlr.discrete_representation import OctreeBasedVoxelization
 from volmdlr.primitives3d import Block, Cylinder, Sphere
-from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D
+from volmdlr.shells import ClosedTriangleShell3D
 
 SHOW_BABYLONJS = False
 
 
-class TestMatrixBasedVoxelizationCreation(unittest.TestCase):
+class TestOctreeBasedVoxelizationCreation(unittest.TestCase):
     """
     Unit testing of voxelization creation methods.
     """
@@ -25,7 +24,7 @@ class TestMatrixBasedVoxelizationCreation(unittest.TestCase):
         self.volume_model = VolumeModel(primitives=[self.sphere, self.cylinder], name="volume model")
 
     def test_voxelize_block(self):
-        block_voxelization = MatrixBasedVoxelization.from_shell(self.block, 0.2, name="voxelization")
+        block_voxelization = OctreeBasedVoxelization.from_shell(self.block, 0.2, name="voxelization")
         self.assertEqual(152, len(block_voxelization))
 
         if SHOW_BABYLONJS:
@@ -34,7 +33,7 @@ class TestMatrixBasedVoxelizationCreation(unittest.TestCase):
 
     def test_voxelize_translated_block(self):
         translated_block = self.block.translation(volmdlr.Vector3D(11, 1.8, 4.8))
-        translated_block_voxelization = MatrixBasedVoxelization.from_shell(translated_block, 0.1, name="voxelization")
+        translated_block_voxelization = OctreeBasedVoxelization.from_shell(translated_block, 0.1, name="voxelization")
         self.assertEqual(1216, len(translated_block_voxelization))
 
         if SHOW_BABYLONJS:
@@ -42,7 +41,7 @@ class TestMatrixBasedVoxelizationCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_voxelize_sphere(self):
-        sphere_voxelization = MatrixBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
+        sphere_voxelization = OctreeBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
         self.assertEqual(1876, len(sphere_voxelization))
 
         if SHOW_BABYLONJS:
@@ -50,7 +49,7 @@ class TestMatrixBasedVoxelizationCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_voxelize_cylinder(self):
-        cylinder_voxelization = MatrixBasedVoxelization.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
+        cylinder_voxelization = OctreeBasedVoxelization.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
         self.assertEqual(2788, len(cylinder_voxelization))
 
         if SHOW_BABYLONJS:
@@ -58,7 +57,7 @@ class TestMatrixBasedVoxelizationCreation(unittest.TestCase):
             volume_model.babylonjs()
 
     def test_from_volume_model(self):
-        volume_model_voxelization = MatrixBasedVoxelization.from_volume_model(
+        volume_model_voxelization = OctreeBasedVoxelization.from_volume_model(
             self.volume_model, 0.01, name="voxelization"
         )
         self.assertEqual(4264, len(volume_model_voxelization))
@@ -69,17 +68,8 @@ class TestMatrixBasedVoxelizationCreation(unittest.TestCase):
             )
             volume_model.babylonjs()
 
-    def test_from_mesh_data(self):
-        file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "stanford_bunny.json")
-        stanford_bunny = DisplayTriangleShell3D.load_from_file(file_path)
-        voxelization1 = MatrixBasedVoxelization.from_mesh_data(stanford_bunny.positions, stanford_bunny.indices, 0.005)
-        voxelization2 = MatrixBasedVoxelization.from_shell(stanford_bunny, 0.005)
 
-        self.assertEqual(1735, len(voxelization1))
-        self.assertEqual(1735, len(voxelization2))
-
-
-class TestMatrixBasedVoxelizationBooleanOperation(unittest.TestCase):
+class TestOctreeBasedVoxelizationBooleanOperation(unittest.TestCase):
     """
     Unit testing of voxelization boolean operation methods.
     """
@@ -89,11 +79,11 @@ class TestMatrixBasedVoxelizationBooleanOperation(unittest.TestCase):
         self.cylinder = Cylinder(frame=volmdlr.OXYZ, radius=0.1, length=0.2, name="cylinder")
         self.volume_model = VolumeModel(primitives=[self.sphere, self.cylinder], name="volume model")
 
-        self.sphere_voxelization = MatrixBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
-        self.cylinder_voxelization = MatrixBasedVoxelization.from_shell(
+        self.sphere_voxelization = OctreeBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
+        self.cylinder_voxelization = OctreeBasedVoxelization.from_shell(
             self.cylinder, 0.01, name="cylinder voxelization"
         )
-        self.volume_model_voxelization = MatrixBasedVoxelization.from_volume_model(
+        self.volume_model_voxelization = OctreeBasedVoxelization.from_volume_model(
             self.volume_model, 0.01, name="volume model voxelization"
         )
 
@@ -113,8 +103,8 @@ class TestMatrixBasedVoxelizationBooleanOperation(unittest.TestCase):
         block_1 = Block(frame=volmdlr.OXYZ)
         block_2 = block_1.translation(volmdlr.Vector3D(0.5, 0.5, 0.5))
 
-        voxelization_1 = MatrixBasedVoxelization.from_shell(block_1, 0.1)
-        voxelization_2 = MatrixBasedVoxelization.from_shell(block_2, 0.1)
+        voxelization_1 = OctreeBasedVoxelization.from_shell(block_1, 0.1)
+        voxelization_2 = OctreeBasedVoxelization.from_shell(block_2, 0.1)
 
         union_3 = voxelization_1.union(voxelization_2)
         self.assertEqual(2312, len(union_3))
@@ -167,14 +157,14 @@ class TestMatrixBasedVoxelizationBooleanOperation(unittest.TestCase):
             volume_model.babylonjs()
 
 
-class TestMatrixBasedVoxelizationManipulation(unittest.TestCase):
+class TestOctreeBasedVoxelizationManipulation(unittest.TestCase):
     """
     Unit testing of voxelization manipulation methods.
     """
 
     def setUp(self):
         self.cylinder = Cylinder(frame=volmdlr.OXYZ, radius=0.1, length=0.2, name="cylinder")
-        self.cylinder_voxelization = MatrixBasedVoxelization.from_shell(
+        self.cylinder_voxelization = OctreeBasedVoxelization.from_shell(
             self.cylinder, 0.01, name="cylinder voxelization"
         )
 
@@ -207,14 +197,14 @@ class TestMatrixBasedVoxelizationManipulation(unittest.TestCase):
             volume_model.babylonjs()
 
 
-class TestMatrixBasedVoxelizationExport(unittest.TestCase):
+class TestOctreeBasedVoxelizationExport(unittest.TestCase):
     """
     Unit testing of voxelization export methods.
     """
 
     def setUp(self):
         self.sphere = Sphere(center=volmdlr.O3D, radius=0.1, name="sphere")
-        self.sphere_voxelization = MatrixBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
+        self.sphere_voxelization = OctreeBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
 
     def test_min_grid_center(self):
         self.assertEqual((-0.095, -0.095, -0.105), self.sphere_voxelization.min_grid_center)
@@ -241,7 +231,7 @@ class TestMatrixBasedVoxelizationExport(unittest.TestCase):
 
     def test_serialization(self):
         self.assertEqual(
-            self.sphere_voxelization, MatrixBasedVoxelization.dict_to_object(self.sphere_voxelization.to_dict())
+            self.sphere_voxelization, OctreeBasedVoxelization.dict_to_object(self.sphere_voxelization.to_dict())
         )
 
 
