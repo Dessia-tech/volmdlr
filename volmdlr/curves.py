@@ -26,14 +26,11 @@ from volmdlr.core import EdgeStyle
 
 def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_tangent, point):
     """Gets control points and weights for hyperbola and parabola curves represented by bsplines."""
-    start_tangent = start_tangent.unit_vector()
-    end_tangent = end_tangent.unit_vector()
     line_class = globals()["Line"+start.__class__.__name__[-2:]]
-    vector_02 = end - start
-    line02 = line_class.from_point_and_vector(start, vector_02)
+    line02 = line_class.from_point_and_vector(start, (end - start).to_vector())
 
-    line0 = line_class.from_point_and_vector(start, start_tangent)
-    line2 = line_class.from_point_and_vector(end, end_tangent)
+    line0 = line_class.from_point_and_vector(start, start_tangent.unit_vector())
+    line2 = line_class.from_point_and_vector(end, end_tangent.unit_vector())
     line_intersections = line0.line_intersections(line2)
     point1 = line_intersections[0]
     vector_p1 = point1 - point
@@ -2128,19 +2125,19 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         frame3d = volmdlr.Frame3D(center3d, u_vector, v_vector, w_vector)
         return Ellipse3D(self.major_axis, self.minor_axis, frame3d)
 
-    def point_over_ellipse(self, point, abs_tol=1e-6):
+    def point_over_ellipse(self, point, abs_tol=1e-2):
         """
         Verifies if a point is on the ellipse.
 
         :param point: point to be verified.
-         :param abs_tol: tolerance.
+         :param abs_tol: tolerance (0.99 should be considered True).
         :return: True or False.
         """
         return math.isclose(
             round(((point.x - self.center.x) * math.cos(self.theta) +
                    (point.y - self.center.y) * math.sin(self.theta)) ** 2 / self.major_axis ** 2 +
                   ((point.x - self.center.x) * math.sin(self.theta) -
-                   (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 2), 1.0,
+                   (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 3), 1.0,
             abs_tol=abs_tol)
 
     def point_over_contour(self, point, abs_tol=1e-6):
@@ -2243,7 +2240,7 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         :param tol: tolerance.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
-        if self.point_over_ellipse(point, tol):
+        if self.point_over_ellipse(point):
             angle_abscissa = self.point_angle_with_major_dir(point)
 
             def arc_length(theta):

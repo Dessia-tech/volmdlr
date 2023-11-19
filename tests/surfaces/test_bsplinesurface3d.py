@@ -426,7 +426,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertTrue(contour2d.is_ordered())
 
         surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "bsplinesurface_nan_bug.json"))
-        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder,"bsplinesurface_nan_bug_contour.json"))
+        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "bsplinesurface_nan_bug_contour.json"))
         contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered())
 

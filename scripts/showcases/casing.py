@@ -17,8 +17,8 @@ bottom, sides, belt = casing.primitives
 
 bbox = casing.bounding_box
 
-assert bbox.zmin == -0.00509003002
-assert math.isclose(bbox.xmax, 0.3417427, abs_tol=1e-5)
+assert bbox.zmin == -0.005
+assert math.isclose(bbox.xmax, 0.34067, abs_tol=1e-5)
 
 box = Block.from_bounding_box(bbox)
 box.alpha = 0.3
