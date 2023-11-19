@@ -3526,7 +3526,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         Gets the points of intersections between the spherical surface and the toroidal surface.
 
-        :param spherical_surface: other Conical Surface 3d.
+        :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
         arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
@@ -4050,7 +4050,7 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         Gets the points of intersections between the spherical surface and the toroidal surface.
 
-        :param spherical_surface: other Conical Surface 3d.
+        :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
         cyl_generatrices = self.get_generatrices(spherical_surface.radius*4, 200) +\
@@ -5009,7 +5009,7 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         Gets the points of intersections between the spherical surface and the toroidal surface.
 
-        :param spherical_surface: other Conical Surface 3d.
+        :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
         cyl_generatrices = self._circle_generatrices(200) + self._circle_generatrices_xy(200)
