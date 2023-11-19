@@ -2738,8 +2738,9 @@ class ToroidalSurface3D(PeriodicalSurface):
     def _torus_circle_generatrices_xy(self, number_arcs: int = 50):
         center = self.frame.origin + self.frame.u * self.major_radius
         u_vector = (center - self.frame.origin).unit_vector()
-        i_frame = volmdlr.Frame3D(center, u_vector, self.frame.w, u_vector.cross(self.frame.w))
-        circle = curves.Circle3D(i_frame, self.minor_radius)
+        circle = curves.Circle3D(
+            volmdlr.Frame3D(center, u_vector, self.frame.w, u_vector.cross(self.frame.w)),
+            self.minor_radius)
         initial_point = self.frame.origin.translation(-self.frame.w * self.minor_radius)
         circles = []
         for i in npy.linspace(0, 2 * self.minor_radius, number_arcs):
@@ -4555,12 +4556,12 @@ class SphericalSurface3D(PeriodicalSurface):
             theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
 
             if theta_discontinuity:
-                temp_points = self._fix_angle_discontinuity_on_discretization_points(temp_points,
-                                                                                     indexes_theta_discontinuity, "x")
+                temp_points = self._fix_angle_discontinuity_on_discretization_points(
+                    temp_points, indexes_theta_discontinuity, "x")
 
             edge = get_temp_edge2d(temp_points)
-            point = self.fix_start_end_singularity_point_at_parametric_domain(edge, reference_point=temp_points[-2],
-                                                                              point_at_singularity=points[-1])
+            point = self.fix_start_end_singularity_point_at_parametric_domain(
+                edge, reference_point=temp_points[-2], point_at_singularity=points[-1])
             if point:
                 points[-1] = point
             else:
