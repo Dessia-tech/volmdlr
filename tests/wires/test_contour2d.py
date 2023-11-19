@@ -264,6 +264,10 @@ class TestContour2D(unittest.TestCase):
         merge_not_adjacent_contour1 = contour2.merge_not_adjacent_contour(contour1)
         self.assertAlmostEqual(merge_not_adjacent_contour1.length(), 0.15238337009535752)
 
+    def test_area(self):
+        contour = wires.Contour2D.load_from_file(os.path.join(folder, "strange_contour_from_step_file.json"))
+        self.assertAlmostEqual(contour.area(), 0.00016865275423510724, 6)
+
 
 if __name__ == '__main__':
     unittest.main()
