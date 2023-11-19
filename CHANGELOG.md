@@ -126,6 +126,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BoundingBox: from_bounding_boxes
 - BSplineCurve: improve line_intersections performance.
 - core_compiled.pyx: update typing because Point2D, Point3D, Vector2D and Vector3D are now extension types (C structures.)
+- BSplineCurve: improve line_intersections performance.
+- SphericalSurface3D: enhance bsplinecurve3d_to_2d.
+
 
 ### Unittests
 #### curves 
