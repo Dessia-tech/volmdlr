@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - ToroidalFace3D: PlaneFace3D intersections.
 - PlaneFace3D: circle_intersections. planeface_intersections
+- BsplineFace3D: adjacent_direction_uu
 
 #### wires.py
 - delete remaining inplace methods in wires.py
