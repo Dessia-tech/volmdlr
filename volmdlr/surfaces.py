@@ -1521,7 +1521,7 @@ class Plane3D(Surface3D):
         return False
 
     @classmethod
-    def plane_betweeen_two_planes(cls, plane1, plane2, name: str = ''):
+    def plane_between_two_planes(cls, plane1, plane2, name: str = ''):
         """
         Calculates a plane between two other planes.
 
@@ -2686,6 +2686,50 @@ class CylindricalSurface3D(PeriodicalSurface):
         global_intersections = [edge.frame_mapping(frame, 'old') for edge in curves_]
         return global_intersections
 
+    def _cylindrical_intersection_points(self, cylindricalsurface: 'SphericalSurface3D'):
+        """
+        Gets the points of intersections between two cylindrical surfaces.
+
+        :param cylindricalsurface: other Cylindrical surface 3d.
+        :return: points of intersections.
+        """
+        cyl_generatrices = self.get_generatrices(self.radius*10, 200) +\
+                           self.get_circle_generatrices(200, self.radius*10)
+        intersection_points = []
+        for gene in cyl_generatrices:
+            intersections = cylindricalsurface.edge_intersections(gene)
+            for intersection in intersections:
+                if not volmdlr.core.point_in_list(intersection, intersection_points):
+                    intersection_points.append(intersection)
+        return intersection_points
+
+    def cylindricalsurface_intersections(self, cylindricalsurface: 'CylindricalSurface3D'):
+        """
+        Gets intersections between two cylindrical surfaces 3d.
+
+        :param cylindricalsurface: other cylindrical surface.
+        :return: a list containing the resulting intersections, if there are any.
+        """
+        curves_ = []
+        if self.frame.w.is_colinear_to(cylindricalsurface.frame.w):
+            circle1 = curves.Circle3D(self.frame, self.radius).to_2d(self.frame.origin, self.frame.u, self.frame.v)
+            circle2 = curves.Circle3D(cylindricalsurface.frame, cylindricalsurface.radius).to_2d(
+                self.frame.origin, self.frame.u, self.frame.v)
+            circle2d_intersections = circle1.circle_intersections(circle2)
+            for point in circle2d_intersections:
+                point3d = point.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+                curves_.append(curves.Line3D.from_point_and_vector(point3d, self.frame.w))
+            return curves_
+
+        intersection_points = self._cylindrical_intersection_points(cylindricalsurface)
+        if not intersection_points:
+            return []
+        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
+        for list_points in inters_points:
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
+            curves_.append(bspline)
+        return curves_
+
 
 class ToroidalSurface3D(PeriodicalSurface):
     """
@@ -3483,7 +3527,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         Gets the points of intersections between the spherical surface and the toroidal surface.
 
-        :param spherical_surface: other Conical Surface 3d.
+        :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
         arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
@@ -4007,7 +4051,7 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         Gets the points of intersections between the spherical surface and the toroidal surface.
 
-        :param spherical_surface: other Conical Surface 3d.
+        :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
         cyl_generatrices = self.get_generatrices(spherical_surface.radius*4, 200) +\
@@ -4993,7 +5037,7 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         Gets the points of intersections between the spherical surface and the toroidal surface.
 
-        :param spherical_surface: other Conical Surface 3d.
+        :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
         cyl_generatrices = self._circle_generatrices(200) + self._circle_generatrices_xy(200)
