@@ -26,15 +26,13 @@ from volmdlr.core import EdgeStyle
 
 def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_tangent, point):
     """Gets control points and weights for hyperbola and parabola curves represented by bsplines."""
-    start_tangent = start_tangent.unit_vector()
-    end_tangent = end_tangent.unit_vector()
     line_class = globals()["Line"+start.__class__.__name__[-2:]]
-    vector_02 = end - start
-    line02 = line_class.from_point_and_vector(start, vector_02)
+    line02 = line_class.from_point_and_vector(start, (end - start).to_vector())
 
-    line0 = line_class.from_point_and_vector(start, start_tangent)
-    line2 = line_class.from_point_and_vector(end, end_tangent)
-    point1 = line0.line_intersections(line2)[0]
+    line0 = line_class.from_point_and_vector(start, start_tangent.unit_vector())
+    line2 = line_class.from_point_and_vector(end, end_tangent.unit_vector())
+    line_intersections = line0.line_intersections(line2)
+    point1 = line_intersections[0]
     vector_p1 = point1 - point
     line1p = line_class.from_point_and_vector(point1, vector_p1)
     point_q = line02.line_intersections(line1p)[0]
@@ -966,7 +964,7 @@ class CircleMixin:
 
     @property
     def center(self):
-        """Gets circle's center point ."""
+        """Gets circle's center point."""
         return self.frame.origin
 
     def split_at_abscissa(self, abscissa):
@@ -1628,9 +1626,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
-
-
+        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, 100, close_plot=True)
 
     def line_intersections(self, line: Line3D, abs_tol: float = 1e-6):
         """
@@ -1684,7 +1680,7 @@ class Circle3D(CircleMixin, ClosedCurve):
                                                                                           plane_intersections)
         intersections = []
         for intersection in circle3d_line_intersections1 + circle3d_line_intersections2:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and other_circle.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
@@ -1716,7 +1712,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(
             ellipse, plane_intersections)
         for intersection in circle3d_line_intersections + ellipse3d_line_intersections:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and ellipse.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
@@ -1993,7 +1989,26 @@ class Circle3D(CircleMixin, ClosedCurve):
         return point_angle
 
 
-class Ellipse2D(ClosedCurve):
+class EllipseMixin:
+    """Ellipse abstract class."""
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.frame.origin
+
+    @property
+    def major_dir(self):
+        """Gets ellipse's major direction vector."""
+        return self.frame.u
+
+    @property
+    def minor_dir(self):
+        """Gets ellipse's minor direction vector."""
+        return self.frame.v
+
+
+class Ellipse2D(EllipseMixin, ClosedCurve):
     """
     Defines an Ellipse in two-dimensions.
 
@@ -2014,10 +2029,6 @@ class Ellipse2D(ClosedCurve):
     def __init__(self, major_axis, minor_axis, frame, name=''):
         self.major_axis = major_axis
         self.minor_axis = minor_axis
-        self.center = frame.origin
-        self.major_dir = frame.u
-        self.minor_dir = frame.v
-        # self.frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
         self.frame = frame
         if math.isclose(frame.u.cross(frame.v), 1.0, abs_tol=1e-6):
             self.angle_start = 0.0
@@ -2114,19 +2125,19 @@ class Ellipse2D(ClosedCurve):
         frame3d = volmdlr.Frame3D(center3d, u_vector, v_vector, w_vector)
         return Ellipse3D(self.major_axis, self.minor_axis, frame3d)
 
-    def point_over_ellipse(self, point, abs_tol=1e-6):
+    def point_over_ellipse(self, point, abs_tol=1e-2):
         """
         Verifies if a point is on the ellipse.
 
         :param point: point to be verified.
-         :param abs_tol: tolerance.
+         :param abs_tol: tolerance (0.99 should be considered True).
         :return: True or False.
         """
         return math.isclose(
             round(((point.x - self.center.x) * math.cos(self.theta) +
                    (point.y - self.center.y) * math.sin(self.theta)) ** 2 / self.major_axis ** 2 +
                   ((point.x - self.center.x) * math.sin(self.theta) -
-                   (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 2), 1.0,
+                   (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 3), 1.0,
             abs_tol=abs_tol)
 
     def point_over_contour(self, point, abs_tol=1e-6):
@@ -2229,7 +2240,7 @@ class Ellipse2D(ClosedCurve):
         :param tol: tolerance.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
-        if self.point_over_ellipse(point, tol):
+        if self.point_over_ellipse(point):
             angle_abscissa = self.point_angle_with_major_dir(point)
 
             def arc_length(theta):
@@ -2343,7 +2354,7 @@ class Ellipse2D(ClosedCurve):
         return Ellipse2D(self.major_axis, self.minor_axis, frame)
 
 
-class Ellipse3D(ClosedCurve):
+class Ellipse3D(EllipseMixin, ClosedCurve):
     """
     Defines a 3D ellipse.
 
@@ -2359,10 +2370,6 @@ class Ellipse3D(ClosedCurve):
         self.frame = frame
         self.major_axis = major_axis
         self.minor_axis = minor_axis
-        self.center = frame.origin
-        self.normal = frame.w
-        self.major_dir = frame.u
-        self.minor_dir = frame.v
         self._self_2d = None
         self._bbox = None
         ClosedCurve.__init__(self, name=name)
@@ -2391,6 +2398,11 @@ class Ellipse3D(ClosedCurve):
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
+
+    @property
+    def normal(self):
+        """Gets ellipse's normal vector."""
+        return self.frame.w
 
     def _bounding_box(self):
         """
@@ -2631,7 +2643,7 @@ class Ellipse3D(ClosedCurve):
                                                                                              plane_intersections)
         ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(ellipse, plane_intersections)
         for intersection in self_ellipse3d_line_intersections + ellipse3d_line_intersections:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and ellipse.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
@@ -2691,6 +2703,7 @@ class HyperbolaMixin(Curve):
         :param point2: point2 used to trim circle.
         """
         _bspline_class = getattr(volmdlr.edges, 'BSplineCurve'+self.__class__.__name__[-2:])
+        _lineseg_class = getattr(volmdlr.edges, 'LineSegment'+self.__class__.__name__[-2:])
         local_split_start = self.frame.global_to_local_coordinates(point1)
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_y = max(local_split_start.y, local_split_end.y)
@@ -2698,10 +2711,13 @@ class HyperbolaMixin(Curve):
         hyperbola_points = self.get_points(min_y, max_y, 3)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
+        start_tangent = self.tangent(hyperbola_points[0])
+        end_tangent = self.tangent(hyperbola_points[2])
+        if start_tangent.is_colinear_to(end_tangent):
+            lineseg = _lineseg_class(hyperbola_points[0], hyperbola_points[2])
+            return lineseg
         point, weight1 = hyperbola_parabola_control_point_and_weight(
-            hyperbola_points[0], self.tangent(hyperbola_points[0]),
-            hyperbola_points[2], self.tangent(hyperbola_points[2]),
-            hyperbola_points[1])
+            hyperbola_points[0], start_tangent, hyperbola_points[2], end_tangent, hyperbola_points[1])
         knotvector = generate_knot_vector(2, 3)
         knot_multiplicity = [1] * len(knotvector)
 
@@ -3300,7 +3316,7 @@ class Parabola3D(ParabolaMixin):
                                                                                              plane_intersections)
         ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(conic, plane_intersections)
         for intersection in self_ellipse3d_line_intersections + ellipse3d_line_intersections:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and conic.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)

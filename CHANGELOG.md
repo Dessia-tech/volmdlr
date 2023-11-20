@@ -9,25 +9,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
+#### core_compiled.py
+- Point2D/Point3D: allow users to use a point or a list of points direct inside a numpy array. ex.: np.array(volmdlr.O3D)
+- Point2D/Point3D: in_list. ** ATTENTION:** -> use in_list instead of volmdlr.core.point_in_list.
 - cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify.
 
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
-- ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object
+- ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object, conicalsurface_intersections, sphericalsurface_intersections
 - ToroidalSurface3D: Handles degenerated surfaces (major_radius < minor_radius).
-- CylindricalSurface3D: circle_intersections
+- CylindricalSurface3D: circle_intersections, sphericalsurface_intersections, cylindricalsurface_intersections
 - ToroidalFace3D: PlaneFace3D intersectios.
-- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections
+- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
+- ConicalSurface3D: sphericalsurface_intersections
+
 #### edges.py
 - BsplineCurve3D: circle_intersections.
+- ArcEllipse3D/FullArcEllipse3D: line_intersections.
 #### curves.py
 - Circle3D: point_distance.
 #### shell.py
 - OpenTriangleShell3D: triangle decimation
+- ClosedTriangleShell3D: turn_normals_outwards, are_normals_pointing_outwards, turn_normals_inwards, are_normals_pointing_inwards
+- DiplayTriangleShell3D: concatenate
+
 #### core.py
-- BoundingBox: triangle_intersects_voxel
+- BoundingBox: is_close, scale
+- BoundingBox: triangle_intersects_voxel, is_intersecting_triangle
+#### discrete_representation.py
+- Voxelization: from_mesh_data
+- OctreeBasedVoxelization
+
+
+#### step.py
+- Support to Datakit CrossCadWare STEP file format.
 
 ### Fixed
+
+#### core_compiled
+- Frame2D: fix rotation.
+- Drone : run generate sdist and generate bdist_wheel only on master
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
 
@@ -37,13 +58,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - ToroidalFace3D: PlaneFace3D intersections.
 - PlaneFace3D: circle_intersections. planeface_intersections
+
 #### wires.py
 - delete remaining inplace methods in wires.py
 
 #### shells.py
 - Fixes to boolean operations.
 
-### surfaces.py 
+#### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
 
 #### utils
@@ -51,32 +73,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### curves.py
 - Circle3D: circle_intersectios when the circle are coplanar.
+- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
 
 #### surfaces.py
 - ExtrusionSurface3D: enhance parametric operations.
 
 #### edges.py
 - bsplineCurve: line_intersections. 
-
-- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
-#### edges.py
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 
 #### core_compiled
 - Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
 
+#### primitives3d
+- Block: get_bounding_box
+
+#### discrete_representation.py
+- MatrixBasedVoxelization: _logical_operation
+
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
+- Voxelization: refactor class methods
+
+#### core.py
 - babylon_data: avoid using bounding_box for performance
+- BoundingBox: uses numpy to improve performance.
+
+#### core_compiled
+- Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
+
+#### edges.py
+- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
+- Arc2D: Arc 2D now must follow the same rotation direction of its circle.
+- LineSegment2D/3D: The line attribute from which the line segment was defined was converted to a property, for performance and memory efficiency reasons.
+- BSplineCurve: improve line_intersections performance.
+
+#### faces.py
+- Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
 
 #### primitives3d.py
 - Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
+
+#### surfaces.py
+- ExtrusionSurface3D: Uses edge abscissa as u parameter.
+- ExtrusionSurface3D: general improvements in parametric operations.
+
 
 ### Changed
 - ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
 - ToroidalSurface3D: plots now use Circles 3D instead of ClosedPolygon3D. Performance improved.
 - CylindricalSurface3D: More comprehesive plot
+- BoundingBox: from_bounding_boxes
 - BSplineCurve: improve line_intersections performance.
+- core_compiled.pyx: update typing because Point2D, Point3D, Vector2D and Vector3D are now extension types (C structures.)
+- BSplineCurve: improve line_intersections performance.
+- SphericalSurface3D: enhance bsplinecurve3d_to_2d.
+
 
 ### Unittests
 #### curves 
@@ -87,6 +139,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces
 - ToroidalFace3D: PlaneFace3D intersectios.
 - SphericalSurface3D: circle_intersections, arc_intersections, arcellipse_intersections
+- PlaneFace3D: point_belongs
+#### core
+- BoundingBox: is_close, scale
+#### primitives3d
+- Block: from_bounding_box, get_bounding_box
+
 ## v0.14.0
 
 ### New Features
@@ -134,6 +192,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - read the docs settings
 - fix: move code complexity at end
 - ClosedPolygon2D: points_in_polygon, fix include_edge_points
+- ClosedShell3D: is_face_between_shells
+
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
 

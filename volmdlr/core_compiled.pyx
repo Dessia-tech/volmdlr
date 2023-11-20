@@ -48,6 +48,10 @@ cdef double c_vector2d_norm(double u1, double u2):
     return (u1 * u1 + u2 * u2)**0.5
 
 
+cdef double c_vector2d_squared_distance(double u1, double u2):
+    return (u1 * u1 + u2 * u2)
+
+
 cdef(double, double, double) c_sub_3d(double u1, double u2, double u3,
                                       double v1, double v2, double v3):
     return (u1 - v1, u2 - v2, u3 - v3)
@@ -69,6 +73,10 @@ cdef double c_vector3d_dot(double u1, double u2, double u3,
 
 cdef double c_vector3d_norm(double u1, double u2, double u3):
     return (u1 * u1 + u2 * u2 + u3 * u3)**0.5
+
+
+cdef double c_vector3d_squared_distance(double u1, double u2, double u3):
+    return (u1 * u1 + u2 * u2 + u3 * u3)
 
 
 cdef(double, double, double) c_vector3d_cross(double u1, double u2, double u3,
@@ -176,7 +184,7 @@ cdef (double, (double, double, double)) c_linesegment3d_point_distance((double, 
 cpdef bint polygon_point_belongs(double[:, ::1] polygon, double[:] point,
                                  bint include_edge_points=False, double tol= 1e-6):
     cdef int i
-    cdef int n = polygon.shape[0]
+    cdef size_t n = polygon.shape[0]
     cdef bint inside = False
     cdef double x, y, p1x, p1y, p2x, p2y, xints, dot_product, length_squared, t, distance_projection_to_point
     cdef double[2] u, v, projection_point
@@ -218,8 +226,8 @@ cpdef bint polygon_point_belongs(double[:, ::1] polygon, double[:] point,
 @cython.wraparound(False)
 cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon, double[:, ::1] points,
                                                          bint include_edge_points = False, double tol = 1e-6):
-    cdef int n = polygon.shape[0]
-    cdef int m = points.shape[0]
+    cdef size_t n = polygon.shape[0]
+    cdef size_t m = points.shape[0]
     cdef int i, j
     cdef double x, y, p1x, p1y, p2x, p2y, xints, dot_product, length_squared, t, distance_projection_to_point
     cdef double[2] u, v, projection_point
@@ -735,7 +743,7 @@ cdef class Vector2D(Vector):
             raise ZeroDivisionError
         return Vector2D(self.x / n, self.y / n)
 
-    def dot(self, other_vector: "Vector2D"):
+    def dot(self, other_vector: Vector2D):
         """
         Computes the dot product (scalar product) of two 2-dimensional vectors.
 
@@ -746,7 +754,7 @@ cdef class Vector2D(Vector):
         """
         return c_vector2d_dot(self.x, self.y, other_vector.x, other_vector.y)
 
-    def cross(self, other_vector: "Vector2D"):
+    def cross(self, other_vector: Vector2D):
         """
         Computes the cross product of two 2-dimensional vectors.
 
@@ -757,7 +765,7 @@ cdef class Vector2D(Vector):
         """
         return self.x * other_vector.y - self.y * other_vector.x
 
-    def point_distance(self, other_vector: "Vector2D"):
+    def point_distance(self, other_vector: Vector2D):
         """
         Computes the euclidiean distance between two Vector2D objects.
 
@@ -768,7 +776,7 @@ cdef class Vector2D(Vector):
         """
         return (self - other_vector).norm()
 
-    def rotation_parameters(self, center: "Point2D", angle: float):
+    def rotation_parameters(self, center: Point2D, angle: float):
         """
         Calculates the parameters to be used in rotation methods
 
@@ -784,7 +792,7 @@ cdef class Vector2D(Vector):
         v2y = math.sin(angle) * u.x + math.cos(angle) * u.y + center.y
         return v2x, v2y
 
-    def rotation(self, center: "Point2D", angle: float):
+    def rotation(self, center: Point2D, angle: float):
         """
         Rotates the 2-dimensional vector and returns a new rotated vector
 
@@ -798,7 +806,7 @@ cdef class Vector2D(Vector):
         v2x, v2y = self.rotation_parameters(center, angle)
         return self.__class__(v2x, v2y)
 
-    def translation(self, offset: "Vector2D"):
+    def translation(self, offset: Vector2D):
         """
         Translates the 2-dimensional vector and returns a new translated vector
 
@@ -912,7 +920,7 @@ cdef class Vector2D(Vector):
                    random.uniform(ymin, ymax), name=name)
 
     def plot(self,
-             head_width: float = 3, origin: "Vector2D" = None,
+             head_width: float = 3, origin: Vector2D = None,
              ax: "matplotlib.axes.Axes" = None,
              color: str = "k", label: str = None):
         """
@@ -1030,6 +1038,9 @@ cdef class Point2D(Vector2D):
             return self.x == other.x and self.y == other.y
         return False
 
+    def __array__(self) -> npy.ndarray:
+        return npy.array([self.x, self.y], dtype=npy.float64)
+
     def _data_eq(self, other):
         return self == other
 
@@ -1052,7 +1063,7 @@ cdef class Point2D(Vector2D):
             dict_["name"] = self.name
         return dict_
 
-    def to_3d(self, plane_origin: "Vector3D", vx: "Vector3D", vy: "Vector3D"):
+    def to_3d(self, plane_origin: Vector3D, vx: Vector3D, vy: Vector3D):
         """
         Returns the 3-dimensional point corresponding to the 2-dimensional
         point placed on the 3-dimensional plane (XY) of the 3-dimensional
@@ -1117,7 +1128,7 @@ cdef class Point2D(Vector2D):
         ax.plot([self.x], [self.y], color=color, alpha=alpha, marker="o")
         return ax
 
-    def point_distance(self, other_point: "Point2D"):
+    def point_distance(self, other_point: Point2D):
         """
         Computes the euclidiean distance between two Point2D objects.
 
@@ -1338,6 +1349,10 @@ cdef class Point2D(Vector2D):
         else:
             return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+"};"
 
+    def in_list(self, list[Point2D] list_points, double tol: float = 1e-6):
+        """Return True if point is in the list with a given tolerance. Returns False otherwise."""
+        return point2d_in_list(self, list_points, tol)
+
 
 O2D = Point2D(0, 0)
 
@@ -1510,7 +1525,7 @@ cdef class Vector3D(Vector):
         return c_vector3d_dot(self.x, self.y, self.z,
                               other_vector.x, other_vector.y, other_vector.z)
 
-    def cross(self, other_vector: "Vector3D") -> "Vector3D":
+    def cross(self, other_vector: Vector3D) -> Vector3D:
         """
         Computes the cross product between two 3-dimensional vectors.
 
@@ -1538,7 +1553,7 @@ cdef class Vector3D(Vector):
             raise ZeroDivisionError
         return Vector3D(self.x / n, self.y / n, self.z / n)
 
-    def point_distance(self, point2: "Vector3D") -> float:
+    def point_distance(self, other_vector: Vector3D) -> float:
         """
         Computes the euclidiean distance between two Vector3D objects.
 
@@ -1547,9 +1562,9 @@ cdef class Vector3D(Vector):
         :return: The euclidiean distance
         :rtype: float
         """
-        return (self - point2).norm()
+        return (self - other_vector).norm()
 
-    def rotation(self, center: "Point3D", axis: "Vector3D", angle: float):
+    def rotation(self, center: Point3D, axis: Vector3D, angle: float):
         """
         Rotates of angle around axis the 2-dimensional vector and returns
         a new rotated vector.
@@ -1629,7 +1644,7 @@ cdef class Vector3D(Vector):
         x1, y1 = self.axis_rotation_parameters(self.x, self.y, angle)
         return Point3D(x1, y1, self.z)
 
-    def translation(self, offset: "Vector3D"):
+    def translation(self, offset: Vector3D):
         """
         Translates the vector and returns a new translated vector
 
@@ -1940,6 +1955,9 @@ cdef class Point3D(Vector3D):
             return self.x == other.x and self.y == other.y and self.z == other.z
         return False
 
+    def __array__(self) -> npy.ndarray:
+        return npy.array([self.x, self.y, self.z], dtype=npy.float64)
+
     def _data_eq(self, other):
         return self == other
 
@@ -2024,7 +2042,7 @@ cdef class Point3D(Vector3D):
         """
         return Vector3D(self.x, self.y, self.z)
 
-    def point_distance(self, point2: "Point3D") -> float:
+    def point_distance(self, point2: Point3D) -> float:
         """
         Computes the euclidean distance between two 3-dimensional points.
 
@@ -2036,7 +2054,7 @@ cdef class Point3D(Vector3D):
         return (self - point2).norm()
 
     @classmethod
-    def middle_point(cls, point1: "Point3D", point2: "Point3D", name = ""):
+    def middle_point(cls, point1: Point3D, point2: Point3D, name = ""):
         """
         Computes the middle point between two 3-dimensional points.
 
@@ -2137,6 +2155,42 @@ cdef class Point3D(Vector3D):
             return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+", "+str(point_mesh_size)+"};"
         else:
             return "Point("+str(tag)+") = {"+str([*self, 0])[1:-1]+"};"
+
+    def in_list(self, list[Point3D] list_points, double tol: float = 1e-6):
+        """Return True if point is in the list with a given tolerance. Returns False otherwise."""
+        return point3d_in_list(self, list_points, tol)
+
+cdef bint point3d_in_list(Point3D point, list[Point3D] list_points, double tol):
+    cdef size_t n = len(list_points)
+    if n == 0:
+        return False
+    cdef int i
+    cdef double squared_distance, squared_tol
+    squared_tol = tol * tol
+
+    for i in range(n):
+        squared_distance = c_vector3d_squared_distance(list_points[i].x - point.x,
+                                                       list_points[i].y - point.y,
+                                                       list_points[i].z - point.z)
+        if squared_distance <= squared_tol:
+            return True
+    return False
+
+
+cdef bint point2d_in_list(Point2D point, list[Point2D] list_points, double tol):
+    cdef size_t n = len(list_points)
+    if n == 0:
+        return False
+    cdef int i
+    cdef double squared_distance, squared_tol
+    squared_tol = tol * tol
+
+    for i in range(n):
+        squared_distance = c_vector2d_squared_distance(list_points[i].x - point.x,
+                                                       list_points[i].y - point.y)
+        if squared_distance <= squared_tol:
+            return True
+    return False
 
 
 O3D = Point3D(0, 0, 0)
@@ -2315,11 +2369,11 @@ class Matrix33:
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
-        if abs(u1) < 1e-12:
+        if abs(u1) < 1e-13:
             u1 = 0.
-        if abs(u2) < 1e-12:
+        if abs(u2) < 1e-13:
             u2 = 0.
-        if abs(u3) < 1e-12:
+        if abs(u3) < 1e-13:
             u3 = 0.
         return vector.__class__(u1, u2, u3)
 

@@ -148,9 +148,9 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         for face in faces:
             for contour in [face.outer_contour3d] + face.inner_contours3d:
                 for edge in contour.primitives:
-                    if not volmdlr.core.point_in_list(edge.start, vertices_points):
+                    if not edge.start.in_list(vertices_points):
                         vertices_points.append(edge.start)
-                    if not volmdlr.core.point_in_list(edge.end, vertices_points):
+                    if not edge.end.in_list(vertices_points):
                         vertices_points.append(edge.end)
         return vertices_points
 
@@ -1187,7 +1187,7 @@ class ClosedShell3D(Shell3D):
                 if point_inters[0].is_close(point3d):
                     return True
                 for inter in point_inters:
-                    if volmdlr.core.point_in_list(inter, intersections):
+                    if inter.in_list(intersections):
                         break
                     intersections.append(inter)
                     count += 1
@@ -1514,6 +1514,11 @@ class ClosedShell3D(Shell3D):
         :param face: face to be verified.
         :return:
         """
+        points = []
+        center_of_mass = face.surface2d.outer_contour.center_of_mass()
+        if face.surface2d.outer_contour.point_belongs(center_of_mass):
+            points = [center_of_mass]
+
         if face.surface2d.inner_contours:
             normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector()
             middle_point_0 = face.surface2d.outer_contour.primitives[0].middle_point()
@@ -1521,7 +1526,7 @@ class ClosedShell3D(Shell3D):
             point2 = middle_point_0 - 0.0001 * normal_0
             points = [point1, point2]
         else:
-            points = [face.surface2d.outer_contour.random_point_inside()]
+            points.extend([face.surface2d.outer_contour.random_point_inside()])
 
         for point in points:
             point3d = face.surface3d.point2d_to_3d(point)
@@ -2004,6 +2009,42 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
         ClosedShell3D.__init__(self, faces, color, alpha, name)
 
+    def are_normals_pointing_outwards(self):
+        """Verifies if all face's normal are pointing outwards the closed shell."""
+        return not any(self.point_belongs(face.middle() + face.normal() * 1e-4) for face in self.faces)
+
+    def are_normals_pointing_inwards(self):
+        """Verifies if all face's normal are pointing inwards the closed shell."""
+        return not any(not self.point_belongs(face.middle() + face.normal() * 1e-4) for face in self.faces)
+
+    def turn_normals_outwards(self):
+        """
+        Turns the normals of the closed shells faces always outwards.
+
+        :return: A new ClosedTriangleShell3D object having all faces normals pointing outwards.
+        """
+        new_faces = []
+        for face in self.faces:
+            if self.point_belongs(face.middle() + face.normal() * 1e-5):
+                new_faces.append(volmdlr.faces.Triangle3D(*face.points[::-1]))
+            else:
+                new_faces.append(face)
+        return ClosedTriangleShell3D(new_faces)
+
+    def turn_normals_inwards(self):
+        """
+        Turns the normals of the closed shells faces always inwards.
+
+        :return: A new ClosedTriangleShell3D object having all faces normals pointing inwards.
+        """
+        new_faces = []
+        for face in self.faces:
+            if not self.point_belongs(face.middle() + face.normal() * 1e-5):
+                new_faces.append(volmdlr.faces.Triangle3D(*face.points[::-1]))
+            else:
+                new_faces.append(face)
+        return ClosedTriangleShell3D(new_faces)
+
 
 class DisplayTriangleShell3D(Shell3D):
     """
@@ -2013,7 +2054,7 @@ class DisplayTriangleShell3D(Shell3D):
     performance.
     """
 
-    def __init__(self, positions: NDArray[float], indices: NDArray[int], name):
+    def __init__(self, positions: NDArray[float], indices: NDArray[int], name: str = ""):
         """
         Instantiate the DisplayTriangleShell3D.
 
@@ -2096,3 +2137,49 @@ class DisplayTriangleShell3D(Shell3D):
         display_triangle_shell.color = dict_["color"]
 
         return display_triangle_shell
+
+    def concatenate(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
+        """
+        Concatenates two DisplayTriangleShell3D instances into a single instance.
+
+        This method merges the positions and indices of both shells. If the same vertex exists in both shells,
+        it is only included once in the merged shell to optimize memory usage. It also ensures that each face is
+        represented uniquely by sorting the vertices of each triangle.
+
+        :param other: Another DisplayTriangleShell3D instance to concatenate with this instance.
+        :return: A new DisplayTriangleShell3D instance representing the concatenated shells.
+        """
+        # Merge and remove duplicate vertices
+        merged_positions = np.vstack((self.positions, other.positions))
+        unique_positions, indices_map = np.unique(merged_positions, axis=0, return_inverse=True)
+
+        # Adjust indices to account for duplicates and offset from concatenation
+        self_indices_adjusted = self.indices
+        other_indices_adjusted = other.indices + len(self.positions)
+
+        # Re-map indices to unique vertices
+        all_indices = np.vstack((self_indices_adjusted, other_indices_adjusted))
+        final_indices = indices_map[all_indices]
+
+        # Use np.unique to find unique subarrays
+        _, unique_indices = np.unique(np.sort(final_indices, axis=1), axis=0, return_index=True)
+
+        # Get the unique subarrays
+        merged_indices = final_indices[unique_indices]
+
+        # Create a new DisplayTriangleShell3D with merged data
+        return DisplayTriangleShell3D(
+            positions=unique_positions, indices=merged_indices, name=self.name + "+" + other.name
+        )
+
+    def __add__(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
+        """
+        Overloads the + operator to concatenate two DisplayTriangleShell3D instances.
+
+        :param other: Another DisplayTriangleShell3D instance to concatenate with this instance.
+        :type other: DisplayTriangleShell3D
+
+        :return: A new DisplayTriangleShell3D instance representing the concatenated shells.
+        :rtype: DisplayTriangleShell3D
+        """
+        return self.concatenate(other)

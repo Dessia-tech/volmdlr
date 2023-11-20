@@ -1,3 +1,4 @@
+import os
 import math
 import os
 import numpy as npy
@@ -45,7 +46,7 @@ class TestToroidalFace3D(unittest.TestCase):
 
     def test_cylindricalface_intersections(self):
         expected_results = [[2.546120994711518], [2.454558505161535], [2.7679469885415657], [2.8109172462675667],
-                            [1.3806998364554988, 3.028332404171969], [2.1248783089966574], [1.7368469566130957],
+                            [3.028332404171969, 1.3806998364554988], [2.1248783089966574], [1.7368469566130957],
                             [2.558338114997606], [2.812361380094013, 1.3899450007345244], [2.4475153123576954]]
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         tf = faces.ToroidalFace3D.from_surface_rectangular_cut(toroidal_surface, 0, 3, 1, 3)
