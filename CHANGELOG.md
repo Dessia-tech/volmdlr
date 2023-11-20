@@ -63,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - delete remaining inplace methods in wires.py
 
 #### shells.py
-- Fixes to boolean operations.
+- Fixes to boolean operations. added some tolerance parameters to some methods.
 
 #### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
