@@ -4558,7 +4558,7 @@ class SphericalSurface3D(PeriodicalSurface):
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[1:]
             else:
-                number_points = int(distance / maximum_linear_distance_reference_point)
+                number_points = max(2, int(distance / maximum_linear_distance_reference_point))
 
                 local_discretization = [self.point3d_to_2d(point)
                                         for point in edge3d.local_discretization(
@@ -4592,7 +4592,7 @@ class SphericalSurface3D(PeriodicalSurface):
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[:-1]
             else:
-                number_points = int(distance / maximum_linear_distance_reference_point)
+                number_points = max(2, int(distance / maximum_linear_distance_reference_point))
 
                 local_discretization = [self.point3d_to_2d(point)
                                         for point in edge3d.local_discretization(
@@ -4682,8 +4682,8 @@ class SphericalSurface3D(PeriodicalSurface):
             points[0], points[-1], point_after_start, point_before_end)
         points[0] = start
         points[-1] = end
-
-        points = self.find_edge_start_end_undefined_parametric_points(bspline_curve3d, points, points3d)
+        if start.x == 0.0 or end.x == 0.0:
+            points = self.find_edge_start_end_undefined_parametric_points(bspline_curve3d, points, points3d)
         theta_list = [point.x for point in points]
         theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
         if theta_discontinuity:
@@ -7581,10 +7581,10 @@ class BSplineSurface3D(Surface3D):
         finite_elements = []  # finite elements defined with closed polygon
         for point in finite_elements_points:
             finite_elements.append(
-                wires.ClosedPolygon2D((points_2d[index_points[point[0]]],
+                wires.ClosedPolygon2D([points_2d[index_points[point[0]]],
                                        points_2d[index_points[point[1]]],
                                        points_2d[index_points[point[2]]],
-                                       points_2d[index_points[point[3]]])))
+                                       points_2d[index_points[point[3]]]]))
         k = 0
         for k, point in enumerate(finite_elements_points):
             if (wires.Contour2D(finite_elements[k].primitives).point_belongs(point2d)

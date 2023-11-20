@@ -1876,7 +1876,7 @@ class BSplineCurve(Edge):
         else:
             if math.isclose(abscissa2, 0.0, abs_tol=1e-6):
                 abscissa2 += self.length()
-            if abscissa1 >= abscissa2:
+            if abscissa1 > abscissa2:
                 abscissa2, abscissa1 = abscissa1, abscissa2
             u1 = self.abscissa_to_parameter(abscissa1)
             u2 = self.abscissa_to_parameter(abscissa2)
@@ -5694,8 +5694,6 @@ class Arc3D(ArcMixin, Edge):
         point_start = self.start.to_2d(plane_origin, x, y)
         point_interior = self.middle_point().to_2d(plane_origin, x, y)
         point_end = self.end.to_2d(plane_origin, x, y)
-        if point_start == point_end:
-            print(True)
         arc = Arc2D(circle2d, point_start, point_end, name=self.name)
         if not arc.point_belongs(point_interior):
             arc = Arc2D(circle2d.reverse(), point_start, point_end, name=self.name)
