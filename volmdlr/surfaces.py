@@ -7578,10 +7578,10 @@ class BSplineSurface3D(Surface3D):
         finite_elements = []  # finite elements defined with closed polygon
         for point in finite_elements_points:
             finite_elements.append(
-                wires.ClosedPolygon2D((points_2d[index_points[point[0]]],
+                wires.ClosedPolygon2D([points_2d[index_points[point[0]]],
                                        points_2d[index_points[point[1]]],
                                        points_2d[index_points[point[2]]],
-                                       points_2d[index_points[point[3]]])))
+                                       points_2d[index_points[point[3]]]]))
         k = 0
         for k, point in enumerate(finite_elements_points):
             if (wires.Contour2D(finite_elements[k].primitives).point_belongs(point2d)
