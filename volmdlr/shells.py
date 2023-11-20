@@ -1458,6 +1458,11 @@ class ClosedShell3D(Shell3D):
         :param face: face to be verified.
         :return:
         """
+        points = []
+        center_of_mass = face.surface2d.outer_contour.center_of_mass()
+        if face.surface2d.outer_contour.point_belongs(center_of_mass):
+            points = [center_of_mass]
+
         if face.surface2d.inner_contours:
             normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector()
             middle_point_0 = face.surface2d.outer_contour.primitives[0].middle_point()
@@ -1465,7 +1470,7 @@ class ClosedShell3D(Shell3D):
             point2 = middle_point_0 - 0.0001 * normal_0
             points = [point1, point2]
         else:
-            points = [face.surface2d.outer_contour.random_point_inside()]
+            points.extend([face.surface2d.outer_contour.random_point_inside()])
 
         for point in points:
             point3d = face.surface3d.point2d_to_3d(point)
