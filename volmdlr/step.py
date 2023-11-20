@@ -164,12 +164,13 @@ class Step(dc.DessiaObject):
                 function_arg_string = function_name_arg[1]
             function_arg = function_arg_string.split("#")
             connections = []
-            for connec in function_arg[1:]:
-                connec = connec.split(",")
-                connec = connec[0].split(")")
-                if connec[0][-1] != "'":
-                    function_connection = int(connec[0])
-                    connections.append(function_connection)
+            if function_name:
+                for connec in function_arg[1:]:
+                    connec = connec.split(",")
+                    connec = connec[0].split(")")
+                    if connec[0][-1] != "'":
+                        function_connection = int(connec[0])
+                        connections.append(function_connection)
 
             previous_line = str()
 
@@ -186,11 +187,12 @@ class Step(dc.DessiaObject):
         """Helper function to read_lines."""
         function_id, function_name, function_name_arg = function_parameters
         function_arg = function_name_arg[1]
-        arguments = step_reader.step_split_arguments(function_arg)
         new_name = ''
         new_arguments = []
+        # if function_id == 2556:
+        #     print(True)
         if function_name == "":
-            name_arg = self.step_subfunctions(arguments)
+            name_arg = self.step_subfunctions([function_arg + ")"])
             for name, arg in name_arg:
                 new_name += name + ', '
                 new_arguments.extend(arg)
@@ -200,6 +202,8 @@ class Step(dc.DessiaObject):
             for arg in arguments:
                 if arg[0] == '#':
                     connections.append(int(arg[1:]))
+        else:
+            arguments = step_reader.step_split_arguments(function_arg)
 
         for i, argument in enumerate(arguments):
             if argument[:2] == '(#' and argument[-1] == ')':
@@ -365,6 +369,9 @@ class Step(dc.DessiaObject):
         self.parse_arguments(arguments)
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
+        # print(step_id)
+        # if step_id == 2556:
+        #     print(True)
         try:
             if hasattr(step_reader, fun_name):
                 volmdlr_object = getattr(step_reader, fun_name)(arguments, object_dict,

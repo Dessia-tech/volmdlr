@@ -1,7 +1,7 @@
 """
 volmdlr utils for importing step files.
 """
-from re import search as re_search
+import re
 
 import numpy as npy
 
@@ -25,7 +25,47 @@ def set_to_list(step_set):
     return list(char_list)
 
 
-def step_split_arguments(function_arg):
+def step_split_arguments(function_arg: str) ->list[str]:
+    """
+    Split the arguments of a function that doesn't start with '(' but end with ')'.
+
+    ex: IN: '#123,#124,#125)'
+       OUT: ['#123', '#124', '#125']
+    """
+    # Remove all spaces from the string
+    function_arg = function_arg.replace(" ", "")
+
+    if not function_arg:
+        return []
+
+    if function_arg[-1] == ";":
+        function_arg = function_arg[:-2]
+
+
+    # if double_brackets_start_indexes:
+    if "((" in function_arg:
+        double_brackets_start_indexes = [match.start() for match in re.finditer(r'\(\(', function_arg)]
+        double_brackets_end_indexes = [match.end() for match in re.finditer(r'\)\)', function_arg)]
+        starting_index = 0
+        arguments = []
+        for start, end in zip(double_brackets_start_indexes, double_brackets_end_indexes):
+            arguments.extend(re.findall(r'\([^)]*\)|[^,]+', function_arg[starting_index:start]))
+            arguments.append(function_arg[start:end])
+            starting_index = end
+        arguments.extend(re.findall(r'\([^)]*\)|[^,]+', function_arg[starting_index:]))
+        return arguments
+
+    else:
+        # Use regular expression to extract arguments
+        arguments = re.findall(r'\([^)]*\)|[^,]+', function_arg)
+
+        # # Remove leading and trailing spaces from each argument
+        # arguments = [arg.strip() for arg in arguments]
+
+    return arguments
+
+
+def step_split_arguments_special(function_arg):
     """
     Split the arguments of a function that doesn't start with '(' but end with ')'.
 
@@ -308,7 +348,7 @@ def _helper_get_parameter_value(string):
     pattern = r'\((-?\d+\.\d+)\)'
 
     # Use re.search to find the match
-    match = re_search(pattern, string)
+    match = re.search(pattern, string)
 
     if match:
         numerical_value = float(match.group(1))
