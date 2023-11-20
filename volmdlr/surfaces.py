@@ -1499,24 +1499,24 @@ class Plane3D(Surface3D):
         """
         return cylindrical_surface.plane_intersections(self)
 
-    def is_coincident(self, plane2):
+    def is_coincident(self, plane2, abs_tol: float = 1e-6):
         """
         Verifies if two planes are parallel and coincident.
 
         """
         if not isinstance(self, plane2.__class__):
             return False
-        if self.is_parallel(plane2):
-            if plane2.point_on_surface(self.frame.origin):
+        if self.is_parallel(plane2, abs_tol):
+            if plane2.point_on_surface(self.frame.origin, abs_tol):
                 return True
         return False
 
-    def is_parallel(self, plane2):
+    def is_parallel(self, plane2, abs_tol: float = 1e-6):
         """
         Verifies if two planes are parallel.
 
         """
-        if self.frame.w.is_colinear_to(plane2.frame.w):
+        if self.frame.w.is_colinear_to(plane2.frame.w, abs_tol):
             return True
         return False
 
@@ -2580,11 +2580,12 @@ class CylindricalSurface3D(PeriodicalSurface):
             list_curves.append(bspline)
         return list_curves
 
-    def is_coincident(self, surface3d):
+    def is_coincident(self, surface3d, abs_tol: float = 1e-6):
         """
         Verifies if two CylindricalSurfaces are coincident.
 
         :param surface3d: surface to verify.
+        :param abs_tol: tolerance.
         :return: True if they are coincident, False otherwise.
         """
         if not isinstance(self, surface3d.__class__):
@@ -2592,8 +2593,8 @@ class CylindricalSurface3D(PeriodicalSurface):
         line = curves.Line3D.from_point_and_vector(surface3d.frame.origin, surface3d.frame.w)
         distance_to_self_origin = line.point_distance(self.frame.origin)
 
-        if math.isclose(abs(self.frame.w.dot(surface3d.frame.w)), 1.0, abs_tol=1e-6) and \
-                 math.isclose(distance_to_self_origin, 0.0, abs_tol=1e-6) and self.radius == surface3d.radius:
+        if math.isclose(abs(self.frame.w.dot(surface3d.frame.w)), 1.0, abs_tol=abs_tol) and \
+                 math.isclose(distance_to_self_origin, 0.0, abs_tol=abs_tol) and self.radius == surface3d.radius:
             return True
         return False
 
@@ -3456,18 +3457,19 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         return curves_
 
-    def is_coincident(self, surface3d):
+    def is_coincident(self, surface3d, abs_tol: float = 1e-6):
         """
         Verifies if two ToroidalSurfaces are coincident.
 
         :param surface3d: surface to verify.
+        :param abs_tol: tolerance.
         :return: True if they are coincident, False otherwise.
         """
         if not isinstance(self, surface3d.__class__):
             return False
-        if math.isclose(abs(self.frame.w.dot(surface3d.frame.w)), 1.0, abs_tol=1e-6) and \
-                math.isclose(self.major_radius, surface3d.major_radius, abs_tol=1e-6) and \
-                math.isclose(self.minor_radius, surface3d.minor_radius, abs_tol=1e-6):
+        if math.isclose(abs(self.frame.w.dot(surface3d.frame.w)), 1.0, abs_tol=abs_tol) and \
+                math.isclose(self.major_radius, surface3d.major_radius, abs_tol=abs_tol) and \
+                math.isclose(self.minor_radius, surface3d.minor_radius, abs_tol=abs_tol):
             return True
         return False
 
@@ -3646,18 +3648,19 @@ class ConicalSurface3D(PeriodicalSurface):
         frame.origin = frame.origin - radius / math.tan(semi_angle) * frame.w
         return cls(frame, semi_angle, arguments[0][1:-1])
 
-    def is_coincident(self, surface3d):
+    def is_coincident(self, surface3d, abs_tol: float = 1e-6):
         """
         Verifies if two conical surfaces are coincident.
 
         :param surface3d: other surface 3d.
+        :param abs_tol: tolerance.
         :return: True if they are coincident, False otherwise.
         """
         if not isinstance(surface3d, ConicalSurface3D):
             return False
-        if math.isclose(self.frame.w.dot(surface3d.frame.w), 1.0, abs_tol=1e-6) and \
+        if math.isclose(self.frame.w.dot(surface3d.frame.w), 1.0, abs_tol=abs_tol) and \
             self.frame.origin.is_close(surface3d.frame.origin) and \
-                math.isclose(self.semi_angle, surface3d.semi_angle, abs_tol=1e-6):
+                math.isclose(self.semi_angle, surface3d.semi_angle, abs_tol=abs_tol):
             return True
         return False
 

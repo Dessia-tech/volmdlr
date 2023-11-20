@@ -26,11 +26,12 @@ from volmdlr.utils.step_writer import (geometric_context_writer,
                                        product_writer, step_ids_to_str)
 
 
-def union_list_of_shells(list_shells):
+def union_list_of_shells(list_shells, abs_tol: float = 1e-6):
     """
     Perform union operations with all shells from a list, until all groups of adjacent shells are merged.
 
-    :param list_shells: A list of shells
+    :param list_shells: A list of shells.
+    :param abs_tol: tolerance.
     :return: A list of merged shells
     """
     shells = []
@@ -44,7 +45,7 @@ def union_list_of_shells(list_shells):
 
         for i, union_shell in enumerate(union_shells[:]):
             for j, octant_box in enumerate(list_shells[:]):
-                union = union_shell.union(octant_box)
+                union = union_shell.union(octant_box, abs_tol)
                 if len(union) != 2:
                     union_shells.pop(i)
                     union[0].merge_faces()
@@ -749,13 +750,13 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             intersections_points + shell1_points_outside_shell2)
         return bbox.volume()
 
-    def face_on_shell(self, face):
+    def face_on_shell(self, face, abs_tol: float = 1e-6):
         """
         Verifies if a face lies on the shell's surface.
 
         """
         for face_ in self.faces:
-            if face_.face_inside(face):
+            if face_.face_inside(face, abs_tol):
                 return True
         return False
 
@@ -1232,7 +1233,7 @@ class ClosedShell3D(Shell3D):
         face_combinations2 = {face: [] for face in shell2.faces}
         for face1 in self.faces:
             for face2 in shell2.faces:
-                if face1.surface3d.is_coincident(face2.surface3d):
+                if face1.surface3d.is_coincident(face2.surface3d, abs_tol=tol):
                     contours1, contours2 = face1.get_coincident_face_intersections(face2)
                     face_combinations1[face1].extend(contours1)
                     face_combinations2[face2].extend(contours2)
@@ -1266,7 +1267,7 @@ class ClosedShell3D(Shell3D):
                 valid_non_intercting_faces.append(face)
         return valid_non_intercting_faces
 
-    def get_coincident_faces(self, shell2):
+    def get_coincident_faces(self, shell2, abs_tol: float = 1e-6):
         """
         Finds all pairs of faces that are coincident faces, that is, faces lying on the same plane.
 
@@ -1275,7 +1276,7 @@ class ClosedShell3D(Shell3D):
         list_coincident_faces = []
         for face1 in self.faces:
             for face2 in shell2.faces:
-                if isinstance(face1, face2.__class__) and face1.surface3d.is_coincident(face2.surface3d):
+                if face1.surface3d.is_coincident(face2.surface3d, abs_tol):
                     contour1 = face1.outer_contour3d.to_2d(
                         face1.surface3d.frame.origin,
                         face1.surface3d.frame.u,
@@ -1541,6 +1542,29 @@ class ClosedShell3D(Shell3D):
             non_intersecting_faces.append(face)
         return intersecting_faces, non_intersecting_faces
 
+    def _delete_coincident_faces(self, shell2, list_coincident_faces, abs_tol: float = 1e-6):
+        """
+        Helper method to delete coincident faces during union operation.
+
+        :param shell2: other shell2.
+        :param list_coincident_faces: list of coincident faces.
+        :param abs_tol: tolerance.
+        :return: list of closed shells.
+        """
+        faces1 = self.faces[:]
+        faces2 = shell2.faces[:]
+        if list_coincident_faces:
+            for face1, face2 in list_coincident_faces:
+                if shell2.face_on_shell(face1, abs_tol):
+                    if face1 in faces1:
+                        faces1.remove(face1)
+                if self.face_on_shell(face2, abs_tol):
+                    if face2 in faces2:
+                        faces2.remove(face2)
+        if len(faces1) + len(faces2) == len(self.faces) + len(shell2.faces):
+            return [self, shell2]
+        return [ClosedShell3D(faces1+faces2)]
+
     def union(self, shell2: 'ClosedShell3D', tol: float = 1e-8):
         """
         Given Two closed shells, it returns a new united ClosedShell3D object.
@@ -1549,7 +1573,7 @@ class ClosedShell3D(Shell3D):
         validate_set_operation = self.validate_set_operation(shell2, tol)
         if validate_set_operation:
             return validate_set_operation
-        list_coincident_faces = self.get_coincident_faces(shell2)
+        list_coincident_faces = self.get_coincident_faces(shell2, tol)
         dict_face_intersections1, dict_face_intersections2 = self.intersecting_faces_combinations(shell2, tol)
         intersecting_faces_1, non_intersecting_faces1 = self._separate_intersecting_and_non_intersecting_faces(
             dict_face_intersections1)
@@ -1559,7 +1583,7 @@ class ClosedShell3D(Shell3D):
         non_intersecting_faces2 = shell2.validate_non_intersecting_faces(self, non_intersecting_faces2)
         faces = non_intersecting_faces1 + non_intersecting_faces2
         if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces_1 + intersecting_faces_2:
-            return [self, shell2]
+            return self._delete_coincident_faces(shell2, list_coincident_faces, tol)
         new_valid_faces = self.union_faces(shell2, intersecting_faces_1,
                                             dict_face_intersections1, list_coincident_faces)
         new_valid_faces += shell2.union_faces(self, intersecting_faces_2,
