@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalFace3D: PlaneFace3D intersectios.
 - SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
 - ConicalSurface3D: sphericalsurface_intersections
+- General improvements on sufaces' parametric operations.
 
 #### edges.py
 - BsplineCurve3D: circle_intersections.
@@ -45,10 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support to Datakit CrossCadWare STEP file format.
 
 ### Fixed
-
-#### core_compiled
-- Frame2D: fix rotation.
 - Drone : run generate sdist and generate bdist_wheel only on master
+
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
 
@@ -81,13 +80,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### edges.py
 - bsplineCurve: line_intersections. 
-- Arc2D: Arc 2D now must follow the same rotation direction of its circle.
-
-#### core_compiled
-- Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
-
-#### primitives3d
-- Block: get_bounding_box
 
 #### discrete_representation.py
 - MatrixBasedVoxelization: _logical_operation
@@ -114,6 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### primitives3d.py
 - Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
+- Block: get_bounding_box
 
 #### shells.py
 - boolean operations - now works also for triangle meshed objects, containing coincident faces.

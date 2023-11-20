@@ -2946,10 +2946,9 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """Get polygon lines."""
         lines = []
         if len(self.points) > 1:
-            for point1, point2 in zip(self.points,
-                                      list(self.points[1:]) + [self.points[0]]):
-                if not point1.is_close(point2):
-                    lines.append(volmdlr.edges.LineSegment2D(point1, point2))
+            lines = [volmdlr.edges.LineSegment2D(point1, point2)
+                     for point1, point2 in zip(self.points, self.points[1:] + [self.points[0]])
+                     if point1 != point2]
         return lines
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
@@ -4490,7 +4489,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         points2d = [point.to_2d(plane_origin, x, y) for point in self.points]
         return ClosedPolygon2D(points2d)
 
-    def sewing_with(self, other_poly3d, x, y, resolution=20):
+    def _get_sewing_with_parameters(self, other_poly3d, x, y):
+        """Helper function to sewing_with."""
         self_center, other_center = self.average_center_point(), \
             other_poly3d.average_center_point()
 
@@ -4503,6 +4503,13 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
         bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle.bounds(), \
             other_poly2d.bounding_rectangle.bounds()
+        return (self_center, other_center, self_center2d, other_center2d,
+                self_poly2d, other_poly2d, bbox_self2d, bbox_other2d)
+
+    def sewing_with(self, other_poly3d, x, y, resolution=20):
+        """Sew two polygons."""
+        (self_center, other_center, self_center2d, other_center2d,
+         self_poly2d, other_poly2d, bbox_self2d, bbox_other2d) = self._get_sewing_with_parameters(other_poly3d, x, y)
         position = [abs(value) for value in bbox_self2d] \
             + [abs(value) for value in bbox_other2d]
         max_scale = 2 * max(position)
