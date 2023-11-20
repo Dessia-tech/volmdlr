@@ -25,7 +25,7 @@ def set_to_list(step_set):
     return list(char_list)
 
 
-def step_split_arguments(function_arg: str) ->list[str]:
+def step_split_arguments(function_arg: str) -> list[str]:
     """
     Split the arguments of a function that doesn't start with '(' but end with ')'.
 
@@ -33,14 +33,13 @@ def step_split_arguments(function_arg: str) ->list[str]:
        OUT: ['#123', '#124', '#125']
     """
     # Remove all spaces from the string
-    function_arg = function_arg.replace(" ", "")
+    function_arg = remove_spaces_outside_quotes(function_arg)
 
     if not function_arg:
         return []
 
     if function_arg[-1] == ";":
         function_arg = function_arg[:-2]
-
 
     # if double_brackets_start_indexes:
     if "((" in function_arg:
@@ -63,6 +62,17 @@ def step_split_arguments(function_arg: str) ->list[str]:
         # arguments = [arg.strip() for arg in arguments]
 
     return arguments
+
+
+def remove_spaces_outside_quotes(input_string: str) -> str:
+    """Helper function to remove only space that are outside quotes."""
+    quoted_strings = re.findall(r"'[^']*'", input_string)
+
+    result = input_string.replace(' ', '')
+    # Restore the original quoted strings
+    for quoted_string in quoted_strings:
+        result = result.replace(quoted_string.replace(' ', ''), quoted_string)
+    return result
 
 
 def step_split_arguments_special(function_arg):
@@ -383,7 +393,7 @@ def composite_curve(arguments, object_dict, *args, **kwargs):
     Returns the data in case of a COMPOSITE_CURVE.
     """
     name = arguments[0]
-    list_primitives = [object_dict[int(arg[1:])]for arg in arguments[1]]
+    list_primitives = [object_dict[int(arg[1:])] for arg in arguments[1]]
     first_primitive = list_primitives[0]
     last_primitive = list_primitives[-1]
     if first_primitive.start.is_close(last_primitive.end):
@@ -685,11 +695,11 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
         matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
-                       [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
-                       [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+                              [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                              [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
         matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
-                       [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
-                       [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+                              [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                              [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
         transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
         new_frame = volmdlr.Frame3D(transformed_frame.origin, volmdlr.Vector3D(*transfer_matrix[0]),
                                     volmdlr.Vector3D(*transfer_matrix[1]), volmdlr.Vector3D(*transfer_matrix[2]))
@@ -740,7 +750,8 @@ def b_spline_curve_b_spline_curve_with_knots_rational_b_spline_curve_bounded_cur
     """
     Bounded b spline with knots curve geometric representation item. To clarify.
     """
-    return bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(arguments, object_dict)
+    return bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
+        arguments, object_dict)
 
 
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
@@ -768,12 +779,14 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometr
         arguments, object_dict)
 
 
-def b_spline_surface_b_spline_surface_with_knots_rational_b_spline_surface_bounded_surface_representation_item_geometric_representation_item_surface(arguments, object_dict, *args, **kwargs):
+def b_spline_surface_b_spline_surface_with_knots_rational_b_spline_surface_bounded_surface_representation_item_geometric_representation_item_surface(
+        arguments, object_dict, *args, **kwargs):
     """
     Bounded b spline surface with knots curve geometric representation item. To clarify.
     """
     return bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
         arguments, object_dict)
+
 
 def product_definition_shape(arguments, object_dict, *args, **kwargs):
     """
@@ -822,6 +835,7 @@ def product_context(arguments, *args, **kwargs):
     Returns the data in case of a product_context.
     """
     return arguments
+
 
 STEP_TO_VOLMDLR = {
     # GEOMETRICAL ENTITIES

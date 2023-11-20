@@ -192,7 +192,7 @@ class Step(dc.DessiaObject):
         # if function_id == 2556:
         #     print(True)
         if function_name == "":
-            name_arg = self.step_subfunctions([function_arg + ")"])
+            name_arg = self.step_subfunctions([function_arg])
             for name, arg in name_arg:
                 new_name += name + ', '
                 new_arguments.extend(arg)
