@@ -224,7 +224,6 @@ cpdef bint polygon_point_belongs(double[:, ::1] polygon, double[:] point,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-@cython.profile(True)
 cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon, double[:, ::1] points,
                                                          bint include_edge_points = False, double tol = 1e-6):
     cdef size_t n = polygon.shape[0]

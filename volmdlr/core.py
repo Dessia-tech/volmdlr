@@ -514,10 +514,10 @@ class BoundingRectangle(dc.DessiaObject):
         :return: The bounding rectangle initialized from the list of points.
         :rtype: BoundingRectangle
         """
-        xmin = min(pt.x for pt in points)
-        xmax = max(pt.x for pt in points)
-        ymin = min(pt.y for pt in points)
-        ymax = max(pt.y for pt in points)
+        points_array = npy.array(points)
+        # Compute min and max for each dimension
+        xmin, ymin = points_array.min(axis=0)
+        xmax, ymax = points_array.max(axis=0)
         return cls(xmin, xmax, ymin, ymax, name=name)
 
 
@@ -696,7 +696,7 @@ class BoundingBox(dc.DessiaObject):
         :return: The bounding box initialized from the list of points.
         :rtype: BoundingBox
         """
-        points_array = npy.array([[*point] for point in points])
+        points_array = npy.array(points)
         # Compute min and max for each dimension
         xmin, ymin, zmin = points_array.min(axis=0)
         xmax, ymax, zmax = points_array.max(axis=0)
