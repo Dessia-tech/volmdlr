@@ -59,7 +59,7 @@ class TestPlaneFace3D(unittest.TestCase):
     def test_divide_face(self):
         face_intersections = self.face.face_intersections(self.face_with_3holes)
         cutting_contours = self.face_with_3holes.get_face_cutting_contours(
-            {(self.face, self.face_with_3holes): face_intersections})
+            {self.face_with_3holes: face_intersections})
         new_faces = self.face_with_3holes.divide_face(cutting_contours)
         self.assertEqual(len(new_faces), 2)
         cutting_contour = wires.Wire2D.from_points([
@@ -101,7 +101,7 @@ class TestPlaneFace3D(unittest.TestCase):
         volumemodel = dessia_common.core.DessiaObject.load_from_file(
             os.path.join(folder, 'test_set_operations_new_faces.json'))
         plane_face, cutting_contours3d = volumemodel.primitives[0], volumemodel.primitives[1:]
-        divide_face = plane_face.set_operations_new_faces({(plane_face, plane_face): cutting_contours3d})
+        divide_face = plane_face.set_operations_new_faces({plane_face: cutting_contours3d})
         divide_face = sorted(divide_face, key=lambda face: face.area())
         self.assertEqual(len(divide_face), 7)
         expected_areas = [0.05000000000000002, 0.25, 0.4375, 0.5, 1.0621681469282045, 1.29875, 2.4002627208849607]

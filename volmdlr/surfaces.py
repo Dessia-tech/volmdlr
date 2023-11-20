@@ -5448,6 +5448,7 @@ class ExtrusionSurface3D(Surface3D):
             degree = 2
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree)]
 
+
 class RevolutionSurface3D(PeriodicalSurface):
     """
     Defines a surface of revolution.
@@ -5461,7 +5462,6 @@ class RevolutionSurface3D(PeriodicalSurface):
     """
     face_class = 'RevolutionFace3D'
     x_periodicity = volmdlr.TWO_PI
-
 
     def __init__(self, edge,
                  axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D, name: str = ''):

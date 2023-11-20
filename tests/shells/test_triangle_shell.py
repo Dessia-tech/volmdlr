@@ -4,7 +4,11 @@ import unittest
 import numpy as np
 
 from dessia_common.core import DessiaObject
-from volmdlr.shells import OpenTriangleShell3D, ClosedTriangleShell3D, DisplayTriangleShell3D
+from volmdlr.shells import (
+    OpenTriangleShell3D,
+    ClosedTriangleShell3D,
+    DisplayTriangleShell3D,
+)
 from volmdlr.primitives3d import Block
 from volmdlr import OXYZ
 
@@ -34,10 +38,11 @@ class TestTriangleShell3D(unittest.TestCase):
             closed_triangle_shell.babylonjs()
 
     def test_display_triangle_shell(self):
-        display_triangle_shell = OpenTriangleShell3D(self.faces).to_display_triangle_shell()
+        display_triangle_shell = OpenTriangleShell3D(
+            self.faces
+        ).to_display_triangle_shell()
         self.assertEqual(12, len(display_triangle_shell.indices))
         self.assertEqual(8, len(display_triangle_shell.positions))
-
         self.assertEqual(display_triangle_shell, DisplayTriangleShell3D.dict_to_object(display_triangle_shell.to_dict()))
         self.assertEqual(display_triangle_shell, display_triangle_shell + display_triangle_shell)
 
@@ -45,16 +50,26 @@ class TestTriangleShell3D(unittest.TestCase):
             display_triangle_shell.babylonjs()
 
     def test_turn_normals_outwards(self):
-        closed_shell = DessiaObject.load_from_file(os.path.join(folder, 'closedtriangleshell3d.json'))
+        closed_shell = DessiaObject.load_from_file(
+            os.path.join(folder, "closedtriangleshell3d.json")
+        )
         self.assertFalse(closed_shell.are_normals_pointing_outwards())
         new_closed_shell = closed_shell.turn_normals_outwards()
         self.assertTrue(new_closed_shell.are_normals_pointing_outwards())
 
     def test_turn_normals_inwards(self):
-        closed_shell = DessiaObject.load_from_file(os.path.join(folder, 'closedtriangleshell3d.json'))
+        closed_shell = DessiaObject.load_from_file(
+            os.path.join(folder, "closedtriangleshell3d.json")
+        )
         self.assertFalse(closed_shell.are_normals_pointing_inwards())
         new_closed_shell = closed_shell.turn_normals_inwards()
         self.assertTrue(new_closed_shell.are_normals_pointing_inwards())
+
+    def test_closedtriagleshell3d_subtraction(self):
+        shell1 = DessiaObject.load_from_file(os.path.join(folder, "shell1(1).json"))
+        shell2 = DessiaObject.load_from_file(os.path.join(folder, "shell2(1).json"))
+        new_shell = shell2.subtract_to_closed_shell(shell1)[0]
+        self.assertEqual(len(new_shell.faces), 76)
 
 
 class TestDisplayTriangleShell3D(unittest.TestCase):

@@ -114,6 +114,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### primitives3d.py
 - Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
 
+#### shells.py
+- boolean operations - now works also for triangle meshed objects, containing coincident faces.
 #### surfaces.py
 - ExtrusionSurface3D: Uses edge abscissa as u parameter.
 - ExtrusionSurface3D: general improvements in parametric operations.
