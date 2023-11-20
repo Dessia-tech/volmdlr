@@ -149,7 +149,9 @@ def line_segments_to_pixels(line_segments: List[_Segment2D], pixel_size: float) 
 
 
 def triangle_intersects_voxel(
-    triangle: _Triangle3D, voxel_center: _Point3D, voxel_extents: Tuple[float, float, float]
+    triangle: _Triangle3D,
+    voxel_center: _Point3D,
+    voxel_extents: Tuple[float, float, float],
 ) -> bool:
     """
     Helper function to compute if there is an intersection between a 3D triangle and a voxel.
@@ -478,8 +480,14 @@ def _triangle_interfaces_voxel(
         ] = (p0, p1, p2)
 
         # Define the voxel in 2D
-        pixel_center: Tuple[cython.double, cython.double] = (voxel_center[1], voxel_center[2])
-        pixel_extents: Tuple[cython.double, cython.double] = (voxel_extents[1], voxel_extents[2])
+        pixel_center: Tuple[cython.double, cython.double] = (
+            voxel_center[1],
+            voxel_center[2],
+        )
+        pixel_extents: Tuple[cython.double, cython.double] = (
+            voxel_extents[1],
+            voxel_extents[2],
+        )
 
         # Check for intersection with the voxel
         if _triangle_2d_intersects_pixel(triangle_2d, pixel_center, pixel_extents):
@@ -506,8 +514,14 @@ def _triangle_interfaces_voxel(
         ] = (p0, p1, p2)
 
         # Define the voxel in 2D
-        pixel_center: Tuple[cython.double, cython.double] = (voxel_center[0], voxel_center[2])
-        pixel_extents: Tuple[cython.double, cython.double] = (voxel_extents[0], voxel_extents[2])
+        pixel_center: Tuple[cython.double, cython.double] = (
+            voxel_center[0],
+            voxel_center[2],
+        )
+        pixel_extents: Tuple[cython.double, cython.double] = (
+            voxel_extents[0],
+            voxel_extents[2],
+        )
 
         # Check for intersection with the voxel
         if _triangle_2d_intersects_pixel(triangle_2d, pixel_center, pixel_extents):
@@ -534,8 +548,14 @@ def _triangle_interfaces_voxel(
         ] = (p0, p1, p2)
 
         # Define the voxel in 2D
-        pixel_center: Tuple[cython.double, cython.double] = (voxel_center[0], voxel_center[1])
-        pixel_extents: Tuple[cython.double, cython.double] = (voxel_extents[0], voxel_extents[1])
+        pixel_center: Tuple[cython.double, cython.double] = (
+            voxel_center[0],
+            voxel_center[1],
+        )
+        pixel_extents: Tuple[cython.double, cython.double] = (
+            voxel_extents[0],
+            voxel_extents[1],
+        )
 
         # Check for intersection with the voxel
         if _triangle_2d_intersects_pixel(triangle_2d, pixel_center, pixel_extents):
@@ -661,7 +681,9 @@ def _bounding_rectangles_overlap(
 def _point_in_triangle_2d(
     point: Tuple[cython.double, cython.double],
     triangle_2d: Tuple[
-        Tuple[cython.double, cython.double], Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]
+        Tuple[cython.double, cython.double],
+        Tuple[cython.double, cython.double],
+        Tuple[cython.double, cython.double],
     ],
 ) -> bool_C:
     """Check if a point is in a 2D triangle."""
@@ -933,7 +955,9 @@ def _line_segments_to_pixels(
 @cython.cdivision(True)
 def _triangle_2d_to_pixels(
     triangle_2d: Tuple[
-        Tuple[cython.double, cython.double], Tuple[cython.double, cython.double], Tuple[cython.double, cython.double]
+        Tuple[cython.double, cython.double],
+        Tuple[cython.double, cython.double],
+        Tuple[cython.double, cython.double],
     ],
     pixel_size: cython.double,
 ) -> vector[Tuple[cython.double, cython.double]]:
@@ -984,9 +1008,18 @@ def _triangles_to_voxel_matrix(
             == _round_to_digits(triangles[i][2][0], 9)
         ) and _is_integer(_round_to_digits(x_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
-            p0: Tuple[cython.double, cython.double] = (triangles[i][0][1], triangles[i][0][2])
-            p1: Tuple[cython.double, cython.double] = (triangles[i][1][1], triangles[i][1][2])
-            p2: Tuple[cython.double, cython.double] = (triangles[i][2][1], triangles[i][2][2])
+            p0: Tuple[cython.double, cython.double] = (
+                triangles[i][0][1],
+                triangles[i][0][2],
+            )
+            p1: Tuple[cython.double, cython.double] = (
+                triangles[i][1][1],
+                triangles[i][1][2],
+            )
+            p2: Tuple[cython.double, cython.double] = (
+                triangles[i][2][1],
+                triangles[i][2][2],
+            )
 
             triangle_2d: Tuple[
                 Tuple[cython.double, cython.double],
@@ -1000,19 +1033,31 @@ def _triangles_to_voxel_matrix(
             min_center: Tuple[cython.double, cython.double] = _get_min_pixel_grid_center(pixels)
             max_center: Tuple[cython.double, cython.double] = _get_max_pixel_grid_center(pixels)
 
-            dim_x = cython.cast(cython.int, math_c.round((max_center[0] - min_center[0]) / voxel_size + 1))
-            dim_y = cython.cast(cython.int, math_c.round((max_center[1] - min_center[1]) / voxel_size + 1))
+            dim_x = cython.cast(
+                cython.int,
+                math_c.round((max_center[0] - min_center[0]) / voxel_size + 1),
+            )
+            dim_y = cython.cast(
+                cython.int,
+                math_c.round((max_center[1] - min_center[1]) / voxel_size + 1),
+            )
 
             pixel_matrix = _pixel_centers_to_filled_pixel_matrix(pixels, voxel_size, (dim_x, dim_y), min_center)
 
             # Put the corresponding voxels at True, using the indices
             ix1 = cython.cast(
                 cython.int,
-                _round_to_digits((x_abscissa - matrix_origin_center[0] - voxel_size / 2) / voxel_size, 9),
+                _round_to_digits(
+                    (x_abscissa - matrix_origin_center[0] - voxel_size / 2) / voxel_size,
+                    9,
+                ),
             )
             ix2 = cython.cast(
                 cython.int,
-                _round_to_digits((x_abscissa - matrix_origin_center[0] + voxel_size / 2) / voxel_size, 9),
+                _round_to_digits(
+                    (x_abscissa - matrix_origin_center[0] + voxel_size / 2) / voxel_size,
+                    9,
+                ),
             )
 
             dx: cython.int
@@ -1023,13 +1068,15 @@ def _triangles_to_voxel_matrix(
                         iy = cython.cast(
                             cython.int,
                             _round_to_digits(
-                                ((min_center[0] + dx * voxel_size) - matrix_origin_center[1]) / voxel_size, 6
+                                ((min_center[0] + dx * voxel_size) - matrix_origin_center[1]) / voxel_size,
+                                6,
                             ),
                         )
                         iz = cython.cast(
                             cython.int,
                             _round_to_digits(
-                                ((min_center[1] + dy * voxel_size) - matrix_origin_center[2]) / voxel_size, 6
+                                ((min_center[1] + dy * voxel_size) - matrix_origin_center[2]) / voxel_size,
+                                6,
                             ),
                         )
 
@@ -1043,9 +1090,18 @@ def _triangles_to_voxel_matrix(
             == _round_to_digits(triangles[i][2][1], 9)
         ) and _is_integer(_round_to_digits(y_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
-            p0: Tuple[cython.double, cython.double] = (triangles[i][0][0], triangles[i][0][2])
-            p1: Tuple[cython.double, cython.double] = (triangles[i][1][0], triangles[i][1][2])
-            p2: Tuple[cython.double, cython.double] = (triangles[i][2][0], triangles[i][2][2])
+            p0: Tuple[cython.double, cython.double] = (
+                triangles[i][0][0],
+                triangles[i][0][2],
+            )
+            p1: Tuple[cython.double, cython.double] = (
+                triangles[i][1][0],
+                triangles[i][1][2],
+            )
+            p2: Tuple[cython.double, cython.double] = (
+                triangles[i][2][0],
+                triangles[i][2][2],
+            )
 
             triangle_2d: Tuple[
                 Tuple[cython.double, cython.double],
@@ -1059,19 +1115,31 @@ def _triangles_to_voxel_matrix(
             min_center: Tuple[cython.double, cython.double] = _get_min_pixel_grid_center(pixels)
             max_center: Tuple[cython.double, cython.double] = _get_max_pixel_grid_center(pixels)
 
-            dim_x = cython.cast(cython.int, math_c.round((max_center[0] - min_center[0]) / voxel_size + 1))
-            dim_y = cython.cast(cython.int, math_c.round((max_center[1] - min_center[1]) / voxel_size + 1))
+            dim_x = cython.cast(
+                cython.int,
+                math_c.round((max_center[0] - min_center[0]) / voxel_size + 1),
+            )
+            dim_y = cython.cast(
+                cython.int,
+                math_c.round((max_center[1] - min_center[1]) / voxel_size + 1),
+            )
 
             pixel_matrix = _pixel_centers_to_filled_pixel_matrix(pixels, voxel_size, (dim_x, dim_y), min_center)
 
             # Put the corresponding voxels at True, using the indices
             iy1 = cython.cast(
                 cython.int,
-                _round_to_digits((y_abscissa - matrix_origin_center[1] - voxel_size / 2) / voxel_size, 9),
+                _round_to_digits(
+                    (y_abscissa - matrix_origin_center[1] - voxel_size / 2) / voxel_size,
+                    9,
+                ),
             )
             iy2 = cython.cast(
                 cython.int,
-                _round_to_digits((y_abscissa - matrix_origin_center[1] + voxel_size / 2) / voxel_size, 9),
+                _round_to_digits(
+                    (y_abscissa - matrix_origin_center[1] + voxel_size / 2) / voxel_size,
+                    9,
+                ),
             )
 
             dx: cython.int
@@ -1082,13 +1150,15 @@ def _triangles_to_voxel_matrix(
                         ix = cython.cast(
                             cython.int,
                             _round_to_digits(
-                                ((min_center[0] + dx * voxel_size) - matrix_origin_center[0]) / voxel_size, 6
+                                ((min_center[0] + dx * voxel_size) - matrix_origin_center[0]) / voxel_size,
+                                6,
                             ),
                         )
                         iz = cython.cast(
                             cython.int,
                             _round_to_digits(
-                                ((min_center[1] + dy * voxel_size) - matrix_origin_center[2]) / voxel_size, 6
+                                ((min_center[1] + dy * voxel_size) - matrix_origin_center[2]) / voxel_size,
+                                6,
                             ),
                         )
 
@@ -1102,9 +1172,18 @@ def _triangles_to_voxel_matrix(
             == _round_to_digits(triangles[i][2][2], 9)
         ) and _is_integer(_round_to_digits(z_abscissa / voxel_size, 9)):
             # Define the 3D triangle in 2D
-            p0: Tuple[cython.double, cython.double] = (triangles[i][0][0], triangles[i][0][1])
-            p1: Tuple[cython.double, cython.double] = (triangles[i][1][0], triangles[i][1][1])
-            p2: Tuple[cython.double, cython.double] = (triangles[i][2][0], triangles[i][2][1])
+            p0: Tuple[cython.double, cython.double] = (
+                triangles[i][0][0],
+                triangles[i][0][1],
+            )
+            p1: Tuple[cython.double, cython.double] = (
+                triangles[i][1][0],
+                triangles[i][1][1],
+            )
+            p2: Tuple[cython.double, cython.double] = (
+                triangles[i][2][0],
+                triangles[i][2][1],
+            )
 
             triangle_2d: Tuple[
                 Tuple[cython.double, cython.double],
@@ -1118,19 +1197,31 @@ def _triangles_to_voxel_matrix(
             min_center: Tuple[cython.double, cython.double] = _get_min_pixel_grid_center(pixels)
             max_center: Tuple[cython.double, cython.double] = _get_max_pixel_grid_center(pixels)
 
-            dim_x = cython.cast(cython.int, math_c.round((max_center[0] - min_center[0]) / voxel_size + 1))
-            dim_y = cython.cast(cython.int, math_c.round((max_center[1] - min_center[1]) / voxel_size + 1))
+            dim_x = cython.cast(
+                cython.int,
+                math_c.round((max_center[0] - min_center[0]) / voxel_size + 1),
+            )
+            dim_y = cython.cast(
+                cython.int,
+                math_c.round((max_center[1] - min_center[1]) / voxel_size + 1),
+            )
 
             pixel_matrix = _pixel_centers_to_filled_pixel_matrix(pixels, voxel_size, (dim_x, dim_y), min_center)
 
             # Put the corresponding voxels at True, using the indices
             iz1 = cython.cast(
                 cython.int,
-                _round_to_digits((z_abscissa - matrix_origin_center[2] - voxel_size / 2) / voxel_size, 9),
+                _round_to_digits(
+                    (z_abscissa - matrix_origin_center[2] - voxel_size / 2) / voxel_size,
+                    9,
+                ),
             )
             iz2 = cython.cast(
                 cython.int,
-                _round_to_digits((z_abscissa - matrix_origin_center[2] + voxel_size / 2) / voxel_size, 9),
+                _round_to_digits(
+                    (z_abscissa - matrix_origin_center[2] + voxel_size / 2) / voxel_size,
+                    9,
+                ),
             )
 
             dx: cython.int
@@ -1141,13 +1232,15 @@ def _triangles_to_voxel_matrix(
                         ix = cython.cast(
                             cython.int,
                             _round_to_digits(
-                                ((min_center[0] + dx * voxel_size) - matrix_origin_center[0]) / voxel_size, 6
+                                ((min_center[0] + dx * voxel_size) - matrix_origin_center[0]) / voxel_size,
+                                6,
                             ),
                         )
                         iy = cython.cast(
                             cython.int,
                             _round_to_digits(
-                                ((min_center[1] + dy * voxel_size) - matrix_origin_center[1]) / voxel_size, 6
+                                ((min_center[1] + dy * voxel_size) - matrix_origin_center[1]) / voxel_size,
+                                6,
                             ),
                         )
 
@@ -1239,8 +1332,20 @@ def _pixel_centers_to_filled_pixel_matrix(
     matrix: bool_C[:, :] = np.zeros((shape[0] + 2, shape[1] + 2), dtype=np.bool_)
 
     for i in range(pixel_centers.size()):
-        ix = cython.cast(cython.int, _round_to_digits((pixel_centers[i][0] - min_center[0]) / pixel_size, 9)) + 1
-        iy = cython.cast(cython.int, _round_to_digits((pixel_centers[i][1] - min_center[1]) / pixel_size, 9)) + 1
+        ix = (
+            cython.cast(
+                cython.int,
+                _round_to_digits((pixel_centers[i][0] - min_center[0]) / pixel_size, 9),
+            )
+            + 1
+        )
+        iy = (
+            cython.cast(
+                cython.int,
+                _round_to_digits((pixel_centers[i][1] - min_center[1]) / pixel_size, 9),
+            )
+            + 1
+        )
         matrix[ix, iy] = True
 
     matrix_outer_filled = _flood_fill_matrix_2d(matrix.copy(), (0, 0), True, (shape[0] + 2, shape[1] + 2))
@@ -1279,7 +1384,7 @@ def _triangle_min_max_points(
         Tuple[cython.double, cython.double, cython.double],
         Tuple[cython.double, cython.double, cython.double],
     ]
-) -> Tuple[Tuple[cython.double, cython.double, cython.double], Tuple[cython.double, cython.double, cython.double]]:
+) -> Tuple[Tuple[cython.double, cython.double, cython.double], Tuple[cython.double, cython.double, cython.double],]:
     """Calculate and return the minimum and maximum coordinates of a 3D triangle."""
 
     min_x: cython.double = math_c.INFINITY
@@ -1360,7 +1465,7 @@ def _triangles_min_max_points(
             Tuple[cython.double, cython.double, cython.double],
         ]
     ]
-) -> Tuple[Tuple[cython.double, cython.double, cython.double], Tuple[cython.double, cython.double, cython.double]]:
+) -> Tuple[Tuple[cython.double, cython.double, cython.double], Tuple[cython.double, cython.double, cython.double],]:
     """Calculate and return the minimum and maximum coordinates across a collection of 3D triangles."""
 
     min_x: cython.double = math_c.INFINITY

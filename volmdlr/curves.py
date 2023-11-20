@@ -26,14 +26,11 @@ from volmdlr.core import EdgeStyle
 
 def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_tangent, point):
     """Gets control points and weights for hyperbola and parabola curves represented by bsplines."""
-    start_tangent = start_tangent.unit_vector()
-    end_tangent = end_tangent.unit_vector()
     line_class = globals()["Line"+start.__class__.__name__[-2:]]
-    vector_02 = end - start
-    line02 = line_class.from_point_and_vector(start, vector_02)
+    line02 = line_class.from_point_and_vector(start, (end - start).to_vector())
 
-    line0 = line_class.from_point_and_vector(start, start_tangent)
-    line2 = line_class.from_point_and_vector(end, end_tangent)
+    line0 = line_class.from_point_and_vector(start, start_tangent.unit_vector())
+    line2 = line_class.from_point_and_vector(end, end_tangent.unit_vector())
     line_intersections = line0.line_intersections(line2)
     point1 = line_intersections[0]
     vector_p1 = point1 - point

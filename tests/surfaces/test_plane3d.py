@@ -206,10 +206,10 @@ class TestPlane3D(unittest.TestCase):
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p2), 0.)
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p1), 0.)
 
-    def test_plane_betweeen_two_planes(self):
+    def test_plane_between_two_planes(self):
         plane1 = Plane3D(volmdlr.OXYZ)
         plane2 = Plane3D(volmdlr.OYZX)
-        plane_b = Plane3D.plane_betweeen_two_planes(plane1, plane2)
+        plane_b = Plane3D.plane_between_two_planes(plane1, plane2)
         expected_frame = volmdlr.Frame3D(
             volmdlr.O3D, volmdlr.Vector3D(0, 1, 0), volmdlr.Vector3D(0.7071067811865475, 0.0, -0.7071067811865475),
             volmdlr.Vector3D(0.7071067811865475, 0.0, 0.7071067811865475))

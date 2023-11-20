@@ -10,7 +10,7 @@ class TestAssembly(unittest.TestCase):
         components = [box1, box1]
         positions = [volmdlr.OXYZ, volmdlr.Frame3D(volmdlr.Point3D(0, 0, 1), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)]
         assembly = volmdlr.core.Assembly(components, positions)
-        self.assertAlmostEqual(assembly.bounding_box.volume(), 2.0322289545807095)  # add assertion here
+        self.assertAlmostEqual(assembly.bounding_box.volume(), 2.0)  # add assertion here
 
 
 if __name__ == '__main__':

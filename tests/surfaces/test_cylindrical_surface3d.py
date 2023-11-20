@@ -4,11 +4,14 @@ Unit tests for CylindriSurface3D
 import unittest
 import math
 import numpy as npy
-
+import os
 import dessia_common.core
 import volmdlr
-from volmdlr import Z3D, Point2D, Point3D, edges, wires, surfaces, curves
+from volmdlr import Point2D, Point3D, edges, wires, surfaces, curves
 from volmdlr.models import cylindrical_surfaces
+
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_cylindrical_tests')
 
 
 class TestCylindricalSurface3D(unittest.TestCase):
@@ -131,9 +134,9 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
     def test_linesegment3d_to_2d(self):
         surface = surfaces.CylindricalSurface3D.load_from_file(
-            "surfaces/objects_cylindrical_tests/cylindricalsurface_with_linesegment3d.json")
+            os.path.join(folder, "cylindricalsurface_with_linesegment3d.json"))
         linesegment3d = edges.LineSegment3D.load_from_file(
-            "surfaces/objects_cylindrical_tests/cylindricalsurface_linesegment3d.json")
+            os.path.join(folder, "cylindricalsurface_linesegment3d.json"))
         linesegment2d = surface.linesegment3d_to_2d(linesegment3d)[0]
         self.assertTrue(
             linesegment2d.start.is_close(
@@ -230,28 +233,29 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertEqual(linesegment2d.end, Point2D(0, 0.013))
 
         surface = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/cylindrical_surface_bspline_openned_contour.json')
+            os.path.join(folder, "cylindrical_surface_bspline_openned_contour.json"))
         contour = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/cylindrical_contour_bspline_openned_contour.json')
-
+            os.path.join(folder,"cylindrical_contour_bspline_openned_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertEqual(len(contour2d.primitives), 2)
         self.assertFalse(contour2d.is_ordered())
 
         surface = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/test_contour3d_to_2d_surface.json')
+            os.path.join(folder, "test_contour3d_to_2d_surface.json"
+        ))
         contour = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/test_contour3d_to_2d_contour.json')
+            os.path.join(folder, "test_contour3d_to_2d_contour.json"
+        ))
 
+        surface = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "test_contour3d_to_2d_surface.json"))
+        contour = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "test_contour3d_to_2d_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertAlmostEqual(contour2d.area(), 0.29361767646954695, 2)
         self.assertTrue(contour2d.is_ordered())
 
     def test_bsplinecurve3d_to_2d(self):
-        surface = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/cylindrical_surf_bug.json')
-        bsplinecurve3d = dessia_common.core.DessiaObject.load_from_file(
-            'surfaces/objects_cylindrical_tests/bsplinecurve3d_bug.json')
+        surface = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "cylindrical_surf_bug.json"))
+        bsplinecurve3d = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "bsplinecurve3d_bug.json"))
         primitive2d = surface.bsplinecurve3d_to_2d(bsplinecurve3d)[0]
         self.assertTrue(
             primitive2d.start.is_close(
@@ -435,7 +439,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertEqual(len(inters), 2)
         self.assertAlmostEqual(inters[0].length(), 6.613411150146185)
         self.assertAlmostEqual(inters[1].length(), 6.613411150146188)
-
+      
         # test2
         cylindrical_surface = surfaces.CylindricalSurface3D(
             volmdlr.OXYZ.translation(volmdlr.X3D * 1.5), 1
@@ -495,6 +499,36 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertAlmostEqual(inters7[1].length(), 7.006825334082508)
         self.assertAlmostEqual(inters7[2].length(), 7.006825334082508)
         self.assertAlmostEqual(inters7[3].length(), 7.006825334082508)
+
+    def test_cylindricalsurface_intersections(self):
+        cylindrical_surface1 = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 2)
+        cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.OYZX, 1)
+        inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
+        expected_lengths1 = [6.393300778078848, 6.393300265079942]
+        for intersection, expected_length in zip(inters, expected_lengths1):
+            self.assertAlmostEqual(intersection.length(), expected_length)
+        cylindrical_surface2 = surfaces.CylindricalSurface3D(
+            volmdlr.OYZX.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 4), 1)
+
+        # test 2
+        inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
+        expected_lengths2 = [7.767042433585131, 7.767042217039914]
+        for intersection, expected_length in zip(inters, expected_lengths2):
+            self.assertAlmostEqual(intersection.length(), expected_length)
+
+        # test 3
+        cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.OXYZ.translation(volmdlr.X3D * .5), 2)
+        inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
+        self.assertTrue(len(inters), 2)
+        self.assertTrue(inters[0].point1.is_close(volmdlr.Point3D(0.25, -1.984313483298, 0.0)))
+        self.assertTrue(inters[0].point2.is_close(volmdlr.Point3D(0.25, -1.984313483298, 1.0)))
+        self.assertTrue(inters[1].point1.is_close(volmdlr.Point3D(0.25, 1.984313483298, 0.0)))
+        self.assertTrue(inters[1].point2.is_close(volmdlr.Point3D(0.25, 1.984313483298, 1.0)))
+
+        # test 4
+        cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.OXYZ.translation(volmdlr.X3D * .5), .8)
+        inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
+        self.assertFalse(inters)
 
 
 if __name__ == "__main__":

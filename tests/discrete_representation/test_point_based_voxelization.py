@@ -73,9 +73,11 @@ class TestPointBasedVoxelizationCreation(unittest.TestCase):
     def test_from_mesh_data(self):
         file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "stanford_bunny.json")
         stanford_bunny = DisplayTriangleShell3D.load_from_file(file_path)
-        voxelization = PointBasedVoxelization.from_mesh_data(stanford_bunny.positions, stanford_bunny.indices, 0.005)
+        voxelization1 = PointBasedVoxelization.from_mesh_data(stanford_bunny.positions, stanford_bunny.indices, 0.005)
+        voxelization2 = PointBasedVoxelization.from_shell(stanford_bunny, 0.005)
 
-        self.assertEqual(1735, len(voxelization))
+        self.assertEqual(1735, len(voxelization1))
+        self.assertEqual(1735, len(voxelization2))
 
 
 class TestPointBasedVoxelizationBooleanOperation(unittest.TestCase):
