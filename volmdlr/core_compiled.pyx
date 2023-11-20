@@ -233,7 +233,6 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
     cdef double[2] u, v, projection_point
     cdef np.ndarray[np.uint8_t, ndim = 1] results = npy.zeros(m, dtype=npy.uint8)
     cdef bint inside
-    cdef bint over_edge
 
     for i in prange(m, nogil=True):
         x = points[i][0]

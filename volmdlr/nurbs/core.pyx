@@ -267,7 +267,7 @@ def basis_function_one(int degree, list knot_vector, int span, double knot):
 @wraparound(False)
 @exceptval(check=False)
 cdef vector[vector[double]] basis_functions(int degree, vector[double] knot_vector, vector[int] spans,
-                                             vector[double] knots):
+                                            vector[double] knots):
     """Computes the non-vanishing basis functions for a list of parameters.
 
     Wrapper for :func:`.helpers.basis_function` to process multiple span
@@ -331,7 +331,7 @@ cpdef list basis_function_all(int degree, list knot_vector, int span, double kno
 @wraparound(False)
 @cdivision(True)
 cdef vector[vector[double]] basis_function_ders(int degree, vector[double] knot_vector,
-                                                 int span, double knot, int order):
+                                                int span, double knot, int order):
     """
     Computes derivatives of the basis functions for a single parameter.
 
