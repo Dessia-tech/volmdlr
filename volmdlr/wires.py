@@ -4375,7 +4375,7 @@ class Contour3D(ContourMixin, Wire3D):
         dict_intersecting_points = {}
         for primitive in self.primitives:
             for primitive2 in contour3d.primitives:
-                intersecting_point = primitive.linesegment_intersection(
+                intersecting_point = primitive.linesegment_intersections(
                     primitive2)
                 if intersecting_point is not None:
                     dict_intersecting_points[primitive2] = intersecting_point
