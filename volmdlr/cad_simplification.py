@@ -207,13 +207,14 @@ class TriangleDecimationSimplify(Simplify):
 
 
 class AlphaWrapSimplify(Simplify):
-    """CAD simplification using 'voxelization' method."""
+    """CAD simplification using CGAL 'alpha wrap' method."""
 
     def simplify(self, relative_alpha: int = 10, relative_offset: int = 300) -> VolumeModel:
         """
         Simplify the volume model using the CGAL 'alpha wrap' method, and return it.
 
-        :param relative_alpha:
+        :param relative_alpha: Control the output complexity, by definding the diamater of cavities to be explored
+            relatively to the size of the geometry.
         :type relative_alpha: int
         :param relative_offset:
         :type relative_offset: int
