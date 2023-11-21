@@ -26,8 +26,7 @@ def set_to_list(step_set):
 
 
 def replace_unicode_escapes(step_content, pattern):
-
-    # Define a function to replace matched escape sequences with their corresponding characters
+    """Define a function to replace matched escape sequences with their corresponding characters."""
     def replace_match(match):
         unicode_hex = match.group(1)
         if len(unicode_hex) == 4:
@@ -36,7 +35,6 @@ def replace_unicode_escapes(step_content, pattern):
             unicode_char = str(int(unicode_hex, 16))
         return unicode_char
 
-    # Use the sub() method to replace matches in the Step content
     replaced_content = pattern.sub(replace_match, step_content)
 
     return replaced_content
