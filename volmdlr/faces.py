@@ -348,13 +348,13 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.__class__(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
-    def face_inside(self, face2):
+    def face_inside(self, face2, abs_tol: float = 1e-6):
         """
         Verifies if a face is inside another one.
 
         It returns True if face2 is inside or False if the opposite.
         """
-        if self.surface3d.is_coincident(face2.surface3d):
+        if self.surface3d.is_coincident(face2.surface3d, abs_tol):
             self_contour2d = self.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
             face2_contour2d = face2.outer_contour3d.to_2d(
