@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalFace3D: PlaneFace3D intersectios.
 - SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
 - ConicalSurface3D: sphericalsurface_intersections
-- General improvements on sufaces' parametric operations.
+- General improvements on sufaces\` parametric operations.
 
 #### edges.py
 - BsplineCurve3D: circle_intersections.
@@ -63,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - delete remaining inplace methods in wires.py
 
 #### shells.py
-- Fixes to boolean operations. added some tolerance parameters to some methods.
+- Fixes to boolean operations. Added some tolerance parameters to some methods. 
 
 #### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 

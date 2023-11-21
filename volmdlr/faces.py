@@ -758,7 +758,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 if not connected_contour:
                     cutting_contours.append(current_cutting_contour)
                     continue
-                new_contour = current_cutting_contour.merge_not_adjcent_contour(connected_contour)
+                new_contour = current_cutting_contour.merge_not_adjacent_contour(connected_contour)
                 list_cutting_contours.append(new_contour)
             list_cutting_contours = cutting_contours
 

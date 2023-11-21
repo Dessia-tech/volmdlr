@@ -2567,6 +2567,8 @@ class Contour2D(ContourMixin, Wire2D):
             return [self, contour2d]
 
         merged_primitives = self.delete_shared_contour_section(contour2d, abs_tol)
+        if not merged_primitives:
+            return [self]
         contours = Contour2D.contours_from_edges(merged_primitives, abs_tol)
         contours = sorted(contours, key=lambda contour: contour.area(),
                           reverse=True)
