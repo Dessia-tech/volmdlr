@@ -4,6 +4,7 @@
 ISO STEP reader/writer.
 """
 
+import re
 import time
 from typing import List
 from collections import deque
@@ -129,6 +130,10 @@ class Step(dc.DessiaObject):
         dict_connections = {}
         previous_line = ""
         functions = {}
+        content = "".join(lines)
+        pattern = re.compile(r'\\X2\\([0-9A-Fa-f]+)\\X0\\')
+
+        flag = pattern.search(content)
         for line in lines:
             # line = line.replace(" ", "")
             line = line.replace("\n", "")
@@ -148,13 +153,16 @@ class Step(dc.DessiaObject):
             if line[0] != "#":
                 previous_line = str()
                 continue
+            if flag:
+                line = step_reader.replace_unicode_escapes(line, pattern)
 
             function = line.split("=", maxsplit=1)
             function_id = int(function[0][1:].strip())
             function_name_arg = function[1].split("(", 1)
             function_name = function_name_arg[0].replace(" ", "")
             if function_name:
-                entity_name_str, function_arg_string = self.separate_entity_name_and_arguments(function_name_arg[1])
+                entity_name_str, function_arg_string = step_reader.separate_entity_name_and_arguments(
+                    function_name_arg[1])
             else:
                 entity_name_str = ""
                 function_arg_string = function_name_arg[1]
@@ -179,22 +187,6 @@ class Step(dc.DessiaObject):
             dict_connections[function_id] = connections
 
         return functions, dict_connections
-
-    @staticmethod
-    def separate_entity_name_and_arguments(input_string: str) -> list[str]:
-        """Helper function to separate entity name argument from the other arguments."""
-        entity_name_str = ""
-        input_string = input_string.strip()
-        if input_string[0] == "'":
-            end_index_name = input_string.find("',", 1) + 1
-            if end_index_name != -1:
-                entity_name_str = input_string[:end_index_name]
-                entity_arg_str = input_string[end_index_name:]
-            else:
-                entity_arg_str = input_string
-        else:
-            entity_arg_str = input_string
-        return entity_name_str, entity_arg_str
 
     def _helper_intantiate_step_functions(self, functions, connections, function_parameters):
         """Helper function to read_lines."""

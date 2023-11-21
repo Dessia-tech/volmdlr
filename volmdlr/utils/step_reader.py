@@ -25,6 +25,39 @@ def set_to_list(step_set):
     return list(char_list)
 
 
+def replace_unicode_escapes(step_content, pattern):
+
+    # Define a function to replace matched escape sequences with their corresponding characters
+    def replace_match(match):
+        unicode_hex = match.group(1)
+        if len(unicode_hex) == 4:
+            unicode_char = chr(int(unicode_hex, 16))
+        else:
+            unicode_char = str(int(unicode_hex, 16))
+        return unicode_char
+
+    # Use the sub() method to replace matches in the Step content
+    replaced_content = pattern.sub(replace_match, step_content)
+
+    return replaced_content
+
+
+def separate_entity_name_and_arguments(input_string: str) -> tuple[str]:
+    """Helper function to separate entity name argument from the other arguments."""
+    entity_name_str = ""
+    input_string = input_string.strip()
+    if input_string[0] == "'":
+        end_index_name = input_string.find("',", 1) + 1
+        if end_index_name != -1:
+            entity_name_str = input_string[:end_index_name]
+            entity_arg_str = input_string[end_index_name:]
+        else:
+            entity_arg_str = input_string
+    else:
+        entity_arg_str = input_string
+    return entity_name_str, entity_arg_str
+
+
 def step_split_arguments(entity_name_str: str, function_arg: str) -> list[str]:
     """
     Split the arguments of a function that doesn't start with '(' but end with ')'.
@@ -44,25 +77,22 @@ def step_split_arguments(entity_name_str: str, function_arg: str) -> list[str]:
 
     if function_arg[-1] == ";":
         function_arg = function_arg[:-2]
-
+    pattern = re.compile(r"\([^()]*\)|'[^']*'|[^,]+")
     # if double_brackets_start_indexes:
     if "((" in function_arg:
         double_brackets_start_indexes = [match.start() for match in re.finditer(r'\(\(', function_arg)]
         double_brackets_end_indexes = [match.end() for match in re.finditer(r'\)\)', function_arg)]
         starting_index = 0
         for start, end in zip(double_brackets_start_indexes, double_brackets_end_indexes):
-            arguments.extend(re.findall(r'\([^)]*\)|[^,]+', function_arg[starting_index:start]))
+            arguments.extend(pattern.findall(function_arg[starting_index:start]))
             arguments.append(function_arg[start:end])
             starting_index = end
-        arguments.extend(re.findall(r'\([^)]*\)|[^,]+', function_arg[starting_index:]))
+        arguments.extend(pattern.findall(function_arg[starting_index:]))
         return arguments
 
     else:
         # Use regular expression to extract arguments
-        arguments.extend(re.findall(r'\([^)]*\)|[^,]+', function_arg))
-
-        # # Remove leading and trailing spaces from each argument
-        # arguments = [arg.strip() for arg in arguments]
+        arguments.extend(pattern.findall(function_arg))
 
     return arguments
 
