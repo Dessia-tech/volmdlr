@@ -25,13 +25,17 @@ def set_to_list(step_set):
     return list(char_list)
 
 
-def step_split_arguments(function_arg: str) -> list[str]:
+def step_split_arguments(entity_name_str: str, function_arg: str) -> list[str]:
     """
     Split the arguments of a function that doesn't start with '(' but end with ')'.
 
     ex: IN: '#123,#124,#125)'
        OUT: ['#123', '#124', '#125']
     """
+    if entity_name_str:
+        arguments = [entity_name_str]
+    else:
+        arguments = []
     # Remove all spaces from the string
     function_arg = remove_spaces_outside_quotes(function_arg)
 
@@ -46,7 +50,6 @@ def step_split_arguments(function_arg: str) -> list[str]:
         double_brackets_start_indexes = [match.start() for match in re.finditer(r'\(\(', function_arg)]
         double_brackets_end_indexes = [match.end() for match in re.finditer(r'\)\)', function_arg)]
         starting_index = 0
-        arguments = []
         for start, end in zip(double_brackets_start_indexes, double_brackets_end_indexes):
             arguments.extend(re.findall(r'\([^)]*\)|[^,]+', function_arg[starting_index:start]))
             arguments.append(function_arg[start:end])
@@ -56,7 +59,7 @@ def step_split_arguments(function_arg: str) -> list[str]:
 
     else:
         # Use regular expression to extract arguments
-        arguments = re.findall(r'\([^)]*\)|[^,]+', function_arg)
+        arguments.extend(re.findall(r'\([^)]*\)|[^,]+', function_arg))
 
         # # Remove leading and trailing spaces from each argument
         # arguments = [arg.strip() for arg in arguments]

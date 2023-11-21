@@ -153,14 +153,10 @@ class Step(dc.DessiaObject):
             function_id = int(function[0][1:].strip())
             function_name_arg = function[1].split("(", 1)
             function_name = function_name_arg[0].replace(" ", "")
-            start_index_name = function_name_arg[1].find("'")
-            if start_index_name != -1:
-                end_index_name = function_name_arg[1].find("'", start_index_name + 1)
-                if end_index_name != -1:
-                    function_arg_string = function_name_arg[1][end_index_name + 1:]
-                else:
-                    function_arg_string = function_name_arg[1]
+            if function_name:
+                entity_name_str, function_arg_string = self.separate_entity_name_and_arguments(function_name_arg[1])
             else:
+                entity_name_str = ""
                 function_arg_string = function_name_arg[1]
             function_arg = function_arg_string.split("#")
             connections = []
@@ -177,20 +173,34 @@ class Step(dc.DessiaObject):
             # FUNCTION ARGUMENTS
             functions, connections = self._helper_intantiate_step_functions(functions, connections,
                                                                             [function_id, function_name,
-                                                                             function_name_arg])
+                                                                             entity_name_str,
+                                                                             function_arg_string])
 
             dict_connections[function_id] = connections
 
         return functions, dict_connections
 
+    @staticmethod
+    def separate_entity_name_and_arguments(input_string: str) -> list[str]:
+        """Helper function to separate entity name argument from the other arguments."""
+        entity_name_str = ""
+        input_string = input_string.strip()
+        if input_string[0] == "'":
+            end_index_name = input_string.find("',", 1) + 1
+            if end_index_name != -1:
+                entity_name_str = input_string[:end_index_name]
+                entity_arg_str = input_string[end_index_name:]
+            else:
+                entity_arg_str = input_string
+        else:
+            entity_arg_str = input_string
+        return entity_name_str, entity_arg_str
+
     def _helper_intantiate_step_functions(self, functions, connections, function_parameters):
         """Helper function to read_lines."""
-        function_id, function_name, function_name_arg = function_parameters
-        function_arg = function_name_arg[1]
+        function_id, function_name, entity_name_str, function_arg = function_parameters
         new_name = ''
         new_arguments = []
-        # if function_id == 2556:
-        #     print(True)
         if function_name == "":
             name_arg = self.step_subfunctions([function_arg])
             for name, arg in name_arg:
@@ -203,11 +213,13 @@ class Step(dc.DessiaObject):
                 if arg[0] == '#':
                     connections.append(int(arg[1:]))
         else:
-            arguments = step_reader.step_split_arguments(function_arg)
+            arguments = step_reader.step_split_arguments(entity_name_str, function_arg)
 
         for i, argument in enumerate(arguments):
             if argument[:2] == '(#' and argument[-1] == ')':
                 arg_list = step_reader.set_to_list(argument)
+                for arg in arg_list:
+                    connections.append(int(arg[1:]))
                 arguments[i] = arg_list
 
         function = StepFunction(function_id, function_name, arguments)
@@ -341,7 +353,7 @@ class Step(dc.DessiaObject):
             else:
                 subfunction_arg += char
         return [
-            (subfunction_names[i], step_reader.step_split_arguments(subfunction_args[i]))
+            (subfunction_names[i], step_reader.step_split_arguments("", subfunction_args[i]))
             for i in range(len(subfunction_names))]
 
     def parse_arguments(self, arguments):
@@ -369,9 +381,6 @@ class Step(dc.DessiaObject):
         self.parse_arguments(arguments)
         fun_name = name.replace(', ', '_')
         fun_name = fun_name.lower()
-        # print(step_id)
-        # if step_id == 2556:
-        #     print(True)
         try:
             if hasattr(step_reader, fun_name):
                 volmdlr_object = getattr(step_reader, fun_name)(arguments, object_dict,
