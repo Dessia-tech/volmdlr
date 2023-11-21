@@ -1,17 +1,24 @@
 """
 volmdlr cad simplification module.
 """
+import math
 from abc import ABC
+from typing import Union
 
 import pyfqmr
+from CGAL.CGAL_Alpha_wrap_3 import alpha_wrap_3
+from CGAL.CGAL_Kernel import Point_3
+from CGAL.CGAL_Polyhedron_3 import Polyhedron_3
 from dessia_common.core import DessiaObject
 
 import volmdlr
+from volmdlr import Point3D
 from volmdlr.cloud import PointCloud3D
 from volmdlr.core import VolumeModel
 from volmdlr.discrete_representation import MatrixBasedVoxelization
+from volmdlr.faces import Triangle3D
 from volmdlr.primitives3d import ExtrudedProfile
-from volmdlr.shells import OpenTriangleShell3D
+from volmdlr.shells import ClosedTriangleShell3D, OpenTriangleShell3D
 from volmdlr.wires import Contour2D
 
 
@@ -192,5 +199,72 @@ class TriangleDecimationSimplify(Simplify):
             vertices, faces, _ = simplifier.getMesh()
 
             decimated_shells.append(OpenTriangleShell3D.from_mesh_data(vertices, faces))
+            decimated_shells[-1].name = shell.name
+            decimated_shells[-1].color = shell.color
+            decimated_shells[-1].alpha = shell.alpha
 
         return VolumeModel(decimated_shells)
+
+
+class AlphaWrapSimplify(Simplify):
+    """CAD simplification using 'voxelization' method."""
+
+    def simplify(self, relative_alpha: int = 10, relative_offset: int = 300) -> VolumeModel:
+        """
+        Simplify the volume model using the CGAL 'alpha wrap' method, and return it.
+
+        :param relative_alpha:
+        :type relative_alpha: int
+        :param relative_offset:
+        :type relative_offset: int
+
+        :return: The simplified volume model.
+        :rtype: VolumeModel
+        """
+        wrapped_shells = []
+
+        for shell in self.volume_model.get_shells():
+            vertices, triangles = shell.to_triangle_shell().to_mesh_data(round_vertices=True)
+            vertices = [Point_3(x, y, z) for (x, y, z) in vertices]
+            triangles = triangles.tolist()
+
+            bbox = shell.bounding_box
+            diag_length = math.sqrt(
+                (bbox.xmax - bbox.xmin) ** 2 + (bbox.ymax - bbox.ymin) ** 2 + (bbox.zmax - bbox.zmin) ** 2
+            )
+            alpha = diag_length / relative_alpha
+            offset = diag_length / relative_offset
+
+            wrap = Polyhedron_3()
+            alpha_wrap_3(vertices, triangles, alpha, offset, wrap)
+
+            wrapped_shells.append(self._polyhedron_to_shell(wrap))
+            wrapped_shells[-1].name = shell.name
+            wrapped_shells[-1].color = shell.color
+            wrapped_shells[-1].alpha = shell.alpha
+
+        return VolumeModel(wrapped_shells)
+
+    @staticmethod
+    def _polyhedron_to_shell(polyhedron: Polyhedron_3) -> Union[ClosedTriangleShell3D, OpenTriangleShell3D]:
+        """Convert a CGAL Polyhedron_3 to a volmdlr shell."""
+        triangles = []
+
+        for facet in polyhedron.facets():  # Iterate over each face
+            vertices = []
+            halfedge = facet.halfedge()  # Starting halfedge
+            start_halfedge = halfedge
+
+            while True:
+                point = halfedge.vertex().point()
+                vertices.append(Point3D(point.x(), point.y(), point.z()))
+                halfedge = halfedge.next()  # Move to the next halfedge
+                if halfedge == start_halfedge:
+                    break  # Completed one loop around the facet
+
+            if len(vertices) == 3:  # Check if it's a triangle
+                triangles.append(Triangle3D(*vertices))
+
+        if polyhedron.is_closed():
+            return ClosedTriangleShell3D(triangles)
+        return OpenTriangleShell3D(triangles)
