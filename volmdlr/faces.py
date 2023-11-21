@@ -1728,33 +1728,34 @@ class PlaneFace3D(Face3D):
         used_faces, list_faces = {}, []
 
         for face2 in faces:
-            contour1 = self.surface2d.outer_contour
-            contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)
+            if self.surface3d.is_coincident(face2.surface3d):
+                contour1 = self.surface2d.outer_contour
+                contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)
 
-            inside = self.check_inner_contours(face2)
-            if (self.surface3d.is_coincident(face2.surface3d)
-                    and (contour1.is_overlapping(contour2)
-                         or (contour1.is_inside(contour2) or True in inside))):
+                inside = self.check_inner_contours(face2)
+                if (self.surface3d.is_coincident(face2.surface3d)
+                        and (contour1.is_overlapping(contour2)
+                             or (contour1.is_inside(contour2) or True in inside))):
 
-                if self in used_faces:
-                    faces_1, face2_2 = used_faces[self][:], face2
-                else:
-                    faces_1, face2_2 = [self], face2
+                    if self in used_faces:
+                        faces_1, face2_2 = used_faces[self][:], face2
+                    else:
+                        faces_1, face2_2 = [self], face2
 
-                used = []
-                for face1_1 in faces_1:
-                    plane3d = face1_1.surface3d
-                    s2d = surfaces.Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
-                                             inner_contours=[
-                                                 plane3d.contour3d_to_2d(contour) for contour in
-                                                 face2_2.inner_contours3d])
-                    face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
+                    used = []
+                    for face1_1 in faces_1:
+                        plane3d = face1_1.surface3d
+                        s2d = surfaces.Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
+                                                 inner_contours=[
+                                                     plane3d.contour3d_to_2d(contour) for contour in
+                                                     face2_2.inner_contours3d])
+                        face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
 
-                    divided_faces = face1_1.cut_by_coincident_face(face2_2)
+                        divided_faces = face1_1.cut_by_coincident_face(face2_2)
 
-                    used, list_faces = self.update_faces_with_divided_faces(
-                        divided_faces, face2_2, used, list_faces)
-                used_faces[self] = used
+                        used, list_faces = self.update_faces_with_divided_faces(
+                            divided_faces, face2_2, used, list_faces)
+                    used_faces[self] = used
 
         try:
             if isinstance(used_faces[self], list):
