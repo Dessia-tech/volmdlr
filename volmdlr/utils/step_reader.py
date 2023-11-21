@@ -75,7 +75,7 @@ def step_split_arguments(entity_name_str: str, function_arg: str) -> list[str]:
 
     if function_arg[-1] == ";":
         function_arg = function_arg[:-2]
-    pattern = re.compile(r"\([^()]*\)|'[^']*'|[^,]+")
+    pattern = re.compile(r"\([^()]*\)|'[^']*[^,]*',|[^,]+")
     # if double_brackets_start_indexes:
     if "((" in function_arg:
         double_brackets_start_indexes = [match.start() for match in re.finditer(r'\(\(', function_arg)]
@@ -85,19 +85,18 @@ def step_split_arguments(entity_name_str: str, function_arg: str) -> list[str]:
             arguments.extend(pattern.findall(function_arg[starting_index:start]))
             arguments.append(function_arg[start:end])
             starting_index = end
-        arguments.extend(pattern.findall(function_arg[starting_index:]))
+        arguments.extend([arg.strip(",") for arg in pattern.findall(function_arg[starting_index:])])
         return arguments
 
-    else:
-        # Use regular expression to extract arguments
-        arguments.extend(pattern.findall(function_arg))
+    # Use regular expression to extract arguments
+    arguments.extend([arg.strip(",") for arg in pattern.findall(function_arg)])
 
     return arguments
 
 
 def remove_spaces_outside_quotes(input_string: str) -> str:
     """Helper function to remove only space that are outside quotes."""
-    quoted_strings = re.findall(r"'[^']*'", input_string)
+    quoted_strings = re.findall(r"'[^']*[^,]*',", input_string)
 
     result = input_string.replace(' ', '')
     # Restore the original quoted strings
