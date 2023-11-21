@@ -204,16 +204,33 @@ class Block(shells.ClosedShell3D):
         return self.size[0] * self.size[1] * self.size[2]
 
     @classmethod
-    def from_bounding_box(cls, bounding_box, name: str = ''):
+    def from_bounding_box(cls, bounding_box: volmdlr.core.BoundingBox, name: str = ""):
         """
-        Transform a bounding box into a block.
+        Create a block from a bounding box.
+
+        :param bounding_box: the bounding box sued to create the block.
+        :type bounding_box: BoundingBox
+        :param name: the name of the block, optional.
+        :type name: str
+
+        :return: the created block.
+        :rtype: Block
         """
-        origin = bounding_box.center
-        bbox_size = bounding_box.size
-        frame = volmdlr.Frame3D(origin, bbox_size[0] * volmdlr.Vector3D(1, 0, 0),
-                                bbox_size[1] * volmdlr.Vector3D(0, 1, 0),
-                                bbox_size[2] * volmdlr.Vector3D(0, 0, 1))
-        return cls(frame=frame, name=name)
+        return cls(frame=bounding_box.to_frame(), name=name)
+
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
+        """
+        Get the bounding box of the block.
+
+        :return: the created bounding box.
+        :rtype: BoundingBox
+        """
+        return volmdlr.core.BoundingBox.from_points(
+            [
+                self.frame.origin - volmdlr.Point3D(self.frame.u.x / 2, self.frame.v.y / 2, self.frame.w.z / 2),
+                self.frame.origin + volmdlr.Point3D(self.frame.u.x / 2, self.frame.v.y / 2, self.frame.w.z / 2),
+            ]
+        )
 
     def vertices(self):
         """Computes the vertices of the block."""

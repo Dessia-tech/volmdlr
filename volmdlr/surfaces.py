@@ -1427,7 +1427,7 @@ class Plane3D(Surface3D):
 
         """
         if math.isclose(self.frame.w.dot(point - self.frame.origin), 0,
-                        abs_tol=1e-6):
+                        abs_tol=abs_tol):
             return True
         return False
 
@@ -1521,7 +1521,7 @@ class Plane3D(Surface3D):
         return False
 
     @classmethod
-    def plane_betweeen_two_planes(cls, plane1, plane2, name: str = ''):
+    def plane_between_two_planes(cls, plane1, plane2, name: str = ''):
         """
         Calculates a plane between two other planes.
 
@@ -2686,6 +2686,50 @@ class CylindricalSurface3D(PeriodicalSurface):
         global_intersections = [edge.frame_mapping(frame, 'old') for edge in curves_]
         return global_intersections
 
+    def _cylindrical_intersection_points(self, cylindricalsurface: 'SphericalSurface3D'):
+        """
+        Gets the points of intersections between two cylindrical surfaces.
+
+        :param cylindricalsurface: other Cylindrical surface 3d.
+        :return: points of intersections.
+        """
+        cyl_generatrices = self.get_generatrices(self.radius*10, 200) +\
+                           self.get_circle_generatrices(200, self.radius*10)
+        intersection_points = []
+        for gene in cyl_generatrices:
+            intersections = cylindricalsurface.edge_intersections(gene)
+            for intersection in intersections:
+                if not volmdlr.core.point_in_list(intersection, intersection_points):
+                    intersection_points.append(intersection)
+        return intersection_points
+
+    def cylindricalsurface_intersections(self, cylindricalsurface: 'CylindricalSurface3D'):
+        """
+        Gets intersections between two cylindrical surfaces 3d.
+
+        :param cylindricalsurface: other cylindrical surface.
+        :return: a list containing the resulting intersections, if there are any.
+        """
+        curves_ = []
+        if self.frame.w.is_colinear_to(cylindricalsurface.frame.w):
+            circle1 = curves.Circle3D(self.frame, self.radius).to_2d(self.frame.origin, self.frame.u, self.frame.v)
+            circle2 = curves.Circle3D(cylindricalsurface.frame, cylindricalsurface.radius).to_2d(
+                self.frame.origin, self.frame.u, self.frame.v)
+            circle2d_intersections = circle1.circle_intersections(circle2)
+            for point in circle2d_intersections:
+                point3d = point.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+                curves_.append(curves.Line3D.from_point_and_vector(point3d, self.frame.w))
+            return curves_
+
+        intersection_points = self._cylindrical_intersection_points(cylindricalsurface)
+        if not intersection_points:
+            return []
+        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
+        for list_points in inters_points:
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
+            curves_.append(bspline)
+        return curves_
+
 
 class ToroidalSurface3D(PeriodicalSurface):
     """
@@ -2703,6 +2747,7 @@ class ToroidalSurface3D(PeriodicalSurface):
     face_class = 'ToroidalFace3D'
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = volmdlr.TWO_PI
+
 
     def __init__(self, frame: volmdlr.Frame3D, major_radius: float, minor_radius: float, name: str = ''):
         self.frame = frame
@@ -2737,8 +2782,9 @@ class ToroidalSurface3D(PeriodicalSurface):
     def _torus_circle_generatrices_xy(self, number_arcs: int = 50):
         center = self.frame.origin + self.frame.u * self.major_radius
         u_vector = (center - self.frame.origin).unit_vector()
-        i_frame = volmdlr.Frame3D(center, u_vector, self.frame.w, u_vector.cross(self.frame.w))
-        circle = curves.Circle3D(i_frame, self.minor_radius)
+        circle = curves.Circle3D(
+            volmdlr.Frame3D(center, u_vector, self.frame.w, u_vector.cross(self.frame.w)),
+            self.minor_radius)
         initial_point = self.frame.origin.translation(-self.frame.w * self.minor_radius)
         circles = []
         for i in npy.linspace(0, 2 * self.minor_radius, number_arcs):
@@ -2811,6 +2857,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :type point2d: `volmdlr.`Point2D`
         """
         theta, phi = point2d
+
         x = (self.major_radius + self.minor_radius * math.cos(phi)) * math.cos(theta)
         y = (self.major_radius + self.minor_radius * math.cos(phi)) * math.sin(theta)
         z = self.minor_radius * math.sin(phi)
@@ -2827,11 +2874,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         # Generally this is related to uncertainty of step files.
 
         if abs(x) < 1e-6:
-            x = 0
+            x = 0.0
         if abs(y) < 1e-6:
-            y = 0
+            y = 0.0
         if abs(z) < 1e-6:
-            z = 0
+            z = 0.0
 
         z_r = z / self.minor_radius
         phi = math.asin(z_r)
@@ -2842,8 +2889,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         u1, u2 = round(x / u, 5), round(y / u, 5)
         theta = math.atan2(u2, u1)
 
-        vector_to_tube_center = volmdlr.Vector3D(self.major_radius * math.cos(theta),
-                                                 self.major_radius * math.sin(theta), 0)
+        vector_to_tube_center = volmdlr.Vector3D(abs(self.major_radius) * math.cos(theta),
+                                                 abs(self.major_radius) * math.sin(theta), 0)
         vector_from_tube_center_to_point = volmdlr.Vector3D(x, y, z) - vector_to_tube_center
         phi2 = volmdlr.geometry.vectors3d_angle(vector_to_tube_center, vector_from_tube_center_to_point)
 
@@ -3480,7 +3527,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         Gets the points of intersections between the spherical surface and the toroidal surface.
 
-        :param spherical_surface: other Conical Surface 3d.
+        :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
         arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
@@ -3691,7 +3738,7 @@ class ConicalSurface3D(PeriodicalSurface):
             end = volmdlr.Point2D(start.x, 0)
         elif start.x != end.x:
             end = volmdlr.Point2D(start.x, end.y)
-        if not start.is_close(end):
+        if start != end:
             return [edges.LineSegment2D(start, end)]
         return None
 
@@ -4004,7 +4051,7 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         Gets the points of intersections between the spherical surface and the toroidal surface.
 
-        :param spherical_surface: other Conical Surface 3d.
+        :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
         cyl_generatrices = self.get_generatrices(spherical_surface.radius*4, 200) +\
@@ -4456,12 +4503,18 @@ class SphericalSurface3D(PeriodicalSurface):
         if phi > 0:
             line_positive_singularity = curves.Line2D(volmdlr.Point2D(-math.pi, 0.5 * math.pi),
                                                       volmdlr.Point2D(math.pi, 0.5 * math.pi))
-            return direction_line.line_intersections(line_positive_singularity)[0]
+            intersections = direction_line.line_intersections(line_positive_singularity)
+            if intersections:
+                return intersections[0]
+            return intersections
 
         line_negative_singularity = curves.Line2D(volmdlr.Point2D(-math.pi, -0.5 * math.pi),
                                                   volmdlr.Point2D(math.pi, -0.5 * math.pi))
 
-        return direction_line.line_intersections(line_negative_singularity)[0]
+        intersections = direction_line.line_intersections(line_negative_singularity)
+        if intersections:
+            return intersections[0]
+        return intersections
 
     def is_point2d_on_sphere_singularity(self, point2d, tol=1e-5):
         """Verifies if point is on the spherical singularity point on parametric domain."""
@@ -4502,7 +4555,7 @@ class SphericalSurface3D(PeriodicalSurface):
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[1:]
             else:
-                number_points = int(distance / maximum_linear_distance_reference_point)
+                number_points = max(2, int(distance / maximum_linear_distance_reference_point))
 
                 local_discretization = [self.point3d_to_2d(point)
                                         for point in edge3d.local_discretization(
@@ -4517,16 +4570,26 @@ class SphericalSurface3D(PeriodicalSurface):
                                                                                      indexes_theta_discontinuity, "x")
 
             edge = get_temp_edge2d(temp_points)
-            points[0] = self.fix_start_end_singularity_point_at_parametric_domain(edge,
-                                                                                  reference_point=temp_points[1],
-                                                                                  point_at_singularity=points[0])
+            point = self.fix_start_end_singularity_point_at_parametric_domain(edge,
+                                                                              reference_point=temp_points[1],
+                                                                              point_at_singularity=points[0])
+            if point:
+                points[0] = point
+            else:
+                per = 0.001
+                while per < 0.05:
+                    point = self.point3d_to_2d(edge3d.point_at_abscissa(per * edge3d.length()))
+                    if point != points[0]:
+                        break
+                    per += 0.0025
+                points[0] = point
         if self.is_point3d_on_sphere_singularity(points3d[-1]):
             distance = points3d[-2].point_distance(points3d[-1])
             maximum_linear_distance_reference_point = 1e-5
             if distance < maximum_linear_distance_reference_point:
                 temp_points = points[:-1]
             else:
-                number_points = int(distance / maximum_linear_distance_reference_point)
+                number_points = max(2, int(distance / maximum_linear_distance_reference_point))
 
                 local_discretization = [self.point3d_to_2d(point)
                                         for point in edge3d.local_discretization(
@@ -4537,13 +4600,22 @@ class SphericalSurface3D(PeriodicalSurface):
             theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
 
             if theta_discontinuity:
-                temp_points = self._fix_angle_discontinuity_on_discretization_points(temp_points,
-                                                                                     indexes_theta_discontinuity, "x")
+                temp_points = self._fix_angle_discontinuity_on_discretization_points(
+                    temp_points, indexes_theta_discontinuity, "x")
 
             edge = get_temp_edge2d(temp_points)
-            points[-1] = self.fix_start_end_singularity_point_at_parametric_domain(edge,
-                                                                                   reference_point=temp_points[-2],
-                                                                                   point_at_singularity=points[-1])
+            point = self.fix_start_end_singularity_point_at_parametric_domain(
+                edge, reference_point=temp_points[-2], point_at_singularity=points[-1])
+            if point:
+                points[-1] = point
+            else:
+                per = 0.999
+                while per > 0.95:
+                    point = self.point3d_to_2d(edge3d.point_at_abscissa(per * edge3d.length()))
+                    if point != points[-1]:
+                        break
+                    per -= 0.0025
+                points[-1] = point
         return points
 
     def arc3d_to_2d_any_direction(self, arc3d):
@@ -4607,15 +4679,17 @@ class SphericalSurface3D(PeriodicalSurface):
             points[0], points[-1], point_after_start, point_before_end)
         points[0] = start
         points[-1] = end
-
-        points = self.find_edge_start_end_undefined_parametric_points(bspline_curve3d, points, points3d)
+        if start.x == 0.0 or end.x == 0.0:
+            points = self.find_edge_start_end_undefined_parametric_points(bspline_curve3d, points, points3d)
         theta_list = [point.x for point in points]
         theta_discontinuity, indexes_theta_discontinuity = angle_discontinuity(theta_list)
         if theta_discontinuity:
             points = self._fix_angle_discontinuity_on_discretization_points(points,
                                                                             indexes_theta_discontinuity, "x")
-
-        return [edges.BSplineCurve2D.from_points_interpolation(points, degree=bspline_curve3d.degree).simplify]
+        degree = bspline_curve3d.degree
+        if degree > len(points) - 1:
+            degree = len(points) - 1
+        return [edges.BSplineCurve2D.from_points_interpolation(points, degree=degree).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -4963,7 +5037,7 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         Gets the points of intersections between the spherical surface and the toroidal surface.
 
-        :param spherical_surface: other Conical Surface 3d.
+        :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
         cyl_generatrices = self._circle_generatrices(200) + self._circle_generatrices_xy(200)
@@ -5122,9 +5196,11 @@ class ExtrusionSurface3D(Surface3D):
         if abs(z) < 1e-7:
             z = 0.0
         point_at_curve = []
+        tol = 1e-4 if self.edge.__class__.__name__ in ("FullArcEllipse3D", "ArcEllipse3D") else 1e-6
+
         if hasattr(self.edge, "line_intersections"):
             line = curves.Line3D(point3d, point3d.translation(self.frame.w))
-            point_at_curve = self.edge.line_intersections(line)
+            point_at_curve = self.edge.line_intersections(line, tol)
         if point_at_curve:
             point_at_curve = point_at_curve[0]
             point_at_curve_local = self.frame.global_to_local_coordinates(point_at_curve)
@@ -5135,8 +5211,7 @@ class ExtrusionSurface3D(Surface3D):
             else:
                 point_at_curve_local = volmdlr.Point3D(x, y, 0)
                 point_at_curve = self.frame.local_to_global_coordinates(point_at_curve_local)
-
-        u = self.edge.abscissa(point_at_curve, tol=1e-6)
+        u = self.edge.abscissa(point_at_curve)
         v = z - point_at_curve_local.z
 
         return volmdlr.Point2D(u, v)
@@ -5267,12 +5342,12 @@ class ExtrusionSurface3D(Surface3D):
         end3d = self.point2d_to_3d(linesegment2d.end)
         u1, param_z1 = linesegment2d.start
         u2, param_z2 = linesegment2d.end
-        if math.isclose(u1, u2, abs_tol=1e-4):
+        if math.isclose(u1, u2, abs_tol=1e-6):
             return [edges.LineSegment3D(start3d, end3d)]
         if math.isclose(param_z1, param_z2, abs_tol=1e-6):
             primitive = self.edge.translation(self.direction * (param_z1 + param_z2) * 0.5)
             if primitive.point_belongs(start3d) and primitive.point_belongs(end3d):
-                if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-4):
+                if math.isclose(abs(u1 - u2), 1.0, abs_tol=1e-6):
                     if primitive.start.is_close(start3d) and primitive.end.is_close(end3d):
                         return [primitive]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
@@ -5373,6 +5448,7 @@ class ExtrusionSurface3D(Surface3D):
             degree = 2
         return [edges.BSplineCurve2D.from_points_interpolation(points, degree)]
 
+
 class RevolutionSurface3D(PeriodicalSurface):
     """
     Defines a surface of revolution.
@@ -5386,7 +5462,6 @@ class RevolutionSurface3D(PeriodicalSurface):
     """
     face_class = 'RevolutionFace3D'
     x_periodicity = volmdlr.TWO_PI
-
 
     def __init__(self, edge,
                  axis_point: volmdlr.Point3D, axis: volmdlr.Vector3D, name: str = ''):
@@ -7013,9 +7088,9 @@ class BSplineSurface3D(Surface3D):
 
         if self._is_line_segment(parametric_points):
             return [edges.LineSegment2D(parametric_points[0], parametric_points[-1])]
+        parametric_points = verify_repeated_parametric_points(parametric_points)
         if interpolation_degree >= len(parametric_points):
             interpolation_degree = len(parametric_points) - 1
-        parametric_points = verify_repeated_parametric_points(parametric_points)
         brep = edges.BSplineCurve2D.from_points_interpolation(points=parametric_points, degree=interpolation_degree)
         if brep:
             return [brep]
@@ -7503,10 +7578,10 @@ class BSplineSurface3D(Surface3D):
         finite_elements = []  # finite elements defined with closed polygon
         for point in finite_elements_points:
             finite_elements.append(
-                wires.ClosedPolygon2D((points_2d[index_points[point[0]]],
+                wires.ClosedPolygon2D([points_2d[index_points[point[0]]],
                                        points_2d[index_points[point[1]]],
                                        points_2d[index_points[point[2]]],
-                                       points_2d[index_points[point[3]]])))
+                                       points_2d[index_points[point[3]]]]))
         k = 0
         for k, point in enumerate(finite_elements_points):
             if (wires.Contour2D(finite_elements[k].primitives).point_belongs(point2d)

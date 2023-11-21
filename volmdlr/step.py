@@ -394,7 +394,7 @@ class Step(dc.DessiaObject):
 
             else:
                 raise NotImplementedError(f'Dont know how to interpret #{step_id} = {name}({arguments})')
-        except (ValueError, NotImplementedError, IndexError) as error:
+        except (ValueError, NotImplementedError, IndexError, AttributeError, ZeroDivisionError) as error:
             raise ValueError(f"Error while instantiating #{step_id} = {name}({arguments})") from error
         return volmdlr_object
 
