@@ -339,7 +339,7 @@ def get_plane_linesegment_intersections(plane_frame, linesegment, abs_tol: float
     return [linesegment.start + intersection_abscissea * u_vector]
 
 
-def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-8):
+def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-6):
     """
     Find the intersection with a line.
 

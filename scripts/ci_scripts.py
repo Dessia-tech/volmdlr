@@ -83,8 +83,8 @@ scripts = [
     "cad_simplification/triple_extrusion_simplify.py",
     "cad_simplification/triangle_decimation_simplify.py",
     # Voxelization
-    "discrete_representation/voxelization/interference_surface_showcase.py",
-    "discrete_representation/voxelization/interference_volume_showcase.py",
+    "discrete_representation/voxelization/interference/interference_surface_showcase.py",
+    "discrete_representation/voxelization/interference/interference_volume_showcase.py",
     "discrete_representation/voxelization/step_file_voxelization.py",
     "discrete_representation/voxelization/stl_file_voxelization.py",
     "discrete_representation/voxelization/volume_model_matrix_based_voxelization.py",
@@ -92,6 +92,9 @@ scripts = [
     "discrete_representation/voxelization/voxelization_filling.py",
     "discrete_representation/voxelization/voxelization_inverse.py",
     "discrete_representation/voxelization/voxelization_moving.py",
+    "discrete_representation/voxelization/octree/inner_growing_showcase.py",
+    "discrete_representation/voxelization/octree/non_homogeneous_showcase.py",
+    "discrete_representation/voxelization/octree/intersecting_faces_combinations.py",
     # Pixelization
     "discrete_representation/pixelization/pixelization_boolean_operations.py",
     "discrete_representation/pixelization/pixelization_filling.py",

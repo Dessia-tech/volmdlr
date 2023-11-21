@@ -168,9 +168,6 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
-        step_id = kwargs.get("step_id")
-        if step_id == 4062779:
-            print(True)
         if obj.__class__.__name__ == 'LineSegment3D':
             if point1 != point2:
                 return LineSegment3D(point1, point2, name=arguments[0][1:-1])
@@ -1832,19 +1829,17 @@ class BSplineCurve(Edge):
         """
         return [self.point_at_abscissa(self.abscissa(point))]
 
-    def local_discretization(self, point1, point2, number_points: int = 10, tol: float = 1e-6):
+    def local_discretization(self, point1, point2, number_points: int = 10):
         """
         Gets n discretization points between two given points of the edge.
 
         :param point1: point 1 on edge.
         :param point2: point 2 on edge.
         :param number_points: number of points to discretize locally.
-        :param tol: tolerance.
         :return: list of locally discretized points.
         """
         abscissa1 = self.abscissa(point1)
         abscissa2 = self.abscissa(point2)
-
         return self.get_abscissa_discretization(abscissa1, abscissa2, number_points)
 
     def get_abscissa_discretization(self, abscissa1, abscissa2, number_points: int = 10,
@@ -1881,7 +1876,7 @@ class BSplineCurve(Edge):
         else:
             if math.isclose(abscissa2, 0.0, abs_tol=1e-6):
                 abscissa2 += self.length()
-            if abscissa1 >= abscissa2:
+            if abscissa1 > abscissa2:
                 abscissa2, abscissa1 = abscissa1, abscissa2
             u1 = self.abscissa_to_parameter(abscissa1)
             u2 = self.abscissa_to_parameter(abscissa2)
@@ -4148,12 +4143,12 @@ class FullArcEllipse(Edge):
         """
         return self.ellipse.length()
 
-    def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-6):
+    def point_belongs(self, point: Union[volmdlr.Point2D, volmdlr.Point3D], abs_tol: float = 1e-2):
         """
         Verifies if a given point lies on the ellipse.
 
         :param point: point to be verified.
-        :param abs_tol: Absolute tolerance to consider the point on the ellipse.
+        :param abs_tol: Absolute tolerance to consider the point on the ellipse (0.99 should be considered True).
         :return: True is point lies on the ellipse, False otherwise
         """
         new_point = self.ellipse.frame.global_to_local_coordinates(point)
@@ -5109,7 +5104,7 @@ class BSplineCurve3D(BSplineCurve):
         if not same_sense:
             bspline_curve = self.reverse()
         n = len(bspline_curve.control_points)
-        local_discretization = bspline_curve.local_discretization(point1, point2, n, tol=1e-8)
+        local_discretization = bspline_curve.local_discretization(point1, point2, n)
         if len(local_discretization) <= bspline_curve.degree:
             return bspline_curve
         return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
@@ -5699,8 +5694,6 @@ class Arc3D(ArcMixin, Edge):
         point_start = self.start.to_2d(plane_origin, x, y)
         point_interior = self.middle_point().to_2d(plane_origin, x, y)
         point_end = self.end.to_2d(plane_origin, x, y)
-        if point_start == point_end:
-            print(True)
         arc = Arc2D(circle2d, point_start, point_end, name=self.name)
         if not arc.point_belongs(point_interior):
             arc = Arc2D(circle2d.reverse(), point_start, point_end, name=self.name)

@@ -205,7 +205,7 @@ class Face3D(volmdlr.core.Primitive3D):
         outer_contour3d, inner_contours3d = None, []
         if len(contours3d) == 1:
             outer_contour2d = surface.contour3d_to_2d(contours3d[0])
-            outer_contour3d = surface.contour2d_to_3d(outer_contour2d)
+            outer_contour3d = contours3d[0]
             inner_contours2d = []
 
         elif len(contours3d) > 1:
@@ -222,18 +222,22 @@ class Face3D(volmdlr.core.Primitive3D):
                 outer_contour3d = surface.contour2d_to_3d(outer_contour2d)
                 inner_contours3d = [surface.contour2d_to_3d(contour) for contour in inner_contours2d]
             else:
-                for contour2d, contour3d in zip(contours2d, contours3d):
-                    # if not contour2d.is_ordered(1e-4):
-                    #     contour2d = vm_parametric.contour2d_healing(contour2d)
-                    inner_contours2d.append(contour2d)
-                    inner_contours3d.append(contour3d)
-                    contour_area = contour2d.area()
-                    if contour_area > area:
-                        area = contour_area
-                        outer_contour2d = contour2d
-                        outer_contour3d = contour3d
-                inner_contours2d.remove(outer_contour2d)
-                inner_contours3d.remove(outer_contour3d)
+                if contours3d[0].name == "face_outer_bound":
+                    outer_contour2d, inner_contours2d = contours2d[0], contours2d[1:]
+                    outer_contour3d, inner_contours3d = contours3d[0], contours3d[1:]
+                else:
+                    for contour2d, contour3d in zip(contours2d, contours3d):
+                        # if not contour2d.is_ordered(1e-4):
+                        #     contour2d = vm_parametric.contour2d_healing(contour2d)
+                        inner_contours2d.append(contour2d)
+                        inner_contours3d.append(contour3d)
+                        contour_area = contour2d.area()
+                        if contour_area > area:
+                            area = contour_area
+                            outer_contour2d = contour2d
+                            outer_contour3d = contour3d
+                    inner_contours2d.remove(outer_contour2d)
+                    inner_contours3d.remove(outer_contour3d)
         else:
             raise ValueError('Must have at least one contour')
         if (not outer_contour2d) or (not all(outer_contour2d.primitives)) or (not outer_contour2d.is_ordered(1e-2)):
@@ -257,7 +261,7 @@ class Face3D(volmdlr.core.Primitive3D):
         outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(
             current_id, surface_id=surface3d_ids[0], surface3d=self.surface3d)
         content += outer_contour_content
-        content += f"#{outer_contour_id + 1} = FACE_BOUND('{self.name}',#{outer_contour_id},.T.);\n"
+        content += f"#{outer_contour_id + 1} = FACE_OUTER_BOUND('{self.name}',#{outer_contour_id},.T.);\n"
         contours_ids = [outer_contour_id + 1]
         current_id = outer_contour_id + 2
         for inner_contour3d in self.inner_contours3d:
@@ -344,13 +348,13 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.__class__(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
-    def face_inside(self, face2):
+    def face_inside(self, face2, abs_tol: float = 1e-6):
         """
         Verifies if a face is inside another one.
 
         It returns True if face2 is inside or False if the opposite.
         """
-        if self.surface3d.is_coincident(face2.surface3d):
+        if self.surface3d.is_coincident(face2.surface3d, abs_tol):
             self_contour2d = self.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
             face2_contour2d = face2.outer_contour3d.to_2d(
@@ -691,11 +695,10 @@ class Face3D(volmdlr.core.Primitive3D):
         :param intersecting_combinations: faces intersecting combinations dictionary.
         :return: new split faces.
         """
-        self_copy = self.copy(deep=True)
-        list_cutting_contours = self_copy.get_face_cutting_contours(intersecting_combinations)
+        list_cutting_contours = self.get_face_cutting_contours(intersecting_combinations)
         if not list_cutting_contours:
-            return [self_copy]
-        return self_copy.divide_face(list_cutting_contours)
+            return [self]
+        return self.divide_face(list_cutting_contours)
 
     def split_inner_contour_intersecting_cutting_contours(self, list_cutting_contours):
         """
@@ -1044,17 +1047,15 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: list of intersecting primitives for current face
         """
         face_intersecting_primitives2d = []
-        for intersecting_combination, intersections in dict_intersecting_combinations.items():
-            if self in intersecting_combination:
-                for intersection_wire in intersections:
-                    if len(intersection_wire.primitives) != 1:
-                        raise NotImplementedError
-                    primitive2_2d = self.surface3d.contour3d_to_2d(intersection_wire).primitives[0]
-                    if volmdlr.core.edge_in_list(primitive2_2d, face_intersecting_primitives2d) or \
-                            volmdlr.core.edge_in_list(primitive2_2d.reverse(), face_intersecting_primitives2d):
-                        continue
-                    if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d, tol=1e-7):
-                        face_intersecting_primitives2d.append(primitive2_2d)
+        intersections = dict_intersecting_combinations[self]
+        for intersection_wire in intersections:
+            wire2d = self.surface3d.contour3d_to_2d(intersection_wire)
+            for primitive2d in wire2d.primitives:
+                if volmdlr.core.edge_in_list(primitive2d, face_intersecting_primitives2d) or \
+                        volmdlr.core.edge_in_list(primitive2d.reverse(), face_intersecting_primitives2d):
+                    continue
+                if not self.surface2d.outer_contour.primitive_over_contour(primitive2d, tol=1e-7):
+                    face_intersecting_primitives2d.append(primitive2d)
         return face_intersecting_primitives2d
 
     def _is_linesegment_intersection_possible(self, linesegment: vme.LineSegment3D):
@@ -1237,6 +1238,24 @@ class Face3D(volmdlr.core.Primitive3D):
         if return_other_point:
             return minimum_distance, best_distance_point
         return minimum_distance
+
+    def get_coincident_face_intersections(self, face):
+        """
+        Gets intersections for two faces which have coincident faces.
+
+        :param face: other face.
+        :return: two lists of intersections. one list containing wires intersecting face1, the other those for face2.
+        """
+        points_intersections = self.outer_contour3d.wire_intersections(face.outer_contour3d)
+        if not points_intersections:
+            return [], []
+        extracted_contours = self.outer_contour3d.split_with_sorted_points(points_intersections)
+        extracted_contours2 = face.outer_contour3d.split_with_sorted_points(points_intersections)
+        contours_in_self = [contour for contour in extracted_contours2
+                            if all(self.edge3d_inside(edge) for edge in contour.primitives)]
+        contours_in_other_face = [contour for contour in extracted_contours
+                                  if all(face.edge3d_inside(edge) for edge in contour.primitives)]
+        return contours_in_self, contours_in_other_face
 
 
 class PlaneFace3D(Face3D):
@@ -1922,6 +1941,7 @@ class Triangle3D(PlaneFace3D):
         """
         Changes frame_mapping and return a new Triangle3D.
 
+        :param frame: frame used.
         :param side: 'old' or 'new'.
         """
         np1 = self.point1.frame_mapping(frame, side)
@@ -2279,7 +2299,7 @@ class ToroidalFace3D(Face3D):
 
     contours 2d is rectangular and will create a classic tore with x:2*pi, y:2*pi
     x is for exterior, and y for the circle to revolute
-    points = [pi, 2*pi] for an half tore
+    points = [pi, 2*pi] for a half tore
     """
     min_x_density = 5
     min_y_density = 1
@@ -2314,10 +2334,9 @@ class ToroidalFace3D(Face3D):
         return ToroidalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
-    def points_resolution(self, line, pos,
-                          resolution):  # With a resolution wished
-        points = []
-        points.append(line.points[0])
+    @staticmethod
+    def points_resolution(line, pos, resolution):  # With a resolution wished
+        points = [line.points[0]]
         limit = line.points[1].vector[pos]
         start = line.points[0].vector[pos]
         vec = [0, 0]
@@ -3130,8 +3149,11 @@ class BSplineFace3D(Face3D):
         v2 = nearest_start2[1]
 
         if v1 == 0 and v2 == 0:
+            if corresponding_directions == [('+u', '-u')]:
+                grid2d_direction = [['-x', '-y'], ['+x', '+y']]
+            else:
+                grid2d_direction = [['+x', '-y'], ['+x', '+y']]
             corresponding_directions.append(('+v', '-v'))
-            grid2d_direction = [['+x', '-y'], ['+x', '+y']]
 
         elif v1 == 1 and v2 == 1:
             if corresponding_directions == [('+u', '-u')]:
@@ -3400,11 +3422,11 @@ class BSplineFace3D(Face3D):
 
     def to_planeface3d(self, plane3d: surfaces.Plane3D = None):
         """
-        Converts a Bspline face3d to a Plane face3d (using or without a reference Plane3D).
+        Converts a Bspline face 3d to a Plane face 3d (using or without a reference Plane3D).
 
         :param plane3d: A reference Plane3D, defaults to None
         :type plane3d: Plane3D, optional
-        :return: A Plane face3d
+        :return: A Plane face 3d.
         :rtype: PlaneFace3D
         """
 

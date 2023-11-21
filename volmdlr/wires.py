@@ -2087,21 +2087,29 @@ class Contour2D(ContourMixin, Wire2D):
 
     def area(self):
         """Returns the area of the contour."""
+        #todo: use the sum of straight_line_area for all cases to avoid triangulation.
         if not self._area:
             area = self.edge_polygon.area()
             classes = {prim.__class__ for prim in self.primitives}
             verify_classes = classes.issubset({volmdlr.edges.LineSegment2D, volmdlr.edges.Arc2D})
+            if self.edge_polygon.is_trigo:
+                trigo = 1
+            else:
+                trigo = -1
             if verify_classes:
-                if self.edge_polygon.is_trigo:
-                    trigo = 1
-                else:
-                    trigo = -1
                 for edge in self.primitives:
                     area += trigo * edge.straight_line_area()
                 self._area = abs(area)
             else:
                 polygon = self.to_polygon(angle_resolution=50)
-                self._area = polygon.triangulation().area()
+                points_set = set(polygon.points)
+                if len(points_set) < len(polygon.points):
+                    # This prevents segmentation fault from contours coming from step files
+                    for edge in self.primitives:
+                        area += trigo * edge.straight_line_area()
+                    self._area = abs(area)
+                else:
+                    self._area = polygon.triangulation().area()
         return self._area
 
     def center_of_mass(self):
@@ -2938,10 +2946,9 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """Get polygon lines."""
         lines = []
         if len(self.points) > 1:
-            for point1, point2 in zip(self.points,
-                                      list(self.points[1:]) + [self.points[0]]):
-                if not point1.is_close(point2):
-                    lines.append(volmdlr.edges.LineSegment2D(point1, point2))
+            lines = [volmdlr.edges.LineSegment2D(point1, point2)
+                     for point1, point2 in zip(self.points, self.points[1:] + [self.points[0]])
+                     if point1 != point2]
         return lines
 
     def rotation(self, center: volmdlr.Point2D, angle: float):
@@ -4201,7 +4208,9 @@ class Contour3D(ContourMixin, Wire3D):
                 return contour_reordered
         list_edges = reorder_contour3d_edges_from_step(raw_edges, [step_id, step_name, arguments])
         if list_edges:
-            return cls(list_edges, name=name)
+            contour = cls(list_edges, name=name)
+            if contour.is_ordered(1e-3):
+                return contour
         return None
 
     def to_step(self, current_id, surface_id=None, surface3d=None):
@@ -4365,7 +4374,7 @@ class Contour3D(ContourMixin, Wire3D):
         dict_intersecting_points = {}
         for primitive in self.primitives:
             for primitive2 in contour3d.primitives:
-                intersecting_point = primitive.linesegment_intersection(
+                intersecting_point = primitive.linesegment_intersections(
                     primitive2)
                 if intersecting_point is not None:
                     dict_intersecting_points[primitive2] = intersecting_point
@@ -4480,7 +4489,8 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         points2d = [point.to_2d(plane_origin, x, y) for point in self.points]
         return ClosedPolygon2D(points2d)
 
-    def sewing_with(self, other_poly3d, x, y, resolution=20):
+    def _get_sewing_with_parameters(self, other_poly3d, x, y):
+        """Helper function to sewing_with."""
         self_center, other_center = self.average_center_point(), \
             other_poly3d.average_center_point()
 
@@ -4493,6 +4503,13 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
 
         bbox_self2d, bbox_other2d = self_poly2d.bounding_rectangle.bounds(), \
             other_poly2d.bounding_rectangle.bounds()
+        return (self_center, other_center, self_center2d, other_center2d,
+                self_poly2d, other_poly2d, bbox_self2d, bbox_other2d)
+
+    def sewing_with(self, other_poly3d, x, y, resolution=20):
+        """Sew two polygons."""
+        (self_center, other_center, self_center2d, other_center2d,
+         self_poly2d, other_poly2d, bbox_self2d, bbox_other2d) = self._get_sewing_with_parameters(other_poly3d, x, y)
         position = [abs(value) for value in bbox_self2d] \
             + [abs(value) for value in bbox_other2d]
         max_scale = 2 * max(position)

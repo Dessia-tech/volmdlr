@@ -28,6 +28,7 @@ cosinus
 ctrlpts
 ctrlptsw
 cylindricalface
+cylindricalsurface
 cython
 Cython
 dataset
@@ -150,3 +151,8 @@ zmax
 zmin
 π
 Π
+octree
+octrees
+PointBasedVoxelization
+MatrixBasedVoxelization
+OctreeBasedVoxelization

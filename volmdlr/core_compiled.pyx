@@ -183,7 +183,7 @@ cdef (double, (double, double, double)) c_linesegment3d_point_distance((double, 
 @cython.wraparound(False)
 cpdef bint polygon_point_belongs(double[:, ::1] polygon, double[:] point,
                                  bint include_edge_points=False, double tol= 1e-6):
-    cdef int i
+    cdef size_t i
     cdef size_t n = polygon.shape[0]
     cdef bint inside = False
     cdef double x, y, p1x, p1y, p2x, p2y, xints, dot_product, length_squared, t, distance_projection_to_point
@@ -228,18 +228,16 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
                                                          bint include_edge_points = False, double tol = 1e-6):
     cdef size_t n = polygon.shape[0]
     cdef size_t m = points.shape[0]
-    cdef int i, j
+    cdef size_t i, j
     cdef double x, y, p1x, p1y, p2x, p2y, xints, dot_product, length_squared, t, distance_projection_to_point
     cdef double[2] u, v, projection_point
     cdef np.ndarray[np.uint8_t, ndim = 1] results = npy.zeros(m, dtype=npy.uint8)
     cdef bint inside
-    cdef bint over_edge
 
     for i in prange(m, nogil=True):
         x = points[i][0]
         y = points[i][1]
         inside = False
-        over_edge = False
         for j in range(n):
             p1x = polygon[j][0]
             p1y = polygon[j][1]
@@ -260,11 +258,9 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
                 if distance_projection_to_point <= tol:
                     if include_edge_points:
                         results[i] = True
-                        over_edge = True
                         break
                     else:
                         results[i] = False
-                        over_edge = True
                         break
             xints = math_c.HUGE_VAL
             if min(p1y, p2y) <= y <= max(p1y, p2y) and min(p1x, p2x) <= x <= max(p1x, p2x):
@@ -273,18 +269,16 @@ cpdef np.ndarray[np.uint8_t, ndim = 1] points_in_polygon(double[:, ::1] polygon,
                 if p1y == p2y or x == xints:
                     if include_edge_points:
                         results[i] = True
-                        over_edge = True
                         break
                     else:
                         results[i] = False
-                        over_edge = True
                         break
             if min(p1y, p2y) < y <= max(p1y, p2y) and x <= max(p1x, p2x):
                 if p1y != p2y:
                     xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
                 if p1x == p2x or x < xints:
                     inside = not inside
-        if not over_edge:
+        else:
             results[i] = inside
 
     return results
@@ -2160,11 +2154,14 @@ cdef class Point3D(Vector3D):
         """Return True if point is in the list with a given tolerance. Returns False otherwise."""
         return point3d_in_list(self, list_points, tol)
 
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef bint point3d_in_list(Point3D point, list[Point3D] list_points, double tol):
     cdef size_t n = len(list_points)
     if n == 0:
         return False
-    cdef int i
+    cdef size_t i
     cdef double squared_distance, squared_tol
     squared_tol = tol * tol
 
@@ -2177,11 +2174,13 @@ cdef bint point3d_in_list(Point3D point, list[Point3D] list_points, double tol):
     return False
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef bint point2d_in_list(Point2D point, list[Point2D] list_points, double tol):
     cdef size_t n = len(list_points)
     if n == 0:
         return False
-    cdef int i
+    cdef size_t i
     cdef double squared_distance, squared_tol
     squared_tol = tol * tol
 
@@ -2369,11 +2368,11 @@ class Matrix33:
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
-        if abs(u1) < 1e-12:
+        if abs(u1) < 1e-13:
             u1 = 0.
-        if abs(u2) < 1e-12:
+        if abs(u2) < 1e-13:
             u2 = 0.
-        if abs(u3) < 1e-12:
+        if abs(u3) < 1e-13:
             u3 = 0.
         return vector.__class__(u1, u2, u3)
 

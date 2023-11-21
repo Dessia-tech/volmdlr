@@ -37,6 +37,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         arc2 = edges.Arc3D.from_3_points(volmdlr.Point3D(-0.169132244445, 0.06508125180570001, 0.627719515715),
                                          volmdlr.Point3D(-0.169169279223, 0.064939567779, 0.628073066814),
                                          volmdlr.Point3D(-0.169258691383, 0.064597504793, 0.628219515715))
+
         surface2 = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "surface.json"))
         test2 = surface2.arc3d_to_2d(arc3d=arc2)[0]
         self.assertTrue(test2.start.is_close(volmdlr.Point2D(-0.28681306221029024, -math.pi)))
