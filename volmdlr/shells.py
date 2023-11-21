@@ -902,7 +902,10 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                     pass
                 else:
                     for _, primitive in enumerate(contour.primitives):
+                        # index = get_edge_index_in_list(primitive, primitives)
                         index = get_edge_index_in_list(primitive, primitives)
+                        if index == None:
+                            index = get_edge_index_in_list(primitive.reverse(), primitives)
 
                         if primitives[index].is_close(primitive):
 
