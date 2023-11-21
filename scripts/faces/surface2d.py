@@ -35,7 +35,7 @@ contour = volmdlr.primitives2d.ClosedRoundedLineSegments2D([p1, p2,
                                                            adapt_radius=True)
 
 # contour.plot()
-hole = curves.Circle2D(pc, 0.5*r)
+hole = curves.Circle2D(volmdlr.OXY.translation(pc), 0.5*r)
 surface = surfaces.Surface2D(contour, [hole])
 surface.plot()
 

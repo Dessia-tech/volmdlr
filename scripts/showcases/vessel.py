@@ -37,11 +37,11 @@ connector2 = faces.CylindricalFace3D.from_surface_rectangular_cut(cyl_surface, 0
 closing_face_left = faces.PlaneFace3D(
     surfaces.Plane3D(volmdlr.Frame3D(conector1_center.translation(volmdlr.X3D*(-1)), volmdlr.Y3D, volmdlr.Z3D,
                                      volmdlr.X3D)),
-    surfaces.Surface2D(wires.Contour2D.from_circle(curves.Circle2D(volmdlr.O2D, conector_radius)), []))
+    surfaces.Surface2D(wires.Contour2D.from_circle(curves.Circle2D(volmdlr.OXY, conector_radius)), []))
 closing_face_right = faces.PlaneFace3D(
     surfaces.Plane3D(volmdlr.Frame3D(conector2_center.translation(volmdlr.X3D*1),
                                      volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D)),
-    surfaces.Surface2D(wires.Contour2D.from_circle(curves.Circle2D(volmdlr.O2D, conector_radius)), []))
+    surfaces.Surface2D(wires.Contour2D.from_circle(curves.Circle2D(volmdlr.OXY, conector_radius)), []))
 
 #cylinder body
 cylindrial_surface = surfaces.CylindricalSurface3D(volmdlr.Frame3D(volmdlr.O3D, volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D), 4)

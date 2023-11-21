@@ -90,6 +90,13 @@ class TestFullArcEllipse3D(unittest.TestCase):
         self.assertTrue(discretization_points[0].is_close(fullarcellipse.start))
         self.assertTrue(discretization_points[-1].is_close(fullarcellipse.end))
 
+    def test_line_intersections(self):
+        fullarcellipse = vme.FullArcEllipse3D.load_from_file(
+            os.path.join(folder, "fullarcellipse3d_line_intersections.json"))
+        line = curves.Line3D.load_from_file(os.path.join(folder, "fullarcellipse3d_line_intersections_line.json"))
+        test = fullarcellipse.line_intersections(line, 1e-4)[0]
+        self.assertTrue(test, volmdlr.Point3D(0.3407914925119553, -0.10964172421958009, 0.5033056993640009))
+
 
 if __name__ == '__main__':
     unittest.main()

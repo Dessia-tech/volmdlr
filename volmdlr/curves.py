@@ -17,7 +17,7 @@ from dessia_common.core import DessiaObject
 import plot_data.colors
 import plot_data.core as plot_data
 import volmdlr
-from volmdlr import core, geometry
+from volmdlr import core, geometry, get_minimum_distance_points_lines
 from volmdlr.nurbs.helpers import generate_knot_vector
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as volmdlr_intersections
@@ -26,15 +26,13 @@ from volmdlr.core import EdgeStyle
 
 def hyperbola_parabola_control_point_and_weight(start, start_tangent, end, end_tangent, point):
     """Gets control points and weights for hyperbola and parabola curves represented by bsplines."""
-    start_tangent = start_tangent.unit_vector()
-    end_tangent = end_tangent.unit_vector()
     line_class = globals()["Line"+start.__class__.__name__[-2:]]
-    vector_02 = end - start
-    line02 = line_class.from_point_and_vector(start, vector_02)
+    line02 = line_class.from_point_and_vector(start, (end - start).to_vector())
 
-    line0 = line_class.from_point_and_vector(start, start_tangent)
-    line2 = line_class.from_point_and_vector(end, end_tangent)
-    point1 = line0.line_intersections(line2)[0]
+    line0 = line_class.from_point_and_vector(start, start_tangent.unit_vector())
+    line2 = line_class.from_point_and_vector(end, end_tangent.unit_vector())
+    line_intersections = line0.line_intersections(line2)
+    point1 = line_intersections[0]
     vector_p1 = point1 - point
     line1p = line_class.from_point_and_vector(point1, vector_p1)
     point_q = line02.line_intersections(line1p)[0]
@@ -50,8 +48,12 @@ class Curve(DessiaObject):
     """Abstract class for a curve object."""
 
     def __init__(self, name: str = ''):
-        self.periodic = False
         DessiaObject.__init__(self, name=name)
+
+    @property
+    def periodic(self):
+        """Returns True if the curve is closed."""
+        return False
 
     def abscissa(self, point):
         """
@@ -68,7 +70,7 @@ class Curve(DessiaObject):
         """
         return sorted(points, key=self.abscissa)
 
-    def line_intersections(self, line):
+    def line_intersections(self, line, abs_tol: float = 1e-6):
         """
         Calculate the line_intersections between line and curve.
         """
@@ -105,14 +107,19 @@ class Curve(DessiaObject):
         if hasattr(other_curve, method_name):
             intersections = getattr(other_curve, method_name)(self, abs_tol)
             return intersections
-        raise NotImplementedError
+        intersections = volmdlr_intersections.get_bsplinecurve_intersections(other_curve, self, abs_tol)
+        return intersections
 
 
 class ClosedCurve(Curve):
     """Abstract class for defining closed curves (Circle, Ellipse) properties."""
     def __init__(self, name: str = ''):
         Curve.__init__(self, name=name)
-        self.periodic = True
+
+    @property
+    def periodic(self):
+        """Returns True if the curve is closed."""
+        return True
 
     def point_at_abscissa(self, abscissa):
         """
@@ -455,12 +462,26 @@ class Line2D(Line):
                                 [self.point2.x, self.point2.y],
                                 edge_style=edge_style)
 
-    def line_intersections(self, line):
+    def line_distance(self, other_line):
+        """
+        Calculates the distance between infinite Lines in 2D.
+
+        :param other_line: other line.
+        :return: distance between line and line segment.
+        """
+        intersections = self.line_intersections(other_line)
+        if intersections:
+            return 0.0
+        distance, _ = self.point_projection(other_line.point1)
+        return distance
+
+    def line_intersections(self, line, abs_tol: float = 1e-6):
         """
         Calculate the intersection between the two lines.
 
         :param line: The line to calculate intersections with.
-        :type line: :class:`volmdlr.Line2D`
+        :type line: :class:`volmdlr.Line2D`.
+        :param abs_tol: tolerance.
         :return: A list of at most one intersection point between
             the two lines.
         :rtype: List[:class:`volmdlr.Point2D`]
@@ -479,17 +500,6 @@ class Line2D(Line):
 
             return [point_projection1]
         return []
-
-    def linesegment_intersections(self, linesegment):
-        """
-        Calculate the intersection between a line and a line segment.
-
-        :param linesegment: The line segment to calculate intersections with.
-        :type linesegment: :class:`volmdlr.edges.LineSegment2D`
-        :return: A list of at most one intersection point between the two lines.
-        :rtype: List[:class:`volmdlr.Point2D`]
-        """
-        return linesegment.line_intersections(self)
 
     @staticmethod
     def _compute_data_create_tangent_circle(line, point, other_line):
@@ -804,17 +814,18 @@ class Line3D(Line):
         intersection = self.point1 + t_coefficient * direction_vector1
         return intersection
 
-    def line_intersections(self, line):
+    def line_intersections(self, line, abs_tol: float = 1e-6):
         """
         Gets the intersection between two Line3D, if there is an intersection.
 
-        :param line: other Line3D
+        :param line: other Line3D.
+        :param abs_tol: tolerance.
         :return: None if there is no intersection between Lines.
         A volmdlr.Point3D if there exists an intersection.
         """
-        return [self.intersection(line)]
+        return [self.intersection(line, abs_tol)]
 
-    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+    def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(), length: float = 1.0):
         """Plot method for Line 3D using Matplotlib."""
         if ax is None:
             fig = plt.figure()
@@ -826,9 +837,9 @@ class Line3D(Line):
 
         # Drawing 3 times length of segment on each side
         u = self.point2 - self.point1
-        v1 = self.point1 - u * 3
+        v1 = self.point1 - u * length
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = self.point2 - u * 3
+        v2 = self.point2 - u * length
         x2, y2, z2 = v2.x, v2.y, v2.z
         if edge_style.dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color,
@@ -854,24 +865,9 @@ class Line3D(Line):
         """
         Returns the points on this line and the other line that are the closest of lines.
         """
-        if self.point_belongs(other_line.point1):
-            return other_line.point1, other_line.point1
-        if self.point_belongs(other_line.point2):
-            return other_line.point2, other_line.point2
-        u = self.point2 - self.point1
-        v = other_line.point2 - other_line.point1
-        w = self.point1 - other_line.point1
-        u_dot_u = u.dot(u)
-        u_dot_v = u.dot(v)
-        v_dot_v = v.dot(v)
-        u_dot_w = u.dot(w)
-        v_dot_w = v.dot(w)
 
-        s_param = (u_dot_v * v_dot_w - v_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
-        t_param = (u_dot_u * v_dot_w - u_dot_v * u_dot_w) / (u_dot_u * v_dot_v - u_dot_v ** 2)
-        point1 = self.point1 + s_param * u
-        point2 = other_line.point1 + t_param * v
-        return point1, point2
+        return get_minimum_distance_points_lines(self.point1, self.point2, other_line.point1, other_line.point2)
+
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
@@ -966,6 +962,11 @@ class Line3D(Line):
 class CircleMixin:
     """Circle abstract class."""
 
+    @property
+    def center(self):
+        """Gets circle's center point."""
+        return self.frame.origin
+
     def split_at_abscissa(self, abscissa):
         """
         Splits a Circle into two at a given fraction of its length (abscissa parameter).
@@ -1013,6 +1014,52 @@ class CircleMixin:
             return fullar_arc_class_(circle, point1)
         return arc_class_(circle, point1, point2)
 
+    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
+        """
+        Calculates the abscissa a given point.
+
+        :param point: point to calculate abscissa.
+        :param tol: tolerance.
+        :return: abscissa
+        """
+        if not math.isclose(self.center.point_distance(point), self.radius, abs_tol=tol):
+            raise ValueError('Point is not on circle')
+        dimension = self.__class__.__name__[-2:]
+        if dimension == "2D":
+            x, y = self.frame.global_to_local_coordinates(point)
+        else:
+            x, y, _ = self.frame.global_to_local_coordinates(point)
+        u1 = x / self.radius
+        u2 = y / self.radius
+        theta = geometry.sin_cos_angle(u1, u2)
+
+        return self.radius * abs(theta)
+
+    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
+        """
+        Discretize a Circle to have "n" points.
+
+        :param number_points: the number of points (including start and end points)
+             if unset, only start and end will be returned
+        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
+            to mesh an arc
+        :return: a list of sampled points
+        """
+        if number_points:
+            angle_resolution = number_points
+        discretization_points = [self.center + self.radius * math.cos(theta) * self.frame.u +
+                                 self.radius * math.sin(theta) * self.frame.v for theta in
+                                 npy.linspace(0, volmdlr.TWO_PI, angle_resolution, dtype=npy.float64)]
+        return discretization_points
+
+    def point_at_abscissa(self, curvilinear_abscissa):
+        """Start point is at intersection of frame.u axis."""
+        start = self.frame.origin + self.radius * self.frame.u
+        dimension = self.__class__.__name__[-2:]
+        if dimension == "2D":
+            return start.rotation(self.center, curvilinear_abscissa / self.radius)
+        return start.rotation(self.frame.origin, self.frame.w, curvilinear_abscissa / self.radius)
+
 
 class Circle2D(CircleMixin, ClosedCurve):
     """
@@ -1021,19 +1068,19 @@ class Circle2D(CircleMixin, ClosedCurve):
     This class inherits from `CircleMixin` and `Curve` classes,
     and provides methods to work with 2D circles.
 
-    :param center: The center point of the circle.
-    :type center: volmdlr.Point2D
+    :param frame: The 2D frame for the circle.
+    :type frame: volmdlr.Frame2D
     :param radius: The radius of the circle.
     :type radius: float.
     :param name: The name of the circle. Defaults to ''.
     :type name: str, optional
     """
 
-    def __init__(self, center: volmdlr.Point2D, radius: float, name: str = ''):
-        self.center = center
+    def __init__(self, frame: volmdlr.Frame2D, radius: float, name: str = ''):
         self.radius = radius
+        self.frame = frame
         self._bounding_rectangle = None
-        self.frame = volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)
+        self._is_trigo = None
         ClosedCurve.__init__(self, name=name)
 
     def __hash__(self):
@@ -1057,12 +1104,87 @@ class Circle2D(CircleMixin, ClosedCurve):
             return self.radius
         raise IndexError
 
+    @property
+    def is_trigo(self):
+        """Return True if circle is counterclockwise."""
+        if self._is_trigo is None:
+            cross = self.frame.u.cross(self.frame.v)
+            if cross > 0:
+                self._is_trigo = True
+            else:
+                self._is_trigo = False
+        return self._is_trigo
+
+    @is_trigo.setter
+    def is_trigo(self, value):
+        """
+        Set circle rotation direction.
+
+        :param value: True, if you want that the circle to be counterclockwise direction. False, otherwise.
+        :type value: bool
+        """
+        cross = self.frame.u.cross(self.frame.v)
+        if cross > 0 and not value:
+            self.frame.v = -self.frame.v
+            self._is_trigo = value
+        elif cross < 0 and value:
+            self.frame.v = -self.frame.v
+            self._is_trigo = value
+        elif self._is_trigo is None:
+            self._is_trigo = value
+
+    @property
+    def bounding_rectangle(self):
+        """
+        Gets the bounding rectangle for the circle.
+
+        :return: bounding rectangle.
+        """
+        if not self._bounding_rectangle:
+            self._bounding_rectangle = self.get_bounding_rectangle()
+        return self._bounding_rectangle
+
     @classmethod
-    def from_3_points(cls, point1, point2, point3, name: str = ''):
+    def from_center_and_radius(cls, center: volmdlr.Point2D, radius: float, is_trigo: bool = True, name: str = ""):
+        """
+        Instantiate a 2D circle using a center and a radius.
+
+        :param center: The center point of the circle.
+        :type center: volmdlr.Point2D
+        :param radius: The radius of the circle.
+        :type radius: float.
+        :param is_trigo: (Optional) If False, the circle is in clockwise direction.
+        :type is_trigo: bool
+        :param name: The name of the circle. Defaults to ''.
+        :type name: str, optional
+        """
+
+        if is_trigo:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)
+        else:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)
+        return cls(frame=frame, radius=radius, name=name)
+
+    @classmethod
+    def from_3_points(cls, point1, point2, point3, is_trigo: bool = True, name: str = ''):
         """
         Creates a circle 2d from 3 points.
 
         :return: circle 2d.
+        """
+        center = cls.find_circle_center_from_3_points(point1, point2, point3)
+        if is_trigo:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, volmdlr.Y2D)
+        else:
+            frame = volmdlr.Frame2D(center, volmdlr.X2D, -volmdlr.Y2D)
+
+        circle = cls(frame, point1.point_distance(center), name=name)
+        return circle
+
+    @staticmethod
+    def find_circle_center_from_3_points(point1, point2, point3):
+        """
+        Finds the center of the circle passing through the three given points.
         """
         x_interior, y_interior = point2.x, point2.y
         x_end, y_end = point3.x, point3.y
@@ -1080,8 +1202,7 @@ class Circle2D(CircleMixin, ClosedCurve):
             matrix_a = npy.array(matrix1)
             b_vector = - npy.array(b_vector_components)
             center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
-        circle = cls(center, point1.point_distance(center), name=name)
-        return circle
+        return center
 
     def area(self):
         """
@@ -1116,44 +1237,29 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param point: symmetry point.
         :return: Circle 2D symmetric to point.
         """
-        center = 2 * point - self.center
-        return Circle2D(center, self.radius)
+        offset = 2 * point - self.center
+        return self.translation(offset)
 
     def axial_symmetry(self, line):
         """
         Finds out the symmetric circle 2d according to a line.
         """
-        return self.__class__(center=self.center.axial_symmetry(line),
-                              radius=self.radius)
-
+        axial_symmetric_center = self.center.axial_symmetry(line)
+        offset = axial_symmetric_center - self.center
+        return self.translation(offset)
     def copy(self, *args, **kwargs):
         """
         Create a copy of the arc 2d.
 
         :return: copied circle 2d.
         """
-        return Circle2D(self.center.copy(), self.radius)
+        return Circle2D(self.frame.copy(), self.radius)
 
-    def point_at_abscissa(self, curvilinear_abscissa):
-        """
-        Gets the point at a given abscissa.
-
-        :param curvilinear_abscissa: a portion of the circle's length - (0, length).
-        :return: Point found at given abscissa.
-        """
-        start = self.center + self.radius * volmdlr.X3D
-        return start.rotation(self.center, curvilinear_abscissa / self.radius)
-
-    def abscissa(self, point: volmdlr.Point2D, tol=1e-6):
-        """
-        Returns the abscissa of a given point 2d.
-
-        """
-        if not math.isclose(point.point_distance(self.center), self.radius, abs_tol=tol):
-            raise ValueError('Point not in arc')
-        u1, u2 = point.x / self.radius, point.y / self.radius
-        point_angle = geometry.sin_cos_angle(u1, u2)
-        return self.radius * point_angle
+    def reverse(self):
+        """Gets the circle in the reverse direction."""
+        frame = self.frame.copy()
+        frame.v = - frame.v
+        return Circle2D(frame, self.radius)
 
     def point_belongs(self, point, include_edge_points: bool = True, tol: float = 1e-6):
         """
@@ -1181,17 +1287,6 @@ class Circle2D(CircleMixin, ClosedCurve):
         :return: the distance from the point to the circle 2D.
         """
         return abs(point.point_distance(self.center) - self.radius)
-
-    @property
-    def bounding_rectangle(self):
-        """
-        Gets the bounding rectangle for the circle.
-
-        :return: bounding rectangle.
-        """
-        if not self._bounding_rectangle:
-            self._bounding_rectangle = self.get_bounding_rectangle()
-        return self._bounding_rectangle
 
     def get_bounding_rectangle(self):
         """
@@ -1318,7 +1413,7 @@ class Circle2D(CircleMixin, ClosedCurve):
                 intersections.append(inter)
         return intersections
 
-    def ellipse_intersections(self, ellipse2d, abs_tol: float = 1e-7):
+    def ellipse_intersections(self, ellipse2d: 'Ellipse2D', abs_tol: float = 1e-7):
         """
         Finds the intersection points between this circle and an arc 2d.
 
@@ -1396,7 +1491,9 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param angle: angle rotation.
         :return: a new rotated Circle2D.
         """
-        return Circle2D(self.center.rotation(center, angle), self.radius)
+        if center.is_close(self.center):
+            return Circle2D(self.frame.rotation(center, angle, rotate_basis=True), self.radius)
+        return Circle2D(self.frame.rotation(center, angle), self.radius)
 
     def translation(self, offset: volmdlr.Vector2D):
         """
@@ -1405,21 +1502,15 @@ class Circle2D(CircleMixin, ClosedCurve):
         :param offset: translation vector
         :return: A new translated Circle2D
         """
-        return Circle2D(self.center.translation(offset), self.radius)
+        return Circle2D(self.frame.translation(offset), self.radius)
 
-    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+    def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new Circle2D.
 
         side = 'old' or 'new'
         """
-        if side == 'old':
-            return Circle2D(frame.local_to_global_coordinates(self.center),
-                            self.radius)
-        if side == 'new':
-            return Circle2D(frame.global_to_local_coordinates(self.center),
-                            self.radius)
-        raise ValueError('Side should be \'new\' \'old\'')
+        return Circle2D(self.frame.frame_mapping(frame, side), self.radius)
 
     def split_by_line(self, line: Line2D):
         """
@@ -1443,21 +1534,6 @@ class Circle2D(CircleMixin, ClosedCurve):
         """
         return [volmdlr.edges.Arc2D(self, split_start, split_end),
                 volmdlr.edges.Arc2D(self, split_end, split_start)]
-
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 40):
-        """
-        Discretize a Contour to have "n" points.
-
-        :param number_points: the number of points (including start and end points)
-             if unset, only start and end will be returned
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
-            to mesh an arc
-        :return: a list of sampled points
-        """
-        if not number_points and angle_resolution:
-            number_points = math.ceil(math.pi * angle_resolution) + 2
-        step = self.length() / (number_points - 1)
-        return [self.point_at_abscissa(i * step) for i in range(number_points)]
 
     def get_geo_points(self):
         """
@@ -1487,10 +1563,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         self.angle = 2 * math.pi
         ClosedCurve.__init__(self, name=name)
 
-    @property
-    def center(self):
-        """Gets the center point of the circle 3d."""
-        return self.frame.origin
+
 
     @property
     def normal(self):
@@ -1514,40 +1587,6 @@ class Circle3D(CircleMixin, ClosedCurve):
         if key == 1:
             return self.radius
         raise IndexError
-
-    def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
-        """
-        Discretize a Circle to have "n" points.
-
-        :param number_points: the number of points (including start and end points)
-             if unset, only start and end will be returned
-        :param angle_resolution: if set, the sampling will be adapted to have a controlled angular distance. Useful
-            to mesh an arc
-        :return: a list of sampled points
-        """
-        if number_points:
-            angle_resolution = number_points
-        discretization_points_3d = [self.center + self.radius * math.cos(theta) * self.frame.u +
-                                    self.radius * math.sin(theta) * self.frame.v for theta in
-                                    npy.linspace(0, volmdlr.TWO_PI, angle_resolution)]
-        return discretization_points_3d
-
-    def abscissa(self, point: volmdlr.Point3D, tol: float = 1e-6):
-        """
-        Calculates the abscissa a given point.
-
-        :param point: point to calculate abscissa.
-        :param tol: tolerance.
-        :return: abscissa
-        """
-        if not math.isclose(self.center.point_distance(point), self.radius, abs_tol=tol):
-            raise ValueError('Point is not on circle')
-        x, y, _ = self.frame.global_to_local_coordinates(point)
-        u1 = x / self.radius
-        u2 = y / self.radius
-        theta = geometry.sin_cos_angle(u1, u2)
-
-        return self.radius * abs(theta)
 
     def length(self):
         """Calculates the arc length of the circle."""
@@ -1587,13 +1626,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, close_plot=True)
-
-    def point_at_abscissa(self, curvilinear_abscissa):
-        """ Start point is at intersection of frame.u axis. """
-        start = self.frame.origin + self.radius * self.frame.u
-        return start.rotation(self.frame.origin, self.frame.w,
-                              curvilinear_abscissa / self.radius)
+        return vm_common_operations.plot_from_discretization_points(ax, edge_style, self, 100, close_plot=True)
 
     def line_intersections(self, line: Line3D, abs_tol: float = 1e-6):
         """
@@ -1629,6 +1662,15 @@ class Circle3D(CircleMixin, ClosedCurve):
         :param abs_tol: tolerance.
         :return: list of points intersecting Circle
         """
+        intersections = []
+        if self.frame.w.is_colinear_to(other_circle.frame.w) and \
+                math.isclose(self.frame.w.dot(other_circle.frame.origin - self.frame.origin), 0, abs_tol=1e-6):
+            other_circle2d = other_circle.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+            circle2d = self.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+            intersections_2d = circle2d.circle_intersections(other_circle2d)
+            for intersection in intersections_2d:
+                intersections.append(intersection.to_3d(self.frame.origin, self.frame.u, self.frame.v))
+            return intersections
         plane_intersections = volmdlr_intersections.get_two_planes_intersections(self.frame, other_circle.frame)
         if not plane_intersections:
             return []
@@ -1638,7 +1680,7 @@ class Circle3D(CircleMixin, ClosedCurve):
                                                                                           plane_intersections)
         intersections = []
         for intersection in circle3d_line_intersections1 + circle3d_line_intersections2:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and other_circle.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
@@ -1670,7 +1712,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(
             ellipse, plane_intersections)
         for intersection in circle3d_line_intersections + ellipse3d_line_intersections:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and ellipse.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
@@ -1757,8 +1799,15 @@ class Circle3D(CircleMixin, ClosedCurve):
         :param y: plane v vector.
         :return: Circle2D.
         """
-        center = self.center.to_2d(plane_origin, x, y)
-        return Circle2D(center, self.radius)
+        center_2d = self.center.to_2d(plane_origin, x, y)
+        point1_3d = self.frame.origin + self.frame.u
+        point2_3d = self.frame.origin + self.frame.v
+        point1_2d = point1_3d.to_2d(plane_origin, x, y)
+        point2_2d = point2_3d.to_2d(plane_origin, x, y)
+        u_2d = (point1_2d - center_2d).unit_vector()
+        v_2d = (point2_2d - center_2d).unit_vector()
+        frame2d = volmdlr.Frame2D(center_2d, u_2d, v_2d)
+        return Circle2D(frame2d, self.radius)
 
     @classmethod
     def from_center_normal(cls, center: volmdlr.Point3D,
@@ -1915,6 +1964,23 @@ class Circle3D(CircleMixin, ClosedCurve):
             return point1.point_distance(point2), point1, point2
         return point1.point_distance(point2)
 
+    def point_distance(self, point3d):
+        """
+        Calculates the distance between a Circle 3D and point 3D.
+
+        :param point3d: other point.
+        :return: distance between the two objects.
+        """
+        point2d = point3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
+        projected_point3d = point2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+        line = Line3D(self.frame.origin, projected_point3d)
+        line_intersections = self.line_intersections(line)
+        distance1 = line_intersections[0].point_distance(point3d)
+        distance2 = line_intersections[1].point_distance(point3d)
+        if distance1 > distance2:
+            return distance2
+        return distance1
+
     def get_arc_point_angle(self, point):
         """Returns the angle of point on the circle."""
         local_start_point = self.frame.global_to_local_coordinates(point)
@@ -1923,7 +1989,26 @@ class Circle3D(CircleMixin, ClosedCurve):
         return point_angle
 
 
-class Ellipse2D(ClosedCurve):
+class EllipseMixin:
+    """Ellipse abstract class."""
+
+    @property
+    def center(self):
+        """Gets ellipse's center point."""
+        return self.frame.origin
+
+    @property
+    def major_dir(self):
+        """Gets ellipse's major direction vector."""
+        return self.frame.u
+
+    @property
+    def minor_dir(self):
+        """Gets ellipse's minor direction vector."""
+        return self.frame.v
+
+
+class Ellipse2D(EllipseMixin, ClosedCurve):
     """
     Defines an Ellipse in two-dimensions.
 
@@ -1944,10 +2029,6 @@ class Ellipse2D(ClosedCurve):
     def __init__(self, major_axis, minor_axis, frame, name=''):
         self.major_axis = major_axis
         self.minor_axis = minor_axis
-        self.center = frame.origin
-        self.major_dir = frame.u
-        self.minor_dir = frame.v
-        # self.frame = volmdlr.Frame2D(self.center, self.major_dir, self.minor_dir)
         self.frame = frame
         if math.isclose(frame.u.cross(frame.v), 1.0, abs_tol=1e-6):
             self.angle_start = 0.0
@@ -2044,19 +2125,19 @@ class Ellipse2D(ClosedCurve):
         frame3d = volmdlr.Frame3D(center3d, u_vector, v_vector, w_vector)
         return Ellipse3D(self.major_axis, self.minor_axis, frame3d)
 
-    def point_over_ellipse(self, point, abs_tol=1e-6):
+    def point_over_ellipse(self, point, abs_tol=1e-2):
         """
         Verifies if a point is on the ellipse.
 
         :param point: point to be verified.
-         :param abs_tol: tolerance.
+         :param abs_tol: tolerance (0.99 should be considered True).
         :return: True or False.
         """
         return math.isclose(
             round(((point.x - self.center.x) * math.cos(self.theta) +
                    (point.y - self.center.y) * math.sin(self.theta)) ** 2 / self.major_axis ** 2 +
                   ((point.x - self.center.x) * math.sin(self.theta) -
-                   (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 2), 1.0,
+                   (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 3), 1.0,
             abs_tol=abs_tol)
 
     def point_over_contour(self, point, abs_tol=1e-6):
@@ -2069,14 +2150,15 @@ class Ellipse2D(ClosedCurve):
         """
         return self.point_over_ellipse(point, abs_tol)
 
-    def line_intersections(self, line: 'Line2D'):
+    def line_intersections(self, line: 'Line2D', abs_tol: float = 1e-6):
         """
         Calculates the intersections between a line and an ellipse.
 
-        :param line: line to calculate intersections
+        :param line: line to calculate intersections.
+        :param abs_tol: tolerance.
         :return: list of points intersections, if there are any
         """
-        intersections = volmdlr_intersections.ellipse2d_line_intersections(self, line)
+        intersections = volmdlr_intersections.ellipse2d_line_intersections(self, line, abs_tol)
         return intersections
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D', abs_tol: float = 1e-6):
@@ -2107,6 +2189,34 @@ class Ellipse2D(ClosedCurve):
         intersections = volmdlr_intersections.get_bsplinecurve_intersections(ellipse2d, self, abs_tol)
         return intersections
 
+    def hyperbola_intersections(self, hyperbola2d, abs_tol: float = 1e-6):
+        """
+        Calculates the intersections between a circle 2d and a Hyperbola 2D.
+
+        :param hyperbola2d: hyperbola to search for intersections with.
+        :param abs_tol: tolerance to be considered while validating an intersection.
+        :return: a list with all intersections between circle and hyperbola.
+        """
+        b_rectangle = self.bounding_rectangle
+        hyperbola_point1 = volmdlr.Point2D(hyperbola2d.get_x(b_rectangle.ymin), b_rectangle.ymin)
+        hyperbola_point2 = volmdlr.Point2D(hyperbola2d.get_x(b_rectangle.ymax), b_rectangle.ymax)
+        hyperbola_bspline = hyperbola2d.trim(hyperbola_point1, hyperbola_point2)
+        return volmdlr_intersections.get_bsplinecurve_intersections(self, hyperbola_bspline, abs_tol)
+
+    def parabola_intersections(self, parabola2d, abs_tol: float = 1e-6):
+        """
+        Calculates the intersections between a circle 2d and a Hyperbola 2D.
+
+        :param parabola2d: parabola to search for intersections with.
+        :param abs_tol: tolerance to be considered while validating an intersection.
+        :return: a list with all intersections between circle and hyperbola.
+        """
+        b_rectangle = self.bounding_rectangle
+        parabola2d_point1 = volmdlr.Point2D(b_rectangle.xmin, parabola2d.get_y(b_rectangle.xmin))
+        parabola2d_point2 = volmdlr.Point2D(b_rectangle.xmax, parabola2d.get_y(b_rectangle.xmax))
+        parabola2d_bspline = parabola2d.trim(parabola2d_point1, parabola2d_point2)
+        return volmdlr_intersections.get_bsplinecurve_intersections(self, parabola2d_bspline, abs_tol)
+
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
         Calculates the discretized points for the ellipse.
@@ -2130,7 +2240,7 @@ class Ellipse2D(ClosedCurve):
         :param tol: tolerance.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
-        if self.point_over_ellipse(point, tol):
+        if self.point_over_ellipse(point):
             angle_abscissa = self.point_angle_with_major_dir(point)
 
             def arc_length(theta):
@@ -2244,7 +2354,7 @@ class Ellipse2D(ClosedCurve):
         return Ellipse2D(self.major_axis, self.minor_axis, frame)
 
 
-class Ellipse3D(ClosedCurve):
+class Ellipse3D(EllipseMixin, ClosedCurve):
     """
     Defines a 3D ellipse.
 
@@ -2260,11 +2370,8 @@ class Ellipse3D(ClosedCurve):
         self.frame = frame
         self.major_axis = major_axis
         self.minor_axis = minor_axis
-        self.center = frame.origin
-        self.normal = frame.w
-        self.major_dir = frame.u
-        self.minor_dir = frame.v
         self._self_2d = None
+        self._bbox = None
         ClosedCurve.__init__(self, name=name)
 
     def __getitem__(self, key):
@@ -2284,6 +2391,29 @@ class Ellipse3D(ClosedCurve):
         if not self._self_2d:
             self._self_2d = self.to_2d(self.center, self.frame.u, self.frame.v)
         return self._self_2d
+
+    @property
+    def bounding_box(self):
+        """Bounding box for Arc 3D."""
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    @property
+    def normal(self):
+        """Gets ellipse's normal vector."""
+        return self.frame.w
+
+    def _bounding_box(self):
+        """
+        Computes the bounding box.
+
+        """
+        points = [self.frame.origin + self.major_axis * self.frame.u,
+                  self.frame.origin - self.major_axis * self.frame.u,
+                  self.frame.origin + self.minor_axis * self.frame.v,
+                  self.frame.origin - self.minor_axis * self.frame.v]
+        return core.BoundingBox.from_points(points)
 
     def point_belongs(self, point, tol: float = 1e-6):
         """
@@ -2462,14 +2592,15 @@ class Ellipse3D(ClosedCurve):
                                 self.frame.u.cross(-self.frame.v))
         return Ellipse3D(self.major_axis, self.minor_axis, frame)
 
-    def line_intersections(self, line):
+    def line_intersections(self, line, abs_tol: float = 1e-6):
         """
         Gets intersections between an Ellipse 3D and a Line3D.
 
         :param line: Other Line 3D.
+        :param abs_tol: tolerance.
         :return: A list of points, containing all intersections between the Line 3D and the Ellipse3D.
         """
-        return volmdlr_intersections.conic3d_line_intersections(self, line)
+        return volmdlr_intersections.conic3d_line_intersections(self, line, abs_tol)
 
     def linesegment_intersections(self, linesegment, abs_tol: float = 1e-6):
         """
@@ -2512,7 +2643,7 @@ class Ellipse3D(ClosedCurve):
                                                                                              plane_intersections)
         ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(ellipse, plane_intersections)
         for intersection in self_ellipse3d_line_intersections + ellipse3d_line_intersections:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and ellipse.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)
@@ -2572,6 +2703,7 @@ class HyperbolaMixin(Curve):
         :param point2: point2 used to trim circle.
         """
         _bspline_class = getattr(volmdlr.edges, 'BSplineCurve'+self.__class__.__name__[-2:])
+        _lineseg_class = getattr(volmdlr.edges, 'LineSegment'+self.__class__.__name__[-2:])
         local_split_start = self.frame.global_to_local_coordinates(point1)
         local_split_end = self.frame.global_to_local_coordinates(point2)
         max_y = max(local_split_start.y, local_split_end.y)
@@ -2579,10 +2711,13 @@ class HyperbolaMixin(Curve):
         hyperbola_points = self.get_points(min_y, max_y, 3)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
+        start_tangent = self.tangent(hyperbola_points[0])
+        end_tangent = self.tangent(hyperbola_points[2])
+        if start_tangent.is_colinear_to(end_tangent):
+            lineseg = _lineseg_class(hyperbola_points[0], hyperbola_points[2])
+            return lineseg
         point, weight1 = hyperbola_parabola_control_point_and_weight(
-            hyperbola_points[0], self.tangent(hyperbola_points[0]),
-            hyperbola_points[2], self.tangent(hyperbola_points[2]),
-            hyperbola_points[1])
+            hyperbola_points[0], start_tangent, hyperbola_points[2], end_tangent, hyperbola_points[1])
         knotvector = generate_knot_vector(2, 3)
         knot_multiplicity = [1] * len(knotvector)
 
@@ -2682,11 +2817,12 @@ class Hyperbola2D(HyperbolaMixin):
 
         return tangent_vector
 
-    def line_intersections(self, line: Line2D):
+    def line_intersections(self, line: Line2D, abs_tol: float = 1e-6):
         """
         Calculates the intersections between a Hyperbola and an infinite Line in 2D.
 
         :param line: the infinite 2d line.
+        :param abs_tol: tolerance.
         :return:a list containing all intersections between the two objects, if any exists.
         """
         line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
@@ -2833,14 +2969,15 @@ class Hyperbola3D(HyperbolaMixin):
 
         return Hyperbola3D(self.frame.frame_mapping(frame, side), self.semi_major_axis, self.semi_minor_axis)
 
-    def line_intersections(self, line):
+    def line_intersections(self, line, abs_tol: float = 1e-6):
         """
         Gets intersections between a Hyperbola 3D and a Line 3D.
 
         :param line: Other Line 3D.
+        :param abs_tol: tolerance.
         :return: A list of points, containing all intersections between the Line 3D and the Hyperbola3D.
         """
-        return volmdlr_intersections.conic3d_line_intersections(self, line)
+        return volmdlr_intersections.conic3d_line_intersections(self, line, abs_tol)
 
     def circle_intersections(self, circle, abs_tol: float = 1e-6):
         """
@@ -2980,11 +3117,12 @@ class Parabola2D(ParabolaMixin):
             return True
         return False
 
-    def line_intersections(self, line: Line2D):
+    def line_intersections(self, line: Line2D, abs_tol: float = 1e-6):
         """
         Gets intersections between a Parabola 2D and a Line 2D.
 
         :param line: Other Line 2D.
+        :param abs_tol: tolerance.
         :return: A list of points, containing all intersections between the Line 2D and the Parabola 2D.
         """
         line_to_local_coodinates = line.frame_mapping(self.frame, 'new')
@@ -2999,7 +3137,7 @@ class Parabola2D(ParabolaMixin):
             intersections = [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]
             intersections = [self.frame.local_to_global_coordinates(point) for point in intersections]
             return intersections
-        if math.isclose(m**2, - 4 * self.vrtx_equation_a * c, abs_tol=1e-6):
+        if math.isclose(m**2, - 4 * self.vrtx_equation_a * c, abs_tol=abs_tol):
             x = m / (2 * self.vrtx_equation_a)
             return [volmdlr.Point2D(x, m * x + c)]
         return []
@@ -3148,14 +3286,15 @@ class Parabola3D(ParabolaMixin):
 
         return Parabola3D(self.frame.frame_mapping(frame, side), self.focal_length)
 
-    def line_intersections(self, line):
+    def line_intersections(self, line, abs_tol: float = 1e-6):
         """
         Gets intersections between a Parabola 3D and a Line 3D.
 
         :param line: Other Line 3D.
+        :param abs_tol: tolerance.
         :return: A list of points, containing all intersections between the Line 3D and the Parabola3D.
         """
-        return volmdlr_intersections.conic3d_line_intersections(self, line)
+        return volmdlr_intersections.conic3d_line_intersections(self, line, abs_tol)
 
     def conic_intersections(self, conic, abs_tol: float = 1e-6):
         """
@@ -3177,7 +3316,7 @@ class Parabola3D(ParabolaMixin):
                                                                                              plane_intersections)
         ellipse3d_line_intersections = volmdlr_intersections.conic3d_line_intersections(conic, plane_intersections)
         for intersection in self_ellipse3d_line_intersections + ellipse3d_line_intersections:
-            if volmdlr.core.point_in_list(intersection, intersections):
+            if intersection.in_list(intersections):
                 continue
             if self.point_belongs(intersection, abs_tol) and conic.point_belongs(intersection, abs_tol):
                 intersections.append(intersection)

@@ -1,10 +1,13 @@
 import math
 import unittest
-
+import os
 import volmdlr
 from volmdlr import edges, surfaces, curves, wires
 from volmdlr.surfaces import Plane3D
 from volmdlr.models.edges import bspline_curve3d
+
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_plane_test')
 
 
 class TestPlane3D(unittest.TestCase):
@@ -170,8 +173,8 @@ class TestPlane3D(unittest.TestCase):
                            volmdlr.Point3D(2, 3, 2.5))
         arc_intersections2 = plane.arc_intersections(arc2)
         self.assertEqual(len(arc_intersections2), 2)
-        self.assertTrue(arc_intersections2[1].is_close(volmdlr.Point3D(2.0, 1.133974596216, 3.0)))
-        self.assertTrue(arc_intersections2[0].is_close(volmdlr.Point3D(2.0, 2.866025403784, 3.0)))
+        self.assertTrue(arc_intersections2[0].is_close(volmdlr.Point3D(2.0, 1.1339745962155614, 3.0)))
+        self.assertTrue(arc_intersections2[1].is_close(volmdlr.Point3D(2.0, 2.8660254037844384, 3.0)))
 
     def test_bspline_intersections(self):
         plane = Plane3D(volmdlr.OZXY)
@@ -203,10 +206,10 @@ class TestPlane3D(unittest.TestCase):
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p2), 0.)
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p1), 0.)
 
-    def test_plane_betweeen_two_planes(self):
+    def test_plane_between_two_planes(self):
         plane1 = Plane3D(volmdlr.OXYZ)
         plane2 = Plane3D(volmdlr.OYZX)
-        plane_b = Plane3D.plane_betweeen_two_planes(plane1, plane2)
+        plane_b = Plane3D.plane_between_two_planes(plane1, plane2)
         expected_frame = volmdlr.Frame3D(
             volmdlr.O3D, volmdlr.Vector3D(0, 1, 0), volmdlr.Vector3D(0.7071067811865475, 0.0, -0.7071067811865475),
             volmdlr.Vector3D(0.7071067811865475, 0.0, 0.7071067811865475))
@@ -221,13 +224,17 @@ class TestPlane3D(unittest.TestCase):
         self.assertEqual(rotated_plane1.frame, expected_frame)
 
     def test_contour3d_to_2d(self):
-        plane = surfaces.Plane3D.load_from_file(
-            "surfaces/objects_plane_test/plane_parametric_operation_bug_surface.json")
-        contour3d = wires.Contour3D.load_from_file(
-            "surfaces/objects_plane_test/plane_parametric_operation_bug_contour.json")
+        plane = surfaces.Plane3D.load_from_file(os.path.join(folder, "plane_parametric_operation_bug_surface.json"))
+        contour3d = wires.Contour3D.load_from_file(os.path.join(folder, "plane_parametric_operation_bug_contour.json"))
         contour = plane.contour3d_to_2d(contour3d)
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), 8.120300532917004e-06)
+
+        plane = surfaces.Plane3D.load_from_file(os.path.join(folder, "planesurface_arc3d_to_2d.json"))
+        contour3d = wires.Contour3D.load_from_file(os.path.join(folder, "planesurface_arc3d_to_2d_contour.json"))
+        contour = plane.contour3d_to_2d(contour3d)
+        self.assertTrue(contour.is_ordered())
+        self.assertAlmostEqual(contour.area(), math.pi * 0.202**2, 4)
 
 
 if __name__ == '__main__':
