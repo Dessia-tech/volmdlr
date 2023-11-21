@@ -213,10 +213,10 @@ class AlphaWrapSimplify(Simplify):
         """
         Simplify the volume model using the CGAL 'alpha wrap' method, and return it.
 
-        :param relative_alpha: Control the output complexity, by defining the diamater of cavities to be explored
+        :param relative_alpha: Control the output complexity, by defining the diameter of cavities to be explored
             relatively to the size of the geometry.
         :type relative_alpha: int
-        :param relative_offset: Control how close to the intput geometry the simplifcation is.
+        :param relative_offset: Control how close to the input geometry the simplification is.
         :type relative_offset: int
 
         :return: The simplified volume model.
@@ -253,18 +253,18 @@ class AlphaWrapSimplify(Simplify):
 
         for facet in polyhedron.facets():  # Iterate over each face
             vertices = []
-            halfedge = facet.halfedge()  # Starting halfedge
+            halfedge = facet.halfedge()  # Starting half-edge
             start_halfedge = halfedge
 
             while True:
                 point = halfedge.vertex().point()
                 vertices.append(Point3D(point.x(), point.y(), point.z()))
-                halfedge = halfedge.next()  # Move to the next halfedge
+                halfedge = halfedge.next()  # Move to the next half-edge
                 if halfedge == start_halfedge:
                     break  # Completed one loop around the facet
 
             if len(vertices) == 3:  # Check if it's a triangle
-                triangles.append(Triangle3D(*vertices))
+                triangles.append(Triangle3D(vertices[0], vertices[1], vertices[2]))
 
         if polyhedron.is_closed():
             return ClosedTriangleShell3D(triangles)
