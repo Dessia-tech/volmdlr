@@ -12,7 +12,7 @@ volume_model = Step.from_file("../step/engine.step").to_volume_model()
 # Simplify
 start = time.perf_counter()
 simplifier = AlphaWrapSimplify(volume_model=volume_model)
-simplified_volume_model = simplifier.simplify(relative_alpha=10, relative_offset=300)
+simplified_volume_model = simplifier.simplify(relative_alpha=15, relative_offset=420)
 
 print(f"Simplification took {time.perf_counter() - start:.6f} seconds\n")
 
