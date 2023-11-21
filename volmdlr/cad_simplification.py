@@ -213,10 +213,10 @@ class AlphaWrapSimplify(Simplify):
         """
         Simplify the volume model using the CGAL 'alpha wrap' method, and return it.
 
-        :param relative_alpha: Control the output complexity, by definding the diamater of cavities to be explored
+        :param relative_alpha: Control the output complexity, by defining the diamater of cavities to be explored
             relatively to the size of the geometry.
         :type relative_alpha: int
-        :param relative_offset:
+        :param relative_offset: Control how close to the intput geometry the simplifcation is.
         :type relative_offset: int
 
         :return: The simplified volume model.
