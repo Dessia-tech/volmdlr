@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+#### curves.py
+- Ellipse2D/3D: mutualize length method.
+
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
 - BSplineCurve: Consider overlaping curves also as periodic.
