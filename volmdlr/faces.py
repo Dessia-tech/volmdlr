@@ -2892,9 +2892,9 @@ class ExtrusionFace3D(Face3D):
         angle_resolution = 11
         xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
-        number_points_x = int(delta_x * angle_resolution)
+        number_points_x = max(36, int(delta_x * angle_resolution))
 
-        number_points_y = number_points_x
+        number_points_y = 2
 
         return number_points_x, number_points_y
 
