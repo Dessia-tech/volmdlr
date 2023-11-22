@@ -1733,9 +1733,8 @@ class PlaneFace3D(Face3D):
                 contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)
 
                 inside = self.check_inner_contours(face2)
-                if (self.surface3d.is_coincident(face2.surface3d)
-                        and (contour1.is_overlapping(contour2)
-                             or (contour1.is_inside(contour2) or True in inside))):
+                if (contour1.is_overlapping(contour2)
+                    or (contour1.is_inside(contour2) or True in inside)):
 
                     if self in used_faces:
                         faces_1, face2_2 = used_faces[self][:], face2
