@@ -3051,22 +3051,18 @@ class ToroidalSurface3D(PeriodicalSurface):
             [theta_discontinuity, phi_discontinuity])
 
         theta1, phi1 = start
-        # theta2, phi2 = end
         theta3, phi3 = point_after_start
-        # theta4, phi4 = point_before_end
         if self.frame.w.is_colinear_to(fullarc3d.circle.normal, abs_tol=1e-4):
-            point1 = start
             if theta1 > theta3:
-                point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi1)
+                end = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi1)
             elif theta1 < theta3:
-                point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi1)
-            return [edges.LineSegment2D(point1, point2)]
-        point1 = start
+                end = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi1)
+            return [edges.LineSegment2D(start, end)]
         if phi1 > phi3:
-            point2 = volmdlr.Point2D(theta1, phi1 - volmdlr.TWO_PI)
+            end = volmdlr.Point2D(theta1, phi1 - volmdlr.TWO_PI)
         elif phi1 < phi3:
-            point2 = volmdlr.Point2D(theta1, phi1 + volmdlr.TWO_PI)
-        return [edges.LineSegment2D(point1, point2)]
+            end = volmdlr.Point2D(theta1, phi1 + volmdlr.TWO_PI)
+        return [edges.LineSegment2D(start, end)]
 
     def arc3d_to_2d(self, arc3d):
         """
