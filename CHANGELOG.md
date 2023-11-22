@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
 - BSplineCurve: Consider overlaping curves also as periodic.
-
+- BSplineCurve.simplify: handles exceptions.
+- 
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
 
