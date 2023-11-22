@@ -291,11 +291,7 @@ class AlphaWrapSimplify(Simplify):
     def _shell_to_mesh_data(shell: Shell3D):
         """Prepare shell to CGAL."""
 
-        triangulation = shell.triangulation()
-        triangles = np.array(triangulation.triangles)
-        vertices = np.round(np.array(triangulation.points), 6)
-
-        mesh = DisplayTriangleShell3D(vertices, triangles)
+        mesh = shell.to_triangle_shell().to_display_triangle_shell()
 
         vertices = [Point_3(x, y, z) for (x, y, z) in mesh.positions]
         triangles = mesh.indices.tolist()
@@ -314,14 +310,10 @@ class AlphaWrapSimplify(Simplify):
         mesh = None
 
         for shell in volume_model.get_shells():
-            triangulation = shell.triangulation()
-            triangles = np.array(triangulation.triangles)
-            vertices = np.round(np.array(triangulation.points), 6)
-
             if mesh:
-                mesh += DisplayTriangleShell3D(vertices, triangles)
+                mesh += shell.to_triangle_shell().to_display_triangle_shell()
             else:
-                mesh = DisplayTriangleShell3D(vertices, triangles)
+                mesh = shell.to_triangle_shell().to_display_triangle_shell()
 
         vertices = [Point_3(x, y, z) for (x, y, z) in mesh.positions]
         triangles = mesh.indices.tolist()
