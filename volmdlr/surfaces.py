@@ -1861,9 +1861,12 @@ class PeriodicalSurface(Surface3D):
                     old_innner_contour_positioned.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 if not new_outer_contour.is_ordered():
-                    new_outer_contour = new_outer_contour.order_contour(tol=min(1e-2,
+                    try:
+                        new_outer_contour = new_outer_contour.order_contour(tol=min(1e-2,
                                                                                 0.1 * closing_linesegment1.length(),
                                                                                 0.1 * closing_linesegment2.length()))
+                    except NotImplementedError:
+                        pass
             else:
                 new_inner_contours.append(inner_contour)
         return new_outer_contour, new_inner_contours
