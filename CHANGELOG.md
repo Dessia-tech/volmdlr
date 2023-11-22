@@ -48,6 +48,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Drone : run generate sdist and generate bdist_wheel only on master
 
+#### core.py
+- VolumeModel: get_mesh_lines (change tolerance to 1e-5)
+
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
 
@@ -59,12 +62,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalFace3D: PlaneFace3D intersections.
 - PlaneFace3D: circle_intersections. planeface_intersections
 - BsplineFace3D: adjacent_direction_uu
+- PlaneFace3D: project_faces (check first if surfaces are coincident)
 
 #### wires.py
 - delete remaining inplace methods in wires.py
 
 #### shells.py
 - Fixes to boolean operations. Added some tolerance parameters to some methods. 
+- Shell3D: get_geo_lines (consider edge.inverse in get_edge_index_in_list check)
 
 #### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
