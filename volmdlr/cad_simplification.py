@@ -2,11 +2,9 @@
 volmdlr cad simplification module.
 """
 import math
-from abc import ABC
-from typing import Union, List, Tuple
+from typing import Union
 
 import pyfqmr
-import numpy as np
 from CGAL.CGAL_Alpha_wrap_3 import alpha_wrap_3
 from CGAL.CGAL_Kernel import Point_3
 from CGAL.CGAL_Polyhedron_3 import Polyhedron_3
@@ -19,11 +17,11 @@ from volmdlr.core import VolumeModel
 from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.faces import Triangle3D
 from volmdlr.primitives3d import ExtrudedProfile
-from volmdlr.shells import ClosedTriangleShell3D, OpenTriangleShell3D, DisplayTriangleShell3D, Shell3D
+from volmdlr.shells import ClosedTriangleShell3D, OpenTriangleShell3D, Shell3D
 from volmdlr.wires import Contour2D
 
 
-class Simplify(ABC, DessiaObject):
+class Simplify(DessiaObject):
     """CAD simplification abstract class."""
 
     def __init__(self, volume_model: VolumeModel, name: str = ""):
