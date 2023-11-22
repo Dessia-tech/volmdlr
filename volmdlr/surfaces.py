@@ -3604,7 +3604,7 @@ class ConicalSurface3D(PeriodicalSurface):
     def get_circle_generatrices(self, z, number_circles: int):
         circles = []
         for i_z in npy.linspace(0, z, number_circles):
-            i_frame = self.frame.translation(volmdlr.Vector3D(0, 0, i_z))
+            i_frame = self.frame.translation(i_z*self.frame.w)
             radius = i_z * math.tan(self.semi_angle)
             circle = curves.Circle3D(i_frame, radius)
             circles.append(circle)
