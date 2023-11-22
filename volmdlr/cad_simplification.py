@@ -256,8 +256,6 @@ class AlphaWrapSimplify(Simplify):
 
             wrapped_shells.append(self._polyhedron_to_shell(wrap))
             wrapped_shells[-1].name = self.volume_model.name
-            wrapped_shells[-1].color = self.volume_model.name
-            wrapped_shells[-1].alpha = self.volume_model.name
 
         return VolumeModel(wrapped_shells)
 
