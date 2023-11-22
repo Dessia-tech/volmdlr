@@ -1699,7 +1699,6 @@ class ClosedShell3D(Shell3D):
         faces = non_intersecting_faces1 + non_intersecting_faces2
         new_valid_faces = self.subtraction_faces(shell2, intersecting_faces_1, dict_face_intersections1, False)
         new_valid_faces += shell2.subtraction_faces(self, intersecting_faces_2, dict_face_intersections2, True)
-        # self.is_shell_open(new_valid_faces + faces)
         faces += new_valid_faces
         faces = self.validate_set_operations_faces(faces)
         new_shell = ClosedShell3D(faces)
