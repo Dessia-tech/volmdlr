@@ -81,7 +81,7 @@ def conic3d_line_intersections(conic3d, line3d, abs_tol: float = 1e-6):
             intersections.append(conic3d.frame.local_to_global_coordinates(inter))
         return intersections
 
-    if line3d.point1.z == line3d.point2.z == conic3d.frame.origin.z:
+    if abs(line3d.point1.z - line3d.point2.z) <= abs_tol and abs(line3d.point1.z - conic3d.frame.origin.z) <= abs_tol:
         conic2d = conic3d.self_2d
         line2d = line3d.to_2d(conic3d.frame.origin, conic3d.frame.u, conic3d.frame.v)
         intersections_2d = conic2d.line_intersections(line2d)

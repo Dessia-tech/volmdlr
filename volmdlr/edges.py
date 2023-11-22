@@ -1191,11 +1191,8 @@ class BSplineCurve(Edge):
             points = self.points
             if self.periodic:
                 fullarc_class_ = getattr(sys.modules[__name__], 'FullArc' + class_sufix)
-                try:
-                    try_fullarc = fullarc_class_.from_3_points(points[0], self.point_at_abscissa(0.25 * self.length()),
+                try_fullarc = fullarc_class_.from_3_points(points[0], self.point_at_abscissa(0.25 * self.length()),
                                                            self.point_at_abscissa(0.5 * self.length()))
-                except npy.linalg.LinAlgError:
-                    try_fullarc = None
 
                 if try_fullarc and all(try_fullarc.point_belongs(point, 1e-6) for point in points):
                     self._simplified = try_fullarc
