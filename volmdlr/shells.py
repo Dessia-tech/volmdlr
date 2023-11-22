@@ -244,7 +244,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         face_vertices = {}
 
         for face_index, face in enumerate(faces):
-            face_contour_primitives = face.outer_contour3d.primitives
+            face_contour_primitives = face.outer_contour3d.primitives[:]
             for inner_contour in face.inner_contours3d:
                 face_contour_primitives.extend(inner_contour.primitives)
             for edge in face_contour_primitives:
@@ -986,12 +986,21 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             faces_graph = Shell3D._helper_create_faces_graph(faces, vertices_points, False)
         for n_index in faces_graph.nodes:
             face = faces[n_index]
-            for prim in face.outer_contour3d.primitives:
-                for neihgbor in faces_graph.neighbors(n_index):
-                    if faces[neihgbor].outer_contour3d.is_primitive_section_over_wire(prim):
+            for contour in [face.outer_contour3d] + face.inner_contours3d:
+                for prim in contour.primitives:
+                    primitive_on_neighbor_face = False
+                    for neighbor in faces_graph.neighbors(n_index):
+                        neighbor_face = faces[neighbor]
+                        for neighbor_face_contour in [neighbor_face.outer_contour3d] + neighbor_face.inner_contours3d:
+                            if neighbor_face_contour.is_primitive_section_over_wire(prim):
+                                primitive_on_neighbor_face = True
+                                break
+                        if not primitive_on_neighbor_face:
+                            continue
                         break
-                else:
-                    return True
+                    if not primitive_on_neighbor_face:
+                        return True
+
         return False
 
     @classmethod
@@ -1690,6 +1699,7 @@ class ClosedShell3D(Shell3D):
         faces = non_intersecting_faces1 + non_intersecting_faces2
         new_valid_faces = self.subtraction_faces(shell2, intersecting_faces_1, dict_face_intersections1, False)
         new_valid_faces += shell2.subtraction_faces(self, intersecting_faces_2, dict_face_intersections2, True)
+        # self.is_shell_open(new_valid_faces + faces)
         faces += new_valid_faces
         faces = self.validate_set_operations_faces(faces)
         new_shell = ClosedShell3D(faces)
