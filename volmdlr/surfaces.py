@@ -1861,9 +1861,12 @@ class PeriodicalSurface(Surface3D):
                     old_innner_contour_positioned.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 if not new_outer_contour.is_ordered():
-                    new_outer_contour = new_outer_contour.order_contour(tol=min(1e-2,
+                    try:
+                        new_outer_contour = new_outer_contour.order_contour(tol=min(1e-2,
                                                                                 0.1 * closing_linesegment1.length(),
                                                                                 0.1 * closing_linesegment2.length()))
+                    except NotImplementedError:
+                        pass
             else:
                 new_inner_contours.append(inner_contour)
         return new_outer_contour, new_inner_contours
@@ -5308,8 +5311,8 @@ class ExtrusionSurface3D(Surface3D):
         method. Additionally, it calculates a point on the arc at a small abscissa value (0.01 * length)
         and converts it to a 2D point. Based on the relative position of this point, the method determines
         the start and end points of the line segment in 2D. If the abscissa point is closer to the start
-        point, the line segment starts from (0, start.y) and ends at (1, end.y). If the abscissa point is
-        closer to the end point, the line segment starts from (1, start.y) and ends at (0, end.y). If the
+        point, the line segment starts from (0, start.y) and ends at (length, end.y). If the abscissa point is
+        closer to the end point, the line segment starts from (length, start.y) and ends at (0, end.y). If the
         abscissa point lies exactly at the midpoint of the arc, a NotImplementedError is raised. The resulting
         line segment is returned as a list.
 
@@ -5323,15 +5326,15 @@ class ExtrusionSurface3D(Surface3D):
         end = self.point3d_to_2d(fullarcellipse3d.end)
 
         u3, _ = self.point3d_to_2d(fullarcellipse3d.point_at_abscissa(0.01 * length))
-        if u3 > 0.5:
-            p1 = volmdlr.Point2D(1, start.y)
-            p2 = volmdlr.Point2D(0, end.y)
-        elif u3 < 0.5:
-            p1 = volmdlr.Point2D(0, start.y)
-            p2 = volmdlr.Point2D(1, end.y)
+        if u3 > 0.5 * length:
+            start.x = length
+            end.x = 0.0
+        elif u3 < 0.5 * length:
+            start.x = 0.0
+            end.x = length
         else:
             raise NotImplementedError
-        return [edges.LineSegment2D(p1, p2)]
+        return [edges.LineSegment2D(start, end)]
 
     def linesegment2d_to_3d(self, linesegment2d):
         """

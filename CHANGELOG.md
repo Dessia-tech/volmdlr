@@ -5,7 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.15.0 [future]
+## v0.16.0 [future]
+
+### New Features
+-
+
+### Fixed
+
+#### edges.py
+- BSplineCurve: handles exceptions in simplify method.
+- BSplineCurve: Consider overlaping curves also as periodic.
+
+#### surface.py
+- PeriodicalSurface: handles exceptions in connect_contours method.
+- ExtrusionSurface3D: fullarcellipse3d_to_2d
+
+### Refactor
+
+#### step.py
+- Step: uses Regular Expressions to improve the performance.
+
+### Changed
+-
+
+### Unittests
+- 
+
+## v0.15.0
 
 ### New Features
 
