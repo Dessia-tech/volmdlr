@@ -2189,3 +2189,29 @@ class DisplayTriangleShell3D(Shell3D):
         :rtype: DisplayTriangleShell3D
         """
         return self.concatenate(other)
+
+    def __hash__(self):
+        return hash(
+            (
+                self.__class__.__name__,
+                (tuple(self.indices[0]), tuple(self.indices[-1]), len(self.indices)),
+                (tuple(self.positions[0]), tuple(self.positions[-1]), len(self.positions)),
+            )
+        )
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def _data_hash(self):
+        return hash(
+            (
+                self.__class__.__name__,
+                (tuple(self.indices[0]), tuple(self.indices[-1]), len(self.indices)),
+                (tuple(self.positions[0]), tuple(self.positions[-1]), len(self.positions)),
+            )
+        )
+
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
+            return False
+        return self._data_hash() == other_object._data_hash()
