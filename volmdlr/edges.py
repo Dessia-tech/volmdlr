@@ -721,7 +721,7 @@ class LineSegment(Edge):
             if self.__class__ == other_linesegment.simplify.__class__:
                 return self.get_shared_section(other_linesegment.simplify)
             return []
-        if not self.direction_vector().is_colinear_to(other_linesegment.direction_vector()) or \
+        if not self.direction_vector().is_colinear_to(other_linesegment.direction_vector(), 1e-5) or \
                 (not any(self.point_belongs(point, abs_tol)
                          for point in [other_linesegment.start, other_linesegment.end]) and
                  not any(other_linesegment.point_belongs(point, abs_tol) for point in [self.start, self.end])):
