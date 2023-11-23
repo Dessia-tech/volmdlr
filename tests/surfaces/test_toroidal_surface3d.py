@@ -40,8 +40,8 @@ class TestToroidalSurface3D(unittest.TestCase):
 
         surface2 = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "surface.json"))
         test2 = surface2.arc3d_to_2d(arc3d=arc2)[0]
-        self.assertTrue(test2.start.is_close(volmdlr.Point2D(-0.28681306221029024, -math.pi)))
-        self.assertTrue(test2.end.is_close(volmdlr.Point2D(-0.28681611209686064, -0.5 * math.pi)))
+        self.assertTrue(test2.start.is_close(volmdlr.Point2D(-0.2868131934235978, -math.pi)))
+        self.assertTrue(test2.end.is_close(volmdlr.Point2D(-0.28681319342359773, -0.5 * math.pi)))
 
         surface = surfaces.ToroidalSurface3D.load_from_file(
             os.path.join(folder, "degenerated_toroidalsurface.json"))
@@ -84,8 +84,8 @@ class TestToroidalSurface3D(unittest.TestCase):
         test = self.toroidal_surface2.bsplinecurve3d_to_2d(bspline_curve3d)[0]
         inv_prof = self.toroidal_surface2.bsplinecurve2d_to_3d(test)[0]
 
-        self.assertTrue(test.start.is_close(volmdlr.Point2D(0.8489211153847066, math.pi)))
-        self.assertTrue(test.end.is_close(volmdlr.Point2D(1.4449243890313308, 1.5707974196708867)))
+        self.assertTrue(test.start.is_close(volmdlr.Point2D(0.8489257266674017, math.pi)))
+        self.assertTrue(test.end.is_close(volmdlr.Point2D(1.4449281658550368, 1.5707952339189064)))
 
         self.assertTrue(inv_prof.end.is_close(bspline_curve3d.end))
 
@@ -134,6 +134,15 @@ class TestToroidalSurface3D(unittest.TestCase):
 
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1.0990644259885822, 2)
+
+        surface = surfaces.ToroidalSurface3D.load_from_file(
+            os.path.join(folder, "toroidalsurface_small_bsplinecurve.json"))
+        contour = wires.Contour3D.load_from_file(
+            os.path.join(folder, "toroidalsurface_small_bsplinecurve_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour)
+
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 0.12142017346476651, 4)
 
     def test_line_intersections(self):
         expected_results = [[volmdlr.Point3D(2.9993479584651066, 0.031270376297965426, 0.031270376297965426),
