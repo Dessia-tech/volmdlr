@@ -89,6 +89,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### discrete_representation.py
 - MatrixBasedVoxelization: _logical_operation
+- Remove inheritance from ABC for platform usage
+
+#### cad_simplification.py
+- Remove inheritance from ABC for platform usage
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
