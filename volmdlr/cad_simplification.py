@@ -1,8 +1,6 @@
 """
 volmdlr cad simplification module.
 """
-from abc import ABC
-
 import pyfqmr
 from dessia_common.core import DessiaObject
 
@@ -15,7 +13,7 @@ from volmdlr.shells import OpenTriangleShell3D
 from volmdlr.wires import Contour2D
 
 
-class Simplify(ABC, DessiaObject):
+class Simplify(DessiaObject):
     """CAD simplification abstract class."""
 
     def __init__(self, volume_model: VolumeModel, name: str = ""):
