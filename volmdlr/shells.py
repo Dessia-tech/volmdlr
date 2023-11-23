@@ -2155,6 +2155,11 @@ class DisplayTriangleShell3D(Shell3D):
         :param other: Another DisplayTriangleShell3D instance to concatenate with this instance.
         :return: A new DisplayTriangleShell3D instance representing the concatenated shells.
         """
+        if len(self.positions) == 0 or len(self.indices) == 0:
+            return other
+        if len(other.positions) == 0 or len(other.indices) == 0:
+            return self
+
         # Merge and remove duplicate vertices
         merged_positions = np.vstack((self.positions, other.positions))
         unique_positions, indices_map = np.unique(merged_positions, axis=0, return_inverse=True)
