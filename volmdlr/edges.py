@@ -884,6 +884,7 @@ class BSplineCurve(Edge):
         self._knotvector = None
         self.ctrlptsw = None
         self.rational = False
+        self._periodic = None
         if self.weights:
             self.rational = True
             ctrlptsw = []
@@ -937,8 +938,11 @@ class BSplineCurve(Edge):
     @property
     def periodic(self):
         """Return True if the BSpline is periodic."""
-        control_points = self.control_points
-        return control_points[0].is_close(control_points[-1])
+        if self._periodic is None:
+            umin, umax = self.domain
+            control_points = self.control_points
+            self._periodic = bool(umin != 0.0 or umax != 1.0) or control_points[0].is_close(control_points[-1])
+        return self._periodic
 
     @property
     def points(self):
