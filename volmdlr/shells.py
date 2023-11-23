@@ -987,22 +987,25 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         if faces_graph is None:
             vertices_points = Shell3D._helper_getter_vertices_points(faces)
             faces_graph = Shell3D._helper_create_faces_graph(faces, vertices_points, False)
+
+        def is_primitive_on_neighbor_face(prim, neighbor_face):
+            """Verifies if primitive is on a neighbor face."""
+            return any(
+                neighbor_face_contour.is_primitive_section_over_wire(prim)
+                for neighbor_face_contour in [neighbor_face.outer_contour3d] + neighbor_face.inner_contours3d
+            )
+
         for n_index in faces_graph.nodes:
             face = faces[n_index]
-            for contour in [face.outer_contour3d] + face.inner_contours3d:
-                for prim in contour.primitives:
-                    primitive_on_neighbor_face = False
-                    for neighbor in faces_graph.neighbors(n_index):
-                        neighbor_face = faces[neighbor]
-                        for neighbor_face_contour in [neighbor_face.outer_contour3d] + neighbor_face.inner_contours3d:
-                            if neighbor_face_contour.is_primitive_section_over_wire(prim):
-                                primitive_on_neighbor_face = True
-                                break
-                        if not primitive_on_neighbor_face:
-                            continue
-                        break
-                    if not primitive_on_neighbor_face:
-                        return True
+            if any(
+                    not any(
+                        is_primitive_on_neighbor_face(prim, faces[neighbor])
+                        for neighbor in faces_graph.neighbors(n_index)
+                    )
+                    for prim in [prim for contour in [face.outer_contour3d] + face.inner_contours3d
+                                 for prim in contour.primitives]
+            ):
+                return True
 
         return False
 
