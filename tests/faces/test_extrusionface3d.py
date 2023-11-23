@@ -28,6 +28,14 @@ class TestExtrusionFace3D(unittest.TestCase):
         self.assertTrue(extrusionface.surface2d.outer_contour.is_ordered())
         self.assertTrue(extrusionface.surface2d.inner_contours[0].is_ordered())
 
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
+            os.path.join(folder, "extrusionsurface_fullarcellipse.json"))
+        contour_0 = wires.Contour3D.load_from_file(
+            os.path.join(folder, "extrusionsurface_fullarcellipse_contour.json"))
+        extrusionface = faces.ExtrusionFace3D.from_contours3d(surface, [contour_0])
+        self.assertAlmostEqual(extrusionface.surface2d.area(), 0.0015836412348717846, 4)
+        self.assertTrue(extrusionface.surface2d.outer_contour.is_ordered())
+
     def test_to_step(self):
         model = VolumeModel.load_from_file(os.path.join(folder, "extrusionface_export_test.json"))
         model.to_step(os.path.join(folder, "test_export.step"))
