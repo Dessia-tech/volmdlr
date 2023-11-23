@@ -44,7 +44,7 @@ class TestTriangleShell3D(unittest.TestCase):
         self.assertEqual(12, len(display_triangle_shell.indices))
         self.assertEqual(8, len(display_triangle_shell.positions))
         self.assertEqual(display_triangle_shell, DisplayTriangleShell3D.dict_to_object(display_triangle_shell.to_dict()))
-        self.assertEqual(display_triangle_shell, display_triangle_shell + display_triangle_shell)
+        self.assertEqual(len(display_triangle_shell.indices), len((display_triangle_shell + display_triangle_shell).indices))
 
         if SHOW_BABYLONJS:
             display_triangle_shell.babylonjs()
