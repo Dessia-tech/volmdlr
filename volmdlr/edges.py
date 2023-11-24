@@ -4652,7 +4652,7 @@ class LineSegment3D(LineSegment):
             surface, 0, angle, 0, (self.end - self.start).dot(axis))]
 
     @staticmethod
-    def _helper_plane_intersecting_axis_revolution(surface, distance_1, distance_2, angle):
+    def _helper_intersecting_axis_plane_revolution(surface, distance_1, distance_2, angle):
         """
         Plane revolution helper method: Line Segment intersects the revolution axis.
 
@@ -4738,7 +4738,7 @@ class LineSegment3D(LineSegment):
         surface = volmdlr.surfaces.Plane3D(
             volmdlr.Frame3D(p1_proj, u, v, axis))
         if self.point_belongs(line_intersection):
-            return self._helper_plane_intersecting_axis_revolution(surface, distance_1, distance_2, angle)
+            return self._helper_intersecting_axis_plane_revolution(surface, distance_1, distance_2, angle)
         smaller_r, bigger_r = sorted([distance_1, distance_2])
         if angle == volmdlr.TWO_PI:
             return self._helper_plane_revolution_two_circles(surface, bigger_r, smaller_r)
