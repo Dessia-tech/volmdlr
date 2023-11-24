@@ -12,19 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+#### curves.py
+- Ellipse2D/3D: mutualize length method.
+
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
 - BSplineCurve: Consider overlaping curves also as periodic.
-
+- BSplineCurve.simplify: handles exceptions.
+- 
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
 - ExtrusionSurface3D: fullarcellipse3d_to_2d
+- ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
 - ToroidalSurface3D: increases precision of point3d_to_2d.
 
 ### Refactor
-
-#### step.py
-- Step: uses Regular Expressions to improve the performance.
 
 ### Changed
 -
@@ -96,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### shells.py
 - Fixes to boolean operations. Added some tolerance parameters to some methods. 
-- Shell3D: get_geo_lines (consider edge.inverse in get_edge_index_in_list check)
+- Shell3D: get_geo_lines (consider edge.inverse in get_edge_index_in_list check), is_shell_open
 
 #### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
@@ -116,6 +118,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### discrete_representation.py
 - MatrixBasedVoxelization: _logical_operation
+- Remove inheritance from ABC for platform usage
+
+#### cad_simplification.py
+- Remove inheritance from ABC for platform usage
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.

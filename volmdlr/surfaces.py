@@ -5437,7 +5437,7 @@ class ExtrusionSurface3D(Surface3D):
         """
         line_at_periodicity = curves.Line3D(self.edge.start, self.edge.start.translation(self.direction))
         intersections = edge3d.line_intersections(line_at_periodicity)
-        intersections = [point for point in intersections if not edge3d.is_point_edge_extremity(point)]
+        intersections = [point for point in intersections if not edge3d.is_point_edge_extremity(point, abs_tol=5e-6)]
         if not intersections:
             return points
         reference_point = edge3d.local_discretization(edge3d.start, intersections[0], 3)[1]

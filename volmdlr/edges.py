@@ -721,7 +721,7 @@ class LineSegment(Edge):
             if self.__class__ == other_linesegment.simplify.__class__:
                 return self.get_shared_section(other_linesegment.simplify)
             return []
-        if not self.direction_vector().is_colinear_to(other_linesegment.direction_vector()) or \
+        if not self.direction_vector().is_colinear_to(other_linesegment.direction_vector(), 1e-5) or \
                 (not any(self.point_belongs(point, abs_tol)
                          for point in [other_linesegment.start, other_linesegment.end]) and
                  not any(other_linesegment.point_belongs(point, abs_tol) for point in [self.start, self.end])):
@@ -1195,11 +1195,10 @@ class BSplineCurve(Edge):
             points = self.points
             if self.periodic:
                 fullarc_class_ = getattr(sys.modules[__name__], 'FullArc' + class_sufix)
-                n = len(points)
-                try_fullarc = fullarc_class_.from_3_points(points[0], points[int(0.5 * n)],
-                                                           points[int(0.75 * n)])
+                try_fullarc = fullarc_class_.from_3_points(points[0], self.point_at_abscissa(0.25 * self.length()),
+                                                           self.point_at_abscissa(0.5 * self.length()))
 
-                if all(try_fullarc.point_belongs(point, 1e-6) for point in points):
+                if try_fullarc and all(try_fullarc.point_belongs(point, 1e-6) for point in points):
                     self._simplified = try_fullarc
                     return try_fullarc
             else:
