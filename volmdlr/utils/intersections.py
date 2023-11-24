@@ -300,13 +300,11 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
         abscissa1, abscissa2 = param_intersections[0]
         if bsplinecurve.__class__.__name__ in ("BSplineCurve2D", "BSplineCurve3D"):
             (
-                discretized_points_between_1_2,
-                points_abscissas,
+                discretized_points_between_1_2, points_abscissas
             ) = bsplinecurve.get_abscissa_discretization(abscissa1, abscissa2, number_points=10, return_abscissas=True)
         else:
             (
-                discretized_points_between_1_2,
-                points_abscissas,
+                discretized_points_between_1_2, points_abscissas,
             ) = get_abscissa_discretization(bsplinecurve, abscissa1, abscissa2, max_number_points=10)
         for point1, point2, abscissa_point1, abscissa_point2 in zip(
             discretized_points_between_1_2[:-1],
