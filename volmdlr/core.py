@@ -1485,9 +1485,10 @@ class VolumeModel(dc.PhysicalObject):
 
         return page_name
 
-    def save_babylonjs_to_file(self, filename: str = None, use_cdn=True, debug=False):
+    def save_babylonjs_to_file(self, filename: str = None, use_cdn=True, debug=False, dark_mode=False):
         """Export a html file of the model."""
         babylon_data = self.babylon_data()
+        babylon_data['dark_mode'] = 1 if dark_mode else 0
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn, debug=debug)
         if filename is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
