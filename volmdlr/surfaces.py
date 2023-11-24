@@ -5287,9 +5287,12 @@ class ExtrusionSurface3D(Surface3D):
         end = self.point3d_to_2d(arc3d.end)
         if self.x_periodicity:
             start, end = self._verify_start_end_parametric_points(start, end, arc3d)
-            point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.02 * arc3d.length()))
-            point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * arc3d.length()))
-            start, _, _, end = self._repair_points_order([start, point_after_start, point_before_end, end], arc3d)
+            points3d = [arc3d.start, arc3d.point_at_abscissa(0.02 * arc3d.length()),
+                        arc3d.point_at_abscissa(0.98 * arc3d.length()), arc3d.end]
+            point_after_start = self.point3d_to_2d(points3d[1])
+            point_before_end = self.point3d_to_2d(points3d[2])
+            start, _, _, end = self._repair_points_order([start, point_after_start, point_before_end, end], arc3d,
+                                                         points3d)
         return [edges.LineSegment2D(start, end, name="arc")]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
@@ -5301,9 +5304,9 @@ class ExtrusionSurface3D(Surface3D):
         end2d = self.point3d_to_2d(arcellipse3d.end)
         if isinstance(self.edge, edges.ArcEllipse3D):
             return [edges.LineSegment2D(start2d, end2d)]
-        points = [self.point3d_to_2d(p)
-                  for p in arcellipse3d.discretization_points(number_points=15)]
-        return self._edge3d_to_2d(points, arcellipse3d)
+        points3d = arcellipse3d.discretization_points(number_points=15)
+        points = [self.point3d_to_2d(p) for p in points3d]
+        return self._edge3d_to_2d(points, arcellipse3d, points3d)
 
     def fullarcellipse3d_to_2d(self, fullarcellipse3d):
         """
@@ -5370,10 +5373,10 @@ class ExtrusionSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         n = len(bspline_curve3d.control_points)
-
+        points3d = bspline_curve3d.discretization_points(number_points=n)
         points = [self.point3d_to_2d(point)
-                  for point in bspline_curve3d.discretization_points(number_points=n)]
-        return self._edge3d_to_2d(points, bspline_curve3d)
+                  for point in points3d]
+        return self._edge3d_to_2d(points, bspline_curve3d, points3d)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -5418,32 +5421,64 @@ class ExtrusionSurface3D(Surface3D):
                 end.x = self.x_periodicity
         return start, end
 
-    def _repair_points_order(self, points, edge3d):
-        """Helper function to reorder edge discretization points on parametric domain."""
-        #Todo: enhance this method when intersections beteween edges is finished.
-        point_after_start = self.point3d_to_2d(edge3d.point_at_abscissa(0.01 * edge3d.length()))
-        if point_after_start.x == points[0].x:
-            point_after_start = self.point3d_to_2d(edge3d.point_at_abscissa(0.05 * edge3d.length()))
-        diff = point_after_start.x - points[0].x
-        if diff:
-            sign = diff / abs(diff)
-            index_periodicity = 0
-            for i, (point, next_point) in enumerate(zip(points[:-1], points[1:])):
-                if sign * (next_point.x - point.x) < 0:
-                    index_periodicity = i + 1
-                    break
-            if index_periodicity:
-                for point in points[index_periodicity:]:
+    def _repair_points_order(self, points: List[volmdlr.Point2D], edge3d,
+                             points3d: List[volmdlr.Point3D]) -> List[volmdlr.Point2D]:
+        """
+        Helper function to reorder discretization points along a parametric domain for an extrusion surface.
+
+        When generating an extrusion surface from a periodic edge, there may be discontinuities in the parametric
+        representation of the edge on the surface. This function addresses this issue by calculating how many times the
+        edge crosses the periodic boundary of the surface. It then selects the first side as reference, and then all
+        parts of the edge on the "opposite" side (lower/upper bound) are updated by adding or subtracting one
+        periodicity. This is achieved using the 'sign' variable. The result is a list of parametric points that form a
+        continuous path in parametric space. The memory_point_index keeps track of points that were already checked, so
+        we don't need to check it again in the next remaining edge's piece.
+
+        :param points: List of 2D parametric points representing the discretization of the edge on the surface.
+        :param edge3d: The 3D curve representing the edge.
+        :param points3d: List of corresponding 3D points.
+
+        :return: The reordered list of parametric points forming a continuous path on the extrusion surface.
+        """
+        line_at_periodicity = curves.Line3D(self.edge.start, self.edge.start.translation(self.direction))
+        intersections = edge3d.line_intersections(line_at_periodicity)
+        intersections = [point for point in intersections if not edge3d.is_point_edge_extremity(point, abs_tol=5e-6)]
+        if not intersections:
+            return points
+        sign = self._helper_get_sign_repair_points_order(edge3d, points[0], intersections[0])
+        remaining_edge = edge3d
+        memory_point_index = 0
+        crossed_even_number_of_times = True
+        for i, intersection in enumerate(intersections):
+            current_split = remaining_edge.split(intersection)
+            crossed_even_number_of_times = bool(i % 2 == 0)
+            for point, point3d in zip(points[memory_point_index:], points3d[memory_point_index:]):
+                if crossed_even_number_of_times and current_split[0].point_belongs(point3d):
+                    memory_point_index += 1
+                elif not crossed_even_number_of_times and current_split[0].point_belongs(point3d):
                     point.x = point.x + sign * self.x_periodicity
+                    memory_point_index += 1
+
+            remaining_edge = current_split[1]
+        if crossed_even_number_of_times and memory_point_index < len(points):
+            for point in points[memory_point_index:]:
+                point.x = point.x + sign * self.x_periodicity
         return points
 
-    def _edge3d_to_2d(self, points, edge3d):
+    def _helper_get_sign_repair_points_order(self, edge3d, starting_parametric_point, first_intersection_point):
+        """Helper function to repair points order."""
+        reference_point = edge3d.local_discretization(edge3d.start, first_intersection_point, 3)[1]
+        reference_point_u_parm = self.point3d_to_2d(reference_point).x
+        diff = reference_point_u_parm - starting_parametric_point.x
+        return diff / abs(diff)
+
+    def _edge3d_to_2d(self, points, edge3d, points3d):
         """Helper to get parametric representation of edges on the surface."""
         if self.x_periodicity:
             start, end = self._verify_start_end_parametric_points(points[0], points[-1], edge3d)
             points[0] = start
             points[-1] = end
-            points = self._repair_points_order(points, edge3d)
+            points = self._repair_points_order(points, edge3d, points3d)
         start = points[0]
         end = points[-1]
         if is_isocurve(points, 1e-5):
