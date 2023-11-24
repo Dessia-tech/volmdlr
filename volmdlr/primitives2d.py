@@ -334,11 +334,6 @@ class RoundedLineSegments2D(RoundedLineSegments):
         """
         if len(line_indexes) <= 1:
             return []
-        # intersection = volmdlr.Point2D.line_intersection(
-        #     curves.Line2D(self.points[line_indexes[0]], self.points[line_indexes[0]] + directive_vector1),
-        #     curves.Line2D(self.points[line_indexes[-1] + 1], self.points[line_indexes[-1] + 1] + directive_vector2))
-        # vec1 = intersection.point_distance(self.points[line_indexes[0]]) * directive_vector1
-        # vec2 = intersection.point_distance(self.points[line_indexes[-1] + 1]) * directive_vector2
         vec1, vec2 = self._helper_get_offset_vectors(line_indexes, directive_vector1, directive_vector2)
         new_points = {line_indexes[0]: self.points[line_indexes[0]] + distance_dir1 * directive_vector1}
 
