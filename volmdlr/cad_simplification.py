@@ -244,7 +244,7 @@ class AlphaWrapSimplify(Simplify):
     """CAD simplification using CGAL 'alpha wrap' method."""
 
     def simplify(
-        self, relative_alpha: int = 10, relative_offset: int = 300, preserve_shells: bool = True
+        self, relative_alpha: int = 10, relative_offset: int = 300, preserve_shells: bool = False
     ) -> VolumeModel:
         """
         Simplify the volume model using the CGAL 'alpha wrap' method, and return it.
