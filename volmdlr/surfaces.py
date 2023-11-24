@@ -4665,7 +4665,7 @@ class SphericalSurface3D(PeriodicalSurface):
         return [edges.BSplineCurve3D.from_points_interpolation(points, degree).simplify]
 
     @staticmethod
-    def _horizontal_through_origin_fullarc3d_to_2d(theta1, theta3, phi1, phi2):
+    def _horizontal_fullarc3d_to_2d(theta1, theta3, phi1, phi2):
         """
         Helper Convert primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
 
@@ -4715,7 +4715,7 @@ class SphericalSurface3D(PeriodicalSurface):
         theta4, _ = point_before_end
 
         if self.frame.w.is_colinear_to(fullarc3d.circle.normal, abs_tol=1e-4):
-            return self._horizontal_through_origin_fullarc3d_to_2d(theta1, theta3, phi1, phi2)
+            return self._horizontal_fullarc3d_to_2d(theta1, theta3, phi1, phi2)
 
         if self.frame.w.is_perpendicular_to(fullarc3d.circle.normal, abs_tol=1e-4) and \
                 self.frame.origin.is_close(fullarc3d.center):
