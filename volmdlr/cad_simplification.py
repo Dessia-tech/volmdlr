@@ -175,6 +175,7 @@ class TriangleDecimationSimplify(Simplify):
         alpha: float = 1e-9,
         k: int = 3,
         preserve_border: bool = True,
+        preserve_shells: bool = True,
     ):
         """
         Simplify the VolumeModel using the 'triangle decimation' method, and return it.
@@ -204,6 +205,9 @@ class TriangleDecimationSimplify(Simplify):
         :type k: int
         :param preserve_border: Flag for preserving vertices on open border.
         :type preserve_border: bool
+        :param preserve_shells: Argument to chose if you want to keep the shell structures (same number of shells in the
+          returned volume model), or if you want a volume model with only one shell including the entire input geometry.
+        :type preserve_shells: bool
 
         :return: The decimated VolumeModel.
         :rtype: VolumeModel
@@ -213,8 +217,13 @@ class TriangleDecimationSimplify(Simplify):
         decimated_shells = []
         simplifier = pyfqmr.Simplify()
 
-        for shell in self.volume_model.get_shells():
-            vertices, triangles = shell.to_triangle_shell().to_mesh_data(round_vertices=True)
+        if preserve_shells:
+            meshes = self._volume_model_to_display_shells(self.volume_model)
+        else:
+            meshes = [self._volume_model_to_display_shell(self.volume_model)]
+
+        for mesh in meshes:
+            vertices, triangles = mesh.positions, mesh.indices
 
             simplifier.setMesh(vertices, triangles)
             simplifier.simplify_mesh(
@@ -233,9 +242,9 @@ class TriangleDecimationSimplify(Simplify):
             vertices, faces, _ = simplifier.getMesh()
 
             decimated_shells.append(OpenTriangleShell3D.from_mesh_data(vertices, faces))
-            decimated_shells[-1].name = shell.name
-            decimated_shells[-1].color = shell.color
-            decimated_shells[-1].alpha = shell.alpha
+            decimated_shells[-1].name = mesh.name
+            decimated_shells[-1].color = mesh.color
+            decimated_shells[-1].alpha = mesh.alpha
 
         return VolumeModel(decimated_shells)
 
