@@ -1069,15 +1069,13 @@ class Wire2D(WireMixin, PhysicalObject):
             point2 = self_primitives_to_test[1].point_at_abscissa(self_primitives_to_test[1].length() * .99)
             point3 = current_wire_primitive.point_at_abscissa(current_wire_primitive.length() * .99)
             point4 = next_wire_primitive.point_at_abscissa(next_wire_primitive.length() * 0.01)
-            linesegment1 = volmdlr.edges.LineSegment2D(point1, point2)
-            linesegment2 = volmdlr.edges.LineSegment2D(point3, point4)
         else:
             point1 = self_primitives_to_test[0].point_at_abscissa(self_primitives_to_test[0].length() * .99)
             point2 = self_primitives_to_test[1].point_at_abscissa(self_primitives_to_test[1].length() * 0.01)
             point3 = current_wire_primitive.point_at_abscissa(current_wire_primitive.length() * .99)
             point4 = next_wire_primitive.point_at_abscissa(next_wire_primitive.length() * 0.01)
-            linesegment1 = volmdlr.edges.LineSegment2D(point1, point2)
-            linesegment2 = volmdlr.edges.LineSegment2D(point3, point4)
+        linesegment1 = volmdlr.edges.LineSegment2D(point1, point2)
+        linesegment2 = volmdlr.edges.LineSegment2D(point3, point4)
         inter = linesegment1.linesegment_intersections(linesegment2)
         if inter:
             return True
