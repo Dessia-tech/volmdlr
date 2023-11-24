@@ -83,7 +83,7 @@ class TripleExtrusionSimplify(Simplify):
         :return: The simplified volume model.
         :rtype: VolumeModel
         """
-        points = [Point3D(*point) for point in self._volume_model_to_display_shell(self.volume_model).posisitions]
+        points = [Point3D(*point) for point in self._volume_model_to_display_shell(self.volume_model).positions]
 
         point_cloud3d = PointCloud3D(points)
         simplified_volume_model = VolumeModel(
