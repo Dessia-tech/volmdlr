@@ -1282,6 +1282,21 @@ class Surface3D(DessiaObject):
                 intersections.append(intersection)
         return intersections
 
+    def brep_connectivity_check(self, brep: wires.Contour2D, tol: float = 1e-6) -> bool:
+        """Checks the topology of 2D BREP in 3D space."""
+        if len(brep.primitives) == 2 and brep.primitives[0].direction_independent_is_close(brep.primitives[1]):
+            return False
+        if self.x_periodicity or self.y_periodicity:
+            distance = brep.primitives[-1].end.point_distance(brep.primitives[0].start)
+            if distance >= (0.99 * self.x_periodicity) or distance >= (0.99 * self.y_periodicity):
+                return False
+        for prim1, prim2 in zip(brep.primitives, brep.primitives[1:] + [brep.primitives[0]]):
+            end = self.point2d_to_3d(prim1.end)
+            start = self.point2d_to_3d(prim2.start)
+            if not end.is_close(start, tol):
+                return False
+        return True
+
 
 class Plane3D(Surface3D):
     """

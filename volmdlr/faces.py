@@ -190,6 +190,8 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
+        if step_id == 219810:
+            print(True)
         return face.from_contours3d(surface, contours, name)
 
     @classmethod
@@ -216,8 +218,7 @@ class Face3D(volmdlr.core.Primitive3D):
             contours2d = [surface.contour3d_to_2d(contour3d) for contour3d in contours3d]
 
             check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
-            if any(check_contours):
-                # Not implemented yet, but connect_contours should also return outer_contour3d and inner_contours3d
+            if (surface.x_periodicity or surface.y_periodicity) and sum(1 for value in check_contours if value) >= 2:
                 outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
                 outer_contour3d = surface.contour2d_to_3d(outer_contour2d)
                 inner_contours3d = [surface.contour2d_to_3d(contour) for contour in inner_contours2d]
@@ -240,7 +241,8 @@ class Face3D(volmdlr.core.Primitive3D):
                     inner_contours3d.remove(outer_contour3d)
         else:
             raise ValueError('Must have at least one contour')
-        if (not outer_contour2d) or (not all(outer_contour2d.primitives)) or (not outer_contour2d.is_ordered(1e-2)):
+        if ((not outer_contour2d) or (not all(outer_contour2d.primitives)) or
+                (not surface.brep_connectivity_check(outer_contour2d, tol=5e-5))):
             return None
         # if outer_contour3d and outer_contour3d.primitives and not outer_contour3d.is_ordered(1e-5):
         #     outer_contour2d = contour2d_healing(outer_contour2d)
