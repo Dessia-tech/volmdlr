@@ -307,7 +307,10 @@ class AlphaWrapSimplify(Simplify):
                     break  # Completed one loop around the facet
 
             if len(vertices) == 3:  # Check if it's a triangle
-                triangles.append(Triangle3D(vertices[0], vertices[1], vertices[2]))
+                try:
+                    triangles.append(Triangle3D(vertices[0], vertices[1], vertices[2]))
+                except ZeroDivisionError:
+                    pass
 
         if polyhedron.is_closed():
             return ClosedTriangleShell3D(triangles)
