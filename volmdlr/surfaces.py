@@ -1290,7 +1290,7 @@ class Surface3D(DessiaObject):
             distance = brep.primitives[-1].end.point_distance(brep.primitives[0].start)
             if distance >= (0.99 * self.x_periodicity):
                 return False
-        elif self.y_periodicity:
+        if self.y_periodicity:
             distance = brep.primitives[-1].end.point_distance(brep.primitives[0].start)
             if distance >= (0.99 * self.y_periodicity):
                 return False
