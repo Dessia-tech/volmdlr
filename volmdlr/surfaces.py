@@ -2877,11 +2877,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Generally this is related to uncertainty of step files.
 
-        if abs(x) < 1e-6:
+        if abs(x) < 1e-12:
             x = 0.0
-        if abs(y) < 1e-6:
+        if abs(y) < 1e-12:
             y = 0.0
-        if abs(z) < 1e-6:
+        if abs(z) < 1e-12:
             z = 0.0
 
         z_r = z / self.minor_radius
@@ -2890,7 +2890,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             phi = 0
 
         u = self.major_radius + math.sqrt((self.minor_radius ** 2) - (z ** 2))
-        u1, u2 = round(x / u, 15), round(y / u, 15)
+        u1, u2 = x / u, y / u
         theta = math.atan2(u2, u1)
 
         vector_to_tube_center = volmdlr.Vector3D(abs(self.major_radius) * math.cos(theta),
@@ -5424,11 +5424,10 @@ class ExtrusionSurface3D(Surface3D):
 
         When generating an extrusion surface from a periodic edge, there may be discontinuities in the parametric
         representation of the edge on the surface. This function addresses this issue by calculating how many times the
-        edge crosses the periodic boundary of the surface. It then selects the first side as reference, and then all
-        parts of the edge on the "opposite" side (lower/upper bound) are updated by adding or subtracting one
-        periodicity. This is achieved using the 'sign' variable. The result is a list of parametric points that form a
-        continuous path in parametric space. The memory_point_index keeps track of points that were already checked, so
-        we don't need to check it again in the next remaining edge's piece.
+        edge crosses the periodic boundary of the surface. It then selects one side as the reference, typically the
+        first side after the first split. Once the reference side is chosen, all parts of the edge on the "opposite"
+        side (lower/upper bound) are updated by adding or subtracting one periodicity. This is achieved using the
+        'sign' variable. The result is a list of parametric points that form a continuous path in parametric space.
 
         :param points: List of 2D parametric points representing the discretization of the edge on the surface.
         :param edge3d: The 3D curve representing the edge.
@@ -5441,32 +5440,29 @@ class ExtrusionSurface3D(Surface3D):
         intersections = [point for point in intersections if not edge3d.is_point_edge_extremity(point, abs_tol=5e-6)]
         if not intersections:
             return points
-        sign = self._helper_get_sign_repair_points_order(edge3d, points[0], intersections[0])
-        remaining_edge = edge3d
+        reference_point = edge3d.local_discretization(edge3d.start, intersections[0], 3)[1]
+        reference_point_u_parm = self.point3d_to_2d(reference_point).x
+        diff = reference_point_u_parm - points[0].x
+        sign = diff / abs(diff)
+        current_edge = edge3d
+
         memory_point_index = 0
-        crossed_even_number_of_times = True
+        flag = True
         for i, intersection in enumerate(intersections):
-            current_split = remaining_edge.split(intersection)
-            crossed_even_number_of_times = bool(i % 2 == 0)
+            split = current_edge.split(intersection)
+            flag = bool(i % 2 == 0)
             for point, point3d in zip(points[memory_point_index:], points3d[memory_point_index:]):
-                if crossed_even_number_of_times and current_split[0].point_belongs(point3d):
+                if flag and split[0].point_belongs(point3d):
                     memory_point_index += 1
-                elif not crossed_even_number_of_times and current_split[0].point_belongs(point3d):
+                elif not flag and split[0].point_belongs(point3d):
                     point.x = point.x + sign * self.x_periodicity
                     memory_point_index += 1
 
-            remaining_edge = current_split[1]
-        if crossed_even_number_of_times and memory_point_index < len(points):
+            current_edge = split[1]
+        if flag and memory_point_index < len(points):
             for point in points[memory_point_index:]:
                 point.x = point.x + sign * self.x_periodicity
         return points
-
-    def _helper_get_sign_repair_points_order(self, edge3d, starting_parametric_point, first_intersection_point):
-        """Helper function to repair points order."""
-        reference_point = edge3d.local_discretization(edge3d.start, first_intersection_point, 3)[1]
-        reference_point_u_parm = self.point3d_to_2d(reference_point).x
-        diff = reference_point_u_parm - starting_parametric_point.x
-        return diff / abs(diff)
 
     def _edge3d_to_2d(self, points, edge3d, points3d):
         """Helper to get parametric representation of edges on the surface."""
