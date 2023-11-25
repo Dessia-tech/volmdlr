@@ -2896,11 +2896,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Generally this is related to uncertainty of step files.
 
-        if abs(x) < 1e-6:
+        if abs(x) < 1e-12:
             x = 0.0
-        if abs(y) < 1e-6:
+        if abs(y) < 1e-12:
             y = 0.0
-        if abs(z) < 1e-6:
+        if abs(z) < 1e-12:
             z = 0.0
 
         z_r = z / self.minor_radius
@@ -2909,7 +2909,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             phi = 0
 
         u = self.major_radius + math.sqrt((self.minor_radius ** 2) - (z ** 2))
-        u1, u2 = round(x / u, 15), round(y / u, 15)
+        u1, u2 = x / u, y / u
         theta = math.atan2(u2, u1)
 
         vector_to_tube_center = volmdlr.Vector3D(abs(self.major_radius) * math.cos(theta),
