@@ -98,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### shells.py
 - Fixes to boolean operations. Added some tolerance parameters to some methods. 
 - Shell3D: get_geo_lines (consider edge.inverse in get_edge_index_in_list check), is_shell_open
+- DisplayTriangleShell3D: eq, data_eq, hash, data_hash, concatenate
 
 #### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
