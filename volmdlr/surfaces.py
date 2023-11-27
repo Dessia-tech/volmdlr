@@ -2881,7 +2881,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             x = 0.0
         if abs(y) < 1e-12:
             y = 0.0
-        if abs(z) < 1e-12:
+        if abs(z) < 1e-6:
             z = 0.0
 
         z_r = z / self.minor_radius
