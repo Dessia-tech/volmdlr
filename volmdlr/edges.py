@@ -3777,7 +3777,7 @@ class ArcEllipse2D(Edge):
         aproximation_point = None
         for point1, point2 in zip(discretized_points[:-1], discretized_points[1:]):
             dist1 = point1.point_distance(point2)
-            if aproximation_abscissa + dist1 > abscissa:
+            if (aproximation_abscissa + dist1) >= abscissa:
                 aproximation_point = point1
                 break
             aproximation_abscissa += dist1
