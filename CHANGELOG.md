@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
 
 ### Refactor
+- Big refactor to improve and simplify complex and long methods in various modules.
 
 ### Changed
 -

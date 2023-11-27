@@ -4651,48 +4651,61 @@ class LineSegment3D(LineSegment):
         return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
             surface, 0, angle, 0, (self.end - self.start).dot(axis))]
 
-    def _plane_revolution(self, params):
+    @staticmethod
+    def _helper_intersecting_axis_plane_revolution(surface, distance_1, distance_2, angle):
         """
-        Creates Plane Revolution of a Line Segment 3D.
+        Plane revolution helper method: Line Segment intersects the revolution axis.
 
-        :param params: needed parameters.
-        :return: List of plane revolution faces.
+        :return: revolution faces list
         """
-        axis, angle, p1_proj, u, distance_1, distance_2, line_intersection = params
-        v = axis.cross(u)
-        surface = volmdlr.surfaces.Plane3D(
-            volmdlr.Frame3D(p1_proj, u, v, axis))
-        if self.point_belongs(line_intersection):  # Linesegment intersects revolution axis
-            faces = []
-            for i, radius in enumerate([distance_1, distance_2]):
-                if math.isclose(radius, 0, abs_tol=1e-9):
-                    continue
-                if i == 0:
-                    arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
-                else:
-                    arc_point1 = volmdlr.O2D - volmdlr.X2D * radius
-                arc_point2 = arc_point1.rotation(volmdlr.O2D, angle / 2)
-                arc_point3 = arc_point1.rotation(volmdlr.O2D, angle)
-                arc = Arc2D.from_3_points(arc_point1, arc_point2, arc_point3)
-                outer_contour = volmdlr.wires.Contour2D([LineSegment2D(volmdlr.O2D, arc_point1), arc,
-                                                         LineSegment2D(arc_point3, volmdlr.O2D)])
-                face = volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour, []))
-                faces.append(face)
-            return faces
-        smaller_r, bigger_r = sorted([distance_1, distance_2])
+        faces = []
+        for i, radius in enumerate([distance_1, distance_2]):
+            if math.isclose(radius, 0, abs_tol=1e-9):
+                continue
+            if i == 0:
+                arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
+            else:
+                arc_point1 = volmdlr.O2D - volmdlr.X2D * radius
+            arc_point2 = arc_point1.rotation(volmdlr.O2D, angle / 2)
+            arc_point3 = arc_point1.rotation(volmdlr.O2D, angle)
+            arc = Arc2D.from_3_points(arc_point1, arc_point2, arc_point3)
+            outer_contour = volmdlr.wires.Contour2D([LineSegment2D(volmdlr.O2D, arc_point1), arc,
+                                                     LineSegment2D(arc_point3, volmdlr.O2D)])
+            face = volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour, []))
+            faces.append(face)
+        return faces
+
+    @staticmethod
+    def _helper_plane_revolution_two_circles(surface, bigger_r, smaller_r):
+        """
+        Helper method plane revolution creating two full circles.
+
+        :param surface: face surface.
+        :param bigger_r: bigger radius.
+        :param smaller_r: smaller radius.
+        :return: revolution faces list
+        """
         inner_contours2d = []
-        if angle == volmdlr.TWO_PI:
-            # Only 2 circles as contours
-            bigger_circle = volmdlr_curves.Circle2D(volmdlr.OXY, bigger_r)
-            outer_contour2d = volmdlr.wires.Contour2D(
-                bigger_circle.split_at_abscissa(bigger_circle.length() * 0.5))
-            if not math.isclose(smaller_r, 0, abs_tol=1e-9):
-                smaller_circle = volmdlr_curves.Circle2D(volmdlr.OXY, smaller_r)
-                inner_contours2d = [volmdlr.wires.Contour2D(
-                    smaller_circle.split_at_abscissa(smaller_circle.length() * 0.5))]
-            return [volmdlr.faces.PlaneFace3D(surface,
-                                              volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
-        # Two arcs and lines
+        bigger_circle = volmdlr_curves.Circle2D(volmdlr.OXY, bigger_r)
+        outer_contour2d = volmdlr.wires.Contour2D(
+            bigger_circle.split_at_abscissa(bigger_circle.length() * 0.5))
+        if not math.isclose(smaller_r, 0, abs_tol=1e-9):
+            smaller_circle = volmdlr_curves.Circle2D(volmdlr.OXY, smaller_r)
+            inner_contours2d = [volmdlr.wires.Contour2D(
+                smaller_circle.split_at_abscissa(smaller_circle.length() * 0.5))]
+        return [volmdlr.faces.PlaneFace3D(surface,  volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
+
+    @staticmethod
+    def _helper_plane_revolution_arcs_and_lines(surface, bigger_r, smaller_r, angle):
+        """
+        Plane revolution helper method for the case where it creates Two arcs and lines.
+
+        :param surface: face surface.
+        :param bigger_r: bigger radius.
+        :param smaller_r: smaller radius.
+        :param angle: revolution angle.
+        :return: revolution faces list
+        """
         arc1_s = volmdlr.Point2D(bigger_r, 0)
         arc1_i = arc1_s.rotation(center=volmdlr.O2D,
                                  angle=0.5 * angle)
@@ -4711,7 +4724,25 @@ class LineSegment3D(LineSegment):
         outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
                                                    arc2, line2])
 
-        return [volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
+        return [volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour2d, []))]
+
+    def _plane_revolution(self, params):
+        """
+        Creates Plane Revolution of a Line Segment 3D.
+
+        :param params: needed parameters.
+        :return: List of plane revolution faces.
+        """
+        axis, angle, p1_proj, u, distance_1, distance_2, line_intersection = params
+        v = axis.cross(u)
+        surface = volmdlr.surfaces.Plane3D(
+            volmdlr.Frame3D(p1_proj, u, v, axis))
+        if self.point_belongs(line_intersection):
+            return self._helper_intersecting_axis_plane_revolution(surface, distance_1, distance_2, angle)
+        smaller_r, bigger_r = sorted([distance_1, distance_2])
+        if angle == volmdlr.TWO_PI:
+            return self._helper_plane_revolution_two_circles(surface, bigger_r, smaller_r)
+        return self._helper_plane_revolution_arcs_and_lines(surface, bigger_r, smaller_r, angle)
 
     def revolution(self, axis_point, axis, angle):
         """
@@ -5199,6 +5230,9 @@ class BSplineCurve3D(BSplineCurve):
 
     # Copy paste du LineSegment3D
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """
+        Matplotlib plot method for a BSpline Curve 3D.
+        """
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -6164,6 +6198,15 @@ class FullArc3D(FullArcMixin, Arc3D):
     @classmethod
     def from_center_normal(cls, center: volmdlr.Point3D, normal: volmdlr.Vector3D,
                            start_end: volmdlr.Point3D, name: str = ''):
+        """
+        Creates a Full Arc 3D using a center, and a normal vector and a start point.
+
+        :param center: full arc center.
+        :param normal: circle normal
+        :param start_end: full arc starting point.
+        :param name: full arc's name.
+        :return: FullArc3D.
+        """
         u_vector = normal.deterministic_unit_normal_vector()
         v_vector = normal.cross(u_vector)
         circle = volmdlr_curves.Circle3D(volmdlr.Frame3D(center, u_vector, v_vector, normal),
