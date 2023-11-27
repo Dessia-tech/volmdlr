@@ -26,11 +26,12 @@ from volmdlr.utils.step_writer import (geometric_context_writer,
                                        product_writer, step_ids_to_str)
 
 
-def union_list_of_shells(list_shells):
+def union_list_of_shells(list_shells, abs_tol: float = 1e-6):
     """
     Perform union operations with all shells from a list, until all groups of adjacent shells are merged.
 
-    :param list_shells: A list of shells
+    :param list_shells: A list of shells.
+    :param abs_tol: tolerance.
     :return: A list of merged shells
     """
     shells = []
@@ -44,7 +45,7 @@ def union_list_of_shells(list_shells):
 
         for i, union_shell in enumerate(union_shells[:]):
             for j, octant_box in enumerate(list_shells[:]):
-                union = union_shell.union(octant_box)
+                union = union_shell.union(octant_box, abs_tol)
                 if len(union) != 2:
                     union_shells.pop(i)
                     union[0].merge_faces()
@@ -53,7 +54,7 @@ def union_list_of_shells(list_shells):
                     break
                 if len(list_shells) != len_previous_shells_list - 1:
                     union_shells.insert(0, union[1])
-                    list_shells.remove(octant_box)
+                    list_shells.pop(j)
                     break
             else:
                 shells.append(union_shell)
@@ -243,7 +244,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         face_vertices = {}
 
         for face_index, face in enumerate(faces):
-            face_contour_primitives = face.outer_contour3d.primitives
+            face_contour_primitives = face.outer_contour3d.primitives[:]
             for inner_contour in face.inner_contours3d:
                 face_contour_primitives.extend(inner_contour.primitives)
             for edge in face_contour_primitives:
@@ -652,20 +653,31 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return point1_min
 
-    def minimum_distance(self, other_shell, return_points=False):
+    @staticmethod
+    def _minimum_distance_helper_points_sets(shell_decomposition):
+        """
+        Gets a set of points representing the shell, some kink of a cloud of points.
+
+        """
+        list_set_points = [{point for face in faces
+                            for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces in
+                           shell_decomposition.items()]
+        list_set_points = [np.array([(point[0], point[1], point[2]) for point in sets_points1])
+                           for sets_points1 in list_set_points]
+        return list_set_points
+
+    def get_minimum_distance_nearby_faces(self, other_shell):
+        """
+        Gets the nearby faces of the two shells where the minimum distance points could be, for further calculations.
+
+        :param other_shell: other shell.
+        :return: A list faces of self, with the closest faces to shell2, and another faces list of shell2,
+        with those closest to self.
+        """
         shell_decomposition1 = self.shell_decomposition()
         shell_decomposition2 = other_shell.shell_decomposition()
-        list_set_points1 = [{point for face in faces1
-                             for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces1 in
-                            shell_decomposition1.items()]
-        list_set_points1 = [np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in
-                            list_set_points1]
-        list_set_points2 = [{point for face in faces2
-                             for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces2 in
-                            shell_decomposition2.items()]
-        list_set_points2 = [np.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
-                            list_set_points2]
-
+        list_set_points1 = self._minimum_distance_helper_points_sets(shell_decomposition1)
+        list_set_points2 = self._minimum_distance_helper_points_sets(shell_decomposition2)
         minimum_distance = math.inf
         index1, index2 = None, None
         for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
@@ -677,7 +689,17 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 index2 = next((i for i, x in enumerate(list_set_points2) if np.array_equal(x, sets_points2)), -1)
         faces1 = list(shell_decomposition1.values())[index1]
         faces2 = list(shell_decomposition2.values())[index2]
+        return faces1, faces2
 
+    def minimum_distance(self, other_shell, return_points=False):
+        """
+        Calculates the minimum distance between two shells 3D.
+
+        :param other_shell: other shell.
+        :param return_points: weather to return the minimum distance corresponding points.
+        :return: minimum distance, and if condition is True, the corresponding points.
+        """
+        faces1, faces2 = self.get_minimum_distance_nearby_faces(other_shell)
         minimum_distance = math.inf
         best_distance_points = None
         for face1, face2 in product(faces1, faces2):
@@ -749,13 +771,13 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             intersections_points + shell1_points_outside_shell2)
         return bbox.volume()
 
-    def face_on_shell(self, face):
+    def face_on_shell(self, face, abs_tol: float = 1e-6):
         """
         Verifies if a face lies on the shell's surface.
 
         """
         for face_ in self.faces:
-            if face_.face_inside(face):
+            if face_.face_inside(face, abs_tol):
                 return True
         return False
 
@@ -852,8 +874,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return self.__class__(list_faces)
 
-    def get_geo_lines(self, update_data,
-                      point_mesh_size: float = None):
+    def get_geo_lines(self, update_data, point_mesh_size: float = None):
         """
         Gets the lines that define an OpenShell3D geometry in a .geo file.
 
@@ -867,9 +888,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         primitives = []
         points = []
-
         for face in self.faces:
-            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+            for contour in list(chain(*[[face.outer_contour3d], face.inner_contours3d])):
                 for point_contour in contour.get_geo_points():
                     if not point_in_list(point_contour, points):
                         points.append(point_contour)
@@ -877,7 +897,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 if isinstance(contour, curves.Circle2D):
                     pass
                 else:
-                    for _, primitive in enumerate(contour.primitives):
+                    for primitive in contour.primitives:
                         if (not edge_in_list(primitive, primitives)
                                 and not edge_in_list(primitive.reverse(), primitives)):
                             primitives.append(primitive)
@@ -895,13 +915,16 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         for f_index, face in enumerate(self.faces):
             line_surface = []
-            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+            for contour in list(chain(*[[face.outer_contour3d], face.inner_contours3d])):
                 lines_tags = []
                 if isinstance(contour, curves.Circle2D):
                     pass
                 else:
-                    for _, primitive in enumerate(contour.primitives):
+                    for primitive in contour.primitives:
+                        # index = get_edge_index_in_list(primitive, primitives)
                         index = get_edge_index_in_list(primitive, primitives)
+                        if index is None:
+                            index = get_edge_index_in_list(primitive.reverse(), primitives)
 
                         if primitives[index].is_close(primitive):
 
@@ -983,14 +1006,26 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         if faces_graph is None:
             vertices_points = Shell3D._helper_getter_vertices_points(faces)
             faces_graph = Shell3D._helper_create_faces_graph(faces, vertices_points, False)
+
+        def is_primitive_on_neighbor_face(prim, neighbor_face):
+            """Verifies if primitive is on a neighbor face."""
+            return any(
+                neighbor_face_contour.is_primitive_section_over_wire(prim)
+                for neighbor_face_contour in [neighbor_face.outer_contour3d] + neighbor_face.inner_contours3d
+            )
+
         for n_index in faces_graph.nodes:
             face = faces[n_index]
-            for prim in face.outer_contour3d.primitives:
-                for neihgbor in faces_graph.neighbors(n_index):
-                    if faces[neihgbor].outer_contour3d.is_primitive_section_over_wire(prim):
-                        break
-                else:
-                    return True
+            if any(
+                    not any(
+                        is_primitive_on_neighbor_face(prim, faces[neighbor])
+                        for neighbor in faces_graph.neighbors(n_index)
+                    )
+                    for prim in [prim for contour in [face.outer_contour3d] + face.inner_contours3d
+                                 for prim in contour.primitives]
+            ):
+                return True
+
         return False
 
     @classmethod
@@ -1232,7 +1267,7 @@ class ClosedShell3D(Shell3D):
         face_combinations2 = {face: [] for face in shell2.faces}
         for face1 in self.faces:
             for face2 in shell2.faces:
-                if face1.surface3d.is_coincident(face2.surface3d):
+                if face1.surface3d.is_coincident(face2.surface3d, abs_tol=tol):
                     contours1, contours2 = face1.get_coincident_face_intersections(face2)
                     face_combinations1[face1].extend(contours1)
                     face_combinations2[face2].extend(contours2)
@@ -1266,7 +1301,7 @@ class ClosedShell3D(Shell3D):
                 valid_non_intercting_faces.append(face)
         return valid_non_intercting_faces
 
-    def get_coincident_faces(self, shell2):
+    def get_coincident_faces(self, shell2, abs_tol: float = 1e-6):
         """
         Finds all pairs of faces that are coincident faces, that is, faces lying on the same plane.
 
@@ -1275,7 +1310,7 @@ class ClosedShell3D(Shell3D):
         list_coincident_faces = []
         for face1 in self.faces:
             for face2 in shell2.faces:
-                if isinstance(face1, face2.__class__) and face1.surface3d.is_coincident(face2.surface3d):
+                if face1.surface3d.is_coincident(face2.surface3d, abs_tol):
                     contour1 = face1.outer_contour3d.to_2d(
                         face1.surface3d.frame.origin,
                         face1.surface3d.frame.u,
@@ -1362,11 +1397,10 @@ class ClosedShell3D(Shell3D):
                 break
             for face in valid_faces:
                 if face.face_inside(faces[0]):
-                    faces.remove(faces[0])
+                    faces.pop(0)
                     break
             else:
-                valid_faces.append(faces[0])
-                faces.remove(faces[0])
+                valid_faces.append(faces.pop(0))
         return valid_faces
 
     def subtraction_faces(self, shell2, intersecting_faces, dict_faces_intersections, keep_interior_faces: bool):
@@ -1541,6 +1575,29 @@ class ClosedShell3D(Shell3D):
             non_intersecting_faces.append(face)
         return intersecting_faces, non_intersecting_faces
 
+    def _delete_coincident_faces(self, shell2, list_coincident_faces, abs_tol: float = 1e-6):
+        """
+        Helper method to delete coincident faces during union operation.
+
+        :param shell2: other shell2.
+        :param list_coincident_faces: list of coincident faces.
+        :param abs_tol: tolerance.
+        :return: list of closed shells.
+        """
+        faces1 = self.faces[:]
+        faces2 = shell2.faces[:]
+        if list_coincident_faces:
+            for face1, face2 in list_coincident_faces:
+                if shell2.face_on_shell(face1, abs_tol):
+                    if face1 in faces1:
+                        faces1.remove(face1)
+                if self.face_on_shell(face2, abs_tol):
+                    if face2 in faces2:
+                        faces2.remove(face2)
+        if len(faces1) + len(faces2) == len(self.faces) + len(shell2.faces):
+            return [self, shell2]
+        return [ClosedShell3D(faces1+faces2)]
+
     def union(self, shell2: 'ClosedShell3D', tol: float = 1e-8):
         """
         Given Two closed shells, it returns a new united ClosedShell3D object.
@@ -1549,7 +1606,7 @@ class ClosedShell3D(Shell3D):
         validate_set_operation = self.validate_set_operation(shell2, tol)
         if validate_set_operation:
             return validate_set_operation
-        list_coincident_faces = self.get_coincident_faces(shell2)
+        list_coincident_faces = self.get_coincident_faces(shell2, tol)
         dict_face_intersections1, dict_face_intersections2 = self.intersecting_faces_combinations(shell2, tol)
         intersecting_faces_1, non_intersecting_faces1 = self._separate_intersecting_and_non_intersecting_faces(
             dict_face_intersections1)
@@ -1559,7 +1616,7 @@ class ClosedShell3D(Shell3D):
         non_intersecting_faces2 = shell2.validate_non_intersecting_faces(self, non_intersecting_faces2)
         faces = non_intersecting_faces1 + non_intersecting_faces2
         if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces_1 + intersecting_faces_2:
-            return [self, shell2]
+            return self._delete_coincident_faces(shell2, list_coincident_faces, tol)
         new_valid_faces = self.union_faces(shell2, intersecting_faces_1,
                                             dict_face_intersections1, list_coincident_faces)
         new_valid_faces += shell2.union_faces(self, intersecting_faces_2,
@@ -2116,6 +2173,11 @@ class DisplayTriangleShell3D(Shell3D):
         :param other: Another DisplayTriangleShell3D instance to concatenate with this instance.
         :return: A new DisplayTriangleShell3D instance representing the concatenated shells.
         """
+        if len(self.positions) == 0 or len(self.indices) == 0:
+            return other
+        if len(other.positions) == 0 or len(other.indices) == 0:
+            return self
+
         # Merge and remove duplicate vertices
         merged_positions = np.vstack((self.positions, other.positions))
         unique_positions, indices_map = np.unique(merged_positions, axis=0, return_inverse=True)
@@ -2150,3 +2212,29 @@ class DisplayTriangleShell3D(Shell3D):
         :rtype: DisplayTriangleShell3D
         """
         return self.concatenate(other)
+
+    def __hash__(self):
+        return hash(
+            (
+                self.__class__.__name__,
+                (tuple(self.indices[0]), tuple(self.indices[-1]), len(self.indices)),
+                (tuple(self.positions[0]), tuple(self.positions[-1]), len(self.positions)),
+            )
+        )
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def _data_hash(self):
+        return hash(
+            (
+                self.__class__.__name__,
+                (tuple(self.indices[0]), tuple(self.indices[-1]), len(self.indices)),
+                (tuple(self.positions[0]), tuple(self.positions[-1]), len(self.positions)),
+            )
+        )
+
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
+            return False
+        return self._data_hash() == other_object._data_hash()

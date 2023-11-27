@@ -4,7 +4,6 @@ Class for discrete representations of volmdlr models (voxelization for 3D geomet
 import itertools
 import math
 import warnings
-from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List, Set, Tuple, TypeVar, Union
 
 import matplotlib.pyplot as plt
@@ -48,7 +47,7 @@ Octree = Union[int, List["Octree"]]
 DECIMALS = 9  # Used to round numbers and avoid floating point arithmetic imprecision
 
 
-class DiscreteRepresentation(ABC):
+class DiscreteRepresentation:
     """
     Abstract base class for discrete representation in any dimension.
 
@@ -88,7 +87,6 @@ class DiscreteRepresentation(ABC):
         """
         return f"{self.__class__}: element size={self.element_size}, number of elements={len(self)}"
 
-    @abstractmethod
     def __eq__(self, other: DiscreteRepresentationType) -> bool:
         """
         Check if two discrete representations are equal.
@@ -99,8 +97,8 @@ class DiscreteRepresentation(ABC):
         :return: True if the discrete representations are equal, False otherwise.
         :rtype: bool
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
-    @abstractmethod
     def __len__(self) -> int:
         """
         Get the number of elements in the discrete representation.
@@ -108,8 +106,8 @@ class DiscreteRepresentation(ABC):
         :return: The number of elements in the discrete representation.
         :rtype: int
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
-    @abstractmethod
     def _get_element_centers(self) -> Set[Tuple]:
         """
         Get the center point of each element.
@@ -117,9 +115,9 @@ class DiscreteRepresentation(ABC):
         :return: The center point of each element.
         :rtype: set[tuple[float, ...]]
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
     @property
-    @abstractmethod
     def min_grid_center(self) -> Tuple:
         """
         Get the minimum center point from the set of voxel centers, in the voxel 3D grid.
@@ -129,9 +127,9 @@ class DiscreteRepresentation(ABC):
         :return: The minimum center point.
         :rtype: tuple[float, ...]
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
     @property
-    @abstractmethod
     def max_grid_center(self) -> Tuple:
         """
         Get the maximum center point from the set of voxel centers, in the voxel 3D grid.
@@ -141,6 +139,7 @@ class DiscreteRepresentation(ABC):
         :return: The maximum center point.
         :rtype: tuple[float, ...]
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
     # BOOLEAN OPERATIONS
     def __add__(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
@@ -200,7 +199,6 @@ class DiscreteRepresentation(ABC):
         """
         return self.inverse()
 
-    @abstractmethod
     def union(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
         """
         Perform a union operation with another discrete representation.
@@ -211,8 +209,8 @@ class DiscreteRepresentation(ABC):
         :return: A new discrete representation resulting from the union operation.
         :rtype: DiscreteRepresentationType
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
-    @abstractmethod
     def difference(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
         """
         Perform a difference operation with another discrete representation.
@@ -223,8 +221,8 @@ class DiscreteRepresentation(ABC):
         :return: A new discrete representation resulting from the difference operation.
         :rtype: DiscreteRepresentationType
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
-    @abstractmethod
     def intersection(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
         """
         Perform an intersection operation with another discrete representation.
@@ -235,6 +233,7 @@ class DiscreteRepresentation(ABC):
         :return: A new discrete representation resulting from the intersection operation.
         :rtype: DiscreteRepresentationType
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
     def symmetric_difference(self, other: DiscreteRepresentationType) -> DiscreteRepresentationType:
         """
@@ -246,8 +245,8 @@ class DiscreteRepresentation(ABC):
         :return: A new discrete representation resulting from the symmetric difference operation.
         :rtype: DiscreteRepresentationType
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
-    @abstractmethod
     def inverse(self) -> DiscreteRepresentationType:
         """
         Compute the inverse of the discrete representation.
@@ -255,6 +254,7 @@ class DiscreteRepresentation(ABC):
         :return: A new discrete representation representing the inverse.
         :rtype: DiscreteRepresentationType
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
     def interference(self, other: DiscreteRepresentationType) -> float:
         """
@@ -283,7 +283,6 @@ class DiscreteRepresentation(ABC):
         return len(intersection) > 0
 
     # FILLING METHODS
-    @abstractmethod
     def flood_fill(self, start, fill_with: bool) -> DiscreteRepresentationType:
         """
         Perform a flood fill operation on the discrete representation.
@@ -295,8 +294,8 @@ class DiscreteRepresentation(ABC):
         :return: A new discrete representation resulting from the flood fill operation.
         :rtype: DiscreteRepresentationType
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
-    @abstractmethod
     def _fill_outer_elements(self) -> DiscreteRepresentationType:
         """
         Fill the outer elements of the discrete representation.
@@ -304,8 +303,8 @@ class DiscreteRepresentation(ABC):
         :return: A new discrete representation with outer elements filled.
         :rtype: DiscreteRepresentationType
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
-    @abstractmethod
     def _fill_enclosed_elements(self) -> DiscreteRepresentationType:
         """
         Fill the enclosed elements of the discrete representation.
@@ -313,6 +312,7 @@ class DiscreteRepresentation(ABC):
         :return: A new discrete representation with enclosed elements filled.
         :rtype: DiscreteRepresentationType
         """
+        raise NotImplementedError("DiscreteRepresentation is an abstract class and should not be use directly.")
 
     # HELPER METHODS
     @staticmethod
@@ -471,7 +471,6 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
 
     # CLASS METHODS
     @classmethod
-    @abstractmethod
     def from_triangles(cls, triangles: List[_Triangle3D], voxel_size: float, name: str = "") -> VoxelizationType:
         """
         Create a voxelization from a list of triangles.
@@ -486,6 +485,7 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         :return: A voxelization created from the list of triangles.
         :rtype: VoxelizationType
         """
+        raise NotImplementedError("Voxelization is an abstract class and should not be use directly.")
 
     @classmethod
     def from_shell(cls, shell: Shell3D, voxel_size: float, name: str = "") -> VoxelizationType:
@@ -3138,7 +3138,6 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
 
     # CLASS METHODS
     @classmethod
-    @abstractmethod
     def from_line_segment(cls, line_segment: LineSegment2D, pixel_size: float, name: str = "") -> PixelizationType:
         """
         Create a pixelization from a LineSegment2D.
@@ -3153,9 +3152,9 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
         :return: A pixelization created from the LineSegment2D.
         :rtype: PixelizationType
         """
+        raise NotImplementedError("Pixelization is an abstract class and should not be use directly.")
 
     @classmethod
-    @abstractmethod
     def from_closed_polygon(
         cls, closed_polygon: ClosedPolygon2D, pixel_size: float, name: str = ""
     ) -> PixelizationType:
@@ -3172,6 +3171,7 @@ class Pixelization(DiscreteRepresentation, DessiaObject):
         :return: A pixelization created from the ClosedPolygon2D.
         :rtype: PixelizationType
         """
+        raise NotImplementedError("Pixelization is an abstract class and should not be use directly.")
 
     # FILLING METHODS
     def fill_outer_pixels(self) -> PixelizationType:

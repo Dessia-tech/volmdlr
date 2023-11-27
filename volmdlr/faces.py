@@ -348,13 +348,13 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.__class__(self.surface3d.copy(deep, memo), self.surface2d.copy(),
                               self.name)
 
-    def face_inside(self, face2):
+    def face_inside(self, face2, abs_tol: float = 1e-6):
         """
         Verifies if a face is inside another one.
 
         It returns True if face2 is inside or False if the opposite.
         """
-        if self.surface3d.is_coincident(face2.surface3d):
+        if self.surface3d.is_coincident(face2.surface3d, abs_tol):
             self_contour2d = self.outer_contour3d.to_2d(
                 self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
             face2_contour2d = face2.outer_contour3d.to_2d(
@@ -758,7 +758,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 if not connected_contour:
                     cutting_contours.append(current_cutting_contour)
                     continue
-                new_contour = current_cutting_contour.merge_not_adjcent_contour(connected_contour)
+                new_contour = current_cutting_contour.merge_not_adjacent_contour(connected_contour)
                 list_cutting_contours.append(new_contour)
             list_cutting_contours = cutting_contours
 
@@ -1158,6 +1158,12 @@ class Face3D(volmdlr.core.Primitive3D):
         return minimum_distance
 
     def plane_intersections(self, plane3d: surfaces.Plane3D):
+        """
+        Gets intersections between Face 3D and a plane.
+
+        :param plane3d: other plane3D.
+        :return: List containing the intersection curves.
+        """
         surfaces_intersections = self.surface3d.plane_intersections(plane3d)
         outer_contour_intersections_with_plane = plane3d.contour_intersections(self.outer_contour3d)
         plane_intersections = []
@@ -1555,12 +1561,25 @@ class PlaneFace3D(Face3D):
         return face_intersections
 
     def planeface_minimum_distance(self, planeface: 'PlaneFace3D', return_points: bool = False):
+        """
+        Gets the minimum distance between two plane faces 3D.
+
+        :param planeface: other plane face.
+        :param return_points: weather to return corresponding minimum distance points or not.
+        :return: minimum distance or minimum distance, point1 and point2.
+        """
         dist, point1, point2 = self.minimum_distance_points_plane(planeface, return_points=True)
         if not return_points:
             return dist
         return dist, point1, point2
 
     def is_adjacent(self, face2: Face3D):
+        """
+        Verifies if two plane faces are adjacent to eachother.
+
+        :param face2: other face.
+        :return: True if adjacent, False otherwise.
+        """
         contour1 = self.outer_contour3d.to_2d(
             self.surface3d.frame.origin,
             self.surface3d.frame.u,
@@ -1685,8 +1704,11 @@ class PlaneFace3D(Face3D):
 
     @staticmethod
     def update_faces_with_divided_faces(divided_faces, face2_2, used, list_faces):
-        for d_face in divided_faces:
+        """
+        Update divided faces from project_faces.
 
+        """
+        for d_face in divided_faces:
             if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
                 if face2_2.surface2d.inner_contours:
                     divided_faces_d_face = []
@@ -1728,33 +1750,33 @@ class PlaneFace3D(Face3D):
         used_faces, list_faces = {}, []
 
         for face2 in faces:
-            contour1 = self.surface2d.outer_contour
-            contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)
+            if self.surface3d.is_coincident(face2.surface3d):
+                contour1 = self.surface2d.outer_contour
+                contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)
 
-            inside = self.check_inner_contours(face2)
-            if (self.surface3d.is_coincident(face2.surface3d)
-                    and (contour1.is_overlapping(contour2)
-                         or (contour1.is_inside(contour2) or True in inside))):
+                inside = self.check_inner_contours(face2)
+                if (contour1.is_overlapping(contour2)
+                    or (contour1.is_inside(contour2) or True in inside)):
 
-                if self in used_faces:
-                    faces_1, face2_2 = used_faces[self][:], face2
-                else:
-                    faces_1, face2_2 = [self], face2
+                    if self in used_faces:
+                        faces_1, face2_2 = used_faces[self][:], face2
+                    else:
+                        faces_1, face2_2 = [self], face2
 
-                used = []
-                for face1_1 in faces_1:
-                    plane3d = face1_1.surface3d
-                    s2d = surfaces.Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
-                                             inner_contours=[
-                                                 plane3d.contour3d_to_2d(contour) for contour in
-                                                 face2_2.inner_contours3d])
-                    face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
+                    used = []
+                    for face1_1 in faces_1:
+                        plane3d = face1_1.surface3d
+                        s2d = surfaces.Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
+                                                 inner_contours=[
+                                                     plane3d.contour3d_to_2d(contour) for contour in
+                                                     face2_2.inner_contours3d])
+                        face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
 
-                    divided_faces = face1_1.cut_by_coincident_face(face2_2)
+                        divided_faces = face1_1.cut_by_coincident_face(face2_2)
 
-                    used, list_faces = self.update_faces_with_divided_faces(
-                        divided_faces, face2_2, used, list_faces)
-                used_faces[self] = used
+                        used, list_faces = self.update_faces_with_divided_faces(
+                            divided_faces, face2_2, used, list_faces)
+                    used_faces[self] = used
 
         try:
             if isinstance(used_faces[self], list):
@@ -2085,6 +2107,10 @@ class Triangle3D(PlaneFace3D):
         return [Triangle3D(subtri[0], subtri[1], subtri[2]) for subtri in sub_triangles]
 
     def middle(self):
+        """
+        Gets the middle point of the face: center of gravity.
+
+        """
         return (self.point1 + self.point2 + self.point3) / 3
 
     def normal(self):
@@ -2892,9 +2918,9 @@ class ExtrusionFace3D(Face3D):
         angle_resolution = 11
         xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
-        number_points_x = int(delta_x * angle_resolution)
+        number_points_x = max(36, int(delta_x * angle_resolution))
 
-        number_points_y = number_points_x
+        number_points_y = 2
 
         return number_points_x, number_points_y
 
