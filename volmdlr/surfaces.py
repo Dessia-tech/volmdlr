@@ -5361,7 +5361,7 @@ class ExtrusionSurface3D(Surface3D):
                         return [primitive]
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
                         return [primitive.reverse()]
-                primitive = primitive.split_between_two_points(start3d, end3d)
+                primitive = primitive.trim(start3d, end3d)
                 return [primitive]
         n = 10
         degree = 3
@@ -5762,7 +5762,7 @@ class RevolutionSurface3D(PeriodicalSurface):
                     if primitive.start.is_close(end3d) and primitive.end.is_close(start3d):
                         primitive = primitive.reverse()
                     return [primitive]
-                primitive = primitive.split_between_two_points(start3d, end3d)
+                primitive = primitive.trim(start3d, end3d)
                 if abscissa1 > abscissa2:
                     primitive = primitive.reverse()
                 return [primitive]
