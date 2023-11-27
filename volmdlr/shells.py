@@ -2173,6 +2173,11 @@ class DisplayTriangleShell3D(Shell3D):
         :param other: Another DisplayTriangleShell3D instance to concatenate with this instance.
         :return: A new DisplayTriangleShell3D instance representing the concatenated shells.
         """
+        if len(self.positions) == 0 or len(self.indices) == 0:
+            return other
+        if len(other.positions) == 0 or len(other.indices) == 0:
+            return self
+
         # Merge and remove duplicate vertices
         merged_positions = np.vstack((self.positions, other.positions))
         unique_positions, indices_map = np.unique(merged_positions, axis=0, return_inverse=True)
@@ -2207,3 +2212,29 @@ class DisplayTriangleShell3D(Shell3D):
         :rtype: DisplayTriangleShell3D
         """
         return self.concatenate(other)
+
+    def __hash__(self):
+        return hash(
+            (
+                self.__class__.__name__,
+                (tuple(self.indices[0]), tuple(self.indices[-1]), len(self.indices)),
+                (tuple(self.positions[0]), tuple(self.positions[-1]), len(self.positions)),
+            )
+        )
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def _data_hash(self):
+        return hash(
+            (
+                self.__class__.__name__,
+                (tuple(self.indices[0]), tuple(self.indices[-1]), len(self.indices)),
+                (tuple(self.positions[0]), tuple(self.positions[-1]), len(self.positions)),
+            )
+        )
+
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
+            return False
+        return self._data_hash() == other_object._data_hash()
