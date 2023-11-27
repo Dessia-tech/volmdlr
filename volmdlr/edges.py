@@ -1856,23 +1856,32 @@ class BSplineCurve(Edge):
         data = self.data
         point_name = 'Point' + self.__class__.__name__[-2:]
         # special case periodical bsplinecurve
-        if self.periodic and abscissa1 == abscissa2 and (not math.isclose(abscissa1, 0.0, abs_tol=1e-6) or
-                        not math.isclose(abscissa1, self.length(), abs_tol=1e-6)):
+        if self.periodic and abscissa1 >= abscissa2 and (not math.isclose(abscissa1, 0.0, abs_tol=1e-6) and
+                                                         not math.isclose(abscissa1, self.length(), abs_tol=1e-6)):
             umin, umax = self.domain
+            u_start = self.abscissa_to_parameter(abscissa1)
+            u_end = self.abscissa_to_parameter(abscissa2)
             number_points1 = int((abscissa1 / self.length()) * number_points)
-            max_number_points = math.ceil((self.length() - abscissa1) / 5e-6)
-            if number_points1 > max_number_points:
-                number_points1 = max(max_number_points, 2)
-            number_points2 = number_points - number_points1
-            max_number_points = math.ceil(abscissa1 / 5e-6)
-            if number_points2 > max_number_points:
-                number_points2 = max(max_number_points, 2)
-            u_start_end = self.abscissa_to_parameter(abscissa1)
-            data["sample_size"] = number_points1
-            points1 = evaluate_curve(data, start=u_start_end, stop=umax)
-            data["sample_size"] = number_points2
-            points2 = evaluate_curve(data, start=umin, stop=u_start_end)
-            points = points1 + points2[1:]
+            if umin == u_end:
+                number_points1 = number_points
+                data["sample_size"] = number_points1
+                points1 = evaluate_curve(data, start=u_start, stop=umax)
+                points = points1
+            else:
+                max_number_points = math.ceil((self.length() - abscissa1) / 5e-6)
+                if number_points1 > max_number_points:
+                    number_points1 = max(max_number_points, 2)
+
+                number_points2 = number_points - number_points1
+                max_number_points = math.ceil(abscissa1 / 5e-6)
+                if number_points2 > max_number_points:
+                    number_points2 = max(max_number_points, 2)
+
+                data["sample_size"] = number_points1
+                points1 = evaluate_curve(data, start=u_start, stop=umax)
+                data["sample_size"] = number_points2
+                points2 = evaluate_curve(data, start=umin, stop=u_end)
+                points = points1 + points2[1:]
         else:
             if math.isclose(abscissa2, 0.0, abs_tol=1e-6):
                 abscissa2 += self.length()

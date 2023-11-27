@@ -92,7 +92,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         Tells you if a point is on the 3D face and inside its contour.
         """
-        if not self.bounding_box.point_belongs(point3d):
+        if not self.bounding_box.point_belongs(point3d, 1e-3):
             return False
         point2d = self.surface3d.point3d_to_2d(point3d)
         # check_point3d = self.surface3d.point2d_to_3d(point2d)
