@@ -3515,8 +3515,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
 
-        x = npy.linspace(x_min, x_max, num=number_points_x + 2, dtype=npy.float64)
-        y = npy.linspace(y_min, y_max, num=number_points_y + 2, dtype=npy.float64)
+        x = npy.linspace(x_min, x_max, num=int(number_points_x + 2), dtype=npy.float64)
+        y = npy.linspace(y_min, y_max, num=int(number_points_y + 2), dtype=npy.float64)
 
         grid_point_index = {}
 

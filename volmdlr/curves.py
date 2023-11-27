@@ -1010,7 +1010,7 @@ class CircleMixin:
         if not self.point_belongs(point2, 1e-5):
             angle = circle.get_arc_point_angle(point2)
             point2 = circle.point_at_abscissa(angle * self.radius)
-        if point1.is_close(point2):
+        if point1 == point2:
             return fullar_arc_class_(circle, point1)
         return arc_class_(circle, point1, point2)
 

@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PeriodicalSurface: handles exceptions in connect_contours method.
 - ExtrusionSurface3D: fullarcellipse3d_to_2d
 - ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
+- ToroidalSurface3D: increases precision of point3d_to_2d.
 
 ### Refactor
 - Big refactor to improve and simplify complex and long methods in various modules.
