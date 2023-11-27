@@ -1160,6 +1160,12 @@ class Face3D(volmdlr.core.Primitive3D):
         return minimum_distance
 
     def plane_intersections(self, plane3d: surfaces.Plane3D):
+        """
+        Gets intersections between Face 3D and a plane.
+
+        :param plane3d: other plane3D.
+        :return: List containing the intersection curves.
+        """
         surfaces_intersections = self.surface3d.plane_intersections(plane3d)
         outer_contour_intersections_with_plane = plane3d.contour_intersections(self.outer_contour3d)
         plane_intersections = []
@@ -1557,12 +1563,25 @@ class PlaneFace3D(Face3D):
         return face_intersections
 
     def planeface_minimum_distance(self, planeface: 'PlaneFace3D', return_points: bool = False):
+        """
+        Gets the minimum distance between two plane faces 3D.
+
+        :param planeface: other plane face.
+        :param return_points: weather to return corresponding minimum distance points or not.
+        :return: minimum distance or minimum distance, point1 and point2.
+        """
         dist, point1, point2 = self.minimum_distance_points_plane(planeface, return_points=True)
         if not return_points:
             return dist
         return dist, point1, point2
 
     def is_adjacent(self, face2: Face3D):
+        """
+        Verifies if two plane faces are adjacent to eachother.
+
+        :param face2: other face.
+        :return: True if adjacent, False otherwise.
+        """
         contour1 = self.outer_contour3d.to_2d(
             self.surface3d.frame.origin,
             self.surface3d.frame.u,
@@ -1687,8 +1706,11 @@ class PlaneFace3D(Face3D):
 
     @staticmethod
     def update_faces_with_divided_faces(divided_faces, face2_2, used, list_faces):
-        for d_face in divided_faces:
+        """
+        Update divided faces from project_faces.
 
+        """
+        for d_face in divided_faces:
             if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
                 if face2_2.surface2d.inner_contours:
                     divided_faces_d_face = []
@@ -2087,6 +2109,10 @@ class Triangle3D(PlaneFace3D):
         return [Triangle3D(subtri[0], subtri[1], subtri[2]) for subtri in sub_triangles]
 
     def middle(self):
+        """
+        Gets the middle point of the face: center of gravity.
+
+        """
         return (self.point1 + self.point2 + self.point3) / 3
 
     def normal(self):

@@ -144,6 +144,13 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 0.12142017346476651, 4)
 
+        surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "toroidalsurface_small_arc3d.json"))
+        contour = wires.Contour3D.load_from_file(os.path.join(folder, "toroidalsurface_small_arc3d_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour)
+
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 0.09543353484687866, 2)
+
     def test_line_intersections(self):
         expected_results = [[volmdlr.Point3D(2.9993479584651066, 0.031270376297965426, 0.031270376297965426),
                              volmdlr.Point3D(1.0000193965498871, 0.09374939385781603, 0.09374939385781603),
