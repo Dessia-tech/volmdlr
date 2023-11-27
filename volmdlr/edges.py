@@ -168,7 +168,7 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
-        tol = min(1e-6, kwargs.get("global_uncertainty"))
+        tol = min(1e-6, kwargs.get("global_uncertainty", 1e-6))
         if obj.__class__.__name__ == 'LineSegment3D':
             if point1 != point2:
                 return LineSegment3D(point1, point2, name=arguments[0][1:-1])
@@ -1706,7 +1706,10 @@ class BSplineCurve(Edge):
                     if line.point_distance(linesegment.middle_point()) < (tol * 0.01):
                         list_intersections.append(linesegment.middle_point())
                         continue
-                list_intersections.extend(intersections)
+                if intersections:
+                    for intersection in intersections:
+                        if not intersection.in_list(list_intersections):
+                            list_intersections.append(intersection)
             initial_abscissa += linesegment.length()
         return list_intersections
 
