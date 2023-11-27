@@ -5230,6 +5230,9 @@ class BSplineCurve3D(BSplineCurve):
 
     # Copy paste du LineSegment3D
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
+        """
+        Matplotlib plot method for a BSpline Curve 3D.
+        """
         if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
@@ -6195,6 +6198,15 @@ class FullArc3D(FullArcMixin, Arc3D):
     @classmethod
     def from_center_normal(cls, center: volmdlr.Point3D, normal: volmdlr.Vector3D,
                            start_end: volmdlr.Point3D, name: str = ''):
+        """
+        Creates a Full Arc 3D using a center, and a normal vector and a start point.
+
+        :param center: full arc center.
+        :param normal: circle normal
+        :param start_end: full arc starting point.
+        :param name: full arc's name.
+        :return: FullArc3D.
+        """
         u_vector = normal.deterministic_unit_normal_vector()
         v_vector = normal.cross(u_vector)
         circle = volmdlr_curves.Circle3D(volmdlr.Frame3D(center, u_vector, v_vector, normal),
