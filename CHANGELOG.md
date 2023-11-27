@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Big refactor to improve and simplify complex and long methods in various modules.
 
 ### Changed
--
+- Edge.split_between_two_points -> trim
 
 ### Unittests
 - 
