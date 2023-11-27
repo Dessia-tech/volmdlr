@@ -5294,6 +5294,19 @@ class ExtrusionSurface3D(Surface3D):
         content += f"#{current_id} = SURFACE_OF_LINEAR_EXTRUSION('{self.name}',#{edge_id},#{vector_id});\n"
         return content, [current_id]
 
+    def linesegment3d_to_2d(self, linesegment3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        start = self.point3d_to_2d(linesegment3d.start)
+        end = self.point3d_to_2d(linesegment3d.end)
+        if self.x_periodicity:
+            line_at_periodicity = curves.Line3D(self.edge.start, self.edge.start.translation(self.direction))
+            if (line_at_periodicity.point_belongs(linesegment3d.start) and
+                line_at_periodicity.point_belongs(linesegment3d.end) and start.x != end.x):
+                end.x = start.x
+        return [edges.LineSegment2D(start, end)]
+
     def arc3d_to_2d(self, arc3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.

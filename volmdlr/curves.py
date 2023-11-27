@@ -2008,6 +2008,18 @@ class EllipseMixin:
         """Gets ellipse's minor direction vector."""
         return self.frame.v
 
+    def length(self):
+        """
+        Calculates the length of the ellipse.
+
+        Ramanujan's approximation for the perimeter of the ellipse.
+        P = π (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
+        :return:
+        """
+        perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
+        return math.pi * (self.major_axis + self.minor_axis) * \
+            (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+
 
 class Ellipse2D(EllipseMixin, ClosedCurve):
     """
@@ -2090,19 +2102,6 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         :return: ellipse's area, float.
         """
         return math.pi * self.major_axis * self.minor_axis
-
-    def length(self):
-        """
-        Calculates the ellipse's length.
-
-        :return: ellipse's length.
-        """
-        mid_point = self.center - self.major_axis * self.major_dir
-        if self.theta != 0.0:
-            mid_point = self.center - volmdlr.Point2D(self.major_axis, 0)
-            mid_point = mid_point.rotation(self.center, self.theta)
-        length = 2 * self.abscissa(mid_point)
-        return length
 
     def to_3d(self, plane_origin, x, y):
         """
@@ -2428,17 +2427,6 @@ class Ellipse3D(EllipseMixin, ClosedCurve):
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
                             new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=tol)
 
-    def length(self):
-        """
-        Calculates the length of the ellipse.
-
-        Ramanujan's approximation for the perimeter of the ellipse.
-        P = π (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
-        :return:
-        """
-        perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
-        return math.pi * (self.major_axis + self.minor_axis) * \
-            (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
