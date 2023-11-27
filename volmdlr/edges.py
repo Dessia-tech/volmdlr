@@ -168,6 +168,7 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
+        tol = min(1e-6, kwargs.get("global_uncertainty"))
         if obj.__class__.__name__ == 'LineSegment3D':
             if point1 != point2:
                 return LineSegment3D(point1, point2, name=arguments[0][1:-1])
@@ -182,7 +183,7 @@ class Edge(dc.DessiaObject):
             return None
 
         if hasattr(obj, 'trim'):
-            trimmed_edge = obj.trim(point1, point2, same_sense)
+            trimmed_edge = obj.trim(point1, point2, same_sense, tol)
             if trimmed_edge:
                 trimmed_edge.name = arguments[0][1:-1]
             return trimmed_edge
@@ -5048,7 +5049,7 @@ class BSplineCurve3D(BSplineCurve):
                                             self.knots, self.weights, self.name)
         return new_bsplinecurve3d
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
         """
         Trims a bspline curve between two points.
 
@@ -5066,21 +5067,21 @@ class BSplineCurve3D(BSplineCurve):
         parameter1 = bsplinecurve.point_to_parameter(point1)
         parameter2 = bsplinecurve.point_to_parameter(point2)
 
-        if (point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end)) \
-                or (point1.is_close(bsplinecurve.end) and point2.is_close(bsplinecurve.start)):
+        if (point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol)) \
+                or (point1.is_close(bsplinecurve.end, abs_tol) and point2.is_close(bsplinecurve.start, abs_tol)):
             return bsplinecurve
 
-        if point1.is_close(bsplinecurve.start) and not point2.is_close(bsplinecurve.end):
+        if point1.is_close(bsplinecurve.start, abs_tol) and not point2.is_close(bsplinecurve.end, abs_tol):
             return bsplinecurve.cut_after(parameter2)
 
-        if point2.is_close(bsplinecurve.start) and not point1.is_close(bsplinecurve.end):
+        if point2.is_close(bsplinecurve.start, abs_tol) and not point1.is_close(bsplinecurve.end, abs_tol):
             bsplinecurve = bsplinecurve.cut_after(parameter1)
             return bsplinecurve
 
-        if not point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end):
+        if not point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol):
             return bsplinecurve.cut_before(parameter1)
 
-        if not point2.is_close(bsplinecurve.start) and point1.is_close(bsplinecurve.end):
+        if not point2.is_close(bsplinecurve.start, abs_tol) and point1.is_close(bsplinecurve.end, abs_tol):
             bsplinecurve = bsplinecurve.cut_before(parameter2)
             return bsplinecurve
 

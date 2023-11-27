@@ -216,8 +216,7 @@ class Face3D(volmdlr.core.Primitive3D):
             contours2d = [surface.contour3d_to_2d(contour3d) for contour3d in contours3d]
 
             check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
-            if any(check_contours):
-                # Not implemented yet, but connect_contours should also return outer_contour3d and inner_contours3d
+            if (surface.x_periodicity or surface.y_periodicity) and sum(1 for value in check_contours if value) >= 2:
                 outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
                 outer_contour3d = surface.contour2d_to_3d(outer_contour2d)
                 inner_contours3d = [surface.contour2d_to_3d(contour) for contour in inner_contours2d]
@@ -240,7 +239,8 @@ class Face3D(volmdlr.core.Primitive3D):
                     inner_contours3d.remove(outer_contour3d)
         else:
             raise ValueError('Must have at least one contour')
-        if (not outer_contour2d) or (not all(outer_contour2d.primitives)) or (not outer_contour2d.is_ordered(1e-2)):
+        if ((not outer_contour2d) or (not all(outer_contour2d.primitives)) or
+                (not surface.brep_connectivity_check(outer_contour2d, tol=5e-5))):
             return None
         # if outer_contour3d and outer_contour3d.primitives and not outer_contour3d.is_ordered(1e-5):
         #     outer_contour2d = contour2d_healing(outer_contour2d)
@@ -1158,6 +1158,14 @@ class Face3D(volmdlr.core.Primitive3D):
         return minimum_distance
 
     def plane_intersections(self, plane3d: surfaces.Plane3D):
+        """
+        Gets intersections with a 3D plane surface.
+
+        :param plane3d: The Plane3D instance to find intersections with.
+        :type plane3d: Plane3D
+        :return: List of Wire3D instances representing the intersections with the plane.
+        :rtype: List[wires.Wire3D]
+        """
         surfaces_intersections = self.surface3d.plane_intersections(plane3d)
         outer_contour_intersections_with_plane = plane3d.contour_intersections(self.outer_contour3d)
         plane_intersections = []
@@ -1555,6 +1563,17 @@ class PlaneFace3D(Face3D):
         return face_intersections
 
     def planeface_minimum_distance(self, planeface: 'PlaneFace3D', return_points: bool = False):
+        """
+        Gets the minimal distance from another PlaneFace3D.
+
+        :param planeface: Another PlaneFace3D instance to calculate the minimum distance.
+        :type planeface: PlaneFace3D
+        :param return_points: If True, returns a tuple containing the two points that give the minimum distance.
+        :type return_points: bool, optional
+        :return: If return_points is False, returns the minimum distance between the two plane faces.
+                 If return_points is True, returns a tuple containing the two points that give the minimum distance.
+        :rtype: float or tuple(float, Tuple3D, Tuple3D)
+        """
         dist, point1, point2 = self.minimum_distance_points_plane(planeface, return_points=True)
         if not return_points:
             return dist
@@ -1858,12 +1877,14 @@ class Triangle3D(PlaneFace3D):
 
     @property
     def surface3d(self):
+        """Gets the plane on which the triangle is contained."""
         if self._surface3d is None:
             self._surface3d = surfaces.Plane3D.from_3_points(self.point1, self.point2, self.point3)
         return self._surface3d
 
     @surface3d.setter
     def surface3d(self, new_surface3d):
+        """Sets the plane on which the triangle is contained."""
         self._surface3d = new_surface3d
 
     @property
@@ -1883,6 +1904,7 @@ class Triangle3D(PlaneFace3D):
 
     @surface2d.setter
     def surface2d(self, new_surface2d):
+        """Sets the boundary representation of the face."""
         self._surface2d = new_surface2d
 
     def to_dict(self, *args, **kwargs):
@@ -2152,6 +2174,9 @@ class CylindricalFace3D(Face3D):
 
     @bounding_box.setter
     def bounding_box(self, new_bouding_box):
+        """
+        Sets the surface bounding box.
+        """
         self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=5):
