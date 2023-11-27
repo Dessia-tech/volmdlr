@@ -2,8 +2,9 @@
 volmdlr cad simplification module.
 """
 import math
-from typing import Union, List
+from typing import List, Union
 
+import numpy as np
 import pyfqmr
 from CGAL.CGAL_Alpha_wrap_3 import alpha_wrap_3
 from CGAL.CGAL_Kernel import Point_3
@@ -17,7 +18,7 @@ from volmdlr.core import VolumeModel
 from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.faces import Triangle3D
 from volmdlr.primitives3d import ExtrudedProfile
-from volmdlr.shells import ClosedTriangleShell3D, OpenTriangleShell3D, Shell3D, DisplayTriangleShell3D
+from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, OpenTriangleShell3D, Shell3D
 from volmdlr.wires import Contour2D
 
 
@@ -250,7 +251,11 @@ class AlphaWrapSimplify(Simplify):
     """CAD simplification using CGAL 'alpha wrap' method."""
 
     def simplify(
-        self, relative_alpha: int = 10, relative_offset: int = 300, preserve_shells: bool = False
+        self,
+        relative_alpha: int = 10,
+        relative_offset: int = 300,
+        preserve_shells: bool = False,
+        equal_alpha: bool = True,
     ) -> VolumeModel:
         """
         Simplify the volume model using the CGAL 'alpha wrap' method, and return it.
@@ -263,32 +268,49 @@ class AlphaWrapSimplify(Simplify):
         :param preserve_shells: Argument to chose if you want to keep the shell structures (same number of shells in the
           returned volume model), or if you want a volume model with only one shell including the entire input geometry.
         :type preserve_shells: bool
+        :param equal_alpha: Control if the alpha is relative to the entire volume model bbox (equal for all shells) or
+          relative to each shell bbox. No effect if preserve_shells is False.
+        :type equal_alpha: bool
 
         :return: The simplified volume model.
         :rtype: VolumeModel
         """
         wrapped_shells = []
 
+        bbox, alpha, offset = None, None, None
+
         if preserve_shells:
             meshes = self._volume_model_to_display_shells(self.volume_model)
         else:
             meshes = [self._volume_model_to_display_shell(self.volume_model)]
+            # Use display shell bbox for performance
+            bbox = meshes[0].bounding_box
 
-        for mesh in meshes:
-            vertices = [Point_3(x, y, z) for (x, y, z) in mesh.positions]
-            triangles = mesh.indices.tolist()
-
-            bbox = mesh.bounding_box
+        if equal_alpha:
+            if not bbox:
+                bbox = self.volume_model.bounding_box
             diag_length = math.sqrt(
                 (bbox.xmax - bbox.xmin) ** 2 + (bbox.ymax - bbox.ymin) ** 2 + (bbox.zmax - bbox.zmin) ** 2
             )
             alpha = diag_length / relative_alpha
             offset = diag_length / relative_offset
 
+        for mesh in meshes:
+            vertices = [Point_3(x, y, z) for (x, y, z) in mesh.positions]
+            triangles = mesh.indices.tolist()
+
+            if not equal_alpha:
+                bbox = mesh.bounding_box
+                diag_length = math.sqrt(
+                    (bbox.xmax - bbox.xmin) ** 2 + (bbox.ymax - bbox.ymin) ** 2 + (bbox.zmax - bbox.zmin) ** 2
+                )
+                alpha = diag_length / relative_alpha
+                offset = diag_length / relative_offset
+
             wrap = Polyhedron_3()
             alpha_wrap_3(vertices, triangles, alpha, offset, wrap)
 
-            wrapped_shells.append(self._polyhedron_to_shell(wrap))
+            wrapped_shells.append(self._polyhedron_to_display_shell(wrap))
             wrapped_shells[-1].name = mesh.name
             wrapped_shells[-1].color = mesh.color
             wrapped_shells[-1].alpha = mesh.alpha
@@ -321,3 +343,36 @@ class AlphaWrapSimplify(Simplify):
         if polyhedron.is_closed():
             return ClosedTriangleShell3D(triangles)
         return OpenTriangleShell3D(triangles)
+
+    @staticmethod
+    def _polyhedron_to_display_shell(polyhedron: Polyhedron_3) -> DisplayTriangleShell3D:
+        """Convert a CGAL Polyhedron_3 to a volmdlr display shell."""
+        points = []
+        faces = []
+        point_map = {}  # Map CGAL points to their indices
+
+        for facet in polyhedron.facets():
+            face_indices = []
+            halfedge = facet.halfedge()
+            start_halfedge = halfedge
+
+            while True:
+                point = halfedge.vertex().point()
+                point_tuple = (point.x(), point.y(), point.z())
+
+                # Add point if it's not already in the list
+                if point_tuple not in point_map:
+                    points.append(point_tuple)
+                    point_map[point_tuple] = len(points) - 1
+
+                face_indices.append(point_map[point_tuple])
+                halfedge = halfedge.next()
+                if halfedge == start_halfedge:
+                    break
+
+            faces.append(face_indices)
+
+        points_array = np.array(points)
+        faces_array = np.array(faces)
+
+        return DisplayTriangleShell3D(points_array, faces_array, "")
