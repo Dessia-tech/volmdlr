@@ -101,31 +101,15 @@ class RoundedLineSegments2D(RoundedLineSegments):
             [point.translation(offset) for point in self.points],
             self.radius, adapt_radius=self.adapt_radius, name=self.name)
 
-    def offset(self, offset):
+    def _helper_offset_points_and_radii(self, vectors, number_points, offset):
         """
-        Return a new rounded line segment with the specified offset.
+        Helper method to get offset points and new radii for offset method.
 
-        This method creates a new rounded line segment by offsetting the current one by a given distance.
-        The offset can be both positive and negative, moving the line segments outward or inward.
-
-        :param offset: The offset distance for the new rounded line segment.
-        :type offset: float
-
-        :return: A new RoundedLineSegments2D instance with the specified offset.
-        :rtype: RoundedLineSegments2D
+        :param vectors: offset vectors.
+        :param number_points: number of points.
+        :param offset: offset.
+        :return: list of offset points and radii.
         """
-        number_points = len(self.points)
-        vectors = []
-        for i in range(number_points - 1):
-            v1 = (self.points[i + 1] - self.points[i]).unit_vector()
-            v2 = (self.points[i] - self.points[i + 1]).unit_vector()
-            vectors.extend([v1, v2])
-
-        if self.closed:
-            v1 = (self.points[0] - self.points[-1]).unit_vector()
-            v2 = (self.points[-1] - self.points[0]).unit_vector()
-            vectors.extend([v1, v2])
-
         offset_vectors = []
         new_radii = {}
         offset_points = []
@@ -161,109 +145,43 @@ class RoundedLineSegments2D(RoundedLineSegments):
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * offset_vectors[i - (not self.closed)]
             offset_points.append(offset_point)
+        return offset_points, new_radii
+
+    def offset(self, offset):
+        """
+        Return a new rounded line segment with the specified offset.
+
+        This method creates a new rounded line segment by offsetting the current one by a given distance.
+        The offset can be both positive and negative, moving the line segments outward or inward.
+
+        :param offset: The offset distance for the new rounded line segment.
+        :type offset: float
+
+        :return: A new RoundedLineSegments2D instance with the specified offset.
+        :rtype: RoundedLineSegments2D
+        """
+        number_points = len(self.points)
+        vectors = []
+        for i in range(number_points - 1):
+            v1 = (self.points[i + 1] - self.points[i]).unit_vector()
+            v2 = (self.points[i] - self.points[i + 1]).unit_vector()
+            vectors.extend([v1, v2])
+
+        if self.closed:
+            v1 = (self.points[0] - self.points[-1]).unit_vector()
+            v2 = (self.points[-1] - self.points[0]).unit_vector()
+            vectors.extend([v1, v2])
+        offset_points, new_radii = self._helper_offset_points_and_radii(vectors, number_points, offset)
 
         if not self.closed:
             normal_1 = vectors[0].normal_vector()
-            offset_vectors.insert(0, normal_1)
-            offset_points.insert(0, self.points[0] + offset * offset_vectors[0])
+            offset_points.insert(0, self.points[0] + offset * normal_1)
 
             n_last = vectors[-1].normal_vector()
             n_last = - n_last
-            offset_vectors.append(n_last)
-            offset_points.append(self.points[-1] + offset * offset_vectors[-1])
+            offset_points.append(self.points[-1] + offset * n_last)
 
         return self.__class__(offset_points, new_radii, adapt_radius=self.adapt_radius)
-
-    def offset_single_line(self, line_index, offset):
-        """
-        Offsets a single line.
-
-        :param line_index: 0 being the 1st line
-        """
-        new_linesegment2d_points = []
-        dont_add_last_point = False
-
-        for i, point in enumerate(
-                self.points[:-1] + (self.closed) * [self.points[-1]]):
-
-            if i == line_index:
-                # Not closed RLS2D and the offset line is the last one
-                if i == len(self.points) - 2:
-                    dir_vec_1 = volmdlr.Vector2D(point - self.points[i - 1])
-                    dir_vec_1 = dir_vec_1.unit_vector()
-                    dir_vec_2 = dir_vec_1
-                    dont_add_last_point = True
-                # The offset line is the first one
-                elif i == 0:
-                    dir_vec_2 = volmdlr.Vector2D(
-                        self.points[i + 1] - self.points[i + 2])
-                    dir_vec_2 = dir_vec_2.unit_vector()
-                    if not self.closed:
-                        dir_vec_1 = dir_vec_2
-                    else:
-                        dir_vec_1 = volmdlr.Vector2D(
-                            point - self.points[i - 1])
-                        dir_vec_1 = dir_vec_1.unit_vector()
-                # Closed RLS2D and the offset line is the last one
-                elif i == len(self.points) - 1:
-                    dir_vec_1 = volmdlr.Vector2D(point - self.points[i - 1])
-                    dir_vec_1 = dir_vec_1.unit_vector()
-                    dir_vec_2 = volmdlr.Vector2D(
-                        self.points[0] - self.points[1])
-                    dir_vec_2 = dir_vec_2.unit_vector()
-                    dont_add_last_point = True
-                else:
-                    dir_vec_1 = volmdlr.Vector2D(point - self.points[i - 1])
-                    dir_vec_1 = dir_vec_1.unit_vector()
-                    dir_vec_2 = volmdlr.Vector2D(
-                        self.points[i + 1] - self.points[i + 2])
-                    dir_vec_2 = dir_vec_2.unit_vector()
-
-                if self.closed and line_index == len(self.points) - 1:
-                    normal_vector = volmdlr.Vector2D(
-                        self.points[0] - point).unit_normal_vector()
-                else:
-                    normal_vector = volmdlr.Vector2D(
-                        self.points[i + 1] - point).unit_normal_vector()
-
-                alpha1 = math.acos(dir_vec_1.dot(normal_vector))
-                alpha2 = math.acos(dir_vec_2.dot(normal_vector))
-
-                # If 3 segments are aligned and the middle one have to be offset
-                if math.isclose(math.cos(alpha1), 0,
-                                abs_tol=1e-9) or math.isclose(math.cos(alpha2),
-                                                              0, abs_tol=1e-9):
-                    return self
-                #                    distance_dir1 = offset
-                #                    distance_dir2 = offset
-
-                distance_dir1 = offset / math.cos(alpha1)
-                distance_dir2 = offset / math.cos(alpha2)
-
-                new_point1 = point + distance_dir1 * dir_vec_1
-                if self.closed and line_index == len(self.points) - 1:
-                    new_point2 = self.points[0] + distance_dir2 * dir_vec_2
-                else:
-                    new_point2 = self.points[i + 1] + distance_dir2 * dir_vec_2
-
-                new_linesegment2d_points.append(new_point1)
-                new_linesegment2d_points.append(new_point2)
-
-            elif i == line_index + 1:
-                pass
-
-            elif line_index == len(self.points) - 1 and i == 0:
-                pass
-            else:
-                new_linesegment2d_points.append(point)
-
-        if not dont_add_last_point and not self.closed:
-            new_linesegment2d_points.append(self.points[-1])
-
-        rls_2d = self.__class__(new_linesegment2d_points, self.radius,
-                                adapt_radius=self.adapt_radius)
-
-        return rls_2d
 
     def _offset_directive_vector_helper(self, line_indexes):
         """
