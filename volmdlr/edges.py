@@ -1864,11 +1864,11 @@ class BSplineCurve(Edge):
                         not math.isclose(abscissa1, self.length(), abs_tol=1e-6)):
             umin, umax = self.domain
             number_points1 = int((abscissa1 / self.length()) * number_points)
-            max_number_points = math.ceil((self.length() - abscissa1) / 5e-6)
+            max_number_points = math.ceil((self.length() - abscissa1) / 2e-6)
             if number_points1 > max_number_points:
                 number_points1 = max(max_number_points, 2)
             number_points2 = number_points - number_points1
-            max_number_points = math.ceil(abscissa1 / 5e-6)
+            max_number_points = math.ceil(abscissa1 / 2e-6)
             if number_points2 > max_number_points:
                 number_points2 = max(max_number_points, 2)
             u_start_end = self.abscissa_to_parameter(abscissa1)
@@ -1885,7 +1885,7 @@ class BSplineCurve(Edge):
             u1 = self.abscissa_to_parameter(abscissa1)
             u2 = self.abscissa_to_parameter(abscissa2)
             # todo: improve intersections so we don't need to worry about limiting the precision?
-            max_number_points = math.ceil(abs(abscissa1 - abscissa2) / 5e-6)
+            max_number_points = math.ceil(abs(abscissa1 - abscissa2) / 2e-6)
             if number_points > max_number_points:
                 number_points = max(max_number_points, 2)
             data["sample_size"] = number_points
