@@ -430,8 +430,8 @@ def composite_curve(arguments, object_dict, *args, **kwargs):
     first_primitive = list_primitives[0]
     last_primitive = list_primitives[-1]
     if first_primitive.start.is_close(last_primitive.end):
-        return volmdlr.wires.Contour3D(list_primitives, name)
-    return volmdlr.wires.Wire3D(list_primitives, name)
+        return volmdlr.wires.Contour3D(list_primitives, name=name)
+    return volmdlr.wires.Wire3D(list_primitives, name=name)
 
 
 def pcurve(arguments, object_dict, *args, **kwargs):
