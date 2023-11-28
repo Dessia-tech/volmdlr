@@ -450,8 +450,9 @@ def manifold_surface_shape_representation(arguments, object_dict, *args, **kwarg
         if isinstance(primitive, volmdlr.core.Compound):
             counter = 0
             for sub_prim in primitive.primitives:
-                sub_prim.name = arguments[0][1:-1] + str(counter)
-                counter += 1
+                if sub_prim:
+                    sub_prim.name = arguments[0][1:-1] + str(counter)
+                    counter += 1
             primitives.append(primitive)
     if len(primitives) == 1:
         return primitives[0]
