@@ -81,7 +81,8 @@ def conic3d_line_intersections(conic3d, line3d, abs_tol: float = 1e-6):
             intersections.append(conic3d.frame.local_to_global_coordinates(inter))
         return intersections
 
-    if line3d.point1.z == line3d.point2.z == conic3d.frame.origin.z:
+    if math.isclose(line3d.point1.z, line3d.point2.z, abs_tol=abs_tol) and\
+            math.isclose(conic3d.frame.origin.z, line3d.point2.z, abs_tol=abs_tol):
         conic2d = conic3d.self_2d
         line2d = line3d.to_2d(conic3d.frame.origin, conic3d.frame.u, conic3d.frame.v)
         intersections_2d = conic2d.line_intersections(line2d)
@@ -195,12 +196,11 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
     abscissa1 = 0
     abscissa2 = bsplinecurve.length()
     if bsplinecurve.__class__.__name__ in ("BSplineCurve2D", "BSplineCurve3D"):
-        bspline_discretized_points, points_abscissas = bsplinecurve.get_abscissa_discretization(abscissa1, abscissa2,
-                                                                                            number_points=resolution,
-                                                                                            return_abscissas=True)
+        bspline_discretized_points, points_abscissas = bsplinecurve.get_abscissa_discretization(
+            abscissa1, abscissa2, number_points=resolution, return_abscissas=True)
     else:
-        bspline_discretized_points, points_abscissas = get_abscissa_discretization(bsplinecurve, abscissa1, abscissa2,
-                                                                               max_number_points=resolution)
+        bspline_discretized_points, points_abscissas = get_abscissa_discretization(
+            bsplinecurve, abscissa1, abscissa2,  max_number_points=resolution)
         if bsplinecurve.periodic:
             bspline_discretized_points += [bspline_discretized_points[0]]
             if points_abscissas[0] == 0.0:
