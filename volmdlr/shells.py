@@ -801,7 +801,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         meshes = []
         for i, face in enumerate(self.faces):
             try:
-                face_mesh = face.triangulation()
+                face_mesh = face.to_mesh()
 
             except Exception:
                 face_mesh = None

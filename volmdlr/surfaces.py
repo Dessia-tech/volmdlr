@@ -288,6 +288,104 @@ class Surface2D(PhysicalObject):
         points = [volmdlr.Point2D(*triangulation['vertices'][i, :]) for i in range(number_points)]
         return display.DisplayMesh2D(points, triangles=triangles)
 
+    def to_mesh(self, outer_contour_parametric_points, inner_contours_parametric_points,
+                      number_points_x: int = 15, number_points_y: int = 15):
+        """
+        Triangulates the Surface2D using the Triangle library.
+
+        :param number_points_x: Number of discretization points in x direction.
+        :type number_points_x: int
+        :param number_points_y: Number of discretization points in y direction.
+        :type number_points_y: int
+        :return: The triangulated surface as a display mesh.
+        :rtype: :class:`volmdlr.display.DisplayMesh2D`
+        """
+        area = self.bounding_rectangle().area()
+        tri_opt = "p"
+        if math.isclose(area, 0., abs_tol=1e-8):
+            return display.DisplayMesh2D([], triangles=[])
+
+        triangulates_with_grid = number_points_x > 0 and number_points_y > 0
+        discretize_line = number_points_x > 0 or number_points_y > 0
+        if not triangulates_with_grid:
+            tri_opt = "p"
+
+        discretize_line_direction = "xy"
+        if number_points_y == 0 or number_points_x > 25 * number_points_y:
+            discretize_line_direction = "x"
+        elif number_points_y > 20 * number_points_x:
+            discretize_line_direction = "y"
+        outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
+                                                      discretize_line_direction=discretize_line_direction)
+
+        # if not self.inner_contours and not triangulates_with_grid:
+        #     return outer_polygon.triangulation()
+
+        points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
+                                                                                      number_points_y=number_points_y,
+                                                                                      include_edge_points=False)
+        points = outer_contour_parametric_points
+        points_set = set(points)
+        if len(points_set) < len(points) - 1:
+            return None
+        vertices = [(point.x, point.y) for point in points]
+        n = len(points)
+        segments = [(i, i + 1) for i in range(n - 1)]
+        segments.append((n - 1, 0))
+
+        if not self.inner_contours:  # No holes
+            return self.triangulation_without_holes(vertices, segments, points_grid, tri_opt)
+
+        point_index = {p: i for i, p in enumerate(points)}
+        holes = []
+        for index, inner_contour in enumerate(self.inner_contours):
+            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=discretize_line,
+                                                     discretize_line_direction=discretize_line_direction)
+            inner_polygon_nodes = inner_contours_parametric_points[index]
+            for point in inner_polygon_nodes:
+                if point not in point_index:
+                    points.append(point)
+                    vertices.append((point.x, point.y))
+                    point_index[point] = n
+                    n += 1
+
+            for point1, point2 in zip(inner_polygon_nodes[:-1],
+                                      inner_polygon_nodes[1:]):
+                segments.append((point_index[point1], point_index[point2]))
+            segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
+            rpi = inner_polygon.barycenter()
+            if not inner_polygon.point_belongs(rpi, include_edge_points=False):
+                rpi = inner_polygon.random_point_inside(include_edge_points=False)
+            holes.append([rpi.x, rpi.y])
+
+            if triangulates_with_grid:
+                # removes with a region search the grid points that are in the inner contour
+                xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
+                x_grid_range = array_range_search(x, xmin, xmax)
+                y_grid_range = array_range_search(y, ymin, ymax)
+                for i in x_grid_range:
+                    for j in y_grid_range:
+                        point = grid_point_index.get((i, j))
+                        if not point:
+                            continue
+                        if inner_polygon.point_belongs(point):
+                            points_grid.remove(point)
+                            grid_point_index.pop((i, j))
+
+        if triangulates_with_grid:
+            vertices_grid = [(p.x, p.y) for p in points_grid]
+            vertices.extend(vertices_grid)
+
+        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
+               'segments': npy.array(segments).reshape((-1, 2)),
+               'holes': npy.array(holes).reshape((-1, 2))
+               }
+        triangulation = triangle_lib.triangulate(tri, tri_opt)
+        triangles = triangulation['triangles'].tolist()
+        number_points = triangulation['vertices'].shape[0]
+        points = [volmdlr.Point2D(*triangulation['vertices'][i, :]) for i in range(number_points)]
+        return display.DisplayMesh2D(points, triangles=triangles)
+
     def split_by_lines(self, lines):
         """
         Returns a list of cut surfaces given by the lines provided as argument.

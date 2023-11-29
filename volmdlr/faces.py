@@ -291,12 +291,37 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         return [0, 0]
 
-    def triangulation(self, grid_size=None):
+    # def triangulation(self, grid_size=None):
+    #     if not grid_size:
+    #         number_points_x, number_points_y = self.grid_size()
+    #     else:
+    #         number_points_x, number_points_y = grid_size
+    #     mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
+    #     if mesh2d is None:
+    #         return None
+    #     return vmd.DisplayMesh3D([self.surface3d.point2d_to_3d(point) for point in mesh2d.points],
+    #                              mesh2d.triangles)
+
+    def to_mesh(self, grid_size=None):
         if not grid_size:
             number_points_x, number_points_y = self.grid_size()
         else:
             number_points_x, number_points_y = grid_size
-        mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
+        outer_contour_parametric_points = []
+        for edge in self.surface2d.outer_contour.primitives:
+            method_name = f'{edge.__class__.__name__.lower()}_to_3d'
+            if hasattr(self.surface3d, method_name):
+                primitive = getattr(self.surface3d, method_name)(edge)[0]
+                if primitive is None:
+                    continue
+            else:
+                primitive = edge.to_3d(self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
+            n = len(primitive.discretization_points())
+            points = edge.discretization_points(number_points=n)
+            outer_contour_parametric_points.extend(points[:-1])
+        inner_contours_parametric_points = []
+        mesh2d = self.surface2d.to_mesh(outer_contour_parametric_points, inner_contours_parametric_points,
+                                        number_points_x, number_points_y)
         if mesh2d is None:
             return None
         return vmd.DisplayMesh3D([self.surface3d.point2d_to_3d(point) for point in mesh2d.points],
