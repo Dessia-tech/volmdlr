@@ -3781,8 +3781,6 @@ class ArcEllipse2D(Edge):
                 aproximation_point = point1
                 break
             aproximation_abscissa += dist1
-        if aproximation_point is None:
-            print(True)
         initial_point = self.ellipse.frame.global_to_local_coordinates(aproximation_point)
         u1, u2 = initial_point.x / self.ellipse.major_axis, initial_point.y / self.ellipse.minor_axis
         initial_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
