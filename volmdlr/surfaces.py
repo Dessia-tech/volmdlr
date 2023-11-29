@@ -2604,28 +2604,6 @@ class CylindricalSurface3D(PeriodicalSurface):
         if math.isclose(distance_axis_sphere_center + self.radius, spherical_surface.radius, abs_tol=1e-6):
             return self._sphere_cylinder_tangent_intersections(frame, distance_axis_sphere_center)
 
-        # b = (spherical_surface.radius**2 - self.radius**2 -
-        #      distance_axis_sphere_center**2) / (2*distance_axis_sphere_center)
-        #
-        # if spherical_surface.radius > self.radius + distance_axis_sphere_center:
-        #     phi_0, phi_1, two_curves = 0, 2*math.pi, True
-        # else:
-        #     phi_0 = math.acos(-b/self.radius)
-        #     phi_1 = phi_0-0.000001
-        #     phi_0 = -phi_0+0.000001
-        #     two_curves = False
-        #
-        # phi = npy.linspace(phi_0, phi_1, 400)
-        # x_components = self.radius * npy.cos(phi)
-        # y_components = self.radius * npy.sin(phi)
-        # z_components1 = npy.sqrt(2 * distance_axis_sphere_center * (b + x_components))
-        #
-        # inters_points = [[volmdlr.Point3D(x_comp, y_comp, z_comp)
-        #                   for x_comp, y_comp, z_comp in zip(x_components, y_components, z_components1)],
-        #                  [volmdlr.Point3D(x_comp, y_comp, -z_comp)
-        #                   for x_comp, y_comp, z_comp in zip(x_components, y_components, z_components1)]]
-        # if not two_curves:
-        #     inters_points = vm_common_operations.separate_points_by_closeness(inters_points[0]+inters_points[1])
         inters_points = self._helper_spherical_intersections_points(spherical_surface, distance_axis_sphere_center)
 
         curves_ = [edges.BSplineCurve3D.from_points_interpolation(points, 4, centripetal=False)
