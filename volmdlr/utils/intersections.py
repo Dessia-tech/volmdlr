@@ -361,7 +361,7 @@ def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-6):
 
 def _helper_two_plane_intersections(plane1_frame, plane2_frame):
     """
-    Helper funtion to get point 1 on two plane intersections.
+    Helper function to get point 1 on two plane intersections.
 
     """
     a1, b1, c1, d1 = get_plane_equation_coefficients(plane1_frame)
