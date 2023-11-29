@@ -241,7 +241,7 @@ class Surface2D(PhysicalObject):
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=discretize_line,
+            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
                                                      discretize_line_direction=discretize_line_direction)
             inner_polygon_nodes = inner_polygon.points.copy()
             for point in inner_polygon_nodes:
