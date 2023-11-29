@@ -253,6 +253,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return face
 
     def to_step(self, current_id):
+        """Tranforms a Face 3D into a Step object."""
         content, surface3d_ids = self.surface3d.to_step(current_id)
         current_id = max(surface3d_ids)
 
