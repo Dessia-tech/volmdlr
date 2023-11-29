@@ -3635,6 +3635,13 @@ class ArcEllipse2D(Edge):
         self._bounding_rectangle = None
         self._reverse = None
 
+    def __eq__(self, other):
+        """Defines equality."""
+        if not isinstance(other, self.__class__):
+            return False
+        return bool(self.ellipse == other.ellipse and self.start == other.start
+                    and self.end == other.end)
+
     @property
     def center(self):
         """Gets ellipse's center point."""
