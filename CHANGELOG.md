@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
+- FullArcEllipse: angle_start, angle_end.
 
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections.
