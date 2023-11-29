@@ -644,6 +644,9 @@ cdef class Vector2D(Vector):
             return self.x == other.x and self.y == other.y
         return False
 
+    def __array__(self) -> npy.ndarray:
+        return npy.array([self.x, self.y], dtype=npy.float64)
+
     def _data_eq(self, other):
         return self == other
 
@@ -1430,6 +1433,9 @@ cdef class Vector3D(Vector):
 
     def _data_eq(self, other):
         return self == other
+
+    def __array__(self) -> npy.ndarray:
+        return npy.array([self.x, self.y, self.z], dtype=npy.float64)
 
     def is_close(self, other_vector, tol=1e-6):
         """

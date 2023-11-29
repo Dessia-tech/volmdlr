@@ -2242,6 +2242,33 @@ class CylindricalSurface3D(PeriodicalSurface):
                                 point2d.y)
         return self.frame.local_to_global_coordinates(point)
 
+    def parametric_points_to_3d(self, points) -> List[volmdlr.Point3D]:
+        """Transforms a list of parametric points into a list of 3D points."""
+        center = npy.array(self.frame.origin)
+        x = npy.array(self.frame.u)
+        y = npy.array(self.frame.v)
+        z = npy.array(self.frame.w)
+        array_points = npy.array(points).reshape(-1, 2, 1)
+
+        u_values = array_points[:, 0]
+        v_values = array_points[:, 1]
+
+        cos_u = npy.cos(u_values)
+        sin_u = npy.sin(u_values)
+
+        x_component = self.radius * cos_u * x
+        y_component = self.radius * sin_u * y
+        # x_component = cos_u * x
+        # y_component = sin_u * y
+        # xy_component = x_component + y_component
+        # rxy_component = self.radius * xy_component
+        z_component = v_values * z
+
+        result = center + x_component + y_component + z_component
+        # result = center + rxy_component + z_component
+
+        return [volmdlr.Point3D(*point) for point in result.tolist()]
+
     def point3d_to_2d(self, point3d):
         """
         Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a Cartesian coordinates point (x, y, z).
