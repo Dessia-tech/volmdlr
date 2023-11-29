@@ -3130,6 +3130,26 @@ class ToroidalSurface3D(PeriodicalSurface):
             point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
         return point_after_start, point_before_end
 
+    def _get_line_intersections_solution_roots(self, line):
+        """
+        Line intersections helper: get roots.
+
+        :param line: other line.
+        :return: roots.
+        """
+        vector = line.unit_direction_vector()
+        coeff_a = vector.x**2 + vector.y**2 + vector.z**2
+        coeff_b = 2 * (line.point1.x * vector.x + line.point1.y * vector.y + line.point1.z * vector.z)
+        coeff_c = line.point1.x**2 + line.point1.y**2 + line.point1.z**2 + self.major_radius**2 - self.minor_radius**2
+        coeff_d = vector.x**2 + vector.y**2
+        coeff_e = 2 * (line.point1.x * vector.x + line.point1.y * vector.y)
+        coeff_f = line.point1.x**2 + line.point1.y**2
+        solutions = npy.roots([(coeff_a**2), 2*coeff_a*coeff_b,
+                               (2*coeff_a*coeff_c + coeff_b**2 - 4*coeff_d*self.major_radius**2),
+                               (2*coeff_b*coeff_c - 4*self.major_radius**2*coeff_e),
+                               coeff_c**2 - 4*self.major_radius**2*coeff_f])
+        return solutions
+
     def line_intersections(self, line: curves.Line3D):
         """
         Calculates the intersections between the toroidal surface and an infinite line.
@@ -3154,16 +3174,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             global_intersections = [self.frame.local_to_global_coordinates(point) for point in local_intersections]
             return global_intersections
         vector = line.unit_direction_vector()
-        coeff_a = vector.x**2 + vector.y**2 + vector.z**2
-        coeff_b = 2 * (line.point1.x * vector.x + line.point1.y * vector.y + line.point1.z * vector.z)
-        coeff_c = line.point1.x**2 + line.point1.y**2 + line.point1.z**2 + self.major_radius**2 - self.minor_radius**2
-        coeff_d = vector.x**2 + vector.y**2
-        coeff_e = 2 * (line.point1.x * vector.x + line.point1.y * vector.y)
-        coeff_f = line.point1.x**2 + line.point1.y**2
-        solutions = npy.roots([(coeff_a**2), 2*coeff_a*coeff_b,
-                               (2*coeff_a*coeff_c + coeff_b**2 - 4*coeff_d*self.major_radius**2),
-                               (2*coeff_b*coeff_c - 4*self.major_radius**2*coeff_e),
-                               coeff_c**2 - 4*self.major_radius**2*coeff_f])
+        solutions = self._get_line_intersections_solution_roots(line)
         intersections = []
         for sol_param in sorted(solutions):
             if isinstance(sol_param, npy.complex128):
