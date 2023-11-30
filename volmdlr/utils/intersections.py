@@ -195,12 +195,11 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
     abscissa1 = 0
     abscissa2 = bsplinecurve.length()
     if bsplinecurve.__class__.__name__ in ("BSplineCurve2D", "BSplineCurve3D"):
-        bspline_discretized_points, points_abscissas = bsplinecurve.get_abscissa_discretization(abscissa1, abscissa2,
-                                                                                            number_points=resolution,
-                                                                                            return_abscissas=True)
+        bspline_discretized_points, points_abscissas = bsplinecurve.get_abscissa_discretization(
+            abscissa1, abscissa2, number_points=resolution, return_abscissas=True)
     else:
-        bspline_discretized_points, points_abscissas = get_abscissa_discretization(bsplinecurve, abscissa1, abscissa2,
-                                                                               max_number_points=resolution)
+        bspline_discretized_points, points_abscissas = get_abscissa_discretization(
+            bsplinecurve, abscissa1, abscissa2,  max_number_points=resolution)
         if bsplinecurve.periodic:
             bspline_discretized_points += [bspline_discretized_points[0]]
             if points_abscissas[0] == 0.0:
