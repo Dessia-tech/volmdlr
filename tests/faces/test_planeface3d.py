@@ -35,6 +35,14 @@ class TestPlaneFace3D(unittest.TestCase):
 
         self.assertEqual(1, len(face_intersections))
         self.assertAlmostEqual(0.003600000000881293, face_intersections[0].length())
+        face1, face2 = faces.PlaneFace3D.load_from_file(
+            os.path.join(folder, 'test_planef_inters291123.json')).primitives
+        face_intersections = face1.face_intersections(face2)
+        line_seg = edges.LineSegment3D(
+            volmdlr.Point3D(0.034031786272172244, 0.019018077708099396, 0.07196336225667499),
+            volmdlr.Point3D(0.03756212352555941, 0.022324611455208112, 0.07196336225667499)
+        )
+        self.assertTrue(face_intersections[0].primitives[0], line_seg)
 
     def test_face_inside(self):
         face2 = self.face.frame_mapping(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(0.5, 0, 0),

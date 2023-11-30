@@ -2880,6 +2880,10 @@ class ExtrusionFace3D(Face3D):
 
     @property
     def bounding_box(self):
+        """
+        Gets the extrusion face bounding box.
+
+        """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox

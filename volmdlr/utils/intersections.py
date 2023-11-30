@@ -357,24 +357,11 @@ def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-6):
     intersection_abscissea = - plane_frame.w.dot(w_vector) / plane_frame.w.dot(u_vector)
     return [line.point1 + intersection_abscissea * u_vector]
 
-
-def get_two_planes_intersections(plane1_frame, plane2_frame, abs_tol: float = 1e-6):
+def _helper_two_plane_intersections(plane1_frame, plane2_frame):
     """
-    Calculates the intersections between two planes, given their frames.
-
-    :param plane1_frame: Plane's 1 frame.
-    :param plane2_frame: Plane's 2 frame.
-    :param abs_tol: tolerance.
-    :return: A list containing two points that define an infinite line if there is any intersections,
-    or an empty list if the planes are parallel.
+    Helper function to get point 1 on two plane intersections.
+   
     """
-    if plane1_frame.w.is_colinear_to(plane2_frame.w):
-        return []
-    line_direction = plane1_frame.w.cross(plane2_frame.w)
-
-    if line_direction.norm() < abs_tol:
-        return None
-
     a1, b1, c1, d1 = get_plane_equation_coefficients(plane1_frame)
     a2, b2, c2, d2 = get_plane_equation_coefficients(plane2_frame)
     tol = 1e-10
@@ -392,4 +379,25 @@ def get_two_planes_intersections(plane1_frame, plane2_frame, abs_tol: float = 1e
         point1 = volmdlr.Point3D(0, y0, z0)
     else:
         raise NotImplementedError
+    return point1
+
+
+def get_two_planes_intersections(plane1_frame, plane2_frame, abs_tol=1e-8):
+    """
+    Calculates the intersections between two planes, given their frames.
+
+    :param plane1_frame: Plane's 1 frame.
+    :param plane2_frame: Plane's 2 frame.
+    :param abs_tol: tolerance.
+    :return: A list containing two points that define an infinite line if there is any intersections,
+    or an empty list if the planes are parallel.
+    """
+    if plane1_frame.w.is_colinear_to(plane2_frame.w, abs_tol):
+        return []
+    line_direction = plane1_frame.w.cross(plane2_frame.w)
+
+    if line_direction.norm() < abs_tol:
+        return None
+
+    point1 = _helper_two_plane_intersections(plane1_frame, plane2_frame)
     return [point1, point1 + line_direction]
