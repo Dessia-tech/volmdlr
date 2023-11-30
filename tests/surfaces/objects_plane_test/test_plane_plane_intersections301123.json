@@ -1,0 +1,71 @@
+{
+  "object_class": "volmdlr.core.VolumeModel",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.surfaces.Plane3D",
+      "name": "",
+      "frame": {
+        "object_class": "volmdlr.Frame3D",
+        "name": "",
+        "origin": {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "u": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 1.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "v": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.0,
+          "y": 1.0,
+          "z": 0.0
+        },
+        "w": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 1.0
+        }
+      }
+    },
+    {
+      "object_class": "volmdlr.surfaces.Plane3D",
+      "name": "",
+      "frame": {
+        "object_class": "volmdlr.Frame3D",
+        "name": "",
+        "origin": {
+          "object_class": "volmdlr.Point3D",
+          "x": -0.06,
+          "y": 0.303510045726,
+          "z": -0.04
+        },
+        "u": {
+          "object_class": "volmdlr.Vector3D",
+          "x": -0.7071067811865476,
+          "y": 1.5492436747961248e-11,
+          "z": 0.7071067811865476
+        },
+        "v": {
+          "object_class": "volmdlr.Vector3D",
+          "x": -0.7071067811865476,
+          "y": 0.0,
+          "z": -0.7071067811865476
+        },
+        "w": {
+          "object_class": "volmdlr.Vector3D",
+          "x": -1.0954807081587062e-11,
+          "y": -1.0000000000000002,
+          "z": 1.0954807081587062e-11
+        }
+      }
+    }
+  ],
+  "_references": {}
+}

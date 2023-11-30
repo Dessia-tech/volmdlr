@@ -357,23 +357,23 @@ def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-6):
     intersection_abscissea = - plane_frame.w.dot(w_vector) / plane_frame.w.dot(u_vector)
     return [line.point1 + intersection_abscissea * u_vector]
 
-
 def _helper_two_plane_intersections(plane1_frame, plane2_frame):
     """
     Helper function to get point 1 on two plane intersections.
-
+   
     """
     a1, b1, c1, d1 = get_plane_equation_coefficients(plane1_frame)
     a2, b2, c2, d2 = get_plane_equation_coefficients(plane2_frame)
-    if not math.isclose(a1 * b2 - a2 * b1, 0.0, abs_tol=1e-10):
+    tol = 1e-10
+    if abs(a1 * b2 - a2 * b1) > tol:
         x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
         y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
         point1 = volmdlr.Point3D(x0, y0, 0)
-    elif a2 * c1 != a1 * c2:
+    elif abs(a2 * c1 - a1 * c2) > tol:
         x0 = (c2 * d1 - c1 * d2) / (a2 * c1 - a1 * c2)
         z0 = (a1 * d2 - a2 * d1) / (a2 * c1 - a1 * c2)
         point1 = volmdlr.Point3D(x0, 0, z0)
-    elif c1 * b2 != b1 * c2:
+    elif abs(c1 * b2 - b1 * c2) > tol:
         y0 = (- c2 * d1 + c1 * d2) / (b1 * c2 - c1 * b2)
         z0 = (- b1 * d2 + b2 * d1) / (b1 * c2 - c1 * b2)
         point1 = volmdlr.Point3D(0, y0, z0)
