@@ -22,7 +22,7 @@ class TestSphericalSurface3D(unittest.TestCase):
     def test_contour3d_to_2d(self):
         surface = surfaces.SphericalSurface3D.load_from_file(os.path.join(folder, "sphericalsurface1.json"))
         contour = wires.Contour3D.load_from_file(os.path.join(folder, "spericalsurface1_contour0.json"))
-        contour2d = surface.contour3d_to_2d(contour)
+        contour2d = surface.contour3d_to_2d(contour)[0]
         self.assertEqual(len(contour2d.primitives), 6)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 4.107527949001648, 2)
@@ -31,7 +31,7 @@ class TestSphericalSurface3D(unittest.TestCase):
             os.path.join(folder, "spherical_surface_arc3d_to_2d.json"))
         contour = wires.Contour3D.load_from_file(
             os.path.join(folder, "spherical_surface_arc3d_to_2d_contour3d.json"))
-        contour2d = surface.contour3d_to_2d(contour)
+        contour2d = surface.contour3d_to_2d(contour)[0]
         self.assertEqual(len(contour2d.primitives), 4)
         self.assertTrue(contour2d.is_ordered(1e-2))
         self.assertAlmostEqual(contour2d.area(), 1.7779412219307336, 2)
@@ -40,7 +40,7 @@ class TestSphericalSurface3D(unittest.TestCase):
             os.path.join(folder, "buggy_contour3d_to_2d_surface.json"))
         contour = wires.Contour3D.load_from_file(
             os.path.join(folder, "buggy_contour3d_to_2d_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour)
+        contour2d = surface.contour3d_to_2d(contour)[0]
 
         self.assertTrue(contour2d.is_ordered(1e-2))
         self.assertAlmostEqual(contour2d.area(), 0.028684788284169843, 2)
@@ -49,7 +49,7 @@ class TestSphericalSurface3D(unittest.TestCase):
             os.path.join(folder, "contour3d_to_2d_surface_bspline_with_singularity.json"))
         contour = wires.Contour3D.load_from_file(
             os.path.join(folder, "contour3d_to_2d_contour_bspline_with_singularity.json"))
-        contour2d = surface.contour3d_to_2d(contour)
+        contour2d = surface.contour3d_to_2d(contour)[0]
         self.assertEqual(len(contour2d.primitives), 4)
         self.assertTrue(contour2d.is_ordered(1e-2))
         self.assertAlmostEqual(contour2d.area(), 1.1836145679685492, 2)
@@ -58,35 +58,35 @@ class TestSphericalSurface3D(unittest.TestCase):
             os.path.join(folder, "repair_primitives2d_periodicity_surface.json"))
         contour = wires.Contour3D.load_from_file(
             os.path.join(folder, "repair_primitives2d_periodicity_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour)
+        contour2d = surface.contour3d_to_2d(contour)[0]
         self.assertEqual(len(contour2d.primitives), 4)
         self.assertTrue(contour2d.is_ordered(1e-2))
         self.assertAlmostEqual(contour2d.area(), 0.6254993351001795, 2)
 
         contour_left_side = wires.Contour3D.load_from_file(os.path.join(folder, "contour_left_side.json"))
-        test = self.surface3d.contour3d_to_2d(contour_left_side)
+        test = self.surface3d.contour3d_to_2d(contour_left_side)[0]
         theta_min, theta_max, _, _ = test.bounding_rectangle.bounds()
         self.assertEqual(theta_min, -math.pi)
         self.assertEqual(theta_max, 0)
         contour_rigth_side = wires.Contour3D.load_from_file(os.path.join(folder, "contour_rigth_side.json"))
-        test = self.surface3d.contour3d_to_2d(contour_rigth_side)
+        test = self.surface3d.contour3d_to_2d(contour_rigth_side)[0]
         theta_min, theta_max, _, _ = test.bounding_rectangle.bounds()
         self.assertEqual(theta_min, 0)
         self.assertEqual(theta_max, math.pi)
         contour_left_side = wires.Contour3D.load_from_file(os.path.join(folder, "contour_upper_side.json"))
-        test = self.surface3d.contour3d_to_2d(contour_left_side)
+        test = self.surface3d.contour3d_to_2d(contour_left_side)[0]
         _, _, phi_min, phi_max = test.bounding_rectangle.bounds()
         self.assertEqual(phi_min, 0)
         self.assertEqual(phi_max, 0.5 * math.pi)
         contour_rigth_side = wires.Contour3D.load_from_file(os.path.join(folder, "contour_lower_side.json"))
-        test = self.surface3d.contour3d_to_2d(contour_rigth_side)
+        test = self.surface3d.contour3d_to_2d(contour_rigth_side)[0]
         _, _, phi_min, phi_max = test.bounding_rectangle.bounds()
         self.assertEqual(phi_min, -0.5 * math.pi)
         self.assertEqual(phi_max, 0)
 
         contour_any_direction_upper = wires.Contour3D.load_from_file(
             os.path.join(folder, "contour_any_direction_upper_side.json"))
-        test = self.surface3d.contour3d_to_2d(contour_any_direction_upper)
+        test = self.surface3d.contour3d_to_2d(contour_any_direction_upper)[0]
         theta_min, theta_max, phi_min, phi_max = test.bounding_rectangle.bounds()
         self.assertAlmostEqual(theta_min, 0, 6)
         self.assertAlmostEqual(theta_max, math.pi, 4)
@@ -96,7 +96,7 @@ class TestSphericalSurface3D(unittest.TestCase):
             os.path.join(folder, "test_sphericalsurface_repair_periodicity_surface.json"))
         contour = wires.Contour3D.load_from_file(
             os.path.join(folder, "test_sphericalsurface_repair_periodicity_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour)
+        contour2d = surface.contour3d_to_2d(contour)[0]
         self.assertEqual(len(contour2d.primitives), 6)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 6.129921072323977, 2)
@@ -105,7 +105,7 @@ class TestSphericalSurface3D(unittest.TestCase):
             os.path.join(folder, "test_2_sphericalsurface_repair_periodicity_surface.json"))
         contour = wires.Contour3D.load_from_file(
             os.path.join(folder, "test_2_sphericalsurface_repair_periodicity_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour)
+        contour2d = surface.contour3d_to_2d(contour)[0]
         self.assertEqual(len(contour2d.primitives), 8)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 2.1665348983853794, 2)
@@ -114,7 +114,7 @@ class TestSphericalSurface3D(unittest.TestCase):
             os.path.join(folder, "sphericalsurface_contour3d_to_2d_positive_singularity.json"))
         contour = wires.Contour3D.load_from_file(
             os.path.join(folder, "sphericalsurface_contour3d_to_2d_positive_singularity_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour)
+        contour2d = surface.contour3d_to_2d(contour)[0]
         self.assertEqual(len(contour2d.primitives), 4)
         self.assertTrue(contour2d.is_ordered(0.0001))
         self.assertAlmostEqual(contour2d.area(), 0.10067063484647809, 2)

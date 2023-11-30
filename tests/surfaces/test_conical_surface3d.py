@@ -53,10 +53,10 @@ class TestConicalSurface3D(unittest.TestCase):
                                 ]
 
         contour_cone = vmw.Contour3D(primitives_cone)
-        contour2d_cone = self.conical_surface2.contour3d_to_2d(contour_cone)
+        contour2d_cone = self.conical_surface2.contour3d_to_2d(contour_cone)[0]
 
         contour_demi_cone = vmw.Contour3D(primitives_demi_cone)
-        contour2d_demi_cone = self.conical_surface2.contour3d_to_2d(contour_demi_cone)
+        contour2d_demi_cone = self.conical_surface2.contour3d_to_2d(contour_demi_cone)[0]
 
         area_cone = contour2d_cone.area()
         area_demi_cone = contour2d_demi_cone.area()
@@ -77,7 +77,7 @@ class TestConicalSurface3D(unittest.TestCase):
 
         surface = surfaces.ConicalSurface3D.load_from_file(os.path.join(folder, "conical_singularity_suface.json"))
         contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "conical_singularity_contour.json"))
-        contour = surface.contour3d_to_2d(contour3d)
+        contour = surface.contour3d_to_2d(contour3d)[0]
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), 0.0025393181156878604, 6)
 
@@ -85,7 +85,7 @@ class TestConicalSurface3D(unittest.TestCase):
             os.path.join(folder, "conicalsurface_contour_with_singularity_2.json"))
         contour3d = vmw.Contour3D.load_from_file(
             os.path.join(folder, "conicalsurface_contour_with_singularity_contour_2.json"))
-        contour = surface.contour3d_to_2d(contour3d)
+        contour = surface.contour3d_to_2d(contour3d)[0]
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), math.pi * 0.0014073966802667698, 5)
 
@@ -93,7 +93,7 @@ class TestConicalSurface3D(unittest.TestCase):
             os.path.join(folder, "conicalsurface_linesegment3d_to_2d.json"))
         contour3d = vmw.Contour3D.load_from_file(
             os.path.join(folder, "conicalsurface_linesegment3d_to_2d_contour.json"))
-        contour = surface.contour3d_to_2d(contour3d)
+        contour = surface.contour3d_to_2d(contour3d)[0]
         self.assertTrue(contour.is_ordered())
 
 
