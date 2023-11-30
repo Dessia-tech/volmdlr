@@ -18,7 +18,7 @@ from volmdlr.core import VolumeModel
 from volmdlr.discrete_representation import MatrixBasedVoxelization
 from volmdlr.faces import Triangle3D
 from volmdlr.primitives3d import ExtrudedProfile
-from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, OpenTriangleShell3D, Shell3D
+from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, OpenTriangleShell3D
 from volmdlr.wires import Contour2D
 
 
