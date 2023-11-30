@@ -54,8 +54,6 @@ def circle_3d_line_intersections(circle_3d, line, abs_tol: float = 1e-6):
         s_param = (-quadratic_equation_b - sqrt_delta) / (2 * quadratic_equation_a)
         return [point1 + t_param * vec, point1 + s_param * vec]
     z_constant = circle_3d.frame.origin.z
-    if direction_vector.z == 0.0:
-        print(True)
     constant = (z_constant - line.point1.z) / direction_vector.z
     x_coordinate = constant * direction_vector.x + line.point1.x
     y_coordinate = constant * direction_vector.y + line.point1.y
@@ -360,12 +358,13 @@ def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-6):
     return [line.point1 + intersection_abscissea * u_vector]
 
 
-def get_two_planes_intersections(plane1_frame, plane2_frame):
+def get_two_planes_intersections(plane1_frame, plane2_frame, abs_tol: float = 1e-6):
     """
     Calculates the intersections between two planes, given their frames.
 
     :param plane1_frame: Plane's 1 frame.
     :param plane2_frame: Plane's 2 frame.
+    :param abs_tol: tolerance.
     :return: A list containing two points that define an infinite line if there is any intersections,
     or an empty list if the planes are parallel.
     """
@@ -373,20 +372,21 @@ def get_two_planes_intersections(plane1_frame, plane2_frame):
         return []
     line_direction = plane1_frame.w.cross(plane2_frame.w)
 
-    if line_direction.norm() < 1e-6:
+    if line_direction.norm() < abs_tol:
         return None
 
     a1, b1, c1, d1 = get_plane_equation_coefficients(plane1_frame)
     a2, b2, c2, d2 = get_plane_equation_coefficients(plane2_frame)
-    if abs(a1 * b2 - a2 * b1) > 1e-10:
+    tol = 1e-10
+    if abs(a1 * b2 - a2 * b1) > tol:
         x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
         y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
         point1 = volmdlr.Point3D(x0, y0, 0)
-    elif abs(a2 * c1 - a1 * c2) > 1e-10:
+    elif abs(a2 * c1 - a1 * c2) > tol:
         x0 = (c2 * d1 - c1 * d2) / (a2 * c1 - a1 * c2)
         z0 = (a1 * d2 - a2 * d1) / (a2 * c1 - a1 * c2)
         point1 = volmdlr.Point3D(x0, 0, z0)
-    elif abs(c1 * b2 - b1 * c2) > 1e-10:
+    elif abs(c1 * b2 - b1 * c2) > tol:
         y0 = (- c2 * d1 + c1 * d2) / (b1 * c2 - c1 * b2)
         z0 = (- b1 * d2 + b2 * d1) / (b1 * c2 - c1 * b2)
         point1 = volmdlr.Point3D(0, y0, z0)
