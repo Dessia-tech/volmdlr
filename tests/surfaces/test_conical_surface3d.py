@@ -77,9 +77,15 @@ class TestConicalSurface3D(unittest.TestCase):
 
         surface = surfaces.ConicalSurface3D.load_from_file(os.path.join(folder, "conical_singularity_suface.json"))
         contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "conical_singularity_contour.json"))
-        contour = surface.contour3d_to_2d(contour3d)[0]
+        contour, primitives_mapping = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), 0.0025393181156878604, 6)
+        self.assertEqual(len(primitives_mapping), len(contour3d.primitives))
+        self.assertIsNone(primitives_mapping.get(contour.primitives[3]))
+        self.assertEqual(contour3d.primitives[0], primitives_mapping.get(contour.primitives[0]))
+        self.assertEqual(contour3d.primitives[1], primitives_mapping.get(contour.primitives[1]))
+        self.assertEqual(contour3d.primitives[2], primitives_mapping.get(contour.primitives[2]))
+
 
         surface = surfaces.ConicalSurface3D.load_from_file(
             os.path.join(folder, "conicalsurface_contour_with_singularity_2.json"))
