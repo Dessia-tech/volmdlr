@@ -167,6 +167,10 @@ class TestPlaneFace3D(unittest.TestCase):
         face_intersections = plane_face_3.face_intersections(face)
         self.assertEqual(face_intersections[0].primitives[0], edges.LineSegment3D(volmdlr.Point3D(0.0, 0.15, -0.25),
                                                                                   volmdlr.Point3D(0.0, 0.15, 0.25)))
+        """======= [] ==========="""
+        planeface, cylface = dessia_common.core.DessiaObject.load_from_file(
+            os.path.join(folder, 'test_planeface_cylindricalface_intersections_none.json')).primitives
+        self.assertFalse(planeface.face_intersections(cylface))
 
     def test_conical_face_intersections(self):
         def get_face(plane, x1=-1, x2=1, y1=-1, y2=1):

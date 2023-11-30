@@ -54,6 +54,8 @@ def circle_3d_line_intersections(circle_3d, line, abs_tol: float = 1e-6):
         s_param = (-quadratic_equation_b - sqrt_delta) / (2 * quadratic_equation_a)
         return [point1 + t_param * vec, point1 + s_param * vec]
     z_constant = circle_3d.frame.origin.z
+    if direction_vector.z == 0.0:
+        print(True)
     constant = (z_constant - line.point1.z) / direction_vector.z
     x_coordinate = constant * direction_vector.x + line.point1.x
     y_coordinate = constant * direction_vector.y + line.point1.y
@@ -376,15 +378,15 @@ def get_two_planes_intersections(plane1_frame, plane2_frame):
 
     a1, b1, c1, d1 = get_plane_equation_coefficients(plane1_frame)
     a2, b2, c2, d2 = get_plane_equation_coefficients(plane2_frame)
-    if not math.isclose(a1 * b2 - a2 * b1, 0.0, abs_tol=1e-10):
+    if abs(a1 * b2 - a2 * b1) > 1e-10:
         x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
         y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
         point1 = volmdlr.Point3D(x0, y0, 0)
-    elif a2 * c1 != a1 * c2:
+    elif abs(a2 * c1 - a1 * c2) > 1e-10:
         x0 = (c2 * d1 - c1 * d2) / (a2 * c1 - a1 * c2)
         z0 = (a1 * d2 - a2 * d1) / (a2 * c1 - a1 * c2)
         point1 = volmdlr.Point3D(x0, 0, z0)
-    elif c1 * b2 != b1 * c2:
+    elif abs(c1 * b2 - b1 * c2) > 1e-10:
         y0 = (- c2 * d1 + c1 * d2) / (b1 * c2 - c1 * b2)
         z0 = (- b1 * d2 + b2 * d1) / (b1 * c2 - c1 * b2)
         point1 = volmdlr.Point3D(0, y0, z0)

@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### surfaces.py
 - ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
 - ConicalSurface3D: circle_generatrixes direction.
+- Plane3D: plane intersections.
 
 #### faces.py
 - ToroidalFace3D: PlaneFace3D intersections.
