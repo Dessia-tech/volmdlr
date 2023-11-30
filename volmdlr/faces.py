@@ -1462,6 +1462,8 @@ class PlaneFace3D(Face3D):
         :return: list of intersecting wires.
         """
         cylindricalsurfaceface_intersections = cylindricalface.surface3d.plane_intersections(self.surface3d)
+        if not cylindricalsurfaceface_intersections:
+            return []
         if not isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Line3D):
             if all(self.edge3d_inside(intersection) and cylindricalface.edge3d_inside(intersection)
                    for intersection in cylindricalsurfaceface_intersections):
@@ -2903,6 +2905,10 @@ class ExtrusionFace3D(Face3D):
 
     @property
     def bounding_box(self):
+        """
+        Gets the extrusion face bounding box.
+
+        """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
