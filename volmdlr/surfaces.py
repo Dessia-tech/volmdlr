@@ -840,12 +840,15 @@ class Surface3D(DessiaObject):
         """Deprecated method, 'Use Face3D from_contours3d method'."""
         raise AttributeError('Use Face3D from_contours3d method')
 
-    def repair_primitives_periodicity(self, primitives2d):
+    def repair_primitives_periodicity(self, primitives2d, primitives_mapping):
         """
         Repairs the continuity of the 2D contour while using contour3d_to_2d on periodic surfaces.
 
         :param primitives2d: The primitives in parametric surface domain.
         :type primitives2d: list
+        :param primitives_mapping: It is a dictionary that stores the correspondence between primitives
+         in the parametric domain with their equivalent primitive in 3D space.
+        :type primitives_mapping: dict
         :return: A list of primitives.
         :rtype: list
         """
@@ -877,9 +880,11 @@ class Surface3D(DessiaObject):
                     delta_end = previous_primitive.end - current_primitive.end
                     delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
                     if self.is_undefined_brep(primitives2d[i]):
+                        old_primitive = primitives2d[i]
                         primitives2d[i] = self.fix_undefined_brep_with_neighbors(primitives2d[i], previous_primitive,
-                                                                                 primitives2d[
-                                                                                     (i + 1) % len(primitives2d)])
+                                                                               primitives2d[(i + 1) % len(primitives2d)
+                                                                               ])
+                        primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
                         delta = previous_primitive.end - primitives2d[i].start
                         if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
                             primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
@@ -892,23 +897,37 @@ class Surface3D(DessiaObject):
                         if i < len(primitives2d):
                             i += 1
                     elif current_primitive.end.is_close(previous_primitive.end, tol=tol):
+                        old_primitive = primitives2d[i]
                         primitives2d[i] = current_primitive.reverse()
+                        primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
                     elif delta_min_index == 0:
+                        old_primitive = primitives2d[i]
                         primitives2d[i] = current_primitive.translation(delta)
+                        primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
                     else:
+                        old_primitive = primitives2d[i]
                         new_primitive = current_primitive.reverse()
                         primitives2d[i] = new_primitive.translation(delta_end)
+                        primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
 
                 elif current_primitive.end.is_close(previous_primitive.end, tol=tol):
+                    old_primitive = primitives2d[i]
                     primitives2d[i] = current_primitive.reverse()
+                    primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
                 elif self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                         self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
                     primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, current_primitive.start,
                                                                name="construction"))
                     i += 1
                 else:
+                    old_primitive = primitives2d[i]
                     primitives2d[i] = current_primitive.translation(delta)
+                    primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
             i += 1
+        self.check_parametric_contour_end(primitives2d, tol)
+
+    def check_parametric_contour_end(self, primitives2d, tol):
+        """Helper function to repair_primitives_periodicity."""
         previous_primitive = primitives2d[-1]
         delta = previous_primitive.end - primitives2d[0].start
         distance = delta.norm()
@@ -917,7 +936,7 @@ class Surface3D(DessiaObject):
                 self.is_singularity_point(self.point2d_to_3d(primitives2d[0].start)):
             primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start,
                                                 name="construction"))
-        return primitives2d
+        # return primitives2d, primitives_mapping
 
     def connect_contours(self, outer_contour, inner_contours):
         """
@@ -932,6 +951,14 @@ class Surface3D(DessiaObject):
         raise NotImplementedError(f'connect_contours is abstract and should be implemented in '
                                   f'{self.__class__.__name__}')
 
+    @staticmethod
+    def update_primitives_mapping(primitives_mapping, primitives, primitive3d):
+        """
+        Helper function to contour3d_to_2d.
+        """
+        for primitive in primitives:
+            primitives_mapping[primitive] = primitive3d
+
     def primitives3d_to_2d(self, primitives3d):
         """
         Helper function to perform conversion of 3D primitives into B-Rep primitives.
@@ -942,17 +969,18 @@ class Surface3D(DessiaObject):
         :rtype: List[edges.Edge]
         """
         primitives2d = []
+        primitives_mapping = {}
         for primitive3d in primitives3d:
             method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
-
                 if primitives is None:
                     continue
+                self.update_primitives_mapping(primitives_mapping, primitives, primitive3d)
                 primitives2d.extend(primitives)
             else:
                 raise AttributeError(f'Class {self.__class__.__name__} does not implement {method_name}')
-        return primitives2d
+        return primitives2d, primitives_mapping
 
     def contour3d_to_2d(self, contour3d):
         """
@@ -963,7 +991,7 @@ class Surface3D(DessiaObject):
         :return: A 2D contour object.
         :rtype: :class:`wires.Contour2D`
         """
-        primitives2d = self.primitives3d_to_2d(contour3d.primitives)
+        primitives2d, primitives_mapping = self.primitives3d_to_2d(contour3d.primitives)
 
         wire2d = wires.Wire2D(primitives2d)
         if self.x_periodicity and not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[0].start)) and \
@@ -978,8 +1006,8 @@ class Surface3D(DessiaObject):
                 return wires.Contour2D(primitives2d)
         # Fix contour
         if self.x_periodicity or self.y_periodicity:
-            primitives2d = self.repair_primitives_periodicity(primitives2d)
-        return wires.Contour2D(primitives2d)
+            self.repair_primitives_periodicity(primitives2d, primitives_mapping)
+        return wires.Contour2D(primitives2d), primitives_mapping
 
     def contour2d_to_3d(self, contour2d):
         """
@@ -1650,19 +1678,21 @@ class Plane3D(Surface3D):
         Converts a contour 3D into a 2D parametric contour.
         """
         primitives2d = []
+        primitives_mapping = {}
         for primitive3d in contour3d.primitives:
             method_name = f'{primitive3d.__class__.__name__.lower()}_to_2d'
             if hasattr(self, method_name):
                 primitives = getattr(self, method_name)(primitive3d)
                 if primitives is None:
                     continue
+                self.update_primitives_mapping(primitives_mapping, primitives, primitive3d)
                 primitives2d.extend(primitives)
             else:
                 primitive = primitive3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
                 if primitive is None:
                     continue
                 primitives2d.append(primitive)
-        return wires.Contour2D(primitives2d)
+        return wires.Contour2D(primitives2d), primitives_mapping
 
     def arc3d_to_2d(self, arc3d):
         """Converts primitive from 3D cartesian space to surface parametric space."""
@@ -3807,7 +3837,7 @@ class ConicalSurface3D(PeriodicalSurface):
         :rtype: :class:`wires.Contour2D`
         """
         contour3d = self.check_primitives_order(contour3d)
-        primitives2d = self.primitives3d_to_2d(contour3d.primitives)
+        primitives2d, primitives_mapping = self.primitives3d_to_2d(contour3d.primitives)
 
         wire2d = wires.Wire2D(primitives2d)
         delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
@@ -3815,11 +3845,11 @@ class ConicalSurface3D(PeriodicalSurface):
             if len(primitives2d) > 1:
                 # very specific conical case due to the singularity in the point z = 0 on parametric domain.
                 if primitives2d[-2].start.y == 0.0:
-                    primitives2d = self.repair_primitives_periodicity(primitives2d)
+                    self.repair_primitives_periodicity(primitives2d, primitives_mapping)
             return wires.Contour2D(primitives2d)
         # Fix contour
-        primitives2d = self.repair_primitives_periodicity(primitives2d)
-        return wires.Contour2D(primitives2d)
+        self.repair_primitives_periodicity(primitives2d, primitives_mapping)
+        return wires.Contour2D(primitives2d), primitives_mapping
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -4351,7 +4381,7 @@ class SphericalSurface3D(PeriodicalSurface):
         :rtype: :class:`wires.Contour2D`
         """
         primitives2d = []
-
+        primitives_mapping = {}
         # Transform the contour's primitives to parametric domain
         for primitive3d in contour3d.primitives:
             primitive3d = primitive3d.simplify if primitive3d.simplify.__class__.__name__ != "LineSegment3D" else \
@@ -4362,6 +4392,7 @@ class SphericalSurface3D(PeriodicalSurface):
 
                 if primitives is None:
                     continue
+                self.update_primitives_mapping(primitives_mapping, primitives, primitive3d)
                 primitives2d.extend(primitives)
             else:
                 raise NotImplementedError(
@@ -4369,8 +4400,8 @@ class SphericalSurface3D(PeriodicalSurface):
         contour2d = wires.Contour2D(primitives2d)
         if contour2d.is_ordered(1e-2):
             return contour2d
-        primitives2d = self.repair_primitives_periodicity(primitives2d)
-        return wires.Contour2D(primitives2d)
+        self.repair_primitives_periodicity(primitives2d, primitives_mapping)
+        return wires.Contour2D(primitives2d), primitives_mapping
 
     def is_lat_long_curve(self, arc):
         """
@@ -4854,48 +4885,50 @@ class SphericalSurface3D(PeriodicalSurface):
         face = self.rectangular_cut(0, volmdlr.TWO_PI, -0.5 * math.pi, 0.5 * math.pi)
         return face.triangulation()
 
-    def repair_primitives_periodicity(self, primitives2d):
-        """
-        Repairs the continuity of the 2D contour while using contour3d_to_2d on periodic surfaces.
-
-        :param primitives2d: The primitives in parametric surface domain.
-        :type primitives2d: list
-        :return: A list of primitives.
-        :rtype: list
-        """
-        if self.is_undefined_brep(primitives2d[0]):
-            primitives2d[0] = self.fix_undefined_brep_with_neighbors(primitives2d[0], primitives2d[-1],
-                                                                     primitives2d[1])
-        i = 1
-        while i < len(primitives2d):
-            previous_primitive = primitives2d[i - 1]
-            delta = previous_primitive.end - primitives2d[i].start
-            if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
-                if primitives2d[i].end.is_close(previous_primitive.end, 1e-3) and \
-                        primitives2d[i].length() == volmdlr.TWO_PI:
-                    primitives2d[i] = primitives2d[i].reverse()
-                elif self.is_undefined_brep(primitives2d[i]):
-                    primitives2d[i] = self.fix_undefined_brep_with_neighbors(primitives2d[i], previous_primitive,
-                                                                             primitives2d[(i + 1) % len(primitives2d)])
-                    delta = previous_primitive.end - primitives2d[i].start
-                    if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
-                        primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
-                                                                   name="construction"))
-                        if i < len(primitives2d):
-                            i += 1
-                elif self.is_point2d_on_sphere_singularity(previous_primitive.end, 1e-5):
-                    primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
-                                                               name="construction"))
-                    if i < len(primitives2d):
-                        i += 1
-                else:
-                    primitives2d[i] = primitives2d[i].translation(delta)
-            i += 1
+    # def repair_primitives_periodicity(self, primitives2d):
+    #     """
+    #     Repairs the continuity of the 2D contour while using contour3d_to_2d on periodic surfaces.
+    #
+    #     :param primitives2d: The primitives in parametric surface domain.
+    #     :type primitives2d: list
+    #     :return: A list of primitives.
+    #     :rtype: list
+    #     """
+    #     if self.is_undefined_brep(primitives2d[0]):
+    #         primitives2d[0] = self.fix_undefined_brep_with_neighbors(primitives2d[0], primitives2d[-1],
+    #                                                                  primitives2d[1])
+    #     i = 1
+    #     while i < len(primitives2d):
+    #         previous_primitive = primitives2d[i - 1]
+    #         delta = previous_primitive.end - primitives2d[i].start
+    #         if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
+    #             if primitives2d[i].end.is_close(previous_primitive.end, 1e-3) and \
+    #                     primitives2d[i].length() == volmdlr.TWO_PI:
+    #                 primitives2d[i] = primitives2d[i].reverse()
+    #             elif self.is_undefined_brep(primitives2d[i]):
+    #                 primitives2d[i] = self.fix_undefined_brep_with_neighbors(primitives2d[i], previous_primitive,
+    #                                                                          primitives2d[(i + 1) % len(primitives2d)])
+    #                 delta = previous_primitive.end - primitives2d[i].start
+    #                 if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
+    #                     primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+    #                                                                name="construction"))
+    #                     if i < len(primitives2d):
+    #                         i += 1
+    #             elif self.is_point2d_on_sphere_singularity(previous_primitive.end, 1e-5):
+    #                 primitives2d.insert(i, edges.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+    #                                                            name="construction"))
+    #                 if i < len(primitives2d):
+    #                     i += 1
+    #             else:
+    #                 primitives2d[i] = primitives2d[i].translation(delta)
+    #         i += 1
         #     return primitives2d
         # primitives2d = repair(primitives2d)
+    def check_parametric_contour_end(self, primitives2d, tol):
+        """Helper function"""
         last_end = primitives2d[-1].end
         first_start = primitives2d[0].start
-        if not last_end.is_close(first_start, tol=1e-2):
+        if not last_end.is_close(first_start, tol=tol):
             last_end_3d = self.point2d_to_3d(last_end)
             first_start_3d = self.point2d_to_3d(first_start)
             if last_end_3d.is_close(first_start_3d, 1e-6) and \
@@ -4914,7 +4947,7 @@ class SphericalSurface3D(PeriodicalSurface):
                     primitives2d.extend(lines)
             else:
                 primitives2d.append(edges.LineSegment2D(last_end, first_start, name="construction"))
-        return primitives2d
+        # return primitives2d
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
