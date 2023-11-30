@@ -44,7 +44,7 @@ class TestTriangleShell3D(unittest.TestCase):
         self.assertEqual(12, len(display_triangle_shell.indices))
         self.assertEqual(8, len(display_triangle_shell.positions))
         self.assertEqual(display_triangle_shell, DisplayTriangleShell3D.dict_to_object(display_triangle_shell.to_dict()))
-        self.assertEqual(display_triangle_shell, display_triangle_shell + display_triangle_shell)
+        self.assertEqual(len(display_triangle_shell.indices), len((display_triangle_shell + display_triangle_shell).indices))
 
         if SHOW_BABYLONJS:
             display_triangle_shell.babylonjs()
@@ -167,6 +167,17 @@ class TestDisplayTriangleShell3D(unittest.TestCase):
 
         self.assertEqual(22, len(combined_shell.indices))
         self.assertEqual(12, len(combined_shell.positions))
+
+    def test_equality(self):
+        self.assertNotEqual(self.shell1, self.shell2)
+        self.assertFalse(self.shell1._data_eq(self.shell2))
+
+    def test_concatenate_empty(self):
+        empty_shell = DisplayTriangleShell3D(np.array([]), np.array([]))
+
+        self.assertEqual(self.shell1, self.shell1 + empty_shell)
+        self.assertEqual(self.shell1, empty_shell + self.shell1)
+        self.assertNotEqual(self.shell1, self.shell1 + self.shell2)
 
 
 if __name__ == '__main__':

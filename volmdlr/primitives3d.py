@@ -260,25 +260,21 @@ class Block(shells.ClosedShell3D):
                 volmdlr.edges.LineSegment3D(point4.copy(), point8.copy())]
 
     def face_contours3d(self):
-        edge1, edge2, edge3, edge4, edge5, edge6, edge7, edge8, edge9, edge10, edge11, edge12 = self.edges()
-        e5_switch = edge5.reverse()
-        e6_switch = edge6.reverse()
-        e7_switch = edge7.reverse()
-        e8_switch = edge8.reverse()
-        e9_switch = edge9.reverse()
-        e10_switch = edge10.reverse()
-        e11_switch = edge11.reverse()
-        e12_switch = edge12.reverse()
-        return [volmdlr.wires.Contour3D([edge1.copy(), edge2.copy(), edge3.copy(), edge4.copy()]),
-                volmdlr.wires.Contour3D([edge5.copy(), edge6.copy(), edge7.copy(), edge8.copy()]),
-                # volmdlr.Contour3D([e1.copy(), e9.copy(), e5.copy(), e10.copy()]),
-                volmdlr.wires.Contour3D([edge1.copy(), edge10.copy(), e5_switch.copy(), e9_switch.copy()]),
-                # volmdlr.Contour3D([e2.copy(), e10.copy(), e6.copy(), e11.copy()]),
-                volmdlr.wires.Contour3D([edge2.copy(), edge11.copy(), e6_switch.copy(), e10_switch.copy()]),
-                # volmdlr.Contour3D([e3.copy(), e11.copy(), e7.copy(), e12.copy()]),
-                volmdlr.wires.Contour3D([edge3.copy(), edge12.copy(), e7_switch.copy(), e11_switch.copy()]),
-                # volmdlr.Contour3D([e4.copy(), e12.copy(), e8.copy(), e9.copy()])]
-                volmdlr.wires.Contour3D([edge4.copy(), edge9.copy(), e8_switch.copy(), e12_switch.copy()])]
+        edges = self.edges()
+        switched_edges = [edge.reverse() for edge in edges[4:]]
+        contours = [
+            volmdlr.wires.Contour3D([edge.copy() for edge in edges[:4]]),
+            volmdlr.wires.Contour3D([edge.copy() for edge in edges[4:8]]),
+            volmdlr.wires.Contour3D([edges[0].copy(), edges[9].copy(),
+                                     switched_edges[0].copy(), switched_edges[4].copy()]),
+            volmdlr.wires.Contour3D([edges[1].copy(), edges[10].copy(),
+                                     switched_edges[1].copy(), switched_edges[5].copy()]),
+            volmdlr.wires.Contour3D([edges[2].copy(), edges[11].copy(),
+                                     switched_edges[2].copy(), switched_edges[6].copy()]),
+            volmdlr.wires.Contour3D([edges[3].copy(), edges[12].copy(),
+                                     switched_edges[3].copy(), switched_edges[7].copy()])
+        ]
+        return contours
 
     def shell_faces(self):
         """Computes the faces of the block."""
@@ -287,33 +283,21 @@ class Block(shells.ClosedShell3D):
         hlz = 0.5 * self.frame.w.norm()
         frame = self.frame.copy()
         frame = frame.normalize()
-        xm_frame = volmdlr.Frame3D(frame.origin - 0.5 * self.frame.u,
-                                   frame.v, frame.w, frame.u)
-        xp_frame = volmdlr.Frame3D(frame.origin + 0.5 * self.frame.u,
-                                   frame.v, frame.w, frame.u)
-        ym_frame = volmdlr.Frame3D(frame.origin - 0.5 * self.frame.v,
-                                   frame.w, frame.u, frame.v)
-        yp_frame = volmdlr.Frame3D(frame.origin + 0.5 * self.frame.v,
-                                   frame.w, frame.u, frame.v)
-        zm_frame = volmdlr.Frame3D(frame.origin - 0.5 * self.frame.w,
-                                   frame.u, frame.v, frame.w)
-        zp_frame = volmdlr.Frame3D(frame.origin + 0.5 * self.frame.w,
-                                   frame.u, frame.v, frame.w)
-
-        xm_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
-            surfaces.Plane3D(xm_frame), -hly, hly, -hlz, hlz)
-        xp_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
-            surfaces.Plane3D(xp_frame), -hly, hly, -hlz, hlz)
-        ym_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
-            surfaces.Plane3D(ym_frame), -hlz, hlz, -hlx, hlx)
-        yp_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
-            surfaces.Plane3D(yp_frame), -hlz, hlz, -hlx, hlx)
-        zm_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
-            surfaces.Plane3D(zm_frame), -hlx, hlx, -hly, hly)
-        zp_face = volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(
-            surfaces.Plane3D(zp_frame), -hlx, hlx, -hly, hly)
-
-        return [xm_face, xp_face, ym_face, yp_face, zm_face, zp_face]
+        xm_frame = volmdlr.Frame3D(frame.origin - 0.5 * self.frame.u, frame.v, frame.w, frame.u)
+        xp_frame = volmdlr.Frame3D(frame.origin + 0.5 * self.frame.u,  frame.v, frame.w, frame.u)
+        ym_frame = volmdlr.Frame3D(frame.origin - 0.5 * self.frame.v, frame.w, frame.u, frame.v)
+        yp_frame = volmdlr.Frame3D(frame.origin + 0.5 * self.frame.v, frame.w, frame.u, frame.v)
+        zm_frame = volmdlr.Frame3D(frame.origin - 0.5 * self.frame.w, frame.u, frame.v, frame.w)
+        zp_frame = volmdlr.Frame3D(frame.origin + 0.5 * self.frame.w, frame.u, frame.v, frame.w)
+        block_faces = [
+            volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(surfaces.Plane3D(xm_frame), -hly, hly, -hlz, hlz),
+            volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(surfaces.Plane3D(xp_frame), -hly, hly, -hlz, hlz),
+            volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(surfaces.Plane3D(ym_frame), -hlz, hlz, -hlx, hlx),
+            volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(surfaces.Plane3D(yp_frame), -hlz, hlz, -hlx, hlx),
+            volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(surfaces.Plane3D(zm_frame), -hlx, hlx, -hly, hly),
+            volmdlr.faces.PlaneFace3D.from_surface_rectangular_cut(surfaces.Plane3D(zp_frame), -hlx, hlx, -hly, hly)
+        ]
+        return block_faces
 
     def faces_center(self):
         """Computes the faces center of the block."""

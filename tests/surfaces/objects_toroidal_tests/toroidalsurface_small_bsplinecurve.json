@@ -1,0 +1,37 @@
+{
+  "object_class": "volmdlr.surfaces.ToroidalSurface3D",
+  "name": "homeo Torus",
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "Torus Axis2P3D",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": 4.54461785509,
+      "y": 2.54,
+      "z": 2.54,
+      "name": "Axis2P3D Location"
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 0.0,
+      "y": -0.9622890092057144,
+      "z": -0.27202915792591925
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.0,
+      "y": 0.27202915792591925,
+      "z": -0.9622890092057144
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 1.0,
+      "y": 0.0,
+      "z": -0.0,
+      "name": "Axis2P3D Direction"
+    }
+  },
+  "major_radius": 0.631333369262,
+  "minor_radius": 0.009000000000000001,
+  "_references": {}
+}
