@@ -161,7 +161,7 @@ class TestExtrusionSurface3D(unittest.TestCase):
             os.path.join(folder, "periodical_extrusionsurface_linesegment3d_to_2d.json"))
         contour = vmw.Contour3D.load_from_file(
             os.path.join(folder, "periodical_extrusionsurface_linesegment3d_to_2d_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour)
+        contour2d = surface.contour3d_to_2d(contour)[0]
         self.assertTrue(contour2d.is_ordered(1e-5))
         self.assertAlmostEqual(contour2d.area(), 0.007376809172328507, 2)
 
