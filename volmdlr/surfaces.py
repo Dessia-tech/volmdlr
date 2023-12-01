@@ -4846,7 +4846,7 @@ class SphericalSurface3D(PeriodicalSurface):
         return face.triangulation()
 
     def check_parametric_contour_end(self, primitives2d, tol):
-        """Helper function"""
+        """Helper function to repair_primitives_periodicity."""
         last_end = primitives2d[-1].end
         first_start = primitives2d[0].start
         if not last_end.is_close(first_start, tol=tol):
