@@ -89,6 +89,13 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), math.pi * 0.0014073966802667698, 5)
 
+        surface = surfaces.ConicalSurface3D.load_from_file(
+            os.path.join(folder, "conicalsurface_linesegment3d_to_2d.json"))
+        contour3d = vmw.Contour3D.load_from_file(
+            os.path.join(folder, "conicalsurface_linesegment3d_to_2d_contour.json"))
+        contour = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour.is_ordered())
+
 
 
     def test_bsplinecurve3d_to_2d(self):
@@ -171,6 +178,59 @@ class TestConicalSurface3D(unittest.TestCase):
                     self.assertTrue(intersection[1].is_close(expected_result[1]))
                 else:
                     self.assertAlmostEqual(intersection[1], expected_result[1])
+
+    def test_ellipse_intersections(self):
+        conical_surface = surfaces.ConicalSurface3D(
+            volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, 0.0),
+                            u=volmdlr.Vector3D(-5.551115123125783e-17, 0.0, 0.9999999999999998),
+                            v=volmdlr.Vector3D(0.0, 0.9999999999999998, 0.0),
+                            w=volmdlr.Vector3D(-0.9999999999999998, 0.0, -5.551115123125783e-17)), math.pi / 4)
+
+        frame = volmdlr.Frame3D(origin=volmdlr.Point3D(0.0, 0.0, 0.0),
+                                u=volmdlr.Vector3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+                                v=volmdlr.Vector3D(0.8164965809277258, -0.40824829046386313, -0.40824829046386313),
+                                w=volmdlr.Vector3D(0.0, 0.7071067811865476, -0.7071067811865476))
+        ellipse = curves.Ellipse3D(2, 1, frame)
+        ellipse_intersections = conical_surface.ellipse_intersections(ellipse)
+        self.assertEqual(len(ellipse_intersections), 2)
+        self.assertTrue(ellipse_intersections[0].is_close(
+            volmdlr.Point3D(-1.2979434653952304, -1.0460502895587362, -1.0460502895587362)))
+        self.assertTrue(ellipse_intersections[1].is_close(
+            volmdlr.Point3D(-5.967998071287894e-07, 0.9999997016000061, 0.9999997016000058)))
+
+    def test_arcellipse_intersections(self):
+        conical_surface = surfaces.ConicalSurface3D(
+            volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, 0.0),
+                            u=volmdlr.Vector3D(-5.551115123125783e-17, 0.0, 0.9999999999999998),
+                            v=volmdlr.Vector3D(0.0, 0.9999999999999998, 0.0),
+                            w=volmdlr.Vector3D(-0.9999999999999998, 0.0, -5.551115123125783e-17)), math.pi / 4)
+        frame = volmdlr.Frame3D(origin=volmdlr.Point3D(0.0, 0.0, 0.0),
+                                u=volmdlr.Vector3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+                                v=volmdlr.Vector3D(0.8164965809277258, -0.40824829046386313, -0.40824829046386313),
+                                w=volmdlr.Vector3D(0.0, 0.7071067811865476, -0.7071067811865476))
+        ellipse = curves.Ellipse3D(2, 1, frame)
+        arcellipse = edges.ArcEllipse3D(ellipse, ellipse.point_at_abscissa(4.5), ellipse.point_at_abscissa(8.0))
+        arcellipse_intersections = conical_surface.arcellipse_intersections(arcellipse)
+        self.assertEqual(len(arcellipse_intersections), 1)
+        self.assertTrue(arcellipse_intersections[0].is_close(
+            volmdlr.Point3D(-1.2979434653952304, -1.0460502895587362, -1.0460502895587362)))
+
+    def test_sphericalsurface_intersections(self):
+        spherical_surface = surfaces.SphericalSurface3D(volmdlr.OXYZ.translation(volmdlr.Vector3D(0.5, 0.5, 0)),
+                                                        2)
+
+        # test 1
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
+        inters = spherical_surface.surface_intersections(conical_surface)
+        self.assertEqual(len(inters), 1)
+        self.assertAlmostEqual(inters[0].length(), 6.132194414411092)
+        # test 2
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
+        conical_surface = conical_surface.translation(-volmdlr.Z3D * 2)
+        inters = spherical_surface.surface_intersections(conical_surface)
+        self.assertEqual(len(inters), 2)
+        self.assertAlmostEqual(inters[0].length(), 10.905677051611681)
+        self.assertAlmostEqual(inters[1].length(), 0.5120820085072879)
 
 
 if __name__ == '__main__':

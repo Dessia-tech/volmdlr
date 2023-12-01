@@ -25,6 +25,25 @@ class TestPlaneFace3D(unittest.TestCase):
     def test_area(self):
         self.assertAlmostEqual(self.face_with_3holes.area(), 0.12160000)
 
+    def test_point_belongs(self):
+        volume_model = dc.DessiaObject.load_from_file(os.path.join(folder, 'test_planeface_point_belongs.json'))
+        self.assertTrue(volume_model.primitives[0].point_belongs(volume_model.primitives[1]))
+
+    def test_plane_face_intersection(self):
+        face1, face2 = dc.DessiaObject.load_from_file(os.path.join(folder, 'test_planeface_intersections.json')).primitives
+        face_intersections = face1.face_intersections(face2)
+
+        self.assertEqual(1, len(face_intersections))
+        self.assertAlmostEqual(0.003600000000881293, face_intersections[0].length())
+        face1, face2 = faces.PlaneFace3D.load_from_file(
+            os.path.join(folder, 'test_planef_inters291123.json')).primitives
+        face_intersections = face1.face_intersections(face2)
+        line_seg = edges.LineSegment3D(
+            volmdlr.Point3D(0.034031786272172244, 0.019018077708099396, 0.07196336225667499),
+            volmdlr.Point3D(0.03756212352555941, 0.022324611455208112, 0.07196336225667499)
+        )
+        self.assertTrue(face_intersections[0].primitives[0], line_seg)
+
     def test_face_inside(self):
         face2 = self.face.frame_mapping(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(0.5, 0, 0),
                                         volmdlr.Vector3D(0, 0.5, 0), volmdlr.Vector3D(0, 0, 0.5)), 'old')
@@ -48,7 +67,7 @@ class TestPlaneFace3D(unittest.TestCase):
     def test_divide_face(self):
         face_intersections = self.face.face_intersections(self.face_with_3holes)
         cutting_contours = self.face_with_3holes.get_face_cutting_contours(
-            {(self.face, self.face_with_3holes): face_intersections})
+            {self.face_with_3holes: face_intersections})
         new_faces = self.face_with_3holes.divide_face(cutting_contours)
         self.assertEqual(len(new_faces), 2)
         cutting_contour = wires.Wire2D.from_points([
@@ -90,7 +109,7 @@ class TestPlaneFace3D(unittest.TestCase):
         volumemodel = dessia_common.core.DessiaObject.load_from_file(
             os.path.join(folder, 'test_set_operations_new_faces.json'))
         plane_face, cutting_contours3d = volumemodel.primitives[0], volumemodel.primitives[1:]
-        divide_face = plane_face.set_operations_new_faces({(plane_face, plane_face): cutting_contours3d})
+        divide_face = plane_face.set_operations_new_faces({plane_face: cutting_contours3d})
         divide_face = sorted(divide_face, key=lambda face: face.area())
         self.assertEqual(len(divide_face), 7)
         expected_areas = [0.05000000000000002, 0.25, 0.4375, 0.5, 1.0621681469282045, 1.29875, 2.4002627208849607]
@@ -145,15 +164,21 @@ class TestPlaneFace3D(unittest.TestCase):
         """ ========== TWO PARALLEL LINES ========="""
         plane_face_3 = self.plane_face_cylindricalface_intersec.rotation(volmdlr.O3D, volmdlr.X3D, math.pi)
         face_intersections = plane_face_3.face_intersections(face)
-        self.assertEqual(face_intersections[0].primitives[0], edges.LineSegment3D(volmdlr.Point3D(0.15, 0.0, -0.25),
-                                                                                  volmdlr.Point3D(0.15, 0.0, 0.25)))
-        self.assertEqual(face_intersections[1].primitives[0], edges.LineSegment3D(volmdlr.Point3D(-0.15, 0.0, -0.25),
-                                                                                  volmdlr.Point3D(-0.15, 0.0, 0.25)))
+        self.assertTrue(face_intersections[0].primitives[0].is_close(
+            edges.LineSegment3D(volmdlr.Point3D(0.15, 0.0, -0.25),
+                                volmdlr.Point3D(0.15, 0.0, 0.25))))
+        self.assertTrue(face_intersections[1].primitives[0].is_close(
+            edges.LineSegment3D(volmdlr.Point3D(-0.15, 0.0, -0.25),
+                                volmdlr.Point3D(-0.15, 0.0, 0.25))))
         """ ========== ONE LINE ========="""
         plane_face_3 = self.plane_face_cylindricalface_intersec.translation(R * volmdlr.Y3D)
         face_intersections = plane_face_3.face_intersections(face)
         self.assertEqual(face_intersections[0].primitives[0], edges.LineSegment3D(volmdlr.Point3D(0.0, 0.15, -0.25),
                                                                                   volmdlr.Point3D(0.0, 0.15, 0.25)))
+        """======= [] ==========="""
+        planeface, cylface = dessia_common.core.DessiaObject.load_from_file(
+            os.path.join(folder, 'test_planeface_cylindricalface_intersections_none.json')).primitives
+        self.assertFalse(planeface.face_intersections(cylface))
 
     def test_conical_face_intersections(self):
         def get_face(plane, x1=-1, x2=1, y1=-1, y2=1):

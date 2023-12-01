@@ -1,26 +1,30 @@
 import math
 import unittest
-
+import os
 import volmdlr
 from volmdlr.edges import Arc2D
 from volmdlr import curves
 
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'arc_objects')
+
 class TestArc2D(unittest.TestCase):
-    circle2d = curves.Circle2D(volmdlr.O2D, 1)
-    arc2d = Arc2D(circle2d, volmdlr.Point2D(-1, 0), volmdlr.Point2D(1, 0), True)
-    arc1 = Arc2D(circle2d, volmdlr.Point2D(0, -1), volmdlr.Point2D(0, 1), True)
-    arc2 = Arc2D(circle2d, volmdlr.Point2D(1, 0), volmdlr.Point2D(-1, 0), True)
-    arc3 = Arc2D(curves.Circle2D(volmdlr.O2D, 1.5), 1.5 * volmdlr.Point2D(0, -1), 1.5 * volmdlr.Point2D(0, 1), True)
+    circle2d = curves.Circle2D(volmdlr.OXY, 1)
+    arc2d = Arc2D(circle2d, volmdlr.Point2D(-1, 0), volmdlr.Point2D(1, 0))
+    arc1 = Arc2D(circle2d, volmdlr.Point2D(0, -1), volmdlr.Point2D(0, 1))
+    arc2 = Arc2D(circle2d, volmdlr.Point2D(1, 0), volmdlr.Point2D(-1, 0))
+    arc3 = Arc2D(curves.Circle2D(volmdlr.OXY, 1.5), 1.5 * volmdlr.Point2D(0, -1), 1.5 * volmdlr.Point2D(0, 1))
     arc4 = Arc2D(circle2d, volmdlr.Point2D(0.7071067811865475, -0.7071067811865475),
                  volmdlr.Point2D(0.7071067811865475, 0.7071067811865475))
     arc5 = Arc2D(circle2d, volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475),
                  volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475))
     arc6 = arc4.complementary()
-    arc7 = Arc2D(circle2d, volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475),
-                 volmdlr.Point2D(0.7071067811865475, 0.7071067811865475), False)
+    circle2d_reversed = circle2d.reverse()
+    arc7 = Arc2D(circle2d_reversed, volmdlr.Point2D(-0.7071067811865475, 0.7071067811865475),
+                 volmdlr.Point2D(0.7071067811865475, 0.7071067811865475))
     arc8 = arc7.complementary()
-    arc9 = Arc2D(circle2d, volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475),
-                 volmdlr.Point2D(0.7071067811865475, -0.7071067811865475), False)
+    arc9 = Arc2D(circle2d_reversed, volmdlr.Point2D(-0.7071067811865475, -0.7071067811865475),
+                 volmdlr.Point2D(0.7071067811865475, -0.7071067811865475))
     arc10 = arc9.complementary()
     list_points = [volmdlr.Point2D(1, 0),
                    volmdlr.Point2D(0.7071067811865475, -0.7071067811865475),
@@ -45,7 +49,7 @@ class TestArc2D(unittest.TestCase):
         self.assertTrue(arc_split3[1].end.is_close(self.arc2d.end))
 
     def test_arc_intersections(self):
-        arc2 = Arc2D(curves.Circle2D(volmdlr.Point2D(0, 1.5), 1), volmdlr.Point2D(-1, 1.5),
+        arc2 = Arc2D(curves.Circle2D(volmdlr.OXY.translation(volmdlr.Point2D(0, 1.5)), 1), volmdlr.Point2D(-1, 1.5),
                      volmdlr.Point2D(1, 1.5), True)
         arc_intersections = self.arc1.arc_intersections(arc2)
         self.assertEqual(len(arc_intersections), 1)
@@ -101,11 +105,11 @@ class TestArc2D(unittest.TestCase):
         for result_list, expected_result_list in zip(list_point_belongs, expected_results):
             self.assertEqual(result_list, expected_result_list)
 
-        arc = Arc2D.load_from_file("edges/arc_objects/arc2d_bug_point_belongs.json")
+        arc = Arc2D.load_from_file(os.path.join(folder, "arc2d_bug_point_belongs.json"))
         point = volmdlr.Point2D(0.01330629098214331, 0.0032923224261096617)
         self.assertTrue(arc.point_belongs(point))
 
-        arc = Arc2D.load_from_file("edges/arc_objects/arc2d_point_belongs.json")
+        arc = Arc2D.load_from_file(os.path.join(folder, "arc2d_point_belongs.json"))
         point = volmdlr.Point2D(0.0007151488183559929, 0.007258543823331798)
         self.assertTrue(arc.point_belongs(point))
 
@@ -131,7 +135,7 @@ class TestArc2D(unittest.TestCase):
 
     def test_delete_shared_section(self):
         remaining_arc1 = self.arc1.delete_shared_section(self.arc2)
-        self.assertEqual(remaining_arc1, [Arc2D(curves.Circle2D(volmdlr.O2D, 1), volmdlr.Point2D(0.0, -1.0),
+        self.assertEqual(remaining_arc1, [Arc2D(curves.Circle2D(volmdlr.OXY, 1), volmdlr.Point2D(0.0, -1.0),
                                                 volmdlr.Point2D(1.0, 0.0), True)])
         self.assertEqual(self.arc2.delete_shared_section(self.arc3), [self.arc2])
         remaining_arc2 = self.arc1.delete_shared_section(self.arc4)
@@ -163,10 +167,38 @@ class TestArc2D(unittest.TestCase):
         self.assertTrue(rotated_arc2d.start.is_close(volmdlr.Point2D(0.9999999999999999, -1.1102230246251565e-16)))
         self.assertTrue(rotated_arc2d.end.is_close(volmdlr.Point2D(1.1102230246251565e-16, 0.9999999999999999)))
 
+        # Test on non trigo Arc2D
+        rotated_arc2d = self.arc9.rotation(volmdlr.O2D, math.pi / 4)
+        rotated_arc2d = rotated_arc2d.rotation(volmdlr.O2D, -math.pi / 4)
+        self.assertTrue(rotated_arc2d.is_close(self.arc9))
+
+        # Test on trigo Arc2D
+        rotated_arc2d = self.arc2.rotation(volmdlr.O2D, math.pi / 2)
+        rotated_arc2d = rotated_arc2d.rotation(volmdlr.O2D, -math.pi / 2)
+        self.assertTrue(rotated_arc2d.is_close(self.arc2))
+
+        arc2d = Arc2D.load_from_file(os.path.join(folder, "arc2d_rotation_test.json"))
+        rotated_arc2d = arc2d.rotation(volmdlr.Point2D(0.5, 0.5), math.pi / 1.5)
+        self.assertEqual(arc2d.frame.u, rotated_arc2d.frame.u)
+        self.assertEqual(arc2d.frame.v, rotated_arc2d.frame.v)
+        self.assertTrue(rotated_arc2d.center.is_close(volmdlr.Point2D(-0.17631397208144173, 0.5714101615137755)))
+        self.assertTrue(rotated_arc2d.start.is_close(volmdlr.Point2D(-0.4330127018922192, 1.1160254037844388)))
+        self.assertTrue(rotated_arc2d.end.is_close(volmdlr.Point2D(-0.3660254037844387, 2.220446049250313e-16)))
+
     def test_translation(self):
         translated_arc2d = self.arc4.translation(volmdlr.Vector2D(1, 1))
         self.assertTrue(translated_arc2d.start.is_close(volmdlr.Point2D(1.7071067811865475, 0.29289321881345254)))
         self.assertTrue(translated_arc2d.end.is_close(volmdlr.Point2D(1.7071067811865475, 1.7071067811865475)))
+
+        # Test on non trigo Arc2D
+        translated_arc2d = self.arc9.translation(volmdlr.Vector2D(1, 1))
+        translated_arc2d = translated_arc2d.translation(volmdlr.Vector2D(-1, -1))
+        self.assertTrue(translated_arc2d.is_close(self.arc9))
+
+        # Test on trigo Arc2D
+        translated_arc2d = self.arc2.translation(volmdlr.Vector2D(1, 1))
+        translated_arc2d = translated_arc2d.translation(volmdlr.Vector2D(-1, -1))
+        self.assertTrue(translated_arc2d.is_close(self.arc2))
 
     def test_frame_mapping(self):
         u_vector = volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475)
@@ -175,6 +207,16 @@ class TestArc2D(unittest.TestCase):
         frame_mapped_arc2d = self.arc4.frame_mapping(frame, 'new')
         self.assertTrue(frame_mapped_arc2d.start.is_close(volmdlr.Point2D(0.0, -1.0)))
         self.assertTrue(frame_mapped_arc2d.end.is_close(volmdlr.Point2D(1.0, 0.0)))
+
+        # Test on non trigo Arc2D
+        frame_mapped_arc2d = self.arc9.frame_mapping(frame, 'new')
+        frame_mapped_arc2d = frame_mapped_arc2d.frame_mapping(frame, 'old')
+        self.assertTrue(frame_mapped_arc2d.is_close(self.arc9))
+
+        # Test on trigo Arc2D
+        frame_mapped_arc2d = self.arc2.frame_mapping(frame, 'new')
+        frame_mapped_arc2d = frame_mapped_arc2d.frame_mapping(frame, 'old')
+        self.assertTrue(frame_mapped_arc2d.is_close(self.arc2))
 
     def test_reverse(self):
         reverse = self.arc4.reverse()
@@ -212,10 +254,12 @@ class TestArc2D(unittest.TestCase):
         self.assertTrue(arc3d.end.is_close(volmdlr.Point3D(0.985598559653, 0.119573155869, 0.119573155869)))
         point3d_ = self.arc4.middle_point().to_3d(volmdlr.O3D, vector1, vector2)
         self.assertTrue(arc3d.point_belongs(point3d_))
-        arc = volmdlr.edges.Arc2D(
-            curves.Circle2D(volmdlr.Point2D(0.2068381066975619, 0.1167563813274402), 0.01500000000000002),
+        circle = curves.Circle2D(
+            volmdlr.OXY.translation(volmdlr.Vector2D(0.2068381066975619, 0.1167563813274402)),
+            0.01500000000000002).reverse()
+        arc = volmdlr.edges.Arc2D(circle,
             volmdlr.Point2D(0.21783000907195643, 0.10654961483693107),
-            volmdlr.Point2D(0.19291095633428304, 0.11118552118212867), False)
+            volmdlr.Point2D(0.19291095633428304, 0.11118552118212867))
         point3d = arc.middle_point().to_3d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
         arc_to_3d = arc.to_3d(volmdlr.O3D, volmdlr.X3D, volmdlr.Y3D)
         self.assertTrue(arc_to_3d.point_belongs(point3d))
@@ -232,6 +276,11 @@ class TestArc2D(unittest.TestCase):
         for arc in [arc_from_3_points, arc_from_3_points2]:
             for point in points_:
                 self.assertTrue(arc.point_belongs(point))
+
+        self.assertEqual(arc_from_3_points.rotation(volmdlr.O2D, 10).rotation(volmdlr.O2D, -10), arc_from_3_points)
+        self.assertEqual(arc_from_3_points2.rotation(volmdlr.O2D, 10).rotation(volmdlr.O2D, -10), arc_from_3_points2)
+        self.assertEqual(arc_from_3_points.translation(volmdlr.X2D).translation(-volmdlr.X2D), arc_from_3_points)
+        self.assertEqual(arc_from_3_points2.translation(volmdlr.X2D).translation(-volmdlr.X2D), arc_from_3_points2)
 
 
 if __name__ == '__main__':

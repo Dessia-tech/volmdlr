@@ -26,7 +26,7 @@ class TestToroidalFace3D(unittest.TestCase):
             # Test distance from middle to surface
 
             self.assertLess(self.surface1.point_distance(triangle.middle()),
-                            self.surface1.small_radius * 0.05)
+                            self.surface1.minor_radius * 0.05)
 
     def test_number_triangles(self):
         triangulation = self.face1.triangulation()

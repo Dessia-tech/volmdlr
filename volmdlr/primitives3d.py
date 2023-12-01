@@ -204,16 +204,33 @@ class Block(shells.ClosedShell3D):
         return self.size[0] * self.size[1] * self.size[2]
 
     @classmethod
-    def from_bounding_box(cls, bounding_box, name: str = ''):
+    def from_bounding_box(cls, bounding_box: volmdlr.core.BoundingBox, name: str = ""):
         """
-        Transform a bounding box into a block.
+        Create a block from a bounding box.
+
+        :param bounding_box: the bounding box sued to create the block.
+        :type bounding_box: BoundingBox
+        :param name: the name of the block, optional.
+        :type name: str
+
+        :return: the created block.
+        :rtype: Block
         """
-        origin = bounding_box.center
-        bbox_size = bounding_box.size
-        frame = volmdlr.Frame3D(origin, bbox_size[0] * volmdlr.Vector3D(1, 0, 0),
-                                bbox_size[1] * volmdlr.Vector3D(0, 1, 0),
-                                bbox_size[2] * volmdlr.Vector3D(0, 0, 1))
-        return cls(frame=frame, name=name)
+        return cls(frame=bounding_box.to_frame(), name=name)
+
+    def get_bounding_box(self) -> volmdlr.core.BoundingBox:
+        """
+        Get the bounding box of the block.
+
+        :return: the created bounding box.
+        :rtype: BoundingBox
+        """
+        return volmdlr.core.BoundingBox.from_points(
+            [
+                self.frame.origin - volmdlr.Point3D(self.frame.u.x / 2, self.frame.v.y / 2, self.frame.w.z / 2),
+                self.frame.origin + volmdlr.Point3D(self.frame.u.x / 2, self.frame.v.y / 2, self.frame.w.z / 2),
+            ]
+        )
 
     def vertices(self):
         """Computes the vertices of the block."""
@@ -355,8 +372,8 @@ class Block(shells.ClosedShell3D):
 
         return volmdlr.faces.PlaneFace3D(plane_3d, contour_2d)
 
-    def frame_mapping_parametres(self, frame: volmdlr.Frame3D,
-                                 side: str):
+    def frame_mapping_parametres(self, frame: volmdlr.Frame3D, side: str):
+        """Helper function to frame mapping."""
         basis = frame.basis()
         if side == 'new':
             new_origin = frame.global_to_local_coordinates(self.frame.origin)
@@ -829,7 +846,7 @@ class Cylinder(shells.ClosedShell3D):
             self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v
         )
         circle = volmdlr.curves.Circle2D(
-            self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v), self.radius
+            volmdlr.OXY.translation(self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v)), self.radius
         )
         lower_face = volmdlr.faces.PlaneFace3D(
             lower_plane, surfaces.Surface2D(volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(circle)]), [])
@@ -1375,7 +1392,7 @@ class Cone(shells.ClosedShell3D):
             self.frame.origin.translation(-self.frame.w * (self.length * 0.5)), self.frame.u, self.frame.v
         )
         circle = volmdlr.curves.Circle2D(
-            self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v), self.radius
+            volmdlr.OXY.translation(self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v)), self.radius
         )
         lower_face = volmdlr.faces.PlaneFace3D(
             lower_plane, surfaces.Surface2D(volmdlr.wires.Contour2D([volmdlr.edges.FullArc2D.from_curve(circle)]), [])
@@ -1577,8 +1594,8 @@ class HollowCylinder(shells.ClosedShell3D):
         )
 
         position_2d = self.position.to_2d(self.frame.origin, self.frame.u, self.frame.v)
-        outer_circle = volmdlr.curves.Circle2D(position_2d, self.outer_radius)
-        inner_circle = volmdlr.curves.Circle2D(position_2d, self.inner_radius)
+        outer_circle = volmdlr.curves.Circle2D(volmdlr.OXY.translation(position_2d), self.outer_radius)
+        inner_circle = volmdlr.curves.Circle2D(volmdlr.OXY.translation(position_2d), self.inner_radius)
 
         lower_face = volmdlr.faces.PlaneFace3D(
             lower_plane,
@@ -1830,17 +1847,44 @@ class HollowCylinder(shells.ClosedShell3D):
 
 class Sweep(shells.ClosedShell3D):
     """
-    Sweep a 2D contour along a Wire3D.
+    Sweep a profile along a path.
 
+    The resulting shape is defined by a contour in 2D and a path with C1 continuity provided by
+    the 3D wire. The starting frame defines the position and orientation of the profile in the 3D space.
+
+    :param contour2d: The 2D contour, defining the profile to be swept along the wire.
+    :type contour2d: volmdlr.wires.Contour2D
+    :param wire3d: The 3D wire path along which the contour is swept. The path must be C1 continuous.
+    :type wire3d: volmdlr.wires.Wire3D
+    :param starting_frame: (optional) The starting frame for the sweep. This parameter is used to control the
+        orientation of the profile in 3D space. The frame's origin should be coincident with the start of the path.
+        If not provided, it is determined from the orientation of the wire and may provide unexpected sweep
+        orientation, if the aspect ratio of the profile is different of 1.
+    :type starting_frame: volmdlr.Frame3D
+    :param color: (optional) The RGB color of the resulting shell.
+    :type color: Tuple[float, float, float]
+    :param alpha: (optional) The transparency of the resulting shell.
+    :type alpha: float
+    :param name: The name of the sweep.
+    :type name: str
     """
 
     def __init__(self, contour2d: volmdlr.wires.Contour2D,
-                 wire3d: volmdlr.wires.Wire3D, *,
+                 wire3d: volmdlr.wires.Wire3D,
+                 starting_frame=None, *,
                  color: Tuple[float, float, float] = None, alpha: float = 1,
                  name: str = ''):
         self.contour2d = contour2d
         self.wire3d = wire3d
-        self.frames = []
+        self.starting_frame = starting_frame
+        if self.starting_frame is None:
+            origin = self.wire3d.primitives[0].start
+            w = self.wire3d.primitives[0].unit_direction_vector(0.)
+            u = self.wire3d.primitives[0].unit_normal_vector(0.)
+            if not u:
+                u = w.deterministic_unit_normal_vector()
+            v = w.cross(u)
+            self.starting_frame = volmdlr.Frame3D(origin, u, v, w)
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces, color=color,
                                       alpha=alpha, name=name)
@@ -1862,66 +1906,30 @@ class Sweep(shells.ClosedShell3D):
 
         For now, it does not take into account rotation of sections.
         """
-        def get_sweep_profile_section(profile_section_face, touching_faces):
-            primitives_on_section_face = []
-            for face in touching_faces:
-                for prim in face.outer_contour3d.primitives:
-                    if profile_section_face.edge3d_inside(prim):
-                        primitives_on_section_face.append(prim)
-            contour3d_ = volmdlr.wires.Contour3D.contours_from_edges(primitives_on_section_face)[0]
-            return contour3d_
-
-        # End  planar faces
-        w = self.wire3d.primitives[0].unit_direction_vector(0.)
-        u = self.wire3d.primitives[0].unit_normal_vector(0.)
-        if not u:
-            u = w.deterministic_unit_normal_vector()
-        v = w.cross(u)
-
-        start_plane = surfaces.Plane3D(
-            volmdlr.Frame3D(self.wire3d.point_at_abscissa(0.), u, v, w))
-
-        length_last_primitive = self.wire3d.primitives[-1].length()
-        w = self.wire3d.primitives[-1].unit_direction_vector(length_last_primitive)
-        u = self.wire3d.primitives[-1].unit_normal_vector(length_last_primitive)
-        if not u:
-            u = w.deterministic_unit_normal_vector()
-        v = w.cross(u)
-
-        end_plane = surfaces.Plane3D(
-            volmdlr.Frame3D(self.wire3d.primitives[-1].point_at_abscissa(length_last_primitive), u, v, w))
+        if not self.wire3d.point_at_abscissa(0.).is_close(self.starting_frame.origin):
+            raise ValueError("Frame origin and wire start should be coincident.")
+        start_plane = surfaces.Plane3D(self.starting_frame)
 
         faces = [volmdlr.faces.PlaneFace3D(start_plane, surfaces.Surface2D(self.contour2d, []))]
 
-        max_brectangle = max(self.contour2d.bounding_rectangle.bounds()) * 4
-        cutting_face_contour = volmdlr.wires.Contour2D.from_points(
-                    [volmdlr.Point2D(-max_brectangle, -max_brectangle),
-                     volmdlr.Point2D(max_brectangle, -max_brectangle),
-                     volmdlr.Point2D(max_brectangle, max_brectangle),
-                     volmdlr.Point2D(-max_brectangle, max_brectangle)])
-        new_faces = []
         last_end_tangent = self.wire3d.primitives[0].unit_direction_vector(0.)
-        for i, wire_primitive in enumerate(self.wire3d.primitives):
+        frame_contour = self.starting_frame
+        for wire_primitive in self.wire3d.primitives:
             start_tangent = wire_primitive.unit_direction_vector(0.)
-            normal = wire_primitive.unit_normal_vector(0.)
-            if normal is None:
-                normal = start_tangent.deterministic_unit_normal_vector()
-            tangent_normal_orthonormal = start_tangent.cross(normal)
+            if not start_tangent.is_close(last_end_tangent):
+                raise ValueError("""It seems that the wire3d provided to the sweep is not C1 continuous.
+                 If you have a wire with discotinuites you can try to break it down into many sweeps or
+                  try to use a OpenRoundedLineSegments3D as path.""")
 
-            if i == 0 or not start_tangent.is_close(last_end_tangent):
-                new_faces = wire_primitive.sweep(self.contour2d, None)
-            else:
-                plane = surfaces.Plane3D(volmdlr.Frame3D(wire_primitive.start, normal,
-                                                         tangent_normal_orthonormal, start_tangent))
-                cutting_face = volmdlr.faces.PlaneFace3D(plane, surfaces.Surface2D(cutting_face_contour, []))
-                section_contour = get_sweep_profile_section(cutting_face, new_faces)
-                new_faces = wire_primitive.sweep(self.contour2d, section_contour)
+            if not wire_primitive.start.is_close(frame_contour.origin):
+                raise ValueError("Frame origin and edge start should be coincident.")
 
-            faces.extend(new_faces)
+            faces.extend(wire_primitive.sweep(self.contour2d, frame_contour))
             last_end_tangent = wire_primitive.unit_direction_vector(wire_primitive.length())
-        cutting_face = volmdlr.faces.PlaneFace3D(end_plane, surfaces.Surface2D(cutting_face_contour, []))
-        contour3d = get_sweep_profile_section(cutting_face, new_faces)
-        contour2d = cutting_face.surface3d.contour3d_to_2d(contour3d)
+            frame_contour = wire_primitive.move_frame_along(frame_contour)
+        end_plane = surfaces.Plane3D(frame_contour)
+        contour3d = self.contour2d.to_3d(frame_contour.origin, frame_contour.u, frame_contour.v)
+        contour2d = end_plane.contour3d_to_2d(contour3d)
         end_face = volmdlr.faces.PlaneFace3D(end_plane, surfaces.Surface2D(contour2d, []))
         faces.append(end_face)
         return faces
@@ -1930,6 +1938,7 @@ class Sweep(shells.ClosedShell3D):
         """
         Changes frame_mapping and return a new Sweep.
 
+        :param frame: Frame to map.
         :param side: 'old' or 'new'
         """
         new_wire = self.wire3d.frame_mapping(frame, side)

@@ -8,22 +8,157 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.15.0 [future]
 
 ### New Features
--
+
+#### core_compiled.py
+- Point2D/Point3D: allow users to use a point or a list of points direct inside a numpy array. ex.: np.array(volmdlr.O3D)
+- Point2D/Point3D: in_list. ** ATTENTION:** -> use in_list instead of volmdlr.core.point_in_list.
+- cad_simplification: VoxelizationSimplify, TripleExtrusionSimplify, TriangleDecimationSimplify.
+
+#### surfaces.py
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections
+- ToroidalSurface3D: cylindricalSurface_intersections, circle_intersections, fullarc_intersections, dict_to_object, conicalsurface_intersections, sphericalsurface_intersections
+- ToroidalSurface3D: Handles degenerated surfaces (major_radius < minor_radius).
+- CylindricalSurface3D: circle_intersections, sphericalsurface_intersections, cylindricalsurface_intersections
+- ToroidalFace3D: PlaneFace3D intersectios.
+- SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
+- ConicalSurface3D: sphericalsurface_intersections
+- General improvements on sufaces\` parametric operations.
+
+#### edges.py
+- BsplineCurve3D: circle_intersections.
+- ArcEllipse3D/FullArcEllipse3D: line_intersections.
+
+#### curves.py
+- Circle3D: point_distance.
+#### shell.py
+- OpenTriangleShell3D: triangle decimation
+- ClosedTriangleShell3D: turn_normals_outwards, are_normals_pointing_outwards, turn_normals_inwards, are_normals_pointing_inwards
+- DiplayTriangleShell3D: concatenate
+
+#### core.py
+- BoundingBox: is_close, scale
+- BoundingBox: triangle_intersects_voxel, is_intersecting_triangle
+#### discrete_representation.py
+- Voxelization: from_mesh_data
+- OctreeBasedVoxelization
+
+
+#### step.py
+- Support to Datakit CrossCadWare STEP file format.
 
 ### Fixed
-- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
-- ToroidalFace3D: PlaneFace3D intersectios.
-- PlaneFace3D: circle_intersections.
+- Drone : run generate sdist and generate bdist_wheel only on master
+
+#### core.py
+- VolumeModel: get_mesh_lines (change tolerance to 1e-5)
+
+#### edges.py 
+- Arc2D: direction conservation in rotation / translation / frame_mapping.
+- FullArcEllipse: angle_start, angle_end.
+
+#### surfaces.py
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections.
+- ConicalSurface3D: circle_generatrixes direction.
+- PeriodicalSurface: handles exceptions in connect_contours method.
+- ExtrusionSurface3D: fullarcellipse3d_to_2d
+- ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
+- ToroidalSurface3D: increases precision of point3d_to_2d.
+- Plane3D: plane intersections.
+
+#### faces.py
+- ToroidalFace3D: PlaneFace3D intersections.
+- PlaneFace3D: circle_intersections. planeface_intersections
+- BsplineFace3D: adjacent_direction_uu
+- PlaneFace3D: project_faces (check first if surfaces are coincident)
+
+#### wires.py
+- delete remaining inplace methods in wires.py
+
+#### shells.py
+- Fixes to boolean operations. Added some tolerance parameters to some methods. 
+- Shell3D: get_geo_lines (consider edge.inverse in get_edge_index_in_list check), is_shell_open
+- DisplayTriangleShell3D: eq, data_eq, hash, data_hash, concatenate
+
+#### surfaces.py 
+- SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
+- add bigger precision to plane-plane intersections.
+
+#### utils
+- common_operations separate_points_by_closeness: consider more than two cluster groups.
+
+#### curves.py
+- Circle3D: circle_intersectios when the circle are coplanar.
+- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
+
+#### surfaces.py
+- ExtrusionSurface3D: enhance parametric operations.
+
+#### edges.py
+- bsplineCurve: line_intersections. 
+
+#### discrete_representation.py
+- MatrixBasedVoxelization: _logical_operation
+- Remove inheritance from ABC for platform usage
+
+#### cad_simplification.py
+- Remove inheritance from ABC for platform usage
 
 ### Refactor
--
+- Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
+- Voxelization: refactor class methods
+
+#### core.py
+- babylon_data: avoid using bounding_box for performance
+- BoundingBox: uses numpy to improve performance.
+
+#### core_compiled
+- Frame2D: fix rotation, now it has an optional parameter rotate_basis, set to False by default option, so the user can specify if he wants to rotate also the basis of the frame.
+
+#### edges.py
+- Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
+- Arc2D: Arc 2D now must follow the same rotation direction of its circle.
+- LineSegment2D/3D: The line attribute from which the line segment was defined was converted to a property, for performance and memory efficiency reasons.
+- BSplineCurve: improve line_intersections performance. 
+
+#### faces.py
+- Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
+
+#### primitives3d.py
+- Sweep: accepts an optional parameter starting_frame that can control the orientation of the profile.
+- Block: get_bounding_box
+
+#### shells.py
+- boolean operations - now works also for triangle meshed objects, containing coincident faces.
+#### surfaces.py
+- ExtrusionSurface3D: Uses edge abscissa as u parameter.
+- ExtrusionSurface3D: general improvements in parametric operations.
+
 
 ### Changed
--
+- ToroidalSurface3D: init param tore_radius and small_radius changed to major_radius and minor_radius respectevely.
+- ToroidalSurface3D: plots now use Circles 3D instead of ClosedPolygon3D. Performance improved.
+- CylindricalSurface3D: More comprehesive plot
+- BoundingBox: from_bounding_boxes
+- BSplineCurve: improve line_intersections performance.
+- core_compiled.pyx: update typing because Point2D, Point3D, Vector2D and Vector3D are now extension types (C structures.)
+- BSplineCurve: improve line_intersections performance.
+- SphericalSurface3D: enhance bsplinecurve3d_to_2d.
+
 
 ### Unittests
-- ToroidalSurface3D: line_intersections, plane_intersections
+#### curves 
+- Circle3D: new case to test_circle_intersections, new test: test_point_distance.
+#### surfaces
+- ToroidalSurface3D: test_line_intersections, test_plane_intersections, test_cylindrical_surface_intersections, test_circle_intersections
+- CylindricalSurface3D:  test_circle_intersections.
+#### faces
 - ToroidalFace3D: PlaneFace3D intersectios.
+- SphericalSurface3D: circle_intersections, arc_intersections, arcellipse_intersections
+- PlaneFace3D: point_belongs
+#### core
+- BoundingBox: is_close, scale
+#### primitives3d
+- Block: from_bounding_box, get_bounding_box
 
 ## v0.14.0
 
@@ -71,7 +206,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Matrix based discrete representation: boolean operations
 - read the docs settings
 - fix: move code complexity at end
-- 
+- ClosedPolygon2D: points_in_polygon, fix include_edge_points
+- ClosedShell3D: is_face_between_shells
+
 ### Refactor
 - TriangleShell3D: various improvement such as get_bounding_box, to_mesh_data, from_mesh_data, to_dict, dict_to_object
 
@@ -163,7 +300,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: transform some attributs into lazy evaluation and Caching
 - BSplineSurface3D: store control_points as numpy array for memory efficiency
 - PlaneFace3D: distance_to_point -> point_distance
-- remove normalize() methods
+- remove normalize() methods for Vectors. Replaced by unit_vector(), it returns a new normalized vector.
 - Cylinder / Cone / HollowCylinder: docstrings, typings, style, coherence
 - BSplineSurface3D: point3d_to_2d performance improvements.
 
@@ -257,7 +394,7 @@ All adequations have been done for all tests and existing scripts.
 
 - bspline_compiled: refactor binomial_coefficient for performance.
 - Improve step translator.
-- Delete inplace methods: rotation, translation and frame_mapping
+- Delete inplace methods: rotation, translation and frame_mapping. replace by juste the rotation, translation and frame_mapping. objects are no longer changed inplace, a new transformed object is returned each time.
 - OpenShell3D: faces_graph.
 - RevolutionSurface3D: Improve init and methods
 

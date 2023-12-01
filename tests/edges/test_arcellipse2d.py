@@ -89,8 +89,8 @@ class TestArcEllipse2D(unittest.TestCase):
         lineseg = edges.LineSegment2D(volmdlr.Point2D(2, -1), volmdlr.Point2D(-2, 2))
         inters = self.arc_ellipse2d.linesegment_intersections(lineseg)
         self.assertEqual(len(inters), 2)
-        self.assertTrue(inters[0].is_close(volmdlr.Point2D(-0.5154201866080642, 0.8865651399560482)))
-        self.assertTrue(inters[1].is_close(volmdlr.Point2D(1.0636435368618713, -0.29773265264640336)))
+        self.assertTrue(inters[1].is_close(volmdlr.Point2D(-0.5154201866080642, 0.8865651399560482)))
+        self.assertTrue(inters[0].is_close(volmdlr.Point2D(1.0636435368618713, -0.29773265264640336)))
 
     def test_translation(self):
         translated_ellipse = self.arc_ellipse2d.translation(volmdlr.Vector2D(1, 1))

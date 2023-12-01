@@ -3,7 +3,6 @@
 """
 Base classes.
 """
-
 import os
 import tempfile
 import warnings
@@ -26,6 +25,7 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
+from volmdlr.discrete_representation_compiled import triangle_intersects_voxel
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
 
@@ -59,7 +59,9 @@ def point_in_list(point, list_points, tol: float = 1e-6):
     :return: True if there is a point inside the list close to the point to given tolerance.
     """
 
-    return element_in_list(point, list_points, tol)
+    if not list_points:
+        return False
+    return point.in_list(list_points, tol)
 
 
 def edge_in_list(edge, list_edges, tol: float = 1e-6):
@@ -145,6 +147,78 @@ def delete_double_point(list_point):
         else:
             continue
     return points
+
+
+def map_primitive_with_initial_and_final_frames(primitive, initial_frame, final_frame):
+    """
+    Frame maps a primitive in an assembly to its good position.
+
+    :param primitive: primitive to map
+    :type primitive: Primitive3D
+    :param initial_frame: Initial frame
+    :type initial_frame: volmdlr.Frame3D
+    :param final_frame: The frame resulted after applying a transformation to the initial frame
+    :type final_frame: volmdlr.Frame3D
+    :return: A new positioned primitive
+    :rtype: Primitive3D
+
+    """
+    if initial_frame == final_frame:
+        return primitive
+    basis_a = initial_frame.basis()
+    basis_b = final_frame.basis()
+    matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+                          [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                          [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+    matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+                          [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                          [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+    transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
+    u_vector = volmdlr.Vector3D(*transfer_matrix[0])
+    v_vector = volmdlr.Vector3D(*transfer_matrix[1])
+    w_vector = volmdlr.Vector3D(*transfer_matrix[2])
+    new_frame = volmdlr.Frame3D(final_frame.origin, u_vector, v_vector, w_vector)
+    if new_frame == volmdlr.OXYZ:
+        return primitive
+    new_primitive = primitive.frame_mapping(new_frame, 'old')
+    return new_primitive
+
+
+def helper_babylon_data(babylon_data, display_points):
+    """Helper function to babylon_data."""
+    # Compute max length in each direction
+    all_positions = []
+    all_points = []
+    for mesh in babylon_data["meshes"]:
+        positions = mesh["positions"]
+        all_positions.extend(positions)
+    for line in babylon_data["lines"]:
+        points = line["points"]
+        all_points.extend(points)
+    if display_points:
+        all_points.extend(display_points)
+    # Convert to a NumPy array and reshape
+    positions_array = npy.array([])
+    if all_points and all_positions:
+        positions_array = npy.concatenate((npy.array(all_positions).reshape(-1, 3), npy.array(all_points)))
+    elif all_positions:
+        positions_array = npy.array(all_positions).reshape(-1, 3)
+    elif all_points:
+        positions_array = npy.array(all_points)
+    # Compute min and max for each dimension
+    min_vals = positions_array.min(axis=0)
+    max_vals = positions_array.max(axis=0)
+
+    # Calculate max length of the bounding box
+    max_length = npy.max(max_vals - min_vals)
+
+    # Calculate center point of the bounding box
+    center = (0.5 * (min_vals + max_vals)).tolist()
+
+    babylon_data['max_length'] = max_length
+    babylon_data['center'] = center
+
+    return babylon_data
 
 
 @dataclass
@@ -440,10 +514,10 @@ class BoundingRectangle(dc.DessiaObject):
         :return: The bounding rectangle initialized from the list of points.
         :rtype: BoundingRectangle
         """
-        xmin = min(pt.x for pt in points)
-        xmax = max(pt.x for pt in points)
-        ymin = min(pt.y for pt in points)
-        ymax = max(pt.y for pt in points)
+        points_array = npy.array(points)
+        # Compute min and max for each dimension
+        xmin, ymin = points_array.min(axis=0)
+        xmax, ymax = points_array.max(axis=0)
         return cls(xmin, xmax, ymin, ymax, name=name)
 
 
@@ -575,10 +649,6 @@ class BoundingBox(dc.DessiaObject):
                       [self.points[6], self.points[7]],
                       [self.points[7], self.points[4]]]
 
-        # x = [p[0] for p in self.points]
-        # y = [p[1] for p in self.points]
-        # z = [p[2] for p in self.points]
-        # ax.scatter(x, y, z, color)
         for edge in bbox_edges:
             ax.plot3D([edge[0][0], edge[1][0]],
                       [edge[0][1], edge[1][1]],
@@ -590,32 +660,29 @@ class BoundingBox(dc.DessiaObject):
         return ax
 
     @classmethod
-    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"], name: str = '') -> "BoundingBox":
+    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"], name: str = "") -> "BoundingBox":
         """
-        Creates a bounding box that contains multiple bounding boxes.
+        Create a bounding box that contains multiple bounding boxes.
 
         :param bounding_boxes: A list of bounding boxes that need to be contained.
-        :type bounding_boxes: list of BoundingBox
+        :type bounding_boxes: List[BoundingBox]
+        :param name: A name for the bounding box, optional.
+        :type name: str
+
         :return: A new bounding box that contains all the input bounding boxes.
         :rtype: BoundingBox
         """
-        xmin = min(bb.xmin for bb in bounding_boxes)
-        xmax = max(bb.xmax for bb in bounding_boxes)
-        x_length = xmax - xmin
-        xmin -= x_length * 0.001
-        xmax += x_length * 0.001
+        # Create a 2D NumPy array where each row corresponds to the coordinates of a bounding box
+        # [xmin, xmax, ymin, ymax, zmin, zmax]
+        coords = npy.array([[bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax] for bb in bounding_boxes])
 
-        ymin = min(bb.ymin for bb in bounding_boxes)
-        ymax = max(bb.ymax for bb in bounding_boxes)
-        y_length = ymax - ymin
-        ymin -= y_length * 0.001
-        ymax += y_length * 0.001
+        # Find the global minimum and maximum for each axis
+        mins = npy.amin(coords, axis=0)
+        maxs = npy.amax(coords, axis=0)
 
-        zmin = min(bb.zmin for bb in bounding_boxes)
-        zmax = max(bb.zmax for bb in bounding_boxes)
-        z_length = zmax - zmin
-        zmin -= z_length * 0.001
-        zmax += z_length * 0.001
+        # Assign min and max for each axis
+        xmin, xmax, ymin, ymax, zmin, zmax = mins[0], maxs[1], mins[2], maxs[3], mins[4], maxs[5]
+
         return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     @classmethod
@@ -629,14 +696,11 @@ class BoundingBox(dc.DessiaObject):
         :return: The bounding box initialized from the list of points.
         :rtype: BoundingBox
         """
-        # if len(points) == 0:
-        #     return (0, 0, 0, 0, 0, 0)
-        xmin = min(pt.x for pt in points)
-        xmax = max(pt.x for pt in points)
-        ymin = min(pt.y for pt in points)
-        ymax = max(pt.y for pt in points)
-        zmin = min(pt.z for pt in points)
-        zmax = max(pt.z for pt in points)
+        points_array = npy.array(points)
+        # Compute min and max for each dimension
+        xmin, ymin, zmin = points_array.min(axis=0)
+        xmax, ymax, zmax = points_array.max(axis=0)
+
         return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     def to_frame(self) -> volmdlr.Frame3D:
@@ -692,8 +756,37 @@ class BoundingBox(dc.DessiaObject):
         :return: The volume of the bounding box.
         :rtype: float
         """
-        return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
-                self.zmax - self.zmin)
+        return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (self.zmax - self.zmin)
+
+    def scale(self, factor: float) -> "BoundingBox":
+        """
+        Scales the bounding box by a given factor and returns a new BoundingBox.
+
+        :param factor: The scaling factor.
+        :type factor: float
+
+        :return: A new scaled BoundingBox.
+        :rtype: BoundingBox
+        """
+        x_center = (self.xmin + self.xmax) / 2
+        y_center = (self.ymin + self.ymax) / 2
+        z_center = (self.zmin + self.zmax) / 2
+        x_size, y_size, z_size = self.size
+
+        scaled_half_x_size = (x_size * factor) / 2
+        scaled_half_y_size = (y_size * factor) / 2
+        scaled_half_z_size = (z_size * factor) / 2
+
+        # Calculate new min and max values
+        new_xmin = x_center - scaled_half_x_size
+        new_xmax = x_center + scaled_half_x_size
+        new_ymin = y_center - scaled_half_y_size
+        new_ymax = y_center + scaled_half_y_size
+        new_zmin = z_center - scaled_half_z_size
+        new_zmax = z_center + scaled_half_z_size
+
+        # Return a new BoundingBox object
+        return BoundingBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax, self.name)
 
     def bbox_intersection(self, bbox2: "BoundingBox", tol: float = 1e-6) -> bool:
         """
@@ -705,15 +798,6 @@ class BoundingBox(dc.DessiaObject):
         :return: A boolean value indicating whether the two bounding boxes intersect (True) or not (False).
         :rtype: bool
         """
-        # if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
-        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-        #         return True
-        # if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
-        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-        #         return True
-        # return False
         warnings.warn('bbox_intersection is deprecated, please use is_intersecting instead')
         return self.is_intersecting(bbox2, tol)
 
@@ -762,6 +846,22 @@ class BoundingBox(dc.DessiaObject):
 
         return lx * ly * lz
 
+    def is_intersecting_triangle(self, triangle: "Triangle3D") -> bool:
+        """
+        Check if the bounding box and a triangle are intersecting or touching.
+
+        :param triangle: the triangle to check if there is an intersection with.
+        :type triangle: Triangle3D
+
+        :return: True if the bounding box and the triangle are intersecting or touching, False otherwise.
+        :rtype: bool
+        """
+        _triangle = tuple((point.x, point.y, point.z) for point in triangle.points)
+        _center = (self.center[0], self.center[1], self.center[2])
+        _extents = tuple(size / 2 for size in self.size)
+
+        return triangle_intersects_voxel(_triangle, _center, _extents)
+
     def distance_to_bbox(self, bbox2: "BoundingBox") -> float:
         """
         Calculates the distance between the bounding box and another bounding box.
@@ -775,7 +875,7 @@ class BoundingBox(dc.DessiaObject):
         :rtype: float
         """
 
-        if self.bbox_intersection(bbox2):
+        if self.is_intersecting(bbox2):
             return 0
 
         permute_bbox1 = self
@@ -847,6 +947,27 @@ class BoundingBox(dc.DessiaObject):
             dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
+    def is_close(self, other_bounding_box: "BoundingBox", tol: float = 1e-6) -> bool:
+        """
+        Check if two bounding boxes are close to each other considering the Euclidean distance of their corners points.
+
+        The tolerance can be modified.
+
+        :param other_bounding_box: the other bounding box.
+        :type other_bounding_box: BoundingBox
+        :param tol: The tolerance under which the Euclidean distance is considered equal to 0.
+        :type tol: float
+
+        :return: True if the bounding boxes are equal at the given tolerance, False otherwise.
+        :rtype: bool
+        """
+        self_corner_min = volmdlr.Point3D(self.xmin, self.ymin, self.zmin)
+        self_conrer_max = volmdlr.Point3D(self.xmax, self.ymax, self.zmax)
+        other_corner_min = volmdlr.Point3D(other_bounding_box.xmin, other_bounding_box.ymin, other_bounding_box.zmin)
+        other_corner_max = volmdlr.Point3D(other_bounding_box.xmax, other_bounding_box.ymax, other_bounding_box.zmax)
+
+        return self_corner_min.is_close(other_corner_min, tol) and self_conrer_max.is_close(other_corner_max, tol)
+
     def octree(self):
         """Creates a simple octree structure for a bounding box."""
         if not self._octree:
@@ -888,7 +1009,7 @@ class Assembly(dc.PhysicalObject):
         self.components = components
         self.frame = frame
         self.positions = positions
-        self.primitives = [self.map_primitive(primitive, frame, frame_primitive)
+        self.primitives = [map_primitive_with_initial_and_final_frames(primitive, frame, frame_primitive)
                            for primitive, frame_primitive in zip(components, positions)]
         self._bbox = None
         dc.PhysicalObject.__init__(self, name=name)
@@ -925,6 +1046,7 @@ class Assembly(dc.PhysicalObject):
 
         babylon_data = {'meshes': [],
                         'lines': []}
+        display_points = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
@@ -936,17 +1058,9 @@ class Assembly(dc.PhysicalObject):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
-
-        bbox = self.bounding_box
-        center = bbox.center
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
-
-        babylon_data['max_length'] = max_length
-        babylon_data['center'] = list(center)
-
-        return babylon_data
+            elif isinstance(primitive, volmdlr.Point3D):
+                display_points.append(primitive)
+        return helper_babylon_data(babylon_data, display_points)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -957,41 +1071,6 @@ class Assembly(dc.PhysicalObject):
         new_positions = [position.frame_mapping(frame, side)
                          for position in self.positions]
         return Assembly(self.components, new_positions, self.frame, self.name)
-
-    @staticmethod
-    def map_primitive(primitive, global_frame, transformed_frame):
-        """
-        Frame maps a primitive in an assembly to its good position.
-
-        :param primitive: primitive to map
-        :type primitive: Primitive3D
-        :param global_frame: Assembly frame
-        :type global_frame: volmdlr.Frame3D
-        :param transformed_frame: position of the primitive on the assembly
-        :type transformed_frame: volmdlr.Frame3D
-        :return: A new positioned primitive
-        :rtype: Primitive3D
-
-        """
-        if global_frame == transformed_frame:
-            return primitive
-        basis_a = global_frame.basis()
-        basis_b = transformed_frame.basis()
-        matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
-                              [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
-                              [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
-        matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
-                              [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
-                              [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
-        transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
-        u_vector = volmdlr.Vector3D(*transfer_matrix[0])
-        v_vector = volmdlr.Vector3D(*transfer_matrix[1])
-        w_vector = volmdlr.Vector3D(*transfer_matrix[2])
-        new_frame = volmdlr.Frame3D(transformed_frame.origin, u_vector, v_vector, w_vector)
-        if new_frame == volmdlr.OXYZ:
-            return primitive
-        new_primitive = primitive.frame_mapping(new_frame, 'old')
-        return new_primitive
 
     def volmdlr_primitives(self):
         return [self]
@@ -1150,6 +1229,7 @@ class Compound(dc.PhysicalObject):
 
         babylon_data = {'meshes': [],
                         'lines': []}
+        display_points = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
@@ -1161,17 +1241,9 @@ class Compound(dc.PhysicalObject):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
-
-        bbox = self.bounding_box
-        center = bbox.center
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
-
-        babylon_data['max_length'] = max_length
-        babylon_data['center'] = list(center)
-
-        return babylon_data
+            elif isinstance(primitive, volmdlr.Point3D):
+                display_points.append(primitive)
+        return helper_babylon_data(babylon_data, display_points)
 
     def volmdlr_primitives(self):
         """Return primitives."""
@@ -1358,6 +1430,7 @@ class VolumeModel(dc.PhysicalObject):
 
         babylon_data = {'meshes': [],
                         'lines': []}
+        display_points = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
@@ -1369,17 +1442,9 @@ class VolumeModel(dc.PhysicalObject):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
-
-        bbox = self.bounding_box
-        center = bbox.center
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
-
-        babylon_data['max_length'] = max_length
-        babylon_data['center'] = list(center)
-
-        return babylon_data
+            elif isinstance(primitive, volmdlr.Point3D):
+                display_points.append(primitive)
+        return helper_babylon_data(babylon_data, display_points)
 
     @classmethod
     def babylonjs_script(cls, babylon_data, use_cdn=True, **kwargs):
@@ -1553,7 +1618,7 @@ class VolumeModel(dc.PhysicalObject):
 
         lines.append('Mesh.CharacteristicLengthMin = 0;')
         lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
-        lines.append('Geometry.Tolerance = 1e-6;')
+        lines.append('Geometry.Tolerance = 1e-5;')
         lines.append('Mesh.AngleToleranceFacetOverlap = 0.01;')
         lines.append('General.Verbosity = 0;')
 
@@ -1781,6 +1846,7 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def update_surfaces_list(face_contours, surfaces, contours, i):
+        """Update surfaces list."""
         for k_f, face_c in enumerate(face_contours):
             for l_c, contour_l in enumerate(contours):
                 for c_c, contour in enumerate(contour_l):
@@ -1977,6 +2043,7 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def get_nodes_lines(gmsh_model):
+        """Get nodes lines."""
         lines_nodes = []
         lines_nodes.append('$Nodes')
 
@@ -2083,10 +2150,24 @@ class MovingVolumeModel(VolumeModel):
                 meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 primitives_to_meshes.append(i_prim)
 
-        bbox = self._bounding_box()
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
+        # Compute max length in each direction
+        all_positions = []
+        for mesh in meshes:
+            positions = mesh["positions"]
+            all_positions.extend(positions)
+
+        # Convert to a NumPy array and reshape
+        positions_array = npy.array(all_positions).reshape(-1, 3)
+
+        # Compute min and max for each dimension
+        min_vals = positions_array.min(axis=0)
+        max_vals = positions_array.max(axis=0)
+
+        # Calculate max length of the bounding box
+        max_length = npy.max(max_vals - min_vals)
+
+        # Calculate center point of the bounding box
+        center = (0.5 * (min_vals + max_vals)).tolist()
 
         steps = []
         for istep, frames in enumerate(self.step_frames):
@@ -2107,6 +2188,6 @@ class MovingVolumeModel(VolumeModel):
 
         babylon_data = {'meshes': meshes,
                         'max_length': max_length,
-                        'center': list(bbox.center),
+                        'center': center,
                         'steps': steps}
         return babylon_data

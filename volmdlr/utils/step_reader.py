@@ -1,7 +1,10 @@
 """
 volmdlr utils for importing step files.
 """
+from re import search as re_search
+
 import numpy as npy
+
 import volmdlr
 import volmdlr.shells as vmshells
 from volmdlr import surfaces
@@ -66,7 +69,7 @@ def step_split_arguments(function_arg):
     return arguments
 
 
-def uncertainty_measure_with_unit(arguments, object_dict):
+def uncertainty_measure_with_unit(arguments, object_dict, *args, **kwargs):
     """
     Gets the length uncertainty related to the shape representation.
 
@@ -78,7 +81,7 @@ def uncertainty_measure_with_unit(arguments, object_dict):
     return length_measure * object_dict[arguments[1]]
 
 
-def conversion_based_unit_length_unit_named_unit(arguments, object_dict):
+def conversion_based_unit_length_unit_named_unit(arguments, object_dict, *args, **kwargs):
     """
     Gets the conversion based unit length.
 
@@ -89,7 +92,7 @@ def conversion_based_unit_length_unit_named_unit(arguments, object_dict):
     return object_dict[arguments[1]]
 
 
-def length_measure_with_unit(arguments, object_dict):
+def length_measure_with_unit(arguments, object_dict, *args, **kwargs):
     """
     Calculates the step file's SI unit conversion factor.
 
@@ -105,7 +108,7 @@ def length_measure_with_unit(arguments, object_dict):
     return length_measure * length_si_unit
 
 
-def conversion_based_unit_named_unit_plane_angle_unit(arguments, object_dict):
+def conversion_based_unit_named_unit_plane_angle_unit(arguments, object_dict, *args, **kwargs):
     """
     Gets the conversion based plane unit angle.
 
@@ -146,7 +149,7 @@ def named_unit_length_unit_si_unit(arguments, *args, **kwargs):
     return SI_PREFIX[arguments[1]]
 
 
-def plane_angle_measure_with_unit(arguments, object_dict):
+def plane_angle_measure_with_unit(arguments, object_dict, *args, **kwargs):
     """
     Returns the angle plane measure with the right unit.
 
@@ -171,7 +174,7 @@ def length_unit_named_unit_si_unit(arguments, *args, **kwargs):
 
 
 def geometric_representation_context_global_uncertainty_assigned_context_global_unit_assigned_context_representation_context(
-        arguments, object_dict):
+        arguments, object_dict, *args, **kwargs):
     """
     Gets the global length uncertainty.
 
@@ -185,21 +188,21 @@ def geometric_representation_context_global_uncertainty_assigned_context_global_
     return length_global_uncertainty, length_conversion_factor, angle_conversion_factor
 
 
-def vertex_point(arguments, object_dict):
+def vertex_point(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a VERTEX.
     """
     return object_dict[arguments[1]]
 
 
-def axis1_placement(arguments, object_dict):
+def axis1_placement(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a AXIS1_PLACEMENT.
     """
     return object_dict[arguments[1]], object_dict[arguments[2]]
 
 
-def oriented_edge(arguments, object_dict):
+def oriented_edge(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of an ORIENTED_EDGE.
     """
@@ -212,7 +215,7 @@ def oriented_edge(arguments, object_dict):
     return object_dict[arguments[3]].reverse()
 
 
-def face_outer_bound(arguments, object_dict):
+def face_outer_bound(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a FACE_OUTER_BOUND.
 
@@ -224,12 +227,15 @@ def face_outer_bound(arguments, object_dict):
     :return: A Contour3D representing the BREP of a face.
     :rtype: volmdlr.wires.Contour3D
     """
-    if arguments[2] == '.T.':
-        return object_dict[arguments[1]]
-    return object_dict[arguments[1]].invert()
+    contour = object_dict[arguments[1]]
+    if contour and arguments[2] == '.F.':
+        contour = object_dict[arguments[1]].invert()
+    if contour:
+        contour.name = "face_outer_bound"
+    return contour
 
 
-def face_bound(arguments, object_dict):
+def face_bound(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a FACE_BOUND.
 
@@ -244,7 +250,7 @@ def face_bound(arguments, object_dict):
     return object_dict[arguments[1]]
 
 
-def surface_curve(arguments, object_dict):
+def surface_curve(arguments, object_dict, *args, **kwargs):
     """
     Returns xx.
 
@@ -259,7 +265,7 @@ def surface_curve(arguments, object_dict):
     return object_dict[arguments[1]]
 
 
-def seam_curve(arguments, object_dict):
+def seam_curve(arguments, object_dict, *args, **kwargs):
     """
     Returns xx.
 
@@ -273,7 +279,7 @@ def seam_curve(arguments, object_dict):
     return object_dict[arguments[1]]
 
 
-def trimmed_curve(arguments, object_dict):
+def trimmed_curve(arguments, object_dict, *args, **kwargs):
     """
     Returns xx.
 
@@ -286,21 +292,41 @@ def trimmed_curve(arguments, object_dict):
     """
 
     curve = object_dict[arguments[1]]
-    point1 = object_dict[int(arguments[2][0][1:])]
-    point2 = object_dict[int(arguments[3][0][1:])]
+    if arguments[5] == '.PARAMETER.':
+        length_conversion_factor = kwargs.get("length_conversion_factor")
+        abscissa1 = _helper_get_parameter_value(arguments[2]) * length_conversion_factor
+        abscissa2 = _helper_get_parameter_value(arguments[3]) * length_conversion_factor
+        point1 = curve.point_at_abscissa(abscissa1)
+        point2 = curve.point_at_abscissa(abscissa2)
+    else:
+        point1 = object_dict[int(arguments[2][0][1:])]
+        point2 = object_dict[int(arguments[3][0][1:])]
     if curve.__class__.__name__ == "Line3D" and point1.is_close(point2):
         return None
     return curve.trim(point1=point1, point2=point2)
 
 
-def vertex_loop(arguments, object_dict):
+def _helper_get_parameter_value(string):
+    # Define a regular expression pattern to match the numerical value
+    pattern = r'\((-?\d+\.\d+)\)'
+
+    # Use re.search to find the match
+    match = re_search(pattern, string)
+
+    if match:
+        numerical_value = float(match.group(1))
+        return numerical_value
+    raise ValueError("No numerical value found in the input string.")
+
+
+def vertex_loop(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a VERTEX_LOOP.
     """
     return object_dict[arguments[1]]
 
 
-def composite_curve_segment(arguments, object_dict):
+def composite_curve_segment(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a COMPOSITE_CURVE_SEGMENT.
     """
@@ -315,7 +341,7 @@ def composite_curve_segment(arguments, object_dict):
     return edge
 
 
-def composite_curve(arguments, object_dict):
+def composite_curve(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a COMPOSITE_CURVE.
     """
@@ -324,18 +350,18 @@ def composite_curve(arguments, object_dict):
     first_primitive = list_primitives[0]
     last_primitive = list_primitives[-1]
     if first_primitive.start.is_close(last_primitive.end):
-        return volmdlr.wires.Contour3D(list_primitives, name)
-    return volmdlr.wires.Wire3D(list_primitives, name)
+        return volmdlr.wires.Contour3D(list_primitives, name=name)
+    return volmdlr.wires.Wire3D(list_primitives, name=name)
 
 
-def pcurve(arguments, object_dict):
+def pcurve(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a PCURVE.
     """
     return object_dict[arguments[1]]
 
 
-def geometric_curve_set(arguments, object_dict):
+def geometric_curve_set(arguments, object_dict, *args, **kwargs):
     """
     Returns xx.
 
@@ -354,7 +380,7 @@ def geometric_curve_set(arguments, object_dict):
     return sub_objects
 
 
-def geometric_set(arguments, object_dict):
+def geometric_set(arguments, object_dict, *args, **kwargs):
     """
     Returns xx.
 
@@ -372,7 +398,7 @@ def geometric_set(arguments, object_dict):
     return primitives
 
 
-def shell_based_surface_model(arguments, object_dict):
+def shell_based_surface_model(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a Shell3D.
     """
@@ -384,7 +410,7 @@ def shell_based_surface_model(arguments, object_dict):
     return compound
 
 
-def oriented_closed_shell(arguments, object_dict):
+def oriented_closed_shell(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a Shell3D.
     """
@@ -392,7 +418,7 @@ def oriented_closed_shell(arguments, object_dict):
     return object_dict[arguments[2]]
 
 
-def item_defined_transformation(arguments, object_dict):
+def item_defined_transformation(arguments, object_dict, *args, **kwargs):
     """
     Returns xx.
 
@@ -412,7 +438,7 @@ def item_defined_transformation(arguments, object_dict):
     return [volmdlr_object1, volmdlr_object2]
 
 
-def manifold_surface_shape_representation(arguments, object_dict):
+def manifold_surface_shape_representation(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a manifold_surface_shape_representation, interpreted as shell3D.
     """
@@ -424,8 +450,9 @@ def manifold_surface_shape_representation(arguments, object_dict):
         if isinstance(primitive, volmdlr.core.Compound):
             counter = 0
             for sub_prim in primitive.primitives:
-                sub_prim.name = arguments[0][1:-1] + str(counter)
-                counter += 1
+                if sub_prim:
+                    sub_prim.name = arguments[0][1:-1] + str(counter)
+                    counter += 1
             primitives.append(primitive)
     if len(primitives) == 1:
         return primitives[0]
@@ -434,14 +461,14 @@ def manifold_surface_shape_representation(arguments, object_dict):
     return compound
 
 
-def faceted_brep(arguments, object_dict):
+def faceted_brep(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a faceted_brep entity, interpreted as shell3D.
     """
     return object_dict[arguments[1]]
 
 
-def faceted_brep_shape_representation(arguments, object_dict):
+def faceted_brep_shape_representation(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a faceted_brep_shape_representation, interpreted as shell3D.
     """
@@ -456,21 +483,21 @@ def faceted_brep_shape_representation(arguments, object_dict):
     return volmdlr.core.Compound(shells)
 
 
-def manifold_solid_brep(arguments, object_dict):
+def manifold_solid_brep(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a manifold_solid_brep with voids.
     """
     return object_dict[arguments[1]]
 
 
-def brep_with_voids(arguments, object_dict):
+def brep_with_voids(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a BREP with voids.
     """
     return object_dict[arguments[1]]
 
 
-def shape_representation(arguments, object_dict):
+def shape_representation(arguments, object_dict, *args, **kwargs):
     """
     Returns xx.
 
@@ -519,7 +546,7 @@ def shape_representation(arguments, object_dict):
     return shells
 
 
-def advanced_brep_shape_representation(arguments, object_dict):
+def advanced_brep_shape_representation(arguments, object_dict, *args, **kwargs):
     """
     Returns xx.
 
@@ -549,7 +576,7 @@ def advanced_brep_shape_representation(arguments, object_dict):
     return compound
 
 
-def geometrically_bounded_surface_shape_representation(arguments, object_dict):
+def geometrically_bounded_surface_shape_representation(arguments, object_dict, *args, **kwargs):
     """
     Returns xx.
 
@@ -571,7 +598,7 @@ def geometrically_bounded_surface_shape_representation(arguments, object_dict):
     return primitives[0]
 
 
-def geometrically_bounded_wireframe_shape_representation(arguments, object_dict):
+def geometrically_bounded_wireframe_shape_representation(arguments, object_dict, *args, **kwargs):
     """
     Returns xx.
 
@@ -585,7 +612,9 @@ def geometrically_bounded_wireframe_shape_representation(arguments, object_dict)
     """
     primitives = []
     for arg in arguments[1]:
-        primitives.extend(object_dict[int(arg[1:])])
+        prim = object_dict[int(arg[1:])]
+        if isinstance(prim, list):
+            primitives.extend(prim)
     if len(primitives) > 1:
         compound = volmdlr.core.Compound(primitives, name=arguments[0])
         compound.compound_type = "geometric_curve_set"
@@ -633,7 +662,7 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
 
 
 def representation_relationship_representation_relationship_with_transformation_shape_representation_relationship(
-        arguments, object_dict):
+        arguments, object_dict, *args, **kwargs):
     """
     Representation relationship with transformation shape. To clarify.
     """
@@ -654,7 +683,7 @@ def representation_relationship_representation_relationship_with_transformation_
 
 
 def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
-        arguments, object_dict):
+        arguments, object_dict, *args, **kwargs):
     """
     Bounded b spline with knots curve geometric representation item. To clarify.
     """
@@ -671,7 +700,7 @@ def bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_repre
 
 
 def b_spline_curve_b_spline_curve_with_knots_rational_b_spline_curve_bounded_curve_representation_item_geometric_representation_item_curve(
-        arguments, object_dict):
+        arguments, object_dict, *args, **kwargs):
     """
     Bounded b spline with knots curve geometric representation item. To clarify.
     """
@@ -679,7 +708,7 @@ def b_spline_curve_b_spline_curve_with_knots_rational_b_spline_curve_bounded_cur
 
 
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
-        arguments, object_dict):
+        arguments, object_dict, *args, **kwargs):
     """
     Bounded b spline surface with knots curve geometric representation item. To clarify.
     """
@@ -695,7 +724,7 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_repre
 
 
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometric_representation_item_rational_b_spline_surface_representation_item(
-        arguments, object_dict):
+        arguments, object_dict, *args, **kwargs):
     """
     Bounded b spline surface with knots curve geometric representation item. To clarify.
     """
@@ -703,35 +732,35 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometr
         arguments, object_dict)
 
 
-def b_spline_surface_b_spline_surface_with_knots_rational_b_spline_surface_bounded_surface_representation_item_geometric_representation_item_surface(arguments, object_dict):
+def b_spline_surface_b_spline_surface_with_knots_rational_b_spline_surface_bounded_surface_representation_item_geometric_representation_item_surface(arguments, object_dict, *args, **kwargs):
     """
     Bounded b spline surface with knots curve geometric representation item. To clarify.
     """
     return bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
         arguments, object_dict)
 
-def product_definition_shape(arguments, object_dict):
+def product_definition_shape(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a product_definition_shape.
     """
     return object_dict[arguments[2]]
 
 
-def product_definition(arguments, object_dict):
+def product_definition(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a product_definition.
     """
     return object_dict[arguments[2]]
 
 
-def product_definition_formation(arguments, object_dict):
+def product_definition_formation(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a product_definition_formation.
     """
     return object_dict[arguments[2]]
 
 
-def product_definition_formation_with_specified_source(arguments, object_dict):
+def product_definition_formation_with_specified_source(arguments, object_dict, *args, **kwargs):
     """
     Returns the data in case of a product_definition_formation_with_specified_source.
     """

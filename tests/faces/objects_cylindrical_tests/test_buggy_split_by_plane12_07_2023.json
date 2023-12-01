@@ -13,7 +13,7 @@
         "z": 0.329066417629
       },
       "normal": {
-        "object_class": "volmdlr.Point3D",
+        "object_class": "volmdlr.Vector3D",
         "x": -0.13415147089978718,
         "y": -0.9370615685963822,
         "z": -0.322364699548681
@@ -43,7 +43,7 @@
             "z": 0.9456090820844187
           },
           "w": {
-            "object_class": "volmdlr.Point3D",
+            "object_class": "volmdlr.Vector3D",
             "x": -0.13415147089978718,
             "y": -0.9370615685963822,
             "z": -0.322364699548681
@@ -110,7 +110,7 @@
           "z": -0.33593409792716383
         },
         "w": {
-          "object_class": "volmdlr.Point3D",
+          "object_class": "volmdlr.Vector3D",
           "x": 0.33174213539688263,
           "y": -0.5750950277810633,
           "z": -0.7478053654687257

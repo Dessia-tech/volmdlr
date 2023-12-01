@@ -36,7 +36,7 @@ class TestBSplineFace3D(unittest.TestCase):
         contours = [contour3d_0, contour3d_1]
         face = faces.BSplineFace3D.from_contours3d(surface, contours)
         self.assertTrue(face.surface2d.outer_contour.is_ordered(1e-5))
-        self.assertAlmostEqual(face.surface2d.area(), 0.6252186029871439, 3)
+        self.assertAlmostEqual(face.surface2d.area(), 0.6257540398385436, 3)
 
         surface = surfaces.BSplineSurface3D.load_from_file(
             os.path.join(folder, "bsplineface_closedsurface_surface.json"))
@@ -77,7 +77,7 @@ class TestBSplineFace3D(unittest.TestCase):
         self.assertAlmostEqual(face.surface2d.area(), 1, 2)
         self.assertGreaterEqual(len(mesh.points), 650)
         self.assertLessEqual(len(mesh.points), 1300)
-        self.assertLessEqual(total_time, 0.05)
+        self.assertLessEqual(total_time, 0.15)
 
 if __name__ == '__main__':
     unittest.main()

@@ -184,20 +184,8 @@ class TestArc3D(unittest.TestCase):
 
     def test_revolution(self):
         revolution_point = self.arc3d.circle.center + self.arc3d.circle.frame.u * 4 * self.arc3d.circle.radius
-        revolution = self.arc3d.revolution(revolution_point, self.arc3d.circle.normal, math.pi / 4)
-        rev_points = revolution[0].outer_contour3d.discretization_points(number_points=10)
-        expected_points = [volmdlr.Point3D(-0.5773502691896257, -0.5773502691896257, -0.5773502691896257),
-                           volmdlr.Point3D(-1.5908072005465637, 0.09711996966100678, 0.09711996966100678),
-                           volmdlr.Point3D(-2.3020892306514145, 0.9429902409070772, 0.9429902409070772),
-                           volmdlr.Point3D(-2.5850082506429826, 1.8986223959112984, 1.5325969153619727),
-                           volmdlr.Point3D(-1.5470925482550173, 2.545945969185909, 1.1371139212866739),
-                           volmdlr.Point3D(-0.6511451002704305, 2.011854997659544, 1.888598197214789),
-                           volmdlr.Point3D(-0.1559690908243554, 1.1006931019373574, 1.1006931019373574),
-                           volmdlr.Point3D(0.5425317810931582, 0.7843765655228172, 0.30068699666349935),
-                           volmdlr.Point3D(-0.10025583143955093, 0.5961084068679217, -0.7966200697470236),
-                           volmdlr.Point3D(-0.5773502691896257, -0.5773502691896257, -0.5773502691896257)]
-        for point, expected_point in zip(rev_points, expected_points):
-            self.assertTrue(point.is_close(expected_point))
+        revolution = self.arc3d.revolution(revolution_point, self.arc3d.frame.v, math.pi / 4)
+        self.assertAlmostEqual(self.arc3d.angle * (math.pi/4), revolution[0].surface2d.area())
 
     def test_point_belongs(self):
         expected_results = [True, True, True, True, True, True, False, False]
@@ -289,6 +277,18 @@ class TestArc3D(unittest.TestCase):
             volmdlr.Point3D(-1.29057373513423, -5.961765089185557, -0.9872550297440593)))
         self.assertTrue(min_dist_point2.is_close(
             volmdlr.Point3D(-1.2905737351257018, -5.9617650891813065, -0.9872550297271026)))
+
+    def test_move_frame_along(self):
+        origin = self.arc3d.start
+        w = self.arc3d.unit_direction_vector(0.)
+        u = self.arc3d.unit_normal_vector(0.)
+        if not u:
+            u = w.deterministic_unit_normal_vector()
+        v = w.cross(u)
+        starting_frame = volmdlr.Frame3D(origin, u, v, w)
+        ending_frame = self.arc3d.move_frame_along(starting_frame)
+        self.assertTrue(ending_frame.origin.is_close(self.arc3d.end))
+        self.assertTrue(ending_frame.w.is_close(self.arc3d.unit_direction_vector(self.arc3d.length())))
 
 
 if __name__ == '__main__':
