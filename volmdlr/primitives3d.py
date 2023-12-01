@@ -1913,7 +1913,7 @@ class Sweep(shells.ClosedShell3D):
             frame_contour = wire_primitive.move_frame_along(frame_contour)
         end_plane = surfaces.Plane3D(frame_contour)
         contour3d = self.contour2d.to_3d(frame_contour.origin, frame_contour.u, frame_contour.v)
-        contour2d = end_plane.contour3d_to_2d(contour3d)
+        contour2d = end_plane.contour3d_to_2d(contour3d)[0]
         end_face = volmdlr.faces.PlaneFace3D(end_plane, surfaces.Surface2D(contour2d, []))
         faces.append(end_face)
         return faces
