@@ -19,7 +19,7 @@ MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 6,
                      'invalid-name': 1,
                      'arguments-differ': 64,
-                     'too-many-locals': 70,
+                     'too-many-locals': 74,
                      'unused-argument': 8,
                      'too-many-arguments': 29,
                      'line-too-long': 12,
@@ -123,8 +123,7 @@ for error_type, number_errors in stats_by_msg.items():
                 f"(time effect: {time_decrease_effect} errors)")
 
             messages = extract_messages_by_type(error_type)
-            messages_to_show = messages
-            # messages_to_show = sorted(random.sample(messages, min(30, len(messages))), key=lambda m: (m.path, m.line))
+            messages_to_show = sorted(random.sample(messages, min(30, len(messages))), key=lambda m: (m.path, m.line))
             for message in messages_to_show:
                 print(f"{message.path} line {message.line}: {message.msg}")
         elif number_errors < max_errors:

@@ -3521,7 +3521,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         return points, x, y, grid_point_index
 
-    def _helper_search_ear(self, remaining_points, initial_point_to_index):
+    def search_ear(self, remaining_points, initial_point_to_index):
         """
         Helper method to search for ears for ear clipping triangulation method.
 
@@ -3582,7 +3582,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         number_remaining_points = len(remaining_points)
         while number_remaining_points > 3:
             current_polygon = ClosedPolygon2D(remaining_points)
-            found_ear, remaining_points = current_polygon._helper_search_ear(remaining_points, initial_point_to_index)
+            found_ear, remaining_points = current_polygon.search_ear(remaining_points, initial_point_to_index)
 
             # Searching for a flat ear
             if not found_ear:
