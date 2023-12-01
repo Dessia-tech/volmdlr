@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
 
 #### surfaces.py
-- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections. 
 - ConicalSurface3D: circle_generatrixes direction.
 - Plane3D: plane intersections.
 
