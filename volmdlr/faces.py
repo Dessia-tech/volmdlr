@@ -109,7 +109,12 @@ class Face3D(volmdlr.core.Primitive3D):
         Gives the 3d version of the outer contour of the face.
         """
         if not self._outer_contour3d:
-            self._outer_contour3d = self.surface3d.contour2d_to_3d(self.surface2d.outer_contour)
+            self._outer_contour3d, primitives_mapping = self.surface3d.contour2d_to_3d(self.surface2d.outer_contour,
+                                                                                       return_primitives_mapping=True)
+            if not self._primitives_mapping:
+                self._primitives_mapping = primitives_mapping
+            else:
+                self._primitives_mapping.update(primitives_mapping)
         return self._outer_contour3d
 
     @outer_contour3d.setter
@@ -122,8 +127,18 @@ class Face3D(volmdlr.core.Primitive3D):
         Gives the 3d version of the inner contours of the face.
         """
         if not self._inner_contours3d:
-            self._inner_contours3d = [self.surface3d.contour2d_to_3d(c) for c in
-                                      self.surface2d.inner_contours]
+            primitives_mapping = {}
+            inner_contours3d = []
+            for contour2d in self.surface2d.inner_contours:
+                inner_contour3d, contour2d_mapping = self.surface3d.contour2d_to_3d(contour2d,
+                                                                                    return_primitives_mapping=True)
+                inner_contours3d.append(inner_contour3d)
+                primitives_mapping.update(contour2d_mapping)
+            self._inner_contours3d = inner_contours3d
+            if not self._primitives_mapping:
+                self._primitives_mapping = primitives_mapping
+            else:
+                self._primitives_mapping.update(primitives_mapping)
         return self._inner_contours3d
 
     @inner_contours3d.setter
