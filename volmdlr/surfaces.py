@@ -3354,15 +3354,12 @@ class ToroidalSurface3D(PeriodicalSurface):
             if plane3d.frame.w.dot(arc.frame.w) == 1.0:
                 continue
             intersections = plane3d.circle_intersections(arc)
-            for inter in intersections:
-                if inter not in points_intersections:
-                    points_intersections.append(inter)
+            points_intersections.extend(inter for inter in intersections if inter not in points_intersections)
+
         for edge in plane3d.plane_grid(300, self.major_radius * 4):
             intersections = self.line_intersections(edge.line)
-            for inter in intersections:
-                if inter not in points_intersections:
-                    points_intersections.append(inter)
-            # points_intersections.extend(intersections)
+            points_intersections.extend(inter for inter in intersections if inter not in points_intersections)
+
         return points_intersections
 
     def concurrent_plane_intersection(self, plane3d):
