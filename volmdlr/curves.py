@@ -989,7 +989,7 @@ class CircleMixin:
         return self.split(start, point_at_absccissa)
 
     def trim(self, point1: Union[volmdlr.Point2D, volmdlr.Point3D], point2: Union[volmdlr.Point2D, volmdlr.Point3D],
-             same_sense: bool = True):
+             same_sense: bool = True, abs_tol: float = 1e-6):
         """
         Trims a circle between two points.
 
@@ -997,6 +997,7 @@ class CircleMixin:
         :param point2: point2 used to trim circle.
         :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :param abs_tol: tolerance between points to consider a full arc.
         :return: arc between these two points.
         """
         fullar_arc_class_ = getattr(volmdlr.edges, 'FullArc' + self.__class__.__name__[-2:])
@@ -1010,7 +1011,7 @@ class CircleMixin:
         if not self.point_belongs(point2, 1e-5):
             angle = circle.get_arc_point_angle(point2)
             point2 = circle.point_at_abscissa(angle * self.radius)
-        if point1.is_close(point2):
+        if point1.is_close(point2, abs_tol):
             return fullar_arc_class_(circle, point1)
         return arc_class_(circle, point1, point2)
 
@@ -2007,6 +2008,18 @@ class EllipseMixin:
         """Gets ellipse's minor direction vector."""
         return self.frame.v
 
+    def length(self):
+        """
+        Calculates the length of the ellipse.
+
+        Ramanujan's approximation for the perimeter of the ellipse.
+        P = π (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
+        :return:
+        """
+        perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
+        return math.pi * (self.major_axis + self.minor_axis) * \
+            (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
+
 
 class Ellipse2D(EllipseMixin, ClosedCurve):
     """
@@ -2089,19 +2102,6 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         :return: ellipse's area, float.
         """
         return math.pi * self.major_axis * self.minor_axis
-
-    def length(self):
-        """
-        Calculates the ellipse's length.
-
-        :return: ellipse's length.
-        """
-        mid_point = self.center - self.major_axis * self.major_dir
-        if self.theta != 0.0:
-            mid_point = self.center - volmdlr.Point2D(self.major_axis, 0)
-            mid_point = mid_point.rotation(self.center, self.theta)
-        length = 2 * self.abscissa(mid_point)
-        return length
 
     def to_3d(self, plane_origin, x, y):
         """
@@ -2427,17 +2427,6 @@ class Ellipse3D(EllipseMixin, ClosedCurve):
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
                             new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=tol)
 
-    def length(self):
-        """
-        Calculates the length of the ellipse.
-
-        Ramanujan's approximation for the perimeter of the ellipse.
-        P = π (a + b) [ 1 + (3h) / (10 + √(4 - 3h) ) ], where h = (a - b)**2/(a + b)**2
-        :return:
-        """
-        perimeter_formular_h = (self.major_axis - self.minor_axis) ** 2 / (self.major_axis + self.minor_axis) ** 2
-        return math.pi * (self.major_axis + self.minor_axis) * \
-            (1 + (3 * perimeter_formular_h / (10 + math.sqrt(4 - 3 * perimeter_formular_h))))
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
@@ -2507,7 +2496,7 @@ class Ellipse3D(EllipseMixin, ClosedCurve):
         point2d = self.self_2d.point_at_abscissa(abscissa)
         return point2d.to_3d(self.center, self.frame.u, self.frame.v)
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
         """
         Trims an ellipse between two points.
 
@@ -2515,12 +2504,13 @@ class Ellipse3D(EllipseMixin, ClosedCurve):
         :param point2: point2 used to trim ellipse.
         :param same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
                direction (False) to the edge direction. By default, it's assumed True
+        :abs_tol: tolerance between points to consider a full arc of ellipse.
         :return: arc of ellipse between these two points.
         """
         ellipse = self
         if not same_sense:
             ellipse = self.reverse()
-        if point1.is_close(point2):
+        if point1.is_close(point2, abs_tol):
             return volmdlr.edges.FullArcEllipse3D(ellipse, point1, self.name)
         return volmdlr.edges.ArcEllipse3D(ellipse, point1, point2)
 

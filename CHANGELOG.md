@@ -53,10 +53,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
+- FullArcEllipse: angle_start, angle_end.
 
 #### surfaces.py
-- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections.
 - ConicalSurface3D: circle_generatrixes direction.
+- PeriodicalSurface: handles exceptions in connect_contours method.
+- ExtrusionSurface3D: fullarcellipse3d_to_2d
+- ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
+- ToroidalSurface3D: increases precision of point3d_to_2d.
 - Plane3D: plane intersections.
 
 #### faces.py

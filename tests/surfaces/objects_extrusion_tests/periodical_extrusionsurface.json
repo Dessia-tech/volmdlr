@@ -1,0 +1,87 @@
+{
+  "object_class": "volmdlr.surfaces.ExtrusionSurface3D",
+  "name": "generated tabulated cylinder",
+  "edge": {
+    "object_class": "volmdlr.edges.FullArc3D",
+    "name": "",
+    "circle": {
+      "object_class": "volmdlr.curves.Circle3D",
+      "name": "generated circle",
+      "radius": 0.871459123228,
+      "frame": {
+        "object_class": "volmdlr.Frame3D",
+        "name": "",
+        "origin": {
+          "object_class": "volmdlr.Point3D",
+          "x": 4.08236743,
+          "y": 2.4964481655,
+          "z": 2.52553809367,
+          "name": "Axis2P3D Location"
+        },
+        "u": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.11437694041806153,
+          "y": 0.6358848148640952,
+          "z": -0.7632616967501111
+        },
+        "v": {
+          "object_class": "volmdlr.Vector3D",
+          "x": -6.938893903907228e-18,
+          "y": -0.7683037484529687,
+          "z": -0.6400854240748787
+        },
+        "w": {
+          "object_class": "volmdlr.Vector3D",
+          "x": -0.9934374240487437,
+          "y": 0.07321101241188112,
+          "z": -0.0878762320597774
+        }
+      },
+      "angle": 6.283185307179586
+    },
+    "angle": 6.283185307179586,
+    "is_trigo": true,
+    "start_end": {
+      "object_class": "volmdlr.Point3D",
+      "x": 4.182042258214225,
+      "y": 3.0505957887354636,
+      "z": 1.8603867246266323
+    }
+  },
+  "direction": {
+    "object_class": "volmdlr.Vector3D",
+    "x": -0.9938728228063547,
+    "y": 0.07077156700572526,
+    "z": -0.0849011035881303
+  },
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": 4.08236743,
+      "y": 2.4964481655,
+      "z": 2.52553809367,
+      "name": "Axis2P3D Location"
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.07942779931895812,
+      "y": 0.07686375467198836,
+      "z": 0.9938728228063546
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": 0.07686375467198837,
+      "y": 0.994526695730828,
+      "z": -0.07077156700572526
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.9938728228063546,
+      "y": 0.07077156700572526,
+      "z": -0.08490110358813033
+    }
+  },
+  "_references": {}
+}
