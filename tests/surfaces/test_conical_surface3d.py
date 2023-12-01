@@ -37,6 +37,19 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertTrue(test2.start.is_close(volmdlr.Point2D(-0.5 * math.pi, 0.5773502691896258)))
         self.assertTrue(test2.end.is_close(volmdlr.Point2D(-2 * math.pi, 0.5773502691896258)))
 
+    def test_contour2d_to_3d(self):
+        contour2d = vmw.Contour2D([vme.LineSegment2D(volmdlr.Point2D(-math.pi, 0.0), volmdlr.Point2D(math.pi, 0.0)),
+                                   vme.LineSegment2D(volmdlr.Point2D(math.pi, 0.0), volmdlr.Point2D(math.pi, 1.0)),
+                                   vme.LineSegment2D(volmdlr.Point2D(math.pi, 1.0), volmdlr.Point2D(-math.pi, 1.0)),
+                                   vme.LineSegment2D(volmdlr.Point2D(-math.pi, 1.0), volmdlr.Point2D(-math.pi, 0.0))])
+        contour3d, primitives_mapping = self.conical_surface.contour2d_to_3d(contour2d, return_primitives_mapping=True)
+        self.assertEqual(len(contour3d.primitives), len(primitives_mapping))
+        self.assertIsNone(primitives_mapping.get(contour2d.primitives[0]))
+        self.assertEqual(contour3d.primitives[0], primitives_mapping[contour2d.primitives[1]])
+        self.assertEqual(contour3d.primitives[1], primitives_mapping[contour2d.primitives[2]])
+        self.assertEqual(contour3d.primitives[2], primitives_mapping[contour2d.primitives[3]])
+
+
     def test_contour3d_to_2d(self):
         center1 = O3D
         start_end1 = Point3D(0.035, 0, 0)
