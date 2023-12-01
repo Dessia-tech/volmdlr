@@ -312,8 +312,8 @@ class Edge(dc.DessiaObject):
         for lineseg1, lineseg2 in product(line_segments1, line_segments2):
             valid_section = section_validor_(lineseg1, lineseg2)
             if valid_section:
-                intersection_section_pairs.append((self.split_between_two_points(lineseg1.start, lineseg1.end),
-                                                   edge2.split_between_two_points(lineseg2.start, lineseg2.end)))
+                intersection_section_pairs.append((self.trim(lineseg1.start, lineseg1.end),
+                                                   edge2.trim(lineseg2.start, lineseg2.end)))
         return intersection_section_pairs
 
     def _generic_edge_intersections(self, edge2, abs_tol: float = 1e-6):
@@ -414,13 +414,13 @@ class Edge(dc.DessiaObject):
         abscissa2 = self.abscissa(point2)
         return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
 
-    def split_between_two_points(self, point1, point2):
+    def trim(self, point1, point2):
         """
-        Split edge between two points.
+        Trims edge between two points.
 
         :param point1: point 1.
         :param point2: point 2.
-        :return: edge split.
+        :return: edge trimmed.
         """
         if point1.is_close(self.start) or point1.is_close(self.end):
             split1 = [self, None]
@@ -4787,13 +4787,6 @@ class LineSegment3D(LineSegment):
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        """Trims a Line Segment at two given points."""
-        if not self.point_belongs(point1) or not self.point_belongs(point2):
-            raise ValueError('Point not on curve')
-
-        return LineSegment3D(point1, point2)
-
     def sweep(self, *args):
         """
         Line Segment 3D is used as path for sweeping given section through it.
@@ -5438,16 +5431,6 @@ class BSplineCurve3D(BSplineCurve):
         surface = volmdlr.surfaces.RevolutionSurface3D(self, axis_point, axis)
         face = volmdlr.faces.RevolutionFace3D.from_surface_rectangular_cut(surface, 0, angle, 0, self.length())
         return face
-
-    def split_between_two_points(self, point1, point2):
-        """
-        Split edge between two points.
-
-        :param point1: point 1.
-        :param point2: point 2.
-        :return: edge split.
-        """
-        return self.trim(point1, point2)
 
     def move_frame_along(self, frame, *args, **kwargs):
         """Moves frame along the edge."""

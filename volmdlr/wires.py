@@ -257,7 +257,7 @@ class WireMixin:
                 split_primitives2 = primitive.split(point2)
                 if split_primitives2[1]:
                     primitives2.append(split_primitives2[1])
-                primitives1.append(primitive.split_between_two_points(point1, point2))
+                primitives1.append(primitive.trim(point1, point2))
             elif current_abscissa <= abscissa1 <= current_abscissa + primitive.length():
                 split_primitives = primitive.split(point1)
                 if split_primitives[1]:
