@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - BsplineCurve3D: circle_intersections.
 - ArcEllipse3D/FullArcEllipse3D: line_intersections.
+
 #### curves.py
 - Circle3D: point_distance.
 #### shell.py
@@ -89,10 +90,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
+- FullArcEllipse: angle_start, angle_end.
 
 #### surfaces.py
-- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections.
 - ConicalSurface3D: circle_generatrixes direction.
+- PeriodicalSurface: handles exceptions in connect_contours method.
+- ExtrusionSurface3D: fullarcellipse3d_to_2d
+- ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
+- ToroidalSurface3D: increases precision of point3d_to_2d.
+- Plane3D: plane intersections.
 
 #### faces.py
 - ToroidalFace3D: PlaneFace3D intersections.
@@ -110,6 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
+- add bigger precision to plane-plane intersections.
 
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
@@ -146,7 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 - LineSegment2D/3D: The line attribute from which the line segment was defined was converted to a property, for performance and memory efficiency reasons.
-- BSplineCurve: improve line_intersections performance.
+- BSplineCurve: improve line_intersections performance. 
 
 #### faces.py
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.

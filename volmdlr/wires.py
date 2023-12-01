@@ -701,7 +701,7 @@ class WireMixin:
         return intersections_points
 
 
-class EdgeCollection3D(WireMixin):
+class EdgeCollection3D(WireMixin, PhysicalObject):
     """
     A collection of simple edges 3D.
     """
@@ -716,7 +716,7 @@ class EdgeCollection3D(WireMixin):
         self.color = color
         self.alpha = alpha
         self._bbox = None
-        self.name = name
+        PhysicalObject.__init__(self, name=name)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """ Plot edges with Matplotlib, not tested. """

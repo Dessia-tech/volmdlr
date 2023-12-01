@@ -350,8 +350,8 @@ def composite_curve(arguments, object_dict, *args, **kwargs):
     first_primitive = list_primitives[0]
     last_primitive = list_primitives[-1]
     if first_primitive.start.is_close(last_primitive.end):
-        return volmdlr.wires.Contour3D(list_primitives, name)
-    return volmdlr.wires.Wire3D(list_primitives, name)
+        return volmdlr.wires.Contour3D(list_primitives, name=name)
+    return volmdlr.wires.Wire3D(list_primitives, name=name)
 
 
 def pcurve(arguments, object_dict, *args, **kwargs):
@@ -450,8 +450,9 @@ def manifold_surface_shape_representation(arguments, object_dict, *args, **kwarg
         if isinstance(primitive, volmdlr.core.Compound):
             counter = 0
             for sub_prim in primitive.primitives:
-                sub_prim.name = arguments[0][1:-1] + str(counter)
-                counter += 1
+                if sub_prim:
+                    sub_prim.name = arguments[0][1:-1] + str(counter)
+                    counter += 1
             primitives.append(primitive)
     if len(primitives) == 1:
         return primitives[0]

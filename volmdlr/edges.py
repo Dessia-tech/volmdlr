@@ -8,6 +8,7 @@ import sys
 import warnings
 from itertools import product
 from typing import List, Union
+from functools import cached_property
 
 import dessia_common.core as dc
 import matplotlib.patches
@@ -168,6 +169,7 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
+        tol = min(1e-6, kwargs.get("global_uncertainty", 1e-6))
         if obj.__class__.__name__ == 'LineSegment3D':
             if point1 != point2:
                 return LineSegment3D(point1, point2, name=arguments[0][1:-1])
@@ -182,7 +184,7 @@ class Edge(dc.DessiaObject):
             return None
 
         if hasattr(obj, 'trim'):
-            trimmed_edge = obj.trim(point1, point2, same_sense)
+            trimmed_edge = obj.trim(point1, point2, same_sense, tol)
             if trimmed_edge:
                 trimmed_edge.name = arguments[0][1:-1]
             return trimmed_edge
@@ -1708,7 +1710,10 @@ class BSplineCurve(Edge):
                     if line.point_distance(linesegment.middle_point()) < (tol * 0.01):
                         list_intersections.append(linesegment.middle_point())
                         continue
-                list_intersections.extend(intersections)
+                if intersections:
+                    for intersection in intersections:
+                        if not intersection.in_list(list_intersections):
+                            list_intersections.append(intersection)
             initial_abscissa += linesegment.length()
         return list_intersections
 
@@ -1859,23 +1864,32 @@ class BSplineCurve(Edge):
         data = self.data
         point_name = 'Point' + self.__class__.__name__[-2:]
         # special case periodical bsplinecurve
-        if self.periodic and abscissa1 == abscissa2 and (not math.isclose(abscissa1, 0.0, abs_tol=1e-6) or
-                        not math.isclose(abscissa1, self.length(), abs_tol=1e-6)):
+        if self.periodic and abscissa1 >= abscissa2 and (not math.isclose(abscissa1, 0.0, abs_tol=1e-6) and
+                                                         not math.isclose(abscissa1, self.length(), abs_tol=1e-6)):
             umin, umax = self.domain
+            u_start = self.abscissa_to_parameter(abscissa1)
+            u_end = self.abscissa_to_parameter(abscissa2)
             number_points1 = int((abscissa1 / self.length()) * number_points)
-            max_number_points = math.ceil((self.length() - abscissa1) / 5e-6)
-            if number_points1 > max_number_points:
-                number_points1 = max(max_number_points, 2)
-            number_points2 = number_points - number_points1
-            max_number_points = math.ceil(abscissa1 / 5e-6)
-            if number_points2 > max_number_points:
-                number_points2 = max(max_number_points, 2)
-            u_start_end = self.abscissa_to_parameter(abscissa1)
-            data["sample_size"] = number_points1
-            points1 = evaluate_curve(data, start=u_start_end, stop=umax)
-            data["sample_size"] = number_points2
-            points2 = evaluate_curve(data, start=umin, stop=u_start_end)
-            points = points1 + points2[1:]
+            if umin == u_end:
+                number_points1 = number_points
+                data["sample_size"] = number_points1
+                points1 = evaluate_curve(data, start=u_start, stop=umax)
+                points = points1
+            else:
+                max_number_points = math.ceil((self.length() - abscissa1) / 2e-6)
+                if number_points1 > max_number_points:
+                    number_points1 = max(max_number_points, 2)
+
+                number_points2 = number_points - number_points1
+                max_number_points = math.ceil(abscissa1 / 2e-6)
+                if number_points2 > max_number_points:
+                    number_points2 = max(max_number_points, 2)
+
+                data["sample_size"] = number_points1
+                points1 = evaluate_curve(data, start=u_start, stop=umax)
+                data["sample_size"] = number_points2
+                points2 = evaluate_curve(data, start=umin, stop=u_end)
+                points = points1 + points2[1:]
         else:
             if math.isclose(abscissa2, 0.0, abs_tol=1e-6):
                 abscissa2 += self.length()
@@ -1884,7 +1898,7 @@ class BSplineCurve(Edge):
             u1 = self.abscissa_to_parameter(abscissa1)
             u2 = self.abscissa_to_parameter(abscissa2)
             # todo: improve intersections so we don't need to worry about limiting the precision?
-            max_number_points = math.ceil(abs(abscissa1 - abscissa2) / 5e-6)
+            max_number_points = math.ceil(abs(abscissa1 - abscissa2) / 2e-6)
             if number_points > max_number_points:
                 number_points = max(max_number_points, 2)
             data["sample_size"] = number_points
@@ -3630,27 +3644,51 @@ class ArcEllipse2D(Edge):
                  end: volmdlr.Point2D, name: str = ''):
         Edge.__init__(self, start, end, name)
         self.ellipse = ellipse
-        self.angle_start, self.angle_end = self.get_start_end_angles()
-        self.angle = self.angle_end - self.angle_start
         self._bounding_rectangle = None
         self._reverse = None
+
+    def __eq__(self, other):
+        """Defines equality."""
+        if not isinstance(other, self.__class__):
+            return False
+        return bool(self.ellipse == other.ellipse and self.start == other.start
+                    and self.end == other.end)
 
     @property
     def center(self):
         """Gets ellipse's center point."""
         return self.ellipse.frame.origin
 
-    def get_start_end_angles(self):
-        """Gets start and end angles for start and end points, respectively."""
+    @cached_property
+    def angle(self):
+        """Gets arc of ellipse angle."""
+        return self.angle_end - self.angle_start
+
+    @cached_property
+    def angle_start(self):
+        """Gets arc of ellipse starting angle."""
+        return self.get_start_angle()
+
+    @cached_property
+    def angle_end(self):
+        """Gets arc of ellipse ending angle."""
+        return self.get_end_angle()
+
+    def get_start_angle(self):
+        """Gets angle for the start point."""
         local_start_point = self.ellipse.frame.global_to_local_coordinates(self.start)
         u1, u2 = local_start_point.x / self.ellipse.major_axis, local_start_point.y / self.ellipse.minor_axis
         start_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        return start_angle
+
+    def get_end_angle(self):
+        """Gets angle for the end point."""
         local_end_point = self.ellipse.frame.global_to_local_coordinates(self.end)
         u1, u2 = local_end_point.x / self.ellipse.major_axis, local_end_point.y / self.ellipse.minor_axis
         end_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         if self.ellipse.is_trigo and end_angle == 0.0:
             end_angle = volmdlr.TWO_PI
-        return start_angle, end_angle
+        return end_angle
 
     @classmethod
     def from_3_points_and_center(cls, start, interior, end, center, name: str = ''):
@@ -3878,7 +3916,7 @@ class ArcEllipse2D(Edge):
             if not angle_resolution:
                 number_points = 2
             else:
-                number_points = math.ceil(angle_resolution * abs(self.angle / math.pi)) + 2
+                number_points = max(math.ceil(angle_resolution * abs(self.angle) + 1), 2)
         if self.angle_start > self.angle_end:
             angle_end = self.angle_end + volmdlr.TWO_PI
             angle_start = self.angle_start
@@ -4120,9 +4158,20 @@ class FullArcEllipse(Edge):
         self.start_end = start_end
         self.ellipse = ellipse
         self.is_trigo = True
-        self.angle_start = 0.0
-        self.angle_end = volmdlr.TWO_PI
         Edge.__init__(self, start=start_end, end=start_end, name=name)
+
+    @cached_property
+    def angle_start(self):
+        """Get ellipse starting angle."""
+        local_start_point = self.ellipse.frame.global_to_local_coordinates(self.start)
+        u1, u2 = local_start_point.x / self.ellipse.major_axis, local_start_point.y / self.ellipse.minor_axis
+        start_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        return start_angle
+
+    @cached_property
+    def angle_end(self):
+        """Get ellipse starting angle."""
+        return self.angle_start + volmdlr.TWO_PI
 
     @property
     def periodic(self):
@@ -5075,7 +5124,7 @@ class BSplineCurve3D(BSplineCurve):
                                             self.knots, self.weights, self.name)
         return new_bsplinecurve3d
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
         """
         Trims a bspline curve between two points.
 
@@ -5093,21 +5142,21 @@ class BSplineCurve3D(BSplineCurve):
         parameter1 = bsplinecurve.point_to_parameter(point1)
         parameter2 = bsplinecurve.point_to_parameter(point2)
 
-        if (point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end)) \
-                or (point1.is_close(bsplinecurve.end) and point2.is_close(bsplinecurve.start)):
+        if (point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol)) \
+                or (point1.is_close(bsplinecurve.end, abs_tol) and point2.is_close(bsplinecurve.start, abs_tol)):
             return bsplinecurve
 
-        if point1.is_close(bsplinecurve.start) and not point2.is_close(bsplinecurve.end):
+        if point1.is_close(bsplinecurve.start, abs_tol) and not point2.is_close(bsplinecurve.end, abs_tol):
             return bsplinecurve.cut_after(parameter2)
 
-        if point2.is_close(bsplinecurve.start) and not point1.is_close(bsplinecurve.end):
+        if point2.is_close(bsplinecurve.start, abs_tol) and not point1.is_close(bsplinecurve.end, abs_tol):
             bsplinecurve = bsplinecurve.cut_after(parameter1)
             return bsplinecurve
 
-        if not point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end):
+        if not point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol):
             return bsplinecurve.cut_before(parameter1)
 
-        if not point2.is_close(bsplinecurve.start) and point1.is_close(bsplinecurve.end):
+        if not point2.is_close(bsplinecurve.start, abs_tol) and point1.is_close(bsplinecurve.end, abs_tol):
             bsplinecurve = bsplinecurve.cut_before(parameter2)
             return bsplinecurve
 
@@ -5225,6 +5274,7 @@ class BSplineCurve3D(BSplineCurve):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
         Matplotlib plot method for a BSpline Curve 3D.
+
         """
         if ax is None:
             fig = plt.figure()
@@ -6254,6 +6304,10 @@ class ArcEllipse3D(Edge):
 
     @property
     def self_2d(self):
+        """
+        Arc ellipse 2d version of self.
+
+        """
         if not self._self_2d:
             self._self_2d = self.to_2d(self.ellipse.center, self.ellipse.frame.u, self.ellipse.frame.v)
         return self._self_2d
