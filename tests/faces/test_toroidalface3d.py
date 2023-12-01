@@ -3,6 +3,7 @@ import math
 import os
 import numpy as npy
 import unittest
+from dessia_common.core import DessiaObject
 import volmdlr
 from volmdlr import faces, surfaces, wires
 
@@ -26,10 +27,11 @@ class TestToroidalFace3D(unittest.TestCase):
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
     def test_planeface_intersections(self):
-        expected_results = [[14.700000000000001], [9.388571408528668], [9.282044462349344], [9.107655321906883],
-                            [8.870824383803773], [8.58245537985896], [5.0000000000008145, 5.000000000000816],
-                            [3.717538057019154, 3.717538040295004], [3.325530330504112, 3.325530342893853],
-                            [3.0819608468437045, 3.0819656111441143]]
+        expected_results = [[14.700000000000001], [9.388571088159908], [9.282044462953378],
+                            [9.10765519911981], [8.870824370954356], [8.582455381664765],
+                            [4.999999999998194, 4.999999999998194], [3.717538102728644, 3.7176009688555847],
+                            [3.325530350863936, 3.3255467887441523], [3.0819608531081744, 3.092417913000651]]
+
         ts = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         tf = faces.ToroidalFace3D.from_surface_rectangular_cut(ts, -1.4, 3.5, 0., 2.5)
 
@@ -39,10 +41,18 @@ class TestToroidalFace3D(unittest.TestCase):
         for i, n in enumerate(npy.linspace(0, math.pi / 4, 10)):
             plane = plane1.rotation(plane1.frame.origin, volmdlr.X3D, n)
             plane_face = faces.PlaneFace3D.from_surface_rectangular_cut(plane, 4, -4, 4, -4)
-            plane_intersections = tf.face_intersections(plane_face)
-            list_expected_lenghts1.append([i.length() for i in plane_intersections])
-            for result, expected_result in zip(plane_intersections, expected_results[i]):
+            planeface_intersections = tf.face_intersections(plane_face)
+            list_expected_lenghts1.append([i.length() for i in planeface_intersections])
+            self.assertEqual(len(planeface_intersections), len(expected_results[i]))
+            for result, expected_result in zip(planeface_intersections, expected_results[i]):
                 self.assertAlmostEqual(result.length(), expected_result, 6)
+
+        planeface, toroidalface = DessiaObject.load_from_file(
+            os.path.join(folder, "test_planeface_toroidialface_intersections301123.json")).primitives
+
+        inters = planeface.face_intersections(toroidalface)
+        self.assertEqual(len(inters), 1)
+        self.assertAlmostEqual(inters[0].length(), 0.08139556829160953)
 
     def test_cylindricalface_intersections(self):
         expected_results = [[2.546120994711518], [2.454558505161535], [2.7679469885415657], [2.8109172462675667],
