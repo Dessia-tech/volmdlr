@@ -5983,8 +5983,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         An edge is said to be degenerated when it corresponds to a single 3D point.
         """
         if "LineSegment2D" in (edge.__class__.__name__, edge.simplify.__class__.__name__):
-            start3d = self.point3d_to_2d(edge.start)
-            end3d = self.point3d_to_2d(edge.end)
+            start3d = self.point2d_to_3d(edge.start)
+            end3d = self.point2d_to_3d(edge.end)
             return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
         return False
 
