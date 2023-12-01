@@ -90,7 +90,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         Tells you if a point is on the 3D face and inside its contour.
         """
-        if not self.bounding_box.point_belongs(point3d):
+        if not self.bounding_box.point_belongs(point3d, 1e-3):
             return False
         point2d = self.surface3d.point3d_to_2d(point3d)
         # check_point3d = self.surface3d.point2d_to_3d(point2d)
@@ -250,6 +250,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return face
 
     def to_step(self, current_id):
+        """Transforms a Face 3D into a Step object."""
         content, surface3d_ids = self.surface3d.to_step(current_id)
         current_id = max(surface3d_ids)
 
@@ -1196,10 +1197,12 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def plane_intersections(self, plane3d: surfaces.Plane3D):
         """
-        Gets intersections between Face 3D and a plane.
+        Gets intersections with a 3D plane surface.
 
-        :param plane3d: other plane3D.
-        :return: List containing the intersection curves.
+        :param plane3d: The Plane3D instance to find intersections with.
+        :type plane3d: Plane3D
+        :return: List of Wire3D instances representing the intersections with the plane.
+        :rtype: List[wires.Wire3D]
         """
         surfaces_intersections = self.surface3d.plane_intersections(plane3d)
         outer_contour_intersections_with_plane = plane3d.contour_intersections(self.outer_contour3d)
@@ -1496,6 +1499,8 @@ class PlaneFace3D(Face3D):
         :return: list of intersecting wires.
         """
         cylindricalsurfaceface_intersections = cylindricalface.surface3d.plane_intersections(self.surface3d)
+        if not cylindricalsurfaceface_intersections:
+            return []
         if not isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Line3D):
             if all(
                 self.edge3d_inside(intersection) and cylindricalface.edge3d_inside(intersection)
@@ -1603,11 +1608,15 @@ class PlaneFace3D(Face3D):
 
     def planeface_minimum_distance(self, planeface: "PlaneFace3D", return_points: bool = False):
         """
-        Gets the minimum distance between two plane faces 3D.
+        Gets the minimal distance from another PlaneFace3D.
 
-        :param planeface: other plane face.
-        :param return_points: weather to return corresponding minimum distance points or not.
-        :return: minimum distance or minimum distance, point1 and point2.
+        :param planeface: Another PlaneFace3D instance to calculate the minimum distance.
+        :type planeface: PlaneFace3D
+        :param return_points: If True, returns a tuple containing the two points that give the minimum distance.
+        :type return_points: bool, optional
+        :return: If return_points is False, returns the minimum distance between the two plane faces.
+                 If return_points is True, returns a tuple containing the two points that give the minimum distance.
+        :rtype: float or tuple(float, Tuple3D, Tuple3D)
         """
         dist, point1, point2 = self.minimum_distance_points_plane(planeface, return_points=True)
         if not return_points:
@@ -1615,12 +1624,6 @@ class PlaneFace3D(Face3D):
         return dist, point1, point2
 
     def is_adjacent(self, face2: Face3D):
-        """
-        Verifies if two plane faces are adjacent to eachother.
-
-        :param face2: other face.
-        :return: True if adjacent, False otherwise.
-        """
         contour1 = self.outer_contour3d.to_2d(
             self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
         )
@@ -1746,11 +1749,8 @@ class PlaneFace3D(Face3D):
 
     @staticmethod
     def update_faces_with_divided_faces(divided_faces, face2_2, used, list_faces):
-        """
-        Update divided faces from project_faces.
-
-        """
         for d_face in divided_faces:
+
             if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
                 if face2_2.surface2d.inner_contours:
                     divided_faces_d_face = []
@@ -1933,12 +1933,14 @@ class Triangle3D(PlaneFace3D):
 
     @property
     def surface3d(self):
+        """Gets the plane on which the triangle is contained."""
         if self._surface3d is None:
             self._surface3d = surfaces.Plane3D.from_3_points(self.point1, self.point2, self.point3)
         return self._surface3d
 
     @surface3d.setter
     def surface3d(self, new_surface3d):
+        """Sets the plane on which the triangle is contained."""
         self._surface3d = new_surface3d
 
     @property
@@ -1961,6 +1963,7 @@ class Triangle3D(PlaneFace3D):
 
     @surface2d.setter
     def surface2d(self, new_surface2d):
+        """Sets the boundary representation of the face."""
         self._surface2d = new_surface2d
 
     def to_dict(self, *args, **kwargs):
@@ -2165,10 +2168,6 @@ class Triangle3D(PlaneFace3D):
         return [Triangle3D(subtri[0], subtri[1], subtri[2]) for subtri in sub_triangles]
 
     def middle(self):
-        """
-        Gets the middle point of the face: center of gravity.
-
-        """
         return (self.point1 + self.point2 + self.point3) / 3
 
     def normal(self):
@@ -2231,6 +2230,9 @@ class CylindricalFace3D(Face3D):
 
     @bounding_box.setter
     def bounding_box(self, new_bouding_box):
+        """
+        Sets the surface bounding box.
+        """
         self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=5):
@@ -2948,6 +2950,10 @@ class ExtrusionFace3D(Face3D):
 
     @property
     def bounding_box(self):
+        """
+        Gets the extrusion face bounding box.
+
+        """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox
@@ -2963,9 +2969,9 @@ class ExtrusionFace3D(Face3D):
         angle_resolution = 11
         xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
-        number_points_x = max(36, int(delta_x * angle_resolution))
+        number_points_x = int(delta_x * angle_resolution)
 
-        number_points_y = 2
+        number_points_y = number_points_x
 
         return number_points_x, number_points_y
 

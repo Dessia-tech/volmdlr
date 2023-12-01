@@ -198,6 +198,7 @@ class TestCylindricalFace3D(unittest.TestCase):
                 cyl_face = faces.CylindricalFace3D.from_surface_rectangular_cut(
                     cylindrical_surface, 0, volmdlr.TWO_PI, z, 2)
                 list_curves = cyl_face.face_intersections(conical_face)
+                self.assertEqual(len(list_curves), len(expected_results[i][j]))
                 for curve_solution, expected_result in zip(list_curves, expected_results[i][j]):
                     self.assertAlmostEqual(curve_solution.length(), expected_result, 6)
 

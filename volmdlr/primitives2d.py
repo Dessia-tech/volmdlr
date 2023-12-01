@@ -115,6 +115,7 @@ class RoundedLineSegments2D(RoundedLineSegments):
         offset_points = []
 
         for i in range((not self.closed), number_points - (not self.closed)):
+
             check = False
             normal_i = vectors[2 * i - 1] + vectors[2 * i]
             if normal_i.is_close(volmdlr.Vector2D(0, 0)):
@@ -139,11 +140,14 @@ class RoundedLineSegments2D(RoundedLineSegments):
                     if self.adapt_radius:
                         new_radii[i] = 1e-6
 
-            normal_vector1 = - vectors[2 * i - 1].normal_vector().unit_vector()
-            normal_vector2 = vectors[2 * i].normal_vector().unit_vector()
+            normal_vector1 = - vectors[2 * i - 1].normal_vector()
+            normal_vector2 = vectors[2 * i].normal_vector()
+            normal_vector1 = normal_vector1.unit_vector()
+            normal_vector2 = normal_vector2.unit_vector()
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
-            offset_point = self.points[i] + offset / math.cos(alpha / 2) * offset_vectors[i - (not self.closed)]
+            offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
+                offset_vectors[i - (not self.closed)]
             offset_points.append(offset_point)
         return offset_points, new_radii
 
@@ -237,6 +241,10 @@ class RoundedLineSegments2D(RoundedLineSegments):
         return normal_vectors
 
     def _helper_get_offset_vectors(self, line_indexes, directive_vector1, directive_vector2):
+        """
+        Helper method: get offset vectors.
+
+        """
         intersection = volmdlr.Point2D.line_intersection(
             curves.Line2D(self.points[line_indexes[0]], self.points[line_indexes[0]] + directive_vector1),
             curves.Line2D(self.points[line_indexes[-1] + 1], self.points[line_indexes[-1] + 1] + directive_vector2))

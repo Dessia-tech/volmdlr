@@ -8,6 +8,7 @@ import sys
 import warnings
 from itertools import product
 from typing import List, Union
+from functools import cached_property
 
 import dessia_common.core as dc
 import matplotlib.patches
@@ -168,6 +169,7 @@ class Edge(dc.DessiaObject):
         point1 = object_dict[arguments[1]]
         point2 = object_dict[arguments[2]]
         same_sense = bool(arguments[4] == ".T.")
+        tol = min(1e-6, kwargs.get("global_uncertainty", 1e-6))
         if obj.__class__.__name__ == 'LineSegment3D':
             if point1 != point2:
                 return LineSegment3D(point1, point2, name=arguments[0][1:-1])
@@ -182,7 +184,7 @@ class Edge(dc.DessiaObject):
             return None
 
         if hasattr(obj, 'trim'):
-            trimmed_edge = obj.trim(point1, point2, same_sense)
+            trimmed_edge = obj.trim(point1, point2, same_sense, tol)
             if trimmed_edge:
                 trimmed_edge.name = arguments[0][1:-1]
             return trimmed_edge
@@ -312,8 +314,8 @@ class Edge(dc.DessiaObject):
         for lineseg1, lineseg2 in product(line_segments1, line_segments2):
             valid_section = section_validor_(lineseg1, lineseg2)
             if valid_section:
-                intersection_section_pairs.append((self.trim(lineseg1.start, lineseg1.end),
-                                                   edge2.trim(lineseg2.start, lineseg2.end)))
+                intersection_section_pairs.append((self.split_between_two_points(lineseg1.start, lineseg1.end),
+                                                   edge2.split_between_two_points(lineseg2.start, lineseg2.end)))
         return intersection_section_pairs
 
     def _generic_edge_intersections(self, edge2, abs_tol: float = 1e-6):
@@ -414,13 +416,13 @@ class Edge(dc.DessiaObject):
         abscissa2 = self.abscissa(point2)
         return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
 
-    def trim(self, point1, point2):
+    def split_between_two_points(self, point1, point2):
         """
-        Trims edge between two points.
+        Split edge between two points.
 
         :param point1: point 1.
         :param point2: point 2.
-        :return: edge trimmed.
+        :return: edge split.
         """
         if point1.is_close(self.start) or point1.is_close(self.end):
             split1 = [self, None]
@@ -884,7 +886,6 @@ class BSplineCurve(Edge):
         self._knotvector = None
         self.ctrlptsw = None
         self.rational = False
-        self._periodic = None
         if self.weights:
             self.rational = True
             ctrlptsw = []
@@ -938,11 +939,8 @@ class BSplineCurve(Edge):
     @property
     def periodic(self):
         """Return True if the BSpline is periodic."""
-        if self._periodic is None:
-            umin, umax = self.domain
-            control_points = self.control_points
-            self._periodic = bool(umin != 0.0 or umax != 1.0) or control_points[0].is_close(control_points[-1])
-        return self._periodic
+        control_points = self.control_points
+        return control_points[0].is_close(control_points[-1])
 
     @property
     def points(self):
@@ -1195,10 +1193,11 @@ class BSplineCurve(Edge):
             points = self.points
             if self.periodic:
                 fullarc_class_ = getattr(sys.modules[__name__], 'FullArc' + class_sufix)
-                try_fullarc = fullarc_class_.from_3_points(points[0], self.point_at_abscissa(0.25 * self.length()),
-                                                           self.point_at_abscissa(0.5 * self.length()))
+                n = len(points)
+                try_fullarc = fullarc_class_.from_3_points(points[0], points[int(0.5 * n)],
+                                                           points[int(0.75 * n)])
 
-                if try_fullarc and all(try_fullarc.point_belongs(point, 1e-6) for point in points):
+                if all(try_fullarc.point_belongs(point, 1e-6) for point in points):
                     self._simplified = try_fullarc
                     return try_fullarc
             else:
@@ -1708,7 +1707,10 @@ class BSplineCurve(Edge):
                     if line.point_distance(linesegment.middle_point()) < (tol * 0.01):
                         list_intersections.append(linesegment.middle_point())
                         continue
-                list_intersections.extend(intersections)
+                if intersections:
+                    for intersection in intersections:
+                        if not intersection.in_list(list_intersections):
+                            list_intersections.append(intersection)
             initial_abscissa += linesegment.length()
         return list_intersections
 
@@ -1859,23 +1861,32 @@ class BSplineCurve(Edge):
         data = self.data
         point_name = 'Point' + self.__class__.__name__[-2:]
         # special case periodical bsplinecurve
-        if self.periodic and abscissa1 == abscissa2 and (not math.isclose(abscissa1, 0.0, abs_tol=1e-6) or
-                        not math.isclose(abscissa1, self.length(), abs_tol=1e-6)):
+        if self.periodic and abscissa1 >= abscissa2 and (not math.isclose(abscissa1, 0.0, abs_tol=1e-6) and
+                                                         not math.isclose(abscissa1, self.length(), abs_tol=1e-6)):
             umin, umax = self.domain
+            u_start = self.abscissa_to_parameter(abscissa1)
+            u_end = self.abscissa_to_parameter(abscissa2)
             number_points1 = int((abscissa1 / self.length()) * number_points)
-            max_number_points = math.ceil((self.length() - abscissa1) / 5e-6)
-            if number_points1 > max_number_points:
-                number_points1 = max(max_number_points, 2)
-            number_points2 = number_points - number_points1
-            max_number_points = math.ceil(abscissa1 / 5e-6)
-            if number_points2 > max_number_points:
-                number_points2 = max(max_number_points, 2)
-            u_start_end = self.abscissa_to_parameter(abscissa1)
-            data["sample_size"] = number_points1
-            points1 = evaluate_curve(data, start=u_start_end, stop=umax)
-            data["sample_size"] = number_points2
-            points2 = evaluate_curve(data, start=umin, stop=u_start_end)
-            points = points1 + points2[1:]
+            if umin == u_end:
+                number_points1 = number_points
+                data["sample_size"] = number_points1
+                points1 = evaluate_curve(data, start=u_start, stop=umax)
+                points = points1
+            else:
+                max_number_points = math.ceil((self.length() - abscissa1) / 2e-6)
+                if number_points1 > max_number_points:
+                    number_points1 = max(max_number_points, 2)
+
+                number_points2 = number_points - number_points1
+                max_number_points = math.ceil(abscissa1 / 2e-6)
+                if number_points2 > max_number_points:
+                    number_points2 = max(max_number_points, 2)
+
+                data["sample_size"] = number_points1
+                points1 = evaluate_curve(data, start=u_start, stop=umax)
+                data["sample_size"] = number_points2
+                points2 = evaluate_curve(data, start=umin, stop=u_end)
+                points = points1 + points2[1:]
         else:
             if math.isclose(abscissa2, 0.0, abs_tol=1e-6):
                 abscissa2 += self.length()
@@ -1884,7 +1895,7 @@ class BSplineCurve(Edge):
             u1 = self.abscissa_to_parameter(abscissa1)
             u2 = self.abscissa_to_parameter(abscissa2)
             # todo: improve intersections so we don't need to worry about limiting the precision?
-            max_number_points = math.ceil(abs(abscissa1 - abscissa2) / 5e-6)
+            max_number_points = math.ceil(abs(abscissa1 - abscissa2) / 2e-6)
             if number_points > max_number_points:
                 number_points = max(max_number_points, 2)
             data["sample_size"] = number_points
@@ -3630,27 +3641,51 @@ class ArcEllipse2D(Edge):
                  end: volmdlr.Point2D, name: str = ''):
         Edge.__init__(self, start, end, name)
         self.ellipse = ellipse
-        self.angle_start, self.angle_end = self.get_start_end_angles()
-        self.angle = self.angle_end - self.angle_start
         self._bounding_rectangle = None
         self._reverse = None
+
+    def __eq__(self, other):
+        """Defines equality."""
+        if not isinstance(other, self.__class__):
+            return False
+        return bool(self.ellipse == other.ellipse and self.start == other.start
+                    and self.end == other.end)
 
     @property
     def center(self):
         """Gets ellipse's center point."""
         return self.ellipse.frame.origin
 
-    def get_start_end_angles(self):
-        """Gets start and end angles for start and end points, respectively."""
+    @cached_property
+    def angle(self):
+        """Gets arc of ellipse angle."""
+        return self.angle_end - self.angle_start
+
+    @cached_property
+    def angle_start(self):
+        """Gets arc of ellipse starting angle."""
+        return self.get_start_angle()
+
+    @cached_property
+    def angle_end(self):
+        """Gets arc of ellipse ending angle."""
+        return self.get_end_angle()
+
+    def get_start_angle(self):
+        """Gets angle for the start point."""
         local_start_point = self.ellipse.frame.global_to_local_coordinates(self.start)
         u1, u2 = local_start_point.x / self.ellipse.major_axis, local_start_point.y / self.ellipse.minor_axis
         start_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        return start_angle
+
+    def get_end_angle(self):
+        """Gets angle for the end point."""
         local_end_point = self.ellipse.frame.global_to_local_coordinates(self.end)
         u1, u2 = local_end_point.x / self.ellipse.major_axis, local_end_point.y / self.ellipse.minor_axis
         end_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         if self.ellipse.is_trigo and end_angle == 0.0:
             end_angle = volmdlr.TWO_PI
-        return start_angle, end_angle
+        return end_angle
 
     @classmethod
     def from_3_points_and_center(cls, start, interior, end, center, name: str = ''):
@@ -3777,7 +3812,7 @@ class ArcEllipse2D(Edge):
         aproximation_point = None
         for point1, point2 in zip(discretized_points[:-1], discretized_points[1:]):
             dist1 = point1.point_distance(point2)
-            if (aproximation_abscissa + dist1) >= abscissa:
+            if aproximation_abscissa + dist1 > abscissa:
                 aproximation_point = point1
                 break
             aproximation_abscissa += dist1
@@ -3878,7 +3913,7 @@ class ArcEllipse2D(Edge):
             if not angle_resolution:
                 number_points = 2
             else:
-                number_points = math.ceil(angle_resolution * abs(self.angle / math.pi)) + 2
+                number_points = max(math.ceil(angle_resolution * abs(self.angle) + 1), 2)
         if self.angle_start > self.angle_end:
             angle_end = self.angle_end + volmdlr.TWO_PI
             angle_start = self.angle_start
@@ -4120,9 +4155,20 @@ class FullArcEllipse(Edge):
         self.start_end = start_end
         self.ellipse = ellipse
         self.is_trigo = True
-        self.angle_start = 0.0
-        self.angle_end = volmdlr.TWO_PI
         Edge.__init__(self, start=start_end, end=start_end, name=name)
+
+    @cached_property
+    def angle_start(self):
+        """Get ellipse starting angle."""
+        local_start_point = self.ellipse.frame.global_to_local_coordinates(self.start)
+        u1, u2 = local_start_point.x / self.ellipse.major_axis, local_start_point.y / self.ellipse.minor_axis
+        start_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
+        return start_angle
+
+    @cached_property
+    def angle_end(self):
+        """Get ellipse starting angle."""
+        return self.angle_start + volmdlr.TWO_PI
 
     @property
     def periodic(self):
@@ -4655,61 +4701,48 @@ class LineSegment3D(LineSegment):
         return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
             surface, 0, angle, 0, (self.end - self.start).dot(axis))]
 
-    @staticmethod
-    def _helper_intersecting_axis_plane_revolution(surface, distance_1, distance_2, angle):
+    def _plane_revolution(self, params):
         """
-        Plane revolution helper method: Line Segment intersects the revolution axis.
+        Creates Plane Revolution of a Line Segment 3D.
 
-        :return: revolution faces list
+        :param params: needed parameters.
+        :return: List of plane revolution faces.
         """
-        faces = []
-        for i, radius in enumerate([distance_1, distance_2]):
-            if math.isclose(radius, 0, abs_tol=1e-9):
-                continue
-            if i == 0:
-                arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
-            else:
-                arc_point1 = volmdlr.O2D - volmdlr.X2D * radius
-            arc_point2 = arc_point1.rotation(volmdlr.O2D, angle / 2)
-            arc_point3 = arc_point1.rotation(volmdlr.O2D, angle)
-            arc = Arc2D.from_3_points(arc_point1, arc_point2, arc_point3)
-            outer_contour = volmdlr.wires.Contour2D([LineSegment2D(volmdlr.O2D, arc_point1), arc,
-                                                     LineSegment2D(arc_point3, volmdlr.O2D)])
-            face = volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour, []))
-            faces.append(face)
-        return faces
-
-    @staticmethod
-    def _helper_plane_revolution_two_circles(surface, bigger_r, smaller_r):
-        """
-        Helper method plane revolution creating two full circles.
-
-        :param surface: face surface.
-        :param bigger_r: bigger radius.
-        :param smaller_r: smaller radius.
-        :return: revolution faces list
-        """
+        axis, angle, p1_proj, u, distance_1, distance_2, line_intersection = params
+        v = axis.cross(u)
+        surface = volmdlr.surfaces.Plane3D(
+            volmdlr.Frame3D(p1_proj, u, v, axis))
+        if self.point_belongs(line_intersection):  # Linesegment intersects revolution axis
+            faces = []
+            for i, radius in enumerate([distance_1, distance_2]):
+                if math.isclose(radius, 0, abs_tol=1e-9):
+                    continue
+                if i == 0:
+                    arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
+                else:
+                    arc_point1 = volmdlr.O2D - volmdlr.X2D * radius
+                arc_point2 = arc_point1.rotation(volmdlr.O2D, angle / 2)
+                arc_point3 = arc_point1.rotation(volmdlr.O2D, angle)
+                arc = Arc2D.from_3_points(arc_point1, arc_point2, arc_point3)
+                outer_contour = volmdlr.wires.Contour2D([LineSegment2D(volmdlr.O2D, arc_point1), arc,
+                                                         LineSegment2D(arc_point3, volmdlr.O2D)])
+                face = volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour, []))
+                faces.append(face)
+            return faces
+        smaller_r, bigger_r = sorted([distance_1, distance_2])
         inner_contours2d = []
-        bigger_circle = volmdlr_curves.Circle2D(volmdlr.OXY, bigger_r)
-        outer_contour2d = volmdlr.wires.Contour2D(
-            bigger_circle.split_at_abscissa(bigger_circle.length() * 0.5))
-        if not math.isclose(smaller_r, 0, abs_tol=1e-9):
-            smaller_circle = volmdlr_curves.Circle2D(volmdlr.OXY, smaller_r)
-            inner_contours2d = [volmdlr.wires.Contour2D(
-                smaller_circle.split_at_abscissa(smaller_circle.length() * 0.5))]
-        return [volmdlr.faces.PlaneFace3D(surface,  volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
-
-    @staticmethod
-    def _helper_plane_revolution_arcs_and_lines(surface, bigger_r, smaller_r, angle):
-        """
-        Plane revolution helper method for the case where it creates Two arcs and lines.
-
-        :param surface: face surface.
-        :param bigger_r: bigger radius.
-        :param smaller_r: smaller radius.
-        :param angle: revolution angle.
-        :return: revolution faces list
-        """
+        if angle == volmdlr.TWO_PI:
+            # Only 2 circles as contours
+            bigger_circle = volmdlr_curves.Circle2D(volmdlr.OXY, bigger_r)
+            outer_contour2d = volmdlr.wires.Contour2D(
+                bigger_circle.split_at_abscissa(bigger_circle.length() * 0.5))
+            if not math.isclose(smaller_r, 0, abs_tol=1e-9):
+                smaller_circle = volmdlr_curves.Circle2D(volmdlr.OXY, smaller_r)
+                inner_contours2d = [volmdlr.wires.Contour2D(
+                    smaller_circle.split_at_abscissa(smaller_circle.length() * 0.5))]
+            return [volmdlr.faces.PlaneFace3D(surface,
+                                              volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
+        # Two arcs and lines
         arc1_s = volmdlr.Point2D(bigger_r, 0)
         arc1_i = arc1_s.rotation(center=volmdlr.O2D,
                                  angle=0.5 * angle)
@@ -4728,25 +4761,7 @@ class LineSegment3D(LineSegment):
         outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
                                                    arc2, line2])
 
-        return [volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour2d, []))]
-
-    def _plane_revolution(self, params):
-        """
-        Creates Plane Revolution of a Line Segment 3D.
-
-        :param params: needed parameters.
-        :return: List of plane revolution faces.
-        """
-        axis, angle, p1_proj, u, distance_1, distance_2, line_intersection = params
-        v = axis.cross(u)
-        surface = volmdlr.surfaces.Plane3D(
-            volmdlr.Frame3D(p1_proj, u, v, axis))
-        if self.point_belongs(line_intersection):
-            return self._helper_intersecting_axis_plane_revolution(surface, distance_1, distance_2, angle)
-        smaller_r, bigger_r = sorted([distance_1, distance_2])
-        if angle == volmdlr.TWO_PI:
-            return self._helper_plane_revolution_two_circles(surface, bigger_r, smaller_r)
-        return self._helper_plane_revolution_arcs_and_lines(surface, bigger_r, smaller_r, angle)
+        return [volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
 
     def revolution(self, axis_point, axis, angle):
         """
@@ -4786,6 +4801,13 @@ class LineSegment3D(LineSegment):
             return self._conical_revolution([axis, u, distance_1, distance_2, angle, line_intersection])
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
+
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
+        """Trims a Line Segment at two given points."""
+        if not self.point_belongs(point1) or not self.point_belongs(point2):
+            raise ValueError('Point not on curve')
+
+        return LineSegment3D(point1, point2)
 
     def sweep(self, *args):
         """
@@ -5079,7 +5101,7 @@ class BSplineCurve3D(BSplineCurve):
                                             self.knots, self.weights, self.name)
         return new_bsplinecurve3d
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
         """
         Trims a bspline curve between two points.
 
@@ -5097,21 +5119,21 @@ class BSplineCurve3D(BSplineCurve):
         parameter1 = bsplinecurve.point_to_parameter(point1)
         parameter2 = bsplinecurve.point_to_parameter(point2)
 
-        if (point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end)) \
-                or (point1.is_close(bsplinecurve.end) and point2.is_close(bsplinecurve.start)):
+        if (point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol)) \
+                or (point1.is_close(bsplinecurve.end, abs_tol) and point2.is_close(bsplinecurve.start, abs_tol)):
             return bsplinecurve
 
-        if point1.is_close(bsplinecurve.start) and not point2.is_close(bsplinecurve.end):
+        if point1.is_close(bsplinecurve.start, abs_tol) and not point2.is_close(bsplinecurve.end, abs_tol):
             return bsplinecurve.cut_after(parameter2)
 
-        if point2.is_close(bsplinecurve.start) and not point1.is_close(bsplinecurve.end):
+        if point2.is_close(bsplinecurve.start, abs_tol) and not point1.is_close(bsplinecurve.end, abs_tol):
             bsplinecurve = bsplinecurve.cut_after(parameter1)
             return bsplinecurve
 
-        if not point1.is_close(bsplinecurve.start) and point2.is_close(bsplinecurve.end):
+        if not point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol):
             return bsplinecurve.cut_before(parameter1)
 
-        if not point2.is_close(bsplinecurve.start) and point1.is_close(bsplinecurve.end):
+        if not point2.is_close(bsplinecurve.start, abs_tol) and point1.is_close(bsplinecurve.end, abs_tol):
             bsplinecurve = bsplinecurve.cut_before(parameter2)
             return bsplinecurve
 
@@ -5228,7 +5250,8 @@ class BSplineCurve3D(BSplineCurve):
     # Copy paste du LineSegment3D
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
-        Matplotlib plot method for a BSpline Curve 3D.
+        Bspline Curve plot method using matplotlib.
+
         """
         if ax is None:
             fig = plt.figure()
@@ -5431,6 +5454,16 @@ class BSplineCurve3D(BSplineCurve):
         surface = volmdlr.surfaces.RevolutionSurface3D(self, axis_point, axis)
         face = volmdlr.faces.RevolutionFace3D.from_surface_rectangular_cut(surface, 0, angle, 0, self.length())
         return face
+
+    def split_between_two_points(self, point1, point2):
+        """
+        Split edge between two points.
+
+        :param point1: point 1.
+        :param point2: point 2.
+        :return: edge split.
+        """
+        return self.trim(point1, point2)
 
     def move_frame_along(self, frame, *args, **kwargs):
         """Moves frame along the edge."""
@@ -6186,13 +6219,13 @@ class FullArc3D(FullArcMixin, Arc3D):
     def from_center_normal(cls, center: volmdlr.Point3D, normal: volmdlr.Vector3D,
                            start_end: volmdlr.Point3D, name: str = ''):
         """
-        Creates a Full Arc 3D using a center, and a normal vector and a start point.
+        Created a Full arc 3d using a center point, a normal vector and a start point.
 
         :param center: full arc center.
-        :param normal: circle normal
+        :param normal: full arc normal
         :param start_end: full arc starting point.
-        :param name: full arc's name.
-        :return: FullArc3D.
+        :param name: full arc name.
+        :return: Full Arc 3D.
         """
         u_vector = normal.deterministic_unit_normal_vector()
         v_vector = normal.cross(u_vector)
@@ -6258,6 +6291,10 @@ class ArcEllipse3D(Edge):
 
     @property
     def self_2d(self):
+        """
+        Arc ellipse 2d version of self.
+
+        """
         if not self._self_2d:
             self._self_2d = self.to_2d(self.ellipse.center, self.ellipse.frame.u, self.ellipse.frame.v)
         return self._self_2d

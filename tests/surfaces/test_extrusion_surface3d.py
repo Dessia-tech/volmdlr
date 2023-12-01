@@ -158,12 +158,12 @@ class TestExtrusionSurface3D(unittest.TestCase):
         self.assertAlmostEqual(contour2d.area(), 0.012120134592666365, 2)
 
         surface = surfaces.ExtrusionSurface3D.load_from_file(
-            os.path.join(folder, "periodical_extrusionsurface_linesegment3d_to_2d.json"))
-        contour = vmw.Contour3D.load_from_file(
-            os.path.join(folder, "periodical_extrusionsurface_linesegment3d_to_2d_contour.json"))
+            os.path.join(folder, "extrusionsurface_periodic.json"))
+        contour = vmw.Contour3D.load_from_file(os.path.join(folder, "extrusionsurface_periodic_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
-        self.assertTrue(contour2d.is_ordered(1e-5))
-        self.assertAlmostEqual(contour2d.area(), 0.007376809172328507, 2)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 2.009851332304794e-06, 8)
+
 
 
 if __name__ == '__main__':
