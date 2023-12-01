@@ -1260,7 +1260,7 @@ class Surface3D(DessiaObject):
                 return False
         return True
 
-    def is_degenerated_brep(self, edge):
+    def is_degenerated_brep(self, *args):
         """
         An edge is said to be degenerated when it corresponds to a single 3D point.
         """
