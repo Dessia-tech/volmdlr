@@ -1866,6 +1866,7 @@ class BSplineCurve(Edge):
             umin, umax = self.domain
             u_start = self.abscissa_to_parameter(abscissa1)
             u_end = self.abscissa_to_parameter(abscissa2)
+            number_points1 = int((abscissa1 / self.length()) * number_points)
             if umin == u_end:
                 number_points1 = number_points
                 data["sample_size"] = number_points1
