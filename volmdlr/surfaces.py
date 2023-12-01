@@ -935,7 +935,8 @@ class Surface3D(DessiaObject):
         primitives3d = []
         primitives_mapping = {}
         for primitive2d in contour2d.primitives:
-            if self.is_degenerated_brep(primitive2d):
+            if (self.__class__.__name__ in ("ConicalSurface3D", "RevolutionSurface3D") and
+                    self.is_degenerated_brep(primitive2d)):
                 continue
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
             if hasattr(self, method_name):
@@ -1259,12 +1260,6 @@ class Surface3D(DessiaObject):
             if not end.is_close(start, tol):
                 return False
         return True
-
-    def is_degenerated_brep(self, edge):
-        """
-        An edge is said to be degenerated when it corresponds to a single 3D point.
-        """
-        return False
 
 
 class Plane3D(Surface3D):
@@ -5983,8 +5978,8 @@ class RevolutionSurface3D(PeriodicalSurface):
         An edge is said to be degenerated when it corresponds to a single 3D point.
         """
         if "LineSegment2D" in (edge.__class__.__name__, edge.simplify.__class__.__name__):
-            start3d = self.point3d_to_2d(edge.start)
-            end3d = self.point3d_to_2d(edge.end)
+            start3d = self.point2d_to_3d(edge.start)
+            end3d = self.point2d_to_3d(edge.end)
             return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
         return False
 
