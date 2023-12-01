@@ -570,7 +570,8 @@ class Line2D(Line):
 
         return circle1, circle2
 
-    def _helper_tangent_circles_theta(self, new_vector_c, new_vector_d, new_point_k):
+    @staticmethod
+    def _helper_tangent_circles_theta(new_vector_c, new_vector_d, new_point_k):
         """
         Helper method in get concurrent segments tangent circle to get theta.
 

@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: increases precision of point3d_to_2d.
 
 ### Refactor
-- Big refactor to improve and simplify complex and long methods in various modules.
+- Big refactor to improve and simplify complex and long methods in various modules. 
 
 ### Changed
 -
