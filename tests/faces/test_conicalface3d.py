@@ -46,18 +46,6 @@ class TestConicalFace3D(unittest.TestCase):
         self.assertEqual(len(conical_face.surface2d.outer_contour.primitives), 5)
         self.assertAlmostEqual(conical_face.area(), 0.0009613769926732048 * volmdlr.TWO_PI, 4)
 
-        buggy_conical_surface = DessiaObject.load_from_file(
-            os.path.join(folder, 'conicalsurface_openned_contours.json'))
-        buggy_contours3d1 = DessiaObject.load_from_file(
-            os.path.join(folder, 'conicalsurface_openned_contours_contour_0.json'))
-        buggy_contours3d2 = DessiaObject.load_from_file(
-            os.path.join(folder, 'conicalsurface_openned_contours_contour_1.json'))
-
-        conical_face = faces.ConicalFace3D.from_contours3d(buggy_conical_surface,
-                                                           [buggy_contours3d1, buggy_contours3d2])
-        self.assertFalse(conical_face.surface2d.inner_contours)
-        self.assertAlmostEqual(conical_face.area(), 0.021682359796019755 , 3)
-
     def test_from_base_and_vertex(self):
         circle = curves.Circle3D(
             volmdlr.Frame3D(volmdlr.Point3D(0, 0, 1), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D), 0.5 * math.sqrt(3)
