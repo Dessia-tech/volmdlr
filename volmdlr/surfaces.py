@@ -920,18 +920,22 @@ class Surface3D(DessiaObject):
             return wires.Contour2D(primitives2d), primitives_mapping
         return wires.Contour2D(primitives2d)
 
-    def contour2d_to_3d(self, contour2d):
+    def contour2d_to_3d(self, contour2d, return_primitives_mapping: bool = False):
         """
         Transforms a Contour2D in the parametric domain of the surface into a Contour3D in Cartesian coordinate.
 
         :param contour2d: The contour to be transformed.
         :type contour2d: :class:`wires.Contour2D`
+        :param return_primitives_mapping: If True, returns a dictionary containing the correspondence between 2D and 3D
+         primitives
+        :type return_primitives_mapping: bool
         :return: A 3D contour object.
         :rtype: :class:`wires.Contour3D`
         """
         primitives3d = []
+        primitives_mapping = {}
         for primitive2d in contour2d.primitives:
-            if primitive2d.name == "construction":
+            if self.is_degenerated_brep(primitive2d):
                 continue
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
             if hasattr(self, method_name):
@@ -940,6 +944,7 @@ class Surface3D(DessiaObject):
                     if primitives is None:
                         continue
                     primitives3d.extend(primitives)
+                    primitives_mapping[primitive2d] = primitives[0]
                 except AttributeError:
                     print(traceback.format_exc())
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
@@ -949,6 +954,8 @@ class Surface3D(DessiaObject):
                     f'Class {self.__class__.__name__} does not implement {method_name}')
         if not primitives3d:
             raise ValueError("no primitives to create contour")
+        if return_primitives_mapping:
+            return wires.Contour3D(primitives3d), primitives_mapping
         return wires.Contour3D(primitives3d)
 
     def linesegment3d_to_2d(self, linesegment3d):
@@ -1252,6 +1259,12 @@ class Surface3D(DessiaObject):
             if not end.is_close(start, tol):
                 return False
         return True
+
+    def is_degenerated_brep(self, edge):
+        """
+        An edge is said to be degenerated when it corresponds to a single 3D point.
+        """
+        return False
 
 
 class Plane3D(Surface3D):
@@ -1597,11 +1610,23 @@ class Plane3D(Surface3D):
         """
         return point3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
 
-    def contour2d_to_3d(self, contour2d):
+    def contour2d_to_3d(self, contour2d, return_primitives_mapping: bool = False):
         """
-        Converts a contour 2D on parametric surface into a 3D contour.
+        Transforms a Contour2D in the parametric domain of the surface into a Contour3D in Cartesian coordinate.
+
+        :param contour2d: The contour to be transformed.
+        :type contour2d: :class:`wires.Contour2D`
+        :param return_primitives_mapping: If True, returns a dictionary containing the correspondence between 2D and 3D
+         primitives
+        :type return_primitives_mapping: bool
+        :return: A 3D contour object.
+        :rtype: :class:`wires.Contour3D`
         """
-        return contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+        contour3d = contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+        if return_primitives_mapping:
+            primitives_mapping = dict(zip(contour2d.primitives, contour3d.primitives))
+            return contour3d, primitives_mapping
+        return contour3d
 
     def contour3d_to_2d(self, contour3d, return_primitives_mapping: bool = False):
         """
@@ -4105,6 +4130,16 @@ class ConicalSurface3D(PeriodicalSurface):
             curves_.append(bspline)
         return curves_
 
+    def is_degenerated_brep(self, edge):
+        """
+        An edge is said to be degenerated when it corresponds to a single 3D point.
+        """
+        if "LineSegment2D" in (edge.__class__.__name__, edge.simplify.__class__.__name__):
+            start3d = self.point2d_to_3d(edge.start)
+            end3d = self.point2d_to_3d(edge.end)
+            return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
+        return False
+
 
 class SphericalSurface3D(PeriodicalSurface):
     """
@@ -4198,13 +4233,22 @@ class SphericalSurface3D(PeriodicalSurface):
         circle = curves.Circle3D(volmdlr.Frame3D(center1, self.frame.u, self.frame.v, self.frame.w),  circle_radius)
         return circle
 
-    def contour2d_to_3d(self, contour2d):
+    def contour2d_to_3d(self, contour2d, return_primitives_mapping: bool = False):
         """
-        Converts the primitive from parametric 2D space to 3D spatial coordinates.
+        Transforms a Contour2D in the parametric domain of the surface into a Contour3D in Cartesian coordinate.
+
+        :param contour2d: The contour to be transformed.
+        :type contour2d: :class:`wires.Contour2D`
+        :param return_primitives_mapping: If True, returns a dictionary containing the correspondence between 2D and 3D
+         primitives
+        :type return_primitives_mapping: bool
+        :return: A 3D contour object.
+        :rtype: :class:`wires.Contour3D`
         """
         primitives3d = []
+        primitives_mapping = {}
         for primitive2d in contour2d.primitives:
-            if primitive2d.name == "construction":
+            if self.is_degenerated_brep(primitive2d) or primitive2d.name == "construction":
                 continue
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
             if hasattr(self, method_name):
@@ -4214,12 +4258,14 @@ class SphericalSurface3D(PeriodicalSurface):
                         primitives3d.extend(primitives_list)
                     else:
                         continue
+                    primitives_mapping[primitive2d] = primitives_list[0]
                 except AttributeError:
                     print(f'Class {self.__class__.__name__} does not implement {method_name}'
                           f'with {primitive2d.__class__.__name__}')
             else:
                 raise AttributeError(f'Class {self.__class__.__name__} does not implement {method_name}')
-
+        if return_primitives_mapping:
+            return wires.Contour3D(primitives3d), primitives_mapping
         return wires.Contour3D(primitives3d)
 
     @classmethod
@@ -4846,7 +4892,7 @@ class SphericalSurface3D(PeriodicalSurface):
         return face.triangulation()
 
     def check_parametric_contour_end(self, primitives2d, tol):
-        """Helper function"""
+        """Helper function to repair_primitives_periodicity."""
         last_end = primitives2d[-1].end
         first_start = primitives2d[0].start
         if not last_end.is_close(first_start, tol=tol):
@@ -4872,8 +4918,8 @@ class SphericalSurface3D(PeriodicalSurface):
     def is_singularity_point(self, point, *args, **kwargs):
         """Verifies if point is on the surface singularity."""
         tol = kwargs.get("tol", 1e-6)
-        positive_singularity = self.frame.origin.translation(self.radius * self.frame.w)
-        negative_singularity = self.frame.origin.translation(-self.radius * self.frame.w)
+        positive_singularity = self.point2d_to_3d(volmdlr.Point2D(0.0, 0.5 * math.pi))
+        negative_singularity = self.point2d_to_3d(volmdlr.Point2D(0.0, -0.5 * math.pi))
         return bool(positive_singularity.is_close(point, tol) or negative_singularity.is_close(point, tol))
 
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
@@ -5077,6 +5123,16 @@ class SphericalSurface3D(PeriodicalSurface):
                 continue
             curves_.append(bspline)
         return curves_
+
+    def is_degenerated_brep(self, edge):
+        """
+        An edge is said to be degenerated when it corresponds to a single 3D point.
+        """
+        if "LineSegment2D" in (edge.__class__.__name__, edge.simplify.__class__.__name__):
+            start3d = self.point3d_to_2d(edge.start)
+            end3d = self.point3d_to_2d(edge.end)
+            return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
+        return False
 
 
 class RuledSurface3D(Surface3D):
@@ -5921,6 +5977,16 @@ class RevolutionSurface3D(PeriodicalSurface):
         if self.u_closed_upper():
             lines.append(curves.Line2D(volmdlr.Point2D(a, d), volmdlr.Point2D(b, d)))
         return lines
+
+    def is_degenerated_brep(self, edge):
+        """
+        An edge is said to be degenerated when it corresponds to a single 3D point.
+        """
+        if "LineSegment2D" in (edge.__class__.__name__, edge.simplify.__class__.__name__):
+            start3d = self.point3d_to_2d(edge.start)
+            end3d = self.point3d_to_2d(edge.end)
+            return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
+        return False
 
 
 class BSplineSurface3D(Surface3D):
