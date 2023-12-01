@@ -241,7 +241,7 @@ class Surface2D(PhysicalObject):
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=discretize_line,
+            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
                                                      discretize_line_direction=discretize_line_direction)
             inner_polygon_nodes = inner_polygon.points.copy()
             for point in inner_polygon_nodes:
@@ -839,17 +839,13 @@ class Surface3D(DessiaObject):
         tol = 1e-2
         if self.__class__.__name__ == "ExtrusionSurface3D":
             tol = 5e-6
-        x_periodicity = self.x_periodicity
-        y_periodicity = self.y_periodicity
+        x_periodicity = self.x_periodicity if self.x_periodicity else -1
+        y_periodicity = self.y_periodicity if self.y_periodicity else -1
 
         if x_periodicity or y_periodicity:
             if self.is_undefined_brep(primitives2d[0]):
                 primitives2d[0] = self.fix_undefined_brep_with_neighbors(primitives2d[0], primitives2d[-1],
                                                                          primitives2d[1])
-        if x_periodicity is None:
-            x_periodicity = -1
-        if y_periodicity is None:
-            y_periodicity = -1
         i = 1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
@@ -1281,6 +1277,25 @@ class Surface3D(DessiaObject):
             if arcellipse.point_belongs(intersection):
                 intersections.append(intersection)
         return intersections
+
+    def brep_connectivity_check(self, brep: wires.Contour2D, tol: float = 1e-6) -> bool:
+        """Checks the topology of 2D BREP in 3D space."""
+        if len(brep.primitives) == 2 and brep.primitives[0].direction_independent_is_close(brep.primitives[1]):
+            return False
+        if self.x_periodicity:
+            distance = brep.primitives[-1].end.point_distance(brep.primitives[0].start)
+            if distance >= (0.99 * self.x_periodicity):
+                return False
+        if self.y_periodicity:
+            distance = brep.primitives[-1].end.point_distance(brep.primitives[0].start)
+            if distance >= (0.99 * self.y_periodicity):
+                return False
+        for prim1, prim2 in zip(brep.primitives, brep.primitives[1:] + [brep.primitives[0]]):
+            end = self.point2d_to_3d(prim1.end)
+            start = self.point2d_to_3d(prim2.start)
+            if not end.is_close(start, tol):
+                return False
+        return True
 
 
 class Plane3D(Surface3D):
@@ -1861,9 +1876,12 @@ class PeriodicalSurface(Surface3D):
                     old_innner_contour_positioned.primitives + [closing_linesegment2]
                 new_outer_contour = wires.Contour2D(primitives=new_outer_contour_primitives)
                 if not new_outer_contour.is_ordered():
-                    new_outer_contour = new_outer_contour.order_contour(tol=min(1e-2,
+                    try:
+                        new_outer_contour = new_outer_contour.order_contour(tol=min(1e-2,
                                                                                 0.1 * closing_linesegment1.length(),
                                                                                 0.1 * closing_linesegment2.length()))
+                    except NotImplementedError:
+                        pass
             else:
                 new_inner_contours.append(inner_contour)
         return new_outer_contour, new_inner_contours
@@ -2874,9 +2892,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         # Do not delete this, mathematical problem when x and y close to zero (should be zero) but not 0
         # Generally this is related to uncertainty of step files.
 
-        if abs(x) < 1e-6:
+        if abs(x) < 1e-12:
             x = 0.0
-        if abs(y) < 1e-6:
+        if abs(y) < 1e-12:
             y = 0.0
         if abs(z) < 1e-6:
             z = 0.0
@@ -2887,7 +2905,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             phi = 0
 
         u = self.major_radius + math.sqrt((self.minor_radius ** 2) - (z ** 2))
-        u1, u2 = round(x / u, 5), round(y / u, 5)
+        u1, u2 = x / u, y / u
         theta = math.atan2(u2, u1)
 
         vector_to_tube_center = volmdlr.Vector3D(abs(self.major_radius) * math.cos(theta),
@@ -3051,22 +3069,18 @@ class ToroidalSurface3D(PeriodicalSurface):
             [theta_discontinuity, phi_discontinuity])
 
         theta1, phi1 = start
-        # theta2, phi2 = end
         theta3, phi3 = point_after_start
-        # theta4, phi4 = point_before_end
         if self.frame.w.is_colinear_to(fullarc3d.circle.normal, abs_tol=1e-4):
-            point1 = start
             if theta1 > theta3:
-                point2 = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi1)
+                end = volmdlr.Point2D(theta1 - volmdlr.TWO_PI, phi1)
             elif theta1 < theta3:
-                point2 = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi1)
-            return [edges.LineSegment2D(point1, point2)]
-        point1 = start
+                end = volmdlr.Point2D(theta1 + volmdlr.TWO_PI, phi1)
+            return [edges.LineSegment2D(start, end)]
         if phi1 > phi3:
-            point2 = volmdlr.Point2D(theta1, phi1 - volmdlr.TWO_PI)
+            end = volmdlr.Point2D(theta1, phi1 - volmdlr.TWO_PI)
         elif phi1 < phi3:
-            point2 = volmdlr.Point2D(theta1, phi1 + volmdlr.TWO_PI)
-        return [edges.LineSegment2D(point1, point2)]
+            end = volmdlr.Point2D(theta1, phi1 + volmdlr.TWO_PI)
+        return [edges.LineSegment2D(start, end)]
 
     def arc3d_to_2d(self, arc3d):
         """
@@ -5278,6 +5292,19 @@ class ExtrusionSurface3D(Surface3D):
         content += f"#{current_id} = SURFACE_OF_LINEAR_EXTRUSION('{self.name}',#{edge_id},#{vector_id});\n"
         return content, [current_id]
 
+    def linesegment3d_to_2d(self, linesegment3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        start = self.point3d_to_2d(linesegment3d.start)
+        end = self.point3d_to_2d(linesegment3d.end)
+        if self.x_periodicity:
+            line_at_periodicity = curves.Line3D(self.edge.start, self.edge.start.translation(self.direction))
+            if (line_at_periodicity.point_belongs(linesegment3d.start) and
+                line_at_periodicity.point_belongs(linesegment3d.end) and start.x != end.x):
+                end.x = start.x
+        return [edges.LineSegment2D(start, end)]
+
     def arc3d_to_2d(self, arc3d):
         """
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
@@ -5286,9 +5313,12 @@ class ExtrusionSurface3D(Surface3D):
         end = self.point3d_to_2d(arc3d.end)
         if self.x_periodicity:
             start, end = self._verify_start_end_parametric_points(start, end, arc3d)
-            point_after_start = self.point3d_to_2d(arc3d.point_at_abscissa(0.02 * arc3d.length()))
-            point_before_end = self.point3d_to_2d(arc3d.point_at_abscissa(0.98 * arc3d.length()))
-            start, _, _, end = self._repair_points_order([start, point_after_start, point_before_end, end], arc3d)
+            points3d = [arc3d.start, arc3d.point_at_abscissa(0.02 * arc3d.length()),
+                        arc3d.point_at_abscissa(0.98 * arc3d.length()), arc3d.end]
+            point_after_start = self.point3d_to_2d(points3d[1])
+            point_before_end = self.point3d_to_2d(points3d[2])
+            start, _, _, end = self._repair_points_order([start, point_after_start, point_before_end, end], arc3d,
+                                                         points3d)
         return [edges.LineSegment2D(start, end, name="arc")]
 
     def arcellipse3d_to_2d(self, arcellipse3d):
@@ -5300,9 +5330,9 @@ class ExtrusionSurface3D(Surface3D):
         end2d = self.point3d_to_2d(arcellipse3d.end)
         if isinstance(self.edge, edges.ArcEllipse3D):
             return [edges.LineSegment2D(start2d, end2d)]
-        points = [self.point3d_to_2d(p)
-                  for p in arcellipse3d.discretization_points(number_points=15)]
-        return self._edge3d_to_2d(points, arcellipse3d)
+        points3d = arcellipse3d.discretization_points(number_points=15)
+        points = [self.point3d_to_2d(p) for p in points3d]
+        return self._edge3d_to_2d(points, arcellipse3d, points3d)
 
     def fullarcellipse3d_to_2d(self, fullarcellipse3d):
         """
@@ -5314,8 +5344,8 @@ class ExtrusionSurface3D(Surface3D):
         method. Additionally, it calculates a point on the arc at a small abscissa value (0.01 * length)
         and converts it to a 2D point. Based on the relative position of this point, the method determines
         the start and end points of the line segment in 2D. If the abscissa point is closer to the start
-        point, the line segment starts from (0, start.y) and ends at (1, end.y). If the abscissa point is
-        closer to the end point, the line segment starts from (1, start.y) and ends at (0, end.y). If the
+        point, the line segment starts from (0, start.y) and ends at (length, end.y). If the abscissa point is
+        closer to the end point, the line segment starts from (length, start.y) and ends at (0, end.y). If the
         abscissa point lies exactly at the midpoint of the arc, a NotImplementedError is raised. The resulting
         line segment is returned as a list.
 
@@ -5329,15 +5359,15 @@ class ExtrusionSurface3D(Surface3D):
         end = self.point3d_to_2d(fullarcellipse3d.end)
 
         u3, _ = self.point3d_to_2d(fullarcellipse3d.point_at_abscissa(0.01 * length))
-        if u3 > 0.5:
-            p1 = volmdlr.Point2D(1, start.y)
-            p2 = volmdlr.Point2D(0, end.y)
-        elif u3 < 0.5:
-            p1 = volmdlr.Point2D(0, start.y)
-            p2 = volmdlr.Point2D(1, end.y)
+        if u3 > 0.5 * length:
+            start.x = length
+            end.x = 0.0
+        elif u3 < 0.5 * length:
+            start.x = 0.0
+            end.x = length
         else:
             raise NotImplementedError
-        return [edges.LineSegment2D(p1, p2)]
+        return [edges.LineSegment2D(start, end)]
 
     def linesegment2d_to_3d(self, linesegment2d):
         """
@@ -5369,10 +5399,10 @@ class ExtrusionSurface3D(Surface3D):
         Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
         """
         n = len(bspline_curve3d.control_points)
-
+        points3d = bspline_curve3d.discretization_points(number_points=n)
         points = [self.point3d_to_2d(point)
-                  for point in bspline_curve3d.discretization_points(number_points=n)]
-        return self._edge3d_to_2d(points, bspline_curve3d)
+                  for point in points3d]
+        return self._edge3d_to_2d(points, bspline_curve3d, points3d)
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -5417,32 +5447,64 @@ class ExtrusionSurface3D(Surface3D):
                 end.x = self.x_periodicity
         return start, end
 
-    def _repair_points_order(self, points, edge3d):
-        """Helper function to reorder edge discretization points on parametric domain."""
-        #Todo: enhance this method when intersections beteween edges is finished.
-        point_after_start = self.point3d_to_2d(edge3d.point_at_abscissa(0.01 * edge3d.length()))
-        if point_after_start.x == points[0].x:
-            point_after_start = self.point3d_to_2d(edge3d.point_at_abscissa(0.05 * edge3d.length()))
-        diff = point_after_start.x - points[0].x
-        if diff:
-            sign = diff / abs(diff)
-            index_periodicity = 0
-            for i, (point, next_point) in enumerate(zip(points[:-1], points[1:])):
-                if sign * (next_point.x - point.x) < 0:
-                    index_periodicity = i + 1
-                    break
-            if index_periodicity:
-                for point in points[index_periodicity:]:
+    def _repair_points_order(self, points: List[volmdlr.Point2D], edge3d,
+                             points3d: List[volmdlr.Point3D]) -> List[volmdlr.Point2D]:
+        """
+        Helper function to reorder discretization points along a parametric domain for an extrusion surface.
+
+        When generating an extrusion surface from a periodic edge, there may be discontinuities in the parametric
+        representation of the edge on the surface. This function addresses this issue by calculating how many times the
+        edge crosses the periodic boundary of the surface. It then selects the first side as reference, and then all
+        parts of the edge on the "opposite" side (lower/upper bound) are updated by adding or subtracting one
+        periodicity. This is achieved using the 'sign' variable. The result is a list of parametric points that form a
+        continuous path in parametric space. The cache_point_index keeps track of points that were already checked, so
+        we don't need to check it again in the next remaining edge's piece.
+
+        :param points: List of 2D parametric points representing the discretization of the edge on the surface.
+        :param edge3d: The 3D curve representing the edge.
+        :param points3d: List of corresponding 3D points.
+
+        :return: The reordered list of parametric points forming a continuous path on the extrusion surface.
+        """
+        line_at_periodicity = curves.Line3D(self.edge.start, self.edge.start.translation(self.direction))
+        intersections = edge3d.line_intersections(line_at_periodicity)
+        intersections = [point for point in intersections if not edge3d.is_point_edge_extremity(point, abs_tol=5e-6)]
+        if not intersections:
+            return points
+        sign = self._helper_get_sign_repair_points_order(edge3d, points[0], intersections[0])
+        remaining_edge = edge3d
+        cache_point_index = 0
+        crossed_even_number_of_times = True
+        for i, intersection in enumerate(intersections):
+            current_split = remaining_edge.split(intersection)
+            crossed_even_number_of_times = bool(i % 2 == 0)
+            for point, point3d in zip(points[cache_point_index:], points3d[cache_point_index:]):
+                if crossed_even_number_of_times and current_split[0].point_belongs(point3d):
+                    cache_point_index += 1
+                elif not crossed_even_number_of_times and current_split[0].point_belongs(point3d):
                     point.x = point.x + sign * self.x_periodicity
+                    cache_point_index += 1
+
+            remaining_edge = current_split[1]
+        if crossed_even_number_of_times and cache_point_index < len(points):
+            for point in points[cache_point_index:]:
+                point.x = point.x + sign * self.x_periodicity
         return points
 
-    def _edge3d_to_2d(self, points, edge3d):
+    def _helper_get_sign_repair_points_order(self, edge3d, starting_parametric_point, first_intersection_point):
+        """Helper function to repair points order."""
+        reference_point = edge3d.local_discretization(edge3d.start, first_intersection_point, 3)[1]
+        reference_point_u_parm = self.point3d_to_2d(reference_point).x
+        diff = reference_point_u_parm - starting_parametric_point.x
+        return diff / abs(diff)
+
+    def _edge3d_to_2d(self, points, edge3d, points3d):
         """Helper to get parametric representation of edges on the surface."""
         if self.x_periodicity:
             start, end = self._verify_start_end_parametric_points(points[0], points[-1], edge3d)
             points[0] = start
             points[-1] = end
-            points = self._repair_points_order(points, edge3d)
+            points = self._repair_points_order(points, edge3d, points3d)
         start = points[0]
         end = points[-1]
         if is_isocurve(points, 1e-5):
