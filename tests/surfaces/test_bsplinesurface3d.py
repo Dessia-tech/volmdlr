@@ -300,7 +300,7 @@ class TestBSplineSurface3D(unittest.TestCase):
 
     def test_contour2d_parametric_to_dimension(self):
         bspline_face = vmf.BSplineFace3D.from_surface_rectangular_cut(bspline_surfaces.bspline_surface_2, 0, 1, 0, 1)
-        contour2d = bspline_surfaces.bspline_surface_2.contour3d_to_2d(bspline_face.outer_contour3d)[0]
+        contour2d = bspline_surfaces.bspline_surface_2.contour3d_to_2d(bspline_face.outer_contour3d)
         grid2d = volmdlr.grid.Grid2D.from_properties((0, 1), (0, 1), (10, 10))
         contour2d_dim = bspline_surfaces.bspline_surface_2.contour2d_parametric_to_dimension(contour2d, grid2d)
         self.assertEqual(len(contour2d_dim.primitives), 4)
@@ -376,7 +376,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "bspline_surface_with_arcs.json"))
         contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "bspline_contour_with_arcs.json"))
 
-        contour2d = surface.contour3d_to_2d(contour3d)[0]
+        contour2d = surface.contour3d_to_2d(contour3d)
         bspline_1 = contour2d.primitives[0]
         arc3d = surface.bsplinecurve2d_to_3d(bspline_1)[0]
         self.assertTrue(isinstance(bspline_1, vme.BSplineCurve2D))
@@ -410,38 +410,38 @@ class TestBSplineSurface3D(unittest.TestCase):
     def test_contour3d_to_2d(self):
         surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "periodicalsurface.json"))
         contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "periodicalsurface_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour3d)[0]
+        contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1/6, 5)
 
         surface = surfaces.BSplineSurface3D.load_from_file(
             os.path.join(folder, "contour3d_to_2d_small_primitives_surface.json"))
         contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "contour3d_to_2d_small_primitives_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour3d)[0]
+        contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered(1e-2)) # 1e-2 is an acceptable value, because this is parametric dimension
 
         surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "surface_with_singularity.json"))
         contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "surface_with_singularity_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour3d)[0]
+        contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered())
 
         surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "bsplinesurface_nan_bug.json"))
         contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "bsplinesurface_nan_bug_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour3d)[0]
+        contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered())
 
         surface = surfaces.BSplineSurface3D.load_from_file(
             os.path.join(folder, "bsplinesurface_with_singularity_point3d_to_2d.json"))
         contour3d = vmw.Contour3D.load_from_file(
             os.path.join(folder, "bsplinesurface_with_singularity_point3d_to_2d_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour3d)[0]
+        contour2d = surface.contour3d_to_2d(contour3d)
         self.assertIsNotNone(contour2d)
 
         surface = surfaces.BSplineSurface3D.load_from_file(
             os.path.join(folder, "bsplinesurface_with_singularity_linesegment3d_to_2d.json"))
         contour3d = vmw.Contour3D.load_from_file(
             os.path.join(folder, "bsplinesurface_with_singularity_linesegment3d_to_2d_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour3d)[0]
+        contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered())
 
 

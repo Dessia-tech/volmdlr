@@ -123,14 +123,14 @@ class TestToroidalSurface3D(unittest.TestCase):
     def test_contour3d_to_2d(self):
         surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "toroidal_surface_bug_2.json"))
         contour = wires.Contour3D.load_from_file(os.path.join(folder, "toroidal_surface_bug_2_contour_0.json"))
-        contour2d = surface.contour3d_to_2d(contour)[0]
+        contour2d = surface.contour3d_to_2d(contour)
 
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1.3773892114076673, 2)
 
         surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "buggy_toroidalface_surface.json"))
         contour = wires.Contour3D.load_from_file(os.path.join(folder, "buggy_toroidalface_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour)[0]
+        contour2d = surface.contour3d_to_2d(contour)
 
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1.0990644259885822, 2)
@@ -139,14 +139,14 @@ class TestToroidalSurface3D(unittest.TestCase):
             os.path.join(folder, "toroidalsurface_small_bsplinecurve.json"))
         contour = wires.Contour3D.load_from_file(
             os.path.join(folder, "toroidalsurface_small_bsplinecurve_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour)[0]
+        contour2d = surface.contour3d_to_2d(contour)
 
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 0.12142017346476651, 4)
 
         surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "toroidalsurface_small_arc3d.json"))
         contour = wires.Contour3D.load_from_file(os.path.join(folder, "toroidalsurface_small_arc3d_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour)[0]
+        contour2d = surface.contour3d_to_2d(contour)
 
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 0.09543353484687866, 2)

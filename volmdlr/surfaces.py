@@ -887,32 +887,38 @@ class Surface3D(DessiaObject):
                 raise AttributeError(f'Class {self.__class__.__name__} does not implement {method_name}')
         return primitives2d, primitives_mapping
 
-    def contour3d_to_2d(self, contour3d):
+    def contour3d_to_2d(self, contour3d, return_primitives_mapping: bool = False):
         """
         Transforms a Contour3D into a Contour2D in the parametric domain of the surface.
 
         :param contour3d: The contour to be transformed.
         :type contour3d: :class:`wires.Contour3D`
+        :param return_primitives_mapping: If True, returns a dictionary containing the correspondence between 2D and 3D
+         primitives
+        :type return_primitives_mapping: bool
         :return: A 2D contour object.
         :rtype: :class:`wires.Contour2D`
         """
         primitives2d, primitives_mapping = self.primitives3d_to_2d(contour3d.primitives)
 
         wire2d = wires.Wire2D(primitives2d)
+        is_wire = False
         if self.x_periodicity and not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[0].start)) and \
                 not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[-1].end)):
             delta_x = abs(wire2d.primitives[0].start.x - wire2d.primitives[-1].end.x)
             if math.isclose(delta_x, self.x_periodicity, rel_tol=0.01) and wire2d.is_ordered(1e-3):
-                return wires.Contour2D(primitives2d), primitives_mapping
+                is_wire = True
         if self.y_periodicity and not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[0].start)) and \
                 not self.is_singularity_point(self.point2d_to_3d(wire2d.primitives[-1].end)):
             delta_y = abs(wire2d.primitives[0].start.y - wire2d.primitives[-1].end.y)
             if math.isclose(delta_y, self.y_periodicity, rel_tol=0.01) and wire2d.is_ordered(1e-3):
-                return wires.Contour2D(primitives2d), primitives_mapping
+                is_wire = True
         # Fix contour
-        if self.x_periodicity or self.y_periodicity:
+        if not is_wire and (self.x_periodicity or self.y_periodicity):
             self.repair_primitives_periodicity(primitives2d, primitives_mapping)
-        return wires.Contour2D(primitives2d), primitives_mapping
+        if return_primitives_mapping:
+            return wires.Contour2D(primitives2d), primitives_mapping
+        return wires.Contour2D(primitives2d)
 
     def contour2d_to_3d(self, contour2d):
         """
@@ -1597,9 +1603,17 @@ class Plane3D(Surface3D):
         """
         return contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
 
-    def contour3d_to_2d(self, contour3d):
+    def contour3d_to_2d(self, contour3d, return_primitives_mapping: bool = False):
         """
-        Converts a contour 3D into a 2D parametric contour.
+        Transforms a Contour3D into a Contour2D in the parametric domain of the surface.
+
+        :param contour3d: The contour to be transformed.
+        :type contour3d: :class:`wires.Contour3D`
+        :param return_primitives_mapping: If True, returns a dictionary containing the correspondence between 2D and 3D
+         primitives
+        :type return_primitives_mapping: bool
+        :return: A 2D contour object.
+        :rtype: :class:`wires.Contour2D`
         """
         primitives2d = []
         primitives_mapping = {}
@@ -1616,7 +1630,9 @@ class Plane3D(Surface3D):
                 if primitive is None:
                     continue
                 primitives2d.append(primitive)
-        return wires.Contour2D(primitives2d), primitives_mapping
+        if return_primitives_mapping:
+            return wires.Contour2D(primitives2d), primitives_mapping
+        return wires.Contour2D(primitives2d)
 
     def arc3d_to_2d(self, arc3d):
         """Converts primitive from 3D cartesian space to surface parametric space."""
@@ -3754,12 +3770,15 @@ class ConicalSurface3D(PeriodicalSurface):
                   for p in linesegment2d.discretization_points(number_points=10)]
         return [edges.BSplineCurve3D.from_points_interpolation(points, 3)]
 
-    def contour3d_to_2d(self, contour3d):
+    def contour3d_to_2d(self, contour3d, return_primitives_mapping: bool = False):
         """
         Transforms a Contour3D into a Contour2D in the parametric domain of the surface.
 
         :param contour3d: The contour to be transformed.
         :type contour3d: :class:`wires.Contour3D`
+        :param return_primitives_mapping: If True, returns a dictionary containing the correspondence between 2D and 3D
+         primitives
+        :type return_primitives_mapping: bool
         :return: A 2D contour object.
         :rtype: :class:`wires.Contour2D`
         """
@@ -3773,10 +3792,14 @@ class ConicalSurface3D(PeriodicalSurface):
                 # very specific conical case due to the singularity in the point z = 0 on parametric domain.
                 if primitives2d[-2].start.y == 0.0:
                     self.repair_primitives_periodicity(primitives2d, primitives_mapping)
-            return wires.Contour2D(primitives2d), primitives_mapping
+            if return_primitives_mapping:
+                return wires.Contour2D(primitives2d), primitives_mapping
+            return wires.Contour2D(primitives2d)
         # Fix contour
         self.repair_primitives_periodicity(primitives2d, primitives_mapping)
-        return wires.Contour2D(primitives2d), primitives_mapping
+        if return_primitives_mapping:
+            return wires.Contour2D(primitives2d), primitives_mapping
+        return wires.Contour2D(primitives2d)
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -4301,12 +4324,15 @@ class SphericalSurface3D(PeriodicalSurface):
             arc = edges.Arc3D(circle.reverse(), start, end)
         return [arc]
 
-    def contour3d_to_2d(self, contour3d):
+    def contour3d_to_2d(self, contour3d, return_primitives_mapping: bool = False):
         """
         Transforms a Contour3D into a Contour2D in the parametric domain of the surface.
 
         :param contour3d: The contour to be transformed.
         :type contour3d: :class:`wires.Contour3D`
+        :param return_primitives_mapping: If True, returns a dictionary containing the correspondence between 2D and 3D
+         primitives
+        :type return_primitives_mapping: bool
         :return: A 2D contour object.
         :rtype: :class:`wires.Contour2D`
         """
@@ -4329,9 +4355,13 @@ class SphericalSurface3D(PeriodicalSurface):
                     f'Class {self.__class__.__name__} does not implement {method_name}')
         contour2d = wires.Contour2D(primitives2d)
         if contour2d.is_ordered(1e-2):
-            return contour2d, primitives_mapping
+            if return_primitives_mapping:
+                return contour2d, primitives_mapping
+            return contour2d
         self.repair_primitives_periodicity(primitives2d, primitives_mapping)
-        return wires.Contour2D(primitives2d), primitives_mapping
+        if return_primitives_mapping:
+            return wires.Contour2D(primitives2d), primitives_mapping
+        return wires.Contour2D(primitives2d)
 
     def is_lat_long_curve(self, arc):
         """
@@ -7964,7 +7994,7 @@ class BSplineSurface3D(Surface3D):
 
         """
 
-        contour2d_01 = self.contour3d_to_2d(contour3d)[0]
+        contour2d_01 = self.contour3d_to_2d(contour3d)
 
         return self.contour2d_parametric_to_dimension(contour2d_01, grid2d)
 
@@ -8431,7 +8461,7 @@ class BSplineSurface3D(Surface3D):
 
         """
 
-        contour = self.contour3d_to_2d(wire3d)[0]
+        contour = self.contour3d_to_2d(wire3d)
 
         return wires.Wire2D(contour.primitives)
 

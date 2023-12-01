@@ -106,25 +106,25 @@ class TestRevolutionSurface3D(unittest.TestCase):
     def test_contour3d_to_2d(self):
         surface = surfaces.RevolutionSurface3D.load_from_file(os.path.join(folder, "revolutionface_surface.json"))
         contour = vmw.Contour3D.load_from_file(os.path.join(folder, "revolutionface_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour)[0]
+        contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 0.031887165433924704 * 0.5 * math.pi, 2)
 
         surface = surfaces.RevolutionSurface3D.load_from_file(os.path.join(folder, "revolutionface_surface_1.json"))
         contour = vmw.Contour3D.load_from_file(os.path.join(folder, "revolutionface_contour_1.json"))
-        contour2d = surface.contour3d_to_2d(contour)[0]
+        contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
 
         surface = surfaces.RevolutionSurface3D.load_from_file(os.path.join(folder, "revolutionface_surface_2.json"))
         contour = vmw.Contour3D.load_from_file(os.path.join(folder, "revolutionface_contour_2.json"))
-        contour2d = surface.contour3d_to_2d(contour)[0]
+        contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 0.00031415327300491437 * math.pi, 2)
 
         surface = surfaces.RevolutionSurface3D.load_from_file(os.path.join(folder,
                                                                            "revolutionsurface_with_singularity.json"))
         contour = vmw.Contour3D.load_from_file(os.path.join(folder, "revolutionsurface_with_singularity_contour.json"))
-        contour2d = surface.contour3d_to_2d(contour)[0]
+        contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), surface.edge.length() * math.pi, 2)
 
@@ -132,7 +132,7 @@ class TestRevolutionSurface3D(unittest.TestCase):
                                                                         "revolutionsurface_with_singularity_1.json"))
         contour = vmw.Contour3D.load_from_file(os.path.join(folder,
                                                             "revolutionsurface_with_singularity_contour_1.json"))
-        contour2d = surface.contour3d_to_2d(contour)[0]
+        contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), surface.edge.length() * math.pi, 2)
 

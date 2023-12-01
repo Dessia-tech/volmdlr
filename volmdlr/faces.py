@@ -204,7 +204,7 @@ class Face3D(volmdlr.core.Primitive3D):
         outer_contour2d = None
         outer_contour3d, inner_contours3d = None, []
         if len(contours3d) == 1:
-            outer_contour2d = surface.contour3d_to_2d(contours3d[0])[0]
+            outer_contour2d = surface.contour3d_to_2d(contours3d[0])
             outer_contour3d = contours3d[0]
             inner_contours2d = []
 
@@ -213,7 +213,7 @@ class Face3D(volmdlr.core.Primitive3D):
             inner_contours2d = []
             inner_contours3d = []
 
-            contours2d = [surface.contour3d_to_2d(contour3d)[0] for contour3d in contours3d]
+            contours2d = [surface.contour3d_to_2d(contour3d) for contour3d in contours3d]
 
             check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
             if (surface.x_periodicity or surface.y_periodicity) and sum(1 for value in check_contours if value) >= 2:
@@ -1049,7 +1049,7 @@ class Face3D(volmdlr.core.Primitive3D):
         face_intersecting_primitives2d = []
         intersections = dict_intersecting_combinations[self]
         for intersection_wire in intersections:
-            wire2d = self.surface3d.contour3d_to_2d(intersection_wire)[0]
+            wire2d = self.surface3d.contour3d_to_2d(intersection_wire)
             for primitive2d in wire2d.primitives:
                 if volmdlr.core.edge_in_list(primitive2d, face_intersecting_primitives2d) or \
                         volmdlr.core.edge_in_list(primitive2d.reverse(), face_intersecting_primitives2d):
@@ -1184,7 +1184,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def split_by_plane(self, plane3d: surfaces.Plane3D):
         """Split face with a plane."""
         intersections_with_plane = self.plane_intersections(plane3d)
-        intersections_with_plane2d = [self.surface3d.contour3d_to_2d(intersection_wire)[0]
+        intersections_with_plane2d = [self.surface3d.contour3d_to_2d(intersection_wire)
                                       for intersection_wire in intersections_with_plane]
         while True:
             for i, intersection2d in enumerate(intersections_with_plane2d):
@@ -1664,15 +1664,14 @@ class PlaneFace3D(Face3D):
             return self.divide_face([face.surface2d.outer_contour])
 
         outer_contour_1 = self.surface2d.outer_contour
-        outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)[0]
+        outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
 
         if (face.face_inside(self)
                 and not outer_contour_1.intersection_points(outer_contour_2)):
             return self.divide_face(face.surface2d.inner_contours)
 
         inner_contours = self.surface2d.inner_contours
-        inner_contours.extend([self.surface3d.contour3d_to_2d(
-            contour)[0] for contour in face.inner_contours3d])
+        inner_contours.extend([self.surface3d.contour3d_to_2d(contour) for contour in face.inner_contours3d])
 
         contours = outer_contour_1.cut_by_wire(outer_contour_2)
 
@@ -1692,7 +1691,7 @@ class PlaneFace3D(Face3D):
 
         """
         c_inners_1 = self.surface2d.inner_contours
-        c_inners_2 = [self.surface3d.contour3d_to_2d(inner)[0] for inner in face.inner_contours3d]
+        c_inners_2 = [self.surface3d.contour3d_to_2d(inner) for inner in face.inner_contours3d]
         inside = set()
         for inner_contour1 in c_inners_1:
             for inner_contour2 in c_inners_2:
@@ -1752,7 +1751,7 @@ class PlaneFace3D(Face3D):
         for face2 in faces:
             if self.surface3d.is_coincident(face2.surface3d):
                 contour1 = self.surface2d.outer_contour
-                contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)[0]
+                contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)
 
                 inside = self.check_inner_contours(face2)
                 if (contour1.is_overlapping(contour2)
@@ -1766,9 +1765,9 @@ class PlaneFace3D(Face3D):
                     used = []
                     for face1_1 in faces_1:
                         plane3d = face1_1.surface3d
-                        s2d = surfaces.Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d)[0],
+                        s2d = surfaces.Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
                                                  inner_contours=[
-                                                     plane3d.contour3d_to_2d(contour)[0] for contour in
+                                                     plane3d.contour3d_to_2d(contour) for contour in
                                                      face2_2.inner_contours3d])
                         face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
 
@@ -2589,7 +2588,7 @@ class ConicalFace3D(Face3D):
         :return: Conical face.
         :rtype: ConicalFace3D
         """
-        contour2d = conical_surface3d.contour3d_to_2d(contour)[0]
+        contour2d = conical_surface3d.contour3d_to_2d(contour)
         start_contour2d = contour2d.primitives[0].start
         end_contour2d = contour2d.primitives[-1].end
         linesegment2d_1 = vme.LineSegment2D(end_contour2d, volmdlr.Point2D(end_contour2d.x, 0))
@@ -2763,7 +2762,7 @@ class SphericalFace3D(Face3D):
         point3 = volmdlr.Point2D(math.pi, 0.5 * math.pi)
         point4 = volmdlr.Point2D(-math.pi, 0.5 * math.pi)
         surface_rectangular_cut = volmdlr.wires.Contour2D.from_points([point1, point2, point3, point4])
-        contours2d = [surface3d.contour3d_to_2d(contour)[0] for contour in contours]
+        contours2d = [surface3d.contour3d_to_2d(contour) for contour in contours]
         point2d = surface3d.point3d_to_2d(point)
         for contour in contours2d:
             if not contour.point_belongs(point2d):
@@ -3459,8 +3458,8 @@ class BSplineFace3D(Face3D):
         if not plane3d:
             plane3d = self.surface3d.to_plane3d()
         surface2d = surfaces.Surface2D(
-            outer_contour=plane3d.contour3d_to_2d(self.outer_contour3d)[0],
-            inner_contours=[plane3d.contour3d_to_2d(contour)[0] for contour in self.inner_contours3d])
+            outer_contour=plane3d.contour3d_to_2d(self.outer_contour3d),
+            inner_contours=[plane3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
 
         return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
 
