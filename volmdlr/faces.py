@@ -68,6 +68,7 @@ class Face3D(volmdlr.core.Primitive3D):
         self._outer_contour3d = None
         self._inner_contours3d = None
         self._face_octree_decomposition = None
+        self._primitives_mapping = {}
         # self.bounding_box = self._bounding_box()
 
         volmdlr.core.Primitive3D.__init__(self, name=name)
@@ -112,8 +113,8 @@ class Face3D(volmdlr.core.Primitive3D):
         return self._outer_contour3d
 
     @outer_contour3d.setter
-    def outer_contour3d(self, contour3d):
-        self._outer_contour3d = contour3d
+    def outer_contour3d(self, values):
+        self._outer_contour3d, self._primitives_mapping = values
 
     @property
     def inner_contours3d(self):
@@ -126,8 +127,22 @@ class Face3D(volmdlr.core.Primitive3D):
         return self._inner_contours3d
 
     @inner_contours3d.setter
-    def inner_contours3d(self, contours3d):
-        self._inner_contours3d = contours3d
+    def inner_contours3d(self, values):
+        self._inner_contours3d, self._primitives_mapping = values
+
+    @property
+    def primitives_mapping(self):
+        """
+        Gives the 3d version of the inner contours of the face.
+        """
+        if not self._primitives_mapping:
+            _ = self.outer_contour3d
+            _ = self.inner_contours3d
+        return self._primitives_mapping
+
+    @primitives_mapping.setter
+    def primitives_mapping(self, primitives_mapping):
+        self._primitives_mapping = primitives_mapping
 
     @property
     def bounding_box(self):
