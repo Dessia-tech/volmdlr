@@ -5,7 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.15.0 [future]
+## v0.16.0 [future]
+
+### New Features
+-
+
+### Fixed
+
+#### curves.py
+- Ellipse2D/3D: mutualize length method.
+
+#### edges.py
+- BSplineCurve: handles exceptions in simplify method.
+- BSplineCurve: Consider overlaping curves also as periodic.
+- BSplineCurve.simplify: handles exceptions.
+
+#### faces.py
+- Face3D: enhance from_contours3d.
+
+#### surface.py
+- PeriodicalSurface: handles exceptions in connect_contours method.
+- ExtrusionSurface3D: fullarcellipse3d_to_2d
+- ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
+- ToroidalSurface3D: increases precision of point3d_to_2d.
+
+### Refactor
+- Big refactor to improve and simplify complex and long methods in various modules.
+
+### Changed
+- Edge.split_between_two_points -> trim
+
+### Unittests
+- 
+
+## v0.15.0
 
 ### New Features
 
