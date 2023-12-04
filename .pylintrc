@@ -247,7 +247,7 @@ max-spelling-suggestions=4
 
 # Spelling dictionary name. Available dictionaries: none. To make it work,
 # install the python-enchant package.
-spelling-dict=
+spelling-dict=en_US
 
 # List of comma separated words that should not be checked.
 spelling-ignore-words=param,type,rtype,txt,str,msh,geo,gmsh,dx,dy,u3,v3,u4,v4,du,dv,fullarc,cz,generatrix
