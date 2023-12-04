@@ -163,6 +163,9 @@ steps:
     username: dessia_tech
     password:
         from_secret: pypi_password
+    distributions:
+      - sdist
+      - bdist_wheel
 
 - name: upload_doc_master
   image: appleboy/drone-scp
