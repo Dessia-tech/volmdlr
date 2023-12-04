@@ -315,8 +315,9 @@ class Surface2D(PhysicalObject):
             discretize_line_direction = "x"
         elif number_points_y > 20 * number_points_x:
             discretize_line_direction = "y"
-        outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
-                                                      discretize_line_direction=discretize_line_direction)
+        # outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
+        #                                               discretize_line_direction=
+        outer_polygon = wires.ClosedPolygon2D(outer_contour_parametric_points)
 
         # if not self.inner_contours and not triangulates_with_grid:
         #     return outer_polygon.triangulation()
@@ -338,9 +339,10 @@ class Surface2D(PhysicalObject):
 
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
-        for index, inner_contour in enumerate(self.inner_contours):
-            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=discretize_line,
-                                                     discretize_line_direction=discretize_line_direction)
+        for index, inner_contour_points in enumerate(inner_contours_parametric_points):
+            # inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=discretize_line,
+            #                                          discretize_line_direction=discretize_line_direction)
+            inner_polygon = wires.ClosedPolygon2D(inner_contour_points)
             inner_polygon_nodes = inner_contours_parametric_points[index]
             for point in inner_polygon_nodes:
                 if point not in point_index:
@@ -861,8 +863,10 @@ class Surface3D(DessiaObject):
 
         if x_periodicity or y_periodicity:
             if self.is_undefined_brep(primitives2d[0]):
+                old_primitive = primitives2d[0]
                 primitives2d[0] = self.fix_undefined_brep_with_neighbors(primitives2d[0], primitives2d[-1],
                                                                          primitives2d[1])
+                primitives_mapping[primitives2d[0]] = primitives_mapping.pop(old_primitive)
         i = 1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
