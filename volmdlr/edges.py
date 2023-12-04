@@ -314,8 +314,8 @@ class Edge(dc.DessiaObject):
         for lineseg1, lineseg2 in product(line_segments1, line_segments2):
             valid_section = section_validor_(lineseg1, lineseg2)
             if valid_section:
-                intersection_section_pairs.append((self.split_between_two_points(lineseg1.start, lineseg1.end),
-                                                   edge2.split_between_two_points(lineseg2.start, lineseg2.end)))
+                intersection_section_pairs.append((self.trim(lineseg1.start, lineseg1.end),
+                                                   edge2.trim(lineseg2.start, lineseg2.end)))
         return intersection_section_pairs
 
     def _generic_edge_intersections(self, edge2, abs_tol: float = 1e-6):
@@ -416,13 +416,13 @@ class Edge(dc.DessiaObject):
         abscissa2 = self.abscissa(point2)
         return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
 
-    def split_between_two_points(self, point1, point2):
+    def trim(self, point1, point2):
         """
-        Split edge between two points.
+        Trims edge between two points.
 
         :param point1: point 1.
         :param point2: point 2.
-        :return: edge split.
+        :return: edge trimmed.
         """
         if point1.is_close(self.start) or point1.is_close(self.end):
             split1 = [self, None]
@@ -886,6 +886,7 @@ class BSplineCurve(Edge):
         self._knotvector = None
         self.ctrlptsw = None
         self.rational = False
+        self._periodic = None
         if self.weights:
             self.rational = True
             ctrlptsw = []
@@ -939,8 +940,11 @@ class BSplineCurve(Edge):
     @property
     def periodic(self):
         """Return True if the BSpline is periodic."""
-        control_points = self.control_points
-        return control_points[0].is_close(control_points[-1])
+        if self._periodic is None:
+            umin, umax = self.domain
+            control_points = self.control_points
+            self._periodic = bool(umin != 0.0 or umax != 1.0) or control_points[0].is_close(control_points[-1])
+        return self._periodic
 
     @property
     def points(self):
@@ -1193,11 +1197,10 @@ class BSplineCurve(Edge):
             points = self.points
             if self.periodic:
                 fullarc_class_ = getattr(sys.modules[__name__], 'FullArc' + class_sufix)
-                n = len(points)
-                try_fullarc = fullarc_class_.from_3_points(points[0], points[int(0.5 * n)],
-                                                           points[int(0.75 * n)])
+                try_fullarc = fullarc_class_.from_3_points(points[0], self.point_at_abscissa(0.25 * self.length()),
+                                                           self.point_at_abscissa(0.5 * self.length()))
 
-                if all(try_fullarc.point_belongs(point, 1e-6) for point in points):
+                if try_fullarc and all(try_fullarc.point_belongs(point, 1e-6) for point in points):
                     self._simplified = try_fullarc
                     return try_fullarc
             else:
@@ -3812,7 +3815,7 @@ class ArcEllipse2D(Edge):
         aproximation_point = None
         for point1, point2 in zip(discretized_points[:-1], discretized_points[1:]):
             dist1 = point1.point_distance(point2)
-            if aproximation_abscissa + dist1 > abscissa:
+            if (aproximation_abscissa + dist1) >= abscissa:
                 aproximation_point = point1
                 break
             aproximation_abscissa += dist1
@@ -4701,48 +4704,61 @@ class LineSegment3D(LineSegment):
         return [volmdlr.faces.CylindricalFace3D.from_surface_rectangular_cut(
             surface, 0, angle, 0, (self.end - self.start).dot(axis))]
 
-    def _plane_revolution(self, params):
+    @staticmethod
+    def _helper_intersecting_axis_plane_revolution(surface, distance_1, distance_2, angle):
         """
-        Creates Plane Revolution of a Line Segment 3D.
+        Plane revolution helper method: Line Segment intersects the revolution axis.
 
-        :param params: needed parameters.
-        :return: List of plane revolution faces.
+        :return: revolution faces list
         """
-        axis, angle, p1_proj, u, distance_1, distance_2, line_intersection = params
-        v = axis.cross(u)
-        surface = volmdlr.surfaces.Plane3D(
-            volmdlr.Frame3D(p1_proj, u, v, axis))
-        if self.point_belongs(line_intersection):  # Linesegment intersects revolution axis
-            faces = []
-            for i, radius in enumerate([distance_1, distance_2]):
-                if math.isclose(radius, 0, abs_tol=1e-9):
-                    continue
-                if i == 0:
-                    arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
-                else:
-                    arc_point1 = volmdlr.O2D - volmdlr.X2D * radius
-                arc_point2 = arc_point1.rotation(volmdlr.O2D, angle / 2)
-                arc_point3 = arc_point1.rotation(volmdlr.O2D, angle)
-                arc = Arc2D.from_3_points(arc_point1, arc_point2, arc_point3)
-                outer_contour = volmdlr.wires.Contour2D([LineSegment2D(volmdlr.O2D, arc_point1), arc,
-                                                         LineSegment2D(arc_point3, volmdlr.O2D)])
-                face = volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour, []))
-                faces.append(face)
-            return faces
-        smaller_r, bigger_r = sorted([distance_1, distance_2])
+        faces = []
+        for i, radius in enumerate([distance_1, distance_2]):
+            if math.isclose(radius, 0, abs_tol=1e-9):
+                continue
+            if i == 0:
+                arc_point1 = volmdlr.O2D + volmdlr.X2D * radius
+            else:
+                arc_point1 = volmdlr.O2D - volmdlr.X2D * radius
+            arc_point2 = arc_point1.rotation(volmdlr.O2D, angle / 2)
+            arc_point3 = arc_point1.rotation(volmdlr.O2D, angle)
+            arc = Arc2D.from_3_points(arc_point1, arc_point2, arc_point3)
+            outer_contour = volmdlr.wires.Contour2D([LineSegment2D(volmdlr.O2D, arc_point1), arc,
+                                                     LineSegment2D(arc_point3, volmdlr.O2D)])
+            face = volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour, []))
+            faces.append(face)
+        return faces
+
+    @staticmethod
+    def _helper_plane_revolution_two_circles(surface, bigger_r, smaller_r):
+        """
+        Helper method plane revolution creating two full circles.
+
+        :param surface: face surface.
+        :param bigger_r: bigger radius.
+        :param smaller_r: smaller radius.
+        :return: revolution faces list
+        """
         inner_contours2d = []
-        if angle == volmdlr.TWO_PI:
-            # Only 2 circles as contours
-            bigger_circle = volmdlr_curves.Circle2D(volmdlr.OXY, bigger_r)
-            outer_contour2d = volmdlr.wires.Contour2D(
-                bigger_circle.split_at_abscissa(bigger_circle.length() * 0.5))
-            if not math.isclose(smaller_r, 0, abs_tol=1e-9):
-                smaller_circle = volmdlr_curves.Circle2D(volmdlr.OXY, smaller_r)
-                inner_contours2d = [volmdlr.wires.Contour2D(
-                    smaller_circle.split_at_abscissa(smaller_circle.length() * 0.5))]
-            return [volmdlr.faces.PlaneFace3D(surface,
-                                              volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
-        # Two arcs and lines
+        bigger_circle = volmdlr_curves.Circle2D(volmdlr.OXY, bigger_r)
+        outer_contour2d = volmdlr.wires.Contour2D(
+            bigger_circle.split_at_abscissa(bigger_circle.length() * 0.5))
+        if not math.isclose(smaller_r, 0, abs_tol=1e-9):
+            smaller_circle = volmdlr_curves.Circle2D(volmdlr.OXY, smaller_r)
+            inner_contours2d = [volmdlr.wires.Contour2D(
+                smaller_circle.split_at_abscissa(smaller_circle.length() * 0.5))]
+        return [volmdlr.faces.PlaneFace3D(surface,  volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
+
+    @staticmethod
+    def _helper_plane_revolution_arcs_and_lines(surface, bigger_r, smaller_r, angle):
+        """
+        Plane revolution helper method for the case where it creates Two arcs and lines.
+
+        :param surface: face surface.
+        :param bigger_r: bigger radius.
+        :param smaller_r: smaller radius.
+        :param angle: revolution angle.
+        :return: revolution faces list
+        """
         arc1_s = volmdlr.Point2D(bigger_r, 0)
         arc1_i = arc1_s.rotation(center=volmdlr.O2D,
                                  angle=0.5 * angle)
@@ -4761,7 +4777,25 @@ class LineSegment3D(LineSegment):
         outer_contour2d = volmdlr.wires.Contour2D([arc1, line1,
                                                    arc2, line2])
 
-        return [volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour2d, inner_contours2d))]
+        return [volmdlr.faces.PlaneFace3D(surface, volmdlr.surfaces.Surface2D(outer_contour2d, []))]
+
+    def _plane_revolution(self, params):
+        """
+        Creates Plane Revolution of a Line Segment 3D.
+
+        :param params: needed parameters.
+        :return: List of plane revolution faces.
+        """
+        axis, angle, p1_proj, u, distance_1, distance_2, line_intersection = params
+        v = axis.cross(u)
+        surface = volmdlr.surfaces.Plane3D(
+            volmdlr.Frame3D(p1_proj, u, v, axis))
+        if self.point_belongs(line_intersection):
+            return self._helper_intersecting_axis_plane_revolution(surface, distance_1, distance_2, angle)
+        smaller_r, bigger_r = sorted([distance_1, distance_2])
+        if angle == volmdlr.TWO_PI:
+            return self._helper_plane_revolution_two_circles(surface, bigger_r, smaller_r)
+        return self._helper_plane_revolution_arcs_and_lines(surface, bigger_r, smaller_r, angle)
 
     def revolution(self, axis_point, axis, angle):
         """
@@ -4801,13 +4835,6 @@ class LineSegment3D(LineSegment):
             return self._conical_revolution([axis, u, distance_1, distance_2, angle, line_intersection])
         # Cylindrical face
         return self._cylindrical_revolution([axis, u, p1_proj, distance_1, distance_2, angle])
-
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D):
-        """Trims a Line Segment at two given points."""
-        if not self.point_belongs(point1) or not self.point_belongs(point2):
-            raise ValueError('Point not on curve')
-
-        return LineSegment3D(point1, point2)
 
     def sweep(self, *args):
         """
@@ -5250,7 +5277,7 @@ class BSplineCurve3D(BSplineCurve):
     # Copy paste du LineSegment3D
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """
-        Bspline Curve plot method using matplotlib.
+        Matplotlib plot method for a BSpline Curve 3D.
 
         """
         if ax is None:
@@ -5454,16 +5481,6 @@ class BSplineCurve3D(BSplineCurve):
         surface = volmdlr.surfaces.RevolutionSurface3D(self, axis_point, axis)
         face = volmdlr.faces.RevolutionFace3D.from_surface_rectangular_cut(surface, 0, angle, 0, self.length())
         return face
-
-    def split_between_two_points(self, point1, point2):
-        """
-        Split edge between two points.
-
-        :param point1: point 1.
-        :param point2: point 2.
-        :return: edge split.
-        """
-        return self.trim(point1, point2)
 
     def move_frame_along(self, frame, *args, **kwargs):
         """Moves frame along the edge."""
@@ -6219,13 +6236,13 @@ class FullArc3D(FullArcMixin, Arc3D):
     def from_center_normal(cls, center: volmdlr.Point3D, normal: volmdlr.Vector3D,
                            start_end: volmdlr.Point3D, name: str = ''):
         """
-        Created a Full arc 3d using a center point, a normal vector and a start point.
+        Creates a Full Arc 3D using a center, and a normal vector and a start point.
 
         :param center: full arc center.
-        :param normal: full arc normal
+        :param normal: circle normal
         :param start_end: full arc starting point.
-        :param name: full arc name.
-        :return: Full Arc 3D.
+        :param name: full arc's name.
+        :return: FullArc3D.
         """
         u_vector = normal.deterministic_unit_normal_vector()
         v_vector = normal.cross(u_vector)

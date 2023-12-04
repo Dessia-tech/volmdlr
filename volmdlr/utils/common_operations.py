@@ -152,10 +152,9 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
                 + 2 * radius * math.sin(x[1]) * w_param.dot(v_param) +
                 2 * radius * math.cos(x[1]) * w_param.dot(k_param)
                 + math.sin(2 * x[1]) * v_param.dot(k_param) * radius ** 2)
-    circle_point = circle3d.point_at_abscissa(0.0)
     radius = circle3d.radius
     linseg_direction_vector = linesegment3d.direction_vector()
-    vector_point_origin = circle_point - circle3d.frame.origin
+    vector_point_origin = circle3d.point_at_abscissa(0.0) - circle3d.frame.origin
     vector_point_origin = vector_point_origin.unit_vector()
     w = circle3d.frame.origin - linesegment3d.start
     v = circle3d.frame.w.cross(vector_point_origin)
@@ -172,8 +171,7 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
     for couple in results[1:]:
         ptest1 = linesegment3d.point_at_abscissa(couple.x[0] * linesegment3d.length())
         ptest2 = circle3d.point_at_abscissa(couple.x[1] * circle3d.radius)
-        dtest = ptest1.point_distance(ptest2)
-        if dtest < v.dot(v):
+        if ptest1.point_distance(ptest2) < v.dot(v):
             point1, point2 = ptest1, ptest2
 
     return point1, point2
