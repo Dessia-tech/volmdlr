@@ -935,8 +935,7 @@ class Surface3D(DessiaObject):
         primitives3d = []
         primitives_mapping = {}
         for primitive2d in contour2d.primitives:
-            if (self.__class__.__name__ in ("ConicalSurface3D", "SphericalSurface3D", "RevolutionSurface3D") and
-                    self.is_degenerated_brep(primitive2d)):
+            if self.is_degenerated_brep(primitive2d):
                 continue
             method_name = f'{primitive2d.__class__.__name__.lower()}_to_3d'
             if hasattr(self, method_name):
