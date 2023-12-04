@@ -241,7 +241,7 @@ class Surface2D(PhysicalObject):
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=discretize_line,
+            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
                                                      discretize_line_direction=discretize_line_direction)
             inner_polygon_nodes = inner_polygon.points.copy()
             for point in inner_polygon_nodes:
@@ -3173,7 +3173,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             ax = fig.add_subplot(111, projection='3d')
 
         self.frame.plot(ax=ax, ratio=self.major_radius)
-        circles = self._torus_arcs(100)
+        circles = self._torus_arcs(100) + self._torus_circle_generatrices_xy(30)
         for circle in circles:
             circle.plot(ax=ax, edge_style=edge_style)
 
@@ -3354,16 +3354,18 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: other plane 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(100)
+        arcs = self._torus_arcs(100) + self._torus_circle_generatrices_xy(100)
         points_intersections = []
         for arc in arcs:
             if plane3d.frame.w.dot(arc.frame.w) == 1.0:
                 continue
             intersections = plane3d.circle_intersections(arc)
-            points_intersections.extend(intersections)
-        for edge in plane3d.plane_grid(200, self.major_radius * 4):
+            points_intersections.extend(inter for inter in intersections if inter not in points_intersections)
+
+        for edge in plane3d.plane_grid(300, self.major_radius * 4):
             intersections = self.line_intersections(edge.line)
-            points_intersections.extend(intersections)
+            points_intersections.extend(inter for inter in intersections if inter not in points_intersections)
+
         return points_intersections
 
     def concurrent_plane_intersection(self, plane3d):
