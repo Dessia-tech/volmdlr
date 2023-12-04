@@ -283,7 +283,7 @@ class RoundedLineSegments2D(RoundedLineSegments):
 
     def offset_lines(self, line_indexes, offset):
         """
-        line_indexes is a list of consecutive line indexes.
+        Line indexes is a list of consecutive line indexes.
 
         These line should all be aligned line_indexes = 0 being the 1st line.
 
