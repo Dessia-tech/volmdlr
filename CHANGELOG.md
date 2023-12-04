@@ -84,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Drone : run generate sdist and generate bdist_wheel only on master
+- drone.yml: add distribution types to be uploaded into pypi.
 
 #### core.py
 - VolumeModel: get_mesh_lines (change tolerance to 1e-5)
