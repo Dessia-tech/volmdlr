@@ -1583,6 +1583,12 @@ class PlaneFace3D(Face3D):
         return dist, point1, point2
 
     def is_adjacent(self, face2: Face3D):
+        """
+        Verifies if two plane faces are adjacent to eachother.
+
+        :param face2: other face.
+        :return: True if adjacent, False otherwise.
+        """
         contour1 = self.outer_contour3d.to_2d(
             self.surface3d.frame.origin,
             self.surface3d.frame.u,
@@ -1707,8 +1713,11 @@ class PlaneFace3D(Face3D):
 
     @staticmethod
     def update_faces_with_divided_faces(divided_faces, face2_2, used, list_faces):
-        for d_face in divided_faces:
+        """
+        Update divided faces from project_faces.
 
+        """
+        for d_face in divided_faces:
             if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
                 if face2_2.surface2d.inner_contours:
                     divided_faces_d_face = []
@@ -2110,6 +2119,10 @@ class Triangle3D(PlaneFace3D):
         return [Triangle3D(subtri[0], subtri[1], subtri[2]) for subtri in sub_triangles]
 
     def middle(self):
+        """
+        Gets the middle point of the face: center of gravity.
+
+        """
         return (self.point1 + self.point2 + self.point3) / 3
 
     def normal(self):
@@ -2924,9 +2937,9 @@ class ExtrusionFace3D(Face3D):
         angle_resolution = 11
         xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
-        number_points_x = int(delta_x * angle_resolution)
+        number_points_x = max(36, int(delta_x * angle_resolution))
 
-        number_points_y = number_points_x
+        number_points_y = 2
 
         return number_points_x, number_points_y
 

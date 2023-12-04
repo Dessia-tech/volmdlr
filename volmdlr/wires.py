@@ -257,7 +257,7 @@ class WireMixin:
                 split_primitives2 = primitive.split(point2)
                 if split_primitives2[1]:
                     primitives2.append(split_primitives2[1])
-                primitives1.append(primitive.split_between_two_points(point1, point2))
+                primitives1.append(primitive.trim(point1, point2))
             elif current_abscissa <= abscissa1 <= current_abscissa + primitive.length():
                 split_primitives = primitive.split(point1)
                 if split_primitives[1]:
@@ -1069,15 +1069,13 @@ class Wire2D(WireMixin, PhysicalObject):
             point2 = self_primitives_to_test[1].point_at_abscissa(self_primitives_to_test[1].length() * .99)
             point3 = current_wire_primitive.point_at_abscissa(current_wire_primitive.length() * .99)
             point4 = next_wire_primitive.point_at_abscissa(next_wire_primitive.length() * 0.01)
-            linesegment1 = volmdlr.edges.LineSegment2D(point1, point2)
-            linesegment2 = volmdlr.edges.LineSegment2D(point3, point4)
         else:
             point1 = self_primitives_to_test[0].point_at_abscissa(self_primitives_to_test[0].length() * .99)
             point2 = self_primitives_to_test[1].point_at_abscissa(self_primitives_to_test[1].length() * 0.01)
             point3 = current_wire_primitive.point_at_abscissa(current_wire_primitive.length() * .99)
             point4 = next_wire_primitive.point_at_abscissa(next_wire_primitive.length() * 0.01)
-            linesegment1 = volmdlr.edges.LineSegment2D(point1, point2)
-            linesegment2 = volmdlr.edges.LineSegment2D(point3, point4)
+        linesegment1 = volmdlr.edges.LineSegment2D(point1, point2)
+        linesegment2 = volmdlr.edges.LineSegment2D(point3, point4)
         inter = linesegment1.linesegment_intersections(linesegment2)
         if inter:
             return True
@@ -3517,8 +3515,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
 
-        x = npy.linspace(x_min, x_max, num=number_points_x + 2, dtype=npy.float64)
-        y = npy.linspace(y_min, y_max, num=number_points_y + 2, dtype=npy.float64)
+        x = npy.linspace(x_min, x_max, num=int(number_points_x + 2), dtype=npy.float64)
+        y = npy.linspace(y_min, y_max, num=int(number_points_y + 2), dtype=npy.float64)
 
         grid_point_index = {}
 
