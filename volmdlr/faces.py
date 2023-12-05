@@ -220,7 +220,7 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
-        if step_id == 6094:
+        if step_id == 17:
             print(True)
         return face.from_contours3d(surface, contours, step_id)
 
@@ -360,14 +360,18 @@ class Face3D(volmdlr.core.Primitive3D):
         def get_polygon_points(primitives):
             points = []
             for edge in primitives:
-                # try:
-                edge3d = self.primitives_mapping[edge]
-                # except KeyError:
-                #     print(True)
+                if self.surface3d.__class__.__name__ in ("SphericalSurface3D", "ConicalSurface3D"
+                                                                               "RevolutionSurface3D"):
+                   if self.surface3d.is_degenerated_brep(edge):
+                       continue
+                try:
+                    edge3d = self.primitives_mapping[edge]
+                except KeyError:
+                    print(True)
                 if edge3d.__class__.__name__ == "BSplineCurve3D":
                     edge_points = edge.discretization_points(number_points=15)
                 elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
-                    edge_points = edge.discretization_points(number_points= max(2, int(edge3d.angle * 20)))
+                    edge_points = edge.discretization_points(number_points=max(2, int(edge3d.angle * 10)))
                 else:
                     edge_points = edge.discretization_points(number_points=2)
                 points.extend(edge_points[:-1])

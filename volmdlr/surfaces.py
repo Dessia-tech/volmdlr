@@ -1751,6 +1751,7 @@ class Plane3D(Surface3D):
                 primitive = primitive3d.to_2d(self.frame.origin, self.frame.u, self.frame.v)
                 if primitive is None:
                     continue
+                self.update_primitives_mapping(primitives_mapping, [primitive], primitive3d)
                 primitives2d.append(primitive)
         if return_primitives_mapping:
             return wires.Contour2D(primitives2d), primitives_mapping
@@ -5228,8 +5229,8 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         edge = args[0]
         if "LineSegment2D" in (edge.__class__.__name__, edge.simplify.__class__.__name__):
-            start3d = self.point3d_to_2d(edge.start)
-            end3d = self.point3d_to_2d(edge.end)
+            start3d = self.point2d_to_3d(edge.start)
+            end3d = self.point2d_to_3d(edge.end)
             return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
         return False
 
