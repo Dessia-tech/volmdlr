@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: increases precision of point3d_to_2d.
 
 ### Refactor
-- Big refactor to improve and simplify complex and long methods in various modules.
+- Big refactor to improve and simplify complex and long methods in various modules. 
 
 #### surfaces.py
 - contour3d_to_2d/contour2d_to_3d: Add option to return also a dictionary with the correspondence between the parametric and 3D primitives.
