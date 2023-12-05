@@ -5,7 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.15.0 [future]
+## v0.16.0 [future]
+
+### New Features
+-
+
+### Fixed
+
+#### curves.py
+- Ellipse2D/3D: mutualize length method.
+
+#### edges.py
+- BSplineCurve: handles exceptions in simplify method.
+- BSplineCurve: Consider overlaping curves also as periodic.
+- BSplineCurve.simplify: handles exceptions.
+
+#### faces.py
+- Face3D: enhance from_contours3d.
+
+#### surface.py
+- PeriodicalSurface: handles exceptions in connect_contours method.
+- ExtrusionSurface3D: fullarcellipse3d_to_2d
+- ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
+- ToroidalSurface3D: increases precision of point3d_to_2d.
+
+### Refactor
+- Big refactor to improve and simplify complex and long methods in various modules.
+
+#### surfaces.py
+- contour3d_to_2d/contour2d_to_3d: Add option to return also a dictionary with the correspondence between the parametric and 3D primitives.
+
+### Changed
+- Edge.split_between_two_points -> trim
+
+### Unittests
+- 
+
+## v0.15.0
 
 ### New Features
 
@@ -22,11 +58,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalFace3D: PlaneFace3D intersectios.
 - SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
 - ConicalSurface3D: sphericalsurface_intersections
-- General improvements on sufaces' parametric operations.
+- General improvements on sufaces\` parametric operations.
 
 #### edges.py
 - BsplineCurve3D: circle_intersections.
 - ArcEllipse3D/FullArcEllipse3D: line_intersections.
+
 #### curves.py
 - Circle3D: point_distance.
 #### shell.py
@@ -47,26 +84,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Drone : run generate sdist and generate bdist_wheel only on master
+- drone.yml: add distribution types to be uploaded into pypi.
+
+#### core.py
+- VolumeModel: get_mesh_lines (change tolerance to 1e-5)
 
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
+- FullArcEllipse: angle_start, angle_end.
 
 #### surfaces.py
-- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections.
+- ConicalSurface3D: circle_generatrixes direction.
+- PeriodicalSurface: handles exceptions in connect_contours method.
+- ExtrusionSurface3D: fullarcellipse3d_to_2d
+- ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
+- ToroidalSurface3D: increases precision of point3d_to_2d.
+- Plane3D: plane intersections.
 
 #### faces.py
 - ToroidalFace3D: PlaneFace3D intersections.
 - PlaneFace3D: circle_intersections. planeface_intersections
 - BsplineFace3D: adjacent_direction_uu
+- PlaneFace3D: project_faces (check first if surfaces are coincident)
 
 #### wires.py
 - delete remaining inplace methods in wires.py
 
 #### shells.py
-- Fixes to boolean operations. added some tolerance parameters to some methods.
+- Fixes to boolean operations. Added some tolerance parameters to some methods. 
+- Shell3D: get_geo_lines (consider edge.inverse in get_edge_index_in_list check), is_shell_open
+- DisplayTriangleShell3D: eq, data_eq, hash, data_hash, concatenate
 
 #### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
+- add bigger precision to plane-plane intersections.
 
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
@@ -83,6 +135,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### discrete_representation.py
 - MatrixBasedVoxelization: _logical_operation
+- Remove inheritance from ABC for platform usage
+
+#### cad_simplification.py
+- Remove inheritance from ABC for platform usage
 
 ### Refactor
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.
@@ -99,7 +155,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 - LineSegment2D/3D: The line attribute from which the line segment was defined was converted to a property, for performance and memory efficiency reasons.
-- BSplineCurve: improve line_intersections performance.
+- BSplineCurve: improve line_intersections performance. 
 
 #### faces.py
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.

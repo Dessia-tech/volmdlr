@@ -1,0 +1,220 @@
+{
+  "object_class": "volmdlr.wires.Contour3D",
+  "name": "face_outer_bound",
+  "primitives": [
+    {
+      "object_class": "volmdlr.edges.Arc3D",
+      "name": "NONE",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle3D",
+        "name": "NONE",
+        "radius": 4.34439470249428e-06,
+        "frame": {
+          "object_class": "volmdlr.Frame3D",
+          "name": "",
+          "origin": {
+            "object_class": "volmdlr.Point3D",
+            "x": 0.2527095032079815,
+            "y": -0.0678,
+            "z": 0.4358227260114445,
+            "name": "NONE"
+          },
+          "u": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 1.0,
+            "y": -1.2678493489097758e-16,
+            "z": -6.3171273826209764e-49
+          },
+          "v": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.0,
+            "y": 4.98255363545604e-33,
+            "z": -1.0
+          },
+          "w": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 1.2678493489097758e-16,
+            "y": 1.0,
+            "z": 4.98255363545604e-33
+          }
+        },
+        "angle": 6.283185307179586
+      },
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.2527136995654365,
+        "y": -0.0678,
+        "z": 0.43582160157850103,
+        "name": "NONE"
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.2527136230826915,
+        "y": -0.0678,
+        "z": 0.4358213474623138,
+        "name": "NONE"
+      }
+    },
+    {
+      "object_class": "volmdlr.edges.Arc3D",
+      "name": "NONE",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle3D",
+        "name": "NONE",
+        "radius": 0.0004999999999999997,
+        "frame": {
+          "object_class": "volmdlr.Frame3D",
+          "name": "",
+          "origin": {
+            "object_class": "volmdlr.Point3D",
+            "x": 0.2527136230826916,
+            "y": -0.0683,
+            "z": 0.43582134746231377,
+            "name": "NONE"
+          },
+          "u": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.9483196146265969,
+            "y": 0.0,
+            "z": -0.3173167321690786
+          },
+          "v": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.0,
+            "y": -1.0,
+            "z": 0.0
+          },
+          "w": {
+            "object_class": "volmdlr.Vector3D",
+            "x": -0.3173167321690786,
+            "y": -0.0,
+            "z": -0.948319614626597
+          }
+        },
+        "angle": 6.283185307179586
+      },
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.2527136230826915,
+        "y": -0.0678,
+        "z": 0.4358213474623138,
+        "name": "NONE"
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.25318776483545224,
+        "y": -0.0682956367322508,
+        "z": 0.4356626951374537,
+        "name": "NONE"
+      }
+    },
+    {
+      "object_class": "volmdlr.edges.Arc3D",
+      "name": "NONE_reverse",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle3D",
+        "name": "",
+        "radius": 0.0005043253562345914,
+        "frame": {
+          "object_class": "volmdlr.Frame3D",
+          "name": "",
+          "origin": {
+            "object_class": "volmdlr.Point3D",
+            "x": 0.2527095032079815,
+            "y": -0.0682956367322508,
+            "z": 0.4358227260114445,
+            "name": "NONE"
+          },
+          "u": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 1.0,
+            "y": -1.2678493489097758e-16,
+            "z": 0.0
+          },
+          "v": {
+            "object_class": "volmdlr.Vector3D",
+            "x": -0.0,
+            "y": -0.0,
+            "z": 1.0
+          },
+          "w": {
+            "object_class": "volmdlr.Vector3D",
+            "x": -1.2678493489097758e-16,
+            "y": -1.0,
+            "z": -0.0
+          }
+        },
+        "angle": 6.283185307179586
+      },
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.25318776483545224,
+        "y": -0.0682956367322508,
+        "z": 0.4356626951374537,
+        "name": "NONE"
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.253196643445718,
+        "y": -0.0682956367322508,
+        "z": 0.43569219458335295,
+        "name": "NONE"
+      }
+    },
+    {
+      "object_class": "volmdlr.edges.Arc3D",
+      "name": "NONE_reverse",
+      "circle": {
+        "object_class": "volmdlr.curves.Circle3D",
+        "name": "",
+        "radius": 0.0005000000000000114,
+        "frame": {
+          "object_class": "volmdlr.Frame3D",
+          "name": "",
+          "origin": {
+            "object_class": "volmdlr.Point3D",
+            "x": 0.2527136995654355,
+            "y": -0.0683,
+            "z": 0.43582160157850103,
+            "name": "NONE"
+          },
+          "u": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.9659245400097564,
+            "y": -6.472715899999927e-17,
+            "z": -0.2588238455145516
+          },
+          "v": {
+            "object_class": "volmdlr.Vector3D",
+            "x": -0.0,
+            "y": 1.0,
+            "z": -2.500818998006896e-16
+          },
+          "w": {
+            "object_class": "volmdlr.Vector3D",
+            "x": 0.2588238455145516,
+            "y": 2.415602440297471e-16,
+            "z": 0.9659245400097564
+          }
+        },
+        "angle": 6.283185307179586
+      },
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.253196643445718,
+        "y": -0.0682956367322508,
+        "z": 0.43569219458335295,
+        "name": "NONE"
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.2527136995654365,
+        "y": -0.0678,
+        "z": 0.43582160157850103,
+        "name": "NONE"
+      }
+    }
+  ],
+  "color": null,
+  "alpha": 1.0
+}

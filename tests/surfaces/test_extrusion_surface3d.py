@@ -80,6 +80,26 @@ class TestExtrusionSurface3D(unittest.TestCase):
         self.assertTrue(result.start.is_close(volmdlr.Point2D(0.0034138143320201525, 0.0032000000499998738)))
         self.assertTrue(result.end.is_close(volmdlr.Point2D(0.00046275860846800896, 0.0032000000499998738)))
 
+    def test_bsplinecurve3d_to_2d(self):
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
+            os.path.join(folder, "periodical_extrusionsurface.json"))
+        bsplinecurve3d = vme.BSplineCurve3D.load_from_file(
+            os.path.join(folder, "periodical_extrusionsurface_bsplinecurve.json"))
+        result = surface.bsplinecurve3d_to_2d(bsplinecurve3d)[0]
+        inverse_prof = surface.linesegment2d_to_3d(result)[0]
+        self.assertTrue(result.start.is_close(volmdlr.Point2D(5.475029217377275, 0.02477709130796299)))
+        self.assertTrue(result.end.is_close(volmdlr.Point2D(5.616985468553595, 0.024781167649391873)))
+        self.assertTrue(inverse_prof.is_close(inverse_prof))
+
+    def test_fullarcellipse3d_to_2d(self):
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
+            os.path.join(folder, "extrusionsurface_fullarcellipse3d_to_2d.json"))
+        ellipse = vme.FullArcEllipse3D.load_from_file(
+            os.path.join(folder, "extrusionsurface_fullarcellipse3d_to_2d_fullarcellipse3d.json"))
+        result = surface.fullarcellipse3d_to_2d(ellipse)[0]
+        self.assertTrue(result.start.is_close(volmdlr.Point2D(0.0, 0.01)))
+        self.assertTrue(result.end.is_close(volmdlr.Point2D(0.025526998862788763, 0.01)))
+
     def test_frame_mapping(self):
         surface = self.surface
         new_frame = volmdlr.Frame3D(volmdlr.Point3D(0, 0, 1), volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D)
@@ -136,6 +156,21 @@ class TestExtrusionSurface3D(unittest.TestCase):
         contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 0.012120134592666365, 2)
+
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
+            os.path.join(folder, "extrusionsurface_periodic.json"))
+        contour = vmw.Contour3D.load_from_file(os.path.join(folder, "extrusionsurface_periodic_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertTrue(contour2d.is_ordered())
+        self.assertAlmostEqual(contour2d.area(), 2.009851332304794e-06, 8)
+
+        surface = surfaces.ExtrusionSurface3D.load_from_file(
+            os.path.join(folder, "periodical_extrusionsurface_linesegment3d_to_2d.json"))
+        contour = vmw.Contour3D.load_from_file(
+            os.path.join(folder, "periodical_extrusionsurface_linesegment3d_to_2d_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertTrue(contour2d.is_ordered(1e-5))
+        self.assertAlmostEqual(contour2d.area(), 0.007376809172328507, 2)
 
 
 if __name__ == '__main__':
