@@ -251,9 +251,10 @@ class Face3D(volmdlr.core.Primitive3D):
         face = cls(surface,
                    surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),
                    name=name)
-        # To improve performance while reading from step file
-        face.outer_contour3d = outer_contour3d, primitives_mapping
-        face.inner_contours3d = inner_contours3d, primitives_mapping
+        if face.surface2d.outer_contour == outer_contour2d:
+            # To improve performance while reading from step file
+            face.outer_contour3d = outer_contour3d, primitives_mapping
+            face.inner_contours3d = inner_contours3d, primitives_mapping
         return face
 
     @staticmethod
@@ -264,7 +265,11 @@ class Face3D(volmdlr.core.Primitive3D):
         inner_contours2d = []
         inner_contours3d = []
         primitives_mapping = {}
-        contours2d = [surface.contour3d_to_2d(contour3d) for contour3d in contours3d]
+        contours2d = []
+        for contour3d in contours3d:
+            contour2d, contour_mapping = surface.contour3d_to_2d(contour3d, return_primitives_mapping=True)
+            contours2d.append(contour2d)
+            primitives_mapping.update(contour_mapping)
 
         check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
         if (surface.x_periodicity or surface.y_periodicity) and sum(1 for value in check_contours if value) >= 2:
