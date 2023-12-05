@@ -92,7 +92,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         Tells you if a point is on the 3D face and inside its contour.
         """
-        if not self.bounding_box.point_belongs(point3d):
+        if not self.bounding_box.point_belongs(point3d, 1e-3):
             return False
         point2d = self.surface3d.point3d_to_2d(point3d)
         # check_point3d = self.surface3d.point2d_to_3d(point2d)
@@ -216,8 +216,7 @@ class Face3D(volmdlr.core.Primitive3D):
             contours2d = [surface.contour3d_to_2d(contour3d) for contour3d in contours3d]
 
             check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
-            if any(check_contours):
-                # Not implemented yet, but connect_contours should also return outer_contour3d and inner_contours3d
+            if (surface.x_periodicity or surface.y_periodicity) and sum(1 for value in check_contours if value) >= 2:
                 outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
                 outer_contour3d = surface.contour2d_to_3d(outer_contour2d)
                 inner_contours3d = [surface.contour2d_to_3d(contour) for contour in inner_contours2d]
@@ -240,7 +239,8 @@ class Face3D(volmdlr.core.Primitive3D):
                     inner_contours3d.remove(outer_contour3d)
         else:
             raise ValueError('Must have at least one contour')
-        if (not outer_contour2d) or (not all(outer_contour2d.primitives)) or (not outer_contour2d.is_ordered(1e-2)):
+        if ((not outer_contour2d) or (not all(outer_contour2d.primitives)) or
+                (not surface.brep_connectivity_check(outer_contour2d, tol=5e-5))):
             return None
         # if outer_contour3d and outer_contour3d.primitives and not outer_contour3d.is_ordered(1e-5):
         #     outer_contour2d = contour2d_healing(outer_contour2d)
@@ -253,6 +253,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return face
 
     def to_step(self, current_id):
+        """Transforms a Face 3D into a Step object."""
         content, surface3d_ids = self.surface3d.to_step(current_id)
         current_id = max(surface3d_ids)
 
@@ -1159,10 +1160,12 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def plane_intersections(self, plane3d: surfaces.Plane3D):
         """
-        Gets intersections between Face 3D and a plane.
+        Gets intersections with a 3D plane surface.
 
-        :param plane3d: other plane3D.
-        :return: List containing the intersection curves.
+        :param plane3d: The Plane3D instance to find intersections with.
+        :type plane3d: Plane3D
+        :return: List of Wire3D instances representing the intersections with the plane.
+        :rtype: List[wires.Wire3D]
         """
         surfaces_intersections = self.surface3d.plane_intersections(plane3d)
         outer_contour_intersections_with_plane = plane3d.contour_intersections(self.outer_contour3d)
@@ -1459,6 +1462,8 @@ class PlaneFace3D(Face3D):
         :return: list of intersecting wires.
         """
         cylindricalsurfaceface_intersections = cylindricalface.surface3d.plane_intersections(self.surface3d)
+        if not cylindricalsurfaceface_intersections:
+            return []
         if not isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Line3D):
             if all(self.edge3d_inside(intersection) and cylindricalface.edge3d_inside(intersection)
                    for intersection in cylindricalsurfaceface_intersections):
@@ -1562,11 +1567,15 @@ class PlaneFace3D(Face3D):
 
     def planeface_minimum_distance(self, planeface: 'PlaneFace3D', return_points: bool = False):
         """
-        Gets the minimum distance between two plane faces 3D.
+        Gets the minimal distance from another PlaneFace3D.
 
-        :param planeface: other plane face.
-        :param return_points: weather to return corresponding minimum distance points or not.
-        :return: minimum distance or minimum distance, point1 and point2.
+        :param planeface: Another PlaneFace3D instance to calculate the minimum distance.
+        :type planeface: PlaneFace3D
+        :param return_points: If True, returns a tuple containing the two points that give the minimum distance.
+        :type return_points: bool, optional
+        :return: If return_points is False, returns the minimum distance between the two plane faces.
+                 If return_points is True, returns a tuple containing the two points that give the minimum distance.
+        :rtype: float or tuple(float, Tuple3D, Tuple3D)
         """
         dist, point1, point2 = self.minimum_distance_points_plane(planeface, return_points=True)
         if not return_points:
@@ -1880,12 +1889,14 @@ class Triangle3D(PlaneFace3D):
 
     @property
     def surface3d(self):
+        """Gets the plane on which the triangle is contained."""
         if self._surface3d is None:
             self._surface3d = surfaces.Plane3D.from_3_points(self.point1, self.point2, self.point3)
         return self._surface3d
 
     @surface3d.setter
     def surface3d(self, new_surface3d):
+        """Sets the plane on which the triangle is contained."""
         self._surface3d = new_surface3d
 
     @property
@@ -1905,6 +1916,7 @@ class Triangle3D(PlaneFace3D):
 
     @surface2d.setter
     def surface2d(self, new_surface2d):
+        """Sets the boundary representation of the face."""
         self._surface2d = new_surface2d
 
     def to_dict(self, *args, **kwargs):
@@ -2178,6 +2190,9 @@ class CylindricalFace3D(Face3D):
 
     @bounding_box.setter
     def bounding_box(self, new_bouding_box):
+        """
+        Sets the surface bounding box.
+        """
         self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=5):
@@ -2903,6 +2918,10 @@ class ExtrusionFace3D(Face3D):
 
     @property
     def bounding_box(self):
+        """
+        Gets the extrusion face bounding box.
+
+        """
         if not self._bbox:
             self._bbox = self.get_bounding_box()
         return self._bbox

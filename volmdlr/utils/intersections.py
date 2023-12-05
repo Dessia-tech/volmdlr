@@ -240,13 +240,11 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
     abscissa1 = 0
     abscissa2 = bsplinecurve.length()
     if bsplinecurve.__class__.__name__ in ("BSplineCurve2D", "BSplineCurve3D"):
-        (bspline_discretized_points, points_abscissas,) = bsplinecurve.get_abscissa_discretization(
-            abscissa1, abscissa2, number_points=resolution, return_abscissas=True
-        )
+        bspline_discretized_points, points_abscissas = bsplinecurve.get_abscissa_discretization(
+            abscissa1, abscissa2, number_points=resolution, return_abscissas=True)
     else:
         bspline_discretized_points, points_abscissas = get_abscissa_discretization(
-            bsplinecurve, abscissa1, abscissa2, max_number_points=resolution
-        )
+            bsplinecurve, abscissa1, abscissa2,  max_number_points=resolution)
         if bsplinecurve.periodic:
             bspline_discretized_points += [bspline_discretized_points[0]]
             if points_abscissas[0] == 0.0:
@@ -419,37 +417,47 @@ def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-6):
     intersection_abscissea = -plane_frame.w.dot(w_vector) / plane_frame.w.dot(u_vector)
     return [line.point1 + intersection_abscissea * u_vector]
 
-
-def get_two_planes_intersections(plane1_frame, plane2_frame):
+def _helper_two_plane_intersections(plane1_frame, plane2_frame):
     """
-    Calculates the intersection points between two planes, given their frames.
-
-    :param plane1_frame: Plane's 1 frame.
-    :param plane2_frame: Plane's 2 frame.
-    :return: A list containing two points that define an infinite line if there is any intersections,
-    or an empty list if the planes are parallel.
+    Helper function to get point 1 on two plane intersections.
+   
     """
-    if plane1_frame.w.is_colinear_to(plane2_frame.w):
-        return []
-    line_direction = plane1_frame.w.cross(plane2_frame.w)
-
-    if line_direction.norm() < 1e-6:
-        return None
-
     a1, b1, c1, d1 = get_plane_equation_coefficients(plane1_frame)
     a2, b2, c2, d2 = get_plane_equation_coefficients(plane2_frame)
-    if not math.isclose(a1 * b2 - a2 * b1, 0.0, abs_tol=1e-10):
+    tol = 1e-10
+    if abs(a1 * b2 - a2 * b1) > tol:
         x0 = (b1 * d2 - b2 * d1) / (a1 * b2 - a2 * b1)
         y0 = (a2 * d1 - a1 * d2) / (a1 * b2 - a2 * b1)
         point1 = volmdlr.Point3D(x0, y0, 0)
-    elif a2 * c1 != a1 * c2:
+    elif abs(a2 * c1 - a1 * c2) > tol:
         x0 = (c2 * d1 - c1 * d2) / (a2 * c1 - a1 * c2)
         z0 = (a1 * d2 - a2 * d1) / (a2 * c1 - a1 * c2)
         point1 = volmdlr.Point3D(x0, 0, z0)
-    elif c1 * b2 != b1 * c2:
-        y0 = (-c2 * d1 + c1 * d2) / (b1 * c2 - c1 * b2)
-        z0 = (-b1 * d2 + b2 * d1) / (b1 * c2 - c1 * b2)
+    elif abs(c1 * b2 - b1 * c2) > tol:
+        y0 = (- c2 * d1 + c1 * d2) / (b1 * c2 - c1 * b2)
+        z0 = (- b1 * d2 + b2 * d1) / (b1 * c2 - c1 * b2)
         point1 = volmdlr.Point3D(0, y0, z0)
     else:
         raise NotImplementedError
+    return point1
+
+
+def get_two_planes_intersections(plane1_frame, plane2_frame, abs_tol=1e-8):
+    """
+    Calculates the intersections between two planes, given their frames.
+
+    :param plane1_frame: Plane's 1 frame.
+    :param plane2_frame: Plane's 2 frame.
+    :param abs_tol: tolerance.
+    :return: A list containing two points that define an infinite line if there is any intersections,
+    or an empty list if the planes are parallel.
+    """
+    if plane1_frame.w.is_colinear_to(plane2_frame.w, abs_tol):
+        return []
+    line_direction = plane1_frame.w.cross(plane2_frame.w)
+
+    if line_direction.norm() < abs_tol:
+        return None
+
+    point1 = _helper_two_plane_intersections(plane1_frame, plane2_frame)
     return [point1, point1 + line_direction]

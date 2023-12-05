@@ -241,7 +241,7 @@ class Surface2D(PhysicalObject):
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
         for inner_contour in self.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=discretize_line,
+            inner_polygon = inner_contour.to_polygon(angle_resolution=10, discretize_line=discretize_line,
                                                      discretize_line_direction=discretize_line_direction)
             inner_polygon_nodes = inner_polygon.points.copy()
             for point in inner_polygon_nodes:
@@ -754,17 +754,13 @@ class Surface3D(DessiaObject):
         tol = 1e-2
         if self.__class__.__name__ == "ExtrusionSurface3D":
             tol = 5e-6
-        x_periodicity = self.x_periodicity
-        y_periodicity = self.y_periodicity
+        x_periodicity = self.x_periodicity if self.x_periodicity else -1
+        y_periodicity = self.y_periodicity if self.y_periodicity else -1
 
         if x_periodicity or y_periodicity:
             if self.is_undefined_brep(primitives2d[0]):
                 primitives2d[0] = self.fix_undefined_brep_with_neighbors(primitives2d[0], primitives2d[-1],
                                                                          primitives2d[1])
-        if x_periodicity is None:
-            x_periodicity = -1
-        if y_periodicity is None:
-            y_periodicity = -1
         i = 1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
@@ -1196,6 +1192,25 @@ class Surface3D(DessiaObject):
             if arcellipse.point_belongs(intersection):
                 intersections.append(intersection)
         return intersections
+
+    def brep_connectivity_check(self, brep: wires.Contour2D, tol: float = 1e-6) -> bool:
+        """Checks the topology of 2D BREP in 3D space."""
+        if len(brep.primitives) == 2 and brep.primitives[0].direction_independent_is_close(brep.primitives[1]):
+            return False
+        if self.x_periodicity:
+            distance = brep.primitives[-1].end.point_distance(brep.primitives[0].start)
+            if distance >= (0.99 * self.x_periodicity):
+                return False
+        if self.y_periodicity:
+            distance = brep.primitives[-1].end.point_distance(brep.primitives[0].start)
+            if distance >= (0.99 * self.y_periodicity):
+                return False
+        for prim1, prim2 in zip(brep.primitives, brep.primitives[1:] + [brep.primitives[0]]):
+            end = self.point2d_to_3d(prim1.end)
+            start = self.point2d_to_3d(prim2.start)
+            if not end.is_close(start, tol):
+                return False
+        return True
 
 
 class Plane3D(Surface3D):
@@ -3077,7 +3092,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             ax = fig.add_subplot(111, projection='3d')
 
         self.frame.plot(ax=ax, ratio=self.major_radius)
-        circles = self._torus_arcs(100)
+        circles = self._torus_arcs(100) + self._torus_circle_generatrices_xy(30)
         for circle in circles:
             circle.plot(ax=ax, edge_style=edge_style)
 
@@ -3258,16 +3273,18 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: other plane 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(100)
+        arcs = self._torus_arcs(100) + self._torus_circle_generatrices_xy(100)
         points_intersections = []
         for arc in arcs:
             if plane3d.frame.w.dot(arc.frame.w) == 1.0:
                 continue
             intersections = plane3d.circle_intersections(arc)
-            points_intersections.extend(intersections)
-        for edge in plane3d.plane_grid(200, self.major_radius * 4):
+            points_intersections.extend(inter for inter in intersections if inter not in points_intersections)
+
+        for edge in plane3d.plane_grid(300, self.major_radius * 4):
             intersections = self.line_intersections(edge.line)
-            points_intersections.extend(intersections)
+            points_intersections.extend(inter for inter in intersections if inter not in points_intersections)
+
         return points_intersections
 
     def concurrent_plane_intersection(self, plane3d):
@@ -5223,6 +5240,19 @@ class ExtrusionSurface3D(Surface3D):
         content = content_edge + content_vector
         content += f"#{current_id} = SURFACE_OF_LINEAR_EXTRUSION('{self.name}',#{edge_id},#{vector_id});\n"
         return content, [current_id]
+
+    def linesegment3d_to_2d(self, linesegment3d):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
+        start = self.point3d_to_2d(linesegment3d.start)
+        end = self.point3d_to_2d(linesegment3d.end)
+        if self.x_periodicity:
+            line_at_periodicity = curves.Line3D(self.edge.start, self.edge.start.translation(self.direction))
+            if (line_at_periodicity.point_belongs(linesegment3d.start) and
+                line_at_periodicity.point_belongs(linesegment3d.end) and start.x != end.x):
+                end.x = start.x
+        return [edges.LineSegment2D(start, end)]
 
     def arc3d_to_2d(self, arc3d):
         """

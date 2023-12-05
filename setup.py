@@ -128,7 +128,7 @@ setup(
         "packaging",
         "dessia_common>=0.10.0",
         "Cython>=3.0.0",
-        # "numpy<1.26.0",
+        "numpy<1.26.0",
         "matplotlib",
         "scipy<=1.11.1",
         "geomdl",

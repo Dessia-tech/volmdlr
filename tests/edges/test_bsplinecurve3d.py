@@ -2,7 +2,7 @@ import unittest
 import os
 import volmdlr
 import volmdlr.edges as vme
-
+from dessia_common.core import DessiaObject
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'bsplinecurve_objects')
 
@@ -34,6 +34,13 @@ class TestBSplineCurve3D(unittest.TestCase):
         trimmed_curve = obj.trim(point1, point2, True)
         self.assertTrue(trimmed_curve.start.is_close(point1))
         self.assertAlmostEqual(trimmed_curve.length(), 0.011010880733091775, 2)
+        bspline, point1, point2 = DessiaObject.load_from_file(
+            os.path.join(folder, "test_bspline_trim271123.json")).primitives
+        trim = bspline.trim(point1, point2, True)
+        self.assertAlmostEqual(trim.length(), 14.606177552397396)
+        trim = bspline.trim(point2, point1, True)
+        self.assertAlmostEqual(trim.length(), 2.5461209947115186)
+
 
     def test_from_step(self):
         obj_list = volmdlr.core.VolumeModel.load_from_file(
