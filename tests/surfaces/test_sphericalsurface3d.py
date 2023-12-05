@@ -22,10 +22,14 @@ class TestSphericalSurface3D(unittest.TestCase):
     def test_contour3d_to_2d(self):
         surface = surfaces.SphericalSurface3D.load_from_file(os.path.join(folder, "sphericalsurface1.json"))
         contour = wires.Contour3D.load_from_file(os.path.join(folder, "spericalsurface1_contour0.json"))
-        contour2d = surface.contour3d_to_2d(contour)
+        contour2d, primitives_mapping = surface.contour3d_to_2d(contour, return_primitives_mapping=True)
         self.assertEqual(len(contour2d.primitives), 6)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 4.107527949001648, 2)
+        self.assertEqual(len(primitives_mapping), len(contour.primitives))
+        self.assertIsNone(primitives_mapping.get(contour2d.primitives[3]))
+        self.assertEqual(contour.primitives[0], primitives_mapping.get(contour2d.primitives[0]))
+        self.assertEqual(contour.primitives[-1], primitives_mapping.get(contour2d.primitives[-1]))
 
         surface = surfaces.SphericalSurface3D.load_from_file(
             os.path.join(folder, "spherical_surface_arc3d_to_2d.json"))

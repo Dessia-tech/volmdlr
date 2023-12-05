@@ -1680,8 +1680,7 @@ class PlaneFace3D(Face3D):
             return self.divide_face(face.surface2d.inner_contours)
 
         inner_contours = self.surface2d.inner_contours
-        inner_contours.extend([self.surface3d.contour3d_to_2d(
-            contour) for contour in face.inner_contours3d])
+        inner_contours.extend([self.surface3d.contour3d_to_2d(contour) for contour in face.inner_contours3d])
 
         contours = outer_contour_1.cut_by_wire(outer_contour_2)
 
