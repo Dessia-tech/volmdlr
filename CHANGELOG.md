@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Contour2D: cut_by_line.
 
+#### step.py
+- Step: uses Regular Expressions to improve the performance.
+
+
 ### Refactor
 - Big refactor to improve and simplify complex and long methods in various modules.
 
