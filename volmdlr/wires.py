@@ -1500,6 +1500,8 @@ class ContourMixin(WireMixin):
         :param tol: tolerance to be considered.
         :return: True if ordered, False if not.
         """
+        if len(self.primitives) == 1 and self.primitives[0].length() <= tol:
+            return False
         if len(self.primitives) == 2 and self.primitives[0].direction_independent_is_close(self.primitives[1]):
             return False
         for prim1, prim2 in zip(self.primitives, self.primitives[1:] + [self.primitives[0]]):
@@ -4191,8 +4193,6 @@ class Contour3D(ContourMixin, Wire3D):
             edge = object_dict[int(edge_id[1:])]
             if edge:
                 raw_edges.append(edge)
-        if step_id in (1635573, 12102375, 12220960, 12374276, 12392418, 12396341, 13083190, 13199199, 13203122):
-            print(True)
         if step_name == "POLY_LOOP":
             return cls.from_points(raw_edges)
         if (len(raw_edges)) == 1:

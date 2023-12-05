@@ -67,6 +67,14 @@ class TestContour3D(unittest.TestCase):
 
         self.assertFalse(contour)
 
+        arguments = ["''", ['#13203123', '#13203124', '#13203125', '#13203126', '#13203127',
+                            '#13203128', '#13203129', '#13203130', '#13203131', '#13203132']]
+        primitives = Contour3D.load_from_file("edge_loop_with_small_edges_and_gaps.json").primitives
+        object_dict = {int(arg[1:]): edge for arg, edge in zip(arguments[1], primitives)}
+        contour = Contour3D.from_step(arguments, object_dict)
+        self.assertFalse(contour.is_ordered())
+        self.assertTrue(contour.is_ordered(5e-6))
+
     def test_edge_intersections(self):
         points = [volmdlr.Point3D(1.2918566581549966, 2.3839907440191492, 0.5678759590090421),
                   volmdlr.Point3D(1.2067665579541171, -1.246879774203074, -0.4359328108960321),

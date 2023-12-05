@@ -190,14 +190,7 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
-        try:
-            return face.from_contours3d(surface, contours, name)
-        except (ValueError, NotImplementedError, IndexError,
-                AttributeError, ZeroDivisionError, UnboundLocalError, TypeError):
-            surface.save_to_file(f"caisse/face_{step_id}_surface.json")
-            for i, contour in enumerate(contours):
-                contour.save_to_file(f"caisse/face_{step_id}_contour_{i}.json")
-            return None
+        return face.from_contours3d(surface, contours, name)
 
     @classmethod
     def from_contours3d(cls, surface, contours3d: List[volmdlr.wires.Contour3D], name: str = ''):
