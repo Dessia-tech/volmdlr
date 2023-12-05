@@ -49,7 +49,6 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertEqual(contour3d.primitives[1], primitives_mapping[contour2d.primitives[2]])
         self.assertEqual(contour3d.primitives[2], primitives_mapping[contour2d.primitives[3]])
 
-
     def test_contour3d_to_2d(self):
         center1 = O3D
         start_end1 = Point3D(0.035, 0, 0)
