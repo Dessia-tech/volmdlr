@@ -217,8 +217,11 @@ def get_point_distance_to_edge(edge, point, start, end):
     best_distance = math.inf
     if start != end:
         if start.is_close(end):
-            return point.point_distance(start)
-        number_points = 10 if abs(edge.abscissa(start) - edge.abscissa(end)) > 5e-6 else 2
+            if not edge.periodic:
+                return point.point_distance(start)
+            number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
+        else:
+            number_points = 10 if abs(edge.abscissa(start) - edge.abscissa(end)) > 5e-6 else 2
         # number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
     elif edge.periodic:
         number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2

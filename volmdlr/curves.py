@@ -155,7 +155,7 @@ class ClosedCurve(Curve):
             abscissa2 = self.length()
             points = vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
             return points + [points[0]]
-        if abscissa1 > abscissa2 == 0.0:
+        if abscissa1 > abscissa2 <= 1e-6:
             abscissa2 = self.length()
         return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
 
