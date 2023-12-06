@@ -2882,7 +2882,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         xi1_yi = npy.multiply(npy.roll(x, -1), y)
 
         signed_area = 0.5 * npy.sum(xi_yi1 - xi1_yi)  # signed area!
-        if not math.isclose(signed_area, 0, abs_tol=1e-09):
+        if not math.isclose(signed_area, 0, abs_tol=1e-12):
             center_x = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
             center_y = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
             return volmdlr.Point2D(center_x, center_y)

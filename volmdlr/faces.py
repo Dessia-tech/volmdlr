@@ -947,7 +947,8 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: list divided faces
         """
         for closed_cutting_contour in list_closed_cutting_contours:
-            if closed_cutting_contour.primitives[0].start.is_close(closed_cutting_contour.primitives[-1].end):
+            if closed_cutting_contour.area() / self.surface2d.outer_contour.area() > 1e-9 and\
+                    closed_cutting_contour.primitives[0].start.is_close(closed_cutting_contour.primitives[-1].end):
                 inner_contours1 = []
                 inner_contours2 = []
                 if list_faces:
