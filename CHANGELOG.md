@@ -8,10 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.16.0 [future]
 
 ### New Features
--
+- added missing hash and eq methods to several classes
 
 ### Fixed
-
+- review hash and eq methods
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 

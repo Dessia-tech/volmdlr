@@ -1985,7 +1985,7 @@ class Contour2D(ContourMixin, Wire2D):
                               name=self.name)
 
     def __hash__(self):
-        return hash(tuple(self.primitives))
+        return hash(('contour2d', tuple(self.primitives)))
 
     def __eq__(self, other_):
         if id(self) == id(other_):
@@ -2838,7 +2838,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         return ClosedPolygon2D(points, self.name)
 
     def __hash__(self):
-        return sum(hash(point) for point in self.points)
+        return hash((self.__class__.__name__, tuple(self.points)))
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
@@ -4120,7 +4120,7 @@ class Contour3D(ContourMixin, Wire3D):
         self._utd_bounding_box = False
 
     def __hash__(self):
-        return hash(tuple(self.primitives))
+        return hash(('contour3d', tuple(self.primitives)))
 
     def __eq__(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:
@@ -4425,14 +4425,14 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return ClosedPolygon3D(points, self.name)
 
     def __hash__(self):
-        return sum(hash(point) for point in self.points)
+        return hash((self.__class__.__name__, tuple(self.points)))
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
             return False
         equal = True
         for point, other_point in zip(self.points, other_.points):
-            equal = (equal and point.is_close(other_point))
+            equal = (equal and point == other_point)
         return equal
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
