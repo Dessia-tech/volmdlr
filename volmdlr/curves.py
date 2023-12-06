@@ -155,7 +155,7 @@ class ClosedCurve(Curve):
             abscissa2 = self.length()
             points = vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
             return points + [points[0]]
-        if abscissa1 > abscissa2 == 0.0:
+        if abscissa1 > abscissa2 <= 1e-6:
             abscissa2 = self.length()
         return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
 
@@ -585,6 +585,30 @@ class Line2D(Line):
         return circle1, circle2
 
     @staticmethod
+    def _helper_tangent_circles_theta(new_vector_c, new_vector_d, new_point_k):
+        """
+        Helper method in get concurrent segments tangent circle to get theta.
+
+        """
+        theta1 = math.atan2(new_vector_c[1], new_vector_c[0] - new_point_k[0])
+        theta2 = math.atan2(new_vector_d[1], new_vector_d[0] - new_point_k[0])
+
+        if theta1 < 0:
+            theta1 += math.pi
+        if theta2 < 0:
+            theta2 += math.pi
+        theta = theta1
+        if not math.isclose(theta1, theta2, abs_tol=1e-08):
+            if math.isclose(theta1, math.pi, abs_tol=1e-08) or math.isclose(
+                    theta1, 0., abs_tol=1e-08):
+                theta = theta2
+            elif math.isclose(theta2, math.pi,
+                              abs_tol=1e-08) or math.isclose(theta2, 0.,
+                                                             abs_tol=1e-08):
+                theta = theta1
+        return theta
+
+    @staticmethod
     def get_concurrent_segments_tangent_circles(vector_i, vector_c, vector_d, new_point_k, new_basis):
         """Creates circles tangents to concurrent segments."""
         point_k = volmdlr.Point2D(new_basis.local_to_global_coordinates(new_point_k))
@@ -594,29 +618,14 @@ class Line2D(Line):
 
         # CHANGEMENT DE REPERE:
         new_u2 = volmdlr.Vector2D(point_k - vector_i).unit_vector()
-        new_v2 = new_u2.unit_vector()
+        new_v2 = new_u2.copy()
         new_basis2 = volmdlr.Frame2D(vector_i, new_u2, new_v2)
         new_vector_c = new_basis2.global_to_local_coordinates(vector_c)
         new_vector_d = new_basis2.global_to_local_coordinates(vector_d)
         new_point_k = new_basis2.global_to_local_coordinates(point_k)
-        teta1 = math.atan2(new_vector_c[1], new_vector_c[0] - new_point_k[0])
-        teta2 = math.atan2(new_vector_d[1], new_vector_d[0] - new_point_k[0])
-
-        if teta1 < 0:
-            teta1 += math.pi
-        if teta2 < 0:
-            teta2 += math.pi
-        teta = teta1
-        if not math.isclose(teta1, teta2, abs_tol=1e-08):
-            if math.isclose(teta1, math.pi, abs_tol=1e-08) or math.isclose(
-                    teta1, 0., abs_tol=1e-08):
-                teta = teta2
-            elif math.isclose(teta2, math.pi,
-                              abs_tol=1e-08) or math.isclose(teta2, 0.,
-                                                             abs_tol=1e-08):
-                teta = teta1
-        radius1 = new_point_k[0] * math.sin(teta) / (1 + math.cos(teta))
-        radius2 = new_point_k[0] * math.sin(teta) / (1 - math.cos(teta))
+        theta = Line2D._helper_tangent_circles_theta(new_vector_c, new_vector_d, new_point_k)
+        radius1 = new_point_k[0] * math.sin(theta) / (1 + math.cos(theta))
+        radius2 = new_point_k[0] * math.sin(theta) / (1 - math.cos(theta))
         circle_center1 = new_basis2.local_to_global_coordinates(volmdlr.Point2D(0, -radius1))
         circle_center2 = new_basis2.local_to_global_coordinates(volmdlr.Point2D(0, radius2))
 
@@ -1355,24 +1364,13 @@ class Circle2D(CircleMixin, ClosedCurve):
             return [contour1, contour2]
         raise ValueError
 
-    def line_intersections(self, line2d: Line2D, tol=1e-9):
+    def _helper_line_intersections(self, line2d: Line2D):
         """
-        Calculates the intersections between a circle 2D and Line 2D.
+        Helper method to calculate the intersections between a circle 2D and Line 2D.
 
         :param line2d: line to calculate intersections
-        :param tol: tolerance to consider in calculations.
         :return: circle and line intersections.
         """
-        if line2d.point_distance(self.center) > self.radius + tol:
-            return []
-        if line2d.point_belongs(self.center):
-            direction_vector = line2d.unit_direction_vector()
-            return [self.center + self.radius * direction_vector, self.center - self.radius * direction_vector]
-        if not self.center.is_close(volmdlr.O2D):
-            local_line = line2d.frame_mapping(self.frame, 'new')
-            local_circle = self.frame_mapping(self.frame, 'new')
-            local_line_intersections = local_circle.line_intersections(local_line)
-            return [self.frame.local_to_global_coordinates(point) for point in local_line_intersections]
         m = line2d.get_slope()
         c = line2d.get_y_intersection()
         if m == math.inf and c is None:
@@ -1395,6 +1393,26 @@ class Circle2D(CircleMixin, ClosedCurve):
         y1 = m * x1 + c
         y2 = m * x2 + c
         return [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]
+
+    def line_intersections(self, line2d: Line2D, tol=1e-9):
+        """
+        Calculates the intersections between a circle 2D and Line 2D.
+
+        :param line2d: line to calculate intersections
+        :param tol: tolerance to consider in calculations.
+        :return: circle and line intersections.
+        """
+        if line2d.point_distance(self.center) > self.radius + tol:
+            return []
+        if line2d.point_belongs(self.center):
+            direction_vector = line2d.unit_direction_vector()
+            return [self.center + self.radius * direction_vector, self.center - self.radius * direction_vector]
+        if not self.center.is_close(volmdlr.O2D):
+            local_line = line2d.frame_mapping(self.frame, 'new')
+            local_circle = self.frame_mapping(self.frame, 'new')
+            local_line_intersections = local_circle.line_intersections(local_line)
+            return [self.frame.local_to_global_coordinates(point) for point in local_line_intersections]
+        return self._helper_line_intersections(line2d)
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D', tol=1e-9):
         """
@@ -2799,9 +2817,8 @@ class HyperbolaMixin(Curve):
         _lineseg_class = getattr(volmdlr.edges, 'LineSegment'+self.__class__.__name__[-2:])
         local_split_start = self.frame.global_to_local_coordinates(point1)
         local_split_end = self.frame.global_to_local_coordinates(point2)
-        max_y = max(local_split_start.y, local_split_end.y)
-        min_y = min(local_split_start.y, local_split_end.y)
-        hyperbola_points = self.get_points(min_y, max_y, 3)
+        hyperbola_points = self.get_points(min(local_split_start.y, local_split_end.y),
+                                           max(local_split_start.y, local_split_end.y), 3)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
         start_tangent = self.tangent(hyperbola_points[0])
@@ -2812,9 +2829,8 @@ class HyperbolaMixin(Curve):
         point, weight1 = hyperbola_parabola_control_point_and_weight(
             hyperbola_points[0], start_tangent, hyperbola_points[2], end_tangent, hyperbola_points[1])
         knotvector = generate_knot_vector(2, 3)
-        knot_multiplicity = [1] * len(knotvector)
 
-        bspline = _bspline_class(2, [point1, point, point2], knot_multiplicity, knotvector, [1, weight1, 1])
+        bspline = _bspline_class(2, [point1, point, point2], [1] * len(knotvector), knotvector, [1, weight1, 1])
         return bspline
 
 
