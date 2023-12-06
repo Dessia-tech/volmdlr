@@ -2123,7 +2123,12 @@ class DisplayTriangleShell3D(Shell3D):
     def babylon_meshes(self, merge_meshes=True):
         """Overload of 'babylon_meshes' for performance."""
 
-        babylon_mesh = {"positions": self.positions.flatten().tolist(), "indices": self.indices.flatten().tolist()}
+        babylon_mesh = {
+            "positions": self.positions.flatten().tolist(),
+            "indices": self.indices.flatten().tolist(),
+            "normals": self.normals.flatten().tolist(),
+        }
+
         babylon_mesh.update(self.babylon_param())
 
         return [babylon_mesh]
