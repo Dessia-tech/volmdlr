@@ -83,6 +83,9 @@ class Surface2D(PhysicalObject):
     def _data_hash(self):
         return hash(self)
 
+    def __eq__(self, other):
+        return self.outer_contour == other.outer_contour and self.inner_contours == other.inner_contours
+
     def copy(self, deep=True, memo=None):
         """
         Copies the surface2d.
@@ -2271,6 +2274,16 @@ class CylindricalSurface3D(PeriodicalSurface):
         self.radius = radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.frame, self.radius))
+
+    def __eq__(self, other):
+        if self.__class__.__name__ != other.__class__.__name__:
+            return False
+        if self.frame == other.frame and self.radius == other.radius:
+            return True
+        return False
+
     def get_generatrices(self, length: float = 1, number_lines: int = 30):
         list_generatrices = []
         for i in range(number_lines):
@@ -2765,7 +2778,6 @@ class ToroidalSurface3D(PeriodicalSurface):
     x_periodicity = volmdlr.TWO_PI
     y_periodicity = volmdlr.TWO_PI
 
-
     def __init__(self, frame: volmdlr.Frame3D, major_radius: float, minor_radius: float, name: str = ''):
         self.frame = frame
         self.major_radius = major_radius
@@ -2773,6 +2785,18 @@ class ToroidalSurface3D(PeriodicalSurface):
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
         self._bbox = None
+
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.frame, self.major_radius, self.minor_radius))
+
+    def __eq__(self, other):
+        if self.__class__.__name__ != other.__class__.__name__:
+            return False
+        if self.frame == other.frame and \
+                self.major_radius == other.major_radius and \
+                self.minor_radius == other.minor_radius:
+            return True
+        return False
 
     @cached_property
     def outer_radius(self):
@@ -3618,6 +3642,16 @@ class ConicalSurface3D(PeriodicalSurface):
         self.semi_angle = semi_angle
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.frame, self.semi_angle))
+
+    def __eq__(self, other):
+        if self.__class__.__name__ != other.__class__.__name__:
+            return False
+        if self.frame == other.frame and self.semi_angle == other.semi_angle:
+            return True
+        return False
+
     @property
     def domain(self):
         """Returns u and v bounds."""
@@ -4197,6 +4231,16 @@ class SphericalSurface3D(PeriodicalSurface):
 
         # Hidden Attributes
         self._bbox = None
+
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.frame, self.radius))
+
+    def __eq__(self, other):
+        if self.__class__.__name__ != other.__class__.__name__:
+            return False
+        if self.frame == other.frame and self.radius == other.radius:
+            return True
+        return False
 
     def _circle_generatrices(self, number_circles: int):
         """
@@ -5190,6 +5234,16 @@ class RuledSurface3D(Surface3D):
         self.length2 = wire2.length()
         Surface3D.__init__(self, name=name)
 
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.wire1, self.wire2))
+
+    def __eq__(self, other):
+        if self.__class__.__name__ != other.__class__.__name__:
+            return False
+        if self.wire1 == other.wire1 and self.wire2 == other.wire2:
+            return True
+        return False
+
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """
         Coverts a parametric coordinate on the surface into a 3D spatial point (x, y, z).
@@ -5248,6 +5302,16 @@ class ExtrusionSurface3D(Surface3D):
         self._x_periodicity = False
 
         Surface3D.__init__(self, frame=self.frame, name=name)
+
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.edge, self.direction))
+
+    def __eq__(self, other):
+        if self.__class__.__name__ != other.__class__.__name__:
+            return False
+        if self.edge == other.edge and self.direction == other.direction:
+            return True
+        return False
 
     @property
     def x_periodicity(self):
@@ -5634,6 +5698,16 @@ class RevolutionSurface3D(PeriodicalSurface):
         self.frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
 
         PeriodicalSurface.__init__(self, frame=self.frame, name=name)
+
+    def __hash__(self):
+        return hash((self.__class__.__name__, self.edge, self.axis_point, self.axis))
+
+    def __eq__(self, other):
+        if self.__class__.__name__ != other.__class__.__name__:
+            return False
+        if self.edge == other.edge and self.axis_point == other.axis_point and self.axis == other.axis:
+            return True
+        return False
 
     @property
     def y_periodicity(self):
