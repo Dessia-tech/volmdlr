@@ -1,0 +1,84 @@
+{
+  "object_class": "volmdlr.wires.Contour2D",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.wires.Contour2D",
+      "name": "",
+      "primitives": [
+        {
+          "object_class": "volmdlr.edges.LineSegment2D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point2D",
+            "x": -0.15,
+            "y": -0.034999999999999976
+          },
+          "end": {
+            "object_class": "volmdlr.Point2D",
+            "x": 0.15,
+            "y": -0.03500000000000002
+          }
+        },
+        {
+          "object_class": "volmdlr.edges.LineSegment2D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point2D",
+            "x": 0.15,
+            "y": -0.03500000000000002
+          },
+          "end": {
+            "object_class": "volmdlr.Point2D",
+            "x": 0.15,
+            "y": 0.1
+          }
+        },
+        {
+          "object_class": "volmdlr.edges.LineSegment2D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point2D",
+            "x": 0.15,
+            "y": 0.1
+          },
+          "end": {
+            "object_class": "volmdlr.Point2D",
+            "x": -0.15,
+            "y": 0.1
+          }
+        },
+        {
+          "object_class": "volmdlr.edges.LineSegment2D",
+          "name": "",
+          "start": {
+            "object_class": "volmdlr.Point2D",
+            "x": -0.15,
+            "y": 0.1
+          },
+          "end": {
+            "object_class": "volmdlr.Point2D",
+            "x": -0.15,
+            "y": -0.034999999999999976
+          }
+        }
+      ]
+    },
+    {
+      "object_class": "volmdlr.curves.Line2D",
+      "name": "",
+      "point1": {
+        "object_class": "volmdlr.Vector2D",
+        "x": -0.0,
+        "y": 0.1,
+        "name": ""
+      },
+      "point2": {
+        "object_class": "volmdlr.Vector2D",
+        "x": 1.0,
+        "y": 0.1,
+        "name": ""
+      }
+    }
+  ]
+}
