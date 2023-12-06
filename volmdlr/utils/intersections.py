@@ -417,6 +417,7 @@ def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-6):
     intersection_abscissea = -plane_frame.w.dot(w_vector) / plane_frame.w.dot(u_vector)
     return [line.point1 + intersection_abscissea * u_vector]
 
+
 def _helper_two_plane_intersections(plane1_frame, plane2_frame):
     """
     Helper function to get point 1 on two plane intersections.

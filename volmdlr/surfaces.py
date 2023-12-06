@@ -2634,6 +2634,38 @@ class CylindricalSurface3D(PeriodicalSurface):
         global_intersections = [edge.frame_mapping(frame, 'old') for edge in curves_]
         return global_intersections
 
+    def _helper_spherical_intersections_points(self, spherical_surface, distance_axis_sphere_center):
+        """
+        Helper method to get spherical intersections points.
+
+        :param spherical_surface: spherical surface.
+        :param distance_axis_sphere_center: distance cylinder axis to sphere center.
+        :return: intersection points.
+        """
+        b = (spherical_surface.radius**2 - self.radius**2 -
+             distance_axis_sphere_center**2) / (2*distance_axis_sphere_center)
+
+        if spherical_surface.radius > self.radius + distance_axis_sphere_center:
+            phi_0, phi_1, two_curves = 0, 2*math.pi, True
+        else:
+            phi_0 = math.acos(-b/self.radius)
+            phi_1 = phi_0-0.000001
+            phi_0 = -phi_0+0.000001
+            two_curves = False
+
+        phi = npy.linspace(phi_0, phi_1, 400)
+        x_components = self.radius * npy.cos(phi)
+        y_components = self.radius * npy.sin(phi)
+        z_components1 = npy.sqrt(2 * distance_axis_sphere_center * (b + x_components))
+
+        inters_points = [[volmdlr.Point3D(x_comp, y_comp, z_comp)
+                          for x_comp, y_comp, z_comp in zip(x_components, y_components, z_components1)],
+                         [volmdlr.Point3D(x_comp, y_comp, -z_comp)
+                          for x_comp, y_comp, z_comp in zip(x_components, y_components, z_components1)]]
+        if not two_curves:
+            inters_points = vm_common_operations.separate_points_by_closeness(inters_points[0]+inters_points[1])
+        return inters_points
+
     def sphericalsurface_intersections(self, spherical_surface: 'SphericalSurface3D'):
         """
         Cylinder Surface intersections with a Spherical surface.
@@ -2665,34 +2697,11 @@ class CylindricalSurface3D(PeriodicalSurface):
         if math.isclose(distance_axis_sphere_center + self.radius, spherical_surface.radius, abs_tol=1e-6):
             return self._sphere_cylinder_tangent_intersections(frame, distance_axis_sphere_center)
 
-        b = (spherical_surface.radius**2 - self.radius**2 -
-             distance_axis_sphere_center**2) / (2*distance_axis_sphere_center)
+        inters_points = self._helper_spherical_intersections_points(spherical_surface, distance_axis_sphere_center)
 
-        if spherical_surface.radius > self.radius + distance_axis_sphere_center:
-            phi_0, phi_1, two_curves = 0, 2*math.pi, True
-        else:
-            phi_0 = math.acos(-b/self.radius)
-            phi_1 = phi_0-0.000001
-            phi_0 = -phi_0+0.000001
-            two_curves = False
-
-        phi = npy.linspace(phi_0, phi_1, 400)
-        x_components = self.radius * npy.cos(phi)
-        y_components = self.radius * npy.sin(phi)
-        z_components1 = npy.sqrt(2 * distance_axis_sphere_center * (b + x_components))
-
-        inters_points1 = [volmdlr.Point3D(x_comp, y_comp, z_comp)
-                          for x_comp, y_comp, z_comp in zip(x_components, y_components, z_components1)]
-        inters_points2 = [volmdlr.Point3D(x_comp, y_comp, -z_comp)
-                          for x_comp, y_comp, z_comp in zip(x_components, y_components, z_components1)]
-        inters_points = [inters_points1, inters_points2]
-
-        if not two_curves:
-            inters_points = vm_common_operations.separate_points_by_closeness(inters_points[0]+inters_points[1])
         curves_ = [edges.BSplineCurve3D.from_points_interpolation(points, 4, centripetal=False)
                    for points in inters_points]
-        global_intersections = [edge.frame_mapping(frame, 'old') for edge in curves_]
-        return global_intersections
+        return [edge.frame_mapping(frame, 'old') for edge in curves_]
 
     def _cylindrical_intersection_points(self, cylindricalsurface: 'SphericalSurface3D'):
         """
@@ -3223,6 +3232,26 @@ class ToroidalSurface3D(PeriodicalSurface):
             point_before_end = self.point3d_to_2d(edge.point_at_abscissa(0.97 * length))
         return point_after_start, point_before_end
 
+    def _get_line_intersections_solution_roots(self, line):
+        """
+        Line intersections helper: get roots.
+
+        :param line: other line.
+        :return: roots.
+        """
+        vector = line.unit_direction_vector()
+        coeff_a = vector.x**2 + vector.y**2 + vector.z**2
+        coeff_b = 2 * (line.point1.x * vector.x + line.point1.y * vector.y + line.point1.z * vector.z)
+        coeff_c = line.point1.x**2 + line.point1.y**2 + line.point1.z**2 + self.major_radius**2 - self.minor_radius**2
+        coeff_d = vector.x**2 + vector.y**2
+        coeff_e = 2 * (line.point1.x * vector.x + line.point1.y * vector.y)
+        coeff_f = line.point1.x**2 + line.point1.y**2
+        solutions = npy.roots([(coeff_a**2), 2*coeff_a*coeff_b,
+                               (2*coeff_a*coeff_c + coeff_b**2 - 4*coeff_d*self.major_radius**2),
+                               (2*coeff_b*coeff_c - 4*self.major_radius**2*coeff_e),
+                               coeff_c**2 - 4*self.major_radius**2*coeff_f])
+        return solutions
+
     def line_intersections(self, line: curves.Line3D):
         """
         Calculates the intersections between the toroidal surface and an infinite line.
@@ -3247,16 +3276,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             global_intersections = [self.frame.local_to_global_coordinates(point) for point in local_intersections]
             return global_intersections
         vector = line.unit_direction_vector()
-        coeff_a = vector.x**2 + vector.y**2 + vector.z**2
-        coeff_b = 2 * (line.point1.x * vector.x + line.point1.y * vector.y + line.point1.z * vector.z)
-        coeff_c = line.point1.x**2 + line.point1.y**2 + line.point1.z**2 + self.major_radius**2 - self.minor_radius**2
-        coeff_d = vector.x**2 + vector.y**2
-        coeff_e = 2 * (line.point1.x * vector.x + line.point1.y * vector.y)
-        coeff_f = line.point1.x**2 + line.point1.y**2
-        solutions = npy.roots([(coeff_a**2), 2*coeff_a*coeff_b,
-                               (2*coeff_a*coeff_c + coeff_b**2 - 4*coeff_d*self.major_radius**2),
-                               (2*coeff_b*coeff_c - 4*self.major_radius**2*coeff_e),
-                               coeff_c**2 - 4*self.major_radius**2*coeff_f])
+        solutions = self._get_line_intersections_solution_roots(line)
         intersections = []
         for sol_param in sorted(solutions):
             if isinstance(sol_param, npy.complex128):
@@ -3265,6 +3285,25 @@ class ToroidalSurface3D(PeriodicalSurface):
             else:
                 intersections.append(line.point1 + sol_param*vector)
         return intersections
+
+    def _helper_parallel_plane_intersections_through_origin(self, plane3d):
+        """
+        Helper method to get intersection between torus and plane through the origin.
+
+        :param plane3d: other plane.
+        :return: two circles.
+        """
+        plane1 = Plane3D(self.frame)
+        plane_intersections = plane1.plane_intersections(plane3d)
+        center1 = self.frame.origin + plane_intersections[0].unit_direction_vector() * self.major_radius
+        center2 = self.frame.origin - plane_intersections[0].unit_direction_vector() * self.major_radius
+        circle1 = curves.Circle3D(
+            volmdlr.Frame3D(center1, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
+            self.major_radius - self.minor_radius)
+        circle2 = curves.Circle3D(
+            volmdlr.Frame3D(center2, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
+            self.major_radius - self.minor_radius)
+        return [circle1, circle2]
 
     def parallel_plane_intersection(self, plane3d: Plane3D):
         """
@@ -3276,18 +3315,8 @@ class ToroidalSurface3D(PeriodicalSurface):
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis >= self.outer_radius:
             return []
-        plane1 = Plane3D(self.frame)
-        plane_intersections = plane1.plane_intersections(plane3d)
         if plane3d.point_on_surface(self.frame.origin):
-            center1 = self.frame.origin + plane_intersections[0].unit_direction_vector() * self.major_radius
-            center2 = self.frame.origin - plane_intersections[0].unit_direction_vector() * self.major_radius
-            circle1 = curves.Circle3D(
-                volmdlr.Frame3D(center1, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
-                self.major_radius - self.minor_radius)
-            circle2 = curves.Circle3D(
-                volmdlr.Frame3D(center2, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
-                self.major_radius - self.minor_radius)
-            return [circle1, circle2]
+            return self._helper_parallel_plane_intersections_through_origin(plane3d)
         if math.isclose(distance_plane_cylinder_axis, self.inner_radius, abs_tol=1e-6):
             point_projection = plane3d.point_projection(self.frame.origin)
             vector = (point_projection - self.frame.origin).unit_vector()
@@ -3365,6 +3394,25 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         return points_intersections
 
+    def get_villarceau_circles(self, plane3d):
+        """
+        The concurrent intersecting plane touches the torus in two isolated points.
+
+        :param plane3d: concurrent plane.
+        :return: two circles.
+        """
+        plane1 = Plane3D(self.frame)
+        plane_intersections1 = plane1.plane_intersections(plane3d)
+        torus_line_interections1 = self.line_intersections(plane_intersections1[0])
+        points = torus_line_interections1
+        radius1 = points[0].point_distance(points[2]) / 2
+        circle1 = curves.Circle3D(volmdlr.Frame3D((points[0] + points[2]) / 2, plane3d.frame.u,
+                                                  plane3d.frame.v, plane3d.frame.w), radius1)
+        radius2 = points[1].point_distance(points[3]) / 2
+        circle2 = curves.Circle3D(volmdlr.Frame3D((points[1] + points[3]) / 2, plane3d.frame.u,
+                                                  plane3d.frame.v, plane3d.frame.w), radius2)
+        return [circle1, circle2]
+
     def concurrent_plane_intersection(self, plane3d):
         """
         Toroidal plane intersections when plane's normal is concurrent with the cone's axis, but not orthogonal.
@@ -3382,21 +3430,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         points_intersections = self._plane_intersection_points(plane3d)
         inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
         if len(inters_points) == 1 and plane3d.point_on_surface(self.frame.origin):
-            plane1 = Plane3D(self.frame)
-            plane_intersections1 = plane1.plane_intersections(plane3d)
-            torus_line_interections1 = self.line_intersections(plane_intersections1[0])
-            points = torus_line_interections1
-            radius1 = points[0].point_distance(points[2]) / 2
-            circle1 = curves.Circle3D(volmdlr.Frame3D((points[0] + points[2]) / 2, plane3d.frame.u,
-                                                      plane3d.frame.v, plane3d.frame.w), radius1)
-            radius2 = points[1].point_distance(points[3]) / 2
-            circle2 = curves.Circle3D(volmdlr.Frame3D((points[1] + points[3]) / 2, plane3d.frame.u,
-                                                      plane3d.frame.v, plane3d.frame.w), radius2)
-            return [circle1, circle2]
-        curves_ = []
-        for list_points in inters_points:
-            curves_.append(edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False))
-        return curves_
+            return self.get_villarceau_circles(plane3d)
+        return [edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
+                for list_points in inters_points]
 
     def plane_intersections(self, plane3d):
         """
