@@ -6562,22 +6562,6 @@ class ArcEllipse3D(Edge):
         point2d = point.to_2d(self.ellipse.center, self.ellipse.major_dir, self.ellipse.minor_dir)
         return self.self_2d.point_belongs(point2d, abs_tol=abs_tol)
 
-    def is_close(self, other_edge, tol: float = 1e-6):
-        """
-        Checks if two arc-ellipse are the same considering the Euclidean distance.
-
-        :param other_edge: other arc-ellipse.
-        :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
-        :type tol: float, optional
-        """
-
-        if isinstance(other_edge, self.__class__):
-            if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
-                    and self.ellipse.center.is_close(other_edge.ellipse.center, tol)
-                    and self.point_belongs(other_edge.point_at_abscissa(other_edge.length() * 0.5), tol)):
-                return True
-        return False
-
     def complementary(self):
         """Gets the complementary arc of ellipse."""
         return self.__class__(self.ellipse, self.end, self.start)
