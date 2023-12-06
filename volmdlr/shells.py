@@ -2076,16 +2076,18 @@ class DisplayTriangleShell3D(Shell3D):
     performance.
     """
 
-    def __init__(self, positions: NDArray[float], indices: NDArray[int], name: str = ""):
+    def __init__(self, positions: NDArray[float], indices: NDArray[int], normals: NDArray[float] = None, name: str = ""):
         """
         Instantiate the DisplayTriangleShell3D.
 
         :param positions: A 3D numpy array of float representing the positions of the vertices of the triangles.
         :param indices: A 3D numpy array of int representing the indices of the vertices representing the triangles.
+        :param normals: A 3D numpy array of float representing the normals of the triangles.
         :param name: A name for the DisplayTriangleShell3D, optional.
         """
         self.positions = positions
         self.indices = indices
+        self.normals = normals
 
         Shell3D.__init__(self, faces=[], name=name)  # avoid saving the faces for memory and performance
 
