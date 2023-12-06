@@ -3647,6 +3647,9 @@ class ArcEllipse2D(Edge):
         self._bounding_rectangle = None
         self._reverse = None
 
+    def __hash__(self):
+        return hash(('Arcellipse2d', self.ellipse, self.start, self.end))
+
     def __eq__(self, other):
         """Defines equality."""
         if not isinstance(other, self.__class__):
@@ -4257,6 +4260,9 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
         if self.theta == math.pi * 2:
             self.theta = 0.0
         self._bounding_rectangle = None
+
+    def __hash__(self):
+        return hash(('FullArcellipse2d', self.ellipse, self.start_end))
 
     def to_3d(self, plane_origin, x, y):
         """
@@ -6270,6 +6276,21 @@ class ArcEllipse3D(Edge):
         self._self_2d = None
         self._length = None
         self._bbox = None
+
+    def __hash__(self):
+        return hash(('Arcellipse3d', self.ellipse, self.start, self.end))
+
+    def __eq__(self, other_arcellipse):
+        if self.__class__.__name__ != other_arcellipse.__class__.__name__:
+            return False
+        return self.ellipse == other_arcellipse.ellipse and \
+            self.start == other_arcellipse.start and self.end == other_arcellipse.end
+
+    def is_close(self, other_arcellipse, abs_tol: float = 1e-6):
+        if self.__class__.__name__ != other_arcellipse.__class__.__name__:
+            return False
+        return self.ellipse.is_close(other_arcellipse.ellipse, abs_tol) and \
+            self.start.is_close(other_arcellipse.start, abs_tol) and self.end.is_close(other_arcellipse.end, abs_tol)
 
     @property
     def center(self):
