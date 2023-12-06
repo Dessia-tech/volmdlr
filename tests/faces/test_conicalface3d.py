@@ -84,6 +84,12 @@ class TestConicalFace3D(unittest.TestCase):
                     continue
                 self.assertFalse(conical_face.point_belongs(points[j]))
 
+    def test_triangulation(self):
+        face = faces.ConicalFace3D.load_from_file(
+            os.path.join(folder, "conicalface_segfault_with_tri_opt_set_to_pq.json"))
+        mesh2d = face.triangulation()
+        self.assertIsNotNone(mesh2d)
+
 
 if __name__ == '__main__':
     unittest.main()

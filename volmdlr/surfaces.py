@@ -211,7 +211,7 @@ class Surface2D(PhysicalObject):
         triangulates_with_grid = number_points_x > 0 and number_points_y > 0
         discretize_line = number_points_x > 0 or number_points_y > 0
         if not triangulates_with_grid:
-            tri_opt = "pq"
+            tri_opt = "p"
 
         discretize_line_direction = "xy"
         if number_points_y == 0 or number_points_x > 25 * number_points_y:
