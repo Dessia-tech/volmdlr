@@ -2167,6 +2167,41 @@ class DisplayTriangleShell3D(Shell3D):
 
         return display_triangle_shell
 
+    def round_vertices(self, decimals: int) -> "DisplayTriangleShell3D":
+        """
+        Round the vertices to a specified number of decimals and update the indices to reflect merged vertices.
+
+        :param decimals: Number of decimal places to round to.
+        :type decimals: int
+
+        :return: A new DisplayTriangleShell3D with rounded decimals.
+        :rtype: DisplayTriangleShell3D
+        """
+        # Round the vertices
+        rounded_positions = np.round(self.positions, decimals=decimals)
+
+        # Identify and merge duplicate vertices
+        # Create a dictionary to map old vertex indices to new ones
+        unique_vertices, indices_map = np.unique(rounded_positions, axis=0, return_inverse=True)
+
+        # Update indices
+        updated_indices = np.array([indices_map[i] for i in self.indices.flatten()]).reshape(self.indices.shape)
+
+        # If normals are present, recalculate or adjust them
+        new_normals = None
+        if self.normals is not None:
+            # Initialize an array to store the new normals
+            new_normals = np.zeros_like(unique_vertices)
+
+            for i, new_index in enumerate(indices_map):
+                # Average the normals for vertices that are being merged
+                new_normals[new_index] += self.normals[i]
+
+            # Normalize the new normals
+            new_normals = new_normals / np.linalg.norm(new_normals, axis=1)[:, np.newaxis]
+
+        return self.__class__(unique_vertices, updated_indices, normals=new_normals, name=self.name)
+
     def concatenate(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
         """
         Concatenates two DisplayTriangleShell3D instances into a single instance.
