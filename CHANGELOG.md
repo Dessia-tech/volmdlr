@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - review hash and eq methods
+
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 
@@ -31,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### step.py
 - Step: uses Regular Expressions to improve the performance.
+
+#### core.py
+- Add missing dark_mode parameter in save_babylonjs_to_file method.
 
 ### Refactor
 - Big refactor to improve and simplify complex and long methods in various modules. 
