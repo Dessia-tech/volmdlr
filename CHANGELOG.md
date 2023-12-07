@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
 - ConicalSurface3D: sphericalsurface_intersections
 - General improvements on sufaces\` parametric operations.
+- Surface2D: triangulation. Set tri_opt equal to "p".
 
 #### edges.py
 - BsplineCurve3D: circle_intersections.
