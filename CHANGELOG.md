@@ -8,13 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.16.0 [future]
 
 ### New Features
--
+- added missing hash and eq methods to several classes
 
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
 
 ### Fixed
-
+- review hash and eq methods
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 
@@ -25,15 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### faces.py
 - Face3D: enhance from_contours3d.
-
+- Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
 - ExtrusionSurface3D: fullarcellipse3d_to_2d
 - ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
 - ToroidalSurface3D: increases precision of point3d_to_2d.
 
+#### step.py
+- Step: uses Regular Expressions to improve the performance.
+
 ### Refactor
-- Big refactor to improve and simplify complex and long methods in various modules.
+- Big refactor to improve and simplify complex and long methods in various modules. 
 
 #### surfaces.py
 - contour3d_to_2d/contour2d_to_3d: Add option to return also a dictionary with the correspondence between the parametric and 3D primitives.
@@ -62,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
 - ConicalSurface3D: sphericalsurface_intersections
 - General improvements on sufaces\` parametric operations.
+- Surface2D: triangulation. Set tri_opt equal to "p".
 
 #### edges.py
 - BsplineCurve3D: circle_intersections.
