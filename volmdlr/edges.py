@@ -5633,6 +5633,11 @@ class Arc3D(ArcMixin, Edge):
 
     @property
     def points(self):
+        """
+        Gets arc points.
+
+        :return: list with arc points.
+        """
         return [self.start, self.end]
 
     def get_reverse(self):

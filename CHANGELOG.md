@@ -30,10 +30,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: increases precision of point3d_to_2d.
 
 #### wires.py
+- Contour2D: cut_by_line.
 - ContourMixin: is_ordered()
+
 
 #### step.py
 - Step: uses Regular Expressions to improve the performance.
+
 
 ### Refactor
 - Big refactor to improve and simplify complex and long methods in various modules. 
@@ -65,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
 - ConicalSurface3D: sphericalsurface_intersections
 - General improvements on sufaces\` parametric operations.
+- Surface2D: triangulation. Set tri_opt equal to "p".
 
 #### edges.py
 - BsplineCurve3D: circle_intersections.
