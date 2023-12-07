@@ -203,7 +203,7 @@ BABYLON_UNPACKER_BODY_TEMPLATE = Template(
                         vertexData.applyToMesh(child_mesh);
                         
                         // child_mesh.convertToFlatShadedMesh();
-                        child_mesh.enableEdgesRendering(0.95);
+                        child_mesh.enableEdgesRendering(0.8);
                         child_mesh.edgesWidth = max_length*0.025;
                         
                         if ('edges_color' in prim_mesh_data) {
@@ -251,7 +251,7 @@ BABYLON_UNPACKER_BODY_TEMPLATE = Template(
                     vertexData.applyToMesh(mesh);
                     
                     // mesh.convertToFlatShadedMesh();
-                    mesh.enableEdgesRendering(0.95);
+                    mesh.enableEdgesRendering(0.8);
                     mesh.edgesWidth = max_length*0.025;
                     if ('edges_color' in mesh_data) {
                             mesh.edgesColor = new BABYLON.Color4(mesh_data['edges_color'][0],
