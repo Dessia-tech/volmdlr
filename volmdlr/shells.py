@@ -2251,6 +2251,7 @@ class DisplayTriangleShell3D(Shell3D):
             for i in range(len(faces)):
                 for j in range(i + 1, len(faces)):
                     face1, face2 = faces[i], faces[j]
+
                     angle = compute_angle_between_triangles(
                         np.array([new_positions[new_indices[face1][0]], new_positions[new_indices[face1][1]], new_positions[new_indices[face1][2]]]),
                         np.array([new_positions[new_indices[face2][0]], new_positions[new_indices[face2][1]], new_positions[new_indices[face2][2]]]),
@@ -2263,10 +2264,30 @@ class DisplayTriangleShell3D(Shell3D):
                         new_positions = np.append(new_positions, [new_positions[vertex]], axis=0)
 
                         # Update the indices of the faces to refer to the new vertex
-                        new_indices[face1][new_indices[face1] == vertex] = new_vertex_index
                         new_indices[face2][new_indices[face2] == vertex] = new_vertex_index
 
         return DisplayTriangleShell3D(np.array(new_positions), new_indices, name=self.name)
+
+    def remove_unused_vertices(self):
+        """
+        Removes vertices that are not used in any triangle.
+        """
+        # Find all vertices that are used at least once in the indices array
+        used_vertices = np.unique(self.indices)
+
+        # Filter out the unused vertices from the positions array
+        new_positions = self.positions[used_vertices]
+        new_indices = self.indices.copy()
+
+        # Create a mapping from old indices to new indices
+        index_mapping = {old_idx: new_idx for new_idx, old_idx in enumerate(used_vertices)}
+
+        # Update the indices to reflect the new positions
+        for i in range(new_indices.shape[0]):
+            for j in range(new_indices.shape[1]):
+                new_indices[i, j] = index_mapping[new_indices[i, j]]
+
+        return DisplayTriangleShell3D(new_positions, new_indices)
 
     def concatenate(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
         """
