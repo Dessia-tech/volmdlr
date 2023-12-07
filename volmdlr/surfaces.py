@@ -288,8 +288,8 @@ class Surface2D(PhysicalObject):
         points = [volmdlr.Point2D(*triangulation['vertices'][i, :]) for i in range(number_points)]
         return display.DisplayMesh2D(points, triangles=triangles)
 
-    def to_mesh(self, outer_contour_parametric_points, inner_contours_parametric_points,
-                      number_points_x: int = 15, number_points_y: int = 15):
+    def to_mesh(self, outer_polygon, inner_polygons,
+                      number_points_x: int = 15, number_points_y: int = 15, grid_parametrs= None):
         """
         Triangulates the Surface2D using the Triangle library.
 
@@ -317,7 +317,7 @@ class Surface2D(PhysicalObject):
             discretize_line_direction = "y"
         # outer_polygon = self.outer_contour.to_polygon(angle_resolution=15, discretize_line=discretize_line,
         #                                               discretize_line_direction=
-        outer_polygon = wires.ClosedPolygon2D(outer_contour_parametric_points)
+        # outer_polygon = wires.ClosedPolygon2D(outer_contour_parametric_points)
 
         # if not self.inner_contours and not triangulates_with_grid:
         #     return outer_polygon.triangulation()
@@ -325,7 +325,7 @@ class Surface2D(PhysicalObject):
         points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_x,
                                                                                       number_points_y=number_points_y,
                                                                                       include_edge_points=False)
-        points = outer_contour_parametric_points
+        points = outer_polygon.points.copy()
         points_set = set(points)
         if len(points_set) < len(points) - 1:
             return None
@@ -339,11 +339,11 @@ class Surface2D(PhysicalObject):
 
         point_index = {p: i for i, p in enumerate(points)}
         holes = []
-        for index, inner_contour_points in enumerate(inner_contours_parametric_points):
+        for index, inner_polygon in enumerate(inner_polygons):
             # inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=discretize_line,
             #                                          discretize_line_direction=discretize_line_direction)
-            inner_polygon = wires.ClosedPolygon2D(inner_contour_points)
-            inner_polygon_nodes = inner_contours_parametric_points[index]
+            # inner_polygon = wires.ClosedPolygon2D(inner_contour_points)
+            inner_polygon_nodes = inner_polygon.points
             for point in inner_polygon_nodes:
                 if point not in point_index:
                     points.append(point)

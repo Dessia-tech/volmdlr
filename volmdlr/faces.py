@@ -8,7 +8,7 @@ import warnings
 from itertools import chain, product
 from typing import List
 import matplotlib.pyplot as plt
-import numpy as npy
+import numpy as np
 
 from dessia_common.core import DessiaObject
 
@@ -334,6 +334,39 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         return [], []
 
+    def get_face_polygons(self):
+        angle_resolution = 10
+
+        def get_polygon_points(primitives):
+            points = []
+            for edge in primitives:
+                if self.surface3d.__class__.__name__ in ("SphericalSurface3D", "ConicalSurface3D"
+                                                                               "RevolutionSurface3D"):
+                    if self.surface3d.is_degenerated_brep(edge):
+                        edge_points = edge.discretization_points(number_points=2)
+                        points.extend(edge_points[:-1])
+                        continue
+                try:
+                    edge3d = self.primitives_mapping[edge]
+                except KeyError:
+                    print(True)
+                if edge3d.__class__.__name__ == "BSplineCurve3D":
+                    edge_points = edge.discretization_points(number_points=15)
+                elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
+                    edge_points = edge.discretization_points(
+                        number_points=max(2, math.ceil(edge3d.angle / math.radians(angle_resolution)) + 1))
+                else:
+                    edge_points = edge.discretization_points(number_points=2)
+                points.extend(edge_points[:-1])
+            return points
+
+        # if self.name == 6094:
+        #     print(True)
+        outer_polygon = volmdlr.wires.ClosedPolygon2D(get_polygon_points(self.surface2d.outer_contour.primitives))
+        inner_polygons = [get_polygon_points(inner_contour.primitives)
+                          for inner_contour in self.surface2d.inner_contours]
+        return outer_polygon, inner_polygons
+
     def grid_size(self):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
@@ -356,32 +389,8 @@ class Face3D(volmdlr.core.Primitive3D):
             number_points_x, number_points_y = self.grid_size()
         else:
             number_points_x, number_points_y = grid_size
-
-        def get_polygon_points(primitives):
-            points = []
-            for edge in primitives:
-                if self.surface3d.__class__.__name__ in ("SphericalSurface3D", "ConicalSurface3D"
-                                                                               "RevolutionSurface3D"):
-                   if self.surface3d.is_degenerated_brep(edge):
-                       continue
-                try:
-                    edge3d = self.primitives_mapping[edge]
-                except KeyError:
-                    print(True)
-                if edge3d.__class__.__name__ == "BSplineCurve3D":
-                    edge_points = edge.discretization_points(number_points=15)
-                elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
-                    edge_points = edge.discretization_points(number_points=max(2, int(edge3d.angle * 10)))
-                else:
-                    edge_points = edge.discretization_points(number_points=2)
-                points.extend(edge_points[:-1])
-            return points
-        # if self.name == 6094:
-        #     print(True)
-        outer_contour_parametric_points = get_polygon_points(self.surface2d.outer_contour.primitives)
-        inner_contours_parametric_points = [get_polygon_points(inner_contour.primitives)
-                                            for inner_contour in self.surface2d.inner_contours]
-        mesh2d = self.surface2d.to_mesh(outer_contour_parametric_points, inner_contours_parametric_points,
+        outer_polygon, inner_polygons = self.get_face_polygons()
+        mesh2d = self.surface2d.to_mesh(outer_polygon, inner_polygons,
                                         number_points_x, number_points_y)
         if mesh2d is None:
             return None
@@ -1212,22 +1221,22 @@ class Face3D(volmdlr.core.Primitive3D):
         face_decomposition2 = other_face.face_decomposition()
         list_set_points1 = [{point for face in faces1 for point in face.points}
                             for _, faces1 in face_decomposition1.items()]
-        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1])
+        list_set_points1 = [np.array([(point[0], point[1], point[2]) for point in sets_points1])
                             for sets_points1 in list_set_points1]
         list_set_points2 = [{point for face in faces2 for point in face.points} for _, faces2 in
                             face_decomposition2.items()]
-        list_set_points2 = [npy.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
+        list_set_points2 = [np.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
                             list_set_points2]
 
         minimum_distance = math.inf
         index1, index2 = None, None
         for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
-            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
-            sets_min_dist = npy.min(distances)
+            distances = np.linalg.norm(sets_points2[:, np.newaxis] - sets_points1, axis=2)
+            sets_min_dist = np.min(distances)
             if sets_min_dist < minimum_distance:
                 minimum_distance = sets_min_dist
-                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
-                index2 = next((i for i, x in enumerate(list_set_points2) if npy.array_equal(x, sets_points2)), -1)
+                index1 = next((i for i, x in enumerate(list_set_points1) if np.array_equal(x, sets_points1)), -1)
+                index2 = next((i for i, x in enumerate(list_set_points2) if np.array_equal(x, sets_points2)), -1)
         faces1 = list(face_decomposition1.values())[index1]
         faces2 = list(face_decomposition2.values())[index2]
 
@@ -1296,18 +1305,18 @@ class Face3D(volmdlr.core.Primitive3D):
         face_decomposition1 = self.face_decomposition()
         list_set_points1 = [{point for face in faces1 for point in face.points}
                             for _, faces1 in face_decomposition1.items()]
-        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1])
+        list_set_points1 = [np.array([(point[0], point[1], point[2]) for point in sets_points1])
                             for sets_points1 in list_set_points1]
-        list_set_points2 = [npy.array([(point[0], point[0], point[0])])]
+        list_set_points2 = [np.array([(point[0], point[0], point[0])])]
 
         minimum_distance = math.inf
         index1 = None
         for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
-            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
-            sets_min_dist = npy.min(distances)
+            distances = np.linalg.norm(sets_points2[:, np.newaxis] - sets_points1, axis=2)
+            sets_min_dist = np.min(distances)
             if sets_min_dist < minimum_distance:
                 minimum_distance = sets_min_dist
-                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
+                index1 = next((i for i, x in enumerate(list_set_points1) if np.array_equal(x, sets_points1)), -1)
         return list(face_decomposition1.values())[index1]
 
     def point_distance(self, point, return_other_point: bool = False):
@@ -2501,15 +2510,15 @@ class ToroidalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        theta_angle_resolution = 5
-        phi_angle_resolution = 2.3
+        theta_angle_resolution = 10
+        phi_angle_resolution = 10
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
-        number_points_x = max(theta_angle_resolution, int(delta_theta * theta_angle_resolution))
+        number_points_x = math.ceil(delta_theta / math.radians(theta_angle_resolution))
 
         delta_phi = phi_max - phi_min
-        number_points_y = max(math.ceil(phi_angle_resolution), int(delta_phi * phi_angle_resolution))
+        number_points_y = math.ceil(delta_phi / math.radians(phi_angle_resolution))
 
         return number_points_x, number_points_y
 
@@ -2630,11 +2639,14 @@ class ConicalFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 5
-        theta_min, theta_max, _, _ = self.surface2d.bounding_rectangle().bounds()
+        theta_angle_resolution = 10
+        theta_min, theta_max, _, z_max = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
-        number_points_x = math.ceil(delta_theta * angle_resolution)
+        number_points_x = math.ceil(delta_theta / math.radians(theta_angle_resolution))
 
+        # r_max = z_max * math.tan(self.surface3d.semi_angle)
+        # s = r_max * math.radians(theta_angle_resolution)
+        # number_points_y = z_max * math.tan(math.radians(20)) / s
         number_points_y = 0
 
         return number_points_x, number_points_y
@@ -2804,6 +2816,76 @@ class SphericalFace3D(Face3D):
         number_points_y = int(delta_phi * angle_resolution)
 
         return number_points_x, number_points_y
+
+    def grid_points(self, polygon_data = None):
+        """
+        Parametric tesselation points.
+        """
+        if polygon_data:
+            outer_polygon, inner_contours = polygon_data
+        else:
+            outer_polygon, inner_contours = self.get_face_polygons()
+        theta_min, theta_max, phi_min, phi_max = outer_polygon.bounding_rectangle.bounds()
+        theta_resolution = 10
+        phi_resolution = 10
+        step_u = math.radians(theta_resolution)
+        step_v = math.radians(phi_resolution)
+        u_size = math.ceil((theta_max - theta_min) / step_u) + 1
+        v_size = math.ceil((phi_max - phi_min) / step_v) + 1
+        points2d = []
+        v_start = phi_min + step_v
+        for j in range(v_size - 2):
+            v = v_start + j * step_v
+            if j % 2 == 0:
+                u_start = theta_min
+            else:
+                u_start = theta_min + 0.5 * step_u
+            for i in range(u_size - 1):
+                points2d.append(volmdlr.Point2D(u_start + i * step_u, v))
+
+        # u = np.linspace(0.0, 4 * math.pi, int(u_size))
+        # v = np.linspace(0.0, 2 * math.pi, int(v_size))
+        # points3d = []
+        # for ui in u:
+        #     for vi in v:
+        #         x = 0.5 * self.surface3d.radius * (math.cos(ui) + math.cos(vi))
+        #         y = 0.5 * self.surface3d.radius * (math.sin(ui) + math.sin(vi))
+        #         z = self.surface3d.radius * math.sin(0.5 * (ui - vi))
+        #         points3d.append(volmdlr.Point3D(x, y, z))
+        # # points3d = [volmdlr.Point3D(xi, yi, zi) for zi in z for xi, yi in zip(x, y)]
+        # points2d = [self.surface3d.point3d_to_2d(point) for point in points3d]
+
+        grid_point_index = {}
+        # theta_min, theta_max, _, _ = outer_polygon.bounding_rectangle.bounds()
+        # if theta_max > math.pi:
+        #     points2d = [point.translation(volmdlr.Vector2D(2*math.pi, 0.0))
+        #                 if point.x < theta_min else point for point in points2d]
+        # elif theta_min < -math.pi:
+        #     points2d = [point.translation(volmdlr.Vector2D(-2 * math.pi, 0.0))
+        #                 if point.x > theta_max else point for point in points2d]
+
+        polygon_points = set(outer_polygon.points)
+
+        grid_points = np.array(points2d)
+
+        points_in_polygon_ = outer_polygon.points_in_polygon(grid_points, include_edge_points=False)
+
+        # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
+        indices = np.where(points_in_polygon_)[0]
+
+        points = []
+
+        for i in indices:
+            point = volmdlr.Point2D(*grid_points[i])
+            if point not in polygon_points:
+                grid_point_index[(i // (u_size - 1), i % (v_size - 2))] = point
+                points.append(point)
+
+        return points
+        # points3d = [volmdlr.Point3D(xi, yi, zi) for zi in z for xi, yi in zip(x, y)]
+        # points2d = [self.surface3d.point3d_to_2d(point) for point in points3d]
+        #
+        # return points2d
 
     @classmethod
     def from_surface_rectangular_cut(cls, spherical_surface, theta1: float = 0.0, theta2: float = volmdlr.TWO_PI,
@@ -3415,7 +3497,7 @@ class BSplineFace3D(Face3D):
         shared = []
         for k, point1 in enumerate(contour1.primitives):
             if dis_sorted[0] == dis_sorted[1]:
-                indices = npy.where(npy.array(dis) == dis_sorted[0])[0]
+                indices = np.where(np.array(dis) == dis_sorted[0])[0]
                 index1 = indices[0]
                 index2 = indices[1]
             else:
@@ -3617,8 +3699,8 @@ class BSplineFace3D(Face3D):
             return v_centers
         if u_radius and not v_radius:
             return u_centers
-        u_mean = npy.mean(u_radius)
-        v_mean = npy.mean(v_radius)
+        u_mean = np.mean(u_radius)
+        v_mean = np.mean(v_radius)
         if u_mean > v_mean:
             return v_centers
         if u_mean < v_mean:

@@ -3522,8 +3522,16 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         polygon_points = set(self.points)
 
+        grid_points = []
         # Generate all points in the grid
-        grid_points = npy.array([[xi, yi] for xi in x for yi in y], dtype=npy.float64)
+        for i, yi in enumerate(y):
+            if i % 2 == 0:
+                for xi in x:
+                    grid_points.append((xi, yi))
+            else:
+                for xi in reversed(x):
+                    grid_points.append((xi, yi))
+        grid_points = npy.array(grid_points, dtype=npy.float64)
 
         # Use self.points_in_polygon to check if each point is inside the polygon
         points_in_polygon_ = self.points_in_polygon(grid_points, include_edge_points=include_edge_points)
