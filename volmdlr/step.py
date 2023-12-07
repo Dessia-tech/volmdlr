@@ -746,8 +746,6 @@ class Step(dc.DessiaObject):
         for node in nodes:
             if node is None:
                 continue
-            if node in (16,15,10):
-                print(True)
             object_dict, times = self._helper_instantiate(node, object_dict, times, show_times)
 
             if not object_dict[node]:
