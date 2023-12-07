@@ -2202,6 +2202,72 @@ class DisplayTriangleShell3D(Shell3D):
 
         return self.__class__(unique_vertices, updated_indices, normals=new_normals, name=self.name)
 
+    def unmutualize_vertices(self, angle_threshold):
+        """
+        Create a new DisplayTriangleShell3D with unmutualized vertices for faces that have an angle between them greater than angle_threshold.
+
+        :param angle_threshold: Angle threshold in degrees.
+        :return: New instance of DisplayTriangleShell3D with updated vertices and faces.
+        """
+        new_positions = self.positions.copy()
+        new_indices = self.indices.copy()
+
+        def compute_angle_between_triangles(triangle1, triangle2):
+            # Calculate the normal vectors of both triangles
+            normal1 = np.cross(triangle1[1] - triangle1[0], triangle1[2] - triangle1[0])
+            normal2 = np.cross(triangle2[1] - triangle2[0], triangle2[2] - triangle2[0])
+
+            # Calculate the dot product between the normal vectors
+            dot_product = np.dot(normal1, normal2)
+
+            # Calculate the magnitudes of the normal vectors
+            magnitude1 = np.linalg.norm(normal1)
+            magnitude2 = np.linalg.norm(normal2)
+
+            # Calculate the cosine of the angle between the normals
+            cosine_angle = dot_product / (magnitude1 * magnitude2)
+
+            # Use arccosine to calculate the angle in radians
+            angle_rad = np.arccos(np.clip(cosine_angle, -1.0, 1.0))
+
+            # Convert radians to degrees
+            angle_deg = np.degrees(angle_rad)
+
+            # Check the orientation of the normals
+            if dot_product < 0:
+                angle_deg = 180 - angle_deg
+
+            return angle_deg
+
+        # Create a mapping from each vertex to its adjacent faces
+        vertex_to_faces = {i: [] for i in range(len(self.positions))}
+        for i, face in enumerate(self.indices):
+            for vertex in face:
+                vertex_to_faces[vertex].append(i)
+
+        # Iterate over each vertex and check angles between adjacent faces
+        from tqdm import tqdm
+        for vertex, faces in tqdm(vertex_to_faces.items()):
+            for i in range(len(faces)):
+                for j in range(i + 1, len(faces)):
+                    face1, face2 = faces[i], faces[j]
+                    angle = compute_angle_between_triangles(
+                        np.array([new_positions[new_indices[face1][0]], new_positions[new_indices[face1][1]], new_positions[new_indices[face1][2]]]),
+                        np.array([new_positions[new_indices[face2][0]], new_positions[new_indices[face2][1]], new_positions[new_indices[face2][2]]]),
+                    )
+
+                    if angle > angle_threshold:
+                        # Unmutualize the vertex for these faces
+                        # Duplicate the vertex position
+                        new_vertex_index = len(new_positions)
+                        new_positions = np.append(new_positions, [new_positions[vertex]], axis=0)
+
+                        # Update the indices of the faces to refer to the new vertex
+                        new_indices[face1][new_indices[face1] == vertex] = new_vertex_index
+                        new_indices[face2][new_indices[face2] == vertex] = new_vertex_index
+
+        return DisplayTriangleShell3D(np.array(new_positions), new_indices, name=self.name)
+
     def concatenate(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
         """
         Concatenates two DisplayTriangleShell3D instances into a single instance.
