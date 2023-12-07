@@ -1815,28 +1815,6 @@ class BSplineCurve(Edge):
                 break
         return shared_bspline_section
 
-    # def delete_shared_section(self, other_bspline2, abs_tol: float = 1e-6):
-    #     """
-    #     Deletes from self, the section shared with the other arc.
-    #
-    #     :param other_bspline2:
-    #     :param abs_tol: tolerance.
-    #     :return:
-    #     """
-    #     shared_section = self.get_shared_section(other_bspline2, abs_tol)
-    #     if not shared_section:
-    #         return [self]
-    #     if shared_section == self:
-    #         return []
-    #     split_bspline1 = self.split(shared_section[0].start)
-    #     split_bspline2 = self.split(shared_section[0].end)
-    #     new_arcs = []
-    #     shared_section_middle_point = shared_section[0].point_at_abscissa(0.5 * shared_section[0].length())
-    #     for arc in split_bspline1 + split_bspline2:
-    #         if arc and not arc.point_belongs(shared_section_middle_point, abs_tol=abs_tol):
-    #             new_arcs.append(arc)
-    #     return new_arcs
-
     def straight_line_point_belongs(self, point):
         """
         Verifies if a point belongs to the surface created by closing the edge.
