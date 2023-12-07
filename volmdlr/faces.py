@@ -67,6 +67,7 @@ class Face3D(volmdlr.core.Primitive3D):
         self._outer_contour3d = None
         self._inner_contours3d = None
         self._face_octree_decomposition = None
+        self._primitives_mapping = {}
         # self.bounding_box = self._bounding_box()
 
         volmdlr.core.Primitive3D.__init__(self, name=name)
@@ -106,12 +107,17 @@ class Face3D(volmdlr.core.Primitive3D):
         Gives the 3d version of the outer contour of the face.
         """
         if not self._outer_contour3d:
-            self._outer_contour3d = self.surface3d.contour2d_to_3d(self.surface2d.outer_contour)
+            self._outer_contour3d, primitives_mapping = self.surface3d.contour2d_to_3d(self.surface2d.outer_contour,
+                                                                                       return_primitives_mapping=True)
+            if not self._primitives_mapping:
+                self._primitives_mapping = primitives_mapping
+            else:
+                self._primitives_mapping.update(primitives_mapping)
         return self._outer_contour3d
 
     @outer_contour3d.setter
-    def outer_contour3d(self, contour3d):
-        self._outer_contour3d = contour3d
+    def outer_contour3d(self, values):
+        self._outer_contour3d, self._primitives_mapping = values
 
     @property
     def inner_contours3d(self):
@@ -119,12 +125,37 @@ class Face3D(volmdlr.core.Primitive3D):
         Gives the 3d version of the inner contours of the face.
         """
         if not self._inner_contours3d:
-            self._inner_contours3d = [self.surface3d.contour2d_to_3d(c) for c in self.surface2d.inner_contours]
+            primitives_mapping = {}
+            inner_contours3d = []
+            for contour2d in self.surface2d.inner_contours:
+                inner_contour3d, contour2d_mapping = self.surface3d.contour2d_to_3d(contour2d,
+                                                                                    return_primitives_mapping=True)
+                inner_contours3d.append(inner_contour3d)
+                primitives_mapping.update(contour2d_mapping)
+            self._inner_contours3d = inner_contours3d
+            if not self._primitives_mapping:
+                self._primitives_mapping = primitives_mapping
+            else:
+                self._primitives_mapping.update(primitives_mapping)
         return self._inner_contours3d
 
     @inner_contours3d.setter
-    def inner_contours3d(self, contours3d):
-        self._inner_contours3d = contours3d
+    def inner_contours3d(self, values):
+        self._inner_contours3d, self._primitives_mapping = values
+
+    @property
+    def primitives_mapping(self):
+        """
+        Gives the 3d version of the inner contours of the face.
+        """
+        if not self._primitives_mapping:
+            _ = self.outer_contour3d
+            _ = self.inner_contours3d
+        return self._primitives_mapping
+
+    @primitives_mapping.setter
+    def primitives_mapping(self, primitives_mapping):
+        self._primitives_mapping = primitives_mapping
 
     @property
     def bounding_box(self):
@@ -196,42 +227,16 @@ class Face3D(volmdlr.core.Primitive3D):
         :param contours3d: List of 3D contours representing the face's BREP.
         :param name: the name to inject in the new face
         """
-        outer_contour2d = None
         outer_contour3d, inner_contours3d = None, []
         if len(contours3d) == 1:
-            outer_contour2d = surface.contour3d_to_2d(contours3d[0])
+            outer_contour2d, primitives_mapping = surface.contour3d_to_2d(contours3d[0],
+                                                                          return_primitives_mapping=True)
             outer_contour3d = contours3d[0]
             inner_contours2d = []
 
         elif len(contours3d) > 1:
-            area = -1
-            inner_contours2d = []
-            inner_contours3d = []
-
-            contours2d = [surface.contour3d_to_2d(contour3d) for contour3d in contours3d]
-
-            check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
-            if (surface.x_periodicity or surface.y_periodicity) and sum(1 for value in check_contours if value) >= 2:
-                outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
-                outer_contour3d = surface.contour2d_to_3d(outer_contour2d)
-                inner_contours3d = [surface.contour2d_to_3d(contour) for contour in inner_contours2d]
-            else:
-                if contours3d[0].name == "face_outer_bound":
-                    outer_contour2d, inner_contours2d = contours2d[0], contours2d[1:]
-                    outer_contour3d, inner_contours3d = contours3d[0], contours3d[1:]
-                else:
-                    for contour2d, contour3d in zip(contours2d, contours3d):
-                        # if not contour2d.is_ordered(1e-4):
-                        #     contour2d = vm_parametric.contour2d_healing(contour2d)
-                        inner_contours2d.append(contour2d)
-                        inner_contours3d.append(contour3d)
-                        contour_area = contour2d.area()
-                        if contour_area > area:
-                            area = contour_area
-                            outer_contour2d = contour2d
-                            outer_contour3d = contour3d
-                    inner_contours2d.remove(outer_contour2d)
-                    inner_contours3d.remove(outer_contour3d)
+            outer_contour2d, inner_contours2d, outer_contour3d, \
+                inner_contours3d, primitives_mapping = cls.from_contours3d_with_inner_contours(surface, contours3d)
         else:
             raise ValueError('Must have at least one contour')
         if ((not outer_contour2d) or (not all(outer_contour2d.primitives)) or
@@ -245,9 +250,51 @@ class Face3D(volmdlr.core.Primitive3D):
             name=name,
         )
         # To improve performance while reading from step file
-        face.outer_contour3d = outer_contour3d
-        face.inner_contours3d = inner_contours3d
+        face.outer_contour3d = outer_contour3d, primitives_mapping
+        face.inner_contours3d = inner_contours3d, primitives_mapping
         return face
+
+    @staticmethod
+    def from_contours3d_with_inner_contours(surface, contours3d, ):
+        """Helper function to class."""
+        outer_contour2d = None
+        outer_contour3d = None
+        inner_contours2d = []
+        inner_contours3d = []
+        primitives_mapping = {}
+        contours2d = []
+        for contour3d in contours3d:
+            contour2d, contour_mapping = surface.contour3d_to_2d(contour3d, return_primitives_mapping=True)
+            contours2d.append(contour2d)
+            primitives_mapping.update(contour_mapping)
+
+        check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
+        if (surface.x_periodicity or surface.y_periodicity) and sum(1 for value in check_contours if value) >= 2:
+            outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
+            outer_contour3d, primitives_mapping = surface.contour2d_to_3d(outer_contour2d,
+                                                                          return_primitives_mapping=True)
+            inner_contours3d = []
+            for contour2d in inner_contours2d:
+                contour3d, contour_mapping = surface.contour2d_to_3d(contour2d, return_primitives_mapping=True)
+                inner_contours3d.append(contour3d)
+                primitives_mapping.update(contour_mapping)
+        else:
+            if contours3d[0].name == "face_outer_bound":
+                outer_contour2d, inner_contours2d = contours2d[0], contours2d[1:]
+                outer_contour3d, inner_contours3d = contours3d[0], contours3d[1:]
+            else:
+                area = -1
+                for contour2d, contour3d in zip(contours2d, contours3d):
+                    inner_contours2d.append(contour2d)
+                    inner_contours3d.append(contour3d)
+                    contour_area = contour2d.area()
+                    if contour_area > area:
+                        area = contour_area
+                        outer_contour2d = contour2d
+                        outer_contour3d = contour3d
+                inner_contours2d.remove(outer_contour2d)
+                inner_contours3d.remove(outer_contour3d)
+        return outer_contour2d, inner_contours2d, outer_contour3d, inner_contours3d, primitives_mapping
 
     def to_step(self, current_id):
         """Transforms a Face 3D into a Step object."""
