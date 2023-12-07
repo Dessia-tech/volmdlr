@@ -2920,20 +2920,13 @@ class SphericalFace3D(Face3D):
 
     def grid_size(self):
         """
-        Specifies an adapted size of the discretization grid used in face triangulation.
+        Specifies an adapted size of the discretization grid used to calculate the grid_points.
+
+        For the sphere the grid size is given in angle resolution in both theta and phi direction.
         """
-        angle_resolution = 11
-        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
+        return 10, 10
 
-        delta_theta = theta_max - theta_min
-        number_points_x = int(delta_theta * angle_resolution)
-
-        delta_phi = phi_max - phi_min
-        number_points_y = int(delta_phi * angle_resolution)
-
-        return number_points_x, number_points_y
-
-    def grid_points(self, grid_size, polygon_data = None):
+    def grid_points(self, grid_size, polygon_data=None):
         """
         Parametric tesselation points.
         """
@@ -2942,49 +2935,20 @@ class SphericalFace3D(Face3D):
         else:
             outer_polygon, inner_polygons = self.get_face_polygons()
         theta_min, theta_max, phi_min, phi_max = outer_polygon.bounding_rectangle.bounds()
-        theta_resolution = 10
-        phi_resolution = 10
+        theta_resolution, phi_resolution = grid_size
         step_u = 0.5 * math.radians(theta_resolution)
         step_v = math.radians(phi_resolution)
         u_size = math.ceil((theta_max - theta_min) / step_u)
         v_size = math.ceil((phi_max - phi_min) / step_v)
-        points2d = []
         v_start = phi_min + step_v
         u = [theta_min + step_u * i for i in range(u_size)]
         v = [v_start + j * step_v for j in range(v_size - 1)]
-        for j, v_j in enumerate(v):
-            if j % 2 == 0:
-                for i in range(0, u_size, 2):
-                    points2d.append(volmdlr.Point2D(u[i], v_j))
-            else:
-                for i in range(1, u_size, 2):
-                    points2d.append(volmdlr.Point2D(u[i], v_j))
-
-
-        # u = np.linspace(0.0, 4 * math.pi, int(u_size))
-        # v = np.linspace(0.0, 2 * math.pi, int(v_size))
-        # points3d = []
-        # for ui in u:
-        #     for vi in v:
-        #         x = 0.5 * self.surface3d.radius * (math.cos(ui) + math.cos(vi))
-        #         y = 0.5 * self.surface3d.radius * (math.sin(ui) + math.sin(vi))
-        #         z = self.surface3d.radius * math.sin(0.5 * (ui - vi))
-        #         points3d.append(volmdlr.Point3D(x, y, z))
-        # # points3d = [volmdlr.Point3D(xi, yi, zi) for zi in z for xi, yi in zip(x, y)]
-        # points2d = [self.surface3d.point3d_to_2d(point) for point in points3d]
+        grid_points = np.array([(u[i], v_j) for j, v_j in enumerate(v) for i in range(u_size) if
+                               (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0)], dtype=np.float64)
 
         grid_point_index = {}
-        # theta_min, theta_max, _, _ = outer_polygon.bounding_rectangle.bounds()
-        # if theta_max > math.pi:
-        #     points2d = [point.translation(volmdlr.Vector2D(2*math.pi, 0.0))
-        #                 if point.x < theta_min else point for point in points2d]
-        # elif theta_min < -math.pi:
-        #     points2d = [point.translation(volmdlr.Vector2D(-2 * math.pi, 0.0))
-        #                 if point.x > theta_max else point for point in points2d]
 
         polygon_points = set(outer_polygon.points)
-
-        grid_points = np.array(points2d)
 
         points_in_polygon_ = outer_polygon.points_in_polygon(grid_points, include_edge_points=False)
 
@@ -3007,10 +2971,6 @@ class SphericalFace3D(Face3D):
             points = self.update_grid_points_with_inner_polygons(inner_polygons, [points, u, v, grid_point_index])
 
         return points
-        # points3d = [volmdlr.Point3D(xi, yi, zi) for zi in z for xi, yi in zip(x, y)]
-        # points2d = [self.surface3d.point3d_to_2d(point) for point in points3d]
-        #
-        # return points2d
 
     @classmethod
     def from_surface_rectangular_cut(cls, spherical_surface, theta1: float = 0.0, theta2: float = volmdlr.TWO_PI,
