@@ -742,11 +742,6 @@ class Surface3D(DessiaObject):
         """Deprecated method, 'Use Face3D from_contours3d method'."""
         raise AttributeError('Use Face3D from_contours3d method')
 
-    # def fix_undefined_brep_with_neighbors(self, edge, previous_edge, next_edge):
-    #     """Uses neighbors edges to fix edge contained within the periodicity boundary."""
-    #     raise NotImplementedError(f'fix_undefined_brep_with_neighbors is abstract and should be implemented'
-    #                               f' in {self.__class__.__name__}')
-
     def repair_primitives_periodicity(self, primitives2d, primitives_mapping):
         """
         Repairs the continuity of the 2D contour while using contour3d_to_2d on periodic surfaces.
@@ -768,8 +763,10 @@ class Surface3D(DessiaObject):
 
         if x_periodicity or y_periodicity:
             if self.is_undefined_brep(primitives2d[0]):
+                old_primitive = primitives2d[0]
                 primitives2d[0] = self.fix_undefined_brep_with_neighbors(primitives2d[0], primitives2d[-1],
                                                                          primitives2d[1])
+                primitives_mapping[primitives2d[0]] = primitives_mapping.pop(old_primitive)
         i = 1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
