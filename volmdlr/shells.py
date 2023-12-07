@@ -2126,7 +2126,7 @@ class DisplayTriangleShell3D(Shell3D):
         babylon_mesh = {
             "positions": self.positions.flatten().tolist(),
             "indices": self.indices.flatten().tolist(),
-            "normals": self.normals.flatten().tolist(),
+            # "normals": self.normals.flatten().tolist(),
         }
 
         babylon_mesh.update(self.babylon_param())
