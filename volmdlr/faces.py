@@ -285,6 +285,35 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         return [], []
 
+    def get_face_polygons(self):
+        """Get face polygons."""
+        angle_resolution = 10
+
+        def get_polygon_points(primitives):
+            points = []
+            for edge in primitives:
+                if self.surface3d.__class__.__name__ in ("SphericalSurface3D", "ConicalSurface3D"
+                                                                               "RevolutionSurface3D"):
+                    if self.surface3d.is_degenerated_brep(edge):
+                        edge_points = edge.discretization_points(number_points=2)
+                        points.extend(edge_points[:-1])
+                        continue
+                edge3d = self.primitives_mapping[edge]
+                if edge3d.__class__.__name__ == "BSplineCurve3D":
+                    edge_points = edge.discretization_points(number_points=15)
+                elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
+                    edge_points = edge.discretization_points(
+                        number_points=max(2, math.ceil(edge3d.angle / math.radians(angle_resolution)) + 1))
+                else:
+                    edge_points = edge.discretization_points(number_points=2)
+                points.extend(edge_points[:-1])
+            return points
+
+        outer_polygon = volmdlr.wires.ClosedPolygon2D(get_polygon_points(self.surface2d.outer_contour.primitives))
+        inner_polygons = [volmdlr.wires.ClosedPolygon2D(get_polygon_points(inner_contour.primitives))
+                          for inner_contour in self.surface2d.inner_contours]
+        return outer_polygon, inner_polygons
+
     def grid_size(self):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
