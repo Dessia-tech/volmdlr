@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - added missing hash and eq methods to several classes
+- ArcEllipse2D/3D: get_shared_section and delete_shared_section.
 
 ### Fixed
 - review hash and eq methods

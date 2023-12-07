@@ -564,6 +564,69 @@ class Edge(dc.DessiaObject):
         """
         return sorted(points, key=self.abscissa)
 
+    def get_shared_section(self, *args, **kwargs):
+        """
+        Gets the shared section between two arcs of ellipse.
+
+        """
+        raise NotImplementedError(f'the get_shared_section method must be overloaded by {self.__class__.__name__}')
+
+    @staticmethod
+    def _get_shared_section_from_split(edge1, edge2, other_edge, abs_tol):
+        """
+        Helper function to get_shared_section.
+        """
+        shared_edge_section = []
+        for edge in [edge1, edge2]:
+            if edge and all(other_edge.point_belongs(point, abs_tol)
+                            for point in [edge.start, edge.middle_point(), edge.end]):
+                shared_edge_section.append(edge)
+                break
+        return shared_edge_section
+
+    def generic_get_shared_section(self, other_edge, abs_tol: float = 1e-6):
+        """
+        Generic method to Get the shared section between two arcs of ellipse.
+
+        :param other_edge: other edge to verify for shared section.
+        :param abs_tol: tolerance.
+        :return: shared arc section.
+        """
+        if all(self.point_belongs(point, abs_tol) for point in
+               [other_edge.start, other_edge.middle_point(), other_edge.end]):
+            return [other_edge]
+        if all(other_edge.point_belongs(point, abs_tol) for point in
+               [self.start, self.point_at_abscissa(self.length() * .5), self.end]):
+            return [self]
+        if self.point_belongs(other_edge.start, abs_tol):
+            edge1, edge2 = self.split(other_edge.start, abs_tol)
+        elif self.point_belongs(other_edge.end, abs_tol):
+            edge1, edge2 = self.split(other_edge.end, abs_tol)
+        else:
+            raise NotImplementedError
+        return self._get_shared_section_from_split(edge1, edge2, other_edge, abs_tol)
+
+    def delete_shared_section(self, other_arc2, abs_tol: float = 1e-6):
+        """
+        Deletes from self, the section shared with the other arc.
+
+        :param other_arc2:
+        :param abs_tol: tolerance.
+        :return:
+        """
+        shared_section = self.get_shared_section(other_arc2, abs_tol)
+        if not shared_section:
+            return [self]
+        if shared_section == self:
+            return []
+        split_arcs1 = self.split(shared_section[0].start)
+        split_arcs2 = self.split(shared_section[0].end)
+        new_arcs = []
+        for arc in split_arcs1 + split_arcs2:
+            if arc and not arc.point_belongs(shared_section[0].middle_point(), abs_tol):
+                new_arcs.append(arc)
+        return new_arcs
+
 
 class LineSegment(Edge):
     """
@@ -728,49 +791,7 @@ class LineSegment(Edge):
                          for point in [other_linesegment.start, other_linesegment.end]) and
                  not any(other_linesegment.point_belongs(point, abs_tol) for point in [self.start, self.end])):
             return []
-        if all(self.point_belongs(point) for point in other_linesegment.discretization_points(number_points=5)):
-            return [other_linesegment]
-        if all(other_linesegment.point_belongs(point) for point in self.discretization_points(number_points=5)):
-            return [self]
-        new_linesegment_points = []
-        for point in [self.start, self.end]:
-            if other_linesegment.point_belongs(point, abs_tol=abs_tol) and\
-                    not point.in_list(new_linesegment_points):
-                new_linesegment_points.append(point)
-        for point in [other_linesegment.start, other_linesegment.end]:
-            if self.point_belongs(point, abs_tol=abs_tol) and\
-                    not point.in_list(new_linesegment_points):
-                new_linesegment_points.append(point)
-        if len(new_linesegment_points) == 1:
-            return []
-        if len(new_linesegment_points) != 2:
-            raise ValueError
-        class_ = self.__class__
-        return [class_(new_linesegment_points[0], new_linesegment_points[1])]
-
-    def delete_shared_section(self, other_linesegment, abs_tol: float = 1e-6):
-        """
-        Deletes from self, the section shared with the other line segment.
-
-        :param other_linesegment:
-        :param abs_tol: tolerance.
-        :return:
-        """
-        shared_section = self.get_shared_section(other_linesegment, abs_tol)
-        if not shared_section:
-            return [self]
-        points = []
-        for point in [self.start, self.end, shared_section[0].start, shared_section[0].end]:
-            if not point.in_list(points):
-                points.append(point)
-        points = sorted(points, key=self.start.point_distance)
-        new_line_segments = []
-        class_ = self.__class__
-        for point1, point2 in zip(points[:-1], points[1:]):
-            lineseg = class_(point1, point2)
-            if not lineseg.direction_independent_is_close(shared_section[0]):
-                new_line_segments.append(lineseg)
-        return new_line_segments
+        return self.generic_get_shared_section(other_linesegment, abs_tol)
 
     def straight_line_point_belongs(self, point):
         """
@@ -1769,7 +1790,6 @@ class BSplineCurve(Edge):
             bspline1_, bspline2_ = self.split(other_bspline2.end, tol=abs_tol)
         else:
             return []
-            # raise NotImplementedError
         return self._get_shared_section_from_split(bspline1_, bspline2_, other_bspline2, abs_tol)
 
     def is_shared_section_possible(self, other_bspline2, tol):
@@ -1795,27 +1815,27 @@ class BSplineCurve(Edge):
                 break
         return shared_bspline_section
 
-    def delete_shared_section(self, other_bspline2, abs_tol: float = 1e-6):
-        """
-        Deletes from self, the section shared with the other arc.
-
-        :param other_bspline2:
-        :param abs_tol: tolerance.
-        :return:
-        """
-        shared_section = self.get_shared_section(other_bspline2, abs_tol)
-        if not shared_section:
-            return [self]
-        if shared_section == self:
-            return []
-        split_bspline1 = self.split(shared_section[0].start)
-        split_bspline2 = self.split(shared_section[0].end)
-        new_arcs = []
-        shared_section_middle_point = shared_section[0].point_at_abscissa(0.5 * shared_section[0].length())
-        for arc in split_bspline1 + split_bspline2:
-            if arc and not arc.point_belongs(shared_section_middle_point, abs_tol=abs_tol):
-                new_arcs.append(arc)
-        return new_arcs
+    # def delete_shared_section(self, other_bspline2, abs_tol: float = 1e-6):
+    #     """
+    #     Deletes from self, the section shared with the other arc.
+    #
+    #     :param other_bspline2:
+    #     :param abs_tol: tolerance.
+    #     :return:
+    #     """
+    #     shared_section = self.get_shared_section(other_bspline2, abs_tol)
+    #     if not shared_section:
+    #         return [self]
+    #     if shared_section == self:
+    #         return []
+    #     split_bspline1 = self.split(shared_section[0].start)
+    #     split_bspline2 = self.split(shared_section[0].end)
+    #     new_arcs = []
+    #     shared_section_middle_point = shared_section[0].point_at_abscissa(0.5 * shared_section[0].length())
+    #     for arc in split_bspline1 + split_bspline2:
+    #         if arc and not arc.point_belongs(shared_section_middle_point, abs_tol=abs_tol):
+    #             new_arcs.append(arc)
+    #     return new_arcs
 
     def straight_line_point_belongs(self, point):
         """
@@ -2795,62 +2815,23 @@ class ArcMixin:
         return [self.__class__(self.circle, self.start, split_point),
                 self.__class__(self.circle, split_point, self.end)]
 
-    def get_shared_section(self, other_arc2, abs_tol: float = 1e-6):
+    def get_shared_section(self, other_arc, abs_tol: float = 1e-6):
         """
         Gets the shared section between two arcs.
 
-        :param other_arc2: other arc to verify for shared section.
+        :param other_arc: other arc to verify for shared section.
         :param abs_tol: tolerance.
         :return: shared arc section.
         """
-        if self.__class__ != other_arc2.__class__:
-            if self.__class__ == other_arc2.simplify.__class__:
-                return self.get_shared_section(other_arc2.simplify, abs_tol)
+        if self.__class__ != other_arc.__class__:
+            if self.__class__ == other_arc.simplify.__class__:
+                return self.get_shared_section(other_arc.simplify, abs_tol)
             return []
-        if not self.circle.center.is_close(other_arc2.circle.center) or self.circle.radius != self.circle.radius or \
-                not any(self.point_belongs(point) for point in [other_arc2.start,
-                                                                other_arc2.middle_point(), other_arc2.end]):
+        if not self.circle.center.is_close(other_arc.circle.center) or self.circle.radius != self.circle.radius or \
+                not any(self.point_belongs(point) for point in [other_arc.start,
+                                                                other_arc.middle_point(), other_arc.end]):
             return []
-        if all(self.point_belongs(point, abs_tol) for point in
-               [other_arc2.start, other_arc2.middle_point(), other_arc2.end]):
-            return [other_arc2]
-        if all(other_arc2.point_belongs(point, abs_tol) for point in
-               [self.start, self.point_at_abscissa(self.length() * .5), self.end]):
-            return [self]
-        if self.point_belongs(other_arc2.start, abs_tol):
-            arc1_, arc2_ = self.split(other_arc2.start, abs_tol)
-        elif self.point_belongs(other_arc2.end, abs_tol):
-            arc1_, arc2_ = self.split(other_arc2.end, abs_tol)
-        else:
-            raise NotImplementedError
-        shared_arc_section = []
-        for arc in [arc1_, arc2_]:
-            if arc and all(other_arc2.point_belongs(point, abs_tol)
-                           for point in [arc.start, arc.middle_point(), arc.end]):
-                shared_arc_section.append(arc)
-                break
-        return shared_arc_section
-
-    def delete_shared_section(self, other_arc2, abs_tol: float = 1e-6):
-        """
-        Deletes from self, the section shared with the other arc.
-
-        :param other_arc2:
-        :param abs_tol: tolerance.
-        :return:
-        """
-        shared_section = self.get_shared_section(other_arc2, abs_tol)
-        if not shared_section:
-            return [self]
-        if shared_section == self:
-            return []
-        split_arcs1 = self.split(shared_section[0].start)
-        split_arcs2 = self.split(shared_section[0].end)
-        new_arcs = []
-        for arc in split_arcs1 + split_arcs2:
-            if arc and not arc.point_belongs(shared_section[0].middle_point(), abs_tol):
-                new_arcs.append(arc)
-        return new_arcs
+        return self.generic_get_shared_section(other_arc, abs_tol)
 
     def is_close(self, other_edge, tol: float = 1e-6):
         """
@@ -3629,7 +3610,27 @@ class FullArc2D(FullArcMixin, Arc2D):
         return math.isclose(distance, self.circle.radius, abs_tol=abs_tol)
 
 
-class ArcEllipse2D(Edge):
+class ArcEllipseMixin:
+    def get_shared_section(self, other_arcelipse, abs_tol: float = 1e-6):
+        """
+        Gets the shared section between two arcs of ellipse.
+
+        :param other_arcelipse: other arc ellipse to verify for shared section.
+        :param abs_tol: tolerance.
+        :return: shared arc section.
+        """
+        if self.__class__ != other_arcelipse.__class__:
+            return []
+        if not self.ellipse.center.is_close(other_arcelipse.ellipse.center) or \
+                not self.ellipse.frame.u.is_colinear_to(other_arcelipse.ellipse.frame.u) or \
+                self.ellipse.major_axis != other_arcelipse.ellipse.major_axis or \
+                not any(self.point_belongs(point) for point in [
+                    other_arcelipse.start, other_arcelipse.middle_point(), other_arcelipse.end]):
+            return []
+        return self.generic_get_shared_section(other_arcelipse, abs_tol)
+
+
+class ArcEllipse2D(ArcEllipseMixin, Edge):
     """
     An 2-dimensional elliptical arc.
 
@@ -6269,7 +6270,7 @@ class FullArc3D(FullArcMixin, Arc3D):
         return cls(circle, start_end, name=name)
 
 
-class ArcEllipse3D(Edge):
+class ArcEllipse3D(ArcEllipseMixin, Edge):
     """
     An arc is defined by a starting point, an end point and an interior point.
 
