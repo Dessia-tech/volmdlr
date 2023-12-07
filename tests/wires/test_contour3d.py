@@ -69,7 +69,8 @@ class TestContour3D(unittest.TestCase):
 
         arguments = ["''", ['#13203123', '#13203124', '#13203125', '#13203126', '#13203127',
                             '#13203128', '#13203129', '#13203130', '#13203131', '#13203132']]
-        primitives = Contour3D.load_from_file("edge_loop_with_small_edges_and_gaps.json").primitives
+        primitives = Contour3D.load_from_file(
+            os.path.join(folder, "edge_loop_with_small_edges_and_gaps.json")).primitives
         object_dict = {int(arg[1:]): edge for arg, edge in zip(arguments[1], primitives)}
         contour = Contour3D.from_step(arguments, object_dict)
         self.assertFalse(contour.is_ordered())
