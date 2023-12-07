@@ -4,6 +4,7 @@
 ISO STEP reader/writer.
 """
 
+import re
 import time
 from typing import List
 from collections import deque
@@ -129,6 +130,10 @@ class Step(dc.DessiaObject):
         dict_connections = {}
         previous_line = ""
         functions = {}
+        content = "".join(lines)
+        pattern = re.compile(r'\\X2\\([0-9A-Fa-f]+)\\X0\\')
+
+        flag = pattern.search(content)
         for line in lines:
             # line = line.replace(" ", "")
             line = line.replace("\n", "")
@@ -148,35 +153,36 @@ class Step(dc.DessiaObject):
             if line[0] != "#":
                 previous_line = str()
                 continue
+            if flag:
+                line = step_reader.replace_unicode_escapes(line, pattern)
 
             function = line.split("=", maxsplit=1)
             function_id = int(function[0][1:].strip())
             function_name_arg = function[1].split("(", 1)
             function_name = function_name_arg[0].replace(" ", "")
-            start_index_name = function_name_arg[1].find("'")
-            if start_index_name != -1:
-                end_index_name = function_name_arg[1].find("'", start_index_name + 1)
-                if end_index_name != -1:
-                    function_arg_string = function_name_arg[1][end_index_name + 1:]
-                else:
-                    function_arg_string = function_name_arg[1]
+            if function_name:
+                entity_name_str, function_arg_string = step_reader.separate_entity_name_and_arguments(
+                    function_name_arg[1])
             else:
+                entity_name_str = ""
                 function_arg_string = function_name_arg[1]
             function_arg = function_arg_string.split("#")
             connections = []
-            for connec in function_arg[1:]:
-                connec = connec.split(",")
-                connec = connec[0].split(")")
-                if connec[0][-1] != "'":
-                    function_connection = int(connec[0])
-                    connections.append(function_connection)
+            if function_name:
+                for connec in function_arg[1:]:
+                    connec = connec.split(",")
+                    connec = connec[0].split(")")
+                    if connec[0][-1] != "'":
+                        function_connection = int(connec[0])
+                        connections.append(function_connection)
 
             previous_line = str()
 
             # FUNCTION ARGUMENTS
             functions, connections = self._helper_intantiate_step_functions(functions, connections,
                                                                             [function_id, function_name,
-                                                                             function_name_arg])
+                                                                             entity_name_str,
+                                                                             function_arg_string])
 
             dict_connections[function_id] = connections
 
@@ -184,13 +190,11 @@ class Step(dc.DessiaObject):
 
     def _helper_intantiate_step_functions(self, functions, connections, function_parameters):
         """Helper function to read_lines."""
-        function_id, function_name, function_name_arg = function_parameters
-        function_arg = function_name_arg[1]
-        arguments = step_reader.step_split_arguments(function_arg)
+        function_id, function_name, entity_name_str, function_arg = function_parameters
         new_name = ''
         new_arguments = []
         if function_name == "":
-            name_arg = self.step_subfunctions(arguments)
+            name_arg = self.step_subfunctions([function_arg])
             for name, arg in name_arg:
                 new_name += name + ', '
                 new_arguments.extend(arg)
@@ -200,10 +204,14 @@ class Step(dc.DessiaObject):
             for arg in arguments:
                 if arg[0] == '#':
                     connections.append(int(arg[1:]))
+        else:
+            arguments = step_reader.step_split_arguments(entity_name_str, function_arg)
 
         for i, argument in enumerate(arguments):
             if argument[:2] == '(#' and argument[-1] == ')':
                 arg_list = step_reader.set_to_list(argument)
+                for arg in arg_list:
+                    connections.append(int(arg[1:]))
                 arguments[i] = arg_list
 
         function = StepFunction(function_id, function_name, arguments)
@@ -337,7 +345,7 @@ class Step(dc.DessiaObject):
             else:
                 subfunction_arg += char
         return [
-            (subfunction_names[i], step_reader.step_split_arguments(subfunction_args[i]))
+            (subfunction_names[i], step_reader.step_split_arguments("", subfunction_args[i]))
             for i in range(len(subfunction_names))]
 
     def parse_arguments(self, arguments):

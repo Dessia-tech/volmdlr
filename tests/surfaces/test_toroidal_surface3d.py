@@ -235,7 +235,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
         inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(),  14.655769886728576)
+        self.assertAlmostEqual(inters[0].length(),  14.65577016755327, 6)
         # Test2
         expected_results = [[9.424777944721708, 9.424777944721708], [6.283185307179586], []]
         frame = volmdlr.OXYZ
@@ -251,15 +251,15 @@ class TestToroidalSurface3D(unittest.TestCase):
         expected_results = [[17.155074987011552], [17.448537879741707], [8.189772236143783, 11.901224672053287],
                             [9.34218757856321, 6.783271714064327, 6.6266233840305615],
                             [8.454978430198972, 11.779922655326294], [18.76170912656177],
-                            [6.937794429336999, 15.19250562117756], [19.04179116730168], [19.712180413083974],
-                            [9.106324562479518, 6.6066389656171705, 6.606876915186218]]
+                            [6.937794429336999, 15.19250562117756], [19.04179116730168],
+                            [19.712180413083964], [9.106324562479518, 6.6066389656171705, 6.606876915186218]]
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
             cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1.5)
             inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
             for sol, expected_result in zip(inters, expected_results[i]):
-                self.assertAlmostEqual(sol.length(), expected_result)
+                self.assertAlmostEqual(sol.length(), expected_result, 5)
 
     def test_circle_intersections(self):
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)

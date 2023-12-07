@@ -112,7 +112,8 @@ class TestPlane3D(unittest.TestCase):
     def test_plane_intersections(self):
         plane_intersections = self.plane1.plane_intersections(self.plane2)
         self.assertEqual(len(plane_intersections), 1)
-        self.assertEqual(plane_intersections[0], curves.Line3D(volmdlr.O3D, volmdlr.Point3D(0, 0.7071067811865476, 0)))
+        self.assertTrue(plane_intersections[0].is_close(
+            curves.Line3D(volmdlr.O3D, volmdlr.Point3D(0, 0.7071067811865476, 0))))
         no_plane_intersections = self.plane1.plane_intersections(self.plane3)
         self.assertFalse(no_plane_intersections)
         plane1 = surfaces.Plane3D(

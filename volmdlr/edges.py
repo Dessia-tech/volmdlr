@@ -1869,7 +1869,10 @@ class BSplineCurve(Edge):
             umin, umax = self.domain
             u_start = self.abscissa_to_parameter(abscissa1)
             u_end = self.abscissa_to_parameter(abscissa2)
-            number_points1 = int((abscissa1 / self.length()) * number_points)
+            number_points1 = max(int((abscissa1 / self.length()) * number_points), 2)
+            if u_start > u_end:
+                number_points1 = max(int(((self.length() - abscissa1) / self.length()) * number_points), 2)
+
             if umin == u_end:
                 number_points1 = number_points
                 data["sample_size"] = number_points1
@@ -3647,6 +3650,9 @@ class ArcEllipse2D(Edge):
         self._bounding_rectangle = None
         self._reverse = None
 
+    def __hash__(self):
+        return hash(('Arcellipse2d', self.ellipse, self.start, self.end))
+
     def __eq__(self, other):
         """Defines equality."""
         if not isinstance(other, self.__class__):
@@ -4258,6 +4264,9 @@ class FullArcEllipse2D(FullArcEllipse, ArcEllipse2D):
             self.theta = 0.0
         self._bounding_rectangle = None
 
+    def __hash__(self):
+        return hash(('FullArcellipse2d', self.ellipse, self.start_end))
+
     def to_3d(self, plane_origin, x, y):
         """
         Transforms the full arc of ellipse 2D into a 3D full arc of ellipse.
@@ -4583,19 +4592,14 @@ class LineSegment3D(LineSegment):
         """
         return volmdlr.LineSegment3DDistance([self.start, self.end], [other_line.start, other_line.end])
 
-    def parallel_distance(self, other_linesegment):
-        """Calculates the parallel distance between two Line Segments 3D."""
-        pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
-        vector = volmdlr.Vector3D((pt_a - pt_b).vector)
-        vector = vector.unit_vector()
-        plane1 = volmdlr.surfaces.Plane3D.from_3_points(pt_a, pt_b, pt_c)
-        v = vector.cross(plane1.frame.w)  # distance vector
-        # pt_a = k*u + c*v + pt_c
-        res = (pt_a - pt_c).vector
-        x, y, z = res[0], res[1], res[2]
-        u1, u2, u3 = vector.x, vector.y, vector.z
-        v1, v2, v3 = v.x, v.y, v.z
+    def _helper_paralel_distance(self, vector_ac, vector_ab, vector_ab_cross_normal):
+        """
+        Parallel distance helper method.
 
+        """
+        x, y, z = vector_ac[0], vector_ac[1], vector_ac[2]
+        u1, u2, u3 = vector_ab.x, vector_ab.y, vector_ab.z
+        v1, v2, v3 = vector_ab_cross_normal.x, vector_ab_cross_normal.y, vector_ab_cross_normal.z
         if (u1 * v2 - v1 * u2) != 0 and u1 != 0:
             c = (y * u1 - x * u2) / (u1 * v2 - v1 * u2)
             k = (x - c * v1) / u1
@@ -4627,6 +4631,15 @@ class LineSegment3D(LineSegment):
             if math.isclose(k * u1 + c * v1, x, abs_tol=1e-7):
                 return k
         raise NotImplementedError
+
+    def parallel_distance(self, other_linesegment):
+        """Calculates the parallel distance between two Line Segments 3D."""
+        pt_a, pt_b, pt_c = self.start, self.end, other_linesegment.start
+        vector_ab = volmdlr.Vector3D((pt_a - pt_b).vector).unit_vector()
+        plane1 = volmdlr.surfaces.Plane3D.from_3_points(pt_a, pt_b, pt_c)
+        vector_ab_cross_normal = vector_ab.cross(plane1.frame.w)  # distance vector
+        vector_ac = (pt_a - pt_c).vector
+        return self._helper_paralel_distance(vector_ac, vector_ab, vector_ab_cross_normal)
 
     def distance_linesegment(self, linesegment, return_points=False):
         """
@@ -6271,6 +6284,21 @@ class ArcEllipse3D(Edge):
         self._length = None
         self._bbox = None
 
+    def __hash__(self):
+        return hash(('Arcellipse3d', self.ellipse, self.start, self.end))
+
+    def __eq__(self, other_arcellipse):
+        if self.__class__.__name__ != other_arcellipse.__class__.__name__:
+            return False
+        return self.ellipse == other_arcellipse.ellipse and \
+            self.start == other_arcellipse.start and self.end == other_arcellipse.end
+
+    def is_close(self, other_arcellipse, abs_tol: float = 1e-6):
+        if self.__class__.__name__ != other_arcellipse.__class__.__name__:
+            return False
+        return self.ellipse.is_close(other_arcellipse.ellipse, abs_tol) and \
+            self.start.is_close(other_arcellipse.start, abs_tol) and self.end.is_close(other_arcellipse.end, abs_tol)
+
     @property
     def center(self):
         """Gets ellipse's center point."""
@@ -6533,22 +6561,6 @@ class ArcEllipse3D(Edge):
         """
         point2d = point.to_2d(self.ellipse.center, self.ellipse.major_dir, self.ellipse.minor_dir)
         return self.self_2d.point_belongs(point2d, abs_tol=abs_tol)
-
-    def is_close(self, other_edge, tol: float = 1e-6):
-        """
-        Checks if two arc-ellipse are the same considering the Euclidean distance.
-
-        :param other_edge: other arc-ellipse.
-        :param tol: The tolerance under which the Euclidean distance is considered equal to 0, defaults to 1e-6.
-        :type tol: float, optional
-        """
-
-        if isinstance(other_edge, self.__class__):
-            if (self.start.is_close(other_edge.start, tol) and self.end.is_close(other_edge.end, tol)
-                    and self.ellipse.center.is_close(other_edge.ellipse.center, tol)
-                    and self.point_belongs(other_edge.point_at_abscissa(other_edge.length() * 0.5), tol)):
-                return True
-        return False
 
     def complementary(self):
         """Gets the complementary arc of ellipse."""
