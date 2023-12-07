@@ -339,8 +339,7 @@ class Face3D(volmdlr.core.Primitive3D):
         def get_polygon_points(primitives):
             points = []
             for edge in primitives:
-                if self.surface3d.__class__.__name__ in ("SphericalSurface3D", "ConicalSurface3D"
-                                                                               "RevolutionSurface3D"):
+                if self.__class__.__name__ in ("SphericalFace3D", "ConicalFace3D", "RevolutionFace3D"):
                     if self.surface3d.is_degenerated_brep(edge):
                         edge_points = edge.discretization_points(number_points=2)
                         points.extend(edge_points[:-1])
