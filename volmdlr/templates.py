@@ -184,17 +184,28 @@ BABYLON_UNPACKER_BODY_TEMPLATE = Template(
                 meshes.push(mesh);
                 if ('primitives_meshes' in mesh_data) {
                     for (let prim_mesh_data of mesh_data['primitives_meshes']){
-                        var child_mesh = new BABYLON.Mesh(prim_mesh_data['name'], scene);
                         var normals = [];
                         var vertexData = new BABYLON.VertexData();
-                        BABYLON.VertexData.ComputeNormals(prim_mesh_data['positions'], prim_mesh_data['indices'],
-                                                          normals);
+            
+                        // Check if normals are provided
+                        if ('normals' in prim_mesh_data && prim_mesh_data['normals'].length > 0) {
+                            normals = prim_mesh_data['normals'];
+                            console.log("Using provided normals for mesh:", prim_mesh_data['name']);
+                        } else {
+                            // Compute normals if not provided
+                            BABYLON.VertexData.ComputeNormals(prim_mesh_data['positions'], prim_mesh_data['indices'], normals);
+                            console.log("Computed normals for mesh:", prim_mesh_data['name']);
+                        }
+            
                         vertexData.positions = prim_mesh_data['positions'];
                         vertexData.indices = prim_mesh_data['indices'];
                         vertexData.normals = normals;
                         vertexData.applyToMesh(child_mesh);
-                        child_mesh.enableEdgesRendering(0.9);
+                        
+                        // child_mesh.convertToFlatShadedMesh();
+                        child_mesh.enableEdgesRendering(0.8);
                         child_mesh.edgesWidth = max_length*0.025;
+                        
                         if ('edges_color' in prim_mesh_data) {
                                 child_mesh.edgesColor = new BABYLON.Color4(prim_mesh_data['edges_color'][0],
                                                                      prim_mesh_data['edges_color'][1],
@@ -221,13 +232,26 @@ BABYLON_UNPACKER_BODY_TEMPLATE = Template(
                 else{
                     var normals = [];
                     var vertexData = new BABYLON.VertexData();
-                    BABYLON.VertexData.ComputeNormals(mesh_data['positions'], mesh_data['indices'], normals);
+        
+                    // Check if normals are provided
+                    if ('normals' in mesh_data && mesh_data['normals'].length > 0) {
+                        normals = mesh_data['normals'];
+                        console.log("Using provided normals for mesh:", mesh_data['name']);
+                    } else {
+                        // Compute normals if not provided
+                        BABYLON.VertexData.ComputeNormals(mesh_data['positions'], mesh_data['indices'], normals);
+                        console.log("Computed normals for mesh:", mesh_data['name']);
+                    }
+                    
+                    console.log(normals);
 
                     vertexData.positions = mesh_data['positions'];
                     vertexData.indices = mesh_data['indices'];
                     vertexData.normals = normals;
                     vertexData.applyToMesh(mesh);
-                    mesh.enableEdgesRendering(0.9);
+                    
+                    // mesh.convertToFlatShadedMesh();
+                    mesh.enableEdgesRendering(0.8);
                     mesh.edgesWidth = max_length*0.025;
                     if ('edges_color' in mesh_data) {
                             mesh.edgesColor = new BABYLON.Color4(mesh_data['edges_color'][0],
