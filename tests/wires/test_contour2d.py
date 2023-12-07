@@ -268,6 +268,14 @@ class TestContour2D(unittest.TestCase):
         contour = wires.Contour2D.load_from_file(os.path.join(folder, "strange_contour_from_step_file.json"))
         self.assertAlmostEqual(contour.area(), 0.00016865275423510724, 6)
 
+    def test_cut_by_line(self):
+        contour, line = wires.Contour2D.load_from_file(
+            os.path.join(folder, 'test_contour2d_cut_by_line.json')).primitives
+
+        cut_by_line = contour.cut_by_line(line)
+        self.assertEqual(len(cut_by_line), 1)
+        self.assertEqual(cut_by_line[0], contour)
+
 
 if __name__ == '__main__':
     unittest.main()
