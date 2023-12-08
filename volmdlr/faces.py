@@ -346,14 +346,41 @@ class Face3D(volmdlr.core.Primitive3D):
             outer_polygon, inner_polygons = polygon_data
         else:
             outer_polygon, inner_polygons = self.get_face_polygons()
-        number_points_u, number_points_v = grid_size
 
-        points, u, v, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_u,
-                                                                                 number_points_y=number_points_v,
-                                                                                 include_edge_points=False)
+        u, v = self._get_grid_axis(outer_polygon, grid_size)
         if inner_polygons:
-            points = update_face_grid_points_with_inner_polygons(inner_polygons, [points, u, v, grid_point_index])
+            grid_points = []
+            points_indexes_map = {}
+            for j, v_j in enumerate(v):
+                for i, u_i in enumerate(u):
+                    grid_points.append((u_i, v_j))
+                    points_indexes_map[(i, j)] = len(grid_points) - 1
+            grid_points = update_face_grid_points_with_inner_polygons(inner_polygons,
+                                                                      [grid_points, u, v, points_indexes_map])
+        else:
+            grid_points = np.array([[u_i, v_j] for v_j in v for u_i in u], dtype=np.float64)
+        grid_points = self._update_grid_points_with_outer_polygon(outer_polygon, grid_points)
 
+        return grid_points
+
+    @staticmethod
+    def _get_grid_axis(outer_polygon, grid_size):
+        """Helper function to grid_points."""
+        u_min, u_max, v_min, v_max = outer_polygon.bounding_rectangle.bounds()
+        number_points_u, number_points_v = grid_size
+        u = np.linspace(u_min, u_max, num=int(number_points_u), dtype=np.float64)
+        v = np.linspace(v_min, v_max, num=int(number_points_v), dtype=np.float64)
+
+        return u, v
+
+    @staticmethod
+    def _update_grid_points_with_outer_polygon(outer_polygon, grid_points):
+        """Helper function to grid_points."""
+        # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
+        indices = np.where(outer_polygon.points_in_polygon(grid_points, include_edge_points=False) == 0)[0]
+        grid_points = np.delete(grid_points, indices, axis=0)
+        polygon_points = set(outer_polygon.points)
+        points = [volmdlr.Point2D(*point) for point in grid_points if volmdlr.Point2D(*point) not in polygon_points]
         return points
 
     def get_face_polygons(self):
@@ -2881,6 +2908,36 @@ class SphericalFace3D(Face3D):
 
         return number_points_x, number_points_y
 
+    def grid_points(self, grid_size, polygon_data=None):
+        """
+        Parametric tesselation points.
+        """
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
+        else:
+            outer_polygon, inner_polygons = self.get_face_polygons()
+        u, v, u_size, _ = self._get_grid_axis(outer_polygon, grid_size)
+        if not u or not v:
+            return []
+        if inner_polygons:
+            points = []
+            points_indexes_map = {}
+            for j, v_j in enumerate(v):
+                for i in range(u_size):
+                    if (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0):
+                        points.append((u[i], v_j))
+                        points_indexes_map[(i, j)] = len(points) - 1
+            points = np.array(points, dtype=np.float64)
+            points = update_face_grid_points_with_inner_polygons(inner_polygons, [points, u, v, points_indexes_map])
+        else:
+            points = np.array([(u[i], v_j) for j, v_j in enumerate(v) for i in range(u_size) if
+                                   (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0)],
+                                   dtype=np.float64)
+
+        points = self._update_grid_points_with_outer_polygon(outer_polygon, points)
+
+        return points
+
     @staticmethod
     def _get_grid_axis(outer_polygon, grid_size):
         """Helper function to grid_points."""
@@ -2894,27 +2951,6 @@ class SphericalFace3D(Face3D):
         u = [theta_min + step_u * i for i in range(u_size)]
         v = [v_start + j * step_v for j in range(v_size - 1)]
         return u, v, u_size, v_size
-
-    @staticmethod
-    def _update_grid_points_with_outer_polygon(outer_polygon, grid_points, u_size):
-        """Helper function to grid_points."""
-        # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
-        indices = np.where(outer_polygon.points_in_polygon(grid_points, include_edge_points=False))[0]
-        points = []
-        grid_point_index = {}
-        polygon_points = set(outer_polygon.points)
-        u_grid_size = 0.5 * u_size
-        for i in indices:
-            point = volmdlr.Point2D(*grid_points[i])
-            if point not in polygon_points:
-                v_index = i // u_grid_size
-                if v_index % 2 == 0:
-                    u_index = (i % u_grid_size) * 2
-                else:
-                    u_index = (i % u_grid_size) * 2 + 1
-                grid_point_index[(u_index, v_index)] = point
-                points.append(point)
-        return points, grid_point_index
 
     @classmethod
     def from_surface_rectangular_cut(
