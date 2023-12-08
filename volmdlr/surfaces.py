@@ -1417,12 +1417,12 @@ class Plane3D(Surface3D):
         angle = math.acos(self.frame.w.dot(plane2.frame.w))
         return angle
 
-    def point_belongs(self, point, abs_tol: float = 1e-6):
+    def point_belongs(self, point3d, abs_tol: float = 1e-6):
         """
         Return if the point belongs to the plane at a tolerance of 1e-6.
 
         """
-        if math.isclose(self.frame.w.dot(point - self.frame.origin), 0,
+        if math.isclose(self.frame.w.dot(point3d - self.frame.origin), 0,
                         abs_tol=abs_tol):
             return True
         return False
