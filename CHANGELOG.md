@@ -30,8 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: increases precision of point3d_to_2d.
 
 #### wires.py
-
 - Contour2D: cut_by_line.
+- ContourMixin: is_ordered().
+
 
 #### step.py
 - Step: uses Regular Expressions to improve the performance.
