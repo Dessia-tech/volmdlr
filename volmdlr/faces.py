@@ -102,13 +102,14 @@ class Face3D(volmdlr.core.Primitive3D):
         return self.surface2d.point_belongs(point2d)
 
     @property
-    def outer_contour3d(self):
+    def outer_contour3d(self) -> volmdlr.wires.Contour3D:
         """
         Gives the 3d version of the outer contour of the face.
         """
         if not self._outer_contour3d:
-            self._outer_contour3d, primitives_mapping = self.surface3d.contour2d_to_3d(self.surface2d.outer_contour,
-                                                                                       return_primitives_mapping=True)
+            outer_contour3d, primitives_mapping = self.surface3d.contour2d_to_3d(self.surface2d.outer_contour,
+                                                                                 return_primitives_mapping=True)
+            self._outer_contour3d = outer_contour3d
             if not self._primitives_mapping:
                 self._primitives_mapping = primitives_mapping
             else:
@@ -116,11 +117,11 @@ class Face3D(volmdlr.core.Primitive3D):
         return self._outer_contour3d
 
     @outer_contour3d.setter
-    def outer_contour3d(self, values):
-        self._outer_contour3d, self._primitives_mapping = values
+    def outer_contour3d(self, value):
+        self._outer_contour3d = value
 
     @property
-    def inner_contours3d(self):
+    def inner_contours3d(self) -> List[volmdlr.wires.Contour3D]:
         """
         Gives the 3d version of the inner contours of the face.
         """
@@ -140,8 +141,8 @@ class Face3D(volmdlr.core.Primitive3D):
         return self._inner_contours3d
 
     @inner_contours3d.setter
-    def inner_contours3d(self, values):
-        self._inner_contours3d, self._primitives_mapping = values
+    def inner_contours3d(self, value):
+        self._inner_contours3d = value
 
     @property
     def primitives_mapping(self):
@@ -149,6 +150,10 @@ class Face3D(volmdlr.core.Primitive3D):
         Gives the 3d version of the inner contours of the face.
         """
         if not self._primitives_mapping:
+            if self._outer_contour3d:
+                self._outer_contour3d = None
+            if self._inner_contours3d:
+                self._inner_contours3d = None
             _ = self.outer_contour3d
             _ = self.inner_contours3d
         return self._primitives_mapping
@@ -250,8 +255,9 @@ class Face3D(volmdlr.core.Primitive3D):
             name=name,
         )
         # To improve performance while reading from step file
-        face.outer_contour3d = outer_contour3d, primitives_mapping
-        face.inner_contours3d = inner_contours3d, primitives_mapping
+        face.outer_contour3d = outer_contour3d
+        face.inner_contours3d = inner_contours3d
+        face.primitives_mapping = primitives_mapping
         return face
 
     @staticmethod
@@ -339,12 +345,7 @@ class Face3D(volmdlr.core.Primitive3D):
         def get_polygon_points(primitives):
             points = []
             for edge in primitives:
-                if self.__class__.__name__ in ("SphericalFace3D", "ConicalFace3D", "RevolutionFace3D"):
-                    if self.surface3d.is_degenerated_brep(edge):
-                        edge_points = edge.discretization_points(number_points=2)
-                        points.extend(edge_points[:-1])
-                        continue
-                edge3d = self.primitives_mapping[edge]
+                edge3d = self.primitives_mapping.get(edge)
                 if edge3d.__class__.__name__ == "BSplineCurve3D":
                     edge_points = edge.discretization_points(number_points=15)
                 elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
