@@ -4169,10 +4169,10 @@ class ConicalSurface3D(PeriodicalSurface):
         :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
-        cyl_generatrices = self.get_generatrices(spherical_surface.radius*4, 200) +\
-                           self.get_circle_generatrices(200, spherical_surface.radius*4)
+        cone_generatrices = self.get_generatrices(spherical_surface.radius*4, 200) +\
+                            self.get_circle_generatrices(200, spherical_surface.radius*4)
         intersection_points = []
-        for gene in cyl_generatrices:
+        for gene in cone_generatrices:
             intersections = spherical_surface.edge_intersections(gene)
             for intersection in intersections:
                 if not intersection.in_list(intersection_points):
@@ -4181,7 +4181,7 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def sphericalsurface_intersections(self, spherical_surface: 'SphericalSurface3D'):
         """
-        Cylinder Surface intersections with a Spherical surface.
+        Conical Surface intersections with a Spherical surface.
 
         :param spherical_surface: intersecting sphere.
         :return: list of intersecting curves.
@@ -4209,6 +4209,44 @@ class ConicalSurface3D(PeriodicalSurface):
             end3d = self.point2d_to_3d(edge.end)
             return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
         return False
+
+    def _conic_intersection_points(self, conical_surface: 'ConicalSurface3D'):
+        """
+        Gets the points of intersections between the spherical surface and the toroidal surface.
+
+        :param spherical_surface: other Spherical Surface 3d.
+        :return: points of intersections.
+        """
+        length = max(5*self.frame.origin.point_distance(conical_surface.frame.origin), 2)
+        cone_generatrices = self.get_generatrices(2, length) +\
+                            self.get_circle_generatrices(200, length)
+        intersection_points = []
+        for gene in cone_generatrices:
+            intersections = conical_surface.edge_intersections(gene)
+            for intersection in intersections:
+                if not intersection.in_list(intersection_points):
+                    intersection_points.append(intersection)
+        return intersection_points
+
+    def conicalsurface_intersections(self, conical_surface):
+        """
+        Conical Surface intersections with another conical surface.
+
+        :param conical_surface: intersecting conical surface.
+        :return: list of intersecting curves.
+        """
+        intersection_points = self._conical_intersection_points(spherical_surface)
+        if not intersection_points:
+            return []
+        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
+        curves_ = []
+        for list_points in inters_points:
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
+            if isinstance(bspline.simplify, edges.FullArc3D):
+                curves_.append(bspline.simplify)
+                continue
+            curves_.append(bspline)
+        return curves_
 
 
 class SphericalSurface3D(PeriodicalSurface):
