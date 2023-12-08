@@ -21,7 +21,7 @@ import volmdlr.curves as volmdlr_curves
 import volmdlr.geometry
 import volmdlr.grid
 from volmdlr import surfaces
-from volmdlr.utils.parametric import array_range_search
+from volmdlr.utils.parametric import update_face_grid_points_with_inner_polygons
 import volmdlr.wires
 
 warnings.simplefilter("once")
@@ -337,6 +337,24 @@ class Face3D(volmdlr.core.Primitive3D):
         Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
         """
         return [], []
+
+    def grid_points(self, grid_size, polygon_data=None):
+        """
+        Parametric tesselation points.
+        """
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
+        else:
+            outer_polygon, inner_polygons = self.get_face_polygons()
+        number_points_u, number_points_v = grid_size
+
+        points, u, v, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x=number_points_u,
+                                                                                 number_points_y=number_points_v,
+                                                                                 include_edge_points=False)
+        if inner_polygons:
+            points = update_face_grid_points_with_inner_polygons(inner_polygons, [points, u, v, grid_point_index])
+
+        return points
 
     def get_face_polygons(self):
         """Get face polygons."""
@@ -2850,20 +2868,22 @@ class SphericalFace3D(Face3D):
 
     def grid_size(self):
         """
-        Specifies an adapted size of the discretization grid used to calculate the grid_points.
+        Specifies an adapted size of the discretization grid used in face triangulation.
+        """
+        angle_resolution = 11
+        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
-        For the sphere the grid size is given in angle resolution in both theta and phi direction.
-        """
-        return 10, 10
+        delta_theta = theta_max - theta_min
+        number_points_x = int(delta_theta * angle_resolution)
 
-    def grid_points(self, grid_size, polygon_data=None):
-        """
-        Parametric tesselation points.
-        """
-        if polygon_data:
-            outer_polygon, inner_polygons = polygon_data
-        else:
-            outer_polygon, inner_polygons = self.get_face_polygons()
+        delta_phi = phi_max - phi_min
+        number_points_y = int(delta_phi * angle_resolution)
+
+        return number_points_x, number_points_y
+
+    @staticmethod
+    def _get_grid_axis(outer_polygon, grid_size):
+        """Helper function to grid_points."""
         theta_min, theta_max, phi_min, phi_max = outer_polygon.bounding_rectangle.bounds()
         theta_resolution, phi_resolution = grid_size
         step_u = 0.5 * math.radians(theta_resolution)
@@ -2873,19 +2893,16 @@ class SphericalFace3D(Face3D):
         v_start = phi_min + step_v
         u = [theta_min + step_u * i for i in range(u_size)]
         v = [v_start + j * step_v for j in range(v_size - 1)]
-        grid_points = np.array([(u[i], v_j) for j, v_j in enumerate(v) for i in range(u_size) if
-                               (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0)], dtype=np.float64)
+        return u, v, u_size, v_size
 
-        grid_point_index = {}
-
-        polygon_points = set(outer_polygon.points)
-
-        points_in_polygon_ = outer_polygon.points_in_polygon(grid_points, include_edge_points=False)
-
+    @staticmethod
+    def _update_grid_points_with_outer_polygon(outer_polygon, grid_points, u_size):
+        """Helper function to grid_points."""
         # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
-        indices = np.where(points_in_polygon_)[0]
-
+        indices = np.where(outer_polygon.points_in_polygon(grid_points, include_edge_points=False))[0]
         points = []
+        grid_point_index = {}
+        polygon_points = set(outer_polygon.points)
         u_grid_size = 0.5 * u_size
         for i in indices:
             point = volmdlr.Point2D(*grid_points[i])
@@ -2897,10 +2914,7 @@ class SphericalFace3D(Face3D):
                     u_index = (i % u_grid_size) * 2 + 1
                 grid_point_index[(u_index, v_index)] = point
                 points.append(point)
-        if inner_polygons:
-            points = self.update_grid_points_with_inner_polygons(inner_polygons, [points, u, v, grid_point_index])
-
-        return points
+        return points, grid_point_index
 
     @classmethod
     def from_surface_rectangular_cut(
@@ -3233,12 +3247,7 @@ class BSplineFace3D(Face3D):
                 number_points_x, number_points_y = 5, 3
             else:
                 number_points_x, number_points_y = 3, 5
-            outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
-            points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(
-                number_points_x, number_points_y, include_edge_points=False
-            )
-            if self.surface2d.inner_contours:
-                points_grid = self._get_bbox_inner_contours_points(points_grid, x, y, grid_point_index)
+            points_grid = self.grid_points([number_points_x, number_points_y])
             points3d = [self.surface3d.point2d_to_3d(point) for point in points_grid]
         except ZeroDivisionError:
             points3d = []
@@ -3249,22 +3258,6 @@ class BSplineFace3D(Face3D):
         return volmdlr.core.BoundingBox.from_bounding_boxes(
             [volmdlr.core.BoundingBox.from_points(points3d), self.outer_contour3d.bounding_box]
         ).scale(1.001)
-
-    def _get_bbox_inner_contours_points(self, points_grid, x, y, grid_point_index):
-        """Helper function to get_bounding_box."""
-        for inner_contour in self.surface2d.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True)
-            # removes with a region search the grid points that are in the inner contour
-            xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
-            for i in array_range_search(x, xmin, xmax):
-                for j in array_range_search(y, ymin, ymax):
-                    point = grid_point_index.get((i, j))
-                    if not point:
-                        continue
-                    if inner_polygon.point_belongs(point):
-                        points_grid.remove(point)
-                        grid_point_index.pop((i, j))
-        return points_grid
 
     def triangulation_lines(self, resolution=25):
         """

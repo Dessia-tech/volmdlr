@@ -301,6 +301,25 @@ def array_range_search(x, xmin, xmax):
     return range(left, right)
 
 
+def update_face_grid_points_with_inner_polygons(inner_polygons, grid_points_data):
+    """Remove grid_points inside inner contours of the face."""
+    # pylint: disable= too-many-locals
+    points_grid, u, v, grid_point_index = grid_points_data
+    for inner_polygon in inner_polygons:
+        u_min, u_max, v_min, v_max = inner_polygon.bounding_rectangle.bounds()
+        x_grid_range = array_range_search(u, u_min, u_max)
+        y_grid_range = array_range_search(v, v_min, v_max)
+        for i in x_grid_range:
+            for j in y_grid_range:
+                point = grid_point_index.get((i, j))
+                if not point:
+                    continue
+                if inner_polygon.point_belongs(point):
+                    points_grid.remove(point)
+                    grid_point_index.pop((i, j))
+    return points_grid
+
+
 def contour2d_healing(contour2d):
     """
     Heals topologies incoherencies on the boundary representation.
