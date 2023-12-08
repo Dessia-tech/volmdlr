@@ -346,7 +346,9 @@ class Face3D(volmdlr.core.Primitive3D):
             points = []
             for edge in primitives:
                 edge3d = self.primitives_mapping.get(edge)
-                if edge3d.__class__.__name__ == "BSplineCurve3D":
+                if edge3d is None:
+                    edge_points = edge.discretization_points(number_points=2)
+                elif edge3d.__class__.__name__ == "BSplineCurve3D":
                     edge_points = edge.discretization_points(number_points=15)
                 elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
                     edge_points = edge.discretization_points(
