@@ -1449,16 +1449,16 @@ class Plane3D(Surface3D):
         """
         return vm_utils_intersections.get_plane_line_intersections(self.frame, line)
 
-    def linesegment_intersections(self, linesegment: edges.LineSegment3D, abs_tol: float = 1e-6) \
+    def linesegment_intersections(self, linesegment3d: edges.LineSegment3D, abs_tol: float = 1e-6) \
             -> List[volmdlr.Point3D]:
         """
         Gets the intersections of a plane a line segment 3d.
 
-        :param linesegment: other line segment.
+        :param linesegment3d: other line segment.
         :param abs_tol: tolerance allowed.
         :return: a list with the intersecting point.
         """
-        return vm_utils_intersections.get_plane_linesegment_intersections(self.frame, linesegment, abs_tol)
+        return vm_utils_intersections.get_plane_linesegment_intersections(self.frame, linesegment3d, abs_tol)
 
     def bsplinecurve_intersections(self, bspline_curve):
         """
@@ -5057,7 +5057,7 @@ class SphericalSurface3D(PeriodicalSurface):
                                  circle_radius)
         return [edges.FullArc3D(circle, start_end)]
 
-    def line_intersections(self, line3d: curves.Line3D):
+    def line_intersections(self, line: curves.Line3D):
         """
         Calculates the intersection points between a 3D line and a spherical surface.
 
@@ -5066,8 +5066,8 @@ class SphericalSurface3D(PeriodicalSurface):
         points, which can be empty if there are no intersections. The intersection points are
         represented as 3D points using the `volmdlr.Point3D` class.
 
-        :param line3d: The 3D line object to intersect with the sphere.
-        :type line3d:curves.Line3D
+        :param line: The 3D line object to intersect with the sphere.
+        :type line:curves.Line3D
         :return: A list of intersection points between the line and the sphere. The list may be empty if there
         are no intersections.
         :rtype: List[volmdlr.Point3D]
@@ -5078,8 +5078,8 @@ class SphericalSurface3D(PeriodicalSurface):
         >>> line2 = curves.Line3D(Point3D(0, 1, -0.5), Point3D(0, 1, 0.5))
         >>> line_intersections2 = spherical_surface3d.line_intersections(line2) #returns [Point3D(0.0, 1.0, 0.0)]
         """
-        line_direction_vector = line3d.direction_vector()
-        vector_linept1_center = self.frame.origin - line3d.point1
+        line_direction_vector = line.direction_vector()
+        vector_linept1_center = self.frame.origin - line.point1
         vector_linept1_center = vector_linept1_center.to_vector()
         a_param = line_direction_vector[0] ** 2 + line_direction_vector[1] ** 2 + line_direction_vector[2] ** 2
         b_param = -2 * (line_direction_vector[0] * vector_linept1_center[0] +
@@ -5090,12 +5090,12 @@ class SphericalSurface3D(PeriodicalSurface):
         b2_minus4ac = b_param ** 2 - 4 * a_param * c_param
         if math.isclose(b2_minus4ac, 0, abs_tol=1e-8):
             t_param = -b_param / (2 * a_param)
-            return [line3d.point1 + line_direction_vector * t_param]
+            return [line.point1 + line_direction_vector * t_param]
         if b2_minus4ac < 0:
             return []
         t_param1 = (-b_param + math.sqrt(b2_minus4ac)) / (2 * a_param)
         t_param2 = (-b_param - math.sqrt(b2_minus4ac)) / (2 * a_param)
-        return line3d.point1 + line_direction_vector * t_param1, line3d.point1 + line_direction_vector * t_param2
+        return line.point1 + line_direction_vector * t_param1, line.point1 + line_direction_vector * t_param2
 
     def circle_intersections(self, circle: curves.Circle3D):
         """
