@@ -1,0 +1,86 @@
+{
+  "object_class": "volmdlr.surfaces.ExtrusionSurface3D",
+  "name": "generated tabulated cylinder",
+  "edge": {
+    "object_class": "volmdlr.edges.FullArcEllipse3D",
+    "name": "",
+    "ellipse": {
+      "object_class": "volmdlr.curves.Ellipse3D",
+      "name": "Ellipse",
+      "frame": {
+        "object_class": "volmdlr.Frame3D",
+        "name": "",
+        "origin": {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.505158973071,
+          "y": 0.11301232803700001,
+          "z": 0.5890387323249999,
+          "name": "Axis2P3D Location"
+        },
+        "u": {
+          "object_class": "volmdlr.Vector3D",
+          "x": -0.001378855954459614,
+          "y": 0.999995102585155,
+          "z": 0.0028095483555407278
+        },
+        "v": {
+          "object_class": "volmdlr.Vector3D",
+          "x": -0.4383684226222151,
+          "y": -0.003129655995919649,
+          "z": 0.8987899261232699
+        },
+        "w": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.898794317296,
+          "y": 7.68456054416e-06,
+          "z": 0.438370591095,
+          "name": "Axis2P3D Direction"
+        }
+      },
+      "major_axis": 0.0026048165477900002,
+      "minor_axis": 0.0025873184234400004
+    },
+    "start_end": {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.5051553814041928,
+      "y": 0.11561713182792278,
+      "z": 0.5890460506830483
+    }
+  },
+  "direction": {
+    "object_class": "volmdlr.Vector3D",
+    "x": -0.898794317296173,
+    "y": -7.684560544161478e-06,
+    "z": -0.43837059109508436
+  },
+  "frame": {
+    "object_class": "volmdlr.Frame3D",
+    "name": "",
+    "origin": {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.505158973071,
+      "y": 0.11301232803700001,
+      "z": 0.5890387323249999,
+      "name": "Axis2P3D Location"
+    },
+    "u": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.43837059098993947,
+      "y": -1.229785911937539e-05,
+      "z": 0.8987943172961731
+    },
+    "v": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -1.229785911937539e-05,
+      "y": 0.9999999998948552,
+      "z": 7.68456054416148e-06
+    },
+    "w": {
+      "object_class": "volmdlr.Vector3D",
+      "x": -0.8987943172961731,
+      "y": -7.68456054416148e-06,
+      "z": -0.43837059109508436
+    }
+  },
+  "_references": {}
+}

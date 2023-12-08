@@ -290,8 +290,8 @@ def array_range_search(x, xmin, xmax):
     :rtype: range
     :Example:
 
-    >>> x = [1, 2, 3, 4, 5]
-    >>> array_range_search(x, 2, 4)
+    >>> array = [1, 2, 3, 4, 5]
+    >>> array_range_search(array, 2, 4)
     range(1, 3)
     """
 
@@ -315,10 +315,10 @@ def contour2d_healing_close_gaps(contour2d, contour3d):
     Heals topologies incoherencies on the boundary representation.
     """
     new_primitives = []
-    for prim1_3d, prim2_3d, prim1, prim2 in zip(contour3d.primitives, contour3d.primitives[1:] +
-                                                [contour3d.primitives[0]],
-                                                contour2d.primitives, contour2d.primitives[1:] +
-                                                                      [contour2d.primitives[0]]):
+    for prim1_3d, prim2_3d, prim1, prim2 in zip(contour3d.primitives,
+                                                contour3d.primitives[1:] + [contour3d.primitives[0]],
+                                                contour2d.primitives,
+                                                contour2d.primitives[1:] + [contour2d.primitives[0]]):
         if prim1 and prim2:
             if not prim1_3d.end.is_close(prim2_3d.start) and not prim1.end.is_close(prim2.start):
                 new_primitives.append(vme.LineSegment2D(prim1.end, prim2.start))
@@ -392,3 +392,18 @@ def verify_repeated_parametric_points(points):
                 verification_set.add(point)
         return new_points
     return points
+
+
+def repair_undefined_brep(surface, primitives2d, primitives_mapping, i, previous_primitive):
+    """Helper function to repair_primitives_periodicity."""
+    old_primitive = primitives2d[i]
+    primitives2d[i] = surface.fix_undefined_brep_with_neighbors(primitives2d[i], previous_primitive,
+                                                                primitives2d[(i + 1) % len(primitives2d)
+                                                                             ])
+    primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
+    delta = previous_primitive.end - primitives2d[i].start
+    if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
+        primitives2d.insert(i, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+                                                 name="construction"))
+        if i < len(primitives2d):
+            i += 1

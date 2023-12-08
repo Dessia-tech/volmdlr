@@ -155,7 +155,7 @@ class ClosedCurve(Curve):
             abscissa2 = self.length()
             points = vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
             return points + [points[0]]
-        if abscissa1 > abscissa2 == 0.0:
+        if abscissa1 > abscissa2 <= 1e-6:
             abscissa2 = self.length()
         return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
 
@@ -178,6 +178,13 @@ class Line(Curve):
         self._direction_vector = None
         Curve.__init__(self, name=name)
 
+    def __eq__(self, other_line):
+        if self.__class__.__name__ != other_line.__class__.__name__:
+            return False
+        if self.point1 == other_line.point1 and self.point2 == other_line.point2:
+            return True
+        return False
+
     def __getitem__(self, key):
         """
         Get a point of the line by its index.
@@ -187,6 +194,13 @@ class Line(Curve):
         if key == 1:
             return self.point2
         raise IndexError
+
+    def is_close(self, other_line, abs_tol: float = 1e-6):
+        if self.__class__.__name__ != other_line.__class__.__name__:
+            return False
+        if self.point1.is_close(other_line.point1, abs_tol) and self.point2.is_close(other_line.point2, abs_tol):
+            return True
+        return False
 
     def unit_direction_vector(self, *args, **kwargs):
         """
@@ -571,6 +585,30 @@ class Line2D(Line):
         return circle1, circle2
 
     @staticmethod
+    def _helper_tangent_circles_theta(new_vector_c, new_vector_d, new_point_k):
+        """
+        Helper method in get concurrent segments tangent circle to get theta.
+
+        """
+        theta1 = math.atan2(new_vector_c[1], new_vector_c[0] - new_point_k[0])
+        theta2 = math.atan2(new_vector_d[1], new_vector_d[0] - new_point_k[0])
+
+        if theta1 < 0:
+            theta1 += math.pi
+        if theta2 < 0:
+            theta2 += math.pi
+        theta = theta1
+        if not math.isclose(theta1, theta2, abs_tol=1e-08):
+            if math.isclose(theta1, math.pi, abs_tol=1e-08) or math.isclose(
+                    theta1, 0., abs_tol=1e-08):
+                theta = theta2
+            elif math.isclose(theta2, math.pi,
+                              abs_tol=1e-08) or math.isclose(theta2, 0.,
+                                                             abs_tol=1e-08):
+                theta = theta1
+        return theta
+
+    @staticmethod
     def get_concurrent_segments_tangent_circles(vector_i, vector_c, vector_d, new_point_k, new_basis):
         """Creates circles tangents to concurrent segments."""
         point_k = volmdlr.Point2D(new_basis.local_to_global_coordinates(new_point_k))
@@ -580,29 +618,14 @@ class Line2D(Line):
 
         # CHANGEMENT DE REPERE:
         new_u2 = volmdlr.Vector2D(point_k - vector_i).unit_vector()
-        new_v2 = new_u2.unit_vector()
+        new_v2 = new_u2.copy()
         new_basis2 = volmdlr.Frame2D(vector_i, new_u2, new_v2)
         new_vector_c = new_basis2.global_to_local_coordinates(vector_c)
         new_vector_d = new_basis2.global_to_local_coordinates(vector_d)
         new_point_k = new_basis2.global_to_local_coordinates(point_k)
-        teta1 = math.atan2(new_vector_c[1], new_vector_c[0] - new_point_k[0])
-        teta2 = math.atan2(new_vector_d[1], new_vector_d[0] - new_point_k[0])
-
-        if teta1 < 0:
-            teta1 += math.pi
-        if teta2 < 0:
-            teta2 += math.pi
-        teta = teta1
-        if not math.isclose(teta1, teta2, abs_tol=1e-08):
-            if math.isclose(teta1, math.pi, abs_tol=1e-08) or math.isclose(
-                    teta1, 0., abs_tol=1e-08):
-                teta = teta2
-            elif math.isclose(teta2, math.pi,
-                              abs_tol=1e-08) or math.isclose(teta2, 0.,
-                                                             abs_tol=1e-08):
-                teta = teta1
-        radius1 = new_point_k[0] * math.sin(teta) / (1 + math.cos(teta))
-        radius2 = new_point_k[0] * math.sin(teta) / (1 - math.cos(teta))
+        theta = Line2D._helper_tangent_circles_theta(new_vector_c, new_vector_d, new_point_k)
+        radius1 = new_point_k[0] * math.sin(theta) / (1 + math.cos(theta))
+        radius2 = new_point_k[0] * math.sin(theta) / (1 - math.cos(theta))
         circle_center1 = new_basis2.local_to_global_coordinates(volmdlr.Point2D(0, -radius1))
         circle_center2 = new_basis2.local_to_global_coordinates(volmdlr.Point2D(0, radius2))
 
@@ -712,6 +735,9 @@ class Line3D(Line):
                  name: str = ''):
         Line.__init__(self, point1, point2, name=name)
         self._bbox = None
+
+    def __hash__(self):
+        return hash(('line3d', self.point1, self.point2))
 
     @property
     def bounding_box(self):
@@ -868,7 +894,6 @@ class Line3D(Line):
 
         return get_minimum_distance_points_lines(self.point1, self.point2, other_line.point1, other_line.point2)
 
-
     def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Line3D rotation.
@@ -989,7 +1014,7 @@ class CircleMixin:
         return self.split(start, point_at_absccissa)
 
     def trim(self, point1: Union[volmdlr.Point2D, volmdlr.Point3D], point2: Union[volmdlr.Point2D, volmdlr.Point3D],
-             same_sense: bool = True):
+             same_sense: bool = True, abs_tol: float = 1e-6):
         """
         Trims a circle between two points.
 
@@ -997,6 +1022,7 @@ class CircleMixin:
         :param point2: point2 used to trim circle.
         :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :param abs_tol: tolerance between points to consider a full arc.
         :return: arc between these two points.
         """
         fullar_arc_class_ = getattr(volmdlr.edges, 'FullArc' + self.__class__.__name__[-2:])
@@ -1010,7 +1036,7 @@ class CircleMixin:
         if not self.point_belongs(point2, 1e-5):
             angle = circle.get_arc_point_angle(point2)
             point2 = circle.point_at_abscissa(angle * self.radius)
-        if point1 == point2:
+        if point1.is_close(point2, abs_tol):
             return fullar_arc_class_(circle, point1)
         return arc_class_(circle, point1, point2)
 
@@ -1084,18 +1110,13 @@ class Circle2D(CircleMixin, ClosedCurve):
         ClosedCurve.__init__(self, name=name)
 
     def __hash__(self):
-        return int(round(1e6 * (self.center.x + self.center.y + self.radius)))
+        return hash(('circle2d', self.frame, self.radius))
 
     def __eq__(self, other_circle):
         if self.__class__.__name__ != other_circle.__class__.__name__:
             return False
 
-        return math.isclose(self.center.x,
-                            other_circle.center.x, abs_tol=1e-06) \
-            and math.isclose(self.center.y,
-                             other_circle.center.y, abs_tol=1e-06) \
-            and math.isclose(self.radius, other_circle.radius,
-                             abs_tol=1e-06)
+        return self.frame == other_circle.frame and self.radius == other_circle.radius
 
     def __getitem__(self, key):
         if key == 0:
@@ -1103,6 +1124,21 @@ class Circle2D(CircleMixin, ClosedCurve):
         if key == 1:
             return self.radius
         raise IndexError
+
+    def is_close(self, other_circle, abs_tol: float = 1e-6):
+        """
+        Verifies if two circles are the same, up to given tolerance.
+
+        :param other_circle: other_circle.
+        :param abs_tol: tolerance used
+        :return:
+        """
+        if self.__class__.__name__ != other_circle.__class__.__name__:
+            return False
+
+        return math.isclose(self.center.x, other_circle.center.x, abs_tol=abs_tol) \
+            and math.isclose(self.center.y, other_circle.center.y, abs_tol=abs_tol) \
+            and math.isclose(self.radius, other_circle.radius, abs_tol=abs_tol)
 
     @property
     def is_trigo(self):
@@ -1247,6 +1283,7 @@ class Circle2D(CircleMixin, ClosedCurve):
         axial_symmetric_center = self.center.axial_symmetry(line)
         offset = axial_symmetric_center - self.center
         return self.translation(offset)
+
     def copy(self, *args, **kwargs):
         """
         Create a copy of the arc 2d.
@@ -1327,24 +1364,13 @@ class Circle2D(CircleMixin, ClosedCurve):
             return [contour1, contour2]
         raise ValueError
 
-    def line_intersections(self, line2d: Line2D, tol=1e-9):
+    def _helper_line_intersections(self, line2d: Line2D):
         """
-        Calculates the intersections between a circle 2D and Line 2D.
+        Helper method to calculate the intersections between a circle 2D and Line 2D.
 
         :param line2d: line to calculate intersections
-        :param tol: tolerance to consider in calculations.
         :return: circle and line intersections.
         """
-        if line2d.point_distance(self.center) > self.radius + tol:
-            return []
-        if line2d.point_belongs(self.center):
-            direction_vector = line2d.unit_direction_vector()
-            return [self.center + self.radius * direction_vector, self.center - self.radius * direction_vector]
-        if not self.center.is_close(volmdlr.O2D):
-            local_line = line2d.frame_mapping(self.frame, 'new')
-            local_circle = self.frame_mapping(self.frame, 'new')
-            local_line_intersections = local_circle.line_intersections(local_line)
-            return [self.frame.local_to_global_coordinates(point) for point in local_line_intersections]
         m = line2d.get_slope()
         c = line2d.get_y_intersection()
         if m == math.inf and c is None:
@@ -1367,6 +1393,26 @@ class Circle2D(CircleMixin, ClosedCurve):
         y1 = m * x1 + c
         y2 = m * x2 + c
         return [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]
+
+    def line_intersections(self, line2d: Line2D, abs_tol=1e-9):
+        """
+        Calculates the intersections between a circle 2D and Line 2D.
+
+        :param line2d: line to calculate intersections
+        :param abs_tol: tolerance to consider in calculations.
+        :return: circle and line intersections.
+        """
+        if line2d.point_distance(self.center) > self.radius + abs_tol:
+            return []
+        if line2d.point_belongs(self.center):
+            direction_vector = line2d.unit_direction_vector()
+            return [self.center + self.radius * direction_vector, self.center - self.radius * direction_vector]
+        if not self.center.is_close(volmdlr.O2D):
+            local_line = line2d.frame_mapping(self.frame, 'new')
+            local_circle = self.frame_mapping(self.frame, 'new')
+            local_line_intersections = local_circle.line_intersections(local_line)
+            return [self.frame.local_to_global_coordinates(point) for point in local_line_intersections]
+        return self._helper_line_intersections(line2d)
 
     def linesegment_intersections(self, linesegment: 'volmdlr.edges.LineSegment2D', tol=1e-9):
         """
@@ -1563,8 +1609,6 @@ class Circle3D(CircleMixin, ClosedCurve):
         self.angle = 2 * math.pi
         ClosedCurve.__init__(self, name=name)
 
-
-
     @property
     def normal(self):
         """
@@ -1573,13 +1617,25 @@ class Circle3D(CircleMixin, ClosedCurve):
         return self.frame.w
 
     def __hash__(self):
-        return hash(self.frame.origin)
+        return hash(('circle3d', self.frame, self.radius))
 
     def __eq__(self, other_circle):
-        return self.frame.origin.is_close(other_circle.frame.origin) \
-            and self.frame.w.is_colinear_to(other_circle.frame.w) \
-            and math.isclose(self.radius,
-                             other_circle.radius, abs_tol=1e-06)
+        if self.__class__.__name__ != other_circle.__class__.__name__:
+            return False
+
+        return self.frame == other_circle.frame and self.radius == other_circle.radius
+
+    def is_close(self, other_circle, abs_tol: float = 1e-6):
+        """
+        Verifies if two circles are the same, up to given tolerance.
+
+        :param other_circle: other_circle.
+        :param abs_tol: tolerance used
+        :return:
+        """
+        return self.frame.origin.is_close(other_circle.frame.origin, abs_tol) \
+            and self.frame.w.is_colinear_to(other_circle.frame.w, abs_tol) \
+            and math.isclose(self.radius, other_circle.radius, abs_tol=abs_tol)
 
     def __getitem__(self, key):
         if key == 0:
@@ -1830,8 +1886,8 @@ class Circle3D(CircleMixin, ClosedCurve):
         :param (Point3D) point1: The first point on the circumference of the circle.
         :param (Point3D) point2: The second point on the circumference of the circle.
         :param (Point3D) point3: The third point on the circumference of the circle.
-
-        return: A Circle3D object that represents the circle uniquely defined by the three input points.
+        :param name: new obejct's name.
+        :return: A Circle3D object that represents the circle uniquely defined by the three input points.
 
         :raise ZeroDivisionError: If the three input points are not distinct, a ZeroDivisionError is raised.
         :raise ZeroDivisionError: If the start, end, and interior points of the arc are not distinct,
@@ -2057,7 +2113,28 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         ClosedCurve.__init__(self, name=name)
 
     def __hash__(self):
-        return hash((self.center, self.major_dir, self.major_axis, self.minor_axis))
+        return hash(("ellipse2d", self.frame, self.major_axis, self.minor_axis))
+
+    def __eq__(self, other_ellipse2d):
+        if self.__class__ != other_ellipse2d.__class__:
+            return False
+        return (self.frame == other_ellipse2d.frame and
+                self.major_axis == other_ellipse2d.major_axis and
+                self.minor_axis == other_ellipse2d.minor_axis)
+
+    def is_close(self, other_ellipse2d, abs_tol: float = 1e-6):
+        """
+        Verifies if two ellipse are the same, up to given tolerance.
+
+        :param other_ellipse2d: other ellipse.
+        :param abs_tol: tolerance used
+        :return:
+        """
+        if self.__class__ != other_ellipse2d.__class__:
+            return False
+        return (self.frame.is_close(other_ellipse2d.frame, abs_tol) and
+                math.isclose(self.major_axis, other_ellipse2d.major_axis, abs_tol=abs_tol) and
+                math.isclose(self.minor_axis, other_ellipse2d.minor_axis, abs_tol=abs_tol))
 
     def __getitem__(self, key):
         if key == 0:
@@ -2373,6 +2450,30 @@ class Ellipse3D(EllipseMixin, ClosedCurve):
         self._bbox = None
         ClosedCurve.__init__(self, name=name)
 
+    def __hash__(self):
+        return hash(("ellipse3d", self.frame, self.major_axis, self.minor_axis))
+
+    def __eq__(self, other_ellipse3d):
+        if self.__class__ != other_ellipse3d.__class__:
+            return False
+        return (self.frame == other_ellipse3d.frame and
+                self.major_axis == other_ellipse3d.major_axis and
+                self.minor_axis == other_ellipse3d.minor_axis)
+
+    def is_close(self, other_ellipse3d, abs_tol: float = 1e-6):
+        """
+        Verifies if two ellipse are the same, up to given tolerance.
+
+        :param other_ellipse3d: other ellipse.
+        :param abs_tol: tolerance used
+        :return:
+        """
+        if self.__class__ != other_ellipse3d.__class__:
+            return False
+        return (self.frame.is_close(other_ellipse3d.frame, abs_tol) and
+                math.isclose(self.major_axis, other_ellipse3d.major_axis, abs_tol=abs_tol) and
+                math.isclose(self.minor_axis, other_ellipse3d.minor_axis, abs_tol=abs_tol))
+
     def __getitem__(self, key):
         if key == 0:
             return self.major_axis
@@ -2425,7 +2526,6 @@ class Ellipse3D(EllipseMixin, ClosedCurve):
         new_point = self.frame.global_to_local_coordinates(point)
         return math.isclose(new_point.x ** 2 / self.major_axis ** 2 +
                             new_point.y ** 2 / self.minor_axis ** 2, 1.0, abs_tol=tol)
-
 
     def discretization_points(self, *, number_points: int = None, angle_resolution: int = 20):
         """
@@ -2495,7 +2595,7 @@ class Ellipse3D(EllipseMixin, ClosedCurve):
         point2d = self.self_2d.point_at_abscissa(abscissa)
         return point2d.to_3d(self.center, self.frame.u, self.frame.v)
 
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, abs_tol: float = 1e-6):
         """
         Trims an ellipse between two points.
 
@@ -2503,12 +2603,13 @@ class Ellipse3D(EllipseMixin, ClosedCurve):
         :param point2: point2 used to trim ellipse.
         :param same_sense: indicates whether the curve direction agrees with (True) or is in the opposite
                direction (False) to the edge direction. By default, it's assumed True
+        :param abs_tol: tolerance between points to consider a full arc of ellipse.
         :return: arc of ellipse between these two points.
         """
         ellipse = self
         if not same_sense:
             ellipse = self.reverse()
-        if point1.is_close(point2):
+        if point1.is_close(point2, abs_tol):
             return volmdlr.edges.FullArcEllipse3D(ellipse, point1, self.name)
         return volmdlr.edges.ArcEllipse3D(ellipse, point1, point2)
 
@@ -2649,6 +2750,28 @@ class HyperbolaMixin(Curve):
         self.semi_minor_axis = semi_minor_axis
         Curve.__init__(self, name=name)
 
+    def __eq__(self, other):
+        if self.frame != other.frame:
+            return False
+        if self.semi_major_axis != other.semi_major_axis or not self.semi_minor_axis != other.semi_minor_axis:
+            return False
+        return True
+
+    def is_close(self, other, abs_tol: float = 1e-6):
+        """
+        Verifies if two Hyperbolas are the same, up to given tolerance.
+
+        :param other: other hyperbola.
+        :param abs_tol: tolerance used
+        :return:
+        """
+        if self.frame.is_close(other.frame):
+            return False
+        if not math.isclose(self.semi_major_axis, other.semi_major_axis, abs_tol=abs_tol) or\
+                not math.isclose(self.semi_minor_axis, other.semi_minor_axis, abs_tol=abs_tol):
+            return False
+        return True
+
     def __getitem__(self, key):
         if key == 0:
             return self.frame
@@ -2694,9 +2817,8 @@ class HyperbolaMixin(Curve):
         _lineseg_class = getattr(volmdlr.edges, 'LineSegment'+self.__class__.__name__[-2:])
         local_split_start = self.frame.global_to_local_coordinates(point1)
         local_split_end = self.frame.global_to_local_coordinates(point2)
-        max_y = max(local_split_start.y, local_split_end.y)
-        min_y = min(local_split_start.y, local_split_end.y)
-        hyperbola_points = self.get_points(min_y, max_y, 3)
+        hyperbola_points = self.get_points(min(local_split_start.y, local_split_end.y),
+                                           max(local_split_start.y, local_split_end.y), 3)
         if not hyperbola_points[0].is_close(point1):
             hyperbola_points = hyperbola_points[::-1]
         start_tangent = self.tangent(hyperbola_points[0])
@@ -2707,9 +2829,8 @@ class HyperbolaMixin(Curve):
         point, weight1 = hyperbola_parabola_control_point_and_weight(
             hyperbola_points[0], start_tangent, hyperbola_points[2], end_tangent, hyperbola_points[1])
         knotvector = generate_knot_vector(2, 3)
-        knot_multiplicity = [1] * len(knotvector)
 
-        bspline = _bspline_class(2, [point1, point, point2], knot_multiplicity, knotvector, [1, weight1, 1])
+        bspline = _bspline_class(2, [point1, point, point2], [1] * len(knotvector), knotvector, [1, weight1, 1])
         return bspline
 
 
@@ -2726,14 +2847,9 @@ class Hyperbola2D(HyperbolaMixin):
         self.semi_major_axis = semi_major_axis
         self.semi_minor_axis = semi_minor_axis
         HyperbolaMixin.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
-  
-    def __eq__(self, other):
-        if self.frame != other.frame:
-            return False
-        if not math.isclose(self.semi_major_axis, other.semi_major_axis, abs_tol=1e-6) or\
-                not math.isclose(self.semi_minor_axis, other.semi_minor_axis, abs_tol=1e-6):
-            return False
-        return True
+
+    def __hash__(self):
+        return hash(('hyperbola2d', self.frame, self.semi_minor_axis, self.semi_major_axis))
 
     def get_points(self, min_y: float = None, max_y: float = None, number_points: int = 30):
         """
@@ -2875,6 +2991,9 @@ class Hyperbola3D(HyperbolaMixin):
     def __init__(self, frame: volmdlr.Frame3D, semi_major_axis, semi_minor_axis, name: str = ''):
         self._self_2d = None
         HyperbolaMixin.__init__(self, frame, semi_major_axis, semi_minor_axis, name=name)
+
+    def __hash__(self):
+        return hash(('hyperbola3d', self.frame, self.semi_minor_axis, self.semi_major_axis))
 
     @property
     def self_2d(self):
@@ -3028,6 +3147,23 @@ class ParabolaMixin(Curve):
             return self.focal_length
         raise IndexError
 
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        return self.frame == other.frame and self.focal_length == other.focal_length
+
+    def is_close(self, other, abs_tol: float = 1e-6):
+        """
+        Verifies if two Parabolas are the same, up to given tolerance.
+
+        :param other: other parabola.
+        :param abs_tol: tolerance used
+        :return:
+        """
+        if self.__class__ != other.__class__:
+            return False
+        return self.frame.is_close(other.frame, abs_tol) and abs(self.focal_length - other.focal_length) < abs_tol
+
     def _get_y(self, x):
         """
         Evaluate the y-coordinate of the parabola at a given x-coordinate.
@@ -3072,6 +3208,9 @@ class Parabola2D(ParabolaMixin):
         self.frame = frame
         self.vrtx_equation_a = 1 / (4 * focal_length)
         ParabolaMixin.__init__(self, name=name)
+
+    def __hash__(self):
+        return hash(('parabola2d', self.frame, self.focal_length))
 
     def get_points(self, min_x: float = None, max_x: float = None, number_points: int = 30):
         """
