@@ -93,9 +93,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if not self.bounding_box.point_belongs(point3d, 1e-3):
             return False
         point2d = self.surface3d.point3d_to_2d(point3d)
-        # check_point3d = self.surface3d.point2d_to_3d(point2d)
-        # if check_point3d.point_distance(point3d) > tol:
-        if not self.surface3d.point_on_surface(point3d, tol):
+        if not self.surface3d.point_belongs(point3d, tol):
             return False
 
         return self.surface2d.point_belongs(point2d)
@@ -1868,6 +1866,42 @@ class PlaneFace3D(Face3D):
         return cls(plane3d, surface, name)
 
 
+class PeriodicalFaceMixin:
+    """
+    Abstract method for mutualizing methods for faces constructed on periodic surfaces.
+    """
+
+    def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6) -> bool:
+        """
+        Checks if a 3D point lies on the ConicalFace3D.
+
+        :param point3d: The 3D point to be checked.
+        :type point3d: volmdlr.Point3D
+
+        :param tol: Tolerance for the check.
+        :type tol: float, optional
+
+        :return: True if the point is on the ConicalFace3D, False otherwise.
+        :rtype: bool
+        """
+        if not self.surface3d.point_belongs(point3d, tol):
+            return False
+        point2d = self.surface3d.point3d_to_2d(point3d)
+        u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
+        if self.surface3d.x_periodicity:
+            if point2d.x < u_min:
+                point2d.x += self.surface3d.x_periodicity
+            elif point2d.x > u_max:
+                point2d.x -= self.surface3d.x_periodicity
+        if self.surface3d.y_periodicity:
+            if point2d.y < v_min:
+                point2d.y += self.surface3d.y_periodicity
+            elif point2d.y > v_max:
+                point2d.y -= self.surface3d.y_periodicity
+
+        return self.surface2d.point_belongs(point2d)
+
+
 class Triangle3D(PlaneFace3D):
     """
     Defines a Triangle3D class.
@@ -2204,7 +2238,7 @@ class Triangle3D(PlaneFace3D):
         return self.planeface_minimum_distance(triangle_face, return_points)
 
 
-class CylindricalFace3D(Face3D):
+class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
     """
     Defines a CylindricalFace3D class.
 
@@ -2262,22 +2296,7 @@ class CylindricalFace3D(Face3D):
             lines.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, zmin), volmdlr.Point2D(theta, zmax)))
         return lines, []
 
-    def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6):
-        """
-        Tells you if a point is on the 3D Cylindrical face and inside its contour.
-        """
-        point2d = self.surface3d.point3d_to_2d(point3d)
-        point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
-        point2d_minus_2pi = point2d.translation(volmdlr.Point2D(-volmdlr.TWO_PI, 0))
-        # check_point3d = self.surface3d.point2d_to_3d(point2d)
-        # if check_point3d.point_distance(point3d) > tol:
-        if not self.surface3d.point_on_surface(point3d, tol):
-            return False
-        return any(self.surface2d.point_belongs(pt2d) for pt2d in [point2d, point2d_plus_2pi, point2d_minus_2pi])
-
     def parametrized_grid_size(self, angle_resolution, z_resolution):
-        # angle_resolution = 5
-        # z_resolution = 0
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         number_points_x = max(angle_resolution, int(delta_theta * angle_resolution))
@@ -2381,7 +2400,7 @@ class CylindricalFace3D(Face3D):
         return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
 
 
-class ToroidalFace3D(Face3D):
+class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
     """
     Defines a ToroidalFace3D class.
 
@@ -2552,7 +2571,7 @@ class ToroidalFace3D(Face3D):
         return planeface_intersections
 
 
-class ConicalFace3D(Face3D):
+class ConicalFace3D(PeriodicalFaceMixin, Face3D):
     """
     Defines a ConicalFace3D class.
 
@@ -2564,13 +2583,7 @@ class ConicalFace3D(Face3D):
 
     """
 
-    min_x_density = 5
-    min_y_density = 1
-
     def __init__(self, surface3d: surfaces.ConicalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
-        surface2d_br = surface2d.bounding_rectangle()
-        if surface2d_br[0] < 0:
-            surface2d = surface2d.translation(volmdlr.Vector2D(2 * math.pi, 0))
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
 
@@ -2631,8 +2644,6 @@ class ConicalFace3D(Face3D):
         Cut a rectangular piece of the ConicalSurface3D object and return a ConicalFace3D object.
 
         """
-        # theta1 = angle_principal_measure(theta1)
-        # theta2 = angle_principal_measure(theta2)
         if theta1 < 0:
             theta1, theta2 = theta1 + 2 * math.pi, theta2 + 2 * math.pi
         if theta1 == theta2:
@@ -2683,28 +2694,6 @@ class ConicalFace3D(Face3D):
         point2 = self.surface3d.frame.origin + self.surface3d.frame.w * zmax
         return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
 
-    def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6):
-        """
-        Tells you if a point is on the 3D conical face and inside its contour.
-        """
-        if not self.bounding_box.point_belongs(point3d):
-            return False
-        x, y, z = self.surface3d.frame.global_to_local_coordinates(point3d)
-        radius = z * math.tan(self.surface3d.semi_angle)
-        point2d = volmdlr.Point2D(0, z)
-        if radius != 0.0:
-            theta = volmdlr.geometry.sin_cos_angle(x / radius, y / radius)
-            if abs(theta) < 1e-9:
-                theta = 0.0
-            point2d = volmdlr.Point2D(theta, z)
-
-        point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
-        check_point3d = self.surface3d.point2d_to_3d(self.surface3d.point3d_to_2d(point3d))
-        if check_point3d.point_distance(point3d) > tol:
-            return False
-
-        return self.surface2d.point_belongs(point2d) or self.surface2d.point_belongs(point2d_plus_2pi)
-
     def circle_inside(self, circle: volmdlr_curves.Circle3D):
         """
         Verifies if a circle 3D lies completely on the Conical face.
@@ -2721,7 +2710,7 @@ class ConicalFace3D(Face3D):
         return True
 
 
-class SphericalFace3D(Face3D):
+class SphericalFace3D(PeriodicalFaceMixin, Face3D):
     """
     Defines a SpehericalFace3D class.
 

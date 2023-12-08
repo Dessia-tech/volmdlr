@@ -1266,6 +1266,18 @@ class Surface3D(DessiaObject):
         """
         return False
 
+    def point_belongs(self, point3d, abs_tol: float = 1e-6):
+        """
+        Verifies if point is on Toroidal Surface 3D.
+
+        :param point3d: other point.
+        :param abs_tol: tolerance.
+        :return: True or False.
+        """
+        if self.point_distance(point3d) < abs_tol:
+            return True
+        return False
+
 
 class Plane3D(Surface3D):
     """
@@ -1405,7 +1417,7 @@ class Plane3D(Surface3D):
         angle = math.acos(self.frame.w.dot(plane2.frame.w))
         return angle
 
-    def point_on_surface(self, point, abs_tol: float = 1e-6):
+    def point_belongs(self, point, abs_tol: float = 1e-6):
         """
         Return if the point belongs to the plane at a tolerance of 1e-6.
 
@@ -1491,7 +1503,7 @@ class Plane3D(Surface3D):
         if not isinstance(self, plane2.__class__):
             return False
         if self.is_parallel(plane2, abs_tol):
-            if plane2.point_on_surface(self.frame.origin, abs_tol):
+            if plane2.point_belongs(self.frame.origin, abs_tol):
                 return True
         return False
 
@@ -2613,7 +2625,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             return True
         return False
 
-    def point_on_surface(self, point3d, abs_tol: float = 1e-5):
+    def point_belongs(self, point3d, abs_tol: float = 1e-5):
         """
         Verifies if a given point is on the CylindricalSurface3D.
 
@@ -3339,7 +3351,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis >= self.outer_radius:
             return []
-        if plane3d.point_on_surface(self.frame.origin):
+        if plane3d.point_belongs(self.frame.origin):
             return self._helper_parallel_plane_intersections_through_origin(plane3d)
         if math.isclose(distance_plane_cylinder_axis, self.inner_radius, abs_tol=1e-6):
             point_projection = plane3d.point_projection(self.frame.origin)
@@ -3372,7 +3384,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis > self.minor_radius:
             return []
-        if plane3d.point_on_surface(self.frame.origin):
+        if plane3d.point_belongs(self.frame.origin):
             circle1 = curves.Circle3D(self.frame, self.outer_radius)
             circle2 = curves.Circle3D(self.frame, self.inner_radius)
             return [circle1, circle2]
@@ -3453,7 +3465,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 return []
         points_intersections = self._plane_intersection_points(plane3d)
         inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
-        if len(inters_points) == 1 and plane3d.point_on_surface(self.frame.origin):
+        if len(inters_points) == 1 and plane3d.point_belongs(self.frame.origin):
             return self.get_villarceau_circles(plane3d)
         return [edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
                 for list_points in inters_points]
@@ -3535,18 +3547,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         if math.isclose(abs(self.frame.w.dot(surface3d.frame.w)), 1.0, abs_tol=abs_tol) and \
                 math.isclose(self.major_radius, surface3d.major_radius, abs_tol=abs_tol) and \
                 math.isclose(self.minor_radius, surface3d.minor_radius, abs_tol=abs_tol):
-            return True
-        return False
-
-    def point_on_surface(self, point3d, abs_tol: float = 1e-6):
-        """
-        Verifies if point is on Toroidal Surface 3D.
-
-        :param point3d: other point.
-        :param abs_tol: tolerance.
-        :return: True or False.
-        """
-        if self.point_distance(point3d) < abs_tol:
             return True
         return False
 
@@ -4036,7 +4036,7 @@ class ConicalSurface3D(PeriodicalSurface):
         plane_intersections_line = curves.Line3D(line_plane_intersections_points[0],
                                                  line_plane_intersections_points[1])
 
-        if plane3d.point_on_surface(self.frame.origin):
+        if plane3d.point_belongs(self.frame.origin):
             return self._helper_parallel_plane_intersection_through_origin(plane_intersections_line)
 
         if not self.frame.w.is_close(volmdlr.Z3D):
@@ -7556,7 +7556,7 @@ class BSplineSurface3D(Surface3D):
                 vector_list.append(vector)
                 if len(points) == 3:
                     plane3d = Plane3D.from_3_points(*points)
-                    if all(plane3d.point_on_surface(point) for point in self.control_points):
+                    if all(plane3d.point_belongs(point) for point in self.control_points):
                         return plane3d
                     break
         return self
