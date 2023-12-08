@@ -1868,12 +1868,12 @@ class PlaneFace3D(Face3D):
 
 class PeriodicalFaceMixin:
     """
-    Abstract method for mutualizing methods for faces constructed on periodic surfaces.
+    Abstract class for mutualizing methods for faces constructed on periodic surfaces.
     """
 
     def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6) -> bool:
         """
-        Checks if a 3D point lies on the ConicalFace3D.
+        Checks if a 3D point lies on the face.
 
         :param point3d: The 3D point to be checked.
         :type point3d: volmdlr.Point3D
