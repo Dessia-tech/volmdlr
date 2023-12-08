@@ -28,8 +28,8 @@ class TestLineSegment2D(unittest.TestCase):
 
     def test_get_shared_section(self):
         shared_section1 = self.lineseg1.get_shared_section(self.lineseg2)
-        self.assertEqual(shared_section1[0].start, volmdlr.Point2D(0.0, 3.0))
-        self.assertEqual(shared_section1[0].end, volmdlr.Point2D(0.0, 2.0))
+        self.assertEqual(shared_section1[0].start, volmdlr.Point2D(0.0, 2.0))
+        self.assertEqual(shared_section1[0].end, volmdlr.Point2D(0.0, 3.0))
         self.assertFalse(self.lineseg1.get_shared_section(self.lineseg3))
         shared_section3 = self.lineseg3.get_shared_section(self.lineseg4)
         self.assertTrue(shared_section3[0], self.lineseg4)
