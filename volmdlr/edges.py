@@ -3589,6 +3589,7 @@ class FullArc2D(FullArcMixin, Arc2D):
 
 
 class ArcEllipseMixin:
+    """Abstract class for ArcEllipses."""
     def get_shared_section(self, other_arcelipse, abs_tol: float = 1e-6):
         """
         Gets the shared section between two arcs of ellipse.
