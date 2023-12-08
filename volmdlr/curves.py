@@ -1394,15 +1394,15 @@ class Circle2D(CircleMixin, ClosedCurve):
         y2 = m * x2 + c
         return [volmdlr.Point2D(x1, y1), volmdlr.Point2D(x2, y2)]
 
-    def line_intersections(self, line2d: Line2D, tol=1e-9):
+    def line_intersections(self, line2d: Line2D, abs_tol=1e-9):
         """
         Calculates the intersections between a circle 2D and Line 2D.
 
         :param line2d: line to calculate intersections
-        :param tol: tolerance to consider in calculations.
+        :param abs_tol: tolerance to consider in calculations.
         :return: circle and line intersections.
         """
-        if line2d.point_distance(self.center) > self.radius + tol:
+        if line2d.point_distance(self.center) > self.radius + abs_tol:
             return []
         if line2d.point_belongs(self.center):
             direction_vector = line2d.unit_direction_vector()

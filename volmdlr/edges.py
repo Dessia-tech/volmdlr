@@ -936,11 +936,11 @@ class BSplineCurve(Edge):
             return common_check and self.weights == other.weights
         return False
 
-    def _data_eq(self, other):
+    def _data_eq(self, other_object):
         """
         Defines dessia common object equality.
         """
-        return self == other
+        return self == other_object
 
     @property
     def control_points(self):
@@ -1173,24 +1173,24 @@ class BSplineCurve(Edge):
         return [getattr(volmdlr, vector_name)(*point)
                 for point in derivatives_curve(datadict, u, order)]
 
-    def split(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
+    def split(self, split_point: Union[volmdlr.Point2D, volmdlr.Point3D],
               tol: float = 1e-6):
         """
         Splits of B-spline curve in two pieces using a 2D or 3D point.
 
-        :param point: The point where the B-spline curve is split
-        :type point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
+        :param split_point: The point where the B-spline curve is split
+        :type split_point: Union[:class:`volmdlr.Point2D`, :class:`volmdlr.Point3D`]
         :param tol: The precision in terms of distance. Default value is 1e-6
         :type tol: float, optional
         :return: A list containing the first and second split of the B-spline
             curve
         :rtype: List[:class:`volmdlr.edges.BSplineCurve`]
         """
-        if point.is_close(self.start, tol):
+        if split_point.is_close(self.start, tol):
             return [None, self.copy()]
-        if point.is_close(self.end, tol):
+        if split_point.is_close(self.end, tol):
             return [self.copy(), None]
-        parameter = round(self.point_to_parameter(point), 12)
+        parameter = round(self.point_to_parameter(split_point), 12)
         return split_curve(self, parameter)
 
     def get_reverse(self):
@@ -1803,12 +1803,12 @@ class BSplineCurve(Edge):
         raise NotImplementedError(f"is_shared_section_possible is not yet implemented by {self.__class__.__name__}")
 
     @staticmethod
-    def _get_shared_section_from_split(bspline1_, bspline2_, other_bspline2, abs_tol):
+    def _get_shared_section_from_split(edge1, edge2, other_bspline2, abs_tol):
         """
         Helper function to get_shared_section.
         """
         shared_bspline_section = []
-        for bspline in [bspline1_, bspline2_]:
+        for bspline in [edge1, edge2]:
             if bspline and all(other_bspline2.point_belongs(point, abs_tol=abs_tol)
                                for point in bspline.discretization_points(number_points=10)):
                 shared_bspline_section.append(bspline)
