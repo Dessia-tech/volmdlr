@@ -1500,6 +1500,8 @@ class ContourMixin(WireMixin):
         :param tol: tolerance to be considered.
         :return: True if ordered, False if not.
         """
+        if len(self.primitives) == 1 and self.primitives[0].length() <= tol:
+            return False
         if len(self.primitives) == 2 and self.primitives[0].direction_independent_is_close(self.primitives[1]):
             return False
         for prim1, prim2 in zip(self.primitives, self.primitives[1:] + [self.primitives[0]]):
@@ -2282,7 +2284,7 @@ class Contour2D(ContourMixin, Wire2D):
         intersections = self.line_crossings(line)
         if not intersections or len(intersections) < 2:
             return [self]
-        points_intersections = [point for point, prim in intersections]
+        points_intersections = [point for point, _ in intersections]
         sorted_points = line.sort_points_along_curve(points_intersections)
         list_contours = []
         contour_to_cut = self
@@ -2302,7 +2304,8 @@ class Contour2D(ContourMixin, Wire2D):
                     list_contours.append(contour1)
             else:
                 list_contours.extend([contour1, contour2])
-
+        if not list_contours:
+            return [self]
         return list_contours
 
     def split_by_line(self, line: curves.Line2D) -> List['Contour2D']:
@@ -4179,7 +4182,6 @@ class Contour3D(ContourMixin, Wire3D):
             edge = object_dict[int(edge_id[1:])]
             if edge:
                 raw_edges.append(edge)
-
         if step_name == "POLY_LOOP":
             return cls.from_points(raw_edges)
         if (len(raw_edges)) == 1:
