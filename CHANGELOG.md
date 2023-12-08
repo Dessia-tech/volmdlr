@@ -11,8 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added missing hash and eq methods to several classes
 - ArcEllipse2D/3D: get_shared_section and delete_shared_section.
 
+#### faces.py
+- Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
+
 ### Fixed
 - review hash and eq methods
+
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 
@@ -40,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### step.py
 - Step: uses Regular Expressions to improve the performance.
 
+#### core.py
+- Add missing dark_mode parameter in save_babylonjs_to_file method.
 
 ### Refactor
 - Big refactor to improve and simplify complex and long methods in various modules. 
