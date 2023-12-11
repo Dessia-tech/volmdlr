@@ -9,11 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - added missing hash and eq methods to several classes
+- ArcEllipse2D/3D: get_shared_section and delete_shared_section.
+
+#### faces.py
+- Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
 
 ### Fixed
 - review hash and eq methods
+
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
+- Circle2D: abscissa method - consider frame direction during rotation.
 
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
@@ -23,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - Face3D: enhance from_contours3d.
 - Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
+- Face3D: point_belongs
+
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
 - ExtrusionSurface3D: fullarcellipse3d_to_2d
@@ -37,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### step.py
 - Step: uses Regular Expressions to improve the performance.
 
+#### core.py
+- Add missing dark_mode parameter in save_babylonjs_to_file method.
 
 ### Refactor
 - Big refactor to improve and simplify complex and long methods in various modules. 
@@ -46,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Edge.split_between_two_points -> trim
+- surfaces.py: point_on_surface -> point_belongs
 
 ### Unittests
 - 
@@ -73,6 +84,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - BsplineCurve3D: circle_intersections.
 - ArcEllipse3D/FullArcEllipse3D: line_intersections.
+
+#### faces.py
+- Face3D: get_face_polygons
 
 #### curves.py
 - Circle3D: point_distance.
