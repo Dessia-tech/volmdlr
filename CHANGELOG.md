@@ -81,6 +81,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BsplineCurve3D: circle_intersections.
 - ArcEllipse3D/FullArcEllipse3D: line_intersections.
 
+#### faces.py
+- Face3D: get_face_polygons
+
 #### curves.py
 - Circle3D: point_distance.
 #### shell.py
