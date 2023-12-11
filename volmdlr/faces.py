@@ -2419,6 +2419,11 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         return True
 
     def planeface_intersections(self, planeface: PlaneFace3D):
+        """
+        Finds intersections with the given plane face.
+
+        :param planeface: Plane face to evaluate the intersections.
+        """
         planeface_intersections = planeface.cylindricalface_intersections(self)
         return planeface_intersections
 
@@ -3342,7 +3347,9 @@ class BSplineFace3D(Face3D):
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_uv(self, other_bspline_face3d, corresponding_directions):
-
+        """
+        Returns the sides that are adjacents to other BSpline face.
+        """
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]

@@ -3677,6 +3677,12 @@ class ConicalSurface3D(PeriodicalSurface):
         return list_generatrices
 
     def get_circle_generatrices(self, z, number_circles: int):
+        """
+        Get circles generatrix of the cone.
+
+        :param z: height of cone
+        :param number_circles: number of expected circles.
+        """
         circles = []
         for i_z in npy.linspace(0, z, number_circles):
             i_frame = self.frame.translation(i_z*self.frame.w)
@@ -8753,28 +8759,6 @@ class BSplineSurface3D(Surface3D):
                 BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v))
 
         return surfaces
-
-    def point_belongs(self, point3d):
-        """
-        Check if a point 3d belongs to the bspline_surface or not.
-
-        """
-
-        def fun(param):
-            p3d = self.point2d_to_3d(volmdlr.Point2D(param[0], param[1]))
-            return point3d.point_distance(p3d)
-
-        x = npy.linspace(0, 1, 5)
-        x_init = []
-        for xi in x:
-            for yi in x:
-                x_init.append((xi, yi))
-
-        for x0 in x_init:
-            z = least_squares(fun, x0=x0, bounds=([0, 1]))
-            if z.fun < 1e-10:
-                return True
-        return False
 
     def is_intersected_with(self, other_bspline_surface3d):
         """
