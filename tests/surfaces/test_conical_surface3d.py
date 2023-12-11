@@ -1,7 +1,7 @@
 import math
 import unittest
 import os
-
+from dessia_common.core import DessiaObject
 import volmdlr
 import volmdlr.edges as vme
 from volmdlr import curves, surfaces, edges
@@ -196,6 +196,13 @@ class TestConicalSurface3D(unittest.TestCase):
                     self.assertTrue(intersection[1].is_close(expected_result[1]))
                 else:
                     self.assertAlmostEqual(intersection[1], expected_result[1])
+
+        conicalsurface, plane = DessiaObject.load_from_file(
+            os.path.join(folder, 'test_conicalsurface_plane_intersections081223.json')).primitives
+        intersections = conicalsurface.plane_intersections(plane)
+        self.assertEqual(len(intersections), 1)
+        self.assertEqual(intersections[0].__class__.__name__, 'Hyperbola3D')
+        self.assertAlmostEqual(intersections[0][1], 0.7708351267203888)
 
     def test_ellipse_intersections(self):
         conical_surface = surfaces.ConicalSurface3D(

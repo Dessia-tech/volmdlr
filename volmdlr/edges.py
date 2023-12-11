@@ -1349,7 +1349,7 @@ class BSplineCurve(Edge):
         results = [(abscissa, evaluate_point_distance(u))]
         initial_condition_list = npy.linspace(u_min, u_max, 10).tolist()
         initial_condition_list.sort(key=evaluate_point_distance)
-        for u0 in initial_condition_list[:2]:
+        for u0 in initial_condition_list:
             u, convergence_sucess = self.point_invertion(u0, point)
             if u_min != 0 or u_max != 1.0:
                 u = (u - u_min) / (u_max - u_min)
