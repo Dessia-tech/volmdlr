@@ -93,11 +93,11 @@ class TestCircle3D(unittest.TestCase):
 
     def test_from_center_normal(self):
         from_center_normal = curves.Circle3D.from_center_normal(volmdlr.O3D, circle3d.normal, 1)
-        self.assertEqual(from_center_normal, circle3d)
+        self.assertTrue(from_center_normal.is_close(circle3d))
 
     def test_from_3_points(self):
         from_3_points = curves.Circle3D.from_3_points(*self.list_points[:3])
-        assert from_3_points == circle3d
+        self.assertTrue(from_3_points.is_close(circle3d))
 
     def test_extrusion(self):
         extrusion = circle3d.extrusion(circle3d.normal)

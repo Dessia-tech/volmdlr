@@ -35,6 +35,11 @@ class TestConicalFace3D(unittest.TestCase):
                                   expected_pimitives):
             self.assertEqual(primitives_mapping.get(prim).__class__.__name__, expected)
 
+    def test_get_face_polygons(self):
+        outer_polygon, inner_polygons = self.conical_face.get_face_polygons()
+        self.assertAlmostEqual(outer_polygon.area(), 2 * math.pi)
+        self.assertAlmostEqual(inner_polygons[0].area(), 0.9032078879070156)
+
     def test_from_contours(self):
         buggy_conical_surface = DessiaObject.load_from_file(os.path.join(folder, "conical_surface1.json"))
         buggy_contours3d1 = DessiaObject.load_from_file(os.path.join(folder, 'face_from_contours1_0.json'))
@@ -120,6 +125,12 @@ class TestConicalFace3D(unittest.TestCase):
                     self.assertTrue(conical_face.point_belongs(points[j]))
                     continue
                 self.assertFalse(conical_face.point_belongs(points[j]))
+
+    def test_triangulation(self):
+        face = faces.ConicalFace3D.load_from_file(
+            os.path.join(folder, "conicalface_segfault_with_tri_opt_set_to_pq.json"))
+        mesh2d = face.triangulation()
+        self.assertIsNotNone(mesh2d)
 
 
 if __name__ == '__main__':

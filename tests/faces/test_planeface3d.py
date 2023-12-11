@@ -35,6 +35,14 @@ class TestPlaneFace3D(unittest.TestCase):
 
         self.assertEqual(1, len(face_intersections))
         self.assertAlmostEqual(0.003600000000881293, face_intersections[0].length())
+        face1, face2 = faces.PlaneFace3D.load_from_file(
+            os.path.join(folder, 'test_planef_inters291123.json')).primitives
+        face_intersections = face1.face_intersections(face2)
+        line_seg = edges.LineSegment3D(
+            volmdlr.Point3D(0.034031786272172244, 0.019018077708099396, 0.07196336225667499),
+            volmdlr.Point3D(0.03756212352555941, 0.022324611455208112, 0.07196336225667499)
+        )
+        self.assertTrue(face_intersections[0].primitives[0], line_seg)
 
     def test_face_inside(self):
         face2 = self.face.frame_mapping(volmdlr.Frame3D(volmdlr.Point3D(0, 0, 0), volmdlr.Vector3D(0.5, 0, 0),
@@ -167,6 +175,10 @@ class TestPlaneFace3D(unittest.TestCase):
         face_intersections = plane_face_3.face_intersections(face)
         self.assertEqual(face_intersections[0].primitives[0], edges.LineSegment3D(volmdlr.Point3D(0.0, 0.15, -0.25),
                                                                                   volmdlr.Point3D(0.0, 0.15, 0.25)))
+        """======= [] ==========="""
+        planeface, cylface = dessia_common.core.DessiaObject.load_from_file(
+            os.path.join(folder, 'test_planeface_cylindricalface_intersections_none.json')).primitives
+        self.assertFalse(planeface.face_intersections(cylface))
 
     def test_conical_face_intersections(self):
         def get_face(plane, x1=-1, x2=1, y1=-1, y2=1):
@@ -263,6 +275,16 @@ class TestPlaneFace3D(unittest.TestCase):
             self.assertEqual(len(solution), len(expected_solution))
             for solution_area, expected_solution_area in zip(solution, expected_solution):
                 self.assertAlmostEqual(solution_area, expected_solution_area)
+
+    def test_grid_points(self):
+        surface3d = surfaces.Plane3D(volmdlr.OXYZ)
+        outer_contour2d = wires.Contour2D.from_circle(curves.Circle2D.from_center_and_radius(volmdlr.O2D, 1.0))
+        inner_contour2d = wires.Contour2D.from_circle(curves.Circle2D.from_center_and_radius(volmdlr.O2D, 0.25,
+                                                                                             is_trigo=False))
+        surface2d = surfaces.Surface2D(outer_contour2d, [inner_contour2d])
+        face = faces.PlaneFace3D(surface3d, surface2d)
+        grid_points = face.grid_points([10, 10])
+        self.assertEqual(len(grid_points), 56)
 
 
 if __name__ == '__main__':
