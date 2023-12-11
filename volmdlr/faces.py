@@ -346,6 +346,8 @@ class Face3D(volmdlr.core.Primitive3D):
             outer_polygon, inner_polygons = self.get_face_polygons()
 
         u, v = self._get_grid_axis(outer_polygon, grid_size)
+        if not u or not v:
+            return []
         if inner_polygons:
             grid_points = []
             points_indexes_map = {}
@@ -366,8 +368,10 @@ class Face3D(volmdlr.core.Primitive3D):
         """Helper function to grid_points."""
         u_min, u_max, v_min, v_max = outer_polygon.bounding_rectangle.bounds()
         number_points_u, number_points_v = grid_size
-        u = np.linspace(u_min, u_max, num=int(number_points_u), dtype=np.float64)
-        v = np.linspace(v_min, v_max, num=int(number_points_v), dtype=np.float64)
+        u_step = (u_max - u_min) / (number_points_u - 1) if number_points_u > 1 else (u_max - u_min)
+        v_step = (v_max - v_min) / (number_points_v - 1) if number_points_v > 1 else (v_max - v_min)
+        u = [u_min + i * u_step for i in range(number_points_u)]
+        v = [v_min + i * v_step for i in range(number_points_v)]
 
         return u, v
 
