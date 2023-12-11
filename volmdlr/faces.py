@@ -222,6 +222,8 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
+        if step_id == 59666:
+            print(True)
         return face.from_contours3d(surface, contours, step_id)
 
     @classmethod
@@ -3279,14 +3281,16 @@ class ExtrusionFace3D(Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        angle_resolution = 10
-        number_points_x = 2
-        if self.surface3d.edge.__class__.__name__ == "BSplineCurve3D":
-            number_points_x = 25
-        elif self.surface3d.edge.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
-            number_points_x = max(2, math.ceil(self.surface3d.edge.angle / math.radians(angle_resolution)) + 1)
-
-        number_points_y = 2
+        # angle_resolution = 10
+        # number_points_x = 2
+        # if self.surface3d.edge.__class__.__name__ == "BSplineCurve3D":
+        #     number_points_x = 25
+        # elif self.surface3d.edge.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
+        #     number_points_x = max(2, math.ceil(self.surface3d.edge.angle / math.radians(angle_resolution)) + 1)
+        #
+        # number_points_y = 2
+        number_points_x = 0
+        number_points_y = 0
 
         return number_points_x, number_points_y
 
@@ -3460,8 +3464,8 @@ class BSplineFace3D(Face3D):
             resolution_u = max(15, resolution_u)
             resolution_v = max(15, resolution_v)
         delta_v = v_max - v_min
-        number_points_x = int(delta_u * resolution_u)
-        number_points_y = int(delta_v * resolution_v)
+        number_points_x = max(int(delta_u * resolution_u), int(delta_v * resolution_v))
+        number_points_y = number_points_x
 
         return number_points_x, number_points_y
 

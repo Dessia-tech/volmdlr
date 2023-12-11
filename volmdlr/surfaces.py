@@ -870,6 +870,25 @@ class Surface3D(DessiaObject):
                 primitives2d[0] = self.fix_undefined_brep_with_neighbors(primitives2d[0], primitives2d[-1],
                                                                          primitives2d[1])
                 primitives_mapping[primitives2d[0]] = primitives_mapping.pop(old_primitive)
+        self._helper_repair_primitives_periodicity(primitives2d, primitives_mapping,
+                                                   [x_periodicity, y_periodicity], tol)
+        if self.__class__.__name__ in ("SphericalSurface3D", "ConicalSurface3D", "RevolutionSurface3D"):
+            last_end = primitives2d[-1].end
+            first_start = primitives2d[0].start
+            if not last_end.is_close(first_start, tol=tol):
+                last_end_3d = self.point2d_to_3d(last_end)
+                first_start_3d = self.point2d_to_3d(first_start)
+                if last_end_3d.is_close(first_start_3d, 1e-6) and not self.is_singularity_point(last_end_3d):
+                    old_primitive = primitives2d[0]
+                    primitives2d[0] = primitives2d[0].translation(last_end - first_start)
+                    primitives_mapping[primitives2d[0]] = primitives_mapping.pop(old_primitive)
+                    self._helper_repair_primitives_periodicity(primitives2d, primitives_mapping,
+                                                               [x_periodicity, y_periodicity], tol)
+        self.check_parametric_contour_end(primitives2d, tol)
+
+    def _helper_repair_primitives_periodicity(self, primitives2d, primitives_mapping, periodicities, tol):
+        """Helper function ton repair_primitives_periodicity"""
+        x_periodicity, y_periodicity = periodicities
         i = 1
         while i < len(primitives2d):
             previous_primitive = primitives2d[i - 1]
@@ -908,7 +927,6 @@ class Surface3D(DessiaObject):
                 else:
                     self.repair_translation(primitives2d, primitives_mapping, i, delta)
             i += 1
-        self.check_parametric_contour_end(primitives2d, tol)
 
     def check_parametric_contour_end(self, primitives2d, tol):
         """Helper function to repair_primitives_periodicity."""
@@ -919,7 +937,7 @@ class Surface3D(DessiaObject):
         if not is_connected and self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                 self.is_singularity_point(self.point2d_to_3d(primitives2d[0].start)):
             primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start,
-                                                name="construction"))
+                                                    name="construction"))
 
     @staticmethod
     def repair_singularity(primitives2d, i, previous_primitive):
@@ -5079,8 +5097,7 @@ class SphericalSurface3D(PeriodicalSurface):
         if not last_end.is_close(first_start, tol=tol):
             last_end_3d = self.point2d_to_3d(last_end)
             first_start_3d = self.point2d_to_3d(first_start)
-            if last_end_3d.is_close(first_start_3d, 1e-6) and \
-                    not self.is_point2d_on_sphere_singularity(last_end):
+            if last_end_3d.is_close(first_start_3d, 1e-6) and not self.is_singularity_point(last_end_3d):
                 if first_start.x > last_end.x:
                     half_pi = -0.5 * math.pi
                 else:

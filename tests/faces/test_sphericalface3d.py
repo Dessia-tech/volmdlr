@@ -40,7 +40,15 @@ class TestSphericalFace3D(unittest.TestCase):
         contour = DessiaObject.load_from_file(
             os.path.join(folder, "sphericalsurface_contour3d_to_2d_bug_contour.json"))
         face = SphericalFace3D.from_contours3d(surface, [contour])
-        self.assertTrue(face.triangulation())
+        self.assertTrue(face.to_mesh())
+
+        surface = surfaces.SphericalSurface3D.load_from_file(
+            os.path.join(folder, "sphericalface_from_contours3d_repair_primitives_periodicity_surface.json"))
+        contour = DessiaObject.load_from_file(
+            os.path.join(folder, "sphericalface_from_contours3d_repair_primitives_periodicity_contour.json"))
+        face = SphericalFace3D.from_contours3d(surface, [contour])
+        self.assertAlmostEqual(face.surface2d.area(), math.pi * math.pi)
+        self.assertTrue(face.to_mesh())
 
     def test_grid_points(self):
         surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
