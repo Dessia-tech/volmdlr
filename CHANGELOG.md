@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - Face3D: enhance from_contours3d.
 - Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
+- Face3D: point_belongs
+
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
 - ExtrusionSurface3D: fullarcellipse3d_to_2d
@@ -53,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Edge.split_between_two_points -> trim
+- surfaces.py: point_on_surface -> point_belongs
 
 ### Unittests
 - 

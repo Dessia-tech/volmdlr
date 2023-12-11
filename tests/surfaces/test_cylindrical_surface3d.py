@@ -123,11 +123,11 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertFalse(cyl_surface1.is_coincident(plane_face))
         self.assertFalse(self.cylindrical_surface.is_coincident(cyl_surface1))
 
-    def test_point_on_surface(self):
+    def test_point_belongs(self):
         point = volmdlr.Point3D(0.32, 0, 1)
         point2 = volmdlr.Point3D(1, 1, 1)
-        self.assertTrue(self.cylindrical_surface.point_on_surface(point))
-        self.assertFalse((self.cylindrical_surface.point_on_surface(point2)))
+        self.assertTrue(self.cylindrical_surface.point_belongs(point))
+        self.assertFalse((self.cylindrical_surface.point_belongs(point2)))
 
     def test_arcellipse3d_to_2d(self):
         pass
