@@ -9,9 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 - added missing hash and eq methods to several classes
+- ArcEllipse2D/3D: get_shared_section and delete_shared_section.
+
+#### faces.py
+- Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
 
 ### Fixed
 - review hash and eq methods
+
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 
@@ -29,8 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
 - ToroidalSurface3D: increases precision of point3d_to_2d.
 
+#### wires.py
+- Contour2D: cut_by_line.
+- ContourMixin: is_ordered().
+
+
 #### step.py
 - Step: uses Regular Expressions to improve the performance.
+
+#### core.py
+- Add missing dark_mode parameter in save_babylonjs_to_file method.
 
 ### Refactor
 - Big refactor to improve and simplify complex and long methods in various modules. 
@@ -67,6 +80,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - BsplineCurve3D: circle_intersections.
 - ArcEllipse3D/FullArcEllipse3D: line_intersections.
+
+#### faces.py
+- Face3D: get_face_polygons
 
 #### curves.py
 - Circle3D: point_distance.
