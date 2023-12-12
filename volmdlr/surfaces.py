@@ -873,57 +873,54 @@ class Surface3D(DessiaObject):
         self._helper_repair_primitives_periodicity(primitives2d, primitives_mapping,
                                                    [x_periodicity, y_periodicity], tol)
         if self.__class__.__name__ in ("SphericalSurface3D", "ConicalSurface3D", "RevolutionSurface3D"):
-            last_end = primitives2d[-1].end
-            first_start = primitives2d[0].start
-            if not last_end.is_close(first_start, tol=tol):
-                last_end_3d = self.point2d_to_3d(last_end)
-                first_start_3d = self.point2d_to_3d(first_start)
+            delta = primitives2d[-1].end - primitives2d[0].start
+            if (math.isclose(abs(delta.x), x_periodicity, abs_tol=tol) or
+                    math.isclose(abs(delta.y), y_periodicity, abs_tol=tol)):
+                last_end_3d = self.point2d_to_3d(primitives2d[-1].end)
+                first_start_3d = self.point2d_to_3d(primitives2d[0].start)
                 if last_end_3d.is_close(first_start_3d, 1e-6) and not self.is_singularity_point(last_end_3d):
                     old_primitive = primitives2d[0]
-                    primitives2d[0] = primitives2d[0].translation(last_end - first_start)
+                    primitives2d[0] = primitives2d[0].translation(delta)
                     primitives_mapping[primitives2d[0]] = primitives_mapping.pop(old_primitive)
                     self._helper_repair_primitives_periodicity(primitives2d, primitives_mapping,
                                                                [x_periodicity, y_periodicity], tol)
         self.check_parametric_contour_end(primitives2d, tol)
 
     def _helper_repair_primitives_periodicity(self, primitives2d, primitives_mapping, periodicities, tol):
-        """Helper function ton repair_primitives_periodicity"""
+        """Helper function to repair_primitives_periodicity."""
         x_periodicity, y_periodicity = periodicities
         i = 1
         while i < len(primitives2d):
-            previous_primitive = primitives2d[i - 1]
-            current_primitive = primitives2d[i]
-            delta = previous_primitive.end - current_primitive.start
+            delta = primitives2d[i - 1].end - primitives2d[i].start
             distance = delta.norm()
-            is_connected = math.isclose(distance, 0, abs_tol=tol)
 
-            if not is_connected:
-                if math.isclose(current_primitive.length(), x_periodicity, abs_tol=tol) or \
-                        math.isclose(current_primitive.length(), y_periodicity, abs_tol=tol):
-                    delta_end = previous_primitive.end - current_primitive.end
+            if not math.isclose(distance, 0, abs_tol=tol):
+                if math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=tol) or \
+                        math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=tol):
+                    delta_end = primitives2d[i - 1].end - primitives2d[i].end
                     delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
                     if self.is_undefined_brep(primitives2d[i]):
-                        repair_undefined_brep(self, primitives2d, primitives_mapping, i, previous_primitive)
-                    elif self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
-                            self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
-                        self.repair_singularity(primitives2d, i, previous_primitive)
-                    elif current_primitive.end.is_close(previous_primitive.end, tol=tol):
+                        repair_undefined_brep(self, primitives2d, primitives_mapping, i, primitives2d[i - 1])
+                    elif self.is_singularity_point(self.point2d_to_3d(primitives2d[i - 1].end)) and \
+                            self.is_singularity_point(self.point2d_to_3d(primitives2d[i].start)):
+                        self.repair_singularity(primitives2d, i, primitives2d[i - 1])
+                    elif primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=tol):
                         self.repair_reverse(primitives2d, primitives_mapping, i)
                     elif delta_min_index == 0:
                         self.repair_translation(primitives2d, primitives_mapping, i, delta)
                     else:
                         old_primitive = primitives2d[i]
-                        new_primitive = current_primitive.reverse()
+                        new_primitive = primitives2d[i].reverse()
                         primitives2d[i] = new_primitive.translation(delta_end)
                         primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
 
-                elif current_primitive.end.is_close(previous_primitive.end, tol=tol):
+                elif primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=tol):
                     self.repair_reverse(primitives2d, primitives_mapping, i)
                 elif self.is_undefined_brep(primitives2d[i]):
-                    repair_undefined_brep(self, primitives2d, primitives_mapping, i, previous_primitive)
-                elif self.is_singularity_point(self.point2d_to_3d(previous_primitive.end), tol=1e-5) and \
-                        self.is_singularity_point(self.point2d_to_3d(current_primitive.start), tol=1e-5):
-                    self.repair_singularity(primitives2d, i, previous_primitive)
+                    repair_undefined_brep(self, primitives2d, primitives_mapping, i, primitives2d[i - 1])
+                elif self.is_singularity_point(self.point2d_to_3d(primitives2d[i - 1].end), tol=1e-5) and \
+                        self.is_singularity_point(self.point2d_to_3d(primitives2d[i].start), tol=1e-5):
+                    self.repair_singularity(primitives2d, i, primitives2d[i - 1])
                 else:
                     self.repair_translation(primitives2d, primitives_mapping, i, delta)
             i += 1
@@ -1384,6 +1381,18 @@ class Surface3D(DessiaObject):
         """
         return False
 
+    def point_belongs(self, point3d, abs_tol: float = 1e-6):
+        """
+        Verifies if point is on Toroidal Surface 3D.
+
+        :param point3d: other point.
+        :param abs_tol: tolerance.
+        :return: True or False.
+        """
+        if self.point_distance(point3d) < abs_tol:
+            return True
+        return False
+
 
 class Plane3D(Surface3D):
     """
@@ -1523,12 +1532,12 @@ class Plane3D(Surface3D):
         angle = math.acos(self.frame.w.dot(plane2.frame.w))
         return angle
 
-    def point_on_surface(self, point, abs_tol: float = 1e-6):
+    def point_belongs(self, point3d, abs_tol: float = 1e-6):
         """
         Return if the point belongs to the plane at a tolerance of 1e-6.
 
         """
-        if math.isclose(self.frame.w.dot(point - self.frame.origin), 0,
+        if math.isclose(self.frame.w.dot(point3d - self.frame.origin), 0,
                         abs_tol=abs_tol):
             return True
         return False
@@ -1609,7 +1618,7 @@ class Plane3D(Surface3D):
         if not isinstance(self, plane2.__class__):
             return False
         if self.is_parallel(plane2, abs_tol):
-            if plane2.point_on_surface(self.frame.origin, abs_tol):
+            if plane2.point_belongs(self.frame.origin, abs_tol):
                 return True
         return False
 
@@ -2732,7 +2741,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             return True
         return False
 
-    def point_on_surface(self, point3d, abs_tol: float = 1e-5):
+    def point_belongs(self, point3d, abs_tol: float = 1e-5):
         """
         Verifies if a given point is on the CylindricalSurface3D.
 
@@ -3458,7 +3467,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis >= self.outer_radius:
             return []
-        if plane3d.point_on_surface(self.frame.origin):
+        if plane3d.point_belongs(self.frame.origin):
             return self._helper_parallel_plane_intersections_through_origin(plane3d)
         if math.isclose(distance_plane_cylinder_axis, self.inner_radius, abs_tol=1e-6):
             point_projection = plane3d.point_projection(self.frame.origin)
@@ -3491,7 +3500,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis > self.minor_radius:
             return []
-        if plane3d.point_on_surface(self.frame.origin):
+        if plane3d.point_belongs(self.frame.origin):
             circle1 = curves.Circle3D(self.frame, self.outer_radius)
             circle2 = curves.Circle3D(self.frame, self.inner_radius)
             return [circle1, circle2]
@@ -3572,7 +3581,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 return []
         points_intersections = self._plane_intersection_points(plane3d)
         inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
-        if len(inters_points) == 1 and plane3d.point_on_surface(self.frame.origin):
+        if len(inters_points) == 1 and plane3d.point_belongs(self.frame.origin):
             return self.get_villarceau_circles(plane3d)
         return [edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
                 for list_points in inters_points]
@@ -3654,18 +3663,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         if math.isclose(abs(self.frame.w.dot(surface3d.frame.w)), 1.0, abs_tol=abs_tol) and \
                 math.isclose(self.major_radius, surface3d.major_radius, abs_tol=abs_tol) and \
                 math.isclose(self.minor_radius, surface3d.minor_radius, abs_tol=abs_tol):
-            return True
-        return False
-
-    def point_on_surface(self, point3d, abs_tol: float = 1e-6):
-        """
-        Verifies if point is on Toroidal Surface 3D.
-
-        :param point3d: other point.
-        :param abs_tol: tolerance.
-        :return: True or False.
-        """
-        if self.point_distance(point3d) < abs_tol:
             return True
         return False
 
@@ -3796,6 +3793,12 @@ class ConicalSurface3D(PeriodicalSurface):
         return list_generatrices
 
     def get_circle_generatrices(self, z, number_circles: int):
+        """
+        Get circles generatrix of the cone.
+
+        :param z: height of cone
+        :param number_circles: number of expected circles.
+        """
         circles = []
         for i_z in npy.linspace(0, z, number_circles):
             i_frame = self.frame.translation(i_z*self.frame.w)
@@ -4155,7 +4158,7 @@ class ConicalSurface3D(PeriodicalSurface):
         plane_intersections_line = curves.Line3D(line_plane_intersections_points[0],
                                                  line_plane_intersections_points[1])
 
-        if plane3d.point_on_surface(self.frame.origin):
+        if plane3d.point_belongs(self.frame.origin):
             return self._helper_parallel_plane_intersection_through_origin(plane_intersections_line)
 
         if not self.frame.w.is_close(volmdlr.Z3D):
@@ -7674,7 +7677,7 @@ class BSplineSurface3D(Surface3D):
                 vector_list.append(vector)
                 if len(points) == 3:
                     plane3d = Plane3D.from_3_points(*points)
-                    if all(plane3d.point_on_surface(point) for point in self.control_points):
+                    if all(plane3d.point_belongs(point) for point in self.control_points):
                         return plane3d
                     break
         return self
@@ -8871,28 +8874,6 @@ class BSplineSurface3D(Surface3D):
                 BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v))
 
         return surfaces
-
-    def point_belongs(self, point3d):
-        """
-        Check if a point 3d belongs to the bspline_surface or not.
-
-        """
-
-        def fun(param):
-            p3d = self.point2d_to_3d(volmdlr.Point2D(param[0], param[1]))
-            return point3d.point_distance(p3d)
-
-        x = npy.linspace(0, 1, 5)
-        x_init = []
-        for xi in x:
-            for yi in x:
-                x_init.append((xi, yi))
-
-        for x0 in x_init:
-            z = least_squares(fun, x0=x0, bounds=([0, 1]))
-            if z.fun < 1e-10:
-                return True
-        return False
 
     def is_intersected_with(self, other_bspline_surface3d):
         """

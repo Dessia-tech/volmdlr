@@ -50,6 +50,14 @@ class TestSphericalFace3D(unittest.TestCase):
         self.assertAlmostEqual(face.surface2d.area(), math.pi * math.pi)
         self.assertTrue(face.to_mesh())
 
+        surface = surfaces.SphericalSurface3D.load_from_file(
+            os.path.join(folder, "sphericalface_from_contours3d_repair_primitives_periodicity_surface.json"))
+        contour = DessiaObject.load_from_file(
+            os.path.join(folder, "sphericalface_from_contours3d_repair_primitives_periodicity_contour.json"))
+        face = SphericalFace3D.from_contours3d(surface, [contour])
+        self.assertAlmostEqual(face.surface2d.area(), math.pi * math.pi)
+        self.assertTrue(face.triangulation())
+
     def test_grid_points(self):
         surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
         outer_contour2d = wires.Contour2D.rectangle(-math.pi, math.pi, -0.5 * math.pi, 0.5 * math.pi)
