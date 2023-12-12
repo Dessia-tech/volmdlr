@@ -3997,31 +3997,6 @@ class ConicalSurface3D(PeriodicalSurface):
                 continue
             positive_lobe_intersections.append(point)
         return positive_lobe_intersections
-        # if line.point_belongs(self.frame.origin):
-        #     return [self.frame.origin]
-        # line_direction_vector = line.unit_direction_vector()
-        # plane_normal = line_direction_vector.cross((self.frame.origin - line.point1).to_vector()).unit_vector()
-        # if self.frame.w.dot(plane_normal) > 0:
-        #     plane_normal = - plane_normal
-        # plane = Plane3D.from_normal(self.frame.origin, plane_normal)
-        # cos_theta = math.sqrt(1 - (plane_normal.dot(self.frame.w) ** 2))
-        # if cos_theta >= math.cos(self.semi_angle):
-        #     plane_h = Plane3D.from_normal(self.frame.origin + self.frame.w, self.frame.w)
-        #     circle = self.perpendicular_plane_intersection(plane_h)[0]
-        #     line_p = plane_h.plane_intersections(plane)[0]
-        #     circle_line_p_intersections = circle.line_intersections(line_p)
-        #     intersections = []
-        #     for intersection in circle_line_p_intersections:
-        #         line_v_x = curves.Line3D(self.frame.origin, intersection)
-        #         line_inter = line_v_x.intersection(line)
-        #         if not line_inter:
-        #             continue
-        #         local_point = self.frame.global_to_local_coordinates(line_inter)
-        #         if local_point.z < 0:
-        #             continue
-        #         intersections.append(line_inter)
-        #     return line.sort_points_along_curve(intersections)
-        # return []
 
     def _helper_parallel_plane_intersection_through_origin(self, line_plane_intersections):
         """
@@ -4264,8 +4239,6 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         cone_generatrices = self.get_generatrices(length, max(100, int((length / 2) * 10))) + \
                             self.get_circle_generatrices(length, max(200, int((length / 2) * 20)))
-        # cone_generatrices = self.get_generatrices(length, 100)
-        # cone_generatrices = self.get_circle_generatrices(length, 200)
         intersection_points = []
         for i, gene in enumerate(cone_generatrices):
             print('i: ', i)
