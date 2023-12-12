@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
+- grid_points: returns a grid of points inside the surface2d of the face.
 
 ### Fixed
 - review hash and eq methods
