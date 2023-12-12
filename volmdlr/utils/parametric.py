@@ -4,6 +4,7 @@ volmdlr utils for calculating 3D to surface parametric domain operation.
 """
 import bisect
 import math
+import numpy as np
 
 import volmdlr
 import volmdlr.edges as vme
@@ -299,6 +300,23 @@ def array_range_search(x, xmin, xmax):
     right = bisect.bisect_right(x, xmax)
 
     return range(left, right)
+
+
+def update_face_grid_points_with_inner_polygons(inner_polygons, grid_points_data):
+    """Remove grid_points inside inner contours of the face."""
+    points_grid, u, v, grid_point_index = grid_points_data
+    indexes = []
+    for inner_polygon in inner_polygons:
+        u_min, u_max, v_min, v_max = inner_polygon.bounding_rectangle.bounds()
+        for i in array_range_search(u, u_min, u_max):  # u_grid_range of inner_polygon
+            for j in array_range_search(v, v_min, v_max):  # v_grid_range of inner_polygon
+                index = grid_point_index.get((i, j))
+                if not index:
+                    continue
+                if inner_polygon.point_belongs(points_grid[index], include_edge_points=True):
+                    indexes.append(index)
+    points_grid = np.delete(points_grid, indexes, axis=0)
+    return points_grid
 
 
 def contour2d_healing(contour2d):
