@@ -2800,7 +2800,7 @@ class HyperbolaMixin(Curve):
         :param abs_tol: tolerance used
         :return:
         """
-        if self.frame.is_close(other.frame):
+        if not self.frame.is_close(other.frame):
             return False
         if not math.isclose(self.semi_major_axis, other.semi_major_axis, abs_tol=abs_tol) or\
                 not math.isclose(self.semi_minor_axis, other.semi_minor_axis, abs_tol=abs_tol):
@@ -3193,6 +3193,8 @@ class ParabolaMixin(Curve):
         lineseg1 = _line_class(point1, point1 + tangent_vector1)
         lineseg2 = _line_class(point2, point2 + tangent_vector2)
         line_inters = lineseg1.line_intersections(lineseg2)
+        if not line_inters:
+            print(True)
         bezier_parabola = _bspline_class(2, [point1, line_inters[0], point2])
         return bezier_parabola
 

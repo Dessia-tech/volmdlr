@@ -3676,7 +3676,7 @@ class ConicalSurface3D(PeriodicalSurface):
             list_generatrices.append(wire)
         return list_generatrices
 
-    def _get_circle_at_z(self, z):
+    def get_circle_at_z(self, z):
         """Gets a circle in the conical surface at given z position."""
         i_frame = self.frame.translation(z * self.frame.w)
         radius = z * math.tan(self.semi_angle)
@@ -3691,8 +3691,8 @@ class ConicalSurface3D(PeriodicalSurface):
         :param number_circles: number of expected circles.
         """
         circles = []
-        for i_z in npy.linspace(0, z, number_circles):
-            circles.append(self._get_circle_at_z(i_z))
+        for i_z in npy.linspace(0.001, z, number_circles):
+            circles.append(self.get_circle_at_z(i_z))
         return circles
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
@@ -4042,16 +4042,8 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def _hyperbola_helper(self, plane3d, hyperbola_center, hyperbola_positive_vertex):
         semi_major_axis = hyperbola_center.point_distance(hyperbola_positive_vertex)
-        circle = self._get_circle_at_z(2 * semi_major_axis)
+        circle = self.get_circle_at_z(2 * semi_major_axis)
         hyperbola_points = plane3d.circle_intersections(circle)
-        # circle = self.perpendicular_plane_intersection(
-        #     Plane3D(volmdlr.Frame3D(self.frame.origin + semi_major_axis * 2 * self.frame.w,
-        #                             self.frame.u, self.frame.v, self.frame.w)))[0]
-        #
-        # line_circle_inters_plane_pt1, line_circle_inters_plane_pt2 = \
-        #     vm_utils_intersections.get_two_planes_intersections(plane3d.frame, circle.frame)
-        # hyperbola_points = circle.line_intersections(curves.Line3D(line_circle_inters_plane_pt1,
-        #                                                            line_circle_inters_plane_pt2))
         if not hyperbola_points:
             return []
 
@@ -4075,26 +4067,6 @@ class ConicalSurface3D(PeriodicalSurface):
             volmdlr.Point3D(hyperbola_center.x, hyperbola_center.y,
                             math.sqrt(hyperbola_center.x ** 2 + hyperbola_center.y ** 2) / math.tan(self.semi_angle)))
         return self._hyperbola_helper(plane3d, hyperbola_center, hyperbola_positive_vertex)
-        # semi_major_axis = hyperbola_center.point_distance(hyperbola_positive_vertex)
-        # circle = self._get_circle_at_z(2 * semi_major_axis)
-        # hyperbola_points = plane3d.circle_intersections(circle)
-        # # circle = self.perpendicular_plane_intersection(
-        # #     Plane3D(volmdlr.Frame3D(self.frame.origin + semi_major_axis * 2 * self.frame.w,
-        # #                             self.frame.u, self.frame.v, self.frame.w)))[0]
-        # #
-        # # line_circle_inters_plane_pt1, line_circle_inters_plane_pt2 = \
-        # #     vm_utils_intersections.get_two_planes_intersections(plane3d.frame, circle.frame)
-        # # hyperbola_points = circle.line_intersections(curves.Line3D(line_circle_inters_plane_pt1,
-        # #                                                            line_circle_inters_plane_pt2))
-        # if not hyperbola_points:
-        #     return []
-        #
-        # semi_major_dir = (hyperbola_positive_vertex - hyperbola_center).unit_vector()
-        # frame = volmdlr.Frame3D(hyperbola_center, semi_major_dir,
-        #                         plane3d.frame.w.cross(semi_major_dir), plane3d.frame.w)
-        # local_point = frame.global_to_local_coordinates(hyperbola_points[0])
-        # return [curves.Hyperbola3D(frame, semi_major_axis,
-        #                            math.sqrt((local_point.y ** 2)/(local_point.x**2/semi_major_axis**2 - 1)))]
 
     def parallel_plane_intersection(self, plane3d: Plane3D):
         """
@@ -4184,8 +4156,8 @@ class ConicalSurface3D(PeriodicalSurface):
         if len(line_intersections) != 2:
             return []
         ellipse_center = (line_intersections[0] + line_intersections[1]) / 2
-        line2 = curves.Line3D.from_point_and_vector(ellipse_center, plane_normal)
-        line_intersections2 = self.line_intersections(line2)
+        line_intersections2 = self.line_intersections(curves.Line3D.from_point_and_vector(
+            ellipse_center, plane_normal))
         major_dir = (line_intersections[0] - ellipse_center).unit_vector()
         major_axis = ellipse_center.point_distance(line_intersections[0])
         minor_dir = (line_intersections2[0] - ellipse_center).unit_vector()
@@ -4194,10 +4166,8 @@ class ConicalSurface3D(PeriodicalSurface):
         if minor_axis > major_axis:
             major_axis, minor_axis = minor_axis, major_axis
             major_dir, minor_dir = minor_dir, major_dir
-        ellipse = curves.Ellipse3D(major_axis, minor_axis,
-                                   volmdlr.Frame3D(ellipse_center, major_dir,
-                                                   minor_dir, plane3d.frame.w))
-        return [ellipse]
+        return [curves.Ellipse3D(major_axis, minor_axis, volmdlr.Frame3D(
+            ellipse_center, major_dir, minor_dir, plane3d.frame.w))]
 
     def plane_intersections(self, plane3d):
         """
@@ -4285,17 +4255,17 @@ class ConicalSurface3D(PeriodicalSurface):
             return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
         return False
 
-    def _conical_intersection_points(self, conical_surface: 'ConicalSurface3D'):
+    def _conical_intersection_points(self, conical_surface: 'ConicalSurface3D', length: float):
         """
         Gets the points of intersections between the spherical surface and the toroidal surface.
 
         :param conical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
-        length = max(5*self.frame.origin.point_distance(conical_surface.frame.origin), 2)
-        # cone_generatrices = self.get_generatrices(length, 100) + self.get_circle_generatrices(length, 200)
+        cone_generatrices = self.get_generatrices(length, max(100, int((length / 2) * 10))) + \
+                            self.get_circle_generatrices(length, max(200, int((length / 2) * 20)))
         # cone_generatrices = self.get_generatrices(length, 100)
-        cone_generatrices = self.get_circle_generatrices(length, 200)
+        # cone_generatrices = self.get_circle_generatrices(length, 200)
         intersection_points = []
         for i, gene in enumerate(cone_generatrices):
             print('i: ', i)
@@ -4307,6 +4277,43 @@ class ConicalSurface3D(PeriodicalSurface):
                     intersection_points.append(intersection)
         return intersection_points
 
+    def parallel_conicalsurface_intersections(self, conical_surface):
+        """
+        Get Conical Surface intersections with another conical surface, when their axis are parallel.
+
+        :param conical_surface: intersecting conical surface.
+        :return: list of intersecting curves.
+        """
+        generatrix = conical_surface.get_generatrices(z=2, number_lines=1)[0]
+        line_intersections = self.line_intersections(generatrix.line)
+        if line_intersections:
+            local_surface = self.frame_mapping(self.frame, 'new')
+            local_point = self.frame.global_to_local_coordinates(line_intersections[0])
+            local_circle = local_surface.get_circle_at_z(local_point.z)
+            return [local_circle.frame_mapping(self.frame, 'old')]
+        axis_line = curves.Line3D.from_point_and_vector(self.frame.origin, self.frame.w)
+        if axis_line.point_distance(conical_surface.frame.origin) < 1e-6:
+            return []
+        intersections_points = [self.circle_intersections(circle) for circle in
+                                [conical_surface.get_circle_at_z(1), conical_surface.get_circle_at_z(2)]]
+        plane = Plane3D.from_3_points(intersections_points[0][0], intersections_points[0][1],
+                                      intersections_points[1][0])
+        return self.plane_intersections(plane)
+
+    def same_origin_conicalsurface_intersections(self, conical_surface):
+        """
+        Gets Conical Surface intersections with another conical surface, sharing the same origin.
+
+        :param conical_surface: intersecting conical surface.
+        :return: list of intersecting curves.
+        """
+        circle = self.get_circle_at_z(1)
+        circle_intersections = conical_surface.circle_intersections(circle)
+        if not circle_intersections:
+            return []
+        return [curves.Line3D(self.frame.origin, circle_intersections[0]),
+                curves.Line3D(self.frame.origin, circle_intersections[1])]
+
     def conicalsurface_intersections(self, conical_surface):
         """
         Conical Surface intersections with another conical surface.
@@ -4314,24 +4321,31 @@ class ConicalSurface3D(PeriodicalSurface):
         :param conical_surface: intersecting conical surface.
         :return: list of intersecting curves.
         """
+        if self.frame.w.is_colinear_to(conical_surface.frame.w):
+            return self.parallel_conicalsurface_intersections(conical_surface)
         if self.frame.origin.is_close(conical_surface.frame.origin):
-            circle = self._get_circle_at_z(1)
-            circle_intersections = conical_surface.circle_intersections(circle)
-            if not circle_intersections:
-                return []
-            return [curves.Line3D(self.frame.origin, circle_intersections[0]),
-                    curves.Line3D(self.frame.origin, circle_intersections[1])]
-
-        intersection_points = self._conical_intersection_points(conical_surface)
+            return self.same_origin_conicalsurface_intersections(conical_surface)
+        if self.semi_angle + conical_surface.semi_angle > volmdlr.geometry.vectors3d_angle(
+                self.frame.w, conical_surface.frame.w):
+            intersection_points = self._conical_intersection_points(conical_surface, 5)
+            local_intersections = [self.frame.global_to_local_coordinates(point) for point in intersection_points]
+            max_z_point = volmdlr.O3D
+            for point in local_intersections:
+                if point.z > max_z_point.z:
+                    max_z_point = point
+            point_index = local_intersections.index(max_z_point)
+            removed_point = intersection_points.pop(point_index)
+            intersection_points.insert(0, removed_point)
+            list_points = vm_common_operations.order_points_list_for_nearest_neighbor(intersection_points)
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 3, centripetal=True)
+            return [bspline]
+        intersection_points = self._conical_intersection_points(conical_surface, 5)
         if not intersection_points:
             return []
         inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
         curves_ = []
         for list_points in inters_points:
             bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
-            if isinstance(bspline.simplify, edges.FullArc3D):
-                curves_.append(bspline.simplify)
-                continue
             curves_.append(bspline)
         return curves_
 
