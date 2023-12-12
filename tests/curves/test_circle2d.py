@@ -7,7 +7,6 @@ from geomdl import utilities
 import volmdlr.edges
 from volmdlr import curves, wires
 
-
 circle = curves.Circle2D(volmdlr.OXY, 0.50)
 line = curves.Line2D(volmdlr.O2D, volmdlr.Point2D(0, 1))
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)))
@@ -58,6 +57,14 @@ class TestCircle2D(unittest.TestCase):
     def test_abscissa(self):
         abscissa = self.circle2d.abscissa(self.circle2d.point_at_abscissa(math.pi))
         self.assertAlmostEqual(abscissa, math.pi)
+
+        circle_2 = curves.Circle2D(volmdlr.Frame2D(volmdlr.Point2D(0.7137093779940084, 0.0),
+                                                   volmdlr.Vector2D(-1.0, 0.0),
+                                                   volmdlr.Vector2D(1.5487611193520934e-13, 1.0)), 0.15231602579123288)
+        point1 = volmdlr.Point2D(0.8060483808152039, -0.12113496716812525)
+        abcissa1 = circle_2.abscissa(point1)
+        abscissa_point = circle_2.point_at_abscissa(abcissa1)
+        self.assertTrue(point1.is_close(abscissa_point))
 
     def test_point_belongs(self):
         self.assertTrue(self.circle2d.point_belongs(volmdlr.Point2D(-1.0, 0.0)))
@@ -150,11 +157,11 @@ class TestCircle2D(unittest.TestCase):
 
         rotated_arc2d = self.circle2d.rotation(self.circle2d.center, math.pi / 4)
         circle2d_points = rotated_arc2d.discretization_points(number_points=5)
-        expected_points = [volmdlr.Point2D(1/math.sqrt(2), 1/math.sqrt(2)),
-                           volmdlr.Point2D(-1/math.sqrt(2), 1/math.sqrt(2)),
-                           volmdlr.Point2D(-1/math.sqrt(2), -1/math.sqrt(2)),
-                           volmdlr.Point2D(1/math.sqrt(2), -1/math.sqrt(2)),
-                           volmdlr.Point2D(1/math.sqrt(2), 1/math.sqrt(2))]
+        expected_points = [volmdlr.Point2D(1 / math.sqrt(2), 1 / math.sqrt(2)),
+                           volmdlr.Point2D(-1 / math.sqrt(2), 1 / math.sqrt(2)),
+                           volmdlr.Point2D(-1 / math.sqrt(2), -1 / math.sqrt(2)),
+                           volmdlr.Point2D(1 / math.sqrt(2), -1 / math.sqrt(2)),
+                           volmdlr.Point2D(1 / math.sqrt(2), 1 / math.sqrt(2))]
         for point, expected_point in zip(circle2d_points, expected_points):
             self.assertTrue(point.is_close(expected_point))
 
