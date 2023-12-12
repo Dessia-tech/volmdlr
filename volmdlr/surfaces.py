@@ -770,45 +770,60 @@ class Surface3D(DessiaObject):
                 primitives2d[0] = self.fix_undefined_brep_with_neighbors(primitives2d[0], primitives2d[-1],
                                                                          primitives2d[1])
                 primitives_mapping[primitives2d[0]] = primitives_mapping.pop(old_primitive)
+        self._helper_repair_primitives_periodicity(primitives2d, primitives_mapping,
+                                                   [x_periodicity, y_periodicity], tol)
+        if self.__class__.__name__ in ("SphericalSurface3D", "ConicalSurface3D", "RevolutionSurface3D"):
+            delta = primitives2d[-1].end - primitives2d[0].start
+            if (math.isclose(abs(delta.x), x_periodicity, abs_tol=tol) or
+                    math.isclose(abs(delta.y), y_periodicity, abs_tol=tol)):
+                last_end_3d = self.point2d_to_3d(primitives2d[-1].end)
+                first_start_3d = self.point2d_to_3d(primitives2d[0].start)
+                if last_end_3d.is_close(first_start_3d, 1e-6) and not self.is_singularity_point(last_end_3d):
+                    old_primitive = primitives2d[0]
+                    primitives2d[0] = primitives2d[0].translation(delta)
+                    primitives_mapping[primitives2d[0]] = primitives_mapping.pop(old_primitive)
+                    self._helper_repair_primitives_periodicity(primitives2d, primitives_mapping,
+                                                               [x_periodicity, y_periodicity], tol)
+        self.check_parametric_contour_end(primitives2d, tol)
+
+    def _helper_repair_primitives_periodicity(self, primitives2d, primitives_mapping, periodicities, tol):
+        """Helper function to repair_primitives_periodicity."""
+        x_periodicity, y_periodicity = periodicities
         i = 1
         while i < len(primitives2d):
-            previous_primitive = primitives2d[i - 1]
-            current_primitive = primitives2d[i]
-            delta = previous_primitive.end - current_primitive.start
+            delta = primitives2d[i - 1].end - primitives2d[i].start
             distance = delta.norm()
-            is_connected = math.isclose(distance, 0, abs_tol=tol)
 
-            if not is_connected:
-                if math.isclose(current_primitive.length(), x_periodicity, abs_tol=tol) or \
-                        math.isclose(current_primitive.length(), y_periodicity, abs_tol=tol):
-                    delta_end = previous_primitive.end - current_primitive.end
+            if not math.isclose(distance, 0, abs_tol=tol):
+                if math.isclose(primitives2d[i].length(), x_periodicity, abs_tol=tol) or \
+                        math.isclose(primitives2d[i].length(), y_periodicity, abs_tol=tol):
+                    delta_end = primitives2d[i - 1].end - primitives2d[i].end
                     delta_min_index, _ = min(enumerate([distance, delta_end.norm()]), key=lambda x: x[1])
                     if self.is_undefined_brep(primitives2d[i]):
-                        repair_undefined_brep(self, primitives2d, primitives_mapping, i, previous_primitive)
-                    elif self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
-                            self.is_singularity_point(self.point2d_to_3d(current_primitive.start)):
-                        self.repair_singularity(primitives2d, i, previous_primitive)
-                    elif current_primitive.end.is_close(previous_primitive.end, tol=tol):
+                        repair_undefined_brep(self, primitives2d, primitives_mapping, i, primitives2d[i - 1])
+                    elif self.is_singularity_point(self.point2d_to_3d(primitives2d[i - 1].end)) and \
+                            self.is_singularity_point(self.point2d_to_3d(primitives2d[i].start)):
+                        self.repair_singularity(primitives2d, i, primitives2d[i - 1])
+                    elif primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=tol):
                         self.repair_reverse(primitives2d, primitives_mapping, i)
                     elif delta_min_index == 0:
                         self.repair_translation(primitives2d, primitives_mapping, i, delta)
                     else:
                         old_primitive = primitives2d[i]
-                        new_primitive = current_primitive.reverse()
+                        new_primitive = primitives2d[i].reverse()
                         primitives2d[i] = new_primitive.translation(delta_end)
                         primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
 
-                elif current_primitive.end.is_close(previous_primitive.end, tol=tol):
+                elif primitives2d[i].end.is_close(primitives2d[i - 1].end, tol=tol):
                     self.repair_reverse(primitives2d, primitives_mapping, i)
                 elif self.is_undefined_brep(primitives2d[i]):
-                    repair_undefined_brep(self, primitives2d, primitives_mapping, i, previous_primitive)
-                elif self.is_singularity_point(self.point2d_to_3d(previous_primitive.end), tol=1e-5) and \
-                        self.is_singularity_point(self.point2d_to_3d(current_primitive.start), tol=1e-5):
-                    self.repair_singularity(primitives2d, i, previous_primitive)
+                    repair_undefined_brep(self, primitives2d, primitives_mapping, i, primitives2d[i - 1])
+                elif self.is_singularity_point(self.point2d_to_3d(primitives2d[i - 1].end), tol=1e-5) and \
+                        self.is_singularity_point(self.point2d_to_3d(primitives2d[i].start), tol=1e-5):
+                    self.repair_singularity(primitives2d, i, primitives2d[i - 1])
                 else:
                     self.repair_translation(primitives2d, primitives_mapping, i, delta)
             i += 1
-        self.check_parametric_contour_end(primitives2d, tol)
 
     def check_parametric_contour_end(self, primitives2d, tol):
         """Helper function to repair_primitives_periodicity."""
@@ -819,7 +834,7 @@ class Surface3D(DessiaObject):
         if not is_connected and self.is_singularity_point(self.point2d_to_3d(previous_primitive.end)) and \
                 self.is_singularity_point(self.point2d_to_3d(primitives2d[0].start)):
             primitives2d.append(edges.LineSegment2D(previous_primitive.end, primitives2d[0].start,
-                                                name="construction"))
+                                                    name="construction"))
 
     @staticmethod
     def repair_singularity(primitives2d, i, previous_primitive):
