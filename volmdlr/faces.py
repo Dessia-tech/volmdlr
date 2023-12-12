@@ -506,7 +506,7 @@ class Face3D(volmdlr.core.Primitive3D):
         points = [volmdlr.Point2D(*triangulation['vertices'][i, :]) for i in range(number_points)]
         return vmd.DisplayMesh2D(points, triangles=triangles)
 
-    def to_mesh(self):
+    def triangulation(self):
         """Triangulates the face."""
         outer_polygon, inner_polygons = self.get_face_polygons()
         mesh2d = self.helper_to_mesh(outer_polygon, inner_polygons)
