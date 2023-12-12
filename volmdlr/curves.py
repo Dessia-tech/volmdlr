@@ -1082,10 +1082,10 @@ class CircleMixin:
         """Start point is at intersection of frame.u axis."""
         start = self.frame.origin + self.radius * self.frame.u
         dimension = self.__class__.__name__[-2:]
-        rotation_sign = self.frame.u.cross(self.frame.v)
         if dimension == "2D":
+            rotation_sign = self.frame.u.cross(self.frame.v)
             return start.rotation(self.center, rotation_sign*curvilinear_abscissa / self.radius)
-        return start.rotation(self.frame.origin, self.frame.w, rotation_sign*curvilinear_abscissa / self.radius)
+        return start.rotation(self.frame.origin, self.frame.w, curvilinear_abscissa / self.radius)
 
 
 class Circle2D(CircleMixin, ClosedCurve):
