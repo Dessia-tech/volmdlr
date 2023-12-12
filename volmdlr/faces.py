@@ -8,7 +8,7 @@ import warnings
 from itertools import chain, product
 from typing import List
 import matplotlib.pyplot as plt
-import numpy as npy
+import numpy as np
 
 from dessia_common.core import DessiaObject
 
@@ -21,7 +21,7 @@ import volmdlr.curves as volmdlr_curves
 import volmdlr.geometry
 import volmdlr.grid
 from volmdlr import surfaces
-from volmdlr.utils.parametric import array_range_search
+from volmdlr.utils.parametric import update_face_grid_points_with_inner_polygons
 import volmdlr.wires
 
 warnings.simplefilter("once")
@@ -335,6 +335,55 @@ class Face3D(volmdlr.core.Primitive3D):
         Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
         """
         return [], []
+
+    def grid_points(self, grid_size, polygon_data=None):
+        """
+        Parametric tesselation points.
+        """
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
+        else:
+            outer_polygon, inner_polygons = self.get_face_polygons()
+
+        u, v = self._get_grid_axis(outer_polygon, grid_size)
+        if not u or not v:
+            return []
+        if inner_polygons:
+            grid_points = []
+            points_indexes_map = {}
+            for j, v_j in enumerate(v):
+                for i, u_i in enumerate(u):
+                    grid_points.append((u_i, v_j))
+                    points_indexes_map[(i, j)] = len(grid_points) - 1
+            grid_points = update_face_grid_points_with_inner_polygons(inner_polygons,
+                                                                      [grid_points, u, v, points_indexes_map])
+        else:
+            grid_points = np.array([[u_i, v_j] for v_j in v for u_i in u], dtype=np.float64)
+        grid_points = self._update_grid_points_with_outer_polygon(outer_polygon, grid_points)
+
+        return grid_points
+
+    @staticmethod
+    def _get_grid_axis(outer_polygon, grid_size):
+        """Helper function to grid_points."""
+        u_min, u_max, v_min, v_max = outer_polygon.bounding_rectangle.bounds()
+        number_points_u, number_points_v = grid_size
+        u_step = (u_max - u_min) / (number_points_u - 1) if number_points_u > 1 else (u_max - u_min)
+        v_step = (v_max - v_min) / (number_points_v - 1) if number_points_v > 1 else (v_max - v_min)
+        u = [u_min + i * u_step for i in range(number_points_u)]
+        v = [v_min + i * v_step for i in range(number_points_v)]
+
+        return u, v
+
+    @staticmethod
+    def _update_grid_points_with_outer_polygon(outer_polygon, grid_points):
+        """Helper function to grid_points."""
+        # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
+        indices = np.where(outer_polygon.points_in_polygon(grid_points, include_edge_points=False) == 0)[0]
+        grid_points = np.delete(grid_points, indices, axis=0)
+        polygon_points = set(outer_polygon.points)
+        points = [volmdlr.Point2D(*point) for point in grid_points if volmdlr.Point2D(*point) not in polygon_points]
+        return points
 
     def get_face_polygons(self):
         """Get face polygons."""
@@ -1239,24 +1288,24 @@ class Face3D(volmdlr.core.Primitive3D):
             {point for face in faces1 for point in face.points} for _, faces1 in face_decomposition1.items()
         ]
         list_set_points1 = [
-            npy.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in list_set_points1
+            np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in list_set_points1
         ]
         list_set_points2 = [
             {point for face in faces2 for point in face.points} for _, faces2 in face_decomposition2.items()
         ]
         list_set_points2 = [
-            npy.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in list_set_points2
+            np.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in list_set_points2
         ]
 
         minimum_distance = math.inf
         index1, index2 = None, None
         for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
-            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
-            sets_min_dist = npy.min(distances)
+            distances = np.linalg.norm(sets_points2[:, np.newaxis] - sets_points1, axis=2)
+            sets_min_dist = np.min(distances)
             if sets_min_dist < minimum_distance:
                 minimum_distance = sets_min_dist
-                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
-                index2 = next((i for i, x in enumerate(list_set_points2) if npy.array_equal(x, sets_points2)), -1)
+                index1 = next((i for i, x in enumerate(list_set_points1) if np.array_equal(x, sets_points1)), -1)
+                index2 = next((i for i, x in enumerate(list_set_points2) if np.array_equal(x, sets_points2)), -1)
         faces1 = list(face_decomposition1.values())[index1]
         faces2 = list(face_decomposition2.values())[index2]
 
@@ -1330,18 +1379,18 @@ class Face3D(volmdlr.core.Primitive3D):
             {point for face in faces1 for point in face.points} for _, faces1 in face_decomposition1.items()
         ]
         list_set_points1 = [
-            npy.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in list_set_points1
+            np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in list_set_points1
         ]
-        list_set_points2 = [npy.array([(point[0], point[0], point[0])])]
+        list_set_points2 = [np.array([(point[0], point[0], point[0])])]
 
         minimum_distance = math.inf
         index1 = None
         for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
-            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
-            sets_min_dist = npy.min(distances)
+            distances = np.linalg.norm(sets_points2[:, np.newaxis] - sets_points1, axis=2)
+            sets_min_dist = np.min(distances)
             if sets_min_dist < minimum_distance:
                 minimum_distance = sets_min_dist
-                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
+                index1 = next((i for i, x in enumerate(list_set_points1) if np.array_equal(x, sets_points1)), -1)
         return list(face_decomposition1.values())[index1]
 
     def point_distance(self, point, return_other_point: bool = False):
@@ -2857,6 +2906,50 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
 
         return number_points_x, number_points_y
 
+    def grid_points(self, grid_size, polygon_data=None):
+        """
+        Parametric tesselation points.
+        """
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
+        else:
+            outer_polygon, inner_polygons = self.get_face_polygons()
+        u, v, u_size, _ = self._get_grid_axis(outer_polygon, grid_size)
+        if not u or not v:
+            return []
+        if inner_polygons:
+            points = []
+            points_indexes_map = {}
+            for j, v_j in enumerate(v):
+                for i in range(u_size):
+                    if (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0):
+                        points.append((u[i], v_j))
+                        points_indexes_map[(i, j)] = len(points) - 1
+            points = np.array(points, dtype=np.float64)
+            points = update_face_grid_points_with_inner_polygons(inner_polygons, [points, u, v, points_indexes_map])
+        else:
+            points = np.array([(u[i], v_j) for j, v_j in enumerate(v) for i in range(u_size) if
+                                   (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0)],
+                                   dtype=np.float64)
+
+        points = self._update_grid_points_with_outer_polygon(outer_polygon, points)
+
+        return points
+
+    @staticmethod
+    def _get_grid_axis(outer_polygon, grid_size):
+        """Helper function to grid_points."""
+        theta_min, theta_max, phi_min, phi_max = outer_polygon.bounding_rectangle.bounds()
+        theta_resolution, phi_resolution = grid_size
+        step_u = 0.5 * math.radians(theta_resolution)
+        step_v = math.radians(phi_resolution)
+        u_size = math.ceil((theta_max - theta_min) / step_u)
+        v_size = math.ceil((phi_max - phi_min) / step_v)
+        v_start = phi_min + step_v
+        u = [theta_min + step_u * i for i in range(u_size)]
+        v = [v_start + j * step_v for j in range(v_size - 1)]
+        return u, v, u_size, v_size
+
     @classmethod
     def from_surface_rectangular_cut(
         cls,
@@ -3188,12 +3281,7 @@ class BSplineFace3D(Face3D):
                 number_points_x, number_points_y = 5, 3
             else:
                 number_points_x, number_points_y = 3, 5
-            outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
-            points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(
-                number_points_x, number_points_y, include_edge_points=False
-            )
-            if self.surface2d.inner_contours:
-                points_grid = self._get_bbox_inner_contours_points(points_grid, x, y, grid_point_index)
+            points_grid = self.grid_points([number_points_x, number_points_y])
             points3d = [self.surface3d.point2d_to_3d(point) for point in points_grid]
         except ZeroDivisionError:
             points3d = []
@@ -3204,22 +3292,6 @@ class BSplineFace3D(Face3D):
         return volmdlr.core.BoundingBox.from_bounding_boxes(
             [volmdlr.core.BoundingBox.from_points(points3d), self.outer_contour3d.bounding_box]
         ).scale(1.001)
-
-    def _get_bbox_inner_contours_points(self, points_grid, x, y, grid_point_index):
-        """Helper function to get_bounding_box."""
-        for inner_contour in self.surface2d.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True)
-            # removes with a region search the grid points that are in the inner contour
-            xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
-            for i in array_range_search(x, xmin, xmax):
-                for j in array_range_search(y, ymin, ymax):
-                    point = grid_point_index.get((i, j))
-                    if not point:
-                        continue
-                    if inner_polygon.point_belongs(point):
-                        points_grid.remove(point)
-                        grid_point_index.pop((i, j))
-        return points_grid
 
     def triangulation_lines(self, resolution=25):
         """
@@ -3466,7 +3538,7 @@ class BSplineFace3D(Face3D):
         shared = []
         for k, point1 in enumerate(contour1.primitives):
             if dis_sorted[0] == dis_sorted[1]:
-                indices = npy.where(npy.array(dis) == dis_sorted[0])[0]
+                indices = np.where(np.array(dis) == dis_sorted[0])[0]
                 index1 = indices[0]
                 index2 = indices[1]
             else:
@@ -3672,8 +3744,8 @@ class BSplineFace3D(Face3D):
             return v_centers
         if u_radius and not v_radius:
             return u_centers
-        u_mean = npy.mean(u_radius)
-        v_mean = npy.mean(v_radius)
+        u_mean = np.mean(u_radius)
+        v_mean = np.mean(v_radius)
         if u_mean > v_mean:
             return v_centers
         if u_mean < v_mean:
