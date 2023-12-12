@@ -4241,9 +4241,6 @@ class ConicalSurface3D(PeriodicalSurface):
                             self.get_circle_generatrices(length, max(200, int((length / 2) * 20)))
         intersection_points = []
         for i, gene in enumerate(cone_generatrices):
-            print('i: ', i)
-            if i == 7:
-                print(True)
             intersections = conical_surface.edge_intersections(gene)
             for intersection in intersections:
                 if not intersection.in_list(intersection_points):
