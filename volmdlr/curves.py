@@ -198,8 +198,10 @@ class Line(Curve):
     def is_close(self, other_line, abs_tol: float = 1e-6):
         if self.__class__.__name__ != other_line.__class__.__name__:
             return False
-        if self.point1.is_close(other_line.point1, abs_tol) and self.point2.is_close(other_line.point2, abs_tol):
+        if other_line.point_belongs(self.point1, abs_tol) and\
+                self.direction_vector().is_colinear_to(other_line.direction_vector(), abs_tol):
             return True
+
         return False
 
     def unit_direction_vector(self, *args, **kwargs):
