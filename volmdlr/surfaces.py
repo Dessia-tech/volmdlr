@@ -1161,7 +1161,7 @@ class Surface3D(DessiaObject):
 
     def circle_intersections(self, circle: curves.Circle3D):
         """
-        Calculates the intersections between a conical surface and a Circle 3D.
+        Calculates the intersections between a surface 3d and a Circle 3D.
 
         :param circle: other circle to verify intersections.
         :return: a list of intersection points, if there exists any.
@@ -3322,6 +3322,22 @@ class ToroidalSurface3D(PeriodicalSurface):
                 intersections.append(line.point1 + sol_param*vector)
         return intersections
 
+    def circle_intersections(self, circle: curves.Circle3D):
+        """
+        Calculates the intersections between a toroidal surface 3d and a Circle 3D.
+
+        :param circle: other circle to verify intersections.
+        :return: a list of intersection points, if there exists any.
+        """
+        toroidal_plane = Plane3D(self.frame)
+        if toroidal_plane.point_distance(circle.center) >= circle.radius + self.minor_radius:
+            return []
+        circle2_ = curves.Circle3D(self.frame, self.major_radius)
+        circle_distance = circle.circle_distance(circle2_, False)
+        if circle_distance > self.minor_radius:
+            return []
+        return self.curve_intersections(circle)
+
     def _helper_parallel_plane_intersections_through_origin(self, plane3d):
         """
         Helper method to get intersection between torus and plane through the origin.
@@ -3625,6 +3641,35 @@ class ToroidalSurface3D(PeriodicalSurface):
                 continue
             curves_.append(bspline)
         return curves_
+
+    def _toroidal_intersection_points(self, toroidal_surface):
+        """
+        Gets the points of intersections between the spherical surface and the toroidal surface.
+
+        :param toroidal_surface: other Toroidal Surface 3d.
+        :return: points of intersections.
+        """
+        arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
+        intersection_points = []
+        for arc in arcs:
+            intersections = toroidal_surface.circle_intersections(arc)
+            intersection_points.extend(intersections)
+
+        arcs = toroidal_surface._torus_arcs(300) + toroidal_surface._torus_circle_generatrices_xy(100)
+        for arc in arcs:
+            intersections = self.circle_intersections(arc)
+            intersection_points.extend(inter for inter in intersections if inter not in intersection_points)
+        return intersection_points
+
+    def toroidalsurface_intersections(self, toroidal_surface):
+        """
+        Gets the intersections between two toroidal surface.
+
+        :param toroidal_surface: other toroidal Surface 3d.
+        :return: List os curves intersecting Torus.
+        """
+        intersection_points = self._toroidal_intersection_points(toroidal_surface)
+        print(True)
 
 
 class ConicalSurface3D(PeriodicalSurface):

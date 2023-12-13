@@ -2045,6 +2045,19 @@ class Circle3D(CircleMixin, ClosedCurve):
         point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         return point_angle
 
+    def circle_distance(self, other_circle, return_points: False):
+        """
+        Gets the distance between two circles 3D.
+
+        :param other_circle: Other circle 3D.
+        :param return_points: weather to return the corresponding points or not.
+        :return:
+        """
+        point1 = self.center + self.frame.u * self.radius
+        other_point1 = other_circle.center + other_circle.frame.u * other_circle.radius
+        return vm_common_operations._generic_minimum_distance(
+            self, other_circle, point1, point1, other_point1, other_point1, return_points)
+
 
 class EllipseMixin:
     """Ellipse abstract class."""

@@ -251,6 +251,60 @@ def get_point_distance_to_edge(edge, point, start, end):
     return distance
 
 
+def _generic_minimum_distance(self, element, point1_edge1_, point2_edge1_, point1_edge2_,
+                              point2_edge2_, return_points=False):
+    """
+    Gets the minimum distance between two elements.
+
+    This is a generalized method in a case an analytical method has not yet been defined.
+
+    :param element: other element.
+    :param return_points: Weather to return the corresponding points or not.
+    :return: distance to edge.
+    """
+    n = max(1, int(self.length() / element.length()))
+    best_distance = math.inf
+    distance_points = None
+    distance = best_distance
+
+    # point1_edge1_ = self.start
+    # point2_edge1_ = self.end
+
+    # point1_edge2_ = element.start
+    # point2_edge2_ = element.end
+    # min_dist_point1 = None
+    # min_dist_point2 = None
+    linesegment_class_ = getattr(volmdlr.edges, 'LineSegment' + self.__class__.__name__[-2:])
+    while True:
+        edge1_discretized_points_between_1_2 = self.local_discretization(point1_edge1_, point2_edge1_,
+                                                                         number_points=10 * n)
+        edge2_discretized_points_between_1_2 = element.local_discretization(point1_edge2_, point2_edge2_)
+        if not edge1_discretized_points_between_1_2:
+            break
+        distance = edge2_discretized_points_between_1_2[0].point_distance(edge1_discretized_points_between_1_2[0])
+        distance_points = [edge2_discretized_points_between_1_2[0], edge1_discretized_points_between_1_2[0]]
+        for point1_edge1, point2_edge1 in zip(edge1_discretized_points_between_1_2[:-1],
+                                              edge1_discretized_points_between_1_2[1:]):
+            lineseg1 = linesegment_class_(point1_edge1, point2_edge1)
+            for point1_edge2, point2_edge2 in zip(edge2_discretized_points_between_1_2[:-1],
+                                                  edge2_discretized_points_between_1_2[1:]):
+                lineseg2 = linesegment_class_(point1_edge2, point2_edge2)
+                dist, min_dist_point1_, min_dist_point2_ = lineseg1.minimum_distance(lineseg2, True)
+                if dist < distance:
+                    point1_edge1_, point2_edge1_ = point1_edge1, point2_edge1
+                    point1_edge2_, point2_edge2_ = point1_edge2, point2_edge2
+                    distance = dist
+                    distance_points = [min_dist_point1_, min_dist_point2_]
+        if math.isclose(distance, best_distance, abs_tol=1e-6):
+            break
+        best_distance = distance
+        # best_distance_points = distance_points
+        n = 1
+    if return_points:
+        return distance, distance_points[0], distance_points[1]
+    return distance
+
+
 def ellipse_abscissa_angle_integration(ellipse3d, point_abscissa, angle_start, initial_angle):
     """
     Calculates the angle for a given abscissa point by integrating the ellipse.
