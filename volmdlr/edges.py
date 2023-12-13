@@ -911,7 +911,7 @@ class BSplineCurve(Edge):
         if self.weights:
             self.rational = True
             ctrlptsw = []
-            for point, w in zip(self.control_points, weights):
+            for point, w in zip(control_points, weights):
                 temp = [float(c * w) for c in point]
                 temp.append(float(w))
                 ctrlptsw.append(temp)

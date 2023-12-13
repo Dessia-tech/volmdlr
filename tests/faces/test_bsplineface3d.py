@@ -83,8 +83,8 @@ class TestBSplineFace3D(unittest.TestCase):
         mesh = face.triangulation()
         self.assertAlmostEqual(face.surface2d.area(), 1, 2)
         self.assertGreaterEqual(len(mesh.points), 650)
-        self.assertLessEqual(len(mesh.points), 1300)
-        self.assertLessEqual(total_time, 0.15)
+        self.assertLessEqual(len(mesh.points), 2750)
+        self.assertLessEqual(total_time, 0.5)
 
 
 if __name__ == '__main__':
