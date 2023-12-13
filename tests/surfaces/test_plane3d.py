@@ -74,19 +74,19 @@ class TestPlane3D(unittest.TestCase):
         angle = plane1.angle_between_planes(plane2)
         self.assertAlmostEqual(angle, 0)
 
-    def test_point_on_surface(self):
+    def test_point_belongs(self):
         # Test with point on the plane
         plane = Plane3D.from_3_points(self.point1, self.point2, self.point3)
         point = self.point1
-        self.assertTrue(plane.point_on_surface(point))
+        self.assertTrue(plane.point_belongs(point))
 
         # Test with point above the plane
         point = volmdlr.Point3D(0, 0, 1)
-        self.assertFalse(plane.point_on_surface(point))
+        self.assertFalse(plane.point_belongs(point))
 
         # Test with point below the plane
         point = volmdlr.Point3D(0, 0, -1)
-        self.assertFalse(plane.point_on_surface(point))
+        self.assertFalse(plane.point_belongs(point))
 
     def test_point_distance(self):
         # test point above the plane
@@ -228,9 +228,9 @@ class TestPlane3D(unittest.TestCase):
         ]:
 
             surface = surfaces.Plane3D.from_3_points(p1, p2, p3)
-            self.assertTrue(surface.point_on_surface(p1))
-            self.assertTrue(surface.point_on_surface(p2))
-            self.assertTrue(surface.point_on_surface(p3))
+            self.assertTrue(surface.point_belongs(p1))
+            self.assertTrue(surface.point_belongs(p2))
+            self.assertTrue(surface.point_belongs(p3))
             self.assertAlmostEqual(surface.frame.w.dot(p1 - p2), 0.0)
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p2), 0.0)
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p1), 0.0)

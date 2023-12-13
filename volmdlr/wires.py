@@ -2712,6 +2712,44 @@ class Contour2D(ContourMixin, Wire2D):
             new_contour = sorted(new_contours, key=lambda contour: contour.area())[-1]
         return new_contour
 
+    @classmethod
+    def rectangle(cls, xmin: float, xmax: float, ymin: float, ymax: float, is_trigo: bool = True):
+        """
+        Creates a rectangular contour.
+
+        :param xmin: minimal x coordinate
+        :type xmin: float
+        :param xmax: maximal x coordinate
+        :type xmax: float
+        :param ymin: minimal y coordinate
+        :type ymin: float
+        :param ymax: maximal y coordinate
+        :type ymax: float
+        :param is_trigo: (Optional) If True, triangle is drawn in counterclockwise direction.
+        :type is_trigo: bool
+        :return: Contour2D
+        """
+        point1 = volmdlr.Point2D(xmin, ymin)
+        point2 = volmdlr.Point2D(xmax, ymin)
+        point3 = volmdlr.Point2D(xmax, ymax)
+        point4 = volmdlr.Point2D(xmin, ymax)
+        if is_trigo:
+            return cls.from_points([point1, point2, point3, point4])
+        return cls.from_points([point1, point4, point3, point2])
+
+    @classmethod
+    def rectangle_from_center_and_sides(cls, center, x_length, y_length, is_trigo: bool = True):
+        """
+        Creates a rectangular contour given a center and a side.
+        """
+        x_center, y_center = center
+        xmin = x_center - 0.5 * x_length
+        xmax = xmin + x_length
+        ymin = y_center - 0.5 * y_length
+        ymax = ymin + y_length
+        return cls.rectangle(xmin, xmax, ymin, ymax, is_trigo)
+
+
 
 class ClosedPolygonMixin:
     """

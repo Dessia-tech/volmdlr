@@ -1083,7 +1083,8 @@ class CircleMixin:
         start = self.frame.origin + self.radius * self.frame.u
         dimension = self.__class__.__name__[-2:]
         if dimension == "2D":
-            return start.rotation(self.center, curvilinear_abscissa / self.radius)
+            rotation_sign = self.frame.u.cross(self.frame.v)
+            return start.rotation(self.center, rotation_sign*curvilinear_abscissa / self.radius)
         return start.rotation(self.frame.origin, self.frame.w, curvilinear_abscissa / self.radius)
 
 

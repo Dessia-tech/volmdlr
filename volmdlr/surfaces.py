@@ -1266,6 +1266,18 @@ class Surface3D(DessiaObject):
         """
         return False
 
+    def point_belongs(self, point3d, abs_tol: float = 1e-6):
+        """
+        Verifies if point is on Toroidal Surface 3D.
+
+        :param point3d: other point.
+        :param abs_tol: tolerance.
+        :return: True or False.
+        """
+        if self.point_distance(point3d) < abs_tol:
+            return True
+        return False
+
 
 class Plane3D(Surface3D):
     """
@@ -1405,12 +1417,12 @@ class Plane3D(Surface3D):
         angle = math.acos(self.frame.w.dot(plane2.frame.w))
         return angle
 
-    def point_on_surface(self, point, abs_tol: float = 1e-6):
+    def point_belongs(self, point3d, abs_tol: float = 1e-6):
         """
         Return if the point belongs to the plane at a tolerance of 1e-6.
 
         """
-        if math.isclose(self.frame.w.dot(point - self.frame.origin), 0,
+        if math.isclose(self.frame.w.dot(point3d - self.frame.origin), 0,
                         abs_tol=abs_tol):
             return True
         return False
@@ -1491,7 +1503,7 @@ class Plane3D(Surface3D):
         if not isinstance(self, plane2.__class__):
             return False
         if self.is_parallel(plane2, abs_tol):
-            if plane2.point_on_surface(self.frame.origin, abs_tol):
+            if plane2.point_belongs(self.frame.origin, abs_tol):
                 return True
         return False
 
@@ -2613,7 +2625,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             return True
         return False
 
-    def point_on_surface(self, point3d, abs_tol: float = 1e-5):
+    def point_belongs(self, point3d, abs_tol: float = 1e-5):
         """
         Verifies if a given point is on the CylindricalSurface3D.
 
@@ -3339,7 +3351,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis >= self.outer_radius:
             return []
-        if plane3d.point_on_surface(self.frame.origin):
+        if plane3d.point_belongs(self.frame.origin):
             return self._helper_parallel_plane_intersections_through_origin(plane3d)
         if math.isclose(distance_plane_cylinder_axis, self.inner_radius, abs_tol=1e-6):
             point_projection = plane3d.point_projection(self.frame.origin)
@@ -3372,7 +3384,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis > self.minor_radius:
             return []
-        if plane3d.point_on_surface(self.frame.origin):
+        if plane3d.point_belongs(self.frame.origin):
             circle1 = curves.Circle3D(self.frame, self.outer_radius)
             circle2 = curves.Circle3D(self.frame, self.inner_radius)
             return [circle1, circle2]
@@ -3453,7 +3465,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 return []
         points_intersections = self._plane_intersection_points(plane3d)
         inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
-        if len(inters_points) == 1 and plane3d.point_on_surface(self.frame.origin):
+        if len(inters_points) == 1 and plane3d.point_belongs(self.frame.origin):
             return self.get_villarceau_circles(plane3d)
         return [edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
                 for list_points in inters_points]
@@ -3465,11 +3477,13 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
-            return self.parallel_plane_intersection(plane3d)
-        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
-            return self.perpendicular_plane_intersection(plane3d)
-        return self.concurrent_plane_intersection(plane3d)
+        projected_origin = plane3d.point_projection(self.frame.origin)
+        translated_to_local_plane3d = plane3d.translation((projected_origin - plane3d.frame.origin).to_vector())
+        if math.isclose(abs(translated_to_local_plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
+            return self.parallel_plane_intersection(translated_to_local_plane3d)
+        if math.isclose(abs(translated_to_local_plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
+            return self.perpendicular_plane_intersection(translated_to_local_plane3d)
+        return self.concurrent_plane_intersection(translated_to_local_plane3d)
 
     def _cylinder_intersection_points(self, cylindrical_surface: CylindricalSurface3D):
         """
@@ -3535,18 +3549,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         if math.isclose(abs(self.frame.w.dot(surface3d.frame.w)), 1.0, abs_tol=abs_tol) and \
                 math.isclose(self.major_radius, surface3d.major_radius, abs_tol=abs_tol) and \
                 math.isclose(self.minor_radius, surface3d.minor_radius, abs_tol=abs_tol):
-            return True
-        return False
-
-    def point_on_surface(self, point3d, abs_tol: float = 1e-6):
-        """
-        Verifies if point is on Toroidal Surface 3D.
-
-        :param point3d: other point.
-        :param abs_tol: tolerance.
-        :return: True or False.
-        """
-        if self.point_distance(point3d) < abs_tol:
             return True
         return False
 
@@ -3677,6 +3679,12 @@ class ConicalSurface3D(PeriodicalSurface):
         return list_generatrices
 
     def get_circle_generatrices(self, z, number_circles: int):
+        """
+        Get circles generatrix of the cone.
+
+        :param z: height of cone
+        :param number_circles: number of expected circles.
+        """
         circles = []
         for i_z in npy.linspace(0, z, number_circles):
             i_frame = self.frame.translation(i_z*self.frame.w)
@@ -4036,7 +4044,7 @@ class ConicalSurface3D(PeriodicalSurface):
         plane_intersections_line = curves.Line3D(line_plane_intersections_points[0],
                                                  line_plane_intersections_points[1])
 
-        if plane3d.point_on_surface(self.frame.origin):
+        if plane3d.point_belongs(self.frame.origin):
             return self._helper_parallel_plane_intersection_through_origin(plane_intersections_line)
 
         if not self.frame.w.is_close(volmdlr.Z3D):
@@ -4204,7 +4212,7 @@ class ConicalSurface3D(PeriodicalSurface):
         An edge is said to be degenerated when it corresponds to a single 3D point.
         """
         edge = args[0]
-        if "LineSegment2D" in (edge.__class__.__name__, edge.simplify.__class__.__name__):
+        if "LineSegment2D" == edge.__class__.__name__:
             start3d = self.point2d_to_3d(edge.start)
             end3d = self.point2d_to_3d(edge.end)
             return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
@@ -5209,9 +5217,9 @@ class SphericalSurface3D(PeriodicalSurface):
         An edge is said to be degenerated when it corresponds to a single 3D point.
         """
         edge = args[0]
-        if "LineSegment2D" in (edge.__class__.__name__, edge.simplify.__class__.__name__):
-            start3d = self.point3d_to_2d(edge.start)
-            end3d = self.point3d_to_2d(edge.end)
+        if "LineSegment2D" == edge.__class__.__name__:
+            start3d = self.point2d_to_3d(edge.start)
+            end3d = self.point2d_to_3d(edge.end)
             return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
         return False
 
@@ -6094,7 +6102,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         An edge is said to be degenerated when it corresponds to a single 3D point.
         """
         edge = args[0]
-        if "LineSegment2D" in (edge.__class__.__name__, edge.simplify.__class__.__name__):
+        if "LineSegment2D" == edge.__class__.__name__:
             start3d = self.point2d_to_3d(edge.start)
             end3d = self.point2d_to_3d(edge.end)
             return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
@@ -7556,7 +7564,7 @@ class BSplineSurface3D(Surface3D):
                 vector_list.append(vector)
                 if len(points) == 3:
                     plane3d = Plane3D.from_3_points(*points)
-                    if all(plane3d.point_on_surface(point) for point in self.control_points):
+                    if all(plane3d.point_belongs(point) for point in self.control_points):
                         return plane3d
                     break
         return self
@@ -8753,28 +8761,6 @@ class BSplineSurface3D(Surface3D):
                 BSplineSurface3D.points_fitting_into_bspline_surface(points3d, size_u, size_v, degree_u, degree_v))
 
         return surfaces
-
-    def point_belongs(self, point3d):
-        """
-        Check if a point 3d belongs to the bspline_surface or not.
-
-        """
-
-        def fun(param):
-            p3d = self.point2d_to_3d(volmdlr.Point2D(param[0], param[1]))
-            return point3d.point_distance(p3d)
-
-        x = npy.linspace(0, 1, 5)
-        x_init = []
-        for xi in x:
-            for yi in x:
-                x_init.append((xi, yi))
-
-        for x0 in x_init:
-            z = least_squares(fun, x0=x0, bounds=([0, 1]))
-            if z.fun < 1e-10:
-                return True
-        return False
 
     def is_intersected_with(self, other_bspline_surface3d):
         """

@@ -13,12 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
+- grid_points: returns a grid of points inside the surface2d of the face.
 
 ### Fixed
 - review hash and eq methods
+- ConicalSurface3D: plane_intersections
 
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
+- Circle2D: abscissa method - consider frame direction during rotation.
 
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
@@ -28,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - Face3D: enhance from_contours3d.
 - Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
+- Face3D: point_belongs
+
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
 - ExtrusionSurface3D: fullarcellipse3d_to_2d
@@ -53,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Edge.split_between_two_points -> trim
+- surfaces.py: point_on_surface -> point_belongs
 
 ### Unittests
 - 
