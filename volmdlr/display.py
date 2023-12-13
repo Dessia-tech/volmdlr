@@ -7,6 +7,7 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 import math
 import warnings
 from typing import List, Tuple
+from numpy.typing import NDArray
 
 import dessia_common.core as dc
 
@@ -84,9 +85,9 @@ class DisplayMesh(dc.DessiaObject):
     """
     _linesegment_class = volmdlr.edges.LineSegment
 
-    def __init__(self, points, triangles, name: str = ''):
+    def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ''):
 
-        self.points = points
+        self.vertices = vertices
         self.triangles = triangles
         # Avoiding calling dessia object init because its inefficiency
         # dc.DessiaObject.__init__(self, name=name)
@@ -94,7 +95,7 @@ class DisplayMesh(dc.DessiaObject):
         self._point_index = None
 
     def check(self):
-        npoints = len(self.points)
+        npoints = len(self.vertices)
         for triangle in self.triangles:
             if max(triangle) >= npoints:
                 return False
@@ -103,7 +104,7 @@ class DisplayMesh(dc.DessiaObject):
     @property
     def point_index(self):
         if self._point_index is None:
-            self._point_index = {point: index for index, point in enumerate(self.points)}
+            self._point_index = {point: index for index, point in enumerate(self.vertices)}
         return self._point_index
 
     @classmethod
@@ -116,11 +117,11 @@ class DisplayMesh(dc.DessiaObject):
         point_index = {}
         points = []
         if len(meshes) == 1:
-            return cls(meshes[0].points, meshes[0].triangles, name=name)
+            return cls(meshes[0].vertices, meshes[0].triangles, name=name)
         for mesh in meshes:
             if not mesh:
                 continue
-            for point in mesh.points:
+            for point in mesh.vertices:
                 if point not in point_index:
                     point_index[point] = i_points
                     i_points += 1
@@ -131,9 +132,9 @@ class DisplayMesh(dc.DessiaObject):
             if not mesh:
                 continue
             for vertex1, vertex2, vertex3 in mesh.triangles:
-                point1 = mesh.points[vertex1]
-                point2 = mesh.points[vertex2]
-                point3 = mesh.points[vertex3]
+                point1 = mesh.vertices[vertex1]
+                point2 = mesh.vertices[vertex2]
+                point3 = mesh.vertices[vertex3]
                 triangles.append((point_index[point1],
                                   point_index[point2],
                                   point_index[point3]))
@@ -146,12 +147,12 @@ class DisplayMesh(dc.DessiaObject):
         :param other_mesh: other mesh.
         :return:
         """
-        i_points = len(self.points)
+        i_points = len(self.vertices)
         for point in other_mesh.points:
             if point not in self.point_index:
                 self.point_index[point] = i_points
                 i_points += 1
-                self.points.append(point)
+                self.vertices.append(point)
 
         for vertex1, vertex2, vertex3 in other_mesh.triangles:
             point1 = other_mesh.points[vertex1]
@@ -165,7 +166,7 @@ class DisplayMesh(dc.DessiaObject):
         """
         Defines how to add two meshes.
         """
-        new_points = self.points[:]
+        new_points = self.vertices[:]
         new_point_index = self.point_index.copy()
         i_points = len(new_points)
         for point in other_mesh.points:
@@ -187,16 +188,16 @@ class DisplayMesh(dc.DessiaObject):
 
     def plot(self, ax=None, numbering=False):
         """Plots the mesh with Matplotlib."""
-        for i_points, point in enumerate(self.points):
+        for i_points, point in enumerate(self.vertices):
             ax = point.plot(ax=ax)
             if numbering:
                 ax.text(*point, f'node {i_points + 1}',
                         ha='center', va='center')
 
         for vertex1, vertex2, vertex3 in self.triangles:
-            point1 = self.points[vertex1]
-            point2 = self.points[vertex2]
-            point3 = self.points[vertex3]
+            point1 = self.vertices[vertex1]
+            point2 = self.vertices[vertex2]
+            point3 = self.vertices[vertex3]
             if not point1.is_close(point2):
                 self._linesegment_class(point1, point2).plot(ax=ax)
             if not point2.is_close(point3):
@@ -216,10 +217,10 @@ class DisplayMesh2D(DisplayMesh):
     _linesegment_class = volmdlr.edges.LineSegment2D
     _point_class = volmdlr.Point2D
 
-    def __init__(self, points: List[volmdlr.Point2D],
-                 triangles: List[Tuple[int, int, int]],
+    def __init__(self, vertices: NDArray[float],
+                 triangles: NDArray[int],
                  name: str = ''):
-        DisplayMesh.__init__(self, points, triangles, name=name)
+        DisplayMesh.__init__(self, vertices, triangles, name=name)
 
     def area(self):
         """
@@ -227,9 +228,9 @@ class DisplayMesh2D(DisplayMesh):
         """
         area = 0.
         for (vertex1, vertex2, vertex3) in self.triangles:
-            point1 = self.points[vertex1]
-            point2 = self.points[vertex2]
-            point3 = self.points[vertex3]
+            point1 = self.vertices[vertex1]
+            point2 = self.vertices[vertex2]
+            point3 = self.vertices[vertex3]
             area += 0.5 * abs((point2 - point1).cross(point3 - point1))
         return area
 
@@ -243,10 +244,10 @@ class DisplayMesh3D(DisplayMesh):
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 
-    def __init__(self, points: List[volmdlr.Point3D],
-                 triangles: List[Tuple[int, int, int]], name=''):
+    def __init__(self, vertices: NDArray[float],
+                 triangles: NDArray[int], name=''):
         self._faces = None
-        DisplayMesh.__init__(self, points, triangles, name=name)
+        DisplayMesh.__init__(self, vertices, triangles, name=name)
 
     def to_babylon(self):
         """
@@ -255,7 +256,7 @@ class DisplayMesh3D(DisplayMesh):
         https://doc.babylonjs.com/how_to/custom
         """
         positions = []
-        for point in self.points:
+        for point in self.vertices:
             # positions.extend(list(round(p, 6)))
             # Not using round for performance
             positions.extend([int(1e6 * point.x) / 1e6, int(1e6 * point.y) / 1e6, int(1e6 * point.z) / 1e6])
@@ -282,9 +283,9 @@ class DisplayMesh3D(DisplayMesh):
         """
         triangular_faces = []
         for (vertex1, vertex2, vertex3) in self.triangles:
-            point1 = self.points[vertex1]
-            point2 = self.points[vertex2]
-            point3 = self.points[vertex3]
+            point1 = self.vertices[vertex1]
+            point2 = self.vertices[vertex2]
+            point3 = self.vertices[vertex3]
             if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3):
                 face = volmdlr.faces.Triangle3D(point1, point2, point3)
                 if face.area() >= 1e-11:
