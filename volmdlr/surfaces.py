@@ -4126,6 +4126,8 @@ class ConicalSurface3D(PeriodicalSurface):
             return self._concurrent_plane_intersection_parabola(plane3d, line_intersections[0])
         if len(line_intersections) == 1:
             full_line_intersections = self._full_line_intersections(plane2_plane3d_intersections[0])
+            if len(full_line_intersections) == 1:
+                return []
             hyperbola_center = (full_line_intersections[0] + full_line_intersections[1]) / 2
             return self._hyperbola_helper(plane3d, hyperbola_center, line_intersections[0])
         if len(line_intersections) != 2:
