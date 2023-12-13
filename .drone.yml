@@ -62,7 +62,7 @@ steps:
   - git fetch --tags
   - pip install .[doc,test]
   - python setup.py build_ext --inplace
-  - python setup.py install
+  - pip install .
   - cd doc
   - make html
   - cd ../tests
@@ -123,7 +123,7 @@ steps:
   - git fetch --tags
   - pip install numpy Cython>3
   - python setup.py build_ext --inplace
-  - python setup.py install
+  - pip install .
   - pip install pylint==2.17.3 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
   - python code_pylint.py
   - python code_pydocstyle.py
