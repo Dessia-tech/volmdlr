@@ -339,6 +339,22 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         return [], []
 
+    @staticmethod
+    def get_edge_discretization_size(edge3d):
+        """
+        Helper function to polygonize the face boundaries.
+        """
+        angle_resolution = 10
+        if edge3d is None:
+            number_points = 2
+        elif edge3d.__class__.__name__ == "BSplineCurve3D":
+            number_points = max(15, len(edge3d.ctrlpts))
+        elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
+            number_points = max(2, math.ceil(edge3d.angle / math.radians(angle_resolution)) + 1)
+        else:
+            number_points = 2
+        return number_points
+
     def grid_points(self, grid_size, polygon_data=None):
         """
         Parametric tesselation points.
@@ -390,22 +406,14 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def get_face_polygons(self):
         """Get face polygons."""
-        angle_resolution = 10
         primitives_mapping = self.primitives_mapping
 
         def get_polygon_points(primitives):
             points = []
             for edge in primitives:
                 edge3d = primitives_mapping.get(edge)
-                if edge3d is None:
-                    edge_points = edge.discretization_points(number_points=2)
-                elif edge3d.__class__.__name__ == "BSplineCurve3D":
-                    edge_points = edge.discretization_points(number_points=max(15, len(edge3d.ctrlpts)))
-                elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
-                    edge_points = edge.discretization_points(
-                        number_points=max(2, math.ceil(edge3d.angle / math.radians(angle_resolution)) + 1))
-                else:
-                    edge_points = edge.discretization_points(number_points=2)
+                number_points = self.get_edge_discretization_size(edge3d)
+                edge_points = edge.discretization_points(number_points=number_points)
                 points.extend(edge_points[:-1])
             return points
 
@@ -510,10 +518,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def triangulation(self):
         """Triangulates the face."""
         outer_polygon, inner_polygons = self.get_face_polygons()
-        # try:
         mesh2d = self.helper_to_mesh(outer_polygon, inner_polygons)
-        # except Exception:
-        #     outer_polygon, inner_polygons = self.get_face_polygons()
         if mesh2d is None:
             return None
         return vmd.DisplayMesh3D([self.surface3d.point2d_to_3d(point) for point in mesh2d.points], mesh2d.triangles)
@@ -3360,7 +3365,7 @@ class RevolutionFace3D(Face3D):
         xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
         delta_x = xmax - xmin
         number_points_x = math.ceil(delta_x / math.radians(angle_resolution))
-        number_points_y = number_points_x
+        number_points_y = self.get_edge_discretization_size(self.surface3d.edge)
 
         return number_points_x, number_points_y
 
@@ -3379,6 +3384,36 @@ class RevolutionFace3D(Face3D):
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(revolution_surface3d, surface2d, name)
+
+    def get_face_polygons(self):
+        """Get face polygons."""
+        primitives_mapping = self.primitives_mapping
+
+        def get_polygon_points(primitives):
+            points = []
+            for edge in primitives:
+                edge3d = primitives_mapping.get(edge)
+                number_points = self.get_edge_discretization_size(edge3d)
+                edge_points = edge.discretization_points(number_points=number_points)
+                for point in edge_points:
+                    point.y *= 1000
+                points.extend(edge_points[:-1])
+            return points
+
+        outer_polygon = volmdlr.wires.ClosedPolygon2D(get_polygon_points(self.surface2d.outer_contour.primitives))
+        inner_polygons = [volmdlr.wires.ClosedPolygon2D(get_polygon_points(inner_contour.primitives))
+                          for inner_contour in self.surface2d.inner_contours]
+        return outer_polygon, inner_polygons
+
+    def triangulation(self):
+        """Triangulates the face."""
+        outer_polygon, inner_polygons = self.get_face_polygons()
+        mesh2d = self.helper_to_mesh(outer_polygon, inner_polygons)
+        if mesh2d is None:
+            return None
+        for point in mesh2d.points:
+            point.y *= 0.001
+        return vmd.DisplayMesh3D([self.surface3d.point2d_to_3d(point) for point in mesh2d.points], mesh2d.triangles)
 
 
 class BSplineFace3D(Face3D):
