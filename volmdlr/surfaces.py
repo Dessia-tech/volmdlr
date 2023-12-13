@@ -3477,11 +3477,13 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
-        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
-            return self.parallel_plane_intersection(plane3d)
-        if math.isclose(abs(plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
-            return self.perpendicular_plane_intersection(plane3d)
-        return self.concurrent_plane_intersection(plane3d)
+        projected_origin = plane3d.point_projection(self.frame.origin)
+        translated_to_local_plane3d = plane3d.translation((projected_origin - plane3d.frame.origin).to_vector())
+        if math.isclose(abs(translated_to_local_plane3d.frame.w.dot(self.frame.w)), 0, abs_tol=1e-6):
+            return self.parallel_plane_intersection(translated_to_local_plane3d)
+        if math.isclose(abs(translated_to_local_plane3d.frame.w.dot(self.frame.w)), 1, abs_tol=1e-6):
+            return self.perpendicular_plane_intersection(translated_to_local_plane3d)
+        return self.concurrent_plane_intersection(translated_to_local_plane3d)
 
     def _cylinder_intersection_points(self, cylindrical_surface: CylindricalSurface3D):
         """
