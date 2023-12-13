@@ -2113,14 +2113,14 @@ class PeriodicalFaceMixin:
         point2d = self.surface3d.point3d_to_2d(point3d)
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         if self.surface3d.x_periodicity:
-            if point2d.x < u_min:
+            if point2d.x < u_min - tol:
                 point2d.x += self.surface3d.x_periodicity
-            elif point2d.x > u_max:
+            elif point2d.x > u_max + tol:
                 point2d.x -= self.surface3d.x_periodicity
         if self.surface3d.y_periodicity:
-            if point2d.y < v_min:
+            if point2d.y < v_min - tol:
                 point2d.y += self.surface3d.y_periodicity
-            elif point2d.y > v_max:
+            elif point2d.y > v_max + tol:
                 point2d.y -= self.surface3d.y_periodicity
 
         return self.surface2d.point_belongs(point2d)

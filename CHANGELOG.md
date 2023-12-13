@@ -17,9 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - review hash and eq methods
+- ConicalSurface3D: plane_intersections
 
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
+- Circle2D: abscissa method - consider frame direction during rotation.
 
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
