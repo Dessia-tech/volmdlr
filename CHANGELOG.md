@@ -8,29 +8,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v0.16.0 [future]
 
 ### New Features
--
+- added missing hash and eq methods to several classes
+- ArcEllipse2D/3D: get_shared_section and delete_shared_section.
+
+#### faces.py
+- Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
+- grid_points: returns a grid of points inside the surface2d of the face.
 
 ### Fixed
+- review hash and eq methods
+- ConicalSurface3D: plane_intersections
 
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
+- Circle2D: abscissa method - consider frame direction during rotation.
 
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
 - BSplineCurve: Consider overlaping curves also as periodic.
 - BSplineCurve.simplify: handles exceptions.
-- 
+
+#### faces.py
+- Face3D: enhance from_contours3d.
+- Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
+- Face3D: point_belongs
+
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
 - ExtrusionSurface3D: fullarcellipse3d_to_2d
 - ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
 - ToroidalSurface3D: increases precision of point3d_to_2d.
 
+#### wires.py
+- Contour2D: cut_by_line.
+- ContourMixin: is_ordered().
+
+
+#### step.py
+- Step: uses Regular Expressions to improve the performance.
+
+#### core.py
+- Add missing dark_mode parameter in save_babylonjs_to_file method.
+
 ### Refactor
-- Big refactor to improve and simplify complex and long methods in various modules.
+- Big refactor to improve and simplify complex and long methods in various modules. 
+
+#### surfaces.py
+- contour3d_to_2d/contour2d_to_3d: Add option to return also a dictionary with the correspondence between the parametric and 3D primitives.
 
 ### Changed
 - Edge.split_between_two_points -> trim
+- surfaces.py: point_on_surface -> point_belongs
 
 ### Unittests
 - 
@@ -53,10 +81,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SphericalSurface3D: circle_intersections, arc_intersections, ellipse_intersections, arcellipse_intersections, sphericalsurface_intersections
 - ConicalSurface3D: sphericalsurface_intersections
 - General improvements on sufaces\` parametric operations.
+- Surface2D: triangulation. Set tri_opt equal to "p".
 
 #### edges.py
 - BsplineCurve3D: circle_intersections.
 - ArcEllipse3D/FullArcEllipse3D: line_intersections.
+
+#### faces.py
+- Face3D: get_face_polygons
+
 #### curves.py
 - Circle3D: point_distance.
 #### shell.py
@@ -77,16 +110,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Drone : run generate sdist and generate bdist_wheel only on master
+- drone.yml: add distribution types to be uploaded into pypi.
 
 #### core.py
 - VolumeModel: get_mesh_lines (change tolerance to 1e-5)
 
 #### edges.py 
 - Arc2D: direction conservation in rotation / translation / frame_mapping.
+- FullArcEllipse: angle_start, angle_end.
 
 #### surfaces.py
-- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections 
+- ToroidalSurface3D: line_intersections, linesegment_intersections, plane_intersections.
 - ConicalSurface3D: circle_generatrixes direction.
+- PeriodicalSurface: handles exceptions in connect_contours method.
+- ExtrusionSurface3D: fullarcellipse3d_to_2d
+- ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
+- ToroidalSurface3D: increases precision of point3d_to_2d.
+- Plane3D: plane intersections.
 
 #### faces.py
 - ToroidalFace3D: PlaneFace3D intersections.
@@ -104,6 +144,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### surfaces.py 
 - SphericalSurface3D: use circle 3d instead of polygon3D for plotting. 
+- add bigger precision to plane-plane intersections.
 
 #### utils
 - common_operations separate_points_by_closeness: consider more than two cluster groups.
@@ -140,7 +181,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Circle2D: Now, it needs a Frame2D and a radius instead of a Center and a Radius. This allows to easily control the circle's direction (clockwise/counterclockwise)
 - Arc2D: Arc 2D now must follow the same rotation direction of its circle.
 - LineSegment2D/3D: The line attribute from which the line segment was defined was converted to a property, for performance and memory efficiency reasons.
-- BSplineCurve: improve line_intersections performance.
+- BSplineCurve: improve line_intersections performance. 
 
 #### faces.py
 - Face3D: create a generic method for calculating intersections between two faces: _generic_face_intersections.

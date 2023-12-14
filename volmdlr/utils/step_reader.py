@@ -1,7 +1,7 @@
 """
 volmdlr utils for importing step files.
 """
-from re import search as re_search
+import re
 
 import numpy as npy
 
@@ -25,7 +25,87 @@ def set_to_list(step_set):
     return list(char_list)
 
 
-def step_split_arguments(function_arg):
+def replace_unicode_escapes(step_content, pattern):
+    """Define a function to replace matched escape sequences with their corresponding characters."""
+    def replace_match(match):
+        unicode_hex = match.group(1)
+        if len(unicode_hex) == 4:
+            unicode_char = chr(int(unicode_hex, 16))
+        else:
+            unicode_char = str(int(unicode_hex, 16))
+        return unicode_char
+
+    replaced_content = pattern.sub(replace_match, step_content)
+
+    return replaced_content
+
+
+def separate_entity_name_and_arguments(input_string: str) -> tuple[str]:
+    """Helper function to separate entity name argument from the other arguments."""
+    entity_name_str = ""
+    input_string = input_string.strip()
+    if input_string[0] == "'":
+        end_index_name = input_string.find("',", 1) + 1
+        if end_index_name != -1:
+            entity_name_str = input_string[:end_index_name]
+            entity_arg_str = input_string[end_index_name:]
+        else:
+            entity_arg_str = input_string
+    else:
+        entity_arg_str = input_string
+    return entity_name_str, entity_arg_str
+
+
+def step_split_arguments(entity_name_str: str, function_arg: str) -> list[str]:
+    """
+    Split the arguments of a function that doesn't start with '(' but end with ')'.
+
+    ex: IN: '#123,#124,#125)'
+       OUT: ['#123', '#124', '#125']
+    """
+    if entity_name_str:
+        arguments = [entity_name_str]
+    else:
+        arguments = []
+    # Remove all spaces from the string
+    function_arg = remove_spaces_outside_quotes(function_arg)
+
+    if not function_arg:
+        return []
+
+    if function_arg[-1] == ";":
+        function_arg = function_arg[:-2]
+    pattern = re.compile(r"\([^()]*\)|'[^']*[^,]*',|[^,]+")
+    # if double_brackets_start_indexes:
+    if "((" in function_arg:
+        double_brackets_start_indexes = [match.start() for match in re.finditer(r'\(\(', function_arg)]
+        double_brackets_end_indexes = [match.end() for match in re.finditer(r'\)\)', function_arg)]
+        starting_index = 0
+        for start, end in zip(double_brackets_start_indexes, double_brackets_end_indexes):
+            arguments.extend(pattern.findall(function_arg[starting_index:start]))
+            arguments.append(function_arg[start:end])
+            starting_index = end
+        arguments.extend([arg.strip(",") for arg in pattern.findall(function_arg[starting_index:])])
+        return arguments
+
+    # Use regular expression to extract arguments
+    arguments.extend([arg.strip(",") for arg in pattern.findall(function_arg)])
+
+    return arguments
+
+
+def remove_spaces_outside_quotes(input_string: str) -> str:
+    """Helper function to remove only space that are outside quotes."""
+    quoted_strings = re.findall(r"'[^']*[^,]*',", input_string)
+
+    result = input_string.replace(' ', '')
+    # Restore the original quoted strings
+    for quoted_string in quoted_strings:
+        result = result.replace(quoted_string.replace(' ', ''), quoted_string)
+    return result
+
+
+def step_split_arguments_special(function_arg):
     """
     Split the arguments of a function that doesn't start with '(' but end with ')'.
 
@@ -311,7 +391,7 @@ def _helper_get_parameter_value(string):
     pattern = r'\((-?\d+\.\d+)\)'
 
     # Use re.search to find the match
-    match = re_search(pattern, string)
+    match = re.search(pattern, string)
 
     if match:
         numerical_value = float(match.group(1))
@@ -346,12 +426,12 @@ def composite_curve(arguments, object_dict, *args, **kwargs):
     Returns the data in case of a COMPOSITE_CURVE.
     """
     name = arguments[0]
-    list_primitives = [object_dict[int(arg[1:])]for arg in arguments[1]]
+    list_primitives = [object_dict[int(arg[1:])] for arg in arguments[1]]
     first_primitive = list_primitives[0]
     last_primitive = list_primitives[-1]
     if first_primitive.start.is_close(last_primitive.end):
-        return volmdlr.wires.Contour3D(list_primitives, name)
-    return volmdlr.wires.Wire3D(list_primitives, name)
+        return volmdlr.wires.Contour3D(list_primitives, name=name)
+    return volmdlr.wires.Wire3D(list_primitives, name=name)
 
 
 def pcurve(arguments, object_dict, *args, **kwargs):
@@ -450,8 +530,9 @@ def manifold_surface_shape_representation(arguments, object_dict, *args, **kwarg
         if isinstance(primitive, volmdlr.core.Compound):
             counter = 0
             for sub_prim in primitive.primitives:
-                sub_prim.name = arguments[0][1:-1] + str(counter)
-                counter += 1
+                if sub_prim:
+                    sub_prim.name = arguments[0][1:-1] + str(counter)
+                    counter += 1
             primitives.append(primitive)
     if len(primitives) == 1:
         return primitives[0]
@@ -648,11 +729,11 @@ def frame_map_closed_shell(closed_shells, item_defined_transformation_frames, sh
         basis_a = global_frame.basis()
         basis_b = transformed_frame.basis()
         matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
-                       [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
-                       [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+                              [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                              [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
         matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
-                       [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
-                       [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+                              [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                              [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
         transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
         new_frame = volmdlr.Frame3D(transformed_frame.origin, volmdlr.Vector3D(*transfer_matrix[0]),
                                     volmdlr.Vector3D(*transfer_matrix[1]), volmdlr.Vector3D(*transfer_matrix[2]))
@@ -703,7 +784,8 @@ def b_spline_curve_b_spline_curve_with_knots_rational_b_spline_curve_bounded_cur
     """
     Bounded b spline with knots curve geometric representation item. To clarify.
     """
-    return bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(arguments, object_dict)
+    return bounded_curve_b_spline_curve_b_spline_curve_with_knots_curve_geometric_representation_item_rational_b_spline_curve_representation_item(
+        arguments, object_dict)
 
 
 def bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
@@ -731,12 +813,14 @@ def bounded_surface_b_spline_surface_b_spline_surface_with_knots_surface_geometr
         arguments, object_dict)
 
 
-def b_spline_surface_b_spline_surface_with_knots_rational_b_spline_surface_bounded_surface_representation_item_geometric_representation_item_surface(arguments, object_dict, *args, **kwargs):
+def b_spline_surface_b_spline_surface_with_knots_rational_b_spline_surface_bounded_surface_representation_item_geometric_representation_item_surface(
+        arguments, object_dict, *args, **kwargs):
     """
     Bounded b spline surface with knots curve geometric representation item. To clarify.
     """
     return bounded_surface_b_spline_surface_b_spline_surface_with_knots_geometric_representation_item_rational_b_spline_surface_representation_item_surface(
         arguments, object_dict)
+
 
 def product_definition_shape(arguments, object_dict, *args, **kwargs):
     """
@@ -785,6 +869,7 @@ def product_context(arguments, *args, **kwargs):
     Returns the data in case of a product_context.
     """
     return arguments
+
 
 STEP_TO_VOLMDLR = {
     # GEOMETRICAL ENTITIES

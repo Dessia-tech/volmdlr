@@ -3068,6 +3068,21 @@ class Frame2D(Basis2D):
         """
         return 0
 
+    def is_close(self, other_frame, abs_tol: float = 1e-6):
+        """
+        Verifies if two frames are the same, up to given tolerance.
+
+        :param other_frame: other frame.
+        :param abs_tol: tolerance used
+        :return:
+        """
+        if self.__class__ != other_frame.__class__:
+            return False
+        if (self.origin.is_close(other_frame.origin, abs_tol) and self.u.is_close(other_frame.u, abs_tol) and
+                self.v.is_close(other_frame.v, abs_tol)):
+            return True
+        return False
+
     def to_dict(self, *args, **kwargs):
         """
         Serializes a 2-dimensional frame into a dictionary.
@@ -3343,6 +3358,21 @@ class Frame3D(Basis3D):
                               round(self.u, ndigits),
                               round(self.v, ndigits),
                               round(self.w, ndigits))
+
+    def is_close(self, other_frame, abs_tol: float = 1e-6):
+        """
+        Verifies if two frames are the same, up to given tolerance.
+
+        :param other_frame: other frame.
+        :param abs_tol: tolerance used
+        :return:
+        """
+        if self.__class__ != other_frame.__class__:
+            return False
+        if (self.origin.is_close(other_frame.origin, abs_tol) and self.u.is_close(other_frame.u, abs_tol) and
+                self.v.is_close(other_frame.v) and self.w.is_close(other_frame.w, abs_tol)):
+            return True
+        return False
 
     def to_dict(self, *args, **kwargs):
         """

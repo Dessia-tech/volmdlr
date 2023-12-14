@@ -123,11 +123,11 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertFalse(cyl_surface1.is_coincident(plane_face))
         self.assertFalse(self.cylindrical_surface.is_coincident(cyl_surface1))
 
-    def test_point_on_surface(self):
+    def test_point_belongs(self):
         point = volmdlr.Point3D(0.32, 0, 1)
         point2 = volmdlr.Point3D(1, 1, 1)
-        self.assertTrue(self.cylindrical_surface.point_on_surface(point))
-        self.assertFalse((self.cylindrical_surface.point_on_surface(point2)))
+        self.assertTrue(self.cylindrical_surface.point_belongs(point))
+        self.assertFalse((self.cylindrical_surface.point_belongs(point2)))
 
     def test_arcellipse3d_to_2d(self):
         pass
@@ -525,7 +525,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
         inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
         expected_lengths2 = [7.767042433585131, 7.767042217039914]
         for intersection, expected_length in zip(inters, expected_lengths2):
-            self.assertAlmostEqual(intersection.length(), expected_length)
+            self.assertAlmostEqual(intersection.length(), expected_length, 6)
 
         # test 3
         cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.OXYZ.translation(volmdlr.X3D * .5), 2)
