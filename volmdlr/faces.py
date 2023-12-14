@@ -450,7 +450,7 @@ class Face3D(volmdlr.core.Primitive3D):
         points = [vmd.Node2D(*triagulation['vertices'][i, :]) for i in range(number_points)]
         return vmd.DisplayMesh2D(points, triangles=triangles)
 
-    def helper_to_mesh(self, outer_polygon, inner_polygons):
+    def helper_to_mesh(self, polygon_data=None):
         """
         Triangulates the Surface2D using the Triangle library.
 
@@ -467,6 +467,10 @@ class Face3D(volmdlr.core.Primitive3D):
             return vmd.DisplayMesh2D([], triangles=[])
         grid_size = self.grid_size()
         points_grid = []
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
+        else:
+            outer_polygon, inner_polygons = self.get_face_polygons()
         if any(grid_size):
             points_grid = self.grid_points(grid_size, [outer_polygon, inner_polygons])
         points = outer_polygon.points.copy()
@@ -518,7 +522,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def triangulation(self):
         """Triangulates the face."""
         outer_polygon, inner_polygons = self.get_face_polygons()
-        mesh2d = self.helper_to_mesh(outer_polygon, inner_polygons)
+        mesh2d = self.helper_to_mesh([outer_polygon, inner_polygons])
         if mesh2d is None:
             return None
         return vmd.DisplayMesh3D([self.surface3d.point2d_to_3d(point) for point in mesh2d.points], mesh2d.triangles)
@@ -3388,6 +3392,14 @@ class RevolutionFace3D(Face3D):
     def get_face_polygons(self):
         """Get face polygons."""
         primitives_mapping = self.primitives_mapping
+        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
+        delta_x = xmax - xmin
+        delta_y = ymax - ymin
+        number_points_x, number_points_y = self.grid_size()
+        scale_factor = 1
+        if number_points_x > 1  and number_points_y > 1:
+            scale_factor = 10 ** math.floor(
+                math.log10((delta_x/(number_points_x - 1))/(delta_y/(number_points_y - 1))))
 
         def get_polygon_points(primitives):
             points = []
@@ -3395,24 +3407,26 @@ class RevolutionFace3D(Face3D):
                 edge3d = primitives_mapping.get(edge)
                 number_points = self.get_edge_discretization_size(edge3d)
                 edge_points = edge.discretization_points(number_points=number_points)
-                for point in edge_points:
-                    point.y *= 1000
+                if scale_factor != 1:
+                    for point in edge_points:
+                        point.y *= scale_factor
                 points.extend(edge_points[:-1])
             return points
 
         outer_polygon = volmdlr.wires.ClosedPolygon2D(get_polygon_points(self.surface2d.outer_contour.primitives))
         inner_polygons = [volmdlr.wires.ClosedPolygon2D(get_polygon_points(inner_contour.primitives))
                           for inner_contour in self.surface2d.inner_contours]
-        return outer_polygon, inner_polygons
+        return outer_polygon, inner_polygons, scale_factor
 
     def triangulation(self):
         """Triangulates the face."""
-        outer_polygon, inner_polygons = self.get_face_polygons()
-        mesh2d = self.helper_to_mesh(outer_polygon, inner_polygons)
+        outer_polygon, inner_polygons, scale_factor = self.get_face_polygons()
+        mesh2d = self.helper_to_mesh([outer_polygon, inner_polygons])
         if mesh2d is None:
             return None
-        for point in mesh2d.points:
-            point.y *= 0.001
+        if scale_factor != 1:
+            for point in mesh2d.points:
+                point.y /= scale_factor
         return vmd.DisplayMesh3D([self.surface3d.point2d_to_3d(point) for point in mesh2d.points], mesh2d.triangles)
 
 
