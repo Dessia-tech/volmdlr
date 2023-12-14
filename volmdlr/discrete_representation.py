@@ -30,7 +30,7 @@ from volmdlr.faces import Face3D, Triangle3D
 from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, Shell3D
 from volmdlr.wires import ClosedPolygon2D
 
-# pylint: disable=no-name-in-module,too-many-lines
+# pylint: disable=no-name-in-module,too-many-lines,arguments-differ,unused-argument
 
 
 # CUSTOM TYPES
