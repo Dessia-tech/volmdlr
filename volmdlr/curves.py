@@ -2309,11 +2309,12 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
             for theta in npy.linspace(self.angle_start, self.angle_end, angle_resolution)]
         return discretization_points
 
-    def abscissa(self, point: volmdlr.Point2D):
+    def abscissa(self, point: volmdlr.Point2D, tol: float = 1e-6):
         """
         Calculates the abscissa for a given point.
 
         :param point: point to calculate the abscissa.
+        :param tol: tolerance.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
         if self.point_over_ellipse(point):
