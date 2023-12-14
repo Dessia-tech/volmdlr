@@ -2311,7 +2311,20 @@ class CylindricalSurface3D(PeriodicalSurface):
             return True
         return False
 
-    def get_generatrices(self, length: float = 1, number_lines: int = 30):
+    def get_generatrices(self, number_lines: int = 30, length: float = 1):
+        """
+        Retrieve line segments representing the generatrices of a cylinder.
+
+        Generates a specified number of line segments along the surface of the cylinder,
+        each representing a generatrix.
+
+        :param number_lines: The number of generatrices to generate. Default is 30
+        :type number_lines: int
+        :param length: The length of the cylinder along the z-direction. Default is 1.
+        :type length: float
+        :return: A list of LineSegment3D instances representing the generatrices of the cylinder.
+        :rtype: List[LineSegment3D]
+        """
         list_generatrices = []
         for i in range(number_lines):
             theta = i / (number_lines - 1) * volmdlr.TWO_PI
@@ -2322,6 +2335,19 @@ class CylindricalSurface3D(PeriodicalSurface):
         return list_generatrices
 
     def get_circle_generatrices(self, number_circles: int = 10, length: float = 1.0):
+        """
+        Retrieve circles representing the generatrices of a cylinder.
+
+        Generates a specified number of circles along the surface of the cylinder,
+        each representing a generatrix.
+
+        :param number_circles: The number of generatrices to generate. Default is 10
+        :type number_circles: int
+        :param length: The length of the cylinder along the z-direction. Default is 1.
+        :type length: float
+        :return: A list of Circle3D instances representing the generatrices of the cylinder.
+        :rtype: List[Circle3D]
+        """
         circles = []
         for j in range(number_circles):
             circle_frame = self.frame.copy()
@@ -2354,7 +2380,7 @@ class CylindricalSurface3D(PeriodicalSurface):
             length = self.radius
 
         self.frame.plot(ax=ax, color=edge_style.color, ratio=self.radius)
-        for edge in self.get_generatrices(length, nlines):
+        for edge in self.get_generatrices(nlines, length):
             edge.plot(ax=ax, edge_style=edge_style)
 
         circles = self.get_circle_generatrices(ncircles, length)
@@ -2580,7 +2606,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :return: list of intersecting curves.
         """
         def _list_generatrices_intersections(surface, other_surface):
-            linesegments = other_surface.get_generatrices(2, 50)
+            linesegments = other_surface.get_generatrices(50, 2)
             all_generatrices_intersecting = True
             lists_intersections = [[], []]
             for generatrix in linesegments:
@@ -2750,7 +2776,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         :param cylindricalsurface: other Cylindrical surface 3d.
         :return: points of intersections.
         """
-        cyl_generatrices = self.get_generatrices(self.radius*10, 200) +\
+        cyl_generatrices = self.get_generatrices(200, self.radius*10) +\
                            self.get_circle_generatrices(200, self.radius*10)
         intersection_points = []
         for gene in cyl_generatrices:
@@ -3514,7 +3540,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             for intersection in intersections:
                 if not intersection.in_list(points_intersections):
                     points_intersections.append(intersection)
-        for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 300):
+        for edge in cylindrical_surface.get_generatrices(300, self.outer_radius * 3):
             # \
             #    cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
@@ -3579,7 +3605,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         for arc in arcs:
             intersections = conical_surface.circle_intersections(arc)
             points_intersections.extend(intersections)
-        for edge in conical_surface.get_generatrices(self.outer_radius * 3, 300):
+        for edge in conical_surface.get_generatrices(300, self.outer_radius * 3):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not point.in_list(points_intersections):
@@ -3674,7 +3700,7 @@ class ConicalSurface3D(PeriodicalSurface):
         """Returns u and v bounds."""
         return -math.pi, math.pi, -math.inf, math.inf
 
-    def get_generatrices(self, z: float = 1, number_lines: int = 36):
+    def get_generatrices(self, number_lines: int = 36, z: float = 1):
         """
         Gets Conical Surface 3D generatrix lines.
 
@@ -3693,7 +3719,7 @@ class ConicalSurface3D(PeriodicalSurface):
             list_generatrices.append(wire)
         return list_generatrices
 
-    def get_circle_generatrices(self, z, number_circles: int):
+    def get_circle_generatrices(self, number_circles: int,  z):
         """
         Get circles generatrix of the cone.
 
@@ -3717,8 +3743,8 @@ class ConicalSurface3D(PeriodicalSurface):
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-        line_generatrices = self.get_generatrices(z, 36)
-        circle_generatrices = self.get_circle_generatrices(z, 50)
+        line_generatrices = self.get_generatrices(36, z)
+        circle_generatrices = self.get_circle_generatrices(50, z)
         for edge in line_generatrices + circle_generatrices:
             edge.plot(ax, edge_style)
         return ax
@@ -4192,7 +4218,7 @@ class ConicalSurface3D(PeriodicalSurface):
         :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
-        cyl_generatrices = self.get_generatrices(spherical_surface.radius*4, 200) +\
+        cyl_generatrices = self.get_generatrices(200, spherical_surface.radius*4) +\
                            self.get_circle_generatrices(200, spherical_surface.radius*4)
         intersection_points = []
         for gene in cyl_generatrices:
@@ -6932,7 +6958,7 @@ class BSplineSurface3D(Surface3D):
 
     @staticmethod
     def _find_index_min(matrix_points, point):
-        # Calculate distances
+        """Helper function to find point of minimal distance."""
         distances = npy.linalg.norm(matrix_points - point, axis=1)
 
         return npy.argmin(distances), distances.min()
