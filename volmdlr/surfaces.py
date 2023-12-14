@@ -9,6 +9,7 @@ from typing import List, Union, Dict, Any
 
 import matplotlib.pyplot as plt
 import numpy as npy
+from numpy.typing import NDArray
 import triangle as triangle_lib
 
 from geomdl import NURBS, BSpline
@@ -5389,6 +5390,34 @@ class ExtrusionSurface3D(Surface3D):
         v = z - point_at_curve_local.z
 
         return volmdlr.Point2D(u, v)
+
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the extrusion surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the extrusion surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the extrusion surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        z = npy.array([self.direction[0], self.direction[1], self.direction[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        if self.x_periodicity:
+            u_values[u_values > self.x_periodicity] -= self.x_periodicity
+            u_values[u_values < 0] += self.x_periodicity
+        v_values = points[:, 1]
+
+        points_at_curve = npy.array([self.edge.point_at_abscissa(u) for u in u_values])
+
+        return points_at_curve + v_values * z
 
     def rectangular_cut(self, x1: float = 0.0, x2: float = 1.0,
                         y1: float = 0.0, y2: float = 1.0, name: str = ''):
