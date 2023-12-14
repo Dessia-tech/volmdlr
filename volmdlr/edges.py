@@ -34,6 +34,8 @@ import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
 
+# pylint: disable=arguments-differ
+
 
 class Edge(dc.DessiaObject):
     """
