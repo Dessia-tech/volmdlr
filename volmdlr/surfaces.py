@@ -9,6 +9,7 @@ from typing import List, Union, Dict, Any
 
 import matplotlib.pyplot as plt
 import numpy as npy
+from numpy.typing import NDArray
 import triangle as triangle_lib
 
 from geomdl import NURBS, BSpline
@@ -1615,6 +1616,31 @@ class Plane3D(Surface3D):
         Converts a 2D parametric point into a 3D point on the surface.
         """
         return point2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the plane.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the plane.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the plane in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        center = npy.array(self.frame.origin)
+        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+
+        return center + u_values * x + v_values * y
 
     def point3d_to_2d(self, point3d):
         """
