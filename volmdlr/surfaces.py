@@ -2385,15 +2385,11 @@ class CylindricalSurface3D(PeriodicalSurface):
         u_values = points[:, 0]
         v_values = points[:, 1]
 
-        cos_u = npy.cos(u_values)
-        sin_u = npy.sin(u_values)
-
-        x_component = self.radius * cos_u * x
-        y_component = self.radius * sin_u * y
-
+        x_component =  npy.cos(u_values) * x
+        y_component = npy.sin(u_values) * y
         z_component = v_values * z
 
-        return center + x_component + y_component + z_component
+        return center + self.radius * (x_component + y_component) + z_component
 
     def point3d_to_2d(self, point3d):
         """
