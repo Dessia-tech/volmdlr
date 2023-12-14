@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
 - grid_points: returns a grid of points inside the surface2d of the face.
 
+#### surfaces.py
+- CylindricalSurfaces3D: parametric_points_to_3d
+- ToroidalSurfaces3D: parametric_points_to_3d
+- SphericalSurfaces3D: parametric_points_to_3d
+
 ### Fixed
 - review hash and eq methods
 - ConicalSurface3D: plane_intersections
