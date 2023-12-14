@@ -6,10 +6,12 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 
 import math
 import warnings
-from typing import List, Tuple
+from typing import List, Tuple, Union, Dict, Any
+import numpy as np
 from numpy.typing import NDArray
 
 import dessia_common.core as dc
+from dessia_common.typings import JsonSerializable
 
 import volmdlr.edges
 
@@ -77,35 +79,175 @@ class Node3D(volmdlr.Point3D):
         return cls(point3d.x, point3d.y, point3d.z)
 
 
-class DisplayMesh(dc.DessiaObject):
+class MeshMixin:
     """
     A DisplayMesh is a list of points linked by triangles.
 
     This is an abstract class for 2D & 3D.
     """
-    _linesegment_class = volmdlr.edges.LineSegment
 
-    def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ''):
+    # def __add__(self, other_mesh):
+    #     """
+    #     Defines how to add two meshes.
+    #     """
+    #     new_points = self.vertices[:]
+    #     new_point_index = self.point_index.copy()
+    #     i_points = len(new_points)
+    #     for point in other_mesh.points:
+    #         if point not in new_point_index:
+    #             new_point_index[point] = i_points
+    #             i_points += 1
+    #             new_points.append(point)
+    #
+    #     new_triangles = self.triangles[:]
+    #     for vertex1, vertex2, vertex3 in other_mesh.triangles:
+    #         point1 = other_mesh.points[vertex1]
+    #         point2 = other_mesh.points[vertex2]
+    #         point3 = other_mesh.points[vertex3]
+    #         new_triangles.append((new_point_index[point1],
+    #                               new_point_index[point2],
+    #                               new_point_index[point3]))
+    #
+    #     return self.__class__(new_points, new_triangles)
 
-        self.vertices = vertices
-        self.triangles = triangles
-        # Avoiding calling dessia object init because its inefficiency
-        # dc.DessiaObject.__init__(self, name=name)
-        self.name = name
-        self._point_index = None
+    def to_dict(self, *args, **kwargs):
+        """Overload of 'to_dict' for performance."""
+        dict_ = self.base_dict()
 
-    def check(self):
-        npoints = len(self.vertices)
-        for triangle in self.triangles:
-            if max(triangle) >= npoints:
-                return False
-        return True
+        dict_["vertices"] = self.vertices.tolist()
+        dict_["faces"] = self.faces.tolist()
+        dict_["alpha"] = self.alpha
+        dict_["color"] = self.color
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False,
+                       global_dict=None, pointers_memo: Dict[str, Any] = None,
+                       path: str = "#", name: str = "") -> "Union[Mesh2D, Mesh3D]":
+        """Overload of 'dict_to_object' for performance."""
+
+        vertices = np.array(dict_["vertices"])
+        faces = np.array(dict_["faces"])
+        name = dict_["name"]
+
+        display_triangle_shell = cls(vertices, faces, name)
+
+        display_triangle_shell.alpha = dict_["alpha"]
+        display_triangle_shell.color = dict_["color"]
+
+        return display_triangle_shell
+
+    def concatenate(self, other: "Union[Mesh2D, Mesh3D]") -> "Union[Mesh2D, Mesh3D]":
+        """
+        Concatenates two Mesh instances into a single instance.
+
+        This method merges the vertices and indices of both mesh. If the same vertex exists in both mesh,
+        it is only included once in the merged shell to optimize memory usage. It also ensures that each face is
+        represented uniquely by sorting the vertices of each triangle.
+
+        :param other: Another Mesh instance to concatenate with this instance.
+        :return: A new Mesh instance representing the concatenated shells.
+        """
+        if len(self.vertices) == 0 or len(self.faces) == 0:
+            return other
+        if len(other.vertices) == 0 or len(other.faces) == 0:
+            return self
+
+        # Merge and remove duplicate vertices
+        merged_vertices = np.vstack((self.vertices, other.vertices))
+        unique_vertices, indices_map = np.unique(merged_vertices, axis=0, return_inverse=True)
+
+        # Adjust indices to account for duplicates and offset from concatenation
+        self_indices_adjusted = self.faces
+        other_indices_adjusted = other.faces + self.vertices.shape[0]
+
+        # Re-map indices to unique vertices
+        all_indices = np.vstack((self_indices_adjusted, other_indices_adjusted))
+        final_indices = indices_map[all_indices]
+
+        # Use np.unique to find unique subarrays
+        _, unique_indices = np.unique(np.sort(final_indices, axis=1), axis=0, return_index=True)
+
+        # Get the unique subarrays
+        merged_indices = final_indices[unique_indices]
+
+        # Create a new DisplayTriangleShell3D with merged data
+        return self.__class__(unique_vertices, merged_indices, name=self.name + "+" + other.name)
+
+    def __add__(self, other: "Union[Mesh2D, Mesh3D]") -> "Union[Mesh2D, Mesh3D]":
+        """
+        Overloads the + operator to concatenate two Mesh instances.
+
+        :param other: Another Mesh instance to concatenate with this instance.
+        :type other: Mesh
+
+        :return: A new Mesh instance representing the concatenated shells.
+        :rtype: Union[Mesh2D, Mesh3D]
+        """
+        return self.concatenate(other)
+
+    def __hash__(self):
+        return hash(
+            (
+                self.__class__.__name__,
+                (tuple(self.faces[0]), tuple(self.faces[-1]), len(self.faces)),
+                (tuple(self.vertices[0]), tuple(self.vertices[-1]), len(self.vertices)),
+            )
+        )
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def _data_hash(self):
+        return hash(
+            (
+                self.__class__.__name__,
+                (tuple(self.faces[0]), tuple(self.faces[-1]), len(self.faces)),
+                (tuple(self.vertices[0]), tuple(self.vertices[-1]), len(self.vertices)),
+            )
+        )
+
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
+            return False
+        return self._data_hash() == other_object._data_hash()
+
+
+    @property
+    def triangles(self):
+        """
+        Actual triangles of the mesh (points, not indexes)
+
+        Returns
+        ---------
+        triangles : (n, 3, d) float
+          Points of triangle vertices
+        """
+        # use of advanced indexing on our tracked arrays will
+        # trigger a change flag which means the hash will have to be
+        # recomputed. We can escape this check by viewing the array.
+        triangles = self.vertices.view(np.ndarray)[self.faces]
+
+        return triangles
 
     @property
     def point_index(self):
         if self._point_index is None:
             self._point_index = {point: index for index, point in enumerate(self.vertices)}
         return self._point_index
+
+    def check(self):
+        npoints = len(self.vertices)
+        for triangle in self.faces:
+            if max(triangle) >= npoints:
+                return False
+        return True
+
+    def triangles_crosses(self):
+        vectors = np.diff(self.triangles, axis=1)
+        crosses = np.cross(vectors[:, 0], vectors[:, 1])
+        return crosses
 
     @classmethod
     def merge_meshes(cls, meshes: List['DisplayMesh'], name: str = ''):
@@ -162,42 +304,18 @@ class DisplayMesh(dc.DessiaObject):
                                    self._point_index[point2],
                                    self._point_index[point3]))
 
-    def __add__(self, other_mesh):
-        """
-        Defines how to add two meshes.
-        """
-        new_points = self.vertices[:]
-        new_point_index = self.point_index.copy()
-        i_points = len(new_points)
-        for point in other_mesh.points:
-            if point not in new_point_index:
-                new_point_index[point] = i_points
-                i_points += 1
-                new_points.append(point)
-
-        new_triangles = self.triangles[:]
-        for vertex1, vertex2, vertex3 in other_mesh.triangles:
-            point1 = other_mesh.points[vertex1]
-            point2 = other_mesh.points[vertex2]
-            point3 = other_mesh.points[vertex3]
-            new_triangles.append((new_point_index[point1],
-                                  new_point_index[point2],
-                                  new_point_index[point3]))
-
-        return self.__class__(new_points, new_triangles)
-
     def plot(self, ax=None, numbering=False):
         """Plots the mesh with Matplotlib."""
         for i_points, point in enumerate(self.vertices):
-            ax = point.plot(ax=ax)
+            ax = self._point_class(*point).plot(ax=ax)
             if numbering:
                 ax.text(*point, f'node {i_points + 1}',
                         ha='center', va='center')
 
         for vertex1, vertex2, vertex3 in self.triangles:
-            point1 = self.vertices[vertex1]
-            point2 = self.vertices[vertex2]
-            point3 = self.vertices[vertex3]
+            point1 = self._point_class(*vertex1)
+            point2 = self._point_class(*vertex2)
+            point3 = self._point_class(*vertex3)
             if not point1.is_close(point2):
                 self._linesegment_class(point1, point2).plot(ax=ax)
             if not point2.is_close(point3):
@@ -208,7 +326,7 @@ class DisplayMesh(dc.DessiaObject):
         return ax
 
 
-class DisplayMesh2D(DisplayMesh):
+class Mesh2D(MeshMixin, dc.PhysicalObject):
     """
     A mesh for display purposes in 2D.
 
@@ -217,25 +335,29 @@ class DisplayMesh2D(DisplayMesh):
     _linesegment_class = volmdlr.edges.LineSegment2D
     _point_class = volmdlr.Point2D
 
-    def __init__(self, vertices: NDArray[float],
-                 triangles: NDArray[int],
-                 name: str = ''):
-        DisplayMesh.__init__(self, vertices, triangles, name=name)
+    def __init__(self, vertices: NDArray[float], faces: NDArray[int], name: str = ''):
+        self.vertices = vertices
+        self.faces = faces
+        # Avoiding calling dessia object init because its inefficiency
+        # dc.DessiaObject.__init__(self, name=name)
+        self.name = name
+        self._point_index = None
 
     def area(self):
         """
         Return the area as the sum of areas of triangles.
         """
-        area = 0.
-        for (vertex1, vertex2, vertex3) in self.triangles:
-            point1 = self.vertices[vertex1]
-            point2 = self.vertices[vertex2]
-            point3 = self.vertices[vertex3]
-            area += 0.5 * abs((point2 - point1).cross(point3 - point1))
-        return area
+        # area = 0.
+        # for (vertex1, vertex2, vertex3) in self.triangles:
+        #     point1 = self.vertices[vertex1]
+        #     point2 = self.vertices[vertex2]
+        #     point3 = self.vertices[vertex3]
+        #     area += 0.5 * abs((point2 - point1).cross(point3 - point1))
+        areas = np.sqrt((self.triangles_crosses() ** 2)) / 2.0
+        return areas.sum()
 
 
-class DisplayMesh3D(DisplayMesh):
+class Mesh3D(MeshMixin, dc.PhysicalObject):
     """
     A mesh for display purposes in 3D.
 
@@ -244,10 +366,20 @@ class DisplayMesh3D(DisplayMesh):
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 
-    def __init__(self, vertices: NDArray[float],
-                 triangles: NDArray[int], name=''):
-        self._faces = None
-        DisplayMesh.__init__(self, vertices, triangles, name=name)
+    def __init__(self, vertices: NDArray[float], faces: NDArray[int], name: str = ''):
+        self.vertices = vertices
+        self.faces = faces
+        # Avoiding calling dessia object init because its inefficiency
+        # dc.DessiaObject.__init__(self, name=name)
+        self.name = name
+        self._point_index = None
+
+    def area(self):
+        """
+        Return the area as the sum of areas of triangles.
+        """
+        areas = np.sqrt((self.triangles_crosses() ** 2).sum(axis=1)) / 2.0
+        return areas.sum()
 
     def to_babylon(self):
         """

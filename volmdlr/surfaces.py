@@ -190,7 +190,7 @@ class Surface2D(PhysicalObject):
                'segments': npy.array(segments).reshape((-1, 2)),
                }
         triagulation = triangle_lib.triangulate(tri, tri_opt)
-        return display.DisplayMesh2D(vertices=triagulation['vertices'], triangles=triagulation['triangles'])
+        return display.Mesh2D(vertices=triagulation['vertices'], faces=triagulation['triangles'])
 
     def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
@@ -201,12 +201,12 @@ class Surface2D(PhysicalObject):
         :param number_points_y: Number of discretization points in y direction.
         :type number_points_y: int
         :return: The triangulated surface as a display mesh.
-        :rtype: :class:`volmdlr.display.DisplayMesh2D`
+        :rtype: :class:`volmdlr.display.Mesh2D`
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
         if math.isclose(area, 0., abs_tol=1e-8):
-            return display.DisplayMesh2D(npy.array([], dtype=npy.float64), npy.array([]))
+            return display.Mesh2D(npy.array([], dtype=npy.float64), npy.array([]))
 
         triangulates_with_grid = number_points_x > 0 and number_points_y > 0
         discretize_line = number_points_x > 0 or number_points_y > 0
@@ -283,7 +283,7 @@ class Surface2D(PhysicalObject):
                'holes': npy.array(holes).reshape((-1, 2))
                }
         triangulation = triangle_lib.triangulate(tri, tri_opt)
-        return display.DisplayMesh2D(vertices=triangulation['vertices'], triangles=triangulation['triangles'])
+        return display.Mesh2D(vertices=triangulation['vertices'], faces=triangulation['triangles'])
 
     def split_by_lines(self, lines):
         """
@@ -2354,6 +2354,30 @@ class CylindricalSurface3D(PeriodicalSurface):
                                 point2d.y)
         return self.frame.local_to_global_coordinates(point)
 
+    def parametric_points_to_3d(self, points) -> List[volmdlr.Point3D]:
+        """Transforms a list of parametric points into a list of 3D points."""
+        center = npy.array(self.frame.origin)
+        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+        z = npy.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+
+        cos_u = npy.cos(u_values)
+        sin_u = npy.sin(u_values)
+
+        x_component = self.radius * cos_u * x
+        y_component = self.radius * sin_u * y
+
+        z_component = v_values * z
+
+        result = center + x_component + y_component + z_component
+
+        return [volmdlr.Point3D(*point) for point in result]
+
     def point3d_to_2d(self, point3d):
         """
         Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a Cartesian coordinates point (x, y, z).
@@ -3174,7 +3198,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         Triangulation.
 
-        :rtype: display.DisplayMesh3D
+        :rtype: display.Mesh3D
         """
         face = self.rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
         return face.triangulation()
