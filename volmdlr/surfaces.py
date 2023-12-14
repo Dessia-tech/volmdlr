@@ -2967,16 +2967,16 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
         """
-        Transform parametric coordinates to 3D points on the cylindrical surface.
+        Transform parametric coordinates to 3D points on the toroidal surface.
 
         Given a set of parametric coordinates `(u, v)` representing points on the surface,
-        this method returns the corresponding 3D points on the cylindrical surface.
+        this method returns the corresponding 3D points on the toroidal surface.
 
         :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
                        where `n` is the number of points, and each row corresponds to `(u, v)`.
         :type points: numpy.ndarray[npy.float64]
 
-        :return: Array of 3D points representing the cylindrical surface in Cartesian coordinates.
+        :return: Array of 3D points representing the toroidal surface in Cartesian coordinates.
         :rtype: numpy.ndarray[npy.float64]
         """
         center = npy.array(self.frame.origin)
