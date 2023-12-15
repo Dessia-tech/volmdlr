@@ -5909,6 +5909,40 @@ class RevolutionSurface3D(PeriodicalSurface):
         v = self.edge.abscissa(point_at_curve)
         return volmdlr.Point2D(u, v)
 
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the revolution surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the revolution surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the revolution surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        center = npy.array(self.axis_point)
+        z = npy.array([self.axis[0], self.axis[1], self.axis[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+        if self.y_periodicity:
+            v_values[v_values > self.y_periodicity] -= self.y_periodicity
+            v_values[v_values < 0] += self.y_periodicity
+
+        cos_u = npy.cos(u_values)
+
+        points_at_curve = npy.array([self.edge.point_at_abscissa(v) for v in v_values])
+        points_at_curve_minus_center = points_at_curve - center
+
+        return (center + points_at_curve_minus_center * cos_u +
+                npy.dot(points_at_curve_minus_center, z).reshape(-1, 1) * z * (1 - cos_u) +
+                npy.cross(z, points_at_curve_minus_center * npy.sin(u_values)))
+
     def rectangular_cut(self, x1: float, x2: float,
                         y1: float, y2: float, name: str = ''):
         """Deprecated method, Use RevolutionFace3D from_surface_rectangular_cut method."""
