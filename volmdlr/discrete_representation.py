@@ -651,19 +651,19 @@ class Voxelization(DiscreteRepresentation, PhysicalObject):
         return [
             (
                 (
-                    float(triangulation.points[triangle[0]].x),
-                    float(triangulation.points[triangle[0]].y),
-                    float(triangulation.points[triangle[0]].z),
+                    float(triangulation.vertices[triangle[0]][0]),
+                    float(triangulation.vertices[triangle[0]][1]),
+                    float(triangulation.vertices[triangle[0]][2]),
                 ),
                 (
-                    float(triangulation.points[triangle[1]].x),
-                    float(triangulation.points[triangle[1]].y),
-                    float(triangulation.points[triangle[1]].z),
+                    float(triangulation.vertices[triangle[1]][0]),
+                    float(triangulation.vertices[triangle[1]][1]),
+                    float(triangulation.vertices[triangle[1]][2]),
                 ),
                 (
-                    float(triangulation.points[triangle[2]].x),
-                    float(triangulation.points[triangle[2]].y),
-                    float(triangulation.points[triangle[2]].z),
+                    float(triangulation.vertices[triangle[2]][0]),
+                    float(triangulation.vertices[triangle[2]][1]),
+                    float(triangulation.vertices[triangle[2]][2]),
                 ),
             )
             for triangle in triangulation.triangles
@@ -2943,19 +2943,19 @@ class OctreeBasedVoxelization(Voxelization):
                 face_triangles = [
                     (
                         (
-                            float(triangulation.points[triangle[0]].x),
-                            float(triangulation.points[triangle[0]].y),
-                            float(triangulation.points[triangle[0]].z),
+                            float(triangulation.vertices[triangle[0]].x),
+                            float(triangulation.vertices[triangle[0]].y),
+                            float(triangulation.vertices[triangle[0]].z),
                         ),
                         (
-                            float(triangulation.points[triangle[1]].x),
-                            float(triangulation.points[triangle[1]].y),
-                            float(triangulation.points[triangle[1]].z),
+                            float(triangulation.vertices[triangle[1]].x),
+                            float(triangulation.vertices[triangle[1]].y),
+                            float(triangulation.vertices[triangle[1]].z),
                         ),
                         (
-                            float(triangulation.points[triangle[2]].x),
-                            float(triangulation.points[triangle[2]].y),
-                            float(triangulation.points[triangle[2]].z),
+                            float(triangulation.vertices[triangle[2]].x),
+                            float(triangulation.vertices[triangle[2]].y),
+                            float(triangulation.vertices[triangle[2]].z),
                         ),
                     )
                     for triangle in triangulation.triangles

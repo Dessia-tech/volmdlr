@@ -338,7 +338,7 @@ class Stl(dc.DessiaObject):
         return valid_points
 
     @classmethod
-    def from_display_mesh(cls, mesh: vm.display.DisplayMesh3D):
+    def from_display_mesh(cls, mesh: vm.display.Mesh3D):
         """
         Create an STL object from a display mesh.
 
