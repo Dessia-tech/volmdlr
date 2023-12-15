@@ -2059,7 +2059,10 @@ class Circle3D(CircleMixin, ClosedCurve):
         point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         return point_angle
 
+
 class ConicMixin:
+    """Abstract class for Conic curves."""
+
     def line_intersections(self, line, abs_tol: float = 1e-6):
         """
         Gets intersections between a Conic 3D and a Line 3D.
