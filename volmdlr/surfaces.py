@@ -7220,6 +7220,23 @@ class BSplineSurface3D(Surface3D):
         x[1] = v
         return x
 
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the BSpline surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the BSpline surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the BSpline surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        return npy.array([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
+                         dtype=npy.float64)
+
     def linesegment2d_to_3d(self, linesegment2d):
         """Evaluates the Euclidean form for the parametric line segment."""
         points = []
