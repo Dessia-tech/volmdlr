@@ -24,6 +24,8 @@ from volmdlr.core import (edge_in_list, get_edge_index_in_list,
 from volmdlr.utils.step_writer import (geometric_context_writer,
                                        product_writer, step_ids_to_str)
 
+# pylint: disable=unused-argument
+
 
 def union_list_of_shells(list_shells, abs_tol: float = 1e-6):
     """
