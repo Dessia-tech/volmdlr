@@ -703,7 +703,7 @@ class Mesh(DessiaObject):
                 for node in group.nodes:
                     for node_ref in nodes_reference:
                         d = node.point_distance(node_ref)
-                        if 1e-8 < d < 1e-4:
+                        if 1e-8 < d < tol:
                             nodes_correction[node] = node_ref
 
             self._nodes_correction = nodes_correction
