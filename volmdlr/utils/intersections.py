@@ -145,7 +145,7 @@ def _get_local_ellise2d_line_intersections(ellipse2d, line2d, abs_tol: float = 1
     :param abs_tol: tolerance.
     :return: list of points intersections, if there are any
     """
-    if math.isclose(line2d.point2.x, line2d.point1.x, abs_tol=1e-6):
+    if math.isclose(line2d.point2.x, line2d.point1.x, abs_tol=abs_tol):
         return _get_ellipse2d_vertical_line_intersectioons(ellipse2d, line2d)
     line_slope = line2d.get_slope()
     line_y_intersection = line2d.get_y_intersection()
@@ -161,7 +161,7 @@ def _get_local_ellise2d_line_intersections(ellipse2d, line2d, abs_tol: float = 1
         point1 = volmdlr.Point2D(x1, y1)
         point2 = volmdlr.Point2D(x2, y2)
         intersections = [point1, point2]
-        if point1.is_close(point2):
+        if point1.is_close(point2, abs_tol):
             intersections = [point1]
         return intersections
     return []
