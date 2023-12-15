@@ -115,9 +115,7 @@ class MeshMixin:
         dict_ = self.base_dict()
 
         dict_["vertices"] = self.vertices.tolist()
-        dict_["faces"] = self.faces.tolist()
-        dict_["alpha"] = self.alpha
-        dict_["color"] = self.color
+        dict_["triangles"] = self.triangles.tolist()
 
         return dict_
 
@@ -128,13 +126,10 @@ class MeshMixin:
         """Overload of 'dict_to_object' for performance."""
 
         vertices = np.array(dict_["vertices"])
-        faces = np.array(dict_["faces"])
+        triangles = np.array(dict_["triangles"])
         name = dict_["name"]
 
-        display_triangle_shell = cls(vertices, faces, name)
-
-        display_triangle_shell.alpha = dict_["alpha"]
-        display_triangle_shell.color = dict_["color"]
+        display_triangle_shell = cls(vertices, triangles, name)
 
         return display_triangle_shell
 
@@ -149,9 +144,9 @@ class MeshMixin:
         :param other: Another Mesh instance to concatenate with this instance.
         :return: A new Mesh instance representing the concatenated shells.
         """
-        if len(self.vertices) == 0 or len(self.faces) == 0:
+        if len(self.vertices) == 0 or len(self.triangles) == 0:
             return other
-        if len(other.vertices) == 0 or len(other.faces) == 0:
+        if len(other.vertices) == 0 or len(other.triangles) == 0:
             return self
 
         # Merge and remove duplicate vertices
@@ -159,8 +154,8 @@ class MeshMixin:
         unique_vertices, indices_map = np.unique(merged_vertices, axis=0, return_inverse=True)
 
         # Adjust indices to account for duplicates and offset from concatenation
-        self_indices_adjusted = self.faces
-        other_indices_adjusted = other.faces + self.vertices.shape[0]
+        self_indices_adjusted = self.triangles
+        other_indices_adjusted = other.triangles + self.vertices.shape[0]
 
         # Re-map indices to unique vertices
         all_indices = np.vstack((self_indices_adjusted, other_indices_adjusted))
@@ -191,7 +186,7 @@ class MeshMixin:
         return hash(
             (
                 self.__class__.__name__,
-                (tuple(self.faces[0]), tuple(self.faces[-1]), len(self.faces)),
+                (tuple(self.triangles[0]), tuple(self.triangles[-1]), len(self.triangles)),
                 (tuple(self.vertices[0]), tuple(self.vertices[-1]), len(self.vertices)),
             )
         )
@@ -203,7 +198,7 @@ class MeshMixin:
         return hash(
             (
                 self.__class__.__name__,
-                (tuple(self.faces[0]), tuple(self.faces[-1]), len(self.faces)),
+                (tuple(self.triangles[0]), tuple(self.triangles[-1]), len(self.triangles)),
                 (tuple(self.vertices[0]), tuple(self.vertices[-1]), len(self.vertices)),
             )
         )
@@ -215,7 +210,7 @@ class MeshMixin:
 
 
     @property
-    def triangles(self):
+    def triangles_vertices(self):
         """
         Actual triangles of the mesh (points, not indexes)
 
@@ -227,7 +222,7 @@ class MeshMixin:
         # use of advanced indexing on our tracked arrays will
         # trigger a change flag which means the hash will have to be
         # recomputed. We can escape this check by viewing the array.
-        triangles = self.vertices.view(np.ndarray)[self.faces]
+        triangles = self.vertices.view(np.ndarray)[self.triangles]
 
         return triangles
 
@@ -239,18 +234,18 @@ class MeshMixin:
 
     def check(self):
         npoints = len(self.vertices)
-        for triangle in self.faces:
+        for triangle in self.triangles:
             if max(triangle) >= npoints:
                 return False
         return True
 
     def triangles_crosses(self):
-        vectors = np.diff(self.triangles, axis=1)
+        vectors = np.diff(self.triangles_vertices, axis=1)
         crosses = np.cross(vectors[:, 0], vectors[:, 1])
         return crosses
 
     @classmethod
-    def merge_meshes(cls, meshes: List['DisplayMesh'], name: str = ''):
+    def merge_meshes(cls, meshes: List[Union['Mesh2D', 'Mesh3D']], name: str = ''):
         """
         Merge several meshes into one.
         """
@@ -264,8 +259,8 @@ class MeshMixin:
             if not mesh:
                 continue
             for point in mesh.vertices:
-                if point not in point_index:
-                    point_index[point] = i_points
+                if tuple(point) not in point_index:
+                    point_index[tuple(point)] = i_points
                     i_points += 1
                     points.append(point)
 
@@ -277,10 +272,10 @@ class MeshMixin:
                 point1 = mesh.vertices[vertex1]
                 point2 = mesh.vertices[vertex2]
                 point3 = mesh.vertices[vertex3]
-                triangles.append((point_index[point1],
-                                  point_index[point2],
-                                  point_index[point3]))
-        return cls(points, triangles, name=name)
+                triangles.append(np.array([point_index[tuple(point1)],
+                                  point_index[tuple(point2)],
+                                  point_index[tuple(point3)]], dtype=np.int32))
+        return cls(np.array(points), np.array(triangles), name=name)
 
     def merge_mesh(self, other_mesh):
         """
@@ -312,7 +307,7 @@ class MeshMixin:
                 ax.text(*point, f'node {i_points + 1}',
                         ha='center', va='center')
 
-        for vertex1, vertex2, vertex3 in self.triangles:
+        for vertex1, vertex2, vertex3 in self.triangles_vertices:
             point1 = self._point_class(*vertex1)
             point2 = self._point_class(*vertex2)
             point3 = self._point_class(*vertex3)
@@ -335,9 +330,9 @@ class Mesh2D(MeshMixin, dc.PhysicalObject):
     _linesegment_class = volmdlr.edges.LineSegment2D
     _point_class = volmdlr.Point2D
 
-    def __init__(self, vertices: NDArray[float], faces: NDArray[int], name: str = ''):
+    def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ''):
         self.vertices = vertices
-        self.faces = faces
+        self.triangles = triangles
         # Avoiding calling dessia object init because its inefficiency
         # dc.DessiaObject.__init__(self, name=name)
         self.name = name
@@ -366,9 +361,9 @@ class Mesh3D(MeshMixin, dc.PhysicalObject):
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 
-    def __init__(self, vertices: NDArray[float], faces: NDArray[int], name: str = ''):
+    def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ''):
         self.vertices = vertices
-        self.faces = faces
+        self.triangles = triangles
         # Avoiding calling dessia object init because its inefficiency
         # dc.DessiaObject.__init__(self, name=name)
         self.name = name
@@ -387,16 +382,8 @@ class Mesh3D(MeshMixin, dc.PhysicalObject):
 
         https://doc.babylonjs.com/how_to/custom
         """
-        positions = []
-        for point in self.vertices:
-            # positions.extend(list(round(p, 6)))
-            # Not using round for performance
-            positions.extend([int(1e6 * point.x) / 1e6, int(1e6 * point.y) / 1e6, int(1e6 * point.z) / 1e6])
-
-        flatten_indices = []
-        for vertex in self.triangles:
-            flatten_indices.extend(vertex)
-        return positions, flatten_indices
+        babylon_mesh = {"positions": self.vertices.flatten().tolist(), "indices": self.triangles.flatten().tolist()}
+        return babylon_mesh
 
     @property
     def faces(self):
@@ -414,10 +401,10 @@ class Mesh3D(MeshMixin, dc.PhysicalObject):
 
         """
         triangular_faces = []
-        for (vertex1, vertex2, vertex3) in self.triangles:
-            point1 = self.vertices[vertex1]
-            point2 = self.vertices[vertex2]
-            point3 = self.vertices[vertex3]
+        for (vertex1, vertex2, vertex3) in self.triangles_vertices:
+            point1 = volmdlr.Point3D(*vertex1)
+            point2 = volmdlr.Point3D(*vertex2)
+            point3 = volmdlr.Point3D(*vertex3)
             if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3):
                 face = volmdlr.faces.Triangle3D(point1, point2, point3)
                 if face.area() >= 1e-11:

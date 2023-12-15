@@ -811,7 +811,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 continue
             if face_mesh:
                 meshes.append(face_mesh)
-        return display.DisplayMesh3D.merge_meshes(meshes)
+        return display.Mesh3D.merge_meshes(meshes)
 
     def to_triangle_shell(self) -> Union["OpenTriangleShell3D", "ClosedTriangleShell3D"]:
         """
@@ -1956,7 +1956,7 @@ class OpenTriangleShell3D(OpenShell3D):
             points.append(display.Node3D.from_point(triangle.point3))
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
 
-        return display.DisplayMesh3D(points, triangles)
+        return display.Mesh3D(points, triangles)
 
     def to_dict(self, *args, **kwargs):
         """Overload of 'to_dict' for performance."""

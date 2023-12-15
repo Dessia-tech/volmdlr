@@ -3515,7 +3515,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         if len(tri['vertices']) < 3:
             return None
         triangulate_result = triangulate(tri, tri_opt)
-        mesh = vmd.Mesh2D(triangulate_result['vertices'], faces=triangulate_result['triangles'])
+        mesh = vmd.Mesh2D(triangulate_result['vertices'], triangles=triangulate_result['triangles'])
         mesh.area()
         return mesh
 
