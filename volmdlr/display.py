@@ -249,33 +249,24 @@ class MeshMixin:
         """
         Merge several meshes into one.
         """
-        # Collect points
-        i_points = 0
-        point_index = {}
-        points = []
         if len(meshes) == 1:
             return cls(meshes[0].vertices, meshes[0].triangles, name=name)
-        for mesh in meshes:
-            if not mesh:
-                continue
-            for point in mesh.vertices:
-                if tuple(point) not in point_index:
-                    point_index[tuple(point)] = i_points
-                    i_points += 1
-                    points.append(point)
 
-        triangles = []
+        points_list = []
+        triangles_list = []
+        i_points = 0
+
         for mesh in meshes:
             if not mesh:
                 continue
-            for vertex1, vertex2, vertex3 in mesh.triangles:
-                point1 = mesh.vertices[vertex1]
-                point2 = mesh.vertices[vertex2]
-                point3 = mesh.vertices[vertex3]
-                triangles.append(np.array([point_index[tuple(point1)],
-                                  point_index[tuple(point2)],
-                                  point_index[tuple(point3)]], dtype=np.int32))
-        return cls(np.array(points), np.array(triangles), name=name)
+            points_list.append(mesh.vertices)
+            triangles_list.append(mesh.triangles + i_points)
+            i_points += mesh.vertices.shape[0]
+
+        points = np.concatenate(points_list, axis=0)
+        triangles = np.concatenate(triangles_list, axis=0)
+
+        return cls(points, triangles, name=name)
 
     def merge_mesh(self, other_mesh):
         """
@@ -342,12 +333,6 @@ class Mesh2D(MeshMixin, dc.PhysicalObject):
         """
         Return the area as the sum of areas of triangles.
         """
-        # area = 0.
-        # for (vertex1, vertex2, vertex3) in self.triangles:
-        #     point1 = self.vertices[vertex1]
-        #     point2 = self.vertices[vertex2]
-        #     point3 = self.vertices[vertex3]
-        #     area += 0.5 * abs((point2 - point1).cross(point3 - point1))
         areas = np.sqrt((self.triangles_crosses() ** 2)) / 2.0
         return areas.sum()
 
@@ -368,6 +353,7 @@ class Mesh3D(MeshMixin, dc.PhysicalObject):
         # dc.DessiaObject.__init__(self, name=name)
         self.name = name
         self._point_index = None
+        self._faces = None
 
     def area(self):
         """

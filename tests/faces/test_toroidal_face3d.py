@@ -16,9 +16,9 @@ class TestToroidalFace3D(unittest.TestCase):
         """
         triangulation = self.face1.triangulation()
         for i1, i2, i3 in triangulation.triangles:
-            point1 = triangulation.points[i1]
-            point2 = triangulation.points[i2]
-            point3 = triangulation.points[i3]
+            point1 = triangulation.vertices[i1]
+            point2 = triangulation.vertices[i2]
+            point3 = triangulation.vertices[i3]
 
             triangle = faces.Triangle3D(point1, point2, point3)
             # Test orthogonality

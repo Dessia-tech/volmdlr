@@ -445,26 +445,21 @@ class Face3D(volmdlr.core.Primitive3D):
                'segments': np.array(segments).reshape((-1, 2)),
                }
         triagulation = triangle_lib.triangulate(tri, tri_opt)
-        triangles = triagulation['triangles'].tolist()
-        number_points = triagulation['vertices'].shape[0]
-        points = [vmd.Node2D(*triagulation['vertices'][i, :]) for i in range(number_points)]
-        return vmd.DisplayMesh2D(points, triangles=triangles)
+        return vmd.Mesh2D(triagulation['vertices'], triangles=triagulation['triangles'])
 
-    def helper_to_mesh(self, polygon_data=None):
+    def helper_to_mesh(self, polygon_data=None) -> volmdlr.display.Mesh2D:
         """
         Triangulates the Surface2D using the Triangle library.
 
-        :param outer_polygon: Face's outer polygon.
-        :type outer_polygon: wires.ClosedPolygon2D
-        :param inner_polygons: Face's inner polygons.
-        :type inner_polygons: List[wires.ClosedPolygon2D]
+        :param polygon_data: Face's outer polygon.
+        :type polygon_data: Union[Tuple((wires.ClosedPolygon2D), List[wires.ClosedPolygon2D], None]
         :return: The triangulated surface as a display mesh.
-        :rtype: :class:`volmdlr.display.DisplayMesh2D`
+        :rtype: :class:`volmdlr.display.Mesh2D`
         """
         area = self.surface2d.bounding_rectangle().area()
         tri_opt = "p"
         if math.isclose(area, 0., abs_tol=1e-8):
-            return vmd.DisplayMesh2D([], triangles=[])
+            return None
         grid_size = self.grid_size()
         points_grid = []
         if polygon_data:
@@ -514,10 +509,7 @@ class Face3D(volmdlr.core.Primitive3D):
                'holes': np.array(holes).reshape((-1, 2))
                }
         triangulation = triangle_lib.triangulate(tri, tri_opt)
-        triangles = triangulation['triangles'].tolist()
-        number_points = triangulation['vertices'].shape[0]
-        points = [volmdlr.Point2D(*triangulation['vertices'][i, :]) for i in range(number_points)]
-        return vmd.DisplayMesh2D(points, triangles=triangles)
+        return vmd.Mesh2D(triangulation['vertices'], triangles=triangulation['triangles'])
 
     def triangulation(self):
         """Triangulates the face."""
@@ -3425,9 +3417,8 @@ class RevolutionFace3D(Face3D):
         if mesh2d is None:
             return None
         if scale_factor != 1:
-            for point in mesh2d.points:
-                point.y /= scale_factor
-        return vmd.DisplayMesh3D([self.surface3d.point2d_to_3d(point) for point in mesh2d.points], mesh2d.triangles)
+            mesh2d.vertices[:, 1] /= scale_factor
+        return vmd.Mesh3D(self.surface3d.parametric_points_to_3d(mesh2d.vertices), mesh2d.triangles)
 
 
 class BSplineFace3D(Face3D):
