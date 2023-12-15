@@ -86,6 +86,5 @@ class TestBSplineFace3D(unittest.TestCase):
         self.assertLessEqual(len(mesh.vertices), 2750)
         self.assertLessEqual(total_time, 0.5)
 
-
 if __name__ == '__main__':
     unittest.main()

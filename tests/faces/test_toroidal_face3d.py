@@ -16,9 +16,9 @@ class TestToroidalFace3D(unittest.TestCase):
         """
         triangulation = self.face1.triangulation()
         for i1, i2, i3 in triangulation.triangles:
-            point1 = triangulation.vertices[i1]
-            point2 = triangulation.vertices[i2]
-            point3 = triangulation.vertices[i3]
+            point1 = volmdlr.Point3D(*triangulation.vertices[i1])
+            point2 = volmdlr.Point3D(*triangulation.vertices[i2])
+            point3 = volmdlr.Point3D(*triangulation.vertices[i3])
 
             triangle = faces.Triangle3D(point1, point2, point3)
             # Test orthogonality
@@ -34,7 +34,7 @@ class TestToroidalFace3D(unittest.TestCase):
         n_triangles = len(triangulation.triangles)
         n_triangles_max = 250
         self.assertLess(n_triangles, n_triangles_max,
-                        f'Too much triangles in Toroidal face triangulation: {n_triangles}/{n_triangles_max}')
+                        f'Too much triangles in toroidal face triangulation: {n_triangles}/{n_triangles_max}')
 
 
 if __name__ == '__main__':

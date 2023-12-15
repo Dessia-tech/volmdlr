@@ -2302,14 +2302,7 @@ class Triangle3D(PlaneFace3D):
 
     def triangulation(self):
         """Computes the triangulation of the Triangle3D, basically returns itself."""
-        return vmd.DisplayMesh3D(
-            [
-                vmd.Node3D.from_point(self.point1),
-                vmd.Node3D.from_point(self.point2),
-                vmd.Node3D.from_point(self.point3),
-            ],
-            [(0, 1, 2)],
-        )
+        return vmd.Mesh3D(np.array([self.point1, self.point2, self.point3]), np.array([[0, 1, 2]], dtype=np.int8))
 
     def translation(self, offset: volmdlr.Vector3D):
         """

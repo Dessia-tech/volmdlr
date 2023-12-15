@@ -1141,9 +1141,9 @@ class ClosedShell3D(Shell3D):
         for face in self.faces:
             display3d = face.triangulation()
             for triangle_index in display3d.triangles:
-                point1 = display3d.points[triangle_index[0]]
-                point2 = display3d.points[triangle_index[1]]
-                point3 = display3d.points[triangle_index[2]]
+                point1 = display3d.vertices[triangle_index[0]]
+                point2 = display3d.vertices[triangle_index[1]]
+                point3 = display3d.vertices[triangle_index[2]]
 
                 point1_adj = (point1[0] - center_x, point1[1] - center_y, point1[2] - center_z)
                 point2_adj = (point2[0] - center_x, point2[1] - center_y, point2[2] - center_z)
@@ -1953,12 +1953,12 @@ class OpenTriangleShell3D(OpenShell3D):
         points = []
         triangles = []
         for i, triangle in enumerate(self.faces):
-            points.append(display.Node3D.from_point(triangle.point1))
-            points.append(display.Node3D.from_point(triangle.point2))
-            points.append(display.Node3D.from_point(triangle.point3))
+            points.append(np.array(triangle.point1))
+            points.append(np.array(triangle.point2))
+            points.append(np.array(triangle.point3))
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
-
-        return display.Mesh3D(points, triangles)
+        vertices = np.concatenate(points, axis=0)
+        return display.Mesh3D(vertices, np.array(triangles, dtype=np.int32))
 
     def to_dict(self, *args, **kwargs):
         """Overload of 'to_dict' for performance."""
