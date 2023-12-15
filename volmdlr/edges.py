@@ -34,6 +34,8 @@ import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
 
+# pylint: disable=arguments-differ
+
 
 class Edge(dc.DessiaObject):
     """
@@ -6279,6 +6281,13 @@ class ArcEllipse3D(ArcEllipseMixin, Edge):
             self.start == other_arcellipse.start and self.end == other_arcellipse.end
 
     def is_close(self, other_arcellipse, abs_tol: float = 1e-6):
+        """
+        Verifies if two arc ellipses are the same, considereing given tolerance.
+
+        :param other_arcellipse: other arc ellipse.
+        :param abs_tol: tolerance.
+        :return: True or False.
+        """
         if self.__class__.__name__ != other_arcellipse.__class__.__name__:
             return False
         return self.ellipse.is_close(other_arcellipse.ellipse, abs_tol) and \
@@ -6651,6 +6660,7 @@ class FullArcEllipse3D(FullArcEllipse, ArcEllipse3D):
         ArcEllipse3D.__init__(self, self.ellipse, start_end, start_end)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#'):
+        """Transforms an instance of a Full arc ellipse into a dictionary."""
         dict_ = self.base_dict()
         dict_["ellipse"] = self.ellipse.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/ellipse')
         dict_['start_end'] = self.start_end.to_dict(use_pointers=use_pointers, memo=memo, path=path + '/start_end')
