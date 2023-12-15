@@ -9,6 +9,7 @@ from typing import List, Union, Dict, Any
 
 import matplotlib.pyplot as plt
 import numpy as npy
+from numpy.typing import NDArray
 import triangle as triangle_lib
 
 from geomdl import NURBS, BSpline
@@ -190,10 +191,7 @@ class Surface2D(PhysicalObject):
                'segments': npy.array(segments).reshape((-1, 2)),
                }
         triagulation = triangle_lib.triangulate(tri, tri_opt)
-        triangles = triagulation['triangles'].tolist()
-        number_points = triagulation['vertices'].shape[0]
-        points = [display.Node2D(*triagulation['vertices'][i, :]) for i in range(number_points)]
-        return display.DisplayMesh2D(points, triangles=triangles)
+        return display.Mesh2D(vertices=triagulation['vertices'], triangles=triagulation['triangles'])
 
     def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
@@ -204,12 +202,12 @@ class Surface2D(PhysicalObject):
         :param number_points_y: Number of discretization points in y direction.
         :type number_points_y: int
         :return: The triangulated surface as a display mesh.
-        :rtype: :class:`volmdlr.display.DisplayMesh2D`
+        :rtype: :class:`volmdlr.display.Mesh2D`
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
         if math.isclose(area, 0., abs_tol=1e-8):
-            return display.DisplayMesh2D([], triangles=[])
+            return display.Mesh2D(npy.array([], dtype=npy.float64), npy.array([]))
 
         triangulates_with_grid = number_points_x > 0 and number_points_y > 0
         discretize_line = number_points_x > 0 or number_points_y > 0
@@ -286,10 +284,7 @@ class Surface2D(PhysicalObject):
                'holes': npy.array(holes).reshape((-1, 2))
                }
         triangulation = triangle_lib.triangulate(tri, tri_opt)
-        triangles = triangulation['triangles'].tolist()
-        number_points = triangulation['vertices'].shape[0]
-        points = [volmdlr.Point2D(*triangulation['vertices'][i, :]) for i in range(number_points)]
-        return display.DisplayMesh2D(points, triangles=triangles)
+        return display.Mesh2D(vertices=triangulation['vertices'], triangles=triangulation['triangles'])
 
     def split_by_lines(self, lines):
         """
@@ -1631,6 +1626,31 @@ class Plane3D(Surface3D):
         """
         return point2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
 
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the plane.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the plane.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the plane in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        center = npy.array(self.frame.origin)
+        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+
+        return center + u_values * x + v_values * y
+
     def point3d_to_2d(self, point3d):
         """
         Converts a 3D point into a 2D parametric point.
@@ -2376,6 +2396,36 @@ class CylindricalSurface3D(PeriodicalSurface):
                                 point2d.y)
         return self.frame.local_to_global_coordinates(point)
 
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the cylindrical surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the cylindrical surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the cylindrical surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        center = npy.array(self.frame.origin)
+        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+        z = npy.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+
+        x_component =  npy.cos(u_values) * x
+        y_component = npy.sin(u_values) * y
+        z_component = v_values * z
+
+        return center + self.radius * (x_component + y_component) + z_component
+
     def point3d_to_2d(self, point3d):
         """
         Returns the cylindrical coordinates volmdlr.Point2D(theta, z) of a Cartesian coordinates point (x, y, z).
@@ -2980,6 +3030,37 @@ class ToroidalSurface3D(PeriodicalSurface):
                     theta += math.pi
         return volmdlr.Point2D(theta, phi)
 
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the toroidal surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the toroidal surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the toroidal surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        center = npy.array(self.frame.origin)
+        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+        z = npy.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+
+        common_term = self.major_radius + self.minor_radius * npy.cos(v_values)
+        x_component = npy.cos(u_values) * x
+        y_component = npy.sin(u_values) * y
+        z_component = self.minor_radius * npy.sin(v_values) * z
+
+        return center + common_term * (x_component + y_component) + z_component
+
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
         """
@@ -3196,7 +3277,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         Triangulation.
 
-        :rtype: display.DisplayMesh3D
+        :rtype: display.Mesh3D
         """
         face = self.rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
         return face.triangulation()
@@ -3818,6 +3899,35 @@ class ConicalSurface3D(PeriodicalSurface):
         if abs(theta) < 1e-9:
             theta = 0.0
         return volmdlr.Point2D(theta, z)
+
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the conical surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the conical surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the conical surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        center = npy.array(self.frame.origin)
+        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+        z = npy.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+
+        x_component = npy.cos(u_values) * x
+        y_component = npy.sin(u_values) * y
+
+        return center + v_values * math.tan(self.semi_angle) * (x_component + y_component) + v_values * z
 
     def rectangular_cut(self, theta1: float, theta2: float,
                         param_z1: float, param_z2: float, name: str = ''):
@@ -4448,6 +4558,37 @@ class SphericalSurface3D(PeriodicalSurface):
             phi = 0
 
         return volmdlr.Point2D(theta, phi)
+
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the spherical surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the spherical surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the spherical surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        center = npy.array(self.frame.origin)
+        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+        z = npy.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+
+        common_term = self.radius * npy.cos(v_values)
+        x_component = npy.cos(u_values) * x
+        y_component = npy.sin(u_values) * y
+        z_component = self.radius * npy.sin(v_values) * z
+
+        return center + common_term * (x_component + y_component) + z_component
 
     def linesegment2d_to_3d(self, linesegment2d):
         """
@@ -5405,6 +5546,34 @@ class ExtrusionSurface3D(Surface3D):
 
         return volmdlr.Point2D(u, v)
 
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the extrusion surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the extrusion surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the extrusion surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        z = npy.array([self.direction[0], self.direction[1], self.direction[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        if self.x_periodicity:
+            u_values[u_values > self.x_periodicity] -= self.x_periodicity
+            u_values[u_values < 0] += self.x_periodicity
+        v_values = points[:, 1]
+
+        points_at_curve = npy.array([self.edge.point_at_abscissa(u) for u in u_values])
+
+        return points_at_curve + v_values * z
+
     def rectangular_cut(self, x1: float = 0.0, x2: float = 1.0,
                         y1: float = 0.0, y2: float = 1.0, name: str = ''):
         """Deprecated method, Use ExtrusionFace3D from_surface_rectangular_cut method."""
@@ -5779,6 +5948,40 @@ class RevolutionSurface3D(PeriodicalSurface):
         point_at_curve = point3d.rotation(self.axis_point, self.axis, -u)
         v = self.edge.abscissa(point_at_curve)
         return volmdlr.Point2D(u, v)
+
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the revolution surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the revolution surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the revolution surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        center = npy.array(self.axis_point)
+        z = npy.array([self.axis[0], self.axis[1], self.axis[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+        if self.y_periodicity:
+            v_values[v_values > self.y_periodicity] -= self.y_periodicity
+            v_values[v_values < 0] += self.y_periodicity
+
+        cos_u = npy.cos(u_values)
+
+        points_at_curve = npy.array([self.edge.point_at_abscissa(v) for v in v_values])
+        points_at_curve_minus_center = points_at_curve - center
+
+        return (center + points_at_curve_minus_center * cos_u +
+                npy.dot(points_at_curve_minus_center, z).reshape(-1, 1) * z * (1 - cos_u) +
+                npy.cross(z, points_at_curve_minus_center * npy.sin(u_values)))
 
     def rectangular_cut(self, x1: float, x2: float,
                         y1: float, y2: float, name: str = ''):
@@ -7203,6 +7406,23 @@ class BSplineSurface3D(Surface3D):
         x[0] = u
         x[1] = v
         return x
+
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the BSpline surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the BSpline surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the BSpline surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        return npy.array([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
+                         dtype=npy.float64)
 
     def linesegment2d_to_3d(self, linesegment2d):
         """Evaluates the Euclidean form for the parametric line segment."""

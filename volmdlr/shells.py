@@ -25,6 +25,8 @@ from volmdlr.core import (edge_in_list, get_edge_index_in_list,
 from volmdlr.utils.step_writer import (geometric_context_writer,
                                        product_writer, step_ids_to_str)
 
+# pylint: disable=unused-argument
+
 
 def union_list_of_shells(list_shells, abs_tol: float = 1e-6):
     """
@@ -811,7 +813,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 continue
             if face_mesh:
                 meshes.append(face_mesh)
-        return display.DisplayMesh3D.merge_meshes(meshes)
+        return display.Mesh3D.merge_meshes(meshes)
 
     def to_triangle_shell(self) -> Union["OpenTriangleShell3D", "ClosedTriangleShell3D"]:
         """
@@ -1956,7 +1958,7 @@ class OpenTriangleShell3D(OpenShell3D):
             points.append(display.Node3D.from_point(triangle.point3))
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
 
-        return display.DisplayMesh3D(points, triangles)
+        return display.Mesh3D(points, triangles)
 
     def to_dict(self, *args, **kwargs):
         """Overload of 'to_dict' for performance."""

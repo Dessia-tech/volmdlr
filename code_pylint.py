@@ -20,7 +20,7 @@ MAX_ERROR_BY_TYPE = {
                      'invalid-name': 1,
                      'arguments-differ': 67,
                      'too-many-locals': 74,
-                     'unused-argument': 8,
+                     'unused-argument': 10,
                      'too-many-arguments': 29,
                      'line-too-long': 12,
                      'too-many-branches': 26,

@@ -525,7 +525,7 @@ class Face3D(volmdlr.core.Primitive3D):
         mesh2d = self.helper_to_mesh([outer_polygon, inner_polygons])
         if mesh2d is None:
             return None
-        return vmd.DisplayMesh3D([self.surface3d.point2d_to_3d(point) for point in mesh2d.points], mesh2d.triangles)
+        return vmd.Mesh3D(self.surface3d.parametric_points_to_3d(mesh2d.vertices), mesh2d.triangles)
 
     def plot2d(self, ax=None, color="k", alpha=1):
         """Plot 2D of the face using matplotlib."""
