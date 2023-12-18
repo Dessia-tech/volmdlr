@@ -10,7 +10,6 @@ import struct
 import warnings
 from typing import List
 
-import volmdlr
 from binaryornot.check import is_binary
 from kaitaistruct import KaitaiStream
 
@@ -192,6 +191,7 @@ class Stl(dc.DessiaObject):
     @classmethod
     def from_file(cls, filename: str = None,
                   distance_multiplier: float = 0.001):
+        """Import stl from file."""
         warnings.warn("Use load_from_file instead of from_file",
                       DeprecationWarning)
         return cls.load_from_file(filename, distance_multiplier)
@@ -350,9 +350,9 @@ class Stl(dc.DessiaObject):
         """
         triangles = []
         for vertex1, vertex2, vertex3 in mesh.triangles_vertices:
-            point1 = volmdlr.Point3D(*vertex1)
-            point2 = volmdlr.Point3D(*vertex2)
-            point3 = volmdlr.Point3D(*vertex3)
+            point1 = vm.Point3D(*vertex1)
+            point2 = vm.Point3D(*vertex2)
+            point3 = vm.Point3D(*vertex3)
             triangles.append(vmf.Triangle3D(point1, point2, point3))
         return cls(triangles)
 
