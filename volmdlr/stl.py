@@ -10,6 +10,7 @@ import struct
 import warnings
 from typing import List
 
+import volmdlr
 from binaryornot.check import is_binary
 from kaitaistruct import KaitaiStream
 
@@ -348,10 +349,11 @@ class Stl(dc.DessiaObject):
         :rtype: Stl
         """
         triangles = []
-        for i1, i2, i3 in mesh.triangles:
-            triangles.append(vmf.Triangle3D(mesh.points[i1],
-                                            mesh.points[i2],
-                                            mesh.points[i3]))
+        for vertex1, vertex2, vertex3 in mesh.triangles_vertices:
+            point1 = volmdlr.Point3D(*vertex1)
+            point2 = volmdlr.Point3D(*vertex2)
+            point3 = volmdlr.Point3D(*vertex3)
+            triangles.append(vmf.Triangle3D(point1, point2, point3))
         return cls(triangles)
 
     def get_normals(self):
