@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - added missing hash and eq methods to several classes
 - ArcEllipse2D/3D: get_shared_section and delete_shared_section.
+- ConicalSurface3D: conicalsurface_intersections
 
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
