@@ -3432,8 +3432,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: other plane 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(100) + self._torus_circle_generatrices_xy(100)
+
         points_intersections = []
+        arcs = self._torus_arcs(100) + self._torus_circle_generatrices_xy(100)
         for arc in arcs:
             if plane3d.frame.w.dot(arc.frame.w) == 1.0:
                 continue

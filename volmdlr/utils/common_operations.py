@@ -358,10 +358,6 @@ def order_points_list_for_nearest_neighbor(points):
     remaining_points = np.delete(remaining_points, 0, axis=0)
 
     while remaining_points.any():
-        # time_s = time.time()
-        # nearest_point_idx = np.argmin([current_point.point_distance(p)for p in remaining_points])
-        # time_e = time.time()
-        # print(f'nearest_point_idx took {time_e - time_s} seconds')
         nearest_point_idx = np.argmin(np.linalg.norm(remaining_points - current_point, axis=1))
         nearest_point = remaining_points[nearest_point_idx, :]
         remaining_points = np.delete(remaining_points, nearest_point_idx, axis=0)
