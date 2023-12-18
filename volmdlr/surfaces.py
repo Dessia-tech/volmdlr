@@ -2298,6 +2298,13 @@ class CylindricalSurface3D(PeriodicalSurface):
         return False
 
     def get_generatrices(self, length: float = 1, number_lines: int = 30):
+        """
+        Gets the Cylindrical surface's Line generatrices.
+
+        :param number_lines: number of lines
+        :param length: the length used to determine the lines' length.
+        :return: list of cylindrical surface's circular generatrices.
+        """
         list_generatrices = []
         for i in range(number_lines):
             theta = i / (number_lines - 1) * volmdlr.TWO_PI
@@ -2308,6 +2315,13 @@ class CylindricalSurface3D(PeriodicalSurface):
         return list_generatrices
 
     def get_circle_generatrices(self, number_circles: int = 10, length: float = 1.0):
+        """
+        Gets the Cylindrical surface's circular generatrices.
+
+        :param number_circles: number of circles
+        :param length: the length used to determine the circles creation range.
+        :return: list of cylindrical surface's circular generatrices.
+        """
         circles = []
         for j in range(number_circles):
             circle_frame = self.frame.copy()
