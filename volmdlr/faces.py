@@ -220,7 +220,7 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
-        if step_id == 59666:
+        if step_id == 85:
             print(True)
         return face.from_contours3d(surface, contours, step_id)
 
@@ -398,7 +398,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def _update_grid_points_with_outer_polygon(outer_polygon, grid_points):
         """Helper function to grid_points."""
         # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
-        indices = np.where(outer_polygon.points_in_polygon(grid_points, include_edge_points=False) == 0)[0]
+        indices = np.where(outer_polygon.points_in_polygon(grid_points, include_edge_points=True) == 0)[0]
         grid_points = np.delete(grid_points, indices, axis=0)
         polygon_points = set(outer_polygon.points)
         points = [volmdlr.Point2D(*point) for point in grid_points if volmdlr.Point2D(*point) not in polygon_points]
@@ -3382,7 +3382,7 @@ class RevolutionFace3D(Face3D):
         delta_y = ymax - ymin
         number_points_x, number_points_y = self.grid_size()
         scale_factor = 1
-        if number_points_x > 1  and number_points_y > 1:
+        if number_points_x > 1 and number_points_y > 1:
             scale_factor = 10 ** math.floor(
                 math.log10((delta_x/(number_points_x - 1))/(delta_y/(number_points_y - 1))))
 
@@ -3491,8 +3491,8 @@ class BSplineFace3D(Face3D):
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
         delta_v = v_max - v_min
-        resolution_u = max(10, self.surface3d.nb_u)
-        resolution_v = max(10, self.surface3d.nb_v)
+        resolution_u = self.surface3d.nb_u
+        resolution_v = self.surface3d.nb_v
         if resolution_u > resolution_v:
             number_points_x = int(delta_u * resolution_u)
             number_points_y = max(int(delta_v * resolution_v), int(number_points_x / 5))

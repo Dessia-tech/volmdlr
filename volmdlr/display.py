@@ -260,11 +260,11 @@ class MeshMixin:
             points_list.append(mesh.vertices)
             triangles_list.append(mesh.triangles + i_points)
             i_points += mesh.vertices.shape[0]
-
-        points = np.concatenate(points_list, axis=0)
-        triangles = np.concatenate(triangles_list, axis=0)
-
-        return cls(points, triangles, name=name)
+        if points_list:
+            points = np.concatenate(points_list, axis=0)
+            triangles = np.concatenate(triangles_list, axis=0)
+            return cls(points, triangles, name=name)
+        return None
 
     def merge_mesh(self, other_mesh):
         """
