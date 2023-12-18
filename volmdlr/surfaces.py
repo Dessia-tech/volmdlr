@@ -3776,7 +3776,7 @@ class ConicalSurface3D(PeriodicalSurface):
         for i_z in npy.linspace(z1, z2, number_circles):
             circle = self.get_circle_at_z(i_z)
             if circle.radius == 0.0:
-              continue
+                continue
             circles.append(circle)
         return circles
 
@@ -4278,8 +4278,8 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         point1 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmin))
         point2 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmax))
-        cyl_generatrices = self.get_generatrices(spherical_surface.radius*4, 200) +\
-                           self.get_circle_generatrices(point1.z, point2.z, 200)
+        cone_generatrices = self.get_generatrices(spherical_surface.radius*4, 200) +\
+                            self.get_circle_generatrices(point1.z, point2.z, 200)
         intersection_points = []
         for gene in cone_generatrices:
             intersections = spherical_surface.edge_intersections(gene)
@@ -4327,7 +4327,7 @@ class ConicalSurface3D(PeriodicalSurface):
         :return: points of intersections.
         """
         cone_generatrices = self.get_generatrices(length, max(100, int((length / 2) * 10))) + \
-                            self.get_circle_generatrices(length, max(200, int((length / 2) * 20)))
+                            self.get_circle_generatrices(0, length, max(200, int((length / 2) * 20)))
         intersection_points = []
         for gene in cone_generatrices:
             intersections = conical_surface.edge_intersections(gene)
