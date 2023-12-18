@@ -4,6 +4,7 @@ Concatenate common operation for two or more objects.
 """
 import math
 import random
+import time
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -352,17 +353,23 @@ def order_points_list_for_nearest_neighbor(points):
 
     """
     ordered_points = []
-    remaining_points = points[:]
-    current_point = remaining_points.pop(0)
+    remaining_points = np.array([[*point] for point in points])
+    current_point = remaining_points[0, :]
+    remaining_points = np.delete(remaining_points, 0, axis=0)
 
-    while remaining_points:
-        nearest_point_idx = np.argmin([current_point.point_distance(p)for p in remaining_points])
-        nearest_point = remaining_points.pop(nearest_point_idx)
-        ordered_points.append(current_point)
+    while remaining_points.any():
+        # time_s = time.time()
+        # nearest_point_idx = np.argmin([current_point.point_distance(p)for p in remaining_points])
+        # time_e = time.time()
+        # print(f'nearest_point_idx took {time_e - time_s} seconds')
+        nearest_point_idx = np.argmin(np.linalg.norm(remaining_points - current_point, axis=1))
+        nearest_point = remaining_points[nearest_point_idx, :]
+        remaining_points = np.delete(remaining_points, nearest_point_idx, axis=0)
+        ordered_points.append(volmdlr.Point3D(*current_point))
         current_point = nearest_point
 
     # Add the last point to complete the loop
-    ordered_points.append(current_point)
+    ordered_points.append(volmdlr.Point3D(*current_point))
 
     return ordered_points
 
