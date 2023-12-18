@@ -2417,6 +2417,13 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         return lines, []
 
     def parametrized_grid_size(self, angle_resolution, z_resolution):
+        """
+        Gets size for parametrized grid.
+
+        :param angle_resolution: angle resolution.
+        :param z_resolution: z resolution.
+        :return: number of points in x and y.
+        """
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         number_points_x = max(angle_resolution, int(delta_theta * angle_resolution))
