@@ -1957,7 +1957,7 @@ class OpenTriangleShell3D(OpenShell3D):
             points.append(np.array(triangle.point2))
             points.append(np.array(triangle.point3))
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
-        vertices = np.concatenate(points, axis=0)
+        vertices = np.array(points, dtype=np.float64)
         return display.Mesh3D(vertices, np.array(triangles, dtype=np.int32))
 
     def to_dict(self, *args, **kwargs):

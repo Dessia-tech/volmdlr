@@ -2939,26 +2939,25 @@ class OctreeBasedVoxelization(Voxelization):
         for i, face in enumerate(shell.faces):
             try:
                 triangulation = face.triangulation()
-
                 face_triangles = [
                     (
                         (
-                            float(triangulation.vertices[triangle[0]].x),
-                            float(triangulation.vertices[triangle[0]].y),
-                            float(triangulation.vertices[triangle[0]].z),
+                            float(triangle[0][0]),
+                            float(triangle[0][1]),
+                            float(triangle[0][2]),
                         ),
                         (
-                            float(triangulation.vertices[triangle[1]].x),
-                            float(triangulation.vertices[triangle[1]].y),
-                            float(triangulation.vertices[triangle[1]].z),
+                            float(triangle[1][0]),
+                            float(triangle[1][1]),
+                            float(triangle[1][2]),
                         ),
                         (
-                            float(triangulation.vertices[triangle[2]].x),
-                            float(triangulation.vertices[triangle[2]].y),
-                            float(triangulation.vertices[triangle[2]].z),
+                            float(triangle[2][0]),
+                            float(triangle[2][1]),
+                            float(triangle[2][2]),
                         ),
                     )
-                    for triangle in triangulation.triangles
+                    for triangle in triangulation.triangles_vertices
                 ]
 
                 for triangle in face_triangles:

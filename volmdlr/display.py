@@ -214,10 +214,8 @@ class MeshMixin:
         """
         Actual triangles of the mesh (points, not indexes)
 
-        Returns
-        ---------
-        triangles : (n, 3, d) float
-          Points of triangle vertices
+        :return: Points of triangle vertices
+        :rtype: (n, 3, d) float
         """
         # use of advanced indexing on our tracked arrays will
         # trigger a change flag which means the hash will have to be
@@ -275,20 +273,9 @@ class MeshMixin:
         :param other_mesh: other mesh.
         :return:
         """
-        i_points = len(self.vertices)
-        for point in other_mesh.points:
-            if point not in self.point_index:
-                self.point_index[point] = i_points
-                i_points += 1
-                self.vertices.append(point)
-
-        for vertex1, vertex2, vertex3 in other_mesh.triangles:
-            point1 = other_mesh.points[vertex1]
-            point2 = other_mesh.points[vertex2]
-            point3 = other_mesh.points[vertex3]
-            self.triangles.append((self._point_index[point1],
-                                   self._point_index[point2],
-                                   self._point_index[point3]))
+        result = self + other_mesh
+        self.vertices = result.vertices
+        self.triangles = result.triangles
 
     def plot(self, ax=None, numbering=False):
         """Plots the mesh with Matplotlib."""
@@ -387,10 +374,13 @@ class Mesh3D(MeshMixin, dc.PhysicalObject):
 
         """
         triangular_faces = []
-        for (vertex1, vertex2, vertex3) in self.triangles_vertices:
-            point1 = volmdlr.Point3D(*vertex1)
-            point2 = volmdlr.Point3D(*vertex2)
-            point3 = volmdlr.Point3D(*vertex3)
+        for vertex1, vertex2, vertex3 in self.triangles_vertices:
+            try:
+                point1 = volmdlr.Point3D(*vertex1)
+                point2 = volmdlr.Point3D(*vertex2)
+                point3 = volmdlr.Point3D(*vertex3)
+            except TypeError:
+                print(True)
             if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3):
                 face = volmdlr.faces.Triangle3D(point1, point2, point3)
                 if face.area() >= 1e-11:
