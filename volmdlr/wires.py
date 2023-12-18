@@ -3503,9 +3503,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         :rtype: :class:`vmd.Mesh2D`
         """
         # Converting points to nodes for performance
-        nodes = [vmd.Node2D.from_point(point) for point in self.points]
-        vertices = [(point.x, point.y) for point in nodes]
-        n = len(nodes)
+        vertices = [(point.x, point.y) for point in self.points]
+        n = len(vertices)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
 
@@ -3516,7 +3515,6 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             return None
         triangulate_result = triangulate(tri, tri_opt)
         mesh = vmd.Mesh2D(triangulate_result['vertices'], triangles=triangulate_result['triangles'])
-        mesh.area()
         return mesh
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25,

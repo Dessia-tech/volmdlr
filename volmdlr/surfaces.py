@@ -206,8 +206,8 @@ class Surface2D(PhysicalObject):
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
-        if math.isclose(area, 0., abs_tol=1e-8):
-            return display.Mesh2D(npy.array([], dtype=npy.float64), npy.array([]))
+        if math.isclose(area, 0., abs_tol=1e-12):
+            return None
 
         triangulates_with_grid = number_points_x > 0 and number_points_y > 0
         discretize_line = number_points_x > 0 or number_points_y > 0
