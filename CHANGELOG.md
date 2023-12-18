@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 - Circle2D: abscissa method - consider frame direction during rotation.
+- Line: is_close.
 
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
@@ -51,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: increases precision of point3d_to_2d.
 - ConicalSurface3D: plane_intersections.
 - Surface3D: repeair_primitives_periodicity. Treat special case on surfaces with singularities.
+- ToroidalSurface: plane_intersections.
 
 #### wires.py
 - Contour2D: cut_by_line.
