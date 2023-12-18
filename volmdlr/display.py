@@ -6,7 +6,7 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 
 import math
 import warnings
-from typing import List, Tuple, Union, Dict, Any
+from typing import List, Union
 import numpy as np
 from numpy.typing import NDArray
 
@@ -86,30 +86,6 @@ class MeshMixin:
     This is an abstract class for 2D & 3D.
     """
 
-    # def __add__(self, other_mesh):
-    #     """
-    #     Defines how to add two meshes.
-    #     """
-    #     new_points = self.vertices[:]
-    #     new_point_index = self.point_index.copy()
-    #     i_points = len(new_points)
-    #     for point in other_mesh.points:
-    #         if point not in new_point_index:
-    #             new_point_index[point] = i_points
-    #             i_points += 1
-    #             new_points.append(point)
-    #
-    #     new_triangles = self.triangles[:]
-    #     for vertex1, vertex2, vertex3 in other_mesh.triangles:
-    #         point1 = other_mesh.points[vertex1]
-    #         point2 = other_mesh.points[vertex2]
-    #         point3 = other_mesh.points[vertex3]
-    #         new_triangles.append((new_point_index[point1],
-    #                               new_point_index[point2],
-    #                               new_point_index[point3]))
-    #
-    #     return self.__class__(new_points, new_triangles)
-
     def to_dict(self, *args, **kwargs):
         """Overload of 'to_dict' for performance."""
         dict_ = self.base_dict()
@@ -120,9 +96,7 @@ class MeshMixin:
         return dict_
 
     @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False,
-                       global_dict=None, pointers_memo: Dict[str, Any] = None,
-                       path: str = "#", name: str = "") -> "Union[Mesh2D, Mesh3D]":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "Union[Mesh2D, Mesh3D]":
         """Overload of 'dict_to_object' for performance."""
 
         vertices = np.array(dict_["vertices"])
@@ -183,6 +157,7 @@ class MeshMixin:
         return self.concatenate(other)
 
     def __hash__(self):
+        """Computation of hash."""
         return hash(
             (
                 self.__class__.__name__,
@@ -192,9 +167,11 @@ class MeshMixin:
         )
 
     def __eq__(self, other):
+        """Equality."""
         return hash(self) == hash(other)
 
     def _data_hash(self):
+        """Computation of hash based on data."""
         return hash(
             (
                 self.__class__.__name__,
@@ -203,16 +180,17 @@ class MeshMixin:
             )
         )
 
-    def _data_eq(self, other_object):
+    def _data_eq(self, other_object) -> bool:
+        """Returns if the object is equal to the other object in the sense of data contained in the objects."""
         if other_object.__class__.__name__ != self.__class__.__name__:
             return False
-        return self._data_hash() == other_object._data_hash()
+        return self == other_object
 
 
     @property
     def triangles_vertices(self):
         """
-        Actual triangles of the mesh (points, not indexes)
+        Actual triangles of the mesh (points, not indexes).
 
         :return: Points of triangle vertices
         :rtype: (n, 3, d) float
@@ -226,11 +204,15 @@ class MeshMixin:
 
     @property
     def point_index(self):
+        """
+        Returns a dictionary that maps the indexes of the mesh vertices.
+        """
         if self._point_index is None:
             self._point_index = {point: index for index, point in enumerate(self.vertices)}
         return self._point_index
 
     def check(self):
+        """Check mesh concistency."""
         npoints = len(self.vertices)
         for triangle in self.triangles:
             if max(triangle) >= npoints:
@@ -238,9 +220,11 @@ class MeshMixin:
         return True
 
     def triangles_crosses(self):
+        """
+        Returns the cross product of two edges from mesh triangles.
+        """
         vectors = np.diff(self.triangles_vertices, axis=1)
-        crosses = np.cross(vectors[:, 0], vectors[:, 1])
-        return crosses
+        return np.cross(vectors[:, 0], vectors[:, 1])
 
     @classmethod
     def merge_meshes(cls, meshes: List[Union['Mesh2D', 'Mesh3D']], name: str = ''):
@@ -320,12 +304,6 @@ class Mesh2D(MeshMixin, dc.PhysicalObject):
         """
         Return the area as the sum of areas of triangles.
         """
-        # area = 0.
-        # for (vertex1, vertex2, vertex3) in self.triangles:
-        #     point1 = self.vertices[vertex1]
-        #     point2 = self.vertices[vertex2]
-        #     point3 = self.vertices[vertex3]
-        #     area += 0.5 * abs((point2 - point1).cross(point3 - point1))
         areas = np.sqrt((self.triangles_crosses() ** 2)) / 2.0
         return areas.sum()
 
