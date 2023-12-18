@@ -132,13 +132,6 @@ class TestConicalFace3D(unittest.TestCase):
         mesh2d = face.triangulation()
         self.assertIsNotNone(mesh2d)
 
-    def test_planeface_intersections(self):
-        planeface, toroidalface = DessiaObject.load_from_file(
-            os.path.join(folder, 'test_planeface3d_toroidalface3d_121223.json')).primitives
-        intersections = planeface.face_intersections(toroidalface)
-        self.assertEqual(len(intersections), 1)
-        self.assertAlmostEqual(intersections[0].length(), 0.0033804467442557404)
-
 
 if __name__ == '__main__':
     unittest.main()
