@@ -258,6 +258,8 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
         points_abscissas[:-1],
         points_abscissas[1:],
     ):
+        if point1 == point2:
+            continue
         line_seg = line_seg_class_(point1, point2)
         intersection = primitive.linesegment_intersections(line_seg)
         if intersection:
