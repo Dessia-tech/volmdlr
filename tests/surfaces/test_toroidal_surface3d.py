@@ -20,6 +20,22 @@ class TestToroidalSurface3D(unittest.TestCase):
         edges.LineSegment3D(volmdlr.Point3D(4, 0, 0), volmdlr.Point3D(-4, 0.25, 4)),
     ]
 
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.0, 0.5 * math.pi], [0.0, math.pi], [0.0, 1.5 * math.pi],
+                                      [0.5 * math.pi, 0.0], [0.5 * math.pi, 0.5 * math.pi],
+                                      [0.5 * math.pi, math.pi], [0.5 * math.pi, 1.5 * math.pi],
+                                      [math.pi, 0.0], [math.pi, 0.5 * math.pi],
+                                      [math.pi, math.pi], [math.pi, 1.5 * math.pi],
+                                      [1.5 * math.pi, 0.0], [1.5 * math.pi, 0.5 * math.pi],
+                                      [1.5 * math.pi, math.pi], [1.5 * math.pi, 1.5 * math.pi]])
+        points3d = self.toroidal_surface.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[1.1, 0.0, 0.0], [1.0, 0.0, 0.1], [0.9, 0.0, 0.0], [1.0, 0.0, -0.1],
+                                    [0.0, 1.1, 0.0], [0.0, 1.0, 0.1], [0.0, 0.9, 0.0], [0.0, 1.0, -0.1],
+                                    [-1.1, 0.0, 0.0], [-1.0, 0.0, 0.1], [-0.9, 0.0, 0.0], [-1.0, 0.0, -0.1],
+                                    [0.0, -1.1, 0.0], [0.0, -1.0, 0.1], [0.0, -0.9, 0.0], [0.0, -1.0, -0.1]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
+
     def test_arc3d_to_2d(self):
         arc1 = edges.Arc3D.from_3_points(volmdlr.Point3D(1 - 0.1 / math.sqrt(2), 0, 0.1 / math.sqrt(2)),
                                          volmdlr.Point3D(0.9, 0, 0),
@@ -243,7 +259,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
         inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(),  14.65577016755327, 6)
+        self.assertAlmostEqual(inters[0].length(),  14.655768291221047, 6)
         # Test2
         expected_results = [[9.424777944721708, 9.424777944721708], [6.283185307179586], []]
         frame = volmdlr.OXYZ
@@ -256,11 +272,12 @@ class TestToroidalSurface3D(unittest.TestCase):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
         #Test3
-        expected_results = [[17.155074987011552], [17.448537879741707], [8.189772236143783, 11.901224672053287],
-                            [9.34218757856321, 6.783271714064327, 6.6266233840305615],
-                            [8.454978430198972, 11.779922655326294], [18.76170912656177],
-                            [6.937794429336999, 15.19250562117756], [19.04179116730168],
-                            [19.712180413083964], [9.106324562479518, 6.6066389656171705, 6.606876915186218]]
+        expected_results = [[17.15507503569369], [17.44853522342781], [8.18979750804767, 11.901069427251548],
+                            [9.342206611752372, 6.78330357261647, 6.626631678114964],
+                            [8.45489967872334, 11.777052333065596], [18.76171974067279],
+                            [6.937798079509853, 15.193168664973692], [19.04235019721684],
+                            [19.712202606655215], [9.106322100367702, 6.606845566993955, 6.60687778055754]]
+
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
             frame = frame.rotation(frame.origin, volmdlr.Y3D, theta)
@@ -308,9 +325,9 @@ class TestToroidalSurface3D(unittest.TestCase):
         ellipse = curves.Ellipse3D(2, 1, frame)
         ellipse_intersections = toroidal_surface.ellipse_intersections(ellipse)
         self.assertEqual(len(ellipse_intersections), 2)
-        self.assertTrue(ellipse_intersections[0].is_close(
-            volmdlr.Point3D(1.6865642161149017, -1.0274512473410842, -1.0274512473410844)))
         self.assertTrue(ellipse_intersections[1].is_close(
+            volmdlr.Point3D(1.6865642161149017, -1.0274512473410842, -1.0274512473410844)))
+        self.assertTrue(ellipse_intersections[0].is_close(
             volmdlr.Point3D(1.817953260018375, -1.1400067506585763, -1.1400067506585763)))
 
     def test_conicalsurface_intersections(self):
@@ -319,15 +336,15 @@ class TestToroidalSurface3D(unittest.TestCase):
         toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 1)
         list_curves = toroidal_surface1.conicalsurface_intersections(conical_surface)
         self.assertEqual(len(list_curves), 2)
-        self.assertAlmostEqual(list_curves[0].length(), 7.290726241459603)
-        self.assertAlmostEqual(list_curves[1].length(), 7.290868553949336)
+        self.assertAlmostEqual(list_curves[0].length(), 7.290767246711664)
+        self.assertAlmostEqual(list_curves[1].length(), 7.290767252565628)
 
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 8)
         conical_surface = conical_surface.translation(volmdlr.Vector3D(2, 2, -3))
         toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 1)
         list_curves = toroidal_surface1.conicalsurface_intersections(conical_surface)
         self.assertEqual(len(list_curves), 1)
-        self.assertAlmostEqual(list_curves[0].length(), 15.26647493668247, 6)
+        self.assertAlmostEqual(list_curves[0].length(), 15.26648920774545, 6)
 
     def test_sphericalsurface_intersections(self):
         spherical_surface = surfaces.SphericalSurface3D(

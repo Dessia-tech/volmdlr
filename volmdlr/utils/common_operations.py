@@ -392,7 +392,8 @@ def separate_points_by_closeness(points):
     points_ = np.array([[*point] for point in points])
 
     # Apply DBSCAN clustering with a small epsilon to separate close points
-    eps = 0.25
+    distances = sorted(np.linalg.norm(points_[1:] - points_[0], axis=1))
+    eps = max(min(np.mean(distances[:int(len(points)*0.1)]) / 2, 0.25), 0.02)
     dbscan = DBSCAN(eps=eps, min_samples=1)
     labels = dbscan.fit_predict(points_)
 
