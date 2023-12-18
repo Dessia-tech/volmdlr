@@ -8,6 +8,7 @@ from itertools import chain
 from typing import List, Union, Dict, Any
 
 import matplotlib.pyplot as plt
+import numpy as np
 import numpy as npy
 from numpy.typing import NDArray
 import triangle as triangle_lib
@@ -3510,18 +3511,21 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
 
         points_intersections = []
-        arcs = self._torus_arcs(100) + self._torus_circle_generatrices_xy(100)
-        for arc in arcs:
-            if plane3d.frame.w.dot(arc.frame.w) == 1.0:
-                continue
-            intersections = plane3d.circle_intersections(arc)
-            points_intersections.extend(inter for inter in intersections if inter not in points_intersections)
-
-        for edge in plane3d.plane_grid(300, self.major_radius * 3):
+        for edge in plane3d.plane_grid(100, self.major_radius * 3):
             intersections = self.line_intersections(edge.line)
             points_intersections.extend(inter for inter in intersections if inter not in points_intersections)
 
-        return points_intersections
+        inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
+
+        for points_group in inters_points:
+            center_mass = vm_common_operations.get_center_of_mass(points_group)
+            initial_point = center_mass + plane3d.frame.u * self.major_radius
+            for theta in np.linspace(0, math.pi - 1e-4, 100):
+                point2 = initial_point.rotation(center_mass, plane3d.frame.w, theta)
+                line = curves.Line3D(center_mass, point2)
+                intersections = self.line_intersections(line)
+                points_intersections.extend(intersections)
+        return list(set(points_intersections))
 
     def get_villarceau_circles(self, plane3d):
         """
@@ -3556,6 +3560,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             point = self.frame.origin + (torus_plane_projection - self.frame.origin).unit_vector() * self.major_radius
             if plane3d.point_distance(point) > self.minor_radius:
                 return []
+        # inters_points = self._plane_intersection_points(plane3d)
         points_intersections = self._plane_intersection_points(plane3d)
         inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
         if len(inters_points) == 1 and plane3d.point_belongs(self.frame.origin):

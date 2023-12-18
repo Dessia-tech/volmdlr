@@ -410,3 +410,17 @@ def separate_points_by_closeness(points):
         groups[key] = order_points_list_for_nearest_neighbor(groups[key])
         groups[key].append(groups[key][0])
     return list(groups.values())
+
+
+def get_center_of_mass(list_points):
+    """
+    Gets the center of mass of a given list of points.
+
+    :param list_points: list of points to get the center of mass from.
+    :return: center of mass point.
+    """
+    center_mass = volmdlr.O3D
+    for point in list_points:
+        center_mass += point
+    center_mass /= len(list_points)
+    return center_mass
