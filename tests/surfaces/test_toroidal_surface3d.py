@@ -20,6 +20,22 @@ class TestToroidalSurface3D(unittest.TestCase):
         edges.LineSegment3D(volmdlr.Point3D(4, 0, 0), volmdlr.Point3D(-4, 0.25, 4)),
     ]
 
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.0, 0.5 * math.pi], [0.0, math.pi], [0.0, 1.5 * math.pi],
+                                      [0.5 * math.pi, 0.0], [0.5 * math.pi, 0.5 * math.pi],
+                                      [0.5 * math.pi, math.pi], [0.5 * math.pi, 1.5 * math.pi],
+                                      [math.pi, 0.0], [math.pi, 0.5 * math.pi],
+                                      [math.pi, math.pi], [math.pi, 1.5 * math.pi],
+                                      [1.5 * math.pi, 0.0], [1.5 * math.pi, 0.5 * math.pi],
+                                      [1.5 * math.pi, math.pi], [1.5 * math.pi, 1.5 * math.pi]])
+        points3d = self.toroidal_surface.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[1.1, 0.0, 0.0], [1.0, 0.0, 0.1], [0.9, 0.0, 0.0], [1.0, 0.0, -0.1],
+                                    [0.0, 1.1, 0.0], [0.0, 1.0, 0.1], [0.0, 0.9, 0.0], [0.0, 1.0, -0.1],
+                                    [-1.1, 0.0, 0.0], [-1.0, 0.0, 0.1], [-0.9, 0.0, 0.0], [-1.0, 0.0, -0.1],
+                                    [0.0, -1.1, 0.0], [0.0, -1.0, 0.1], [0.0, -0.9, 0.0], [0.0, -1.0, -0.1]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
+
     def test_arc3d_to_2d(self):
         arc1 = edges.Arc3D.from_3_points(volmdlr.Point3D(1 - 0.1 / math.sqrt(2), 0, 0.1 / math.sqrt(2)),
                                          volmdlr.Point3D(0.9, 0, 0),
