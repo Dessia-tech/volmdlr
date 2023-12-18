@@ -3500,7 +3500,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             intersections = plane3d.circle_intersections(arc)
             points_intersections.extend(inter for inter in intersections if inter not in points_intersections)
 
-        for edge in plane3d.plane_grid(300, self.major_radius * 4):
+        for edge in plane3d.plane_grid(300, self.major_radius * 3):
             intersections = self.line_intersections(edge.line)
             points_intersections.extend(inter for inter in intersections if inter not in points_intersections)
 
@@ -3568,7 +3568,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param cylindrical_surface: other Cylindrical 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(100) + self._torus_circle_generatrices_xy(100)
+        arcs = self._torus_arcs(200) + self._torus_circle_generatrices_xy(200)
         points_intersections = []
         for arc in arcs:
             intersections = cylindrical_surface.circle_intersections(arc)
@@ -3578,7 +3578,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         for edge in cylindrical_surface.get_generatrices(self.outer_radius * 3, 300):
             # \
             #    cylindrical_surface.get_circle_generatrices(72, self.outer_radius * 3):
-            intersections = self.edge_intersections(edge)
+            intersections = self.line_intersections(edge.line)
             for point in intersections:
                 if not point.in_list(points_intersections):
                     points_intersections.append(point)
@@ -3640,7 +3640,10 @@ class ToroidalSurface3D(PeriodicalSurface):
         for arc in arcs:
             intersections = conical_surface.circle_intersections(arc)
             points_intersections.extend(intersections)
-        for edge in conical_surface.get_generatrices(self.outer_radius * 3, 300):
+        point1 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmin))
+        point2 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmax))
+        for edge in conical_surface.get_generatrices(self.outer_radius * 3, 300) + \
+                conical_surface.get_circle_generatrices(point1.z, point2.z, 100):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not point.in_list(points_intersections):
@@ -3761,16 +3764,20 @@ class ConicalSurface3D(PeriodicalSurface):
         circle = curves.Circle3D(i_frame, radius)
         return circle
 
-    def get_circle_generatrices(self, z, number_circles: int):
+    def get_circle_generatrices(self, z1, z2, number_circles: int):
         """
         Get circles generatrix of the cone.
 
-        :param z: height of cone
+        :param z1: Initial height of cone.
+        :param z2: Final height of cone.
         :param number_circles: number of expected circles.
         """
         circles = []
-        for i_z in npy.linspace(0.001, z, number_circles):
-            circles.append(self.get_circle_at_z(i_z))
+        for i_z in npy.linspace(z1, z2, number_circles):
+            circle = self.get_circle_at_z(i_z)
+            if circle.radius == 0.0:
+                continue
+            circles.append(circle)
         return circles
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
@@ -3783,7 +3790,7 @@ class ConicalSurface3D(PeriodicalSurface):
             ax = fig.add_subplot(111, projection='3d')
 
         line_generatrices = self.get_generatrices(z, 36)
-        circle_generatrices = self.get_circle_generatrices(z, 50)
+        circle_generatrices = self.get_circle_generatrices(0, z, 50)
         for edge in line_generatrices + circle_generatrices:
             edge.plot(ax, edge_style)
         return ax
@@ -4269,8 +4276,10 @@ class ConicalSurface3D(PeriodicalSurface):
         :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
+        point1 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmin))
+        point2 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmax))
         cone_generatrices = self.get_generatrices(spherical_surface.radius*4, 200) +\
-                            self.get_circle_generatrices(200, spherical_surface.radius*4)
+                            self.get_circle_generatrices(point1.z, point2.z, 200)
         intersection_points = []
         for gene in cone_generatrices:
             intersections = spherical_surface.edge_intersections(gene)
@@ -4318,7 +4327,7 @@ class ConicalSurface3D(PeriodicalSurface):
         :return: points of intersections.
         """
         cone_generatrices = self.get_generatrices(length, max(100, int((length / 2) * 10))) + \
-                            self.get_circle_generatrices(length, max(200, int((length / 2) * 20)))
+                            self.get_circle_generatrices(0, length, max(200, int((length / 2) * 20)))
         intersection_points = []
         for gene in cone_generatrices:
             intersections = conical_surface.edge_intersections(gene)
