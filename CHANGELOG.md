@@ -10,12 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - added missing hash and eq methods to several classes
 - ArcEllipse2D/3D: get_shared_section and delete_shared_section.
+- ConicalSurface3D: conicalsurface_intersections
 
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
 - grid_points: returns a grid of points inside the surface2d of the face.
 
 #### surfaces.py
+- ToroidalSurfaces3D: parametric_points_to_3d
 - CylindricalSurface3D: parametric_points_to_3d.
 
 ### Fixed
@@ -42,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExtrusionSurface3D: fullarcellipse3d_to_2d
 - ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
 - ToroidalSurface3D: increases precision of point3d_to_2d.
-- ConicalSurface3D: plane_intersections.
+- ToroidalSurface: plane_intersections.
 
 #### wires.py
 - Contour2D: cut_by_line.
