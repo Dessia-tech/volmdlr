@@ -4354,8 +4354,8 @@ class ConicalSurface3D(PeriodicalSurface):
         :param conical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
-        cone_generatrices = self.get_generatrices(length, max(100, int((length / 2) * 10))) + \
-                            self.get_circle_generatrices(0, length, max(200, int((length / 2) * 20)))
+        cone_generatrices = self.get_generatrices(max(100, int((length / 2) * 10)), length) + \
+                            self.get_circle_generatrices(max(200, int((length / 2) * 20)), 0, length)
         intersection_points = []
         for gene in cone_generatrices:
             intersections = conical_surface.edge_intersections(gene)
