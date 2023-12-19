@@ -17,8 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - grid_points: returns a grid of points inside the surface2d of the face.
 
 #### surfaces.py
-- ToroidalSurfaces3D: parametric_points_to_3d
-- CylindricalSurface3D: parametric_points_to_3d.
+- CylindricalSurfaces3D: parametric_points_to_3d.
+- ToroidalSurfaces3D: parametric_points_to_3d.
+- SphericalSurfaces3D: parametric_points_to_3d.
 
 ### Fixed
 - review hash and eq methods

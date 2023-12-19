@@ -4623,6 +4623,37 @@ class SphericalSurface3D(PeriodicalSurface):
 
         return volmdlr.Point2D(theta, phi)
 
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the spherical surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the spherical surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the spherical surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        center = npy.array(self.frame.origin)
+        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+        z = npy.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+
+        common_term = self.radius * npy.cos(v_values)
+        x_component = npy.cos(u_values) * x
+        y_component = npy.sin(u_values) * y
+        z_component = self.radius * npy.sin(v_values) * z
+
+        return center + common_term * (x_component + y_component) + z_component
+
     def linesegment2d_to_3d(self, linesegment2d):
         """
         Converts a BREP line segment 2D onto a 3D primitive on the surface.
