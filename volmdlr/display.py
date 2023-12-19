@@ -124,6 +124,13 @@ class MeshMixin:
 
         return mesh
 
+    def round_vertices(self, decimals: int = 9) -> "MeshType":
+        """Round the mesh vertices to a given number of decimals."""
+
+        rounded_vertices = np.round(self.vertices, 9)
+
+        return self.__class__(rounded_vertices, self.triangles, self.name)
+
     def mutualize_vertices(self) -> "MeshType":
         """Remove duplicated vertices and remap triangles."""
 
