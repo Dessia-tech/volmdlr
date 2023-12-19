@@ -127,7 +127,7 @@ class MeshMixin:
     def round_vertices(self, decimals: int = 9) -> "MeshType":
         """Round the mesh vertices to a given number of decimals."""
 
-        rounded_vertices = np.round(self.vertices, 9)
+        rounded_vertices = np.round(self.vertices, decimals)
 
         return self.__class__(rounded_vertices, self.triangles, self.name)
 
