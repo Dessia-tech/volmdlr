@@ -141,17 +141,29 @@ class MeshMixin:
 
         return self.__class__(self.vertices, unique_triangles, self.name)
 
-    def __add__(self, other: "Union[Mesh2D, Mesh3D]") -> "Union[Mesh2D, Mesh3D]":
+    def __add__(self, other: "MeshType") -> "MeshType":
         """
-        Overloads the + operator to merge two Mesh instances.
+        Overload the "+" operator to merge two Mesh instances, without mutualization of vertices and triangles.
 
         :param other: Another Mesh instance to concatenate with this instance.
-        :type other: Mesh
+        :type other: MeshType
 
-        :return: A new Mesh instance representing the concatenated shells.
-        :rtype: Union[Mesh2D, Mesh3D]
+        :return: A new Mesh instance representing the merged shells.
+        :rtype: MeshType
         """
         return self.merge(other, mutualize_vertices=False, mutualize_triangles=False)
+
+    def __or__(self, other: "MeshType") -> "MeshType":
+        """
+        Overload the "|" operator to merge two Mesh instances, with mutualization of vertices and triangles.
+
+        :param other: Another Mesh instance to concatenate with this instance.
+        :type other: MeshType
+
+        :return: A new Mesh instance representing the concatenated shells.
+        :rtype: MeshType
+        """
+        return self.merge(other, mutualize_vertices=True, mutualize_triangles=True)
 
     @classmethod
     def merge_meshes(cls, meshes: List[Union["Mesh2D", "Mesh3D"]], name: str = ""):
@@ -246,7 +258,6 @@ class MeshMixin:
         """Overload of 'to_dict' for numpy usage."""
 
         dict_ = self.base_dict()
-
         dict_["vertices"] = self.vertices.tolist()
         dict_["triangles"] = self.triangles.tolist()
 
