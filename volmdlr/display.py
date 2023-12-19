@@ -397,17 +397,14 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
         """
         triangular_faces = []
-        for vertex1, vertex2, vertex3 in self.triangles_vertices:
-            try:
-                point1 = volmdlr.Point3D(*vertex1)
-                point2 = volmdlr.Point3D(*vertex2)
-                point3 = volmdlr.Point3D(*vertex3)
-            except TypeError:
-                print(True)
-            if not point1.is_close(point2) and not point2.is_close(point3) and not point1.is_close(point3):
-                face = volmdlr.faces.Triangle3D(point1, point2, point3)
-                if face.area() >= 1e-11:
-                    triangular_faces.append(face)
+        for vertex1, vertex2, vertex3 in self.remove_degenerate_triangles(tol=1e-6).triangles_vertices():
+            # TODO: add unit test for edge cases
+            point1 = volmdlr.Point3D(*vertex1)
+            point2 = volmdlr.Point3D(*vertex2)
+            point3 = volmdlr.Point3D(*vertex3)
+
+            triangular_faces.append(Triangle3D(point1, point2, point3))
+
         return triangular_faces
 
     def to_stl(self):
