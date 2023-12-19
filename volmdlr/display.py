@@ -131,6 +131,29 @@ class MeshMixin:
 
         return self.__class__(rounded_vertices, self.triangles, self.name)
 
+    def remove_degenerate_triangles(self, tol: float = 0.0) -> "MeshType":
+        """Remove degenerate triangles from the mesh."""
+        # Get vertices for each corner of the triangles
+        v0, v1, v2 = (
+            self.vertices[self.triangles[:, 0]],
+            self.vertices[self.triangles[:, 1]],
+            self.vertices[self.triangles[:, 2]],
+        )
+
+        # Calculate the squared distance between each pair of vertices
+        dist_sq_v0_v1 = np.sum((v0 - v1) ** 2, axis=1)
+        dist_sq_v1_v2 = np.sum((v1 - v2) ** 2, axis=1)
+        dist_sq_v0_v2 = np.sum((v0 - v2) ** 2, axis=1)
+
+        # Find triangles where all three vertices are distinct (no zero distances)
+        valid_triangles_mask = (dist_sq_v0_v1 > tol) & (dist_sq_v1_v2 > tol) & (dist_sq_v0_v2 > tol)
+
+        # Filter out invalid triangles
+        valid_triangles = self.triangles[valid_triangles_mask]
+
+        # Create a new Mesh3D instance with non-flat triangles
+        return self.__class__(self.vertices, valid_triangles, self.name)
+
     def mutualize_vertices(self) -> "MeshType":
         """Remove duplicated vertices and remap triangles."""
 
