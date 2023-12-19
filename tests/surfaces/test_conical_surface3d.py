@@ -1,6 +1,7 @@
 import math
 import unittest
 import os
+import numpy as np
 from dessia_common.core import DessiaObject
 import volmdlr
 import volmdlr.edges as vme
@@ -16,6 +17,25 @@ folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_coni
 class TestConicalSurface3D(unittest.TestCase):
     conical_surface = conical_surfaces.conical_surface1
     conical_surface2 = conical_surfaces.conical_surface2
+
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.5 * math.pi, 0.0], [math.pi, 0.0], [1.5 * math.pi, 0.0],
+                                      [0.0, 0.5/math.tan(math.pi / 3)], [0.5 * math.pi, 0.5/math.tan(math.pi / 3)],
+                                      [math.pi, 0.5/math.tan(math.pi / 3)],
+                                      [1.5 * math.pi, 0.5/math.tan(math.pi / 3)],
+                                      [0.0, 1.0 / math.tan(math.pi / 3)], [0.5 * math.pi, 1.0 / math.tan(math.pi / 3)],
+                                      [math.pi, 1.0 / math.tan(math.pi / 3)],
+                                      [1.5 * math.pi, 1.0 / math.tan(math.pi / 3)]
+                                      ], dtype=np.float64)
+        points3d = self.conical_surface.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0],
+                                    [0.5, 0.0, 0.5/math.tan(math.pi / 3)], [0.0, 0.5, 0.5/math.tan(math.pi / 3)],
+                                    [-0.5, 0.0, 0.5/math.tan(math.pi / 3)], [0.0, -0.5, 0.5/math.tan(math.pi / 3)],
+                                    [1.0, 0.0, 1.0 / math.tan(math.pi / 3)], [0.0, 1.0, 1.0 / math.tan(math.pi / 3)],
+                                    [-1.0, 0.0, 1.0 / math.tan(math.pi / 3)], [0.0, -1.0, 1.0 / math.tan(math.pi / 3)]
+                                    ])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
 
     def test_arc3d_to_2d(self):
         arc1 = vme.Arc3D.from_3_points(volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 1 / math.sqrt(3)),
