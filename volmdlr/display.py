@@ -174,30 +174,18 @@ class MeshMixin:
 
     def __hash__(self):
         """Computation of hash."""
-        return hash(
-            (
-                self.__class__.__name__,
-                (tuple(self.triangles[0]), tuple(self.triangles[-1]), len(self.triangles)),
-                (tuple(self.vertices[0]), tuple(self.vertices[-1]), len(self.vertices)),
-            )
-        )
+        return hash((self.__class__.__name__, self.vertices.tobytes(), self.triangles.tobytes()))
 
     def __eq__(self, other):
         """Equality."""
         return hash(self) == hash(other)
 
     def _data_hash(self):
-        """Computation of hash based on data."""
-        return hash(
-            (
-                self.__class__.__name__,
-                (tuple(self.triangles[0]), tuple(self.triangles[-1]), len(self.triangles)),
-                (tuple(self.vertices[0]), tuple(self.vertices[-1]), len(self.vertices)),
-            )
-        )
+        """Computation of hash for Dessia platform usage."""
+        return hash(self)
 
     def _data_eq(self, other_object) -> bool:
-        """Returns if the object is equal to the other object in the sense of data contained in the objects."""
+        """Equality for Dessia platform usage."""
         if other_object.__class__.__name__ != self.__class__.__name__:
             return False
         return self == other_object
