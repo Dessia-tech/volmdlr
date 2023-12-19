@@ -3563,6 +3563,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         # inters_points = self._plane_intersection_points(plane3d)
         points_intersections = self._plane_intersection_points(plane3d)
         inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
+        print('lenghts points:', [len(lps) for lps in inters_points])
         if len(inters_points) == 1 and plane3d.point_belongs(self.frame.origin):
             return self.get_villarceau_circles(plane3d)
         return [edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
