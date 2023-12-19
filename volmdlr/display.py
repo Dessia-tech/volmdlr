@@ -6,11 +6,11 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 
 import math
 import warnings
-from typing import List, Union
+from typing import List, Union, TypeVar
 
-import dessia_common.core as dc
 import numpy as np
 from dessia_common.typings import JsonSerializable
+from dessia_common.core import DessiaObject, PhysicalObject
 from numpy.typing import NDArray
 
 import volmdlr.edges
