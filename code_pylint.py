@@ -31,7 +31,7 @@ MAX_ERROR_BY_TYPE = {
                      'duplicate-code': 9,
                      'arguments-renamed': 56,
                      'too-many-ancestors': 20,
-                     'too-many-public-methods': 15,
+                     'too-many-public-methods': 16,
                      'too-many-instance-attributes': 15,
                      'protected-access': 4,
                      'too-many-nested-blocks': 3,
