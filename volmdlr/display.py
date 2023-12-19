@@ -82,13 +82,19 @@ class Node3D(volmdlr.Point3D):
 
 class MeshMixin:
     """
-    A DisplayMesh is a list of points linked by triangles.
+    Mixin class for 2D and 3D meshes.
 
-    This is an abstract class for 2D & 3D.
+    This is an abstract class.
     """
+
+    MeshType = TypeVar("MeshType", bound="MeshMixin")
+
+    _standalone_in_db = True
+    _non_serializable_attributes = ["vertices", "triangles"]
 
     def to_dict(self, *args, **kwargs):
         """Overload of 'to_dict' for performance."""
+
         dict_ = self.base_dict()
 
         dict_["vertices"] = self.vertices.tolist()
@@ -97,14 +103,14 @@ class MeshMixin:
         return dict_
 
     @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "Union[Mesh2D, Mesh3D]":
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "MeshType":
         """Overload of 'dict_to_object' for performance."""
 
         vertices = np.array(dict_["vertices"])
         triangles = np.array(dict_["triangles"])
         name = dict_["name"]
 
-        display_triangle_shell = cls(vertices, triangles, name)
+        return cls(vertices, triangles, name)
 
         return display_triangle_shell
 
