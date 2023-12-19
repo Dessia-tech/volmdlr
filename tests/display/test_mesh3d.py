@@ -116,7 +116,9 @@ class TestMesh3D(unittest.TestCase):
 
     def test_equality(self):
         self.assertNotEqual(self.mesh1, self.mesh2)
+        self.assertEqual(self.mesh1, self.mesh1)
         self.assertFalse(self.mesh1._data_eq(self.mesh2))
+        self.assertTrue(self.mesh1._data_eq(self.mesh1))
 
     def test_concatenate_empty(self):
         empty_mesh = Mesh3D(np.array([]), np.array([]))
