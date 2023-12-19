@@ -407,6 +407,9 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
         return triangular_faces
 
+    def to_trimesh(self):
+        return Trimesh(self.vertices, self.triangles)
+
     def to_stl(self):
         """
         Exports to STL.
