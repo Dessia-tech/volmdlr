@@ -7315,7 +7315,7 @@ class BSplineSurface3D(Surface3D):
         if distance < tol:
             return volmdlr.Point2D(*x0)
         x1, check, distance = self.point_inversion(x0, point3d, tol)
-        if check:
+        if check and distance <= tol:
             return volmdlr.Point2D(*x1)
         return self.point3d_to_2d_minimize(point3d, x0, tol)
 
@@ -7341,34 +7341,45 @@ class BSplineSurface3D(Surface3D):
                                (min_bound_y, max_bound_y)])
         if res.fun < 1e-6:
             return volmdlr.Point2D(*res.x)
+        self.delta = 0.01
+        distances = npy.linalg.norm(self.evalpts - npy.array(point3d), axis=1)
+        indexes = npy.argsort(distances)
+        x0s = []
+        u_start, u_stop, v_start, v_stop = self.domain
+        delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
+        delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
+        for index in indexes[:100]:
+            if index == 0:
+                u_idx, v_idx = 0, 0
+            else:
+                u_idx = int(index / self.sample_size_v)
+                v_idx = index % self.sample_size_v
 
-        point3d_array = npy.array(point3d)
-        delta_bound_x = max_bound_x - min_bound_x
-        delta_bound_y = max_bound_y - min_bound_y
-        x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
-               ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
-               ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
-               ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 4, min_bound_y + delta_bound_y / 10),
-               ((min_bound_x + max_bound_x) / 4, max_bound_y - delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 4, max_bound_y - delta_bound_y / 10),
-               (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-               (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
-               (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
-               (0.33333333, 0.009), (0.5555555, 0.0099)]
-        # Sort the initial conditions
-        x0s.sort(key=sort_func)
-        x0s = [x0] + x0s
-        if self.weights is not None:
-            control_points = self.ctrlptsw
-        else:
-            control_points = self.ctrlpts
-        bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
+            u = u_start + u_idx * delta_u
+            v = v_start + v_idx * delta_v
+            x0s.append((u, v))
+        # delta_bound_x = max_bound_x - min_bound_x
+        # delta_bound_y = max_bound_y - min_bound_y
+        # x0s = [((min_bound_x + max_bound_x) / 2, (min_bound_y + max_bound_y) / 2),
+        #        ((min_bound_x + max_bound_x) / 2, min_bound_y + delta_bound_y / 10),
+        #        ((min_bound_x + max_bound_x) / 2, max_bound_y - delta_bound_y / 10),
+        #        ((min_bound_x + max_bound_x) / 4, min_bound_y + delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 4, min_bound_y + delta_bound_y / 10),
+        #        ((min_bound_x + max_bound_x) / 4, max_bound_y - delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 4, max_bound_y - delta_bound_y / 10),
+        #        (min_bound_x + delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
+        #        (min_bound_x + delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 10, min_bound_y + delta_bound_y / 10),
+        #        (max_bound_x - delta_bound_x / 10, max_bound_y - delta_bound_y / 10),
+        #        (0.33333333, 0.009), (0.5555555, 0.0099)]
+        # # Sort the initial conditions
+        # x0s.sort(key=sort_func)
+        # x0s = [x0] + x0s
         results = []
-        for x in x0s[:2]:
-            res = point_inversion(point3d_array, x, bounds, [self.degree_u, self.degree_v],
-                                  self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational)
+        for x in x0s:
+            res = minimize(fun, x0=npy.array(x), jac=True,
+                           bounds=[(min_bound_x, max_bound_x),
+                                   (min_bound_y, max_bound_y)])
             if res.fun <= tol:
                 return volmdlr.Point2D(*res.x)
 
