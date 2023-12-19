@@ -7,11 +7,11 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 import math
 import warnings
 from typing import List, Union
-import numpy as np
-from numpy.typing import NDArray
 
 import dessia_common.core as dc
+import numpy as np
 from dessia_common.typings import JsonSerializable
+from numpy.typing import NDArray
 
 import volmdlr.edges
 
@@ -29,15 +29,13 @@ class Node2D(volmdlr.Point2D):
     def __hash__(self):
         return int(1e6 * (self.x + self.y))
 
-    def __eq__(self, other_node: 'Node2D'):
-        if other_node.__class__.__name__ not in ['Vector2D', 'Point2D',
-                                                 'Node2D']:
+    def __eq__(self, other_node: "Node2D"):
+        if other_node.__class__.__name__ not in ["Vector2D", "Point2D", "Node2D"]:
             return False
-        return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-06)
+        return math.isclose(self.x, other_node.x, abs_tol=1e-06) and math.isclose(self.y, other_node.y, abs_tol=1e-06)
 
     @classmethod
-    def from_point(cls, point2d, name: str = ''):
+    def from_point(cls, point2d, name: str = ""):
         """
         Creates a Node 2D from a Point 2D.
 
@@ -61,13 +59,14 @@ class Node3D(volmdlr.Point3D):
     def __hash__(self):
         return int(1e6 * (self.x + self.y + self.z))
 
-    def __eq__(self, other_node: 'Node3D'):
-        if other_node.__class__.__name__ not in ['Vector3D', 'Point3D',
-                                                 'Node3D']:
+    def __eq__(self, other_node: "Node3D"):
+        if other_node.__class__.__name__ not in ["Vector3D", "Point3D", "Node3D"]:
             return False
-        return math.isclose(self.x, other_node.x, abs_tol=1e-06) \
-            and math.isclose(self.y, other_node.y, abs_tol=1e-06) \
+        return (
+            math.isclose(self.x, other_node.x, abs_tol=1e-06)
+            and math.isclose(self.y, other_node.y, abs_tol=1e-06)
             and math.isclose(self.z, other_node.z, abs_tol=1e-06)
+        )
 
     @classmethod
     def from_point(cls, point3d):
@@ -186,7 +185,6 @@ class MeshMixin:
             return False
         return self == other_object
 
-
     @property
     def triangles_vertices(self):
         """
@@ -227,7 +225,7 @@ class MeshMixin:
         return np.cross(vectors[:, 0], vectors[:, 1])
 
     @classmethod
-    def merge_meshes(cls, meshes: List[Union['Mesh2D', 'Mesh3D']], name: str = ''):
+    def merge_meshes(cls, meshes: List[Union["Mesh2D", "Mesh3D"]], name: str = ""):
         """
         Merge several meshes into one.
         """
@@ -266,8 +264,7 @@ class MeshMixin:
         for i_points, point in enumerate(self.vertices):
             ax = self._point_class(*point).plot(ax=ax)
             if numbering:
-                ax.text(*point, f'node {i_points + 1}',
-                        ha='center', va='center')
+                ax.text(*point, f"node {i_points + 1}", ha="center", va="center")
 
         for vertex1, vertex2, vertex3 in self.triangles_vertices:
             point1 = self._point_class(*vertex1)
@@ -292,7 +289,7 @@ class Mesh2D(MeshMixin, dc.PhysicalObject):
     _linesegment_class = volmdlr.edges.LineSegment2D
     _point_class = volmdlr.Point2D
 
-    def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ''):
+    def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ""):
         self.vertices = vertices
         self.triangles = triangles
         # Avoiding calling dessia object init because its inefficiency
@@ -317,7 +314,7 @@ class Mesh3D(MeshMixin, dc.PhysicalObject):
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
 
-    def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ''):
+    def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ""):
         self.vertices = vertices
         self.triangles = triangles
         # Avoiding calling dessia object init because its inefficiency
@@ -376,4 +373,4 @@ class Mesh3D(MeshMixin, dc.PhysicalObject):
         Exports to STL.
 
         """
-        warnings.warn('Please use the Stl.from_display_mesh method instead')
+        warnings.warn("Please use the Stl.from_display_mesh method instead")
