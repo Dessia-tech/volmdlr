@@ -17,6 +17,7 @@ import volmdlr.edges
 
 
 class Node2D(volmdlr.Point2D):
+    # TODO: remove this class when no longer used
     """
     A node is a point with some hash capabilities for performance.
     """
@@ -46,6 +47,7 @@ class Node2D(volmdlr.Point2D):
 
 
 class Node3D(volmdlr.Point3D):
+    # TODO: remove this class when no longer used
     """
     A node is a point with some hash capabilities for performance.
     """
