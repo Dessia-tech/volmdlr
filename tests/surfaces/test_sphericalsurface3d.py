@@ -1,6 +1,7 @@
 import unittest
 import math
 import os
+import numpy as np
 import volmdlr
 from volmdlr import surfaces, wires, edges, curves
 
@@ -10,6 +11,22 @@ folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_sphe
 
 class TestSphericalSurface3D(unittest.TestCase):
     surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
+
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.0, 0.5 * math.pi], [0.0, math.pi], [0.0, 1.5 * math.pi],
+                                      [0.5 * math.pi, 0.0], [0.5 * math.pi, 0.5 * math.pi],
+                                      [0.5 * math.pi, math.pi], [0.5 * math.pi, 1.5 * math.pi],
+                                      [math.pi, 0.0], [math.pi, 0.5 * math.pi],
+                                      [math.pi, math.pi], [math.pi, 1.5 * math.pi],
+                                      [1.5 * math.pi, 0.0], [1.5 * math.pi, 0.5 * math.pi],
+                                      [1.5 * math.pi, math.pi], [1.5 * math.pi, 1.5 * math.pi]])
+        points3d = self.surface3d.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [-1.0, 0.0, 0.0], [0.0, 0.0, -1.0],
+                                    [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0],
+                                    [-1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0],
+                                    [0.0, -1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
 
     def test_arc3d_to_2d(self):
         arc_with_two_singularities = edges.Arc3D.load_from_file(
