@@ -376,7 +376,9 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
         https://doc.babylonjs.com/how_to/custom
         """
-        babylon_mesh = {"positions": self.vertices.flatten().tolist(), "indices": self.triangles.flatten().tolist()}
+        mesh = self.round_vertices(decimals=6)
+        babylon_mesh = {"positions": mesh.vertices.flatten().tolist(), "indices": mesh.triangles.flatten().tolist()}
+
         return babylon_mesh
 
     @property
