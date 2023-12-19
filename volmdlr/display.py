@@ -264,22 +264,22 @@ class MeshMixin:
 
     def plot(self, ax=None, numbering: bool = False):
         """Plot the mesh with Matplotlib."""
-        for i_points, point in enumerate(self.vertices):
+
+        # Plot vertices
+        for i_point, point in enumerate(self.vertices):
             ax = self._point_class(*point).plot(ax=ax)
             if numbering:
-                ax.text(*point, f"node {i_points + 1}", ha="center", va="center")
+                ax.text(*point, f"node {i_point}", ha="center", va="center")
 
-        for vertex1, vertex2, vertex3 in self.triangles_vertices():
+        # Plot line segments
+        for vertex1, vertex2, vertex3 in self.remove_degenerate_triangles(tol=1e-6).triangles_vertices():
             point1 = self._point_class(*vertex1)
             point2 = self._point_class(*vertex2)
             point3 = self._point_class(*vertex3)
 
-            if not point1.is_close(point2):
-                self._linesegment_class(point1, point2).plot(ax=ax)
-            if not point2.is_close(point3):
-                self._linesegment_class(point2, point3).plot(ax=ax)
-            if not point1.is_close(point3):
-                self._linesegment_class(point1, point3).plot(ax=ax)
+            self._linesegment_class(point1, point2).plot(ax=ax)
+            self._linesegment_class(point2, point3).plot(ax=ax)
+            self._linesegment_class(point1, point3).plot(ax=ax)
 
         return ax
 
