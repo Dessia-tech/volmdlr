@@ -6,14 +6,16 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 
 import math
 import warnings
-from typing import List, Union, TypeVar
+from typing import List, TypeVar, Union
 
 import numpy as np
-from dessia_common.typings import JsonSerializable
 from dessia_common.core import DessiaObject, PhysicalObject
+from dessia_common.typings import JsonSerializable
 from numpy.typing import NDArray
+from trimesh import Trimesh
 
 import volmdlr.edges
+from volmdlr.faces import Triangle3D
 
 
 class Node2D(volmdlr.Point2D):
