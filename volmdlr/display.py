@@ -92,26 +92,7 @@ class MeshMixin:
     _standalone_in_db = True
     _non_serializable_attributes = ["vertices", "triangles"]
 
-    def to_dict(self, *args, **kwargs):
-        """Overload of 'to_dict' for performance."""
-
-        dict_ = self.base_dict()
-
-        dict_["vertices"] = self.vertices.tolist()
-        dict_["triangles"] = self.triangles.tolist()
-
-        return dict_
-
-    @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "MeshType":
-        """Overload of 'dict_to_object' for performance."""
-
-        vertices = np.array(dict_["vertices"])
-        triangles = np.array(dict_["triangles"])
-        name = dict_["name"]
-
-        return cls(vertices, triangles, name)
-
+    # MANIPULATION
     def merge(
         self, other: "MeshType", mutualize_vertices: bool = False, mutualize_triangles: bool = False
     ) -> "MeshType":
@@ -172,65 +153,13 @@ class MeshMixin:
         """
         return self.merge(other, mutualize_vertices=False, mutualize_triangles=False)
 
-    def __hash__(self):
-        """Computation of hash."""
-        return hash((self.__class__.__name__, self.vertices.tobytes(), self.triangles.tobytes()))
-
-    def __eq__(self, other):
-        """Equality."""
-        return hash(self) == hash(other)
-
-    def _data_hash(self):
-        """Computation of hash for Dessia platform usage."""
-        return hash(self)
-
-    def _data_eq(self, other_object) -> bool:
-        """Equality for Dessia platform usage."""
-        if other_object.__class__.__name__ != self.__class__.__name__:
-            return False
-        return self == other_object
-
-    def triangles_vertices(self) -> NDArray[float]:
-        """
-        Actual triangles of the mesh (points, not indexes).
-
-        :return: Points of triangle vertices.
-        :rtype: np.ndarray[float]
-        """
-        triangles = self.vertices.view(np.ndarray)[self.triangles]
-
-        return triangles
-
-    @property
-    def point_index(self):
-        """
-        Returns a dictionary that maps the indexes of the mesh vertices.
-        """
-        if self._point_index is None:
-            self._point_index = {point: index for index, point in enumerate(self.vertices)}
-
-        return self._point_index
-
-    def check(self):
-        """Check mesh concistency."""
-        npoints = len(self.vertices)
-        for triangle in self.triangles:
-            if max(triangle) >= npoints:
-                return False
-        return True
-
-    def triangles_crosses(self):
-        """
-        Returns the cross product of two edges from mesh triangles.
-        """
-        vectors = np.diff(self.triangles_vertices, axis=1)
-        return np.cross(vectors[:, 0], vectors[:, 1])
-
     @classmethod
     def merge_meshes(cls, meshes: List[Union["Mesh2D", "Mesh3D"]], name: str = ""):
         """
         Merge several meshes into one.
         """
+        # TODO: refactor this method to "from_meshes"
+
         if len(meshes) == 1:
             return cls(meshes[0].vertices, meshes[0].triangles, name=name)
 
@@ -257,21 +186,52 @@ class MeshMixin:
         :param other_mesh: other mesh.
         :return:
         """
+        # TODO: remove this method and use "merge"
         result = self + other_mesh
         self.vertices = result.vertices
         self.triangles = result.triangles
 
-    def plot(self, ax=None, numbering=False):
-        """Plots the mesh with Matplotlib."""
+    # CHECK
+    def check_concistency(self):
+        """Check mesh concistency."""
+
+        n_points = len(self.vertices)
+
+        for triangle in self.triangles:
+            if max(triangle) >= n_points:
+                return False
+        return True
+
+    # COMPUTATION
+    def triangles_vertices(self):
+        """
+        Actual triangles of the mesh (points, not indexes).
+
+        :return: Points of triangle vertices.
+        :rtype: np.ndarray[float]
+        """
+        triangles = self.vertices.view(np.ndarray)[self.triangles]
+        return triangles
+
+    def triangles_cross_products(self):
+        """
+        Compute the cross products of edges for each triangle in the mesh.
+        """
+        vectors = np.diff(self.triangles_vertices(), axis=1)
+        return np.cross(vectors[:, 0], vectors[:, 1])
+
+    def plot(self, ax=None, numbering: bool = False):
+        """Plot the mesh with Matplotlib."""
         for i_points, point in enumerate(self.vertices):
             ax = self._point_class(*point).plot(ax=ax)
             if numbering:
                 ax.text(*point, f"node {i_points + 1}", ha="center", va="center")
 
-        for vertex1, vertex2, vertex3 in self.triangles_vertices:
+        for vertex1, vertex2, vertex3 in self.triangles_vertices():
             point1 = self._point_class(*vertex1)
             point2 = self._point_class(*vertex2)
             point3 = self._point_class(*vertex3)
+
             if not point1.is_close(point2):
                 self._linesegment_class(point1, point2).plot(ax=ax)
             if not point2.is_close(point3):
@@ -280,6 +240,46 @@ class MeshMixin:
                 self._linesegment_class(point1, point3).plot(ax=ax)
 
         return ax
+
+    # SERIALIZATION
+    def to_dict(self, *args, **kwargs):
+        """Overload of 'to_dict' for numpy usage."""
+
+        dict_ = self.base_dict()
+
+        dict_["vertices"] = self.vertices.tolist()
+        dict_["triangles"] = self.triangles.tolist()
+
+        return dict_
+
+    @classmethod
+    def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "MeshType":
+        """Overload of 'dict_to_object' for numpy usage."""
+
+        vertices = np.array(dict_["vertices"])
+        triangles = np.array(dict_["triangles"])
+        name = dict_["name"]
+
+        return cls(vertices, triangles, name)
+
+    # HASH AND EQUALITY
+    def __hash__(self):
+        """Computation of hash."""
+        return hash((self.__class__.__name__, self.vertices.tobytes(), self.triangles.tobytes()))
+
+    def __eq__(self, other):
+        """Equality."""
+        return hash(self) == hash(other)
+
+    def _data_hash(self):
+        """Computation of hash for Dessia platform usage."""
+        return hash(self)
+
+    def _data_eq(self, other_object) -> bool:
+        """Equality for Dessia platform usage."""
+        if other_object.__class__.__name__ != self.__class__.__name__:
+            return False
+        return self == other_object
 
 
 class Mesh2D(MeshMixin, DessiaObject):
@@ -302,7 +302,7 @@ class Mesh2D(MeshMixin, DessiaObject):
         """
         Return the area as the sum of areas of triangles.
         """
-        areas = np.sqrt((self.triangles_crosses() ** 2)) / 2.0
+        areas = np.sqrt((self.triangles_cross_products() ** 2)) / 2.0
         return areas.sum()
 
 
@@ -327,7 +327,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         """
         Return the area as the sum of areas of triangles.
         """
-        areas = np.sqrt((self.triangles_crosses() ** 2).sum(axis=1)) / 2.0
+        areas = np.sqrt((self.triangles_cross_products() ** 2).sum(axis=1)) / 2.0
         return areas.sum()
 
     def to_babylon(self):
