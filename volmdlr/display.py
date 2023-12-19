@@ -112,45 +112,6 @@ class MeshMixin:
 
         return cls(vertices, triangles, name)
 
-        return display_triangle_shell
-
-    def concatenate(self, other: "Union[Mesh2D, Mesh3D]") -> "Union[Mesh2D, Mesh3D]":
-        """
-        Concatenates two Mesh instances into a single instance.
-
-        This method merges the vertices and indices of both mesh. If the same vertex exists in both mesh,
-        it is only included once in the merged shell to optimize memory usage. It also ensures that each face is
-        represented uniquely by sorting the vertices of each triangle.
-
-        :param other: Another Mesh instance to concatenate with this instance.
-        :return: A new Mesh instance representing the concatenated shells.
-        """
-        if len(self.vertices) == 0 or len(self.triangles) == 0:
-            return other
-        if len(other.vertices) == 0 or len(other.triangles) == 0:
-            return self
-
-        # Merge and remove duplicate vertices
-        merged_vertices = np.vstack((self.vertices, other.vertices))
-        unique_vertices, indices_map = np.unique(merged_vertices, axis=0, return_inverse=True)
-
-        # Adjust indices to account for duplicates and offset from concatenation
-        self_indices_adjusted = self.triangles
-        other_indices_adjusted = other.triangles + self.vertices.shape[0]
-
-        # Re-map indices to unique vertices
-        all_indices = np.vstack((self_indices_adjusted, other_indices_adjusted))
-        final_indices = indices_map[all_indices]
-
-        # Use np.unique to find unique subarrays
-        _, unique_indices = np.unique(np.sort(final_indices, axis=1), axis=0, return_index=True)
-
-        # Get the unique subarrays
-        merged_indices = final_indices[unique_indices]
-
-        # Create a new DisplayTriangleShell3D with merged data
-        return self.__class__(unique_vertices, merged_indices, name=self.name + "+" + other.name)
-
     def merge(
         self, other: "MeshType", mutualize_vertices: bool = False, mutualize_triangles: bool = False
     ) -> "MeshType":
@@ -241,17 +202,13 @@ class MeshMixin:
             return False
         return self == other_object
 
-    @property
-    def triangles_vertices(self):
+    def triangles_vertices(self) -> NDArray[float]:
         """
         Actual triangles of the mesh (points, not indexes).
 
-        :return: Points of triangle vertices
-        :rtype: (n, 3, d) float
+        :return: Points of triangle vertices.
+        :rtype: np.ndarray[float]
         """
-        # use of advanced indexing on our tracked arrays will
-        # trigger a change flag which means the hash will have to be
-        # recomputed. We can escape this check by viewing the array.
         triangles = self.vertices.view(np.ndarray)[self.triangles]
 
         return triangles
@@ -263,6 +220,7 @@ class MeshMixin:
         """
         if self._point_index is None:
             self._point_index = {point: index for index, point in enumerate(self.vertices)}
+
         return self._point_index
 
     def check(self):
@@ -336,10 +294,9 @@ class MeshMixin:
         return ax
 
 
-class Mesh2D(MeshMixin, dc.PhysicalObject):
+class Mesh2D(MeshMixin, DessiaObject):
     """
-    A mesh for display purposes in 2D.
-
+    2D mesh.
     """
 
     _linesegment_class = volmdlr.edges.LineSegment2D
@@ -361,10 +318,9 @@ class Mesh2D(MeshMixin, dc.PhysicalObject):
         return areas.sum()
 
 
-class Mesh3D(MeshMixin, dc.PhysicalObject):
+class Mesh3D(MeshMixin, PhysicalObject):
     """
-    A mesh for display purposes in 3D.
-
+    3D mesh.
     """
 
     _linesegment_class = volmdlr.edges.LineSegment3D
