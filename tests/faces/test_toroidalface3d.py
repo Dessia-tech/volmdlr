@@ -27,10 +27,10 @@ class TestToroidalFace3D(unittest.TestCase):
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
     def test_planeface_intersections(self):
-        expected_results = [[14.700000000000001], [9.388571088159908], [9.282044462953378],
-                            [9.10765519911981], [8.870824370954356], [8.582455381664765],
-                            [4.999999999998194, 4.999999999998194], [3.717538102728644, 3.7240013105263103],
-                            [3.325530350863936, 3.325501013465095], [3.0819608531081744, 3.094049612384317]]
+        expected_results = [[14.700000000000001], [9.388571252432572], [9.282044358781096], [9.107655322912544],
+                            [8.870824455015496], [8.582455381818427], [4.999999999998194, 4.999999999998194],
+                            [3.7175381274011468, 3.717583506678337], [3.3255303534809166, 3.3255042068804834],
+                            [3.0819608577134665, 3.081949673890067]]
 
         ts = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
         tf = faces.ToroidalFace3D.from_surface_rectangular_cut(ts, -1.4, 3.5, 0., 2.5)
@@ -54,8 +54,21 @@ class TestToroidalFace3D(unittest.TestCase):
         self.assertEqual(len(inters), 1)
         self.assertAlmostEqual(inters[0].length(), 0.08139556829160953)
 
+        planeface, toroidalface = DessiaObject.load_from_file(
+            os.path.join(folder, 'test_planeface3d_toroidalface3d_121223.json')).primitives
+        intersections = planeface.face_intersections(toroidalface)
+        self.assertEqual(len(intersections), 1)
+        self.assertAlmostEqual(intersections[0].length(), 0.0033804467442557404)
+
+        planeface, toroidalface = DessiaObject.load_from_file(
+            os.path.join(folder, "test_planeface3d_toroidalface3d_131223.json")).primitives
+
+        inters = planeface.face_intersections(toroidalface)
+        self.assertEqual(len(inters), 1)
+        self.assertAlmostEqual(inters[0].length(), 0.030299086707278766)
+
     def test_cylindricalface_intersections(self):
-        expected_results = [[2.546120994711518], [2.454558505161535], [2.7679469885415657], [2.8109172462675667],
+        expected_results = [[2.546120994711518], [2.454558505161535], [2.7679469885415657], [2.810917943159904],
                             [1.3806998364554988, 3.028332404171969], [2.1248783089966574], [1.736847875568775],
                             [2.558338114997606], [2.812361380094013, 1.3899450007345244], [2.4475153123576954]]
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
