@@ -3441,6 +3441,16 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: intersecting plane.
         :return: list of intersecting curves.
         """
+        def _get_points(line_direction, translation_direction, length):
+            points_intersections = []
+            initial_point = point_projection + translation_direction * length
+            for factor in np.linspace(0, 2 * length, 400):
+                point = initial_point.translation(-translation_direction * factor)
+                line = curves.Line3D.from_point_and_vector(point, line_direction)
+                intersections = self.line_intersections(line)
+                points_intersections.extend(intersections)
+            return points_intersections
+
         distance_plane_cylinder_axis = plane3d.point_distance(self.frame.origin)
         if distance_plane_cylinder_axis >= self.outer_radius:
             return []
@@ -3448,8 +3458,10 @@ class ToroidalSurface3D(PeriodicalSurface):
             return self._helper_parallel_plane_intersections_through_origin(plane3d)
         if math.isclose(distance_plane_cylinder_axis, self.inner_radius, abs_tol=1e-6):
             point_projection = plane3d.point_projection(self.frame.origin)
+            points = _get_points(self.frame.w, plane3d.frame.w.cross(self.frame.w), self.major_radius)
+            point1, point2 = vm_utils_intersections.get_two_planes_intersections(self.frame, plane3d.frame)
+            points.extend(_get_points((point2 - point1).unit_vector(), self.frame.w, self.minor_radius*1.1))
             vector = (point_projection - self.frame.origin).unit_vector()
-            points = self._plane_intersection_points(plane3d)
             frame = volmdlr.Frame3D(point_projection, vector, self.frame.w, vector.cross(self.frame.w))
             local_points = [frame.global_to_local_coordinates(point) for point in points]
             lists_points = [[], []]
@@ -3513,19 +3525,22 @@ class ToroidalSurface3D(PeriodicalSurface):
         points_intersections = []
         for edge in plane3d.plane_grid(100, self.major_radius * 3):
             intersections = self.line_intersections(edge.line)
-            points_intersections.extend(inter for inter in intersections if inter not in points_intersections)
+            points_intersections.extend(intersections)
 
         inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
 
         for points_group in inters_points:
             center_mass = vm_common_operations.get_center_of_mass(points_group)
+
             initial_point = center_mass + plane3d.frame.u * self.major_radius
-            for theta in np.linspace(0, math.pi - 1e-4, 100):
+            for theta in np.linspace(0, math.pi - 1e-4, 120):
                 point2 = initial_point.rotation(center_mass, plane3d.frame.w, theta)
                 line = curves.Line3D(center_mass, point2)
                 intersections = self.line_intersections(line)
-                points_intersections.extend(intersections)
-        return list(set(points_intersections))
+                for intersection in intersections:
+                    if intersection not in points_intersections:
+                        points_intersections.append(intersection)
+        return points_intersections
 
     def get_villarceau_circles(self, plane3d):
         """
@@ -3563,7 +3578,6 @@ class ToroidalSurface3D(PeriodicalSurface):
         # inters_points = self._plane_intersection_points(plane3d)
         points_intersections = self._plane_intersection_points(plane3d)
         inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
-        print('lenghts points:', [len(lps) for lps in inters_points])
         if len(inters_points) == 1 and plane3d.point_belongs(self.frame.origin):
             return self.get_villarceau_circles(plane3d)
         return [edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)

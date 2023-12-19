@@ -493,7 +493,7 @@ class Edge(dc.DessiaObject):
         # point2_edge2_ = element.end
         # min_dist_point1 = None
         # min_dist_point2 = None
-        return vm_common_operations._generic_minimum_distance(element, self.start, self.end,
+        return vm_common_operations._generic_minimum_distance(self, element, self.start, self.end,
                                                               element.start, element.end, return_points)
         # linesegment_class_ = getattr(sys.modules[__name__], 'LineSegment' + self.__class__.__name__[-2:])
         # while True:

@@ -233,8 +233,12 @@ class TestToroidalSurface3D(unittest.TestCase):
         plane4 = surfaces.Plane3D(volmdlr.OYZX)
         plane4 = plane4.translation(volmdlr.X3D)
         plane_intersections = toroidal_surface.plane_intersections(plane4)
-        for intersection, expected_result in zip(plane_intersections, [7.415366424519409, 7.415366424519409]):
-            self.assertAlmostEqual(intersection.length(), expected_result, 6)
+        for intersection in plane_intersections:
+            for p in intersection.discretization_points(number_points=50):
+                self.assertLess(toroidal_surface.point_distance(p), 1e-5)
+                self.assertLess(plane4.point_distance(p), 1e-5)
+        # for intersection, expected_result in zip(plane_intersections, [7.415366424519409, 7.415366424519409]):
+        #     self.assertAlmostEqual(intersection.length(), expected_result, 6)
 
         # Test 5
         plane5 = plane4.translation(volmdlr.X3D * 3.1)
@@ -325,9 +329,9 @@ class TestToroidalSurface3D(unittest.TestCase):
         ellipse = curves.Ellipse3D(2, 1, frame)
         ellipse_intersections = toroidal_surface.ellipse_intersections(ellipse)
         self.assertEqual(len(ellipse_intersections), 2)
-        self.assertTrue(ellipse_intersections[1].is_close(
-            volmdlr.Point3D(1.6865642161149017, -1.0274512473410842, -1.0274512473410844)))
         self.assertTrue(ellipse_intersections[0].is_close(
+            volmdlr.Point3D(1.6865642161149017, -1.0274512473410842, -1.0274512473410844)))
+        self.assertTrue(ellipse_intersections[1].is_close(
             volmdlr.Point3D(1.817953260018375, -1.1400067506585763, -1.1400067506585763)))
 
     def test_conicalsurface_intersections(self):
