@@ -334,10 +334,8 @@ class Mesh2D(MeshMixin, DessiaObject):
     def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ""):
         self.vertices = vertices
         self.triangles = triangles
-        # Avoiding calling dessia object init because its inefficiency
-        # dc.DessiaObject.__init__(self, name=name)
-        self.name = name
-        self._point_index = None
+
+        DessiaObject.__init__(self, name=name)
 
     def area(self):
         """
@@ -358,11 +356,10 @@ class Mesh3D(MeshMixin, PhysicalObject):
     def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ""):
         self.vertices = vertices
         self.triangles = triangles
-        # Avoiding calling dessia object init because its inefficiency
-        # dc.DessiaObject.__init__(self, name=name)
-        self.name = name
-        self._point_index = None
+
         self._faces = None
+
+        PhysicalObject.__init__(self, name=name)
 
     def area(self):
         """
