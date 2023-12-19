@@ -162,7 +162,7 @@ class MeshMixin:
 
     def __add__(self, other: "Union[Mesh2D, Mesh3D]") -> "Union[Mesh2D, Mesh3D]":
         """
-        Overloads the + operator to concatenate two Mesh instances.
+        Overloads the + operator to merge two Mesh instances.
 
         :param other: Another Mesh instance to concatenate with this instance.
         :type other: Mesh
@@ -170,7 +170,7 @@ class MeshMixin:
         :return: A new Mesh instance representing the concatenated shells.
         :rtype: Union[Mesh2D, Mesh3D]
         """
-        return self.concatenate(other)
+        return self.merge(other, mutualize_vertices=False, mutualize_triangles=False)
 
     def __hash__(self):
         """Computation of hash."""
