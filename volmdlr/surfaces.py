@@ -3669,7 +3669,6 @@ class ToroidalSurface3D(PeriodicalSurface):
             points_intersections.extend(intersections)
         point1 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmin))
         point2 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmax))
-        for edge in conical_surface.get_generatrices(self.outer_radius * 3) + \
         for edge in conical_surface.get_generatrices(300, self.outer_radius * 3) + \
                 conical_surface.get_circle_generatrices(100, point1.z, point2.z):
             intersections = self.edge_intersections(edge)
