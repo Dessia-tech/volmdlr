@@ -151,6 +151,54 @@ class MeshMixin:
         # Create a new DisplayTriangleShell3D with merged data
         return self.__class__(unique_vertices, merged_indices, name=self.name + "+" + other.name)
 
+    def merge(
+        self, other: "MeshType", mutualize_vertices: bool = False, mutualize_triangles: bool = False
+    ) -> "MeshType":
+        """
+        Merge two meshes.
+
+        :param other:
+        :param mutualize_vertices:
+        :param mutualize_triangles:
+        :return:
+        """
+        if self.__class__.__name__ != other.__class__.__name__:
+            raise ValueError("Meshes should have same dimension.")
+
+        if len(self.vertices) == 0 or len(self.triangles) == 0:
+            return other
+        if len(other.vertices) == 0 or len(other.triangles) == 0:
+            return self
+
+        merged_vertices = np.concatenate((self.vertices, other.vertices))
+        merged_triangles = np.concatenate((self.triangles, other.triangles + len(self.vertices)))
+
+        mesh = self.__class__(merged_vertices, merged_triangles)
+
+        if mutualize_vertices:
+            mesh = mesh.mutualize_vertices()
+        if mutualize_triangles:
+            mesh = mesh.mutualize_triangles()
+
+        return mesh
+
+    def mutualize_vertices(self) -> "MeshType":
+        """Remove duplicated vertices and remap triangles."""
+
+        unique_vertices, indices_map = np.unique(self.vertices, axis=0, return_inverse=True)
+        remapped_triangles = indices_map[self.triangles]
+
+        return self.__class__(unique_vertices, remapped_triangles, self.name)
+
+    def mutualize_triangles(self) -> "MeshType":
+        """Remove duplicated triangles from a mesh with unique vertices."""
+
+        sorted_triangles = np.sort(self.triangles, axis=1)
+        _, unique_triangle_indices = np.unique(sorted_triangles, axis=0, return_index=True)
+        unique_triangles = self.triangles[unique_triangle_indices]
+
+        return self.__class__(self.vertices, unique_triangles, self.name)
+
     def __add__(self, other: "Union[Mesh2D, Mesh3D]") -> "Union[Mesh2D, Mesh3D]":
         """
         Overloads the + operator to concatenate two Mesh instances.
