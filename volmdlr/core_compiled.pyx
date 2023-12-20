@@ -3364,7 +3364,7 @@ class Frame3D(Basis3D):
         if self.__class__ != other_frame.__class__:
             return False
         if (self.origin.is_close(other_frame.origin, abs_tol) and self.u.is_close(other_frame.u, abs_tol) and
-                self.v.is_close(other_frame.v) and self.w.is_close(other_frame.w, abs_tol)):
+                self.v.is_close(other_frame.v, abs_tol) and self.w.is_close(other_frame.w, abs_tol)):
             return True
         return False
 
