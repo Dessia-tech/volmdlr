@@ -29,7 +29,7 @@ from volmdlr import display, edges, grid, wires, curves
 from volmdlr.core import EdgeStyle
 from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
-from volmdlr.nurbs.operations import split_surface_u, split_surface_v
+from volmdlr.nurbs.operations import split_surface_u, split_surface_v, decompose_surface
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity, is_isocurve,
                                       verify_repeated_parametric_points, repair_undefined_brep)
@@ -7185,6 +7185,12 @@ class BSplineSurface3D(Surface3D):
             for j in range(self.nb_v):
                 blending_mat[i][j] = self.basis_functions_v(v_i, self.degree_v, j)
         return blending_mat
+
+    def decompose(self, return_params: bool = False, **kwargs):
+        """
+        Decomposes the surface into Bezier surface patches of the same degree.
+        """
+        return decompose_surface(self, return_params, **kwargs)
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """

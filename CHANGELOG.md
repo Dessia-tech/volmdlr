@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ConicalSurface3D: parametric_points_to_3d
 - ExtrusionSurface3D: parametric_points_to_3d
 - RevolutionSurface3D: parametric_points_to_3d
+- BSplineSurface3D: decompose
 
 ### Fixed
 - review hash and eq methods
