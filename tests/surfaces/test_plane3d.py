@@ -1,6 +1,7 @@
 import math
 import unittest
 import os
+import numpy as np
 from dessia_common.core import DessiaObject
 import volmdlr
 from volmdlr import edges, surfaces, curves, wires
@@ -37,6 +38,17 @@ class TestPlane3D(unittest.TestCase):
         self.plane5 = Plane3D.from_plane_vectors(
             volmdlr.Point3D(1, 2, 3), volmdlr.Vector3D(1, 0, 0), volmdlr.Vector3D(0, 1, 0)
         )
+
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[-1.0, -1.0], [1.0, -1.0], [1.0, 1.0], [-1.0, 1.0],
+                                      [-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]])
+        points3d = self.plane2.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[0.292893218813, 1.0, 0.292893218813], [0.292893218813, 3.0, 0.292893218813],
+                                    [1.707106781187, 3.0, 1.707106781187], [1.707106781187, 1.0, 1.707106781187],
+                                    [0.646446609407, 1.5, 0.646446609407], [0.646446609407, 2.5, 0.646446609407],
+                                    [1.353553390593, 2.5, 1.353553390593], [1.353553390593, 1.5, 1.353553390593]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
 
     def test_from_normal(self):
         plane = Plane3D.from_normal(self.point1, self.vector3)
