@@ -564,8 +564,6 @@ def decompose_curve(obj, return_params: bool = False, **kwargs):
     """
     Decomposes the curve into Bézier curve segments of the same degree.
 
-    This operation does not modify the input curve, instead it returns the split curve segments.
-
     :param obj: Curve to be decomposed
     :type obj: BSplineCurve
     :param return_params: If True, returns the parameters from start and end of each Bézier patch with repect to the

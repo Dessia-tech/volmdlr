@@ -96,6 +96,8 @@ class TestBSplineCurve3D(unittest.TestCase):
         for param, patch in zip(params, bezier_patches):
             self.assertTrue(bspline.evaluate_single(param[0]).is_close(patch.start))
             self.assertTrue(bspline.evaluate_single(param[1]).is_close(patch.end))
+        bezier_patches= bspline.decompose()
+        self.assertEqual(len(bezier_patches), 37)
 
 
 if __name__ == '__main__':
