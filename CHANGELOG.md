@@ -10,15 +10,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - added missing hash and eq methods to several classes
 - ArcEllipse2D/3D: get_shared_section and delete_shared_section.
+- ConicalSurface3D: conicalsurface_intersections
 
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
+- grid_points: returns a grid of points inside the surface2d of the face.
+
+#### surfaces.py
+- CylindricalSurface3D: parametric_points_to_3d
+- ToroidalSurface3D: parametric_points_to_3d
+- SphericalSurface3D: parametric_points_to_3d
+- ConicalSurface3D: parametric_points_to_3d
+- ExtrusionSurface3D: parametric_points_to_3d
+- RevolutionSurface3D: parametric_points_to_3d
+- Plane3D: parametric_points_to_3d
 
 ### Fixed
 - review hash and eq methods
+- fix pylint.
 
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
+- Circle2D: abscissa method - consider frame direction during rotation.
+- Line: is_close.
 
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
@@ -28,11 +42,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### faces.py
 - Face3D: enhance from_contours3d.
 - Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
+- Face3D: point_belongs
+
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
 - ExtrusionSurface3D: fullarcellipse3d_to_2d
 - ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
 - ToroidalSurface3D: increases precision of point3d_to_2d.
+- Surface3D: repeair_primitives_periodicity. Treat special case on surfaces with singularities.
+- ToroidalSurface3D: plane_intersections.
 
 #### wires.py
 - Contour2D: cut_by_line.
@@ -53,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Edge.split_between_two_points -> trim
+- surfaces.py: point_on_surface -> point_belongs
 
 ### Unittests
 - 
@@ -86,6 +105,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - BsplineCurve3D: circle_intersections.
 - ArcEllipse3D/FullArcEllipse3D: line_intersections.
+
+#### faces.py
+- Face3D: get_face_polygons
 
 #### curves.py
 - Circle3D: point_distance.

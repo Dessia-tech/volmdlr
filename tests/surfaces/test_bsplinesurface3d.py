@@ -695,7 +695,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         plane = surfaces.Plane3D(frame)
         intersections = self.spline_surf.plane_intersections(plane)
         for point in intersections:
-            self.assertTrue(plane.point_on_surface(point))
+            self.assertTrue(plane.point_belongs(point))
 
 
 if __name__ == '__main__':

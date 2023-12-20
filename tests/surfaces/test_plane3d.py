@@ -1,6 +1,7 @@
 import math
 import unittest
 import os
+import numpy as np
 from dessia_common.core import DessiaObject
 import volmdlr
 from volmdlr import edges, surfaces, curves, wires
@@ -38,6 +39,17 @@ class TestPlane3D(unittest.TestCase):
             volmdlr.Point3D(1, 2, 3), volmdlr.Vector3D(1, 0, 0), volmdlr.Vector3D(0, 1, 0)
         )
 
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[-1.0, -1.0], [1.0, -1.0], [1.0, 1.0], [-1.0, 1.0],
+                                      [-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]])
+        points3d = self.plane2.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[0.292893218813, 1.0, 0.292893218813], [0.292893218813, 3.0, 0.292893218813],
+                                    [1.707106781187, 3.0, 1.707106781187], [1.707106781187, 1.0, 1.707106781187],
+                                    [0.646446609407, 1.5, 0.646446609407], [0.646446609407, 2.5, 0.646446609407],
+                                    [1.353553390593, 2.5, 1.353553390593], [1.353553390593, 1.5, 1.353553390593]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
+
     def test_from_normal(self):
         plane = Plane3D.from_normal(self.point1, self.vector3)
         self.assertEqual(plane.frame, volmdlr.Frame3D(volmdlr.O3D, volmdlr.X3D, -volmdlr.Y3D, volmdlr.Z3D))
@@ -74,19 +86,19 @@ class TestPlane3D(unittest.TestCase):
         angle = plane1.angle_between_planes(plane2)
         self.assertAlmostEqual(angle, 0)
 
-    def test_point_on_surface(self):
+    def test_point_belongs(self):
         # Test with point on the plane
         plane = Plane3D.from_3_points(self.point1, self.point2, self.point3)
         point = self.point1
-        self.assertTrue(plane.point_on_surface(point))
+        self.assertTrue(plane.point_belongs(point))
 
         # Test with point above the plane
         point = volmdlr.Point3D(0, 0, 1)
-        self.assertFalse(plane.point_on_surface(point))
+        self.assertFalse(plane.point_belongs(point))
 
         # Test with point below the plane
         point = volmdlr.Point3D(0, 0, -1)
-        self.assertFalse(plane.point_on_surface(point))
+        self.assertFalse(plane.point_belongs(point))
 
     def test_point_distance(self):
         # test point above the plane
@@ -228,9 +240,9 @@ class TestPlane3D(unittest.TestCase):
         ]:
 
             surface = surfaces.Plane3D.from_3_points(p1, p2, p3)
-            self.assertTrue(surface.point_on_surface(p1))
-            self.assertTrue(surface.point_on_surface(p2))
-            self.assertTrue(surface.point_on_surface(p3))
+            self.assertTrue(surface.point_belongs(p1))
+            self.assertTrue(surface.point_belongs(p2))
+            self.assertTrue(surface.point_belongs(p3))
             self.assertAlmostEqual(surface.frame.w.dot(p1 - p2), 0.0)
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p2), 0.0)
             self.assertAlmostEqual(surface.frame.w.dot(p3 - p1), 0.0)
