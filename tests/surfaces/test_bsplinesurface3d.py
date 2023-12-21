@@ -3,6 +3,7 @@ Unit tests for volmdlr.faces.BSplineSurface3D
 """
 import unittest
 import os
+import numpy as np
 import volmdlr.edges as vme
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
@@ -94,6 +95,27 @@ class TestBSplineSurface3D(unittest.TestCase):
             self.assertAlmostEqual(evalpt[0], res[0], delta=DELTA)
             self.assertAlmostEqual(evalpt[1], res[1], delta=DELTA)
             self.assertAlmostEqual(evalpt[2], res[2], delta=DELTA)
+
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.0, 0.2], [0.0, 1.0], [0.3, 0.0],
+                                      [0.3, 0.4], [0.3, 1.0], [0.6, 0.0], [0.6, 0.6],
+                                      [0.6, 1.0], [1.0, 0.0], [1.0, 0.8], [1.0, 1.0],
+                                      ])
+        points3d = self.spline_surf.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[-25.0, -25.0, -10.0], [-25.0, -11.40398, -3.3856], [-25.0, 25.0, -10.0],
+                                    [-7.006, -25.0, -5.725], [-7.006, -3.308, -6.265], [-7.006, 25.0, -5.725],
+                                    [3.533, -25.0, -4.224], [3.533, 3.533, -6.801], [3.533, 25.0, -4.224],
+                                    [25.0, -25.0, -10.0], [25.0, 11.636, -2.751], [25.0, 25.0, -10.0]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0, delta=DELTA)
+
+        points3d = self.nurbs_surf.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[-25.0, -25.0, -10.0], [-25.0, -11.563, -3.489], [-25.0, 25.0, -10.0],
+                                    [-7.006, -25.0, -5.725], [-7.006, -3.052, -6.196], [-7.006, 25.0, -5.725],
+                                    [3.533, -25.0, -4.224], [3.533, 2.868, -7.257], [3.533, 25.0, -4.224],
+                                    [25.0, -25.0, -10.0], [25.0, 9.425, -1.175], [25.0, 25.0, -10.0]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0, delta=DELTA)
 
     def test_derivatives(self):
         test_data = [
