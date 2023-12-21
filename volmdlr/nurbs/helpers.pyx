@@ -29,7 +29,7 @@ cdef double binomial_coefficient(int k, int i):
 @cdivision(True)
 cpdef double round_c(double num, int digits=0):
     cdef double multiplier = math_c.pow(10.0, digits)
-    return float(math_c.round(num * multiplier)) / multiplier
+    return <double>(math_c.round(num * multiplier)) / multiplier
 
 
 cdef vector[double] linspace(double start, double stop, int num, int decimals):

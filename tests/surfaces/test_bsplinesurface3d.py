@@ -719,6 +719,46 @@ class TestBSplineSurface3D(unittest.TestCase):
         for point in intersections:
             self.assertTrue(plane.point_belongs(point))
 
+    def test_decompose(self):
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "bsplineface_triangulation_problem_surface.json"))
+        bezier_patches, params = surface.decompose(return_params=True)
+        self.assertEqual(len(bezier_patches), 116)
+        self.assertEqual(len(bezier_patches), len(params))
+        for patch, param in zip(bezier_patches, params):
+            control_points = patch.control_points
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
+        bezier_patches, params = surface.decompose(return_params=True, decompose_dir="u")
+        self.assertEqual(len(bezier_patches), 4)
+        self.assertEqual(len(bezier_patches), len(params))
+        for patch, param in zip(bezier_patches, params):
+            control_points = patch.control_points
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
+        bezier_patches, params = surface.decompose(return_params=True, decompose_dir="v")
+        self.assertEqual(len(bezier_patches), 29)
+        self.assertEqual(len(bezier_patches), len(params))
+        for patch, param in zip(bezier_patches, params):
+            control_points = patch.control_points
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
+
+        bezier_patches = surface.decompose(decompose_dir="u")
+        self.assertEqual(len(bezier_patches), 4)
+        bezier_patches = surface.decompose(decompose_dir="v")
+        self.assertEqual(len(bezier_patches), 29)
+        bezier_patches = surface.decompose()
+        self.assertEqual(len(bezier_patches), 116)
+
+
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=0)

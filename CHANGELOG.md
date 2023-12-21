@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: parametric_points_to_3d
 - Plane3D: parametric_points_to_3d
 - BSplineSurface3D: parametric_points_to_3d
+- BSplineSurface3D: decompose
 
 ### Fixed
 - review hash and eq methods
@@ -39,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: handles exceptions in simplify method.
 - BSplineCurve: Consider overlaping curves also as periodic.
 - BSplineCurve.simplify: handles exceptions.
+- BSplineCurve: decompose into béziers patches of same degree.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
@@ -69,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### surfaces.py
 - contour3d_to_2d/contour2d_to_3d: Add option to return also a dictionary with the correspondence between the parametric and 3D primitives.
+- BSplineSurface3D: point3d_to_2d
 
 #### display.py
 - refactor DisplayMesh.
