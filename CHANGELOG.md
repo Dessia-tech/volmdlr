@@ -17,10 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - grid_points: returns a grid of points inside the surface2d of the face.
 
 #### surfaces.py
-- CylindricalSurface3D: parametric_points_to_3d.
-- ToroidalSurface3D: parametric_points_to_3d.
-- SphericalSurface3D: parametric_points_to_3d.
-- ConicalSurface3D: parametric_points_to_3d.
+- CylindricalSurface3D: parametric_points_to_3d
+- ToroidalSurface3D: parametric_points_to_3d
+- SphericalSurface3D: parametric_points_to_3d
+- ConicalSurface3D: parametric_points_to_3d
+- ExtrusionSurface3D: parametric_points_to_3d
+- RevolutionSurface3D: parametric_points_to_3d
+- Plane3D: parametric_points_to_3d
 
 ### Fixed
 - review hash and eq methods
@@ -35,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: handles exceptions in simplify method.
 - BSplineCurve: Consider overlaping curves also as periodic.
 - BSplineCurve.simplify: handles exceptions.
+- BSplineCurve: decompose into béziers patches of same degree.
 
 #### faces.py
 - Face3D: enhance from_contours3d.

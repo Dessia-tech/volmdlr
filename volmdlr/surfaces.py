@@ -1632,6 +1632,31 @@ class Plane3D(Surface3D):
         """
         return point2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
 
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the plane.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the plane.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the plane in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        center = npy.array(self.frame.origin)
+        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+
+        return center + u_values * x + v_values * y
+
     def point3d_to_2d(self, point3d):
         """
         Converts a 3D point into a 2D parametric point.
@@ -5668,6 +5693,34 @@ class ExtrusionSurface3D(Surface3D):
 
         return volmdlr.Point2D(u, v)
 
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the extrusion surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the extrusion surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the extrusion surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        z = npy.array([self.direction[0], self.direction[1], self.direction[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        if self.x_periodicity:
+            u_values[u_values > self.x_periodicity] -= self.x_periodicity
+            u_values[u_values < 0] += self.x_periodicity
+        v_values = points[:, 1]
+
+        points_at_curve = npy.array([self.edge.point_at_abscissa(u) for u in u_values])
+
+        return points_at_curve + v_values * z
+
     def rectangular_cut(self, x1: float = 0.0, x2: float = 1.0,
                         y1: float = 0.0, y2: float = 1.0, name: str = ''):
         """Deprecated method, Use ExtrusionFace3D from_surface_rectangular_cut method."""
@@ -6042,6 +6095,40 @@ class RevolutionSurface3D(PeriodicalSurface):
         point_at_curve = point3d.rotation(self.axis_point, self.axis, -u)
         v = self.edge.abscissa(point_at_curve)
         return volmdlr.Point2D(u, v)
+
+    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+        """
+        Transform parametric coordinates to 3D points on the revolution surface.
+
+        Given a set of parametric coordinates `(u, v)` representing points on the surface,
+        this method returns the corresponding 3D points on the revolution surface.
+
+        :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
+                       where `n` is the number of points, and each row corresponds to `(u, v)`.
+        :type points: numpy.ndarray[npy.float64]
+
+        :return: Array of 3D points representing the revolution surface in Cartesian coordinates.
+        :rtype: numpy.ndarray[npy.float64]
+        """
+        center = npy.array(self.axis_point)
+        z = npy.array([self.axis[0], self.axis[1], self.axis[2]])
+
+        points = points.reshape(-1, 2, 1)
+
+        u_values = points[:, 0]
+        v_values = points[:, 1]
+        if self.y_periodicity:
+            v_values[v_values > self.y_periodicity] -= self.y_periodicity
+            v_values[v_values < 0] += self.y_periodicity
+
+        cos_u = npy.cos(u_values)
+
+        points_at_curve = npy.array([self.edge.point_at_abscissa(v) for v in v_values])
+        points_at_curve_minus_center = points_at_curve - center
+
+        return (center + points_at_curve_minus_center * cos_u +
+                npy.dot(points_at_curve_minus_center, z).reshape(-1, 1) * z * (1 - cos_u) +
+                npy.cross(z, points_at_curve_minus_center * npy.sin(u_values)))
 
     def rectangular_cut(self, x1: float, x2: float,
                         y1: float, y2: float, name: str = ''):
