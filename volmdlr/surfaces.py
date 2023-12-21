@@ -7599,13 +7599,6 @@ class BSplineSurface3D(Surface3D):
         :return: Array of 3D points representing the BSpline surface in Cartesian coordinates.
         :rtype: numpy.ndarray[npy.float64]
         """
-        # umin, umax, vmin, vmax = self.domain
-        # if self.x_periodicity:
-        #     points[points[:, 0] > umax, 0] -= self.x_periodicity
-        #     points[points[:, 0] < umin, 0] += self.x_periodicity
-        # if self.y_periodicity:
-        #     points[points[:, 1] > vmax, 1] -= self.y_periodicity
-        #     points[points[:, 1] < vmin, 1] += self.y_periodicity
         return npy.array([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
                          dtype=npy.float64)
 
