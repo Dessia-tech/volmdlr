@@ -50,9 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExtrusionSurface3D: fullarcellipse3d_to_2d
 - ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
 - ToroidalSurface3D: increases precision of point3d_to_2d.
-- ConicalSurface3D: plane_intersections.
 - Surface3D: repeair_primitives_periodicity. Treat special case on surfaces with singularities.
-- ToroidalSurface: plane_intersections.
+- ToroidalSurface3D: plane_intersections.
 
 #### wires.py
 - Contour2D: cut_by_line.
