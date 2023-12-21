@@ -26,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plane3D: parametric_points_to_3d
 - BSplineSurface3D: parametric_points_to_3d
 
-
 ### Fixed
 - review hash and eq methods
 - fix pylint.
