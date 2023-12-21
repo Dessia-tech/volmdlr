@@ -601,7 +601,7 @@ def decompose_surface(obj, return_params, **kwargs):
 
     :param obj: surface
     :type obj: BSplineSurface3D
-        :param return_params: If True, returns the parameters from start and end of each Bézier patch with repect to the
+    :param return_params: If True, returns the parameters from start and end of each Bézier patch with repect to the
      input curve.
     :type return_params: bool
     :return: a list of Bezier patches
