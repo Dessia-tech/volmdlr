@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ExtrusionSurface3D: parametric_points_to_3d
 - RevolutionSurface3D: parametric_points_to_3d
 - Plane3D: parametric_points_to_3d
+- BSplineSurface3D: parametric_points_to_3d
 - BSplineSurface3D: decompose
 
 ### Fixed
@@ -39,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: handles exceptions in simplify method.
 - BSplineCurve: Consider overlaping curves also as periodic.
 - BSplineCurve.simplify: handles exceptions.
+- Arc2D: plot_data
 - BSplineCurve: decompose into béziers patches of same degree.
 
 #### faces.py
