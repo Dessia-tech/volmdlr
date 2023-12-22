@@ -40,7 +40,7 @@ class Simplify(DessiaObject):
 
     @staticmethod
     def _volume_model_to_display_shells(volume_model: VolumeModel) -> List[DisplayTriangleShell3D]:
-        """Convert the VolumeModel to a list of DisplayTriangleShell3D"""
+        """Convert the VolumeModel to a list of DisplayTriangleShell3D."""
 
         display_shells = []
 
@@ -54,7 +54,7 @@ class Simplify(DessiaObject):
 
     @staticmethod
     def _volume_model_to_display_shell(volume_model: VolumeModel):
-        """Convert the VolumeModel to a unique DisplayTriangleShell3D"""
+        """Convert the VolumeModel to a unique DisplayTriangleShell3D."""
 
         display_shell = None
 
