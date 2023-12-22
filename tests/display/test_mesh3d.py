@@ -214,6 +214,13 @@ class TestMesh3DExport(unittest.TestCase):
         # Clean up the temporary file after the test
         os.remove(temp_stl_filename)
 
+    def test_save_to_stl_stream(self):
+        stream = BinaryFile()
+        self.mesh.save_to_stl_stream(stream)
+        mesh_from_stream = Mesh3D.from_stl_stream(stream)
+
+        self.assertEqual(self.mesh, mesh_from_stream)
+
 
 if __name__ == "__main__":
     unittest.main()
