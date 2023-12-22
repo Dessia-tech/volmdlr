@@ -1,5 +1,6 @@
 import os
 import unittest
+import tempfile
 
 import numpy as np
 import trimesh
@@ -8,6 +9,7 @@ from dessia_common.serialization import BinaryFile
 from volmdlr import Point3D
 from volmdlr.display import Mesh3D
 from volmdlr.faces import Triangle3D
+from volmdlr.shells import ClosedTriangleShell3D, OpenTriangleShell3D
 
 SHOW_BABYLONJS = True
 
@@ -166,14 +168,51 @@ class TestMesh3DImport(unittest.TestCase):
 
 class TestMesh3DExport(unittest.TestCase):
     def setUp(self) -> None:
-        self.mesh = Mesh3D(np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0]]), np.array([[0, 1, 2]]))
-        self.degenerated_mesh = Mesh3D(np.array([[0, 0, 0], [0, 0, 1]]), np.array([[0, 1, 1]]))
+        self.mesh = Mesh3D(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0, 0.0]]), np.array([[0, 1, 2]]))
+        self.degenerated_mesh = Mesh3D(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 1.0]]), np.array([[0, 1, 1]]))
+
+        self.triangle3d = Triangle3D(Point3D(*[0, 0, 0]), Point3D(*[0, 0, 1]), Point3D(*[0, 1, 0]))
 
     def test_to_triangles3d(self):
         self.assertEqual(
-            [Triangle3D(Point3D(*[0, 0, 0]), Point3D(*[0, 0, 1]), Point3D(*[0, 1, 0]))], self.mesh.to_triangles3d()
+            [self.triangle3d], self.mesh.to_triangles3d()
         )
         self.assertEqual([], self.degenerated_mesh.to_triangles3d())
+
+    def test_plot(self):
+        self.mesh.plot()
+        self.degenerated_mesh.plot()
+
+    def test_to_closed_shell(self):
+        self.assertEqual(ClosedTriangleShell3D([self.triangle3d]), self.mesh.to_closed_shell())
+        self.assertEqual(ClosedTriangleShell3D([]), self.degenerated_mesh.to_closed_shell())
+
+    def test_to_open_shell(self):
+        self.assertEqual(OpenTriangleShell3D([self.triangle3d]), self.mesh.to_open_shell())
+        self.assertEqual(OpenTriangleShell3D([]), self.degenerated_mesh.to_open_shell())
+
+    def test_to_trimesh(self):
+        trimesh_ = trimesh.Trimesh(vertices=[[0, 0, 0], [0, 0, 1], [0, 1, 0]], faces=[[0, 1, 2]])
+
+        np.testing.assert_array_equal(trimesh_.vertices, self.mesh.to_trimesh().vertices)
+        np.testing.assert_array_equal(trimesh_.faces, self.mesh.to_trimesh().faces)
+
+    def test_save_to_stl_file(self):
+        # Create a temporary STL file for testing
+        with tempfile.NamedTemporaryFile(suffix=".stl", delete=False) as temp_stl_file:
+            temp_stl_filename = temp_stl_file.name
+
+            # Call the save_to_stl_file method to write to the temporary file
+            self.mesh.save_to_stl_file(temp_stl_filename)
+
+            # Call the from_stl_file method to read from the temporary file
+            new_mesh = Mesh3D.from_stl_file(temp_stl_filename)
+
+            # Assert that the original and new meshes are equal
+            self.assertEqual(self.mesh, new_mesh)
+
+        # Clean up the temporary file after the test
+        os.remove(temp_stl_filename)
 
 
 if __name__ == "__main__":

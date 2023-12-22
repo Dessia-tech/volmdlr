@@ -288,14 +288,17 @@ class MeshMixin:
                 ax.text(*point, f"node {i_point}", ha="center", va="center")
 
         # Plot line segments
-        for vertex1, vertex2, vertex3 in self.remove_degenerate_triangles(tol=1e-6).triangles_vertices():
+        for vertex1, vertex2, vertex3 in self.triangles_vertices():
             point1 = self._point_class(*vertex1)
             point2 = self._point_class(*vertex2)
             point3 = self._point_class(*vertex3)
 
-            self._linesegment_class(point1, point2).plot(ax=ax)
-            self._linesegment_class(point2, point3).plot(ax=ax)
-            self._linesegment_class(point1, point3).plot(ax=ax)
+            if not point1.is_close(point2):
+                self._linesegment_class(point1, point2).plot(ax=ax)
+            if not point2.is_close(point3):
+                self._linesegment_class(point2, point3).plot(ax=ax)
+            if not point1.is_close(point3):
+                self._linesegment_class(point1, point3).plot(ax=ax)
 
         return ax
 
@@ -414,7 +417,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return cls.from_trimesh(trimesh.load(stream, "stl")).resize(scale_factor)
 
     # EXPORT
-    def triangular_faces(self):  # -> List[volmdlr.faces.Triangle3D]:
+    def triangular_faces(self):
         """
         Export the mesh faces as Triangle3D objects.
 
@@ -424,7 +427,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         warnings.warn("Deprecated: use to_triangles3d instead.", DeprecationWarning)
         return self.to_triangles3d()
 
-    def to_triangles3d(self):  # -> List[volmdlr.faces.Triangle3D]:
+    def to_triangles3d(self):
         """
         Export the mesh faces as Triangle3D objects.
 
@@ -433,7 +436,6 @@ class Mesh3D(MeshMixin, PhysicalObject):
         """
         triangles3d = []
         for vertex1, vertex2, vertex3 in self.remove_degenerate_triangles(tol=1e-6).triangles_vertices():
-            # TODO: add unit test for edge cases
             point1 = volmdlr.Point3D(*vertex1)
             point2 = volmdlr.Point3D(*vertex2)
             point3 = volmdlr.Point3D(*vertex3)
