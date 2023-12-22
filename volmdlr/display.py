@@ -416,6 +416,15 @@ class Mesh3D(MeshMixin, PhysicalObject):
         stream.seek(0)
         return cls.from_trimesh(trimesh.load(stream, "stl")).resize(scale_factor)
 
+    @classmethod
+    def from_obj_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
+        return cls.from_trimesh(trimesh.load(filepath, "obj")).resize(scale_factor)
+
+    @classmethod
+    def from_obj_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
+        stream.seek(0)
+        return cls.from_trimesh(trimesh.load(stream, "obj")).resize(scale_factor)
+
     # EXPORT
     def triangular_faces(self):
         """
@@ -506,5 +515,16 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
     def save_to_stl_stream(self, stream, scale_factor: float = 1000.0):
         self.resize(scale_factor).to_trimesh().export(stream, "stl")
+
+    def save_to_obj_file(self, filepath: str, scale_factor: float = 1000.0):
+        if not filepath.lower().endswith(".obj"):
+            filepath += ".obj"
+            print(f"Changing name to {filepath}")
+
+        with open(filepath, "wb") as file:
+            self.save_to_obj_stream(file, scale_factor=scale_factor)
+
+    def save_to_obj_stream(self, stream, scale_factor: float = 1000.0):
+        self.resize(scale_factor).to_trimesh().export(stream, "obj")
 
     # TODO: add other saving method

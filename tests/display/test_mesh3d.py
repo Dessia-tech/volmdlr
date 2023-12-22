@@ -221,6 +221,30 @@ class TestMesh3DExport(unittest.TestCase):
 
         self.assertEqual(self.mesh, mesh_from_stream)
 
+    def test_save_to_obj_file(self):
+        # Create a temporary OBJ file for testing
+        with tempfile.NamedTemporaryFile(suffix=".obj", delete=False) as temp_obj_file:
+            temp_obj_filename = temp_obj_file.name
+
+            # Call the save_to_obj_file method to write to the temporary file
+            self.mesh.save_to_obj_file(temp_obj_filename)
+
+            # Call the from_obj_file method to read from the temporary file
+            new_mesh = Mesh3D.from_obj_file(temp_obj_filename)
+
+            # Assert that the original and new meshes are equal
+            self.assertEqual(self.mesh, new_mesh)
+
+        # Clean up the temporary file after the test
+        os.remove(temp_obj_filename)
+
+    def test_save_to_obj_stream(self):
+        stream = BinaryFile()
+        self.mesh.save_to_obj_stream(stream)
+        mesh_from_stream = Mesh3D.from_obj_stream(stream)
+
+        self.assertEqual(self.mesh, mesh_from_stream)
+
 
 if __name__ == "__main__":
     unittest.main()
