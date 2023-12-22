@@ -11,11 +11,14 @@ from typing import List, TypeVar, Union
 import numpy as np
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.typings import JsonSerializable
+from dessia_common.serialization import BinaryFile
 from numpy.typing import NDArray
 from trimesh import Trimesh
 
 import volmdlr.edges
-from volmdlr.faces import Triangle3D
+
+
+# TODO: make this module "mesh" as it is not useful only for display
 
 
 class Node2D(volmdlr.Point2D):
@@ -67,9 +70,9 @@ class Node3D(volmdlr.Point3D):
         if other_node.__class__.__name__ not in ["Vector3D", "Point3D", "Node3D"]:
             return False
         return (
-            math.isclose(self.x, other_node.x, abs_tol=1e-06)
-            and math.isclose(self.y, other_node.y, abs_tol=1e-06)
-            and math.isclose(self.z, other_node.z, abs_tol=1e-06)
+                math.isclose(self.x, other_node.x, abs_tol=1e-06)
+                and math.isclose(self.y, other_node.y, abs_tol=1e-06)
+                and math.isclose(self.z, other_node.z, abs_tol=1e-06)
         )
 
     @classmethod
@@ -96,7 +99,7 @@ class MeshMixin:
 
     # MANIPULATION
     def merge(
-        self, other: "MeshType", mutualize_vertices: bool = False, mutualize_triangles: bool = False
+            self, other: "MeshType", mutualize_vertices: bool = False, mutualize_triangles: bool = False
     ) -> "MeshType":
         """
         Merge two meshes.
@@ -370,6 +373,50 @@ class Mesh3D(MeshMixin, PhysicalObject):
         areas = np.sqrt((self.triangles_cross_products() ** 2).sum(axis=1)) / 2.0
         return areas.sum()
 
+    @property
+    def faces(self) -> List[volmdlr.faces.Triangle3D]:
+        """
+        Get the mesh faces as Triangle3D objects.
+
+        :return: The triangles comosing the mesh.
+        :rtype: list[Triangle3D]
+        """
+        if not self._faces:
+            self._faces = self.to_triangles3d()
+        return self._faces
+
+    # EXPORT
+    def triangular_faces(self) -> List[volmdlr.faces.Triangle3D]:
+        """
+        Export the mesh faces as Triangle3D objects.
+
+        :return: The triangles comosing the mesh.
+        :rtype: list[Triangle3D]
+        """
+        warnings.warn("Deprecated: use to_triangles3d instead.", DeprecationWarning)
+        return self.to_triangles3d()
+
+    def to_triangles3d(self) -> List[volmdlr.faces.Triangle3D]:
+        """
+        Export the mesh faces as Triangle3D objects.
+
+        :return: The triangles comosing the mesh.
+        :rtype: list[Triangle3D]
+        """
+        triangles3d = []
+        for vertex1, vertex2, vertex3 in self.remove_degenerate_triangles(tol=1e-6).triangles_vertices():
+            # TODO: add unit test for edge cases
+            point1 = volmdlr.Point3D(*vertex1)
+            point2 = volmdlr.Point3D(*vertex2)
+            point3 = volmdlr.Point3D(*vertex3)
+
+            triangles3d.append(volmdlr.faces.Triangle3D(point1, point2, point3))
+
+        return triangles3d
+
+    def to_trimesh(self):
+        return Trimesh(self.vertices, self.triangles)
+
     def to_babylon(self):
         """
         Returns mesh in babylonjs format.
@@ -381,38 +428,11 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
         return babylon_mesh
 
-    @property
-    def faces(self):
-        """
-        Gets the mesh's triangular faces.
+    # SAVING
+    def save_to_stl_file(self, filepath: str, distance_multiplier: int = 1000):
+        pass
 
-        """
-        if not self._faces:
-            self._faces = self.triangular_faces()
-        return self._faces
+    def save_to_stl_stream(self, stream: BinaryFile = None, distance_multiplier: int = 1000):
+        pass
 
-    def triangular_faces(self):
-        """
-        Calculates the mesh's triangular faces.
-
-        """
-        triangular_faces = []
-        for vertex1, vertex2, vertex3 in self.remove_degenerate_triangles(tol=1e-6).triangles_vertices():
-            # TODO: add unit test for edge cases
-            point1 = volmdlr.Point3D(*vertex1)
-            point2 = volmdlr.Point3D(*vertex2)
-            point3 = volmdlr.Point3D(*vertex3)
-
-            triangular_faces.append(Triangle3D(point1, point2, point3))
-
-        return triangular_faces
-
-    def to_trimesh(self):
-        return Trimesh(self.vertices, self.triangles)
-
-    def to_stl(self):
-        """
-        Exports to STL.
-
-        """
-        warnings.warn("Please use the Stl.from_display_mesh method instead")
+    # TODO: add other saving method
