@@ -379,7 +379,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return areas.sum()
 
     @property
-    def faces(self) -> List[volmdlr.faces.Triangle3D]:
+    def faces(self):# -> List[volmdlr.faces.Triangle3D]:
         """
         Get the mesh faces as Triangle3D objects.
 
@@ -400,7 +400,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return cls.from_trimesh(trimesh.load(filepath, "stl")).resize(scale_factor)
 
     # EXPORT
-    def triangular_faces(self) -> List[volmdlr.faces.Triangle3D]:
+    def triangular_faces(self):# -> List[volmdlr.faces.Triangle3D]:
         """
         Export the mesh faces as Triangle3D objects.
 
@@ -410,7 +410,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         warnings.warn("Deprecated: use to_triangles3d instead.", DeprecationWarning)
         return self.to_triangles3d()
 
-    def to_triangles3d(self) -> List[volmdlr.faces.Triangle3D]:
+    def to_triangles3d(self):# -> List[volmdlr.faces.Triangle3D]:
         """
         Export the mesh faces as Triangle3D objects.
 
