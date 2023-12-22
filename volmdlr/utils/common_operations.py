@@ -347,6 +347,19 @@ def get_plane_equation_coefficients(plane_frame):
     return round(a, 12), round(b, 12), round(c, 12), round(d, 12)
 
 
+def get_plane_point_distance(plane_frame, point3d):
+    """
+    Gets distance between a point and plane, using its frame.
+
+    :param plane_frame: plane's frame.
+    :param point3d: other point.
+    :return: point plane distance.
+    """
+    coefficient_a, coefficient_b, coefficient_c, coefficient_d = get_plane_equation_coefficients(plane_frame)
+    return abs(plane_frame.w.dot(point3d) + coefficient_d) / math.sqrt(coefficient_a ** 2 +
+                                                                       coefficient_b ** 2 + coefficient_c ** 2)
+
+
 def order_points_list_for_nearest_neighbor(points):
     """
     Given a list of unordered points defining a path, it will order these points considering the nearest neighbor.
@@ -393,7 +406,7 @@ def separate_points_by_closeness(points):
 
     # Apply DBSCAN clustering with a small epsilon to separate close points
     distances = sorted(np.linalg.norm(points_[1:] - points_[0], axis=1))
-    eps = max(min(np.mean(distances[:int(len(points)*0.1)]) / 2, 0.25), 0.02)
+    eps = max(min(np.mean(distances[:max(int(len(points)*0.1), 30)]) / 2, 0.25), 0.02)
     dbscan = DBSCAN(eps=eps, min_samples=1)
     labels = dbscan.fit_predict(points_)
 

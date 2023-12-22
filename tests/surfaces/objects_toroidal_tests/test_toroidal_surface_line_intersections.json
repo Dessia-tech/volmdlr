@@ -1,0 +1,59 @@
+{
+  "object_class": "volmdlr.core.VolumeModel",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.surfaces.ToroidalSurface3D",
+      "name": "",
+      "frame": {
+        "object_class": "volmdlr.Frame3D",
+        "name": "",
+        "origin": {
+          "object_class": "volmdlr.Point3D",
+          "x": 1.0,
+          "y": 1.0,
+          "z": 0.0
+        },
+        "u": {
+          "object_class": "volmdlr.Vector3D",
+          "x": -5.551115123125783e-17,
+          "y": 0.0,
+          "z": 0.9999999999999998
+        },
+        "v": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.0,
+          "y": 0.9999999999999998,
+          "z": 0.0
+        },
+        "w": {
+          "object_class": "volmdlr.Vector3D",
+          "x": -0.9999999999999998,
+          "y": 0.0,
+          "z": -5.551115123125783e-17
+        }
+      },
+      "major_radius": 3,
+      "minor_radius": 1,
+      "outer_radius": 4,
+      "inner_radius": 2
+    },
+    {
+      "object_class": "volmdlr.edges.LineSegment3D",
+      "name": "",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": -6.363497637207638,
+        "y": -2.014403604102813,
+        "z": -2.014403604102813
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 0.5647055930678717,
+        "y": 4.913799626172698,
+        "z": 4.913799626172698
+      }
+    }
+  ],
+  "_references": {}
+}

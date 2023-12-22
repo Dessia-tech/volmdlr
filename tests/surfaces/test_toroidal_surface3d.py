@@ -2,6 +2,7 @@ import math
 import os
 import unittest
 import numpy as np
+from dessia_common.core import DessiaObject
 import volmdlr
 from volmdlr import edges, surfaces, wires, curves
 
@@ -180,6 +181,28 @@ class TestToroidalSurface3D(unittest.TestCase):
             inters = toroidal_surface.line_intersections(lineseg.line)
             for expected_result, inter in zip(expected_results[i], inters):
                 self.assertTrue(expected_result.is_close(inter))
+        expected_results = [[volmdlr.Point3D(-1.0385780861224632, -2.73372290825405, -0.3815197706145943),
+                             volmdlr.Point3D(-1.0385780861224632, -0.27992053908174386, -0.3815197706145943),
+                             volmdlr.Point3D(-1.0385780861224632, 0.2799205390817603, -0.3815197706145943),
+                             volmdlr.Point3D(-1.0385780861224632, 2.7337229082540286, -0.3815197706145943)],
+                            [volmdlr.Point3D(0.02037825356907985, -1.7074248427439929, -1.7074248427439933),
+                             volmdlr.Point3D(1.1557561697724674, -2.2751138008456864, -2.2751138008456877)],
+                            [volmdlr.Point3D(2.8868233917320207, 2.0, -0.8590189402508468),
+                             volmdlr.Point3D(3.3891999753110165, 2.0, 0.353825421244224)],
+                            [volmdlr.Point3D(1.3426661840222276, -1.6569652433720718, -0.9911601091085722),
+                             volmdlr.Point3D(2.6785064972435375, -1.252458418216524, -0.2905337359307829)],
+                            []]
+        surface1, lineseg1 = DessiaObject.load_from_file(os.path.join(folder, "test_torus_line_intersections.json")).primitives
+        surface2, line2 = DessiaObject.load_from_file(os.path.join(folder, "test_torus_line_itnersections_08_11_2023.json")).primitives
+        surface3, lineseg3 = DessiaObject.load_from_file(os.path.join(folder, "test_torus_lineseg141223.json")).primitives
+        surface4, lineseg4 = DessiaObject.load_from_file(os.path.join(folder, "test_toroidal_surface_lineseg_intersections201223.json")).primitives
+        surface5, lineseg5 = DessiaObject.load_from_file(os.path.join(folder, "test_toroidal_surface_line_intersections.json")).primitives
+        for i, (surface, line) in enumerate([[surface1, lineseg1.line], [surface2, line2], [surface3, lineseg3.line],
+                                             [surface4, lineseg4.line], [surface5, lineseg5.line]]):
+            line_intersections = surface.line_intersections(line)
+            self.assertEqual(len(line_intersections), len(expected_results[i]))
+            for result, expected_result in zip(line_intersections, expected_results[i]):
+                self.assertTrue(result.is_close(expected_result))
 
     def test_plane_intersections(self):
         # expected_results1 = [[18.84955592153876, 6.283185307179586], [18.774778566021112, 6.306324825293246],
@@ -253,6 +276,14 @@ class TestToroidalSurface3D(unittest.TestCase):
                             w=volmdlr.Vector3D(0.7071067811865475, 0.0, 0.7071067811865476)))
         plane_intersections = toroidal_surface.plane_intersections(plane6)
         self.assertFalse(plane_intersections)
+        toroidalsurface, plane = DessiaObject.load_from_file(
+            '/Users/wirajandasilva/Downloads/test_toroidalsurface_plane3d_intersections_211223.json').primitives
+        intersections = toroidalsurface.surface_intersections(plane)
+        self.assertEqual(len(intersections), 2)
+        self.assertTrue(intersections[0].center.is_close(volmdlr.Point3D(3.0, 0.0, 0.0)))
+        self.assertEqual(intersections[0].radius, 1)
+        self.assertTrue(intersections[1].center.is_close(volmdlr.Point3D(-3.0, 0.0, 0.0)))
+        self.assertEqual(intersections[1].radius, 1)
 
     def test_cylindrical_surface_intersections(self):
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)

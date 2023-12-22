@@ -1436,9 +1436,7 @@ class Plane3D(Surface3D):
         :param point3d: point to verify distance.
         :return: a float, point distance to plane.
         """
-        coefficient_a, coefficient_b, coefficient_c, coefficient_d = self.equation_coefficients()
-        return abs(self.frame.w.dot(point3d) + coefficient_d) / math.sqrt(coefficient_a ** 2 +
-                                                                          coefficient_b ** 2 + coefficient_c ** 2)
+        return vm_common_operations.get_plane_point_distance(self.frame, point3d)
 
     def line_intersections(self, line):
         """
@@ -3372,22 +3370,27 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param line: other line.
         :return: intersections.
         """
-        if line.point_distance(self.frame.origin) > self.inner_radius:
-            torus_origin_plane = Plane3D(self.frame)
-            projected_point_plane3d, _ = line.point_projection(self.frame.origin)
-            torus_plane_projection = torus_origin_plane.point_projection(projected_point_plane3d)
-            point = self.frame.origin + (torus_plane_projection - self.frame.origin).unit_vector() * self.major_radius
-            if math.sqrt(torus_plane_projection.point_distance(self.frame.origin)**2 +
-                         projected_point_plane3d.point_distance(torus_plane_projection)**2) >\
-                math.sqrt(self.major_radius**2 + self.minor_radius**2) and\
-                    line.point_distance(point) > self.minor_radius:
-                return []
         if not self.frame.origin.is_close(volmdlr.O3D) or not self.frame.w.is_close(volmdlr.Z3D):
             frame_mapped_surface = self.frame_mapping(self.frame, 'new')
             frame_mapped_line = line.frame_mapping(self.frame, 'new')
             local_intersections = frame_mapped_surface.line_intersections(frame_mapped_line)
             global_intersections = [self.frame.local_to_global_coordinates(point) for point in local_intersections]
             return global_intersections
+
+        # if line.point_distance(self.frame.origin) > self.inner_radius:
+        #     torus_origin_plane = Plane3D(self.frame)
+        #     projected_point_plane3d, _ = line.point_projection(self.frame.origin)
+        #     torus_plane_projection = torus_origin_plane.point_projection(projected_point_plane3d)
+        #     point = self.frame.origin + (torus_plane_projection - self.frame.origin).unit_vector() * self.major_radius
+        #     closest_point = line.closest_point_on_line(point)
+        #     not_inside = self.major_radius - math.sqrt(closest_point.x**2 +
+        #                                                closest_point.y**2) + closest_point.z**2 > self.minor_radius
+        #     if math.sqrt(torus_plane_projection.point_distance(self.frame.origin)**2 +
+        #                  projected_point_plane3d.point_distance(torus_plane_projection)**2) >\
+        #         math.sqrt(self.major_radius**2 + self.minor_radius**2) and\
+        #             not_inside:
+        #         return []
+
         vector = line.unit_direction_vector()
         solutions = self._get_line_intersections_solution_roots(line)
         intersections = []
@@ -3427,11 +3430,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         center1 = self.frame.origin + plane_intersections[0].unit_direction_vector() * self.major_radius
         center2 = self.frame.origin - plane_intersections[0].unit_direction_vector() * self.major_radius
         circle1 = curves.Circle3D(
-            volmdlr.Frame3D(center1, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
-            self.major_radius - self.minor_radius)
+            volmdlr.Frame3D(center1, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w), self.minor_radius)
         circle2 = curves.Circle3D(
-            volmdlr.Frame3D(center2, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w),
-            self.major_radius - self.minor_radius)
+            volmdlr.Frame3D(center2, plane3d.frame.u, plane3d.frame.v, plane3d.frame.w), self.minor_radius)
         return [circle1, circle2]
 
     def parallel_plane_intersection(self, plane3d: Plane3D):
@@ -3525,7 +3526,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         points_intersections = []
         for edge in plane3d.plane_grid(100, self.major_radius * 3):
             intersections = self.line_intersections(edge.line)
-            points_intersections.extend(intersections)
+            # print(True)
+            for intersection in intersections:
+                if intersection not in points_intersections:
+                    points_intersections.append(intersection)
+            # points_intersections.extend(intersections)
 
         inters_points = vm_common_operations.separate_points_by_closeness(points_intersections)
 
@@ -3751,7 +3756,10 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
         intersection_points = []
-        for arc in arcs:
+        for i, arc in enumerate(arcs):
+            print('i :', i)
+            if i == 288:
+                print(True)
             intersections = toroidal_surface.circle_intersections(arc)
             intersection_points.extend(intersections)
 
@@ -3761,6 +3769,25 @@ class ToroidalSurface3D(PeriodicalSurface):
             intersection_points.extend(inter for inter in intersections if inter not in intersection_points)
         return intersection_points
 
+    def toroidalsurface_intersections_profile_profile(self, toroidal_surface):
+        """
+        Get intersections between two parallel toroidal surfaces, is there are any.
+
+        :param toroidal_surface: other toroidal surface.
+        :return:
+        """
+        local_self = self.frame_mapping(self.frame, 'new')
+        local_other_toroidal_surface = toroidal_surface.frame_mapping(self.frame, 'new')
+
+        circle = local_self._torus_arcs(1)[0]
+        circle_intersections = local_other_toroidal_surface.circle_intersections(circle)
+        circles = []
+        for intersection in circle_intersections:
+            center = volmdlr.Point3D(0, 0, intersection.z)
+            circles_frame = volmdlr.Frame3D(center, local_self.frame.u, local_self.frame.v, local_self.frame.w)
+            circles.append(curves.Circle3D(circles_frame, intersection.point_distance(center)))
+        return circles
+
     def toroidalsurface_intersections(self, toroidal_surface):
         """
         Gets the intersections between two toroidal surface.
@@ -3768,8 +3795,40 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param toroidal_surface: other toroidal Surface 3d.
         :return: List os curves intersecting Torus.
         """
+        intersections = []
+        axis_line = curves.Line3D.from_point_and_vector(self.frame.origin, self.frame.w)
+        if math.isclose(abs(self.frame.w.dot(toroidal_surface.frame.w)), 1.0, abs_tol=1e-6):
+            if vm_common_operations.get_plane_point_distance(self.frame, toroidal_surface.frame.origin) > \
+                    self.minor_radius + toroidal_surface.minor_radius:
+                return []
+            if axis_line.point_distance(toroidal_surface.frame.origin) < 1e-6:
+                return self.toroidalsurface_intersections_profile_profile(toroidal_surface)
+            if self.minor_radius == toroidal_surface.minor_radius and \
+                    abs(self.frame.origin.point_distance(toroidal_surface.frame.origin) -
+                        self.major_radius - toroidal_surface.major_radius) < 1e-6:
+                vector = (toroidal_surface.frame.origin - self.frame.origin).unit_vector()
+                center = self.frame.origin + vector * self.major_radius
+
+                circle = curves.Circle3D(volmdlr.Frame3D(center, vector,
+                                                         self.frame.w, vector.cross(self.frame.w)), self.minor_radius)
+                intersections.append(circle)
+                # plane = Plane3D(volmdlr.Frame3D(center, self.frame.w, vector.cross(self.frame.w), vector))
+                # intersections = self.plane_intersections(plane)
+                # return intersections + [circle]
         intersection_points = self._toroidal_intersection_points(toroidal_surface)
-        print(True)
+        if not intersection_points:
+            return intersections
+        if intersections:
+            intersection_points = [point for point in intersection_points if not intersections[0].point_belongs(point)]
+        inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
+        curves_ = []
+        for list_points in inters_points:
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
+            if isinstance(bspline.simplify, edges.FullArc3D):
+                curves_.append(bspline.simplify)
+                continue
+            curves_.append(bspline)
+        return curves_
 
 
 class ConicalSurface3D(PeriodicalSurface):

@@ -869,11 +869,14 @@ class Line3D(Line):
                 [self.point1.z, self.point2.z], color=edge_style.color, alpha=edge_style.alpha)
 
         # Drawing 3 times length of segment on each side
-        u = self.point2 - self.point1
+        u = (self.point2 - self.point1).to_vector()
         v1 = self.point1 - u * length
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = self.point2 - u * length
+        v2 = self.point2 + u * length
         x2, y2, z2 = v2.x, v2.y, v2.z
+        # # Line segment
+        # ax.plot([x1, x2], [y1, y2],
+        #         [z1, z2], color=edge_style.color, alpha=edge_style.alpha)
         if edge_style.dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color,
                     dashes=[30, 5, 10, 5])
