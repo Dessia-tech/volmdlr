@@ -1,7 +1,9 @@
-import unittest
 import os
+import unittest
 
 import numpy as np
+import trimesh
+from dessia_common.serialization import BinaryFile
 
 from volmdlr.display import Mesh3D
 
@@ -133,12 +135,28 @@ class TestMesh3D(unittest.TestCase):
         self.assertNotEqual(self.mesh1, self.mesh1 + self.mesh2)
 
 
-class TestMesh3DLoading(unittest.TestCase):
+class TestMesh3DImport(unittest.TestCase):
     def setUp(self) -> None:
         self.stl_file_path = os.path.join(FOLDER, "models", "simple.stl")
 
-    def test_load_from_stl_file(self):
+    def test_from_trimesh(self):
+        mesh = Mesh3D.from_trimesh(trimesh.Trimesh(vertices=[[0, 0, 0], [0, 0, 1], [0, 1, 0]], faces=[[0, 1, 2]]))
+
+        if SHOW_BABYLONJS:
+            mesh.babylonjs()
+
+    def test_from_stl_file(self):
         mesh = Mesh3D.from_stl_file(self.stl_file_path)
+
+        if SHOW_BABYLONJS:
+            mesh.babylonjs()
+
+    def test_from_stl_stream(self):
+        with open(self.stl_file_path, "rb") as file:
+            binary_content = BinaryFile()
+            binary_content.write(file.read())
+
+        mesh = Mesh3D.from_stl_stream(binary_content)
 
         if SHOW_BABYLONJS:
             mesh.babylonjs()

@@ -408,6 +408,11 @@ class Mesh3D(MeshMixin, PhysicalObject):
     def from_stl_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
         return cls.from_trimesh(trimesh.load(filepath, "stl")).resize(scale_factor)
 
+    @classmethod
+    def from_stl_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
+        stream.seek(0)
+        return cls.from_trimesh(trimesh.load(stream, "stl")).resize(scale_factor)
+
     # EXPORT
     def triangular_faces(self):  # -> List[volmdlr.faces.Triangle3D]:
         """
