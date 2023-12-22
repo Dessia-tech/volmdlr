@@ -103,15 +103,13 @@ class MeshMixin:
     def resize(self, scale_factor: float) -> "MeshType":
         return self.__class__(self.vertices * scale_factor, self.triangles, self.name)
 
-    def merge(
-        self, other: "MeshType", mutualize_vertices: bool = False, mutualize_triangles: bool = False
-    ) -> "MeshType":
+    def merge(self, other: "MeshType", merge_vertices: bool = False, merge_triangles: bool = False) -> "MeshType":
         """
         Merge two meshes.
 
         :param other:
-        :param mutualize_vertices:
-        :param mutualize_triangles:
+        :param merge_vertices:
+        :param merge_triangles:
         :return:
         """
         if self.__class__.__name__ != other.__class__.__name__:
@@ -127,10 +125,10 @@ class MeshMixin:
 
         mesh = self.__class__(merged_vertices, merged_triangles, self.name)
 
-        if mutualize_vertices:
-            mesh = mesh.mutualize_vertices()
-        if mutualize_triangles:
-            mesh = mesh.mutualize_triangles()
+        if merge_vertices:
+            mesh = mesh.merge_vertices()
+        if merge_triangles:
+            mesh = mesh.merge_triangles()
 
         return mesh
 
@@ -164,7 +162,7 @@ class MeshMixin:
         # Create a new Mesh3D instance with non-flat triangles
         return self.__class__(self.vertices, valid_triangles, self.name)
 
-    def mutualize_vertices(self) -> "MeshType":
+    def merge_vertices(self) -> "MeshType":
         """Remove duplicated vertices and remap triangles."""
 
         unique_vertices, indices_map = np.unique(self.vertices, axis=0, return_inverse=True)
@@ -172,7 +170,15 @@ class MeshMixin:
 
         return self.__class__(unique_vertices, remapped_triangles, self.name)
 
-    def mutualize_triangles(self) -> "MeshType":
+    def unmerge_vertices(self) -> "MeshType":
+        """Unmerge shared vertices between triangles."""
+
+        unmerged_vertices = self.vertices[self.triangles.ravel()]
+        unmerged_triangles = np.arange(len(self.triangles) * 3).reshape(-1, 3)
+
+        return self.__class__(unmerged_vertices, unmerged_triangles, self.name)
+
+    def merge_triangles(self) -> "MeshType":
         """Remove duplicated triangles from a mesh with unique vertices."""
 
         sorted_triangles = np.sort(self.triangles, axis=1)
@@ -191,7 +197,7 @@ class MeshMixin:
         :return: A new Mesh instance representing the merged shells.
         :rtype: MeshType
         """
-        return self.merge(other, mutualize_vertices=False, mutualize_triangles=False)
+        return self.merge(other, merge_vertices=False, merge_triangles=False)
 
     def __or__(self, other: "MeshType") -> "MeshType":
         """
@@ -203,7 +209,7 @@ class MeshMixin:
         :return: A new Mesh instance representing the concatenated shells.
         :rtype: MeshType
         """
-        return self.merge(other, mutualize_vertices=True, mutualize_triangles=True)
+        return self.merge(other, merge_vertices=True, merge_triangles=True)
 
     @classmethod
     def merge_meshes(cls, meshes: List[Union["Mesh2D", "Mesh3D"]], name: str = ""):
@@ -371,6 +377,9 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
         PhysicalObject.__init__(self, name=name)
 
+    def volmdlr_primitives(self, **kwargs):
+        return [self]
+
     def area(self):
         """
         Return the area as the sum of areas of triangles.
@@ -379,7 +388,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return areas.sum()
 
     @property
-    def faces(self):# -> List[volmdlr.faces.Triangle3D]:
+    def faces(self):  # -> List[volmdlr.faces.Triangle3D]:
         """
         Get the mesh faces as Triangle3D objects.
 
@@ -392,15 +401,15 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
     # IMPORT
     @classmethod
-    def from_trimesh(cls, trimesh_: Trimesh):
+    def from_trimesh(cls, trimesh_: Trimesh) -> "Mesh3D":
         return cls(trimesh_.vertices, trimesh_.faces)
 
     @classmethod
-    def from_stl_file(cls, filepath: str, scale_factor: float = 0.001):
+    def from_stl_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
         return cls.from_trimesh(trimesh.load(filepath, "stl")).resize(scale_factor)
 
     # EXPORT
-    def triangular_faces(self):# -> List[volmdlr.faces.Triangle3D]:
+    def triangular_faces(self):  # -> List[volmdlr.faces.Triangle3D]:
         """
         Export the mesh faces as Triangle3D objects.
 
@@ -410,7 +419,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         warnings.warn("Deprecated: use to_triangles3d instead.", DeprecationWarning)
         return self.to_triangles3d()
 
-    def to_triangles3d(self):# -> List[volmdlr.faces.Triangle3D]:
+    def to_triangles3d(self):  # -> List[volmdlr.faces.Triangle3D]:
         """
         Export the mesh faces as Triangle3D objects.
 
@@ -471,6 +480,13 @@ class Mesh3D(MeshMixin, PhysicalObject):
         babylon_mesh = {"positions": mesh.vertices.flatten().tolist(), "indices": mesh.triangles.flatten().tolist()}
 
         return babylon_mesh
+
+    def babylon_meshes(self, merge_meshes=True):
+        babylon_param = {"alpha": 1.0, "name": self.name, "color": [0.8, 0.8, 0.8]}
+        babylon_mesh = self.to_babylon()
+        babylon_mesh.update(babylon_param)
+
+        return [babylon_mesh]
 
     # SAVING
     def save_to_stl_file(self, filepath: str, scale_factor: float = 1000.0):

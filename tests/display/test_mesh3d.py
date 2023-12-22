@@ -1,10 +1,13 @@
 import unittest
+import os
 
 import numpy as np
 
 from volmdlr.display import Mesh3D
 
 SHOW_BABYLONJS = True
+
+FOLDER = os.path.dirname(os.path.realpath(__file__))
 
 
 class TestMesh3D(unittest.TestCase):
@@ -105,13 +108,13 @@ class TestMesh3D(unittest.TestCase):
         np.testing.assert_array_equal(np.sort(added_mesh.vertices, axis=0), np.sort(expected_vertices, axis=0))
 
     def test_merge_cube_without_mutualization(self):
-        merged_mesh_1 = self.mesh3.merge(self.mesh4, mutualize_vertices=False, mutualize_triangles=False)
+        merged_mesh_1 = self.mesh3.merge(self.mesh4, merge_vertices=False, merge_triangles=False)
 
         self.assertEqual(24, len(merged_mesh_1.triangles))
         self.assertEqual(16, len(merged_mesh_1.vertices))
 
     def test_merge_cube_with_mutualization(self):
-        merged_mesh_2 = self.mesh3.merge(self.mesh4, mutualize_vertices=True, mutualize_triangles=True)
+        merged_mesh_2 = self.mesh3.merge(self.mesh4, merge_vertices=True, merge_triangles=True)
 
         self.assertEqual(22, len(merged_mesh_2.triangles))
         self.assertEqual(12, len(merged_mesh_2.vertices))
@@ -128,6 +131,17 @@ class TestMesh3D(unittest.TestCase):
         self.assertEqual(self.mesh1, self.mesh1 + empty_mesh)
         self.assertEqual(self.mesh1, empty_mesh + self.mesh1)
         self.assertNotEqual(self.mesh1, self.mesh1 + self.mesh2)
+
+
+class TestMesh3DLoading(unittest.TestCase):
+    def setUp(self) -> None:
+        self.stl_file_path = os.path.join(FOLDER, "models", "simple.stl")
+
+    def test_load_from_stl_file(self):
+        mesh = Mesh3D.from_stl_file(self.stl_file_path)
+
+        if SHOW_BABYLONJS:
+            mesh.babylonjs()
 
 
 if __name__ == "__main__":
