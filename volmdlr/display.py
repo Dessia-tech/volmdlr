@@ -6,13 +6,15 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 
 import math
 import warnings
-from typing import List, TypeVar, Union
+from typing import List, TypeVar, Union, Dict
 
 import numpy as np
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.typings import JsonSerializable
 from dessia_common.serialization import BinaryFile
 from numpy.typing import NDArray
+
+import trimesh
 from trimesh import Trimesh
 
 import volmdlr.edges
@@ -98,6 +100,9 @@ class MeshMixin:
     _non_serializable_attributes = ["vertices", "triangles"]
 
     # MANIPULATION
+    def resize(self, scale_factor: float) -> "MeshType":
+        return self.__class__(self.vertices * scale_factor, self.triangles, self.name)
+
     def merge(
         self, other: "MeshType", mutualize_vertices: bool = False, mutualize_triangles: bool = False
     ) -> "MeshType":
@@ -120,7 +125,7 @@ class MeshMixin:
         merged_vertices = np.concatenate((self.vertices, other.vertices))
         merged_triangles = np.concatenate((self.triangles, other.triangles + len(self.vertices)))
 
-        mesh = self.__class__(merged_vertices, merged_triangles)
+        mesh = self.__class__(merged_vertices, merged_triangles, self.name)
 
         if mutualize_vertices:
             mesh = mesh.mutualize_vertices()
@@ -385,6 +390,15 @@ class Mesh3D(MeshMixin, PhysicalObject):
             self._faces = self.to_triangles3d()
         return self._faces
 
+    # IMPORT
+    @classmethod
+    def from_trimesh(cls, trimesh_: Trimesh):
+        return cls(trimesh_.vertices, trimesh_.faces)
+
+    @classmethod
+    def from_stl_file(cls, filepath: str, scale_factor: float = 0.001):
+        return cls.from_trimesh(trimesh.load(filepath, "stl")).resize(scale_factor)
+
     # EXPORT
     def triangular_faces(self) -> List[volmdlr.faces.Triangle3D]:
         """
@@ -449,7 +463,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
     def to_babylon(self):
         """
-        Returns mesh in babylonjs format.
+        Convert the mesh in babylonjs format.
 
         https://doc.babylonjs.com/how_to/custom
         """
@@ -459,10 +473,15 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return babylon_mesh
 
     # SAVING
-    def save_to_stl_file(self, filepath: str, distance_multiplier: int = 1000):
-        pass
+    def save_to_stl_file(self, filepath: str, scale_factor: float = 1000.0):
+        if not filepath.lower().endswith(".stl"):
+            filepath += ".stl"
+            print(f"Changing name to {filepath}")
 
-    def save_to_stl_stream(self, stream: BinaryFile = None, distance_multiplier: int = 1000):
-        pass
+        with open(filepath, "wb") as file:
+            self.save_to_stl_stream(file, scale_factor=scale_factor)
+
+    def save_to_stl_stream(self, stream, scale_factor: float = 1000.0):
+        self.resize(scale_factor).to_trimesh().export(stream, "stl")
 
     # TODO: add other saving method
