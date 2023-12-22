@@ -70,9 +70,9 @@ class Node3D(volmdlr.Point3D):
         if other_node.__class__.__name__ not in ["Vector3D", "Point3D", "Node3D"]:
             return False
         return (
-                math.isclose(self.x, other_node.x, abs_tol=1e-06)
-                and math.isclose(self.y, other_node.y, abs_tol=1e-06)
-                and math.isclose(self.z, other_node.z, abs_tol=1e-06)
+            math.isclose(self.x, other_node.x, abs_tol=1e-06)
+            and math.isclose(self.y, other_node.y, abs_tol=1e-06)
+            and math.isclose(self.z, other_node.z, abs_tol=1e-06)
         )
 
     @classmethod
@@ -99,7 +99,7 @@ class MeshMixin:
 
     # MANIPULATION
     def merge(
-            self, other: "MeshType", mutualize_vertices: bool = False, mutualize_triangles: bool = False
+        self, other: "MeshType", mutualize_vertices: bool = False, mutualize_triangles: bool = False
     ) -> "MeshType":
         """
         Merge two meshes.
@@ -413,6 +413,36 @@ class Mesh3D(MeshMixin, PhysicalObject):
             triangles3d.append(volmdlr.faces.Triangle3D(point1, point2, point3))
 
         return triangles3d
+
+    def to_closed_shell(self):
+        """
+        Convert the Mesh3D object to a closed triangle shell.
+
+        :return: A closed triangle shell representation of the Mesh3D object.
+        :rtype: ClosedTriangleShell3D
+        """
+        warnings.warn(
+            """
+            ClosedTriangleShell3D is not an efficient object to deal with mesh data.
+            Try to stick to Mesh3D or Trimesh object if you can.
+            """
+        )
+        return volmdlr.shells.ClosedTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
+
+    def to_open_shell(self):
+        """
+        Convert the Mesh3D object to an open triangle shell.
+
+        :return: An open triangle shell representation of the Mesh3D object.
+        :rtype: OpenTriangleShell3D
+        """
+        warnings.warn(
+            """
+            OpenTriangleShell3D is not an efficient object to deal with mesh data.
+            Try to stick to Mesh3D or Trimesh object if you can.
+            """
+        )
+        return volmdlr.shells.OpenTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
 
     def to_trimesh(self):
         return Trimesh(self.vertices, self.triangles)
