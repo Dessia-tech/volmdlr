@@ -1201,7 +1201,7 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if split_point.is_close(self.end, tol):
             return [self.copy(), None]
-        parameter = round(self.point_to_parameter(split_point), 19)
+        parameter = round(self.point_to_parameter(split_point), 15)
         return split_curve(self, parameter)
 
     def get_reverse(self):
@@ -5245,7 +5245,7 @@ class BSplineCurve3D(BSplineCurve):
         if self.end.is_close(point3d):
             return self.reverse()
 
-        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 19))
+        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 15))
         return curves[1]
 
     def cut_after(self, parameter: float):
@@ -5261,7 +5261,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if self.end.is_close(point3d):
             return self.copy()
-        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 19))
+        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 15))
         return curves[0]
 
     def insert_knot(self, knot: float, num: int = 1):
