@@ -61,6 +61,13 @@ class TestLine3D(unittest.TestCase):
         self.assertTrue(line3d.point_at_abscissa(abscissa2).is_close(
             volmdlr.Point3D(-0.16533533350550145, 0.6691313782041791, 0.6254210897592992)))
 
+    def test_is_close(self):
+        line1 = curves.Line3D(volmdlr.O3D, volmdlr.Point3D(1, 1, 1))
+        line2 = curves.Line3D(volmdlr.Point3D(0.5, 0.5, 0.5), volmdlr.Point3D(2, 2, 2))
+        line3 = curves.Line3D(volmdlr.O3D, volmdlr.Point3D(2, 3, 2))
+        self.assertTrue(line1.is_close(line2))
+        self.assertFalse(line2.is_close(line3))
+
 
 if __name__ == '__main__':
     unittest.main()
