@@ -837,10 +837,9 @@ class LineSegment(Edge):
         line = self.line
         content, line_id = line.to_step(current_id)
 
-        current_id = line_id + 1
-        start_content, start_id = self.start.to_step(current_id, vertex=True)
-        current_id = start_id + 1
-        end_content, end_id = self.end.to_step(current_id + 1, vertex=True)
+        start_content, start_id = self.start.to_step(line_id, vertex=True)
+
+        end_content, end_id = self.end.to_step(start_id, vertex=True)
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
@@ -5924,7 +5923,7 @@ class Arc3D(ArcMixin, Edge):
 
         current_id = curve_id
         start_content, start_id = self.start.to_step(current_id, vertex=True)
-        end_content, end_id = self.end.to_step(start_id + 1, vertex=True)
+        end_content, end_id = self.end.to_step(start_id, vertex=True)
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"

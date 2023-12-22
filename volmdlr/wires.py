@@ -3491,7 +3491,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         return ax
 
-    def triangulation(self, tri_opt: str = 'pd'):
+    def triangulation(self, tri_opt: str = 'p'):
         """
         Perform triangulation on the polygon.
 
@@ -4261,8 +4261,7 @@ class Contour3D(ContourMixin, Wire3D):
             content += f"#{current_id} = ORIENTED_EDGE('{primitive.name}',*,*,#{primitive_id},.T.);\n"
             edge_ids.append(current_id)
 
-            current_id += 1
-
+        current_id += 1
         content += f"#{current_id} = EDGE_LOOP('{self.name}',({volmdlr.core.step_ids_to_str(edge_ids)}));\n"
         return content, current_id
 
