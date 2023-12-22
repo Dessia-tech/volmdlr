@@ -3323,25 +3323,26 @@ class Arc2D(ArcMixin, Edge):
         return volmdlr.geometry.huygens2d(moment_area_x, moment_area_y, moment_area_xy, self.area(),
                                           self.circle.center, point)
 
-    def plot_data(self, edge_style: plot_data.EdgeStyle = None, anticlockwise: bool = None):
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None):
         """
         Plot data method for a Arc2D.
 
         :param edge_style: edge style.
+        :type edge_style: plot_data.EdgeStyle
         :return: plot_data.Arc2D object.
         """
-        list_node = self.discretization_points(number_points=20)
-        data = []
-        for node in list_node:
-            data.append({'x': node.x, 'y': node.y})
+        start_angle = self.angle_start
+        end_angle = self.angle_end
+        if not self.is_trigo:
+            start_angle = 2 * math.pi - start_angle
+            end_angle = 2 * math.pi - end_angle
         return plot_data.Arc2D(cx=self.circle.center.x,
                                cy=self.circle.center.y,
                                r=self.circle.radius,
-                               start_angle=self.angle_start,
-                               end_angle=self.angle_end,
+                               start_angle=start_angle,
+                               end_angle=end_angle,
                                edge_style=edge_style,
-                               data=data,
-                               anticlockwise=anticlockwise,
+                               clockwise=not self.is_trigo,
                                name=self.name)
 
     def copy(self, *args, **kwargs):
