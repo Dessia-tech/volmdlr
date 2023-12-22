@@ -425,6 +425,33 @@ class Mesh3D(MeshMixin, PhysicalObject):
         stream.seek(0)
         return cls.from_trimesh(trimesh.load(stream, "obj")).resize(scale_factor)
 
+    @classmethod
+    def from_ply_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
+        return cls.from_trimesh(trimesh.load(filepath, "ply")).resize(scale_factor)
+
+    @classmethod
+    def from_ply_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
+        stream.seek(0)
+        return cls.from_trimesh(trimesh.load(stream, "ply")).resize(scale_factor)
+
+    @classmethod
+    def from_off_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
+        return cls.from_trimesh(trimesh.load(filepath, "off")).resize(scale_factor)
+
+    @classmethod
+    def from_off_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
+        stream.seek(0)
+        return cls.from_trimesh(trimesh.load(stream, "off")).resize(scale_factor)
+
+    @classmethod
+    def from_3mf_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
+        return cls.from_trimesh(trimesh.load(filepath, "3mf")).resize(scale_factor)
+
+    @classmethod
+    def from_3mf_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
+        stream.seek(0)
+        return cls.from_trimesh(trimesh.load(stream, "3mf")).resize(scale_factor)
+
     # EXPORT
     def triangular_faces(self):
         """
@@ -527,4 +554,35 @@ class Mesh3D(MeshMixin, PhysicalObject):
     def save_to_obj_stream(self, stream, scale_factor: float = 1000.0):
         self.resize(scale_factor).to_trimesh().export(stream, "obj")
 
-    # TODO: add other saving method
+    def save_to_ply_file(self, filepath: str, scale_factor: float = 1000.0):
+        if not filepath.lower().endswith(".ply"):
+            filepath += ".ply"
+            print(f"Changing name to {filepath}")
+
+        with open(filepath, "wb") as file:
+            self.save_to_ply_stream(file, scale_factor=scale_factor)
+
+    def save_to_ply_stream(self, stream, scale_factor: float = 1000.0):
+        self.resize(scale_factor).to_trimesh().export(stream, "ply")
+
+    def save_to_off_file(self, filepath: str, scale_factor: float = 1000.0):
+        if not filepath.lower().endswith(".off"):
+            filepath += ".off"
+            print(f"Changing name to {filepath}")
+
+        with open(filepath, "wb") as file:
+            self.save_to_off_stream(file, scale_factor=scale_factor)
+
+    def save_to_off_stream(self, stream, scale_factor: float = 1000.0):
+        self.resize(scale_factor).to_trimesh().export(stream, "off")
+
+    def save_to_3mf_file(self, filepath: str, scale_factor: float = 1000.0):
+        if not filepath.lower().endswith(".3mf"):
+            filepath += ".3mf"
+            print(f"Changing name to {filepath}")
+
+        with open(filepath, "wb") as file:
+            self.save_to_3mf_stream(file, scale_factor=scale_factor)
+
+    def save_to_3mf_stream(self, stream, scale_factor: float = 1000.0):
+        self.resize(scale_factor).to_trimesh().export(stream, "3mf")

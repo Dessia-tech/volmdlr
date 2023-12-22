@@ -245,6 +245,79 @@ class TestMesh3DExport(unittest.TestCase):
 
         self.assertEqual(self.mesh, mesh_from_stream)
 
+    def test_save_to_ply_file(self):
+        # Create a temporary PLY file for testing
+        with tempfile.NamedTemporaryFile(suffix=".ply", delete=False) as temp_ply_file:
+            temp_ply_filename = temp_ply_file.name
+
+            # Call the save_to_ply_file method to write to the temporary file
+            self.mesh.save_to_ply_file(temp_ply_filename)
+
+            # Call the from_ply_file method to read from the temporary file
+            new_mesh = Mesh3D.from_ply_file(temp_ply_filename)
+
+            # Assert that the original and new meshes are equal
+            self.assertEqual(self.mesh, new_mesh)
+
+        # Clean up the temporary file after the test
+        os.remove(temp_ply_filename)
+
+    def test_save_to_ply_stream(self):
+        stream = BinaryFile()
+        self.mesh.save_to_ply_stream(stream)
+        mesh_from_stream = Mesh3D.from_ply_stream(stream)
+
+        self.assertEqual(self.mesh, mesh_from_stream)
+
+    def test_save_to_off_file(self):
+        # Create a temporary OFF file for testing
+        with tempfile.NamedTemporaryFile(suffix=".off", delete=False) as temp_off_file:
+            temp_off_filename = temp_off_file.name
+
+            # Call the save_to_off_file method to write to the temporary file
+            self.mesh.save_to_off_file(temp_off_filename)
+
+            # Call the from_off_file method to read from the temporary file
+            new_mesh = Mesh3D.from_off_file(temp_off_filename)
+
+            # Assert that the original and new meshes are equal
+            self.assertEqual(self.mesh, new_mesh)
+
+        # Clean up the temporary file after the test
+        os.remove(temp_off_filename)
+
+    def test_save_to_off_stream(self):
+        stream = BinaryFile()
+        self.mesh.save_to_off_stream(stream)
+        mesh_from_stream = Mesh3D.from_off_stream(stream)
+
+        self.assertEqual(self.mesh, mesh_from_stream)
+
+    def test_save_to_3mf_file(self):
+        # Create a temporary 3MF file for testing
+        with tempfile.NamedTemporaryFile(suffix=".3mf", delete=False) as temp_3mf_file:
+            temp_3mf_filename = temp_3mf_file.name
+
+            # Call the save_to_3mf_file method to write to the temporary file
+            self.mesh.save_to_3mf_file(temp_3mf_filename)
+
+            # Call the from_3mf_file method to read from the temporary file
+            new_mesh = Mesh3D.from_3mf_file(temp_3mf_filename)
+
+            # Assert that the original and new meshes are equal
+            self.assertEqual(self.mesh, new_mesh)
+
+        # Clean up the temporary file after the test
+        os.remove(temp_3mf_filename)
+
+    def test_save_to_3mf_stream(self):
+        stream = BinaryFile()
+        self.mesh.save_to_3mf_stream(stream)
+        mesh_from_stream = Mesh3D.from_3mf_stream(stream)
+
+        self.assertEqual(self.mesh, mesh_from_stream)
+
+
 
 if __name__ == "__main__":
     unittest.main()
