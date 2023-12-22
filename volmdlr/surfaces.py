@@ -7251,16 +7251,6 @@ class BSplineSurface3D(Surface3D):
         """
         u, v = point2d
         umin, umax, vmin, vmax = self.domain
-        # if self.x_periodicity:
-        #     if u > umax:
-        #         u -= self.x_periodicity
-        #     elif u < umin:
-        #         u += self.x_periodicity
-        # if self.y_periodicity:
-        #     if v > vmax:
-        #         v -= self.y_periodicity
-        #     elif v < vmin:
-        #         v += self.y_periodicity
         u = float(min(max(u, umin), umax))
         v = float(min(max(v, vmin), vmax))
         point_array = evaluate_surface(self.data, start=(u, v), stop=(u, v))[0]
@@ -9475,13 +9465,9 @@ class BSplineSurface3D(Surface3D):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
-        idx_a = 0
-        idx_b = (self.nb_v * (self.nb_u - 1))
-        control_points = self.control_points
-        point_at_a_lower = control_points[idx_a]
-        point_at_b_lower = control_points[idx_b]
-        # point_at_a_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
-        # point_at_b_lower = self.point2d_to_3d(volmdlr.Point2D(b, c))
+        a, b, c, _ = self.domain
+        point_at_a_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
+        point_at_b_lower = self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), c))
         if point_at_b_lower.is_close(point_at_a_lower):
             return True
         return False
@@ -9490,14 +9476,9 @@ class BSplineSurface3D(Surface3D):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
-        idx_a = self.nb_v - 1
-        idx_b = (self.nb_v - 1) + (self.nb_v * (self.nb_u - 1))
-        # idx = v + (size_v * u)
-        control_points = self.control_points
-        point_at_a_upper = control_points[idx_a]
-        point_at_b_upper = control_points[idx_b]
-        # point_at_a_upper = self.point2d_to_3d(volmdlr.Point2D(a, d))
-        # point_at_b_upper = self.point2d_to_3d(volmdlr.Point2D(b, d))
+        a, b, _, d = self.domain
+        point_at_a_upper = self.point2d_to_3d(volmdlr.Point2D(a, d))
+        point_at_b_upper = self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), d))
         if point_at_b_upper.is_close(point_at_a_upper):
             return True
         return False
@@ -9506,12 +9487,9 @@ class BSplineSurface3D(Surface3D):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
-        idx_c = 0
-        idx_d = self.nb_v - 1
-        # idx = v + (size_v * u)
-        control_points = self.control_points
-        point_at_c_lower = control_points[idx_c]
-        point_at_d_lower = control_points[idx_d]
+        a, _, c, d = self.domain
+        point_at_c_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
+        point_at_d_lower = self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (d + c)))
         if point_at_d_lower.is_close(point_at_c_lower):
             return True
         return False
@@ -9520,12 +9498,9 @@ class BSplineSurface3D(Surface3D):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
-        idx_c = self.nb_v * (self.nb_u - 1)
-        idx_d = (self.nb_v - 1) + (self.nb_v * (self.nb_u - 1))
-        # idx = v + (size_v * u)
-        control_points = self.control_points
-        point_at_c_upper = control_points[idx_c]
-        point_at_d_upper = control_points[idx_d]
+        _, b, c, d = self.domain
+        point_at_c_upper = self.point2d_to_3d(volmdlr.Point2D(b, c))
+        point_at_d_upper = self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (d + c)))
         if point_at_d_upper.is_close(point_at_c_upper):
             return True
         return False
