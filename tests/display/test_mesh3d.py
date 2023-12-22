@@ -5,7 +5,9 @@ import numpy as np
 import trimesh
 from dessia_common.serialization import BinaryFile
 
+from volmdlr import Point3D
 from volmdlr.display import Mesh3D
+from volmdlr.faces import Triangle3D
 
 SHOW_BABYLONJS = True
 
@@ -160,6 +162,18 @@ class TestMesh3DImport(unittest.TestCase):
 
         if SHOW_BABYLONJS:
             mesh.babylonjs()
+
+
+class TestMesh3DExport(unittest.TestCase):
+    def setUp(self) -> None:
+        self.mesh = Mesh3D(np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0]]), np.array([[0, 1, 2]]))
+        self.degenerated_mesh = Mesh3D(np.array([[0, 0, 0], [0, 0, 1]]), np.array([[0, 1, 1]]))
+
+    def test_to_triangles3d(self):
+        self.assertEqual(
+            [Triangle3D(Point3D(*[0, 0, 0]), Point3D(*[0, 0, 1]), Point3D(*[0, 1, 0]))], self.mesh.to_triangles3d()
+        )
+        self.assertEqual([], self.degenerated_mesh.to_triangles3d())
 
 
 if __name__ == "__main__":
