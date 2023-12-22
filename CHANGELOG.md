@@ -39,12 +39,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: handles exceptions in simplify method.
 - BSplineCurve: Consider overlaping curves also as periodic.
 - BSplineCurve.simplify: handles exceptions.
+- Arc2D: plot_data
 - BSplineCurve: decompose into béziers patches of same degree.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
 - Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
 - Face3D: point_belongs
+
+#### primitives3d.py
+- RevolvedProfile: to_dict
 
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
