@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve.simplify: handles exceptions.
 - Arc2D: plot_data
 - LineSegment3D: planar_revolution.
+- BSplineCurve: decompose into béziers patches of same degree.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
@@ -48,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: point_belongs
 
 #### primitives3d.py
-- RevolvedProfile: 
+- RevolvedProfile: to_dict
 
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
