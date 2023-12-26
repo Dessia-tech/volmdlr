@@ -7415,27 +7415,59 @@ class BSplineSurface3D(Surface3D):
 
     def point3d_to_2d_minimize(self, point3d):
         """Auxiliary function for point3d_to_2d in case the point inversion does not converge."""
-        def fun(x, surf):
-            derivatives = surf.derivatives(x[0], x[1], 1)
-            vector = derivatives[0][0] - point3d
-            f_value = vector.norm()
-            if f_value == 0.0:
-                jacobian = npy.array([0.0, 0.0])
-            else:
-                jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
-                                      vector.dot(derivatives[0][1]) / f_value])
-            return f_value, jacobian
+        # def fun(x, surf):
+        #     derivatives = surf.derivatives(x[0], x[1], 1)
+        #     vector = derivatives[0][0] - point3d
+        #     f_value = vector.norm()
+        #     if f_value == 0.0:
+        #         jacobian = npy.array([0.0, 0.0])
+        #     else:
+        #         jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
+        #                               vector.dot(derivatives[0][1]) / f_value])
+        #     return f_value, jacobian
 
+        point3d_array = npy.array(point3d)
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
-
         results = []
+        distances = npy.linalg.norm(self.evalpts - point3d_array, axis=1)
+        indexes = npy.argsort(distances)
+        x0s = []
+        u_start, u_stop, v_start, v_stop = self.domain
+        delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
+        delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
+        for index in indexes[:3]:
+            if index == 0:
+                u_idx, v_idx = 0, 0
+            else:
+                u_idx = int(index / self.sample_size_v)
+                v_idx = index % self.sample_size_v
+
+            u = u_start + u_idx * delta_u
+            v = v_start + v_idx * delta_v
+            x0s.append((u, v))
+
+        if self.weights is not None:
+            control_points = self.ctrlptsw
+        else:
+            control_points = self.ctrlpts
+        bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
+
+        for x0 in x0s:
+            res = point_inversion(point3d_array, x0, bounds, [self.degree_u, self.degree_v],
+                                  self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational)
+
+            if res.fun < 1e-5:
+                return volmdlr.Point2D(*res.x)
+
+            results.append((res.x, res.fun))
+
         for patch, param in zip(*self.decompose(return_params=True)):
             xmin, ymin, zmin = patch.ctrlpts.min(axis=0)
             xmax, ymax, zmax = patch.ctrlpts.max(axis=0)
 
             bbox = volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
             if bbox.point_belongs(point3d):
-                distances = npy.linalg.norm(patch.evalpts - npy.array(point3d), axis=1)
+                distances = npy.linalg.norm(patch.evalpts - point3d_array, axis=1)
                 index = npy.argmin(distances)
                 u_start, u_stop, v_start, v_stop = patch.domain
                 delta_u = (u_stop - u_start) / (patch.sample_size_u - 1)
@@ -7455,32 +7487,6 @@ class BSplineSurface3D(Surface3D):
                 if distance <= 5e-6:
                     return volmdlr.Point2D(u, v)
                 results.append(((u, v), distance))
-
-        distances = npy.linalg.norm(self.evalpts - npy.array(point3d), axis=1)
-        indexes = npy.argsort(distances)
-        x0s = []
-        u_start, u_stop, v_start, v_stop = self.domain
-        delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
-        delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
-        for index in indexes[:8]:
-            if index == 0:
-                u_idx, v_idx = 0, 0
-            else:
-                u_idx = int(index / self.sample_size_v)
-                v_idx = index % self.sample_size_v
-
-            u = u_start + u_idx * delta_u
-            v = v_start + v_idx * delta_v
-            x0s.append((u, v))
-
-        for x0 in x0s:
-            res = minimize(fun, x0=npy.array(x0), jac=True,
-                           bounds=[(min_bound_x, max_bound_x),
-                                   (min_bound_y, max_bound_y)], args=self)
-            if res.fun <= 1e-6:
-                return volmdlr.Point2D(*res.x)
-
-            results.append((res.x, res.fun))
 
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
