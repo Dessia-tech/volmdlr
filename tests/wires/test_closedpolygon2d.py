@@ -21,16 +21,16 @@ class TestClosedPolygon2D(unittest.TestCase):
         mesh3 = self.polygon.triangulation('pa0.25')  # No triangles with area greter than 0.25
 
         # Assert that the returned object is a vmd.DisplayMesh2D
-        self.assertIsInstance(mesh1, vmd.DisplayMesh2D)
-        self.assertIsInstance(mesh2, vmd.DisplayMesh2D)
-        self.assertIsInstance(mesh3, vmd.DisplayMesh2D)
+        self.assertIsInstance(mesh1, vmd.Mesh2D)
+        self.assertIsInstance(mesh2, vmd.Mesh2D)
+        self.assertIsInstance(mesh3, vmd.Mesh2D)
 
         # Assert that the mesh has the correct number of points and triangles
-        self.assertEqual(len(mesh1.points), 4)
+        self.assertEqual(len(mesh1.vertices), 4)
         self.assertEqual(len(mesh1.triangles), 2)
-        self.assertEqual(len(mesh2.points), 4)
+        self.assertEqual(len(mesh2.vertices), 4)
         self.assertEqual(len(mesh2.triangles), 2)
-        self.assertEqual(len(mesh3.points), 5)
+        self.assertEqual(len(mesh3.vertices), 5)
         self.assertEqual(len(mesh3.triangles), 4)
 
     def test_point_belongs(self):

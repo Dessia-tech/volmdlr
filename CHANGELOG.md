@@ -17,8 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - grid_points: returns a grid of points inside the surface2d of the face.
 
 #### surfaces.py
-- ToroidalSurfaces3D: parametric_points_to_3d
-- CylindricalSurface3D: parametric_points_to_3d.
+- CylindricalSurface3D: parametric_points_to_3d
+- ToroidalSurface3D: parametric_points_to_3d
+- SphericalSurface3D: parametric_points_to_3d
+- ConicalSurface3D: parametric_points_to_3d
+- ExtrusionSurface3D: parametric_points_to_3d
+- RevolutionSurface3D: parametric_points_to_3d
+- Plane3D: parametric_points_to_3d
+- BSplineSurface3D: parametric_points_to_3d
 
 ### Fixed
 - review hash and eq methods
@@ -27,23 +33,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 - Circle2D: abscissa method - consider frame direction during rotation.
+- Line: is_close.
 
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
 - BSplineCurve: Consider overlaping curves also as periodic.
 - BSplineCurve.simplify: handles exceptions.
+- Arc2D: plot_data
+- BSplineCurve: decompose into béziers patches of same degree.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
 - Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
 - Face3D: point_belongs
 
+#### primitives3d.py
+- RevolvedProfile: to_dict
+
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
 - ExtrusionSurface3D: fullarcellipse3d_to_2d
 - ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
 - ToroidalSurface3D: increases precision of point3d_to_2d.
-- ToroidalSurface: plane_intersections.
+- Surface3D: repeair_primitives_periodicity. Treat special case on surfaces with singularities.
+- ToroidalSurface3D: plane_intersections.
 
 #### wires.py
 - Contour2D: cut_by_line.
@@ -61,6 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### surfaces.py
 - contour3d_to_2d/contour2d_to_3d: Add option to return also a dictionary with the correspondence between the parametric and 3D primitives.
+
+#### display.py
+- refactor DisplayMesh
 
 ### Changed
 - Edge.split_between_two_points -> trim

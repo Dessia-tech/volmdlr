@@ -20,7 +20,7 @@ import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
 from geomdl import NURBS, BSpline
 
-from volmdlr.nurbs.operations import split_curve
+from volmdlr.nurbs.operations import split_curve, decompose_curve
 from volmdlr.nurbs.core import evaluate_curve, derivatives_curve
 from volmdlr.nurbs import fitting
 import volmdlr.nurbs.helpers as nurbs_helpers
@@ -1050,6 +1050,15 @@ class BSplineCurve(Edge):
         dict_['weights'] = self.weights
         return dict_
 
+    def decompose(self, return_params: bool = False):
+        """
+        Decomposes the curve into Bézier curve segments of the same degree.
+
+        :return: a list of Bezier segments
+        :rtype: list
+        """
+        return decompose_curve(self, return_params)
+
     def evaluate(self, **kwargs):
         """
         Evaluates the curve.
@@ -1153,7 +1162,7 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if split_point.is_close(self.end, tol):
             return [self.copy(), None]
-        parameter = round(self.point_to_parameter(split_point), 12)
+        parameter = round(self.point_to_parameter(split_point), 15)
         return split_curve(self, parameter)
 
     def get_reverse(self):
@@ -3284,25 +3293,26 @@ class Arc2D(ArcMixin, Edge):
         return volmdlr.geometry.huygens2d(moment_area_x, moment_area_y, moment_area_xy, self.area(),
                                           self.circle.center, point)
 
-    def plot_data(self, edge_style: plot_data.EdgeStyle = None, anticlockwise: bool = None):
+    def plot_data(self, edge_style: plot_data.EdgeStyle = None):
         """
         Plot data method for a Arc2D.
 
         :param edge_style: edge style.
+        :type edge_style: plot_data.EdgeStyle
         :return: plot_data.Arc2D object.
         """
-        list_node = self.discretization_points(number_points=20)
-        data = []
-        for node in list_node:
-            data.append({'x': node.x, 'y': node.y})
+        start_angle = self.angle_start
+        end_angle = self.angle_end
+        if not self.is_trigo:
+            start_angle = 2 * math.pi - start_angle
+            end_angle = 2 * math.pi - end_angle
         return plot_data.Arc2D(cx=self.circle.center.x,
                                cy=self.circle.center.y,
                                r=self.circle.radius,
-                               start_angle=self.angle_start,
-                               end_angle=self.angle_end,
+                               start_angle=start_angle,
+                               end_angle=end_angle,
                                edge_style=edge_style,
-                               data=data,
-                               anticlockwise=anticlockwise,
+                               clockwise=not self.is_trigo,
                                name=self.name)
 
     def copy(self, *args, **kwargs):
@@ -5008,11 +5018,8 @@ class BSplineCurve3D(BSplineCurve):
 
         knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
         knots = [float(i) for i in arguments[7][1:-1].split(",")]
-        knot_vector = []
-        for i, knot in enumerate(knots):
-            knot_vector.extend([knot] * knot_multiplicities[i])
 
-        if 9 in range(len(arguments)):
+        if len(arguments) >= 10:
             weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
         else:
             weight_data = None
@@ -5200,7 +5207,7 @@ class BSplineCurve3D(BSplineCurve):
         if self.end.is_close(point3d):
             return self.reverse()
 
-        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
+        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 15))
         return curves[1]
 
     def cut_after(self, parameter: float):
@@ -5216,7 +5223,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if self.end.is_close(point3d):
             return self.copy()
-        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
+        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 15))
         return curves[0]
 
     def insert_knot(self, knot: float, num: int = 1):
