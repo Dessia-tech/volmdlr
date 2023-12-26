@@ -334,8 +334,7 @@ class Line(Curve):
         """Exports to STEP format."""
         p1_content, p1_id = self.point1.to_step(current_id)
         # p2_content, p2_id = self.point2.to_step(current_id+1)
-        current_id = p1_id + 1
-        u_content, u_id = self.unit_direction_vector().to_step(current_id, vector=True)
+        u_content, u_id = self.unit_direction_vector().to_step(p1_id, vector=True)
         current_id = u_id + 1
         content = p1_content + u_content
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
