@@ -976,10 +976,10 @@ cdef class Vector2D(Vector):
         """
         if vertex:
             return self.to_point().to_step(current_id=current_id, vertex=True)
-        content = f"#{current_id} = DIRECTION('{self.name}',({self.x:.6f},{self.y:.6f}));\n"
+        content = f"#{current_id} = DIRECTION('{self.name}',({self.x},{self.y}));\n"
         if vector:
-            content += f"#{current_id + 1} = VECTOR('{self.name}',#{current_id},1.);\n"
             current_id += 1
+            content += f"#{current_id} = VECTOR('{self.name}',#{current_id},{self.norm():.6f});\n"
         return content, current_id
 
 
@@ -1088,15 +1088,12 @@ cdef class Point2D(Vector2D):
         return Vector2D(self.x, self.y)
 
     def to_step(self, current_id, vertex=False):
-        content = "#{} = CARTESIAN_POINT('{}',({:.6f},{:.6f}));\n"\
-                        .format(current_id, self.name,
-                                1000.*self.x,
-                                1000.*self.y)
+        point_id = current_id + 1
+        content = f"#{point_id} = CARTESIAN_POINT('{self.name}',({1000.*self.x},{1000.*self.y}));\n"
+        current_id = point_id
         if vertex:
-            content += "#{} = VERTEX_POINT('{}',#{});\n".format(current_id+1,
-                                                                self.name,
-                                                                current_id)
             current_id += 1
+            content += f"#{current_id} = VERTEX_POINT('{self.name}',#{point_id});\n"
 
         return content, current_id
 
@@ -1856,14 +1853,13 @@ cdef class Vector3D(Vector):
         """
         if vertex:
             return self.to_point().to_step(current_id=current_id, vertex=True)
-        content = "#{} = DIRECTION('{}',({:.6f},{:.6f},{:.6f}));\n"\
-            .format(current_id, self.name,
-                    self.x, self.y, self.z)
+        direction_id = current_id + 1
+        content = f"#{direction_id} = DIRECTION('{self.name}',({self.x},{self.y},{self.z}));\n"
+        current_id = direction_id
         if vector:
-            content += "#{} = VECTOR('{}',#{},1.);\n".format(current_id + 1,
-                                                             self.name,
-                                                             current_id)
             current_id += 1
+            content += f"#{current_id} = VECTOR('{self.name}',#{direction_id},{self.norm():.6f});\n"
+
         return content, current_id
 
     def plot(self, ax=None, starting_point=None, color="k"):
@@ -2077,16 +2073,13 @@ cdef class Point3D(Vector3D):
             and the new current id
         :rtype: tuple
         """
-        current_id += 1
-        content = "#{} = CARTESIAN_POINT('{}',({:.6f},{:.6f},{:.6f}));\n".format(current_id, self.name,
-                                                                                 1000. * self.x,
-                                                                                 1000. * self.y,
-                                                                                 1000. * self.z)
+        point_id = current_id + 1
+        content = (f"#{point_id} = CARTESIAN_POINT('{self.name}',({1000. * self.x},"
+                   f"{1000. * self.y},{1000. * self.z}));\n")
+        current_id = point_id
         if vertex:
-            content += "#{} = VERTEX_POINT('{}',#{});\n".format(current_id + 1,
-                                                                self.name,
-                                                                current_id)
             current_id += 1
+            content += f"#{current_id} = VERTEX_POINT('{self.name}',#{point_id});\n"
 
         return content, current_id
 
@@ -3536,10 +3529,8 @@ class Frame3D(Basis3D):
         :rtype: tuple
         """
         content, origin_id = self.origin.to_point().to_step(current_id)
-        current_id = origin_id + 1
-        w_content, w_id = Vector3D.to_step(self.w, current_id)
-        current_id = w_id + 1
-        u_content, u_id = Vector3D.to_step(self.u, current_id)
+        w_content, w_id = Vector3D.to_step(self.w, origin_id)
+        u_content, u_id = Vector3D.to_step(self.u, w_id)
         current_id = u_id + 1
         content += w_content + u_content
         content += f"#{current_id} = AXIS2_PLACEMENT_3D('{self.name}',#{origin_id},#{w_id},#{u_id});\n"

@@ -837,10 +837,9 @@ class LineSegment(Edge):
         line = self.line
         content, line_id = line.to_step(current_id)
 
-        current_id = line_id + 1
-        start_content, start_id = self.start.to_step(current_id, vertex=True)
-        current_id = start_id + 1
-        end_content, end_id = self.end.to_step(current_id + 1, vertex=True)
+        start_content, start_id = self.start.to_step(line_id, vertex=True)
+
+        end_content, end_id = self.end.to_step(start_id, vertex=True)
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
@@ -4794,7 +4793,7 @@ class LineSegment3D(LineSegment):
         if self.point_belongs(line_intersection):
             return self._helper_intersecting_axis_plane_revolution(surface, distance_1, distance_2, angle)
         smaller_r, bigger_r = sorted([distance_1, distance_2])
-        if angle == volmdlr.TWO_PI:
+        if math.isclose(angle, volmdlr.TWO_PI, abs_tol=1e-6):
             return self._helper_plane_revolution_two_circles(surface, bigger_r, smaller_r)
         return self._helper_plane_revolution_arcs_and_lines(surface, bigger_r, smaller_r, angle)
 
@@ -5930,7 +5929,7 @@ class Arc3D(ArcMixin, Edge):
 
         current_id = curve_id
         start_content, start_id = self.start.to_step(current_id, vertex=True)
-        end_content, end_id = self.end.to_step(start_id + 1, vertex=True)
+        end_content, end_id = self.end.to_step(start_id, vertex=True)
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
