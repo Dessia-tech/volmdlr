@@ -416,9 +416,10 @@ def split_surface_v(obj, param, **kwargs):
     temp_obj = insert_knot_func(obj, [None, param], num=[0, insertion_count], check_num=False)
 
     # Knot vectors
-    knotvectors = helper_split_knot_vectors(temp_obj.degree_v, temp_obj.knots_vector_v, temp_obj.nb_v, param,
-                                                   span_func)
+    knotvectors = helper_split_knot_vectors(temp_obj.degree_v, temp_obj.knots_vector_v,
+                                            temp_obj.nb_v, param, span_func)
     return construct_split_surfaces(temp_obj, knotvectors, "v", knot_span, insertion_count)
+
 
 def separate_ctrlpts_weights(ctrlptsw):
     """
