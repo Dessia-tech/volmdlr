@@ -257,7 +257,7 @@ class WireMixin:
                 split_primitives2 = primitive.split(point2)
                 if split_primitives2[1]:
                     primitives2.append(split_primitives2[1])
-                primitives1.append(primitive.split_between_two_points(point1, point2))
+                primitives1.append(primitive.trim(point1, point2))
             elif current_abscissa <= abscissa1 <= current_abscissa + primitive.length():
                 split_primitives = primitive.split(point1)
                 if split_primitives[1]:
@@ -1069,15 +1069,13 @@ class Wire2D(WireMixin, PhysicalObject):
             point2 = self_primitives_to_test[1].point_at_abscissa(self_primitives_to_test[1].length() * .99)
             point3 = current_wire_primitive.point_at_abscissa(current_wire_primitive.length() * .99)
             point4 = next_wire_primitive.point_at_abscissa(next_wire_primitive.length() * 0.01)
-            linesegment1 = volmdlr.edges.LineSegment2D(point1, point2)
-            linesegment2 = volmdlr.edges.LineSegment2D(point3, point4)
         else:
             point1 = self_primitives_to_test[0].point_at_abscissa(self_primitives_to_test[0].length() * .99)
             point2 = self_primitives_to_test[1].point_at_abscissa(self_primitives_to_test[1].length() * 0.01)
             point3 = current_wire_primitive.point_at_abscissa(current_wire_primitive.length() * .99)
             point4 = next_wire_primitive.point_at_abscissa(next_wire_primitive.length() * 0.01)
-            linesegment1 = volmdlr.edges.LineSegment2D(point1, point2)
-            linesegment2 = volmdlr.edges.LineSegment2D(point3, point4)
+        linesegment1 = volmdlr.edges.LineSegment2D(point1, point2)
+        linesegment2 = volmdlr.edges.LineSegment2D(point3, point4)
         inter = linesegment1.linesegment_intersections(linesegment2)
         if inter:
             return True
@@ -1502,6 +1500,8 @@ class ContourMixin(WireMixin):
         :param tol: tolerance to be considered.
         :return: True if ordered, False if not.
         """
+        if len(self.primitives) == 1 and self.primitives[0].length() <= tol:
+            return False
         if len(self.primitives) == 2 and self.primitives[0].direction_independent_is_close(self.primitives[1]):
             return False
         for prim1, prim2 in zip(self.primitives, self.primitives[1:] + [self.primitives[0]]):
@@ -1987,7 +1987,7 @@ class Contour2D(ContourMixin, Wire2D):
                               name=self.name)
 
     def __hash__(self):
-        return hash(tuple(self.primitives))
+        return hash(('contour2d', tuple(self.primitives)))
 
     def __eq__(self, other_):
         if id(self) == id(other_):
@@ -2284,7 +2284,7 @@ class Contour2D(ContourMixin, Wire2D):
         intersections = self.line_crossings(line)
         if not intersections or len(intersections) < 2:
             return [self]
-        points_intersections = [point for point, prim in intersections]
+        points_intersections = [point for point, _ in intersections]
         sorted_points = line.sort_points_along_curve(points_intersections)
         list_contours = []
         contour_to_cut = self
@@ -2304,7 +2304,8 @@ class Contour2D(ContourMixin, Wire2D):
                     list_contours.append(contour1)
             else:
                 list_contours.extend([contour1, contour2])
-
+        if not list_contours:
+            return [self]
         return list_contours
 
     def split_by_line(self, line: curves.Line2D) -> List['Contour2D']:
@@ -2408,7 +2409,7 @@ class Contour2D(ContourMixin, Wire2D):
                 elif len(points_in) == 3:
                     triangles.append([point_index[point] for point in points_in])
 
-        return vmd.DisplayMesh2D(points, triangles)
+        return vmd.Mesh2D(points, triangles)
 
     def intersection_points(self, contour2d):
         """Returns the intersections points with other specified contour."""
@@ -2711,6 +2712,44 @@ class Contour2D(ContourMixin, Wire2D):
             new_contour = sorted(new_contours, key=lambda contour: contour.area())[-1]
         return new_contour
 
+    @classmethod
+    def rectangle(cls, xmin: float, xmax: float, ymin: float, ymax: float, is_trigo: bool = True):
+        """
+        Creates a rectangular contour.
+
+        :param xmin: minimal x coordinate
+        :type xmin: float
+        :param xmax: maximal x coordinate
+        :type xmax: float
+        :param ymin: minimal y coordinate
+        :type ymin: float
+        :param ymax: maximal y coordinate
+        :type ymax: float
+        :param is_trigo: (Optional) If True, triangle is drawn in counterclockwise direction.
+        :type is_trigo: bool
+        :return: Contour2D
+        """
+        point1 = volmdlr.Point2D(xmin, ymin)
+        point2 = volmdlr.Point2D(xmax, ymin)
+        point3 = volmdlr.Point2D(xmax, ymax)
+        point4 = volmdlr.Point2D(xmin, ymax)
+        if is_trigo:
+            return cls.from_points([point1, point2, point3, point4])
+        return cls.from_points([point1, point4, point3, point2])
+
+    @classmethod
+    def rectangle_from_center_and_sides(cls, center, x_length, y_length, is_trigo: bool = True):
+        """
+        Creates a rectangular contour given a center and a side.
+        """
+        x_center, y_center = center
+        xmin = x_center - 0.5 * x_length
+        xmax = xmin + x_length
+        ymin = y_center - 0.5 * y_length
+        ymax = ymin + y_length
+        return cls.rectangle(xmin, xmax, ymin, ymax, is_trigo)
+
+
 
 class ClosedPolygonMixin:
     """
@@ -2840,7 +2879,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         return ClosedPolygon2D(points, self.name)
 
     def __hash__(self):
-        return sum(hash(point) for point in self.points)
+        return hash((self.__class__.__name__, tuple(self.points)))
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
@@ -2883,7 +2922,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         xi1_yi = npy.multiply(npy.roll(x, -1), y)
 
         signed_area = 0.5 * npy.sum(xi_yi1 - xi1_yi)  # signed area!
-        if not math.isclose(signed_area, 0, abs_tol=1e-09):
+        if not math.isclose(signed_area, 0, abs_tol=1e-12):
             center_x = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
             center_y = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
             return volmdlr.Point2D(center_x, center_y)
@@ -3028,9 +3067,10 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         :param offset: offset distance.
         :return:
         """
-        x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
+        bounding_rectangle_bounds = self.bounding_rectangle.bounds()
 
-        max_offset_len = min(x_max - x_min, y_max - y_min) / 2
+        max_offset_len = min(bounding_rectangle_bounds[1] - bounding_rectangle_bounds[0],
+                             bounding_rectangle_bounds[3] - bounding_rectangle_bounds[2]) / 2
         if offset <= -max_offset_len:
             print('Inadapted offset, '
                   'polygon might turn over. Offset must be greater than',
@@ -3039,17 +3079,11 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         nb_points = len(self.points)
         vectors = []
         for i in range(nb_points - 1):
-            vector1 = self.points[i + 1] - self.points[i]
-            vector2 = self.points[i] - self.points[i + 1]
-            vector1 = vector1.unit_vector()
-            vector2 = vector2.unit_vector()
-            vectors.append(vector1)
-            vectors.append(vector2)
+            vectors.append((self.points[i + 1] - self.points[i]).unit_vector())
+            vectors.append((self.points[i] - self.points[i + 1]).unit_vector())
 
-        vector1 = (self.points[0] - self.points[-1]).unit_vector()
-        vector2 = (self.points[-1] - self.points[0]).unit_vector()
-        vectors.append(vector1)
-        vectors.append(vector2)
+        vectors.append((self.points[0] - self.points[-1]).unit_vector())
+        vectors.append((self.points[-1] - self.points[0]).unit_vector())
 
         offset_vectors = []
         offset_points = []
@@ -3057,38 +3091,23 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         for i in range(nb_points):
 
             # check = False
-            vector_i = vectors[2 * i - 1] + vectors[2 * i]
+            vector_i = vectors[2 * i - 1] + vectors[2 * i].unit_vector()
             if vector_i == volmdlr.Vector2D(0, 0):
-                vector_i = vectors[2 * i]
-                vector_i = vector_i.normal_vector()
-                offset_vectors.append(vector_i)
+                offset_vectors.append(vectors[2 * i].normal_vector())
             else:
-                vector_i = vector_i.unit_vector()
                 if vector_i.dot(vectors[2 * i - 1].normal_vector()) > 0:
                     vector_i = - vector_i
                     # check = True
                 offset_vectors.append(vector_i)
 
-            normal_vector1 = - vectors[2 * i - 1].normal_vector()
-            normal_vector2 = vectors[2 * i].normal_vector()
-            normal_vector1 = normal_vector1.unit_vector()
-            normal_vector2 = normal_vector2.unit_vector()
+            normal_vector1 = - vectors[2 * i - 1].unit_normal_vector()
+            normal_vector2 = vectors[2 * i].unit_normal_vector()
             alpha = math.acos(normal_vector1.dot(normal_vector2))
 
             offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
                 (-offset_vectors[i])
 
-            # ax=self.plot()
-            # offset_point.plot(ax=ax, color='g')
-
-            # if self.point_belongs(offset_point):
-            #     offset_point = self.points[i] + offset / math.cos(alpha / 2) * \
-            #                    (-offset_vectors[i])
-
             offset_points.append(offset_point)
-
-            # self.points[i].plot(ax=ax, color='b')
-            # offset_point.plot(ax=ax, color='r')
 
         return self.__class__(offset_points)
 
@@ -3481,12 +3500,11 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         :param tri_opt: (Optional) Triangulation preferences.
         :type tri_opt: str
         :return: A 2D mesh.
-        :rtype: :class:`vmd.DisplayMesh2D`
+        :rtype: :class:`vmd.Mesh2D`
         """
         # Converting points to nodes for performance
-        nodes = [vmd.Node2D.from_point(point) for point in self.points]
-        vertices = [(point.x, point.y) for point in nodes]
-        n = len(nodes)
+        vertices = [(point.x, point.y) for point in self.points]
+        n = len(vertices)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
 
@@ -3496,10 +3514,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         if len(tri['vertices']) < 3:
             return None
         triangulate_result = triangulate(tri, tri_opt)
-        triangles = triangulate_result['triangles'].tolist()
-        number_points = triangulate_result['vertices'].shape[0]
-        points = [vmd.Node2D(*triangulate_result['vertices'][i, :]) for i in range(number_points)]
-        return vmd.DisplayMesh2D(points, triangles=triangles)
+        mesh = vmd.Mesh2D(triangulate_result['vertices'], triangles=triangulate_result['triangles'])
+        return mesh
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25,
                                   include_edge_points: bool = True):
@@ -3517,8 +3533,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
 
-        x = npy.linspace(x_min, x_max, num=number_points_x + 2, dtype=npy.float64)
-        y = npy.linspace(y_min, y_max, num=number_points_y + 2, dtype=npy.float64)
+        x = npy.linspace(x_min, x_max, num=int(number_points_x + 2), dtype=npy.float64)
+        y = npy.linspace(y_min, y_max, num=int(number_points_y + 2), dtype=npy.float64)
 
         grid_point_index = {}
 
@@ -3543,6 +3559,50 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         return points, x, y, grid_point_index
 
+    def search_ear(self, remaining_points, initial_point_to_index):
+        """
+        Helper method to search for ears for ear clipping triangulation method.
+
+        :param remaining_points: list of remaining points.
+        :param initial_point_to_index: initial point to index.
+        :return:
+        """
+        number_remaining_points = len(remaining_points)
+        found_ear = False
+        triangles = []
+        for point1, point2, point3 in zip(remaining_points,
+                                          remaining_points[1:] + remaining_points[0:1],
+                                          remaining_points[2:] + remaining_points[0:2]):
+            if not point1.is_close(point3):
+                line_segment = volmdlr.edges.LineSegment2D(point1, point3)
+
+            # Checking if intersections does not contain the vertices
+            # of line_segment
+            intersect = any(
+                inter for inter in self.linesegment_intersections(line_segment)
+                if not inter[0].in_list([line_segment.start, line_segment.end])
+            )
+
+            if not intersect:
+                if self.point_belongs(line_segment.middle_point()):
+
+                    triangles.append((initial_point_to_index[point1],
+                                      initial_point_to_index[point3],
+                                      initial_point_to_index[point2]))
+                    remaining_points.remove(point2)
+                    number_remaining_points -= 1
+                    found_ear = True
+
+                    # Rolling the remaining list
+                    if number_remaining_points > 4:
+                        deq = deque(remaining_points)
+                        # random.randint(1, number_remaining_points-1))
+                        deq.rotate(int(0.3 * number_remaining_points))
+                        remaining_points = list(deq)
+
+                    break
+        return found_ear, remaining_points
+
     def ear_clipping_triangulation(self):
         """
         Computes the triangulation of the polygon using ear clipping algorithm.
@@ -3560,42 +3620,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         number_remaining_points = len(remaining_points)
         while number_remaining_points > 3:
             current_polygon = ClosedPolygon2D(remaining_points)
-
-            found_ear = False
-            for point1, point2, point3 in zip(remaining_points,
-                                              remaining_points[1:] + remaining_points[0:1],
-                                              remaining_points[2:] + remaining_points[0:2]):
-                if not point1.is_close(point3):
-                    line_segment = volmdlr.edges.LineSegment2D(point1, point3)
-
-                # Checking if intersections does not contain the vertices
-                # of line_segment
-                intersect = False
-                intersections = current_polygon.linesegment_intersections(line_segment)
-                if intersections:
-                    for inter in intersections:
-                        if not inter[0].in_list([line_segment.start, line_segment.end]):
-                            intersect = True
-                            break
-
-                if not intersect:
-                    if current_polygon.point_belongs(line_segment.middle_point()):
-
-                        triangles.append((initial_point_to_index[point1],
-                                          initial_point_to_index[point3],
-                                          initial_point_to_index[point2]))
-                        remaining_points.remove(point2)
-                        number_remaining_points -= 1
-                        found_ear = True
-
-                        # Rolling the remaining list
-                        if number_remaining_points > 4:
-                            deq = deque(remaining_points)
-                            # random.randint(1, number_remaining_points-1))
-                            deq.rotate(int(0.3 * number_remaining_points))
-                            remaining_points = list(deq)
-
-                        break
+            found_ear, remaining_points = current_polygon.search_ear(remaining_points, initial_point_to_index)
 
             # Searching for a flat ear
             if not found_ear:
@@ -3614,17 +3639,16 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
                     if not found_flat_ear:
                         print('Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
-                        return vmd.DisplayMesh2D(nodes, triangles)
+                        return vmd.Mesh2D(nodes, triangles)
                 else:
-                    return vmd.DisplayMesh2D(nodes, triangles)
+                    return vmd.Mesh2D(nodes, triangles)
 
         if len(remaining_points) == 3:
-            point1, point2, point3 = remaining_points
-            triangles.append((initial_point_to_index[point1],
-                              initial_point_to_index[point3],
-                              initial_point_to_index[point2]))
+            triangles.append((initial_point_to_index[remaining_points[0]],
+                              initial_point_to_index[remaining_points[1]],
+                              initial_point_to_index[remaining_points[2]]))
 
-        return vmd.DisplayMesh2D(nodes, triangles)
+        return vmd.Mesh2D(nodes, triangles)
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         """Simplify polygon."""
@@ -4134,7 +4158,7 @@ class Contour3D(ContourMixin, Wire3D):
         self._utd_bounding_box = False
 
     def __hash__(self):
-        return hash(tuple(self.primitives))
+        return hash(('contour3d', tuple(self.primitives)))
 
     def __eq__(self, other_):
         if other_.__class__.__name__ != self.__class__.__name__:
@@ -4193,7 +4217,6 @@ class Contour3D(ContourMixin, Wire3D):
             edge = object_dict[int(edge_id[1:])]
             if edge:
                 raw_edges.append(edge)
-
         if step_name == "POLY_LOOP":
             return cls.from_points(raw_edges)
         if (len(raw_edges)) == 1:
@@ -4439,14 +4462,14 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return ClosedPolygon3D(points, self.name)
 
     def __hash__(self):
-        return sum(hash(point) for point in self.points)
+        return hash((self.__class__.__name__, tuple(self.points)))
 
     def __eq__(self, other_):
         if not isinstance(other_, self.__class__):
             return False
         equal = True
         for point, other_point in zip(self.points, other_.points):
-            equal = (equal and point.is_close(other_point))
+            equal = (equal and point == other_point)
         return equal
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
@@ -4507,55 +4530,6 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
             other_poly2d.bounding_rectangle.bounds()
         return (self_center, other_center, self_center2d, other_center2d,
                 self_poly2d, other_poly2d, bbox_self2d, bbox_other2d)
-
-    def sewing_with(self, other_poly3d, x, y, resolution=20):
-        """Sew two polygons."""
-        (self_center, other_center, self_center2d, other_center2d,
-         self_poly2d, other_poly2d, bbox_self2d, bbox_other2d) = self._get_sewing_with_parameters(other_poly3d, x, y)
-        position = [abs(value) for value in bbox_self2d] \
-            + [abs(value) for value in bbox_other2d]
-        max_scale = 2 * max(position)
-
-        lines = [volmdlr.edges.LineSegment2D(volmdlr.O2D, max_scale * (
-                volmdlr.X2D * math.sin(n * 2 * math.pi / resolution) +
-                volmdlr.Y2D * math.cos(n * 2 * math.pi / resolution))
-                                             ) for n in range(resolution)]
-
-        self_new_points, other_new_points = [], []
-        for line in lines:
-            for self_line in self_poly2d.line_segments:
-                intersect = line.linesegment_intersections(self_line)
-                if intersect:
-                    self_new_points.extend(intersect)
-                    break
-
-            for other_line in other_poly2d.line_segments:
-                intersect = line.linesegment_intersections(other_line)
-                if intersect:
-                    other_new_points.extend(intersect)
-                    break
-
-        new_self_poly2d, new_other_poly2d = ClosedPolygon2D(
-            self_new_points), ClosedPolygon2D(other_new_points)
-        new_self_poly2d = new_self_poly2d.translation(self_center2d)
-        new_other_poly2d = new_other_poly2d.translation(other_center2d)
-
-        new_poly1, new_poly2 = new_self_poly2d.to_3d(self_center, x, y), \
-            new_other_poly2d.to_3d(other_center, x, y)
-
-        triangles = []
-        for point1, point2, other_point in zip(new_poly1.points,
-                                               new_poly1.points[
-                                                   1:] + new_poly1.points[:1],
-                                               new_poly2.points):
-            triangles.append([point1, point2, other_point])
-
-        for point1, point2, other_point in zip(
-                new_poly2.points, new_poly2.points[1:] + new_poly2.points[:1],
-                new_poly1.points[1:] + new_poly1.points[:1]):
-            triangles.append([other_point, point2, point1])
-
-        return triangles
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         """

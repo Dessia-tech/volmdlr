@@ -1,6 +1,7 @@
 import unittest
 import math
 import os
+import numpy as np
 import volmdlr
 import volmdlr.edges as vme
 import volmdlr.wires as vmw
@@ -20,6 +21,17 @@ class TestRevolutionSurface3D(unittest.TestCase):
     axis_point = volmdlr.O3D
     axis = volmdlr.Z3D
     surface = surfaces.RevolutionSurface3D(arc, axis_point, axis)
+
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.5 * math.pi, 0.0], [math.pi, 0.0], [1.5 * math.pi, 0.0],
+                                      [0.0, 0.2], [0.5 * math.pi, 0.2], [math.pi, 0.2], [1.5 * math.pi, 0.2]])
+        points3d = self.surface.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[0.5, 0.0, 0.5], [0.0, 0.5, 0.5], [-0.5, 0.0, 0.5], [0.0, -0.5, 0.5],
+                                    [0.40806046117362793, 0.0, 0.6682941969615793],
+                                    [0.0, 0.40806046117362793, 0.6682941969615792],
+                                    [-0.40806046117362793, 0.0, 0.6682941969615793], [0.0, -0.40806046117362793, 0.6682941969615793]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
 
     def test_point2d_to_3d(self):
         surface = surfaces.RevolutionSurface3D(self.arc, self.axis_point, self.axis)

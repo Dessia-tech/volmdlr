@@ -191,6 +191,7 @@ class Stl(dc.DessiaObject):
     @classmethod
     def from_file(cls, filename: str = None,
                   distance_multiplier: float = 0.001):
+        """Import stl from file."""
         warnings.warn("Use load_from_file instead of from_file",
                       DeprecationWarning)
         return cls.load_from_file(filename, distance_multiplier)
@@ -338,7 +339,7 @@ class Stl(dc.DessiaObject):
         return valid_points
 
     @classmethod
-    def from_display_mesh(cls, mesh: vm.display.DisplayMesh3D):
+    def from_display_mesh(cls, mesh: vm.display.Mesh3D):
         """
         Create an STL object from a display mesh.
 
@@ -348,10 +349,11 @@ class Stl(dc.DessiaObject):
         :rtype: Stl
         """
         triangles = []
-        for i1, i2, i3 in mesh.triangles:
-            triangles.append(vmf.Triangle3D(mesh.points[i1],
-                                            mesh.points[i2],
-                                            mesh.points[i3]))
+        for vertex1, vertex2, vertex3 in mesh.triangles_vertices:
+            point1 = vm.Point3D(*vertex1)
+            point2 = vm.Point3D(*vertex2)
+            point3 = vm.Point3D(*vertex3)
+            triangles.append(vmf.Triangle3D(point1, point2, point3))
         return cls(triangles)
 
     def get_normals(self):

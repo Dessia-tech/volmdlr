@@ -2355,7 +2355,7 @@ class Matrix33:
                         self.M21 * float_value, self.M22 * float_value, self.M23 * float_value,
                         self.M31 * float_value, self.M32 * float_value, self.M33 * float_value)
 
-    def vector_multiplication(self, vector):
+    def vector_multiplication(self, vector: Vector3D) -> Vector3D:
         """
        Multiplies the matrix by a 3-dimensional vector.
 
@@ -2364,16 +2364,17 @@ class Matrix33:
        :return: A Vector3D-like object
        :rtype: :class:`volmdlr.Vector3D`
        """
+        cdef double u1, u2, u3
         u1, u2, u3 = c_matrix_vector_multiplication3(self.M11, self.M12, self.M13,
                                                      self.M21, self.M22, self.M23,
                                                      self.M31, self.M32, self.M33,
                                                      vector.x, vector.y, vector.z)
-        if abs(u1) < 1e-13:
-            u1 = 0.
-        if abs(u2) < 1e-13:
-            u2 = 0.
-        if abs(u3) < 1e-13:
-            u3 = 0.
+        if abs(u1) < 1e-16:
+            u1 = 0.0
+        if abs(u2) < 1e-16:
+            u2 = 0.0
+        if abs(u3) < 1e-16:
+            u3 = 0.0
         return vector.__class__(u1, u2, u3)
 
     def determinent(self):
@@ -3061,6 +3062,21 @@ class Frame2D(Basis2D):
         """
         return 0
 
+    def is_close(self, other_frame, abs_tol: float = 1e-6):
+        """
+        Verifies if two frames are the same, up to given tolerance.
+
+        :param other_frame: other frame.
+        :param abs_tol: tolerance used
+        :return:
+        """
+        if self.__class__ != other_frame.__class__:
+            return False
+        if (self.origin.is_close(other_frame.origin, abs_tol) and self.u.is_close(other_frame.u, abs_tol) and
+                self.v.is_close(other_frame.v, abs_tol)):
+            return True
+        return False
+
     def to_dict(self, *args, **kwargs):
         """
         Serializes a 2-dimensional frame into a dictionary.
@@ -3336,6 +3352,21 @@ class Frame3D(Basis3D):
                               round(self.u, ndigits),
                               round(self.v, ndigits),
                               round(self.w, ndigits))
+
+    def is_close(self, other_frame, abs_tol: float = 1e-6):
+        """
+        Verifies if two frames are the same, up to given tolerance.
+
+        :param other_frame: other frame.
+        :param abs_tol: tolerance used
+        :return:
+        """
+        if self.__class__ != other_frame.__class__:
+            return False
+        if (self.origin.is_close(other_frame.origin, abs_tol) and self.u.is_close(other_frame.u, abs_tol) and
+                self.v.is_close(other_frame.v, abs_tol) and self.w.is_close(other_frame.w, abs_tol)):
+            return True
+        return False
 
     def to_dict(self, *args, **kwargs):
         """

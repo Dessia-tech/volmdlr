@@ -166,6 +166,46 @@ class TestArcEllipse2D(unittest.TestCase):
         self.assertTrue(frame_mapped_arcelipsse1.end.is_close(
             volmdlr.Point2D(1.4142135623730951, -0.7071067811865477)))
 
+    def test_get_shared_section(self):
+        #test1
+        u_vector = volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475)
+        v_vector = volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)
+        ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, u_vector, v_vector))
+
+        arc_ellipse2d = edges.ArcEllipse2D(ellipse2d, start=ellipse2d.point_at_abscissa(0.25 * ellipse2d.length()),
+                                           end=ellipse2d.point_at_abscissa(0.75 * ellipse2d.length()))
+
+        arc_ellipse2d_2 = edges.ArcEllipse2D(ellipse2d, start=ellipse2d.point_at_abscissa(0.6 * ellipse2d.length()),
+                                             end=ellipse2d.point_at_abscissa(0.9 * ellipse2d.length()))
+        get_shared_section = arc_ellipse2d.get_shared_section(arc_ellipse2d_2)
+        expected_ellipse = edges.ArcEllipse2D(ellipse2d, volmdlr.Point2D(-0.4969829723203407, -1.4989916288867593),
+                                              volmdlr.Point2D(0.7071067817853691, -0.7071067805877258))
+        self.assertTrue(get_shared_section[0].is_close(expected_ellipse))
+
+        # test2
+        arc_ellipse2d_2 = edges.ArcEllipse2D(ellipse2d, start=ellipse2d.point_at_abscissa(0.4 * ellipse2d.length()),
+                                             end=ellipse2d.point_at_abscissa(0.6 * ellipse2d.length()))
+
+        get_shared_section = arc_ellipse2d.get_shared_section(arc_ellipse2d_2)
+        self.assertEqual(get_shared_section[0], arc_ellipse2d_2)
+
+    def test_delete_shared_section(self):
+        u_vector = volmdlr.Vector2D(0.7071067811865475, 0.7071067811865475)
+        v_vector = volmdlr.Vector2D(-0.7071067811865475, 0.7071067811865475)
+        ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, u_vector, v_vector))
+
+        arc_ellipse2d = edges.ArcEllipse2D(ellipse2d, start=ellipse2d.point_at_abscissa(0.25 * ellipse2d.length()),
+                                           end=ellipse2d.point_at_abscissa(0.75 * ellipse2d.length()))
+        arc_ellipse2d_2 = edges.ArcEllipse2D(ellipse2d, start=ellipse2d.point_at_abscissa(0.4 * ellipse2d.length()),
+                                             end=ellipse2d.point_at_abscissa(0.6 * ellipse2d.length()))
+
+        delete_shared_section = arc_ellipse2d.delete_shared_section(arc_ellipse2d_2)
+        self.assertEqual(len(delete_shared_section), 2)
+        self.assertEqual(delete_shared_section[0].start, arc_ellipse2d.start)
+        self.assertEqual(delete_shared_section[0].end, arc_ellipse2d_2.start)
+        self.assertEqual(delete_shared_section[1].end, arc_ellipse2d.end)
+        self.assertEqual(delete_shared_section[1].start, arc_ellipse2d_2.end)
+
 
 if __name__ == '__main__':
     unittest.main()
