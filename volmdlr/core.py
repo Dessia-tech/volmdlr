@@ -281,11 +281,8 @@ class Primitive3D(dc.PhysicalObject):
         mesh = self.triangulation()
         if mesh is None:
             return []
-        positions, indices = mesh.to_babylon()
+        babylon_mesh = mesh.to_babylon()
 
-        babylon_mesh = {'positions': positions,
-                        'indices': indices
-                        }
         babylon_mesh.update(self.babylon_param())
         return [babylon_mesh]
 

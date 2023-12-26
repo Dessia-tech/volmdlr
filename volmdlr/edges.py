@@ -921,19 +921,25 @@ class BSplineCurve(Edge):
         """
         Return a hash value for the B-spline curve.
         """
-        return hash((tuple(self.control_points), self.degree, tuple(self.knots)))
+        control_points = tuple(tuple(point) for point in self.ctrlpts)
+        if self.weights is None:
+            return hash((control_points, self.degree, tuple(self.knot_multiplicities), tuple(self.knots)))
+        return hash((control_points, self.degree, tuple(self.knot_multiplicities),
+                     tuple(self.knots), tuple(self.weights)))
 
     def __eq__(self, other):
         """
         Return True if the other B-spline curve has the same control points, degree, and knot vector, False otherwise.
         """
         if isinstance(other, self.__class__) and self.rational == other.rational:
-            common_check = (self.control_points == other.control_points
-                            and self.degree == other.degree
-                            and self.knots == other.knots)
+            common_check = (
+                    tuple(tuple(point) for point in self.ctrlpts) == tuple(tuple(point) for point in other.ctrlpts)
+                    and self.degree == other.degree
+                    and tuple(self.knots) == tuple(other.knots)
+                    and tuple(self.knot_multiplicities) == tuple(other.knot_multiplicities))
             if self.weights is None:
                 return common_check
-            return common_check and self.weights == other.weights
+            return common_check and tuple(self.weights) == tuple(other.weights)
         return False
 
     def _data_eq(self, other_object):

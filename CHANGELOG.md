@@ -77,6 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - contour3d_to_2d/contour2d_to_3d: Add option to return also a dictionary with the correspondence between the parametric and 3D primitives.
 - BSplineSurface3D: point3d_to_2d
 
+#### display.py
+- refactor DisplayMesh
+
 ### Changed
 - Edge.split_between_two_points -> trim
 - surfaces.py: point_on_surface -> point_belongs

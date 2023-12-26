@@ -89,9 +89,9 @@ class TestBSplineFace3D(unittest.TestCase):
         total_time = end - start
         mesh = face.triangulation()
         self.assertAlmostEqual(face.surface2d.area(), 1, 2)
-        self.assertGreaterEqual(len(mesh.points), 650)
-        self.assertLessEqual(len(mesh.points), 1300)
-        self.assertLessEqual(total_time, 3)
+        self.assertGreaterEqual(len(mesh.vertices), 650)
+        self.assertLessEqual(len(mesh.vertices), 1300)
+        self.assertLessEqual(total_time, 2)
 
 
 if __name__ == '__main__':
