@@ -424,7 +424,7 @@ class Face3D(volmdlr.core.Primitive3D):
         mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
         if mesh2d is None:
             return None
-        return vmd.DisplayMesh3D([self.surface3d.point2d_to_3d(point) for point in mesh2d.points], mesh2d.triangles)
+        return vmd.Mesh3D(self.surface3d.parametric_points_to_3d(mesh2d.vertices), mesh2d.triangles)
 
     def plot2d(self, ax=None, color="k", alpha=1):
         """Plot 2D of the face using matplotlib."""
@@ -2209,14 +2209,7 @@ class Triangle3D(PlaneFace3D):
 
     def triangulation(self):
         """Computes the triangulation of the Triangle3D, basically returns itself."""
-        return vmd.DisplayMesh3D(
-            [
-                vmd.Node3D.from_point(self.point1),
-                vmd.Node3D.from_point(self.point2),
-                vmd.Node3D.from_point(self.point3),
-            ],
-            [(0, 1, 2)],
-        )
+        return vmd.Mesh3D(np.array([self.point1, self.point2, self.point3]), np.array([[0, 1, 2]], dtype=np.int8))
 
     def translation(self, offset: volmdlr.Vector3D):
         """

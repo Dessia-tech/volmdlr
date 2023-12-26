@@ -191,10 +191,7 @@ class Surface2D(PhysicalObject):
                'segments': npy.array(segments).reshape((-1, 2)),
                }
         triagulation = triangle_lib.triangulate(tri, tri_opt)
-        triangles = triagulation['triangles'].tolist()
-        number_points = triagulation['vertices'].shape[0]
-        points = [display.Node2D(*triagulation['vertices'][i, :]) for i in range(number_points)]
-        return display.DisplayMesh2D(points, triangles=triangles)
+        return display.Mesh2D(vertices=triagulation['vertices'], triangles=triagulation['triangles'])
 
     def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
@@ -205,12 +202,12 @@ class Surface2D(PhysicalObject):
         :param number_points_y: Number of discretization points in y direction.
         :type number_points_y: int
         :return: The triangulated surface as a display mesh.
-        :rtype: :class:`volmdlr.display.DisplayMesh2D`
+        :rtype: :class:`volmdlr.display.Mesh2D`
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
-        if math.isclose(area, 0., abs_tol=1e-8):
-            return display.DisplayMesh2D([], triangles=[])
+        if math.isclose(area, 0., abs_tol=1e-12):
+            return None
 
         triangulates_with_grid = number_points_x > 0 and number_points_y > 0
         discretize_line = number_points_x > 0 or number_points_y > 0
@@ -287,10 +284,7 @@ class Surface2D(PhysicalObject):
                'holes': npy.array(holes).reshape((-1, 2))
                }
         triangulation = triangle_lib.triangulate(tri, tri_opt)
-        triangles = triangulation['triangles'].tolist()
-        number_points = triangulation['vertices'].shape[0]
-        points = [volmdlr.Point2D(*triangulation['vertices'][i, :]) for i in range(number_points)]
-        return display.DisplayMesh2D(points, triangles=triangles)
+        return display.Mesh2D(vertices=triangulation['vertices'], triangles=triangulation['triangles'])
 
     def split_by_lines(self, lines):
         """
@@ -3308,7 +3302,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         Triangulation.
 
-        :rtype: display.DisplayMesh3D
+        :rtype: display.Mesh3D
         """
         face = self.rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
         return face.triangulation()
