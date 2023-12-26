@@ -350,7 +350,7 @@ class Face3D(volmdlr.core.Primitive3D):
         elif edge3d.__class__.__name__ == "BSplineCurve3D":
             number_points = max(15, len(edge3d.ctrlpts))
         elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
-            number_points = max(2, math.ceil(edge3d.angle / math.radians(angle_resolution)) + 1)
+            number_points = max(2, math.ceil(round(edge3d.angle, 12) / math.radians(angle_resolution)) + 1)
         else:
             number_points = 2
         return number_points
@@ -398,7 +398,7 @@ class Face3D(volmdlr.core.Primitive3D):
     def _update_grid_points_with_outer_polygon(outer_polygon, grid_points):
         """Helper function to grid_points."""
         # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
-        indices = np.where(outer_polygon.points_in_polygon(grid_points, include_edge_points=True) == 0)[0]
+        indices = np.where(outer_polygon.points_in_polygon(grid_points, include_edge_points=False) == 0)[0]
         grid_points = np.delete(grid_points, indices, axis=0)
         polygon_points = set(outer_polygon.points)
         points = [volmdlr.Point2D(*point) for point in grid_points if volmdlr.Point2D(*point) not in polygon_points]
@@ -2996,52 +2996,6 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
         For the sphere the grid size is given in angle resolution in both theta and phi direction.
         """
         return 10, 10
-
-    def grid_points(self, grid_size, polygon_data=None):
-        """
-        Parametric tesselation points.
-        """
-        if polygon_data:
-            outer_polygon, inner_polygons = polygon_data
-        else:
-            outer_polygon, inner_polygons = self.get_face_polygons()
-        theta_min, theta_max, phi_min, phi_max = outer_polygon.bounding_rectangle.bounds()
-        theta_resolution, phi_resolution = grid_size
-        step_u = 0.5 * math.radians(theta_resolution)
-        step_v = math.radians(phi_resolution)
-        u_size = math.ceil((theta_max - theta_min) / step_u)
-        v_size = math.ceil((phi_max - phi_min) / step_v)
-        v_start = phi_min + step_v
-        u = [theta_min + step_u * i for i in range(u_size)]
-        v = [v_start + j * step_v for j in range(v_size - 1)]
-        grid_points = np.array([(u[i], v_j) for j, v_j in enumerate(v) for i in range(u_size) if
-                               (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0)], dtype=np.float64)
-
-        grid_point_index = {}
-
-        polygon_points = set(outer_polygon.points)
-
-        points_in_polygon_ = outer_polygon.points_in_polygon(grid_points, include_edge_points=False)
-
-        # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
-        indices = np.where(points_in_polygon_)[0]
-
-        points = []
-        u_grid_size = 0.5 * u_size
-        for i in indices:
-            point = volmdlr.Point2D(*grid_points[i])
-            if point not in polygon_points:
-                v_index = i // u_grid_size
-                if v_index % 2 == 0:
-                    u_index = (i % u_grid_size) * 2
-                else:
-                    u_index = (i % u_grid_size) * 2 + 1
-                grid_point_index[(u_index, v_index)] = point
-                points.append(point)
-        if inner_polygons:
-            points = self.update_grid_points_with_inner_polygons(inner_polygons, [points, u, v, grid_point_index])
-
-        return points
 
     def grid_points(self, grid_size, polygon_data=None):
         """
