@@ -50,10 +50,10 @@ class StepFunction:
         """
         Custom to dict for performance.
         """
-        dict_= {"id": self.id,
-                "name":self.name,
-                "arg": self.arg
-                }
+        dict_ = {"id": self.id,
+                 "name": self.name,
+                 "arg": self.arg
+                 }
         return dict_
 
     @classmethod

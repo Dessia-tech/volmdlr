@@ -6851,14 +6851,9 @@ class BSplineSurface3D(Surface3D):
         Evaluates the periodicity of the surface in u direction.
         """
         if self._x_periodicity is False:
-            idx_a = 0
-            idx_b = (self.nb_v * (self.nb_u - 1))
-            a, b, _, _ = self.domain
-            control_points = self.control_points
-            point_at_a = control_points[idx_a]
-            point_at_b = control_points[idx_b]
-            # point_at_a = self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (d - c)))
-            # point_at_b = self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (d - c)))
+            a, b, c, d = self.domain
+            point_at_a = self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (d - c)))
+            point_at_b = self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (d - c)))
             if point_at_b.is_close(point_at_a) or self.u_closed:
                 self._x_periodicity = b - a
             else:
@@ -6871,12 +6866,9 @@ class BSplineSurface3D(Surface3D):
         Evaluates the periodicity of the surface in v direction.
         """
         if self._y_periodicity is False:
-            idx_c = 0
-            idx_d = self.nb_v - 1
-            _, _, c, d = self.domain
-            control_points = self.control_points
-            point_at_c = control_points[idx_c]
-            point_at_d = control_points[idx_d]
+            a, b, c, d = self.domain
+            point_at_c = self.point2d_to_3d(volmdlr.Point2D(0.5 * (b - a), c))
+            point_at_d = self.point2d_to_3d(volmdlr.Point2D(0.5 * (b - a), d))
             if point_at_d.is_close(point_at_c) or self.v_closed:
                 self._y_periodicity = d - c
             else:
@@ -7448,8 +7440,33 @@ class BSplineSurface3D(Surface3D):
             return f_value, jacobian
 
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
-
         results = []
+        distances = npy.linalg.norm(self.evalpts - npy.array(point3d), axis=1)
+        indexes = npy.argsort(distances)
+        x0s = []
+        u_start, u_stop, v_start, v_stop = self.domain
+        delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
+        delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
+        for index in indexes[:8]:
+            if index == 0:
+                u_idx, v_idx = 0, 0
+            else:
+                u_idx = int(index / self.sample_size_v)
+                v_idx = index % self.sample_size_v
+
+            u = u_start + u_idx * delta_u
+            v = v_start + v_idx * delta_v
+            x0s.append((u, v))
+
+        for x0 in x0s:
+            res = minimize(fun, x0=npy.array(x0), jac=True,
+                           bounds=[(min_bound_x, max_bound_x),
+                                   (min_bound_y, max_bound_y)], args=self)
+            if res.fun <= 5e-6:
+                return volmdlr.Point2D(*res.x)
+
+            results.append((res.x, res.fun))
+
         for patch, param in zip(*self.decompose(return_params=True)):
             xmin, ymin, zmin = patch.ctrlpts.min(axis=0)
             xmax, ymax, zmax = patch.ctrlpts.max(axis=0)
@@ -7476,32 +7493,6 @@ class BSplineSurface3D(Surface3D):
                 if distance <= 5e-6:
                     return volmdlr.Point2D(u, v)
                 results.append(((u, v), distance))
-
-        distances = npy.linalg.norm(self.evalpts - npy.array(point3d), axis=1)
-        indexes = npy.argsort(distances)
-        x0s = []
-        u_start, u_stop, v_start, v_stop = self.domain
-        delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
-        delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
-        for index in indexes[:8]:
-            if index == 0:
-                u_idx, v_idx = 0, 0
-            else:
-                u_idx = int(index / self.sample_size_v)
-                v_idx = index % self.sample_size_v
-
-            u = u_start + u_idx * delta_u
-            v = v_start + v_idx * delta_v
-            x0s.append((u, v))
-
-        for x0 in x0s:
-            res = minimize(fun, x0=npy.array(x0), jac=True,
-                           bounds=[(min_bound_x, max_bound_x),
-                                   (min_bound_y, max_bound_y)], args=self)
-            if res.fun <= 1e-6:
-                return volmdlr.Point2D(*res.x)
-
-            results.append((res.x, res.fun))
 
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
@@ -9461,7 +9452,7 @@ class BSplineSurface3D(Surface3D):
         """
         a, b, c, _ = self.domain
         point_at_a_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
-        point_at_b_lower = self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), c))
+        point_at_b_lower = self.point2d_to_3d(volmdlr.Point2D(b, c))
         if point_at_b_lower.is_close(point_at_a_lower):
             return True
         return False
@@ -9472,7 +9463,7 @@ class BSplineSurface3D(Surface3D):
         """
         a, b, _, d = self.domain
         point_at_a_upper = self.point2d_to_3d(volmdlr.Point2D(a, d))
-        point_at_b_upper = self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), d))
+        point_at_b_upper = self.point2d_to_3d(volmdlr.Point2D(b, d))
         if point_at_b_upper.is_close(point_at_a_upper):
             return True
         return False
@@ -9483,7 +9474,7 @@ class BSplineSurface3D(Surface3D):
         """
         a, _, c, d = self.domain
         point_at_c_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
-        point_at_d_lower = self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (d + c)))
+        point_at_d_lower = self.point2d_to_3d(volmdlr.Point2D(a, d))
         if point_at_d_lower.is_close(point_at_c_lower):
             return True
         return False
@@ -9494,7 +9485,7 @@ class BSplineSurface3D(Surface3D):
         """
         _, b, c, d = self.domain
         point_at_c_upper = self.point2d_to_3d(volmdlr.Point2D(b, c))
-        point_at_d_upper = self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (d + c)))
+        point_at_d_upper = self.point2d_to_3d(volmdlr.Point2D(b, d))
         if point_at_d_upper.is_close(point_at_c_upper):
             return True
         return False
