@@ -6531,7 +6531,7 @@ class BSplineSurface3D(Surface3D):
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
                  weights: List[float] = None, name: str = ''):
-        self.ctrlpts = npy.asarray(control_points)
+        self.ctrlpts = npy.array(control_points)
         self.degree_u = int(degree_u)
         self.degree_v = int(degree_v)
         self.nb_u = int(nb_u)
@@ -6547,7 +6547,7 @@ class BSplineSurface3D(Surface3D):
         self.rational = False
         if weights is not None:
             self.rational = True
-            self._weights = npy.asarray(weights, dtype=npy.float64)
+            self._weights = npy.array(weights, dtype=npy.float64)
 
         self._surface = None
         Surface3D.__init__(self, name=name)
@@ -6561,13 +6561,7 @@ class BSplineSurface3D(Surface3D):
         self._knotvector = None
         self.ctrlptsw = None
         if self._weights is not None:
-            ctrlptsw = []
-            for point, w in zip(self.ctrlpts, self._weights):
-                temp = [float(c * w) for c in point]
-                temp.append(float(w))
-                ctrlptsw.append(temp)
-            self.ctrlptsw = npy.asarray(ctrlptsw, dtype=npy.float64)
-
+            self.ctrlptsw = npy.hstack((self.ctrlpts * self._weights[:, npy.newaxis], self._weights[:, npy.newaxis]))
         self._delta = [0.05, 0.05]
         self._eval_points = None
         self._vertices = None
@@ -6580,15 +6574,14 @@ class BSplineSurface3D(Surface3D):
         """
         Creates custom hash to the surface.
         """
-        control_points = self.control_points
-        weights = self.weights
-        if weights is None:
-            weights = tuple(1.0 for _ in range(len(control_points)))
-        else:
-            weights = tuple(weights)
-        return hash((tuple(control_points),
+        control_points = tuple(tuple(point) for point in self.ctrlpts)
+        if self.weights is None:
+            return hash((control_points,
+                         self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
+                         self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v))
+        return hash((control_points,
                      self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
-                     self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v, weights))
+                     self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v, tuple(self.weights)))
 
     def __eq__(self, other):
         """
@@ -7458,7 +7451,10 @@ class BSplineSurface3D(Surface3D):
 
         results = []
         for patch, param in zip(*self.decompose(return_params=True)):
-            bbox = volmdlr.core.BoundingBox.from_points(patch.control_points)
+            xmin, ymin, zmin = patch.ctrlpts.min(axis=0)
+            xmax, ymax, zmax = patch.ctrlpts.max(axis=0)
+
+            bbox = volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
             if bbox.point_belongs(point3d):
                 distances = npy.linalg.norm(patch.evalpts - npy.array(point3d), axis=1)
                 index = npy.argmin(distances)
@@ -7474,13 +7470,12 @@ class BSplineSurface3D(Surface3D):
                 u = u_start + u_idx * delta_u
                 v = v_start + v_idx * delta_v
 
-                x1, check, distance = patch.point_inversion((u, v), point3d, 5e-6)
+                x1, _, distance = patch.point_inversion((u, v), point3d, 5e-6)
                 u = x1[0] * (param[0][1] - param[0][0]) + param[0][0]
                 v = x1[1] * (param[1][1] - param[1][0]) + param[1][0]
-                if check and distance <= 5e-6:
+                if distance <= 5e-6:
                     return volmdlr.Point2D(u, v)
-                if distance:
-                    results.append(((u, v), distance))
+                results.append(((u, v), distance))
 
         distances = npy.linalg.norm(self.evalpts - npy.array(point3d), axis=1)
         indexes = npy.argsort(distances)
@@ -7517,11 +7512,10 @@ class BSplineSurface3D(Surface3D):
         Given a point P = (x, y, z) assumed to lie on the NURBS surface S(u, v), point inversion is
         the problem of finding the corresponding parameters u, v that S(u, v) = P.
         """
-        dist = None
-        if maxiter == 1:
-            return x, False, dist
         jacobian, k, surface_derivatives, distance_vector = self.point_inversion_funcs(x, point3d)
         dist, check = self.check_convergence(surface_derivatives, distance_vector, tol1=tol)
+        if maxiter == 1:
+            return x, False, dist
         if check:
             return x, True, dist
         if jacobian[1][1]:
