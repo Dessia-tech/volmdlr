@@ -1201,7 +1201,7 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if split_point.is_close(self.end, tol):
             return [self.copy(), None]
-        parameter = round(self.point_to_parameter(split_point), 19)
+        parameter = round(self.point_to_parameter(split_point), 15)
         return split_curve(self, parameter)
 
     def get_reverse(self):
@@ -1341,8 +1341,6 @@ class BSplineCurve(Edge):
 
         :return: the given point when the BSplineCurve3D is evaluated at the u value.
         """
-        if self.length() == 0.0:
-            print(True)
         u = max(min(abscissa / self.length(), 1.), 0.0)
         u_min, u_max = self.domain
         if u_min != 0 or u_max != 1.0:
@@ -5248,7 +5246,7 @@ class BSplineCurve3D(BSplineCurve):
         if self.end.is_close(point3d):
             return self.reverse()
 
-        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 19))
+        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 15))
         return curves[1]
 
     def cut_after(self, parameter: float):
@@ -5264,7 +5262,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if self.end.is_close(point3d):
             return self.copy()
-        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 19))
+        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 15))
         return curves[0]
 
     def insert_knot(self, knot: float, num: int = 1):

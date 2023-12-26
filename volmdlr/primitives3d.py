@@ -624,13 +624,21 @@ class RevolvedProfile(shells.ClosedShell3D):
         self.axis = axis
         self.angle = angle
         self.frame = frame
-        self.contour3d = self.contour2d.to_3d(frame.origin, frame.u, frame.v)
 
         faces = self.shell_faces()
         shells.ClosedShell3D.__init__(self, faces, color=color,
                                       alpha=alpha, name=name)
 
+    def __hash__(self):
+        """
+        Defines hash.
+        """
+        return hash((hash(self.contour2d), hash(self.axis_point), hash(self.axis), self.angle, hash(self.frame)))
+
     def __eq__(self, other):
+        """
+        Defines equality.
+        """
         if not self.__class__.__name__ == other.__class__.__name__:
             return False
         for self_param, other_param in zip([self.frame,
@@ -642,6 +650,13 @@ class RevolvedProfile(shells.ClosedShell3D):
                 return False
         return True
 
+    @property
+    def contour3d(self):
+        """
+        Gets the positionned contour for revolution.
+        """
+        return self.contour2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
+
     def to_dict(self, *args, **kwargs):
         """
         Custom to dict for performance.
@@ -649,7 +664,7 @@ class RevolvedProfile(shells.ClosedShell3D):
         dict_ = dc.DessiaObject.base_dict(self)
         dict_.update({'color': self.color,
                       'alpha': self.alpha,
-                      'frame': self.frame,
+                      'frame': self.frame.to_dict(),
                       'contour2d': self.contour2d.to_dict(),
                       'axis_point': self.axis_point.to_dict(),
                       'angle': self.angle,
