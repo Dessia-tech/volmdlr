@@ -43,9 +43,9 @@ class TripleExtrusionSimplify(Simplify):
         points = []
         for primitive in self.volume_model.primitives:
             tri = primitive.triangulation()
-            points.extend(tri.points)
+            points.extend(tri.vertices)
 
-        point_cloud3d = PointCloud3D(points)
+        point_cloud3d = PointCloud3D([volmdlr.Point3D(*point) for point in points])
         simplified_volume_model = VolumeModel(
             [self.extrusion_union_cloud_simplifier(point_cloud3d)], name=f"{self.volume_model.name} voxel simplified"
         )
