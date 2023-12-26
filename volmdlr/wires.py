@@ -2409,7 +2409,7 @@ class Contour2D(ContourMixin, Wire2D):
                 elif len(points_in) == 3:
                     triangles.append([point_index[point] for point in points_in])
 
-        return vmd.DisplayMesh2D(points, triangles)
+        return vmd.Mesh2D(points, triangles)
 
     def intersection_points(self, contour2d):
         """Returns the intersections points with other specified contour."""
@@ -3500,12 +3500,11 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         :param tri_opt: (Optional) Triangulation preferences.
         :type tri_opt: str
         :return: A 2D mesh.
-        :rtype: :class:`vmd.DisplayMesh2D`
+        :rtype: :class:`vmd.Mesh2D`
         """
         # Converting points to nodes for performance
-        nodes = [vmd.Node2D.from_point(point) for point in self.points]
-        vertices = [(point.x, point.y) for point in nodes]
-        n = len(nodes)
+        vertices = [(point.x, point.y) for point in self.points]
+        n = len(vertices)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
 
@@ -3515,10 +3514,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         if len(tri['vertices']) < 3:
             return None
         triangulate_result = triangulate(tri, tri_opt)
-        triangles = triangulate_result['triangles'].tolist()
-        number_points = triangulate_result['vertices'].shape[0]
-        points = [vmd.Node2D(*triangulate_result['vertices'][i, :]) for i in range(number_points)]
-        return vmd.DisplayMesh2D(points, triangles=triangles)
+        mesh = vmd.Mesh2D(triangulate_result['vertices'], triangles=triangulate_result['triangles'])
+        return mesh
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25,
                                   include_edge_points: bool = True):
@@ -3642,16 +3639,16 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
                     if not found_flat_ear:
                         print('Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
-                        return vmd.DisplayMesh2D(nodes, triangles)
+                        return vmd.Mesh2D(nodes, triangles)
                 else:
-                    return vmd.DisplayMesh2D(nodes, triangles)
+                    return vmd.Mesh2D(nodes, triangles)
 
         if len(remaining_points) == 3:
             triangles.append((initial_point_to_index[remaining_points[0]],
                               initial_point_to_index[remaining_points[1]],
                               initial_point_to_index[remaining_points[2]]))
 
-        return vmd.DisplayMesh2D(nodes, triangles)
+        return vmd.Mesh2D(nodes, triangles)
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         """Simplify polygon."""

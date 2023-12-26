@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: Consider overlaping curves also as periodic.
 - BSplineCurve.simplify: handles exceptions.
 - Arc2D: plot_data
+- BSplineCurve: decompose into béziers patches of same degree.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
@@ -48,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: point_belongs
 
 #### primitives3d.py
-- RevolvedProfile: 
+- RevolvedProfile: to_dict
 
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
@@ -74,6 +75,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### surfaces.py
 - contour3d_to_2d/contour2d_to_3d: Add option to return also a dictionary with the correspondence between the parametric and 3D primitives.
+
+#### display.py
+- refactor DisplayMesh
 
 ### Changed
 - Edge.split_between_two_points -> trim
