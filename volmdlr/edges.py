@@ -1340,8 +1340,6 @@ class BSplineCurve(Edge):
 
         :return: the given point when the BSplineCurve3D is evaluated at the u value.
         """
-        if self.length() == 0.0:
-            print(True)
         u = max(min(abscissa / self.length(), 1.), 0.0)
         u_min, u_max = self.domain
         if u_min != 0 or u_max != 1.0:

@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Face3D: point_belongs
 
 #### primitives3d.py
-- RevolvedProfile: 
+- RevolvedProfile: to_dict
 
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
