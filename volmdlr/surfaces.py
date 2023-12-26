@@ -3757,16 +3757,22 @@ class ToroidalSurface3D(PeriodicalSurface):
         arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
         intersection_points = []
         for i, arc in enumerate(arcs):
-            print('i :', i)
-            if i == 288:
-                print(True)
+            # print('i :', i)
+            # if i == 497:
+            #     print(True)
             intersections = toroidal_surface.circle_intersections(arc)
-            intersection_points.extend(intersections)
+            for intersection in intersections:
+                if not intersection.in_list(intersection_points):
+                    intersection_points.append(intersection)
+            # intersection_points.extend(inter for inter in intersections if not inter.is_list(intersection_points))
 
         arcs = toroidal_surface._torus_arcs(300) + toroidal_surface._torus_circle_generatrices_xy(100)
         for arc in arcs:
             intersections = self.circle_intersections(arc)
-            intersection_points.extend(inter for inter in intersections if inter not in intersection_points)
+            # intersection_points.extend(inter for inter in intersections if inter not in intersection_points)
+            for intersection in intersections:
+                if not intersection.in_list(intersection_points):
+                    intersection_points.append(intersection)
         return intersection_points
 
     def toroidalsurface_intersections_profile_profile(self, toroidal_surface):
@@ -3812,23 +3818,81 @@ class ToroidalSurface3D(PeriodicalSurface):
                 circle = curves.Circle3D(volmdlr.Frame3D(center, vector,
                                                          self.frame.w, vector.cross(self.frame.w)), self.minor_radius)
                 intersections.append(circle)
+            else:
+                circle_bigr1 = curves.Circle3D(self.frame, self.major_radius + self.minor_radius)
+                circle_bigr2 = curves.Circle3D(toroidal_surface.frame,
+                                               toroidal_surface.major_radius + toroidal_surface.minor_radius)
+                circle_intersections = circle_bigr1.circle_intersections(circle_bigr2)
+                if circle_intersections:
+                    center = (circle_intersections[0] + circle_intersections[1]) / 2
+                    vector = (center - self.frame.origin).unit_vector()
+                    plane = Plane3D(volmdlr.Frame3D(center, self.frame.w, vector.cross(self.frame.w), vector))
+                    intersections = self.plane_intersections(plane)
+                # print(True)
                 # plane = Plane3D(volmdlr.Frame3D(center, self.frame.w, vector.cross(self.frame.w), vector))
                 # intersections = self.plane_intersections(plane)
                 # return intersections + [circle]
+        # if abs(self.major_radius - toroidal_surface.major_radius) < 1e-6:
+        #     circle_r1 = curves.Circle3D(self.frame, self.minor_radius)
+        #     circle_r2 = curves.Circle3D(toroidal_surface.frame, toroidal_surface.minor_radius)
+        #     circle_intersections = circle_r1.circle_intersections(circle_r2)
+        #     for intersection in circle_intersections:
+        #         x_comp, y_comp, _ = intersection
+        #         cos_s = x_comp / self.minor_radius
+        #         sin_s = y_comp / self.minor_radius
+        #         if toroidal_surface.frame.u.z != 0.0 and toroidal_surface.frame.v.z != 0.0:
+        #             sin_t = (y_comp - toroidal_surface.frame.origin.y +
+        #                      toroidal_surface.frame.origin.z * toroidal_surface.frame.u.y / toroidal_surface.frame.u.z
+        #                      ) * (1 / (
+        #                         (toroidal_surface.frame.v.y - (toroidal_surface.frame.v.z / toroidal_surface.frame.u.z)
+        #                          ) * toroidal_surface.minor_radius))
+        #             cos_t = -toroidal_surface.frame.origin.z / (
+        #                         toroidal_surface.minor_radius * toroidal_surface.frame.u.z
+        #                         ) - sin_t * (
+        #                             toroidal_surface.frame.v.z / toroidal_surface.frame.u.z)
+        #         elif toroidal_surface.frame.origin.z == 0:
+        #             sin_t = (y_comp - toroidal_surface.frame.origin.y
+        #                      ) * (1 / (toroidal_surface.frame.v.y * toroidal_surface.minor_radius))
+        #             cos_t = math.cos(math.asin(sin_t))
+        #         else:
+        #             raise NotImplementedError
+        #         for sign in [1, -1]:
+        #
+        #             normal1 = volmdlr.Vector3D(-(self.minor_radius / self.major_radius) * sin_s,
+        #                                        (self.minor_radius / self.major_radius) * cos_s,
+        #                                        sign * math.sqrt(1 - (self.minor_radius / self.major_radius)**2)
+        #                                        ).unit_vector()
+        #             normal2 = -(toroidal_surface.minor_radius / toroidal_surface.major_radius
+        #                         ) * sin_t * toroidal_surface.frame.u + (
+        #                               toroidal_surface.minor_radius / toroidal_surface.major_radius
+        #                       ) * cos_t * toroidal_surface.frame.v + sign * math.sqrt(
+        #                 1 - (toroidal_surface.minor_radius / toroidal_surface.major_radius) ** 2
+        #             ) * toroidal_surface.frame.w
+        #             if abs(abs(normal1.dot(normal2.unit_vector())) - 1.0) < 1e-6:
+        #                 intersections.append(curves.Circle3D.from_center_normal(
+        #                     intersection, normal1, self.major_radius))
+        #         vector = (intersection - self.frame.origin).unit_vector()
+        #         plane = Plane3D(volmdlr.Frame3D(intersection, self.frame.w, vector.cross(self.frame.w), vector))
+        #         intersections.extend(self.plane_intersections(plane))
+        #         if intersections:
+        #             return intersections
         intersection_points = self._toroidal_intersection_points(toroidal_surface)
         if not intersection_points:
             return intersections
         if intersections:
-            intersection_points = [point for point in intersection_points if not intersections[0].point_belongs(point)]
+            # for point in intersection_points:
+            #     if any(intersection.point_belongs(point) for intersection in intersections):
+            intersection_points = [point for point in intersection_points if not any(
+                intersection.point_belongs(point) for intersection in intersections)]
         inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
-        curves_ = []
+        # curves_ = []
         for list_points in inters_points:
             bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
             if isinstance(bspline.simplify, edges.FullArc3D):
-                curves_.append(bspline.simplify)
+                intersections.append(bspline.simplify)
                 continue
-            curves_.append(bspline)
-        return curves_
+            intersections.append(bspline)
+        return intersections
 
 
 class ConicalSurface3D(PeriodicalSurface):

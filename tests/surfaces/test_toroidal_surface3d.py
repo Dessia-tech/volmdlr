@@ -277,7 +277,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         plane_intersections = toroidal_surface.plane_intersections(plane6)
         self.assertFalse(plane_intersections)
         toroidalsurface, plane = DessiaObject.load_from_file(
-            '/Users/wirajandasilva/Downloads/test_toroidalsurface_plane3d_intersections_211223.json').primitives
+            os.path.join(folder, 'test_toroidalsurface_plane3d_intersections_211223.json')).primitives
         intersections = toroidalsurface.surface_intersections(plane)
         self.assertEqual(len(intersections), 2)
         self.assertTrue(intersections[0].center.is_close(volmdlr.Point3D(3.0, 0.0, 0.0)))
@@ -332,6 +332,12 @@ class TestToroidalSurface3D(unittest.TestCase):
         expected_point2 = volmdlr.Point3D(0.161552737537, 1.544982741074, -0.894736842105)
         self.assertTrue(circle_intersections[0].is_close(expected_point1))
         self.assertTrue(circle_intersections[1].is_close(expected_point2))
+        torus, circle = DessiaObject.from_json(os.path.join(folder,
+            'test_toroidalsurface_circle_intersections211223_2.json')).primitives
+        circle_intersections = torus.circle_intersections(circle)
+        self.assertEqual(len(circle_intersections), 2)
+        self.assertTrue(circle_intersections[0].is_close(volmdlr.Point3D(2.0000006438528177, -0.5135128860482583, 0.9978935668376178)))
+        self.assertTrue(circle_intersections[1].is_close(volmdlr.Point3D(2.0000002080103414, -0.5135127741429286, -0.9978935960903826)))
 
     def test_ellipse_intersections(self):
         toroidal_surface = surfaces.ToroidalSurface3D(volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, 0.0),

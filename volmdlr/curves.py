@@ -1451,7 +1451,12 @@ class Circle2D(CircleMixin, ClosedCurve):
         :return: A list of intersection points between the two circles.
         :rtype: List[Point2D].
         """
-        return volmdlr_intersections.get_circle_intersections(self, circle)
+        circle_intersections = volmdlr_intersections.get_circle_intersections(self, circle)
+        valid_intersections = []
+        for intersection in circle_intersections:
+            if not intersection.in_list(valid_intersections):
+                valid_intersections.append(intersection)
+        return valid_intersections
 
     def arc_intersections(self, arc2d: 'volmdlr.edges.Arc2D', abs_tol: float = 1e-6):
         """
