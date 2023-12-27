@@ -152,10 +152,9 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
                 + 2 * radius * math.sin(x[1]) * w_param.dot(v_param) +
                 2 * radius * math.cos(x[1]) * w_param.dot(k_param)
                 + math.sin(2 * x[1]) * v_param.dot(k_param) * radius ** 2)
-    circle_point = circle3d.point_at_abscissa(0.0)
     radius = circle3d.radius
     linseg_direction_vector = linesegment3d.direction_vector()
-    vector_point_origin = circle_point - circle3d.frame.origin
+    vector_point_origin = circle3d.point_at_abscissa(0.0) - circle3d.frame.origin
     vector_point_origin = vector_point_origin.unit_vector()
     w = circle3d.frame.origin - linesegment3d.start
     v = circle3d.frame.w.cross(vector_point_origin)
@@ -172,8 +171,7 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
     for couple in results[1:]:
         ptest1 = linesegment3d.point_at_abscissa(couple.x[0] * linesegment3d.length())
         ptest2 = circle3d.point_at_abscissa(couple.x[1] * circle3d.radius)
-        dtest = ptest1.point_distance(ptest2)
-        if dtest < v.dot(v):
+        if ptest1.point_distance(ptest2) < v.dot(v):
             point1, point2 = ptest1, ptest2
 
     return point1, point2
@@ -217,12 +215,19 @@ def get_point_distance_to_edge(edge, point, start, end):
     :return: distance to edge.
     """
     best_distance = math.inf
-    abscissa1 = 0
-    abscissa2 = edge.length()
+    if start != end:
+        if start.is_close(end):
+            if not edge.periodic:
+                return point.point_distance(start)
+            number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
+        else:
+            number_points = 10 if abs(edge.abscissa(start) - edge.abscissa(end)) > 5e-6 else 2
+        # number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
+    elif edge.periodic:
+        number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
     distance = best_distance
     point1_ = start
     point2_ = end
-    number_points = 10 if abs(abscissa2 - abscissa1) > 5e-6 else 2
     linesegment_class_ = getattr(volmdlr.edges, 'LineSegment' + edge.__class__.__name__[-2:])
     while True:
         discretized_points_between_1_2 = edge.local_discretization(point1_, point2_, number_points)
@@ -241,8 +246,8 @@ def get_point_distance_to_edge(edge, point, start, end):
         if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-7):
             break
         best_distance = distance
-        if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
-            break
+        # if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
+        #     break
     return distance
 
 
@@ -330,7 +335,8 @@ def separate_points_by_closeness(points):
     points_ = np.array([[*point] for point in points])
 
     # Apply DBSCAN clustering with a small epsilon to separate close points
-    eps = 0.25
+    distances = sorted(np.linalg.norm(points_[1:] - points_[0], axis=1))
+    eps = max(min(np.mean(distances[:int(len(points)*0.1)]) / 2, 0.25), 0.02)
     dbscan = DBSCAN(eps=eps, min_samples=1)
     labels = dbscan.fit_predict(points_)
 

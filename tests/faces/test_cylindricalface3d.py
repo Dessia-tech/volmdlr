@@ -37,9 +37,9 @@ class TestCylindricalFace3D(unittest.TestCase):
         triangulation = self.cylindrical_face2.triangulation()
         # ax = self.cylindrical_surface2.plot()
         for i1, i2, i3 in triangulation.triangles:
-            point1 = triangulation.points[i1]
-            point2 = triangulation.points[i2]
-            point3 = triangulation.points[i3]
+            point1 = volmdlr.Point3D(*triangulation.vertices[i1])
+            point2 = volmdlr.Point3D(*triangulation.vertices[i2])
+            point3 = volmdlr.Point3D(*triangulation.vertices[i3])
 
             triangle = faces.Triangle3D(point1, point2, point3)
             # triangle.plot(ax=ax)
@@ -152,16 +152,17 @@ class TestCylindricalFace3D(unittest.TestCase):
         self.assertAlmostEqual(plane_intersections[0].length(), 0.10485331158773475)
 
     def test_conicalface_intersections(self):
-        expected_results = [[[3.710301041350294], [2.754670182062095, 0.7935213268610652],
-                             [2.07512665961546,  0.4913309270404711, 1.0377142604170024, 0.5464208760911483],
+        expected_results = [[[3.710301041350294],
+                             [2.754670182062095, 0.7935213268610652],
+                             [2.07512665961546, 0.4913309270404711, 1.0377142604170024, 0.5464208760911483],
                              [2.5645345026338227, 2.564534502633822],
                              [0.5440554687692009, 0.04555235973550468, 1.278230779082318, 0.2561661169269733]],
-                            [[0.9041806131078493], [2.754670182062095, 0.7935213268610652],
+                            [[0.9041806131078493, 1.4108685266468648], [2.754670182062095, 0.7935213268610652],
                              [0.9945100038459505, 0.011885884100618874, 0.4913309270404711, 1.0377142604170024,
                               0.5464208760911483], [0.28956385943908486, 0.9392209648068304, 2.564534502633822],
                              [0.2798809794245967, 0.04555235973550447, 0.7579656358689125]],
-                            [[0.856042897691951, 0.3222289774014608],
-                             [0.6888878304143007, 0.6888878304143002, 0.19841549441745723, 0.19841549441745734],
+                            [[0.856042897691951, 0.3222289774014608], [0.6888878304143007, 0.6888878304143002,
+                              0.19841549441745723, 0.19841549441745734],
                              [0.4913309270404711, 1.0377142604170024, 0.5464208760911483],
                              [2.564534502633822],
                              []]]

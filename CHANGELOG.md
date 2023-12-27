@@ -5,6 +5,91 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## v0.16.0 [future]
+
+### New Features
+- added missing hash and eq methods to several classes
+- ArcEllipse2D/3D: get_shared_section and delete_shared_section.
+- ConicalSurface3D: conicalsurface_intersections
+
+#### faces.py
+- Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
+- grid_points: returns a grid of points inside the surface2d of the face.
+
+#### surfaces.py
+- CylindricalSurface3D: parametric_points_to_3d
+- ToroidalSurface3D: parametric_points_to_3d
+- SphericalSurface3D: parametric_points_to_3d
+- ConicalSurface3D: parametric_points_to_3d
+- ExtrusionSurface3D: parametric_points_to_3d
+- RevolutionSurface3D: parametric_points_to_3d
+- Plane3D: parametric_points_to_3d
+- BSplineSurface3D: parametric_points_to_3d
+- BSplineSurface3D: decompose
+
+### Fixed
+- review hash and eq methods
+- fix pylint.
+- Add some missing docstrings.
+
+#### curves.py
+- Ellipse2D/3D: mutualize length method.
+- Circle2D: abscissa method - consider frame direction during rotation.
+- Line: is_close.
+- Circle3D: Line intersections
+
+#### edges.py
+- BSplineCurve: handles exceptions in simplify method.
+- BSplineCurve: Consider overlaping curves also as periodic.
+- BSplineCurve.simplify: handles exceptions.
+- Arc2D: plot_data
+- LineSegment3D: planar_revolution.
+- BSplineCurve: decompose into béziers patches of same degree.
+
+#### faces.py
+- Face3D: enhance from_contours3d.
+- Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
+- Face3D: point_belongs
+
+#### primitives3d.py
+- RevolvedProfile: to_dict
+
+#### surface.py
+- PeriodicalSurface: handles exceptions in connect_contours method.
+- ExtrusionSurface3D: fullarcellipse3d_to_2d
+- ExtrusionSurface3D: generalization of the _repair_points_order method to repair the order of parametric points of edges after transformation.
+- ToroidalSurface3D: increases precision of point3d_to_2d.
+- Surface3D: repeair_primitives_periodicity. Treat special case on surfaces with singularities.
+- ToroidalSurface3D: plane_intersections.
+
+#### wires.py
+- Contour2D: cut_by_line.
+- ContourMixin: is_ordered().
+
+
+#### step.py
+- Step: uses Regular Expressions to improve the performance.
+
+#### core.py
+- Add missing dark_mode parameter in save_babylonjs_to_file method.
+
+### Refactor
+- Big refactor to improve and simplify complex and long methods in various modules. 
+
+#### surfaces.py
+- contour3d_to_2d/contour2d_to_3d: Add option to return also a dictionary with the correspondence between the parametric and 3D primitives.
+
+#### display.py
+- refactor DisplayMesh
+
+### Changed
+- Edge.split_between_two_points -> trim
+- surfaces.py: point_on_surface -> point_belongs
+
+### Unittests
+- 
+
 ## 0.15.2
 
 ### build
@@ -17,7 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use pip install instead of setuptools install in order to avoid .egg being generating and preventing PyPI upload
 
 
-## v0.15.0 [future]
+## v0.15.0
 
 ### New Features
 
@@ -40,6 +125,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### edges.py
 - BsplineCurve3D: circle_intersections.
 - ArcEllipse3D/FullArcEllipse3D: line_intersections.
+
+#### faces.py
+- Face3D: get_face_polygons
 
 #### curves.py
 - Circle3D: point_distance.

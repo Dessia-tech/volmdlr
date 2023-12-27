@@ -3,6 +3,7 @@ import os
 import volmdlr
 import volmdlr.edges as vme
 from dessia_common.core import DessiaObject
+from geomdl.operations import decompose_curve
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'bsplinecurve_objects')
 
@@ -37,10 +38,9 @@ class TestBSplineCurve3D(unittest.TestCase):
         bspline, point1, point2 = DessiaObject.load_from_file(
             os.path.join(folder, "test_bspline_trim271123.json")).primitives
         trim = bspline.trim(point1, point2, True)
-        self.assertAlmostEqual(trim.length(), 14.606177552397396)
+        self.assertAlmostEqual(trim.length(), 14.615193887786996)
         trim = bspline.trim(point2, point1, True)
         self.assertAlmostEqual(trim.length(), 2.5461209947115186)
-
 
     def test_from_step(self):
         obj_list = volmdlr.core.VolumeModel.load_from_file(
@@ -88,6 +88,16 @@ class TestBSplineCurve3D(unittest.TestCase):
         self.assertTrue(bspline.end.is_close(bspline.point_at_abscissa(bspline.length())))
         self.assertTrue(bspline.point_at_abscissa(0.5 * bspline.length()).is_close(
             volmdlr.Point3D(0.3429479995510001, -0.44040811419137504, 0.01328024447265125)))
+
+    def test_decompose(self):
+        bspline = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "spiral_bsplinecurve.json"))
+        bezier_patches, params = bspline.decompose(return_params=True)
+        self.assertEqual(len(bezier_patches), 37)
+        for param, patch in zip(params, bezier_patches):
+            self.assertTrue(bspline.evaluate_single(param[0]).is_close(patch.start))
+            self.assertTrue(bspline.evaluate_single(param[1]).is_close(patch.end))
+        bezier_patches= bspline.decompose()
+        self.assertEqual(len(bezier_patches), 37)
 
 
 if __name__ == '__main__':
