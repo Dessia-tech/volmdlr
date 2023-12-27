@@ -1068,6 +1068,11 @@ class BSplineCurve(Edge):
         """
         return self.knotvector[self.degree], self.knotvector[-(self.degree + 1)]
 
+    def copy(self, *args, **kwargs):
+        """Returns a copy of the instance."""
+        return self.__class__(self.degree, self.control_points, self.knot_multiplicities,
+                              self.knots, name=self.name + "_copy")
+
     def to_geomdl(self):
         """Converts the BSpline curve into a geomdl curve."""
         if self.weights is None:

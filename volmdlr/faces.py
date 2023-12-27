@@ -3312,12 +3312,52 @@ class RevolutionFace3D(Face3D):
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
         angle_resolution = 10
-        xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
-        delta_x = xmax - xmin
-        number_points_x = math.ceil(delta_x / math.radians(angle_resolution))
         number_points_y = self.get_edge_discretization_size(self.surface3d.edge)
 
-        return number_points_x, number_points_y
+        return angle_resolution, number_points_y
+
+    def grid_points(self, grid_size, polygon_data=None):
+        """
+        Parametric tesselation points.
+        """
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
+        else:
+            outer_polygon, inner_polygons = self.get_face_polygons()
+        u, v, u_size, _ = self._get_grid_axis(outer_polygon, grid_size)
+        if not u or not v:
+            return []
+        if inner_polygons:
+            points = []
+            points_indexes_map = {}
+            for j, v_j in enumerate(v):
+                for i in range(u_size):
+                    if (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0):
+                        points.append((u[i], v_j))
+                        points_indexes_map[(i, j)] = len(points) - 1
+            points = np.array(points, dtype=np.float64)
+            points = update_face_grid_points_with_inner_polygons(inner_polygons, [points, u, v, points_indexes_map])
+        else:
+            points = np.array([(u[i], v_j) for j, v_j in enumerate(v) for i in range(u_size) if
+                              (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0)], dtype=np.float64)
+
+        points = self._update_grid_points_with_outer_polygon(outer_polygon, points)
+
+        return points
+
+    @staticmethod
+    def _get_grid_axis(outer_polygon, grid_size):
+        """Helper function to grid_points."""
+        u_min, u_max, v_min, v_max = outer_polygon.bounding_rectangle.bounds()
+        angle_resolution, number_points_v = grid_size
+        delta_x = u_max - u_min
+        number_points_u = math.ceil(delta_x / math.radians(angle_resolution))
+        u_step = (u_max - u_min) / (number_points_u - 1) if number_points_u > 1 else (u_max - u_min)
+        v_step = (v_max - v_min) / (number_points_v - 1) if number_points_v > 1 else (v_max - v_min)
+        u = [u_min + i * u_step for i in range(number_points_u)]
+        v = [v_min + i * v_step for i in range(number_points_v)]
+
+        return u, v, number_points_u, number_points_v
 
     @classmethod
     def from_surface_rectangular_cut(
