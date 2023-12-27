@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.15.2
 
+- limit plot-data version to < 0.21.0
+
+## 0.15.2
+
 ### build
 - fix build test before upload to pypi
 
