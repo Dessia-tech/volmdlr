@@ -7,6 +7,7 @@ import math
 
 import volmdlr as vm
 import volmdlr.wires as vmw
+import volmdlr.step as vm_step
 from volmdlr.primitives2d import (ClosedRoundedLineSegments2D,
                                   OpenedRoundedLineSegments2D)
 from volmdlr.primitives3d import RevolvedProfile
@@ -114,6 +115,7 @@ conical_rim = RevolvedProfile(frame2, rim_contour, 0.5*vm.X3D.to_point(), vm.X3D
 
 
 model = vm.core.VolumeModel([profile1, profile5, conical_rim])
+model.check_platform()
 
 translated_model = model.translation(vm.Point3D.random(0, 1, 0, 1, 0, 1))
 turned_model = model.rotation(0.3*vm.X3D.to_point(), vm.Z3D, 0.4)
@@ -123,6 +125,9 @@ model.babylonjs()
 # translated_model.babylonjs()
 # turned_model.babylonjs()
 model.to_step('revolved_profile.step')
+step = vm_step.Step.from_file("revolved_profile.step")
+model_step_export = step.to_volume_model()
+model_step_export.babylonjs()
 
 # Checking face triangulation
 planar_face = profile1.faces[1]
