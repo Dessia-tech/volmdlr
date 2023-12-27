@@ -4798,7 +4798,7 @@ class LineSegment3D(LineSegment):
         if self.point_belongs(line_intersection):
             return self._helper_intersecting_axis_plane_revolution(surface, distance_1, distance_2, angle)
         smaller_r, bigger_r = sorted([distance_1, distance_2])
-        if angle == volmdlr.TWO_PI:
+        if math.isclose(angle, volmdlr.TWO_PI, abs_tol=1e-6):
             return self._helper_plane_revolution_two_circles(surface, bigger_r, smaller_r)
         return self._helper_plane_revolution_arcs_and_lines(surface, bigger_r, smaller_r, angle)
 
