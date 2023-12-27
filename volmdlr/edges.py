@@ -20,7 +20,7 @@ import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares
 from geomdl import NURBS, BSpline
 
-from volmdlr.nurbs.operations import split_curve
+from volmdlr.nurbs.operations import split_curve, decompose_curve
 from volmdlr.nurbs.core import evaluate_curve, derivatives_curve
 from volmdlr.nurbs import fitting
 import volmdlr.nurbs.helpers as nurbs_helpers
@@ -837,10 +837,9 @@ class LineSegment(Edge):
         line = self.line
         content, line_id = line.to_step(current_id)
 
-        current_id = line_id + 1
-        start_content, start_id = self.start.to_step(current_id, vertex=True)
-        current_id = start_id + 1
-        end_content, end_id = self.end.to_step(current_id + 1, vertex=True)
+        start_content, start_id = self.start.to_step(line_id, vertex=True)
+
+        end_content, end_id = self.end.to_step(start_id, vertex=True)
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{line_id},.T.);\n"
@@ -1089,6 +1088,15 @@ class BSplineCurve(Edge):
         dict_['weights'] = self.weights
         return dict_
 
+    def decompose(self, return_params: bool = False):
+        """
+        Decomposes the curve into Bézier curve segments of the same degree.
+
+        :return: a list of Bezier segments
+        :rtype: list
+        """
+        return decompose_curve(self, return_params)
+
     def evaluate(self, **kwargs):
         """
         Evaluates the curve.
@@ -1192,7 +1200,7 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if split_point.is_close(self.end, tol):
             return [self.copy(), None]
-        parameter = round(self.point_to_parameter(split_point), 12)
+        parameter = round(self.point_to_parameter(split_point), 15)
         return split_curve(self, parameter)
 
     def get_reverse(self):
@@ -4785,7 +4793,7 @@ class LineSegment3D(LineSegment):
         if self.point_belongs(line_intersection):
             return self._helper_intersecting_axis_plane_revolution(surface, distance_1, distance_2, angle)
         smaller_r, bigger_r = sorted([distance_1, distance_2])
-        if angle == volmdlr.TWO_PI:
+        if math.isclose(angle, volmdlr.TWO_PI, abs_tol=1e-6):
             return self._helper_plane_revolution_two_circles(surface, bigger_r, smaller_r)
         return self._helper_plane_revolution_arcs_and_lines(surface, bigger_r, smaller_r, angle)
 
@@ -5048,11 +5056,8 @@ class BSplineCurve3D(BSplineCurve):
 
         knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
         knots = [float(i) for i in arguments[7][1:-1].split(",")]
-        knot_vector = []
-        for i, knot in enumerate(knots):
-            knot_vector.extend([knot] * knot_multiplicities[i])
 
-        if 9 in range(len(arguments)):
+        if len(arguments) >= 10:
             weight_data = [float(i) for i in arguments[9][1:-1].split(",")]
         else:
             weight_data = None
@@ -5240,7 +5245,7 @@ class BSplineCurve3D(BSplineCurve):
         if self.end.is_close(point3d):
             return self.reverse()
 
-        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
+        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 15))
         return curves[1]
 
     def cut_after(self, parameter: float):
@@ -5256,7 +5261,7 @@ class BSplineCurve3D(BSplineCurve):
             return self.reverse()
         if self.end.is_close(point3d):
             return self.copy()
-        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 7))
+        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 15))
         return curves[0]
 
     def insert_knot(self, knot: float, num: int = 1):
@@ -5924,7 +5929,7 @@ class Arc3D(ArcMixin, Edge):
 
         current_id = curve_id
         start_content, start_id = self.start.to_step(current_id, vertex=True)
-        end_content, end_id = self.end.to_step(start_id + 1, vertex=True)
+        end_content, end_id = self.end.to_step(start_id, vertex=True)
         content += start_content + end_content
         current_id = end_id + 1
         content += f"#{current_id} = EDGE_CURVE('{self.name}',#{start_id},#{end_id},#{curve_id},.T.);\n"
