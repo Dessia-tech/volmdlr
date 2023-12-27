@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## v0.16.0 [future]
 
 ### New Features
@@ -41,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve: Consider overlaping curves also as periodic.
 - BSplineCurve.simplify: handles exceptions.
 - Arc2D: plot_data
+- LineSegment3D: planar_revolution.
 - BSplineCurve: decompose into béziers patches of same degree.
 
 #### faces.py
@@ -85,6 +87,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 - 
+
+## 0.15.1
+
+### build
+
+- Use pip install instead of setuptools install in order to avoid .egg being generating and preventing PyPI upload
+
 
 ## v0.15.0
 
