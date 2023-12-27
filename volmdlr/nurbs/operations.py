@@ -502,7 +502,7 @@ def get_knots_and_multiplicities(knotvector):
     """
     Get knots and multiplicities from knotvector in u and v direction.
     """
-    knotvector = np.round(knotvector, decimals=17)
+    knotvector = np.round(knotvector, decimals=19)
     knots = np.unique(knotvector).tolist()
     multiplicities = [core.find_multiplicity(knot, knotvector) for knot in knots]
     return knots, multiplicities
@@ -558,3 +558,38 @@ def construct_split_surfaces(obj, knotvectors, direction, knot_span, insertion_c
 
     # Return the new surfaces
     return [surf1, surf2]
+
+
+def decompose_curve(obj, return_params: bool = False, **kwargs):
+    """
+    Decomposes the curve into Bézier curve segments of the same degree.
+
+    :param obj: Curve to be decomposed
+    :type obj: BSplineCurve
+    :param return_params: If True, returns the parameters from start and end of each Bézier patch with repect to the
+     input curve.
+    :type return_params: bool
+    :return: a list of Bezier segments
+    :rtype: list
+    """
+    multi_curve = []
+    curve = obj
+    knots = curve.knotvector[curve.degree + 1:-(curve.degree + 1)]
+    params = []
+    umin, umax = obj.domain
+    param_start = umin
+    while knots:
+        knot = knots[0]
+        curves = split_curve(curve, param=knot, **kwargs)
+        multi_curve.append(curves[0])
+        if return_params:
+            umax_0 = knot * (umax - param_start) + param_start
+            params.append((param_start, umax_0))
+            param_start = umax_0
+        curve = curves[1]
+        knots = curve.knotvector[curve.degree + 1:-(curve.degree + 1)]
+    multi_curve.append(curve)
+    if return_params:
+        params.append((param_start, umax))
+        return multi_curve, params
+    return multi_curve
