@@ -894,11 +894,20 @@ class BSplineCurve(Edge):
                  knots: List[float],
                  weights: List[float] = None,
                  name: str = ''):
-        self.ctrlpts = [[*point] for point in control_points]
+        self.ctrlpts = npy.array(control_points)
         self.degree = degree
         self.knots = nurbs_helpers.standardize_knot_vector(knots)
         self.knot_multiplicities = knot_multiplicities
         self.weights = weights
+        self.ctrlptsw = None
+        self.rational = False
+        if self.weights is not None:
+            self.weights = npy.array(weights, dtype=npy.float64)
+            self.rational = self.weights.any()
+            if self.rational:
+                self.ctrlptsw = npy.hstack((self.ctrlpts * self.weights[:, npy.newaxis], self.weights[:, npy.newaxis]))
+            else:
+                self.weights = None
 
         Edge.__init__(self, control_points[0], control_points[-1], name=name)
         self._simplified = None
@@ -906,35 +915,31 @@ class BSplineCurve(Edge):
         self._length = None
         self._eval_points = None
         self._knotvector = None
-        self.ctrlptsw = None
-        self.rational = False
         self._periodic = None
-        if self.weights:
-            self.rational = True
-            ctrlptsw = []
-            for point, w in zip(control_points, weights):
-                temp = [float(c * w) for c in point]
-                temp.append(float(w))
-                ctrlptsw.append(temp)
-            self.ctrlptsw = ctrlptsw
 
     def __hash__(self):
         """
         Return a hash value for the B-spline curve.
         """
-        return hash((tuple(self.control_points), self.degree, tuple(self.knots)))
+        control_points = tuple(tuple(point) for point in self.ctrlpts)
+        if self.weights is None:
+            return hash((control_points, self.degree, tuple(self.knot_multiplicities), tuple(self.knots)))
+        return hash((control_points, self.degree, tuple(self.knot_multiplicities),
+                     tuple(self.knots), tuple(self.weights)))
 
     def __eq__(self, other):
         """
         Return True if the other B-spline curve has the same control points, degree, and knot vector, False otherwise.
         """
         if isinstance(other, self.__class__) and self.rational == other.rational:
-            common_check = (self.control_points == other.control_points
-                            and self.degree == other.degree
-                            and self.knots == other.knots)
+            common_check = (
+                    tuple(tuple(point) for point in self.ctrlpts) == tuple(tuple(point) for point in other.ctrlpts)
+                    and self.degree == other.degree
+                    and tuple(self.knots) == tuple(other.knots)
+                    and tuple(self.knot_multiplicities) == tuple(other.knot_multiplicities))
             if self.weights is None:
                 return common_check
-            return common_check and self.weights == other.weights
+            return common_check and tuple(self.weights) == tuple(other.weights)
         return False
 
     def _data_eq(self, other_object):
@@ -986,16 +991,16 @@ class BSplineCurve(Edge):
         datadict = {
             "degree": self.degree,
             "knotvector": self.knotvector,
-            "size": len(self.ctrlpts),
+            "size": self.ctrlpts.shape[0],
             "sample_size": self.sample_size,
-            "rational": bool(self.weights),
+            "rational": not (self.weights is None),
             "dimension": 3 if self.__class__.__name__[-2:] == "3D" else 2,
             "precision": 18
         }
-        if self.weights:
-            datadict["control_points"] = tuple(self.ctrlptsw)
+        if self.weights is not None:
+            datadict["control_points"] = self.ctrlptsw
         else:
-            datadict["control_points"] = tuple(self.ctrlpts)
+            datadict["control_points"] = self.ctrlpts
         return datadict
 
     @property
@@ -1171,15 +1176,15 @@ class BSplineCurve(Edge):
         datadict = {
             "degree": self.degree,
             "knotvector": self.knotvector,
-            "size": len(self.ctrlpts),
+            "size": self.ctrlpts.shape[0],
             "sample_size": self.sample_size,
-            "rational": bool(self.weights),
+            "rational": True if self.weights is not None else False,
             "dimension": 3 if vector_name == "Vector3D" else 2,
         }
-        if self.weights:
-            datadict["control_points"] = tuple(self.ctrlptsw)
+        if self.weights is not None:
+            datadict["control_points"] = self.ctrlptsw
         else:
-            datadict["control_points"] = tuple(self.ctrlpts)
+            datadict["control_points"] = self.ctrlpts
         return [getattr(volmdlr, vector_name)(*point)
                 for point in derivatives_curve(datadict, u, order)]
 
