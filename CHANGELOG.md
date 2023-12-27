@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ellipse2D/3D: mutualize length method.
 - Circle2D: abscissa method - consider frame direction during rotation.
 - Line: is_close.
+- Circle3D: Line intersections
 
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
