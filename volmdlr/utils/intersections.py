@@ -23,10 +23,10 @@ def get_planar_circle3d_line_intersections(circle_3d, line, abs_tol: float = 1e-
     """
     if line.point1.is_close(circle_3d.center):
         point1 = line.point2
-        vec = line.point1 - line.point2
+        vec = (line.point1 - line.point2).unit_vector()
     else:
         point1 = line.point1
-        vec = line.point2 - line.point1
+        vec = (line.point2 - line.point1).unit_vector()
     quadratic_equation_a = vec.dot(vec)
     quadratic_equation_b = 2 * vec.dot(point1 - circle_3d.center)
     quadratic_equation_c = (
