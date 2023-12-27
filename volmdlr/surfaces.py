@@ -14,7 +14,7 @@ import triangle as triangle_lib
 
 from geomdl import NURBS, BSpline
 from scipy.linalg import lu_factor, lu_solve
-from scipy.optimize import least_squares, minimize
+from scipy.optimize import least_squares
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.typings import JsonSerializable

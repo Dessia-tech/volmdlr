@@ -1068,6 +1068,18 @@ class BSplineCurve(Edge):
         """
         return self.knotvector[self.degree], self.knotvector[-(self.degree + 1)]
 
+    def copy(self, deep: bool = True, **kwargs):
+        """
+        Returns a copy of the instance.
+
+        :param deep: If False, perform a shallow copy. If True, perform a deep copy.
+        """
+        if deep:
+            return self.__class__(self.degree, self.control_points.copy(), self.knot_multiplicities.copy(),
+                                  self.knots.copy(), name=self.name + "_copy")
+        return self.__class__(self.degree, self.control_points, self.knot_multiplicities,
+                              self.knots, name=self.name + "_copy")
+
     def to_geomdl(self):
         """Converts the BSpline curve into a geomdl curve."""
         if self.weights is None:
@@ -1178,7 +1190,7 @@ class BSplineCurve(Edge):
             "knotvector": self.knotvector,
             "size": self.ctrlpts.shape[0],
             "sample_size": self.sample_size,
-            "rational": True if self.weights is not None else False,
+            "rational": not (self.weights is None),
             "dimension": 3 if vector_name == "Vector3D" else 2,
         }
         if self.weights is not None:
