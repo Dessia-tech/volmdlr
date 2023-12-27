@@ -3929,7 +3929,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             # for point in intersection_points:
             #     if any(intersection.point_belongs(point) for intersection in intersections):
             intersection_points = [point for point in intersection_points if not any(
-                intersection.point_belongs(point) for intersection in intersections)]
+                intersection.point_belongs(point, 1e-5) for intersection in intersections)]
         inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
         # curves_ = []
         for list_points in inters_points:
