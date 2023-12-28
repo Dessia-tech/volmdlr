@@ -83,35 +83,35 @@ steps:
       path: /root/.cache/pip
 
 
-- name: generate sdist
-  image: python:3.9
-  when:
-    branch: master
-  commands:
-  - git fetch --tags
-  - pip install .
-  - python setup.py sdist
-
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
-
-- name: generate bdist_wheel
-  image: python:3.9
-  when:
-      branch: master
-
-  commands:
-  - git fetch --tags
-  - pip install wheel
-  - pip install .
-  - python setup.py bdist_wheel
-
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
+#- name: generate sdist
+#  image: python:3.9
+#  when:
+#    branch: master
+#  commands:
+#  - git fetch --tags
+#  - pip install .
+#  - python setup.py sdist
+#
+#  volumes:
+#    # Mount pip cache from host
+#    - name: pip_cache
+#      path: /root/.cache/pip
+#
+#- name: generate bdist_wheel
+#  image: python:3.9
+#  when:
+#      branch: master
+#
+#  commands:
+#  - git fetch --tags
+#  - pip install wheel
+#  - pip install .
+#  - python setup.py bdist_wheel
+#
+#  volumes:
+#    # Mount pip cache from host
+#    - name: pip_cache
+#      path: /root/.cache/pip
 
 - name: check code complexity
   image: dessia/python-ci:3.9
@@ -154,15 +154,15 @@ steps:
 
 
 
-- name: upload to pypi
-  image: plugins/pypi
-  when:
-      event: tag
-  settings:
-    skip_build: True
-    username: dessia_tech
-    password:
-        from_secret: pypi_password
+#- name: upload to pypi
+#  image: plugins/pypi
+#  when:
+#      event: tag
+#  settings:
+#    skip_build: True
+#    username: dessia_tech
+#    password:
+#        from_secret: pypi_password
 
 - name: upload_doc_master
   image: appleboy/drone-scp
