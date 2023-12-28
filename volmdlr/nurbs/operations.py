@@ -503,7 +503,7 @@ def extract_surface_curve_u(obj, param, curve_class, **kwargs):
     ctrlpts = insert_control_points_surface_u(obj, param, insertion_count, check_num=False)
 
     ctrlpts2d = np.reshape(ctrlpts, (obj.nb_u + insertion_count, obj.nb_v, -1))
-    # takes the second part of the splitted surface for simplicity
+    # takes the second part of the split surface for simplicity
     surf2_ctrlpts = ctrlpts2d_to_ctrlpts(ctrlpts2d[knot_span + insertion_count - 1:])
     weights = None
     if obj.rational:
