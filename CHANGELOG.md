@@ -90,6 +90,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Unittests
 - 
 
+## 0.15.2
+
+### build
+- fix build test before upload to pypi
+
 ## 0.15.1
 
 ### build
