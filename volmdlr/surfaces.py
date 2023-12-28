@@ -27,7 +27,7 @@ import volmdlr.utils.intersections as vm_utils_intersections
 import volmdlr.utils.parametric as vm_parametric
 from volmdlr import display, edges, grid, wires, curves
 from volmdlr.core import EdgeStyle
-from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
+from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
 from volmdlr.nurbs.operations import (split_surface_u, split_surface_v, decompose_surface,
                                       extract_surface_curve_u, extract_surface_curve_v)
