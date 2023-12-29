@@ -2445,7 +2445,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         u_values = points[:, 0]
         v_values = points[:, 1]
 
-        x_component =  npy.cos(u_values) * x
+        x_component = npy.cos(u_values) * x
         y_component = npy.sin(u_values) * y
         z_component = v_values * z
 
@@ -6513,7 +6513,7 @@ class BSplineSurface3D(Surface3D):
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
                  weights: List[float] = None, name: str = ''):
-        self.ctrlpts = npy.array(control_points)
+        self.ctrlpts = npy.asarray(control_points)
         self.degree_u = int(degree_u)
         self.degree_v = int(degree_v)
         self.nb_u = int(nb_u)
@@ -6529,7 +6529,7 @@ class BSplineSurface3D(Surface3D):
         self.rational = False
         if weights is not None:
             self.rational = True
-            self._weights = npy.array(weights, dtype=npy.float64)
+            self._weights = npy.asarray(weights, dtype=npy.float64)
 
         self._surface = None
         Surface3D.__init__(self, name=name)
@@ -7333,7 +7333,7 @@ class BSplineSurface3D(Surface3D):
         """
         Find the parameters (u, v) of a 3D point on the BSpline surface using a grid search algorithm.
         """
-        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
+        point3d_array = npy.asarray(point3d)
         u, v, u_start, u_stop, v_start, v_stop, delta_u, delta_v, sample_size_u, sample_size_v, minimal_distance = \
             self._point_inversion_initialization(point3d_array)
         if minimal_distance <= acceptable_distance:
@@ -7420,7 +7420,7 @@ class BSplineSurface3D(Surface3D):
         #                               vector.dot(derivatives[0][1]) / f_value])
         #     return f_value, jacobian
 
-        point3d_array = npy.array(point3d)
+        point3d_array = npy.asarray(point3d)
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         results = []
         distances = npy.linalg.norm(self.evalpts - point3d_array, axis=1)
@@ -7515,12 +7515,12 @@ class BSplineSurface3D(Surface3D):
         distance_vector = surface_derivatives[0][0] - point3d
         common_term = (surface_derivatives[1][0].dot(surface_derivatives[0][1]) +
                        distance_vector.dot(surface_derivatives[1][1]))
-        jacobian = npy.array(
+        jacobian = npy.asarray(
             [[surface_derivatives[1][0].norm() ** 2 + distance_vector.dot(surface_derivatives[2][0]),
               common_term],
              [common_term,
               surface_derivatives[0][1].norm() ** 2 + distance_vector.dot(surface_derivatives[0][2])]])
-        k = npy.array(
+        k = npy.asarray(
             [[-(distance_vector.dot(surface_derivatives[1][0]))], [-(distance_vector.dot(surface_derivatives[0][1]))]])
 
         return jacobian, k, surface_derivatives, distance_vector
@@ -7588,7 +7588,7 @@ class BSplineSurface3D(Surface3D):
         :return: Array of 3D points representing the BSpline surface in Cartesian coordinates.
         :rtype: numpy.ndarray[npy.float64]
         """
-        return npy.array([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
+        return npy.asarray([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
                          dtype=npy.float64)
 
     def linesegment2d_to_3d(self, linesegment2d):

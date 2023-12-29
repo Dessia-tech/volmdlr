@@ -14,6 +14,7 @@ import dessia_common.core as dc
 import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as npy
+from numpy.typing import NDArray
 import plot_data.core as plot_data
 import plot_data.colors
 import scipy.integrate as scipy_integrate
@@ -892,9 +893,9 @@ class BSplineCurve(Edge):
                  control_points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
                  knot_multiplicities: List[int],
                  knots: List[float],
-                 weights: List[float] = None,
+                 weights: Union[List[float], NDArray] = None,
                  name: str = ''):
-        self.ctrlpts = npy.array(control_points)
+        self.ctrlpts = npy.asarray(control_points)
         self.degree = degree
         self.knots = nurbs_helpers.standardize_knot_vector(knots)
         self.knot_multiplicities = knot_multiplicities
@@ -902,7 +903,7 @@ class BSplineCurve(Edge):
         self.ctrlptsw = None
         self.rational = False
         if self.weights is not None:
-            self.weights = npy.array(weights, dtype=npy.float64)
+            self.weights = npy.asarray(weights, dtype=npy.float64)
             self.rational = self.weights.any()
             if self.rational:
                 self.ctrlptsw = npy.hstack((self.ctrlpts * self.weights[:, npy.newaxis], self.weights[:, npy.newaxis]))
