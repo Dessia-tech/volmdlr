@@ -22,7 +22,7 @@ class TestBSplineCurve2D(unittest.TestCase):
     points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
     knotvector = nurbs_helpers.generate_knot_vector(degree, len(points))
     knot_multiplicity = [1] * len(knotvector)
-    bspline1 = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
+    bspline1 = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None)
     bspline2, bspline3 = bspline1.split(volmdlr.Point2D(1.5, 0.0))
     bspline4, bspline5 = bspline2.split(bspline2.point_at_abscissa(0.3 * bspline2.length()))
     bspline6 = bspline1.split(bspline1.point_at_abscissa(0.7 * bspline1.length()))[0]

@@ -6614,10 +6614,10 @@ class BSplineSurface3D(Surface3D):
             "knotvector": self.knotvector,
             "size": (self.nb_u, self.nb_v),
             "sample_size": self.sample_size,
-            "rational": not (self._weights is None),
+            "rational": self.rational,
             "precision": 18
         }
-        if self._weights is not None:
+        if self.rational:
             datadict["control_points"] = self.ctrlptsw
         else:
             datadict["control_points"] = self.ctrlpts
@@ -7342,10 +7342,10 @@ class BSplineSurface3D(Surface3D):
             "knotvector": self.knotvector,
             "size": (self.nb_u, self.nb_v),
             "sample_size": [sample_size_u, sample_size_v],
-            "rational": not (self._weights is None),
+            "rational": self.rational,
             "precision": 18
         }
-        if self._weights is not None:
+        if self.rational:
             datadict["control_points"] = self.ctrlptsw
         else:
             datadict["control_points"] = self.ctrlpts
@@ -7984,7 +7984,7 @@ class BSplineSurface3D(Surface3D):
         v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
         # knot_spec = arguments[12]
 
-        if 13 in range(len(arguments)):
+        if len(arguments) >= 14:
             weight_data = [
                 float(i) for i in
                 arguments[13][1:-1].replace("(", "").replace(")", "").split(",")
