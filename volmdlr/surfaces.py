@@ -7198,7 +7198,7 @@ class BSplineSurface3D(Surface3D):
                 blending_mat[i][j] = self.basis_functions_v(v_i, self.degree_v, j)
         return blending_mat
 
-    @lru_cache(maxsize=10)
+    @lru_cache(maxsize=6)
     def decompose(self, return_params: bool = False, **kwargs):
         """
         Decomposes the surface into Bezier surface patches of the same degree.
