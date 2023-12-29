@@ -17,7 +17,7 @@ import numpy as npy
 import plot_data.core as plot_data
 import plot_data.colors
 import scipy.integrate as scipy_integrate
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, minimize
 from geomdl import NURBS, BSpline
 
 from volmdlr.nurbs.operations import split_curve, decompose_curve
@@ -1363,9 +1363,10 @@ class BSplineCurve(Edge):
         if point.is_close(self.end):
             return self.length()
         length = self.length()
-        point_array = npy.array(list(point), dtype=npy.float64)
+        point_array = npy.asarray(point)
         distances = npy.linalg.norm(self._eval_points - point_array, axis=1)
-        index = npy.argmin(distances)
+        indexes = npy.argsort(distances)
+        index = indexes[0]
         u_min, u_max = self.domain
         u0 = u_min + index * (u_max - u_min) / (self.sample_size - 1)
         u, convergence_sucess = self.point_invertion(u0, point)
@@ -1378,19 +1379,13 @@ class BSplineCurve(Edge):
         def evaluate_point_distance(u_param):
             return (point - self.evaluate_single(u_param)).norm()
         results = [(abscissa, evaluate_point_distance(u))]
-        initial_condition_list = npy.linspace(u_min, u_max, 10).tolist()
-        initial_condition_list.sort(key=evaluate_point_distance)
+        initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
         for u0 in initial_condition_list:
-            u, convergence_sucess = self.point_invertion(u0, point)
-            if u_min != 0 or u_max != 1.0:
-                u = (u - u_min) / (u_max - u_min)
-            abscissa = u * length
-            if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
-                return float(abscissa)
-            dist = evaluate_point_distance(u)
-            if dist < tol:
-                return float(abscissa)
-            results.append((abscissa, dist))
+            res = minimize(evaluate_point_distance, npy.array(u0), bounds=[(u_min, u_max)])
+            if res.fun < 1e-6:
+                return float(res.x[0] * length)
+            abscissa = res.x[0] * length
+            results.append((abscissa, res.fun))
         result = min(results, key=lambda r: r[1])[0]
         return float(result)
 
