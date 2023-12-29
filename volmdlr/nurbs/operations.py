@@ -484,6 +484,8 @@ def extract_surface_curve_u(obj, param, curve_class, **kwargs):
     :type obj: volmdlr.surfaces.BSplineSurface3D
     :param param: parameter for the u-direction
     :type param: float
+    :param curve_class: BSpline curve object
+    :type curve_class: volmdlr.edges.BSplineCurve3D
     :return: The bspline curve at the specified parameter
     :rtype: volmdlr.surfaces.BSplineSurface3D
 
@@ -505,12 +507,11 @@ def extract_surface_curve_u(obj, param, curve_class, **kwargs):
 
     ctrlpts2d = np.reshape(ctrlpts, (obj.nb_u + insertion_count, obj.nb_v, -1))
     # takes the second part of the split surface for simplicity
-    surf2_ctrlpts = ctrlpts2d_to_ctrlpts(ctrlpts2d[knot_span + insertion_count - 1:])
+    surf2_ctrlpts = ctrlpts2d_to_ctrlpts(ctrlpts2d[knot_span + insertion_count - 1:])[:obj.nb_v]
     weights = None
     if obj.rational:
         surf2_ctrlpts, weights = separate_ctrlpts_weights(surf2_ctrlpts)
-        weights = weights[:obj.nb_v]
-    control_points = [volmdlr.Point3D(*point) for point in surf2_ctrlpts[:obj.nb_v]]
+    control_points = [volmdlr.Point3D(*point) for point in surf2_ctrlpts]
 
     return curve_class(obj.degree_u, control_points, obj.u_multiplicities, obj.u_knots, weights)
 
@@ -529,6 +530,8 @@ def extract_surface_curve_v(obj, param, curve_class, **kwargs):
     :type obj: volmdlr.surfaces.BSplineSurface3D
     :param param: parameter for the u-direction
     :type param: float
+    :param curve_class: BSpline curve object
+    :type curve_class: volmdlr.edges.BSplineCurve3D
     :return: The bspline curve at the specified parameter
     :rtype: volmdlr.surfaces.BSplineSurface3D
 
@@ -549,16 +552,13 @@ def extract_surface_curve_v(obj, param, curve_class, **kwargs):
     ctrlpts = insert_control_points_surface_v(obj, param, insertion_count, check_num=False)
     new_nb_v = obj.nb_v + insertion_count
     ctrlpts2d = np.reshape(ctrlpts, (obj.nb_u, new_nb_v, -1))
-    surf2_ctrlpts = []
-    for v_row in ctrlpts2d:
-        temp = v_row[knot_span + insertion_count - 1:]
-        surf2_ctrlpts.extend(temp)
-    surf2_nb_v = new_nb_v - (knot_span + insertion_count - 1)
+    # first slicing ([:, knot_span + insertion_count - 1:, :]) takes the control points of the second surface
+    # second slicing ([:, 0, :]) takes only the first control point of each row
+    surf2_ctrlpts = ctrlpts2d[:, knot_span + insertion_count - 1:, :][:, 0, :]
     weights = None
     if obj.rational:
         surf2_ctrlpts, weights = separate_ctrlpts_weights(surf2_ctrlpts)
-        weights = [weights[surf2_nb_v * u] for u in range(obj.nb_u)]
-    control_points = [volmdlr.Point3D(*surf2_ctrlpts[surf2_nb_v * u]) for u in range(obj.nb_u)]
+    control_points = [volmdlr.Point3D(*point) for point in surf2_ctrlpts]
 
     return curve_class(obj.degree_v, control_points, obj.v_multiplicities, obj.v_knots, weights)
 
