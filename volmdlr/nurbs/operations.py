@@ -355,30 +355,30 @@ def insert_control_points_surface_u(obj, param, num, **kwargs):
     # Get keyword arguments
     check_num = kwargs.get('check_num', True)  # can be set to False when the caller checks number of insertions
     # u-direction
-    if num > 0:
-        # Find knot multiplicity
-        knotvector = obj.knots_vector_u
-        param_multiplicity = core.find_multiplicity(param, knotvector)
+    # Find knot multiplicity
+    knotvector = obj.knots_vector_u
+    param_multiplicity = core.find_multiplicity(param, knotvector)
 
-        # Check if it is possible add that many number of knots
-        if check_num and num > obj.degree_u - param_multiplicity:
-            raise ValueError("Knot " + str(param) + " cannot be inserted " + str(num) + " times (u-dir)")
+    # Check if it is possible add that many number of knots
+    if check_num and num > obj.degree_u - param_multiplicity:
+        raise ValueError("Knot " + str(param) + " cannot be inserted " + str(num) + " times (u-dir)")
 
-        # Find knot span
-        span = core.find_span_linear(obj.degree_u, knotvector, obj.nb_u, param)
+    # Find knot span
+    span = core.find_span_linear(obj.degree_u, knotvector, obj.nb_u, param)
 
-        # Get curves
-        cpts_tmp = []
-        cpts = obj.ctrlptsw if obj.rational else obj.ctrlpts
-        for v in range(obj.nb_v):
-            ctrlpts = [cpts[v + (obj.nb_v * u)] for u in range(obj.nb_u)]
-            ctrlpts_tmp = knot_insertion(obj.degree_u, knotvector, ctrlpts, param,
-                                         num=num, s=param_multiplicity, span=span)
-            cpts_tmp += ctrlpts_tmp
+    # Get curves
+    cpts_tmp = []
+    cpts = obj.ctrlptsw if obj.rational else obj.ctrlpts
+    for v in range(obj.nb_v):
+        ctrlpts = [cpts[v + (obj.nb_v * u)] for u in range(obj.nb_u)]
+        ctrlpts_tmp = knot_insertion(obj.degree_u, knotvector, ctrlpts, param,
+                                     num=num, s=param_multiplicity, span=span)
+        cpts_tmp += ctrlpts_tmp
 
-        cpts_tmp = flip_ctrlpts_u(cpts_tmp, obj.nb_u + num, obj.nb_v)
+    cpts_tmp = flip_ctrlpts_u(cpts_tmp, obj.nb_u + num, obj.nb_v)
 
     return cpts_tmp
+
 
 def insert_control_points_surface_v(obj, param, num, **kwargs):
     """
@@ -397,28 +397,29 @@ def insert_control_points_surface_v(obj, param, num, **kwargs):
     """
     check_num = kwargs.get('check_num', True)  # can be set to False when the caller checks number of insertions
     # v-direction
-    if param is not None and num > 0:
-        # Find knot multiplicity
-        knotvector = obj.knots_vector_v
-        param_multiplicity = core.find_multiplicity(param, knotvector)
 
-        # Check if it is possible add that many number of knots
-        if check_num and num > obj.degree_v - param_multiplicity:
-            raise ValueError("Knot " + str(param[1]) + " cannot be inserted " + str(num) + " times (v-dir)")
+    # Find knot multiplicity
+    knotvector = obj.knots_vector_v
+    param_multiplicity = core.find_multiplicity(param, knotvector)
 
-        # Find knot span
-        span = core.find_span_linear(obj.degree_v, knotvector, obj.nb_v, param)
+    # Check if it is possible add that many number of knots
+    if check_num and num > obj.degree_v - param_multiplicity:
+        raise ValueError("Knot " + str(param[1]) + " cannot be inserted " + str(num) + " times (v-dir)")
 
-        # Get curves
-        cpts_tmp = []
-        cpts = obj.ctrlptsw if obj.rational else obj.ctrlpts
-        for u in range(obj.nb_u):
-            ctrlpts = [cpts[v + (obj.nb_v * u)] for v in range(obj.nb_v)]
-            ctrlpts_tmp = knot_insertion(obj.degree_v, knotvector, ctrlpts, param,
-                                         num=num, s=param_multiplicity, span=span)
-            cpts_tmp += ctrlpts_tmp
+    # Find knot span
+    span = core.find_span_linear(obj.degree_v, knotvector, obj.nb_v, param)
 
-        return cpts_tmp
+    # Get curves
+    cpts_tmp = []
+    cpts = obj.ctrlptsw if obj.rational else obj.ctrlpts
+    for u in range(obj.nb_u):
+        ctrlpts = [cpts[v + (obj.nb_v * u)] for v in range(obj.nb_v)]
+        ctrlpts_tmp = knot_insertion(obj.degree_v, knotvector, ctrlpts, param,
+                                     num=num, s=param_multiplicity, span=span)
+        cpts_tmp += ctrlpts_tmp
+
+    return cpts_tmp
+
 
 
 def refine_knot_vector_surface(obj, u, v, **kwargs):
@@ -816,8 +817,8 @@ def decompose_curve(obj, return_params: bool = False, **kwargs):
         params.append((param_start, umax))
         return multi_curve, params
     return multi_curve
- 
- 
+
+
 def decompose_surface(obj, return_params, **kwargs):
     """
     Decomposes the surface into Bezier surface patches of the same degree.
