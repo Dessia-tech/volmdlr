@@ -1853,7 +1853,7 @@ class BSplineCurve(Edge):
                 if number_points1 > max_number_points:
                     number_points1 = max(max_number_points, 2)
 
-                number_points2 = number_points - number_points1
+                number_points2 = max(number_points - number_points1, 2)
                 max_number_points = math.ceil(abscissa1 / 2e-6)
                 if number_points2 > max_number_points:
                     number_points2 = max(max_number_points, 2)
