@@ -502,7 +502,6 @@ def get_knots_and_multiplicities(knotvector):
     """
     Get knots and multiplicities from knotvector in u and v direction.
     """
-    knotvector = np.round(knotvector, decimals=19)
     knots = np.unique(knotvector).tolist()
     multiplicities = [core.find_multiplicity(knot, knotvector) for knot in knots]
     return knots, multiplicities
