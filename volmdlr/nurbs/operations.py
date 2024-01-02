@@ -595,7 +595,7 @@ def decompose_curve(obj, return_params: bool = False, **kwargs):
         return multi_curve, params
     return multi_curve
 
-
+  
 def decompose_surface(obj, return_params, **kwargs):
     """
     Decomposes the surface into Bezier surface patches of the same degree.

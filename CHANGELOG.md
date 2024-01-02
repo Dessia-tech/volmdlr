@@ -31,11 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - review hash and eq methods
 - fix pylint.
+- Add some missing docstrings.
 
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 - Circle2D: abscissa method - consider frame direction during rotation.
 - Line: is_close.
+- Circle3D: Line intersections
 
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
@@ -88,6 +90,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 - 
+
+## 0.15.2
+
+### build
+- fix build test before upload to pypi
 
 ## 0.15.1
 
