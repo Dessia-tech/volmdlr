@@ -6650,15 +6650,7 @@ class BSplineSurface3D(Surface3D):
         Compute the global knot vector (u direction) based on knot elements and multiplicities.
 
         """
-
-        knots = self.u_knots
-        multiplicities = self.u_multiplicities
-
-        knots_vec = []
-        for i, knot in enumerate(knots):
-            for _ in range(0, multiplicities[i]):
-                knots_vec.append(knot)
-        return knots_vec
+        return npy.repeat(self.u_knots, self.u_multiplicities)
 
     @property
     def knots_vector_v(self):
@@ -6666,15 +6658,7 @@ class BSplineSurface3D(Surface3D):
         Compute the global knot vector (v direction) based on knot elements and multiplicities.
 
         """
-
-        knots = self.v_knots
-        multiplicities = self.v_multiplicities
-
-        knots_vec = []
-        for i, knot in enumerate(knots):
-            for _ in range(0, multiplicities[i]):
-                knots_vec.append(knot)
-        return knots_vec
+        return npy.repeat(self.v_knots, self.v_multiplicities)
 
     @property
     def knotvector(self):

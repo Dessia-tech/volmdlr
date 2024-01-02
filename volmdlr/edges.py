@@ -959,10 +959,7 @@ class BSplineCurve(Edge):
     def knotvector(self):
         """Return the knot vector."""
         if self._knotvector is None:
-            knot_vector = []
-            for knot, knot_mut in zip(self.knots, self.knot_multiplicities):
-                knot_vector.extend([knot] * knot_mut)
-            self._knotvector = knot_vector
+            self._knotvector = npy.repeat(self.knots, self.knot_multiplicities)
         return self._knotvector
 
     @property
