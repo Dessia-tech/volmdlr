@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plane3D: parametric_points_to_3d
 - BSplineSurface3D: parametric_points_to_3d
 - BSplineSurface3D: decompose
+- BSplineSurface3D:extract_curves method. Extracts curves from the surface given an ordered list of parameters in u or v direction.
 
 ### Fixed
 - review hash and eq methods
@@ -89,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Edge.split_between_two_points -> trim
 - surfaces.py: point_on_surface -> point_belongs
+- Numpyfy BSplines
 
 ### Unittests
 - 
