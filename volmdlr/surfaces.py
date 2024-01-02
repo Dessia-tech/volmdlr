@@ -27,9 +27,10 @@ import volmdlr.utils.intersections as vm_utils_intersections
 import volmdlr.utils.parametric as vm_parametric
 from volmdlr import display, edges, grid, wires, curves
 from volmdlr.core import EdgeStyle
-from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
+from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
-from volmdlr.nurbs.operations import split_surface_u, split_surface_v, decompose_surface
+from volmdlr.nurbs.operations import (split_surface_u, split_surface_v, decompose_surface,
+                                      extract_surface_curve_u, extract_surface_curve_v)
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity, is_isocurve,
                                       verify_repeated_parametric_points, repair_undefined_brep)
@@ -6896,13 +6897,6 @@ class BSplineSurface3D(Surface3D):
         extract_u = kwargs.get('extract_u', True)
         extract_v = kwargs.get('extract_v', True)
 
-        # Get data from the surface object
-        kv_u = self.knots_vector_u
-        u_knots = list(sorted(set(kv_u)))
-        u_multiplicities = [find_multiplicity(knot, kv_u) for knot in u_knots]
-        kv_v = self.knots_vector_v
-        v_knots = list(sorted(set(kv_v)))
-        v_multiplicities = [find_multiplicity(knot, kv_v) for knot in v_knots]
         cpts = self.control_points
 
         # v-direction
@@ -6912,8 +6906,9 @@ class BSplineSurface3D(Surface3D):
             for u in range(self.nb_u):
                 control_points = [cpts[v + (self.nb_v * u)] for v in range(self.nb_v)]
                 if self.rational:
-                    weights = [self._weights[v + (self.nb_v * u)] for v in range(self.nb_v)]
-                curve = edges.BSplineCurve3D(self.degree_v, control_points, v_multiplicities, v_knots, weights)
+                    weights = [self.weights[v + (self.nb_v * u)] for v in range(self.nb_v)]
+                curve = edges.BSplineCurve3D(self.degree_v, control_points, self.v_multiplicities,
+                                             self.v_knots, weights)
                 crvlist_v.append(curve)
 
         # u-direction
@@ -6922,9 +6917,67 @@ class BSplineSurface3D(Surface3D):
             for v in range(self.nb_v):
                 control_points = [cpts[v + (self.nb_v * u)] for u in range(self.nb_u)]
                 if self.rational:
-                    weights = [self._weights[v + (self.nb_v * u)] for u in range(self.nb_u)]
-                curve = edges.BSplineCurve3D(self.degree_u, control_points, u_multiplicities, u_knots, weights)
+                    weights = [self.weights[v + (self.nb_v * u)] for u in range(self.nb_u)]
+                curve = edges.BSplineCurve3D(self.degree_u, control_points, self.u_multiplicities,
+                                             self.u_knots, weights)
                 crvlist_u.append(curve)
+
+        # Return shapes as a dict object
+        return {"u": crvlist_u, "v": crvlist_v}
+
+    def extract_curves(self, u: List[float] = None, v: List[float] = None):
+        """
+        Extracts curves from a surface.
+
+        :param u: a list of parameters in ascending order in u direction to extract curves
+        :param v: a list of parameters in ascending order in v direction to extract curves
+        :return: a dictionary containing the extracted curves in u and v direction
+        :rtype: dict
+        """
+        umin, umax, vmin, vmax = self.domain
+        # v-direction
+        crvlist_v = []
+
+        def extract_from_surface_boundary_u(u_pos):
+            weights = None
+            control_points = [self.control_points[j + (self.nb_v * u_pos)] for j in range(self.nb_v)]
+            if self.rational:
+                weights = [self.weights[j + (self.nb_v * u_pos)] for j in range(self.nb_v)]
+            return edges.BSplineCurve3D(self.degree_u, control_points, self.u_multiplicities, self.u_knots, weights)
+
+        def extract_from_surface_boundary_v(v_pos):
+            weights = None
+            control_points = [self.control_points[v_pos + (self.nb_v * i)] for i in range(self.nb_u)]
+            if self.rational:
+                weights = [self.weights[v_pos + (self.nb_v * i)] for i in range(self.nb_u)]
+            return edges.BSplineCurve3D(self.degree_v, control_points, self.v_multiplicities, self.v_knots, weights)
+
+        if v:
+            if v[0] == vmin:
+                crvlist_v.append(extract_from_surface_boundary_v(0))
+            else:
+                crvlist_v.append(extract_surface_curve_v(self, v[0], edges.BSplineCurve3D))
+            for param in v[1:-1]:
+                crvlist_v.append(extract_surface_curve_v(self, param, edges.BSplineCurve3D))
+            if v[-1] == vmax:
+                crvlist_v.append(extract_from_surface_boundary_v(self.nb_v - 1))
+            else:
+                crvlist_v.append(extract_surface_curve_v(self, v[-1], edges.BSplineCurve3D))
+        # u-direction
+        crvlist_u = []
+        if u:
+            if u[0] == umin:
+                crvlist_u.append(extract_from_surface_boundary_u(0))
+            else:
+                crvlist_u.append(extract_surface_curve_u(self, u[0], edges.BSplineCurve3D))
+
+            for param in u[1:-1]:
+                crvlist_u.append(extract_surface_curve_u(self, param, edges.BSplineCurve3D))
+
+            if u[-1] == umax:
+                crvlist_u.append(extract_from_surface_boundary_u(self.nb_u - 1))
+            else:
+                crvlist_u.append(extract_surface_curve_u(self, u[-1], edges.BSplineCurve3D))
 
         # Return shapes as a dict object
         return {"u": crvlist_u, "v": crvlist_v}
@@ -7033,18 +7086,7 @@ class BSplineSurface3D(Surface3D):
         Each row represents the control points in u direction and each column the points in v direction.
         """
         ctrlpts = self.ctrlptsw if self.rational else self.ctrlpts
-        control_points_table = []
-        points_row = []
-        i = 1
-        for point in ctrlpts:
-            points_row.append(point)
-            if i == self.nb_v:
-                control_points_table.append(points_row)
-                points_row = []
-                i = 1
-            else:
-                i += 1
-        return control_points_table
+        return npy.reshape(ctrlpts, (self.nb_u, self.nb_v, -1))
 
     def vertices(self):
         """

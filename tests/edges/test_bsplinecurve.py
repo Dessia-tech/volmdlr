@@ -378,6 +378,12 @@ class TestBSplineCurve3D(unittest.TestCase):
         normal = self.b_splinecurve3d.normal()
         self.assertTrue(normal.is_close(volmdlr.Z3D))
 
+    def test_abscissa(self):
+        point = volmdlr.Point3D(0.18357300891283804, 0.7465725481678318, 0.44333916797214895)
+        bsplinecurve = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bsplinecurve3d_abscissa_test.json"))
+        abscissa = bsplinecurve.abscissa(point)
+        self.assertTrue(bsplinecurve.point_at_abscissa(abscissa).is_close(point))
+
 
 class TestBezierCurve2D(unittest.TestCase):
     # Set up the Bezier curve
