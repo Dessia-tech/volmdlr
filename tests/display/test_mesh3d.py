@@ -1,11 +1,12 @@
 import os
-import unittest
 import tempfile
+import unittest
 
 import numpy as np
 import trimesh
 from dessia_common.serialization import BinaryFile
 
+import volmdlr
 from volmdlr import Point3D
 from volmdlr.display import Mesh3D
 from volmdlr.faces import Triangle3D
@@ -143,6 +144,21 @@ class TestMesh3D(unittest.TestCase):
         mesh = Mesh3D.dict_to_object(dict_)
 
         self.assertEqual(self.mesh4, mesh)
+
+    def test_to_triangles3d(self):
+        expected_triangles3d_1 = [Triangle3D(Point3D(0, 0, 0), Point3D(1, 0, 0), Point3D(0, 1, 0))]
+        self.assertEqual(expected_triangles3d_1, self.mesh1.to_triangles3d())
+
+        expected_triangles3d_4 = []
+        for triangle in self.triangles4:
+            expected_triangles3d_4.append(
+                Triangle3D(
+                    Point3D(*self.vertices4[triangle[0]]),
+                    Point3D(*self.vertices4[triangle[1]]),
+                    Point3D(*self.vertices4[triangle[2]]),
+                )
+            )
+        self.assertEqual(expected_triangles3d_4, self.mesh4.to_triangles3d())
 
 
 class TestMesh3DImport(unittest.TestCase):
