@@ -1470,6 +1470,9 @@ class Wire3D(WireMixin, PhysicalObject):
         return points
 
     def babylon_lines(self, points=None):
+        """
+        Returns the wire data in babylon format.
+        """
         if points is None:
             points = self.babylon_points()
         babylon_lines = {'points': points,
@@ -1523,6 +1526,9 @@ class ContourMixin(WireMixin):
 
     @classmethod
     def contours_from_edges(cls, list_edges, tol=1e-6, name: str = 'r'):
+        """
+        Creates an ordered contour given a list of unordered edges.
+        """
         if not list_edges:
             return []
         if len(list_edges) == 1:
@@ -1859,6 +1865,9 @@ class ContourMixin(WireMixin):
         return 'Line Loop(' + str(tag) + ') = {' + str(primitives_tags)[1:-1] + '};'
 
     def get_geo_points(self):
+        """
+        Get points in geo file format.
+        """
         points = set()
         for primitive in self.primitives:
             points.update(primitive.get_geo_points())
@@ -2409,7 +2418,7 @@ class Contour2D(ContourMixin, Wire2D):
                 elif len(points_in) == 3:
                     triangles.append([point_index[point] for point in points_in])
 
-        return vmd.DisplayMesh2D(points, triangles)
+        return vmd.Mesh2D(points, triangles)
 
     def intersection_points(self, contour2d):
         """Returns the intersections points with other specified contour."""
@@ -3198,6 +3207,9 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
     @classmethod
     def points_convex_hull(cls, points, name: str = ''):
+        """
+        Creates a convex hull from a collection of 2D points.
+        """
         if len(points) < 3:
             return None
 
@@ -3491,7 +3503,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         return ax
 
-    def triangulation(self, tri_opt: str = 'pd'):
+    def triangulation(self, tri_opt: str = 'p'):
         """
         Perform triangulation on the polygon.
 
@@ -3500,12 +3512,11 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         :param tri_opt: (Optional) Triangulation preferences.
         :type tri_opt: str
         :return: A 2D mesh.
-        :rtype: :class:`vmd.DisplayMesh2D`
+        :rtype: :class:`vmd.Mesh2D`
         """
         # Converting points to nodes for performance
-        nodes = [vmd.Node2D.from_point(point) for point in self.points]
-        vertices = [(point.x, point.y) for point in nodes]
-        n = len(nodes)
+        vertices = [(point.x, point.y) for point in self.points]
+        n = len(vertices)
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
 
@@ -3515,10 +3526,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         if len(tri['vertices']) < 3:
             return None
         triangulate_result = triangulate(tri, tri_opt)
-        triangles = triangulate_result['triangles'].tolist()
-        number_points = triangulate_result['vertices'].shape[0]
-        points = [vmd.Node2D(*triangulate_result['vertices'][i, :]) for i in range(number_points)]
-        return vmd.DisplayMesh2D(points, triangles=triangles)
+        mesh = vmd.Mesh2D(triangulate_result['vertices'], triangles=triangulate_result['triangles'])
+        return mesh
 
     def grid_triangulation_points(self, number_points_x: int = 25, number_points_y: int = 25,
                                   include_edge_points: bool = True):
@@ -3642,16 +3651,16 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
                     if not found_flat_ear:
                         print('Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
-                        return vmd.DisplayMesh2D(nodes, triangles)
+                        return vmd.Mesh2D(nodes, triangles)
                 else:
-                    return vmd.DisplayMesh2D(nodes, triangles)
+                    return vmd.Mesh2D(nodes, triangles)
 
         if len(remaining_points) == 3:
             triangles.append((initial_point_to_index[remaining_points[0]],
                               initial_point_to_index[remaining_points[1]],
                               initial_point_to_index[remaining_points[2]]))
 
-        return vmd.DisplayMesh2D(nodes, triangles)
+        return vmd.Mesh2D(nodes, triangles)
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         """Simplify polygon."""
@@ -4082,40 +4091,71 @@ class Triangle2D(Triangle, ClosedPolygon2D):
 
     def __init__(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D,
                  point3: volmdlr.Point2D, name: str = ''):
-        # TODO: This seems buggy. Is it still used?
-        # self.point1 = point1
-        # self.point2 = point2
-        # self.point3 = point3
-        # self.name = name
 
         ClosedPolygon2D.__init__(self, points=[point1, point2, point3], name=name)
 
         Triangle.__init__(self, point1, point2, point3, name)
 
     def area(self):
+        """
+        Calculate the area of the triangle.
+
+        :return: Area of the triangle.
+        :rtype: float
+        """
         u = self.point2 - self.point1
         v = self.point3 - self.point1
         return abs(u.cross(v)) / 2
 
     def incircle_radius(self):
+        """
+        Calculate the radius of the inscribed circle (incircle) of the triangle.
+
+        :return: Radius of the inscribed circle.
+        :rtype: float
+        """
         param_a = self.point1.point_distance(self.point2)
         param_b = self.point1.point_distance(self.point3)
         param_c = self.point2.point_distance(self.point3)
         return 2 * self.area() / (param_a + param_b + param_c)
 
     def circumcircle_radius(self):
+        """
+        Calculate the radius of the circumscribed circle (circumcircle) of the triangle.
+
+        :return: Radius of the circumscribed circle.
+        :rtype: float
+        """
         param_a = self.point1.point_distance(self.point2)
         param_b = self.point1.point_distance(self.point3)
         param_c = self.point2.point_distance(self.point3)
         return param_a * param_b * param_c / (self.area() * 4.0)
 
     def ratio_circumr_length(self):
+        """
+        Calculate the ratio of the circumscribed circle radius to the perimeter (length) of the triangle.
+
+        :return: Ratio of incircle radius to perimeter.
+        :rtype: float
+        """
         return self.circumcircle_radius() / self.length()
 
     def ratio_incircler_length(self):
+        """
+        Calculate the ratio of the incircle radius to the perimeter (length) of the triangle.
+
+        :return: Ratio of incircle radius to perimeter.
+        :rtype: float
+        """
         return self.incircle_radius() / self.length()
 
     def aspect_ratio(self):
+        """
+        Calculate the aspect ratio of the triangle.
+
+        :return: Aspect ratio of the triangle.
+        :rtype: float
+        """
         param_a = self.point1.point_distance(self.point2)
         param_b = self.point1.point_distance(self.point3)
         param_c = self.point2.point_distance(self.point3)
@@ -4186,11 +4226,27 @@ class Contour3D(ContourMixin, Wire3D):
 
     @property
     def edge_polygon(self):
+        """
+        Get the edge polygon of the contour.
+
+        The edge polygon is formed by connecting the vertices of the contour's edges.
+
+        :return: The edge polygon of the contour.
+        :rtype: ClosedPolygon3D
+        """
         if self._edge_polygon is None:
             self._edge_polygon = self._get_edge_polygon()
         return self._edge_polygon
 
     def _get_edge_polygon(self):
+        """
+        Helper function to get the edge polygon of the contour.
+
+        The edge polygon is formed by connecting the vertices of the contour's edges.
+
+        :return: The edge polygon of the contour.
+        :rtype: ClosedPolygon3D
+        """
         points = []
         for edge in self.primitives:
             if points:
@@ -4261,8 +4317,7 @@ class Contour3D(ContourMixin, Wire3D):
             content += f"#{current_id} = ORIENTED_EDGE('{primitive.name}',*,*,#{primitive_id},.T.);\n"
             edge_ids.append(current_id)
 
-            current_id += 1
-
+        current_id += 1
         content += f"#{current_id} = EDGE_LOOP('{self.name}',({volmdlr.core.step_ids_to_str(edge_ids)}));\n"
         return content, current_id
 

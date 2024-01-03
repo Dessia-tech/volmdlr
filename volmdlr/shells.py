@@ -378,7 +378,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
         manifold_id = frame_id + 1
         shell_id = manifold_id + 1
-        current_id = shell_id + 1
+        current_id = shell_id
         for face in self.faces:
             if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
                 face_content, face_sub_ids = face.to_step(current_id)
@@ -811,7 +811,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 continue
             if face_mesh:
                 meshes.append(face_mesh)
-        return display.DisplayMesh3D.merge_meshes(meshes)
+        return display.Mesh3D.merge_meshes(meshes)
 
     def to_triangle_shell(self) -> Union["OpenTriangleShell3D", "ClosedTriangleShell3D"]:
         """
@@ -1139,9 +1139,9 @@ class ClosedShell3D(Shell3D):
         for face in self.faces:
             display3d = face.triangulation()
             for triangle_index in display3d.triangles:
-                point1 = display3d.points[triangle_index[0]]
-                point2 = display3d.points[triangle_index[1]]
-                point3 = display3d.points[triangle_index[2]]
+                point1 = display3d.vertices[triangle_index[0]]
+                point2 = display3d.vertices[triangle_index[1]]
+                point3 = display3d.vertices[triangle_index[2]]
 
                 point1_adj = (point1[0] - center_x, point1[1] - center_y, point1[2] - center_z)
                 point2_adj = (point2[0] - center_x, point2[1] - center_y, point2[2] - center_z)
@@ -1958,12 +1958,12 @@ class OpenTriangleShell3D(OpenShell3D):
         points = []
         triangles = []
         for i, triangle in enumerate(self.faces):
-            points.append(display.Node3D.from_point(triangle.point1))
-            points.append(display.Node3D.from_point(triangle.point2))
-            points.append(display.Node3D.from_point(triangle.point3))
+            points.append(np.array(triangle.point1))
+            points.append(np.array(triangle.point2))
+            points.append(np.array(triangle.point3))
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
-
-        return display.DisplayMesh3D(points, triangles)
+        vertices = np.array(points, dtype=np.float64)
+        return display.Mesh3D(vertices, np.array(triangles, dtype=np.int32))
 
     def to_dict(self, *args, **kwargs):
         """Overload of 'to_dict' for performance."""

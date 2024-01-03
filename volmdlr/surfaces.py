@@ -27,9 +27,10 @@ import volmdlr.utils.intersections as vm_utils_intersections
 import volmdlr.utils.parametric as vm_parametric
 from volmdlr import display, edges, grid, wires, curves
 from volmdlr.core import EdgeStyle
-from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion, find_multiplicity
+from volmdlr.nurbs.core import evaluate_surface, derivatives_surface, point_inversion
 from volmdlr.nurbs.fitting import approximate_surface, interpolate_surface
-from volmdlr.nurbs.operations import split_surface_u, split_surface_v
+from volmdlr.nurbs.operations import (split_surface_u, split_surface_v, decompose_surface,
+                                      extract_surface_curve_u, extract_surface_curve_v)
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity, is_isocurve,
                                       verify_repeated_parametric_points, repair_undefined_brep)
@@ -191,10 +192,7 @@ class Surface2D(PhysicalObject):
                'segments': npy.array(segments).reshape((-1, 2)),
                }
         triagulation = triangle_lib.triangulate(tri, tri_opt)
-        triangles = triagulation['triangles'].tolist()
-        number_points = triagulation['vertices'].shape[0]
-        points = [display.Node2D(*triagulation['vertices'][i, :]) for i in range(number_points)]
-        return display.DisplayMesh2D(points, triangles=triangles)
+        return display.Mesh2D(vertices=triagulation['vertices'], triangles=triagulation['triangles'])
 
     def triangulation(self, number_points_x: int = 15, number_points_y: int = 15):
         """
@@ -205,12 +203,12 @@ class Surface2D(PhysicalObject):
         :param number_points_y: Number of discretization points in y direction.
         :type number_points_y: int
         :return: The triangulated surface as a display mesh.
-        :rtype: :class:`volmdlr.display.DisplayMesh2D`
+        :rtype: :class:`volmdlr.display.Mesh2D`
         """
         area = self.bounding_rectangle().area()
         tri_opt = "p"
-        if math.isclose(area, 0., abs_tol=1e-8):
-            return display.DisplayMesh2D([], triangles=[])
+        if math.isclose(area, 0., abs_tol=1e-12):
+            return None
 
         triangulates_with_grid = number_points_x > 0 and number_points_y > 0
         discretize_line = number_points_x > 0 or number_points_y > 0
@@ -287,10 +285,7 @@ class Surface2D(PhysicalObject):
                'holes': npy.array(holes).reshape((-1, 2))
                }
         triangulation = triangle_lib.triangulate(tri, tri_opt)
-        triangles = triangulation['triangles'].tolist()
-        number_points = triangulation['vertices'].shape[0]
-        points = [volmdlr.Point2D(*triangulation['vertices'][i, :]) for i in range(number_points)]
-        return display.DisplayMesh2D(points, triangles=triangles)
+        return display.Mesh2D(vertices=triangulation['vertices'], triangles=triangulation['triangles'])
 
     def split_by_lines(self, lines):
         """
@@ -3308,7 +3303,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         Triangulation.
 
-        :rtype: display.DisplayMesh3D
+        :rtype: display.Mesh3D
         """
         face = self.rectangular_cut(0, volmdlr.TWO_PI, 0, volmdlr.TWO_PI)
         return face.triangulation()
@@ -6909,13 +6904,6 @@ class BSplineSurface3D(Surface3D):
         extract_u = kwargs.get('extract_u', True)
         extract_v = kwargs.get('extract_v', True)
 
-        # Get data from the surface object
-        kv_u = self.knots_vector_u
-        u_knots = list(sorted(set(kv_u)))
-        u_multiplicities = [find_multiplicity(knot, kv_u) for knot in u_knots]
-        kv_v = self.knots_vector_v
-        v_knots = list(sorted(set(kv_v)))
-        v_multiplicities = [find_multiplicity(knot, kv_v) for knot in v_knots]
         cpts = self.control_points
 
         # v-direction
@@ -6925,8 +6913,9 @@ class BSplineSurface3D(Surface3D):
             for u in range(self.nb_u):
                 control_points = [cpts[v + (self.nb_v * u)] for v in range(self.nb_v)]
                 if self.rational:
-                    weights = [self._weights[v + (self.nb_v * u)] for v in range(self.nb_v)]
-                curve = edges.BSplineCurve3D(self.degree_v, control_points, v_multiplicities, v_knots, weights)
+                    weights = [self.weights[v + (self.nb_v * u)] for v in range(self.nb_v)]
+                curve = edges.BSplineCurve3D(self.degree_v, control_points, self.v_multiplicities,
+                                             self.v_knots, weights)
                 crvlist_v.append(curve)
 
         # u-direction
@@ -6935,9 +6924,67 @@ class BSplineSurface3D(Surface3D):
             for v in range(self.nb_v):
                 control_points = [cpts[v + (self.nb_v * u)] for u in range(self.nb_u)]
                 if self.rational:
-                    weights = [self._weights[v + (self.nb_v * u)] for u in range(self.nb_u)]
-                curve = edges.BSplineCurve3D(self.degree_u, control_points, u_multiplicities, u_knots, weights)
+                    weights = [self.weights[v + (self.nb_v * u)] for u in range(self.nb_u)]
+                curve = edges.BSplineCurve3D(self.degree_u, control_points, self.u_multiplicities,
+                                             self.u_knots, weights)
                 crvlist_u.append(curve)
+
+        # Return shapes as a dict object
+        return {"u": crvlist_u, "v": crvlist_v}
+
+    def extract_curves(self, u: List[float] = None, v: List[float] = None):
+        """
+        Extracts curves from a surface.
+
+        :param u: a list of parameters in ascending order in u direction to extract curves
+        :param v: a list of parameters in ascending order in v direction to extract curves
+        :return: a dictionary containing the extracted curves in u and v direction
+        :rtype: dict
+        """
+        umin, umax, vmin, vmax = self.domain
+        # v-direction
+        crvlist_v = []
+
+        def extract_from_surface_boundary_u(u_pos):
+            weights = None
+            control_points = [self.control_points[j + (self.nb_v * u_pos)] for j in range(self.nb_v)]
+            if self.rational:
+                weights = [self.weights[j + (self.nb_v * u_pos)] for j in range(self.nb_v)]
+            return edges.BSplineCurve3D(self.degree_u, control_points, self.u_multiplicities, self.u_knots, weights)
+
+        def extract_from_surface_boundary_v(v_pos):
+            weights = None
+            control_points = [self.control_points[v_pos + (self.nb_v * i)] for i in range(self.nb_u)]
+            if self.rational:
+                weights = [self.weights[v_pos + (self.nb_v * i)] for i in range(self.nb_u)]
+            return edges.BSplineCurve3D(self.degree_v, control_points, self.v_multiplicities, self.v_knots, weights)
+
+        if v:
+            if v[0] == vmin:
+                crvlist_v.append(extract_from_surface_boundary_v(0))
+            else:
+                crvlist_v.append(extract_surface_curve_v(self, v[0], edges.BSplineCurve3D))
+            for param in v[1:-1]:
+                crvlist_v.append(extract_surface_curve_v(self, param, edges.BSplineCurve3D))
+            if v[-1] == vmax:
+                crvlist_v.append(extract_from_surface_boundary_v(self.nb_v - 1))
+            else:
+                crvlist_v.append(extract_surface_curve_v(self, v[-1], edges.BSplineCurve3D))
+        # u-direction
+        crvlist_u = []
+        if u:
+            if u[0] == umin:
+                crvlist_u.append(extract_from_surface_boundary_u(0))
+            else:
+                crvlist_u.append(extract_surface_curve_u(self, u[0], edges.BSplineCurve3D))
+
+            for param in u[1:-1]:
+                crvlist_u.append(extract_surface_curve_u(self, param, edges.BSplineCurve3D))
+
+            if u[-1] == umax:
+                crvlist_u.append(extract_from_surface_boundary_u(self.nb_u - 1))
+            else:
+                crvlist_u.append(extract_surface_curve_u(self, u[-1], edges.BSplineCurve3D))
 
         # Return shapes as a dict object
         return {"u": crvlist_u, "v": crvlist_v}
@@ -7046,18 +7093,7 @@ class BSplineSurface3D(Surface3D):
         Each row represents the control points in u direction and each column the points in v direction.
         """
         ctrlpts = self.ctrlptsw if self.rational else self.ctrlpts
-        control_points_table = []
-        points_row = []
-        i = 1
-        for point in ctrlpts:
-            points_row.append(point)
-            if i == self.nb_v:
-                control_points_table.append(points_row)
-                points_row = []
-                i = 1
-            else:
-                i += 1
-        return control_points_table
+        return npy.reshape(ctrlpts, (self.nb_u, self.nb_v, -1))
 
     def vertices(self):
         """
@@ -7210,6 +7246,12 @@ class BSplineSurface3D(Surface3D):
             for j in range(self.nb_v):
                 blending_mat[i][j] = self.basis_functions_v(v_i, self.degree_v, j)
         return blending_mat
+
+    def decompose(self, return_params: bool = False, **kwargs):
+        """
+        Decomposes the surface into Bezier surface patches of the same degree.
+        """
+        return decompose_surface(self, return_params, **kwargs)
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """
