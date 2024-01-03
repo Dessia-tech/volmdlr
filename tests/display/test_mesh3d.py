@@ -1,3 +1,7 @@
+"""
+Unit testing of volmdlr.display.Mesh3D class.
+"""
+
 import os
 import tempfile
 import unittest
