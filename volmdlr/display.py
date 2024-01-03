@@ -207,21 +207,6 @@ class MeshMixin:
 
         return self.__class__(unique_vertices, remapped_triangles, self.name)
 
-    def split_shared_vertices(self) -> "MeshType":
-        """
-        Split the shared vertices between triangles in the Mesh instance.
-
-        This method recreates distinct vertices for each triangle, effectively unmerging shared vertices.
-        The resulting mesh will have three times the number of vertices as the number of triangles.
-
-        :return: A new Mesh instance with unmerged vertices and original triangles.
-        :rtype: MeshType
-        """
-        unmerged_vertices = self.vertices[self.triangles.ravel()]
-        unmerged_triangles = np.arange(len(self.triangles) * 3).reshape(-1, 3)
-
-        return self.__class__(unmerged_vertices, unmerged_triangles, self.name)
-
     def merge_triangles(self) -> "MeshType":
         """
         Merge duplicated triangles in the Mesh instance.
@@ -237,6 +222,21 @@ class MeshMixin:
         unique_triangles = self.triangles[unique_triangle_indices]
 
         return self.__class__(self.vertices, unique_triangles, self.name)
+
+    def split_shared_vertices(self) -> "MeshType":
+        """
+        Split the shared vertices between triangles in the Mesh instance.
+
+        This method recreates distinct vertices for each triangle, effectively unmerging shared vertices.
+        The resulting mesh will have three times the number of vertices as the number of triangles.
+
+        :return: A new Mesh instance with unmerged vertices and original triangles.
+        :rtype: MeshType
+        """
+        unmerged_vertices = self.vertices[self.triangles.ravel()]
+        unmerged_triangles = np.arange(len(self.triangles) * 3).reshape(-1, 3)
+
+        return self.__class__(unmerged_vertices, unmerged_triangles, self.name)
 
     def __add__(self, other: "MeshType") -> "MeshType":
         """
@@ -310,12 +310,8 @@ class MeshMixin:
         :return: True if the mesh is consistent, False otherwise.
         :rtype: bool
         """
-        n_points = len(self.vertices)
-
-        for triangle in self.triangles:
-            if max(triangle) >= n_points:
-                return False
-        return True
+        max_vertex_indices = np.max(self.triangles, axis=None)
+        return np.all(max_vertex_indices < len(self.vertices))
 
     # COMPUTATION
     def triangles_vertices(self):
