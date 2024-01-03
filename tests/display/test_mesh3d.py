@@ -174,9 +174,7 @@ class TestMesh3DExport(unittest.TestCase):
         self.triangle3d = Triangle3D(Point3D(*[0, 0, 0]), Point3D(*[0, 0, 1]), Point3D(*[0, 1, 0]))
 
     def test_to_triangles3d(self):
-        self.assertEqual(
-            [self.triangle3d], self.mesh.to_triangles3d()
-        )
+        self.assertEqual([self.triangle3d], self.mesh.to_triangles3d())
         self.assertEqual([], self.degenerated_mesh.to_triangles3d())
 
     def test_plot(self):
@@ -316,7 +314,6 @@ class TestMesh3DExport(unittest.TestCase):
         mesh_from_stream = Mesh3D.from_3mf_stream(stream)
 
         self.assertEqual(self.mesh, mesh_from_stream)
-
 
 
 if __name__ == "__main__":
