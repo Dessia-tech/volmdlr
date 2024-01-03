@@ -201,6 +201,8 @@ class TestMesh3D(unittest.TestCase):
         unconsistent_mesh = Mesh3D(self.vertices1, np.array([[0, 1, 3]]))
         self.assertFalse(unconsistent_mesh.check_consistency())
 
+    def test_area(self):
+        self.assertEqual(0.5, self.mesh1.area())
 
 
 class TestMesh3DImport(unittest.TestCase):
