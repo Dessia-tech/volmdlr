@@ -3919,9 +3919,9 @@ class ToroidalSurface3D(PeriodicalSurface):
                             if abs(abs(normal1.dot(normal2.unit_vector())) - 1.0) < 1e-6:
                                 intersections.append(curves.Circle3D.from_center_normal(
                                     intersection, normal1, self.major_radius))
-                        # vector = (intersection - self.frame.origin).unit_vector()
-                        # plane = Plane3D(volmdlr.Frame3D(intersection, self.frame.w, vector.cross(self.frame.w), vector))
-                        # intersections.extend(self.plane_intersections(plane))
+                        vector = (intersection - self.frame.origin).unit_vector()
+                        plane = Plane3D(volmdlr.Frame3D(intersection, self.frame.w, vector.cross(self.frame.w), vector))
+                        intersections.extend(self.plane_intersections(plane))
                         if intersections:
                             return intersections
 
