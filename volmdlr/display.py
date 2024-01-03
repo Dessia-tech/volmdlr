@@ -408,6 +408,14 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return cls(trimesh_.vertices, trimesh_.faces)
 
     @classmethod
+    def from_trimesh_scene(cls, trimesh_scene: trimesh.Scene) -> "Mesh3D":
+        mesh = cls(np.array([]), np.array([]))
+        for trimesh_ in trimesh_scene.geometry.values():
+            mesh += cls.from_trimesh(trimesh_)
+
+        return mesh
+
+    @classmethod
     def from_stl_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
         return cls.from_trimesh(trimesh.load(filepath, "stl")).resize(scale_factor)
 
