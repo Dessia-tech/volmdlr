@@ -6556,16 +6556,14 @@ class BSplineSurface3D(Surface3D):
         Creates custom hash to the surface.
         """
         control_points = self.control_points
-        weights = self.weights
-        if weights is None:
+        if self.weights is None:
             return hash((tuple(control_points),
                         self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
                         self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v))
-        else:
-            weights = tuple(weights)
-            return hash((tuple(control_points),
-                        self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
-                        self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v, weights))
+        weights = tuple(self.weights)
+        return hash((tuple(control_points),
+                    self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
+                    self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v, weights))
 
     def __eq__(self, other):
         """
@@ -7029,7 +7027,7 @@ class BSplineSurface3D(Surface3D):
             self._domain = start_u, stop_u, start_v, stop_v
         return self._domain
 
-    def copy(self, deep: bool = True, *args, **kwargs):
+    def copy(self, deep: bool = True, **kwargs):
         """
         Returns a copy of the instance.
 

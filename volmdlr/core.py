@@ -28,6 +28,7 @@ from volmdlr.core_compiled import bbox_is_intersecting
 from volmdlr.discrete_representation_compiled import triangle_intersects_voxel
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
+from volmdlr.geometry import get_transfer_matrix_from_basis
 
 npy.seterr(divide='raise')
 
@@ -165,15 +166,7 @@ def map_primitive_with_initial_and_final_frames(primitive, initial_frame, final_
     """
     if initial_frame == final_frame:
         return primitive
-    basis_a = initial_frame.basis()
-    basis_b = final_frame.basis()
-    matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
-                          [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
-                          [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
-    matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
-                          [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
-                          [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
-    transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
+    transfer_matrix = get_transfer_matrix_from_basis(initial_frame.basis(), final_frame.basis())
     u_vector = volmdlr.Vector3D(*transfer_matrix[0])
     v_vector = volmdlr.Vector3D(*transfer_matrix[1])
     w_vector = volmdlr.Vector3D(*transfer_matrix[2])

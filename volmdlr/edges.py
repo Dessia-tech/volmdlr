@@ -1075,7 +1075,7 @@ class BSplineCurve(Edge):
         if deep:
             weights = None
             if self.rational:
-                weights = self._weights.copy()
+                weights = self.weights.copy()
             return self.__class__(self.degree, self.control_points, self.knot_multiplicities.copy(),
                                   self.knots.copy(), weights, name=self.name + "_copy")
         return self.__class__(self.degree, self.ctrlpts, self.knot_multiplicities,

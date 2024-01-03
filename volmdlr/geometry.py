@@ -8,6 +8,7 @@ import math
 from typing import Tuple
 
 from numpy import array, zeros
+from numpy.linalg import solve as np_solve
 
 import volmdlr as vm
 
@@ -46,6 +47,19 @@ def transfer_matrix_to_euler_angles(r_matrix):
             theta = math.pi
             psi = -math.atan2(r_matrix[1, 0], r_matrix[0, 0])
     return psi, theta, phi
+
+
+def get_transfer_matrix_from_basis(basis_a, basis_b):
+    """
+    Get the matrix of tranformation that applied to the basis A gives basis B.
+    """
+    matrix_a = array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
+                          [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
+                          [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
+    matrix_b = array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
+                          [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
+                          [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
+    return np_solve(matrix_a, matrix_b)
 
 
 def direction_to_euler_angles(u: vm.Vector3D, v=None):
