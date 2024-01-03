@@ -192,6 +192,16 @@ class TestMesh3D(unittest.TestCase):
             )
         self.assertEqual(expected_triangles3d_4, self.mesh4.to_triangles3d())
 
+    def test_check_concistency(self):
+        self.assertTrue(self.mesh1.check_consistency())
+        self.assertTrue(self.mesh2.check_consistency())
+        self.assertTrue(self.mesh3.check_consistency())
+        self.assertTrue(self.mesh4.check_consistency())
+
+        unconsistent_mesh = Mesh3D(self.vertices1, np.array([[0, 1, 3]]))
+        self.assertFalse(unconsistent_mesh.check_consistency())
+
+
 
 class TestMesh3DImport(unittest.TestCase):
     def setUp(self) -> None:
