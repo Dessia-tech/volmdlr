@@ -1,0 +1,57 @@
+{
+  "object_class": "volmdlr.core.VolumeModel",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.curves.Circle3D",
+      "name": "",
+      "radius": 1,
+      "frame": {
+        "object_class": "volmdlr.Frame3D",
+        "name": "",
+        "origin": {
+          "object_class": "volmdlr.Point3D",
+          "x": -2.062833677742738,
+          "y": -0.4973797743297107,
+          "z": 0.0
+        },
+        "u": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.968583161128631,
+          "y": -0.24868988716485535,
+          "z": 0.0
+        },
+        "v": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 1.0
+        },
+        "w": {
+          "object_class": "volmdlr.Vector3D",
+          "x": -0.24868988716485535,
+          "y": -0.968583161128631,
+          "z": 0.0
+        }
+      },
+      "angle": 6.283185307179586
+    },
+    {
+      "object_class": "volmdlr.edges.LineSegment3D",
+      "name": "",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": -2.000426742119446,
+        "y": -0.5134031519815476,
+        "z": 0.9978684346354694
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": -1.9995470992468287,
+        "y": -0.5136290058839442,
+        "z": 0.9979201615613109
+      }
+    }
+  ],
+  "_references": {}
+}

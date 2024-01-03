@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ArcEllipse2D/3D: get_shared_section and delete_shared_section.
 - ConicalSurface3D: conicalsurface_intersections
 
+#### edges.py
+- BSplineCurve: decompose into béziers patches of same degree.
+
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
 - grid_points: returns a grid of points inside the surface2d of the face.
@@ -26,15 +29,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: parametric_points_to_3d
 - Plane3D: parametric_points_to_3d
 - BSplineSurface3D: parametric_points_to_3d
+- BSplineSurface3D: decompose
+- BSplineSurface3D:extract_curves method. Extracts curves from the surface given an ordered list of parameters in u or v direction.
 
 ### Fixed
 - review hash and eq methods
 - fix pylint.
+- Add some missing docstrings.
 
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 - Circle2D: abscissa method - consider frame direction during rotation.
 - Line: is_close.
+- Circle3D: Line intersections
 
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
@@ -42,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve.simplify: handles exceptions.
 - Arc2D: plot_data
 - LineSegment3D: planar_revolution.
-- BSplineCurve: decompose into béziers patches of same degree.
+- BSplineCurve: abscissa.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
@@ -86,6 +93,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 - 
+
+## 0.15.2
+
+### build
+- fix build test before upload to pypi
 
 ## 0.15.1
 

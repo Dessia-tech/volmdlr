@@ -873,7 +873,7 @@ class Line3D(Line):
         u = self.point2 - self.point1
         v1 = self.point1 - u * length
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = self.point2 - u * length
+        v2 = self.point2 + u * length
         x2, y2, z2 = v2.x, v2.y, v2.z
         if edge_style.dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color,
