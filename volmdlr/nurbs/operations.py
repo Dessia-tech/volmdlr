@@ -855,7 +855,7 @@ def decompose_surface(obj, return_params, **kwargs):
         result = []
         if return_params:
             for sfu, params in helper_decompose(obj, 0, split_surface_u, return_params,
-                                                     (domain[2], domain[3]), **kwargs):
+                                                (domain[2], domain[3]), **kwargs):
                 result.extend(helper_decompose(sfu, 1, split_surface_v, return_params, params[0], **kwargs))
         else:
             for sfu in helper_decompose(obj, 0, split_surface_u, return_params, **kwargs):
