@@ -88,6 +88,12 @@ class TestMesh3D(unittest.TestCase):
         )
         self.mesh4 = Mesh3D(self.vertices4, self.triangles4, "Mesh4")
 
+    def test_resize(self):
+        exepected_vertices = np.array([[0, 0, 0], [0.001, 0, 0], [0, 0.001, 0]])
+        expected_mesh = Mesh3D(exepected_vertices, self.triangles1)
+
+        self.assertEqual(expected_mesh, self.mesh1.resize(0.001))
+
     def test_merge_without_mutualization(self):
         merged_meshes = self.mesh1.merge(self.mesh2, False, False)
         expected_vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0]])
