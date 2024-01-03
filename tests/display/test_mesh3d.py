@@ -20,7 +20,7 @@ FOLDER = os.path.dirname(os.path.realpath(__file__))
 class TestMesh3D(unittest.TestCase):
     def setUp(self):
         # Sample data for testing
-        self.vertices1 = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
+        self.vertices1 = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
         self.triangles1 = np.array([[0, 1, 2]])
         self.mesh1 = Mesh3D(self.vertices1, self.triangles1, "Mesh1")
 
@@ -89,10 +89,19 @@ class TestMesh3D(unittest.TestCase):
         self.mesh4 = Mesh3D(self.vertices4, self.triangles4, "Mesh4")
 
     def test_resize(self):
-        exepected_vertices = np.array([[0, 0, 0], [0.001, 0, 0], [0, 0.001, 0]])
+        exepected_vertices = np.array([[0.0, 0.0, 0.0], [0.001, 0.0, 0.0], [0.0, 0.001, 0.0]])
         expected_mesh = Mesh3D(exepected_vertices, self.triangles1)
 
         self.assertEqual(expected_mesh, self.mesh1.resize(0.001))
+
+    def test_round_vertices(self):
+        self.assertEqual(self.mesh4, self.mesh4.round_vertices())
+
+        vertices_1_bis = np.array([[0.0, 0.0, 0.0], [1.000000000001, 0.0, 0.0], [0.0, 0.99999999999999, 0.0]])
+        mesh_1_bis = Mesh3D(vertices_1_bis, self.triangles1)
+
+        self.assertNotEqual(self.mesh1, mesh_1_bis)
+        self.assertEqual(self.mesh1, mesh_1_bis.round_vertices(6))
 
     def test_merge_without_mutualization(self):
         merged_meshes = self.mesh1.merge(self.mesh2, False, False)
