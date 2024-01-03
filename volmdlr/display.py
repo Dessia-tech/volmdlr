@@ -453,12 +453,12 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
     @classmethod
     def from_3mf_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
-        return cls.from_trimesh(trimesh.load(filepath, "3mf")).resize(scale_factor)
+        return cls.from_trimesh_scene(trimesh.load(filepath, "3mf")).resize(scale_factor)
 
     @classmethod
     def from_3mf_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
         stream.seek(0)
-        return cls.from_trimesh(trimesh.load(stream, "3mf")).resize(scale_factor)
+        return cls.from_trimesh_scene(trimesh.load(stream, "3mf")).resize(scale_factor)
 
     # EXPORT
     def triangular_faces(self):
