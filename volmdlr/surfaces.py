@@ -7241,18 +7241,17 @@ class BSplineSurface3D(Surface3D):
         return blending_mat
 
     @lru_cache(maxsize=6)
-    def decompose(self, return_params: bool = False, **kwargs):
+    def decompose(self, return_params: bool = False, decompose_dir="uv"):
         """
         Decomposes the surface into Bezier surface patches of the same degree.
 
         :param return_params: If True, returns the parameters from start and end of each Bézier patch
          with repect to the input curve.
         :type return_params: bool
-
-        Keyword Arguments:
-            * ``decompose_dir``: Direction of decomposition. 'uv', 'u' or 'v'.
+        :param decompose_dir: Direction of decomposition. 'uv', 'u' or 'v'.
+        :type decompose_dir: str
         """
-        return decompose_surface(self, return_params, **kwargs)
+        return decompose_surface(self, return_params, decompose_dir=decompose_dir)
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """
@@ -7461,10 +7460,9 @@ class BSplineSurface3D(Surface3D):
         #         jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
         #                               vector.dot(derivatives[0][1]) / f_value])
         #     return f_value, jacobian
-
+        results = []
         point3d_array = npy.asarray(point3d)
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
-        results = []
         distances = npy.linalg.norm(self.evalpts - point3d_array, axis=1)
         indexes = npy.argsort(distances)
         x0s = []
@@ -7482,7 +7480,7 @@ class BSplineSurface3D(Surface3D):
             v = v_start + v_idx * delta_v
             x0s.append((u, v))
 
-        if self.weights is not None:
+        if self.rational:
             control_points = self.ctrlptsw
         else:
             control_points = self.ctrlpts
@@ -7492,12 +7490,16 @@ class BSplineSurface3D(Surface3D):
             res = point_inversion(point3d_array, x0, bounds, [self.degree_u, self.degree_v],
                                   self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational)
 
-            if res.fun < 1e-5:
+            if res.fun < 5e-6:
                 return volmdlr.Point2D(*res.x)
 
             results.append((res.x, res.fun))
-
-        for patch, param in zip(*self.decompose(return_params=True)):
+        decompose_dir = "uv"
+        if self.u_closed:
+            decompose_dir = "v"
+        if self.v_closed:
+            decompose_dir = "u"
+        for patch, param in self.decompose(return_params=True, decompose_dir=decompose_dir):
             xmin, ymin, zmin = patch.ctrlpts.min(axis=0)
             xmax, ymax, zmax = patch.ctrlpts.max(axis=0)
 
@@ -7508,11 +7510,8 @@ class BSplineSurface3D(Surface3D):
                 u_start, u_stop, v_start, v_stop = patch.domain
                 delta_u = (u_stop - u_start) / (patch.sample_size_u - 1)
                 delta_v = (v_stop - v_start) / (patch.sample_size_v - 1)
-                if index == 0:
-                    u_idx, v_idx = 0, 0
-                else:
-                    u_idx = int(index / patch.sample_size_v)
-                    v_idx = index % patch.sample_size_v
+                u_idx = int(index / patch.sample_size_v)
+                v_idx = index % patch.sample_size_v
 
                 u = u_start + u_idx * delta_u
                 v = v_start + v_idx * delta_v
