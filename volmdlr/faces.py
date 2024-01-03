@@ -3204,7 +3204,7 @@ class RevolutionFace3D(Face3D):
         if polygon_data:
             outer_polygon, inner_polygons = polygon_data
         else:
-            outer_polygon, inner_polygons = self.get_face_polygons()
+            outer_polygon, inner_polygons, _ = self.get_face_polygons()
         u, v, u_size, _ = self._get_grid_axis(outer_polygon, grid_size)
         if not u or not v:
             return []

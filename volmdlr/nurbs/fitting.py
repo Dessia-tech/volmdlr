@@ -372,8 +372,7 @@ def approximate_surface(points: np.ndarray[np.double_t, ndim == 2], size_u: cyth
 @cython.wraparound(False)
 @cython.boundscheck(False)
 def compute_knot_vector(
-    degree: cython.int, num_points: cython.size_t, params: cython.double[:]
-) -> cython.double[:]:
+    degree: cython.int, num_points: cython.size_t, params: cython.double[:]) -> cython.double[:]: # noqa
     """
     Computes a knot vector from the parameter list using averaging method.
 
@@ -387,6 +386,7 @@ def compute_knot_vector(
     :type params: list, tuple
     :return: knot vector
     :rtype: list
+
     """
     knotvector: vector[cython.double] = vector[cython.double](num_points + degree + 1, 0.0)
     i: cython.size_t

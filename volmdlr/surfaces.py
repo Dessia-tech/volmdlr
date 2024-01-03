@@ -14,7 +14,7 @@ import triangle as triangle_lib
 
 from geomdl import NURBS, BSpline
 from scipy.linalg import lu_factor, lu_solve
-from scipy.optimize import least_squares, minimize
+from scipy.optimize import least_squares
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.typings import JsonSerializable
@@ -6578,11 +6578,10 @@ class BSplineSurface3D(Surface3D):
             return hash((tuple(control_points),
                         self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
                         self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v))
-        else:
-            weights = tuple(self.weights)
-            return hash((tuple(control_points),
-                        self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
-                        self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v, weights))
+        weights = tuple(self.weights)
+        return hash((tuple(control_points),
+                    self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
+                    self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v, weights))
 
     def __eq__(self, other):
         """
@@ -7046,7 +7045,7 @@ class BSplineSurface3D(Surface3D):
             self._domain = start_u, stop_u, start_v, stop_v
         return self._domain
 
-    def copy(self, deep: bool = True, *args, **kwargs):
+    def copy(self, deep: bool = True, **kwargs):
         """
         Returns a copy of the instance.
 
@@ -7272,6 +7271,7 @@ class BSplineSurface3D(Surface3D):
 
         Keyword Arguments:
             * ``decompose_dir``: Direction of decomposition. 'uv', 'u' or 'v'.
+
         """
         return decompose_surface(self, return_params, **kwargs)
 
