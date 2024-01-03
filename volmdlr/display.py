@@ -6,7 +6,7 @@ Classes to define mesh for display use. Display mesh do not require good aspect 
 
 import math
 import warnings
-from typing import List, TypeVar, Union, Dict
+from typing import List, TypeVar, Union
 
 import numpy as np
 from dessia_common.core import DessiaObject, PhysicalObject
@@ -163,7 +163,7 @@ class MeshMixin:
         return self.__class__(self.vertices, valid_triangles, self.name)
 
     def merge_vertices(self) -> "MeshType":
-        """Remove duplicated vertices and remap triangles."""
+        """Merge duplicated vertices and remap triangles."""
 
         unique_vertices, indices_map = np.unique(self.vertices, axis=0, return_inverse=True)
         remapped_triangles = indices_map[self.triangles]
@@ -179,7 +179,7 @@ class MeshMixin:
         return self.__class__(unmerged_vertices, unmerged_triangles, self.name)
 
     def merge_triangles(self) -> "MeshType":
-        """Remove duplicated triangles from a mesh with unique vertices."""
+        """Merge duplicated triangles."""
 
         sorted_triangles = np.sort(self.triangles, axis=1)
         _, unique_triangle_indices = np.unique(sorted_triangles, axis=0, return_index=True)
@@ -304,20 +304,20 @@ class MeshMixin:
 
     # SERIALIZATION
     def to_dict(self, *args, **kwargs):
-        """Overload of 'to_dict' for numpy usage."""
+        """Overload of 'to_dict' for numpy usage and memory perf."""
 
         dict_ = self.base_dict()
-        dict_["vertices"] = self.vertices.tolist()
-        dict_["triangles"] = self.triangles.tolist()
+        dict_["vertices"] = self.vertices.flatten().tolist()
+        dict_["triangles"] = self.triangles.flatten().tolist()
 
         return dict_
 
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, *args, **kwargs) -> "MeshType":
-        """Overload of 'dict_to_object' for numpy usage."""
+        """Overload of 'dict_to_object' for numpy usage and memory perf."""
 
-        vertices = np.array(dict_["vertices"])
-        triangles = np.array(dict_["triangles"])
+        vertices = np.array(dict_["vertices"]).reshape(-1, 3)
+        triangles = np.array(dict_["triangles"]).reshape(-1, 3)
         name = dict_["name"]
 
         return cls(vertices, triangles, name)

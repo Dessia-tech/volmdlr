@@ -138,6 +138,12 @@ class TestMesh3D(unittest.TestCase):
         self.assertEqual(self.mesh1, empty_mesh + self.mesh1)
         self.assertNotEqual(self.mesh1, self.mesh1 + self.mesh2)
 
+    def test_serialization(self):
+        dict_ = self.mesh4.to_dict()
+        mesh = Mesh3D.dict_to_object(dict_)
+
+        self.assertEqual(self.mesh4, mesh)
+
 
 class TestMesh3DImport(unittest.TestCase):
     def setUp(self) -> None:
