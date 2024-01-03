@@ -391,7 +391,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return areas.sum()
 
     @property
-    def faces(self):  # -> List[volmdlr.faces.Triangle3D]:
+    def faces(self):
         """
         Get the mesh faces as Triangle3D objects.
 
