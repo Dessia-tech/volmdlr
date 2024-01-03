@@ -3552,8 +3552,16 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         polygon_points = set(self.points)
 
+        grid_points = []
         # Generate all points in the grid
-        grid_points = npy.array([[xi, yi] for xi in x for yi in y], dtype=npy.float64)
+        for i, yi in enumerate(y):
+            if i % 2 == 0:
+                for xi in x:
+                    grid_points.append((xi, yi))
+            else:
+                for xi in reversed(x):
+                    grid_points.append((xi, yi))
+        grid_points = npy.array(grid_points, dtype=npy.float64)
 
         # Use self.points_in_polygon to check if each point is inside the polygon
         points_in_polygon_ = self.points_in_polygon(grid_points, include_edge_points=include_edge_points)
@@ -4488,6 +4496,42 @@ class Contour3D(ContourMixin, Wire3D):
         contours = Contour3D.contours_from_edges(merged_primitives, tol=abs_tol)
 
         return contours
+
+    def to_polygon(self, angle_resolution=None, discretize_line: bool = False, discretize_line_direction: str = "xy"):
+        """
+        Transform the contour_mixin to a polygon, COPY/PASTE from Contour2D.
+
+        :param angle_resolution: Number of points per radians.
+        :type angle_resolution: float
+        :param discretize_line: Boolean indicating whether the line segments should be discretized or not.
+        :type discretize_line: bool
+        :return: The discretized version of the contour.
+        :rtype: ClosedPolygon2D
+        """
+
+        polygon_points = []
+
+        for primitive in self.primitives:
+            if isinstance(primitive, volmdlr.edges.LineSegment3D):
+                if not discretize_line:
+                    polygon_points.append(primitive.start)
+                else:
+                    is_horizontal = math.isclose(primitive.start.y, primitive.end.y, abs_tol=1e-6)
+                    is_vertical = math.isclose(primitive.start.x, primitive.end.x, abs_tol=1e-6)
+                    should_discretize = discretize_line_direction == "xy" or \
+                        (discretize_line_direction == "x" and is_horizontal) or \
+                        (discretize_line_direction == "y" and is_vertical)
+                    if should_discretize:
+                        polygon_points.extend(primitive.discretization_points()[:-1])
+                    else:
+                        polygon_points.append(primitive.start)
+
+            else:
+                polygon_points.extend(primitive.discretization_points()[:-1])
+
+        # if isinstance(self, Contour2D):
+        #     return ClosedPolygon2D(polygon_points)
+        return ClosedPolygon3D(polygon_points)
 
 
 class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):

@@ -28,7 +28,7 @@ from volmdlr.utils import step_reader
 from volmdlr.utils.step_reader import STEP_TO_VOLMDLR, STEP_REPRESENTATION_ENTITIES
 
 
-class StepFunction(dc.DessiaObject):
+class StepFunction:
     """
     Abstract class defining a step function.
 
@@ -45,7 +45,20 @@ class StepFunction(dc.DessiaObject):
                 self.simplify('B_SPLINE_SURFACE')
             if self.arg[1][0] == 'B_SPLINE_CURVE':
                 self.simplify('B_SPLINE_CURVE')
-        dc.DessiaObject.__init__(self, name=function_name)
+
+    def to_dict(self, *args, **kwargs):
+        """
+        Custom to dict for performance.
+        """
+        dict_ = {"id": self.id,
+                 "name": self.name,
+                 "arg": self.arg
+                 }
+        return dict_
+
+    @classmethod
+    def dict_to_object(cls, dict_, *args, **kwargs):
+        return cls(dict_["id"], dict_["name"], dict_["arg"])
 
     def simplify(self, new_name):
         """ADD DOCSTRING."""

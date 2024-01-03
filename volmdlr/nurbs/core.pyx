@@ -75,7 +75,7 @@ def find_span_binsearch(int degree, vector[double] knot_vector, int num_ctrlpts,
             high = mid
         else:
             low = mid
-        mid = int((low + high) / 2)
+        mid = <int>((low + high) / 2)
 
     return mid
 
@@ -595,7 +595,7 @@ def build_coeff_matrix(int degree, vector[double] knotvector, double[:] params, 
 def evaluate_curve(dict datadict, double start: float = 0.0, double stop: float = 1.0):
     cdef int degree = datadict["degree"]
     cdef vector[double] knotvector = datadict["knotvector"]
-    cdef vector[vector[double]] ctrlpts = datadict["control_points"]
+    cdef double[:, ::1] ctrlpts = datadict["control_points"]
     cdef int size = datadict["size"]
     cdef int sample_size = datadict["sample_size"]
     cdef bint rational = datadict["rational"]
@@ -608,7 +608,7 @@ def evaluate_curve(dict datadict, double start: float = 0.0, double stop: float 
     return evaluate_curve_c(degree, knotvector, ctrlpts, size, sample_size, dimension, precision, start, stop)
 
 
-cdef vector[vector[double]] evaluate_curve_c(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts,
+cdef vector[vector[double]] evaluate_curve_c(int degree, vector[double] knotvector, double[:, ::1] ctrlpts,
                                              int size, int sample_size, int dimension, int precision, double start,
                                              double stop):
     """Evaluates the curve.
@@ -645,7 +645,7 @@ cdef vector[vector[double]] evaluate_curve_c(int degree, vector[double] knotvect
 def derivatives_curve(dict datadict, double parpos, int deriv_order):
     cdef int degree = datadict["degree"]
     cdef list knotvector = datadict["knotvector"]
-    cdef tuple ctrlpts = datadict["control_points"]
+    cdef double[:, ::1] ctrlpts = datadict["control_points"]
     cdef int size = datadict["size"]
     cdef bint rational = datadict["rational"]
     cdef int dimension = datadict["dimension"] + 1 if rational else datadict["dimension"]
@@ -657,7 +657,7 @@ def derivatives_curve(dict datadict, double parpos, int deriv_order):
 
 @boundscheck(False)
 @wraparound(False)
-cdef vector[vector[double]] derivatives_curve_c(int degree, vector[double] knotvector, vector[vector[double]] ctrlpts,
+cdef vector[vector[double]] derivatives_curve_c(int degree, vector[double] knotvector, double[:, ::1] ctrlpts,
                                                 int size, int dimension, double parpos, int deriv_order):
     """Evaluates the n-th order derivatives at the input parametric position.
 
@@ -690,7 +690,7 @@ cdef vector[vector[double]] derivatives_curve_c(int degree, vector[double] knotv
 
 
 cdef vector[vector[double]] evaluate_curve_rational(int degree, vector[double] knotvector,
-                                                    vector[vector[double]] ctrlpts, int size, int sample_size,
+                                                    double[:, ::1] ctrlpts, int size, int sample_size,
                                                     int dimension, int precision, double start, double stop):
     """Evaluates the rational curve.
 
@@ -724,7 +724,7 @@ cdef vector[vector[double]] evaluate_curve_rational(int degree, vector[double] k
 @wraparound(False)
 @cdivision(True)
 cdef vector[vector[double]] derivatives_curve_rational(int degree, vector[double] knotvector,
-                                                       vector[vector[double]] ctrlpts,
+                                                       double[:, ::1] ctrlpts,
                                                        int size, int dimension, double parpos, int deriv_order):
     """Evaluates the n-th order derivatives at the input parametric position.
 
