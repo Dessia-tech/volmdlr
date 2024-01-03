@@ -8,6 +8,7 @@ import unittest
 import volmdlr.primitives3d as p3d
 from volmdlr import O2D, O3D, OXYZ, X3D, Point2D, Point3D
 from volmdlr.curves import Circle2D
+from volmdlr.display import Mesh3D
 from volmdlr.step import Step
 from volmdlr.wires import Contour2D
 
@@ -77,3 +78,34 @@ class TestDisplayStep(unittest.TestCase):
     def test_display_engine_path(self):
         volume_model = Step.from_file(self.engine_path).to_volume_model()
         volume_model.babylonjs()
+
+
+class TestDisplaySTL(unittest.TestCase):
+    def setUp(self):
+        self.cube_ascii_path = os.path.join(FOLDER, "..", "..", "scripts", "stl", "cube_ascii.stl")
+        self.double_space_path = os.path.join(FOLDER, "..", "..", "scripts", "stl", "double_space.stl")
+        self.simple_path = os.path.join(FOLDER, "..", "..", "scripts", "stl", "simple.stl")
+
+    def test_display_cube_ascii(self):
+        mesh = Mesh3D.from_stl_file(self.cube_ascii_path)
+        mesh.babylonjs()
+
+        # Split shared vertices for better shadow rendering
+        mesh = mesh.split_shared_vertices()
+        mesh.babylonjs()
+
+    def test_display_double_space(self):
+        mesh = Mesh3D.from_stl_file(self.double_space_path)
+        mesh.babylonjs()
+
+        # Split shared vertices for better shadow rendering
+        mesh = mesh.split_shared_vertices()
+        mesh.babylonjs()
+
+    def test_display_simple(self):
+        mesh = Mesh3D.from_stl_file(self.simple_path)
+        mesh.babylonjs()
+
+        # Split shared vertices for better shadow rendering
+        mesh = mesh.split_shared_vertices()
+        mesh.babylonjs()
