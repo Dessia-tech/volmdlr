@@ -110,40 +110,6 @@ class MeshMixin:
         """
         return self.__class__(self.vertices * scale_factor, self.triangles, self.name)
 
-    def merge(self, other: "MeshType", merge_vertices: bool = False, merge_triangles: bool = False) -> "MeshType":
-        """
-        Merge two meshes.
-
-        :param other: Another Mesh instance to merge with this instance.
-        :type other: MeshType
-        :param merge_vertices: Flag to indicate whether to merge vertices.
-        :type merge_vertices: bool, optional
-        :param merge_triangles: Flag to indicate whether to merge triangles.
-        :type merge_triangles: bool, optional
-
-        :return: A new Mesh instance representing the merged meshes.
-        :rtype: MeshType
-        """
-        if self.__class__.__name__ != other.__class__.__name__:
-            raise ValueError("Meshes should have same dimension.")
-
-        if len(self.vertices) == 0 or len(self.triangles) == 0:
-            return other
-        if len(other.vertices) == 0 or len(other.triangles) == 0:
-            return self
-
-        merged_vertices = np.concatenate((self.vertices, other.vertices))
-        merged_triangles = np.concatenate((self.triangles, other.triangles + len(self.vertices)))
-
-        mesh = self.__class__(merged_vertices, merged_triangles, self.name)
-
-        if merge_vertices:
-            mesh = mesh.merge_vertices()
-        if merge_triangles:
-            mesh = mesh.merge_triangles()
-
-        return mesh
-
     def round_vertices(self, decimals: int = 9) -> "MeshType":
         """
         Round the vertices of the Mesh instance to a given number of decimals.
@@ -191,6 +157,40 @@ class MeshMixin:
 
         # Create a new Mesh3D instance with non-flat triangles
         return self.__class__(self.vertices, valid_triangles, self.name)
+
+    def merge(self, other: "MeshType", merge_vertices: bool = False, merge_triangles: bool = False) -> "MeshType":
+        """
+        Merge two meshes.
+
+        :param other: Another Mesh instance to merge with this instance.
+        :type other: MeshType
+        :param merge_vertices: Flag to indicate whether to merge vertices.
+        :type merge_vertices: bool, optional
+        :param merge_triangles: Flag to indicate whether to merge triangles.
+        :type merge_triangles: bool, optional
+
+        :return: A new Mesh instance representing the merged meshes.
+        :rtype: MeshType
+        """
+        if self.__class__.__name__ != other.__class__.__name__:
+            raise ValueError("Meshes should have same dimension.")
+
+        if len(self.vertices) == 0 or len(self.triangles) == 0:
+            return other
+        if len(other.vertices) == 0 or len(other.triangles) == 0:
+            return self
+
+        merged_vertices = np.concatenate((self.vertices, other.vertices))
+        merged_triangles = np.concatenate((self.triangles, other.triangles + len(self.vertices)))
+
+        mesh = self.__class__(merged_vertices, merged_triangles, self.name)
+
+        if merge_vertices:
+            mesh = mesh.merge_vertices()
+        if merge_triangles:
+            mesh = mesh.merge_triangles()
+
+        return mesh
 
     def merge_vertices(self) -> "MeshType":
         """
