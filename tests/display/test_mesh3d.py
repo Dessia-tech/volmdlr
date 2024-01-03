@@ -103,6 +103,13 @@ class TestMesh3D(unittest.TestCase):
         self.assertNotEqual(self.mesh1, mesh_1_bis)
         self.assertEqual(self.mesh1, mesh_1_bis.round_vertices(6))
 
+    def test_remove_degenerated_triangles(self):
+        triangles = np.array([[0, 1, 2], [0, 1, 1]])
+        degenerated_mesh = Mesh3D(self.vertices1, triangles)
+
+        self.assertNotEqual(self.mesh1, degenerated_mesh)
+        self.assertEqual(self.mesh1, degenerated_mesh.remove_degenerate_triangles())
+
     def test_merge_without_mutualization(self):
         merged_meshes = self.mesh1.merge(self.mesh2, False, False)
         expected_vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [0, 1, 0], [0, 1, 0], [1, 1, 0]])
@@ -140,6 +147,16 @@ class TestMesh3D(unittest.TestCase):
 
         self.assertEqual(22, len(merged_mesh_2.triangles))
         self.assertEqual(12, len(merged_mesh_2.vertices))
+
+    def test_unmerge_vertices(self):
+        merged_mesh_2 = self.mesh3.merge(self.mesh4, merge_vertices=True, merge_triangles=True)
+
+        self.assertEqual(3*len(merged_mesh_2.triangles), len(merged_mesh_2.unmerge_vertices().vertices))
+
+        self.assertEqual(3*len(self.mesh1.triangles), len(self.mesh1.unmerge_vertices().vertices))
+        self.assertEqual(3*len(self.mesh2.triangles), len(self.mesh2.unmerge_vertices().vertices))
+        self.assertEqual(3*len(self.mesh3.triangles), len(self.mesh3.unmerge_vertices().vertices))
+        self.assertEqual(3*len(self.mesh4.triangles), len(self.mesh4.unmerge_vertices().vertices))
 
     def test_equality(self):
         self.assertNotEqual(self.mesh1, self.mesh2)
