@@ -9,16 +9,14 @@ import warnings
 from typing import List, TypeVar, Union
 
 import numpy as np
-from dessia_common.core import DessiaObject, PhysicalObject
-from dessia_common.typings import JsonSerializable
-from dessia_common.serialization import BinaryFile
-from numpy.typing import NDArray
-
 import trimesh
+from dessia_common.core import DessiaObject, PhysicalObject
+from dessia_common.serialization import BinaryFile
+from dessia_common.typings import JsonSerializable
+from numpy.typing import NDArray
 from trimesh import Trimesh
 
 import volmdlr.edges
-
 
 # TODO: make this module "mesh" as it is not useful only for display
 
@@ -101,16 +99,30 @@ class MeshMixin:
 
     # MANIPULATION
     def resize(self, scale_factor: float) -> "MeshType":
+        """
+        Resize the Mesh instance by scaling its vertices.
+
+        :param scale_factor: The factor by which to scale the mesh.
+        :type scale_factor: float
+
+        :return: A new Mesh instance representing the scaled mesh.
+        :rtype: MeshType
+        """
         return self.__class__(self.vertices * scale_factor, self.triangles, self.name)
 
     def merge(self, other: "MeshType", merge_vertices: bool = False, merge_triangles: bool = False) -> "MeshType":
         """
         Merge two meshes.
 
-        :param other:
-        :param merge_vertices:
-        :param merge_triangles:
-        :return:
+        :param other: Another Mesh instance to merge with this instance.
+        :type other: MeshType
+        :param merge_vertices: Flag to indicate whether to merge vertices.
+        :type merge_vertices: bool, optional
+        :param merge_triangles: Flag to indicate whether to merge triangles.
+        :type merge_triangles: bool, optional
+
+        :return: A new Mesh instance representing the merged meshes.
+        :rtype: MeshType
         """
         if self.__class__.__name__ != other.__class__.__name__:
             raise ValueError("Meshes should have same dimension.")
@@ -133,14 +145,32 @@ class MeshMixin:
         return mesh
 
     def round_vertices(self, decimals: int = 9) -> "MeshType":
-        """Round the mesh vertices to a given number of decimals."""
+        """
+        Round the vertices of the Mesh instance to a given number of decimals.
 
+        :param decimals: The number of decimal places to round the vertices to (default is 9).
+        :type decimals: int, optional
+
+        :return: A new Mesh instance with rounded vertices.
+        :rtype: MeshType
+        """
         rounded_vertices = np.round(self.vertices, decimals)
 
         return self.__class__(rounded_vertices, self.triangles, self.name)
 
     def remove_degenerate_triangles(self, tol: float = 0.0) -> "MeshType":
-        """Remove degenerate triangles from the mesh."""
+        """
+        Remove degenerate triangles from the Mesh instance.
+
+        Degenerate triangles are triangles with vertices that are too close to each other.
+        This method checks for degenerate triangles based on a tolerance value and removes them.
+
+        :param tol: The tolerance value to determine whether a triangle is degenerate or not (default is 0.0).
+        :type tol: float, optional
+
+        :return: A new Mesh instance with degenerate triangles removed.
+        :rtype: MeshType
+        """
         # Get vertices for each corner of the triangles
         v0, v1, v2 = (
             self.vertices[self.triangles[:, 0]],
@@ -163,23 +193,43 @@ class MeshMixin:
         return self.__class__(self.vertices, valid_triangles, self.name)
 
     def merge_vertices(self) -> "MeshType":
-        """Merge duplicated vertices and remap triangles."""
+        """
+        Merge duplicated vertices in the Mesh instance and remap triangles accordingly.
 
+        This method identifies duplicate vertices and combines them into a single unique set of vertices,
+        updating the triangles to use the unique vertices.
+
+        :return: A new Mesh instance with merged vertices and updated triangles.
+        :rtype: MeshType
+        """
         unique_vertices, indices_map = np.unique(self.vertices, axis=0, return_inverse=True)
         remapped_triangles = indices_map[self.triangles]
 
         return self.__class__(unique_vertices, remapped_triangles, self.name)
 
     def unmerge_vertices(self) -> "MeshType":
-        """Unmerge shared vertices between triangles."""
+        """
+        Unmerge shared vertices between triangles in the Mesh instance.
 
+        This method recreates distinct vertices for each triangle, effectively unmerging shared vertices.
+
+        :return: A new Mesh instance with unmerged vertices and original triangles.
+        :rtype: MeshType
+        """
         unmerged_vertices = self.vertices[self.triangles.ravel()]
         unmerged_triangles = np.arange(len(self.triangles) * 3).reshape(-1, 3)
 
         return self.__class__(unmerged_vertices, unmerged_triangles, self.name)
 
     def merge_triangles(self) -> "MeshType":
-        """Merge duplicated triangles."""
+        """
+        Merge duplicated triangles in the Mesh instance.
+
+        This method identifies and removes duplicate triangles, resulting in a Mesh with unique triangles.
+
+        :return: A new Mesh instance with merged triangles.
+        :rtype: MeshType
+        """
 
         sorted_triangles = np.sort(self.triangles, axis=1)
         _, unique_triangle_indices = np.unique(sorted_triangles, axis=0, return_index=True)
@@ -250,9 +300,15 @@ class MeshMixin:
         self.triangles = result.triangles
 
     # CHECK
-    def check_concistency(self):
-        """Check mesh concistency."""
+    def check_consistency(self) -> bool:
+        """
+        Check the consistency of the Mesh instance.
 
+        This method verifies that all vertices referenced by triangles are within the valid range of vertex indices.
+
+        :return: True if the mesh is consistent, False otherwise.
+        :rtype: bool
+        """
         n_points = len(self.vertices)
 
         for triangle in self.triangles:
@@ -263,9 +319,9 @@ class MeshMixin:
     # COMPUTATION
     def triangles_vertices(self):
         """
-        Actual triangles of the mesh (points, not indexes).
+        Get the actual triangles of the mesh represented by their vertices (not indices).
 
-        :return: Points of triangle vertices.
+        :return: An array containing the vertices of the triangles.
         :rtype: np.ndarray[float]
         """
         triangles = self.vertices.view(np.ndarray)[self.triangles]
@@ -274,6 +330,9 @@ class MeshMixin:
     def triangles_cross_products(self):
         """
         Compute the cross products of edges for each triangle in the mesh.
+
+        :return: An array containing the cross products of edges for each triangle.
+        :rtype: np.ndarray[float]
         """
         vectors = np.diff(self.triangles_vertices(), axis=1)
         return np.cross(vectors[:, 0], vectors[:, 1])
@@ -351,14 +410,27 @@ class Mesh2D(MeshMixin, DessiaObject):
     _point_class = volmdlr.Point2D
 
     def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ""):
+        """
+        Initialize a 2D mesh.
+
+        :param vertices: An array of 2D vertices specifying the 2D mesh.
+        :type vertices: ndarray[float]
+        :param triangles: An array of triangles representing the connectivity of the 2D mesh.
+        :type triangles: ndarray[int]
+        :param name: A name for the mesh (default is an empty string).
+        :type name: str, optional
+        """
         self.vertices = vertices
         self.triangles = triangles
 
         DessiaObject.__init__(self, name=name)
 
-    def area(self):
+    def area(self) -> float:
         """
-        Return the area as the sum of areas of triangles.
+        Calculate the total area of the 2D mesh as the sum of areas of triangles.
+
+        :return: The total area of the mesh.
+        :rtype: float
         """
         areas = np.sqrt((self.triangles_cross_products() ** 2)) / 2.0
         return areas.sum()
@@ -373,6 +445,16 @@ class Mesh3D(MeshMixin, PhysicalObject):
     _point_class = volmdlr.Point3D
 
     def __init__(self, vertices: NDArray[float], triangles: NDArray[int], name: str = ""):
+        """
+        Initialize a 3D mesh.
+
+        :param vertices: An array of 3D vertices specifying the 3D mesh.
+        :type vertices: ndarray[float]
+        :param triangles: An array of triangles representing the connectivity of the 3D mesh.
+        :type triangles: ndarray[int]
+        :param name: A name for the mesh (default is an empty string).
+        :type name: str, optional
+        """
         self.vertices = vertices
         self.triangles = triangles
 
@@ -383,9 +465,12 @@ class Mesh3D(MeshMixin, PhysicalObject):
     def volmdlr_primitives(self, **kwargs):
         return [self]
 
-    def area(self):
+    def area(self) -> float:
         """
-        Return the area as the sum of areas of triangles.
+        Calculate the total surface area of the 3D mesh as the sum of areas of triangles.
+
+        :return: The total surface area of the 3D mesh.
+        :rtype: float
         """
         areas = np.sqrt((self.triangles_cross_products() ** 2).sum(axis=1)) / 2.0
         return areas.sum()
@@ -405,10 +490,28 @@ class Mesh3D(MeshMixin, PhysicalObject):
     # IMPORT
     @classmethod
     def from_trimesh(cls, trimesh_: Trimesh) -> "Mesh3D":
+        """
+        Create a 3D mesh from a Trimesh object.
+
+        :param trimesh_: A Trimesh object representing the 3D mesh.
+        :type trimesh_: Trimesh
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         return cls(trimesh_.vertices, trimesh_.faces)
 
     @classmethod
     def from_trimesh_scene(cls, trimesh_scene: trimesh.Scene) -> "Mesh3D":
+        """
+        Create a 3D mesh from a Trimesh Scene.
+
+        :param trimesh_scene: A Trimesh Scene containing multiple geometry objects.
+        :type trimesh_scene: trimesh.Scene
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         mesh = cls(np.array([]), np.array([]))
         for trimesh_ in trimesh_scene.geometry.values():
             mesh += cls.from_trimesh(trimesh_)
@@ -417,46 +520,156 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
     @classmethod
     def from_stl_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
+        """
+        Create a 3D mesh from an STL file.
+
+        :param filepath: The path to the STL file.
+        :type filepath: str
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         return cls.from_trimesh(trimesh.load(filepath, "stl")).resize(scale_factor)
 
     @classmethod
     def from_stl_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
+        """
+        Create a 3D mesh from an STL stream.
+
+        :param stream: A binary stream containing STL data.
+        :type stream: BinaryFile
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         stream.seek(0)
         return cls.from_trimesh(trimesh.load(stream, "stl")).resize(scale_factor)
 
     @classmethod
     def from_obj_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
+        """
+        Create a 3D mesh from an OBJ file.
+
+        :param filepath: The path to the OBJ file.
+        :type filepath: str
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         return cls.from_trimesh(trimesh.load(filepath, "obj")).resize(scale_factor)
 
     @classmethod
     def from_obj_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
+        """
+        Create a 3D mesh from an OBJ stream.
+
+        :param stream: A binary stream containing OBJ data.
+        :type stream: BinaryFile
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         stream.seek(0)
         return cls.from_trimesh(trimesh.load(stream, "obj")).resize(scale_factor)
 
     @classmethod
     def from_ply_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
+        """
+        Create a 3D mesh from an PLY file.
+
+        :param filepath: The path to the PLY file.
+        :type filepath: str
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         return cls.from_trimesh(trimesh.load(filepath, "ply")).resize(scale_factor)
 
     @classmethod
     def from_ply_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
+        """
+        Create a 3D mesh from an PLY stream.
+
+        :param stream: A binary stream containing PLY data.
+        :type stream: BinaryFile
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         stream.seek(0)
         return cls.from_trimesh(trimesh.load(stream, "ply")).resize(scale_factor)
 
     @classmethod
     def from_off_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
+        """
+        Create a 3D mesh from an OFF file.
+
+        :param filepath: The path to the OFF file.
+        :type filepath: str
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         return cls.from_trimesh(trimesh.load(filepath, "off")).resize(scale_factor)
 
     @classmethod
     def from_off_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
+        """
+        Create a 3D mesh from an OFF stream.
+
+        :param stream: A binary stream containing OFF data.
+        :type stream: BinaryFile
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         stream.seek(0)
         return cls.from_trimesh(trimesh.load(stream, "off")).resize(scale_factor)
 
     @classmethod
     def from_3mf_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
+        """
+        Create a 3D mesh from an 3MF file.
+
+        :param filepath: The path to the 3MF file.
+        :type filepath: str
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         return cls.from_trimesh_scene(trimesh.load(filepath, "3mf")).resize(scale_factor)
 
     @classmethod
     def from_3mf_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
+        """
+        Create a 3D mesh from an 3MF stream.
+
+        :param stream: A binary stream containing 3MF data.
+        :type stream: BinaryFile
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
+
+        :return: A new 3D mesh instance.
+        :rtype: Mesh3D
+        """
         stream.seek(0)
         return cls.from_trimesh_scene(trimesh.load(stream, "3mf")).resize(scale_factor)
 
@@ -519,13 +732,23 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return volmdlr.shells.OpenTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
 
     def to_trimesh(self):
+        """
+        Convert the Mesh3D instance to a Trimesh object.
+
+        :return: A Trimesh object representing the 3D mesh.
+        :rtype: Trimesh
+        """
         return Trimesh(self.vertices, self.triangles)
 
     def to_babylon(self):
         """
-        Convert the mesh in babylonjs format.
+        Convert the mesh to the Babylon.js format.
 
+        This method rounds the vertices to 6 decimal places and returns the mesh in a Babylon.js compatible format.
         https://doc.babylonjs.com/how_to/custom
+
+        :return: A dictionary representing the mesh in Babylon.js format with 'positions' and 'indices' keys.
+        :rtype: dict
         """
         mesh = self.round_vertices(decimals=6)
         babylon_mesh = {"positions": mesh.vertices.flatten().tolist(), "indices": mesh.triangles.flatten().tolist()}
@@ -541,6 +764,15 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
     # SAVING
     def save_to_stl_file(self, filepath: str, scale_factor: float = 1000.0):
+        """
+        Save the 3D mesh to an STL file.
+
+        :param filepath: The path to the STL file.
+        :type filepath: str
+
+        :param scale_factor: The scale factor to apply to the mesh (default is 1000.0).
+        :type scale_factor: float, optional
+        """
         if not filepath.lower().endswith(".stl"):
             filepath += ".stl"
             print(f"Changing name to {filepath}")
@@ -549,9 +781,27 @@ class Mesh3D(MeshMixin, PhysicalObject):
             self.save_to_stl_stream(file, scale_factor=scale_factor)
 
     def save_to_stl_stream(self, stream, scale_factor: float = 1000.0):
+        """
+        Save the 3D mesh to an STL stream.
+
+        :param stream: A binary stream to write the STL data.
+        :type stream: BinaryFile
+
+        :param scale_factor: The scale factor to apply to the mesh (default is 1000.0).
+        :type scale_factor: float, optional
+        """
         self.resize(scale_factor).to_trimesh().export(stream, "stl")
 
     def save_to_obj_file(self, filepath: str, scale_factor: float = 1000.0):
+        """
+        Save the 3D mesh to an OBJ file.
+
+        :param filepath: The path to the OBJ file.
+        :type filepath: str
+
+        :param scale_factor: The scale factor to apply to the mesh (default is 1000.0).
+        :type scale_factor: float, optional
+        """
         if not filepath.lower().endswith(".obj"):
             filepath += ".obj"
             print(f"Changing name to {filepath}")
@@ -560,9 +810,27 @@ class Mesh3D(MeshMixin, PhysicalObject):
             self.save_to_obj_stream(file, scale_factor=scale_factor)
 
     def save_to_obj_stream(self, stream, scale_factor: float = 1000.0):
+        """
+        Save the 3D mesh to an OBJ stream.
+
+        :param stream: A binary stream to write the OBJ data.
+        :type stream: BinaryFile
+
+        :param scale_factor: The scale factor to apply to the mesh (default is 1000.0).
+        :type scale_factor: float, optional
+        """
         self.resize(scale_factor).to_trimesh().export(stream, "obj")
 
     def save_to_ply_file(self, filepath: str, scale_factor: float = 1000.0):
+        """
+        Save the 3D mesh to a PLY file.
+
+        :param filepath: The path to the PLY file.
+        :type filepath: str
+
+        :param scale_factor: The scale factor to apply to the mesh (default is 1000.0).
+        :type scale_factor: float, optional
+        """
         if not filepath.lower().endswith(".ply"):
             filepath += ".ply"
             print(f"Changing name to {filepath}")
@@ -571,9 +839,27 @@ class Mesh3D(MeshMixin, PhysicalObject):
             self.save_to_ply_stream(file, scale_factor=scale_factor)
 
     def save_to_ply_stream(self, stream, scale_factor: float = 1000.0):
+        """
+        Save the 3D mesh to a PLY stream.
+
+        :param stream: A binary stream to write the PLY data.
+        :type stream: BinaryFile
+
+        :param scale_factor: The scale factor to apply to the mesh (default is 1000.0).
+        :type scale_factor: float, optional
+        """
         self.resize(scale_factor).to_trimesh().export(stream, "ply")
 
     def save_to_off_file(self, filepath: str, scale_factor: float = 1000.0):
+        """
+        Save the 3D mesh to an OFF file.
+
+        :param filepath: The path to the OFF file.
+        :type filepath: str
+
+        :param scale_factor: The scale factor to apply to the mesh (default is 1000.0).
+        :type scale_factor: float, optional
+        """
         if not filepath.lower().endswith(".off"):
             filepath += ".off"
             print(f"Changing name to {filepath}")
@@ -582,9 +868,27 @@ class Mesh3D(MeshMixin, PhysicalObject):
             self.save_to_off_stream(file, scale_factor=scale_factor)
 
     def save_to_off_stream(self, stream, scale_factor: float = 1000.0):
+        """
+        Save the 3D mesh to an OFF stream.
+
+        :param stream: A binary stream to write the OFF data.
+        :type stream: BinaryFile
+
+        :param scale_factor: The scale factor to apply to the mesh (default is 1000.0).
+        :type scale_factor: float, optional
+        """
         self.resize(scale_factor).to_trimesh().export(stream, "off")
 
     def save_to_3mf_file(self, filepath: str, scale_factor: float = 1000.0):
+        """
+        Save the 3D mesh to a 3MF file.
+
+        :param filepath: The path to the 3MF file.
+        :type filepath: str
+
+        :param scale_factor: The scale factor to apply to the mesh (default is 1000.0).
+        :type scale_factor: float, optional
+        """
         if not filepath.lower().endswith(".3mf"):
             filepath += ".3mf"
             print(f"Changing name to {filepath}")
@@ -593,4 +897,13 @@ class Mesh3D(MeshMixin, PhysicalObject):
             self.save_to_3mf_stream(file, scale_factor=scale_factor)
 
     def save_to_3mf_stream(self, stream, scale_factor: float = 1000.0):
+        """
+        Save the 3D mesh to a 3MF stream.
+
+        :param stream: A binary stream to write the 3MF data.
+        :type stream: BinaryFile
+
+        :param scale_factor: The scale factor to apply to the mesh (default is 1000.0).
+        :type scale_factor: float, optional
+        """
         self.resize(scale_factor).to_trimesh().export(stream, "3mf")
