@@ -1384,25 +1384,30 @@ class BSplineCurve(Edge):
         index = indexes[0]
         u_min, u_max = self.domain
         u0 = u_min + index * (u_max - u_min) / (self.sample_size - 1)
-        u, convergence_sucess = self.point_invertion(u0, point)
+        u, convergence_sucess, distance = self.point_inversion(u0, point)
         if u_min != 0 or u_max != 1.0:
             u = (u - u_min) / (u_max - u_min)
         abscissa = u * length
+        results = [(abscissa, distance)]
         if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
             return float(abscissa)
 
-        def evaluate_point_distance(u_param):
-            return (point - self.evaluate_single(u_param)).norm()
-        results = [(abscissa, evaluate_point_distance(u))]
-        initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
-        for u0 in initial_condition_list:
-            res = minimize(evaluate_point_distance, npy.array(u0), bounds=[(u_min, u_max)])
-            if res.fun < 1e-6:
-                return float(res.x[0] * length)
-            abscissa = res.x[0] * length
-            results.append((abscissa, res.fun))
-        result = min(results, key=lambda r: r[1])[0]
-        return float(result)
+        for patch, param in self.decompose(True):
+            bounding_element = self.get_bounding_element()
+            if bounding_element.point_belongs(point):
+                distances = npy.linalg.norm(patch.points - point_array, axis=1)
+                index = npy.argmin(distances)
+                u_start, u_stop = patch.domain
+                delta_u = (u_stop - u_start) / (patch.sample_size - 1)
+                u = u_start + index * delta_u
+
+                x1, _, distance = patch.point_inversion(u, point)
+                u = x1 * (param[1] - param[0]) + param[0]
+                if distance <= 1e-6:
+                    return u * self.length()
+                results.append((u * self.length(), distance))
+
+        return min(results, key=lambda r: r[1])[0]
 
     def _point_inversion_funcs(self, u, point):
         """
@@ -1414,7 +1419,7 @@ class BSplineCurve(Edge):
         func_first_derivative = curve_derivatives[2].dot(distance_vector) + curve_derivatives[1].norm() ** 2
         return func, func_first_derivative, curve_derivatives, distance_vector
 
-    def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-7, tol2: float = 1e-8):
+    def point_inversion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-7, tol2: float = 1e-8):
         """
         Finds the equivalent B-Spline curve parameter u to a given a point 3D or 2D using an initial guess u0.
 
@@ -1431,18 +1436,18 @@ class BSplineCurve(Edge):
         :return: u parameter and convergence check
         :rtype: int, bool
         """
-        if maxiter == 0:
-            return u0, False
         func, func_first_derivative, curve_derivatives, distance_vector = self._point_inversion_funcs(u0, point)
+        if maxiter == 0:
+            return u0, False, distance_vector.norm()
         if self._check_convergence(curve_derivatives, distance_vector, tol1=tol1, tol2=tol2):
-            return u0, True
+            return u0, True, distance_vector.norm()
         new_u = u0 - func / (func_first_derivative + 1e-18)
         new_u = self._check_bounds(new_u)
         residual = (new_u - u0) * curve_derivatives[1]
         if residual.norm() <= tol1:
-            return u0, False
+            return u0, False, distance_vector.norm()
         u0 = new_u
-        return self.point_invertion(u0, point, maxiter=maxiter - 1)
+        return self.point_inversion(u0, point, maxiter=maxiter - 1)
 
     @staticmethod
     def _check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-7, tol2: float = 1e-8):
@@ -2014,8 +2019,14 @@ class BSplineCurve2D(BSplineCurve):
         :rtype: :class:`volmdlr.core.BoundingRectangle`
         """
         if not self._bounding_rectangle:
-            self._bounding_rectangle = volmdlr.core.BoundingRectangle.from_points(self.points)
+            xmin, ymin = self.ctrlpts.min(axis=0)
+            xmax, ymax = self.ctrlpts.max(axis=0)
+
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
         return self._bounding_rectangle
+
+    def get_bounding_element(self):
+        return self.bounding_rectangle
 
     def straight_line_area(self):
         """
@@ -4957,7 +4968,12 @@ class BSplineCurve3D(BSplineCurve):
 
     def _bounding_box(self):
         """Creates a bounding box from the bspline points."""
-        return volmdlr.core.BoundingBox.from_points(self.discretization_points())
+        xmin, ymin, zmin = self.ctrlpts.min(axis=0)
+        xmax, ymax, zmax = self.ctrlpts.max(axis=0)
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def get_bounding_element(self):
+        return self.bounding_box
 
     def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):

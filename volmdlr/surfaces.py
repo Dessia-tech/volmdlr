@@ -93,7 +93,7 @@ class Surface2D(PhysicalObject):
         Copies the surface2d.
 
         """
-        return self.__class__(outer_contour=self.outer_contour.copy(deep, memo),
+        return self.__class__(outer_contour=self.outer_contour.copy(deep=deep, memo=memo),
                               inner_contours=[c.copy(deep, memo) for c in self.inner_contours],
                               name='copy_' + self.name)
 

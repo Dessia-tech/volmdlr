@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve.simplify: handles exceptions.
 - Arc2D: plot_data
 - LineSegment3D: planar_revolution.
-- BSplineCurve: abscissa.
+- BSplineCurve: abscissa: use curve decomposition.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
