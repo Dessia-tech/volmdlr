@@ -148,15 +148,15 @@ class TestMesh3D(unittest.TestCase):
         self.assertEqual(22, len(merged_mesh_2.triangles))
         self.assertEqual(12, len(merged_mesh_2.vertices))
 
-    def test_unmerge_vertices(self):
+    def test_split_shared_vertices(self):
         merged_mesh_2 = self.mesh3.merge(self.mesh4, merge_vertices=True, merge_triangles=True)
 
-        self.assertEqual(3*len(merged_mesh_2.triangles), len(merged_mesh_2.unmerge_vertices().vertices))
+        self.assertEqual(3*len(merged_mesh_2.triangles), len(merged_mesh_2.split_shared_vertices().vertices))
 
-        self.assertEqual(3*len(self.mesh1.triangles), len(self.mesh1.unmerge_vertices().vertices))
-        self.assertEqual(3*len(self.mesh2.triangles), len(self.mesh2.unmerge_vertices().vertices))
-        self.assertEqual(3*len(self.mesh3.triangles), len(self.mesh3.unmerge_vertices().vertices))
-        self.assertEqual(3*len(self.mesh4.triangles), len(self.mesh4.unmerge_vertices().vertices))
+        self.assertEqual(3*len(self.mesh1.triangles), len(self.mesh1.split_shared_vertices().vertices))
+        self.assertEqual(3*len(self.mesh2.triangles), len(self.mesh2.split_shared_vertices().vertices))
+        self.assertEqual(3*len(self.mesh3.triangles), len(self.mesh3.split_shared_vertices().vertices))
+        self.assertEqual(3*len(self.mesh4.triangles), len(self.mesh4.split_shared_vertices().vertices))
 
     def test_equality(self):
         self.assertNotEqual(self.mesh1, self.mesh2)

@@ -207,11 +207,12 @@ class MeshMixin:
 
         return self.__class__(unique_vertices, remapped_triangles, self.name)
 
-    def unmerge_vertices(self) -> "MeshType":
+    def split_shared_vertices(self) -> "MeshType":
         """
-        Unmerge shared vertices between triangles in the Mesh instance.
+        Split the shared vertices between triangles in the Mesh instance.
 
         This method recreates distinct vertices for each triangle, effectively unmerging shared vertices.
+        The resulting mesh will have three times the number of vertices as the number of triangles.
 
         :return: A new Mesh instance with unmerged vertices and original triangles.
         :rtype: MeshType
