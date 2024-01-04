@@ -880,13 +880,8 @@ def helper_decompose(srf, idx, split_func, return_params, other_direction_params
         else:
             param_min, param_max = domain[2], domain[3]
     param_start = param_min
-<<<<<<< HEAD
     result = []
-    while knots:
-=======
-    params = []
     while knots.any():
->>>>>>> origin/dev
         knot = knots[0]
         srfs = split_func(srf, param=knot, **kws)
         srf = srfs[1]
