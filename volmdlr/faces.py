@@ -69,7 +69,6 @@ class Face3D(volmdlr.core.Primitive3D):
         self._inner_contours3d = None
         self._face_octree_decomposition = None
         self._primitives_mapping = None
-        # self.bounding_box = self._bounding_box()
 
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
@@ -164,16 +163,16 @@ class Face3D(volmdlr.core.Primitive3D):
     @property
     def bounding_box(self):
         """
-        Needs to be overridden if an error is raised.
+        Returns the surface bounding box.
         """
-        raise NotImplementedError(f"bounding_box method must be" f"overloaded by {self.__class__.__name__}")
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
 
     @bounding_box.setter
-    def bounding_box(self, new_bounding_box):
-        """
-        Sets the bounding box to a new value.
-        """
-        raise NotImplementedError(f"bounding_box setter method must be" f"overloaded by {self.__class__.__name__}")
+    def bounding_box(self, new_bouding_box):
+        """Get the bounding box of the face."""
+        self._bbox = new_bouding_box
 
     def get_bounding_box(self):
         """General method to get the bounding box of a face 3D."""
@@ -220,8 +219,11 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
+<<<<<<< HEAD
         if step_id == 1196888:
             print(True)
+=======
+>>>>>>> 808be86370046d293719b6a3373448ad6d83b8f5
         return face.from_contours3d(surface, contours, step_id)
 
     @classmethod
@@ -559,7 +561,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def copy(self, deep=True, memo=None):
         """Returns a copy of the Face3D."""
-        return self.__class__(self.surface3d.copy(deep, memo), self.surface2d.copy(), self.name)
+        return self.__class__(self.surface3d.copy(deep=deep, memo=memo), self.surface2d.copy(), self.name)
 
     def face_inside(self, face2, abs_tol: float = 1e-6):
         """
@@ -1552,20 +1554,6 @@ class PlaneFace3D(Face3D):
         """Returns a copy of the PlaneFace3D."""
         return PlaneFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(), self.name)
 
-    @property
-    def bounding_box(self):
-        """
-        Returns the boundary box of a PlanFace3D.
-
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bounding_box):
-        self._bbox = new_bounding_box
-
     def point_distance(self, point, return_other_point=False):
         """
         Calculates the distance from a plane face and a point.
@@ -2178,19 +2166,6 @@ class Triangle3D(PlaneFace3D):
             return False
         return True
 
-    @property
-    def bounding_box(self):
-        """
-        Returns the surface bounding box.
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
-
     def get_bounding_box(self):
         """General method to get the bounding box."""
         return volmdlr.core.BoundingBox.from_points([self.point1, self.point2, self.point3])
@@ -2480,22 +2455,6 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         """Returns a copy of the CylindricalFace3D."""
         return CylindricalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(), self.name)
 
-    @property
-    def bounding_box(self):
-        """
-        Returns the surface bounding box.
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        """
-        Sets the surface bounding box.
-        """
-        self._bbox = new_bouding_box
-
     def triangulation_lines(self, angle_resolution=5):
         """
         Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
@@ -2685,19 +2644,6 @@ class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
         points.append(line.points[1])
         return points
 
-    @property
-    def bounding_box(self):
-        """
-        Returns the face bounding box.
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bounding_box):
-        self._bbox = new_bounding_box
-
     def triangulation_lines(self, angle_resolution=5):
         """
         Specifies the number of subdivision when using triangulation by lines. (Old triangulation).
@@ -2812,19 +2758,6 @@ class ConicalFace3D(PeriodicalFaceMixin, Face3D):
     def __init__(self, surface3d: surfaces.ConicalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
-
-    @property
-    def bounding_box(self):
-        """
-        Surface bounding box.
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=5):
         """
@@ -2958,16 +2891,6 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
     def __init__(self, surface3d: surfaces.SphericalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
-
-    @property
-    def bounding_box(self):
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=7):
         """
@@ -3126,19 +3049,6 @@ class RuledFace3D(Face3D):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
 
-    @property
-    def bounding_box(self):
-        """
-        Returns the bounding box of the surface.
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
-
     def get_bounding_box(self):
         """
         General method to get the bounding box.
@@ -3217,20 +3127,6 @@ class ExtrusionFace3D(Face3D):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
 
-    @property
-    def bounding_box(self):
-        """
-        Gets the extrusion face bounding box.
-
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
-
     def grid_size(self):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
@@ -3296,16 +3192,6 @@ class RevolutionFace3D(Face3D):
     def __init__(self, surface3d: surfaces.RevolutionSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
-
-    @property
-    def bounding_box(self):
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
 
     def grid_size(self):
         """
@@ -3434,16 +3320,6 @@ class BSplineFace3D(Face3D):
     def __init__(self, surface3d: surfaces.BSplineSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
-
-    @property
-    def bounding_box(self):
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bounding_box):
-        self._bbox = new_bounding_box
 
     def get_bounding_box(self):
         """Creates a bounding box from the face mesh."""

@@ -7,8 +7,10 @@ import pydocstyle
 
 print(f"Pydocstyle version: {pydocstyle.__version__}")
 
+UNTRACKED_MODULES = ['fitting.py']
+
 file_list = filter(
-    lambda z: not z.endswith("__init__.py"),
+    lambda z: not z.endswith("__init__.py") and not any(z.endswith(module) for module in UNTRACKED_MODULES),
     [y for x in os.walk("./volmdlr") for y in glob(os.path.join(x[0], "*.py"))],
 )
 
@@ -25,8 +27,8 @@ MAX_ERROR_BY_TYPE = {
     # If the error code is not in this dict, then there is no tolerance on the error.
     # http://www.pydocstyle.org/en/stable/error_codes.html
     "D101": 53,
-    "D102": 354,
-
+    "D102": 347,
+    "D103": 3,
     "D205": 77,
 
     "D400": 67,

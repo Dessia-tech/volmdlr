@@ -1,9 +1,13 @@
+import os
 import math
 import unittest
-
+from dessia_common.core import DessiaObject
 import volmdlr
 from volmdlr import edges, curves
 from volmdlr.models.curves import circle3d
+
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'circle3D_objects')
 
 
 class TestCircle3D(unittest.TestCase):
@@ -169,6 +173,11 @@ class TestCircle3D(unittest.TestCase):
         circle_linseg_intersections1 = circle3.linesegment_intersections(lineseg2)
         self.assertEqual(len(circle_linseg_intersections1), 1)
         self.assertTrue(circle_linseg_intersections1[0].is_close(volmdlr.Point3D(1, 0.0, 0.0)))
+        circle, lineseg = DessiaObject.load_from_file(os.path.join(folder,
+            'test_circle_linesegment_intersections221223.json')).primitives
+        intersections = circle.linesegment_intersections(lineseg)
+        self.assertEqual(len(intersections), 1)
+        self.assertTrue(intersections[0].is_close(volmdlr.Point3D(-1.9999993561471823, -0.5135128860482583, 0.9978935668376178)))
 
     def test_circle_intersections(self):
         circle1 = curves.Circle3D.from_3_points(volmdlr.Point3D(-3, -3, 0),
