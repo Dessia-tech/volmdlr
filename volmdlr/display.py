@@ -516,7 +516,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return mesh
 
     @classmethod
-    def trimesh_scene_to_meshes(cls, trimesh_scene: trimesh.Scene, scale_factor: float) -> List["Mesh3D"]:
+    def trimesh_scene_to_meshes(cls, trimesh_scene: trimesh.Scene, scale_factor: float = 0.001) -> List["Mesh3D"]:
         """
         Create a 3D mesh from a Trimesh Scene.
 
@@ -659,7 +659,9 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return cls.from_trimesh(trimesh.load(stream, "off")).resize(scale_factor)
 
     @classmethod
-    def from_3mf_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
+    def from_3mf_file(
+        cls, filepath: str, scale_factor: float = 0.001, merge_meshes: bool = True
+    ) -> Union["Mesh3D", List["Mesh3D"]]:
         """
         Create a 3D mesh from an 3MF file.
 
@@ -667,15 +669,20 @@ class Mesh3D(MeshMixin, PhysicalObject):
         :type filepath: str
         :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
         :type scale_factor: float, optional
+        :param merge_meshes: A flag to choose to merge all the 3mf meshes in one, or return a list of meshes.
+        :type merge_meshes: bool
 
         :return: A new 3D mesh instance.
         :rtype: Mesh3D
         """
-        # return cls.from_trimesh_scene(trimesh.load(filepath, "3mf")).resize(scale_factor)
+        if merge_meshes:
+            return cls.from_trimesh_scene(trimesh.load(filepath, "3mf")).resize(scale_factor)
         return cls.trimesh_scene_to_meshes(trimesh.load(filepath, "3mf"), scale_factor)
 
     @classmethod
-    def from_3mf_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
+    def from_3mf_stream(
+        cls, stream: BinaryFile, scale_factor: float = 0.001, merge_meshes: bool = True
+    ) -> Union["Mesh3D", List["Mesh3D"]]:
         """
         Create a 3D mesh from an 3MF stream.
 
@@ -683,12 +690,17 @@ class Mesh3D(MeshMixin, PhysicalObject):
         :type stream: BinaryFile
         :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
         :type scale_factor: float, optional
+        :param merge_meshes: A flag to choose to merge all the 3mf meshes in one, or return a list of meshes.
+        :type merge_meshes: bool
 
         :return: A new 3D mesh instance.
         :rtype: Mesh3D
         """
         stream.seek(0)
-        return cls.from_trimesh_scene(trimesh.load(stream, "3mf")).resize(scale_factor)
+
+        if merge_meshes:
+            return cls.from_trimesh_scene(trimesh.load(stream, "3mf")).resize(scale_factor)
+        return cls.trimesh_scene_to_meshes(trimesh.load(stream, "3mf"), scale_factor)
 
     # EXPORT
     def triangular_faces(self):
