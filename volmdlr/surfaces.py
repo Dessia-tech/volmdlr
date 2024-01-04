@@ -7450,18 +7450,38 @@ class BSplineSurface3D(Surface3D):
 
     def point3d_to_2d_minimize(self, point3d):
         """Auxiliary function for point3d_to_2d in case the point inversion does not converge."""
-        # def fun(x, surf):
-        #     derivatives = surf.derivatives(x[0], x[1], 1)
-        #     vector = derivatives[0][0] - point3d
-        #     f_value = vector.norm()
-        #     if f_value == 0.0:
-        #         jacobian = npy.array([0.0, 0.0])
-        #     else:
-        #         jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
-        #                               vector.dot(derivatives[0][1]) / f_value])
-        #     return f_value, jacobian
         results = []
         point3d_array = npy.asarray(point3d)
+
+        decompose_dir = "uv"
+        if self.u_closed:
+            decompose_dir = "v"
+        if self.v_closed:
+            decompose_dir = "u"
+        for patch, param in self.decompose(return_params=True, decompose_dir=decompose_dir):
+            xmin, ymin, zmin = patch.ctrlpts.min(axis=0)
+            xmax, ymax, zmax = patch.ctrlpts.max(axis=0)
+
+            bbox = volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+            if bbox.point_belongs(point3d):
+                distances = npy.linalg.norm(patch.evalpts - point3d_array, axis=1)
+                index = npy.argmin(distances)
+                u_start, u_stop, v_start, v_stop = patch.domain
+                delta_u = (u_stop - u_start) / (patch.sample_size_u - 1)
+                delta_v = (v_stop - v_start) / (patch.sample_size_v - 1)
+                u_idx = int(index / patch.sample_size_v)
+                v_idx = index % patch.sample_size_v
+
+                u = u_start + u_idx * delta_u
+                v = v_start + v_idx * delta_v
+
+                x1, _, distance = patch.point_inversion((u, v), point3d, 5e-6)
+                u = x1[0] * (param[0][1] - param[0][0]) + param[0][0]
+                v = x1[1] * (param[1][1] - param[1][0]) + param[1][0]
+                if distance <= 5e-6:
+                    return volmdlr.Point2D(u, v)
+                results.append(((u, v), distance))
+
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         distances = npy.linalg.norm(self.evalpts - point3d_array, axis=1)
         indexes = npy.argsort(distances)
@@ -7494,34 +7514,6 @@ class BSplineSurface3D(Surface3D):
                 return volmdlr.Point2D(*res.x)
 
             results.append((res.x, res.fun))
-        decompose_dir = "uv"
-        if self.u_closed:
-            decompose_dir = "v"
-        if self.v_closed:
-            decompose_dir = "u"
-        for patch, param in self.decompose(return_params=True, decompose_dir=decompose_dir):
-            xmin, ymin, zmin = patch.ctrlpts.min(axis=0)
-            xmax, ymax, zmax = patch.ctrlpts.max(axis=0)
-
-            bbox = volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
-            if bbox.point_belongs(point3d):
-                distances = npy.linalg.norm(patch.evalpts - point3d_array, axis=1)
-                index = npy.argmin(distances)
-                u_start, u_stop, v_start, v_stop = patch.domain
-                delta_u = (u_stop - u_start) / (patch.sample_size_u - 1)
-                delta_v = (v_stop - v_start) / (patch.sample_size_v - 1)
-                u_idx = int(index / patch.sample_size_v)
-                v_idx = index % patch.sample_size_v
-
-                u = u_start + u_idx * delta_u
-                v = v_start + v_idx * delta_v
-
-                x1, _, distance = patch.point_inversion((u, v), point3d, 5e-6)
-                u = x1[0] * (param[0][1] - param[0][0]) + param[0][0]
-                v = x1[1] * (param[1][1] - param[1][0]) + param[1][0]
-                if distance <= 5e-6:
-                    return volmdlr.Point2D(u, v)
-                results.append(((u, v), distance))
 
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
