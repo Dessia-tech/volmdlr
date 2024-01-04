@@ -642,13 +642,8 @@ def split_surface_v(obj, param, **kwargs):
     temp_obj = insert_knot_func(obj, [None, param], num=[0, insertion_count], check_num=False)
 
     # Knot vectors
-<<<<<<< HEAD
     knotvectors = helper_split_knot_vectors(temp_obj.degree_v, temp_obj.knots_vector_v,
                                             temp_obj.nb_v, param, span_func)
-=======
-    knotvectors = helper_split_knot_vectors(temp_obj.degree_v, temp_obj.knots_vector_v, temp_obj.nb_v, param,
-                                            span_func)
->>>>>>> 808be86370046d293719b6a3373448ad6d83b8f5
     return construct_split_surfaces(temp_obj, knotvectors, "v", knot_span, insertion_count)
 
 
@@ -807,11 +802,7 @@ def decompose_curve(obj, return_params: bool = False, **kwargs):
     params = []
     umin, umax = obj.domain
     param_start = umin
-<<<<<<< HEAD
-    while knots:
-=======
     while knots.any():
->>>>>>> 808be86370046d293719b6a3373448ad6d83b8f5
         knot = knots[0]
         curves = split_curve(curve, param=knot, **kwargs)
         multi_curve.append(curves[0])
