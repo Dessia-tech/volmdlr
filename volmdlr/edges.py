@@ -14,6 +14,7 @@ import dessia_common.core as dc
 import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as npy
+from numpy.typing import NDArray
 import plot_data.core as plot_data
 import plot_data.colors
 import scipy.integrate as scipy_integrate
@@ -889,16 +890,25 @@ class BSplineCurve(Edge):
 
     def __init__(self,
                  degree: int,
-                 control_points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                 knot_multiplicities: List[int],
-                 knots: List[float],
-                 weights: List[float] = None,
+                 control_points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D], NDArray],
+                 knot_multiplicities: Union[List[int], NDArray],
+                 knots: Union[List[float], NDArray],
+                 weights: Union[List[float], NDArray] = None,
                  name: str = ''):
-        self.ctrlpts = [[*point] for point in control_points]
+        self.ctrlpts = npy.asarray(control_points)
         self.degree = degree
-        self.knots = nurbs_helpers.standardize_knot_vector(knots)
-        self.knot_multiplicities = knot_multiplicities
+        self.knots = npy.asarray(nurbs_helpers.standardize_knot_vector(knots))
+        self.knot_multiplicities = npy.asarray(knot_multiplicities, dtype=npy.int16)
         self.weights = weights
+        self.ctrlptsw = None
+        self.rational = False
+        if self.weights is not None:
+            self.weights = npy.asarray(weights, dtype=npy.float64)
+            self.rational = self.weights.any()
+            if self.rational:
+                self.ctrlptsw = npy.hstack((self.ctrlpts * self.weights[:, npy.newaxis], self.weights[:, npy.newaxis]))
+            else:
+                self.weights = None
 
         Edge.__init__(self, control_points[0], control_points[-1], name=name)
         self._simplified = None
@@ -906,35 +916,31 @@ class BSplineCurve(Edge):
         self._length = None
         self._eval_points = None
         self._knotvector = None
-        self.ctrlptsw = None
-        self.rational = False
         self._periodic = None
-        if self.weights:
-            self.rational = True
-            ctrlptsw = []
-            for point, w in zip(control_points, weights):
-                temp = [float(c * w) for c in point]
-                temp.append(float(w))
-                ctrlptsw.append(temp)
-            self.ctrlptsw = ctrlptsw
 
     def __hash__(self):
         """
         Return a hash value for the B-spline curve.
         """
-        return hash((tuple(self.control_points), self.degree, tuple(self.knots)))
+        control_points = tuple(tuple(point) for point in self.ctrlpts)
+        if self.weights is None:
+            return hash((control_points, self.degree, tuple(self.knot_multiplicities), tuple(self.knots)))
+        return hash((control_points, self.degree, tuple(self.knot_multiplicities),
+                     tuple(self.knots), tuple(self.weights)))
 
     def __eq__(self, other):
         """
         Return True if the other B-spline curve has the same control points, degree, and knot vector, False otherwise.
         """
         if isinstance(other, self.__class__) and self.rational == other.rational:
-            common_check = (self.control_points == other.control_points
-                            and self.degree == other.degree
-                            and self.knots == other.knots)
+            common_check = (
+                    tuple(tuple(point) for point in self.ctrlpts) == tuple(tuple(point) for point in other.ctrlpts)
+                    and self.degree == other.degree
+                    and tuple(self.knots) == tuple(other.knots)
+                    and tuple(self.knot_multiplicities) == tuple(other.knot_multiplicities))
             if self.weights is None:
                 return common_check
-            return common_check and self.weights == other.weights
+            return common_check and tuple(self.weights) == tuple(other.weights)
         return False
 
     def _data_eq(self, other_object):
@@ -953,10 +959,7 @@ class BSplineCurve(Edge):
     def knotvector(self):
         """Return the knot vector."""
         if self._knotvector is None:
-            knot_vector = []
-            for knot, knot_mut in zip(self.knots, self.knot_multiplicities):
-                knot_vector.extend([knot] * knot_mut)
-            self._knotvector = knot_vector
+            self._knotvector = npy.repeat(self.knots, self.knot_multiplicities)
         return self._knotvector
 
     @property
@@ -988,14 +991,14 @@ class BSplineCurve(Edge):
             "knotvector": self.knotvector,
             "size": len(self.ctrlpts),
             "sample_size": self.sample_size,
-            "rational": bool(self.weights),
+            "rational": self.rational,
             "dimension": 3 if self.__class__.__name__[-2:] == "3D" else 2,
             "precision": 18
         }
-        if self.weights:
-            datadict["control_points"] = tuple(self.ctrlptsw)
+        if self.rational:
+            datadict["control_points"] = self.ctrlptsw
         else:
-            datadict["control_points"] = tuple(self.ctrlpts)
+            datadict["control_points"] = self.ctrlpts
         return datadict
 
     @property
@@ -1063,6 +1066,21 @@ class BSplineCurve(Edge):
         """
         return self.knotvector[self.degree], self.knotvector[-(self.degree + 1)]
 
+    def copy(self, deep: bool = True, **kwargs):
+        """
+        Returns a copy of the instance.
+
+        :param deep: If False, perform a shallow copy. If True, perform a deep copy.
+        """
+        if deep:
+            weights = None
+            if self.rational:
+                weights = self.weights.copy()
+            return self.__class__(self.degree, self.control_points, self.knot_multiplicities.copy(),
+                                  self.knots.copy(), weights, name=self.name + "_copy")
+        return self.__class__(self.degree, self.ctrlpts, self.knot_multiplicities,
+                              self.knots, self.weights, name=self.name + "_copy")
+
     def to_geomdl(self):
         """Converts the BSpline curve into a geomdl curve."""
         if self.weights is None:
@@ -1083,9 +1101,11 @@ class BSplineCurve(Edge):
         dict_ = self.base_dict()
         dict_['degree'] = self.degree
         dict_['control_points'] = [point.to_dict() for point in self.control_points]
-        dict_['knot_multiplicities'] = self.knot_multiplicities
-        dict_['knots'] = self.knots
-        dict_['weights'] = self.weights
+        dict_['knot_multiplicities'] = self.knot_multiplicities.tolist()
+        dict_['knots'] = self.knots.tolist()
+        dict_['weights'] = None
+        if self.rational:
+            dict_['weights'] = self.weights.tolist()
         return dict_
 
     def decompose(self, return_params: bool = False):
@@ -1173,13 +1193,13 @@ class BSplineCurve(Edge):
             "knotvector": self.knotvector,
             "size": len(self.ctrlpts),
             "sample_size": self.sample_size,
-            "rational": bool(self.weights),
+            "rational": self.rational,
             "dimension": 3 if vector_name == "Vector3D" else 2,
         }
-        if self.weights:
-            datadict["control_points"] = tuple(self.ctrlptsw)
+        if self.rational:
+            datadict["control_points"] = self.ctrlptsw
         else:
-            datadict["control_points"] = tuple(self.ctrlpts)
+            datadict["control_points"] = self.ctrlpts
         return [getattr(volmdlr, vector_name)(*point)
                 for point in derivatives_curve(datadict, u, order)]
 
@@ -5042,12 +5062,8 @@ class BSplineCurve3D(BSplineCurve):
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
-        lines = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:]) if not pt1.is_close(pt2)]
-        if lines and not points[0].is_close(points[-1]):
-            # quick fix. Real problem: Tolerance too low (1e-6 m = 0.001mm)
-            dir_vector = lines[0].unit_direction_vector()
-            if all(line.unit_direction_vector() == dir_vector for line in lines):
-                return LineSegment3D(points[0], points[-1])
+        if len(points) == 2 and degree == 1:
+            return LineSegment3D(points[0], points[-1])
 
         knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
         knots = [float(i) for i in arguments[7][1:-1].split(",")]
