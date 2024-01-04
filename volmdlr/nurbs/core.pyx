@@ -937,11 +937,12 @@ cdef vector[vector[vector[double]]] derivatives_surface_c(int[2] degree, double[
 
 @boundscheck(False)
 @wraparound(False)
-cdef vector[vector[vector[double]]] derivatives_surface_rational(int[2] degree,double[:] knotvector_u,
+cdef vector[vector[vector[double]]] derivatives_surface_rational(int[2] degree, double[:] knotvector_u,
                                                                  double[:] knotvector_v, double[:, :] ctrlpts,
                                                                  int[2] size, int dimension, double[2] parpos,
                                                                  int deriv_order):
-    """Evaluates the n-th order derivatives at the input parametric position.
+    """
+    Evaluates the n-th order derivatives at the input parametric position.
 
     :param datadict: data dictionary containing the necessary variables
     :type datadict: dict

@@ -890,15 +890,15 @@ class BSplineCurve(Edge):
 
     def __init__(self,
                  degree: int,
-                 control_points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                 knot_multiplicities: List[int],
-                 knots: List[float],
+                 control_points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D], NDArray],
+                 knot_multiplicities: Union[List[int], NDArray],
+                 knots: Union[List[float], NDArray],
                  weights: Union[List[float], NDArray] = None,
                  name: str = ''):
         self.ctrlpts = npy.asarray(control_points)
         self.degree = degree
         self.knots = npy.asarray(nurbs_helpers.standardize_knot_vector(knots))
-        self.knot_multiplicities = npy.asarray(knot_multiplicities)
+        self.knot_multiplicities = npy.asarray(knot_multiplicities, dtype=npy.int16)
         self.weights = weights
         self.ctrlptsw = None
         self.rational = False
@@ -1073,10 +1073,13 @@ class BSplineCurve(Edge):
         :param deep: If False, perform a shallow copy. If True, perform a deep copy.
         """
         if deep:
-            return self.__class__(self.degree, self.control_points.copy(), self.knot_multiplicities.copy(),
-                                  self.knots.copy(), name=self.name + "_copy")
-        return self.__class__(self.degree, self.control_points, self.knot_multiplicities,
-                              self.knots, name=self.name + "_copy")
+            weights = None
+            if self.rational:
+                weights = self.weights.copy()
+            return self.__class__(self.degree, self.control_points, self.knot_multiplicities.copy(),
+                                  self.knots.copy(), weights, name=self.name + "_copy")
+        return self.__class__(self.degree, self.ctrlpts, self.knot_multiplicities,
+                              self.knots, self.weights, name=self.name + "_copy")
 
     def to_geomdl(self):
         """Converts the BSpline curve into a geomdl curve."""
@@ -1098,9 +1101,11 @@ class BSplineCurve(Edge):
         dict_ = self.base_dict()
         dict_['degree'] = self.degree
         dict_['control_points'] = [point.to_dict() for point in self.control_points]
-        dict_['knot_multiplicities'] = self.knot_multiplicities
-        dict_['knots'] = self.knots
-        dict_['weights'] = self.weights
+        dict_['knot_multiplicities'] = self.knot_multiplicities.tolist()
+        dict_['knots'] = self.knots.tolist()
+        dict_['weights'] = None
+        if self.rational:
+            dict_['weights'] = self.weights.tolist()
         return dict_
 
     def decompose(self, return_params: bool = False):
