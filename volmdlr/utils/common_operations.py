@@ -353,10 +353,3 @@ def separate_points_by_closeness(points):
         groups[key] = order_points_list_for_nearest_neighbor(groups[key])
         groups[key].append(groups[key][0])
     return list(groups.values())
-
-
-def truncate_to_decimal_places(number, decimal_places):
-    power_of_10 = 10 ** decimal_places
-    truncated_number = np.trunc(number * power_of_10) / power_of_10
-    return truncated_number
-
