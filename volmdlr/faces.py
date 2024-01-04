@@ -465,7 +465,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def copy(self, deep=True, memo=None):
         """Returns a copy of the Face3D."""
-        return self.__class__(self.surface3d.copy(deep, memo), self.surface2d.copy(), self.name)
+        return self.__class__(self.surface3d.copy(deep=deep, memo=memo), self.surface2d.copy(), self.name)
 
     def face_inside(self, face2, abs_tol: float = 1e-6):
         """
