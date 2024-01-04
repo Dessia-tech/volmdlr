@@ -68,7 +68,7 @@ class TestExtrusionSurface3D(unittest.TestCase):
         extrusion_surface = model.primitives[0].primitives[0].surface3d
         self.assertEqual(extrusion_surface.direction, -volmdlr.Z3D)
         self.assertEqual(extrusion_surface.edge.degree, 3)
-        self.assertEqual(extrusion_surface.edge.knot_multiplicities, [4, 1, 4])
+        self.assertEqual(extrusion_surface.edge.knot_multiplicities.tolist(), [4, 1, 4])
 
     def test_linesegment2d_to_3d(self):
         surface = surfaces.ExtrusionSurface3D.load_from_file(

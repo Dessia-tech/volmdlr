@@ -803,7 +803,7 @@ def decompose_curve(obj, return_params: bool = False, **kwargs):
     params = []
     umin, umax = obj.domain
     param_start = umin
-    while knots:
+    while knots.any():
         knot = knots[0]
         curves = split_curve(curve, param=knot, **kwargs)
         multi_curve.append(curves[0])
@@ -880,8 +880,13 @@ def helper_decompose(srf, idx, split_func, return_params, other_direction_params
         else:
             param_min, param_max = domain[2], domain[3]
     param_start = param_min
+<<<<<<< HEAD
     result = []
     while knots:
+=======
+    params = []
+    while knots.any():
+>>>>>>> origin/dev
         knot = knots[0]
         srfs = split_func(srf, param=knot, **kws)
         srf = srfs[1]
