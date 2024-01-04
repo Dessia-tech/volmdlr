@@ -516,6 +516,25 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return mesh
 
     @classmethod
+    def trimesh_scene_to_meshes(cls, trimesh_scene: trimesh.Scene, scale_factor: float) -> List["Mesh3D"]:
+        """
+        Create a 3D mesh from a Trimesh Scene.
+
+        :param trimesh_scene: A Trimesh Scene containing multiple geometry objects.
+        :type trimesh_scene: trimesh.Scene
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
+
+        :return: A list of new 3D mesh instance.
+        :rtype: list[Mesh3D]
+        """
+        meshes = []
+        for trimesh_ in trimesh_scene.geometry.values():
+            meshes.append(cls.from_trimesh(trimesh_).resize(scale_factor))
+
+        return meshes
+
+    @classmethod
     def from_stl_file(cls, filepath: str, scale_factor: float = 0.001) -> "Mesh3D":
         """
         Create a 3D mesh from an STL file.
@@ -652,7 +671,8 @@ class Mesh3D(MeshMixin, PhysicalObject):
         :return: A new 3D mesh instance.
         :rtype: Mesh3D
         """
-        return cls.from_trimesh_scene(trimesh.load(filepath, "3mf")).resize(scale_factor)
+        # return cls.from_trimesh_scene(trimesh.load(filepath, "3mf")).resize(scale_factor)
+        return cls.trimesh_scene_to_meshes(trimesh.load(filepath, "3mf"), scale_factor)
 
     @classmethod
     def from_3mf_stream(cls, stream: BinaryFile, scale_factor: float = 0.001) -> "Mesh3D":
