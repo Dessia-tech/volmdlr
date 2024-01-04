@@ -847,11 +847,11 @@ def decompose_surface(obj, return_params, **kwargs):
         return helper_decompose(obj, 0, split_surface_u, return_params, (domain[2], domain[3]), **kwargs)
 
     # Only v-direction
-    elif decompose_dir == 'v':
+    if decompose_dir == 'v':
         return helper_decompose(obj, 1, split_surface_v, return_params, (domain[0], domain[1]), **kwargs)
 
     # Both u- and v-directions
-    elif decompose_dir == 'uv':
+    if decompose_dir == 'uv':
         result = []
         if return_params:
             for sfu, params in helper_decompose(obj, 0, split_surface_u, return_params,
@@ -861,8 +861,8 @@ def decompose_surface(obj, return_params, **kwargs):
             for sfu in helper_decompose(obj, 0, split_surface_u, return_params, **kwargs):
                 result.extend(helper_decompose(sfu, 1, split_surface_v, return_params, **kwargs))
         return result
-    else:
-        raise ValueError("Cannot decompose in " + str(decompose_dir) + " direction. Acceptable values: u, v, uv")
+
+    raise ValueError("Cannot decompose in " + str(decompose_dir) + " direction. Acceptable values: u, v, uv")
 
 
 def helper_decompose(srf, idx, split_func, return_params, other_direction_params=None, **kws):
@@ -870,7 +870,6 @@ def helper_decompose(srf, idx, split_func, return_params, other_direction_params
     Helper function to decompose_surface.
     """
     # pylint: disable=too-many-locals
-    srf_list = []
     surf_degrees = [srf.degree_u, srf.degree_v]
     knots = srf.knotvector[idx][surf_degrees[idx] + 1:-(surf_degrees[idx] + 1)]
     param_min, param_max = 0.0, 1.0
@@ -881,34 +880,27 @@ def helper_decompose(srf, idx, split_func, return_params, other_direction_params
         else:
             param_min, param_max = domain[2], domain[3]
     param_start = param_min
-    params = []
     result = []
     while knots:
         knot = knots[0]
         srfs = split_func(srf, param=knot, **kws)
-        # srf_list.append(srfs[0])
         srf = srfs[1]
         knots = srf.knotvector[idx][surf_degrees[idx] + 1:-(surf_degrees[idx] + 1)]
         if return_params:
             param_end = knot * (param_max - param_start) + param_start
             if idx == 0:
-                # params.append(((param_start, param_end), other_direction_params))
                 result.append([srfs[0], ((param_start, param_end), other_direction_params)])
             else:
-                # params.append((other_direction_params, (param_start, param_end)))
                 result.append([srfs[0], (other_direction_params, (param_start, param_end))])
             param_start = param_end
         else:
             result.append(srfs[0])
 
-    # srf_list.append(srf)
     if return_params:
         if idx == 0:
-            # params.append(((param_start, param_max), other_direction_params))
             result.append([srf, ((param_start, param_max), other_direction_params)])
         else:
             result.append([srf, (other_direction_params, (param_start, param_max))])
     else:
         result.append(srf)
-    # return srf_list, params
     return result

@@ -1069,7 +1069,7 @@ class BSplineCurve(Edge):
         """
         return self.knotvector[self.degree], self.knotvector[-(self.degree + 1)]
 
-    def copy(self, deep: bool = True, *args, **kwargs):
+    def copy(self, deep: bool = True, **kwargs):
         """
         Returns a copy of the instance.
 
