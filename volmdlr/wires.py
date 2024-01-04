@@ -1992,7 +1992,7 @@ class Contour2D(ContourMixin, Wire2D):
         """
         A specified copy of a Contour2D.
         """
-        return self.__class__(primitives=[p.copy(deep, memo) for p in self.primitives],
+        return self.__class__(primitives=[p.copy(deep=deep, memo=memo) for p in self.primitives],
                               name=self.name)
 
     def __hash__(self):
