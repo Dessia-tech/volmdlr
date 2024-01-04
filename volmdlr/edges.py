@@ -10,6 +10,8 @@ from itertools import product
 from typing import List, Union
 from functools import cached_property
 
+import numpy as np
+
 import dessia_common.core as dc
 import matplotlib.patches
 import matplotlib.pyplot as plt
@@ -917,6 +919,7 @@ class BSplineCurve(Edge):
         self._eval_points = None
         self._knotvector = None
         self._periodic = None
+        self._decompose = None
 
     def __hash__(self):
         """
@@ -1115,7 +1118,12 @@ class BSplineCurve(Edge):
         :return: a list of Bezier segments
         :rtype: list
         """
-        return decompose_curve(self, return_params)
+        # return decompose_curve(self, return_params)
+        if not self._decompose:
+            self._decompose = list(decompose_curve(self, True))
+        if return_params:
+            return self._decompose
+        return [patch for patch, _ in self._decompose]
 
     def evaluate(self, **kwargs):
         """
@@ -1366,6 +1374,26 @@ class BSplineCurve(Edge):
             u = u * (u_max - u_min) + u_min
         return u
 
+    def _abscissa_helper(self, point):
+        point_array = np.asarray(point)
+        results = []
+        for patch, param in self.decompose(True):
+            bounding_element = self.get_bounding_element()
+            if bounding_element.point_belongs(point):
+                distances = npy.linalg.norm(patch.points - point_array, axis=1)
+                index = npy.argmin(distances)
+                u_start, u_stop = patch.domain
+                delta_u = (u_stop - u_start) / (patch.sample_size - 1)
+                u = u_start + index * delta_u
+
+                x1, _, distance = patch.point_inversion(u, point)
+                u = x1 * (param[1] - param[0]) + param[0]
+                if distance <= 1e-7:
+                    return [(u * self.length(), distance)]
+                results.append((u * self.length(), distance))
+
+        return results
+
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
                  tol: float = 1e-7):
         """
@@ -1396,7 +1424,7 @@ class BSplineCurve(Edge):
         results = [(abscissa, distance)]
         if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
             return float(abscissa)
-
+        # results.extend(self._abscissa_helper(point))
         for patch, param in self.decompose(True):
             bounding_element = self.get_bounding_element()
             if bounding_element.point_belongs(point):
@@ -1405,13 +1433,11 @@ class BSplineCurve(Edge):
                 u_start, u_stop = patch.domain
                 delta_u = (u_stop - u_start) / (patch.sample_size - 1)
                 u = u_start + index * delta_u
-
                 x1, _, distance = patch.point_inversion(u, point)
                 u = x1 * (param[1] - param[0]) + param[0]
                 if distance <= 1e-6:
                     return u * self.length()
                 results.append((u * self.length(), distance))
-
         return min(results, key=lambda r: r[1])[0]
 
     def _point_inversion_funcs(self, u, point):
@@ -1775,6 +1801,12 @@ class BSplineCurve(Edge):
         :param linesegment: linesegment to verify intersections.
         :return: list with the intersections points.
         """
+        if isinstance(linesegment, LineSegment2D):
+            if not self.bounding_rectangle.is_intersecting(linesegment.bounding_rectangle):
+                return []
+        elif not self.bounding_box.is_intersecting(linesegment.bounding_box):
+            return []
+
         results = self.line_intersections(linesegment.line)
         intersections_points = []
         for result in results:
@@ -1970,6 +2002,28 @@ class BSplineCurve(Edge):
         new_control_points = [control_point.frame_mapping(frame, side) for control_point in self.control_points]
         return self.__class__(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights,
                               self.name)
+
+    # def bsplinecurve_intersections(self, other_bspline, abs_tol: 1e-6):
+    #     # patches1 = self.decompose(False)
+    #     # patches2 = other_bspline.decompose(False)
+    #     intersection_points = []
+    #     # line_seg_class_ = getattr(volmdlr.edges, "LineSegment" + other_bspline.__class__.__name__[-2:])
+    #     # for patch1, patch2 in product(patches1, patches2):
+    #     #     lineseg1 = line_seg_class_(patch1.start, patch1.end)
+    #     #     lineseg2 = line_seg_class_(patch2.start, patch2.end)
+    #     #     if patch1.get_bounding_element().is_intersecting(patch2.get_bounding_element()):
+    #     #         intersections = vm_utils_intersections.get_bsplinecurve_intersections(
+    #     #             patch1, patch2, abs_tol)
+    #     #         for inter in intersections:
+    #     #             if not inter.in_list(intersection_points):
+    #     #                 intersection_points.append(inter)
+    #     for patch, _ in self.decompose(True):
+    #         if not patch.get_bounding_element().is_intersecting(other_bspline.get_bounding_element()):
+    #             continue
+    #         intersection_points.extend(
+    #             vm_utils_intersections.get_bsplinecurve_intersections(other_bspline, patch, abs_tol=abs_tol))
+    #
+    #     return intersection_points
 
 
 class BSplineCurve2D(BSplineCurve):
@@ -5399,13 +5453,19 @@ class BSplineCurve3D(BSplineCurve):
         """
         if not self.bounding_box.is_intersecting(linesegment3d.bounding_box, abs_tol):
             return []
-        intersection_section_pairs = self._get_intersection_sections(linesegment3d)
         intersections = []
-        for bspline, edge2_ in intersection_section_pairs:
-            intersections_points = bspline.get_linesegment_intersections(edge2_)
+        for patch, _ in self.decompose(True):
+            intersections_points = patch.get_linesegment_intersections(linesegment3d)
             for inter in intersections_points:
                 if not inter.in_list(intersections, abs_tol):
                     intersections.append(inter)
+        # intersection_section_pairs = self._get_intersection_sections(linesegment3d)
+        # intersections = []
+        # for bspline, edge2_ in intersection_section_pairs:
+        #     intersections_points = bspline.get_linesegment_intersections(edge2_)
+        #     for inter in intersections_points:
+        #         if not inter.in_list(intersections, abs_tol):
+        #             intersections.append(inter)
         return intersections
 
     def arc_intersections(self, arc, abs_tol=1e-6):
@@ -5424,7 +5484,12 @@ class BSplineCurve3D(BSplineCurve):
         """Get the intersections with the specified curve."""
         if self.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
             return []
-        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(curve, self, abs_tol=abs_tol)
+        intersections_points = []
+        for patch, _ in self.decompose(True):
+            if patch.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
+                continue
+            intersections_points.extend(vm_utils_intersections.get_bsplinecurve_intersections(curve, patch, abs_tol=abs_tol))
+        # intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(curve, self, abs_tol=abs_tol)
         return intersections_points
 
     def circle_intersections(self, circle, abs_tol: float = 1e-6):

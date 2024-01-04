@@ -289,7 +289,7 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
     :return: A list with all intersections between the edge and BSpline Curve.
     :rtype: [volmdlr.Point3D].
     """
-    param_intersections = bspline_intersections_initial_conditions(primitive, bsplinecurve, 100)
+    param_intersections = bspline_intersections_initial_conditions(primitive, bsplinecurve, 10)
     line_seg_class_ = getattr(volmdlr.edges, "LineSegment" + bsplinecurve.__class__.__name__[-2:])
     intersections = []
     if not param_intersections:
@@ -316,10 +316,11 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
             intersection = primitive.linesegment_intersections(line_seg, abs_tol)
             if not intersection:
                 continue
-            if get_point_distance_to_edge(bsplinecurve, intersection[0], point1, point2) > 1e-7 and not (
-                abscissa_point1 == abscissa1 and abscissa_point2 == abscissa2
-            ):
-                param_intersections.insert(0, (abscissa_point1, abscissa_point2))
+            if get_point_distance_to_edge(bsplinecurve, intersection[0], point1, point2) > 1e-7:
+                if not (abscissa_point1 == abscissa1 and abscissa_point2 == abscissa2):
+                    param_intersections.insert(0, (abscissa_point1, abscissa_point2))
+                else:
+                    print(True)
             elif not intersection[0].in_list(intersections):
                 intersections.append(intersection[0])
         param_intersections.remove((abscissa1, abscissa2))
