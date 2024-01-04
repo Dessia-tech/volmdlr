@@ -5,12 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## v0.16.0 [future]
 
 ### New Features
 - added missing hash and eq methods to several classes
 - ArcEllipse2D/3D: get_shared_section and delete_shared_section.
 - ConicalSurface3D: conicalsurface_intersections
+
+#### edges.py
+- BSplineCurve: decompose into béziers patches of same degree.
 
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
@@ -25,26 +29,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: parametric_points_to_3d
 - Plane3D: parametric_points_to_3d
 - BSplineSurface3D: parametric_points_to_3d
+- BSplineSurface3D: decompose
+- BSplineSurface3D:extract_curves method. Extracts curves from the surface given an ordered list of parameters in u or v direction.
 
 ### Fixed
 - review hash and eq methods
 - fix pylint.
+- Add some missing docstrings.
 
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
 - Circle2D: abscissa method - consider frame direction during rotation.
 - Line: is_close.
+- Circle3D: Line intersections
 
 #### edges.py
 - BSplineCurve: handles exceptions in simplify method.
 - BSplineCurve: Consider overlaping curves also as periodic.
 - BSplineCurve.simplify: handles exceptions.
 - Arc2D: plot_data
+- LineSegment3D: planar_revolution.
+- BSplineCurve: abscissa.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
 - Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
 - Face3D: point_belongs
+
+#### primitives3d.py
+- RevolvedProfile: to_dict
 
 #### surface.py
 - PeriodicalSurface: handles exceptions in connect_contours method.
@@ -80,6 +93,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unittests
 - 
+
+## 0.15.2
+
+### build
+- fix build test before upload to pypi
+
+## 0.15.1
+
+### build
+
+- Use pip install instead of setuptools install in order to avoid .egg being generating and preventing PyPI upload
+
 
 ## v0.15.0
 

@@ -334,8 +334,7 @@ class Line(Curve):
         """Exports to STEP format."""
         p1_content, p1_id = self.point1.to_step(current_id)
         # p2_content, p2_id = self.point2.to_step(current_id+1)
-        current_id = p1_id + 1
-        u_content, u_id = self.unit_direction_vector().to_step(current_id, vector=True)
+        u_content, u_id = self.unit_direction_vector().to_step(p1_id, vector=True)
         current_id = u_id + 1
         content = p1_content + u_content
         content += f"#{current_id} = LINE('{self.name}',#{p1_id},#{u_id});\n"
@@ -874,7 +873,7 @@ class Line3D(Line):
         u = self.point2 - self.point1
         v1 = self.point1 - u * length
         x1, y1, z1 = v1.x, v1.y, v1.z
-        v2 = self.point2 - u * length
+        v2 = self.point2 + u * length
         x2, y2, z2 = v2.x, v2.y, v2.z
         if edge_style.dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color,
