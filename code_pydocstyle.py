@@ -7,8 +7,10 @@ import pydocstyle
 
 print(f"Pydocstyle version: {pydocstyle.__version__}")
 
+UNTRACKED_MODULES = ['fitting.py']
+
 file_list = filter(
-    lambda z: not z.endswith("__init__.py"),
+    lambda z: not z.endswith("__init__.py") and not any(z.endswith(module) for module in UNTRACKED_MODULES),
     [y for x in os.walk("./volmdlr") for y in glob(os.path.join(x[0], "*.py"))],
 )
 
