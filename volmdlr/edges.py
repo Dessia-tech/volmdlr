@@ -14,6 +14,7 @@ import dessia_common.core as dc
 import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as npy
+from numpy.typing import NDArray
 import plot_data.core as plot_data
 import plot_data.colors
 import scipy.integrate as scipy_integrate
@@ -853,13 +854,22 @@ class BSplineCurve(Edge):
                  control_points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
                  knot_multiplicities: List[int],
                  knots: List[float],
-                 weights: List[float] = None,
+                 weights: Union[List[float], NDArray] = None,
                  name: str = ''):
-        self.ctrlpts = [[*point] for point in control_points]
+        self.ctrlpts = npy.asarray(control_points)
         self.degree = degree
-        self.knots = nurbs_helpers.standardize_knot_vector(knots)
-        self.knot_multiplicities = knot_multiplicities
+        self.knots = npy.asarray(nurbs_helpers.standardize_knot_vector(knots))
+        self.knot_multiplicities = npy.asarray(knot_multiplicities)
         self.weights = weights
+        self.ctrlptsw = None
+        self.rational = False
+        if self.weights is not None:
+            self.weights = npy.asarray(weights, dtype=npy.float64)
+            self.rational = self.weights.any()
+            if self.rational:
+                self.ctrlptsw = npy.hstack((self.ctrlpts * self.weights[:, npy.newaxis], self.weights[:, npy.newaxis]))
+            else:
+                self.weights = None
 
         Edge.__init__(self, control_points[0], control_points[-1], name=name)
         self._simplified = None
@@ -867,35 +877,31 @@ class BSplineCurve(Edge):
         self._length = None
         self._eval_points = None
         self._knotvector = None
-        self.ctrlptsw = None
-        self.rational = False
         self._periodic = None
-        if self.weights:
-            self.rational = True
-            ctrlptsw = []
-            for point, w in zip(self.control_points, weights):
-                temp = [float(c * w) for c in point]
-                temp.append(float(w))
-                ctrlptsw.append(temp)
-            self.ctrlptsw = ctrlptsw
 
     def __hash__(self):
         """
         Return a hash value for the B-spline curve.
         """
-        return hash((tuple(self.control_points), self.degree, tuple(self.knots)))
+        control_points = tuple(tuple(point) for point in self.ctrlpts)
+        if self.weights is None:
+            return hash((control_points, self.degree, tuple(self.knot_multiplicities), tuple(self.knots)))
+        return hash((control_points, self.degree, tuple(self.knot_multiplicities),
+                     tuple(self.knots), tuple(self.weights)))
 
     def __eq__(self, other):
         """
         Return True if the other B-spline curve has the same control points, degree, and knot vector, False otherwise.
         """
         if isinstance(other, self.__class__) and self.rational == other.rational:
-            common_check = (self.control_points == other.control_points
-                            and self.degree == other.degree
-                            and self.knots == other.knots)
+            common_check = (
+                    tuple(tuple(point) for point in self.ctrlpts) == tuple(tuple(point) for point in other.ctrlpts)
+                    and self.degree == other.degree
+                    and tuple(self.knots) == tuple(other.knots)
+                    and tuple(self.knot_multiplicities) == tuple(other.knot_multiplicities))
             if self.weights is None:
                 return common_check
-            return common_check and self.weights == other.weights
+            return common_check and tuple(self.weights) == tuple(other.weights)
         return False
 
     def _data_eq(self, other_object):
@@ -914,10 +920,7 @@ class BSplineCurve(Edge):
     def knotvector(self):
         """Return the knot vector."""
         if self._knotvector is None:
-            knot_vector = []
-            for knot, knot_mut in zip(self.knots, self.knot_multiplicities):
-                knot_vector.extend([knot] * knot_mut)
-            self._knotvector = knot_vector
+            self._knotvector = npy.repeat(self.knots, self.knot_multiplicities)
         return self._knotvector
 
     @property
@@ -949,14 +952,14 @@ class BSplineCurve(Edge):
             "knotvector": self.knotvector,
             "size": len(self.ctrlpts),
             "sample_size": self.sample_size,
-            "rational": bool(self.weights),
+            "rational": self.rational,
             "dimension": 3 if self.__class__.__name__[-2:] == "3D" else 2,
             "precision": 18
         }
-        if self.weights:
-            datadict["control_points"] = tuple(self.ctrlptsw)
+        if self.rational:
+            datadict["control_points"] = self.ctrlptsw
         else:
-            datadict["control_points"] = tuple(self.ctrlpts)
+            datadict["control_points"] = self.ctrlpts
         return datadict
 
     @property
@@ -1023,6 +1026,18 @@ class BSplineCurve(Edge):
         :getter: Gets the domain
         """
         return self.knotvector[self.degree], self.knotvector[-(self.degree + 1)]
+
+    def copy(self, deep: bool = True, **kwargs):
+        """
+        Returns a copy of the instance.
+
+        :param deep: If False, perform a shallow copy. If True, perform a deep copy.
+        """
+        if deep:
+            return self.__class__(self.degree, self.control_points.copy(), self.knot_multiplicities.copy(),
+                                  self.knots.copy(), name=self.name + "_copy")
+        return self.__class__(self.degree, self.control_points, self.knot_multiplicities,
+                              self.knots, name=self.name + "_copy")
 
     def to_geomdl(self):
         """Converts the BSpline curve into a geomdl curve."""
@@ -1134,13 +1149,13 @@ class BSplineCurve(Edge):
             "knotvector": self.knotvector,
             "size": len(self.ctrlpts),
             "sample_size": self.sample_size,
-            "rational": bool(self.weights),
+            "rational": self.rational,
             "dimension": 3 if vector_name == "Vector3D" else 2,
         }
-        if self.weights:
-            datadict["control_points"] = tuple(self.ctrlptsw)
+        if self.rational:
+            datadict["control_points"] = self.ctrlptsw
         else:
-            datadict["control_points"] = tuple(self.ctrlpts)
+            datadict["control_points"] = self.ctrlpts
         return [getattr(volmdlr, vector_name)(*point)
                 for point in derivatives_curve(datadict, u, order)]
 
@@ -1330,25 +1345,30 @@ class BSplineCurve(Edge):
         index = indexes[0]
         u_min, u_max = self.domain
         u0 = u_min + index * (u_max - u_min) / (self.sample_size - 1)
-        u, convergence_sucess = self.point_invertion(u0, point)
+        u, convergence_sucess, distance = self.point_inversion(u0, point)
         if u_min != 0 or u_max != 1.0:
             u = (u - u_min) / (u_max - u_min)
         abscissa = u * length
+        results = [(abscissa, distance)]
         if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
             return float(abscissa)
 
-        def evaluate_point_distance(u_param):
-            return (point - self.evaluate_single(u_param)).norm()
-        results = [(abscissa, evaluate_point_distance(u))]
-        initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
-        for u0 in initial_condition_list:
-            res = minimize(evaluate_point_distance, npy.array(u0), bounds=[(u_min, u_max)])
-            if res.fun < 1e-6:
-                return float(res.x[0] * length)
-            abscissa = res.x[0] * length
-            results.append((abscissa, res.fun))
-        result = min(results, key=lambda r: r[1])[0]
-        return float(result)
+        for patch, param in self.decompose(True):
+            bounding_element = self.get_bounding_element()
+            if bounding_element.point_belongs(point):
+                distances = npy.linalg.norm(patch.points - point_array, axis=1)
+                index = npy.argmin(distances)
+                u_start, u_stop = patch.domain
+                delta_u = (u_stop - u_start) / (patch.sample_size - 1)
+                u = u_start + index * delta_u
+
+                x1, _, distance = patch.point_inversion(u, point)
+                u = x1 * (param[1] - param[0]) + param[0]
+                if distance <= 1e-6:
+                    return u * self.length()
+                results.append((u * self.length(), distance))
+
+        return min(results, key=lambda r: r[1])[0]
 
     def _point_inversion_funcs(self, u, point):
         """
@@ -1360,7 +1380,7 @@ class BSplineCurve(Edge):
         func_first_derivative = curve_derivatives[2].dot(distance_vector) + curve_derivatives[1].norm() ** 2
         return func, func_first_derivative, curve_derivatives, distance_vector
 
-    def point_invertion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-7, tol2: float = 1e-8):
+    def point_inversion(self, u0: float, point, maxiter: int = 50, tol1: float = 1e-7, tol2: float = 1e-8):
         """
         Finds the equivalent B-Spline curve parameter u to a given a point 3D or 2D using an initial guess u0.
 
@@ -1377,18 +1397,18 @@ class BSplineCurve(Edge):
         :return: u parameter and convergence check
         :rtype: int, bool
         """
-        if maxiter == 0:
-            return u0, False
         func, func_first_derivative, curve_derivatives, distance_vector = self._point_inversion_funcs(u0, point)
+        if maxiter == 0:
+            return u0, False, distance_vector.norm()
         if self._check_convergence(curve_derivatives, distance_vector, tol1=tol1, tol2=tol2):
-            return u0, True
+            return u0, True, distance_vector.norm()
         new_u = u0 - func / (func_first_derivative + 1e-18)
         new_u = self._check_bounds(new_u)
         residual = (new_u - u0) * curve_derivatives[1]
         if residual.norm() <= tol1:
-            return u0, False
+            return u0, False, distance_vector.norm()
         u0 = new_u
-        return self.point_invertion(u0, point, maxiter=maxiter - 1)
+        return self.point_inversion(u0, point, maxiter=maxiter - 1)
 
     @staticmethod
     def _check_convergence(curve_derivatives, distance_vector, tol1: float = 1e-7, tol2: float = 1e-8):
@@ -1960,8 +1980,14 @@ class BSplineCurve2D(BSplineCurve):
         :rtype: :class:`volmdlr.core.BoundingRectangle`
         """
         if not self._bounding_rectangle:
-            self._bounding_rectangle = volmdlr.core.BoundingRectangle.from_points(self.points)
+            xmin, ymin = self.ctrlpts.min(axis=0)
+            xmax, ymax = self.ctrlpts.max(axis=0)
+
+            self._bounding_rectangle = volmdlr.core.BoundingRectangle(xmin, xmax, ymin, ymax)
         return self._bounding_rectangle
+
+    def get_bounding_element(self):
+        return self.bounding_rectangle
 
     def straight_line_area(self):
         """
@@ -4903,7 +4929,12 @@ class BSplineCurve3D(BSplineCurve):
 
     def _bounding_box(self):
         """Creates a bounding box from the bspline points."""
-        return volmdlr.core.BoundingBox.from_points(self.discretization_points())
+        xmin, ymin, zmin = self.ctrlpts.min(axis=0)
+        xmax, ymax, zmax = self.ctrlpts.max(axis=0)
+        return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+
+    def get_bounding_element(self):
+        return self.bounding_box
 
     def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
                       end_parameter: float = 1):
@@ -5003,12 +5034,8 @@ class BSplineCurve3D(BSplineCurve):
         name = arguments[0][1:-1]
         degree = int(arguments[1])
         points = [object_dict[int(i[1:])] for i in arguments[2]]
-        lines = [LineSegment3D(pt1, pt2) for pt1, pt2 in zip(points[:-1], points[1:]) if not pt1.is_close(pt2)]
-        if lines and not points[0].is_close(points[-1]):
-            # quick fix. Real problem: Tolerance too low (1e-6 m = 0.001mm)
-            dir_vector = lines[0].unit_direction_vector()
-            if all(line.unit_direction_vector() == dir_vector for line in lines):
-                return LineSegment3D(points[0], points[-1])
+        if len(points) == 2 and degree == 1:
+            return LineSegment3D(points[0], points[-1])
 
         knot_multiplicities = [int(i) for i in arguments[6][1:-1].split(",")]
         knots = [float(i) for i in arguments[7][1:-1].split(",")]

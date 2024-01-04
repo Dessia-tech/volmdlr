@@ -128,10 +128,10 @@ def standardize_knot_vector(knot_vector):
     """
     Standardize a knot vector to range from 0 to 1.
     """
-    decimals = 18
-    first_knot = float(knot_vector[0])
-    last_knot = float(knot_vector[-1])
-    denominator = last_knot - first_knot
+    cdef int decimals = 18
+    cdef double first_knot = <double>(knot_vector[0])
+    cdef double last_knot = <double>(knot_vector[-1])
+    cdef double denominator = last_knot - first_knot
 
     knot_vector_out = [
         float(("{:." + str(decimals) + "f}").format((float(kv) - first_knot) / denominator)) for kv in knot_vector

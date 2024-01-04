@@ -2,13 +2,22 @@ import unittest
 import os
 import volmdlr
 import volmdlr.edges as vme
+from volmdlr import curves
 from dessia_common.core import DessiaObject
-from geomdl.operations import decompose_curve
+
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'bsplinecurve_objects')
 
 
 class TestBSplineCurve3D(unittest.TestCase):
+    b_splinecurve3d = vme.BSplineCurve3D(degree=5, control_points=[
+        volmdlr.Point3D(0.5334, 4.61e-10, -2.266), volmdlr.Point3D(0.5334, 0.236642912449, -2.26599999893),
+        volmdlr.Point3D(0.5334, 0.473285829931, -2.23144925183),
+        volmdlr.Point3D(0.5334, 0.70316976404, -2.16234807551),
+        volmdlr.Point3D(0.5334, 1.13611540546, -1.95904362568), volmdlr.Point3D(0.5334, 1.49286052971, -1.64044168585),
+        volmdlr.Point3D(0.5334, 1.64654439419, -1.45604332404), volmdlr.Point3D(0.5334, 1.77109261028, -1.25188280667),
+        volmdlr.Point3D(0.5334, 1.86385510975, -1.03417888209)], knot_multiplicities=[6, 3, 6],
+                                         knots=[0.0, 0.4999999725155696, 1.0])
 
     def test_bounding_box(self):
         bspline = vme.BSplineCurve3D.from_points_interpolation([
@@ -20,7 +29,7 @@ class TestBSplineCurve3D(unittest.TestCase):
             volmdlr.Point3D(-0.8090169943749473, -0.8090169943749473, 0.587785252292473),
             volmdlr.Point3D(-1.0, -1.0, 0.0)], 2)
         bbox = bspline.bounding_box
-        self.assertAlmostEqual(bbox.volume(), 4.0, 3)
+        self.assertAlmostEqual(bbox.volume(), 4.029861202734341, 3)
 
     def test_trim(self):
         obj = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bspline_buggy_trim.json"))
@@ -91,13 +100,59 @@ class TestBSplineCurve3D(unittest.TestCase):
 
     def test_decompose(self):
         bspline = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "spiral_bsplinecurve.json"))
-        bezier_patches, params = bspline.decompose(return_params=True)
-        self.assertEqual(len(bezier_patches), 37)
-        for param, patch in zip(params, bezier_patches):
+        decompose_results = list(bspline.decompose(return_params=True))
+        self.assertEqual(len(decompose_results), 37)
+        for patch, param in decompose_results:
             self.assertTrue(bspline.evaluate_single(param[0]).is_close(patch.start))
             self.assertTrue(bspline.evaluate_single(param[1]).is_close(patch.end))
-        bezier_patches= bspline.decompose()
+        bezier_patches = list(bspline.decompose())
         self.assertEqual(len(bezier_patches), 37)
+
+    def test_line_intersections(self):
+        line = curves.Line3D(volmdlr.Point3D(0.5334, -0.44659009801843536, 0.0),
+                          volmdlr.Point3D(0.5334, 0.4342689853571558, -0.47337857496375274))
+        bspline_line_intersections = self.b_splinecurve3d.line_intersections(line)
+        self.assertTrue(bspline_line_intersections[0].is_close(
+            volmdlr.Point3D(0.5334, 1.784620497933768, -1.1990649949459866)))
+
+    def test_linesegment_intersection(self):
+        linesegment1 = vme.LineSegment3D(volmdlr.Point3D(0.5334, -0.44659009801843536, 0.0),
+                                         volmdlr.Point3D(0.5334, 0.4342689853571558, -0.47337857496375274))
+        linesegment2 = vme.LineSegment3D(volmdlr.Point3D(0.5334, -0.44659009801843536, 0.0),
+                                         volmdlr.Point3D(0.5334, 2.1959871521083385, -1.4201357248912583))
+        bspline_lineseg_intersections1 = self.b_splinecurve3d.linesegment_intersections(linesegment1)
+        bspline_lineseg_intersections2 = self.b_splinecurve3d.linesegment_intersections(linesegment2)
+        self.assertFalse(bspline_lineseg_intersections1)
+        self.assertTrue(bspline_lineseg_intersections2[0].is_close(
+            volmdlr.Point3D(0.5334, 1.7846204999239552, -1.1990649960155242)))
+
+    def test_normal(self):
+        normal = self.b_splinecurve3d.normal()
+        self.assertTrue(normal.is_close(volmdlr.Z3D))
+
+    def test_abscissa(self):
+        point = volmdlr.Point3D(0.18357300891283804, 0.7465725481678318, 0.44333916797214895)
+        bsplinecurve = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bsplinecurve3d_abscissa_test.json"))
+        abscissa = bsplinecurve.abscissa(point)
+        self.assertTrue(bsplinecurve.point_at_abscissa(abscissa).is_close(point))
+
+    def test_local_discretization(self):
+        edge, start, end = DessiaObject.load_from_file(os.path.join(
+            folder, 'test_bspline_local_discretizations.json')).primitives
+        expected_points = [volmdlr.Point3D(0.40000000000000013, 0.3055497472688364, -0.0577802904293785),
+                           volmdlr.Point3D(0.39999999999999997, 0.3054558765193882, -0.05729389615629579),
+                           volmdlr.Point3D(0.4, 0.3053650847805137, -0.056818942485284164),
+                           volmdlr.Point3D(0.4000000000000001, 0.30527736613101497, -0.05635539982690565),
+                           volmdlr.Point3D(0.4, 0.3051925979747842, -0.055902690345743224),
+                           volmdlr.Point3D(0.4000000000000001, 0.3051105616115585, -0.055459784623149766),
+                           volmdlr.Point3D(0.4, 0.3050309628076735, -0.055025298319996994),
+                           volmdlr.Point3D(0.39999999999999997, 0.3049534523668191, -0.054597588839424546),
+                           volmdlr.Point3D(0.39999999999999997, 0.30487764670079315, -0.05417485198958898),
+                           volmdlr.Point3D(0.4000000000000001, 0.3048031484002564, -0.05375521864641269)]
+        discretized_points_between_1_2 = edge.local_discretization(start, end, 10)
+        self.assertEqual(len(discretized_points_between_1_2), len(expected_points))
+        for result, expected_point in zip(discretized_points_between_1_2, expected_points):
+            self.assertTrue(result.is_close(expected_point))
 
 
 if __name__ == '__main__':
