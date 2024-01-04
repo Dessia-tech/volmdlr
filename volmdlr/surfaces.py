@@ -6520,12 +6520,10 @@ class BSplineSurface3D(Surface3D):
         self.nb_u = int(nb_u)
         self.nb_v = int(nb_v)
 
-        u_knots = nurbs_helpers.standardize_knot_vector(u_knots)
-        v_knots = nurbs_helpers.standardize_knot_vector(v_knots)
-        self.u_knots = u_knots
-        self.v_knots = v_knots
-        self.u_multiplicities = u_multiplicities
-        self.v_multiplicities = v_multiplicities
+        self.u_knots = npy.asarray(nurbs_helpers.standardize_knot_vector(u_knots), dtype=npy.float64)
+        self.v_knots = npy.asarray(nurbs_helpers.standardize_knot_vector(v_knots), dtype=npy.float64)
+        self.u_multiplicities = npy.asarray(u_multiplicities, dtype=npy.int16)
+        self.v_multiplicities = npy.asarray(v_multiplicities, dtype=npy.int16)
         self._weights = weights
         self.rational = False
         if weights is not None:
@@ -6544,13 +6542,7 @@ class BSplineSurface3D(Surface3D):
         self._knotvector = None
         self.ctrlptsw = None
         if self._weights is not None:
-            ctrlptsw = []
-            for point, w in zip(self.ctrlpts, self._weights):
-                temp = [float(c * w) for c in point]
-                temp.append(float(w))
-                ctrlptsw.append(temp)
-            self.ctrlptsw = npy.asarray(ctrlptsw, dtype=npy.float64)
-
+            self.ctrlptsw = npy.hstack((self.ctrlpts * self._weights[:, npy.newaxis], self._weights[:, npy.newaxis]))
         self._delta = [0.05, 0.05]
         self._eval_points = None
         self._vertices = None
@@ -6564,14 +6556,14 @@ class BSplineSurface3D(Surface3D):
         Creates custom hash to the surface.
         """
         control_points = self.control_points
-        weights = self.weights
-        if weights is None:
-            weights = tuple(1.0 for _ in range(len(control_points)))
-        else:
-            weights = tuple(weights)
+        if self.weights is None:
+            return hash((tuple(control_points),
+                        self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
+                        self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v))
+        weights = tuple(self.weights)
         return hash((tuple(control_points),
-                     self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
-                     self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v, weights))
+                    self.degree_u, tuple(self.u_multiplicities), tuple(self.u_knots), self.nb_u,
+                    self.degree_v, tuple(self.v_multiplicities), tuple(self.v_knots), self.nb_v, weights))
 
     def __eq__(self, other):
         """
@@ -6615,10 +6607,10 @@ class BSplineSurface3D(Surface3D):
             "knotvector": self.knotvector,
             "size": (self.nb_u, self.nb_v),
             "sample_size": self.sample_size,
-            "rational": not (self._weights is None),
+            "rational": self.rational,
             "precision": 18
         }
-        if self._weights is not None:
+        if self.rational:
             datadict["control_points"] = self.ctrlptsw
         else:
             datadict["control_points"] = self.ctrlpts
@@ -6651,15 +6643,7 @@ class BSplineSurface3D(Surface3D):
         Compute the global knot vector (u direction) based on knot elements and multiplicities.
 
         """
-
-        knots = self.u_knots
-        multiplicities = self.u_multiplicities
-
-        knots_vec = []
-        for i, knot in enumerate(knots):
-            for _ in range(0, multiplicities[i]):
-                knots_vec.append(knot)
-        return knots_vec
+        return npy.repeat(self.u_knots, self.u_multiplicities)
 
     @property
     def knots_vector_v(self):
@@ -6667,15 +6651,7 @@ class BSplineSurface3D(Surface3D):
         Compute the global knot vector (v direction) based on knot elements and multiplicities.
 
         """
-
-        knots = self.v_knots
-        multiplicities = self.v_multiplicities
-
-        knots_vec = []
-        for i, knot in enumerate(knots):
-            for _ in range(0, multiplicities[i]):
-                knots_vec.append(knot)
-        return knots_vec
+        return npy.repeat(self.v_knots, self.v_multiplicities)
 
     @property
     def knotvector(self):
@@ -7051,6 +7027,23 @@ class BSplineSurface3D(Surface3D):
             self._domain = start_u, stop_u, start_v, stop_v
         return self._domain
 
+    def copy(self, deep: bool = True, **kwargs):
+        """
+        Returns a copy of the instance.
+
+        :param deep: If False, perform a shallow copy. If True, perform a deep copy.
+        """
+        if deep:
+            weights = None
+            if self.rational:
+                weights = self._weights.copy()
+            return self.__class__(self.degree_u, self.degree_v, self.control_points, self.nb_u, self.nb_v,
+                                  self.u_multiplicities.copy(), self.v_multiplicities.copy(), self.u_knots.copy(),
+                                  self.v_knots.copy(), weights, name=self.name + "_copy")
+        return self.__class__(self.degree_u, self.degree_v, self.control_points, self.nb_u, self.nb_v,
+                              self.u_multiplicities, self.v_multiplicities, self.u_knots,
+                              self.v_knots, self.weights, name=self.name + "_copy")
+
     def to_geomdl(self):
         """Translate into a geomdl object."""
         if not self._surface:
@@ -7081,11 +7074,13 @@ class BSplineSurface3D(Surface3D):
         dict_['control_points'] = [point.to_dict() for point in self.control_points]
         dict_['nb_u'] = self.nb_u
         dict_['nb_v'] = self.nb_v
-        dict_['u_multiplicities'] = self.u_multiplicities
-        dict_['v_multiplicities'] = self.v_multiplicities
-        dict_['u_knots'] = self.u_knots
-        dict_['v_knots'] = self.v_knots
-        dict_['weights'] = self.weights
+        dict_['u_multiplicities'] = self.u_multiplicities.tolist()
+        dict_['v_multiplicities'] = self.v_multiplicities.tolist()
+        dict_['u_knots'] = self.u_knots.tolist()
+        dict_['v_knots'] = self.v_knots.tolist()
+        dict_['weights'] = None
+        if self.rational:
+            dict_['weights'] = self.weights.tolist()
         return dict_
 
     def ctrlpts2d(self):
@@ -7384,10 +7379,10 @@ class BSplineSurface3D(Surface3D):
             "knotvector": self.knotvector,
             "size": (self.nb_u, self.nb_v),
             "sample_size": [sample_size_u, sample_size_v],
-            "rational": not (self._weights is None),
+            "rational": self.rational,
             "precision": 18
         }
-        if self._weights is not None:
+        if self.rational:
             datadict["control_points"] = self.ctrlptsw
         else:
             datadict["control_points"] = self.ctrlpts
@@ -8026,7 +8021,7 @@ class BSplineSurface3D(Surface3D):
         v_knots = [float(i) for i in arguments[11][1:-1].split(",")]
         # knot_spec = arguments[12]
 
-        if 13 in range(len(arguments)):
+        if len(arguments) >= 14:
             weight_data = [
                 float(i) for i in
                 arguments[13][1:-1].replace("(", "").replace(")", "").split(",")
