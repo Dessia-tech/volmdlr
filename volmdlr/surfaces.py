@@ -7813,7 +7813,7 @@ class BSplineSurface3D(Surface3D):
         if lth <= 1e-6:
             print('BSplineCurve3D skipped because it is too small')
             return []
-        n = len(bspline_curve3d.control_points)
+        n = min(len(bspline_curve3d.control_points), 20)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         tol = 1e-6 if lth > 5e-4 else 1e-7
         # todo: how to ensure convergence of point3d_to_2d ?
@@ -9504,7 +9504,7 @@ class BSplineSurface3D(Surface3D):
         """
         a, b, c, _ = self.domain
         point_at_a_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
-        point_at_b_lower = self.point2d_to_3d(volmdlr.Point2D(b, c))
+        point_at_b_lower = self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), c))
         if point_at_b_lower.is_close(point_at_a_lower):
             return True
         return False
@@ -9515,7 +9515,7 @@ class BSplineSurface3D(Surface3D):
         """
         a, b, _, d = self.domain
         point_at_a_upper = self.point2d_to_3d(volmdlr.Point2D(a, d))
-        point_at_b_upper = self.point2d_to_3d(volmdlr.Point2D(b, d))
+        point_at_b_upper = self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), d))
         if point_at_b_upper.is_close(point_at_a_upper):
             return True
         return False
@@ -9526,7 +9526,7 @@ class BSplineSurface3D(Surface3D):
         """
         a, _, c, d = self.domain
         point_at_c_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
-        point_at_d_lower = self.point2d_to_3d(volmdlr.Point2D(a, d))
+        point_at_d_lower = self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (c + d)))
         if point_at_d_lower.is_close(point_at_c_lower):
             return True
         return False
@@ -9537,7 +9537,7 @@ class BSplineSurface3D(Surface3D):
         """
         _, b, c, d = self.domain
         point_at_c_upper = self.point2d_to_3d(volmdlr.Point2D(b, c))
-        point_at_d_upper = self.point2d_to_3d(volmdlr.Point2D(b, d))
+        point_at_d_upper = self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (c + d)))
         if point_at_d_upper.is_close(point_at_c_upper):
             return True
         return False

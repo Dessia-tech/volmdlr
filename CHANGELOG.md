@@ -86,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineSurface3D: point3d_to_2d
 
 #### display.py
-- refactor DisplayMesh
+- refactor DisplayMesh.
 
 ### Changed
 - Edge.split_between_two_points -> trim
