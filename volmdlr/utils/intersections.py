@@ -319,8 +319,6 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
             if get_point_distance_to_edge(bsplinecurve, intersection[0], point1, point2) > 1e-7:
                 if not (abscissa_point1 == abscissa1 and abscissa_point2 == abscissa2):
                     param_intersections.insert(0, (abscissa_point1, abscissa_point2))
-                else:
-                    print(True)
             elif not intersection[0].in_list(intersections):
                 intersections.append(intersection[0])
         param_intersections.remove((abscissa1, abscissa2))
