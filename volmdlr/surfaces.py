@@ -5602,12 +5602,12 @@ class ExtrusionSurface3D(Surface3D):
         direction = direction.unit_vector()
         self.direction = direction
         if hasattr(edge, "center"):
-            self.frame = volmdlr.Frame3D.from_point_and_vector(edge.center, direction, volmdlr.Z3D)
+            frame = volmdlr.Frame3D.from_point_and_vector(edge.center, direction, volmdlr.Z3D)
         else:
-            self.frame = volmdlr.Frame3D.from_point_and_vector(edge.start, direction, volmdlr.Z3D)
+            frame = volmdlr.Frame3D.from_point_and_vector(edge.start, direction, volmdlr.Z3D)
         self._x_periodicity = False
 
-        Surface3D.__init__(self, frame=self.frame, name=name)
+        Surface3D.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
         return hash((self.__class__.__name__, self.edge, self.direction))
@@ -6029,9 +6029,9 @@ class RevolutionSurface3D(PeriodicalSurface):
         u_vector = vector1 - vector1.vector_projection(w_vector)
         u_vector = u_vector.unit_vector()
         v_vector = w_vector.cross(u_vector)
-        self.frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
+        frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
 
-        PeriodicalSurface.__init__(self, frame=self.frame, name=name)
+        PeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
         return hash((self.__class__.__name__, self.edge, self.axis_point, self.axis))
@@ -7078,9 +7078,8 @@ class BSplineSurface3D(Surface3D):
         dict_['v_multiplicities'] = self.v_multiplicities.tolist()
         dict_['u_knots'] = self.u_knots.tolist()
         dict_['v_knots'] = self.v_knots.tolist()
-        dict_['weights'] = None
-        if self.rational:
-            dict_['weights'] = self.weights.tolist()
+        dict_['weights'] = self.weights
+
         return dict_
 
     def ctrlpts2d(self):
