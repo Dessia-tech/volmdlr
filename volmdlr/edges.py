@@ -1393,10 +1393,15 @@ class BSplineCurve(Edge):
             grad = (distance_vector.dot(derivatives[1])) / func
             return func, grad
 
+        # def objective_function(u_param):
+        #     return (point - self.evaluate_single(u_param)).norm()
+
         results.append((abscissa, objective_function(u)[0]))
+        # results.append((abscissa, objective_function(u)))
         initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
         for u0 in initial_condition_list:
             res = minimize(objective_function, npy.array(u0), bounds=[(u_min, u_max)], jac=True)
+            # res = minimize(objective_function, npy.array(u0), bounds=[(u_min, u_max)])
             if res.fun < 1e-6:
                 return float(res.x[0] * length)
 
