@@ -1385,7 +1385,21 @@ class BSplineCurve(Edge):
         results = [(abscissa, distance)]
         if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
             return float(abscissa)
-        # results.extend(self._abscissa_helper(point))
+
+        def objective_function(u_param):
+            derivatives = self.derivatives(u_param, 1)
+            distance_vector = derivatives[0] - point
+            func = distance_vector.norm()
+            grad = (distance_vector.dot(derivatives[1])) / func
+            return func, grad
+
+        results.append((abscissa, objective_function(u)[0]))
+        initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
+        for u0 in initial_condition_list:
+            res = minimize(objective_function, npy.array(u0), bounds=[(u_min, u_max)], jac=True)
+            if res.fun < 1e-6:
+                return float(res.x[0] * length)
+
         for patch, param in self.decompose(True):
             bounding_element = self.get_bounding_element()
             if bounding_element.point_belongs(point):
@@ -5451,7 +5465,6 @@ class BSplineCurve3D(BSplineCurve):
                 continue
             intersections_points.extend(vm_utils_intersections.get_bsplinecurve_intersections(
                 curve, patch, abs_tol=abs_tol))
-        # intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(curve, self, abs_tol=abs_tol)
         return intersections_points
 
     def circle_intersections(self, circle, abs_tol: float = 1e-6):
