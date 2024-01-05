@@ -5449,7 +5449,8 @@ class BSplineCurve3D(BSplineCurve):
         for patch, _ in self.decompose(True):
             if patch.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
                 continue
-            intersections_points.extend(vm_utils_intersections.get_bsplinecurve_intersections(curve, patch, abs_tol=abs_tol))
+            intersections_points.extend(vm_utils_intersections.get_bsplinecurve_intersections(
+                curve, patch, abs_tol=abs_tol))
         # intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(curve, self, abs_tol=abs_tol)
         return intersections_points
 
