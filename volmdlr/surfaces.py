@@ -2465,7 +2465,7 @@ class CylindricalSurface3D(PeriodicalSurface):
         u_values = points[:, 0]
         v_values = points[:, 1]
 
-        x_component =  npy.cos(u_values) * x
+        x_component = npy.cos(u_values) * x
         y_component = npy.sin(u_values) * y
         z_component = v_values * z
 
@@ -5620,12 +5620,12 @@ class ExtrusionSurface3D(Surface3D):
         direction = direction.unit_vector()
         self.direction = direction
         if hasattr(edge, "center"):
-            self.frame = volmdlr.Frame3D.from_point_and_vector(edge.center, direction, volmdlr.Z3D)
+            frame = volmdlr.Frame3D.from_point_and_vector(edge.center, direction, volmdlr.Z3D)
         else:
-            self.frame = volmdlr.Frame3D.from_point_and_vector(edge.start, direction, volmdlr.Z3D)
+            frame = volmdlr.Frame3D.from_point_and_vector(edge.start, direction, volmdlr.Z3D)
         self._x_periodicity = False
 
-        Surface3D.__init__(self, frame=self.frame, name=name)
+        Surface3D.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
         return hash((self.__class__.__name__, self.edge, self.direction))
@@ -6047,9 +6047,9 @@ class RevolutionSurface3D(PeriodicalSurface):
         u_vector = vector1 - vector1.vector_projection(w_vector)
         u_vector = u_vector.unit_vector()
         v_vector = w_vector.cross(u_vector)
-        self.frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
+        frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
 
-        PeriodicalSurface.__init__(self, frame=self.frame, name=name)
+        PeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
         return hash((self.__class__.__name__, self.edge, self.axis_point, self.axis))
@@ -6532,7 +6532,7 @@ class BSplineSurface3D(Surface3D):
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
                  weights: List[float] = None, name: str = ''):
-        self.ctrlpts = npy.array(control_points)
+        self.ctrlpts = npy.asarray(control_points)
         self.degree_u = int(degree_u)
         self.degree_v = int(degree_v)
         self.nb_u = int(nb_u)
@@ -6546,7 +6546,7 @@ class BSplineSurface3D(Surface3D):
         self.rational = False
         if weights is not None:
             self.rational = True
-            self._weights = npy.array(weights, dtype=npy.float64)
+            self._weights = npy.asarray(weights, dtype=npy.float64)
 
         self._surface = None
         Surface3D.__init__(self, name=name)
@@ -7096,9 +7096,8 @@ class BSplineSurface3D(Surface3D):
         dict_['v_multiplicities'] = self.v_multiplicities.tolist()
         dict_['u_knots'] = self.u_knots.tolist()
         dict_['v_knots'] = self.v_knots.tolist()
-        dict_['weights'] = None
-        if self.rational:
-            dict_['weights'] = self.weights.tolist()
+        dict_['weights'] = self.weights
+
         return dict_
 
     def ctrlpts2d(self):
@@ -7260,20 +7259,18 @@ class BSplineSurface3D(Surface3D):
                 blending_mat[i][j] = self.basis_functions_v(v_i, self.degree_v, j)
         return blending_mat
 
-    @lru_cache(maxsize=10)
-    def decompose(self, return_params: bool = False, **kwargs):
+    @lru_cache(maxsize=6)
+    def decompose(self, return_params: bool = False, decompose_dir="uv"):
         """
         Decomposes the surface into Bezier surface patches of the same degree.
 
         :param return_params: If True, returns the parameters from start and end of each Bézier patch
          with repect to the input curve.
         :type return_params: bool
-
-        Keyword Arguments:
-            * ``decompose_dir``: Direction of decomposition. 'uv', 'u' or 'v'.
-
+        :param decompose_dir: Direction of decomposition. 'uv', 'u' or 'v'.
+        :type decompose_dir: str
         """
-        return decompose_surface(self, return_params, **kwargs)
+        return decompose_surface(self, return_params, decompose_dir=decompose_dir)
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """
@@ -7397,7 +7394,7 @@ class BSplineSurface3D(Surface3D):
         """
         Find the parameters (u, v) of a 3D point on the BSpline surface using a grid search algorithm.
         """
-        point3d_array = npy.array([point3d[0], point3d[1], point3d[2]], dtype=npy.float64)
+        point3d_array = npy.asarray(point3d)
         u, v, u_start, u_stop, v_start, v_stop, delta_u, delta_v, sample_size_u, sample_size_v, minimal_distance = \
             self._point_inversion_initialization(point3d_array)
         if minimal_distance <= acceptable_distance:
@@ -7473,20 +7470,39 @@ class BSplineSurface3D(Surface3D):
 
     def point3d_to_2d_minimize(self, point3d):
         """Auxiliary function for point3d_to_2d in case the point inversion does not converge."""
-        # def fun(x, surf):
-        #     derivatives = surf.derivatives(x[0], x[1], 1)
-        #     vector = derivatives[0][0] - point3d
-        #     f_value = vector.norm()
-        #     if f_value == 0.0:
-        #         jacobian = npy.array([0.0, 0.0])
-        #     else:
-        #         jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
-        #                               vector.dot(derivatives[0][1]) / f_value])
-        #     return f_value, jacobian
-
-        point3d_array = npy.array(point3d)
-        min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         results = []
+        point3d_array = npy.asarray(point3d)
+
+        decompose_dir = "uv"
+        if self.u_closed:
+            decompose_dir = "v"
+        if self.v_closed:
+            decompose_dir = "u"
+        for patch, param in self.decompose(return_params=True, decompose_dir=decompose_dir):
+            xmin, ymin, zmin = patch.ctrlpts.min(axis=0)
+            xmax, ymax, zmax = patch.ctrlpts.max(axis=0)
+
+            bbox = volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
+            if bbox.point_belongs(point3d):
+                distances = npy.linalg.norm(patch.evalpts - point3d_array, axis=1)
+                index = npy.argmin(distances)
+                u_start, u_stop, v_start, v_stop = patch.domain
+                delta_u = (u_stop - u_start) / (patch.sample_size_u - 1)
+                delta_v = (v_stop - v_start) / (patch.sample_size_v - 1)
+                u_idx = int(index / patch.sample_size_v)
+                v_idx = index % patch.sample_size_v
+
+                u = u_start + u_idx * delta_u
+                v = v_start + v_idx * delta_v
+
+                x1, _, distance = patch.point_inversion((u, v), point3d, 5e-6)
+                u = x1[0] * (param[0][1] - param[0][0]) + param[0][0]
+                v = x1[1] * (param[1][1] - param[1][0]) + param[1][0]
+                if distance <= 5e-6:
+                    return volmdlr.Point2D(u, v)
+                results.append(((u, v), distance))
+
+        min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
         distances = npy.linalg.norm(self.evalpts - point3d_array, axis=1)
         indexes = npy.argsort(distances)
         x0s = []
@@ -7504,7 +7520,7 @@ class BSplineSurface3D(Surface3D):
             v = v_start + v_idx * delta_v
             x0s.append((u, v))
 
-        if self.weights is not None:
+        if self.rational:
             control_points = self.ctrlptsw
         else:
             control_points = self.ctrlpts
@@ -7514,37 +7530,10 @@ class BSplineSurface3D(Surface3D):
             res = point_inversion(point3d_array, x0, bounds, [self.degree_u, self.degree_v],
                                   self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational)
 
-            if res.fun < 1e-5:
+            if res.fun < 5e-6:
                 return volmdlr.Point2D(*res.x)
 
             results.append((res.x, res.fun))
-
-        for patch, param in zip(*self.decompose(return_params=True)):
-            xmin, ymin, zmin = patch.ctrlpts.min(axis=0)
-            xmax, ymax, zmax = patch.ctrlpts.max(axis=0)
-
-            bbox = volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
-            if bbox.point_belongs(point3d):
-                distances = npy.linalg.norm(patch.evalpts - point3d_array, axis=1)
-                index = npy.argmin(distances)
-                u_start, u_stop, v_start, v_stop = patch.domain
-                delta_u = (u_stop - u_start) / (patch.sample_size_u - 1)
-                delta_v = (v_stop - v_start) / (patch.sample_size_v - 1)
-                if index == 0:
-                    u_idx, v_idx = 0, 0
-                else:
-                    u_idx = int(index / patch.sample_size_v)
-                    v_idx = index % patch.sample_size_v
-
-                u = u_start + u_idx * delta_u
-                v = v_start + v_idx * delta_v
-
-                x1, _, distance = patch.point_inversion((u, v), point3d, 5e-6)
-                u = x1[0] * (param[0][1] - param[0][0]) + param[0][0]
-                v = x1[1] * (param[1][1] - param[1][0]) + param[1][0]
-                if distance <= 5e-6:
-                    return volmdlr.Point2D(u, v)
-                results.append(((u, v), distance))
 
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
@@ -7579,12 +7568,12 @@ class BSplineSurface3D(Surface3D):
         distance_vector = surface_derivatives[0][0] - point3d
         common_term = (surface_derivatives[1][0].dot(surface_derivatives[0][1]) +
                        distance_vector.dot(surface_derivatives[1][1]))
-        jacobian = npy.array(
+        jacobian = npy.asarray(
             [[surface_derivatives[1][0].norm() ** 2 + distance_vector.dot(surface_derivatives[2][0]),
               common_term],
              [common_term,
               surface_derivatives[0][1].norm() ** 2 + distance_vector.dot(surface_derivatives[0][2])]])
-        k = npy.array(
+        k = npy.asarray(
             [[-(distance_vector.dot(surface_derivatives[1][0]))], [-(distance_vector.dot(surface_derivatives[0][1]))]])
 
         return jacobian, k, surface_derivatives, distance_vector
@@ -7652,7 +7641,7 @@ class BSplineSurface3D(Surface3D):
         :return: Array of 3D points representing the BSpline surface in Cartesian coordinates.
         :rtype: numpy.ndarray[npy.float64]
         """
-        return npy.array([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
+        return npy.asarray([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
                          dtype=npy.float64)
 
     def linesegment2d_to_3d(self, linesegment2d):
