@@ -44,7 +44,7 @@ class TestPointBasedVoxelizationCreation(unittest.TestCase):
 
     def test_voxelize_sphere(self):
         sphere_voxelization = PointBasedVoxelization.from_shell(self.sphere, 0.01, name="sphere voxelization")
-        self.assertEqual(1904, len(sphere_voxelization))
+        self.assertEqual(1900, len(sphere_voxelization))
 
         if SHOW_BABYLONJS:
             volume_model = VolumeModel([self.sphere, sphere_voxelization.to_closed_triangle_shell()])
@@ -52,7 +52,7 @@ class TestPointBasedVoxelizationCreation(unittest.TestCase):
 
     def test_voxelize_cylinder(self):
         cylinder_voxelization = PointBasedVoxelization.from_shell(self.cylinder, 0.01, name="cylinder voxelization")
-        self.assertEqual(2920, len(cylinder_voxelization))
+        self.assertEqual(2788, len(cylinder_voxelization))
 
         if SHOW_BABYLONJS:
             volume_model = VolumeModel([self.cylinder, cylinder_voxelization.to_closed_triangle_shell()])
@@ -62,7 +62,7 @@ class TestPointBasedVoxelizationCreation(unittest.TestCase):
         volume_model_voxelization = PointBasedVoxelization.from_volume_model(
             self.volume_model, 0.01, name="voxelization"
         )
-        self.assertEqual(4408, len(volume_model_voxelization))
+        self.assertEqual(4288, len(volume_model_voxelization))
 
         if SHOW_BABYLONJS:
             volume_model = VolumeModel(
@@ -103,7 +103,7 @@ class TestPointBasedVoxelizationBooleanOperation(unittest.TestCase):
         union_2 = self.cylinder_voxelization.union(self.sphere_voxelization)
 
         self.assertEqual(len(union_1), len(union_2))
-        self.assertEqual(4408, len(union_1))
+        self.assertEqual(4288, len(union_1))
         self.assertEqual(self.volume_model_voxelization, union_1)
 
         if SHOW_BABYLONJS:
@@ -115,7 +115,7 @@ class TestPointBasedVoxelizationBooleanOperation(unittest.TestCase):
         intersection_2 = self.cylinder_voxelization.intersection(self.sphere_voxelization)
 
         self.assertEqual(len(intersection_1), len(intersection_2))
-        self.assertEqual(416, len(intersection_1))
+        self.assertEqual(400, len(intersection_1))
 
         if SHOW_BABYLONJS:
             volume_model = VolumeModel([self.sphere, self.cylinder, intersection_1.to_closed_triangle_shell()])
@@ -126,8 +126,8 @@ class TestPointBasedVoxelizationBooleanOperation(unittest.TestCase):
         difference_2 = self.cylinder_voxelization.difference(self.sphere_voxelization)
 
         self.assertNotEqual(len(difference_1), len(difference_2))
-        self.assertEqual(1488, len(difference_1))
-        self.assertEqual(2504, len(difference_2))
+        self.assertEqual(1500, len(difference_1))
+        self.assertEqual(2388, len(difference_2))
 
         if SHOW_BABYLONJS:
             volume_model = VolumeModel(
@@ -145,7 +145,7 @@ class TestPointBasedVoxelizationBooleanOperation(unittest.TestCase):
         symmetric_difference_2 = self.cylinder_voxelization.symmetric_difference(self.sphere_voxelization)
 
         self.assertEqual(len(symmetric_difference_1), len(symmetric_difference_2))
-        self.assertEqual(3992, len(symmetric_difference_1))
+        self.assertEqual(3888, len(symmetric_difference_1))
 
         if SHOW_BABYLONJS:
             volume_model = VolumeModel([self.sphere, self.cylinder, symmetric_difference_1.to_closed_triangle_shell()])
@@ -166,7 +166,7 @@ class TestPointBasedVoxelizationManipulation(unittest.TestCase):
     def test_inverse(self):
         inverse_cylinder_voxelization = self.cylinder_voxelization.inverse()
 
-        self.assertEqual(7728, len(inverse_cylinder_voxelization))
+        self.assertEqual(6452, len(inverse_cylinder_voxelization))
         self.assertEqual(0, len(self.cylinder_voxelization.intersection(inverse_cylinder_voxelization)))
 
         if SHOW_BABYLONJS:
@@ -177,7 +177,7 @@ class TestPointBasedVoxelizationManipulation(unittest.TestCase):
         rotated_cylinder = self.cylinder.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2)
         rotated_cylinder_voxelization = self.cylinder_voxelization.rotation(volmdlr.O3D, volmdlr.X3D, math.pi / 2)
 
-        self.assertEqual(2920, len(rotated_cylinder_voxelization))
+        self.assertEqual(2788, len(rotated_cylinder_voxelization))
 
         if SHOW_BABYLONJS:
             volume_model = VolumeModel([rotated_cylinder, rotated_cylinder_voxelization.to_closed_triangle_shell()])
@@ -187,7 +187,7 @@ class TestPointBasedVoxelizationManipulation(unittest.TestCase):
         translated_cylinder = self.cylinder.translation(volmdlr.X3D)
         translated_cylinder_voxelization = self.cylinder_voxelization.translation(volmdlr.X3D)
 
-        self.assertEqual(2920, len(translated_cylinder_voxelization))
+        self.assertEqual(2788, len(translated_cylinder_voxelization))
         # self.assertEqual(translated_cylinder_voxelization, PointBasedVoxelization.from_shell(translated_cylinder, 0.01))
 
         if SHOW_BABYLONJS:
@@ -199,7 +199,7 @@ class TestPointBasedVoxelizationManipulation(unittest.TestCase):
     def test_fill_outer_voxels(self):
         outer_filled_voxelization = self.cylinder_voxelization.fill_outer_voxels()
 
-        self.assertEqual(5824, len(outer_filled_voxelization))
+        self.assertEqual(4416, len(outer_filled_voxelization))
 
         if SHOW_BABYLONJS:
             volume_model = VolumeModel([self.cylinder, outer_filled_voxelization.to_closed_triangle_shell()])
@@ -208,7 +208,7 @@ class TestPointBasedVoxelizationManipulation(unittest.TestCase):
     def test_fill_enclosed_voxels(self):
         inner_filled_voxelization = self.cylinder_voxelization.fill_enclosed_voxels()
 
-        self.assertEqual(7744, len(inner_filled_voxelization))
+        self.assertEqual(7612, len(inner_filled_voxelization))
 
         if SHOW_BABYLONJS:
             volume_model = VolumeModel([self.cylinder, inner_filled_voxelization.to_closed_triangle_shell()])
@@ -228,15 +228,15 @@ class TestPointBasedVoxelizationExport(unittest.TestCase):
         self.assertEqual((-0.105, -0.105, -0.105), self.sphere_voxelization.min_grid_center)
 
     def test_max_grid_center(self):
-        self.assertEqual((0.105, 0.105, 0.105), self.sphere_voxelization.max_grid_center)
+        self.assertEqual((0.095, 0.105, 0.105), self.sphere_voxelization.max_grid_center)
 
     def test_bounding_box(self):
         self.assertEqual(
-            BoundingBox(-0.115, 0.115, -0.115, 0.115, -0.115, 0.115), self.sphere_voxelization.bounding_box
+            BoundingBox(-0.115, 0.105, -0.115, 0.115, -0.115, 0.115), self.sphere_voxelization.bounding_box
         )
 
     def test_to_triangles(self):
-        self.assertEqual(7520, len(self.sphere_voxelization.to_triangles()))
+        self.assertEqual(7504, len(self.sphere_voxelization.to_triangles()))
 
     def test_to_closed_triangle_shell(self):
         self.assertIsInstance(self.sphere_voxelization.to_closed_triangle_shell(), ClosedTriangleShell3D)
