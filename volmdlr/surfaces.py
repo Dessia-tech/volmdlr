@@ -14,7 +14,7 @@ import triangle as triangle_lib
 
 from geomdl import NURBS, BSpline
 from scipy.linalg import lu_factor, lu_solve
-from scipy.optimize import least_squares, minimize
+from scipy.optimize import least_squares
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.typings import JsonSerializable
@@ -7271,6 +7271,7 @@ class BSplineSurface3D(Surface3D):
 
         Keyword Arguments:
             * ``decompose_dir``: Direction of decomposition. 'uv', 'u' or 'v'.
+
         """
         return decompose_surface(self, return_params, **kwargs)
 
@@ -9503,7 +9504,7 @@ class BSplineSurface3D(Surface3D):
         """
         a, b, c, _ = self.domain
         point_at_a_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
-        point_at_b_lower = self.point2d_to_3d(volmdlr.Point2D(b, c))
+        point_at_b_lower = self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), c))
         if point_at_b_lower.is_close(point_at_a_lower):
             return True
         return False
@@ -9514,7 +9515,7 @@ class BSplineSurface3D(Surface3D):
         """
         a, b, _, d = self.domain
         point_at_a_upper = self.point2d_to_3d(volmdlr.Point2D(a, d))
-        point_at_b_upper = self.point2d_to_3d(volmdlr.Point2D(b, d))
+        point_at_b_upper = self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), d))
         if point_at_b_upper.is_close(point_at_a_upper):
             return True
         return False
@@ -9525,7 +9526,7 @@ class BSplineSurface3D(Surface3D):
         """
         a, _, c, d = self.domain
         point_at_c_lower = self.point2d_to_3d(volmdlr.Point2D(a, c))
-        point_at_d_lower = self.point2d_to_3d(volmdlr.Point2D(a, d))
+        point_at_d_lower = self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (c + d)))
         if point_at_d_lower.is_close(point_at_c_lower):
             return True
         return False
@@ -9536,7 +9537,7 @@ class BSplineSurface3D(Surface3D):
         """
         _, b, c, d = self.domain
         point_at_c_upper = self.point2d_to_3d(volmdlr.Point2D(b, c))
-        point_at_d_upper = self.point2d_to_3d(volmdlr.Point2D(b, d))
+        point_at_d_upper = self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (c + d)))
         if point_at_d_upper.is_close(point_at_c_upper):
             return True
         return False
