@@ -1424,6 +1424,17 @@ class BSplineCurve(Edge):
         results = [(abscissa, distance)]
         if convergence_sucess:  # sometimes we don't achieve convergence with a given initial guess
             return float(abscissa)
+
+        def evaluate_point_distance(u_param):
+            return (point - self.evaluate_single(u_param)).norm()
+
+        results.append((abscissa, evaluate_point_distance(u)))
+        initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
+        for u0 in initial_condition_list:
+            res = minimize(evaluate_point_distance, npy.array(u0), bounds=[(u_min, u_max)])
+            if res.fun < 1e-6:
+                return float(res.x[0] * length)
+
         # results.extend(self._abscissa_helper(point))
         for patch, param in self.decompose(True):
             bounding_element = self.get_bounding_element()
