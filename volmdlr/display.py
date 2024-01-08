@@ -98,6 +98,21 @@ class MeshMixin:
     _standalone_in_db = True
     _non_serializable_attributes = ["vertices", "triangles"]
 
+    @property
+    def n_vertices(self) -> int:
+        """Get number of vertices in the mesh."""
+        return len(self.vertices)
+
+    @property
+    def n_triangles(self) -> int:
+        """Get number of triangles in the mesh."""
+        return len(self.triangles)
+
+    @property
+    def dimension(self) -> int:
+        """Get the dimension of the mesh ("2" for 2D mesh or "3" for 3D mesh)."""
+        return self.vertices.shape[1]
+
     # MANIPULATION
     def resize(self, scale_factor: float) -> "MeshType":
         """
