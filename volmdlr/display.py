@@ -626,11 +626,13 @@ class Mesh3D(MeshMixin, PhysicalObject):
         :return: A new 3D mesh instance.
         :rtype: Mesh3D
         """
-        mesh = cls(np.array([]), np.array([]))
-        for trimesh_ in trimesh_scene.geometry.values():
-            mesh += cls.from_trimesh(trimesh_)
+        # mesh = cls(np.array([]), np.array([]))
+        # for trimesh_ in trimesh_scene.geometry.values():
+        #     mesh += cls.from_trimesh(trimesh_)
+        #
+        # return mesh
 
-        return mesh
+        return cls.from_meshes(cls.trimesh_scene_to_meshes(trimesh_scene))
 
     @classmethod
     def trimesh_scene_to_meshes(cls, trimesh_scene: trimesh.Scene, scale_factor: float = 0.001) -> List["Mesh3D"]:
