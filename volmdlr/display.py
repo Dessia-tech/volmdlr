@@ -437,7 +437,7 @@ class MeshMixin:
 
 class Mesh2D(MeshMixin, DessiaObject):
     """
-    2D mesh.
+    2D triangle mesh.
     """
 
     _linesegment_class = volmdlr.edges.LineSegment2D
@@ -472,7 +472,7 @@ class Mesh2D(MeshMixin, DessiaObject):
 
 class Mesh3D(MeshMixin, PhysicalObject):
     """
-    3D mesh.
+    3D triangle mesh.
     """
 
     _linesegment_class = volmdlr.edges.LineSegment3D
