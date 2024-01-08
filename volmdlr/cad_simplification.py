@@ -310,7 +310,7 @@ class AlphaWrapSimplify(Simplify):
             wrap = Polyhedron_3()
             alpha_wrap_3(vertices, triangles, alpha, offset, wrap)
 
-            wrapped_shells.append(self._polyhedron_to_display_shell(wrap))
+            wrapped_shells.append(self._polyhedron_to_shell(wrap))
             wrapped_shells[-1].name = mesh.name
             wrapped_shells[-1].color = mesh.color
             wrapped_shells[-1].alpha = mesh.alpha
