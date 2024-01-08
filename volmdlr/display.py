@@ -279,6 +279,27 @@ class MeshMixin:
         return self.merge(other, merge_vertices=True, merge_triangles=True)
 
     @classmethod
+    def from_meshes(cls, meshes: List["MeshType"], merge_vertices: bool = False, merge_triangles: bool = False) -> "MeshType":
+        """
+        Merge two meshes.
+
+        :param meshes: A list of Mesh instance to merge all together.
+        :type meshes: MeshType
+        :param merge_vertices: Flag to indicate whether to merge vertices.
+        :type merge_vertices: bool, optional
+        :param merge_triangles: Flag to indicate whether to merge triangles.
+        :type merge_triangles: bool, optional
+
+        :return: A new Mesh instance representing the merged meshes.
+        :rtype: MeshType
+        """
+        merged_mesh = cls(np.array([]), np.array([]))
+        for mesh in meshes:
+            merged_mesh = merged_mesh.merge(mesh, merge_vertices=merge_vertices, merge_triangles=merge_triangles)
+
+        return merged_mesh
+
+    @classmethod
     def merge_meshes(cls, meshes: List[Union["Mesh2D", "Mesh3D"]], name: str = ""):
         """
         Merge several meshes into one.
