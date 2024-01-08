@@ -493,8 +493,22 @@ class Mesh3D(MeshMixin, PhysicalObject):
         self.triangles = triangles
 
         self._faces = None
+        self._bounding_box = None
 
         PhysicalObject.__init__(self, name=name)
+
+    @property
+    def bounding_box(self):
+        """Bounding box of current mesh."""
+        if self._bounding_box is None:
+            maximums = np.max(self.vertices, axis=0)
+            minimums = np.min(self.vertices, axis=0)
+
+            self._bounding_box = volmdlr.core.BoundingBox(
+                minimums[0], maximums[0], minimums[1], maximums[1], minimums[2], maximums[2]
+            )
+
+        return self._bounding_box
 
     def volmdlr_primitives(self, **kwargs):
         return [self]
