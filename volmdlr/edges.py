@@ -645,6 +645,11 @@ class LineSegment(Edge):
         self._line = None
         Edge.__init__(self, start, end, reference_path=reference_path, name=name)
 
+    def to_dict(self, *args, **kwargs):
+        """ Define custom base to_dict for LineSegment children. """
+        return {"name": self.name, "start": self.start.to_dict(), "end": self.end.to_dict(),
+                "reference_path": self.reference_path}
+
     @property
     def line(self):
         """Returns the line from which the line segment was extracted."""
@@ -2272,11 +2277,9 @@ class LineSegment2D(LineSegment):
 
     def to_dict(self, *args, **kwargs):
         """Stores all Line Segment 2D attributes in a dict object."""
-        return {'object_class': 'volmdlr.edges.LineSegment2D',
-                'name': self.name,
-                'start': self.start.to_dict(),
-                'end': self.end.to_dict()
-                }
+        dict_ = super().to_dict(*args, **kwargs)
+        dict_["object_class"] = "volmdlr.edges.LineSegment2D"
+        return dict_
 
     @property
     def bounding_rectangle(self):
@@ -4394,12 +4397,9 @@ class LineSegment3D(LineSegment):
 
     def to_dict(self, *args, **kwargs):
         """Stores all Line Segment 3D in a dict object."""
-        return {'object_class': 'volmdlr.edges.LineSegment3D',
-                'name': self.name,
-                'start': self.start.to_dict(),
-                'end': self.end.to_dict(),
-                'reference_path': self.reference_path
-                }
+        dict_ = super().to_dict(*args, **kwargs)
+        dict_["object_class"] = "volmdlr.edges.LineSegment3D"
+        return dict_
 
     def normal_vector(self, abscissa=0.):
         """
