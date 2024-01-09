@@ -30,7 +30,7 @@ import volmdlr.core
 import volmdlr.core_compiled
 import volmdlr.geometry
 from volmdlr import curves as volmdlr_curves
-from volmdlr import get_minimum_distance_points_lines
+from volmdlr import get_minimum_distance_points_lines, PATH_ROOT
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
@@ -43,7 +43,7 @@ class Edge(dc.DessiaObject):
     Defines a simple edge Object.
     """
 
-    def __init__(self, start, end, name=''):
+    def __init__(self, start, end, reference_path: str = PATH_ROOT, name=''):
         self.start = start
         self.end = end
         self._length = None
@@ -53,6 +53,7 @@ class Edge(dc.DessiaObject):
         self._middle_point = None
         # Disabling super init call for performance
         # dc.DessiaObject.__init__(self, name=name)
+        self.reference_path = reference_path
         self.name = name
 
     def __getitem__(self, key):
@@ -638,11 +639,11 @@ class LineSegment(Edge):
     """
 
     def __init__(self, start: Union[volmdlr.Point2D, volmdlr.Point3D], end: Union[volmdlr.Point2D, volmdlr.Point3D],
-                 name: str = ''):
+                 reference_path: str = PATH_ROOT, name: str = ''):
         if start == end:
             raise ValueError(f"Start & end of {self.__class__.__name__} can't be equal.")
         self._line = None
-        Edge.__init__(self, start, end, name)
+        Edge.__init__(self, start, end, reference_path=reference_path, name=name)
 
     @property
     def line(self):
@@ -2243,9 +2244,9 @@ class LineSegment2D(LineSegment):
 
     """
 
-    def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, name: str = ''):
+    def __init__(self, start: volmdlr.Point2D, end: volmdlr.Point2D, reference_path: str = PATH_ROOT, name: str = ''):
         self._bounding_rectangle = None
-        LineSegment.__init__(self, start, end, name=name)
+        LineSegment.__init__(self, start, end, reference_path=reference_path, name=name)
 
     def copy(self, deep=True, memo=None):
         """
@@ -2441,7 +2442,7 @@ class LineSegment2D(LineSegment):
         """
         start = self.start.to_3d(plane_origin, x1, x2)
         end = self.end.to_3d(plane_origin, x1, x2)
-        return LineSegment3D(start, end, name=self.name)
+        return LineSegment3D(start, end, reference_path=self.reference_path, name=self.name)
 
     def get_reverse(self):
         """
@@ -2493,6 +2494,7 @@ class LineSegment2D(LineSegment):
         """
         return plot_data.LineSegment2D([self.start.x, self.start.y],
                                        [self.end.x, self.end.y],
+                                       reference_path=self.reference_path,
                                        edge_style=edge_style)
 
     def create_tangent_circle(self, point, other_line):
@@ -2903,9 +2905,10 @@ class Arc2D(ArcMixin, Edge):
     angle: the angle measure always >= 0
     """
 
-    def __init__(self, circle: 'volmdlr.curves.Circle2D', start: volmdlr.Point2D,
-                 end: volmdlr.Point2D, name: str = ''):
+    def __init__(self, circle: 'volmdlr.curves.Circle2D', start: volmdlr.Point2D, end: volmdlr.Point2D,
+                 reference_path: str = PATH_ROOT, name: str = ''):
         self._bounding_rectangle = None
+        self.reference_path = reference_path
         ArcMixin.__init__(self, circle, start, end, name=name)
         Edge.__init__(self, start=start, end=end, name=name)
 
@@ -3366,6 +3369,7 @@ class Arc2D(ArcMixin, Edge):
                                end_angle=end_angle,
                                edge_style=edge_style,
                                clockwise=not self.is_trigo,
+                               reference_path=self.reference_path,
                                name=self.name)
 
     def copy(self, *args, **kwargs):
@@ -4347,8 +4351,8 @@ class LineSegment3D(LineSegment):
     """
 
     def __init__(self, start: volmdlr.Point3D, end: volmdlr.Point3D,
-                 name: str = ''):
-        LineSegment.__init__(self, start=start, end=end, name=name)
+                 reference_path: str = PATH_ROOT, name: str = ''):
+        LineSegment.__init__(self, start=start, end=end, reference_path=reference_path, name=name)
         self._bbox = None
 
     @property
@@ -4393,7 +4397,8 @@ class LineSegment3D(LineSegment):
         return {'object_class': 'volmdlr.edges.LineSegment3D',
                 'name': self.name,
                 'start': self.start.to_dict(),
-                'end': self.end.to_dict()
+                'end': self.end.to_dict(),
+                'reference_path': self.reference_path
                 }
 
     def normal_vector(self, abscissa=0.):
@@ -4425,7 +4430,7 @@ class LineSegment3D(LineSegment):
         """
         start, end = self.start.plane_projection2d(center, x, y), self.end.plane_projection2d(center, x, y)
         if not start.is_close(end):
-            return LineSegment2D(start, end)
+            return LineSegment2D(start, end, reference_path=self.reference_path)
         return None
 
     def line_intersections(self, line, tol: float = 1e-6):
@@ -4512,7 +4517,7 @@ class LineSegment3D(LineSegment):
 
     def copy(self, *args, **kwargs):
         """Returns a copy of the line segment."""
-        return LineSegment3D(self.start.copy(), self.end.copy())
+        return LineSegment3D(self.start.copy(), self.end.copy(), reference_path=self.reference_path)
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plots the Line segment 3d using matplotlib."""
@@ -4564,7 +4569,7 @@ class LineSegment3D(LineSegment):
         p2d = [point.to_2d(plane_origin, x, y) for point in (self.start, self.end)]
         if p2d[0].is_close(p2d[1]):
             return None
-        return LineSegment2D(*p2d, name=self.name)
+        return LineSegment2D(*p2d, reference_path=self.reference_path, name=self.name)
 
     def to_bspline_curve(self, resolution=10):
         """
