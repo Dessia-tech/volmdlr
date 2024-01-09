@@ -2983,7 +2983,8 @@ class Arc2D(ArcMixin, Edge):
         """
         Convert to a full arc2d.
         """
-        return FullArc2D(circle=self.circle, start_end=self.point_at_abscissa(0), name=self.name)
+        return FullArc2D(circle=self.circle, start_end=self.point_at_abscissa(0),
+                         reference_path=self.reference_path, name=self.name)
 
     def line_intersections(self, line2d: volmdlr_curves.Line2D):
         """
@@ -3384,7 +3385,7 @@ class Arc2D(ArcMixin, Edge):
         :return: A new Arc2D object that is a deep copy of the original.
 
         """
-        return Arc2D(self.circle.copy(), self.start.copy(), self.end.copy())
+        return Arc2D(self.circle.copy(), self.start.copy(), self.end.copy(), reference_path=self.reference_path)
 
     def cut_between_two_points(self, point1, point2):
         """
@@ -3430,11 +3431,11 @@ class FullArc2D(FullArcMixin, Arc2D):
     """ An edge that starts at start_end, ends at the same point after having described a circle. """
 
     def __init__(self, circle: 'volmdlr.curves.Circle2D', start_end: volmdlr.Point2D,
-                 name: str = ''):
+                 reference_path: str = PATH_ROOT, name: str = ''):
         # self.interior = start_end.rotation(center, math.pi)
         self._bounding_rectangle = None
         FullArcMixin.__init__(self, circle=circle, start_end=start_end, name=name)
-        Arc2D.__init__(self, circle=circle, start=start_end, end=start_end, name=name)
+        Arc2D.__init__(self, circle=circle, start=start_end, end=start_end, reference_path=reference_path, name=name)
         self.angle1 = 0.0
         self.angle2 = volmdlr.TWO_PI
 
@@ -5786,9 +5787,9 @@ class Arc3D(ArcMixin, Edge):
         point_start = self.start.to_2d(plane_origin, x, y)
         point_interior = self.middle_point().to_2d(plane_origin, x, y)
         point_end = self.end.to_2d(plane_origin, x, y)
-        arc = Arc2D(circle2d, point_start, point_end, name=self.name)
+        arc = Arc2D(circle2d, point_start, point_end, reference_path=self.reference_path, name=self.name)
         if not arc.point_belongs(point_interior):
-            arc = Arc2D(circle2d.reverse(), point_start, point_end, name=self.name)
+            arc = Arc2D(circle2d.reverse(), point_start, point_end, reference_path=self.reference_path, name=self.name)
         return arc
 
     def minimum_distance_points_arc(self, other_arc):
