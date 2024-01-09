@@ -14,7 +14,7 @@ import triangle as triangle_lib
 
 from geomdl import NURBS, BSpline
 from scipy.linalg import lu_factor, lu_solve
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.typings import JsonSerializable
@@ -7451,6 +7451,18 @@ class BSplineSurface3D(Surface3D):
 
     def point3d_to_2d_minimize(self, point3d):
         """Auxiliary function for point3d_to_2d in case the point inversion does not converge."""
+
+        def fun(x):
+            derivatives = self.derivatives(x[0], x[1], 1)
+            vector = derivatives[0][0] - point3d
+            f_value = vector.norm()
+            if f_value == 0.0:
+                jacobian = npy.array([0.0, 0.0])
+            else:
+                jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
+                                      vector.dot(derivatives[0][1]) / f_value])
+            return f_value, jacobian
+
         results = []
         point3d_array = npy.asarray(point3d)
         min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
@@ -7471,16 +7483,10 @@ class BSplineSurface3D(Surface3D):
             v = v_start + v_idx * delta_v
             x0s.append((u, v))
 
-        if self.rational:
-            control_points = self.ctrlptsw
-        else:
-            control_points = self.ctrlpts
-        bounds = [(min_bound_x, max_bound_x), (min_bound_y, max_bound_y)]
-
         for x0 in x0s:
-            res = point_inversion(point3d_array, x0, bounds, [self.degree_u, self.degree_v],
-                                  self.knotvector, control_points, [self.nb_u, self.nb_v], self.rational)
-
+            res = minimize(fun, x0=npy.array(x0), jac=True,
+                           bounds=[(min_bound_x, max_bound_x),
+                                   (min_bound_y, max_bound_y)])
             if res.fun < 1e-6:
                 return volmdlr.Point2D(*res.x)
 
@@ -7752,10 +7758,11 @@ class BSplineSurface3D(Surface3D):
 
     def _edge3d_to_2d(self, edge3d, discretization_points,
                       interpolation_degree, parametric_points, tol: float = 1e-6):
+        """Helper function to get the parametric representation of a 3D edge on the BSpline surface."""
         if self.u_closed or self.v_closed:
             parametric_points = self.fix_start_end_singularity_point_at_parametric_domain(edge3d,
                                                                                           parametric_points,
-                                                                                          discretization_points)
+                                                                                          discretization_points, tol)
 
         if self.x_periodicity:
             parametric_points = self._repair_periodic_boundary_points(edge3d, parametric_points, 'x')
