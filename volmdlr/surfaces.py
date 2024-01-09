@@ -728,6 +728,13 @@ class Surface3D(DessiaObject):
         """The parametric domain of the surface in the V direction."""
         return -math.inf, math.inf
 
+    @property
+    def domain(self):
+        """Returns u and v bounds."""
+        umin, umax = self.u_domain
+        vmin, vmax = self.v_domain
+        return umin, umax, vmin, vmax
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
         """
         Abstract method.
@@ -6130,9 +6137,8 @@ class RevolutionSurface3D(PeriodicalSurface):
     @property
     def domain(self):
         """Returns u and v bounds."""
-        if self.edge.__class__.__name__ != "Line3D":
-            return -math.pi, math.pi, 0.0, self.edge.length()
-        return -math.pi, math.pi, 0.0, 1.0
+        vmin, vmax = self.v_domain
+        return -math.pi, math.pi, vmin, vmax
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """
