@@ -258,7 +258,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return face
 
     @staticmethod
-    def from_contours3d_with_inner_contours(surface, contours3d, ):
+    def from_contours3d_with_inner_contours(surface, contours3d):
         """Helper function to class."""
         outer_contour2d = None
         outer_contour3d = None
@@ -285,6 +285,9 @@ class Face3D(volmdlr.core.Primitive3D):
             if contours3d[0].name == "face_outer_bound":
                 outer_contour2d, inner_contours2d = contours2d[0], contours2d[1:]
                 outer_contour3d, inner_contours3d = contours3d[0], contours3d[1:]
+                if surface.x_periodicity:
+                    Face3D.helper_repair_inner_contours_periodicity(surface, outer_contour2d,
+                                                                    inner_contours2d, primitives_mapping)
             else:
                 area = -1
                 for contour2d, contour3d in zip(contours2d, contours3d):
@@ -297,7 +300,28 @@ class Face3D(volmdlr.core.Primitive3D):
                         outer_contour3d = contour3d
                 inner_contours2d.remove(outer_contour2d)
                 inner_contours3d.remove(outer_contour3d)
+                if surface.x_periodicity:
+                    Face3D.helper_repair_inner_contours_periodicity(surface, outer_contour2d,
+                                                                    inner_contours2d, primitives_mapping)
         return outer_contour2d, inner_contours2d, outer_contour3d, inner_contours3d, primitives_mapping
+
+    @staticmethod
+    def helper_repair_inner_contours_periodicity(surface, outer_contour2d, inner_contours2d, primitives_mapping):
+        """Translate inner contours if it's not inside the outer contour of the face."""
+        outer_contour2d_brec = outer_contour2d.bounding_rectangle
+        umin, umax, _, _ = outer_contour2d_brec.bounds()
+        umin_bound, umax_bound = surface.u_domain
+
+        def helper_translate_contour(translation_vector):
+            for i, inner_contour in enumerate(inner_contours2d):
+                if not outer_contour2d_brec.is_inside_b_rectangle(inner_contour.bounding_rectangle):
+                    inner_contours2d[i] = inner_contour.translation(translation_vector)
+                    for new_primitive, old_primitive in zip(inner_contours2d[i].primitives, inner_contour.primitives):
+                        primitives_mapping[new_primitive] = primitives_mapping.pop(old_primitive)
+        if umin < umin_bound:
+            helper_translate_contour(volmdlr.Vector2D(-surface.x_periodicity, 0.0))
+        elif umax > umax_bound:
+            helper_translate_contour(volmdlr.Vector2D(surface.x_periodicity, 0.0))
 
     def to_step(self, current_id):
         """Transforms a Face 3D into a Step object."""
