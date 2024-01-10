@@ -799,8 +799,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         Performs triangulation on a Shell3D object.
 
         This method iterates through each face of the Shell3D object and attempts to perform a triangulation.
-        In cases where a face cannot be triangulated, a warning is issued, and the method proceeds to the
-        next face. The triangulation of successfully processed faces are collected and merged into a single Mesh3D object.
+        In cases where a face cannot be triangulated, a warning is issued, and the method proceeds to the next face.
+        The triangulation of successfully processed faces are collected and merged into a single Mesh3D object.
 
         :return: A Mesh3D object representing the triangulated shell.
         :rtype: display.Mesh3D
