@@ -583,17 +583,19 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return cls(trimesh_.vertices, trimesh_.faces)
 
     @classmethod
-    def from_trimesh_scene(cls, trimesh_scene: trimesh.Scene) -> "Mesh3D":
+    def from_trimesh_scene(cls, trimesh_scene: trimesh.Scene, scale_factor: float = 0.001) -> "Mesh3D":
         """
         Create a 3D mesh from a Trimesh Scene.
 
         :param trimesh_scene: A Trimesh Scene containing multiple geometry objects.
         :type trimesh_scene: trimesh.Scene
+        :param scale_factor: The scale factor to apply to the mesh (default is 0.001).
+        :type scale_factor: float, optional
 
         :return: A new 3D mesh instance.
         :rtype: Mesh3D
         """
-        return cls.from_meshes(cls.trimesh_scene_to_meshes(trimesh_scene))
+        return cls.from_meshes(cls.trimesh_scene_to_meshes(trimesh_scene, scale_factor))
 
     @classmethod
     def trimesh_scene_to_meshes(cls, trimesh_scene: trimesh.Scene, scale_factor: float = 0.001) -> List["Mesh3D"]:
@@ -756,7 +758,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         :rtype: Mesh3D
         """
         if merge_meshes:
-            return cls.from_trimesh_scene(trimesh.load(filepath, "3mf")).resize(scale_factor)
+            return cls.from_trimesh_scene(trimesh.load(filepath, "3mf"), scale_factor)
         return cls.trimesh_scene_to_meshes(trimesh.load(filepath, "3mf"), scale_factor)
 
     @classmethod
@@ -779,7 +781,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         stream.seek(0)
 
         if merge_meshes:
-            return cls.from_trimesh_scene(trimesh.load(stream, "3mf")).resize(scale_factor)
+            return cls.from_trimesh_scene(trimesh.load(stream, "3mf"), scale_factor)
         return cls.trimesh_scene_to_meshes(trimesh.load(stream, "3mf"), scale_factor)
 
     # EXPORT
