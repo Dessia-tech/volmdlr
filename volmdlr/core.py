@@ -183,13 +183,14 @@ def helper_babylon_data(babylon_data, display_points):
     all_positions = []
     all_points = []
     for mesh in babylon_data["meshes"]:
-        positions = mesh["positions"]
-        all_positions.extend(positions)
+        all_positions += _extract_positions(mesh)
+
     for line in babylon_data["lines"]:
         points = line["points"]
         all_points.extend(points)
     if display_points:
         all_points.extend(display_points)
+
     # Convert to a NumPy array and reshape
     positions_array = npy.array([])
     if all_points and all_positions:
@@ -212,6 +213,17 @@ def helper_babylon_data(babylon_data, display_points):
     babylon_data['center'] = center
 
     return babylon_data
+
+
+def _extract_positions(mesh):
+    """Helper function to extract positions from babylon_data."""
+    all_positions = []
+
+    for primitives_mesh in mesh.get("primitives_meshes", []):
+        all_positions += _extract_positions(primitives_mesh)
+
+    all_positions += mesh.get("positions", [])
+    return all_positions
 
 
 @dataclass
