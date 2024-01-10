@@ -1,7 +1,7 @@
 """
 Unit testing of volmdlr.display.Mesh3D class.
 """
-
+import math
 import os
 import tempfile
 import unittest
@@ -206,6 +206,39 @@ class TestMesh3D(unittest.TestCase):
 
     def test_area(self):
         self.assertEqual(0.5, self.mesh1.area())
+
+    def test_get_edges_triangles(self):
+        # Test the get_edges_triangles method
+        expected_edges = np.array([[[0, 1], [0, 2], [1, 2]]])
+        np.testing.assert_array_equal(expected_edges, self.mesh1.get_edges_triangles())
+
+    def test_compute_len_edges(self):
+        # Test the compute_len_edges method
+        expected_lengths = np.array([[1.0, 1.0, math.sqrt(2)]])
+
+        lengths, _ = self.mesh1.compute_len_edges()
+        np.testing.assert_array_almost_equal(lengths, expected_lengths, decimal=6)
+
+    def test_get_mesh_border(self):
+        # Test the get_mesh_border method
+        border_edges, all_edges = self.mesh1.get_mesh_border()
+        expected_border_edges = np.array([[0, 1], [0, 2], [1, 2]])
+        expected_all_edges = np.array([[0, 1], [0, 2], [1, 2]])
+
+        np.testing.assert_array_equal(border_edges, expected_border_edges)
+        np.testing.assert_array_equal(all_edges, expected_all_edges)
+
+    def test_remove_large_triangles(self):
+        # Test the remove_large_triangles method
+        threshold_edge_length = 2.0
+        expected_triangles = np.array([[0, 1, 2]])
+        new_mesh = self.mesh1.remove_large_triangles(threshold_edge_length)
+        np.testing.assert_array_equal(new_mesh.triangles, expected_triangles)
+
+        new_mesh = self.mesh1 + self.mesh1.resize(10)
+        self.assertEqual(2, new_mesh.n_triangles)
+        new_mesh = new_mesh.remove_large_triangles(threshold_edge_length)
+        self.assertEqual(1, new_mesh.n_triangles)
 
 
 class TestMesh3DImport(unittest.TestCase):

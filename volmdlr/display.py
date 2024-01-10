@@ -417,7 +417,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         """Return self as volmdlr_primitives to enable babylonjs method."""
         return [self]
 
-    def area(self) -> float:  # TODO: test it
+    def area(self) -> float:
         """
         Calculate the total surface area of the 3D mesh as the sum of areas of triangles.
 
@@ -427,7 +427,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         areas = np.sqrt((self.triangles_cross_products() ** 2).sum(axis=1)) / 2.0
         return areas.sum()
 
-    def get_edges_triangles(self):  # TODO: test it
+    def get_edges_triangles(self):
         """
         Compute lengths edges of triangles.
 
@@ -439,7 +439,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
         return edges
 
-    def compute_len_edges(self):  # TODO: test it
+    def compute_len_edges(self):
         """
         Compute the lengths of edges for each triangle in the mesh.
 
@@ -470,7 +470,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
         return border_edges, edges
 
-    def remove_large_triangles(self, threshold_edge_length: float) -> "Mesh3D":  # TODO: test it
+    def remove_large_triangles(self, threshold_edge_length: float) -> "Mesh3D":
         """
         Remove triangles from the mesh whose edge lengths exceed the specified threshold.
 
