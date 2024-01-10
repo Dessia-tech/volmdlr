@@ -1299,9 +1299,6 @@ class Plane3D(Surface3D):
     face_class = 'PlaneFace3D'
 
     def __init__(self, frame: volmdlr.Frame3D, name: str = ''):
-
-        self.frame = frame
-        self.name = name
         Surface3D.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
@@ -2318,7 +2315,6 @@ class CylindricalSurface3D(PeriodicalSurface):
     y_periodicity = None
 
     def __init__(self, frame, radius: float, name: str = ''):
-        self.frame = frame
         self.radius = radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
@@ -2883,7 +2879,6 @@ class ToroidalSurface3D(PeriodicalSurface):
     y_periodicity = volmdlr.TWO_PI
 
     def __init__(self, frame: volmdlr.Frame3D, major_radius: float, minor_radius: float, name: str = ''):
-        self.frame = frame
         self.major_radius = major_radius
         self.minor_radius = minor_radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
@@ -3766,7 +3761,6 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def __init__(self, frame: volmdlr.Frame3D, semi_angle: float,
                  name: str = ''):
-        self.frame = frame
         self.semi_angle = semi_angle
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
@@ -4500,7 +4494,6 @@ class SphericalSurface3D(PeriodicalSurface):
     y_periodicity = math.pi
 
     def __init__(self, frame, radius, name=''):
-        self.frame = frame
         self.radius = radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
@@ -5602,12 +5595,12 @@ class ExtrusionSurface3D(Surface3D):
         direction = direction.unit_vector()
         self.direction = direction
         if hasattr(edge, "center"):
-            self.frame = volmdlr.Frame3D.from_point_and_vector(edge.center, direction, volmdlr.Z3D)
+            frame = volmdlr.Frame3D.from_point_and_vector(edge.center, direction, volmdlr.Z3D)
         else:
-            self.frame = volmdlr.Frame3D.from_point_and_vector(edge.start, direction, volmdlr.Z3D)
+            frame = volmdlr.Frame3D.from_point_and_vector(edge.start, direction, volmdlr.Z3D)
         self._x_periodicity = False
 
-        Surface3D.__init__(self, frame=self.frame, name=name)
+        Surface3D.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
         return hash((self.__class__.__name__, self.edge, self.direction))
@@ -6029,9 +6022,9 @@ class RevolutionSurface3D(PeriodicalSurface):
         u_vector = vector1 - vector1.vector_projection(w_vector)
         u_vector = u_vector.unit_vector()
         v_vector = w_vector.cross(u_vector)
-        self.frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
+        frame = volmdlr.Frame3D(origin=axis_point, u=u_vector, v=v_vector, w=w_vector)
 
-        PeriodicalSurface.__init__(self, frame=self.frame, name=name)
+        PeriodicalSurface.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
         return hash((self.__class__.__name__, self.edge, self.axis_point, self.axis))
