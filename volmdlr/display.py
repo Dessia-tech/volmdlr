@@ -4,7 +4,6 @@
 Classes to define mesh for display use. Display mesh do not require good aspect ratios on elements.
 """
 
-import math
 import warnings
 from typing import List, TypeVar, Union
 
