@@ -1529,6 +1529,14 @@ class VolumeModel(dc.PhysicalObject):
             file.write(script)
         return filename
 
+    def to_mesh3d(self):
+        """Converts to volume model to a Mesh3D object."""
+        mesh = self.primitives[0].triangulation()
+        for primitive in self.primitives[1:]:
+            mesh = mesh.merge(primitive.triangulation(), merge_vertices=True, merge_triangles=True)
+
+        return mesh
+
     def to_stl_model(self):
         """Converts the model into a stl object."""
         mesh = self.primitives[0].triangulation()
