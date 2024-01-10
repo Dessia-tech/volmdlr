@@ -389,6 +389,9 @@ class Mesh3D(MeshMixin, PhysicalObject):
         self.vertices = vertices
         self.triangles = triangles
 
+        self.color = (0.8, 0.8, 0.8)
+        self.alpha = 1.0
+
         self._faces = None
         self._bounding_box = None
 
@@ -868,8 +871,10 @@ class Mesh3D(MeshMixin, PhysicalObject):
 
         return babylon_mesh
 
-    def babylon_meshes(self, merge_meshes=True):
-        babylon_param = {"alpha": 1.0, "name": self.name, "color": [0.8, 0.8, 0.8]}
+    def babylon_meshes(self, *args, **kwargs):
+        """Return the mesh data as a dict compatible for Babylon.js."""
+
+        babylon_param = {"alpha": self.alpha, "name": self.name, "color": [*self.color]}
         babylon_mesh = self.to_babylon()
         babylon_mesh.update(babylon_param)
 
