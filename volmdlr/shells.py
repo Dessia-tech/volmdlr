@@ -2087,11 +2087,6 @@ class DisplayTriangleShell3D(Shell3D):
     performance.
     """
 
-    warnings.warn(
-        "'volmdlr.shells.DisplayTriangleShell3D' class is deprecated. Use 'volmdlr.display.Mesh3D' instead",
-        DeprecationWarning
-    )
-
     def __init__(self, positions: NDArray[float], indices: NDArray[int], name: str = ""):
         """
         Instantiate the DisplayTriangleShell3D.
@@ -2100,6 +2095,11 @@ class DisplayTriangleShell3D(Shell3D):
         :param indices: A 3D numpy array of int representing the indices of the vertices representing the triangles.
         :param name: A name for the DisplayTriangleShell3D, optional.
         """
+        warnings.warn(
+            "'volmdlr.shells.DisplayTriangleShell3D' class is deprecated. Use 'volmdlr.display.Mesh3D' instead",
+            DeprecationWarning
+        )
+
         self.positions = positions
         self.indices = indices
 
