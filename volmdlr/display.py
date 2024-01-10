@@ -261,18 +261,6 @@ class MeshMixin:
 
         return cls(points, triangles, name=name)
 
-    def merge_mesh(self, other_mesh):
-        """
-        Merge two meshes.
-
-        :param other_mesh: other mesh.
-        :return:
-        """
-        # TODO: remove this method and use "merge"
-        result = self + other_mesh
-        self.vertices = result.vertices
-        self.triangles = result.triangles
-
     # CHECK
     def check_consistency(self) -> bool:
         """
