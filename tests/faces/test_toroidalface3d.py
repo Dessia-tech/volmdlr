@@ -36,6 +36,15 @@ class TestToroidalFace3D(unittest.TestCase):
         face = faces.ToroidalFace3D.from_contours3d(surface, [contour0, contour1])
         self.assertAlmostEqual(face.surface2d.area(), 33.03042743115413, 2)
 
+        surface = surfaces.ToroidalSurface3D.load_from_file(
+            os.path.join(folder, "repair_inner_contour_periodicity_surface.json"))
+        contour0 = wires.Contour3D.load_from_file(
+            os.path.join(folder, "repair_inner_contour_periodicity_contour_0.json"))
+        contour1 = wires.Contour3D.load_from_file(
+            os.path.join(folder, "repair_inner_contour_periodicity_contour_1.json"))
+        face = faces.ToroidalFace3D.from_contours3d(surface, [contour0, contour1])
+        self.assertAlmostEqual(face.surface2d.area(), 36.56961010698211, 2)
+
     def test_planeface_intersections(self):
         expected_results = [[14.700000000000001], [9.388571252432572], [9.282044358781096], [9.107655322912544],
                             [8.870824455015496], [8.582455381818427], [4.999999999998194, 4.999999999998194],
