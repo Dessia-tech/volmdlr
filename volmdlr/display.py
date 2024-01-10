@@ -459,7 +459,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         effectively representing the border of the mesh.
 
         :return: A tuple of two numpy arrays. The first array contains the unique border edges,
-             and the second array includes all edges of the mesh.
+            and the second array includes all edges of the mesh.
         :rtype: tuple[np.ndarray, np.ndarray]
         """
         edges = self.get_edges_triangles().reshape((-1, 2))
