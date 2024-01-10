@@ -408,6 +408,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         return self._bounding_box
 
     def volmdlr_primitives(self, **kwargs):
+        """Return self as volmdlr_primitives to enable babylonjs method."""
         return [self]
 
     def area(self) -> float:  # TODO: test it
