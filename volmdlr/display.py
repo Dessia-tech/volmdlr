@@ -8,8 +8,8 @@ import warnings
 from typing import List, TypeVar, Union
 
 import numpy as np
-import trimesh
 import pyfqmr
+import trimesh
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.serialization import BinaryFile
 from dessia_common.typings import JsonSerializable
@@ -214,7 +214,9 @@ class MeshMixin:
         return self.merge(other, merge_vertices=True, merge_triangles=True)
 
     @classmethod
-    def from_meshes(cls, meshes: List["MeshType"], merge_vertices: bool = False, merge_triangles: bool = False) -> "MeshType":
+    def from_meshes(
+        cls, meshes: List["MeshType"], merge_vertices: bool = False, merge_triangles: bool = False
+    ) -> "MeshType":
         """
         Merge two meshes.
 
@@ -432,11 +434,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
              where each entry contains the start and end points of an edge.
         :rtype: np.ndarray
         """
-        edges = np.stack([
-            self.triangles[:, [0, 1]],
-            self.triangles[:, [0, 2]],
-            self.triangles[:, [1, 2]]
-        ], axis=1)
+        edges = np.stack([self.triangles[:, [0, 1]], self.triangles[:, [0, 2]], self.triangles[:, [1, 2]]], axis=1)
 
         return edges
 
@@ -828,6 +826,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         )
 
         from volmdlr.shells import ClosedTriangleShell3D
+
         return ClosedTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
 
     def to_open_shell(self):
@@ -845,6 +844,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         )
 
         from volmdlr.shells import OpenTriangleShell3D
+
         return OpenTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
 
     def to_trimesh(self):
