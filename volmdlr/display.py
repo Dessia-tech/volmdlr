@@ -234,32 +234,6 @@ class MeshMixin:
 
         return merged_mesh
 
-    @classmethod
-    def merge_meshes(cls, meshes: List[Union["Mesh2D", "Mesh3D"]], name: str = ""):
-        """
-        Merge several meshes into one.
-        """
-        # TODO: refactor this method to "from_meshes"
-
-        if len(meshes) == 1:
-            return cls(meshes[0].vertices, meshes[0].triangles, name=name)
-
-        points_list = []
-        triangles_list = []
-        i_points = 0
-
-        for mesh in meshes:
-            if not mesh:
-                continue
-            points_list.append(mesh.vertices)
-            triangles_list.append(mesh.triangles + i_points)
-            i_points += mesh.vertices.shape[0]
-
-        points = np.concatenate(points_list, axis=0)
-        triangles = np.concatenate(triangles_list, axis=0)
-
-        return cls(points, triangles, name=name)
-
     # CHECK
     def check_consistency(self) -> bool:
         """
