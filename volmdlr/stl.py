@@ -41,6 +41,11 @@ class Stl(dc.DessiaObject):
     describes binary version.
     """
 
+    warnings.warn(
+        "'volmdlr.stl.Stl' class is deprecated. Use 'volmdlr.display.Mesh3D' instead",
+        DeprecationWarning
+    )
+
     _standalone_in_db = True
 
     _dessia_methods = ['from_text_stream', 'from_text_stream', 'to_closed_shell', 'to_open_shell']

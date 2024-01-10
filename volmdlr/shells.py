@@ -2087,6 +2087,11 @@ class DisplayTriangleShell3D(Shell3D):
     performance.
     """
 
+    warnings.warn(
+        "'volmdlr.shells.DisplayTriangleShell3D' class is deprecated. Use 'volmdlr.display.Mesh3D' instead",
+        DeprecationWarning
+    )
+
     def __init__(self, positions: NDArray[float], indices: NDArray[int], name: str = ""):
         """
         Instantiate the DisplayTriangleShell3D.
