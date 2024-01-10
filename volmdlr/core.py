@@ -1463,29 +1463,53 @@ class VolumeModel(dc.PhysicalObject):
             babylon_data=babylon_data)
         return script
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False, merge_meshes=True, dark_mode=False):
+    def babylonjs(
+        self,
+        page_name: str = None,
+        use_cdn: bool = True,
+        debug: bool = False,
+        merge_meshes: bool = True,
+        dark_mode: bool = False,
+    ):
         """
-        Creates an HTML file using babylonjs to show a 3d model in the browser.
+        Generate and display an HTML file to visualize the 3D model using Babylon.js in a web browser.
 
+        This method creates a 3D representation of the volume model using the Babylon.js framework.
+        The method allows options for debugging, merging meshes, and toggling dark mode for the visualization.
+        The resulting HTML file can either be a temporary file or a user-specified file.
+
+        :param page_name: The name of the HTML file to be generated. If None, a temporary file is created.
+        :type page_name: str, optional
+        :param use_cdn: Flag to use CDN for loading Babylon.js resources. Defaults to True.
+        :type use_cdn: bool
+        :param debug: Enable debugging mode for more detailed console output in the browser. Defaults to False.
+        :type debug: bool
+        :param merge_meshes: Flag to chose to merge all the faces of each shell into a single mesh. Defaults to True.
+            If False, shell are decomposed according to their faces in the Babylon.js scene nodes tree.
+        :type merge_meshes: bool
+        :param dark_mode: Enable dark mode for the HTML visualization. Defaults to False.
+        :type dark_mode: bool
+
+        :return: The file path of the generated HTML file.
+        :rtype: str
         """
         babylon_data = self.babylon_data(merge_meshes=merge_meshes)
-        babylon_data['dark_mode'] = 1 if dark_mode else 0
-        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                       debug=debug)
+        babylon_data["dark_mode"] = 1 if dark_mode else 0
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn, debug=debug)
         if page_name is None:
-            with tempfile.NamedTemporaryFile(suffix=".html",
-                                             delete=False) as file:
-                file.write(bytes(script, 'utf8'))
+            with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as file:
+                file.write(bytes(script, "utf8"))
             page_name = file.name
         else:
-            if not page_name.endswith('.html'):
-                page_name += '.html'
-            with open(page_name, 'w', encoding='utf-8') as file:
+            if not page_name.endswith(".html"):
+                page_name += ".html"
+            with open(page_name, "w", encoding="utf-8") as file:
                 file.write(script)
 
-        webbrowser.open('file://' + os.path.realpath(page_name))
+        webbrowser.open("file://" + os.path.realpath(page_name))
 
         return page_name
+
 
     def save_babylonjs_to_file(self, filename: str = None, use_cdn=True, debug=False, dark_mode=False):
         """Export a html file of the model."""
