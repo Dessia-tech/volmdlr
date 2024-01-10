@@ -1539,24 +1539,24 @@ class VolumeModel(dc.PhysicalObject):
 
     def to_stl_model(self):
         """Converts the model into a stl object."""
-        mesh = self.primitives[0].triangulation()
-        for primitive in self.primitives[1:]:
-            mesh.merge_mesh(primitive.triangulation())
+        warnings.warn(
+            "volmdlr.stl module is deprecated. Use volmdlr.display module and 'Mesh3D' class instead for STL export.",
+            DeprecationWarning
+        )
+
+        mesh = self.to_mesh3d()
+
         # from volmdlr import stl
         stl = volmdlr.stl.Stl.from_display_mesh(mesh)
         return stl
 
     def to_stl(self, filepath: str):
         """Export a stl file of the model."""
-        if not filepath.endswith('.stl'):
-            filepath += '.stl'
-        with open(filepath, 'wb') as file:
-            self.to_stl_stream(file)
+        self.to_mesh3d().save_to_stl_file(filepath)
 
     def to_stl_stream(self, stream: dcf.BinaryFile):
         """Converts the model into a stl stream file."""
-        stl = self.to_stl_model()
-        stl.save_to_stream(stream)
+        self.to_mesh3d().save_to_stl_stream(stream)
         return stream
 
     def to_step(self, filepath: str):
