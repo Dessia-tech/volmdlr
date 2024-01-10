@@ -798,6 +798,8 @@ class Mesh3D(MeshMixin, PhysicalObject):
         :return: The triangles comosing the mesh.
         :rtype: list[Triangle3D]
         """
+        from volmdlr.faces import Triangle3D
+
         triangles3d = []
         for vertex1, vertex2, vertex3 in self.remove_degenerate_triangles(tol=1e-6).triangles_vertices():
             point1 = volmdlr.Point3D(*vertex1)
@@ -818,10 +820,12 @@ class Mesh3D(MeshMixin, PhysicalObject):
         warnings.warn(
             """
             ClosedTriangleShell3D is not an efficient object to deal with mesh data.
-            Try to stick to Mesh3D or Trimesh object if you can.
+            Try to stick to Mesh3D or Trimesh object if possible.
             """
         )
-        return volmdlr.shells.ClosedTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
+
+        from volmdlr.shells import ClosedTriangleShell3D
+        return ClosedTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
 
     def to_open_shell(self):
         """
@@ -833,10 +837,12 @@ class Mesh3D(MeshMixin, PhysicalObject):
         warnings.warn(
             """
             OpenTriangleShell3D is not an efficient object to deal with mesh data.
-            Try to stick to Mesh3D or Trimesh object if you can.
+            Try to stick to Mesh3D or Trimesh object if possible.
             """
         )
-        return volmdlr.shells.OpenTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
+
+        from volmdlr.shells import OpenTriangleShell3D
+        return OpenTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
 
     def to_trimesh(self):
         """
