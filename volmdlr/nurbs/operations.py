@@ -783,7 +783,7 @@ def construct_split_surfaces(obj, knotvectors, direction, knot_span, insertion_c
     return [surf1, surf2]
 
 
-def decompose_curve(obj, return_params: bool = False, **kwargs):
+def decompose_curve(obj, return_params: bool = False, number_max_patches: int = None, **kwargs):
     """
     Generator: Decomposes the curve into Bézier curve segments of the same degree.
 
@@ -792,12 +792,17 @@ def decompose_curve(obj, return_params: bool = False, **kwargs):
     :param return_params: If True, returns the parameters from start and end of each Bézier patch with repect to the
      input curve.
     :type return_params: bool
+    :param number_max_patches: number max of patches, if limiting is needed.
+    :type: int
     :return: a generator element with a Bezier segment.
     :rtype: Generator element.
     """
     multi_curve = []
     curve = obj
-    knots = curve.knotvector[curve.degree + 1:-(curve.degree + 1)]
+    if number_max_patches:
+        knots = np.linspace(0, 1, number_max_patches)[1:-1]
+    else:
+        knots = curve.knotvector[curve.degree + 1:-(curve.degree + 1)]
     params = []
     umin, umax = obj.domain
     param_start = umin

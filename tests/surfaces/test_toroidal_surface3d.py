@@ -410,6 +410,102 @@ class TestToroidalSurface3D(unittest.TestCase):
         self.assertEqual(len(intersections), 1)
         self.assertAlmostEqual(intersections[0].length(), 20.514870931932112)
 
+    def test_toroidal_surfaces(self):
+        toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
+        """ ======= INCLINED AND TRANSLATED ========== """
+        toroidal_surface2 = surfaces.ToroidalSurface3D(volmdlr.OYZX, 2, 1)
+        toroidal_surface2 = toroidal_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 6)
+        toroidal_surface2 = toroidal_surface2.translation(volmdlr.X3D * 2.5)
+
+        inters = toroidal_surface1.surface_intersections(toroidal_surface2)
+        self.assertEqual(len(inters), 1)
+        for i in inters:
+            for p in i.discretization_points(number_points=50):
+                self.assertFalse(toroidal_surface1.point_distance(p) > 1e-4)
+                self.assertFalse(toroidal_surface2.point_distance(p) > 1e-4)
+
+        """" ========================# PARALLEL NOT INTERSECTING ========================"""
+        toroidal_surface2 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
+        toroidal_surface2 = toroidal_surface2.translation(volmdlr.Z3D * 2.5)
+        inters = toroidal_surface1.surface_intersections(toroidal_surface2)
+        self.assertFalse(inters)
+
+        """  ======================== # PARALLEL INTERSECTING  ======================== """
+        surfaces2 = []
+        toroidal_surface2 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 1)
+        surfaces2.append(toroidal_surface2)
+        toroidal_surface2 = toroidal_surface2.translation(volmdlr.Z3D * 1.5)
+        surfaces2.append(toroidal_surface2)
+        toroidal_surface2 = toroidal_surface2.translation(volmdlr.Z3D * 0.5)
+        surfaces2.append(toroidal_surface2)
+
+        toroidal_surface2 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 5, 3)
+        surfaces2.append(toroidal_surface2)
+        toroidal_surface2 = toroidal_surface2.translation(volmdlr.Z3D * 1.5)
+        surfaces2.append(toroidal_surface2)
+        toroidal_surface2 = toroidal_surface2.translation(volmdlr.Z3D * 0.5)
+        surfaces2.append(toroidal_surface2)
+
+        toroidal_surface2 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 2)
+        surfaces2.append(toroidal_surface2)
+        toroidal_surface2 = toroidal_surface2.translation(volmdlr.Z3D * 1.5)
+        surfaces2.append(toroidal_surface2)
+        toroidal_surface2 = toroidal_surface2.translation(volmdlr.Z3D * 0.5)
+        surfaces2.append(toroidal_surface2)
+
+        toroidal_surface2 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 3, 2.5)
+        expected_number_sol = [2, 2, 0, 2, 2, 2, 1, 2, 2, 0]
+
+        surfaces2.append(toroidal_surface2)
+        for i, surface2 in enumerate(surfaces2):
+            inters = toroidal_surface1.surface_intersections(surface2)
+            self.assertEqual(len(inters), expected_number_sol[i])
+            for inter in inters:
+                for p in inter.discretization_points(number_points=50):
+                    self.assertFalse(toroidal_surface1.point_distance(p) > 1e-6)
+                    self.assertFalse(surface2.point_distance(p) > 1e-6)
+
+        """  ======================== # PARALLEL and not coincident INTERSECTING  ======================== """
+        toroidal_surface2 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1)
+        toroidal_surface2 = toroidal_surface2.translation(volmdlr.X3D * 4)
+
+        toroidal_surface1_1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 1, .5)
+        toroidal_surface2_1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 0.8, .5)
+        toroidal_surface2_1 = toroidal_surface2_1.translation(volmdlr.X3D * (-1.8))
+        toroidal_surface3_1 = toroidal_surface2_1.translation(volmdlr.X3D * (-0.1))
+        expected_number_sol = [2, 2, 1]
+        for i, (sf1, sf2) in enumerate([(toroidal_surface1, toroidal_surface2),
+                         (toroidal_surface1_1, toroidal_surface2_1),
+                         (toroidal_surface1_1, toroidal_surface3_1)]):
+            inters = sf1.surface_intersections(sf2)
+            self.assertEqual(len(inters), expected_number_sol[i])
+            for inter in inters:
+                for p in inter.discretization_points(number_points=50):
+                    self.assertFalse(sf1.point_distance(p) > 1e-5)
+                    self.assertFalse(sf2.point_distance(p) > 1e-5)
+        """ ==================== Yvone-Villarceau circles of T1 and T2 ==========================="""
+
+        toroidal_surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 1, .5)
+        toroidal_surface2 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 1, .3)
+        toroidal_surface2_1 = toroidal_surface2.translation(volmdlr.X3D * 0.8)
+
+        toroidal_surface2_2 = toroidal_surface1.translation(volmdlr.X3D)
+        toroidal_surface2_3 = toroidal_surface1.translation(volmdlr.X3D * 1.1)
+        toroidal_surface2_4 = toroidal_surface1.translation(volmdlr.X3D * 1.8)
+        toroidal_surface2_5 = toroidal_surface1.translation(volmdlr.X3D * 0.8)
+        expected_number_sol = [4, 4, 3, 3, 4]
+        expected_sols_lengths = [[3.4903660848134903, 3.4903660848134894, 2.802554969478162, 2.802554984784863],
+                                 [6.283185307179586, 6.283185307179586, 3.707738420898486, 3.707738420898486],
+                                 [6.907653689757426, 5.027206872504137, 5.027205598764028],
+                                 [5.82219814019078, 3.3338737438502717, 3.3338735379661655],
+                                 [3.351031375990407, 3.351031375990407, 6.088038294280911, 6.088038257995996]]
+        for i, toroidal_surface2 in enumerate([toroidal_surface2_1,  toroidal_surface2_2, toroidal_surface2_3,
+                                               toroidal_surface2_4, toroidal_surface2_5]):
+            inters = toroidal_surface1.surface_intersections(toroidal_surface2)
+            self.assertEqual(len(inters), expected_number_sol[i])
+            for inter, expected_inter_length in zip(inters, expected_sols_lengths[i]):
+                self.assertAlmostEqual(inter.length(), expected_inter_length)
+
 
 if __name__ == '__main__':
     unittest.main()

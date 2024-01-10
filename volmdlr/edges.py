@@ -5464,13 +5464,15 @@ class BSplineCurve3D(BSplineCurve):
         """Get the intersections with the specified curve."""
         if self.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
             return []
-        intersections_points = []
-        for patch, _ in self.decompose(True):
-            if patch.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
-                continue
-            intersections_points.extend(vm_utils_intersections.get_bsplinecurve_intersections(
-                curve, patch, abs_tol=abs_tol))
-        return intersections_points
+        # intersections_points = []
+        # for patch in decompose_curve(self, number_max_patches=10):
+        #     if patch.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
+        #         continue
+        #     intersections_points.extend(vm_utils_intersections.get_bsplinecurve_intersections(
+        #         curve, patch, abs_tol=abs_tol))
+        # return intersections_points
+        return vm_utils_intersections.get_bsplinecurve_intersections(
+                curve, self, abs_tol=abs_tol)
 
     def circle_intersections(self, circle, abs_tol: float = 1e-6):
         """Get the intersections with the specified circle."""
