@@ -373,6 +373,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
     """
     3D triangle mesh.
     """
+    # pylint: disable=too-many-public-methods
 
     _linesegment_class = volmdlr.edges.LineSegment3D
     _point_class = volmdlr.Point3D
