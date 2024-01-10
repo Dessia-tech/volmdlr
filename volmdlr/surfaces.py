@@ -7444,12 +7444,12 @@ class BSplineSurface3D(Surface3D):
         x0, distance = self.point_inversion_grid_search(point3d, 5e-5)
         if distance < tol:
             return volmdlr.Point2D(*x0)
-        x1, check, distance = self.point_inversion(x0, point3d, tol)
-        if check and distance <= tol:
+        x1, _, distance = self.point_inversion(x0, point3d, tol)
+        if distance < tol:
             return volmdlr.Point2D(*x1)
-        return self.point3d_to_2d_minimize(point3d)
+        return self.point3d_to_2d_minimize(point3d, x0)
 
-    def point3d_to_2d_minimize(self, point3d):
+    def point3d_to_2d_minimize(self, point3d, initial_guess):
         """Auxiliary function for point3d_to_2d in case the point inversion does not converge."""
 
         def fun(x):
@@ -7465,14 +7465,18 @@ class BSplineSurface3D(Surface3D):
 
         results = []
         point3d_array = npy.asarray(point3d)
-        min_bound_x, max_bound_x, min_bound_y, max_bound_y = self.domain
+        u_start, u_stop, v_start, v_stop = self.domain
+        res = minimize(fun, x0=npy.array(initial_guess), jac=True,
+                       bounds=[(u_start, u_stop),
+                               (v_start, v_stop)])
+        if res.fun < 1e-6:
+            return volmdlr.Point2D(*res.x)
         distances = npy.linalg.norm(self.evalpts - point3d_array, axis=1)
         indexes = npy.argsort(distances)
         x0s = []
-        u_start, u_stop, v_start, v_stop = self.domain
         delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
         delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
-        for index in indexes[:3]:
+        for index in indexes[:2]:
             if index == 0:
                 u_idx, v_idx = 0, 0
             else:
@@ -7482,11 +7486,15 @@ class BSplineSurface3D(Surface3D):
             u = u_start + u_idx * delta_u
             v = v_start + v_idx * delta_v
             x0s.append((u, v))
+        if self.weights is not None:
+            control_points = self.ctrlptsw
+        else:
+            control_points = self.ctrlpts
 
         for x0 in x0s:
-            res = minimize(fun, x0=npy.array(x0), jac=True,
-                           bounds=[(min_bound_x, max_bound_x),
-                                   (min_bound_y, max_bound_y)])
+            res = point_inversion(point3d_array, x0, [(u_start, u_stop), (v_start, v_stop)],
+                                  [self.degree_u, self.degree_v], self.knotvector, control_points,
+                                  [self.nb_u, self.nb_v], self.rational)
             if res.fun < 1e-6:
                 return volmdlr.Point2D(*res.x)
 
@@ -7545,7 +7553,8 @@ class BSplineSurface3D(Surface3D):
         residual = (new_x[0] - x[0]) * surface_derivatives[1][0] + (new_x[1] - x[1]) * surface_derivatives[0][1]
         if residual.norm() <= 1e-12:
             return x, False, dist
-        return self.point_inversion(new_x, point3d, tol, maxiter=maxiter - 1)
+        x = new_x
+        return self.point_inversion(x, point3d, tol, maxiter=maxiter - 1)
 
     def point_inversion_funcs(self, x, point3d):
         """Returns functions evaluated at x."""
@@ -7789,7 +7798,7 @@ class BSplineSurface3D(Surface3D):
         if lth <= 1e-6:
             print('BSplineCurve3D skipped because it is too small')
             return None
-        n = len(bspline_curve3d.control_points)
+        n = min(len(bspline_curve3d.control_points), 20)
         points3d = bspline_curve3d.discretization_points(number_points=n)
         tol = 1e-6 if lth > 5e-4 else 1e-7
         # todo: how to ensure convergence of point3d_to_2d ?
