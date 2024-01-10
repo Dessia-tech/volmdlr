@@ -836,6 +836,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         """
         if merge_meshes:
             return super().babylon_meshes()
+
         babylon_meshes = []
         for face in self.faces:
             face_babylon_meshes = face.babylon_meshes()
