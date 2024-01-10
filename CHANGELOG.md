@@ -90,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Edge.split_between_two_points -> trim
 - surfaces.py: point_on_surface -> point_belongs
+- Numpyfy BSplines
 
 ### Unittests
 - 
