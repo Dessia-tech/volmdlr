@@ -513,7 +513,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
     def volmdlr_primitives(self, **kwargs):
         return [self]
 
-    def area(self) -> float:
+    def area(self) -> float:  # TODO: test it
         """
         Calculate the total surface area of the 3D mesh as the sum of areas of triangles.
 
@@ -522,6 +522,73 @@ class Mesh3D(MeshMixin, PhysicalObject):
         """
         areas = np.sqrt((self.triangles_cross_products() ** 2).sum(axis=1)) / 2.0
         return areas.sum()
+
+    def get_edges_triangles(self):  # TODO: test it
+        """
+        Compute lengths edges of triangles.
+
+        :return: A 3D numpy array representing edges of triangles. The dimensions are n_triangles x 3 x 2,
+             where each entry contains the start and end points of an edge.
+        :rtype: np.ndarray
+        """
+        edges = np.stack([
+            self.triangles[:, [0, 1]],
+            self.triangles[:, [0, 2]],
+            self.triangles[:, [1, 2]]
+        ], axis=1)
+
+        return edges
+
+    def compute_len_edges(self):  # TODO: test it
+        """
+        Compute the lengths of edges for each triangle in the mesh.
+
+        :return: Lengths of edges (3 edges per triangles) of dimensions n_simplices x 3 and edges of dimensions
+            n_simplices x 3 x 2
+        :rtype: tuple[np.ndarray, np.ndarray]
+        """
+        edges = self.get_edges_triangles()
+
+        indexed_points = self.vertices[edges]
+        vectors = indexed_points[..., 0, :] - indexed_points[..., 1, :]
+        return np.linalg.norm(vectors, axis=-1), edges
+
+    def get_mesh_border(self):  # TODO: test it
+        """
+        Retrieve the topological border of a triangle mesh.
+
+        This function identifies and returns the edges that belong to only one triangle,
+        effectively representing the border of the mesh.
+
+        :return: A tuple of two numpy arrays. The first array contains the unique border edges,
+             and the second array includes all edges of the mesh.
+        :rtype: tuple[np.ndarray, np.ndarray]
+        """
+        edges = self.get_edges_triangles().reshape((-1, 2))
+        unique_edges, counts = np.unique(np.sort(edges, axis=1), axis=0, return_counts=True)
+        border_edges = unique_edges[counts == 1]
+
+        return border_edges, edges
+
+    def remove_large_triangles(self, threshold_edge_length: float) -> "Mesh3D":  # TODO: test it
+        """
+        Remove triangles from the mesh whose edge lengths exceed the specified threshold.
+
+        :param threshold_edge_length: The maximum allowed edge length for a triangle to remain in the mesh.
+        :type threshold_edge_length: float
+
+        :return: A new Mesh3D instance with large triangles removed.
+        :rtype: Mesh3D
+        """
+
+        # Compute the lengths of all edges in the mesh
+        edge_lengths, _ = self.compute_len_edges()
+
+        # Find triangles where all edges are below the threshold
+        valid_triangles = np.all(edge_lengths < threshold_edge_length, axis=1)
+
+        # Keep only the triangles that are valid
+        return Mesh3D(self.vertices, self.triangles[valid_triangles])
 
     def decimate(
         self,
@@ -535,7 +602,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         alpha: float = 1e-9,
         k: int = 3,
         preserve_border: bool = True,
-    ) -> "Mesh3D":
+    ) -> "Mesh3D":  # TODO: test it
         """
         Decimate the Mesh3D, and return it as a new instance.
 
