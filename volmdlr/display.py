@@ -799,6 +799,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         :return: The triangles comosing the mesh.
         :rtype: list[Triangle3D]
         """
+        # pylint: disable=import-outside-toplevel
         from volmdlr.faces import Triangle3D
 
         triangles3d = []
@@ -807,7 +808,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
             point2 = volmdlr.Point3D(*vertex2)
             point3 = volmdlr.Point3D(*vertex3)
 
-            triangles3d.append(volmdlr.faces.Triangle3D(point1, point2, point3))
+            triangles3d.append(Triangle3D(point1, point2, point3))
 
         return triangles3d
 
@@ -825,6 +826,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
             """
         )
 
+        # pylint: disable=import-outside-toplevel
         from volmdlr.shells import ClosedTriangleShell3D
 
         return ClosedTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
@@ -843,6 +845,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
             """
         )
 
+        # pylint: disable=import-outside-toplevel
         from volmdlr.shells import OpenTriangleShell3D
 
         return OpenTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
