@@ -47,9 +47,20 @@ class TestBSplineCurve3D(unittest.TestCase):
         bspline, point1, point2 = DessiaObject.load_from_file(
             os.path.join(folder, "test_bspline_trim271123.json")).primitives
         trim = bspline.trim(point1, point2, True)
-        self.assertAlmostEqual(trim.length(), 14.615193887786996)
+        self.assertAlmostEqual(trim.length(), 14.607916441075464)
         trim = bspline.trim(point2, point1, True)
         self.assertAlmostEqual(trim.length(), 2.5461209947115186)
+
+        bspline = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "test_periodic_bspline_trim.json"))
+
+        point1 = bspline.point_at_abscissa(1)
+        point2 = bspline.point_at_abscissa(3)
+
+        for pt1, pt2 in [(bspline.start, point1), (point1, bspline.start), (point2, bspline.end), (point1, point2),
+                         (point2, point1)]:
+            trim = bspline.trim(pt1, pt2)
+            self.assertTrue(trim.start.is_close(pt1))
+            self.assertTrue(trim.end.is_close(pt2))
 
     def test_from_step(self):
         obj_list = volmdlr.core.VolumeModel.load_from_file(

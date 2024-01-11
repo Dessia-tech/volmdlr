@@ -725,6 +725,7 @@ def get_knots_and_multiplicities(knotvector):
     """
     Get knots and multiplicities from knotvector in u and v direction.
     """
+    knotvector = np.asarray(knotvector, dtype=np.float64)
     knots = np.unique(knotvector).tolist()
     multiplicities = [core.find_multiplicity(knot, knotvector) for knot in knots]
     return knots, multiplicities
@@ -947,7 +948,7 @@ def link_curves(curves, tol: float = 1e-7, validate: bool = True):
             if curve.rational:
                 wgts += list(curve.weights)
             else:
-                tmp_w = [1.0 for _ in range(curve.ctrlpts_size)]
+                tmp_w = [1.0 for _ in range(len(curve.ctrlpts))]
                 wgts += tmp_w
         else:
             tmp_kv = [pdomain_end + k for k in curve.knotvector[1:-(curve.degree + 1)]]
@@ -957,7 +958,7 @@ def link_curves(curves, tol: float = 1e-7, validate: bool = True):
             if curve.rational:
                 wgts += list(curve.weights[1:])
             else:
-                tmp_w = [1.0 for _ in range(curve.ctrlpts_size - 1)]
+                tmp_w = [1.0 for _ in range(len(curve.ctrlpts) - 1)]
                 wgts += tmp_w
 
         pdomain_end += curve.knotvector[-1]
