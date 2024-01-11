@@ -219,7 +219,7 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
-        return face.from_contours3d(surface, contours, step_id)
+        return face.from_contours3d(surface, contours, name)
 
     @classmethod
     def from_contours3d(cls, surface, contours3d: List[volmdlr.wires.Contour3D], name: str = ""):
@@ -423,7 +423,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        return [0, 0]
+        return 0, 0
 
     @staticmethod
     def helper_triangulation_without_holes(vertices, segments, points_grid, tri_opt):
@@ -2479,15 +2479,6 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         number_points_y = min(int(delta_z * z_resolution), 20)
         return number_points_x, number_points_y
 
-    def grid_size(self):
-        """
-        Specifies an adapted size of the discretization grid used in face triangulation.
-        """
-        # angle_resolution = 5
-        # z_resolution = 2
-        # return self.parametrized_grid_size(angle_resolution, z_resolution)
-        return [0, 0]
-
     def adjacent_direction(self, other_face3d):
         """
         Find out in which direction the faces are adjacent.
@@ -2776,23 +2767,6 @@ class ConicalFace3D(PeriodicalFaceMixin, Face3D):
         else:
             lines_y = []
         return lines_x, lines_y
-
-    def grid_size(self):
-        """
-        Specifies an adapted size of the discretization grid used in face triangulation.
-        """
-        # theta_angle_resolution = 10
-        # theta_min, theta_max, _, z_max = self.surface2d.bounding_rectangle().bounds()
-        # delta_theta = theta_max - theta_min
-        # number_points_x = math.ceil(delta_theta / math.radians(theta_angle_resolution))
-        #
-        # r_max = z_max * math.tan(self.surface3d.semi_angle)
-        # s = r_max * math.radians(theta_angle_resolution)
-        # number_points_y = z_max * math.tan(math.radians(20)) / s
-        number_points_x = 0
-        number_points_y = 0
-
-        return number_points_x, number_points_y
 
     @classmethod
     def from_surface_rectangular_cut(
@@ -3121,23 +3095,6 @@ class ExtrusionFace3D(Face3D):
     def __init__(self, surface3d: surfaces.ExtrusionSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
-
-    def grid_size(self):
-        """
-        Specifies an adapted size of the discretization grid used in face triangulation.
-        """
-        # angle_resolution = 10
-        # number_points_x = 2
-        # if self.surface3d.edge.__class__.__name__ == "BSplineCurve3D":
-        #     number_points_x = 25
-        # elif self.surface3d.edge.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
-        #     number_points_x = max(2, math.ceil(self.surface3d.edge.angle / math.radians(angle_resolution)) + 1)
-        #
-        # number_points_y = 2
-        number_points_x = 0
-        number_points_y = 0
-
-        return number_points_x, number_points_y
 
     @classmethod
     def from_surface_rectangular_cut(
