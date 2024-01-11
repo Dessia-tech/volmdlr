@@ -9,7 +9,6 @@ import unittest
 import numpy as np
 import trimesh
 from dessia_common.serialization import BinaryFile
-
 from volmdlr import Point3D
 from volmdlr.display import Mesh3D
 from volmdlr.faces import Triangle3D
