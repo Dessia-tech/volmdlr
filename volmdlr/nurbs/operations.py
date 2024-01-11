@@ -4,7 +4,6 @@ Nurbs main operations algorithms.
 
 from functools import lru_cache
 import numpy as np
-
 import volmdlr
 from volmdlr.nurbs import core
 

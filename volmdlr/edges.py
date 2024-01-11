@@ -442,7 +442,7 @@ class Edge(dc.DessiaObject):
             if split_edge and split_edge.point_belongs(point1, 1e-4) and split_edge.point_belongs(point2, 1e-4):
                 new_split_edge = split_edge
                 break
-        return new_split_edge
+        return [new_split_edge]
 
     def point_distance(self, point: Union[volmdlr.Point2D, volmdlr.Point3D]):
         """
@@ -5240,21 +5240,21 @@ class BSplineCurve3D(BSplineCurve):
 
         if (point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol)) \
                 or (point1.is_close(bsplinecurve.end, abs_tol) and point2.is_close(bsplinecurve.start, abs_tol)):
-            return bsplinecurve
+            return [bsplinecurve]
 
         if point1.is_close(bsplinecurve.start, abs_tol) and not point2.is_close(bsplinecurve.end, abs_tol):
-            return bsplinecurve.cut_after(parameter2)
+            return [bsplinecurve.cut_after(parameter2)]
 
         if point2.is_close(bsplinecurve.start, abs_tol) and not point1.is_close(bsplinecurve.end, abs_tol):
             bsplinecurve = bsplinecurve.cut_after(parameter1)
-            return bsplinecurve
+            return [bsplinecurve]
 
         if not point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol):
-            return bsplinecurve.cut_before(parameter1)
+            return [bsplinecurve.cut_before(parameter1)]
 
         if not point2.is_close(bsplinecurve.start, abs_tol) and point1.is_close(bsplinecurve.end, abs_tol):
             bsplinecurve = bsplinecurve.cut_before(parameter2)
-            return bsplinecurve
+            return [bsplinecurve]
 
         if parameter1 is None or parameter2 is None:
             raise ValueError('Point not on BSplineCurve for trim method')
@@ -5266,7 +5266,7 @@ class BSplineCurve3D(BSplineCurve):
         bsplinecurve = bsplinecurve.cut_before(parameter1)
         new_param2 = bsplinecurve.point_to_parameter(point2)
         trimmed_bspline_cruve = bsplinecurve.cut_after(new_param2)
-        return trimmed_bspline_cruve
+        return [trimmed_bspline_cruve]
 
     def trim_with_interpolation(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
         """
@@ -5275,11 +5275,27 @@ class BSplineCurve3D(BSplineCurve):
         bspline_curve = self
         if not same_sense:
             bspline_curve = self.reverse()
-        n = len(bspline_curve.control_points)
-        local_discretization = bspline_curve.local_discretization(point1, point2, n)
-        if len(local_discretization) <= bspline_curve.degree:
-            return bspline_curve
-        return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
+        # n = len(bspline_curve.control_points)
+
+        abscissa1 = bspline_curve.abscissa(point1)
+        abscissa2 = bspline_curve.abscissa(point2)
+        if abscissa2 > abscissa1:
+            if abscissa1 == 0.0:
+                return bspline_curve.split(point2)[0]
+            if abscissa2 == bspline_curve.length():
+                return bspline_curve.split(point1)[1]
+            curve1 = bspline_curve.split(point1)[1]
+            return curve1.split(point2)[0]
+        if abscissa2 == 0.0:
+            return bspline_curve.split(point1)[1]
+        curve1 = bspline_curve.split(point2)[0]
+        curve2 = bspline_curve.split(point1)[1]
+        # todo merge two curves
+        print(True)
+        # local_discretization = bspline_curve.local_discretization(point1, point2, n)
+        # if len(local_discretization) <= bspline_curve.degree:
+        #     return bspline_curve
+        # return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         """
