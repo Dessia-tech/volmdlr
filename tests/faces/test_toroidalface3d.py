@@ -12,6 +12,9 @@ folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_toro
 
 
 class TestToroidalFace3D(unittest.TestCase):
+    surface1 = surfaces.ToroidalSurface3D(volmdlr.OXYZ, 0.32, 0.08)
+    face1 = faces.ToroidalFace3D.from_surface_rectangular_cut(surface1, -0.1, 1.3, 2, 0.3)
+
     def test_from_contours3d(self):
         surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "surface_4.json"))
         contour = wires.Contour3D.load_from_file(os.path.join(folder, "contour_4_0.json"))
@@ -25,6 +28,22 @@ class TestToroidalFace3D(unittest.TestCase):
         face = faces.ToroidalFace3D.from_contours3d(surface, [contour])
         self.assertAlmostEqual(face.surface2d.area(), math.pi**2, 4)
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
+
+        surface = surfaces.ToroidalSurface3D.load_from_file(
+            os.path.join(folder, "face_with_inner_contour_surface.json"))
+        contour0 = wires.Contour3D.load_from_file(os.path.join(folder, "face_with_inner_contour_contour0.json"))
+        contour1 = wires.Contour3D.load_from_file(os.path.join(folder, "face_with_inner_contour_contour1.json"))
+        face = faces.ToroidalFace3D.from_contours3d(surface, [contour0, contour1])
+        self.assertAlmostEqual(face.surface2d.area(), 33.03042743115413, 2)
+
+        surface = surfaces.ToroidalSurface3D.load_from_file(
+            os.path.join(folder, "repair_inner_contour_periodicity_surface.json"))
+        contour0 = wires.Contour3D.load_from_file(
+            os.path.join(folder, "repair_inner_contour_periodicity_contour_0.json"))
+        contour1 = wires.Contour3D.load_from_file(
+            os.path.join(folder, "repair_inner_contour_periodicity_contour_1.json"))
+        face = faces.ToroidalFace3D.from_contours3d(surface, [contour0, contour1])
+        self.assertAlmostEqual(face.surface2d.area(), 36.56961010698211, 2)
 
     def test_planeface_intersections(self):
         expected_results = [[14.700000000000001], [9.388571252432572], [9.282044358781096], [9.107655322912544],
@@ -82,6 +101,32 @@ class TestToroidalFace3D(unittest.TestCase):
             self.assertEqual(len(inters), len(expected_results[i]))
             for inter, expected_result in zip(inters, expected_results[i]):
                 self.assertAlmostEqual(inter.length(), expected_result, 6)
+
+    def test_triangulation_quality(self):
+        """
+        The triangle middle of triangulation should be at least at radius/20 of the surface
+        """
+        triangulation = self.face1.triangulation()
+        for i1, i2, i3 in triangulation.triangles:
+            point1 = volmdlr.Point3D(*triangulation.vertices[i1])
+            point2 = volmdlr.Point3D(*triangulation.vertices[i2])
+            point3 = volmdlr.Point3D(*triangulation.vertices[i3])
+
+            triangle = faces.Triangle3D(point1, point2, point3)
+            # Test orthogonality
+            self.assertAlmostEqual(triangle.surface3d.frame.w.dot(point1 - point2), 0.)
+            # Test distance from middle to surface
+
+            self.assertLess(self.surface1.point_distance(triangle.middle()),
+                            self.surface1.minor_radius * 0.05)
+
+    def test_number_triangles(self):
+        triangulation = self.face1.triangulation()
+        triangulation.plot()
+        n_triangles = len(triangulation.triangles)
+        n_triangles_max = 225  # Could be 208 (13*8 tiles on this ex, 2 triangles per tile)
+        self.assertLess(n_triangles, n_triangles_max,
+                        f'Too much triangles in toroidal face triangulation: {n_triangles}/{n_triangles_max}')
 
 
 if __name__ == '__main__':

@@ -718,6 +718,23 @@ class Surface3D(DessiaObject):
         self.frame = frame
         DessiaObject.__init__(self, name=name)
 
+    @property
+    def u_domain(self):
+        """The parametric domain of the surface in the U direction."""
+        return -math.inf, math.inf
+
+    @property
+    def v_domain(self):
+        """The parametric domain of the surface in the V direction."""
+        return -math.inf, math.inf
+
+    @property
+    def domain(self):
+        """Returns u and v bounds."""
+        umin, umax = self.u_domain
+        vmin, vmax = self.v_domain
+        return umin, umax, vmin, vmax
+
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle(color='grey', alpha=0.5), **kwargs):
         """
         Abstract method.
@@ -2332,6 +2349,16 @@ class CylindricalSurface3D(PeriodicalSurface):
             return True
         return False
 
+    @property
+    def u_domain(self):
+        """The parametric domain of the surface in the U direction."""
+        return -math.pi, math.pi
+
+    @property
+    def v_domain(self):
+        """The parametric domain of the surface in the V direction."""
+        return -math.inf, math.inf
+
     def get_generatrices(self, number_lines: int = 30, length: float = 1):
         """
         Retrieve line segments representing the generatrices of a cylinder.
@@ -2901,6 +2928,16 @@ class ToroidalSurface3D(PeriodicalSurface):
                 self.minor_radius == other.minor_radius:
             return True
         return False
+
+    @property
+    def u_domain(self):
+        """The parametric domain of the surface in the U direction."""
+        return -math.pi, math.pi
+
+    @property
+    def v_domain(self):
+        """The parametric domain of the surface in the V direction."""
+        return -math.pi, math.pi
 
     @cached_property
     def outer_radius(self):
@@ -3781,6 +3818,16 @@ class ConicalSurface3D(PeriodicalSurface):
         return False
 
     @property
+    def u_domain(self):
+        """The parametric domain of the surface in the U direction."""
+        return -math.pi, math.pi
+
+    @property
+    def v_domain(self):
+        """The parametric domain of the surface in the V direction."""
+        return -math.inf, math.inf
+
+    @property
     def domain(self):
         """Returns u and v bounds."""
         return -math.pi, math.pi, -math.inf, math.inf
@@ -4516,6 +4563,16 @@ class SphericalSurface3D(PeriodicalSurface):
         if self.frame == other.frame and self.radius == other.radius:
             return True
         return False
+
+    @property
+    def domain_u(self):
+        """The parametric domain of the surface in the U direction."""
+        return -math.pi, math.pi
+
+    @property
+    def domain_v(self):
+        """The parametric domain of the surface in the V direction."""
+        return -math.pi, math.pi
 
     def _circle_generatrices(self, number_circles: int):
         """
@@ -5636,6 +5693,16 @@ class ExtrusionSurface3D(Surface3D):
         """X periodicity setter."""
         self._x_periodicity = value
 
+    @property
+    def u_domain(self):
+        """The parametric domain of the surface in the U direction."""
+        return 0.0, self.edge.length()
+
+    @property
+    def v_domain(self):
+        """The parametric domain of the surface in the V direction."""
+        return -math.inf, math.inf
+
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """
         Transform a parametric (u, v) point into a 3D Cartesian point (x, y, z).
@@ -6056,11 +6123,22 @@ class RevolutionSurface3D(PeriodicalSurface):
         return None
 
     @property
+    def u_domain(self):
+        """The parametric domain of the surface in the U direction."""
+        return -math.pi, math.pi
+
+    @property
+    def v_domain(self):
+        """The parametric domain of the surface in the V direction."""
+        if self.edge.__class__.__name__ != "Line3D":
+            return 0.0, self.edge.length()
+        return -math.inf, math.inf
+
+    @property
     def domain(self):
         """Returns u and v bounds."""
-        if self.edge.__class__.__name__ != "Line3D":
-            return -math.pi, math.pi, 0.0, self.edge.length()
-        return -math.pi, math.pi, 0.0, 1.0
+        vmin, vmax = self.v_domain
+        return -math.pi, math.pi, vmin, vmax
 
     def point2d_to_3d(self, point2d: volmdlr.Point2D):
         """
@@ -7008,6 +7086,23 @@ class BSplineSurface3D(Surface3D):
         return self._eval_points
 
     @property
+    def u_domain(self):
+        """The parametric domain of the surface in the U direction."""
+        knotvector_u = self.knots_vector_u
+        start_u = knotvector_u[self.degree_u]
+        stop_u = knotvector_u[-(self.degree_u + 1)]
+        return start_u, stop_u
+
+    @property
+    def v_domain(self):
+        """The parametric domain of the surface in the V direction."""
+        knotvector_v = self.knots_vector_v
+        # Find evaluation start and stop parameter values
+        start_v = knotvector_v[self.degree_v]
+        stop_v = knotvector_v[-(self.degree_v + 1)]
+        return start_v, stop_v
+
+    @property
     def domain(self):
         """
         Domain.
@@ -7017,14 +7112,10 @@ class BSplineSurface3D(Surface3D):
         :getter: Gets the domain
         """
         if not self._domain:
-            knotvector_u = self.knots_vector_u
-            knotvector_v = self.knots_vector_v
-            # Find evaluation start and stop parameter values
-            start_u = knotvector_u[self.degree_u]
-            stop_u = knotvector_u[-(self.degree_u + 1)]
-            start_v = knotvector_v[self.degree_v]
-            stop_v = knotvector_v[-(self.degree_v + 1)]
-            self._domain = start_u, stop_u, start_v, stop_v
+            umin, umax = self.u_domain
+            vmin, vmax = self.v_domain
+
+            self._domain = umin, umax, vmin, vmax
         return self._domain
 
     def copy(self, deep: bool = True, **kwargs):
