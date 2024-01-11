@@ -14,6 +14,7 @@ from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.serialization import BinaryFile
 from dessia_common.typings import JsonSerializable
 from numpy.typing import NDArray
+from scipy.spatial import cKDTree
 from trimesh import Trimesh
 
 import volmdlr.edges
@@ -373,6 +374,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
     """
     3D triangle mesh.
     """
+
     # pylint: disable=too-many-public-methods
 
     _linesegment_class = volmdlr.edges.LineSegment3D
@@ -426,6 +428,34 @@ class Mesh3D(MeshMixin, PhysicalObject):
         """
         areas = np.sqrt((self.triangles_cross_products() ** 2).sum(axis=1)) / 2.0
         return areas.sum()
+
+    def minimum_distance(self, other_mesh: "Mesh3D", return_points: bool = False):  # TODO test it
+        """
+        Compute the minimum distance between this 3D mesh and another 3D mesh.
+
+        :param other_mesh: The other 3D mesh to compare against.
+        :type other_mesh: Mesh3D
+        :param return_points: Whether to return the closest points.
+        :type return_points: bool, optional
+
+        :return: The minimum distance between the two meshes, and optionally, the closest points.
+        :rtype: float or (float, ndarray[float], ndarray[float])
+        """
+        # Create KD-Trees for both meshes
+        other_tree = cKDTree(other_mesh.vertices, balanced_tree=False, compact_nodes=False)
+
+        # Query the KD-Tree to find the nearest neighbors for all vertices in one go
+        distances, self_to_other_indices = other_tree.query(self.vertices, k=1)
+
+        # Find the minimum distance
+        min_distance = distances.min()
+
+        if return_points:
+            closest_points_self = self.vertices[distances.argmin()]
+            closest_points_other = other_mesh.vertices[self_to_other_indices[distances.argmin()]]
+            return min_distance, closest_points_self, closest_points_other
+        else:
+            return min_distance
 
     def get_edges_triangles(self):
         """
