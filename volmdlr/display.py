@@ -429,7 +429,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         areas = np.sqrt((self.triangles_cross_products() ** 2).sum(axis=1)) / 2.0
         return areas.sum()
 
-    def minimum_distance(self, other_mesh: "Mesh3D", return_points: bool = False):  # TODO test it
+    def minimum_distance(self, other_mesh: "Mesh3D", return_points: bool = False):
         """
         Compute the minimum distance between this 3D mesh and another 3D mesh.
 
@@ -443,19 +443,27 @@ class Mesh3D(MeshMixin, PhysicalObject):
         :return: The minimum distance between the two meshes, and optionally, the closest points.
         :rtype: float or (float, ndarray[float], ndarray[float])
         """
-        # Create KD-Trees for both meshes
+        # Create KD-Trees for both meshes with optimized parameters
+        self_tree = cKDTree(self.vertices, balanced_tree=False, compact_nodes=False)
         other_tree = cKDTree(other_mesh.vertices, balanced_tree=False, compact_nodes=False)
 
-        # Query the KD-Tree to find the nearest neighbors for all vertices in one go
-        distances, self_to_other_indices = other_tree.query(self.vertices, k=1)
+        # Parallel queries for nearest neighbors
+        distances_self_to_other, self_to_other_indices = other_tree.query(self.vertices, k=1)
+        distances_other_to_self, other_to_self_indices = self_tree.query(other_mesh.vertices, k=1)
 
         # Find the minimum distance
-        min_distance = distances.min()
+        min_distance = min(distances_self_to_other.min(), distances_other_to_self.min())
 
         if return_points:
-            closest_points_self = self.vertices[distances.argmin()]
-            closest_points_other = other_mesh.vertices[self_to_other_indices[distances.argmin()]]
-            return min_distance, closest_points_self, closest_points_other
+            # Find the indices of the closest points
+            index_self_to_other = distances_self_to_other.argmin()
+            index_other_to_self = distances_other_to_self.argmin()
+
+            # Retrieve the closest points
+            closest_point_self = self.vertices[index_self_to_other]
+            closest_point_other = other_mesh.vertices[other_to_self_indices[index_other_to_self]]
+
+            return min_distance, closest_point_self, closest_point_other
         else:
             return min_distance
 
@@ -485,7 +493,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         vectors = indexed_points[..., 0, :] - indexed_points[..., 1, :]
         return np.linalg.norm(vectors, axis=-1), edges
 
-    def get_mesh_border(self):  # TODO: test it
+    def get_mesh_border(self):
         """
         Retrieve the topological border of a triangle mesh.
 
@@ -534,7 +542,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         alpha: float = 1e-9,
         k: int = 3,
         preserve_border: bool = True,
-    ) -> "Mesh3D":  # TODO: test it
+    ) -> "Mesh3D":
         """
         Decimate the Mesh3D, and return it as a new instance.
 

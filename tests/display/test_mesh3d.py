@@ -239,6 +239,13 @@ class TestMesh3D(unittest.TestCase):
         new_mesh = new_mesh.remove_large_triangles(threshold_edge_length)
         self.assertEqual(1, new_mesh.n_triangles)
 
+    def test_minimum_distance(self):
+        self.assertEqual(0.0, self.mesh1.minimum_distance(self.mesh2))
+        self.assertEqual(0.0, self.mesh1.minimum_distance(self.mesh3))
+        self.assertEqual(0.0, self.mesh3.minimum_distance(self.mesh1))
+        self.assertEqual(1.0, self.mesh1.minimum_distance(self.mesh4))
+        self.assertEqual(1.0, self.mesh4.minimum_distance(self.mesh1))
+
 
 class TestMesh3DImport(unittest.TestCase):
     def setUp(self) -> None:
