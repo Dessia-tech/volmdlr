@@ -966,4 +966,5 @@ def link_curves(curves, tol: float = 1e-7, validate: bool = True):
     # Fix curve by appending the last knot to the end
     knotvector += [pdomain_end for _ in range(curve.degree + 1)]
     knots, multiplicities = get_knots_and_multiplicities(knotvector)
+    wgts = [] if all(weight == 1 for weight in wgts) else wgts
     return knots, multiplicities, cpts, wgts
