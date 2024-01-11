@@ -64,4 +64,27 @@ indices4 = np.array(
 )
 mesh4 = Mesh3D(positions4, indices4, "Mesh4")
 
+
+# Plotting
 mesh3.plot()
+mesh4.plot()
+
+# Distance
+print(mesh3.minimum_distance(mesh4))
+
+# 3D view
+mesh3.babylonjs()
+mesh4.babylonjs()
+
+# Merge
+mesh5 = mesh3 + mesh4  # without duplicated vertices / faces merging
+# mesh5 = mesh3.merge(mesh4, merge_vertices=False, merge_triangles=False)  # equivalent code
+
+mesh6 = mesh3 | mesh4  # with duplicated vertices / faces merging
+# mesh6 = mesh3.merge(mesh4, merge_vertices=True, merge_triangles=True)  # equivalent code
+
+print(mesh5.n_vertices, mesh5.n_triangles)  # Expected 16 / 24
+print(mesh6.n_vertices, mesh6.n_triangles)  # Expected 12 / 22
+
+mesh5.babylonjs()
+mesh6.babylonjs()
