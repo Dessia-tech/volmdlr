@@ -433,6 +433,8 @@ class Mesh3D(MeshMixin, PhysicalObject):
         """
         Compute the minimum distance between this 3D mesh and another 3D mesh.
 
+        This is an approximation: only vertices are taken in account for minimum distance computation.
+
         :param other_mesh: The other 3D mesh to compare against.
         :type other_mesh: Mesh3D
         :param return_points: Whether to return the closest points.
