@@ -1348,6 +1348,7 @@ class Wire3D(WireMixin, PhysicalObject):
 
     @property
     def bounding_box(self):
+        """Gets the wire 3D bounding box."""
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
@@ -1356,6 +1357,7 @@ class Wire3D(WireMixin, PhysicalObject):
         """
         Changes frame_mapping and return a new Wire3D.
 
+        :param frame: frame used.
         :param side: 'old' or 'new'
         """
         new_wire = []
