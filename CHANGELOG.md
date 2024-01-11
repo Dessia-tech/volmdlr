@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: plot_data
 - LineSegment3D: planar_revolution.
 - BSplineCurve: abscissa: use curve decomposition.
+- BSplineCurve: trim.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
