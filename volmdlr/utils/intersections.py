@@ -227,13 +227,14 @@ def get_circle_intersections(circle1, circle2):
     return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]
 
 
-def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution: float = 100):
+def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution: float = 100, recursion_iteration=0):
     """
     Gets the initial conditions to calculate intersections between a bspline curve 2d and another edge 2d.
 
     :param primitive: primitive to verify intersection with bspline
     :param bsplinecurve: bsplinecurve to search for intersections.
     :param resolution: bspline discretization resolution, to search for initial intersection conditions.
+    :param recursion_iteration: parameter to count recursions.
     :return: a list with all initial sections where there may exist an intersection.
     """
     line_seg_class_ = getattr(volmdlr.edges, "LineSegment" + bsplinecurve.__class__.__name__[-2:])
@@ -264,8 +265,9 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
         intersection = primitive.linesegment_intersections(line_seg)
         if intersection:
             param_intersections.append((abscissa1, abscissa2))
-    # if not param_intersections:
-    #     param_intersections.append((0.0, bsplinecurve.length()))
+    if not param_intersections and recursion_iteration < 1:
+        return bspline_intersections_initial_conditions(primitive, bsplinecurve, 100,
+                                                        recursion_iteration+1)
     return param_intersections
 
 
