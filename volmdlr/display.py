@@ -443,27 +443,24 @@ class Mesh3D(MeshMixin, PhysicalObject):
         :return: The minimum distance between the two meshes, and optionally, the closest points.
         :rtype: float or (float, ndarray[float], ndarray[float])
         """
-        # Create KD-Trees for both meshes with optimized parameters
-        self_tree = cKDTree(self.vertices, balanced_tree=False, compact_nodes=False)
-        other_tree = cKDTree(other_mesh.vertices, balanced_tree=False, compact_nodes=False)
+        # Create KD-Trees for both meshes (cKDTree for improved performance)
+        self_tree = cKDTree(self.vertices)
+        other_tree = cKDTree(other_mesh.vertices)
 
-        # Parallel queries for nearest neighbors
-        distances_self_to_other, self_to_other_indices = other_tree.query(self.vertices, k=1)
-        distances_other_to_self, other_to_self_indices = self_tree.query(other_mesh.vertices, k=1)
+        # Query the KD-Tree to find the nearest neighbors for all vertices in one go
+        _, self_to_other_indices = other_tree.query(self.vertices, k=1)
+        _, other_to_self_indices = self_tree.query(other_mesh.vertices, k=1)
 
-        # Find the minimum distance
-        min_distance = min(distances_self_to_other.min(), distances_other_to_self.min())
+        # Calculate the minimum distance between vertices using vectorized operations
+        self_to_other_distances = np.linalg.norm(self.vertices - other_mesh.vertices[self_to_other_indices], axis=1)
+        other_to_self_distances = np.linalg.norm(other_mesh.vertices - self.vertices[other_to_self_indices], axis=1)
+
+        min_distance = min(self_to_other_distances.min(), other_to_self_distances.min())
 
         if return_points:
-            # Find the indices of the closest points
-            index_self_to_other = distances_self_to_other.argmin()
-            index_other_to_self = distances_other_to_self.argmin()
-
-            # Retrieve the closest points
-            closest_point_self = self.vertices[index_self_to_other]
-            closest_point_other = other_mesh.vertices[other_to_self_indices[index_other_to_self]]
-
-            return min_distance, closest_point_self, closest_point_other
+            closest_points_self = self.vertices[other_to_self_indices]
+            closest_points_other = other_mesh.vertices[self_to_other_indices]
+            return min_distance, closest_points_self, closest_points_other
         else:
             return min_distance
 
