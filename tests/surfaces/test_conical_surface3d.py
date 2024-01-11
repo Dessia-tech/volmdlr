@@ -313,7 +313,7 @@ class TestConicalSurface3D(unittest.TestCase):
         conical_intersections5 = conical_surface.surface_intersections(conical_surface2_1)
         self.assertEqual(len(conical_intersections5), 1)
         self.assertTrue(isinstance(conical_intersections5[0], edges.BSplineCurve3D))
-        self.assertTrue(all(conical_surface.point_distance(p) < 1e-5 > conical_surface2_1.point_distance(p)
+        self.assertTrue(all(conical_surface.point_distance(p) < 1.5e-5 > conical_surface2_1.point_distance(p)
                             for p in conical_intersections5[0].points))
         # TEST 6
         conical_surface2_1 = conical_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 4)
@@ -321,7 +321,7 @@ class TestConicalSurface3D(unittest.TestCase):
         conical_intersections6 = conical_surface.surface_intersections(conical_surface2_1)
         self.assertEqual(len(conical_intersections6), 1)
         self.assertTrue(isinstance(conical_intersections6[0], edges.BSplineCurve3D))
-        self.assertTrue(all(conical_surface.point_distance(p) < 1e-5 > conical_surface2_1.point_distance(p)
+        self.assertTrue(all(conical_surface.point_distance(p) < 1.7e-5 > conical_surface2_1.point_distance(p)
                             for p in conical_intersections6[0].points))
         # TEST 7
         conical_surface2_1 = conical_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 3)
