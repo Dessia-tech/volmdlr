@@ -11,10 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - added missing hash and eq methods to several classes
 - ArcEllipse2D/3D: get_shared_section and delete_shared_section.
-- ConicalSurface3D: conicalsurface_intersections
+- ConicalSurface3D: conicalsurface_intersections.
+- nurbs/operations: link_curves
 
 #### edges.py
 - BSplineCurve: decompose into béziers patches of same degree.
+- BSplineCurve: merge_with and merge_with_curves
 
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.

@@ -914,3 +914,59 @@ def helper_decompose(srf, idx, split_func, return_params, **kws):
         params.append((param_start, param_max))
         return srf_list, params
     return srf_list
+
+
+def link_curves(curves, tol: float = 1e-7, validate: bool = True):
+    """
+    Links the input curves together.
+
+    The end control point of the curve k has to be the same with the start control point of the curve k + 1.
+
+    :return: a tuple containing: knot vector, control points, weights vector and knots
+    """
+
+    # Validate input
+    if validate:
+        for idx in range(len(curves) - 1):
+            if np.linalg.norm(curves[idx].ctrlpts[-1] - curves[idx + 1].ctrlpts[0]) > tol:
+                raise ValueError("Curve #" + str(idx) + " and Curve #" + str(idx + 1) + " don't touch each other")
+
+    knotvector = []  # new knot vector
+    cpts = []  # new control points array
+    wgts = []  # new weights array
+    # kv_connected = []  # superfluous knots to be removed
+    pdomain_end = 0
+
+    # Loop though the curves
+    for arg in curves:
+        # Process knot vectors
+        if not knotvector:
+            # get rid of the last superfluous knot to maintain split curve notation
+            knotvector += list(arg.knotvector[:-(arg.degree + 1)])
+            cpts += list(arg.ctrlpts)
+            # Process control points
+            if arg.rational:
+                wgts += list(arg.weights)
+            else:
+                tmp_w = [1.0 for _ in range(arg.ctrlpts_size)]
+                wgts += tmp_w
+        else:
+            tmp_kv = [pdomain_end + k for k in arg.knotvector[1:-(arg.degree + 1)]]
+            knotvector += tmp_kv
+            cpts += list(arg.ctrlpts[1:])
+            # Process control points
+            if arg.rational:
+                wgts += list(arg.weights[1:])
+            else:
+                tmp_w = [1.0 for _ in range(arg.ctrlpts_size - 1)]
+                wgts += tmp_w
+
+        pdomain_end += arg.knotvector[-1]
+        # kv_connected.append(pdomain_end)
+
+    # Fix curve by appending the last knot to the end
+    knotvector += [pdomain_end for _ in range(arg.degree + 1)]
+    # Remove the last knot from knot insertion list
+    # kv_connected.pop()
+    knots, multiplicities = get_knots_and_multiplicities(knotvector)
+    return knots, multiplicities, cpts, wgts

@@ -340,6 +340,12 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertAlmostEqual(splitted_curves[0].length(), 0.0005535177002044544, 5)
         self.assertAlmostEqual(splitted_curves[1].length(), 0.0002710315376536523, 5)
 
+    def test_merge_with(self):
+        split_point = volmdlr.Point2D(28.1775252667145, 14.785855215217019)
+        splitted_curves = self.bspline2d_rational.split(split_point)
+        merged_curve = splitted_curves[0].merge_with(splitted_curves[1])
+        self.assertTrue(merged_curve.is_close(self.bspline2d_rational))
+
     def test_tangent(self):
         tangent = self.bspline1.tangent(0.5)
         tangent_rational = self.bspline2d_rational.tangent(0.5)

@@ -21,7 +21,7 @@ import scipy.integrate as scipy_integrate
 from scipy.optimize import least_squares, minimize
 from geomdl import NURBS, BSpline
 
-from volmdlr.nurbs.operations import split_curve, decompose_curve
+from volmdlr.nurbs.operations import split_curve, decompose_curve, link_curves
 from volmdlr.nurbs.core import evaluate_curve, derivatives_curve
 from volmdlr.nurbs import fitting
 import volmdlr.nurbs.helpers as nurbs_helpers
@@ -909,8 +909,8 @@ class BSplineCurve(Edge):
                 self.ctrlptsw = npy.hstack((self.ctrlpts * self.weights[:, npy.newaxis], self.weights[:, npy.newaxis]))
             else:
                 self.weights = None
-
-        Edge.__init__(self, control_points[0], control_points[-1], name=name)
+        point_class = getattr(volmdlr, "Point" + self.__class__.__name__[-2:])
+        Edge.__init__(self, point_class(*control_points[0]), point_class(*control_points[-1]), name=name)
         self._simplified = None
         self._delta = 0.01
         self._length = None
@@ -1514,6 +1514,18 @@ class BSplineCurve(Edge):
             return True
         return False
 
+    def merge_with_curves(self, curves: List['BSplineCurve']):
+        """
+        Merges consecutive B-spline curves to define a new merged one.
+
+        :param curves: A list of B-spline curves
+        :type curves: List[:class:`volmdlr.edges.BSplineCurve`]
+        :return: A merged B-spline curve
+        :rtype: :class:`volmdlr.edges.BSplineCurve`
+        """
+        knots, multiplicities, cpts, wgts = link_curves([self] + curves)
+        return self.__class__(self.degree, cpts, multiplicities, knots, wgts)
+
     def merge_with(self, bspline_curve: 'BSplineCurve'):
         """
         Merges consecutive B-spline curves to define a new merged one.
@@ -1523,16 +1535,7 @@ class BSplineCurve(Edge):
         :return: A merged B-spline curve
         :rtype: :class:`volmdlr.edges.BSplineCurve`
         """
-        point_dimension = f'Wire{self.__class__.__name__[-2::]}'
-        wire = getattr(volmdlr.wires, point_dimension)(bspline_curve)
-        ordered_wire = wire.order_wire()
-
-        points, n = [], 10
-        for primitive in ordered_wire.primitives:
-            points.extend(primitive.discretization_points(n))
-        points.pop(n + 1)
-
-        return self.__class__.from_points_interpolation(points, min(self.degree, bspline_curve.degree))
+        return self.merge_with_curves([bspline_curve])
 
     @classmethod
     def from_bsplines(cls, bsplines: List['BSplineCurve'],
