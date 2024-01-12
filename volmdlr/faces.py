@@ -1328,6 +1328,7 @@ class Face3D(volmdlr.core.Primitive3D):
 
         # Generic case
         return self.triangulation().minimum_distance(other_face.triangulation(), return_points)
+        # TODO : implement an exact method and then clean code
 
         # face_decomposition1 = self.face_decomposition()
         # face_decomposition2 = other_face.face_decomposition()
