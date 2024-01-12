@@ -258,7 +258,7 @@ class Face3D(volmdlr.core.Primitive3D):
         return face
 
     @staticmethod
-    def from_contours3d_with_inner_contours(surface, contours3d, ):
+    def from_contours3d_with_inner_contours(surface, contours3d):
         """Helper function to class."""
         outer_contour2d = None
         outer_contour3d = None
@@ -285,6 +285,9 @@ class Face3D(volmdlr.core.Primitive3D):
             if contours3d[0].name == "face_outer_bound":
                 outer_contour2d, inner_contours2d = contours2d[0], contours2d[1:]
                 outer_contour3d, inner_contours3d = contours3d[0], contours3d[1:]
+                if surface.x_periodicity or surface.y_periodicity:
+                    Face3D.helper_repair_inner_contours_periodicity(surface, outer_contour2d,
+                                                                    inner_contours2d, primitives_mapping)
             else:
                 area = -1
                 for contour2d, contour3d in zip(contours2d, contours3d):
@@ -297,7 +300,41 @@ class Face3D(volmdlr.core.Primitive3D):
                         outer_contour3d = contour3d
                 inner_contours2d.remove(outer_contour2d)
                 inner_contours3d.remove(outer_contour3d)
+                if surface.x_periodicity or surface.y_periodicity:
+                    Face3D.helper_repair_inner_contours_periodicity(surface, outer_contour2d,
+                                                                    inner_contours2d, primitives_mapping)
+
         return outer_contour2d, inner_contours2d, outer_contour3d, inner_contours3d, primitives_mapping
+
+    @staticmethod
+    def helper_repair_inner_contours_periodicity(surface, outer_contour2d, inner_contours2d, primitives_mapping):
+        """Translate inner contours if it's not inside the outer contour of the face."""
+        outer_contour2d_brec = outer_contour2d.bounding_rectangle
+        umin_bound, umax_bound, vmin_bound, vmax_bound = outer_contour2d_brec.bounds()
+
+        def helper_translate_contour(inner_contour, inner_contour_brec):
+            umin, umax, vmin, vmax = inner_contour_brec.bounds()
+            delta_x = 0.0
+            delta_y = 0.0
+            if surface.x_periodicity:
+                if umin > umax_bound:
+                    delta_x = -surface.x_periodicity
+                elif umax < umin_bound:
+                    delta_x = surface.x_periodicity
+
+            if surface.y_periodicity:
+                if vmin > vmax_bound:
+                    delta_y = -surface.y_periodicity
+                elif vmax < vmin_bound:
+                    delta_y = surface.y_periodicity
+            translation_vector = volmdlr.Vector2D(delta_x, delta_y)
+            return inner_contour.translation(translation_vector)
+
+        for i, _inner_contour in enumerate(inner_contours2d):
+            if not outer_contour2d_brec.is_inside_b_rectangle(_brec := _inner_contour.bounding_rectangle):
+                inner_contours2d[i] = helper_translate_contour(_inner_contour, _brec)
+                for new_primitive, old_primitive in zip(inner_contours2d[i].primitives, _inner_contour.primitives):
+                    primitives_mapping[new_primitive] = primitives_mapping.pop(old_primitive)
 
     def to_step(self, current_id):
         """Transforms a Face 3D into a Step object."""
@@ -416,6 +453,9 @@ class Face3D(volmdlr.core.Primitive3D):
         return [0, 0]
 
     def triangulation(self, grid_size=None):
+        """
+        Returns a mesh for the face.
+        """
         if not grid_size:
             number_points_x, number_points_y = self.grid_size()
         else:
@@ -1266,6 +1306,9 @@ class Face3D(volmdlr.core.Primitive3D):
         return linesegment_intersections
 
     def face_decomposition(self):
+        """
+        Decomposes the face discretization triangle faces inside eight boxes from a bounding box octree structure.
+        """
         if not self._face_octree_decomposition:
             self._face_octree_decomposition = octree_face_decomposition(self)
         return self._face_octree_decomposition
@@ -1487,6 +1530,11 @@ class PlaneFace3D(Face3D):
         return (projection_distance ** 2 + border_distance ** 2) ** 0.5
 
     def distance_to_point(self, point, return_other_point=False):
+        """
+        Evaluates the distance to a given point.
+
+        distance_to_point is deprecated, please use point_distance.
+        """
         warnings.warn("distance_to_point is deprecated, please use point_distance", category=DeprecationWarning)
         return self.point_distance(point, return_other_point)
 
@@ -2126,6 +2174,20 @@ class Triangle3D(PlaneFace3D):
 
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
+        """
+        Create a Triangle3D object from a dictionary representation.
+
+        This class method takes a dictionary containing the necessary data for
+        creating a Triangle3D object and returns an instance of the Triangle3D class.
+        It expects the dictionary to have the following keys:
+
+        :param cls: The Triangle3D class itself (automatically passed).
+        :param dict_: A dictionary containing the required data for object creation.
+        :param args: Additional positional arguments (if any).
+        :param kwargs: Additional keyword arguments (if any).
+
+        :return: Triangle3D: An instance of the Triangle3D class created from the provided dictionary.
+        """
         point1 = volmdlr.Point3D.dict_to_object(dict_["point1"])
         point2 = volmdlr.Point3D.dict_to_object(dict_["point2"])
         point3 = volmdlr.Point3D.dict_to_object(dict_["point3"])
@@ -3352,7 +3414,9 @@ class BSplineFace3D(Face3D):
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_vu(self, other_bspline_face3d, corresponding_directions):
-
+        """
+        Returns the sides that are adjacents to other BSpline face.
+        """
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
         borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]

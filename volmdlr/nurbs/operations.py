@@ -123,7 +123,7 @@ def knot_insertion_kv(knotvector, u, span, num_insertions):
         kv_updated[i + num_insertions] = knotvector[i]
 
     # Return the new knot vector
-    return kv_updated
+    return np.array(kv_updated)
 
 
 def insert_knot_curve(obj, param, num, **kwargs):
@@ -718,8 +718,8 @@ def helper_split_knot_vectors(degree, knotvector, num_ctrlpts, param, span_func)
     Computes knot vectors to split object into two pieces.
     """
     knot_span_new = span_func(degree, knotvector, num_ctrlpts, param) + 1
-    kv_1 = list(knotvector[0:knot_span_new]) + [param]
-    kv_2 = [param for _ in range(0, degree + 1)] + list(knotvector[knot_span_new:])
+    kv_1 = np.array(list(knotvector[0:knot_span_new]) + [param])
+    kv_2 = np.array([param for _ in range(0, degree + 1)] + list(knotvector[knot_span_new:]))
     return kv_1, kv_2
 
 
@@ -727,7 +727,6 @@ def get_knots_and_multiplicities(knotvector):
     """
     Get knots and multiplicities from knotvector in u and v direction.
     """
-    knotvector = np.round(knotvector, decimals=19)
     knots = np.unique(knotvector).tolist()
     multiplicities = [core.find_multiplicity(knot, knotvector) for knot in knots]
     return knots, multiplicities
@@ -787,15 +786,15 @@ def construct_split_surfaces(obj, knotvectors, direction, knot_span, insertion_c
 
 def decompose_curve(obj, return_params: bool = False, **kwargs):
     """
-    Decomposes the curve into Bézier curve segments of the same degree.
+    Generator: Decomposes the curve into Bézier curve segments of the same degree.
 
     :param obj: Curve to be decomposed
     :type obj: BSplineCurve
     :param return_params: If True, returns the parameters from start and end of each Bézier patch with repect to the
      input curve.
     :type return_params: bool
-    :return: a list of Bezier segments
-    :rtype: list
+    :return: a generator element with a Bezier segment.
+    :rtype: Generator element.
     """
     multi_curve = []
     curve = obj
@@ -807,17 +806,19 @@ def decompose_curve(obj, return_params: bool = False, **kwargs):
         knot = knots[0]
         curves = split_curve(curve, param=knot, **kwargs)
         multi_curve.append(curves[0])
+        curve = curves[1]
+        knots = curve.knotvector[curve.degree + 1:-(curve.degree + 1)]
         if return_params:
             umax_0 = knot * (umax - param_start) + param_start
             params.append((param_start, umax_0))
+            yield curves[0], (param_start, umax_0)
             param_start = umax_0
-        curve = curves[1]
-        knots = curve.knotvector[curve.degree + 1:-(curve.degree + 1)]
-    multi_curve.append(curve)
+            continue
+        yield curves[0]
     if return_params:
-        params.append((param_start, umax))
-        return multi_curve, params
-    return multi_curve
+        yield curve, (param_start, umax)
+    else:
+        yield curve
 
 
 def decompose_surface(obj, return_params, **kwargs):
