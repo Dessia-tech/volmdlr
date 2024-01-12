@@ -17,7 +17,7 @@ class TestBSplineCurve2D(unittest.TestCase):
     def test_bounding_rectangle(self):
         contour = DessiaObject.load_from_file(os.path.join(folder, "bounding_box_contour.json"))
         b_rec = contour.bounding_rectangle
-        self.assertAlmostEqual(b_rec.area(), 0.46995118100796823, places=2)
+        self.assertAlmostEqual(b_rec.area(), 0.48129011002687494, places=2)
 
     degree = 3
     points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]

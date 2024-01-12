@@ -1,9 +1,9 @@
 """
-Showcase of the 'TriangleDecimationSimplify' class.
+Showcase of the 'AlphaWrapSimplify' class.
 """
 import time
 
-from volmdlr.cad_simplification import TriangleDecimationSimplify
+from volmdlr.cad_simplification import AlphaWrapSimplify
 from volmdlr.step import Step
 
 # Load
@@ -11,8 +11,8 @@ volume_model = Step.from_file("../step/engine.step").to_volume_model()
 
 # Simplify
 start = time.perf_counter()
-simplifier = TriangleDecimationSimplify(volume_model=volume_model)
-simplified_volume_model = simplifier.simplify(target_ratio=0.2, preserve_border=True)
+simplifier = AlphaWrapSimplify(volume_model=volume_model)
+simplified_volume_model = simplifier.simplify(relative_alpha=15, relative_offset=420, preserve_shells=False)
 
 print(f"Simplification took {time.perf_counter() - start:.6f} seconds\n")
 

@@ -245,6 +245,7 @@ class Primitive3D(dc.PhysicalObject):
         dc.PhysicalObject.__init__(self, name=name)
 
     def volmdlr_primitives(self):
+        """ Return a list of volmdlr primitives to build up volume model."""
         return [self]
 
     def babylon_param(self):
@@ -264,6 +265,9 @@ class Primitive3D(dc.PhysicalObject):
         return babylon_param
 
     def triangulation(self, *args, **kwargs):
+        """
+        Get object triangulation.
+        """
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
@@ -395,7 +399,7 @@ class BoundingRectangle(dc.DessiaObject):
         """
         return volmdlr.Point2D(0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax))
 
-    def b_rectangle_intersection(self, b_rectangle2):
+    def is_intersecting(self, b_rectangle2):
         """
         Returns True if there is an intersection with another specified bounding rectangle or False otherwise.
 
@@ -404,6 +408,16 @@ class BoundingRectangle(dc.DessiaObject):
         """
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
             and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+
+    def b_rectangle_intersection(self, b_rectangle2):
+        """
+        Returns True if there is an intersection with another specified bounding rectangle or False otherwise.
+
+        :param b_rectangle2: bounding rectangle to verify intersection
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        warnings.warn('b_rectangle_intersection is deprecated, please use is_intersecting instead')
+        return self.is_intersecting(b_rectangle2)
 
     def is_inside_b_rectangle(self, b_rectangle2, tol: float = 1e-6):
         """
@@ -1063,6 +1077,7 @@ class Assembly(dc.PhysicalObject):
         return Assembly(self.components, new_positions, self.frame, self.name)
 
     def volmdlr_primitives(self):
+        """ Return a list of volmdlr primitives to build up an Assembly. """
         return [self]
 
     def to_step(self, current_id):
@@ -1523,7 +1538,10 @@ class VolumeModel(dc.PhysicalObject):
             self.to_step_stream(file)
 
     def to_step_stream(self, stream: dcf.StringFile):
+        """
+        Export object CAD to given stream in STEP format.
 
+        """
         step_content = STEP_HEADER.format(name=self.name,
                                           filename='',
                                           timestamp=datetime.now().isoformat(),
