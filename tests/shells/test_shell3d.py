@@ -1,9 +1,8 @@
-import math
 import unittest
 
 from dessia_common.core import DessiaObject
 import volmdlr
-from volmdlr import edges, faces, primitives3d, wires, surfaces, shells
+from volmdlr import shells
 
 
 class TestShell3D(unittest.TestCase):

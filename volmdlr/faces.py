@@ -1321,47 +1321,56 @@ class Face3D(volmdlr.core.Primitive3D):
         :param return_points: return corresponding point or not.
         :return:
         """
+        # Speficic case, if defined
         method_name = f"{other_face.__class__.__name__.lower()[:-2]}_minimum_distance"
         if hasattr(self, method_name):
             return getattr(self, method_name)(other_face, return_points)
-        face_decomposition1 = self.face_decomposition()
-        face_decomposition2 = other_face.face_decomposition()
-        list_set_points1 = [
-            {point for face in faces1 for point in face.points} for _, faces1 in face_decomposition1.items()
-        ]
-        list_set_points1 = [
-            np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in list_set_points1
-        ]
-        list_set_points2 = [
-            {point for face in faces2 for point in face.points} for _, faces2 in face_decomposition2.items()
-        ]
-        list_set_points2 = [
-            np.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in list_set_points2
-        ]
 
-        minimum_distance = math.inf
-        index1, index2 = None, None
-        for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
-            distances = np.linalg.norm(sets_points2[:, np.newaxis] - sets_points1, axis=2)
-            sets_min_dist = np.min(distances)
-            if sets_min_dist < minimum_distance:
-                minimum_distance = sets_min_dist
-                index1 = next((i for i, x in enumerate(list_set_points1) if np.array_equal(x, sets_points1)), -1)
-                index2 = next((i for i, x in enumerate(list_set_points2) if np.array_equal(x, sets_points2)), -1)
-        faces1 = list(face_decomposition1.values())[index1]
-        faces2 = list(face_decomposition2.values())[index2]
+        # Generic case
+        return self.triangulation().minimum_distance(other_face.triangulation(), return_points)
+        # TODO : implement an exact method and then clean code
 
-        minimum_distance = math.inf
-        best_distance_points = None
-
-        for face1, face2 in product(faces1, faces2):
-            distance, point1, point2 = face1.planeface_minimum_distance(face2, True)
-            if distance < minimum_distance:
-                minimum_distance = distance
-                best_distance_points = [point1, point2]
-        if return_points:
-            return minimum_distance, *best_distance_points
-        return minimum_distance
+        # face_decomposition1 = self.face_decomposition()
+        # face_decomposition2 = other_face.face_decomposition()
+        # list_set_points1 = [
+        #     {point for face in faces1 for point in face.points} for _, faces1 in face_decomposition1.items()
+        # ]
+        # list_set_points1 = [
+        #     np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in list_set_points1
+        # ]
+        # list_set_points2 = [
+        #     {point for face in faces2 for point in face.points} for _, faces2 in face_decomposition2.items()
+        # ]
+        # list_set_points2 = [
+        #     np.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in list_set_points2
+        # ]
+        #
+        # minimum_distance = math.inf
+        # index1, index2 = None, None
+        # for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
+        #     print("zob")
+        #     distances = np.linalg.norm(sets_points2[:, np.newaxis] - sets_points1, axis=2)
+        #     sets_min_dist = np.min(distances)
+        #     if sets_min_dist < minimum_distance:
+        #         minimum_distance = sets_min_dist
+        #         index1 = next((i for i, x in enumerate(list_set_points1) if np.array_equal(x, sets_points1)), -1)
+        #         index2 = next((i for i, x in enumerate(list_set_points2) if np.array_equal(x, sets_points2)), -1)
+        #
+        # print(index1, index2)
+        # faces1 = list(face_decomposition1.values())[index1]
+        # faces2 = list(face_decomposition2.values())[index2]
+        #
+        # minimum_distance = math.inf
+        # best_distance_points = None
+        #
+        # for face1, face2 in product(faces1, faces2):
+        #     distance, point1, point2 = face1.planeface_minimum_distance(face2, True)
+        #     if distance < minimum_distance:
+        #         minimum_distance = distance
+        #         best_distance_points = [point1, point2]
+        # if return_points:
+        #     return minimum_distance, *best_distance_points
+        # return minimum_distance
 
     def plane_intersections(self, plane3d: surfaces.Plane3D):
         """
