@@ -3624,53 +3624,6 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                     break
         return found_ear, remaining_points
 
-    def ear_clipping_triangulation(self):
-        """
-        Computes the triangulation of the polygon using ear clipping algorithm.
-
-        Note: triangles have been inverted for a better rendering in babylonjs
-        """
-        # Converting to nodes for performance
-        nodes = [vmd.Node2D.from_point(point) for point in self.points]
-
-        initial_point_to_index = {point: i for i, point in enumerate(nodes)}
-        triangles = []
-
-        remaining_points = nodes[:]
-
-        number_remaining_points = len(remaining_points)
-        while number_remaining_points > 3:
-            current_polygon = ClosedPolygon2D(remaining_points)
-            found_ear, remaining_points = current_polygon.search_ear(remaining_points, initial_point_to_index)
-
-            # Searching for a flat ear
-            if not found_ear:
-                remaining_polygon = ClosedPolygon2D(remaining_points)
-                if remaining_polygon.area() > 0.:
-
-                    found_flat_ear = False
-                    for point1, point2, point3 in zip(remaining_points,
-                                                      remaining_points[1:] + remaining_points[0:1],
-                                                      remaining_points[2:] + remaining_points[0:2]):
-                        triangle = Triangle2D(point1, point2, point3)
-                        if math.isclose(triangle.area(), 0, abs_tol=1e-8):
-                            remaining_points.remove(point2)
-                            found_flat_ear = True
-                            break
-
-                    if not found_flat_ear:
-                        print('Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
-                        return vmd.Mesh2D(nodes, triangles)
-                else:
-                    return vmd.Mesh2D(nodes, triangles)
-
-        if len(remaining_points) == 3:
-            triangles.append((initial_point_to_index[remaining_points[0]],
-                              initial_point_to_index[remaining_points[1]],
-                              initial_point_to_index[remaining_points[2]]))
-
-        return vmd.Mesh2D(nodes, triangles)
-
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         """Simplify polygon."""
         return ClosedPolygon2D(self.simplify_polygon(min_distance=min_distance,
