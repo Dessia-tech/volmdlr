@@ -15,7 +15,6 @@ import numpy as np
 import dessia_common.core as dc
 import matplotlib.patches
 import matplotlib.pyplot as plt
-import numpy as npy
 from numpy.typing import NDArray
 import plot_data.core as plot_data
 import plot_data.colors
@@ -858,18 +857,18 @@ class BSplineCurve(Edge):
                  knots: Union[List[float], NDArray],
                  weights: Union[List[float], NDArray] = None,
                  name: str = ''):
-        self.ctrlpts = npy.asarray(control_points)
+        self.ctrlpts = np.asarray(control_points)
         self.degree = degree
-        self.knots = npy.asarray(nurbs_helpers.standardize_knot_vector(knots))
-        self.knot_multiplicities = npy.asarray(knot_multiplicities, dtype=npy.int16)
+        self.knots = np.asarray(nurbs_helpers.standardize_knot_vector(knots))
+        self.knot_multiplicities = np.asarray(knot_multiplicities, dtype=np.int16)
         self.weights = weights
         self.ctrlptsw = None
         self.rational = False
         if self.weights is not None:
-            self.weights = npy.asarray(weights, dtype=npy.float64)
+            self.weights = np.asarray(weights, dtype=np.float64)
             self.rational = self.weights.any()
             if self.rational:
-                self.ctrlptsw = npy.hstack((self.ctrlpts * self.weights[:, npy.newaxis], self.weights[:, npy.newaxis]))
+                self.ctrlptsw = np.hstack((self.ctrlpts * self.weights[:, np.newaxis], self.weights[:, np.newaxis]))
             else:
                 self.weights = None
 
@@ -923,7 +922,7 @@ class BSplineCurve(Edge):
     def knotvector(self):
         """Return the knot vector."""
         if self._knotvector is None:
-            self._knotvector = npy.repeat(self.knots, self.knot_multiplicities)
+            self._knotvector = np.repeat(self.knots, self.knot_multiplicities)
         return self._knotvector
 
     @property
@@ -1030,6 +1029,9 @@ class BSplineCurve(Edge):
         """
         return self.knotvector[self.degree], self.knotvector[-(self.degree + 1)]
 
+    def get_bounding_element(self):
+        raise NotImplementedError("get_bounding_element method should be implemeted by child class.")
+
     def copy(self, deep: bool = True, **kwargs):
         """
         Returns a copy of the instance.
@@ -1117,7 +1119,7 @@ class BSplineCurve(Edge):
         self._points = None
 
         # Evaluate and cache
-        self._eval_points = npy.asarray(evaluate_curve(self.data, start=start, stop=stop), dtype=npy.float64)
+        self._eval_points = np.asarray(evaluate_curve(self.data, start=start, stop=stop), dtype=np.float64)
 
     def evaluate_single(self, u):
         """
@@ -1281,13 +1283,13 @@ class BSplineCurve(Edge):
                 datadict = self.data
                 datadict["sample_size"] = 100
                 start, stop = self.domain
-                points = npy.asarray(evaluate_curve(datadict, start=start, stop=stop), dtype=npy.float64)
+                points = np.asarray(evaluate_curve(datadict, start=start, stop=stop), dtype=np.float64)
 
-            differences = npy.diff(points, axis=0)
+            differences = np.diff(points, axis=0)
 
-            squared_distances = npy.sum(differences ** 2, axis=1)
+            squared_distances = np.sum(differences ** 2, axis=1)
 
-            self._length = float(npy.sum(npy.sqrt(squared_distances)))
+            self._length = float(np.sum(np.sqrt(squared_distances)))
             # self._length = length_curve(self.curve)
         return self._length
 
@@ -1335,26 +1337,6 @@ class BSplineCurve(Edge):
             u = u * (u_max - u_min) + u_min
         return u
 
-    def _abscissa_helper(self, point):
-        point_array = np.asarray(point)
-        results = []
-        for patch, param in self.decompose(True):
-            bounding_element = self.get_bounding_element()
-            if bounding_element.point_belongs(point):
-                distances = npy.linalg.norm(patch.points - point_array, axis=1)
-                index = npy.argmin(distances)
-                u_start, u_stop = patch.domain
-                delta_u = (u_stop - u_start) / (patch.sample_size - 1)
-                u = u_start + index * delta_u
-
-                x1, _, distance = patch.point_inversion(u, point)
-                u = x1 * (param[1] - param[0]) + param[0]
-                if distance <= 1e-7:
-                    return [(u * self.length(), distance)]
-                results.append((u * self.length(), distance))
-
-        return results
-
     def abscissa(self, point: Union[volmdlr.Point2D, volmdlr.Point3D],
                  tol: float = 1e-7):
         """
@@ -1372,9 +1354,9 @@ class BSplineCurve(Edge):
         if point.is_close(self.end):
             return self.length()
         length = self.length()
-        point_array = npy.asarray(point)
-        distances = npy.linalg.norm(self._eval_points - point_array, axis=1)
-        indexes = npy.argsort(distances)
+        point_array = np.asarray(point)
+        distances = np.linalg.norm(self._eval_points - point_array, axis=1)
+        indexes = np.argsort(distances)
         index = indexes[0]
         u_min, u_max = self.domain
         u0 = u_min + index * (u_max - u_min) / (self.sample_size - 1)
@@ -1393,23 +1375,19 @@ class BSplineCurve(Edge):
             grad = (distance_vector.dot(derivatives[1])) / func
             return func, grad
 
-        # def objective_function(u_param):
-        #     return (point - self.evaluate_single(u_param)).norm()
-
         results.append((abscissa, objective_function(u)[0]))
         # results.append((abscissa, objective_function(u)))
         initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
         for u0 in initial_condition_list:
-            res = minimize(objective_function, npy.array(u0), bounds=[(u_min, u_max)], jac=True)
-            # res = minimize(objective_function, npy.array(u0), bounds=[(u_min, u_max)])
+            res = minimize(objective_function, np.array(u0), bounds=[(u_min, u_max)], jac=True)
             if res.fun < 1e-6:
                 return float(res.x[0] * length)
 
         for patch, param in self.decompose(True):
             bounding_element = self.get_bounding_element()
             if bounding_element.point_belongs(point):
-                distances = npy.linalg.norm(patch.points - point_array, axis=1)
-                index = npy.argmin(distances)
+                distances = np.linalg.norm(patch.points - point_array, axis=1)
+                index = np.argmin(distances)
                 u_start, u_stop = patch.domain
                 delta_u = (u_stop - u_start) / (patch.sample_size - 1)
                 u = u_start + index * delta_u
@@ -1601,7 +1579,7 @@ class BSplineCurve(Edge):
         """
         point_name = 'Point' + points[0].__class__.__name__[-2:]
         control_points, knots, knot_multiplicities = fitting.approximate_curve(
-            npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points], dtype=npy.float64),
+            np.asarray([np.asarray([*point], dtype=np.float64) for point in points], dtype=np.float64),
             degree, **kwargs)
         control_points = [getattr(volmdlr, point_name)(*point) for point in control_points]
         return cls(degree, control_points, knot_multiplicities, knots, name=name)
@@ -1651,7 +1629,7 @@ class BSplineCurve(Edge):
             return None
         point_name = 'Point' + points[0].__class__.__name__[-2:]
         ctrlpts, knots, knot_multiplicities = fitting.interpolate_curve(
-            npy.asarray([npy.asarray([*point], dtype=npy.float64) for point in points], dtype=npy.float64),
+            np.asarray([np.asarray([*point], dtype=np.float64) for point in points], dtype=np.float64),
             degree, centripetal=centripetal)
         ctrlpts = [getattr(volmdlr, point_name)(*point) for point in ctrlpts]
         return cls(degree, ctrlpts, knot_multiplicities, knots, name=name)
@@ -1781,12 +1759,6 @@ class BSplineCurve(Edge):
         :param linesegment: linesegment to verify intersections.
         :return: list with the intersections points.
         """
-        if isinstance(linesegment, LineSegment2D):
-            if not self.bounding_rectangle.is_intersecting(linesegment.bounding_rectangle):
-                return []
-        elif not self.bounding_box.is_intersecting(linesegment.bounding_box):
-            return []
-
         results = self.line_intersections(linesegment.line)
         intersections_points = []
         for result in results:
@@ -1949,7 +1921,7 @@ class BSplineCurve(Edge):
 
         if return_abscissas:
             return ([getattr(volmdlr, point_name)(*point) for point in points],
-                    npy.linspace(abscissa1, abscissa2, number_points, dtype=npy.float64).tolist())
+                    np.linspace(abscissa1, abscissa2, number_points, dtype=np.float64).tolist())
         return [getattr(volmdlr, point_name)(*point) for point in points]
 
     def is_close(self, other_edge, tol: float = 1e-6):
@@ -1982,28 +1954,6 @@ class BSplineCurve(Edge):
         new_control_points = [control_point.frame_mapping(frame, side) for control_point in self.control_points]
         return self.__class__(self.degree, new_control_points, self.knot_multiplicities, self.knots, self.weights,
                               self.name)
-
-    # def bsplinecurve_intersections(self, other_bspline, abs_tol: 1e-6):
-    #     # patches1 = self.decompose(False)
-    #     # patches2 = other_bspline.decompose(False)
-    #     intersection_points = []
-    #     # line_seg_class_ = getattr(volmdlr.edges, "LineSegment" + other_bspline.__class__.__name__[-2:])
-    #     # for patch1, patch2 in product(patches1, patches2):
-    #     #     lineseg1 = line_seg_class_(patch1.start, patch1.end)
-    #     #     lineseg2 = line_seg_class_(patch2.start, patch2.end)
-    #     #     if patch1.get_bounding_element().is_intersecting(patch2.get_bounding_element()):
-    #     #         intersections = vm_utils_intersections.get_bsplinecurve_intersections(
-    #     #             patch1, patch2, abs_tol)
-    #     #         for inter in intersections:
-    #     #             if not inter.in_list(intersection_points):
-    #     #                 intersection_points.append(inter)
-    #     for patch, _ in self.decompose(True):
-    #         if not patch.get_bounding_element().is_intersecting(other_bspline.get_bounding_element()):
-    #             continue
-    #         intersection_points.extend(
-    #             vm_utils_intersections.get_bsplinecurve_intersections(other_bspline, patch, abs_tol=abs_tol))
-    #
-    #     return intersection_points
 
 
 class BSplineCurve2D(BSplineCurve):
@@ -3985,7 +3935,7 @@ class ArcEllipse2D(ArcEllipseMixin, Edge):
             angle_start = self.angle_start
         discretization_points = [self.ellipse.frame.local_to_global_coordinates(
             volmdlr.Point2D(self.ellipse.major_axis * math.cos(angle), self.ellipse.minor_axis * math.sin(angle)))
-            for angle in npy.linspace(angle_start, angle_end, number_points)]
+            for angle in np.linspace(angle_start, angle_end, number_points)]
         return discretization_points
 
     def to_3d(self, plane_origin, x, y):
@@ -5435,17 +5385,12 @@ class BSplineCurve3D(BSplineCurve):
             return []
         intersections = []
         for patch, _ in self.decompose(True):
+            if not patch.bounding_box.is_intersecting(linesegment3d.bounding_box, abs_tol):
+                continue
             intersections_points = patch.get_linesegment_intersections(linesegment3d)
             for inter in intersections_points:
                 if not inter.in_list(intersections, abs_tol):
                     intersections.append(inter)
-        # intersection_section_pairs = self._get_intersection_sections(linesegment3d)
-        # intersections = []
-        # for bspline, edge2_ in intersection_section_pairs:
-        #     intersections_points = bspline.get_linesegment_intersections(edge2_)
-        #     for inter in intersections_points:
-        #         if not inter.in_list(intersections, abs_tol):
-        #             intersections.append(inter)
         return intersections
 
     def arc_intersections(self, arc, abs_tol=1e-6):
@@ -5464,15 +5409,8 @@ class BSplineCurve3D(BSplineCurve):
         """Get the intersections with the specified curve."""
         if self.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
             return []
-        # intersections_points = []
-        # for patch in decompose_curve(self, number_max_patches=10):
-        #     if patch.bounding_box.distance_to_bbox(curve.bounding_box) > abs_tol:
-        #         continue
-        #     intersections_points.extend(vm_utils_intersections.get_bsplinecurve_intersections(
-        #         curve, patch, abs_tol=abs_tol))
-        # return intersections_points
-        return vm_utils_intersections.get_bsplinecurve_intersections(
-                curve, self, abs_tol=abs_tol)
+        intersections_points = vm_utils_intersections.get_bsplinecurve_intersections(curve, self, abs_tol=abs_tol)
+        return intersections_points
 
     def circle_intersections(self, circle, abs_tol: float = 1e-6):
         """Get the intersections with the specified circle."""
@@ -5885,7 +5823,7 @@ class Arc3D(ArcMixin, Edge):
                     + 2 * radius2 * math.sin(x[1]) * w_u4 + u3_u4 * math.sin(
                         2 * x[1]) * radius2 ** 2)
 
-        x01 = npy.array([self.angle / 2, other_arc.angle / 2])
+        x01 = np.array([self.angle / 2, other_arc.angle / 2])
 
         res1 = least_squares(distance_squared, x01, bounds=[(0, 0), (self.angle, other_arc.angle)])
 
@@ -6440,7 +6378,7 @@ class ArcEllipse3D(ArcEllipseMixin, Edge):
         discretization_points = [self.ellipse.frame.local_to_global_coordinates(
             volmdlr.Point3D(self.ellipse.major_axis * math.cos(angle),
                             self.ellipse.minor_axis * math.sin(angle), 0))
-            for angle in npy.linspace(angle_start, angle_end, number_points)]
+            for angle in np.linspace(angle_start, angle_end, number_points)]
         return discretization_points
 
     def to_2d(self, plane_origin, x, y):

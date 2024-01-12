@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### faces.py
 - Face3D: enhance from_contours3d.
+- Face3D: enhance from_contours3d. Checks if inner contours position are according outer contour position in parametric domain for periodical surfaces.
 - Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
 - Face3D: point_belongs
 

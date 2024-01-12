@@ -532,7 +532,7 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
         # test 2
         inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
-        expected_lengths2 = [7.76704245530908, 7.767042217039914]
+        expected_lengths2 = [7.767042217039914, 7.767042239472898]
         for intersection, expected_length in zip(inters, expected_lengths2):
             self.assertAlmostEqual(intersection.length(), expected_length, 6)
 

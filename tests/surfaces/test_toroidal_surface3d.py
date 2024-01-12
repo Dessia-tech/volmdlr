@@ -294,7 +294,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         cylindrical_surface = surfaces.CylindricalSurface3D(frame, 1)
         inters = toroidal_surface.cylindricalsurface_intersections(cylindrical_surface)
         self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(),  14.655771126896285, 6)
+        self.assertAlmostEqual(inters[0].length(),  14.655766708064988, 6)
         # Test2
         expected_results = [[9.424777944721708, 9.424777944721708], [6.283185307179586], []]
         frame = volmdlr.OXYZ
@@ -307,11 +307,11 @@ class TestToroidalSurface3D(unittest.TestCase):
                 self.assertAlmostEqual(sol.length(), expected_result)
 
         #Test3
-        expected_results = [[17.15507502094234], [17.448545184818247], [8.189776668686337, 11.902029916604459],
-                            [9.342188106943269, 6.78336866673309, 6.626627789678063],
-                            [8.454959462123995, 11.77511467603688], [18.761719968847533],
-                            [6.937794363985141, 15.19249250941749], [19.04178251289429],
-                            [19.712211191522904], [9.106322135020985, 6.6068733328316185, 6.606874972659134]]
+        expected_results = [[17.15507503569369], [17.44854665643788], [8.189796585620618, 11.901139748235597],
+                            [9.342188230885236, 6.783310155206425, 6.626640664645549],
+                            [8.454900525242053, 11.776994635117465], [18.761719740322402],
+                            [6.937797095728188, 15.192492963838706], [19.04177375915889],
+                            [19.712228121747376], [9.10632294802296, 6.606845279818736, 6.606878954896224]]
 
         frame = volmdlr.OXYZ.translation(volmdlr.Vector3D(1, 1, 0))
         for i, theta in enumerate(np.linspace(0, math.pi * .7, 10)):
@@ -378,7 +378,7 @@ class TestToroidalSurface3D(unittest.TestCase):
         list_curves = toroidal_surface1.conicalsurface_intersections(conical_surface)
         self.assertEqual(len(list_curves), 2)
         self.assertAlmostEqual(list_curves[0].length(), 7.290767246711664)
-        self.assertAlmostEqual(list_curves[1].length(), 7.290781630732165)
+        self.assertAlmostEqual(list_curves[1].length(),  7.290775103464861)
 
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 8)
         conical_surface = conical_surface.translation(volmdlr.Vector3D(2, 2, -3))
