@@ -71,7 +71,7 @@ class TestBSplineCurve3D(unittest.TestCase):
         self.assertTrue(bsplinecurve.start.is_close(object_dict[1], 1e-5))
         self.assertTrue(bsplinecurve.end.is_close(object_dict[2], 1e-5))
         self.assertTrue(bsplinecurve.point_at_abscissa(0.5 * bsplinecurve.length()).is_close(
-            volmdlr.Point3D(0.04916207192770078, -0.042645292206800016, 0.14332757999206563)))
+            volmdlr.Point3D(0.04915593260514362, -0.04264529220680001, 0.14332598788877735)))
 
     def test_bspline_linesegment_minimum_distance(self):
         points = [volmdlr.Point3D(1.2918566581549966, 2.3839907440191492, 0.5678759590090421),

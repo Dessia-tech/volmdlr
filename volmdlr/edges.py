@@ -5208,7 +5208,7 @@ class BSplineCurve3D(BSplineCurve):
             return bsplinecurve
 
         if not point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol):
-            return [bsplinecurve.cut_before(parameter1)]
+            return bsplinecurve.cut_before(parameter1)
 
         if not point2.is_close(bsplinecurve.start, abs_tol) and point1.is_close(bsplinecurve.end, abs_tol):
             bsplinecurve = bsplinecurve.cut_before(parameter2)
