@@ -2173,6 +2173,20 @@ class Triangle3D(PlaneFace3D):
 
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
+        """
+        Create a Triangle3D object from a dictionary representation.
+
+        This class method takes a dictionary containing the necessary data for
+        creating a Triangle3D object and returns an instance of the Triangle3D class.
+        It expects the dictionary to have the following keys:
+
+        :param cls: The Triangle3D class itself (automatically passed).
+        :param dict_: A dictionary containing the required data for object creation.
+        :param args: Additional positional arguments (if any).
+        :param kwargs: Additional keyword arguments (if any).
+
+        :return: Triangle3D: An instance of the Triangle3D class created from the provided dictionary.
+        """
         point1 = volmdlr.Point3D.dict_to_object(dict_["point1"])
         point2 = volmdlr.Point3D.dict_to_object(dict_["point2"])
         point3 = volmdlr.Point3D.dict_to_object(dict_["point3"])

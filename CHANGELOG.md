@@ -11,10 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### New Features
 - added missing hash and eq methods to several classes
 - ArcEllipse2D/3D: get_shared_section and delete_shared_section.
-- ConicalSurface3D: conicalsurface_intersections
+- ConicalSurface3D: conicalsurface_intersections.
+- cad_simplification: AlphaWrapSimplify
+- nurbs/operations: link_curves
+
 
 #### edges.py
 - BSplineCurve: decompose into béziers patches of same degree.
+- BSplineCurve: merge_with and merge_with_curves
 
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
@@ -36,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - review hash and eq methods
 - fix pylint.
 - Add some missing docstrings.
+- Add _serializable_dict to points and vectors objects. This method is important to some platform checks, as they don't inherite from DessiaObject anymore.
 
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
@@ -106,7 +111,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### build
 
 - Use pip install instead of setuptools install in order to avoid .egg being generating and preventing PyPI upload
-
 
 ## v0.15.0
 
