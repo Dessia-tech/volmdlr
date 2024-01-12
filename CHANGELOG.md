@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added missing hash and eq methods to several classes
 - ArcEllipse2D/3D: get_shared_section and delete_shared_section.
 - ConicalSurface3D: conicalsurface_intersections
+- cad_simplification: AlphaWrapSimplify
 
 #### edges.py
 - BSplineCurve: decompose into béziers patches of same degree.
@@ -49,10 +50,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve.simplify: handles exceptions.
 - Arc2D: plot_data
 - LineSegment3D: planar_revolution.
-- BSplineCurve: abscissa.
+- BSplineCurve: abscissa: use curve decomposition.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
+- Face3D: enhance from_contours3d. Checks if inner contours position are according outer contour position in parametric domain for periodical surfaces.
 - Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
 - Face3D: point_belongs
 
@@ -106,7 +108,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### build
 
 - Use pip install instead of setuptools install in order to avoid .egg being generating and preventing PyPI upload
-
 
 ## v0.15.0
 
