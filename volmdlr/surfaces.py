@@ -14,7 +14,7 @@ import triangle as triangle_lib
 
 from geomdl import NURBS, BSpline
 from scipy.linalg import lu_factor, lu_solve
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, minimize
 
 from dessia_common.core import DessiaObject, PhysicalObject
 from dessia_common.typings import JsonSerializable
@@ -7544,25 +7544,25 @@ class BSplineSurface3D(Surface3D):
     def point3d_to_2d_minimize(self, point3d, initial_guess, tol):
         """Auxiliary function for point3d_to_2d in case the point inversion does not converge."""
 
-        # def fun(x):
-        #     derivatives = self.derivatives(x[0], x[1], 1)
-        #     vector = derivatives[0][0] - point3d
-        #     f_value = vector.norm()
-        #     if f_value == 0.0:
-        #         jacobian = npy.array([0.0, 0.0])
-        #     else:
-        #         jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
-        #                               vector.dot(derivatives[0][1]) / f_value])
-        #     return f_value, jacobian
-        #
+        def fun(x):
+            derivatives = self.derivatives(x[0], x[1], 1)
+            vector = derivatives[0][0] - point3d
+            f_value = vector.norm()
+            if f_value == 0.0:
+                jacobian = npy.array([0.0, 0.0])
+            else:
+                jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
+                                      vector.dot(derivatives[0][1]) / f_value])
+            return f_value, jacobian
+
         results = []
         point3d_array = npy.asarray(point3d)
         u_start, u_stop, v_start, v_stop = self.domain
-        # res = minimize(fun, x0=npy.array(initial_guess), jac=True,
-        #                bounds=[(u_start, u_stop),
-        #                        (v_start, v_stop)])
-        # if res.fun < 1e-6:
-        #     return volmdlr.Point2D(*res.x)
+        res = minimize(fun, x0=npy.array(initial_guess), jac=True,
+                       bounds=[(u_start, u_stop),
+                               (v_start, v_stop)])
+        if res.fun < 1e-6:
+            return volmdlr.Point2D(*res.x)
         distances = npy.linalg.norm(self.evalpts - point3d_array, axis=1)
         indexes = npy.argsort(distances)
         x0s = []
