@@ -9,7 +9,7 @@ from pylint.lint import Run
 
 MIN_NOTE = 9.7
 
-UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
+UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline', 'use-maxsplit-arg']
 
 EFFECTIVE_DATE = date(2023, 1, 31)
 

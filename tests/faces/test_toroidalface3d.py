@@ -83,7 +83,7 @@ class TestToroidalFace3D(unittest.TestCase):
 
         inters = planeface.face_intersections(toroidalface)
         self.assertEqual(len(inters), 1)
-        self.assertAlmostEqual(inters[0].length(), 0.030299086707278766, 5)
+        self.assertAlmostEqual(inters[0].length(), 0.030296492908080553, 5)
 
     def test_cylindricalface_intersections(self):
         expected_results = [[2.5461209954222026], [2.454561591082158], [2.7679468571575105], [2.8109179729321183],
