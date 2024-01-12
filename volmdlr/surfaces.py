@@ -1334,9 +1334,6 @@ class Plane3D(Surface3D):
     face_class = 'PlaneFace3D'
 
     def __init__(self, frame: volmdlr.Frame3D, name: str = ''):
-
-        self.frame = frame
-        self.name = name
         Surface3D.__init__(self, frame=frame, name=name)
 
     def __hash__(self):
@@ -2354,7 +2351,6 @@ class CylindricalSurface3D(PeriodicalSurface):
     y_periodicity = None
 
     def __init__(self, frame, radius: float, name: str = ''):
-        self.frame = frame
         self.radius = radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
@@ -2929,7 +2925,6 @@ class ToroidalSurface3D(PeriodicalSurface):
     y_periodicity = volmdlr.TWO_PI
 
     def __init__(self, frame: volmdlr.Frame3D, major_radius: float, minor_radius: float, name: str = ''):
-        self.frame = frame
         self.major_radius = major_radius
         self.minor_radius = minor_radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
@@ -3822,7 +3817,6 @@ class ConicalSurface3D(PeriodicalSurface):
 
     def __init__(self, frame: volmdlr.Frame3D, semi_angle: float,
                  name: str = ''):
-        self.frame = frame
         self.semi_angle = semi_angle
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
@@ -4566,7 +4560,6 @@ class SphericalSurface3D(PeriodicalSurface):
     y_periodicity = math.pi
 
     def __init__(self, frame, radius, name=''):
-        self.frame = frame
         self.radius = radius
         PeriodicalSurface.__init__(self, frame=frame, name=name)
 
