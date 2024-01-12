@@ -828,8 +828,10 @@ class TestBSplineSurface3D(unittest.TestCase):
     def test_decompose(self):
         surface = surfaces.BSplineSurface3D.load_from_file(
             os.path.join(folder, "bsplineface_triangulation_problem_surface.json"))
-        bezier_patches, params = surface.decompose(return_params=True)
-        self.assertEqual(len(bezier_patches), 116)
+        decompose_results = surface.decompose(return_params=True)
+        self.assertEqual(len(decompose_results), 116)
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
         self.assertEqual(len(bezier_patches), len(params))
         for patch, param in zip(bezier_patches, params):
             control_points = patch.control_points
@@ -837,7 +839,9 @@ class TestBSplineSurface3D(unittest.TestCase):
                 surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
             self.assertTrue(
                 surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
-        bezier_patches, params = surface.decompose(return_params=True, decompose_dir="u")
+        decompose_results = surface.decompose(return_params=True, decompose_dir="u")
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
         self.assertEqual(len(bezier_patches), 4)
         self.assertEqual(len(bezier_patches), len(params))
         for patch, param in zip(bezier_patches, params):
@@ -846,7 +850,9 @@ class TestBSplineSurface3D(unittest.TestCase):
                 surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
             self.assertTrue(
                 surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
-        bezier_patches, params = surface.decompose(return_params=True, decompose_dir="v")
+        decompose_results = surface.decompose(return_params=True, decompose_dir="v")
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
         self.assertEqual(len(bezier_patches), 29)
         self.assertEqual(len(bezier_patches), len(params))
         for patch, param in zip(bezier_patches, params):
