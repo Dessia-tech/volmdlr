@@ -2957,7 +2957,7 @@ class OctreeBasedVoxelization(Voxelization):
                             float(triangle[2][2]),
                         ),
                     )
-                    for triangle in triangulation.triangles_vertices
+                    for triangle in triangulation.triangles_vertices()
                 ]
 
                 for triangle in face_triangles:
