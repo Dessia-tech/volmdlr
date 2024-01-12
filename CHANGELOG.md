@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - review hash and eq methods
 - fix pylint.
 - Add some missing docstrings.
+- Add _serializable_dict to points and vectors objects. This method is important to some platform checks, as they don't inherite from DessiaObject anymore.
 
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
