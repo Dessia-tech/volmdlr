@@ -811,9 +811,9 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 face_mesh = face.triangulation()
                 if face_mesh:
                     meshes.append(face_mesh)
-            except Exception as e:
+            except Exception as exception:
                 warnings.warn(f"Could not triangulate face {i} ({face.__class__.__name__}) in '{self.name}' "
-                              f"due to: {e}. This may be due to a topology error in contour2d.")
+                              f"due to: {exception}. This may be due to a topology error in contour2d.")
 
         return display.Mesh3D.from_meshes(meshes)
 

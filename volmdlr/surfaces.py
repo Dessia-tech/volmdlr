@@ -2949,7 +2949,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """Get torus inner radius."""
         return self.major_radius - self.minor_radius
 
-    def _torus_arcs(self, number_arcs: int = 50):
+    def torus_arcs(self, number_arcs: int = 50):
         arcs = []
         center = self.frame.origin + self.frame.u * self.major_radius
         for i in range(number_arcs):
@@ -3375,7 +3375,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             ax = fig.add_subplot(111, projection='3d')
 
         self.frame.plot(ax=ax, ratio=self.major_radius)
-        circles = self._torus_arcs(100) + self._torus_circle_generatrices_xy(30)
+        circles = self.torus_arcs(100) + self._torus_circle_generatrices_xy(30)
         for circle in circles:
             circle.plot(ax=ax, edge_style=edge_style)
 
@@ -3576,7 +3576,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: other plane 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(100) + self._torus_circle_generatrices_xy(100)
+        arcs = self.torus_arcs(100) + self._torus_circle_generatrices_xy(100)
         points_intersections = []
         for arc in arcs:
             if plane3d.frame.w.dot(arc.frame.w) == 1.0:
@@ -3652,7 +3652,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param cylindrical_surface: other Cylindrical 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(200) + self._torus_circle_generatrices_xy(200)
+        arcs = self.torus_arcs(200) + self._torus_circle_generatrices_xy(200)
         points_intersections = []
         for arc in arcs:
             intersections = cylindrical_surface.circle_intersections(arc)
@@ -3719,7 +3719,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param conical_surface: other Conical Surface 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(200)
+        arcs = self.torus_arcs(200)
         points_intersections = []
         for arc in arcs:
             intersections = conical_surface.circle_intersections(arc)
@@ -3762,7 +3762,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
+        arcs = self.torus_arcs(300) + self._torus_circle_generatrices_xy(100)
         intersection_points = []
         for arc in arcs:
             intersections = spherical_surface.circle_intersections(arc)
