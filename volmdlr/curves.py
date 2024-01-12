@@ -875,9 +875,7 @@ class Line3D(Line):
         x1, y1, z1 = v1.x, v1.y, v1.z
         v2 = self.point2 + u * length
         x2, y2, z2 = v2.x, v2.y, v2.z
-        # # Line segment
-        # ax.plot([x1, x2], [y1, y2],
-        #         [z1, z2], color=edge_style.color, alpha=edge_style.alpha)
+
         if edge_style.dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color,
                     dashes=[30, 5, 10, 5])
@@ -2085,7 +2083,7 @@ class Circle3D(CircleMixin, ClosedCurve):
         """
         point1 = self.center + self.frame.u * self.radius
         other_point1 = other_circle.center + other_circle.frame.u * other_circle.radius
-        return vm_common_operations._generic_minimum_distance(
+        return vm_common_operations.generic_minimum_distance(
             self, other_circle, point1, point1, other_point1, other_point1, return_points)
 
 

@@ -4,7 +4,6 @@ Concatenate common operation for two or more objects.
 """
 import math
 import random
-import time
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -252,7 +251,7 @@ def get_point_distance_to_edge(edge, point, start, end):
     return distance
 
 
-def _generic_minimum_distance(self, element, point1_edge1_, point2_edge1_, point1_edge2_,
+def generic_minimum_distance(self, element, point1_edge1_, point2_edge1_, point1_edge2_,
                               point2_edge2_, return_points=False):
     """
     Gets the minimum distance between two elements.
@@ -268,13 +267,6 @@ def _generic_minimum_distance(self, element, point1_edge1_, point2_edge1_, point
     distance_points = None
     distance = best_distance
 
-    # point1_edge1_ = self.start
-    # point2_edge1_ = self.end
-
-    # point1_edge2_ = element.start
-    # point2_edge2_ = element.end
-    # min_dist_point1 = None
-    # min_dist_point2 = None
     linesegment_class_ = getattr(volmdlr.edges, 'LineSegment' + self.__class__.__name__[-2:])
     while True:
         edge1_discretized_points_between_1_2 = self.local_discretization(point1_edge1_, point2_edge1_,
@@ -299,7 +291,6 @@ def _generic_minimum_distance(self, element, point1_edge1_, point2_edge1_, point
         if math.isclose(distance, best_distance, abs_tol=1e-6):
             break
         best_distance = distance
-        # best_distance_points = distance_points
         n = 1
     if return_points:
         return distance, distance_points[0], distance_points[1]

@@ -243,8 +243,6 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
     line_seg_class_ = getattr(volmdlr.edges, "LineSegment" + bsplinecurve.__class__.__name__[-2:])
     abscissa1 = 0
     abscissa2 = bsplinecurve.length()
-    # if math.isnan(abscissa2):
-    #     print(True)
     if bsplinecurve.__class__.__name__ in ("BSplineCurve2D", "BSplineCurve3D"):
         bspline_discretized_points, points_abscissas = bsplinecurve.get_abscissa_discretization(
             abscissa1, abscissa2, number_points=resolution, return_abscissas=True)

@@ -9,7 +9,6 @@ from typing import List, Union, Dict, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy as npy
 from numpy.typing import NDArray
 import triangle as triangle_lib
 
@@ -189,8 +188,8 @@ class Surface2D(PhysicalObject):
         """
         vertices_grid = [(p.x, p.y) for p in points_grid]
         vertices.extend(vertices_grid)
-        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-               'segments': npy.array(segments).reshape((-1, 2)),
+        tri = {'vertices': np.array(vertices).reshape((-1, 2)),
+               'segments': np.array(segments).reshape((-1, 2)),
                }
         triagulation = triangle_lib.triangulate(tri, tri_opt)
         return display.Mesh2D(vertices=triagulation['vertices'], triangles=triagulation['triangles'])
@@ -281,9 +280,9 @@ class Surface2D(PhysicalObject):
             vertices_grid = [(p.x, p.y) for p in points_grid]
             vertices.extend(vertices_grid)
 
-        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-               'segments': npy.array(segments).reshape((-1, 2)),
-               'holes': npy.array(holes).reshape((-1, 2))
+        tri = {'vertices': np.array(vertices).reshape((-1, 2)),
+               'segments': np.array(segments).reshape((-1, 2)),
+               'holes': np.array(holes).reshape((-1, 2))
                }
         triangulation = triangle_lib.triangulate(tri, tri_opt)
         return display.Mesh2D(vertices=triangulation['vertices'], triangles=triangulation['triangles'])
@@ -1644,7 +1643,7 @@ class Plane3D(Surface3D):
         """
         return point2d.to_3d(self.frame.origin, self.frame.u, self.frame.v)
 
-    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+    def parametric_points_to_3d(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Transform parametric coordinates to 3D points on the plane.
 
@@ -1653,14 +1652,14 @@ class Plane3D(Surface3D):
 
         :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
                        where `n` is the number of points, and each row corresponds to `(u, v)`.
-        :type points: numpy.ndarray[npy.float64]
+        :type points: numpy.ndarray[np.float64]
 
         :return: Array of 3D points representing the plane in Cartesian coordinates.
-        :rtype: numpy.ndarray[npy.float64]
+        :rtype: numpy.ndarray[np.float64]
         """
-        center = npy.array(self.frame.origin)
-        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
-        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+        center = np.array(self.frame.origin)
+        x = np.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = np.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
 
         points = points.reshape(-1, 2, 1)
 
@@ -2449,7 +2448,7 @@ class CylindricalSurface3D(PeriodicalSurface):
                                 point2d.y)
         return self.frame.local_to_global_coordinates(point)
 
-    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+    def parametric_points_to_3d(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Transform parametric coordinates to 3D points on the cylindrical surface.
 
@@ -2458,23 +2457,23 @@ class CylindricalSurface3D(PeriodicalSurface):
 
         :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
                        where `n` is the number of points, and each row corresponds to `(u, v)`.
-        :type points: numpy.ndarray[npy.float64]
+        :type points: numpy.ndarray[np.float64]
 
         :return: Array of 3D points representing the cylindrical surface in Cartesian coordinates.
-        :rtype: numpy.ndarray[npy.float64]
+        :rtype: numpy.ndarray[np.float64]
         """
-        center = npy.array(self.frame.origin)
-        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
-        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
-        z = npy.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
+        center = np.array(self.frame.origin)
+        x = np.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = np.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+        z = np.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
 
         points = points.reshape(-1, 2, 1)
 
         u_values = points[:, 0]
         v_values = points[:, 1]
 
-        x_component = npy.cos(u_values) * x
-        y_component = npy.sin(u_values) * y
+        x_component = np.cos(u_values) * x
+        y_component = np.sin(u_values) * y
         z_component = v_values * z
 
         return center + self.radius * (x_component + y_component) + z_component
@@ -2768,11 +2767,11 @@ class CylindricalSurface3D(PeriodicalSurface):
         """
         curves_ = []
         for phi_range in [(0, math.pi), (math.pi, 2*math.pi), (2*math.pi, 3*math.pi), (3*math.pi, 4*math.pi)]:
-            phi = npy.linspace(phi_range[0], phi_range[1], 100)
+            phi = np.linspace(phi_range[0], phi_range[1], 100)
             intersection_points = [volmdlr.Point3D(x_comp, y_comp, z_comp)
                                    for x_comp, y_comp, z_comp in zip(
-                                       self.radius * npy.cos(phi), self.radius * npy.sin(phi),
-                                       2 * math.sqrt(distance_axis_sphere_center*self.radius)*npy.cos(phi / 2))]
+                                       self.radius * np.cos(phi), self.radius * np.sin(phi),
+                                       2 * math.sqrt(distance_axis_sphere_center*self.radius)*np.cos(phi / 2))]
             bspline = edges.BSplineCurve3D.from_points_interpolation(intersection_points, 4, centripetal=False)
             curves_.append(bspline)
         global_intersections = [edge.frame_mapping(frame, 'old') for edge in curves_]
@@ -2797,10 +2796,10 @@ class CylindricalSurface3D(PeriodicalSurface):
             phi_0 = -phi_0+0.000001
             two_curves = False
 
-        phi = npy.linspace(phi_0, phi_1, 400)
-        x_components = self.radius * npy.cos(phi)
-        y_components = self.radius * npy.sin(phi)
-        z_components1 = npy.sqrt(2 * distance_axis_sphere_center * (b + x_components))
+        phi = np.linspace(phi_0, phi_1, 400)
+        x_components = self.radius * np.cos(phi)
+        y_components = self.radius * np.sin(phi)
+        z_components1 = np.sqrt(2 * distance_axis_sphere_center * (b + x_components))
 
         inters_points = [[volmdlr.Point3D(x_comp, y_comp, z_comp)
                           for x_comp, y_comp, z_comp in zip(x_components, y_components, z_components1)],
@@ -2949,7 +2948,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """Get torus inner radius."""
         return self.major_radius - self.minor_radius
 
-    def _torus_arcs(self, number_arcs: int = 50):
+    def torus_arcs(self, number_arcs: int = 50):
         arcs = []
         center = self.frame.origin + self.frame.u * self.major_radius
         for i in range(number_arcs):
@@ -2964,7 +2963,7 @@ class ToroidalSurface3D(PeriodicalSurface):
     def _torus_circle_generatrices_xy(self, number_arcs: int = 50):
         initial_point = self.frame.origin
         circles = []
-        phis = npy.linspace(-0.5*math.pi, 0.5*math.pi, number_arcs)
+        phis = np.linspace(-0.5*math.pi, 0.5*math.pi, number_arcs)
         zs = self.minor_radius * np.sin(phis)
         r_cossines = self.minor_radius * np.cos(phis)
         radiuses1 = self.major_radius - r_cossines
@@ -3091,7 +3090,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                     theta += math.pi
         return volmdlr.Point2D(theta, phi)
 
-    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+    def parametric_points_to_3d(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Transform parametric coordinates to 3D points on the toroidal surface.
 
@@ -3100,25 +3099,25 @@ class ToroidalSurface3D(PeriodicalSurface):
 
         :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
                        where `n` is the number of points, and each row corresponds to `(u, v)`.
-        :type points: numpy.ndarray[npy.float64]
+        :type points: numpy.ndarray[np.float64]
 
         :return: Array of 3D points representing the toroidal surface in Cartesian coordinates.
-        :rtype: numpy.ndarray[npy.float64]
+        :rtype: numpy.ndarray[np.float64]
         """
-        center = npy.array(self.frame.origin)
-        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
-        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
-        z = npy.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
+        center = np.array(self.frame.origin)
+        x = np.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = np.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+        z = np.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
 
         points = points.reshape(-1, 2, 1)
 
         u_values = points[:, 0]
         v_values = points[:, 1]
 
-        common_term = self.major_radius + self.minor_radius * npy.cos(v_values)
-        x_component = npy.cos(u_values) * x
-        y_component = npy.sin(u_values) * y
-        z_component = self.minor_radius * npy.sin(v_values) * z
+        common_term = self.major_radius + self.minor_radius * np.cos(v_values)
+        x_component = np.cos(u_values) * x
+        y_component = np.sin(u_values) * y
+        z_component = self.minor_radius * np.sin(v_values) * z
 
         return center + common_term * (x_component + y_component) + z_component
 
@@ -3373,7 +3372,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             ax = fig.add_subplot(111, projection='3d')
 
         self.frame.plot(ax=ax, ratio=self.major_radius)
-        circles = self._torus_arcs(100) + self._torus_circle_generatrices_xy(30)
+        circles = self.torus_arcs(100) + self._torus_circle_generatrices_xy(30)
         for circle in circles:
             circle.plot(ax=ax, edge_style=edge_style)
 
@@ -3440,7 +3439,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         coeff_d = vector.x**2 + vector.y**2
         coeff_e = 2 * (line.point1.x * vector.x + line.point1.y * vector.y)
         coeff_f = line.point1.x**2 + line.point1.y**2
-        solutions = npy.roots([(coeff_a**2), 2*coeff_a*coeff_b,
+        solutions = np.roots([(coeff_a**2), 2*coeff_a*coeff_b,
                                (2*coeff_a*coeff_c + coeff_b**2 - 4*coeff_d*self.major_radius**2),
                                (2*coeff_b*coeff_c - 4*self.major_radius**2*coeff_e),
                                coeff_c**2 - 4*self.major_radius**2*coeff_f])
@@ -3460,25 +3459,11 @@ class ToroidalSurface3D(PeriodicalSurface):
             global_intersections = [self.frame.local_to_global_coordinates(point) for point in local_intersections]
             return global_intersections
 
-        # if line.point_distance(self.frame.origin) > self.inner_radius:
-        #     torus_origin_plane = Plane3D(self.frame)
-        #     projected_point_plane3d, _ = line.point_projection(self.frame.origin)
-        #     torus_plane_projection = torus_origin_plane.point_projection(projected_point_plane3d)
-        #     point = self.frame.origin + (torus_plane_projection - self.frame.origin).unit_vector() * self.major_radius
-        #     closest_point = line.closest_point_on_line(point)
-        #     not_inside = self.major_radius - math.sqrt(closest_point.x**2 +
-        #                                                closest_point.y**2) + closest_point.z**2 > self.minor_radius
-        #     if math.sqrt(torus_plane_projection.point_distance(self.frame.origin)**2 +
-        #                  projected_point_plane3d.point_distance(torus_plane_projection)**2) >\
-        #         math.sqrt(self.major_radius**2 + self.minor_radius**2) and\
-        #             not_inside:
-        #         return []
-
         vector = line.unit_direction_vector()
         solutions = self._get_line_intersections_solution_roots(line)
         intersections = []
         for sol_param in sorted(solutions):
-            if isinstance(sol_param, npy.complex128):
+            if isinstance(sol_param, np.complex128):
                 if sol_param.imag == 0.0:
                     intersections.append(line.point1 + sol_param.real*vector)
             else:
@@ -3602,9 +3587,9 @@ class ToroidalSurface3D(PeriodicalSurface):
         """
         axis_angle = math.degrees(volmdlr.geometry.vectors3d_angle(self.frame.w, plane3d.frame.w))
         if 0 < axis_angle <= math.degrees(math.atan(self.minor_radius / self.major_radius)):
-            torus_circles = self._torus_arcs(80)
+            torus_circles = self.torus_arcs(80)
         elif axis_angle < 45:
-            torus_circles = self._torus_arcs(80) + self._torus_circle_generatrices_xy(80)
+            torus_circles = self.torus_arcs(80) + self._torus_circle_generatrices_xy(80)
         else:
             torus_circles = self._torus_circle_generatrices_xy(80)
         points_intersections = []
@@ -3613,16 +3598,6 @@ class ToroidalSurface3D(PeriodicalSurface):
             for i in inters:
                 if not i.in_list(points_intersections):
                     points_intersections.append(i)
-
-        # if not plane3d.point_belongs(self.frame.origin, 1e-6):
-        #     point_projection = plane3d.point_projection(self.frame.origin)
-        #     vector = (point_projection - self.frame.origin).unit_vector()
-        #     frame = volmdlr.Frame3D(point_projection, vector, self.frame.w, vector.cross(self.frame.w))
-        #     plane_intersections = vm_utils_intersections.get_two_planes_intersections(plane3d.frame, frame)
-        #     line = curves.Line3D(*plane_intersections)
-        #     for inter in self.line_intersections(line):
-        #         if not inter.in_list(points_intersections):
-        #             points_intersections.append(inter)
         return points_intersections
 
     def get_villarceau_circles(self, plane3d):
@@ -3666,7 +3641,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             vector = (point_projection - self.frame.origin).unit_vector()
             frame = volmdlr.Frame3D(point_projection, vector, self.frame.w, vector.cross(self.frame.w))
             plane_intersections = vm_utils_intersections.get_two_planes_intersections(plane3d.frame, frame)
-            line = curves.Line3D(*plane_intersections)
+            line = curves.Line3D(plane_intersections[0], plane_intersections[1])
             line_intersections = self.line_intersections(line)
             for inter in self.line_intersections(line):
                 if not inter.in_list(points_intersections):
@@ -3706,7 +3681,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param cylindrical_surface: other Cylindrical 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(200) + self._torus_circle_generatrices_xy(200)
+        arcs = self.torus_arcs(200) + self._torus_circle_generatrices_xy(200)
         points_intersections = []
         for arc in arcs:
             intersections = cylindrical_surface.circle_intersections(arc)
@@ -3771,7 +3746,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param conical_surface: other Conical Surface 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(200)
+        arcs = self.torus_arcs(200)
         points_intersections = []
         for arc in arcs:
             intersections = conical_surface.circle_intersections(arc)
@@ -3814,7 +3789,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
+        arcs = self.torus_arcs(300) + self._torus_circle_generatrices_xy(100)
         intersection_points = []
         for arc in arcs:
             intersections = spherical_surface.circle_intersections(arc)
@@ -3848,24 +3823,14 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param toroidal_surface: other Toroidal Surface 3d.
         :return: points of intersections.
         """
-        # arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
-        arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(200)
-        # arcs = self._torus_arcs(200)
+        arcs = self.torus_arcs(300) + self._torus_circle_generatrices_xy(200)
         intersection_points = []
-        for i, arc in enumerate(arcs):
+        for arc in arcs:
             intersections = toroidal_surface.circle_intersections(arc)
             for intersection in intersections:
                 if not intersection.in_list(intersection_points):
                     intersection_points.append(intersection)
-            # intersection_points.extend(inter for inter in intersections if not inter.is_list(intersection_points))
 
-        # arcs = toroidal_surface._torus_arcs(300) + toroidal_surface._torus_circle_generatrices_xy(100)
-        # # arcs = toroidal_surface._torus_circle_generatrices_xy(100)
-        # for j, arc in enumerate(arcs):
-        #     intersections = self.circle_intersections(arc)
-        #     for intersection in intersections:
-        #         if not intersection.in_list(intersection_points):
-        #             intersection_points.append(intersection)
         return intersection_points
 
     def toroidalsurface_intersections_profile_profile(self, toroidal_surface):
@@ -3878,7 +3843,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         local_self = self.frame_mapping(self.frame, 'new')
         local_other_toroidal_surface = toroidal_surface.frame_mapping(self.frame, 'new')
 
-        circle = local_self._torus_arcs(1)[0]
+        circle = local_self.torus_arcs(1)[0]
         circle_intersections = local_other_toroidal_surface.circle_intersections(circle)
         circles = []
         for intersection in circle_intersections:
@@ -3886,6 +3851,58 @@ class ToroidalSurface3D(PeriodicalSurface):
             circles_frame = volmdlr.Frame3D(center, local_self.frame.u, local_self.frame.v, local_self.frame.w)
             circles.append(curves.Circle3D(circles_frame, intersection.point_distance(center)))
         return circles
+
+    def _yvone_villarceau_circles(self, toroidal_surface):
+        """
+        Gets the Yvone-Villarceau circles from two toroidal surfaces intersections.
+
+        """
+        circle_r1 = curves.Circle3D(self.frame, self.minor_radius)
+        circle_r2 = curves.Circle3D(toroidal_surface.frame, toroidal_surface.minor_radius)
+        circle_intersections = circle_r1.circle_intersections(circle_r2)
+        intersections = []
+        for intersection in circle_intersections:
+            x_comp, y_comp, _ = intersection
+            cos_s = x_comp / self.minor_radius
+            sin_s = y_comp / self.minor_radius
+            if toroidal_surface.frame.u.z != 0.0 and toroidal_surface.frame.v.z != 0.0:
+                sin_t = (y_comp -
+                         toroidal_surface.frame.origin.y +
+                         (toroidal_surface.frame.origin.z *
+                          toroidal_surface.frame.u.y / toroidal_surface.frame.u.z)) * (1 / (
+                        (toroidal_surface.frame.v.y - (
+                                toroidal_surface.frame.v.z / toroidal_surface.frame.u.z)
+                         ) * toroidal_surface.minor_radius))
+                cos_t = -toroidal_surface.frame.origin.z / (
+                        toroidal_surface.minor_radius * toroidal_surface.frame.u.z
+                ) - sin_t * (
+                                toroidal_surface.frame.v.z / toroidal_surface.frame.u.z)
+            elif toroidal_surface.frame.origin.z == 0:
+                sin_t = (y_comp - toroidal_surface.frame.origin.y
+                         ) * (1 / (toroidal_surface.frame.v.y * toroidal_surface.minor_radius))
+                cos_t = math.cos(math.asin(sin_t))
+            else:
+                raise NotImplementedError
+            for sign in [1, -1]:
+
+                normal1 = volmdlr.Vector3D(-(self.minor_radius / self.major_radius) * sin_s,
+                                           (self.minor_radius / self.major_radius) * cos_s,
+                                           sign * math.sqrt(
+                                               1 - (self.minor_radius / self.major_radius) ** 2)
+                                           ).unit_vector()
+                normal2 = -(toroidal_surface.minor_radius / toroidal_surface.major_radius
+                            ) * sin_t * toroidal_surface.frame.u + (
+                                  toroidal_surface.minor_radius / toroidal_surface.major_radius
+                          ) * cos_t * toroidal_surface.frame.v + sign * math.sqrt(
+                    1 - (toroidal_surface.minor_radius / toroidal_surface.major_radius) ** 2
+                ) * toroidal_surface.frame.w
+                if abs(abs(normal1.dot(normal2.unit_vector())) - 1.0) < 1e-6:
+                    intersections.append(curves.Circle3D.from_center_normal(
+                        intersection, normal1, self.major_radius))
+            vector = (intersection - self.frame.origin).unit_vector()
+            plane = Plane3D(volmdlr.Frame3D(intersection, self.frame.w, vector.cross(self.frame.w), vector))
+            intersections.extend(self.plane_intersections(plane))
+        return intersections
 
     def toroidalsurface_intersections(self, toroidal_surface):
         """
@@ -3920,55 +3937,12 @@ class ToroidalSurface3D(PeriodicalSurface):
                     abs(distance_origin_to_other_axis -
                         self.minor_radius - toroidal_surface.minor_radius) < 1e-6:
                 if is_minor_same:
-                    circle_r1 = curves.Circle3D(self.frame, self.minor_radius)
-                    circle_r2 = curves.Circle3D(toroidal_surface.frame, toroidal_surface.minor_radius)
-                    circle_intersections = circle_r1.circle_intersections(circle_r2)
-                    for intersection in circle_intersections:
-                        x_comp, y_comp, _ = intersection
-                        cos_s = x_comp / self.minor_radius
-                        sin_s = y_comp / self.minor_radius
-                        if toroidal_surface.frame.u.z != 0.0 and toroidal_surface.frame.v.z != 0.0:
-                            sin_t = (y_comp - toroidal_surface.frame.origin.y +
-                                     toroidal_surface.frame.origin.z * toroidal_surface.frame.u.y / toroidal_surface.frame.u.z
-                                     ) * (1 / (
-                                    (toroidal_surface.frame.v.y - (
-                                                toroidal_surface.frame.v.z / toroidal_surface.frame.u.z)
-                                     ) * toroidal_surface.minor_radius))
-                            cos_t = -toroidal_surface.frame.origin.z / (
-                                    toroidal_surface.minor_radius * toroidal_surface.frame.u.z
-                            ) - sin_t * (
-                                            toroidal_surface.frame.v.z / toroidal_surface.frame.u.z)
-                        elif toroidal_surface.frame.origin.z == 0:
-                            sin_t = (y_comp - toroidal_surface.frame.origin.y
-                                     ) * (1 / (toroidal_surface.frame.v.y * toroidal_surface.minor_radius))
-                            cos_t = math.cos(math.asin(sin_t))
-                        else:
-                            raise NotImplementedError
-                        for sign in [1, -1]:
-
-                            normal1 = volmdlr.Vector3D(-(self.minor_radius / self.major_radius) * sin_s,
-                                                       (self.minor_radius / self.major_radius) * cos_s,
-                                                       sign * math.sqrt(
-                                                           1 - (self.minor_radius / self.major_radius) ** 2)
-                                                       ).unit_vector()
-                            normal2 = -(toroidal_surface.minor_radius / toroidal_surface.major_radius
-                                        ) * sin_t * toroidal_surface.frame.u + (
-                                              toroidal_surface.minor_radius / toroidal_surface.major_radius
-                                      ) * cos_t * toroidal_surface.frame.v + sign * math.sqrt(
-                                1 - (toroidal_surface.minor_radius / toroidal_surface.major_radius) ** 2
-                            ) * toroidal_surface.frame.w
-                            if abs(abs(normal1.dot(normal2.unit_vector())) - 1.0) < 1e-6:
-                                intersections.append(curves.Circle3D.from_center_normal(
-                                    intersection, normal1, self.major_radius))
-                        vector = (intersection - self.frame.origin).unit_vector()
-                        plane = Plane3D(volmdlr.Frame3D(intersection, self.frame.w, vector.cross(self.frame.w), vector))
-                        intersections.extend(self.plane_intersections(plane))
-                        if intersections:
-                            return intersections
+                    intersections = self._yvone_villarceau_circles(toroidal_surface)
+                    if intersections:
+                        return intersections
 
                 intersection_points = self._toroidal_intersection_points(toroidal_surface)
                 vector = (toroidal_surface.frame.origin - self.frame.origin).unit_vector()
-                # if abs(self.frame.w.dot(vector)) < 1e-6:
                 point1 = self.frame.origin - vector * self.inner_radius
                 if not point1.in_list(intersection_points):
                     intersection_points.append(point1)
@@ -4002,51 +3976,28 @@ class ToroidalSurface3D(PeriodicalSurface):
                         curves_.append(edge)
                 return curves_
             elif (is_minor_same and
-                  abs(self.frame.w.dot((toroidal_surface.frame.origin -  self.frame.origin).unit_vector())) < 1e-6 and
+                  abs(self.frame.w.dot((toroidal_surface.frame.origin - self.frame.origin).unit_vector())) < 1e-6 and
                   distance_origin_to_other_axis - self.outer_radius < toroidal_surface.inner_radius):
                 circle_bigr1 = curves.Circle3D(self.frame, self.major_radius + self.minor_radius)
                 circle_bigr2 = curves.Circle3D(toroidal_surface.frame,
                                                toroidal_surface.major_radius + toroidal_surface.minor_radius)
                 circle_intersections = circle_bigr1.circle_intersections(circle_bigr2)
-                # if abs(self.minor_radius - toroidal_surface.minor_radius) < 1e-6 and \
-                #         abs(abs(axis_line.point_distance(toroidal_surface.frame.origin) -
-                #         self.inner_radius - toroidal_surface.inner_radius) - 2 * self.minor_radius) < 1e-6:
-                #     vector = (toroidal_surface.frame.origin - self.frame.origin).unit_vector()
-                #     center = self.frame.origin + vector * self.major_radius
-                #     intersections = [curves.Circle3D(volmdlr.Frame3D(
-                #         center, self.frame.w, vector, vector.cross(self.frame.w)), self.minor_radius)]
-                #     if abs(self.major_radius - toroidal_surface.major_radius) < 1e-6:
-                #         plane = Plane3D(volmdlr.Frame3D(center, self.frame.w, vector.cross(self.frame.w), vector))
-                #         intersections.extend(self.plane_intersections(plane))
 
                 if circle_intersections:
                     center = (circle_intersections[0] + circle_intersections[1]) / 2
                     vector = (center - self.frame.origin).unit_vector()
-                    # intersections = [curves.Circle3D(volmdlr.Frame3D(
-                    #     center, self.frame.w, vector, vector.cross(self.frame.w)), self.minor_radius)]
                     plane = Plane3D(volmdlr.Frame3D(center, self.frame.w, vector.cross(self.frame.w), vector))
                     intersections = self.plane_intersections(plane)
-                # print(True)
-                # plane = Plane3D(volmdlr.Frame3D(center, self.frame.w, vector.cross(self.frame.w), vector))
-                # intersections = self.plane_intersections(plane)
-                # return intersections + [circle]
-        # if abs(self.major_radius - toroidal_surface.major_radius) < 1e-6:
 
         intersection_points = self._toroidal_intersection_points(toroidal_surface)
         if not intersection_points:
             return intersections
         if intersections:
-            # for point in intersection_points:
-            #     if any(intersection.point_belongs(point) for intersection in intersections):
             intersection_points = [point for point in intersection_points if not any(
                 intersection.point_belongs(point, 1e-4) for intersection in intersections)]
         inters_points = vm_common_operations.separate_points_by_closeness(intersection_points)
-        # curves_ = []
         for list_points in inters_points:
-            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 4, centripetal=False)
-            if isinstance(bspline.simplify, edges.FullArc3D):
-                intersections.append(bspline.simplify)
-                continue
+            bspline = edges.BSplineCurve3D.from_points_interpolation(list_points, 8, centripetal=False)
             intersections.append(bspline)
         return intersections
 
@@ -4128,7 +4079,7 @@ class ConicalSurface3D(PeriodicalSurface):
         :param number_circles: number of expected circles.
         """
         circles = []
-        for i_z in npy.linspace(z1, z2, number_circles):
+        for i_z in np.linspace(z1, z2, number_circles):
             circle = self.get_circle_at_z(i_z)
             if circle.radius == 0.0:
                 continue
@@ -4246,7 +4197,7 @@ class ConicalSurface3D(PeriodicalSurface):
             theta = 0.0
         return volmdlr.Point2D(theta, z)
 
-    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+    def parametric_points_to_3d(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Transform parametric coordinates to 3D points on the conical surface.
 
@@ -4255,23 +4206,23 @@ class ConicalSurface3D(PeriodicalSurface):
 
         :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
                        where `n` is the number of points, and each row corresponds to `(u, v)`.
-        :type points: numpy.ndarray[npy.float64]
+        :type points: numpy.ndarray[np.float64]
 
         :return: Array of 3D points representing the conical surface in Cartesian coordinates.
-        :rtype: numpy.ndarray[npy.float64]
+        :rtype: numpy.ndarray[np.float64]
         """
-        center = npy.array(self.frame.origin)
-        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
-        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
-        z = npy.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
+        center = np.array(self.frame.origin)
+        x = np.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = np.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+        z = np.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
 
         points = points.reshape(-1, 2, 1)
 
         u_values = points[:, 0]
         v_values = points[:, 1]
 
-        x_component = npy.cos(u_values) * x
-        y_component = npy.sin(u_values) * y
+        x_component = np.cos(u_values) * x
+        y_component = np.sin(u_values) * y
 
         return center + v_values * math.tan(self.semi_angle) * (x_component + y_component) + v_values * z
 
@@ -4844,7 +4795,7 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         circles = []
         i_frame = volmdlr.Frame3D(self.frame.origin, self.frame.v, self.frame.w, self.frame.u)
-        for theta in npy.linspace(0, volmdlr.TWO_PI / 2, number_circles):
+        for theta in np.linspace(0, volmdlr.TWO_PI / 2, number_circles):
             i_frame_ = i_frame.rotation(self.frame.origin, self.frame.w, theta)
             circle = curves.Circle3D(i_frame_, self.radius)
             circles.append(circle)
@@ -4859,7 +4810,7 @@ class SphericalSurface3D(PeriodicalSurface):
         """
         circles = []
         initial_center = self.frame.origin.translation(-self.frame.w*self.radius)
-        for i in npy.linspace(0, 2 * self.radius, number_circles):
+        for i in np.linspace(0, 2 * self.radius, number_circles):
             center = initial_center.translation(self.frame.w * i)
             frame = volmdlr.Frame3D(center, self.frame.u, self.frame.v, self.frame.w)
             dist = center.point_distance(self.frame.origin)
@@ -5018,7 +4969,7 @@ class SphericalSurface3D(PeriodicalSurface):
 
         return volmdlr.Point2D(theta, phi)
 
-    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+    def parametric_points_to_3d(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Transform parametric coordinates to 3D points on the spherical surface.
 
@@ -5027,25 +4978,25 @@ class SphericalSurface3D(PeriodicalSurface):
 
         :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
                        where `n` is the number of points, and each row corresponds to `(u, v)`.
-        :type points: numpy.ndarray[npy.float64]
+        :type points: numpy.ndarray[np.float64]
 
         :return: Array of 3D points representing the spherical surface in Cartesian coordinates.
-        :rtype: numpy.ndarray[npy.float64]
+        :rtype: numpy.ndarray[np.float64]
         """
-        center = npy.array(self.frame.origin)
-        x = npy.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
-        y = npy.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
-        z = npy.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
+        center = np.array(self.frame.origin)
+        x = np.array([self.frame.u[0], self.frame.u[1], self.frame.u[2]])
+        y = np.array([self.frame.v[0], self.frame.v[1], self.frame.v[2]])
+        z = np.array([self.frame.w[0], self.frame.w[1], self.frame.w[2]])
 
         points = points.reshape(-1, 2, 1)
 
         u_values = points[:, 0]
         v_values = points[:, 1]
 
-        common_term = self.radius * npy.cos(v_values)
-        x_component = npy.cos(u_values) * x
-        y_component = npy.sin(u_values) * y
-        z_component = self.radius * npy.sin(v_values) * z
+        common_term = self.radius * np.cos(v_values)
+        x_component = np.cos(u_values) * x
+        y_component = np.sin(u_values) * y
+        z_component = self.radius * np.sin(v_values) * z
 
         return center + common_term * (x_component + y_component) + z_component
 
@@ -6016,7 +5967,7 @@ class ExtrusionSurface3D(Surface3D):
 
         return volmdlr.Point2D(u, v)
 
-    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+    def parametric_points_to_3d(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Transform parametric coordinates to 3D points on the extrusion surface.
 
@@ -6025,12 +5976,12 @@ class ExtrusionSurface3D(Surface3D):
 
         :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
                        where `n` is the number of points, and each row corresponds to `(u, v)`.
-        :type points: numpy.ndarray[npy.float64]
+        :type points: numpy.ndarray[np.float64]
 
         :return: Array of 3D points representing the extrusion surface in Cartesian coordinates.
-        :rtype: numpy.ndarray[npy.float64]
+        :rtype: numpy.ndarray[np.float64]
         """
-        z = npy.array([self.direction[0], self.direction[1], self.direction[2]])
+        z = np.array([self.direction[0], self.direction[1], self.direction[2]])
 
         points = points.reshape(-1, 2, 1)
 
@@ -6040,7 +5991,7 @@ class ExtrusionSurface3D(Surface3D):
             u_values[u_values < 0] += self.x_periodicity
         v_values = points[:, 1]
 
-        points_at_curve = npy.array([self.edge.point_at_abscissa(u) for u in u_values])
+        points_at_curve = np.array([self.edge.point_at_abscissa(u) for u in u_values])
 
         return points_at_curve + v_values * z
 
@@ -6430,7 +6381,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         v = self.edge.abscissa(point_at_curve)
         return volmdlr.Point2D(u, v)
 
-    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+    def parametric_points_to_3d(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Transform parametric coordinates to 3D points on the revolution surface.
 
@@ -6439,13 +6390,13 @@ class RevolutionSurface3D(PeriodicalSurface):
 
         :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
                        where `n` is the number of points, and each row corresponds to `(u, v)`.
-        :type points: numpy.ndarray[npy.float64]
+        :type points: numpy.ndarray[np.float64]
 
         :return: Array of 3D points representing the revolution surface in Cartesian coordinates.
-        :rtype: numpy.ndarray[npy.float64]
+        :rtype: numpy.ndarray[np.float64]
         """
-        center = npy.array(self.axis_point)
-        z = npy.array([self.axis[0], self.axis[1], self.axis[2]])
+        center = np.array(self.axis_point)
+        z = np.array([self.axis[0], self.axis[1], self.axis[2]])
 
         points = points.reshape(-1, 2, 1)
 
@@ -6455,14 +6406,14 @@ class RevolutionSurface3D(PeriodicalSurface):
             v_values[v_values > self.y_periodicity] -= self.y_periodicity
             v_values[v_values < 0] += self.y_periodicity
 
-        cos_u = npy.cos(u_values)
+        cos_u = np.cos(u_values)
 
-        points_at_curve = npy.array([self.edge.point_at_abscissa(v) for v in v_values])
+        points_at_curve = np.array([self.edge.point_at_abscissa(v) for v in v_values])
         points_at_curve_minus_center = points_at_curve - center
 
         return (center + points_at_curve_minus_center * cos_u +
-                npy.dot(points_at_curve_minus_center, z).reshape(-1, 1) * z * (1 - cos_u) +
-                npy.cross(z, points_at_curve_minus_center * npy.sin(u_values)))
+                np.dot(points_at_curve_minus_center, z).reshape(-1, 1) * z * (1 - cos_u) +
+                np.cross(z, points_at_curve_minus_center * np.sin(u_values)))
 
     def rectangular_cut(self, x1: float, x2: float,
                         y1: float, y2: float, name: str = ''):
@@ -6853,21 +6804,21 @@ class BSplineSurface3D(Surface3D):
     def __init__(self, degree_u: int, degree_v: int, control_points: List[volmdlr.Point3D], nb_u: int, nb_v: int,
                  u_multiplicities: List[int], v_multiplicities: List[int], u_knots: List[float], v_knots: List[float],
                  weights: List[float] = None, name: str = ''):
-        self.ctrlpts = npy.asarray(control_points)
+        self.ctrlpts = np.asarray(control_points)
         self.degree_u = int(degree_u)
         self.degree_v = int(degree_v)
         self.nb_u = int(nb_u)
         self.nb_v = int(nb_v)
 
-        self.u_knots = npy.asarray(nurbs_helpers.standardize_knot_vector(u_knots), dtype=npy.float64)
-        self.v_knots = npy.asarray(nurbs_helpers.standardize_knot_vector(v_knots), dtype=npy.float64)
-        self.u_multiplicities = npy.asarray(u_multiplicities, dtype=npy.int16)
-        self.v_multiplicities = npy.asarray(v_multiplicities, dtype=npy.int16)
+        self.u_knots = np.asarray(nurbs_helpers.standardize_knot_vector(u_knots), dtype=np.float64)
+        self.v_knots = np.asarray(nurbs_helpers.standardize_knot_vector(v_knots), dtype=np.float64)
+        self.u_multiplicities = np.asarray(u_multiplicities, dtype=np.int16)
+        self.v_multiplicities = np.asarray(v_multiplicities, dtype=np.int16)
         self._weights = weights
         self.rational = False
         if weights is not None:
             self.rational = True
-            self._weights = npy.asarray(weights, dtype=npy.float64)
+            self._weights = np.asarray(weights, dtype=np.float64)
 
         self._surface = None
         Surface3D.__init__(self, name=name)
@@ -6881,7 +6832,7 @@ class BSplineSurface3D(Surface3D):
         self._knotvector = None
         self.ctrlptsw = None
         if self._weights is not None:
-            self.ctrlptsw = npy.hstack((self.ctrlpts * self._weights[:, npy.newaxis], self._weights[:, npy.newaxis]))
+            self.ctrlptsw = np.hstack((self.ctrlpts * self._weights[:, np.newaxis], self._weights[:, np.newaxis]))
         self._delta = [0.05, 0.05]
         self._eval_points = None
         self._vertices = None
@@ -6982,7 +6933,7 @@ class BSplineSurface3D(Surface3D):
         Compute the global knot vector (u direction) based on knot elements and multiplicities.
 
         """
-        return npy.repeat(self.u_knots, self.u_multiplicities)
+        return np.repeat(self.u_knots, self.u_multiplicities)
 
     @property
     def knots_vector_v(self):
@@ -6990,7 +6941,7 @@ class BSplineSurface3D(Surface3D):
         Compute the global knot vector (v direction) based on knot elements and multiplicities.
 
         """
-        return npy.repeat(self.v_knots, self.v_multiplicities)
+        return np.repeat(self.v_knots, self.v_multiplicities)
 
     @property
     def knotvector(self):
@@ -7193,13 +7144,13 @@ class BSplineSurface3D(Surface3D):
 
         """
         points = self.evalpts
-        xmin = npy.min(points[:, 0])
-        ymin = npy.min(points[:, 1])
-        zmin = npy.min(points[:, 2])
+        xmin = np.min(points[:, 0])
+        ymin = np.min(points[:, 1])
+        zmin = np.min(points[:, 2])
 
-        xmax = npy.max(points[:, 0])
-        ymax = npy.max(points[:, 1])
-        zmax = npy.max(points[:, 2])
+        xmax = np.max(points[:, 0])
+        ymax = np.max(points[:, 1])
+        zmax = np.max(points[:, 2])
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     @property
@@ -7330,9 +7281,9 @@ class BSplineSurface3D(Surface3D):
         stop_v = kwargs.get('stop_v', knotvector_v[-(self.degree_v + 1)])
 
         # Evaluate and cache
-        self._eval_points = npy.asarray(evaluate_surface(self.data,
+        self._eval_points = np.asarray(evaluate_surface(self.data,
                                                          start=(start_u, start_v),
-                                                         stop=(stop_u, stop_v)), dtype=npy.float64)
+                                                         stop=(stop_u, stop_v)), dtype=np.float64)
 
     @property
     def evalpts(self):
@@ -7440,7 +7391,7 @@ class BSplineSurface3D(Surface3D):
         Each row represents the control points in u direction and each column the points in v direction.
         """
         ctrlpts = self.ctrlptsw if self.rational else self.ctrlpts
-        return npy.reshape(ctrlpts, (self.nb_u, self.nb_v, -1))
+        return np.reshape(ctrlpts, (self.nb_u, self.nb_v, -1))
 
     def vertices(self):
         """
@@ -7452,8 +7403,8 @@ class BSplineSurface3D(Surface3D):
         u_min, u_max, v_min, v_max = self.domain
         if self._vertices is None or len(self._vertices) == 0:
             vertices = []
-            u_vector = npy.linspace(u_min, u_max, self.sample_size_u, dtype=npy.float64)
-            v_vector = npy.linspace(v_min, v_max, self.sample_size_v, dtype=npy.float64)
+            u_vector = np.linspace(u_min, u_max, self.sample_size_u, dtype=np.float64)
+            v_vector = np.linspace(v_min, v_max, self.sample_size_v, dtype=np.float64)
             for u in u_vector:
                 for v in v_vector:
                     vertices.append((u, v))
@@ -7471,7 +7422,7 @@ class BSplineSurface3D(Surface3D):
         Define control points like a matrix, for each coordinate: x:0, y:1, z:2.
         """
 
-        points = npy.empty((self.nb_u, self.nb_v))
+        points = np.empty((self.nb_u, self.nb_v))
         for i in range(0, self.nb_u):
             for j in range(0, self.nb_v):
                 points[i][j] = self.control_points_table[i][j][coordinates]
@@ -7552,7 +7503,7 @@ class BSplineSurface3D(Surface3D):
         Compute a vector of basis_functions in u direction for u=u.
         """
 
-        blending_vect = npy.empty((1, self.nb_u))
+        blending_vect = np.empty((1, self.nb_u))
         for j in range(0, self.nb_u):
             blending_vect[0][j] = self.basis_functions_u(u, self.degree_u, j)
 
@@ -7564,7 +7515,7 @@ class BSplineSurface3D(Surface3D):
 
         """
 
-        blending_vect = npy.empty((1, self.nb_v))
+        blending_vect = np.empty((1, self.nb_v))
         for j in range(0, self.nb_v):
             blending_vect[0][j] = self.basis_functions_v(v, self.degree_v, j)
 
@@ -7576,7 +7527,7 @@ class BSplineSurface3D(Surface3D):
 
         """
 
-        blending_mat = npy.empty((len(u), self.nb_u))
+        blending_mat = np.empty((len(u), self.nb_u))
         for i, u_i in enumerate(u):
             for j in range(self.nb_u):
                 blending_mat[i][j] = self.basis_functions_u(u_i, self.degree_u, j)
@@ -7588,7 +7539,7 @@ class BSplineSurface3D(Surface3D):
 
         """
 
-        blending_mat = npy.empty((len(v), self.nb_v))
+        blending_mat = np.empty((len(v), self.nb_v))
         for i, v_i in enumerate(v):
             for j in range(self.nb_v):
                 blending_mat[i][j] = self.basis_functions_v(v_i, self.degree_v, j)
@@ -7679,9 +7630,9 @@ class BSplineSurface3D(Surface3D):
     @staticmethod
     def _find_index_min(matrix_points, point):
         """Helper function to find point of minimal distance."""
-        distances = npy.linalg.norm(matrix_points - point, axis=1)
+        distances = np.linalg.norm(matrix_points - point, axis=1)
 
-        return npy.argmin(distances), distances.min()
+        return np.argmin(distances), distances.min()
 
     def _point_inversion_initialization(self, point3d_array):
         """
@@ -7728,7 +7679,7 @@ class BSplineSurface3D(Surface3D):
         """
         Find the parameters (u, v) of a 3D point on the BSpline surface using a grid search algorithm.
         """
-        point3d_array = npy.asarray(point3d)
+        point3d_array = np.asarray(point3d)
         u, v, u_start, u_stop, v_start, v_stop, delta_u, delta_v, sample_size_u, sample_size_v, minimal_distance = \
             self._point_inversion_initialization(point3d_array)
         if minimal_distance <= acceptable_distance:
@@ -7755,9 +7706,9 @@ class BSplineSurface3D(Surface3D):
             if sample_size_u == 1 and sample_size_v == 1:
                 return (u, v), minimal_distance
             datadict["sample_size"] = [sample_size_u, sample_size_v]
-            matrix = npy.asarray(evaluate_surface(datadict,
+            matrix = np.asarray(evaluate_surface(datadict,
                                                   start=(u_start, v_start),
-                                                  stop=(u_stop, v_stop)), dtype=npy.float64)
+                                                  stop=(u_stop, v_stop)), dtype=np.float64)
             index, distance = self._find_index_min(matrix, point3d_array)
             if distance < minimal_distance:
                 minimal_distance = distance
@@ -7810,22 +7761,22 @@ class BSplineSurface3D(Surface3D):
             vector = derivatives[0][0] - point3d
             f_value = vector.norm()
             if f_value == 0.0:
-                jacobian = npy.array([0.0, 0.0])
+                jacobian = np.array([0.0, 0.0])
             else:
-                jacobian = npy.array([vector.dot(derivatives[1][0]) / f_value,
+                jacobian = np.array([vector.dot(derivatives[1][0]) / f_value,
                                       vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
 
         results = []
-        point3d_array = npy.asarray(point3d)
+        point3d_array = np.asarray(point3d)
         u_start, u_stop, v_start, v_stop = self.domain
-        res = minimize(fun, x0=npy.array(initial_guess), jac=True,
+        res = minimize(fun, x0=np.array(initial_guess), jac=True,
                        bounds=[(u_start, u_stop),
                                (v_start, v_stop)])
         if res.fun < 1e-6:
             return volmdlr.Point2D(*res.x)
-        distances = npy.linalg.norm(self.evalpts - point3d_array, axis=1)
-        indexes = npy.argsort(distances)
+        distances = np.linalg.norm(self.evalpts - point3d_array, axis=1)
+        indexes = np.argsort(distances)
         x0s = []
         delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
         delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
@@ -7865,8 +7816,8 @@ class BSplineSurface3D(Surface3D):
 
                 bbox = volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
                 if bbox.point_belongs(point3d):
-                    distances = npy.linalg.norm(patch.evalpts - point3d_array, axis=1)
-                    index = npy.argmin(distances)
+                    distances = np.linalg.norm(patch.evalpts - point3d_array, axis=1)
+                    index = np.argmin(distances)
                     u_start, u_stop, v_start, v_stop = patch.domain
                     delta_u = (u_stop - u_start) / (patch.sample_size_u - 1)
                     delta_v = (v_stop - v_start) / (patch.sample_size_v - 1)
@@ -7915,12 +7866,12 @@ class BSplineSurface3D(Surface3D):
         distance_vector = surface_derivatives[0][0] - point3d
         common_term = (surface_derivatives[1][0].dot(surface_derivatives[0][1]) +
                        distance_vector.dot(surface_derivatives[1][1]))
-        jacobian = npy.array(
+        jacobian = np.array(
             [[surface_derivatives[1][0].norm() ** 2 + distance_vector.dot(surface_derivatives[2][0]),
               common_term],
              [common_term,
               surface_derivatives[0][1].norm() ** 2 + distance_vector.dot(surface_derivatives[0][2])]])
-        k = npy.array(
+        k = np.array(
             [[-(distance_vector.dot(surface_derivatives[1][0]))], [-(distance_vector.dot(surface_derivatives[0][1]))]])
 
         return jacobian, k, surface_derivatives, distance_vector
@@ -7974,7 +7925,7 @@ class BSplineSurface3D(Surface3D):
         x[1] = v
         return x
 
-    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+    def parametric_points_to_3d(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Transform parametric coordinates to 3D points on the BSpline surface.
 
@@ -7983,13 +7934,13 @@ class BSplineSurface3D(Surface3D):
 
         :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
                        where `n` is the number of points, and each row corresponds to `(u, v)`.
-        :type points: numpy.ndarray[npy.float64]
+        :type points: numpy.ndarray[np.float64]
 
         :return: Array of 3D points representing the BSpline surface in Cartesian coordinates.
-        :rtype: numpy.ndarray[npy.float64]
+        :rtype: numpy.ndarray[np.float64]
         """
-        return npy.array([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
-                         dtype=npy.float64)
+        return np.array([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
+                         dtype=np.float64)
 
     def linesegment2d_to_3d(self, linesegment2d):
         """Evaluates the Euclidean form for the parametric line segment."""
@@ -8523,7 +8474,7 @@ class BSplineSurface3D(Surface3D):
 
         # System of nonlinear equations
         def non_linear_equations(xparam):
-            vector_f = npy.empty(len(equation_points) + 2)
+            vector_f = np.empty(len(equation_points) + 2)
             idx = 0
             for idx, point_ in enumerate(equation_points):
                 vector_f[idx] = abs((xparam[index_x[point_[0]]] ** 2 +
@@ -8615,7 +8566,7 @@ class BSplineSurface3D(Surface3D):
 
         # Form function "Finite Elements"
         def form_function(s_param, t_param):
-            empty_n = npy.empty(4)
+            empty_n = np.empty(4)
             empty_n[0] = (1 - s_param) * (1 - t_param) / 4
             empty_n[1] = (1 + s_param) * (1 - t_param) / 4
             empty_n[2] = (1 + s_param) * (1 + t_param) / 4
@@ -8661,16 +8612,16 @@ class BSplineSurface3D(Surface3D):
         t_param = 2 * ((y - y0) / (y2 - y0)) - 1
 
         n = form_function(s_param, t_param)
-        dx = npy.array([displacement[index_points[finite_elements_points[k][0]]][0],
+        dx = np.array([displacement[index_points[finite_elements_points[k][0]]][0],
                         displacement[index_points[finite_elements_points[k][1]]][0],
                         displacement[index_points[finite_elements_points[k][2]]][0],
                         displacement[index_points[finite_elements_points[k][3]]][0]])
-        dy = npy.array([displacement[index_points[finite_elements_points[k][0]]][1],
+        dy = np.array([displacement[index_points[finite_elements_points[k][0]]][1],
                         displacement[index_points[finite_elements_points[k][1]]][1],
                         displacement[index_points[finite_elements_points[k][2]]][1],
                         displacement[index_points[finite_elements_points[k][3]]][1]])
 
-        return volmdlr.Point2D(point2d.x + npy.transpose(n).dot(dx), point2d.y + npy.transpose(n).dot(dy))
+        return volmdlr.Point2D(point2d.x + np.transpose(n).dot(dx), point2d.y + np.transpose(n).dot(dy))
 
     def point3d_to_2d_with_dimension(self, point3d: volmdlr.Point3D, grid2d: grid.Grid2D):
         """
@@ -9088,7 +9039,7 @@ class BSplineSurface3D(Surface3D):
         :return: B-spline surface.
         :rtype: BSplineSurface3D
         """
-        points = npy.asarray(points_3d)
+        points = np.asarray(points_3d)
 
         ctrlpts, knots_u, knot_multiplicities_u, knots_v, knot_multiplicities_v = \
             interpolate_surface(points, size_u, size_v, degree_u, degree_v)
@@ -9139,7 +9090,7 @@ class BSplineSurface3D(Surface3D):
         # number of data points, s + 1 > number of control points, m + 1
         num_cpts_v = kwargs.get('ctrlpts_size_v', size_v - 1)
 
-        points = npy.asarray(points_3d)
+        points = np.asarray(points_3d)
 
         ctrlpts, knots_u, knot_multiplicities_u, knots_v, knot_multiplicities_v = \
             approximate_surface(points, size_u, size_v, degree_u, degree_v,
@@ -9346,7 +9297,7 @@ class BSplineSurface3D(Surface3D):
             return (self.point2d_to_3d(volmdlr.Point2D(param[0], param[1])) -
                     other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(param[2], param[3]))).norm()
 
-        x = npy.linspace(0, 1, 10)
+        x = np.linspace(0, 1, 10)
         x_init = []
         for xi in x:
             for yi in x:
@@ -9380,7 +9331,7 @@ class BSplineSurface3D(Surface3D):
             point3d = self.point2d_to_3d(volmdlr.Point2D(*param))
             return point3d[0] * a + point3d[1] * b + point3d[2] * c + d
 
-        x = npy.linspace(0, 1, 20)
+        x = np.linspace(0, 1, 20)
         x_init = []
         for xi in x:
             for yi in x:
@@ -9389,7 +9340,7 @@ class BSplineSurface3D(Surface3D):
         intersection_points = []
 
         for x0 in x_init:
-            z = least_squares(fun, x0=npy.array(x0), bounds=([0, 1]))
+            z = least_squares(fun, x0=np.array(x0), bounds=([0, 1]))
             if abs(z.fun) < 1e-8:
                 solution = z.x
                 intersection_points.append(self.point2d_to_3d(volmdlr.Point2D(*solution)))
@@ -9578,18 +9529,11 @@ class BSplineSurface3D(Surface3D):
         return True, when there are more 50points on the intersection zone.
 
         """
-
-        # intersection_results = self.intersection_with(other_bspline_surface3d)
-        # if len(intersection_results[0][0]) >= 50:
-        #     return True
-        # else:
-        #     return False
-
         def fun(param):
             return (self.point2d_to_3d(volmdlr.Point2D(param[0], param[1])) -
                     other_bspline_surface3d.point2d_to_3d(volmdlr.Point2D(param[2], param[3]))).norm()
 
-        x = npy.linspace(0, 1, 10)
+        x = np.linspace(0, 1, 10)
         x_init = []
         for xi in x:
             for yi in x:

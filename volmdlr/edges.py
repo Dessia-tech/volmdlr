@@ -473,7 +473,7 @@ class Edge(dc.DessiaObject):
             return True
         return False
 
-    def _generic_minimum_distance(self, element, return_points=False):
+    def generic_minimum_distance(self, element, return_points=False):
         """
         Gets the minimum distance between two elements.
 
@@ -483,8 +483,8 @@ class Edge(dc.DessiaObject):
         :param return_points: Weather to return the corresponding points or not.
         :return: distance to edge.
         """
-        return vm_common_operations._generic_minimum_distance(self, element, self.start, self.end,
-                                                              element.start, element.end, return_points)
+        return vm_common_operations.generic_minimum_distance(self, element, self.start, self.end,
+                                                             element.start, element.end, return_points)
 
     def minimum_distance(self, element, return_points=False):
         """
@@ -503,7 +503,7 @@ class Edge(dc.DessiaObject):
         method_name_ = 'distance_to_' + self.__class__.__name__.lower()[:-2]
         if hasattr(element, method_name_):
             return getattr(element, method_name_)(self, return_points)
-        return self._generic_minimum_distance(element, return_points)
+        return self.generic_minimum_distance(element, return_points)
 
     def abscissa_discretization(self, abscissa1, abscissa2, max_number_points: int = 10,
                                 return_abscissas: bool = True):
