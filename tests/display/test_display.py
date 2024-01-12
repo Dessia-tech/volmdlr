@@ -47,7 +47,7 @@ class TestDisplayPrimitives3D(unittest.TestCase):
 
         VolumeModel([cylinder]).babylonjs(merge_meshes=False)
 
-    def test_display_hollow_cylider(self):
+    def test_display_hollow_cylinder(self):
         hollow_cylinder = p3d.HollowCylinder(frame=OXYZ, inner_radius=0.5, outer_radius=1.0, length=1.0)
         hollow_cylinder.babylonjs()
 
