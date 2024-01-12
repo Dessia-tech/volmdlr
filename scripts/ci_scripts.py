@@ -78,6 +78,9 @@ scripts = [
     # 'mesh/geo_file_1.py',
     # 'mesh/geo_file_2.py',
     # 'mesh/geo_file_3.py',
+    # display.py
+    "display/mesh3d.py",
+    "display/mesh_decimation.py",
     # cad_simplification
     "cad_simplification/voxelization_simplify.py",
     "cad_simplification/triple_extrusion_simplify.py",

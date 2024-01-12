@@ -795,16 +795,23 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 return True
         return False
 
-    def triangulation(self):
+    def triangulation(self) -> display.Mesh3D:
         """
-        Triangulation of a Shell3D.
+        Performs triangulation on a Shell3D object.
 
+        This method iterates through each face of the Shell3D object and attempts to perform a triangulation.
+        In cases where a face cannot be triangulated, a warning is issued, and the method proceeds to the next face.
+        The triangulation of successfully processed faces are collected and merged into a single Mesh3D object.
+
+        :return: A Mesh3D object representing the triangulated shell.
+        :rtype: display.Mesh3D
         """
         meshes = []
         for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
-
+                if face_mesh:
+                    meshes.append(face_mesh)
             except Exception:
                 face_mesh = None
                 warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
@@ -838,6 +845,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         """
         if merge_meshes:
             return super().babylon_meshes()
+
         babylon_meshes = []
         for face in self.faces:
             face_babylon_meshes = face.babylon_meshes()
@@ -2095,6 +2103,11 @@ class DisplayTriangleShell3D(Shell3D):
         :param indices: A 3D numpy array of int representing the indices of the vertices representing the triangles.
         :param name: A name for the DisplayTriangleShell3D, optional.
         """
+        warnings.warn(
+            "'volmdlr.shells.DisplayTriangleShell3D' class is deprecated. Use 'volmdlr.display.Mesh3D' instead",
+            DeprecationWarning
+        )
+
         self.positions = positions
         self.indices = indices
 

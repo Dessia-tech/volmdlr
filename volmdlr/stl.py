@@ -46,6 +46,11 @@ class Stl(dc.DessiaObject):
     _dessia_methods = ['from_text_stream', 'from_text_stream', 'to_closed_shell', 'to_open_shell']
 
     def __init__(self, triangles: List[vmf.Triangle3D], name: str = ''):
+        warnings.warn(
+            "'volmdlr.stl.Stl' class is deprecated. Use 'volmdlr.display.Mesh3D' instead",
+            DeprecationWarning
+        )
+
         self.triangles = triangles
         dc.DessiaObject.__init__(self, name=name)
 

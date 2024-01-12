@@ -2968,7 +2968,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         """Get torus inner radius."""
         return self.major_radius - self.minor_radius
 
-    def _torus_arcs(self, number_arcs: int = 50):
+    def torus_arcs(self, number_arcs: int = 50):
         arcs = []
         center = self.frame.origin + self.frame.u * self.major_radius
         for i in range(number_arcs):
@@ -3394,7 +3394,7 @@ class ToroidalSurface3D(PeriodicalSurface):
             ax = fig.add_subplot(111, projection='3d')
 
         self.frame.plot(ax=ax, ratio=self.major_radius)
-        circles = self._torus_arcs(100) + self._torus_circle_generatrices_xy(30)
+        circles = self.torus_arcs(100) + self._torus_circle_generatrices_xy(30)
         for circle in circles:
             circle.plot(ax=ax, edge_style=edge_style)
 
@@ -3595,7 +3595,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param plane3d: other plane 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(100) + self._torus_circle_generatrices_xy(100)
+        arcs = self.torus_arcs(100) + self._torus_circle_generatrices_xy(100)
         points_intersections = []
         for arc in arcs:
             if plane3d.frame.w.dot(arc.frame.w) == 1.0:
@@ -3671,7 +3671,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param cylindrical_surface: other Cylindrical 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(200) + self._torus_circle_generatrices_xy(200)
+        arcs = self.torus_arcs(200) + self._torus_circle_generatrices_xy(200)
         points_intersections = []
         for arc in arcs:
             intersections = cylindrical_surface.circle_intersections(arc)
@@ -3738,7 +3738,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param conical_surface: other Conical Surface 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(200)
+        arcs = self.torus_arcs(200)
         points_intersections = []
         for arc in arcs:
             intersections = conical_surface.circle_intersections(arc)
@@ -3781,7 +3781,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         :param spherical_surface: other Spherical Surface 3d.
         :return: points of intersections.
         """
-        arcs = self._torus_arcs(300) + self._torus_circle_generatrices_xy(100)
+        arcs = self.torus_arcs(300) + self._torus_circle_generatrices_xy(100)
         intersection_points = []
         for arc in arcs:
             intersections = spherical_surface.circle_intersections(arc)
@@ -7557,9 +7557,9 @@ class BSplineSurface3D(Surface3D):
         x1, _, distance = self.point_inversion(x0, point3d, tol)
         if distance <= 1e-6:
             return volmdlr.Point2D(*x1)
-        return self.point3d_to_2d_minimize(point3d, x0)
+        return self.point3d_to_2d_minimize(point3d, x0, distance)
 
-    def point3d_to_2d_minimize(self, point3d, initial_guess):
+    def point3d_to_2d_minimize(self, point3d, initial_guess, point_inversion_result):
         """Auxiliary function for point3d_to_2d in case the point inversion does not converge."""
 
         def fun(x):
@@ -7573,14 +7573,14 @@ class BSplineSurface3D(Surface3D):
                                       vector.dot(derivatives[0][1]) / f_value])
             return f_value, jacobian
 
-        results = []
-        point3d_array = npy.asarray(point3d)
         u_start, u_stop, v_start, v_stop = self.domain
         res = minimize(fun, x0=npy.array(initial_guess), jac=True,
                        bounds=[(u_start, u_stop),
                                (v_start, v_stop)])
-        if res.fun < 1e-6:
+        if res.fun <= 1e-6 or (point_inversion_result < 5e-6 and abs(res.fun - point_inversion_result) <= 1e-7):
             return volmdlr.Point2D(*res.x)
+        results = [(res.x, res.fun)]
+        point3d_array = npy.asarray(point3d)
         distances = npy.linalg.norm(self.evalpts - point3d_array, axis=1)
         indexes = npy.argsort(distances)
         delta_u = (u_stop - u_start) / (self.sample_size_u - 1)

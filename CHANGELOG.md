@@ -15,7 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - cad_simplification: AlphaWrapSimplify
 - nurbs/operations: link_curves
 
-
 #### edges.py
 - BSplineCurve: decompose into béziers patches of same degree.
 - BSplineCurve: merge_with and merge_with_curves
@@ -55,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arc2D: plot_data
 - LineSegment3D: planar_revolution.
 - BSplineCurve: abscissa: use curve decomposition.
+- BSplineCurve: trim.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
@@ -93,6 +93,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### display.py
 - refactor DisplayMesh.
+- refactor DisplayMesh to Mesh3D
+- enable stl / ply / 3mf / obj import and export with Mesh3D object
+- implement various Mesh3D manipulations methods
+- improve performance
 
 ### Changed
 - Edge.split_between_two_points -> trim
