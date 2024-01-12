@@ -801,7 +801,8 @@ def decompose_curve(obj, return_params: bool = False, number_max_patches: int = 
     multi_curve = []
     curve = obj
     if number_max_patches:
-        knots = np.linspace(0, 1, number_max_patches)[1:-1]
+        umin, umax = curve.domain
+        knots = np.linspace(umin, umax, number_max_patches)[1:-1]
     else:
         knots = curve.knotvector[curve.degree + 1:-(curve.degree + 1)]
     params = []
