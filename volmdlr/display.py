@@ -461,8 +461,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
             closest_points_self = self.vertices[other_to_self_indices]
             closest_points_other = other_mesh.vertices[self_to_other_indices]
             return min_distance, closest_points_self, closest_points_other
-        else:
-            return min_distance
+        return min_distance
 
     def get_edges_triangles(self):
         """
@@ -839,7 +838,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
         :return: The triangles comosing the mesh.
         :rtype: list[Triangle3D]
         """
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel, cyclic-import
         from volmdlr.faces import Triangle3D
 
         triangles3d = []
@@ -866,7 +865,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
             """
         )
 
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel, cyclic-import
         from volmdlr.shells import ClosedTriangleShell3D
 
         return ClosedTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
@@ -885,7 +884,7 @@ class Mesh3D(MeshMixin, PhysicalObject):
             """
         )
 
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel, cyclic-import
         from volmdlr.shells import OpenTriangleShell3D
 
         return OpenTriangleShell3D(faces=self.to_triangles3d(), name=self.name)
