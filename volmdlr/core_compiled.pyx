@@ -647,6 +647,14 @@ cdef class Vector2D(Vector):
     def _data_eq(self, other):
         return self == other
 
+    def _serializable_dict(self):
+        """
+        Return a dict of attribute_name, values (still python, not serialized).
+
+        """
+        dict_ = {"x": self.x, "y": self.y, "name": self.name}
+        return dict_
+
     def is_close(self, other_vector: Vector2D, tol: float = 1e-6):
         """
         Checks if two vectors are close to each other considering the
@@ -1427,6 +1435,14 @@ cdef class Vector3D(Vector):
 
     def _data_eq(self, other):
         return self == other
+
+    def _serializable_dict(self):
+        """
+        Return a dict of attribute_name, values (still python, not serialized).
+
+        """
+        dict_ = {"x": self.x, "y": self.y, "z": self.z, "name": self.name}
+        return dict_
 
     def is_close(self, other_vector, tol=1e-6):
         """
