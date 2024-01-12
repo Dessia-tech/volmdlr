@@ -936,7 +936,7 @@ def link_curves(curves, tol: float = 1e-7, validate: bool = True):
     cpts = []  # new control points array
     wgts = []  # new weights array
     pdomain_end = 0
-
+    curve = curves[0]
     # Loop though the curves
     for curve in curves:
         # Process knot vectors
@@ -965,6 +965,6 @@ def link_curves(curves, tol: float = 1e-7, validate: bool = True):
 
     # Fix curve by appending the last knot to the end
     knotvector += [pdomain_end for _ in range(curve.degree + 1)]
-    knots, multiplicities = get_knots_and_multiplicities(knotvector)
     wgts = [] if all(weight == 1 for weight in wgts) else wgts
+    knots, multiplicities = get_knots_and_multiplicities(np.asarray(knotvector, dtype=np.float64))
     return knots, multiplicities, cpts, wgts
