@@ -936,7 +936,7 @@ def link_curves(curves, tol: float = 1e-7, validate: bool = True):
     cpts = []  # new control points array
     wgts = []  # new weights array
     pdomain_end = 0
-
+    curve = curves[0]
     # Loop though the curves
     for curve in curves:
         # Process knot vectors
