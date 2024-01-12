@@ -1876,7 +1876,10 @@ class OpenTriangleShell3D(OpenShell3D):
         points = [volmdlr.Point3D(px, py, pz) for px, py, pz in vertices]
 
         for i1, i2, i3 in faces:
-            triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
+            try:
+                triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
+            except ZeroDivisionError:
+                pass
 
         return cls(triangles, name=name)
 

@@ -257,6 +257,7 @@ class Primitive3D(dc.PhysicalObject):
         dc.PhysicalObject.__init__(self, name=name)
 
     def volmdlr_primitives(self):
+        """ Return a list of volmdlr primitives to build up volume model."""
         return [self]
 
     def babylon_param(self):
@@ -276,6 +277,9 @@ class Primitive3D(dc.PhysicalObject):
         return babylon_param
 
     def triangulation(self, *args, **kwargs):
+        """
+        Get object triangulation.
+        """
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
@@ -1085,6 +1089,7 @@ class Assembly(dc.PhysicalObject):
         return Assembly(self.components, new_positions, self.frame, self.name)
 
     def volmdlr_primitives(self):
+        """ Return a list of volmdlr primitives to build up an Assembly. """
         return [self]
 
     def to_step(self, current_id):
@@ -1576,7 +1581,10 @@ class VolumeModel(dc.PhysicalObject):
             self.to_step_stream(file)
 
     def to_step_stream(self, stream: dcf.StringFile):
+        """
+        Export object CAD to given stream in STEP format.
 
+        """
         step_content = STEP_HEADER.format(name=self.name,
                                           filename='',
                                           timestamp=datetime.now().isoformat(),
