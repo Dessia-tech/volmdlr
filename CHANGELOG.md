@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added missing hash and eq methods to several classes
 - ArcEllipse2D/3D: get_shared_section and delete_shared_section.
 - ConicalSurface3D: conicalsurface_intersections
+- cad_simplification: AlphaWrapSimplify
 
 #### edges.py
 - BSplineCurve: decompose into béziers patches of same degree.
@@ -106,7 +107,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### build
 
 - Use pip install instead of setuptools install in order to avoid .egg being generating and preventing PyPI upload
-
 
 ## v0.15.0
 
