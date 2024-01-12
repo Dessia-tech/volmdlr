@@ -5147,10 +5147,11 @@ class BSplineCurve3D(BSplineCurve):
         :param point2: point2 used to trim.
         :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
             or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :param abs_tol: Point confusion precision.
         :return: New BSpline curve between these two points.
         """
         if self.periodic:
-            return self.trim_with_interpolation(point1, point2, same_sense)
+            return self._trim_periodic(point1, point2, same_sense)
         bsplinecurve = self
         if not same_sense:
             bsplinecurve = self.reverse()
@@ -5169,7 +5170,7 @@ class BSplineCurve3D(BSplineCurve):
             return bsplinecurve
 
         if not point1.is_close(bsplinecurve.start, abs_tol) and point2.is_close(bsplinecurve.end, abs_tol):
-            return bsplinecurve.cut_before(parameter1)
+            return [bsplinecurve.cut_before(parameter1)]
 
         if not point2.is_close(bsplinecurve.start, abs_tol) and point1.is_close(bsplinecurve.end, abs_tol):
             bsplinecurve = bsplinecurve.cut_before(parameter2)
@@ -5187,18 +5188,27 @@ class BSplineCurve3D(BSplineCurve):
         trimmed_bspline_cruve = bsplinecurve.cut_after(new_param2)
         return trimmed_bspline_cruve
 
-    def trim_with_interpolation(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
+    def _trim_periodic(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
         """
         Creates a new BSplineCurve3D between point1 and point2 using interpolation method.
         """
         bspline_curve = self
         if not same_sense:
             bspline_curve = self.reverse()
-        n = len(bspline_curve.control_points)
-        local_discretization = bspline_curve.local_discretization(point1, point2, n)
-        if len(local_discretization) <= bspline_curve.degree:
-            return bspline_curve
-        return bspline_curve.__class__.from_points_interpolation(local_discretization, bspline_curve.degree)
+        abscissa1 = bspline_curve.abscissa(point1)
+        abscissa2 = bspline_curve.abscissa(point2)
+        if abscissa2 > abscissa1:
+            if abscissa1 == 0.0:
+                return bspline_curve.split(point2)[0]
+            if abscissa2 == bspline_curve.length():
+                return bspline_curve.split(point1)[1]
+            curve1 = bspline_curve.split(point1)[1]
+            return curve1.split(point2)[0]
+        if abscissa2 == 0.0:
+            return bspline_curve.split(point1)[1]
+        curve1 = bspline_curve.split(point1)[1]
+        curve2 = bspline_curve.split(point2)[0]
+        return curve1.merge_with(curve2)
 
     def trim_between_evaluations(self, parameter1: float, parameter2: float):
         """
