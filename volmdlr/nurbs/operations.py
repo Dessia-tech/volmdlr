@@ -642,8 +642,9 @@ def split_surface_v(obj, param, **kwargs):
     temp_obj = insert_knot_func(obj, [None, param], num=[0, insertion_count], check_num=False)
 
     # Knot vectors
-    knotvectors = helper_split_knot_vectors(temp_obj.degree_v, temp_obj.knots_vector_v, temp_obj.nb_v, param,
-                                            span_func)
+    knotvectors = helper_split_knot_vectors(temp_obj.degree_v, temp_obj.knots_vector_v,
+                                            temp_obj.nb_v, param, span_func)
+
     return construct_split_surfaces(temp_obj, knotvectors, "v", knot_span, insertion_count)
 
 
@@ -826,7 +827,7 @@ def decompose_surface(obj, return_params, **kwargs):
 
     :param obj: surface
     :type obj: BSplineSurface3D
-        :param return_params: If True, returns the parameters from start and end of each Bézier patch with repect to the
+    :param return_params: If True, returns the parameters from start and end of each Bézier patch with repect to the
      input curve.
     :type return_params: bool
     :return: a list of Bezier patches
@@ -841,54 +842,35 @@ def decompose_surface(obj, return_params, **kwargs):
     decompose_dir = kwargs.get('decompose_dir', 'uv')  # possible directions: u, v, uv
     if "decompose_dir" in kwargs:
         kwargs.pop("decompose_dir")
-
+    domain = obj.domain
     # Only u-direction
     if decompose_dir == 'u':
-        if return_params:
-            multi_surf, u_params = helper_decompose(obj, 0, split_surface_u, return_params, **kwargs)
-            domain = obj.domain
-            params = [[u_param, (domain[2], domain[3])] for u_param in u_params]
-            return multi_surf, params
-        return helper_decompose(obj, 0, split_surface_u, return_params, **kwargs)
+        return helper_decompose(obj, 0, split_surface_u, return_params, (domain[2], domain[3]), **kwargs)
 
     # Only v-direction
     if decompose_dir == 'v':
-        if return_params:
-            multi_surf, v_params = helper_decompose(obj, 1, split_surface_v, return_params, **kwargs)
-            domain = obj.domain
-            params = [[(domain[0], domain[1]), v_param] for v_param in v_params]
-            return multi_surf, params
-        return helper_decompose(obj, 1, split_surface_v, return_params, **kwargs)
+        return helper_decompose(obj, 1, split_surface_v, return_params, (domain[0], domain[1]), **kwargs)
 
     # Both u- and v-directions
     if decompose_dir == 'uv':
+        result = []
         if return_params:
-            multi_surf = []
-            # Process u-direction
-            surfs_u, u_params = helper_decompose(obj, 0, split_surface_u, return_params, **kwargs)
-            # Process v-direction
-            params = []
-            for sfu, u_param in zip(surfs_u, u_params):
-                surfs_v, v_params = helper_decompose(sfu, 1, split_surface_v, return_params, **kwargs)
-                params += [[u_param, v_param] for v_param in v_params]
-                multi_surf += surfs_v
-            return multi_surf, params
-        multi_surf = []
-        # Process u-direction
-        surfs_u = helper_decompose(obj, 0, split_surface_u, return_params, **kwargs)
-        # Process v-direction
-        for sfu in surfs_u:
-            multi_surf += helper_decompose(sfu, 1, split_surface_v, return_params, **kwargs)
-        return multi_surf
+            for sfu, params in helper_decompose(obj, 0, split_surface_u, return_params,
+                                                (domain[2], domain[3]), **kwargs):
+                result.extend(helper_decompose(sfu, 1, split_surface_v, return_params, params[0], **kwargs))
+        else:
+            for sfu in helper_decompose(obj, 0, split_surface_u, return_params, **kwargs):
+                result.extend(helper_decompose(sfu, 1, split_surface_v, return_params, **kwargs))
+        return result
+
     raise ValueError("Cannot decompose in " + str(decompose_dir) + " direction. Acceptable values: u, v, uv")
 
 
-def helper_decompose(srf, idx, split_func, return_params, **kws):
+def helper_decompose(srf, idx, split_func, return_params, other_direction_params=None, **kws):
     """
     Helper function to decompose_surface.
     """
     # pylint: disable=too-many-locals
-    srf_list = []
     surf_degrees = [srf.degree_u, srf.degree_v]
     knots = srf.knotvector[idx][surf_degrees[idx] + 1:-(surf_degrees[idx] + 1)]
     param_min, param_max = 0.0, 1.0
@@ -899,22 +881,30 @@ def helper_decompose(srf, idx, split_func, return_params, **kws):
         else:
             param_min, param_max = domain[2], domain[3]
     param_start = param_min
-    params = []
+    result = []
     while knots.any():
         knot = knots[0]
         srfs = split_func(srf, param=knot, **kws)
-        srf_list.append(srfs[0])
-        if return_params:
-            param_end = knot * (param_max - param_start) + param_start
-            params.append((param_start, param_end))
-            param_start = param_end
         srf = srfs[1]
         knots = srf.knotvector[idx][surf_degrees[idx] + 1:-(surf_degrees[idx] + 1)]
-    srf_list.append(srf)
+        if return_params:
+            param_end = knot * (param_max - param_start) + param_start
+            if idx == 0:
+                result.append([srfs[0], ((param_start, param_end), other_direction_params)])
+            else:
+                result.append([srfs[0], (other_direction_params, (param_start, param_end))])
+            param_start = param_end
+        else:
+            result.append(srfs[0])
+
     if return_params:
-        params.append((param_start, param_max))
-        return srf_list, params
-    return srf_list
+        if idx == 0:
+            result.append([srf, ((param_start, param_max), other_direction_params)])
+        else:
+            result.append([srf, (other_direction_params, (param_start, param_max))])
+    else:
+        result.append(srf)
+    return result
 
 
 def link_curves(curves, tol: float = 1e-7, validate: bool = True):
