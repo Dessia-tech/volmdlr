@@ -399,7 +399,7 @@ class BoundingRectangle(dc.DessiaObject):
         """
         return volmdlr.Point2D(0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax))
 
-    def b_rectangle_intersection(self, b_rectangle2):
+    def is_intersecting(self, b_rectangle2):
         """
         Returns True if there is an intersection with another specified bounding rectangle or False otherwise.
 
@@ -408,6 +408,16 @@ class BoundingRectangle(dc.DessiaObject):
         """
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
             and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+
+    def b_rectangle_intersection(self, b_rectangle2):
+        """
+        Returns True if there is an intersection with another specified bounding rectangle or False otherwise.
+
+        :param b_rectangle2: bounding rectangle to verify intersection
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        warnings.warn('b_rectangle_intersection is deprecated, please use is_intersecting instead')
+        return self.is_intersecting(b_rectangle2)
 
     def is_inside_b_rectangle(self, b_rectangle2, tol: float = 1e-6):
         """

@@ -216,6 +216,7 @@ class WireMixin:
                 range(n + 1)]
 
     def point_at_abscissa(self, curvilinear_abscissa: float):
+        """Gets the point corresponding to given abscissa. """
         length = 0.
         for primitive in self.primitives:
             primitive_length = primitive.length()
@@ -1485,6 +1486,7 @@ class Wire3D(WireMixin, PhysicalObject):
         return [babylon_lines]
 
     def babylon_curves(self):
+        """Gets babylonjs curves."""
         points = self.babylon_points()
         if points:
             babylon_curves = self.babylon_lines(points)[0]
@@ -1963,6 +1965,11 @@ class ContourMixin(WireMixin):
         return self.point_over_contour(wire.primitives[0].start) and self.point_over_contour(wire.primitives[-1].end)
 
     def is_contour_closed(self):
+        """
+        Verifies if contour is closed or not.
+
+        :returns: True is closed, False if Open.
+        """
         return self.primitives[0].start.is_close(self.primitives[-1].end)
 
 
@@ -3756,27 +3763,6 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         return translation1
 
-    def repositioned_polygon(self, x, y):
-        linex = volmdlr.edges.LineSegment2D(-x.to_2d(volmdlr.O2D, x, y),
-                                            x.to_2d(volmdlr.O2D, x, y))
-        way_back = volmdlr.O3D
-        barycenter = self.barycenter()
-        if not self.point_belongs(barycenter):
-            barycenter1_2d = self.point_in_polygon()
-            new_polygon = self.translation(-barycenter1_2d)
-            way_back = barycenter1_2d.to_3d(volmdlr.O3D, x, y)
-        else:
-            inters = self.linesegment_intersections(linex)
-            distance = inters[0][0].point_distance(inters[-1][0])
-            if distance / 2 > 3 * min(
-                    self.point_distance(inters[0][0]),
-                    self.point_distance(inters[-1][0])):
-                mid_point = (inters[0][0] + inters[-1][0]) * 0.5
-                new_polygon = self.translation(-mid_point)
-                way_back = mid_point.to_3d(volmdlr.O3D, x, y)
-
-        return new_polygon, way_back
-
     def get_possible_sewing_closing_points(self, polygon2, polygon_primitive,
                                            line_segment1: None, line_segment2: None):
         """
@@ -4412,6 +4398,11 @@ class Contour3D(ContourMixin, Wire3D):
 
     @property
     def bounding_box(self):
+        """
+        Gets bounding box value.
+
+        :return: Bounding Box.
+        """
         if not self._utd_bounding_box:
             self._bbox = self._bounding_box()
             self._utd_bounding_box = True
@@ -4694,6 +4685,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return ClosedPolygon3D(polygon1_3d_points)
 
     def close_sewing(self, dict_closing_pairs):
+        """Closes sewing resulting triangles."""
         triangles_points = []
         for i, point_polygon2 in enumerate(
                 self.points + [self.points[0]]):

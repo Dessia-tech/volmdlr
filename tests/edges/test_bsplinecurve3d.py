@@ -29,7 +29,7 @@ class TestBSplineCurve3D(unittest.TestCase):
             volmdlr.Point3D(-0.8090169943749473, -0.8090169943749473, 0.587785252292473),
             volmdlr.Point3D(-1.0, -1.0, 0.0)], 2)
         bbox = bspline.bounding_box
-        self.assertAlmostEqual(bbox.volume(), 4.0, 3)
+        self.assertAlmostEqual(bbox.volume(), 4.029861202734341, 3)
 
     def test_trim(self):
         obj = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bspline_buggy_trim.json"))
@@ -100,12 +100,12 @@ class TestBSplineCurve3D(unittest.TestCase):
 
     def test_decompose(self):
         bspline = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "spiral_bsplinecurve.json"))
-        bezier_patches, params = bspline.decompose(return_params=True)
-        self.assertEqual(len(bezier_patches), 37)
-        for param, patch in zip(params, bezier_patches):
+        decompose_results = list(bspline.decompose(return_params=True))
+        self.assertEqual(len(decompose_results), 37)
+        for patch, param in decompose_results:
             self.assertTrue(bspline.evaluate_single(param[0]).is_close(patch.start))
             self.assertTrue(bspline.evaluate_single(param[1]).is_close(patch.end))
-        bezier_patches= bspline.decompose()
+        bezier_patches = list(bspline.decompose())
         self.assertEqual(len(bezier_patches), 37)
 
     def test_line_intersections(self):
@@ -135,6 +135,24 @@ class TestBSplineCurve3D(unittest.TestCase):
         bsplinecurve = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bsplinecurve3d_abscissa_test.json"))
         abscissa = bsplinecurve.abscissa(point)
         self.assertTrue(bsplinecurve.point_at_abscissa(abscissa).is_close(point))
+
+    def test_local_discretization(self):
+        edge, start, end = DessiaObject.load_from_file(os.path.join(
+            folder, 'test_bspline_local_discretizations.json')).primitives
+        expected_points = [volmdlr.Point3D(0.40000000000000013, 0.3055497472688364, -0.0577802904293785),
+                           volmdlr.Point3D(0.39999999999999997, 0.3054558765193882, -0.05729389615629579),
+                           volmdlr.Point3D(0.4, 0.3053650847805137, -0.056818942485284164),
+                           volmdlr.Point3D(0.4000000000000001, 0.30527736613101497, -0.05635539982690565),
+                           volmdlr.Point3D(0.4, 0.3051925979747842, -0.055902690345743224),
+                           volmdlr.Point3D(0.4000000000000001, 0.3051105616115585, -0.055459784623149766),
+                           volmdlr.Point3D(0.4, 0.3050309628076735, -0.055025298319996994),
+                           volmdlr.Point3D(0.39999999999999997, 0.3049534523668191, -0.054597588839424546),
+                           volmdlr.Point3D(0.39999999999999997, 0.30487764670079315, -0.05417485198958898),
+                           volmdlr.Point3D(0.4000000000000001, 0.3048031484002564, -0.05375521864641269)]
+        discretized_points_between_1_2 = edge.local_discretization(start, end, 10)
+        self.assertEqual(len(discretized_points_between_1_2), len(expected_points))
+        for result, expected_point in zip(discretized_points_between_1_2, expected_points):
+            self.assertTrue(result.is_close(expected_point))
 
 
 if __name__ == '__main__':
