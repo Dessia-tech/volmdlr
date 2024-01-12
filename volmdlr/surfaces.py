@@ -2964,11 +2964,11 @@ class ToroidalSurface3D(PeriodicalSurface):
         initial_point = self.frame.origin
         circles = []
         phis = np.linspace(-0.5*math.pi, 0.5*math.pi, number_arcs)
-        zs = self.minor_radius * np.sin(phis)
+        z_positions = self.minor_radius * np.sin(phis)
         r_cossines = self.minor_radius * np.cos(phis)
         radiuses1 = self.major_radius - r_cossines
         radiuses2 = self.major_radius + r_cossines
-        for i, radius1, radius2 in zip(zs, radiuses1, radiuses2):
+        for i, radius1, radius2 in zip(z_positions, radiuses1, radiuses2):
             i_center = initial_point.translation(self.frame.w * i)
             frame = volmdlr.Frame3D(i_center, self.frame.u, self.frame.v, self.frame.w)
             circles.append(curves.Circle3D(frame, radius1))
