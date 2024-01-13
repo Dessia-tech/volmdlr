@@ -892,7 +892,7 @@ class Surface3D(DessiaObject):
         for primitive in primitives:
             primitives_mapping[primitive] = primitive3d
 
-    def parametric_points_to_3d(self, points: NDArray[npy.float64]) -> NDArray[npy.float64]:
+    def parametric_points_to_3d(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
         """
         Transform parametric coordinates to 3D points on the surface.
 
@@ -901,14 +901,14 @@ class Surface3D(DessiaObject):
 
         :param points: Parametric coordinates in the form of a numpy array with shape (n, 2),
                        where `n` is the number of points, and each row corresponds to `(u, v)`.
-        :type points: numpy.ndarray[npy.float64]
+        :type points: numpy.ndarray[np.float64]
 
         :return: Array of 3D points representing the surface in Cartesian coordinates.
-        :rtype: numpy.ndarray[npy.float64]
+        :rtype: numpy.ndarray[np.float64]
         """
         points3d = [self.point2d_to_3d(volmdlr.Point2D(*point)) for point in points]
 
-        return npy.array(points3d)
+        return np.array(points3d)
 
     def primitives3d_to_2d(self, primitives3d):
         """
@@ -7785,9 +7785,9 @@ class BSplineSurface3D(Surface3D):
         if res.fun <= 1e-6 or (point_inversion_result < 5e-6 and abs(res.fun - point_inversion_result) <= 1e-7):
             return volmdlr.Point2D(*res.x)
         results = [(res.x, res.fun)]
-        point3d_array = npy.asarray(point3d)
-        distances = npy.linalg.norm(self.evalpts - point3d_array, axis=1)
-        indexes = npy.argsort(distances)
+        point3d_array = np.asarray(point3d)
+        distances = np.linalg.norm(self.evalpts - point3d_array, axis=1)
+        indexes = np.argsort(distances)
         delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
         delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
         if self.weights is not None:
@@ -7878,12 +7878,12 @@ class BSplineSurface3D(Surface3D):
         distance_vector = surface_derivatives[0][0] - point3d
         common_term = (surface_derivatives[1][0].dot(surface_derivatives[0][1]) +
                        distance_vector.dot(surface_derivatives[1][1]))
-        jacobian = npy.asarray(
+        jacobian = np.asarray(
             [[surface_derivatives[1][0].norm() ** 2 + distance_vector.dot(surface_derivatives[2][0]),
               common_term],
              [common_term,
               surface_derivatives[0][1].norm() ** 2 + distance_vector.dot(surface_derivatives[0][2])]])
-        k = npy.asarray(
+        k = np.asarray(
             [[-(distance_vector.dot(surface_derivatives[1][0]))], [-(distance_vector.dot(surface_derivatives[0][1]))]])
 
         return jacobian, k, surface_derivatives, distance_vector
@@ -7938,8 +7938,8 @@ class BSplineSurface3D(Surface3D):
         :return: Array of 3D points representing the BSpline surface in Cartesian coordinates.
         :rtype: numpy.ndarray[np.float64]
         """
-        return npy.asarray([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
-                         dtype=npy.float64)
+        return np.asarray([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
+                          dtype=np.float64)
 
     def linesegment2d_to_3d(self, linesegment2d):
         """Evaluates the Euclidean form for the parametric line segment."""
