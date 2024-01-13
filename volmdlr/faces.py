@@ -9,6 +9,7 @@ from itertools import chain, product
 from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
+import triangle as triangle_lib
 
 from dessia_common.core import DessiaObject
 
@@ -67,7 +68,7 @@ class Face3D(volmdlr.core.Primitive3D):
         self._outer_contour3d = None
         self._inner_contours3d = None
         self._face_octree_decomposition = None
-        self._primitives_mapping = {}
+        self._primitives_mapping = None
 
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
@@ -107,7 +108,7 @@ class Face3D(volmdlr.core.Primitive3D):
             outer_contour3d, primitives_mapping = self.surface3d.contour2d_to_3d(self.surface2d.outer_contour,
                                                                                  return_primitives_mapping=True)
             self._outer_contour3d = outer_contour3d
-            if not self._primitives_mapping:
+            if self._primitives_mapping is None:
                 self._primitives_mapping = primitives_mapping
             else:
                 self._primitives_mapping.update(primitives_mapping)
@@ -131,7 +132,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 inner_contours3d.append(inner_contour3d)
                 primitives_mapping.update(contour2d_mapping)
             self._inner_contours3d = inner_contours3d
-            if not self._primitives_mapping:
+            if self._primitives_mapping is None:
                 self._primitives_mapping = primitives_mapping
             else:
                 self._primitives_mapping.update(primitives_mapping)
@@ -146,10 +147,10 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         Gives the 3d version of the inner contours of the face.
         """
-        if not self._primitives_mapping:
-            if self._outer_contour3d:
+        if not self._primitives_mapping or not self._inner_contours3d:
+            if not self._primitives_mapping and self._outer_contour3d:
                 self._outer_contour3d = None
-            if self._inner_contours3d:
+            if not self._primitives_mapping and self._inner_contours3d:
                 self._inner_contours3d = None
             _ = self.outer_contour3d
             _ = self.inner_contours3d
@@ -218,7 +219,7 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
-        return face.from_contours3d(surface, contours, step_id)
+        return face.from_contours3d(surface, contours, name)
 
     @classmethod
     def from_contours3d(cls, surface, contours3d: List[volmdlr.wires.Contour3D], name: str = ""):
@@ -372,6 +373,22 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         return [], []
 
+    @staticmethod
+    def get_edge_discretization_size(edge3d):
+        """
+        Helper function to polygonize the face boundaries.
+        """
+        angle_resolution = 10
+        if edge3d is None:
+            number_points = 2
+        elif edge3d.__class__.__name__ == "BSplineCurve3D":
+            number_points = max(15, len(edge3d.ctrlpts))
+        elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
+            number_points = max(2, math.ceil(round(edge3d.angle, 12) / math.radians(angle_resolution)) + 1)
+        else:
+            number_points = 2
+        return number_points
+
     def grid_points(self, grid_size, polygon_data=None):
         """
         Parametric tesselation points.
@@ -423,21 +440,14 @@ class Face3D(volmdlr.core.Primitive3D):
 
     def get_face_polygons(self):
         """Get face polygons."""
-        angle_resolution = 10
+        primitives_mapping = self.primitives_mapping
 
         def get_polygon_points(primitives):
             points = []
             for edge in primitives:
-                edge3d = self.primitives_mapping.get(edge)
-                if edge3d is None:
-                    edge_points = edge.discretization_points(number_points=2)
-                elif edge3d.__class__.__name__ == "BSplineCurve3D":
-                    edge_points = edge.discretization_points(number_points=15)
-                elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
-                    edge_points = edge.discretization_points(
-                        number_points=max(2, math.ceil(edge3d.angle / math.radians(angle_resolution)) + 1))
-                else:
-                    edge_points = edge.discretization_points(number_points=2)
+                edge3d = primitives_mapping.get(edge)
+                number_points = self.get_edge_discretization_size(edge3d)
+                edge_points = edge.discretization_points(number_points=number_points)
                 points.extend(edge_points[:-1])
             return points
 
@@ -450,17 +460,95 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        return [0, 0]
+        return 0, 0
 
-    def triangulation(self, grid_size=None):
+    @staticmethod
+    def helper_triangulation_without_holes(vertices, segments, points_grid, tri_opt):
         """
-        Returns a mesh for the face.
+        Triangulates a surface without holes.
+
+        :param vertices: vertices of the surface.
+        :param segments: segments defined as tuples of vertices.
+        :param points_grid: to do.
+        :param tri_opt: triangulation option: "p"
+        :return:
         """
-        if not grid_size:
-            number_points_x, number_points_y = self.grid_size()
+        vertices_grid = [(p.x, p.y) for p in points_grid]
+        vertices.extend(vertices_grid)
+        tri = {'vertices': np.array(vertices).reshape((-1, 2)),
+               'segments': np.array(segments).reshape((-1, 2)),
+               }
+        triagulation = triangle_lib.triangulate(tri, tri_opt)
+        return vmd.Mesh2D(triagulation['vertices'], triangles=triagulation['triangles'])
+
+    def helper_to_mesh(self, polygon_data=None) -> volmdlr.display.Mesh2D:
+        """
+        Triangulates the Surface2D using the Triangle library.
+
+        :param polygon_data: Face's outer polygon.
+        :type polygon_data: Union[Tuple((wires.ClosedPolygon2D), List[wires.ClosedPolygon2D], None]
+        :return: The triangulated surface as a display mesh.
+        :rtype: :class:`volmdlr.display.Mesh2D`
+        """
+        area = self.surface2d.bounding_rectangle().area()
+        tri_opt = "p"
+        if math.isclose(area, 0., abs_tol=1e-8):
+            return None
+        grid_size = self.grid_size()
+        points_grid = []
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
         else:
-            number_points_x, number_points_y = grid_size
-        mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
+            outer_polygon, inner_polygons = self.get_face_polygons()
+        if any(grid_size):
+            points_grid = self.grid_points(grid_size, [outer_polygon, inner_polygons])
+        points = outer_polygon.points.copy()
+        points_set = set(points)
+        if len(points_set) < len(points) - 1:
+            return None
+        vertices = [(point.x, point.y) for point in points]
+        n = len(points)
+        segments = [(i, i + 1) for i in range(n - 1)]
+        segments.append((n - 1, 0))
+
+        if not inner_polygons:  # No holes
+            return self.helper_triangulation_without_holes(vertices, segments, points_grid, tri_opt)
+
+        point_index = {p: i for i, p in enumerate(points)}
+        holes = []
+        for inner_polygon in inner_polygons:
+            inner_polygon_nodes = inner_polygon.points
+            for point in inner_polygon_nodes:
+                if point not in point_index:
+                    points.append(point)
+                    vertices.append((point.x, point.y))
+                    point_index[point] = n
+                    n += 1
+
+            for point1, point2 in zip(inner_polygon_nodes[:-1],
+                                      inner_polygon_nodes[1:]):
+                segments.append((point_index[point1], point_index[point2]))
+            segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
+            rpi = inner_polygon.barycenter()
+            if not inner_polygon.point_belongs(rpi, include_edge_points=False):
+                rpi = inner_polygon.random_point_inside(include_edge_points=False)
+            holes.append([rpi.x, rpi.y])
+
+        if points_grid:
+            vertices_grid = [(p.x, p.y) for p in points_grid]
+            vertices.extend(vertices_grid)
+
+        tri = {'vertices': np.array(vertices).reshape((-1, 2)),
+               'segments': np.array(segments).reshape((-1, 2)),
+               'holes': np.array(holes).reshape((-1, 2))
+               }
+        triangulation = triangle_lib.triangulate(tri, tri_opt)
+        return vmd.Mesh2D(triangulation['vertices'], triangles=triangulation['triangles'])
+
+    def triangulation(self):
+        """Triangulates the face."""
+        outer_polygon, inner_polygons = self.get_face_polygons()
+        mesh2d = self.helper_to_mesh([outer_polygon, inner_polygons])
         if mesh2d is None:
             return None
         return vmd.Mesh3D(self.surface3d.parametric_points_to_3d(mesh2d.vertices), mesh2d.triangles)
@@ -2458,14 +2546,6 @@ class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
         number_points_y = min(int(delta_z * z_resolution), 20)
         return number_points_x, number_points_y
 
-    def grid_size(self):
-        """
-        Specifies an adapted size of the discretization grid used in face triangulation.
-        """
-        angle_resolution = 5
-        z_resolution = 2
-        return self.parametrized_grid_size(angle_resolution, z_resolution)
-
     def adjacent_direction(self, other_face3d):
         """
         Find out in which direction the faces are adjacent.
@@ -2641,15 +2721,15 @@ class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        theta_angle_resolution = 5
-        phi_angle_resolution = 2.3
+        theta_angle_resolution = 10
+        phi_angle_resolution = 20
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
-        number_points_x = max(theta_angle_resolution, int(delta_theta * theta_angle_resolution))
+        number_points_x = math.ceil(delta_theta / math.radians(theta_angle_resolution))
 
         delta_phi = phi_max - phi_min
-        number_points_y = max(math.ceil(phi_angle_resolution), int(delta_phi * phi_angle_resolution))
+        number_points_y = math.ceil(delta_phi / math.radians(phi_angle_resolution))
 
         return number_points_x, number_points_y
 
@@ -2754,19 +2834,6 @@ class ConicalFace3D(PeriodicalFaceMixin, Face3D):
         else:
             lines_y = []
         return lines_x, lines_y
-
-    def grid_size(self):
-        """
-        Specifies an adapted size of the discretization grid used in face triangulation.
-        """
-        angle_resolution = 5
-        theta_min, theta_max, _, _ = self.surface2d.bounding_rectangle().bounds()
-        delta_theta = theta_max - theta_min
-        number_points_x = math.ceil(delta_theta * angle_resolution)
-
-        number_points_y = 0
-
-        return number_points_x, number_points_y
 
     @classmethod
     def from_surface_rectangular_cut(
@@ -2883,18 +2950,11 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
 
     def grid_size(self):
         """
-        Specifies an adapted size of the discretization grid used in face triangulation.
+        Specifies an adapted size of the discretization grid used to calculate the grid_points.
+
+        For the sphere the grid size is given in angle resolution in both theta and phi direction.
         """
-        angle_resolution = 11
-        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
-
-        delta_theta = theta_max - theta_min
-        number_points_x = int(delta_theta * angle_resolution)
-
-        delta_phi = phi_max - phi_min
-        number_points_y = int(delta_phi * angle_resolution)
-
-        return number_points_x, number_points_y
+        return 10, 10
 
     def grid_points(self, grid_size, polygon_data=None):
         """
@@ -2919,8 +2979,7 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
             points = update_face_grid_points_with_inner_polygons(inner_polygons, [points, u, v, points_indexes_map])
         else:
             points = np.array([(u[i], v_j) for j, v_j in enumerate(v) for i in range(u_size) if
-                                   (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0)],
-                                   dtype=np.float64)
+                              (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0)], dtype=np.float64)
 
         points = self._update_grid_points_with_outer_polygon(outer_polygon, points)
 
@@ -3104,19 +3163,6 @@ class ExtrusionFace3D(Face3D):
         Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
 
-    def grid_size(self):
-        """
-        Specifies an adapted size of the discretization grid used in face triangulation.
-        """
-        angle_resolution = 11
-        xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
-        delta_x = xmax - xmin
-        number_points_x = max(36, int(delta_x * angle_resolution))
-
-        number_points_y = 2
-
-        return number_points_x, number_points_y
-
     @classmethod
     def from_surface_rectangular_cut(
         cls,
@@ -3171,13 +3217,52 @@ class RevolutionFace3D(Face3D):
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
         angle_resolution = 10
-        xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
-        delta_x = xmax - xmin
-        number_points_x = int(delta_x * angle_resolution)
+        number_points_y = self.get_edge_discretization_size(self.surface3d.edge)
 
-        number_points_y = number_points_x
+        return angle_resolution, number_points_y
 
-        return number_points_x, number_points_y
+    def grid_points(self, grid_size, polygon_data=None):
+        """
+        Parametric tesselation points.
+        """
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
+        else:
+            outer_polygon, inner_polygons, _ = self.get_face_polygons()
+        u, v, u_size, _ = self._get_grid_axis(outer_polygon, grid_size)
+        if not u or not v:
+            return []
+        if inner_polygons:
+            points = []
+            points_indexes_map = {}
+            for j, v_j in enumerate(v):
+                for i in range(u_size):
+                    if (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0):
+                        points.append((u[i], v_j))
+                        points_indexes_map[(i, j)] = len(points) - 1
+            points = np.array(points, dtype=np.float64)
+            points = update_face_grid_points_with_inner_polygons(inner_polygons, [points, u, v, points_indexes_map])
+        else:
+            points = np.array([(u[i], v_j) for j, v_j in enumerate(v) for i in range(u_size) if
+                              (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0)], dtype=np.float64)
+
+        points = self._update_grid_points_with_outer_polygon(outer_polygon, points)
+
+        return points
+
+    @staticmethod
+    def _get_grid_axis(outer_polygon, grid_size):
+        """Helper function to grid_points."""
+        u_min, u_max, v_min, v_max = outer_polygon.bounding_rectangle.bounds()
+        angle_resolution, number_points_v = grid_size
+        delta_x = u_max - u_min
+        number_points_u = math.ceil(delta_x / math.radians(angle_resolution))
+        u_step = (u_max - u_min) / (number_points_u - 1) if number_points_u > 1 else (u_max - u_min)
+        v_step = (v_max - v_min) / (number_points_v - 1) if number_points_v > 1 else (v_max - v_min)
+        u = [u_min + i * u_step for i in range(number_points_u)]
+        v = [v_min + i * v_step for i in range(number_points_v)]
+
+        return u, v, number_points_u, number_points_v
 
     @classmethod
     def from_surface_rectangular_cut(
@@ -3194,6 +3279,45 @@ class RevolutionFace3D(Face3D):
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(revolution_surface3d, surface2d, name)
+
+    def get_face_polygons(self):
+        """Get face polygons."""
+        primitives_mapping = self.primitives_mapping
+        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
+        delta_x = xmax - xmin
+        delta_y = ymax - ymin
+        number_points_x, number_points_y = self.grid_size()
+        scale_factor = 1
+        if number_points_x > 1 and number_points_y > 1:
+            scale_factor = 10 ** math.floor(
+                math.log10((delta_x/(number_points_x - 1))/(delta_y/(number_points_y - 1))))
+
+        def get_polygon_points(primitives):
+            points = []
+            for edge in primitives:
+                edge3d = primitives_mapping.get(edge)
+                number_points = self.get_edge_discretization_size(edge3d)
+                edge_points = edge.discretization_points(number_points=number_points)
+                if scale_factor != 1:
+                    for point in edge_points:
+                        point.y *= scale_factor
+                points.extend(edge_points[:-1])
+            return points
+
+        outer_polygon = volmdlr.wires.ClosedPolygon2D(get_polygon_points(self.surface2d.outer_contour.primitives))
+        inner_polygons = [volmdlr.wires.ClosedPolygon2D(get_polygon_points(inner_contour.primitives))
+                          for inner_contour in self.surface2d.inner_contours]
+        return outer_polygon, inner_polygons, scale_factor
+
+    def triangulation(self):
+        """Triangulates the face."""
+        outer_polygon, inner_polygons, scale_factor = self.get_face_polygons()
+        mesh2d = self.helper_to_mesh([outer_polygon, inner_polygons])
+        if mesh2d is None:
+            return None
+        if scale_factor != 1:
+            mesh2d.vertices[:, 1] /= scale_factor
+        return vmd.Mesh3D(self.surface3d.parametric_points_to_3d(mesh2d.vertices), mesh2d.triangles)
 
 
 class BSplineFace3D(Face3D):
@@ -3262,16 +3386,27 @@ class BSplineFace3D(Face3D):
         """
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
+        delta_v = v_max - v_min
         resolution_u = self.surface3d.nb_u
         resolution_v = self.surface3d.nb_v
-        if self.surface2d.inner_contours:
-            resolution_u = max(15, resolution_u)
-            resolution_v = max(15, resolution_v)
-        delta_v = v_max - v_min
-        number_points_x = int(delta_u * resolution_u)
-        number_points_y = int(delta_v * resolution_v)
+        if resolution_u > resolution_v:
+            number_points_x = int(delta_u * resolution_u)
+            number_points_y = max(int(delta_v * resolution_v), int(number_points_x / 5))
+        else:
+            number_points_y = int(delta_v * resolution_v)
+            number_points_x = max(int(delta_u * resolution_u), int(number_points_y / 5))
 
         return number_points_x, number_points_y
+
+    @staticmethod
+    def _update_grid_points_with_outer_polygon(outer_polygon, grid_points):
+        """Helper function to grid_points."""
+        # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
+        indices = np.where(outer_polygon.points_in_polygon(grid_points, include_edge_points=True) == 0)[0]
+        grid_points = np.delete(grid_points, indices, axis=0)
+        polygon_points = set(outer_polygon.points)
+        points = [volmdlr.Point2D(*point) for point in grid_points if volmdlr.Point2D(*point) not in polygon_points]
+        return points
 
     def pair_with(self, other_bspline_face3d):
         """
