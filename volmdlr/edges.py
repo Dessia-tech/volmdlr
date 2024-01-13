@@ -991,7 +991,7 @@ class BSplineCurve(Edge):
         datadict = {
             "degree": self.degree,
             "knotvector": self.knotvector,
-            "size": len(self.ctrlpts),
+            "size": self.ctrlpts.shape[0],
             "sample_size": self.sample_size,
             "rational": self.rational,
             "dimension": 3 if self.__class__.__name__[-2:] == "3D" else 2,
@@ -1201,7 +1201,7 @@ class BSplineCurve(Edge):
         datadict = {
             "degree": self.degree,
             "knotvector": self.knotvector,
-            "size": len(self.ctrlpts),
+            "size": self.ctrlpts.shape[0],
             "sample_size": self.sample_size,
             "rational": self.rational,
             "dimension": 3 if vector_name == "Vector3D" else 2,
