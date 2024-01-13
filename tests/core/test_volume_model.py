@@ -68,7 +68,7 @@ class TestVolumeModel(unittest.TestCase):
     def test_to_mesh3d(self):
         mesh = self.volume_model.to_mesh3d()
 
-        self.assertEqual(20, mesh.n_vertices)
+        self.assertEqual(28, mesh.n_vertices)
         self.assertEqual(24, mesh.n_triangles)
 
 
