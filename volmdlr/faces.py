@@ -1854,11 +1854,10 @@ class PlaneFace3D(Face3D):
                 continue
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
             if primitive.periodic:
-                # if isinstance(primitive, volmdlr_curves.Ellipse3D) or isinstance(primitive, volmdlr_curves.Circle3D):
                 points_on_primitive = points_on_primitive + [points_on_primitive[0]]
             for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
                 edge = primitive.trim(point1, point2)
-                if self.edge3d_inside(edge) and toroidal_face.edge3d_inside(edge, 1e-3):
+                if self.edge3d_inside(edge) and toroidal_face.edge3d_inside(edge, 1e-4):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
         return face_intersections
 

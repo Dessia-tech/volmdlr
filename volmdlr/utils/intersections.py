@@ -215,7 +215,10 @@ def get_circle_intersections(circle1, circle2):
     if d_param == 0 and circle1.radius == circle2.radius:
         return []
     a = (circle1.radius ** 2 - circle2.radius ** 2 + d_param ** 2) / (2 * d_param)
-    h_param = math.sqrt(circle1.radius ** 2 - a ** 2)
+    if abs(circle1.radius - a) < 1e-6:
+        h_param = 0.0
+    else:
+        h_param = math.sqrt(circle1.radius ** 2 - a ** 2)
     x2 = x0 + a * (x1 - x0) / d_param
     y2 = y0 + a * (y1 - y0) / d_param
     x3 = x2 + h_param * (y1 - y0) / d_param

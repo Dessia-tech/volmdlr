@@ -870,11 +870,12 @@ class Line3D(Line):
                 [self.point1.z, self.point2.z], color=edge_style.color, alpha=edge_style.alpha)
 
         # Drawing 3 times length of segment on each side
-        u = self.point2 - self.point1
+        u = (self.point2 - self.point1).to_vector()
         v1 = self.point1 - u * length
         x1, y1, z1 = v1.x, v1.y, v1.z
         v2 = self.point2 + u * length
         x2, y2, z2 = v2.x, v2.y, v2.z
+
         if edge_style.dashed:
             ax.plot([x1, x2], [y1, y2], [z1, z2], color=edge_style.color,
                     dashes=[30, 5, 10, 5])
@@ -1449,7 +1450,12 @@ class Circle2D(CircleMixin, ClosedCurve):
         :return: A list of intersection points between the two circles.
         :rtype: List[Point2D].
         """
-        return volmdlr_intersections.get_circle_intersections(self, circle)
+        circle_intersections = volmdlr_intersections.get_circle_intersections(self, circle)
+        valid_intersections = []
+        for intersection in circle_intersections:
+            if not intersection.in_list(valid_intersections):
+                valid_intersections.append(intersection)
+        return valid_intersections
 
     def arc_intersections(self, arc2d: 'volmdlr.edges.Arc2D', abs_tol: float = 1e-6):
         """
@@ -2066,6 +2072,19 @@ class Circle3D(CircleMixin, ClosedCurve):
         u1, u2 = local_start_point.x / self.radius, local_start_point.y / self.radius
         point_angle = volmdlr.geometry.sin_cos_angle(u1, u2)
         return point_angle
+
+    def circle_distance(self, other_circle, return_points: False):
+        """
+        Gets the distance between two circles 3D.
+
+        :param other_circle: Other circle 3D.
+        :param return_points: weather to return the corresponding points or not.
+        :return:
+        """
+        point1 = self.center + self.frame.u * self.radius
+        other_point1 = other_circle.center + other_circle.frame.u * other_circle.radius
+        return vm_common_operations.generic_minimum_distance(
+            self, other_circle, point1, point1, other_point1, other_point1, return_points)
 
 
 class ConicMixin:
