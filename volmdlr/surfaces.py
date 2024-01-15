@@ -7982,6 +7982,13 @@ class BSplineSurface3D(Surface3D):
         else:
             start = self.point3d_to_2d(linesegment3d.start, tol)
             end = self.point3d_to_2d(linesegment3d.end, tol)
+            umin, umax, vmin, vmax = self.domain
+            if self.x_periodicity and \
+                (math.isclose(end.x, umin, abs_tol=1e-3) or math.isclose(end.x, umax, abs_tol=1e-3)):
+                end.x = start.x
+            if self.y_periodicity and \
+                (math.isclose(end.y, vmin, abs_tol=1e-3) or math.isclose(end.y, vmax, abs_tol=1e-3)):
+                end.y = start.y
         if start.is_close(end):
             return None
         return [edges.LineSegment2D(start, end)]
@@ -8002,13 +8009,15 @@ class BSplineSurface3D(Surface3D):
         if direction_periodicity == 'x':
             i = 0
             min_bound, max_bound = min_bound_x, max_bound_x
+            periodicity = self.x_periodicity
         else:
             i = 1
             min_bound, max_bound = min_bound_y, max_bound_y
-        if ((direction_periodicity == 'x' and not self.u_closed) or
-                (direction_periodicity == 'y' and not self.v_closed)):
-            points = self._repair_points_order(points, edge3d, [min_bound_x, max_bound_x, min_bound_y, max_bound_y],
-                                               direction_periodicity)
+            periodicity = self.y_periodicity
+        # if ((direction_periodicity == 'x' and not self.u_closed) or
+        #         (direction_periodicity == 'y' and not self.v_closed)):
+        #     points = self._repair_points_order(points, edge3d, [min_bound_x, max_bound_x, min_bound_y, max_bound_y],
+        #                                        direction_periodicity)
         start = points[0]
         end = points[-1]
         delta = max_bound + min_bound
@@ -8025,9 +8034,10 @@ class BSplineSurface3D(Surface3D):
 
         points[0] = start
         points[-1] = end
-
-        if all((math.isclose(p[i], max_bound, abs_tol=1e-2) or math.isclose(p[i], min_bound, abs_tol=1e-2)) for
-               p in points):
+        delta_i = abs(points[-1][i] - points[0][i])
+        if ((delta_i <= 1e-5 or math.isclose(delta_i, periodicity, abs_tol=1e-5)) and
+                all((math.isclose(p[i], max_bound, abs_tol=1e-2) or math.isclose(p[i], min_bound, abs_tol=1e-2))
+                    for p in points)):
             # if the line is at the boundary of the surface domain, we take the first point as reference
             t_param = max_bound if math.isclose(points[0][i], max_bound, abs_tol=1e-4) else min_bound
             if direction_periodicity == 'x':
