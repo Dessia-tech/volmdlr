@@ -78,10 +78,14 @@ scripts = [
     # 'mesh/geo_file_1.py',
     # 'mesh/geo_file_2.py',
     # 'mesh/geo_file_3.py',
+    # display.py
+    "display/mesh3d.py",
+    "display/mesh_decimation.py",
     # cad_simplification
     "cad_simplification/voxelization_simplify.py",
     "cad_simplification/triple_extrusion_simplify.py",
     "cad_simplification/triangle_decimation_simplify.py",
+    "cad_simplification/alpha_wrap_simplify.py",
     # Voxelization
     "discrete_representation/voxelization/interference/interference_surface_showcase.py",
     "discrete_representation/voxelization/interference/interference_volume_showcase.py",

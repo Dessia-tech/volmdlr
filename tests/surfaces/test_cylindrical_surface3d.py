@@ -3,7 +3,7 @@ Unit tests for CylindriSurface3D
 """
 import unittest
 import math
-import numpy as npy
+import numpy as np
 import os
 import dessia_common.core
 import volmdlr
@@ -123,11 +123,20 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertFalse(cyl_surface1.is_coincident(plane_face))
         self.assertFalse(self.cylindrical_surface.is_coincident(cyl_surface1))
 
-    def test_point_on_surface(self):
+    def test_point_belongs(self):
         point = volmdlr.Point3D(0.32, 0, 1)
         point2 = volmdlr.Point3D(1, 1, 1)
-        self.assertTrue(self.cylindrical_surface.point_on_surface(point))
-        self.assertFalse((self.cylindrical_surface.point_on_surface(point2)))
+        self.assertTrue(self.cylindrical_surface.point_belongs(point))
+        self.assertFalse((self.cylindrical_surface.point_belongs(point2)))
+
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.5 * math.pi, 0.0], [math.pi, 0.0], [1.5 * math.pi, 0.0],
+                                      [0.0, 1.0], [0.5 * math.pi, 1.0], [math.pi, 1.0], [1.5 * math.pi, 1.0]])
+        points3d = self.cylindrical_surface.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[0.32, 0.0, 0.0], [0.0, 0.32, 0.0], [-0.32, 0.0, 0.0], [0.0, -0.32, 0.0],
+                                    [0.32, 0.0, 1.0], [0.0, 0.32, 1.0], [-0.32, 0.0, 1.0], [0.0, -0.32, 1.0]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
 
     def test_arcellipse3d_to_2d(self):
         pass
@@ -247,11 +256,22 @@ class TestCylindricalSurface3D(unittest.TestCase):
             os.path.join(folder, "test_contour3d_to_2d_contour.json"
         ))
 
-        surface = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "test_contour3d_to_2d_surface.json"))
-        contour = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "test_contour3d_to_2d_contour.json"))
+        surface = dessia_common.core.DessiaObject.load_from_file(
+            os.path.join(folder, "test_contour3d_to_2d_surface.json"))
+        contour = dessia_common.core.DessiaObject.load_from_file(
+            os.path.join(folder, "test_contour3d_to_2d_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertAlmostEqual(contour2d.area(), 0.29361767646954695, 2)
         self.assertTrue(contour2d.is_ordered())
+
+        surface = dessia_common.core.DessiaObject.load_from_file(
+            os.path.join(folder, "cylindricalsurface_small_periodic_bsplinecurve.json"))
+        contour = dessia_common.core.DessiaObject.load_from_file(
+            os.path.join(folder, "cylindricalsurface_small_periodic_bsplinecurve_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour)
+        self.assertAlmostEqual(contour2d.area(), 0.0, 6)
+        self.assertTrue(contour2d.is_ordered())
+
 
     def test_bsplinecurve3d_to_2d(self):
         surface = dessia_common.core.DessiaObject.load_from_file(os.path.join(folder, "cylindrical_surf_bug.json"))
@@ -269,8 +289,8 @@ class TestCylindricalSurface3D(unittest.TestCase):
         )
 
         # Test to _fix_angle_discontinuity_on_discretization_points
-        z = npy.linspace(0, 2 * math.pi, 50)
-        theta = math.pi + 0.5 * math.pi * npy.cos(z)
+        z = np.linspace(0, 2 * math.pi, 50)
+        theta = math.pi + 0.5 * math.pi * np.cos(z)
         points_2d = [volmdlr.Point2D(x, y / (2 * math.pi)) for x, y in zip(theta, z)]
         cylinder = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 1)
         points_3d = [cylinder.point2d_to_3d(point) for point in points_2d]
@@ -512,9 +532,9 @@ class TestCylindricalSurface3D(unittest.TestCase):
 
         # test 2
         inters = cylindrical_surface1.surface_intersections(cylindrical_surface2)
-        expected_lengths2 = [7.767042433585131, 7.767042217039914]
+        expected_lengths2 = [7.767042217039914, 7.767042239472898]
         for intersection, expected_length in zip(inters, expected_lengths2):
-            self.assertAlmostEqual(intersection.length(), expected_length)
+            self.assertAlmostEqual(intersection.length(), expected_length, 6)
 
         # test 3
         cylindrical_surface2 = surfaces.CylindricalSurface3D(volmdlr.OXYZ.translation(volmdlr.X3D * .5), 2)

@@ -1,6 +1,7 @@
 import unittest
 import math
 import os
+import numpy as np
 import volmdlr
 from volmdlr import surfaces, wires, edges, curves
 
@@ -10,6 +11,22 @@ folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_sphe
 
 class TestSphericalSurface3D(unittest.TestCase):
     surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
+
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.0, 0.5 * math.pi], [0.0, math.pi], [0.0, 1.5 * math.pi],
+                                      [0.5 * math.pi, 0.0], [0.5 * math.pi, 0.5 * math.pi],
+                                      [0.5 * math.pi, math.pi], [0.5 * math.pi, 1.5 * math.pi],
+                                      [math.pi, 0.0], [math.pi, 0.5 * math.pi],
+                                      [math.pi, math.pi], [math.pi, 1.5 * math.pi],
+                                      [1.5 * math.pi, 0.0], [1.5 * math.pi, 0.5 * math.pi],
+                                      [1.5 * math.pi, math.pi], [1.5 * math.pi, 1.5 * math.pi]])
+        points3d = self.surface3d.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [-1.0, 0.0, 0.0], [0.0, 0.0, -1.0],
+                                    [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0],
+                                    [-1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0],
+                                    [0.0, -1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
 
     def test_arc3d_to_2d(self):
         arc_with_two_singularities = edges.Arc3D.load_from_file(
@@ -22,10 +39,14 @@ class TestSphericalSurface3D(unittest.TestCase):
     def test_contour3d_to_2d(self):
         surface = surfaces.SphericalSurface3D.load_from_file(os.path.join(folder, "sphericalsurface1.json"))
         contour = wires.Contour3D.load_from_file(os.path.join(folder, "spericalsurface1_contour0.json"))
-        contour2d = surface.contour3d_to_2d(contour)
+        contour2d, primitives_mapping = surface.contour3d_to_2d(contour, return_primitives_mapping=True)
         self.assertEqual(len(contour2d.primitives), 6)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 4.107527949001648, 2)
+        self.assertEqual(len(primitives_mapping), len(contour.primitives))
+        self.assertIsNone(primitives_mapping.get(contour2d.primitives[3]))
+        self.assertEqual(contour.primitives[0], primitives_mapping.get(contour2d.primitives[0]))
+        self.assertEqual(contour.primitives[-1], primitives_mapping.get(contour2d.primitives[-1]))
 
         surface = surfaces.SphericalSurface3D.load_from_file(
             os.path.join(folder, "spherical_surface_arc3d_to_2d.json"))

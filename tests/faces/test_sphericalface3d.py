@@ -1,8 +1,10 @@
 import unittest
 import math
 import os
+
+import volmdlr
 from volmdlr.faces import SphericalFace3D
-from volmdlr import surfaces
+from volmdlr import surfaces, wires
 from dessia_common.core import DessiaObject
 
 
@@ -39,6 +41,33 @@ class TestSphericalFace3D(unittest.TestCase):
             os.path.join(folder, "sphericalsurface_contour3d_to_2d_bug_contour.json"))
         face = SphericalFace3D.from_contours3d(surface, [contour])
         self.assertTrue(face.triangulation())
+
+        surface = surfaces.SphericalSurface3D.load_from_file(
+            os.path.join(folder, "sphericalface_from_contours3d_repair_primitives_periodicity_surface.json"))
+        contour = DessiaObject.load_from_file(
+            os.path.join(folder, "sphericalface_from_contours3d_repair_primitives_periodicity_contour.json"))
+        face = SphericalFace3D.from_contours3d(surface, [contour])
+        self.assertAlmostEqual(face.surface2d.area(), math.pi * math.pi)
+        self.assertTrue(face.triangulation())
+
+        surface = surfaces.SphericalSurface3D.load_from_file(
+            os.path.join(folder, "sphericalface_from_contours3d_repair_primitives_periodicity_surface.json"))
+        contour = DessiaObject.load_from_file(
+            os.path.join(folder, "sphericalface_from_contours3d_repair_primitives_periodicity_contour.json"))
+        face = SphericalFace3D.from_contours3d(surface, [contour])
+        self.assertAlmostEqual(face.surface2d.area(), math.pi * math.pi)
+        self.assertTrue(face.triangulation())
+
+    def test_grid_points(self):
+        surface3d = surfaces.SphericalSurface3D(volmdlr.OXYZ, 1)
+        outer_contour2d = wires.Contour2D.rectangle(-math.pi, math.pi, -0.5 * math.pi, 0.5 * math.pi)
+        inner_contour2d = wires.Contour2D.rectangle_from_center_and_sides(
+            volmdlr.Point2D(0.0, 0.0), 0.5 * math.pi, 0.5 * math.pi, False)
+        surface2d = surfaces.Surface2D(outer_contour2d, [inner_contour2d])
+        face = SphericalFace3D(surface3d, surface2d)
+        grid_points = face.grid_points([10, 10])
+        self.assertEqual(len(grid_points), 518)
+
 
 if __name__ == '__main__':
     unittest.main()
