@@ -33,7 +33,8 @@ from volmdlr.nurbs.operations import (split_surface_u, split_surface_v, decompos
                                       extract_surface_curve_u, extract_surface_curve_v)
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity, is_isocurve,
-                                      verify_repeated_parametric_points, repair_undefined_brep)
+                                      verify_repeated_parametric_points, repair_undefined_brep,
+                                      pre_check_parametric_points_order)
 
 
 def knots_vector_inv(knots_vector):
@@ -8050,7 +8051,7 @@ class BSplineSurface3D(Surface3D):
             return points
 
         intersections = edge3d.intersections(line_at_periodicity)
-        if not intersections:
+        if not intersections or len(intersections) > 1:
             return points
         point_at_periodicity = self.point3d_to_2d(intersections[0])
         index_periodicity = volmdlr.core.get_point_index_in_list(point_at_periodicity, points)

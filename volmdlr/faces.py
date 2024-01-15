@@ -503,8 +503,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if any(grid_size):
             points_grid = self.grid_points(grid_size, [outer_polygon, inner_polygons])
         points = outer_polygon.points.copy()
-        points_set = set(points)
-        if len(points_set) < len(points) - 1:
+        if len(set(points)) < len(points):
             return None
         vertices = [(point.x, point.y) for point in points]
         n = len(points)

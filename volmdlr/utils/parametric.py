@@ -396,6 +396,15 @@ def is_isocurve(points, tol: float = 1e-6):
     return all(linesegment.point_belongs(point, tol) for point in points)
 
 
+def pre_check_parametric_points_order(parametric_points):
+    """
+    Pre-check if there are some changes in the direction of the parametric points.
+    """
+    director_vector = (parametric_points[-1] - parametric_points[0]).unit_vector()
+    return all(director_vector.dot(point2 - point1) > 0 for point1, point2 in zip(parametric_points[:-1],
+                                                                                  parametric_points[1:]))
+
+
 def verify_repeated_parametric_points(points):
     """Verify repeated parametric points from point3d_to_2d method."""
     set_points = set(points)
