@@ -33,8 +33,7 @@ from volmdlr.nurbs.operations import (split_surface_u, split_surface_v, decompos
                                       extract_surface_curve_u, extract_surface_curve_v)
 from volmdlr.utils.parametric import (array_range_search, repair_start_end_angle_periodicity, angle_discontinuity,
                                       find_parametric_point_at_singularity, is_isocurve,
-                                      verify_repeated_parametric_points, repair_undefined_brep,
-                                      pre_check_parametric_points_order)
+                                      verify_repeated_parametric_points, repair_undefined_brep)
 
 
 def knots_vector_inv(knots_vector):
@@ -8014,10 +8013,7 @@ class BSplineSurface3D(Surface3D):
             i = 1
             min_bound, max_bound = min_bound_y, max_bound_y
             periodicity = self.y_periodicity
-        # if ((direction_periodicity == 'x' and not self.u_closed) or
-        #         (direction_periodicity == 'y' and not self.v_closed)):
-        #     points = self._repair_points_order(points, edge3d, [min_bound_x, max_bound_x, min_bound_y, max_bound_y],
-        #                                        direction_periodicity)
+
         start = points[0]
         end = points[-1]
         delta = max_bound + min_bound
@@ -9798,7 +9794,7 @@ class BSplineSurface3D(Surface3D):
                                           points[2])
         return surface3d
 
-    def u_closed_lower(self, tol: float = 1e-7):
+    def u_closed_lower(self, tol: float = 1e-6):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
@@ -9809,7 +9805,7 @@ class BSplineSurface3D(Surface3D):
             return True
         return False
 
-    def u_closed_upper(self, tol: float = 1e-7):
+    def u_closed_upper(self, tol: float = 1e-6):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
@@ -9820,7 +9816,7 @@ class BSplineSurface3D(Surface3D):
             return True
         return False
 
-    def v_closed_lower(self, tol: float = 1e-7):
+    def v_closed_lower(self, tol: float = 1e-6):
         """
         Returns True if the surface is close in any of the u boundaries.
         """
@@ -9831,7 +9827,7 @@ class BSplineSurface3D(Surface3D):
             return True
         return False
 
-    def v_closed_upper(self, tol: float = 1e-7):
+    def v_closed_upper(self, tol: float = 1e-6):
         """
         Returns True if the surface is close in any of the u boundaries.
         """

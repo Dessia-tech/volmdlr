@@ -37,12 +37,14 @@ class TestBSplineCurve3D(unittest.TestCase):
         point2 = volmdlr.Point3D(1.2150653573, -0.879118549155, 0.958332154591)
         trimmed_curve = obj.trim(point1, point2)
         self.assertTrue(trimmed_curve.start.is_close(point1))
+        self.assertTrue(trimmed_curve.end.is_close(point2))
         self.assertAlmostEqual(trimmed_curve.length(), 0.03513727259692126, 2)
         obj = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bsplinecurve_trim.json"))
         point1 = volmdlr.Point3D(0.342947999551, -0.440408114191, 0.0132802444727)
         point2 = volmdlr.Point3D(0.342919095763, -0.44741803835000005, 0.0132953396808)
         trimmed_curve = obj.trim(point1, point2, True)
         self.assertTrue(trimmed_curve.start.is_close(point1))
+        self.assertTrue(trimmed_curve.end.is_close(point2))
         self.assertAlmostEqual(trimmed_curve.length(), 0.011010880733091775, 2)
         bspline, point1, point2 = DessiaObject.load_from_file(
             os.path.join(folder, "test_bspline_trim271123.json")).primitives
@@ -61,6 +63,36 @@ class TestBSplineCurve3D(unittest.TestCase):
             trim = bspline.trim(pt1, pt2)
             self.assertTrue(trim.start.is_close(pt1))
             self.assertTrue(trim.end.is_close(pt2))
+
+        bspline = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bsplinecurve3d_split_test.json"))
+        point1 = volmdlr.Point3D(0.0781678147963, -0.08091364816680001, 0.112275939295)
+        point2 = volmdlr.Point3D(0.0711770282536, -0.08091364816680001, 0.11191690794)
+        trimmed_curve = bspline.trim(point1, point2, True)
+        self.assertTrue(trimmed_curve.start.is_close(point1))
+        self.assertAlmostEqual(bspline.point_to_parameter(trimmed_curve.end), 0.49999, 4)
+
+        bspline = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bsplinecurve_close_points_trim_bug.json"))
+        point1 = volmdlr.Point3D(-0.544134241655, -0.609582655058, 0.271301659325)
+        point2 = volmdlr.Point3D(-0.544132239261, -0.609587093354, 0.271301378758)
+        trimmed_curve = bspline.trim(point1, point2, True)
+        self.assertEqual(len(trimmed_curve.knots), 2)
+        self.assertAlmostEqual(trimmed_curve.length(), 4.876112145226163e-06)
+
+        bspline = vme.BSplineCurve3D.load_from_file(
+            os.path.join(folder, "bsplinecurve_trim_with_close_to_bound_points.json"))
+        point1 = volmdlr.Point3D(-0.662347482412, 0.174584944052, 0.484523514816)
+        point2 = volmdlr.Point3D(-0.66214998812, 0.174699062854, 0.484497837201)
+        trimmed_curve = bspline.trim(point1, point2, True)
+        self.assertEqual(len(trimmed_curve.knots), 4)
+        self.assertAlmostEqual(trimmed_curve.length(), 0.0002325755440461709, 6)
+
+        bspline = vme.BSplineCurve3D.load_from_file(
+            os.path.join(folder, "bsplinecurve_split_bug_2.json"))
+        point1 = volmdlr.Point3D(3.7101740508972862, -1.631997806124392e-05, -18.5000000067868)
+        point2 = volmdlr.Point3D(3.493253085347731, 1.2499999999999991, -18.49999999999689)
+        trimmed_curve = bspline.trim(point1, point2, True)
+        self.assertTrue(bspline.start.is_close(trimmed_curve.start))
+        self.assertTrue(bspline.end.is_close(trimmed_curve.end))
 
     def test_from_step(self):
         obj_list = volmdlr.core.VolumeModel.load_from_file(

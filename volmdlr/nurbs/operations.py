@@ -181,8 +181,9 @@ def insert_knot_curve(obj, param, num, **kwargs):
         knots, knot_multiplicities = get_knots_and_multiplicities(kv_new)
         point_name = "Point" + obj.__class__.__name__[-2:]
         cpts_tmp = [getattr(volmdlr, point_name)(*point) for point in cpts_tmp]
-    # Return new spline geometry
-    return obj.__class__(obj.degree, cpts_tmp, knot_multiplicities, knots, weights)
+        # Return new spline geometry
+        return obj.__class__(obj.degree, cpts_tmp, knot_multiplicities, knots, weights)
+    return obj
 
 
 def split_curve(obj, param, **kwargs):
@@ -206,7 +207,7 @@ def split_curve(obj, param, **kwargs):
     """
     if param in set(obj.domain):
         raise ValueError("Cannot split from the domain edge")
-
+    param = float(f"{param:.18f}")
     # Find multiplicity of the knot and define how many times we need to add the knot
     knot_multiplicity = core.find_multiplicity(param, obj.knotvector)
     insertion_count = obj.degree - knot_multiplicity
@@ -584,7 +585,7 @@ def split_surface_u(obj, param, **kwargs):
 
     if param in (obj.domain[0], obj.domain[1]):
         raise ValueError("Cannot split from the u-domain edge")
-
+    param = float(f"{param:.18f}")
     # Keyword arguments
     span_func = kwargs.get('find_span_func', core.find_span_linear)  # FindSpan implementation
     insert_knot_func = kwargs.get('insert_knot_func', insert_knot_surface)  # Knot insertion algorithm
@@ -626,7 +627,7 @@ def split_surface_v(obj, param, **kwargs):
     """
     if param in (obj.domain[2], obj.domain[3]):
         raise ValueError("Cannot split from the v-domain edge")
-
+    param = float(f"{param:.18f}")
     # Keyword arguments
     span_func = kwargs.get('find_span_func', core.find_span_linear)  # FindSpan implementation
     insert_knot_func = kwargs.get('insert_knot_func', insert_knot_surface)  # Knot insertion algorithm
@@ -798,7 +799,6 @@ def decompose_curve(obj, return_params: bool = False, number_max_patches: int = 
     :return: a generator element with a Bezier segment.
     :rtype: Generator element.
     """
-    multi_curve = []
     curve = obj
     if number_max_patches:
         umin, umax = curve.domain
@@ -811,7 +811,6 @@ def decompose_curve(obj, return_params: bool = False, number_max_patches: int = 
     while knots.any():
         knot = knots[0]
         curves = split_curve(curve, param=knot, **kwargs)
-        multi_curve.append(curves[0])
         curve = curves[1]
         knots = curve.knotvector[curve.degree + 1:-(curve.degree + 1)]
         if return_params:
