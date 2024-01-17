@@ -3,6 +3,7 @@ Unit tests for volmdlr.faces.BSplineSurface3D
 """
 import unittest
 import os
+import numpy as np
 import volmdlr.edges as vme
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
@@ -53,6 +54,112 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.nurbs_surf = surfaces.BSplineSurface3D(degree_u, degree_v, ctrlpts, nb_u, nb_v,
                                                      u_multiplicities, v_multiplicities, knots_u, knots_v, weights)
 
+    def test_extract_curves(self):
+        u = [0.0, 0.25, 0.5, 0.75, 1.0]
+        v = [0.0, 0.25, 0.5, 0.75, 1.0]
+
+        expected_results_u = [[volmdlr.Point3D(-25.0, -25.0, -10.0), volmdlr.Point3D(-25.0, 25.0, -10.0)],
+                              [volmdlr.Point3D(-9.07716976931853, -25.0, -6.280643904610846),
+                               volmdlr.Point3D(-9.07716976931853, 25.0, -6.280643904610846)],
+                              [volmdlr.Point3D(0.11256465850708097, -25.0, -4.238138097577792),
+                               volmdlr.Point3D(0.11256465850708097, 25.0, -4.238138097577792)],
+                              [volmdlr.Point3D(9.309787132823084, -25.0, -5.579386459163334),
+                               volmdlr.Point3D(9.309787132823084, 25.0, -5.579386459163334)],
+                              [volmdlr.Point3D(25.0, -25.0, -10.0), volmdlr.Point3D(25.0, 25.0, -10.0)]
+                              ]
+        expected_results_v = [[volmdlr.Point3D(-25.0, -25.0, -10.0), volmdlr.Point3D(25.0, -25.0, -10.0)],
+                              [volmdlr.Point3D(-25.0, -9.07716976931853, -2.397285527450817),
+                               volmdlr.Point3D(25.0, -9.07716976931853, -1.3277054289450985)],
+                              [volmdlr.Point3D(-25.0, 0.11256465850708097, -0.308297775853914),
+                               volmdlr.Point3D(25.0, 0.11256465850708097, 1.5683831138045203)],
+                              [volmdlr.Point3D(-25.0, 9.309787132823084, -2.497847912329014),
+                               volmdlr.Point3D(25.0, 9.309787132823084, -1.4598916162388402)],
+                              [volmdlr.Point3D(-25.0, 25.0, -10.0), volmdlr.Point3D(25.0, 25.0, -10.0)]
+                              ]
+        test = self.spline_surf.extract_curves(u, v)
+        for curve, expected_result in zip(test["u"], expected_results_u):
+            control_points = curve.control_points
+            self.assertEqual(len(control_points), 6)
+            self.assertTrue(curve.start.is_close(expected_result[0]))
+            self.assertTrue(curve.end.is_close(expected_result[1]))
+
+        for curve, expected_result in zip(test["v"], expected_results_v):
+            control_points = curve.control_points
+            self.assertEqual(len(control_points), 6)
+            self.assertTrue(curve.start.is_close(expected_result[0]))
+            self.assertTrue(curve.end.is_close(expected_result[1]))
+
+    def test_extract_curves_rational(self):
+        u = [0.0, 0.25, 0.5, 0.75, 1.0]
+        v = [0.0, 0.25, 0.5, 0.75, 1.0]
+
+        # points from surface evaluation
+        expected_results_u = [[volmdlr.Point3D(-25.0, -25.0, -10.0),
+                               volmdlr.Point3D(-25.0, -9.485960183093134, -2.651935673517623),
+                               volmdlr.Point3D(-25.0, 0.3732766669129052, -0.21414478478298477),
+                               volmdlr.Point3D(-25.000000000000004, 6.5923170800941175, -1.200587938543581),
+                               volmdlr.Point3D(-25.0, 25.0, -10.0)],
+                              [volmdlr.Point3D(-9.07716976931853, -25.000000000000004, -6.280643904610847),
+                               volmdlr.Point3D(-9.07716976931853, -9.485960183093134, -4.7087289345950065),
+                               volmdlr.Point3D(-9.07716976931853, 0.3732766669129052, -5.9676274770461415),
+                               volmdlr.Point3D(-9.077169769318532, 6.5923170800941175, -5.601767665101728),
+                               volmdlr.Point3D(-9.07716976931853, 25.000000000000004, -6.280643904610847)],
+                              [volmdlr.Point3D(0.11256465850708161, -24.999999999999996, -4.238138097577793),
+                               volmdlr.Point3D(0.1125646585070812, -9.485960183093134, -5.069196197307746),
+                               volmdlr.Point3D(0.11256465850708078, 0.3732766669129052, -7.532144969741332),
+                               volmdlr.Point3D(0.11256465850708117, 6.592317080094115, -6.7118731933170785),
+                               volmdlr.Point3D(0.11256465850708161, 24.999999999999996, -4.238138097577793)],
+                              [volmdlr.Point3D(9.309787132823084, -24.999999999999996, -5.579386459163333),
+                               volmdlr.Point3D(9.309787132823084, -9.485960183093132, -4.462539699464645),
+                               volmdlr.Point3D(9.309787132823082, 0.3732766669129051, -5.839760787576515),
+                               volmdlr.Point3D(9.309787132823086, 6.592317080094118, -5.4233896471890475),
+                               volmdlr.Point3D(9.309787132823084, 24.999999999999996, -5.579386459163333)],
+                              [volmdlr.Point3D(25.0, -25.0, -10.0),
+                               volmdlr.Point3D(25.0, -9.485960183093134, -1.6964667229125177),
+                               volmdlr.Point3D(25.0, 0.3732766669129052, 1.7001973013038214),
+                               volmdlr.Point3D(25.000000000000004, 6.5923170800941175, 0.37750338602002487),
+                               volmdlr.Point3D(25.0, 25.0, -10.0)]
+                              ]
+
+        # points from surface evaluation
+        expected_results_v = [[volmdlr.Point3D(-25.0, -25.0, -10.0),
+                               volmdlr.Point3D(-9.07716976931853, -25.000000000000004, -6.280643904610847),
+                               volmdlr.Point3D(0.11256465850708161, -24.999999999999996, -4.238138097577793),
+                               volmdlr.Point3D(9.309787132823084, -24.999999999999996, -5.579386459163333),
+                               volmdlr.Point3D(25.0, -25.0, -10.0)],
+                              [volmdlr.Point3D(-25.0, -9.485960183093134, -2.651935673517623),
+                               volmdlr.Point3D(-9.07716976931853, -9.485960183093134, -4.7087289345950065),
+                               volmdlr.Point3D(0.1125646585070812, -9.485960183093134, -5.069196197307746),
+                               volmdlr.Point3D(9.309787132823084, -9.485960183093132, -4.462539699464645),
+                               volmdlr.Point3D(25.0, -9.485960183093134, -1.6964667229125177)],
+                              [volmdlr.Point3D(-25.0, 0.3732766669129052, -0.21414478478298477),
+                               volmdlr.Point3D(-9.07716976931853, 0.3732766669129052, -5.9676274770461415),
+                               volmdlr.Point3D(0.11256465850708078, 0.3732766669129052, -7.532144969741332),
+                               volmdlr.Point3D(9.309787132823082, 0.3732766669129051, -5.839760787576515),
+                               volmdlr.Point3D(25.0, 0.3732766669129052, 1.7001973013038214)],
+                              [volmdlr.Point3D(-25.000000000000004, 6.5923170800941175, -1.200587938543581),
+                               volmdlr.Point3D(-9.077169769318532, 6.5923170800941175, -5.601767665101728),
+                               volmdlr.Point3D(0.11256465850708117, 6.592317080094115, -6.7118731933170785),
+                               volmdlr.Point3D(9.309787132823086, 6.592317080094118, -5.4233896471890475),
+                               volmdlr.Point3D(25.000000000000004, 6.5923170800941175, 0.37750338602002487)],
+                              [volmdlr.Point3D(-25.0, 25.0, -10.0),
+                               volmdlr.Point3D(-9.07716976931853, 25.000000000000004, -6.280643904610847),
+                               volmdlr.Point3D(0.11256465850708161, 24.999999999999996, -4.238138097577793),
+                               volmdlr.Point3D(9.309787132823084, 24.999999999999996, -5.579386459163333),
+                               volmdlr.Point3D(25.0, 25.0, -10.0)]]
+        test = self.nurbs_surf.extract_curves(u, v)
+        for curve, expected_result in zip(test["u"], expected_results_u):
+            control_points = curve.control_points
+            self.assertEqual(len(control_points), 6)
+            for point in expected_result:
+                self.assertTrue(curve.point_belongs(point))
+
+        for curve, expected_result in zip(test["v"], expected_results_v):
+            control_points = curve.control_points
+            self.assertEqual(len(control_points), 6)
+            for point in expected_result:
+                self.assertTrue(curve.point_belongs(point))
+
     def test_point2d_to_3d(self):
         test_cases = [
             (volmdlr.Point2D(0.0, 0.0), (-25.0, -25.0, -10.0)),
@@ -94,6 +201,27 @@ class TestBSplineSurface3D(unittest.TestCase):
             self.assertAlmostEqual(evalpt[0], res[0], delta=DELTA)
             self.assertAlmostEqual(evalpt[1], res[1], delta=DELTA)
             self.assertAlmostEqual(evalpt[2], res[2], delta=DELTA)
+
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.0, 0.2], [0.0, 1.0], [0.3, 0.0],
+                                      [0.3, 0.4], [0.3, 1.0], [0.6, 0.0], [0.6, 0.6],
+                                      [0.6, 1.0], [1.0, 0.0], [1.0, 0.8], [1.0, 1.0],
+                                      ])
+        points3d = self.spline_surf.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[-25.0, -25.0, -10.0], [-25.0, -11.40398, -3.3856], [-25.0, 25.0, -10.0],
+                                    [-7.006, -25.0, -5.725], [-7.006, -3.308, -6.265], [-7.006, 25.0, -5.725],
+                                    [3.533, -25.0, -4.224], [3.533, 3.533, -6.801], [3.533, 25.0, -4.224],
+                                    [25.0, -25.0, -10.0], [25.0, 11.636, -2.751], [25.0, 25.0, -10.0]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0, delta=DELTA)
+
+        points3d = self.nurbs_surf.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[-25.0, -25.0, -10.0], [-25.0, -11.563, -3.489], [-25.0, 25.0, -10.0],
+                                    [-7.006, -25.0, -5.725], [-7.006, -3.052, -6.196], [-7.006, 25.0, -5.725],
+                                    [3.533, -25.0, -4.224], [3.533, 2.868, -7.257], [3.533, 25.0, -4.224],
+                                    [25.0, -25.0, -10.0], [25.0, 9.425, -1.175], [25.0, 25.0, -10.0]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0, delta=DELTA)
 
     def test_derivatives(self):
         test_data = [
@@ -695,7 +823,53 @@ class TestBSplineSurface3D(unittest.TestCase):
         plane = surfaces.Plane3D(frame)
         intersections = self.spline_surf.plane_intersections(plane)
         for point in intersections:
-            self.assertTrue(plane.point_on_surface(point))
+            self.assertTrue(plane.point_belongs(point))
+
+    def test_decompose(self):
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "bsplineface_triangulation_problem_surface.json"))
+        decompose_results = surface.decompose(return_params=True)
+        self.assertEqual(len(decompose_results), 116)
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
+        self.assertEqual(len(bezier_patches), len(params))
+        for patch, param in zip(bezier_patches, params):
+            control_points = patch.control_points
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
+        decompose_results = surface.decompose(return_params=True, decompose_dir="u")
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
+        self.assertEqual(len(bezier_patches), 4)
+        self.assertEqual(len(bezier_patches), len(params))
+        for patch, param in zip(bezier_patches, params):
+            control_points = patch.control_points
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
+        decompose_results = surface.decompose(return_params=True, decompose_dir="v")
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
+        self.assertEqual(len(bezier_patches), 29)
+        self.assertEqual(len(bezier_patches), len(params))
+        for patch, param in zip(bezier_patches, params):
+            control_points = patch.control_points
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
+
+        bezier_patches = surface.decompose(decompose_dir="u")
+        self.assertEqual(len(bezier_patches), 4)
+        bezier_patches = surface.decompose(decompose_dir="v")
+        self.assertEqual(len(bezier_patches), 29)
+        bezier_patches = surface.decompose()
+        self.assertEqual(len(bezier_patches), 116)
+
+
 
 
 if __name__ == '__main__':

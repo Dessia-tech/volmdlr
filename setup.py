@@ -142,6 +142,7 @@ setup(
         "rtree",
         "gmsh",
         "pyfqmr",
+        "CGAL",
     ],
     extras_require={"test": ["coverage"],
                     "doc": ["sphinx", "nbsphinx", "pydata_sphinx_theme", "nbformat", "nbconvert",
@@ -154,7 +155,8 @@ setup(
                            "volmdlr/discrete_representation_compiled.py",
                            "volmdlr/nurbs/core.pyx",
                            "volmdlr/nurbs/helpers.pyx",
-                           "volmdlr/nurbs/fitting.py"]),
+                           "volmdlr/nurbs/fitting.py",
+                           "volmdlr/nurbs/operations.py"]),
     include_dirs=[np.get_include()],
     python_requires=">=3.9",
 )

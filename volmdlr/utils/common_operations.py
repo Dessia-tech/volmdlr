@@ -152,10 +152,9 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
                 + 2 * radius * math.sin(x[1]) * w_param.dot(v_param) +
                 2 * radius * math.cos(x[1]) * w_param.dot(k_param)
                 + math.sin(2 * x[1]) * v_param.dot(k_param) * radius ** 2)
-    circle_point = circle3d.point_at_abscissa(0.0)
     radius = circle3d.radius
     linseg_direction_vector = linesegment3d.direction_vector()
-    vector_point_origin = circle_point - circle3d.frame.origin
+    vector_point_origin = circle3d.point_at_abscissa(0.0) - circle3d.frame.origin
     vector_point_origin = vector_point_origin.unit_vector()
     w = circle3d.frame.origin - linesegment3d.start
     v = circle3d.frame.w.cross(vector_point_origin)
@@ -172,8 +171,7 @@ def minimum_distance_points_circle3d_linesegment3d(circle3d,  linesegment3d):
     for couple in results[1:]:
         ptest1 = linesegment3d.point_at_abscissa(couple.x[0] * linesegment3d.length())
         ptest2 = circle3d.point_at_abscissa(couple.x[1] * circle3d.radius)
-        dtest = ptest1.point_distance(ptest2)
-        if dtest < v.dot(v):
+        if ptest1.point_distance(ptest2) < v.dot(v):
             point1, point2 = ptest1, ptest2
 
     return point1, point2
@@ -217,12 +215,19 @@ def get_point_distance_to_edge(edge, point, start, end):
     :return: distance to edge.
     """
     best_distance = math.inf
-    abscissa1 = 0
-    abscissa2 = edge.length()
+    if start != end:
+        if start.is_close(end):
+            if not edge.periodic:
+                return point.point_distance(start)
+            number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
+        else:
+            number_points = 10 if abs(edge.abscissa(start) - edge.abscissa(end)) > 5e-6 else 2
+        # number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
+    elif edge.periodic:
+        number_points = 10 if abs(0 - edge.length()) > 5e-6 else 2
     distance = best_distance
     point1_ = start
     point2_ = end
-    number_points = 10 if abs(abscissa2 - abscissa1) > 5e-6 else 2
     linesegment_class_ = getattr(volmdlr.edges, 'LineSegment' + edge.__class__.__name__[-2:])
     while True:
         discretized_points_between_1_2 = edge.local_discretization(point1_, point2_, number_points)
@@ -241,8 +246,54 @@ def get_point_distance_to_edge(edge, point, start, end):
         if not point1_ or math.isclose(distance, best_distance, abs_tol=1e-7):
             break
         best_distance = distance
-        if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
+        # if math.isclose(abscissa1, abscissa2, abs_tol=1e-6):
+        #     break
+    return distance
+
+
+def generic_minimum_distance(self, element, point1_edge1_, point2_edge1_, point1_edge2_,
+                              point2_edge2_, return_points=False):
+    """
+    Gets the minimum distance between two elements.
+
+    This is a generalized method in a case an analytical method has not yet been defined.
+
+    :param element: other element.
+    :param return_points: Weather to return the corresponding points or not.
+    :return: distance to edge.
+    """
+    n = max(1, int(self.length() / element.length()))
+    best_distance = math.inf
+    distance_points = None
+    distance = best_distance
+
+    linesegment_class_ = getattr(volmdlr.edges, 'LineSegment' + self.__class__.__name__[-2:])
+    while True:
+        edge1_discretized_points_between_1_2 = self.local_discretization(point1_edge1_, point2_edge1_,
+                                                                         number_points=10 * n)
+        edge2_discretized_points_between_1_2 = element.local_discretization(point1_edge2_, point2_edge2_)
+        if not edge1_discretized_points_between_1_2:
             break
+        distance = edge2_discretized_points_between_1_2[0].point_distance(edge1_discretized_points_between_1_2[0])
+        distance_points = [edge2_discretized_points_between_1_2[0], edge1_discretized_points_between_1_2[0]]
+        for point1_edge1, point2_edge1 in zip(edge1_discretized_points_between_1_2[:-1],
+                                              edge1_discretized_points_between_1_2[1:]):
+            lineseg1 = linesegment_class_(point1_edge1, point2_edge1)
+            for point1_edge2, point2_edge2 in zip(edge2_discretized_points_between_1_2[:-1],
+                                                  edge2_discretized_points_between_1_2[1:]):
+                lineseg2 = linesegment_class_(point1_edge2, point2_edge2)
+                dist, min_dist_point1_, min_dist_point2_ = lineseg1.minimum_distance(lineseg2, True)
+                if dist < distance:
+                    point1_edge1_, point2_edge1_ = point1_edge1, point2_edge1
+                    point1_edge2_, point2_edge2_ = point1_edge2, point2_edge2
+                    distance = dist
+                    distance_points = [min_dist_point1_, min_dist_point2_]
+        if math.isclose(distance, best_distance, abs_tol=1e-6):
+            break
+        best_distance = distance
+        n = 1
+    if return_points:
+        return distance, distance_points[0], distance_points[1]
     return distance
 
 
@@ -287,23 +338,38 @@ def get_plane_equation_coefficients(plane_frame):
     return round(a, 12), round(b, 12), round(c, 12), round(d, 12)
 
 
+def get_plane_point_distance(plane_frame, point3d):
+    """
+    Gets distance between a point and plane, using its frame.
+
+    :param plane_frame: plane's frame.
+    :param point3d: other point.
+    :return: point plane distance.
+    """
+    coefficient_a, coefficient_b, coefficient_c, coefficient_d = get_plane_equation_coefficients(plane_frame)
+    return abs(plane_frame.w.dot(point3d) + coefficient_d) / math.sqrt(coefficient_a ** 2 +
+                                                                       coefficient_b ** 2 + coefficient_c ** 2)
+
+
 def order_points_list_for_nearest_neighbor(points):
     """
     Given a list of unordered points defining a path, it will order these points considering the nearest neighbor.
 
     """
     ordered_points = []
-    remaining_points = points[:]
-    current_point = remaining_points.pop(0)
+    remaining_points = np.array([[*point] for point in points])
+    current_point = remaining_points[0, :]
+    remaining_points = np.delete(remaining_points, 0, axis=0)
 
-    while remaining_points:
-        nearest_point_idx = np.argmin([current_point.point_distance(p)for p in remaining_points])
-        nearest_point = remaining_points.pop(nearest_point_idx)
-        ordered_points.append(current_point)
+    while remaining_points.any():
+        nearest_point_idx = np.argmin(np.linalg.norm(remaining_points - current_point, axis=1))
+        nearest_point = remaining_points[nearest_point_idx, :]
+        remaining_points = np.delete(remaining_points, nearest_point_idx, axis=0)
+        ordered_points.append(volmdlr.Point3D(*current_point))
         current_point = nearest_point
 
     # Add the last point to complete the loop
-    ordered_points.append(current_point)
+    ordered_points.append(volmdlr.Point3D(*current_point))
 
     return ordered_points
 
@@ -330,7 +396,10 @@ def separate_points_by_closeness(points):
     points_ = np.array([[*point] for point in points])
 
     # Apply DBSCAN clustering with a small epsilon to separate close points
-    eps = 0.25
+    distances = sorted(np.linalg.norm(points_[1:] - points_[0], axis=1))
+    eps = max(min(np.mean(distances[:max(int(len(points)*0.1), 30)]) / 2, 0.35), 0.02)
+    # eps = np.mean(distances[:max(int(len(points)*0.1), 30)]) / 2
+
     dbscan = DBSCAN(eps=eps, min_samples=1)
     labels = dbscan.fit_predict(points_)
 
@@ -347,3 +416,17 @@ def separate_points_by_closeness(points):
         groups[key] = order_points_list_for_nearest_neighbor(groups[key])
         groups[key].append(groups[key][0])
     return list(groups.values())
+
+
+def get_center_of_mass(list_points):
+    """
+    Gets the center of mass of a given list of points.
+
+    :param list_points: list of points to get the center of mass from.
+    :return: center of mass point.
+    """
+    center_mass = volmdlr.O3D
+    for point in list_points:
+        center_mass += point
+    center_mass /= len(list_points)
+    return center_mass
