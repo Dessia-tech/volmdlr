@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: parametric_points_to_3d
 - Plane3D: parametric_points_to_3d
 - BSplineSurface3D: parametric_points_to_3d
-- BSplineSurface3D: decompose
+- BSplineSurface3D: decompose.
 - BSplineSurface3D:extract_curves method. Extracts curves from the surface given an ordered list of parameters in u or v direction.
 - ToroidalSurface3D: torus-torus intersections.
 
