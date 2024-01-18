@@ -10,111 +10,69 @@ on:
       - fix_ci
 
 jobs:
-  build:
+  build_wheels:
     name: Build distribution on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Set up Python
-        uses: actions/setup-python@v4
+
+      - uses: actions/setup-python@v3
+        name: Install Python
         with:
           python-version: 3.9
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          fetch-depth: 0
-      - name: Install pypa/build
-        run: >-
-          python3 -m
-          pip install
-          build
-          --user
-      - name: Build a binary wheel and a source tarball
-        run: python3 -m build
-      - name: Store the distribution packages
-        uses: actions/upload-artifact@v3
-        with:
-          name: python-package-distributions
-          path: dist/
-#      - uses: actions/setup-python@v3
-#        name: Install Python
-#        with:
-#          python-version: 3.9
-#
-#      - name: Install cibuildwheel
-#        run: |
-#          python -m pip install cibuildwheel==2.16.2
-#
-#      - name: Build wheels
-#        run: |
-#          python -m cibuildwheel --output-dir wheelhouse
-#
-#      - uses: actions/upload-artifact@v3
-#        with:
-#          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-#          path: ./wheelhouse/*.whl
 
-#  build_sdist:
-#    name: Build source distribution
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          fetch-depth: 0
-#
-#      - name: Build sdist
-#        run: pipx run build --sdist
-#
-#      - uses: actions/upload-artifact@v3
-#        with:
-#          name: cibw-sdist
-#          path: dist/*.tar.gz
-  publish-to-testpypi:
-    name: Publish Python 🐍 distribution 📦 to TestPyPI
-    needs:
-      - build
+      - name: Install cibuildwheel
+        run: |
+          python -m pip install cibuildwheel==2.16.2
+
+      - name: Build wheels
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: dist/
+
+  build_sdist:
+    name: Build source distribution
     runs-on: ubuntu-latest
-
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/volmdlr
-
-    permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
-
     steps:
-      - name: Download all the dists
-        uses: actions/download-artifact@v3
+      - uses: actions/checkout@v3
         with:
-          name: python-package-distributions
+          fetch-depth: 0
+
+      - name: Build sdist
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: cibw-sdist
           path: dist/
-      - name: Publish distribution 📦 to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+
+  upload_pypi:
+    name: upload to TestPyPi
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write
+    # upload to PyPI on every tag starting with 'v'
+    #if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    # alternatively, to publish when a GitHub Release is created, use the following rule:
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          # unpacks all CIBW artifacts into dist/
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
-#  upload_pypi:
-#    name: upload to TestPyPi
-#    needs: [build_wheels, build_sdist]
-#    runs-on: ubuntu-latest
-#    environment: testpypi
-#    permissions:
-#      id-token: write
-#    # upload to PyPI on every tag starting with 'v'
-#    #if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-#    # alternatively, to publish when a GitHub Release is created, use the following rule:
-#    steps:
-#      - uses: actions/download-artifact@v3
-#        with:
-#          # unpacks all CIBW artifacts into dist/
-#          pattern: cibw-*
-#          path: dist
-#          merge-multiple: true
-#
-#      - uses: pypa/gh-action-pypi-publish@release/v1
-#        with:
-#          repository-url: https://test.pypi.org/legacy/
