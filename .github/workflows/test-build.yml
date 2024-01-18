@@ -37,7 +37,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-          path: dist/*.whl
+          path: ./wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
@@ -69,7 +69,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           # unpacks all CIBW artifacts into dist/
-          pattern: cibw-*
+          # pattern: cibw-*
           path: dist
           merge-multiple: true
 
