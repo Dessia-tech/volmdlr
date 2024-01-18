@@ -89,7 +89,7 @@ def get_version():
 
     if isdir(join(d, ".git")):
         cmd = "git describe --tags"
-        print(cmd)
+        print("cmd: ", cmd)
         try:
             version = check_output(cmd.split()).decode().strip()[:]
 
