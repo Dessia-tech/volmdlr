@@ -105,6 +105,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - surfaces.py: point_on_surface -> point_belongs
 - Numpyfy BSplines
 
+### Build
+- try adding github actions to testpypi
+
 ### Unittests
 - 
 
