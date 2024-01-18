@@ -89,10 +89,9 @@ def get_version():
 
     if isdir(join(d, ".git")):
         cmd = "git describe --tags"
-        print("cmd: ", cmd)
         try:
             version = check_output(cmd.split()).decode().strip()[:]
-
+            print("version: ", version)
         except CalledProcessError:
             raise RuntimeError("Unable to get version number from git tags")
 
