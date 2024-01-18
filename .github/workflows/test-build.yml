@@ -48,9 +48,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build sdist
-        run: |
-          git describe --tags
-          pipx run build --sdist
+        run: pipx run build --sdist
 
       - uses: actions/upload-artifact@v3
         with:
