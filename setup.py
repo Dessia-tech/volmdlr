@@ -6,7 +6,7 @@ Setup install script for volmdlr
 
 import re
 from os.path import dirname, isdir, join
-from subprocess import CalledProcessError, check_output
+from subprocess import CalledProcessError, check_output, STDOUT
 
 import numpy as np
 from setuptools import setup
@@ -90,10 +90,10 @@ def get_version():
     if isdir(join(d, ".git")):
         cmd = "git describe --tags"
         try:
-            version = check_output(cmd.split()).decode().strip()[:]
-            print("version: ", version)
-        except CalledProcessError:
-            raise RuntimeError("Unable to get version number from git tags")
+            version = check_output(cmd.split(), stderr=STDOUT).decode().strip()[:]
+        except CalledProcessError as exception:
+            raise RuntimeError("Unable to get version number from git tags, rc=", exception.returncode,
+                               "output=", exception.output)
 
         return version_from_git_describe(version)
     else:
