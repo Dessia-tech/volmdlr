@@ -7782,8 +7782,31 @@ class BSplineSurface3D(Surface3D):
         res = minimize(fun, x0=np.array(initial_guess), jac=True,
                        bounds=[(u_start, u_stop),
                                (v_start, v_stop)])
-        if res.fun <= 1e-6 or (point_inversion_result < 5e-6 and abs(res.fun - point_inversion_result) <= 1e-7):
+        if res.fun <= 1e-6 or (point_inversion_result < 5e-6 and abs(res.fun - point_inversion_result) <= 1e-6):
             return volmdlr.Point2D(*res.x)
+
+        if self.u_closed:
+            res = minimize(fun, x0=np.array((u_start, initial_guess[1])), jac=True,
+                           bounds=[(u_start, u_stop),
+                                   (v_start, v_stop)])
+            if res.fun <= 5e-6:
+                return volmdlr.Point2D(u_start, initial_guess[1])
+            res = minimize(fun, x0=np.array((u_stop, initial_guess[1])), jac=True,
+                           bounds=[(u_start, u_stop),
+                                   (v_start, v_stop)])
+            if res.fun <= 5e-6:
+                return volmdlr.Point2D(u_stop, initial_guess[1])
+        if self.v_closed:
+            res = minimize(fun, x0=np.array((initial_guess[0], v_start)), jac=True,
+                           bounds=[(u_start, u_stop),
+                                   (v_start, v_stop)])
+            if res.fun <= 5e-6:
+                return volmdlr.Point2D(initial_guess[0], v_start)
+            res = minimize(fun, x0=np.array((initial_guess[0], v_stop)), jac=True,
+                           bounds=[(u_start, u_stop),
+                                   (v_start, v_stop)])
+            if res.fun <= 5e-6:
+                return volmdlr.Point2D(initial_guess[0], v_stop)
         results = [(res.x, res.fun)]
         point3d_array = np.asarray(point3d)
         distances = np.linalg.norm(self.evalpts - point3d_array, axis=1)
@@ -9858,24 +9881,17 @@ class BSplineSurface3D(Surface3D):
         if not self.u_closed and not self.v_closed:
             return False
         u_min, u_max, v_min, v_max = self.domain
-        delta_u = u_max - u_min
-        delta_v = v_max - v_min
 
-        test_u_lower = [self.point2d_to_3d(volmdlr.Point2D(u_min, v_min)),
-                        self.point2d_to_3d(volmdlr.Point2D(0.5 * delta_u, v_min))]
-        test_u_upper = [self.point2d_to_3d(volmdlr.Point2D(u_min, v_max)),
-                        self.point2d_to_3d(volmdlr.Point2D(0.5 * delta_u, v_max))]
-        test_v_lower = [self.point2d_to_3d(volmdlr.Point2D(u_min, v_min)),
-                        self.point2d_to_3d(volmdlr.Point2D(u_min, 0.5 * delta_v))]
-        test_v_upper = [self.point2d_to_3d(volmdlr.Point2D(u_max, v_min)),
-                        self.point2d_to_3d(volmdlr.Point2D(u_max, 0.5 * delta_v))]
-        if all(test_point.is_close(point, tol) for test_point in test_u_lower) and self.u_closed_lower(tol=tol):
+        test_lower = self.point2d_to_3d(volmdlr.Point2D(u_min, v_min))
+        test_upper = self.point2d_to_3d(volmdlr.Point2D(u_max, v_max))
+
+        if self.u_closed_lower(tol=tol) and test_lower.is_close(point, tol):
             return True
-        if all(test_point.is_close(point, tol) for test_point in test_u_upper) and self.u_closed_upper(tol=tol):
+        if self.u_closed_upper(tol=tol) and test_upper.is_close(point, tol):
             return True
-        if all(test_point.is_close(point, tol) for test_point in test_v_lower) and self.v_closed_lower(tol=tol):
+        if self.v_closed_lower(tol=tol) and test_lower.is_close(point, tol):
             return True
-        if all(test_point.is_close(point, tol) for test_point in test_v_upper) and self.v_closed_upper(tol=tol):
+        if self.v_closed_upper(tol=tol) and test_upper.is_close(point, tol):
             return True
         return False
 
@@ -9920,7 +9936,7 @@ class BSplineSurface3D(Surface3D):
             point = find_parametric_point_at_singularity(temp_edge2d, abscissa=0,
                                                          singularity_line=singularity_line,
                                                          domain=[umin, umax, vmin, vmax])
-            if not point.is_close(points[0], 1e-3):
+            if point and not point.is_close(points[0], 1e-3):
                 points[0] = point
         if self.is_singularity_point(points3d[-1], tol=tol):
             temp_edge2d = get_temp_edge2d(points[:-1])
@@ -9928,7 +9944,7 @@ class BSplineSurface3D(Surface3D):
             point = find_parametric_point_at_singularity(temp_edge2d, abscissa=temp_edge2d.length(),
                                                          singularity_line=singularity_line,
                                                          domain=[umin, umax, vmin, vmax])
-            if not point.is_close(points[-1], 1e-3):
+            if point and not point.is_close(points[-1], 1e-3):
                 points[-1] = point
         return points
 
