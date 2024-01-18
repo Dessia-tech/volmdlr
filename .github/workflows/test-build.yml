@@ -47,7 +47,7 @@ jobs:
 
       - name: Build sdist
         run: |
-          pip install numpy
+          pip install numpy cython>=3 setuptools
           python setup.py sdist
 
       - uses: actions/upload-artifact@v3
