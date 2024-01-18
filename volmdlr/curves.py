@@ -1099,7 +1099,14 @@ class CircleMixin:
 
 class Circle2D(CircleMixin, ClosedCurve):
     """
-    A class representing a 2D circle.
+    Represents a Circle in two dimensions.
+
+    A circle is defined by a coordinate system and a radius. The center of the circle
+    is at the origin of the coordinate system.
+
+    The circle is parametrized with polar angles in the interval [0, 2pi). Moving along
+    the circle in the parameter direction corresponds to moving counter-clockwise,
+    following the right-hand rule around the origin of the local coordinate system.
 
     This class inherits from `CircleMixin` and `Curve` classes,
     and provides methods to work with 2D circles.
@@ -1621,9 +1628,15 @@ class Circle2D(CircleMixin, ClosedCurve):
 
 class Circle3D(CircleMixin, ClosedCurve):
     """
-    Defines a Circle in three dimensions, with a center and a radius.
+    Represents a Circle in three dimensions.
 
-    frame.u, frame.v define the plane, frame.w the normal
+    A circle is defined by a coordinate system and a radius. The center of the circle
+    is at the origin of the coordinate system, and the z-axis of the coordinate system
+    defines the normal of the circle plane.
+
+    The circle is parametrized with polar angles in the interval [0, 2pi). Moving along
+    the circle in the parameter direction corresponds to moving counter-clockwise,
+    following the right-hand rule around the origin of the local coordinate system.
     """
     _non_serializable_attributes = ['point', 'edges', 'point_inside_contour']
     _non_data_eq_attributes = ['name']
@@ -2507,7 +2520,14 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
 
 class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
     """
-    Defines a 3D ellipse.
+    Represents a 3D ellipse.
+
+    An ellipse is defined by a coordinate system, a major and minor axis.
+    The center of the ellipse is at the origin of the coordinate system.
+    The major axis is parallel to the local x-axis, and the minor axis is parallel to the local y-axis.
+    The parameter domain of an ellipse is [0, 2*pi).
+    Moving along the ellipse in the parameter direction corresponds to moving counter-clockwise,
+    following the right-hand rule, around the origin of the local coordinate system
 
     :param major_axis: Largest radius of the ellipse
     :type major_axis: float

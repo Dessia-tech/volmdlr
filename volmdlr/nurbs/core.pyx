@@ -86,7 +86,7 @@ def find_span_binsearch(int degree, double[:] knot_vector, int num_ctrlpts, doub
 cdef int find_span_linear_c(int degree, double[:] knot_vector, int num_ctrlpts, double knot):
     """ Finds the span of a single knot over the knot vector using linear search."""
     cdef int span = degree + 1  # Knot span index starts from zero
-    while span < num_ctrlpts and knot_vector[span] <= (knot + 1e-15):
+    while span < num_ctrlpts and knot_vector[span] <= knot:
         span += 1
     return span - 1
 
@@ -153,7 +153,7 @@ def find_multiplicity(double knot, double[:] knot_vector, **kwargs):
     :rtype: int
     """
     # Get tolerance value
-    cdef double tol = kwargs.get("tol", 1e-18)
+    cdef double tol = kwargs.get("tol", 1e-15)
 
     cdef int mult = 0  # initial multiplicity
     cdef int i

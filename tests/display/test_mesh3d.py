@@ -14,7 +14,7 @@ from volmdlr.display import Mesh3D
 from volmdlr.faces import Triangle3D
 from volmdlr.shells import ClosedTriangleShell3D, OpenTriangleShell3D
 
-SHOW_BABYLONJS = True
+SHOW_BABYLONJS = False
 
 FOLDER = os.path.dirname(os.path.realpath(__file__))
 

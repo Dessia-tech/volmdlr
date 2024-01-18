@@ -1,0 +1,40 @@
+{
+  "object_class": "volmdlr.edges.BSplineCurve3D",
+  "name": "",
+  "degree": 3,
+  "control_points": [
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.43897344153199996,
+      "y": 0.160922017762,
+      "z": 0.421082923806
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.438978330603,
+      "y": 0.160933580213,
+      "z": 0.421079891586
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.43898336569100005,
+      "y": 0.16094508066899998,
+      "z": 0.421076858403
+    },
+    {
+      "object_class": "volmdlr.Point3D",
+      "x": 0.43898854518700003,
+      "y": 0.160956515473,
+      "z": 0.421073824314
+    }
+  ],
+  "knot_multiplicities": [
+    4,
+    4
+  ],
+  "knots": [
+    0.0,
+    1.0
+  ],
+  "weights": null
+}

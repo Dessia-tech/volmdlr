@@ -500,6 +500,17 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(brep_primitive.length(), 0.0024101173639275997)
         self.assertAlmostEqual(bsplinecurve3d.length(), reversed_prof.length(), 5)
 
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "periodic_surface_smallbsplinecurve3d.json"))
+        bsplinecurve3d = vme.BSplineCurve3D.load_from_file(
+            os.path.join(folder, "periodic_surface_smallbsplinecurve3d_curve.json"))
+        brep_primitive = surface.bsplinecurve3d_to_2d(bsplinecurve3d)[0]
+        reversed_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
+        self.assertAlmostEqual(brep_primitive.length(), 0.006419627118992597)
+        self.assertTrue(bsplinecurve3d.start.is_close(reversed_prof.start))
+        self.assertAlmostEqual(bsplinecurve3d.length(), reversed_prof.length(), 5)
+
+
     def test_bsplinecurve2d_to_3d(self):
         surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "bspline_surface_with_arcs.json"))
         contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "bspline_contour_with_arcs.json"))

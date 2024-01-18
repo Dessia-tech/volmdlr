@@ -1191,7 +1191,8 @@ class BSplineCurve(Edge):
             return [None, self.copy()]
         if split_point.is_close(self.end, tol):
             return [self.copy(), None]
-        parameter = round(self.point_to_parameter(split_point), 15)
+        parameter = self.point_to_parameter(split_point)
+        parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
         return split_curve(self, parameter)
 
     def get_reverse(self):
@@ -1380,7 +1381,7 @@ class BSplineCurve(Edge):
         initial_condition_list = [u_min + index * (u_max - u_min) / (self.sample_size - 1) for index in indexes[:3]]
         for u0 in initial_condition_list:
             res = minimize(objective_function, np.array(u0), bounds=[(u_min, u_max)], jac=True)
-            if res.fun < 1e-6:
+            if res.fun < 1e-6 or (res.success and abs(res.fun - distance) <= 1e-8):
                 return float(res.x[0] * length)
 
         for patch, param in self.decompose(True):
@@ -5185,8 +5186,8 @@ class BSplineCurve3D(BSplineCurve):
 
         bsplinecurve = bsplinecurve.cut_before(parameter1)
         new_param2 = bsplinecurve.point_to_parameter(point2)
-        trimmed_bspline_cruve = bsplinecurve.cut_after(new_param2)
-        return trimmed_bspline_cruve
+        trimmed_bspline_curve = bsplinecurve.cut_after(new_param2)
+        return trimmed_bspline_curve
 
     def _trim_periodic(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True):
         """
@@ -5263,13 +5264,13 @@ class BSplineCurve3D(BSplineCurve):
         :param parameter: parameter value that specifies where to split the curve.
         :type parameter: float
         """
+        parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
         point3d = self.evaluate_single(parameter)
         if self.start.is_close(point3d):
             return self.copy()
         if self.end.is_close(point3d):
             return self.reverse()
-
-        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 15))
+        curves = volmdlr.nurbs.operations.split_curve(self, parameter)
         return curves[1]
 
     def cut_after(self, parameter: float):
@@ -5279,13 +5280,13 @@ class BSplineCurve3D(BSplineCurve):
         :param parameter: parameter value that specifies where to split the curve.
         :type parameter: float
         """
-        # Is a value of parameter below 5e-6 a real need for precision ?
+        parameter = next((knot for knot in self.knots if abs(knot - parameter) < 1e-12), parameter)
         point3d = self.evaluate_single(parameter)
         if self.start.is_close(point3d):
             return self.reverse()
         if self.end.is_close(point3d):
             return self.copy()
-        curves = volmdlr.nurbs.operations.split_curve(self, round(parameter, 15))
+        curves = volmdlr.nurbs.operations.split_curve(self, parameter)
         return curves[0]
 
     def insert_knot(self, knot: float, num: int = 1):
