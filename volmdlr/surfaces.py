@@ -9895,6 +9895,72 @@ class BSplineSurface3D(Surface3D):
             return True
         return False
 
+    def _get_singularity_line(self, test_point):
+        """
+        Helper function to fix_start_end_singularity_point_at_parametric_domain.
+
+        Determines the singularity line, side, and domain boundary for a given test point on the parametric domain.
+        - line: A 2D line representing the singularity line (degenerated line) is a 2D line on UV that correspond to
+            a point in 3D space.
+        - side: A string indicating the side of the singularity line ('u-'/'u+' or 'v-'/'v+').
+        - domain_bound: The domain boundary value associated with the singularity line.
+
+        :param test_point: The test 3D point that lies on the singularity.
+        """
+        a, b, c, d = self.domain
+        line = None
+        _side = None
+        _domain_bound = None
+        if self.u_closed:
+            if (self.u_closed_lower() and
+                    test_point.is_close(self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), c)))):
+                line = curves.Line2D(volmdlr.Point2D(a, c), volmdlr.Point2D(b, c))
+                _side = "u-"
+                _domain_bound = c
+            if (self.u_closed_upper() and
+                    test_point.is_close(self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), d)))):
+                line = curves.Line2D(volmdlr.Point2D(a, d), volmdlr.Point2D(b, d))
+                _side = "u+"
+                _domain_bound = d
+        else:
+            if (self.v_closed_lower() and
+                    test_point.is_close(self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (c + d))))):
+                line = curves.Line2D(volmdlr.Point2D(a, c), volmdlr.Point2D(a, d))
+                _side = "v-"
+                _domain_bound = a
+            if (self.v_closed_upper() and
+                    test_point.is_close(self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (c + d))))):
+                line = curves.Line2D(volmdlr.Point2D(b, c), volmdlr.Point2D(b, d))
+                _side = "v+"
+                _domain_bound = b
+        return line, _side, _domain_bound
+
+    @staticmethod
+    def _verify_points(points, side, domain_bound, start_end):
+        """
+        Helper function to fix_start_end_singularity_point_at_parametric_domain.
+
+        Verifies and adjusts the given list of points based on the singularity side and domain boundary.
+
+        :param points: The list of points to be verified.
+        :param side: A string indicating the side of the singularity line ('u-'/'u+' or 'v-'/'v+').
+        :param domain_bound: The domain boundary value associated with the singularity line.
+        :param start_end: An integer (0 or 1) indicating whether to process the start or end of the list.
+
+        :return: Verified and adjusted list of points.
+        """
+        if side.startswith("u"):
+            i = 1
+        else:
+            i = 0
+        indexes = [idx for idx, point in enumerate(points) if point[i] == domain_bound]
+        if len(indexes) == 1 and indexes[0] != len(points) - 1:
+            if start_end == 0:
+                return points[indexes[0]:]
+
+            return points[:indexes[0] + 1]
+        return points
+
     def fix_start_end_singularity_point_at_parametric_domain(self, edge3d, points, points3d, tol: float = 1e-6):
         """
         Helper function.
@@ -9903,47 +9969,6 @@ class BSplineSurface3D(Surface3D):
         point on the BREP of the 3D edge to find the real values on parametric domain.
         """
         points = verify_repeated_parametric_points(points)
-
-        def get_singularity_line(a, b, c, d, test_point):
-            line = None
-            side = None
-            domain_bound = None
-            if self.u_closed:
-                if (self.u_closed_lower() and
-                        test_point.is_close(self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), c)))):
-                    line = curves.Line2D(volmdlr.Point2D(a, c), volmdlr.Point2D(b, c))
-                    side = "u-"
-                    domain_bound = c
-                if (self.u_closed_upper() and
-                        test_point.is_close(self.point2d_to_3d(volmdlr.Point2D(0.5 * (a + b), d)))):
-                    line = curves.Line2D(volmdlr.Point2D(a, d), volmdlr.Point2D(b, d))
-                    side = "u+"
-                    domain_bound = d
-            else:
-                if (self.v_closed_lower() and
-                        test_point.is_close(self.point2d_to_3d(volmdlr.Point2D(a, 0.5 * (c + d))))):
-                    line = curves.Line2D(volmdlr.Point2D(a, c), volmdlr.Point2D(a, d))
-                    side = "v-"
-                    domain_bound = a
-                if (self.v_closed_upper() and
-                        test_point.is_close(self.point2d_to_3d(volmdlr.Point2D(b, 0.5 * (c + d))))):
-                    line = curves.Line2D(volmdlr.Point2D(b, c), volmdlr.Point2D(b, d))
-                    side = "v+"
-                    domain_bound = b
-            return line, side, domain_bound
-
-        def verify_points(_points, start_end):
-            if side.startswith("u"):
-                i = 1
-            else:
-                i = 0
-            indexes = [idx for idx, point in enumerate(points) if point[i] == domain_bound]
-            if len(indexes) == 1 and indexes[0] != len(_points) - 1:
-                if start_end == 0:
-                    return _points[indexes[0]:]
-                else:
-                    return _points[:indexes[0] + 1]
-            return points
 
         def get_temp_edge2d(_points):
             if len(_points) == 2:
@@ -9954,24 +9979,26 @@ class BSplineSurface3D(Surface3D):
 
         umin, umax, vmin, vmax = self.domain
         if self.is_singularity_point(points3d[0], tol=tol):
-            singularity_line, side, domain_bound = get_singularity_line(umin, umax, vmin, vmax, points3d[0])
-            points = verify_points(points, 0)
-            temp_edge2d = get_temp_edge2d(points[1:])
-            point = find_parametric_point_at_singularity(temp_edge2d, abscissa=0,
-                                                         singularity_line=singularity_line,
-                                                         domain=[umin, umax, vmin, vmax])
-            if point and not point.is_close(points[0], 1e-3):
-                points[0] = point
+            singularity_line, side, domain_bound = self._get_singularity_line(points3d[0])
+            points = self._verify_points(points, side, domain_bound, 0)
+            if singularity_line:
+                temp_edge2d = get_temp_edge2d(points[1:])
+                point = find_parametric_point_at_singularity(temp_edge2d, abscissa=0,
+                                                             singularity_line=singularity_line,
+                                                             domain=[umin, umax, vmin, vmax])
+                if point and not point.is_close(points[0], 1e-3):
+                    points[0] = point
         if self.is_singularity_point(points3d[-1], tol=tol):
-            singularity_line, side, domain_bound = get_singularity_line(umin, umax, vmin, vmax, points3d[-1])
-            points = verify_points(points, 1)
-            temp_edge2d = get_temp_edge2d(points[:-1])
+            singularity_line, side, domain_bound = self._get_singularity_line(points3d[-1])
+            points = self._verify_points(points, side, domain_bound, 1)
+            if singularity_line:
+                temp_edge2d = get_temp_edge2d(points[:-1])
 
-            point = find_parametric_point_at_singularity(temp_edge2d, abscissa=temp_edge2d.length(),
-                                                         singularity_line=singularity_line,
-                                                         domain=[umin, umax, vmin, vmax])
-            if point and not point.is_close(points[-1], 1e-3):
-                points[-1] = point
+                point = find_parametric_point_at_singularity(temp_edge2d, abscissa=temp_edge2d.length(),
+                                                             singularity_line=singularity_line,
+                                                             domain=[umin, umax, vmin, vmax])
+                if point and not point.is_close(points[-1], 1e-3):
+                    points[-1] = point
         return points
 
     def is_undefined_brep(self, edge):
