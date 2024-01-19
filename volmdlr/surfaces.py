@@ -9980,8 +9980,8 @@ class BSplineSurface3D(Surface3D):
         umin, umax, vmin, vmax = self.domain
         if self.is_singularity_point(points3d[0], tol=tol):
             singularity_line, side, domain_bound = self._get_singularity_line(points3d[0])
-            points = self._verify_points(points, side, domain_bound, 0)
-            if singularity_line:
+            if singularity_line and len(points) >= 3:
+                points = self._verify_points(points, side, domain_bound, 0)
                 temp_edge2d = get_temp_edge2d(points[1:])
                 point = find_parametric_point_at_singularity(temp_edge2d, abscissa=0,
                                                              singularity_line=singularity_line,
@@ -9990,8 +9990,8 @@ class BSplineSurface3D(Surface3D):
                     points[0] = point
         if self.is_singularity_point(points3d[-1], tol=tol):
             singularity_line, side, domain_bound = self._get_singularity_line(points3d[-1])
-            points = self._verify_points(points, side, domain_bound, 1)
-            if singularity_line:
+            if singularity_line and len(points) >= 3:
+                points = self._verify_points(points, side, domain_bound, 1)
                 temp_edge2d = get_temp_edge2d(points[:-1])
 
                 point = find_parametric_point_at_singularity(temp_edge2d, abscissa=temp_edge2d.length(),
