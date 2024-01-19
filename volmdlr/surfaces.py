@@ -7754,7 +7754,8 @@ class BSplineSurface3D(Surface3D):
                 return volmdlr.Point2D(umax, vmin)
             if self.v_closed_lower(tol) and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmin)), tol):
                 point = volmdlr.Point2D(umin, vmin)
-            return point
+            if point:
+                return point
 
         x0, distance = self.point_inversion_grid_search(point3d, 5e-5)
         if distance < tol:
