@@ -7783,7 +7783,7 @@ class BSplineSurface3D(Surface3D):
         res = minimize(fun, x0=np.array(initial_guess), jac=True,
                        bounds=[(u_start, u_stop),
                                (v_start, v_stop)])
-        if res.fun <= 1e-6 or (point_inversion_result < 5e-6 and abs(res.fun - point_inversion_result) <= 1e-6):
+        if res.fun <= 1e-6 or (res.fun < 5e-6 and abs(res.fun - point_inversion_result) <= 1e-6):
             return volmdlr.Point2D(*res.x)
 
         if self.u_closed:
@@ -7810,34 +7810,8 @@ class BSplineSurface3D(Surface3D):
                 return volmdlr.Point2D(initial_guess[0], v_stop)
         results = [(res.x, res.fun)]
         point3d_array = np.asarray(point3d)
-        distances = np.linalg.norm(self.evalpts - point3d_array, axis=1)
-        indexes = np.argsort(distances)
-        delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
-        delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
-        if self.weights is not None:
-            control_points = self.ctrlptsw
-        else:
-            control_points = self.ctrlpts
-        for index in indexes[:2]:
-            if index == 0:
-                u_idx, v_idx = 0, 0
-            else:
-                u_idx = int(index / self.sample_size_v)
-                v_idx = index % self.sample_size_v
 
-            u = u_start + u_idx * delta_u
-            v = v_start + v_idx * delta_v
-            x0 = (u, v)
-            res = point_inversion(point3d_array, x0, [(u_start, u_stop), (v_start, v_stop)],
-                                  [self.degree_u, self.degree_v], self.knotvector, control_points,
-                                  [self.nb_u, self.nb_v], self.rational)
-
-            if res.fun < 1e-6:
-                return volmdlr.Point2D(*res.x)
-
-            results.append((res.x, res.fun))
-
-        if self.u_knots.shape[0] > 2 and self.v_knots.shape[0] > 2:
+        if self.u_knots.shape[0] > 2 or self.v_knots.shape[0] > 2:
             decompose_dir = "uv"
             if self.u_closed:
                 decompose_dir = "v"
@@ -7866,6 +7840,33 @@ class BSplineSurface3D(Surface3D):
                     if distance < 5e-6:
                         return volmdlr.Point2D(u, v)
                     results.append(((u, v), distance))
+
+        distances = np.linalg.norm(self.evalpts - point3d_array, axis=1)
+        indexes = np.argsort(distances)
+        delta_u = (u_stop - u_start) / (self.sample_size_u - 1)
+        delta_v = (v_stop - v_start) / (self.sample_size_v - 1)
+        if self.weights is not None:
+            control_points = self.ctrlptsw
+        else:
+            control_points = self.ctrlpts
+        for index in indexes[:2]:
+            if index == 0:
+                u_idx, v_idx = 0, 0
+            else:
+                u_idx = int(index / self.sample_size_v)
+                v_idx = index % self.sample_size_v
+
+            u = u_start + u_idx * delta_u
+            v = v_start + v_idx * delta_v
+            x0 = (u, v)
+            res = point_inversion(point3d_array, x0, [(u_start, u_stop), (v_start, v_stop)],
+                                  [self.degree_u, self.degree_v], self.knotvector, control_points,
+                                  [self.nb_u, self.nb_v], self.rational)
+
+            if res.fun < 1e-6:
+                return volmdlr.Point2D(*res.x)
+
+            results.append((res.x, res.fun))
         return volmdlr.Point2D(*min(results, key=lambda r: r[1])[0])
 
     def point_inversion(self, x, point3d, tol, maxiter: int = 50):
