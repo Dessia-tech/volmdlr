@@ -79,4 +79,4 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
-          packages-dir: dist/
+          packages-dir: dist/*
