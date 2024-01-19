@@ -510,6 +510,14 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertTrue(bsplinecurve3d.start.is_close(reversed_prof.start))
         self.assertAlmostEqual(bsplinecurve3d.length(), reversed_prof.length(), 5)
 
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "bsplinecurve3d_to_2d_vclosed_surface_test.json"))
+        bsplinecurve3d = vme.BSplineCurve3D.load_from_file(
+            os.path.join(folder, "bsplinecurve3d_to_2d_vclosed_surface_test_curve.json"))
+        brep_primitive = surface.bsplinecurve3d_to_2d(bsplinecurve3d)[0]
+        reversed_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
+        self.assertTrue(brep_primitive.end.is_close(volmdlr.Point2D(0.0, 1.0)))
+        self.assertTrue(bsplinecurve3d.start.is_close(reversed_prof.start))
 
     def test_bsplinecurve2d_to_3d(self):
         surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "bspline_surface_with_arcs.json"))
