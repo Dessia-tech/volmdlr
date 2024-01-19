@@ -9983,23 +9983,25 @@ class BSplineSurface3D(Surface3D):
             singularity_line, side, domain_bound = self._get_singularity_line(points3d[0])
             if singularity_line and len(points) >= 3:
                 points = self._verify_points(points, side, domain_bound, 0)
-                temp_edge2d = get_temp_edge2d(points[1:])
-                point = find_parametric_point_at_singularity(temp_edge2d, abscissa=0,
-                                                             singularity_line=singularity_line,
-                                                             domain=[umin, umax, vmin, vmax])
-                if point and not point.is_close(points[0], 1e-3):
-                    points[0] = point
+                if len(points) >= 3:
+                    temp_edge2d = get_temp_edge2d(points[1:])
+                    point = find_parametric_point_at_singularity(temp_edge2d, abscissa=0,
+                                                                 singularity_line=singularity_line,
+                                                                 domain=[umin, umax, vmin, vmax])
+                    if point and not point.is_close(points[0], 1e-3):
+                        points[0] = point
         if self.is_singularity_point(points3d[-1], tol=tol):
             singularity_line, side, domain_bound = self._get_singularity_line(points3d[-1])
-            if singularity_line and len(points) >= 3:
+            if singularity_line:
                 points = self._verify_points(points, side, domain_bound, 1)
-                temp_edge2d = get_temp_edge2d(points[:-1])
+                if len(points) >= 3:
+                    temp_edge2d = get_temp_edge2d(points[:-1])
 
-                point = find_parametric_point_at_singularity(temp_edge2d, abscissa=temp_edge2d.length(),
-                                                             singularity_line=singularity_line,
-                                                             domain=[umin, umax, vmin, vmax])
-                if point and not point.is_close(points[-1], 1e-3):
-                    points[-1] = point
+                    point = find_parametric_point_at_singularity(temp_edge2d, abscissa=temp_edge2d.length(),
+                                                                 singularity_line=singularity_line,
+                                                                 domain=[umin, umax, vmin, vmax])
+                    if point and not point.is_close(points[-1], 1e-3):
+                        points[-1] = point
         return points
 
     def is_undefined_brep(self, edge):
@@ -10009,11 +10011,19 @@ class BSplineSurface3D(Surface3D):
             if self.x_periodicity and edge.simplify.line.unit_direction_vector().is_colinear_to(volmdlr.Y2D) \
                 and (math.isclose(abs(edge.start.x), umin, abs_tol=1e-4) or
                      math.isclose(abs(edge.start.x), umax, abs_tol=1e-4)):
-                return True
+                if (self.point2d_to_3d(
+                        volmdlr.Point2D(umin, vmin)).is_close(self.point2d_to_3d(volmdlr.Point2D(umax, vmin))) and
+                    self.point2d_to_3d(
+                        volmdlr.Point2D(umin, vmax)).is_close(self.point2d_to_3d(volmdlr.Point2D(umax, vmax)))):
+                    return True
             if self.y_periodicity and edge.simplify.line.unit_direction_vector().is_colinear_to(volmdlr.X2D) \
                     and (math.isclose(abs(edge.start.y), vmin, abs_tol=1e-4) or
                          math.isclose(abs(edge.start.y), vmax, abs_tol=1e-4)):
-                return True
+                if (self.point2d_to_3d(
+                        volmdlr.Point2D(umin, vmin)).is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmax))) and
+                    self.point2d_to_3d(
+                        volmdlr.Point2D(umax, vmin)).is_close(self.point2d_to_3d(volmdlr.Point2D(umax, vmax)))):
+                    return True
         return False
 
     def fix_undefined_brep_with_neighbors(self, edge, previous_edge, next_edge):
