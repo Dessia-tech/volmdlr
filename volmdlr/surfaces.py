@@ -7963,7 +7963,9 @@ class BSplineSurface3D(Surface3D):
         :return: Array of 3D points representing the BSpline surface in Cartesian coordinates.
         :rtype: numpy.ndarray[np.float64]
         """
-        return np.asarray([evaluate_surface(self.data, start=(u, v), stop=(u, v))[0] for u, v in points],
+        umin, umax, vmin, vmax = self.domain
+        params = [(float(min(max(u, umin), umax)), float(min(max(v, vmin), vmax))) for u, v in points]
+        return np.asarray([evaluate_surface(self.data, start=param, stop=param)[0] for param in params],
                           dtype=np.float64)
 
     def linesegment2d_to_3d(self, linesegment2d):
