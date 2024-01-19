@@ -101,6 +101,14 @@ class TestBSplineFace3D(unittest.TestCase):
         self.assertTrue(face.surface2d.outer_contour.is_ordered(1e-6))
         self.assertAlmostEqual(face.surface2d.area(), 0.4279261149410629, 4)
 
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "small_bsplineface_closed_surface_surface.json"))
+        contour3d = wires.Contour3D.load_from_file(
+            os.path.join(folder, "small_bsplineface_closed_surface_contour.json"))
+        face = faces.BSplineFace3D.from_contours3d(surface, [contour3d])
+        self.assertTrue(face.surface2d.outer_contour.is_ordered())
+        self.assertAlmostEqual(face.surface2d.area(), 1.0, 2)
+
     def test_neutral_fiber(self):
         face = faces.BSplineFace3D.load_from_file(os.path.join(folder, "test_neutral_fiber.json"))
         neutral_fiber = face.neutral_fiber()
