@@ -70,7 +70,7 @@ jobs:
         with:
           # unpacks all CIBW artifacts into dist/
           # pattern: cibw-*
-          path: dist
+          path: dist/
           # merge-multiple: true
       - name: Display structure of downloaded files
         run: ls -R dist
@@ -79,4 +79,4 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
-          packages_dir: dist
+          packages-dir: dist/
