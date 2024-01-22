@@ -67,7 +67,7 @@ center2 = b_rec2.center()
 ax3.scatter(center2[0], center2[1])
 
 # test boundingbox intersection true
-print(b_rec.b_rectangle_intersection(b_rec2))
+print(b_rec.is_intersecting(b_rec2))
 
 # test boundingbox intersection flase
 line_fig3_seg1 = vme.LineSegment2D(vm.Point2D(5, 1), vm.Point2D(5.25, 0.5))
@@ -94,9 +94,9 @@ b_rec3 = BoundingRectangle(xmin, xmax, ymin, ymax)
 ax4 = contour3.plot(ax3)
 b_rec3.plot(ax4)
 # Test intersection
-print(b_rec.b_rectangle_intersection(b_rec2))
+print(b_rec.is_intersecting(b_rec2))
 # test non intersection
-print(b_rec.b_rectangle_intersection(b_rec3))
+print(b_rec.is_intersecting(b_rec3))
 # test distance
 print(b_rec.distance_to_b_rectangle(b_rec3))
 # test distance avec intersection = 0
