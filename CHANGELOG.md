@@ -6,7 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## v0.16.0 [future]
+## v0.17.0 [Future]
+### New Features
+#### edges.py
+-
+
+#### faces.py
+-
+
+#### edges.py
+-
+
+#### surfaces.py
+-
+
+
+### Fixed
+#### edges.py
+-
+
+#### faces.py
+-
+
+#### edges.py
+-
+
+#### surfaces.py
+-
+
+#### wires.py
+
+### Changed
+- load_from_file -> from_json
+
+### Unittests
+
+
+## v0.16.0
 
 ### New Features
 - added missing hash and eq methods to several classes
@@ -265,7 +301,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - core_compiled.pyx: update typing because Point2D, Point3D, Vector2D and Vector3D are now extension types (C structures.)
 - BSplineCurve: improve line_intersections performance.
 - SphericalSurface3D: enhance bsplinecurve3d_to_2d.
-- load_from_file -> from_json
 
 ### Unittests
 #### curves 
