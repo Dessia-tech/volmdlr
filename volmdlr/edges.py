@@ -1030,6 +1030,7 @@ class BSplineCurve(Edge):
         return self.knotvector[self.degree], self.knotvector[-(self.degree + 1)]
 
     def get_bounding_element(self):
+        """Abstract method."""
         raise NotImplementedError("get_bounding_element method should be implemeted by child class.")
 
     def copy(self, deep: bool = True, **kwargs):
@@ -1605,7 +1606,7 @@ class BSplineCurve(Edge):
 
     @classmethod
     def from_points_interpolation(cls, points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                                  degree: int, centripetal: bool = True, name: str = " "):
+                                  degree: int, centripetal: bool = False, name: str = " "):
         """
         Creates a B-spline curve interpolation through the data points.
 
@@ -5781,6 +5782,7 @@ class Arc3D(ArcMixin, Edge):
         return ax
 
     def copy(self, *args, **kwargs):
+        """Creates a copy of the arc."""
         return Arc3D(self.circle.copy(), self.start.copy(), self.end.copy())
 
     def to_2d(self, plane_origin, x, y):

@@ -16,7 +16,7 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as npy
 import plot_data.core as plot_data
-from scipy.spatial.qhull import ConvexHull, Delaunay
+from scipy.spatial import ConvexHull, Delaunay
 from triangle import triangulate
 
 from dessia_common.core import PhysicalObject

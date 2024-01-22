@@ -1029,7 +1029,7 @@ class Surface3D(DessiaObject):
         n = len(bspline_curve2d.control_points)
         points = [self.point2d_to_3d(p)
                   for p in bspline_curve2d.discretization_points(number_points=n)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree, centripetal=True)]
 
     def normal_from_point2d(self, point2d):
         """
@@ -2209,7 +2209,7 @@ class PeriodicalSurface(Surface3D):
         n = len(bspline_curve2d.control_points)
         points = [self.point2d_to_3d(p)
                   for p in bspline_curve2d.discretization_points(number_points=n)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree, centripetal=True)]
 
     def linesegment2d_to_3d(self, linesegment2d):
         """
@@ -2245,7 +2245,7 @@ class PeriodicalSurface(Surface3D):
         n = 10
         points = [self.point2d_to_3d(p)
                   for p in linesegment2d.discretization_points(number_points=n)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, 3)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, 3, centripetal=True)]
 
     @staticmethod
     def is_undefined_brep(edge):
@@ -3225,7 +3225,7 @@ class ToroidalSurface3D(PeriodicalSurface):
                 return [edges.FullArc3D(circle=circle, start_end=start_end)]
             return [edges.Arc3D(circle, start3d, self.point2d_to_3d(linesegment2d.end))]
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=10)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, degree=3).simplify]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree=3, centripetal=True).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -3234,7 +3234,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         n = len(bspline_curve2d.control_points)
         points = [self.point2d_to_3d(p)
                   for p in bspline_curve2d.discretization_points(number_points=n)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree, centripetal=True)]
 
     def _helper_arc3d_to_2d_periodicity_verifications(self, arc3d, start, end):
         """
@@ -4306,7 +4306,7 @@ class ConicalSurface3D(PeriodicalSurface):
                 return [edge]
         points = [self.point2d_to_3d(p)
                   for p in linesegment2d.discretization_points(number_points=10)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, 3)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, 3, centripetal=True)]
 
     def contour3d_to_2d(self, contour3d, return_primitives_mapping: bool = False):
         """
@@ -5451,7 +5451,8 @@ class SphericalSurface3D(PeriodicalSurface):
             if flag:
                 return [arc3d]
 
-        return [edges.BSplineCurve3D.from_points_interpolation(points3d, degree=bspline_curve2d.degree)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points3d, degree=bspline_curve2d.degree,
+                                                               centripetal=True)]
 
     def arc2d_to_3d(self, arc2d):
         """
@@ -6163,7 +6164,7 @@ class ExtrusionSurface3D(Surface3D):
         n = 10
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, degree)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, centripetal=True)]
 
     def bsplinecurve3d_to_2d(self, bspline_curve3d):
         """
@@ -6528,7 +6529,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         n = 10
         degree = 3
         bsplinecurve3d = edges.BSplineCurve3D.from_points_interpolation(arc3d.discretization_points(number_points=n),
-                                                                        degree)
+                                                                        degree, centripetal=True)
         return self.bsplinecurve3d_to_2d(bsplinecurve3d)
 
     def fullarc3d_to_2d(self, fullarc3d):
@@ -6621,7 +6622,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         n = 10
         degree = 3
         points = [self.point2d_to_3d(point2d) for point2d in linesegment2d.discretization_points(number_points=n)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, degree).simplify]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, degree, centripetal=True).simplify]
 
     def bsplinecurve2d_to_3d(self, bspline_curve2d):
         """
@@ -6630,7 +6631,7 @@ class RevolutionSurface3D(PeriodicalSurface):
         n = len(bspline_curve2d.control_points)
         points = [self.point2d_to_3d(p)
                   for p in bspline_curve2d.discretization_points(number_points=n)]
-        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree, centripetal=True)]
 
     def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
         """
@@ -7989,10 +7990,11 @@ class BSplineSurface3D(Surface3D):
         if len(points) == 2:
             return [volmdlr.edges.LineSegment3D(points[0], points[-1])]
         if len(points) < min(self.degree_u, self.degree_v) + 1:
-            bspline = edges.BSplineCurve3D.from_points_interpolation(points, 2)
+            bspline = edges.BSplineCurve3D.from_points_interpolation(points, 2, centripetal=True)
             return [bspline]
 
-        bspline = edges.BSplineCurve3D.from_points_interpolation(points, min(self.degree_u, self.degree_v))
+        bspline = edges.BSplineCurve3D.from_points_interpolation(points, min(self.degree_u, self.degree_v),
+                                                                 centripetal=True)
         return [bspline.simplify]
 
     def linesegment3d_to_2d(self, linesegment3d):
@@ -8199,7 +8201,7 @@ class BSplineSurface3D(Surface3D):
                 points.append(point3d)
         if len(points) < bspline_curve2d.degree + 1:
             return None
-        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree)]
+        return [edges.BSplineCurve3D.from_points_interpolation(points, bspline_curve2d.degree, centripetal=True)]
 
     def arc3d_to_2d(self, arc3d):
         """
@@ -8267,7 +8269,7 @@ class BSplineSurface3D(Surface3D):
         points = [self.point2d_to_3d(arc2d.point_at_abscissa(i * length / (number_points - 1)))
                   for i in range(number_points)]
         return [edges.BSplineCurve3D.from_points_interpolation(
-            points, max(self.degree_u, self.degree_v))]
+            points, max(self.degree_u, self.degree_v), centripetal=True)]
 
     def rectangular_cut(self, u1: float, u2: float,
                         v1: float, v2: float, name: str = ''):
