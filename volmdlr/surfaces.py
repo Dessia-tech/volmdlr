@@ -8062,7 +8062,7 @@ class BSplineSurface3D(Surface3D):
         points[0] = start
         points[-1] = end
         delta_i = abs(points[-1][i] - points[0][i])
-        if ((delta_i <= 1e-5 or math.isclose(delta_i, periodicity, abs_tol=1e-5)) and
+        if ((delta_i <= 1e-5 or math.isclose(delta_i, periodicity, abs_tol=1e-3)) and
                 all((math.isclose(p[i], max_bound, abs_tol=1e-2) or math.isclose(p[i], min_bound, abs_tol=1e-2))
                     for p in points)):
             # if the line is at the boundary of the surface domain, we take the first point as reference

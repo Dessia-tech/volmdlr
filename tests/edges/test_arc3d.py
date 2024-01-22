@@ -270,7 +270,7 @@ class TestArc3D(unittest.TestCase):
         bspline = edges.BSplineCurve3D.from_points_interpolation(
             [volmdlr.Point3D(1.2067665579541171, -1.246879774203074, -0.4359328108960321),
              volmdlr.Point3D(-1.2905737351068276, -5.961765089244547, -0.9872550297481824),
-             volmdlr.Point3D(2.739350840642852, -5.869347626045908, -0.7880999427201254)], 2)
+             volmdlr.Point3D(2.739350840642852, -5.869347626045908, -0.7880999427201254)], 2, centripetal=True)
         dist, min_dist_point1, min_dist_point2 = bspline.minimum_distance(arc, True)
         self.assertAlmostEqual(dist, 1.9450692583417427e-11)
         self.assertTrue(min_dist_point1.is_close(

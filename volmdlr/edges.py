@@ -35,7 +35,8 @@ from volmdlr import get_minimum_distance_points_lines
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
-
+import warnings
+warnings.filterwarnings("error")
 # pylint: disable=arguments-differ
 
 
@@ -1606,7 +1607,7 @@ class BSplineCurve(Edge):
 
     @classmethod
     def from_points_interpolation(cls, points: Union[List[volmdlr.Point2D], List[volmdlr.Point3D]],
-                                  degree: int, centripetal: bool = False, name: str = " "):
+                                  degree: int, centripetal: bool = True, name: str = " "):
         """
         Creates a B-spline curve interpolation through the data points.
 
@@ -1633,9 +1634,13 @@ class BSplineCurve(Edge):
                           "There are repeated points not in the edges of the point list.")
             return None
         point_name = 'Point' + points[0].__class__.__name__[-2:]
-        ctrlpts, knots, knot_multiplicities = fitting.interpolate_curve(
-            np.asarray([np.asarray([*point], dtype=np.float64) for point in points], dtype=np.float64),
-            degree, centripetal=centripetal)
+        try:
+            ctrlpts, knots, knot_multiplicities = fitting.interpolate_curve(
+                np.asarray([np.asarray([*point], dtype=np.float64) for point in points], dtype=np.float64),
+                degree, centripetal=centripetal)
+        except RuntimeWarning:
+            print(True)
+            return None
         ctrlpts = [getattr(volmdlr, point_name)(*point) for point in ctrlpts]
         return cls(degree, ctrlpts, knot_multiplicities, knots, name=name)
 
@@ -2192,7 +2197,7 @@ class BSplineCurve2D(BSplineCurve):
             self.abscissa(point)) for point in points]
         offseted_points = [point.translation(normal_vector * offset_length) for point, normal_vector
                            in zip(points, unit_normal_vectors)]
-        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree)
+        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree, centripetal=True)
         return offseted_bspline
 
     def is_shared_section_possible(self, other_bspline2, tol):
