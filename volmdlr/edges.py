@@ -35,8 +35,6 @@ from volmdlr import get_minimum_distance_points_lines
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
-import warnings
-warnings.filterwarnings("error")
 # pylint: disable=arguments-differ
 
 
@@ -1634,13 +1632,9 @@ class BSplineCurve(Edge):
                           "There are repeated points not in the edges of the point list.")
             return None
         point_name = 'Point' + points[0].__class__.__name__[-2:]
-        try:
-            ctrlpts, knots, knot_multiplicities = fitting.interpolate_curve(
-                np.asarray([np.asarray([*point], dtype=np.float64) for point in points], dtype=np.float64),
-                degree, centripetal=centripetal)
-        except RuntimeWarning:
-            print(True)
-            return None
+        ctrlpts, knots, knot_multiplicities = fitting.interpolate_curve(
+            np.asarray([np.asarray([*point], dtype=np.float64) for point in points], dtype=np.float64),
+            degree, centripetal=centripetal)
         ctrlpts = [getattr(volmdlr, point_name)(*point) for point in ctrlpts]
         return cls(degree, ctrlpts, knot_multiplicities, knots, name=name)
 
