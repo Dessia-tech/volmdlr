@@ -11,8 +11,8 @@ volume_model = Step.from_file("../step/engine.step").to_volume_model()
 
 # Simplify
 start = time.perf_counter()
-octre_block_simplify = TriangleDecimationSimplify(volume_model=volume_model)
-simplified_volume_model = octre_block_simplify.simplify(target_ratio=0.2, preserve_border=True)
+simplifier = TriangleDecimationSimplify(volume_model=volume_model)
+simplified_volume_model = simplifier.simplify(target_ratio=0.2, preserve_border=True)
 
 print(f"Simplification took {time.perf_counter() - start:.6f} seconds\n")
 

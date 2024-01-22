@@ -1,5 +1,6 @@
 import unittest
 import os
+import numpy as np
 import volmdlr
 import volmdlr.edges as vme
 import volmdlr.faces as vmf
@@ -20,6 +21,27 @@ class TestExtrusionSurface3D(unittest.TestCase):
         volmdlr.Point3D(0.013503079, -0.014007147, 0.0)]
     edge = vme.BSplineCurve3D(3, control_points, [4, 1, 4], [0.0, 0.5, 1.0])
     surface = surfaces.ExtrusionSurface3D(edge, -volmdlr.Z3D)
+
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.25 * self.edge.length(), 0.0], [0.5 * self.edge.length(), 0.0],
+                                      [0.75 * self.edge.length(), 0.0], [self.edge.length(), 0.0],
+                                      [0.0, 1.0], [0.25 * self.edge.length(), 1.0], [0.5 * self.edge.length(), 1.0],
+                                      [0.75 * self.edge.length(), 1.0], [self.edge.length(), 1.0],
+                                      [0.0, -1.0], [0.25 * self.edge.length(), -1.0], [0.5 * self.edge.length(), -1.0],
+                                      [0.75 * self.edge.length(), -1.0], [self.edge.length(), -1.0]])
+        points3d = self.surface.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[-0.025917292, 0.002544355, 0.0], [-0.006023608687500001, -0.0040783553125, 0.0],
+                                    [0.0022520050000000005, -0.002475453, 0.0],
+                                    [0.010101844562500002, -0.0035431261875, 0.0], [0.013503079, -0.014007147, 0.0],
+                                    [-0.025917292, 0.002544355, -1.0], [-0.006023608687500001, -0.0040783553125, -1.0],
+                                    [0.0022520050000000005, -0.002475453, -1.0],
+                                    [0.010101844562500002, -0.0035431261875, -1.0], [0.013503079, -0.014007147, -1.0],
+                                    [-0.025917292, 0.002544355, 1.0], [-0.006023608687500001, -0.0040783553125, 1.0],
+                                    [0.0022520050000000005, -0.002475453, 1.0],
+                                    [0.010101844562500002, -0.0035431261875, 1.0], [0.013503079, -0.014007147, 1.0]
+                                    ])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
 
     def test_point2d_to_3d(self):
         point3d = self.surface.point2d_to_3d(volmdlr.Point2D(0.5 * self.edge.length(), 0.5))
@@ -46,7 +68,7 @@ class TestExtrusionSurface3D(unittest.TestCase):
         extrusion_surface = model.primitives[0].primitives[0].surface3d
         self.assertEqual(extrusion_surface.direction, -volmdlr.Z3D)
         self.assertEqual(extrusion_surface.edge.degree, 3)
-        self.assertEqual(extrusion_surface.edge.knot_multiplicities, [4, 1, 4])
+        self.assertEqual(extrusion_surface.edge.knot_multiplicities.tolist(), [4, 1, 4])
 
     def test_linesegment2d_to_3d(self):
         surface = surfaces.ExtrusionSurface3D.load_from_file(

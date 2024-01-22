@@ -1,0 +1,58 @@
+{
+  "object_class": "volmdlr.core.VolumeModel",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "volmdlr.surfaces.ToroidalSurface3D",
+      "name": "",
+      "frame": {
+        "object_class": "volmdlr.Frame3D",
+        "name": "",
+        "origin": {
+          "object_class": "volmdlr.Point3D",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "u": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 1.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "v": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.0,
+          "y": 1.0,
+          "z": 0.0
+        },
+        "w": {
+          "object_class": "volmdlr.Vector3D",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 1.0
+        }
+      },
+      "major_radius": 2,
+      "minor_radius": 1,
+      "inner_radius": 1
+    },
+    {
+      "object_class": "volmdlr.edges.LineSegment3D",
+      "name": "",
+      "start": {
+        "object_class": "volmdlr.Point3D",
+        "x": -1.4583383064425197,
+        "y": -2.5051395516859865,
+        "z": -2.4602411047828623
+      },
+      "end": {
+        "object_class": "volmdlr.Point3D",
+        "x": 3.6738472545205196,
+        "y": -0.9510585235665953,
+        "z": 0.23150619499880126
+      }
+    }
+  ],
+  "_references": {}
+}

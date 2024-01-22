@@ -28,6 +28,7 @@ from volmdlr.core_compiled import bbox_is_intersecting
 from volmdlr.discrete_representation_compiled import triangle_intersects_voxel
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
+from volmdlr.geometry import get_transfer_matrix_from_basis
 
 npy.seterr(divide='raise')
 
@@ -165,15 +166,7 @@ def map_primitive_with_initial_and_final_frames(primitive, initial_frame, final_
     """
     if initial_frame == final_frame:
         return primitive
-    basis_a = initial_frame.basis()
-    basis_b = final_frame.basis()
-    matrix_a = npy.array([[basis_a.vectors[0].x, basis_a.vectors[0].y, basis_a.vectors[0].z],
-                          [basis_a.vectors[1].x, basis_a.vectors[1].y, basis_a.vectors[1].z],
-                          [basis_a.vectors[2].x, basis_a.vectors[2].y, basis_a.vectors[2].z]])
-    matrix_b = npy.array([[basis_b.vectors[0].x, basis_b.vectors[0].y, basis_b.vectors[0].z],
-                          [basis_b.vectors[1].x, basis_b.vectors[1].y, basis_b.vectors[1].z],
-                          [basis_b.vectors[2].x, basis_b.vectors[2].y, basis_b.vectors[2].z]])
-    transfer_matrix = npy.linalg.solve(matrix_a, matrix_b)
+    transfer_matrix = get_transfer_matrix_from_basis(initial_frame.basis(), final_frame.basis())
     u_vector = volmdlr.Vector3D(*transfer_matrix[0])
     v_vector = volmdlr.Vector3D(*transfer_matrix[1])
     w_vector = volmdlr.Vector3D(*transfer_matrix[2])
@@ -190,13 +183,14 @@ def helper_babylon_data(babylon_data, display_points):
     all_positions = []
     all_points = []
     for mesh in babylon_data["meshes"]:
-        positions = mesh["positions"]
-        all_positions.extend(positions)
+        all_positions += _extract_positions(mesh)
+
     for line in babylon_data["lines"]:
         points = line["points"]
         all_points.extend(points)
     if display_points:
         all_points.extend(display_points)
+
     # Convert to a NumPy array and reshape
     positions_array = npy.array([])
     if all_points and all_positions:
@@ -219,6 +213,17 @@ def helper_babylon_data(babylon_data, display_points):
     babylon_data['center'] = center
 
     return babylon_data
+
+
+def _extract_positions(mesh):
+    """Helper function to extract positions from babylon_data."""
+    all_positions = []
+
+    for primitives_mesh in mesh.get("primitives_meshes", []):
+        all_positions += _extract_positions(primitives_mesh)
+
+    all_positions += mesh.get("positions", [])
+    return all_positions
 
 
 @dataclass
@@ -252,6 +257,7 @@ class Primitive3D(dc.PhysicalObject):
         dc.PhysicalObject.__init__(self, name=name)
 
     def volmdlr_primitives(self):
+        """ Return a list of volmdlr primitives to build up volume model."""
         return [self]
 
     def babylon_param(self):
@@ -271,6 +277,9 @@ class Primitive3D(dc.PhysicalObject):
         return babylon_param
 
     def triangulation(self, *args, **kwargs):
+        """
+        Get object triangulation.
+        """
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
@@ -281,11 +290,8 @@ class Primitive3D(dc.PhysicalObject):
         mesh = self.triangulation()
         if mesh is None:
             return []
-        positions, indices = mesh.to_babylon()
+        babylon_mesh = mesh.to_babylon()
 
-        babylon_mesh = {'positions': positions,
-                        'indices': indices
-                        }
         babylon_mesh.update(self.babylon_param())
         return [babylon_mesh]
 
@@ -405,7 +411,7 @@ class BoundingRectangle(dc.DessiaObject):
         """
         return volmdlr.Point2D(0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax))
 
-    def b_rectangle_intersection(self, b_rectangle2):
+    def is_intersecting(self, b_rectangle2):
         """
         Returns True if there is an intersection with another specified bounding rectangle or False otherwise.
 
@@ -414,6 +420,16 @@ class BoundingRectangle(dc.DessiaObject):
         """
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
             and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+
+    def b_rectangle_intersection(self, b_rectangle2):
+        """
+        Returns True if there is an intersection with another specified bounding rectangle or False otherwise.
+
+        :param b_rectangle2: bounding rectangle to verify intersection
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        warnings.warn('b_rectangle_intersection is deprecated, please use is_intersecting instead')
+        return self.is_intersecting(b_rectangle2)
 
     def is_inside_b_rectangle(self, b_rectangle2, tol: float = 1e-6):
         """
@@ -1073,6 +1089,7 @@ class Assembly(dc.PhysicalObject):
         return Assembly(self.components, new_positions, self.frame, self.name)
 
     def volmdlr_primitives(self):
+        """ Return a list of volmdlr primitives to build up an Assembly. """
         return [self]
 
     def to_step(self, current_id):
@@ -1461,33 +1478,57 @@ class VolumeModel(dc.PhysicalObject):
             babylon_data=babylon_data)
         return script
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False, merge_meshes=True, dark_mode=False):
+    def babylonjs(
+        self,
+        page_name: str = None,
+        use_cdn: bool = True,
+        debug: bool = False,
+        merge_meshes: bool = True,
+        dark_mode: bool = False,
+    ):
         """
-        Creates an HTML file using babylonjs to show a 3d model in the browser.
+        Generate and display an HTML file to visualize the 3D model using Babylon.js in a web browser.
 
+        This method creates a 3D representation of the volume model using the Babylon.js framework.
+        The method allows options for debugging, merging meshes, and toggling dark mode for the visualization.
+        The resulting HTML file can either be a temporary file or a user-specified file.
+
+        :param page_name: The name of the HTML file to be generated. If None, a temporary file is created.
+        :type page_name: str, optional
+        :param use_cdn: Flag to use CDN for loading Babylon.js resources. Defaults to True.
+        :type use_cdn: bool
+        :param debug: Enable debugging mode for more detailed console output in the browser. Defaults to False.
+        :type debug: bool
+        :param merge_meshes: Flag to chose to merge all the faces of each shell into a single mesh. Defaults to True.
+            If False, shell are decomposed according to their faces in the Babylon.js scene nodes tree.
+        :type merge_meshes: bool
+        :param dark_mode: Enable dark mode for the HTML visualization. Defaults to False.
+        :type dark_mode: bool
+
+        :return: The file path of the generated HTML file.
+        :rtype: str
         """
         babylon_data = self.babylon_data(merge_meshes=merge_meshes)
-        babylon_data['dark_mode'] = 1 if dark_mode else 0
-        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                       debug=debug)
+        babylon_data["dark_mode"] = 1 if dark_mode else 0
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn, debug=debug)
         if page_name is None:
-            with tempfile.NamedTemporaryFile(suffix=".html",
-                                             delete=False) as file:
-                file.write(bytes(script, 'utf8'))
+            with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as file:
+                file.write(bytes(script, "utf8"))
             page_name = file.name
         else:
-            if not page_name.endswith('.html'):
-                page_name += '.html'
-            with open(page_name, 'w', encoding='utf-8') as file:
+            if not page_name.endswith(".html"):
+                page_name += ".html"
+            with open(page_name, "w", encoding="utf-8") as file:
                 file.write(script)
 
-        webbrowser.open('file://' + os.path.realpath(page_name))
+        webbrowser.open("file://" + os.path.realpath(page_name))
 
         return page_name
 
-    def save_babylonjs_to_file(self, filename: str = None, use_cdn=True, debug=False):
+    def save_babylonjs_to_file(self, filename: str = None, use_cdn=True, debug=False, dark_mode=False):
         """Export a html file of the model."""
         babylon_data = self.babylon_data()
+        babylon_data['dark_mode'] = 1 if dark_mode else 0
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn, debug=debug)
         if filename is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
@@ -1502,26 +1543,34 @@ class VolumeModel(dc.PhysicalObject):
             file.write(script)
         return filename
 
-    def to_stl_model(self):
-        """Converts the model into a stl object."""
+    def to_mesh3d(self):
+        """Converts to volume model to a Mesh3D object."""
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
-            mesh.merge_mesh(primitive.triangulation())
+            mesh = mesh.merge(primitive.triangulation(), merge_vertices=True, merge_triangles=True)
+
+        return mesh
+
+    def to_stl_model(self):
+        """Converts the model into a stl object."""
+        warnings.warn(
+            "volmdlr.stl module is deprecated. Use volmdlr.display module and 'Mesh3D' class instead for STL export.",
+            DeprecationWarning
+        )
+
+        mesh = self.to_mesh3d()
+
         # from volmdlr import stl
         stl = volmdlr.stl.Stl.from_display_mesh(mesh)
         return stl
 
     def to_stl(self, filepath: str):
         """Export a stl file of the model."""
-        if not filepath.endswith('.stl'):
-            filepath += '.stl'
-        with open(filepath, 'wb') as file:
-            self.to_stl_stream(file)
+        self.to_mesh3d().save_to_stl_file(filepath)
 
     def to_stl_stream(self, stream: dcf.BinaryFile):
         """Converts the model into a stl stream file."""
-        stl = self.to_stl_model()
-        stl.save_to_stream(stream)
+        self.to_mesh3d().save_to_stl_stream(stream)
         return stream
 
     def to_step(self, filepath: str):
@@ -1532,7 +1581,10 @@ class VolumeModel(dc.PhysicalObject):
             self.to_step_stream(file)
 
     def to_step_stream(self, stream: dcf.StringFile):
+        """
+        Export object CAD to given stream in STEP format.
 
+        """
         step_content = STEP_HEADER.format(name=self.name,
                                           filename='',
                                           timestamp=datetime.now().isoformat(),

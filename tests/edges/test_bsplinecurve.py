@@ -5,7 +5,7 @@ import unittest
 import os
 from dessia_common.core import DessiaObject
 from geomdl import BSpline
-
+import numpy as np
 import volmdlr
 import volmdlr.edges as vme
 from volmdlr import curves
@@ -22,7 +22,7 @@ class TestBSplineCurve2D(unittest.TestCase):
     points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
     knotvector = nurbs_helpers.generate_knot_vector(degree, len(points))
     knot_multiplicity = [1] * len(knotvector)
-    bspline1 = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, False)
+    bspline1 = vme.BSplineCurve2D(degree, points, knot_multiplicity, knotvector, None, '')
     bspline2, bspline3 = bspline1.split(volmdlr.Point2D(1.5, 0.0))
     bspline4, bspline5 = bspline2.split(bspline2.point_at_abscissa(0.3 * bspline2.length()))
     bspline6 = bspline1.split(bspline1.point_at_abscissa(0.7 * bspline1.length()))[0]
@@ -394,7 +394,7 @@ class TestBezierCurve2D(unittest.TestCase):
         expected_points = [[10.0, 0.0], [15.0, 5.625], [20.0, 7.5], [25.0, 5.625], [30.0, 0.0]]
         expected_knot_vector = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0]
 
-        self.assertEqual(self.curve1.knotvector, expected_knot_vector)
+        self.assertEqual(list(self.curve1.knotvector), expected_knot_vector)
         for point, test in zip(points, expected_points):
             self.assertAlmostEqual(point[0], test[0], delta=1e-6)
             self.assertAlmostEqual(point[1], test[1], delta=1e-6)

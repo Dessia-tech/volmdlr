@@ -23,10 +23,10 @@ def get_planar_circle3d_line_intersections(circle_3d, line, abs_tol: float = 1e-
     """
     if line.point1.is_close(circle_3d.center):
         point1 = line.point2
-        vec = line.point1 - line.point2
+        vec = (line.point1 - line.point2).unit_vector()
     else:
         point1 = line.point1
-        vec = line.point2 - line.point1
+        vec = (line.point2 - line.point1).unit_vector()
     quadratic_equation_a = vec.dot(vec)
     quadratic_equation_b = 2 * vec.dot(point1 - circle_3d.center)
     quadratic_equation_c = (
@@ -145,7 +145,7 @@ def _get_local_ellise2d_line_intersections(ellipse2d, line2d, abs_tol: float = 1
     :param abs_tol: tolerance.
     :return: list of points intersections, if there are any
     """
-    if math.isclose(line2d.point2.x, line2d.point1.x, abs_tol=1e-6):
+    if math.isclose(line2d.point2.x, line2d.point1.x, abs_tol=abs_tol):
         return _get_ellipse2d_vertical_line_intersectioons(ellipse2d, line2d)
     line_slope = line2d.get_slope()
     line_y_intersection = line2d.get_y_intersection()
@@ -161,7 +161,7 @@ def _get_local_ellise2d_line_intersections(ellipse2d, line2d, abs_tol: float = 1
         point1 = volmdlr.Point2D(x1, y1)
         point2 = volmdlr.Point2D(x2, y2)
         intersections = [point1, point2]
-        if point1.is_close(point2):
+        if point1.is_close(point2, abs_tol):
             intersections = [point1]
         return intersections
     return []
@@ -215,7 +215,10 @@ def get_circle_intersections(circle1, circle2):
     if d_param == 0 and circle1.radius == circle2.radius:
         return []
     a = (circle1.radius ** 2 - circle2.radius ** 2 + d_param ** 2) / (2 * d_param)
-    h_param = math.sqrt(circle1.radius ** 2 - a ** 2)
+    if abs(circle1.radius - a) < 1e-6:
+        h_param = 0.0
+    else:
+        h_param = math.sqrt(circle1.radius ** 2 - a ** 2)
     x2 = x0 + a * (x1 - x0) / d_param
     y2 = y0 + a * (y1 - y0) / d_param
     x3 = x2 + h_param * (y1 - y0) / d_param
@@ -227,13 +230,14 @@ def get_circle_intersections(circle1, circle2):
     return [volmdlr.Point2D(x3, y3), volmdlr.Point2D(x4, y4)]
 
 
-def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution: float = 100):
+def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution: float = 100, recursion_iteration=0):
     """
     Gets the initial conditions to calculate intersections between a bspline curve 2d and another edge 2d.
 
     :param primitive: primitive to verify intersection with bspline
     :param bsplinecurve: bsplinecurve to search for intersections.
     :param resolution: bspline discretization resolution, to search for initial intersection conditions.
+    :param recursion_iteration: parameter to count recursions.
     :return: a list with all initial sections where there may exist an intersection.
     """
     line_seg_class_ = getattr(volmdlr.edges, "LineSegment" + bsplinecurve.__class__.__name__[-2:])
@@ -258,12 +262,15 @@ def bspline_intersections_initial_conditions(primitive, bsplinecurve, resolution
         points_abscissas[:-1],
         points_abscissas[1:],
     ):
+        if point1 == point2:
+            continue
         line_seg = line_seg_class_(point1, point2)
         intersection = primitive.linesegment_intersections(line_seg)
         if intersection:
             param_intersections.append((abscissa1, abscissa2))
-    # if not param_intersections:
-    #     param_intersections.append((0.0, bsplinecurve.length()))
+    if not param_intersections and recursion_iteration < 1:
+        return bspline_intersections_initial_conditions(primitive, bsplinecurve, 100,
+                                                        recursion_iteration+1)
     return param_intersections
 
 
@@ -287,7 +294,7 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
     :return: A list with all intersections between the edge and BSpline Curve.
     :rtype: [volmdlr.Point3D].
     """
-    param_intersections = bspline_intersections_initial_conditions(primitive, bsplinecurve, 100)
+    param_intersections = bspline_intersections_initial_conditions(primitive, bsplinecurve, 10)
     line_seg_class_ = getattr(volmdlr.edges, "LineSegment" + bsplinecurve.__class__.__name__[-2:])
     intersections = []
     if not param_intersections:
@@ -314,10 +321,9 @@ def get_bsplinecurve_intersections(primitive, bsplinecurve, abs_tol: float = 1e-
             intersection = primitive.linesegment_intersections(line_seg, abs_tol)
             if not intersection:
                 continue
-            if get_point_distance_to_edge(bsplinecurve, intersection[0], point1, point2) > 1e-7 and not (
-                abscissa_point1 == abscissa1 and abscissa_point2 == abscissa2
-            ):
-                param_intersections.insert(0, (abscissa_point1, abscissa_point2))
+            if get_point_distance_to_edge(bsplinecurve, intersection[0], point1, point2) > 1e-7:
+                if not (abscissa_point1 == abscissa1 and abscissa_point2 == abscissa2):
+                    param_intersections.insert(0, (abscissa_point1, abscissa_point2))
             elif not intersection[0].in_list(intersections):
                 intersections.append(intersection[0])
         param_intersections.remove((abscissa1, abscissa2))
@@ -416,6 +422,7 @@ def get_plane_line_intersections(plane_frame, line, abs_tol: float = 1e-6):
         return []
     intersection_abscissea = -plane_frame.w.dot(w_vector) / plane_frame.w.dot(u_vector)
     return [line.point1 + intersection_abscissea * u_vector]
+
 
 def _helper_two_plane_intersections(plane1_frame, plane2_frame):
     """

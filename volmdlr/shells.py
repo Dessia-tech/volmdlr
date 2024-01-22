@@ -24,6 +24,8 @@ from volmdlr.core import (edge_in_list, get_edge_index_in_list,
 from volmdlr.utils.step_writer import (geometric_context_writer,
                                        product_writer, step_ids_to_str)
 
+# pylint: disable=unused-argument
+
 
 def union_list_of_shells(list_shells, abs_tol: float = 1e-6):
     """
@@ -376,7 +378,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
         manifold_id = frame_id + 1
         shell_id = manifold_id + 1
-        current_id = shell_id + 1
+        current_id = shell_id
         for face in self.faces:
             if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
                 face_content, face_sub_ids = face.to_step(current_id)
@@ -792,24 +794,28 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 return True
         return False
 
-    def triangulation(self):
+    def triangulation(self) -> display.Mesh3D:
         """
-        Triangulation of a Shell3D.
+        Performs triangulation on a Shell3D object.
 
+        This method iterates through each face of the Shell3D object and attempts to perform a triangulation.
+        In cases where a face cannot be triangulated, a warning is issued, and the method proceeds to the next face.
+        The triangulation of successfully processed faces are collected and merged into a single Mesh3D object.
+
+        :return: A Mesh3D object representing the triangulated shell.
+        :rtype: display.Mesh3D
         """
         meshes = []
         for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
+                if face_mesh:
+                    meshes.append(face_mesh)
+            except Exception as exception:
+                warnings.warn(f"Could not triangulate face {i} ({face.__class__.__name__}) in '{self.name}' "
+                              f"due to: {exception}. This may be due to a topology error in contour2d.")
 
-            except Exception:
-                face_mesh = None
-                warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
-                              f"{self.name} faces. Probably because topology error in contour2d.")
-                continue
-            if face_mesh:
-                meshes.append(face_mesh)
-        return display.DisplayMesh3D.merge_meshes(meshes)
+        return display.Mesh3D.from_meshes(meshes)
 
     def to_triangle_shell(self) -> Union["OpenTriangleShell3D", "ClosedTriangleShell3D"]:
         """
@@ -834,6 +840,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         """
         if merge_meshes:
             return super().babylon_meshes()
+
         babylon_meshes = []
         for face in self.faces:
             face_babylon_meshes = face.babylon_meshes()
@@ -1137,9 +1144,9 @@ class ClosedShell3D(Shell3D):
         for face in self.faces:
             display3d = face.triangulation()
             for triangle_index in display3d.triangles:
-                point1 = display3d.points[triangle_index[0]]
-                point2 = display3d.points[triangle_index[1]]
-                point3 = display3d.points[triangle_index[2]]
+                point1 = display3d.vertices[triangle_index[0]]
+                point2 = display3d.vertices[triangle_index[1]]
+                point3 = display3d.vertices[triangle_index[2]]
 
                 point1_adj = (point1[0] - center_x, point1[1] - center_y, point1[2] - center_z)
                 point2_adj = (point2[0] - center_x, point2[1] - center_y, point2[2] - center_z)
@@ -1767,6 +1774,10 @@ class ClosedShell3D(Shell3D):
         return [new_shell]
 
     def eliminate_not_valid_closedshell_faces(self):
+        """
+        Eliminate not valid closed shell faces resulted from boolean operations.
+
+        """
         nodes_with_2degrees = [node for node, degree in list(self.vertices_graph.degree()) if degree <= 2]
         for node in nodes_with_2degrees:
             neighbors = nx.neighbors(self.vertices_graph, node)
@@ -1865,7 +1876,10 @@ class OpenTriangleShell3D(OpenShell3D):
         points = [volmdlr.Point3D(px, py, pz) for px, py, pz in vertices]
 
         for i1, i2, i3 in faces:
-            triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
+            try:
+                triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
+            except ZeroDivisionError:
+                pass
 
         return cls(triangles, name=name)
 
@@ -1949,12 +1963,12 @@ class OpenTriangleShell3D(OpenShell3D):
         points = []
         triangles = []
         for i, triangle in enumerate(self.faces):
-            points.append(display.Node3D.from_point(triangle.point1))
-            points.append(display.Node3D.from_point(triangle.point2))
-            points.append(display.Node3D.from_point(triangle.point3))
+            points.append(np.array(triangle.point1))
+            points.append(np.array(triangle.point2))
+            points.append(np.array(triangle.point3))
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
-
-        return display.DisplayMesh3D(points, triangles)
+        vertices = np.array(points, dtype=np.float64)
+        return display.Mesh3D(vertices, np.array(triangles, dtype=np.int32))
 
     def to_dict(self, *args, **kwargs):
         """Overload of 'to_dict' for performance."""
@@ -2084,6 +2098,11 @@ class DisplayTriangleShell3D(Shell3D):
         :param indices: A 3D numpy array of int representing the indices of the vertices representing the triangles.
         :param name: A name for the DisplayTriangleShell3D, optional.
         """
+        warnings.warn(
+            "'volmdlr.shells.DisplayTriangleShell3D' class is deprecated. Use 'volmdlr.display.Mesh3D' instead",
+            DeprecationWarning
+        )
+
         self.positions = positions
         self.indices = indices
 

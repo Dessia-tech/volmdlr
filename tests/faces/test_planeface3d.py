@@ -276,6 +276,16 @@ class TestPlaneFace3D(unittest.TestCase):
             for solution_area, expected_solution_area in zip(solution, expected_solution):
                 self.assertAlmostEqual(solution_area, expected_solution_area)
 
+    def test_grid_points(self):
+        surface3d = surfaces.Plane3D(volmdlr.OXYZ)
+        outer_contour2d = wires.Contour2D.from_circle(curves.Circle2D.from_center_and_radius(volmdlr.O2D, 1.0))
+        inner_contour2d = wires.Contour2D.from_circle(curves.Circle2D.from_center_and_radius(volmdlr.O2D, 0.25,
+                                                                                             is_trigo=False))
+        surface2d = surfaces.Surface2D(outer_contour2d, [inner_contour2d])
+        face = faces.PlaneFace3D(surface3d, surface2d)
+        grid_points = face.grid_points([10, 10])
+        self.assertEqual(len(grid_points), 56)
+
 
 if __name__ == '__main__':
     unittest.main()
