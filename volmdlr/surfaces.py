@@ -7748,11 +7748,11 @@ class BSplineSurface3D(Surface3D):
         if self.is_singularity_point(point3d, tol=tol):
             if self.u_closed_upper(tol) and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmax)), tol):
                 point = volmdlr.Point2D(umin, vmax)
-            if self.u_closed_lower(tol) and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmin)), tol):
+            elif self.u_closed_lower(tol) and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmin)), tol):
                 point = volmdlr.Point2D(umin, vmin)
-            if self.v_closed_upper(tol) and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umax, vmin)), tol):
+            elif self.v_closed_upper(tol) and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umax, vmin)), tol):
                 return volmdlr.Point2D(umax, vmin)
-            if self.v_closed_lower(tol) and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmin)), tol):
+            elif self.v_closed_lower(tol) and point3d.is_close(self.point2d_to_3d(volmdlr.Point2D(umin, vmin)), tol):
                 point = volmdlr.Point2D(umin, vmin)
             if point:
                 return point
@@ -7763,9 +7763,9 @@ class BSplineSurface3D(Surface3D):
         x1, _, distance = self.point_inversion(x0, point3d, tol)
         if distance <= tol:
             return volmdlr.Point2D(*x1)
-        return self.point3d_to_2d_minimize(point3d, x0, distance)
+        return self.point3d_to_2d_minimize(point3d, x0, distance, tol)
 
-    def point3d_to_2d_minimize(self, point3d, initial_guess, point_inversion_result):
+    def point3d_to_2d_minimize(self, point3d, initial_guess, point_inversion_result, tol):
         """Auxiliary function for point3d_to_2d in case the point inversion does not converge."""
 
         def fun(x):
@@ -7780,35 +7780,37 @@ class BSplineSurface3D(Surface3D):
             return f_value, jacobian
 
         u_start, u_stop, v_start, v_stop = self.domain
-        res = minimize(fun, x0=np.array(initial_guess), jac=True,
-                       bounds=[(u_start, u_stop),
-                               (v_start, v_stop)])
-        if res.fun <= 1e-6 or (res.fun < 5e-6 and abs(res.fun - point_inversion_result) <= 1e-6):
-            return volmdlr.Point2D(*res.x)
+        results = []
+        if tol > 1e-7:
+            res = minimize(fun, x0=np.array(initial_guess), jac=True,
+                           bounds=[(u_start, u_stop),
+                                   (v_start, v_stop)])
+            if res.fun <= 1e-6 or (res.success and abs(res.fun - point_inversion_result) <= 1e-6 and res.fun < 5e-6):
+                return volmdlr.Point2D(*res.x)
 
-        if self.u_closed:
-            res = minimize(fun, x0=np.array((u_start, initial_guess[1])), jac=True,
-                           bounds=[(u_start, u_stop),
-                                   (v_start, v_stop)])
-            if res.fun <= 5e-6:
-                return volmdlr.Point2D(u_start, initial_guess[1])
-            res = minimize(fun, x0=np.array((u_stop, initial_guess[1])), jac=True,
-                           bounds=[(u_start, u_stop),
-                                   (v_start, v_stop)])
-            if res.fun <= 5e-6:
-                return volmdlr.Point2D(u_stop, initial_guess[1])
-        if self.v_closed:
-            res = minimize(fun, x0=np.array((initial_guess[0], v_start)), jac=True,
-                           bounds=[(u_start, u_stop),
-                                   (v_start, v_stop)])
-            if res.fun <= 5e-6:
-                return volmdlr.Point2D(initial_guess[0], v_start)
-            res = minimize(fun, x0=np.array((initial_guess[0], v_stop)), jac=True,
-                           bounds=[(u_start, u_stop),
-                                   (v_start, v_stop)])
-            if res.fun <= 5e-6:
-                return volmdlr.Point2D(initial_guess[0], v_stop)
-        results = [(res.x, res.fun)]
+            if self.u_closed:
+                res = minimize(fun, x0=np.array((u_start, initial_guess[1])), jac=True,
+                               bounds=[(u_start, u_stop),
+                                       (v_start, v_stop)])
+                if res.fun <= 5e-6:
+                    return volmdlr.Point2D(u_start, initial_guess[1])
+                res = minimize(fun, x0=np.array((u_stop, initial_guess[1])), jac=True,
+                               bounds=[(u_start, u_stop),
+                                       (v_start, v_stop)])
+                if res.fun <= 5e-6:
+                    return volmdlr.Point2D(u_stop, initial_guess[1])
+            if self.v_closed:
+                res = minimize(fun, x0=np.array((initial_guess[0], v_start)), jac=True,
+                               bounds=[(u_start, u_stop),
+                                       (v_start, v_stop)])
+                if res.fun <= 5e-6:
+                    return volmdlr.Point2D(initial_guess[0], v_start)
+                res = minimize(fun, x0=np.array((initial_guess[0], v_stop)), jac=True,
+                               bounds=[(u_start, u_stop),
+                                       (v_start, v_stop)])
+                if res.fun <= 5e-6:
+                    return volmdlr.Point2D(initial_guess[0], v_stop)
+            results = [(res.x, res.fun)]
         point3d_array = np.asarray(point3d)
 
         if self.u_knots.shape[0] > 2 or self.v_knots.shape[0] > 2:
