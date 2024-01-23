@@ -35,7 +35,6 @@ from volmdlr import get_minimum_distance_points_lines
 import volmdlr.utils.common_operations as vm_common_operations
 import volmdlr.utils.intersections as vm_utils_intersections
 from volmdlr.core import EdgeStyle
-
 # pylint: disable=arguments-differ
 
 
@@ -1030,6 +1029,7 @@ class BSplineCurve(Edge):
         return self.knotvector[self.degree], self.knotvector[-(self.degree + 1)]
 
     def get_bounding_element(self):
+        """Abstract method."""
         raise NotImplementedError("get_bounding_element method should be implemeted by child class.")
 
     def copy(self, deep: bool = True, **kwargs):
@@ -2191,7 +2191,7 @@ class BSplineCurve2D(BSplineCurve):
             self.abscissa(point)) for point in points]
         offseted_points = [point.translation(normal_vector * offset_length) for point, normal_vector
                            in zip(points, unit_normal_vectors)]
-        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree)
+        offseted_bspline = BSplineCurve2D.from_points_interpolation(offseted_points, self.degree, centripetal=True)
         return offseted_bspline
 
     def is_shared_section_possible(self, other_bspline2, tol):
@@ -5781,6 +5781,7 @@ class Arc3D(ArcMixin, Edge):
         return ax
 
     def copy(self, *args, **kwargs):
+        """Creates a copy of the arc."""
         return Arc3D(self.circle.copy(), self.start.copy(), self.end.copy())
 
     def to_2d(self, plane_origin, x, y):

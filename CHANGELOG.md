@@ -74,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Surface3D: repeair_primitives_periodicity. Treat special case on surfaces with singularities.
 - ToroidalSurface3D: plane_intersections.
 - Remove duplicated attributes.
+- BSplineSurface3D: implements a more robust point3d_to_2d method.
 
 #### wires.py
 - Contour2D: cut_by_line.
