@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## v0.17.0 [Future]
 ### New Features
 #### edges.py
@@ -33,11 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### surfaces.py
 -
 
-#### wires.py 
+#### wires.py
 - Contour2D - point_belongs
 
-
 ### Changed
+- load_from_file -> from_json
+- Delete outdated_methods: bbox_intersections -> is_intersecting | b_rectangle_intersections -> is_intersecting
 
 ### Unittests
 
@@ -301,7 +303,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - core_compiled.pyx: update typing because Point2D, Point3D, Vector2D and Vector3D are now extension types (C structures.)
 - BSplineCurve: improve line_intersections performance.
 - SphericalSurface3D: enhance bsplinecurve3d_to_2d.
-
 
 ### Unittests
 #### curves 
