@@ -139,7 +139,7 @@ class TestBSplineFace3D(unittest.TestCase):
             os.path.join(folder, "bsplineface_2d_interpolation_bug_contour.json"))
         face = faces.BSplineFace3D.from_contours3d(surface, [contour3d])
         self.assertTrue(face.surface2d.outer_contour.is_ordered(1e-3))
-        self.assertAlmostEqual(face.surface2d.area(), 0.9661056644919168, 2)
+        self.assertAlmostEqual(face.surface2d.area(), 0.9976113552749389, 2)
 
     def test_neutral_fiber(self):
         face = faces.BSplineFace3D.load_from_file(os.path.join(folder, "test_neutral_fiber.json"))

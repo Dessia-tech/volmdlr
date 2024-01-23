@@ -8133,7 +8133,7 @@ class BSplineSurface3D(Surface3D):
         if interpolation_degree >= len(parametric_points):
             interpolation_degree = len(parametric_points) - 1
         brep = edges.BSplineCurve2D.from_points_interpolation(points=parametric_points, degree=interpolation_degree,
-                                                              centripetal=False)
+                                                              centripetal=True)
         if brep:
             return [brep]
         return None
@@ -8176,7 +8176,7 @@ class BSplineSurface3D(Surface3D):
             return False
         linesegment = edges.LineSegment2D(points[0], points[-1])
         for point in points:
-            if not linesegment.point_belongs(point, abs_tol=1e-4):
+            if not linesegment.point_belongs(point, abs_tol=1e-3):
                 return False
         return True
 
