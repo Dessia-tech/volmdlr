@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 #### wires.py
+- Contour2D - point_belongs
 
 ### Changed
 - load_from_file -> from_json
