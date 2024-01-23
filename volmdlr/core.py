@@ -459,7 +459,7 @@ class BoundingRectangle(dc.DessiaObject):
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
         """
-        if not self.b_rectangle_intersection(b_rectangle2):
+        if not self.is_intersecting(b_rectangle2):
             return 0
         if self.is_inside_b_rectangle(b_rectangle2) or b_rectangle2.is_inside_b_rectangle(self):
             return min(self.area(), b_rectangle2.area())
@@ -476,7 +476,7 @@ class BoundingRectangle(dc.DessiaObject):
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
         """
-        if self.b_rectangle_intersection(b_rectangle2):
+        if self.is_intersecting(b_rectangle2):
             return 0
 
         permute_b_rec1 = self
@@ -804,19 +804,6 @@ class BoundingBox(dc.DessiaObject):
         # Return a new BoundingBox object
         return BoundingBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax, self.name)
 
-    def bbox_intersection(self, bbox2: "BoundingBox", tol: float = 1e-6) -> bool:
-        """
-        Calculates if there is an intersection between two bounding boxes.
-
-        :param bbox2: The second bounding box to compare with the current bounding box (self).
-        :type bbox2: BoundingBox
-        :param tol: tolerance to be considered.
-        :return: A boolean value indicating whether the two bounding boxes intersect (True) or not (False).
-        :rtype: bool
-        """
-        warnings.warn('bbox_intersection is deprecated, please use is_intersecting instead')
-        return self.is_intersecting(bbox2, tol)
-
     def is_intersecting(self, bbox2, tol: float = 1e-6):
         """
         Checks if two bounding boxes are intersecting or touching.
@@ -851,7 +838,7 @@ class BoundingBox(dc.DessiaObject):
         :return: The volume of the intersection of two bounding boxes.
         :rtype: float
         """
-        if not self.bbox_intersection(bbox2):
+        if not self.is_intersecting(bbox2):
             return 0
         if self.is_inside_bbox(bbox2) or bbox2.is_inside_bbox(self):
             return min(self.volume(), bbox2.volume())
