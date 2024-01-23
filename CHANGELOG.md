@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - load_from_file -> from_json
 - edges/curves.py cut_between_two_points -> trim
+- defines ordering of curve methods
 
 ### Unittests
 
