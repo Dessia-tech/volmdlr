@@ -288,10 +288,10 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         :return: A serialized version of the OpenShell3D
         :rtype: dict
 
-        .. see also::
+        . see also::
             How `serialization and de-serialization`_ works in dessia_common
 
-        .. _serialization and deserialization:
+        . _serialization and deserialization:
         https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
 
         """
@@ -307,7 +307,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
         """
-        Converts a step primitive to a Open Shell 3D.
+        Converts a step primitive to an Open Shell 3D.
 
         :param arguments: The arguments of the step primitive.
         :type arguments: list
@@ -1088,15 +1088,6 @@ class OpenShell3D(Shell3D):
     This class represents a 3D open shell, which is a collection of connected
     faces with no volume. It is a subclass of the `Shell3D` class and
     inherits all of its attributes and methods.
-
-    :param faces: The faces of the shell.
-    :type faces: List[`Face3D`]
-    :param color: The color of the shell.
-    :type color: Tuple[float, float, float]
-    :param alpha: The transparency of the shell, should be a value in the range (0, 1).
-    :type alpha: float
-    :param name: The name of the shell.
-    :type name: str
     """
 
     STEP_FUNCTION = 'OPEN_SHELL'
@@ -1121,15 +1112,6 @@ class ClosedShell3D(Shell3D):
     faces with a volume. It is a subclass of the `Shell3D` class and
     inherits all of its attributes and methods. In addition, it has a method
     to check whether a face is inside the shell.
-
-    :param faces: The faces of the shell.
-    :type faces: List[`Face3D`]
-    :param color: The color of the shell.
-    :type color: Tuple[float, float, float]
-    :param alpha: The transparency of the shell, should be a value in the range (0, 1).
-    :type alpha: float
-    :param name: The name of the shell.
-    :type name: str
     """
 
     STEP_FUNCTION = 'CLOSED_SHELL'
@@ -1266,7 +1248,7 @@ class ClosedShell3D(Shell3D):
 
         :return: returns a dictionary containing as keys the combination of intersecting faces
         and as the values the resulting primitive from the two intersecting faces.
-        It is done so it is not needed to calculate the same intersecting primitive twice.
+        It is done, so it is not needed to calculate the same intersecting primitive twice.
         """
         face_combinations1 = {face: [] for face in self.faces}
         face_combinations2 = {face: [] for face in shell2.faces}
@@ -1623,9 +1605,9 @@ class ClosedShell3D(Shell3D):
         if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces_1 + intersecting_faces_2:
             return self._delete_coincident_faces(shell2, list_coincident_faces, tol)
         new_valid_faces = self.union_faces(shell2, intersecting_faces_1,
-                                            dict_face_intersections1, list_coincident_faces)
+                                           dict_face_intersections1, list_coincident_faces)
         new_valid_faces += shell2.union_faces(self, intersecting_faces_2,
-                                               dict_face_intersections2, list_coincident_faces)
+                                              dict_face_intersections2, list_coincident_faces)
         if list_coincident_faces:
             new_valid_faces = self.validate_set_operations_faces(new_valid_faces)
         faces += new_valid_faces
@@ -1704,7 +1686,7 @@ class ClosedShell3D(Shell3D):
         if len(intersecting_faces_1) == 0:
             return [self, shell2]
         new_valid_faces = self.union_faces(shell2, intersecting_faces_1,  dict_face_intersections1,
-                                            list_coincident_faces)
+                                           list_coincident_faces)
         faces += new_valid_faces
         return OpenShell3D.from_faces(faces)
 
