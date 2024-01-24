@@ -1315,23 +1315,29 @@ class Circle2D(CircleMixin, ClosedCurve):
         frame.v = - frame.v
         return Circle2D(frame, self.radius)
 
-    def point_belongs(self, point, include_edge_points: bool = True, tol: float = 1e-6):
+    def point_belongs(self, point, tol: float = 1e-6):
+        """
+        Verifies if a point lies on the Circle 2D.
+
+        :param point: A 2D point to check if it is on the Circle 2D.
+        :type point: `volmdlr.Point2D`
+        :param tol: tolerance.
+        :return: True if point is on the circle or false otherwise.
+        :rtype: bool
+        """
+        return abs(point.point_distance(self.center) - self.radius) <= tol
+
+    def point_inside(self, point, tol: float = 1e-6):
         """
         Verifies if a point is inside the Circle 2D.
 
         :param point: A 2D point to check if it is inside the Circle 2D.
         :type point: `volmdlr.Point2D`
-        :param include_edge_points: A Boolean indicating whether points on the edge of the Circle 2D
-            should be considered inside the circle.
-        :type include_edge_points: bool
         :param tol: tolerance.
         :return: True if point inside the circle or false otherwise.
         :rtype: bool
         """
-
-        if include_edge_points:
-            return point.point_distance(self.center) <= self.radius + tol
-        return point.point_distance(self.center) < self.radius
+        return point.point_distance(self.center) <= self.radius + tol
 
     def point_distance(self, point):
         """
@@ -2007,7 +2013,7 @@ class Circle3D(CircleMixin, ClosedCurve):
 
     def point_belongs(self, point: volmdlr.Point3D, abs_tol: float = 1e-6):
         """
-        Returns if given point belongs to the Circle3D.
+        Returns if given point lies on the Circle3D.
         """
         distance = point.point_distance(self.center)
         vec = volmdlr.Vector3D(*point - self.center)
@@ -2289,12 +2295,12 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         frame3d = volmdlr.Frame3D(center3d, u_vector, v_vector, w_vector)
         return Ellipse3D(self.major_axis, self.minor_axis, frame3d)
 
-    def point_over_ellipse(self, point, abs_tol=1e-2):
+    def point_belongs(self, point, abs_tol=1e-2):
         """
         Verifies if a point is on the ellipse.
 
         :param point: point to be verified.
-         :param abs_tol: tolerance (0.99 should be considered True).
+        :param abs_tol: tolerance (0.99 should be considered True).
         :return: True or False.
         """
         return math.isclose(
@@ -2304,6 +2310,22 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
                    (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 3), 1.0,
             abs_tol=abs_tol)
 
+    def point_inside(self, point, abs_tol: float = 1e-2):
+        """
+        Verifies if a point is inside ellipse.
+
+        :param point: point to be verified.
+        :param abs_tol: tolerance (0.99 should be considered True).
+        :return: True or False.
+        """
+        line = Line2D(self.center, point)
+        ellipse_line_intersections = self.line_intersections(line)
+        distance_center_point = self.center.point_distance(point)
+        for intersection in ellipse_line_intersections:
+            if self.center.point_distance(intersection) + abs_tol < distance_center_point:
+                return False
+        return True
+
     def point_over_contour(self, point, abs_tol=1e-6):
         """
         Verifies if a point is on the ellipse.
@@ -2312,7 +2334,7 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         :param abs_tol: tolerance.
         :return: True or False.
         """
-        return self.point_over_ellipse(point, abs_tol)
+        return self.point_belongs(point, abs_tol)
 
     def line_intersections(self, line: 'Line2D', abs_tol: float = 1e-6):
         """
@@ -2404,7 +2426,7 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         :param tol: tolerance.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
-        if self.point_over_ellipse(point):
+        if self.point_belongs(point):
             angle_abscissa = self.point_angle_with_major_dir(point)
 
             def arc_length(theta):

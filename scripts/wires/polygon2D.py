@@ -59,7 +59,7 @@ for polygon in [polygon1, polygon2, polygon3]:
     for i in range(100):
 
         pt = vm.Point2D.random(xmin, xmax, ymin, ymax)
-        if polygon.point_belongs(pt):
+        if polygon.point_inside(pt):
             points_inside.append(pt)
         else:
             points_outside.append(pt)
@@ -84,7 +84,7 @@ for polygon in [polygon1, polygon2, polygon3]:
     for i in range(n):
         pt=vm.Point2D.random(-0.3, 0.7, -0.3, 0.7)
     #    print(p.PointDistance(pt))
-        polygon.point_belongs(pt)
+        polygon.point_inside(pt)
     t= time.time() - t 
     print('time spent: {}s, {}s/eval'.format(t, t/n))   
     

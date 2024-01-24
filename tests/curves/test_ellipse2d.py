@@ -67,9 +67,17 @@ class TestEllipse2D(unittest.TestCase):
         self.assertTrue(self.discretized_points[5].is_close(volmdlr.Point2D(-2.8284271247461903, -2.82842712474619)))
         self.assertTrue(self.discretized_points[-2].is_close(volmdlr.Point2D(3.119499486825644, 1.4569917357158295)))
 
-    def test_point_over_ellipse(self):
-        self.assertTrue(self.ellipse2d.point_over_ellipse(self.discretized_points[3]))
-        self.assertFalse(self.ellipse2d.point_over_ellipse(volmdlr.Point2D(2, 2)))
+    def test_point_belongs(self):
+        self.assertTrue(self.ellipse2d.point_belongs(self.discretized_points[3]))
+        self.assertFalse(self.ellipse2d.point_belongs(volmdlr.Point2D(2, 2)))
+
+    def test_point_inside(self):
+        ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, volmdlr.X2D, -volmdlr.Y2D))
+
+        point2d = volmdlr.Point2D(1.6, 0.7)
+        self.assertFalse(ellipse2d.point_inside(point2d))
+        point2d = volmdlr.Point2D(1.6, 0.5)
+        self.assertTrue(ellipse2d.point_inside(point2d))
 
     def test_abscissa(self):
         self.assertEqual(self.ellipse2d.abscissa(self.discretized_points[5]), 9.688448220547677)

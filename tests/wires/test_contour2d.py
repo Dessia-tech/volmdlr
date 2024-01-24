@@ -28,18 +28,18 @@ class TestContour2D(unittest.TestCase):
     contour3 = contour2_unittest.rotation(volmdlr.Point2D(0.5, 0.5), math.pi / 1.5)
     contour3 = contour3.translation(volmdlr.Vector2D(-0.3, 0))
 
-    def test_point_belongs(self):
+    def test_point_inside(self):
         point1 = volmdlr.Point2D(0.0144822, 0.00595264)
         point2 = volmdlr.Point2D(0.02, 0.02)
-        self.assertTrue(self.contour1.point_belongs(point1))
-        self.assertTrue(self.contour1.point_belongs(point2))
+        self.assertTrue(self.contour1.point_inside(point1))
+        self.assertTrue(self.contour1.point_inside(point2))
 
         point3 = volmdlr.Point2D(0, 0.013)
-        self.assertTrue(contour2d_1.point_belongs(point3))
-        self.assertFalse(contour2d_1.point_belongs(point1))
+        self.assertTrue(contour2d_1.point_inside(point3))
+        self.assertFalse(contour2d_1.point_inside(point1))
 
         point4 = volmdlr.Point2D(0.745, 0.0685)
-        self.assertTrue(contour2d_2.point_belongs(point4))
+        self.assertTrue(contour2d_2.point_inside(point4))
 
     def test_is_ordered(self):
         # self.assertTrue(self.ordered_contour.is_ordered())
@@ -269,7 +269,7 @@ class TestContour2D(unittest.TestCase):
         self.assertAlmostEqual(contour.area(), 0.00016865275423510724, 6)
 
     def test_cut_by_line(self):
-        contour, line = wires.Contour2D.load_from_file(
+        contour, line = wires.Contour2D.from_json(
             os.path.join(folder, 'test_contour2d_cut_by_line.json')).primitives
 
         cut_by_line = contour.cut_by_line(line)
