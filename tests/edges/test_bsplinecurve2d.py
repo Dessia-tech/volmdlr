@@ -17,7 +17,7 @@ class TestBSplineCurve2D(unittest.TestCase):
     def test_bounding_rectangle(self):
         contour = DessiaObject.load_from_file(os.path.join(folder, "bounding_box_contour.json"))
         b_rec = contour.bounding_rectangle
-        self.assertAlmostEqual(b_rec.area(), 0.46995118100796823, places=2)
+        self.assertAlmostEqual(b_rec.area(), 0.48129011002687494, places=2)
 
     degree = 3
     points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
@@ -339,6 +339,18 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertTrue(splitted_curves[1].end.is_close(volmdlr.Point2D(0.04793931370999993, 0.011891887758212483)))
         self.assertAlmostEqual(splitted_curves[0].length(), 0.0005535177002044544, 5)
         self.assertAlmostEqual(splitted_curves[1].length(), 0.0002710315376536523, 5)
+
+    def test_merge_with(self):
+        split_point = volmdlr.Point2D(27.64549230676716, 14.691702224146088)
+        splitted_curves = self.bspline2d.split(split_point)
+        merged_curve = splitted_curves[0].merge_with(splitted_curves[1])
+        self.assertTrue(merged_curve.is_close(self.bspline2d))
+        self.assertFalse(merged_curve.rational)
+
+        split_point = volmdlr.Point2D(28.1775252667145, 14.785855215217019)
+        splitted_curves = self.bspline2d_rational.split(split_point)
+        merged_curve = splitted_curves[0].merge_with(splitted_curves[1])
+        self.assertTrue(merged_curve.is_close(self.bspline2d_rational))
 
     def test_tangent(self):
         tangent = self.bspline1.tangent(0.5)

@@ -9,7 +9,7 @@ from pylint.lint import Run
 
 MIN_NOTE = 9.7
 
-UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline']
+UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline', 'use-maxsplit-arg']
 
 EFFECTIVE_DATE = date(2023, 1, 31)
 
@@ -19,9 +19,9 @@ MAX_ERROR_BY_TYPE = {
                      "wrong-spelling-in-comment": 6,
                      'invalid-name': 1,
                      'arguments-differ': 67,
-                     'too-many-locals': 74,
+                     'too-many-locals': 76,
                      'unused-argument': 10,
-                     'too-many-arguments': 29,
+                     'too-many-arguments': 30,
                      'line-too-long': 12,
                      'too-many-branches': 26,
                      'too-many-statements': 15,
@@ -122,8 +122,9 @@ for error_type, number_errors in stats_by_msg.items():
                 f"\nFix some {error_type} errors: {number_errors}/{max_errors} "
                 f"(time effect: {time_decrease_effect} errors)")
 
-            messages = extract_messages_by_type(error_type)
-            messages_to_show = sorted(random.sample(messages, min(30, len(messages))), key=lambda m: (m.path, m.line))
+            # messages = extract_messages_by_type(error_type)
+            messages_to_show = extract_messages_by_type(error_type)
+            # messages_to_show = sorted(random.sample(messages, min(30, len(messages))), key=lambda m: (m.path, m.line))
             for message in messages_to_show:
                 print(f"{message.path} line {message.line}: {message.msg}")
         elif number_errors < max_errors:

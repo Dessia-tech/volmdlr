@@ -300,7 +300,7 @@ class TestBSplineSurface3D(unittest.TestCase):
                     for c, e in zip(computed[idx], expected[idx]):
                         self.assertAlmostEqual(c, e, delta=DELTA)
 
-        surface = surfaces.BSplineSurface3D.load_from_file(
+        surface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, "bsplinesurface_derivatives_v_degree_1.json"))
         test_data = [((0.0, 0.41570203515189436), 2,
                      [[(2.686370456553301, -0.6157625276711683, 0.5584759391609816),
@@ -436,7 +436,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(contour2d_dim.length(), 16.823814079415172, places=2)
 
     def test_periodicity(self):
-        bspline_suface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, 'surface3d_8.json'))
+        bspline_suface = surfaces.BSplineSurface3D.from_json(os.path.join(folder, 'surface3d_8.json'))
         self.assertAlmostEqual(bspline_suface.x_periodicity,  0.8888888888888888)
         self.assertFalse(bspline_suface.y_periodicity)
 
@@ -449,7 +449,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(volume, 3.97787, 2)
 
     def test_arc3d_to_2d(self):
-        bspline_surface = surfaces.BSplineSurface3D.load_from_file(
+        bspline_surface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, 'BSplineSurface3D_with_Arc3D.json'))
         arc = vme.Arc3D.from_3_points(volmdlr.Point3D(-0.01, -0.013722146986970815, 0.026677756316261864),
                         volmdlr.Point3D(-0.01, 0.013517082603, 0.026782241839),
@@ -466,9 +466,9 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertTrue(inv_prof.end.is_close(arc.end))
 
         # Strange case from step file
-        bspline_surface = surfaces.BSplineSurface3D.load_from_file(
+        bspline_surface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, 'bsplinesurface_arc3d_to_2d_surface.json'))
-        arc = vme.Arc3D.load_from_file(os.path.join(folder, "bsplinesurface_arc3d_to_2d_arc3d.json"))
+        arc = vme.Arc3D.from_json(os.path.join(folder, "bsplinesurface_arc3d_to_2d_arc3d.json"))
         brep = bspline_surface.arc3d_to_2d(arc)[0]
         self.assertTrue(brep.start.is_close(volmdlr.Point2D(1, 0)))
 
@@ -491,7 +491,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(original_length, length_after_transformation, places=6)
         self.assertTrue(point.is_close(point_test, 1e-6))
 
-        surface = surfaces.BSplineSurface3D.load_from_file(
+        surface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, "bsplinesurface_smallbsplinecurve.json"))
         bsplinecurve3d = vme.BSplineCurve3D.load_from_file(
             os.path.join(folder, "bsplinesurface_smallbsplinecurve_curve.json"))
@@ -499,6 +499,25 @@ class TestBSplineSurface3D(unittest.TestCase):
         reversed_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
         self.assertAlmostEqual(brep_primitive.length(), 0.0024101173639275997)
         self.assertAlmostEqual(bsplinecurve3d.length(), reversed_prof.length(), 5)
+
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "periodic_surface_smallbsplinecurve3d.json"))
+        bsplinecurve3d = vme.BSplineCurve3D.load_from_file(
+            os.path.join(folder, "periodic_surface_smallbsplinecurve3d_curve.json"))
+        brep_primitive = surface.bsplinecurve3d_to_2d(bsplinecurve3d)[0]
+        reversed_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
+        self.assertAlmostEqual(brep_primitive.length(), 0.006419627118992597)
+        self.assertTrue(bsplinecurve3d.start.is_close(reversed_prof.start))
+        self.assertAlmostEqual(bsplinecurve3d.length(), reversed_prof.length(), 5)
+
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "bsplinecurve3d_to_2d_vclosed_surface_test.json"))
+        bsplinecurve3d = vme.BSplineCurve3D.load_from_file(
+            os.path.join(folder, "bsplinecurve3d_to_2d_vclosed_surface_test_curve.json"))
+        brep_primitive = surface.bsplinecurve3d_to_2d(bsplinecurve3d)[0]
+        reversed_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
+        self.assertTrue(brep_primitive.end.is_close(volmdlr.Point2D(0.0, 1.0)))
+        self.assertTrue(bsplinecurve3d.start.is_close(reversed_prof.start))
 
     def test_bsplinecurve2d_to_3d(self):
         surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "bspline_surface_with_arcs.json"))
@@ -828,8 +847,10 @@ class TestBSplineSurface3D(unittest.TestCase):
     def test_decompose(self):
         surface = surfaces.BSplineSurface3D.load_from_file(
             os.path.join(folder, "bsplineface_triangulation_problem_surface.json"))
-        bezier_patches, params = surface.decompose(return_params=True)
-        self.assertEqual(len(bezier_patches), 116)
+        decompose_results = surface.decompose(return_params=True)
+        self.assertEqual(len(decompose_results), 116)
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
         self.assertEqual(len(bezier_patches), len(params))
         for patch, param in zip(bezier_patches, params):
             control_points = patch.control_points
@@ -837,7 +858,9 @@ class TestBSplineSurface3D(unittest.TestCase):
                 surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
             self.assertTrue(
                 surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
-        bezier_patches, params = surface.decompose(return_params=True, decompose_dir="u")
+        decompose_results = surface.decompose(return_params=True, decompose_dir="u")
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
         self.assertEqual(len(bezier_patches), 4)
         self.assertEqual(len(bezier_patches), len(params))
         for patch, param in zip(bezier_patches, params):
@@ -846,7 +869,9 @@ class TestBSplineSurface3D(unittest.TestCase):
                 surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
             self.assertTrue(
                 surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
-        bezier_patches, params = surface.decompose(return_params=True, decompose_dir="v")
+        decompose_results = surface.decompose(return_params=True, decompose_dir="v")
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
         self.assertEqual(len(bezier_patches), 29)
         self.assertEqual(len(bezier_patches), len(params))
         for patch, param in zip(bezier_patches, params):

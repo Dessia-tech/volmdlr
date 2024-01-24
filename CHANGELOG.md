@@ -6,15 +6,62 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## v0.16.0 [future]
+## v0.17.0 [Future]
+### New Features
+#### edges.py
+-
+
+#### faces.py
+-
+
+#### edges.py
+-
+
+#### surfaces.py
+-
+
+
+### Fixed
+#### edges.py
+-
+
+#### faces.py
+-
+
+#### edges.py
+-
+
+#### surfaces.py
+-
+
+#### wires.py
+
+### Refactor
+#### surfaces.py
+- ToroidalSuface3D: toroidal_surface_intersections
+- Contour2D - point_belongs
+
+### Changed
+- load_from_file -> from_json
+- Delete outdated_methods: bbox_intersections -> is_intersecting | b_rectangle_intersections -> is_intersecting
+- edges/curves.py cut_between_two_points -> trim
+- defines ordering of curve methods
+
+### Unittests
+
+
+## v0.16.0
 
 ### New Features
 - added missing hash and eq methods to several classes
 - ArcEllipse2D/3D: get_shared_section and delete_shared_section.
-- ConicalSurface3D: conicalsurface_intersections
+- ConicalSurface3D: conicalsurface_intersections.
+- cad_simplification: AlphaWrapSimplify
+- nurbs/operations: link_curves
 
 #### edges.py
 - BSplineCurve: decompose into béziers patches of same degree.
+- BSplineCurve: merge_with and merge_with_curves
 
 #### faces.py
 - Add primitives_mapping property: returns a dictionary containing the correspondence between the parametric and 3D boundaries of the faces.
@@ -29,13 +76,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RevolutionSurface3D: parametric_points_to_3d
 - Plane3D: parametric_points_to_3d
 - BSplineSurface3D: parametric_points_to_3d
-- BSplineSurface3D: decompose
+- BSplineSurface3D: decompose.
 - BSplineSurface3D:extract_curves method. Extracts curves from the surface given an ordered list of parameters in u or v direction.
+- ToroidalSurface3D: torus-torus intersections.
 
 ### Fixed
-- review hash and eq methods
+- review hash and eq methods.
 - fix pylint.
 - Add some missing docstrings.
+- Add _serializable_dict to points and vectors objects. This method is important to some platform checks, as they don't inherite from DessiaObject anymore.
 
 #### curves.py
 - Ellipse2D/3D: mutualize length method.
@@ -49,10 +98,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BSplineCurve.simplify: handles exceptions.
 - Arc2D: plot_data
 - LineSegment3D: planar_revolution.
-- BSplineCurve: abscissa.
+- BSplineCurve: abscissa: use curve decomposition.
+- BSplineCurve: trim.
 
 #### faces.py
 - Face3D: enhance from_contours3d.
+- Face3D: enhance from_contours3d. Checks if inner contours position are according outer contour position in parametric domain for periodical surfaces.
 - Face3D: divide_face_with_closed_cutting_contours - if inner_contour.area()/outer_contour.area() < 1e-9 ignore it.
 - Face3D: point_belongs
 
@@ -66,6 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ToroidalSurface3D: increases precision of point3d_to_2d.
 - Surface3D: repeair_primitives_periodicity. Treat special case on surfaces with singularities.
 - ToroidalSurface3D: plane_intersections.
+- Remove duplicated attributes.
 
 #### wires.py
 - Contour2D: cut_by_line.
@@ -83,14 +135,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### surfaces.py
 - contour3d_to_2d/contour2d_to_3d: Add option to return also a dictionary with the correspondence between the parametric and 3D primitives.
+- BSplineSurface3D: point3d_to_2d, improve the method to ensure convergence
 
 #### display.py
-- refactor DisplayMesh
+- refactor DisplayMesh.
+- refactor DisplayMesh to Mesh3D
+- enable stl / ply / 3mf / obj import and export with Mesh3D object
+- implement various Mesh3D manipulations methods
+- improve performance
 
 ### Changed
 - Edge.split_between_two_points -> trim
 - surfaces.py: point_on_surface -> point_belongs
 - Numpyfy BSplines
+
+### Build
+- try adding github actions to testpypi
 
 ### Unittests
 - 
@@ -105,7 +165,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### build
 
 - Use pip install instead of setuptools install in order to avoid .egg being generating and preventing PyPI upload
-
 
 ## v0.15.0
 
@@ -250,7 +309,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - core_compiled.pyx: update typing because Point2D, Point3D, Vector2D and Vector3D are now extension types (C structures.)
 - BSplineCurve: improve line_intersections performance.
 - SphericalSurface3D: enhance bsplinecurve3d_to_2d.
-
 
 ### Unittests
 #### curves 
