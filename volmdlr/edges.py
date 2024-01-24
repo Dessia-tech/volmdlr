@@ -5198,6 +5198,9 @@ class BSplineCurve3D(BSplineCurve):
             bspline_curve = self.reverse()
         abscissa1 = bspline_curve.abscissa(point1)
         abscissa2 = bspline_curve.abscissa(point2)
+        if ((abscissa1 <= 1e-6 or abs(abscissa1 - self.length()) <= 1e-6) and
+                (abscissa2 <= 1e-6 or abs(abscissa2 - self.length()) <= 1e-6)):
+            return bspline_curve
         if abscissa2 > abscissa1:
             if abscissa1 == 0.0:
                 return bspline_curve.split(point2)[0]

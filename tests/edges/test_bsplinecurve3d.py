@@ -63,6 +63,8 @@ class TestBSplineCurve3D(unittest.TestCase):
             trim = bspline.trim(pt1, pt2)
             self.assertTrue(trim.start.is_close(pt1))
             self.assertTrue(trim.end.is_close(pt2))
+        trim = bspline.trim(bspline.start, bspline.end)
+        self.assertEqual(bspline, trim)
 
         bspline = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bsplinecurve3d_split_test.json"))
         point1 = volmdlr.Point3D(0.0781678147963, -0.08091364816680001, 0.112275939295)
