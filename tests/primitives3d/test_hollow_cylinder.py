@@ -18,9 +18,9 @@ class TestHollowCylinder(unittest.TestCase):
         )
 
     def test_point_belongs(self):
-        self.assertFalse(self.hollow_cylinder.point_belongs(volmdlr.O3D))
+        self.assertFalse(self.hollow_cylinder.point_inside(volmdlr.O3D))
         self.assertTrue(
-            self.hollow_cylinder.point_belongs(volmdlr.Point3D((self.inner_radius + self.outer_radius) / 2, 0, 0))
+            self.hollow_cylinder.point_inside(volmdlr.Point3D((self.inner_radius + self.outer_radius) / 2, 0, 0))
         )
 
     def test_from_end_points(self):

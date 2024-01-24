@@ -35,7 +35,7 @@ class TestPlaneFace3D(unittest.TestCase):
 
         self.assertEqual(1, len(face_intersections))
         self.assertAlmostEqual(0.003600000000881293, face_intersections[0].length())
-        face1, face2 = faces.PlaneFace3D.load_from_file(
+        face1, face2 = faces.PlaneFace3D.from_json(
             os.path.join(folder, 'test_planef_inters291123.json')).primitives
         face_intersections = face1.face_intersections(face2)
         line_seg = edges.LineSegment3D(
@@ -176,7 +176,7 @@ class TestPlaneFace3D(unittest.TestCase):
         self.assertEqual(face_intersections[0].primitives[0], edges.LineSegment3D(volmdlr.Point3D(0.0, 0.15, -0.25),
                                                                                   volmdlr.Point3D(0.0, 0.15, 0.25)))
         """======= [] ==========="""
-        planeface, cylface = dessia_common.core.DessiaObject.load_from_file(
+        planeface, cylface = dessia_common.core.DessiaObject.from_json(
             os.path.join(folder, 'test_planeface_cylindricalface_intersections_none.json')).primitives
         self.assertFalse(planeface.face_intersections(cylface))
 
