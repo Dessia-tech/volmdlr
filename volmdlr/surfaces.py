@@ -3920,8 +3920,9 @@ class ToroidalSurface3D(PeriodicalSurface):
 
     def outer_radius_tangent_inner_radius_toroidalsurface_intersections(self, toroidal_surface):
         """
-        Calculates the intersections between two toroidal surfaces, where is the outer radius of one
-        toroidal surface is touching inner radius of the other toroidal surface.
+        Calculates the intersections between two toroidal surfaces.
+
+        Case where the outer radius of one toroidal surface is touching inner radius of the other toroidal surface.
 
         :param toroidal_surface: other toroidal surface.
         :return:
