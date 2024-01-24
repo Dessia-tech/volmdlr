@@ -214,7 +214,6 @@ class Line(Curve):
         if other_line.point_belongs(self.point1, abs_tol) and\
                 self.direction_vector().is_colinear_to(other_line.direction_vector(), abs_tol):
             return True
-
         return False
 
     @classmethod
@@ -326,7 +325,7 @@ class Line(Curve):
         :rtype: Tuple(Union[:class:`volmdlr.Point2D`,
             :class:`volmdlr.Point3D`], float)
         """
-        vector = self.point2 - self.point1
+        vector = self.direction_vector()
         norm_u = vector.norm()
         projection_param_t = (point - self.point1).dot(vector) / norm_u ** 2
         projection = self.point1 + projection_param_t * vector
