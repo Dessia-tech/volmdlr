@@ -128,21 +128,21 @@ class TestRevolutionSurface3D(unittest.TestCase):
         self.assertTrue(contour2d.is_ordered())
 
         surface = surfaces.RevolutionSurface3D.from_json(os.path.join(folder, "revolutionface_surface_2.json"))
-        contour = vmw.Contour3D.load_from_file(os.path.join(folder, "revolutionface_contour_2.json"))
+        contour = vmw.Contour3D.from_json(os.path.join(folder, "revolutionface_contour_2.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 0.00031415327300491437 * math.pi, 2)
 
-        surface = surfaces.RevolutionSurface3D.load_from_file(os.path.join(folder,
+        surface = surfaces.RevolutionSurface3D.from_json(os.path.join(folder,
                                                                            "revolutionsurface_with_singularity.json"))
-        contour = vmw.Contour3D.load_from_file(os.path.join(folder, "revolutionsurface_with_singularity_contour.json"))
+        contour = vmw.Contour3D.from_json(os.path.join(folder, "revolutionsurface_with_singularity_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), surface.edge.length() * math.pi, 2)
 
-        surface = surfaces.RevolutionSurface3D.load_from_file(os.path.join(folder,
+        surface = surfaces.RevolutionSurface3D.from_json(os.path.join(folder,
                                                                         "revolutionsurface_with_singularity_1.json"))
-        contour = vmw.Contour3D.load_from_file(os.path.join(folder,
+        contour = vmw.Contour3D.from_json(os.path.join(folder,
                                                             "revolutionsurface_with_singularity_contour_1.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertTrue(contour2d.is_ordered())
@@ -150,14 +150,14 @@ class TestRevolutionSurface3D(unittest.TestCase):
 
 
     def test_arc3d_to_2d(self):
-        surface = surfaces.RevolutionSurface3D.load_from_file(os.path.join(folder, "arc3d_to_2d_surface.json"))
-        arc3d = vme.Arc3D.load_from_file(os.path.join(folder, "arc3d_to_2d_arc3d.json"))
+        surface = surfaces.RevolutionSurface3D.from_json(os.path.join(folder, "arc3d_to_2d_surface.json"))
+        arc3d = vme.Arc3D.from_json(os.path.join(folder, "arc3d_to_2d_arc3d.json"))
         brep = surface.arc3d_to_2d(arc3d)[0]
         self.assertTrue(brep.start.is_close(volmdlr.Point2D(-math.pi, 0.0)))
         self.assertTrue(brep.end.is_close(volmdlr.Point2D(-math.pi, 0.0038322109949349634)))
 
-        surface = surfaces.RevolutionSurface3D.load_from_file(os.path.join(folder, "arc3d_to_2d_surface_2.json"))
-        arc3d = vme.Arc3D.load_from_file(os.path.join(folder, "arc3d_to_2d_arc3d_2.json"))
+        surface = surfaces.RevolutionSurface3D.from_json(os.path.join(folder, "arc3d_to_2d_surface_2.json"))
+        arc3d = vme.Arc3D.from_json(os.path.join(folder, "arc3d_to_2d_arc3d_2.json"))
         brep = surface.arc3d_to_2d(arc3d)[0]
         self.assertTrue(brep.start.is_close(volmdlr.Point2D(-math.pi, 0.0038322109949349634)))
         self.assertTrue(brep.end.is_close(volmdlr.Point2D(-math.pi, 0.0)))

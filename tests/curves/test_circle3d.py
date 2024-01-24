@@ -173,7 +173,7 @@ class TestCircle3D(unittest.TestCase):
         circle_linseg_intersections1 = circle3.linesegment_intersections(lineseg2)
         self.assertEqual(len(circle_linseg_intersections1), 1)
         self.assertTrue(circle_linseg_intersections1[0].is_close(volmdlr.Point3D(1, 0.0, 0.0)))
-        circle, lineseg = DessiaObject.load_from_file(os.path.join(folder,
+        circle, lineseg = DessiaObject.from_json(os.path.join(folder,
             'test_circle_linesegment_intersections221223.json')).primitives
         intersections = circle.linesegment_intersections(lineseg)
         self.assertEqual(len(intersections), 1)

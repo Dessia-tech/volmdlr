@@ -235,7 +235,7 @@ class TestCircle2D(unittest.TestCase):
             self.assertTrue(intersection.is_close(expected_intersection))
         circle_2 = curves.Circle2D(volmdlr.OXY.translation(volmdlr.Vector2D(4.257776625181402, -2.6149184392658222)),
                                    1.1791034225674362)
-        bspline = volmdlr.edges.BSplineCurve2D.load_from_file(os.path.join(folder, 'bspline.json'))
+        bspline = volmdlr.edges.BSplineCurve2D.from_json(os.path.join(folder, 'bspline.json'))
         intersections = circle_2.bsplinecurve_intersections(bspline, 1e-6)
         self.assertEqual(len(intersections), 1)
         self.assertTrue(intersections[0], volmdlr.Point2D(3.218528920632699, -3.1719185197869))

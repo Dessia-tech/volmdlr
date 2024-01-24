@@ -64,11 +64,11 @@ class TestBoundingRectangle(unittest.TestCase):
         self.assertFalse(self.b_rectangle1.is_inside_b_rectangle(self.b_rectangle3))
 
     def test_point_belongs(self):
-        self.assertTrue(self.br.point_belongs(volmdlr.Point2D(3.0, 4.0)))
-        self.assertFalse(self.br.point_belongs(volmdlr.Point2D(6.0, 7.0)))
+        self.assertTrue(self.br.point_inside(volmdlr.Point2D(3.0, 4.0)))
+        self.assertFalse(self.br.point_inside(volmdlr.Point2D(6.0, 7.0)))
 
-        self.assertTrue(self.b_rectangle1.point_belongs(volmdlr.Point2D(0.25, 0.25)))
-        self.assertFalse(self.b_rectangle1.point_belongs(volmdlr.Point2D(1.0, 1.0)))
+        self.assertTrue(self.b_rectangle1.point_inside(volmdlr.Point2D(0.25, 0.25)))
+        self.assertFalse(self.b_rectangle1.point_inside(volmdlr.Point2D(1.0, 1.0)))
 
     def test_intersection_area(self):
         br2 = BoundingRectangle(1.0, 4.0, 1.0, 4.0)

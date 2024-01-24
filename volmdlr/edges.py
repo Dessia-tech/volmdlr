@@ -1387,7 +1387,7 @@ class BSplineCurve(Edge):
 
         for patch, param in self.decompose(True):
             bounding_element = self.get_bounding_element()
-            if bounding_element.point_belongs(point):
+            if bounding_element.point_inside(point):
                 distances = np.linalg.norm(patch.points - point_array, axis=1)
                 index = np.argmin(distances)
                 u_start, u_stop = patch.domain
@@ -6198,11 +6198,7 @@ class FullArc3D(FullArcMixin, Arc3D):
         """
         Returns if given point belongs to the FullArc3D.
         """
-        distance = point.point_distance(self.circle.center)
-        vec = volmdlr.Vector3D(*point - self.circle.center)
-        dot = self.circle.normal.dot(vec)
-        return math.isclose(distance, self.radius, abs_tol=abs_tol) \
-            and math.isclose(dot, 0, abs_tol=abs_tol)
+        return self.circle.point_belongs(point, abs_tol)
 
     @classmethod
     def from_3_points(cls, point1, point2, point3, name: str = ''):
