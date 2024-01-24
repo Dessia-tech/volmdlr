@@ -35,9 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 #### wires.py
+
 ### Refactor
 #### surfaces.py
 - ToroidalSuface3D: toroidal_surface_intersections
+- Contour2D - point_belongs
+
 ### Changed
 - load_from_file -> from_json
 - Delete outdated_methods: bbox_intersections -> is_intersecting | b_rectangle_intersections -> is_intersecting

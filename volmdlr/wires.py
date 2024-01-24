@@ -2087,6 +2087,8 @@ class Contour2D(ContourMixin, Wire2D):
                     return True
         if not self._polygon_100_points:
             self._polygon_100_points = self.to_polygon(100)
+        if point.is_close(self.center_of_mass()) and self._polygon_100_points.is_convex():
+            return True
         if self._polygon_100_points.point_belongs(point):
             return True
         return False
