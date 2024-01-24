@@ -888,9 +888,9 @@ class Wire2D(WireMixin, PhysicalObject):
         for i, (point1, point2) in enumerate(zip(offset_intersections,
                                                  offset_intersections[1:] + [offset_intersections[0]])):
             if i + 1 == len(offset_intersections):
-                cutted_primitive = infinite_primitives[0].cut_between_two_points(point1, point2)
+                cutted_primitive = infinite_primitives[0].trim(point1, point2)
             else:
-                cutted_primitive = infinite_primitives[i + 1].cut_between_two_points(point1, point2)
+                cutted_primitive = infinite_primitives[i + 1].trim(point1, point2)
             offset_primitives.append(cutted_primitive)
 
         return self.__class__(offset_primitives)

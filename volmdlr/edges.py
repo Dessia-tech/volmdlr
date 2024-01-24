@@ -3380,15 +3380,6 @@ class Arc2D(ArcMixin, Edge):
         """
         return Arc2D(self.circle.copy(), self.start.copy(), self.end.copy())
 
-    def cut_between_two_points(self, point1, point2):
-        """
-        Cuts Arc between two points, and return a new arc between these two points.
-        """
-        if (point1.is_close(self.start) and point2.is_close(self.end)) or \
-                (point2.is_close(self.start) and point1.is_close(self.end)):
-            return self
-        raise NotImplementedError
-
     def infinite_primitive(self, offset):
         """Create an offset curve from a distance of the original curve."""
         vector_start_center = self.start - self.circle.center
@@ -3565,35 +3556,6 @@ class FullArc2D(FullArcMixin, Arc2D):
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
         """Plots a fullarc using Matplotlib."""
         return vm_common_operations.plot_circle(self.circle, ax, edge_style)
-
-    def cut_between_two_points(self, point1, point2, same_sense: bool = True):
-        """
-        Cuts a full arc between two points on the fullarc.
-
-        This method calculates the angles between the circle's center and the two points
-        in order to determine the starting and ending angles of the arc. It then creates
-        an Arc2D object representing the cut arc. If the original arc and the cut arc have
-        opposite rotation directions, the cut arc is flipped to match the original arc's
-        direction.
-
-        :param point1: The first point defining the cut arc.
-        :param point2: The second point defining the cut arc.
-        :param same_sense: Boolean value that indicates whether the arc must follow the same direction of rotation
-            as the complete arc.
-
-        :return: The cut arc between the two points.
-        :rtype: Arc2D.
-        """
-        x1, y1 = point1 - self.circle.center
-        x2, y2 = point2 - self.circle.center
-        angle1 = math.atan2(y1, x1)
-        angle2 = math.atan2(y2, x2)
-        if angle2 < angle1:
-            angle2 += volmdlr.TWO_PI
-        arc = Arc2D(self.circle, point1, point2)
-        if not same_sense:
-            arc = arc.complementary()
-        return arc
 
     def line_intersections(self, line2d: volmdlr_curves.Line2D, tol=1e-9):
         """Full Arc 2D intersections with a Line 2D."""
