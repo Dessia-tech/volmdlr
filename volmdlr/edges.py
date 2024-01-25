@@ -2019,6 +2019,10 @@ class BSplineCurve2D(BSplineCurve):
         return self._bounding_rectangle
 
     def get_bounding_element(self):
+        """
+        Gets bounding element, bounding box for 3D, bounding rectangle 2D.
+
+        """
         return self.bounding_rectangle
 
     def straight_line_area(self):
@@ -4966,6 +4970,10 @@ class BSplineCurve3D(BSplineCurve):
         return volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def get_bounding_element(self):
+        """
+        Gets bounding element, bounding box for 3D, bounding rectangle 2D.
+
+        """
         return self.bounding_box
 
     def look_up_table(self, resolution: int = 20, start_parameter: float = 0,
@@ -5198,6 +5206,9 @@ class BSplineCurve3D(BSplineCurve):
             bspline_curve = self.reverse()
         abscissa1 = bspline_curve.abscissa(point1)
         abscissa2 = bspline_curve.abscissa(point2)
+        if ((abscissa1 <= 1e-6 or abs(abscissa1 - self.length()) <= 1e-6) and
+                (abscissa2 <= 1e-6 or abs(abscissa2 - self.length()) <= 1e-6)):
+            return bspline_curve
         if abscissa2 > abscissa1:
             if abscissa1 == 0.0:
                 return bspline_curve.split(point2)[0]
