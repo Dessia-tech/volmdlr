@@ -4417,6 +4417,8 @@ class ConicalSurface3D(PeriodicalSurface):
         if line.point_distance(circle.center) > radius + circle.radius:
             return []
         intersections = [point for point in self.curve_intersections(circle) if point.z >= 0]
+        if len(intersections) > 1:
+            print(True)
         return intersections
 
     def _full_line_intersections(self, line: curves.Line3D):
@@ -4661,7 +4663,7 @@ class ConicalSurface3D(PeriodicalSurface):
         point1 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmin))
         point2 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmax))
         cone_generatrices = self.get_generatrices(200, spherical_surface.radius*4) +\
-                            self.get_circle_generatrices(200, point1.z, point2.z)
+                            self.get_circle_generatrices(200, max(point1.z, 0), max(point2.z, 0))
         intersection_points = []
         for gene in cone_generatrices:
             intersections = spherical_surface.edge_intersections(gene)
