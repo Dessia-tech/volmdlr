@@ -443,7 +443,7 @@ class BoundingRectangle(dc.DessiaObject):
         return (self.xmin >= b_rectangle2.xmin - tol) and (self.xmax <= b_rectangle2.xmax + tol) \
             and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
 
-    def point_belongs(self, point: volmdlr.Point2D):
+    def point_inside(self, point: volmdlr.Point2D):
         """
         Returns True if a specified point is inside the bounding rectangle and False otherwise.
 
@@ -499,7 +499,7 @@ class BoundingRectangle(dc.DessiaObject):
         :param point: A 2D point
         :type point: :class:`volmdlr.Point2D`
         """
-        if self.point_belongs(point):
+        if self.point_inside(point):
             return min([self.xmax - point.x, point.y - self.xmin,
                         self.ymax - point.y, point.y - self.ymin])
 
@@ -898,7 +898,7 @@ class BoundingBox(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def point_belongs(self, point: volmdlr.Point3D, tol=1e-6) -> bool:
+    def point_inside(self, point: volmdlr.Point3D, tol=1e-6) -> bool:
         """
         Determines if a point belongs to the bounding box.
 
@@ -923,7 +923,7 @@ class BoundingBox(dc.DessiaObject):
         :return: The minimum distance between the point and the bounding box.
         :rtype: float
         """
-        if self.point_belongs(point):
+        if self.point_inside(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
                         self.ymax - point[1], point[1] - self.ymin,
                         self.zmax - point[2], point[2] - self.zmin])

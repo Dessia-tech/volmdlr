@@ -83,7 +83,7 @@ title = ['primitives to be merged  (contour1)', 'primitives to be merged  (conto
 j = j + 1
 for i in range(0, 2):
     for p in merged_primitives:
-        if contour1.point_over_contour(p.start) and contour1.point_over_contour(p.end):
+        if contour1.point_belongs(p.start) and contour1.point_belongs(p.end):
             p.plot(ax=axs[0][j], edge_style=EdgeStyle(color='g', width=4))
         else:
             p.plot(ax=axs[1][j], edge_style=EdgeStyle(color='g', width=4))

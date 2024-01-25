@@ -140,11 +140,11 @@ class Surface2D(PhysicalObject):
         :return: True if the point belongs to the surface, False otherwise.
         :rtype: bool
         """
-        if not self.outer_contour.point_belongs(point2d, include_edge_points=include_edge_points):
+        if not self.outer_contour.point_inside(point2d, include_edge_points=include_edge_points):
             return False
 
         for inner_contour in self.inner_contours:
-            if inner_contour.point_belongs(point2d, include_edge_points=False):
+            if inner_contour.point_inside(point2d, include_edge_points=False):
                 return False
         return True
 
@@ -166,7 +166,7 @@ class Surface2D(PhysicalObject):
         while True:
             inside_inner_contour = False
             for inner_contour in self.inner_contours:
-                if inner_contour.point_belongs(point_inside_outer_contour):
+                if inner_contour.point_inside(point_inside_outer_contour):
                     inside_inner_contour = True
             if not inside_inner_contour and \
                     point_inside_outer_contour is not None:
@@ -258,7 +258,7 @@ class Surface2D(PhysicalObject):
                 segments.append((point_index[point1], point_index[point2]))
             segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
             rpi = inner_polygon.barycenter()
-            if not inner_polygon.point_belongs(rpi, include_edge_points=False):
+            if not inner_polygon.point_inside(rpi, include_edge_points=False):
                 rpi = inner_polygon.random_point_inside(include_edge_points=False)
             holes.append([rpi.x, rpi.y])
 
@@ -272,7 +272,7 @@ class Surface2D(PhysicalObject):
                         point = grid_point_index.get((i, j))
                         if not point:
                             continue
-                        if inner_polygon.point_belongs(point):
+                        if inner_polygon.point_inside(point):
                             points_grid.remove(point)
                             grid_point_index.pop((i, j))
 
@@ -346,7 +346,7 @@ class Surface2D(PhysicalObject):
                 for inner_split in splitted_inner_contours:
                     inner_split.order_contour()
                     point = inner_split.random_point_inside()
-                    if outer_split.point_belongs(point):
+                    if outer_split.point_inside(point):
                         inner_contours.append(inner_split)
 
             if inner_contours:
@@ -7855,7 +7855,7 @@ class BSplineSurface3D(Surface3D):
                 xmax, ymax, zmax = patch.ctrlpts.max(axis=0)
 
                 bbox = volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
-                if bbox.point_belongs(point3d):
+                if bbox.point_inside(point3d):
                     distances = np.linalg.norm(patch.evalpts - point3d_array, axis=1)
                     index = np.argmin(distances)
                     u_start, u_stop, v_start, v_stop = patch.domain
@@ -8655,8 +8655,8 @@ class BSplineSurface3D(Surface3D):
                                        points_2d[index_points[point[3]]]]))
         k = 0
         for k, point in enumerate(finite_elements_points):
-            if (wires.Contour2D(finite_elements[k].primitives).point_belongs(point2d)
-                    or wires.Contour2D(finite_elements[k].primitives).point_over_contour(point2d)
+            if (wires.Contour2D(finite_elements[k].primitives).point_inside(point2d)
+                    or wires.Contour2D(finite_elements[k].primitives).point_belongs(point2d)
                     or ((points_2d[index_points[point[0]]][0] < point2d.x <
                          points_2d[index_points[point[1]]][0])
                         and point2d.y == points_2d[index_points[point[0]]][1])

@@ -16,31 +16,31 @@ class TestToroidalFace3D(unittest.TestCase):
     face1 = faces.ToroidalFace3D.from_surface_rectangular_cut(surface1, -0.1, 1.3, 2, 0.3)
 
     def test_from_contours3d(self):
-        surface = surfaces.ToroidalSurface3D.load_from_file(os.path.join(folder, "surface_4.json"))
-        contour = wires.Contour3D.load_from_file(os.path.join(folder, "contour_4_0.json"))
+        surface = surfaces.ToroidalSurface3D.from_json(os.path.join(folder, "surface_4.json"))
+        contour = wires.Contour3D.from_json(os.path.join(folder, "contour_4_0.json"))
         face = faces.ToroidalFace3D.from_contours3d(surface, [contour])
         self.assertAlmostEqual(face.surface2d.area(), 0.07116351378250674, 4)
 
-        surface = surfaces.ToroidalSurface3D.load_from_file(
+        surface = surfaces.ToroidalSurface3D.from_json(
             os.path.join(folder, "repair_periodicity_toroidal_surface.json"))
-        contour = wires.Contour3D.load_from_file(
+        contour = wires.Contour3D.from_json(
             os.path.join(folder, "repair_periodicity_toroidal_surface_contour.json"))
         face = faces.ToroidalFace3D.from_contours3d(surface, [contour])
         self.assertAlmostEqual(face.surface2d.area(), math.pi**2, 4)
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
-        surface = surfaces.ToroidalSurface3D.load_from_file(
+        surface = surfaces.ToroidalSurface3D.from_json(
             os.path.join(folder, "face_with_inner_contour_surface.json"))
-        contour0 = wires.Contour3D.load_from_file(os.path.join(folder, "face_with_inner_contour_contour0.json"))
-        contour1 = wires.Contour3D.load_from_file(os.path.join(folder, "face_with_inner_contour_contour1.json"))
+        contour0 = wires.Contour3D.from_json(os.path.join(folder, "face_with_inner_contour_contour0.json"))
+        contour1 = wires.Contour3D.from_json(os.path.join(folder, "face_with_inner_contour_contour1.json"))
         face = faces.ToroidalFace3D.from_contours3d(surface, [contour0, contour1])
         self.assertAlmostEqual(face.surface2d.area(), 33.03042743115413, 2)
 
-        surface = surfaces.ToroidalSurface3D.load_from_file(
+        surface = surfaces.ToroidalSurface3D.from_json(
             os.path.join(folder, "repair_inner_contour_periodicity_surface.json"))
-        contour0 = wires.Contour3D.load_from_file(
+        contour0 = wires.Contour3D.from_json(
             os.path.join(folder, "repair_inner_contour_periodicity_contour_0.json"))
-        contour1 = wires.Contour3D.load_from_file(
+        contour1 = wires.Contour3D.from_json(
             os.path.join(folder, "repair_inner_contour_periodicity_contour_1.json"))
         face = faces.ToroidalFace3D.from_contours3d(surface, [contour0, contour1])
         self.assertAlmostEqual(face.surface2d.area(), 36.56961010698211, 2)
@@ -65,20 +65,20 @@ class TestToroidalFace3D(unittest.TestCase):
             # for result, expected_result in zip(planeface_intersections, expected_results[i]):
             #     self.assertAlmostEqual(result.length(), expected_result, 5)
 
-        planeface, toroidalface = DessiaObject.load_from_file(
+        planeface, toroidalface = DessiaObject.from_json(
             os.path.join(folder, "test_planeface_toroidialface_intersections301123.json")).primitives
 
         inters = planeface.face_intersections(toroidalface)
         self.assertEqual(len(inters), 1)
         self.assertAlmostEqual(inters[0].length(), 0.08139556829160953, 5)
 
-        planeface, toroidalface = DessiaObject.load_from_file(
+        planeface, toroidalface = DessiaObject.from_json(
             os.path.join(folder, 'test_planeface3d_toroidalface3d_121223.json')).primitives
         intersections = planeface.face_intersections(toroidalface)
         self.assertEqual(len(intersections), 1)
         self.assertAlmostEqual(intersections[0].length(), 0.0033804467442557404, 5)
 
-        planeface, toroidalface = DessiaObject.load_from_file(
+        planeface, toroidalface = DessiaObject.from_json(
             os.path.join(folder, "test_planeface3d_toroidalface3d_131223.json")).primitives
 
         inters = planeface.face_intersections(toroidalface)

@@ -265,9 +265,9 @@ class TestCylindricalSurface3D(unittest.TestCase):
         self.assertAlmostEqual(contour2d.area(), 0.29361767646954695, 2)
         self.assertTrue(contour2d.is_ordered())
 
-        surface = dessia_common.core.DessiaObject.load_from_file(
+        surface = dessia_common.core.DessiaObject.from_json(
             os.path.join(folder, "cylindricalsurface_small_periodic_bsplinecurve.json"))
-        contour = dessia_common.core.DessiaObject.load_from_file(
+        contour = dessia_common.core.DessiaObject.from_json(
             os.path.join(folder, "cylindricalsurface_small_periodic_bsplinecurve_contour.json"))
         contour2d = surface.contour3d_to_2d(contour)
         self.assertAlmostEqual(contour2d.area(), 0.0, 6)

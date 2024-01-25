@@ -34,7 +34,7 @@ def octree_decomposition(bbox, faces):
     for face in faces:
         center = face.bounding_box.center
         for octant in bbox.octree():
-            if octant.point_belongs(center):
+            if octant.point_inside(center):
                 decomposition[octant].append(face)
                 break
     decomposed = {octant: faces for octant, faces in decomposition.items() if faces}
@@ -91,7 +91,7 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         Tells you if a point is on the 3D face and inside its contour.
         """
-        if not self.bounding_box.point_belongs(point3d, 1e-3):
+        if not self.bounding_box.point_inside(point3d, 1e-3):
             return False
         point2d = self.surface3d.point3d_to_2d(point3d)
         if not self.surface3d.point_belongs(point3d, tol):
@@ -529,7 +529,7 @@ class Face3D(volmdlr.core.Primitive3D):
                 segments.append((point_index[point1], point_index[point2]))
             segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
             rpi = inner_polygon.barycenter()
-            if not inner_polygon.point_belongs(rpi, include_edge_points=False):
+            if not inner_polygon.point_inside(rpi, include_edge_points=False):
                 rpi = inner_polygon.random_point_inside(include_edge_points=False)
             holes.append([rpi.x, rpi.y])
 
@@ -991,9 +991,9 @@ class Face3D(volmdlr.core.Primitive3D):
         connected_at_two_ends = []
         for cutting_contour in list_cutting_contours:
             for split_contour in list_split_inner_contours:
-                if split_contour.point_over_wire(
+                if split_contour.point_belongs(
                     cutting_contour.primitives[0].start
-                ) and split_contour.point_over_wire(cutting_contour.primitives[-1].end):
+                ) and split_contour.point_belongs(cutting_contour.primitives[-1].end):
                     connected_at_two_ends.append(split_contour)
                     break
         list_split_inner_contours = [
@@ -1014,8 +1014,8 @@ class Face3D(volmdlr.core.Primitive3D):
         while list_cutting_contours:
             for i, cutting_contour in enumerate(list_cutting_contours[:]):
                 if (
-                    self.surface2d.outer_contour.point_over_contour(cutting_contour.primitives[0].start)
-                    and self.surface2d.outer_contour.point_over_contour(cutting_contour.primitives[-1].end)
+                    self.surface2d.outer_contour.point_belongs(cutting_contour.primitives[0].start)
+                    and self.surface2d.outer_contour.point_belongs(cutting_contour.primitives[-1].end)
                 ) or cutting_contour.primitives[0].start.is_close(cutting_contour.primitives[-1].end):
                     valid_cutting_contours.append(cutting_contour)
                     list_cutting_contours.pop(i)
@@ -1041,10 +1041,10 @@ class Face3D(volmdlr.core.Primitive3D):
                     connecting_cutting_contour = new_contour.get_connected_wire(list_cutting_contours)
                     if not connecting_cutting_contour:
                         if any(
-                            self.surface2d.outer_contour.point_over_contour(point)
+                            self.surface2d.outer_contour.point_belongs(point)
                             for point in [new_contour.primitives[0].start, new_contour.primitives[-1].end]
                         ) and any(
-                            valid_contour.point_over_contour(point)
+                            valid_contour.point_belongs(point)
                             for valid_contour in valid_cutting_contours
                             for point in [new_contour.primitives[0].start, new_contour.primitives[-1].end]
                         ):
@@ -3052,7 +3052,7 @@ class SphericalFace3D(PeriodicalFaceMixin, Face3D):
         contours2d = [surface3d.contour3d_to_2d(contour) for contour in contours]
         point2d = surface3d.point3d_to_2d(point)
         for contour in contours2d:
-            if not contour.point_belongs(point2d):
+            if not contour.point_inside(point2d):
                 inner_contours.append(contour)
 
         surface2d = surfaces.Surface2D(outer_contour=surface_rectangular_cut, inner_contours=inner_contours)

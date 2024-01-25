@@ -218,7 +218,7 @@ class TestConicalSurface3D(unittest.TestCase):
                 else:
                     self.assertAlmostEqual(intersection[1], expected_result[1])
 
-        conicalsurface, plane = DessiaObject.load_from_file(
+        conicalsurface, plane = DessiaObject.from_json(
             os.path.join(folder, 'test_conicalsurface_plane_intersections081223.json')).primitives
         intersections = conicalsurface.plane_intersections(plane)
         self.assertEqual(len(intersections), 1)

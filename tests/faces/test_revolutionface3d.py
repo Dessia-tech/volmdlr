@@ -11,7 +11,7 @@ folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_revo
 class TestRevolutionFace3D(unittest.TestCase):
 
     def test_to_step(self):
-        model = VolumeModel.load_from_file(os.path.join(folder, "revolutionface_export_test.json"))
+        model = VolumeModel.from_json(os.path.join(folder, "revolutionface_export_test.json"))
         model.to_step(os.path.join(folder, "test_export.step"))
         step_import = Step.from_file(os.path.join(folder, "test_export.step"))
         model2 = step_import.to_volume_model()

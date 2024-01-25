@@ -23,7 +23,7 @@ class TestEdge(unittest.TestCase):
     def test_trim(self):
         point1 = volmdlr.Point3D(0.1744332430903422, 0.033444245563080795, 0.07798520478978595)
         point2 = volmdlr.Point3D(0.177922447446, 0.03351981629780013, 0.07827867754649165)
-        arc3d = edges.Arc3D.load_from_file("edges/arc3d_split_between_two_points.json")
+        arc3d = edges.Arc3D.from_json("edges/arc3d_split_between_two_points.json")
         new_arc3d = arc3d.trim(point1, point2)
         self.assertTrue(new_arc3d)
         self.assertTrue(new_arc3d.start.is_close(point2))
