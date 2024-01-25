@@ -4111,7 +4111,7 @@ class ConicalSurface3D(PeriodicalSurface):
     def get_circle_at_z(self, z):
         """Gets a circle in the conical surface at given z position."""
         i_frame = self.frame.translation(z * self.frame.w)
-        radius = z * math.tan(self.semi_angle)
+        radius = abs(z * math.tan(self.semi_angle))
         circle = curves.Circle3D(i_frame, radius)
         return circle
 
