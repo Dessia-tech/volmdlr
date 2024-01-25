@@ -1,7 +1,8 @@
 import math
 import unittest
 import os
-
+import numpy as np
+from dessia_common.core import DessiaObject
 import volmdlr
 import volmdlr.edges as vme
 from volmdlr import curves, surfaces, edges
@@ -16,6 +17,25 @@ folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_coni
 class TestConicalSurface3D(unittest.TestCase):
     conical_surface = conical_surfaces.conical_surface1
     conical_surface2 = conical_surfaces.conical_surface2
+
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.5 * math.pi, 0.0], [math.pi, 0.0], [1.5 * math.pi, 0.0],
+                                      [0.0, 0.5/math.tan(math.pi / 3)], [0.5 * math.pi, 0.5/math.tan(math.pi / 3)],
+                                      [math.pi, 0.5/math.tan(math.pi / 3)],
+                                      [1.5 * math.pi, 0.5/math.tan(math.pi / 3)],
+                                      [0.0, 1.0 / math.tan(math.pi / 3)], [0.5 * math.pi, 1.0 / math.tan(math.pi / 3)],
+                                      [math.pi, 1.0 / math.tan(math.pi / 3)],
+                                      [1.5 * math.pi, 1.0 / math.tan(math.pi / 3)]
+                                      ], dtype=np.float64)
+        points3d = self.conical_surface.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0],
+                                    [0.5, 0.0, 0.5/math.tan(math.pi / 3)], [0.0, 0.5, 0.5/math.tan(math.pi / 3)],
+                                    [-0.5, 0.0, 0.5/math.tan(math.pi / 3)], [0.0, -0.5, 0.5/math.tan(math.pi / 3)],
+                                    [1.0, 0.0, 1.0 / math.tan(math.pi / 3)], [0.0, 1.0, 1.0 / math.tan(math.pi / 3)],
+                                    [-1.0, 0.0, 1.0 / math.tan(math.pi / 3)], [0.0, -1.0, 1.0 / math.tan(math.pi / 3)]
+                                    ])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
 
     def test_arc3d_to_2d(self):
         arc1 = vme.Arc3D.from_3_points(volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 1 / math.sqrt(3)),
@@ -36,6 +56,18 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertTrue(test1.end.is_close(volmdlr.Point2D(1.25 * math.pi, 0.5773502691896258)))
         self.assertTrue(test2.start.is_close(volmdlr.Point2D(-0.5 * math.pi, 0.5773502691896258)))
         self.assertTrue(test2.end.is_close(volmdlr.Point2D(-2 * math.pi, 0.5773502691896258)))
+
+    def test_contour2d_to_3d(self):
+        contour2d = vmw.Contour2D([vme.LineSegment2D(volmdlr.Point2D(-math.pi, 0.0), volmdlr.Point2D(math.pi, 0.0)),
+                                   vme.LineSegment2D(volmdlr.Point2D(math.pi, 0.0), volmdlr.Point2D(math.pi, 1.0)),
+                                   vme.LineSegment2D(volmdlr.Point2D(math.pi, 1.0), volmdlr.Point2D(-math.pi, 1.0)),
+                                   vme.LineSegment2D(volmdlr.Point2D(-math.pi, 1.0), volmdlr.Point2D(-math.pi, 0.0))])
+        contour3d, primitives_mapping = self.conical_surface.contour2d_to_3d(contour2d, return_primitives_mapping=True)
+        self.assertEqual(len(contour3d.primitives), len(primitives_mapping))
+        self.assertIsNone(primitives_mapping.get(contour2d.primitives[0]))
+        self.assertEqual(contour3d.primitives[0], primitives_mapping[contour2d.primitives[1]])
+        self.assertEqual(contour3d.primitives[1], primitives_mapping[contour2d.primitives[2]])
+        self.assertEqual(contour3d.primitives[2], primitives_mapping[contour2d.primitives[3]])
 
     def test_contour3d_to_2d(self):
         center1 = O3D
@@ -75,19 +107,33 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertEqual(linesegment2d_cone.start, Point2D(-2 * math.pi, 0.1))
         self.assertEqual(linesegment2d_cone.end, Point2D(-2 * math.pi, 0.0))
 
-        surface = surfaces.ConicalSurface3D.load_from_file(os.path.join(folder, "conical_singularity_suface.json"))
-        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "conical_singularity_contour.json"))
-        contour = surface.contour3d_to_2d(contour3d)
+        surface = surfaces.ConicalSurface3D.from_json(os.path.join(folder, "conical_singularity_suface.json"))
+        contour3d = vmw.Contour3D.from_json(os.path.join(folder, "conical_singularity_contour.json"))
+        contour, primitives_mapping = surface.contour3d_to_2d(contour3d, return_primitives_mapping=True)
+      
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), 0.0025393181156878604, 6)
+        self.assertEqual(len(primitives_mapping), len(contour3d.primitives))
+        self.assertIsNone(primitives_mapping.get(contour.primitives[3]))
+        self.assertEqual(contour3d.primitives[0], primitives_mapping.get(contour.primitives[0]))
+        self.assertEqual(contour3d.primitives[1], primitives_mapping.get(contour.primitives[1]))
+        self.assertEqual(contour3d.primitives[2], primitives_mapping.get(contour.primitives[2]))
 
-        surface = surfaces.ConicalSurface3D.load_from_file(
+
+        surface = surfaces.ConicalSurface3D.from_json(
             os.path.join(folder, "conicalsurface_contour_with_singularity_2.json"))
-        contour3d = vmw.Contour3D.load_from_file(
+        contour3d = vmw.Contour3D.from_json(
             os.path.join(folder, "conicalsurface_contour_with_singularity_contour_2.json"))
         contour = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), math.pi * 0.0014073966802667698, 5)
+
+        surface = surfaces.ConicalSurface3D.from_json(
+            os.path.join(folder, "conicalsurface_linesegment3d_to_2d.json"))
+        contour3d = vmw.Contour3D.from_json(
+            os.path.join(folder, "conicalsurface_linesegment3d_to_2d_contour.json"))
+        contour = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour.is_ordered())
 
 
 
@@ -171,6 +217,144 @@ class TestConicalSurface3D(unittest.TestCase):
                     self.assertTrue(intersection[1].is_close(expected_result[1]))
                 else:
                     self.assertAlmostEqual(intersection[1], expected_result[1])
+
+        conicalsurface, plane = DessiaObject.from_json(
+            os.path.join(folder, 'test_conicalsurface_plane_intersections081223.json')).primitives
+        intersections = conicalsurface.plane_intersections(plane)
+        self.assertEqual(len(intersections), 1)
+        self.assertEqual(intersections[0].__class__.__name__, 'Hyperbola3D')
+        self.assertAlmostEqual(intersections[0][1], 0.7708351267203888)
+
+    def test_ellipse_intersections(self):
+        conical_surface = surfaces.ConicalSurface3D(
+            volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, 0.0),
+                            u=volmdlr.Vector3D(-5.551115123125783e-17, 0.0, 0.9999999999999998),
+                            v=volmdlr.Vector3D(0.0, 0.9999999999999998, 0.0),
+                            w=volmdlr.Vector3D(-0.9999999999999998, 0.0, -5.551115123125783e-17)), math.pi / 4)
+
+        frame = volmdlr.Frame3D(origin=volmdlr.Point3D(0.0, 0.0, 0.0),
+                                u=volmdlr.Vector3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+                                v=volmdlr.Vector3D(0.8164965809277258, -0.40824829046386313, -0.40824829046386313),
+                                w=volmdlr.Vector3D(0.0, 0.7071067811865476, -0.7071067811865476))
+        ellipse = curves.Ellipse3D(2, 1, frame)
+        ellipse_intersections = conical_surface.ellipse_intersections(ellipse)
+        self.assertEqual(len(ellipse_intersections), 2)
+        self.assertTrue(ellipse_intersections[0].is_close(
+            volmdlr.Point3D(-1.2979434653952304, -1.0460502895587362, -1.0460502895587362)))
+        self.assertTrue(ellipse_intersections[1].is_close(
+            volmdlr.Point3D(-5.967998071287894e-07, 0.9999997016000061, 0.9999997016000058)))
+
+    def test_arcellipse_intersections(self):
+        conical_surface = surfaces.ConicalSurface3D(
+            volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, 0.0),
+                            u=volmdlr.Vector3D(-5.551115123125783e-17, 0.0, 0.9999999999999998),
+                            v=volmdlr.Vector3D(0.0, 0.9999999999999998, 0.0),
+                            w=volmdlr.Vector3D(-0.9999999999999998, 0.0, -5.551115123125783e-17)), math.pi / 4)
+        frame = volmdlr.Frame3D(origin=volmdlr.Point3D(0.0, 0.0, 0.0),
+                                u=volmdlr.Vector3D(0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
+                                v=volmdlr.Vector3D(0.8164965809277258, -0.40824829046386313, -0.40824829046386313),
+                                w=volmdlr.Vector3D(0.0, 0.7071067811865476, -0.7071067811865476))
+        ellipse = curves.Ellipse3D(2, 1, frame)
+        arcellipse = edges.ArcEllipse3D(ellipse, ellipse.point_at_abscissa(4.5), ellipse.point_at_abscissa(8.0))
+        arcellipse_intersections = conical_surface.arcellipse_intersections(arcellipse)
+        self.assertEqual(len(arcellipse_intersections), 1)
+        self.assertTrue(arcellipse_intersections[0].is_close(
+            volmdlr.Point3D(-1.2979434653952304, -1.0460502895587362, -1.0460502895587362)))
+
+    def test_sphericalsurface_intersections(self):
+        spherical_surface = surfaces.SphericalSurface3D(volmdlr.OXYZ.translation(volmdlr.Vector3D(0.5, 0.5, 0)),
+                                                        2)
+
+        # test 1
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
+        inters = spherical_surface.surface_intersections(conical_surface)
+        self.assertEqual(len(inters), 1)
+        self.assertAlmostEqual(inters[0].length(), 6.132194414411092)
+        # test 2
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
+        conical_surface = conical_surface.translation(-volmdlr.Z3D * 2)
+        inters = spherical_surface.surface_intersections(conical_surface)
+        self.assertEqual(len(inters), 2)
+        self.assertAlmostEqual(inters[0].length(), 10.905677051611681)
+        self.assertAlmostEqual(inters[1].length(), 0.5120820085072879)
+
+    def test_conicalsurface_intersections(self):
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 3)
+        conical_surface2 = surfaces.ConicalSurface3D(volmdlr.OYZX, math.pi / 3)
+        # TEST 1
+        conical_intersections = conical_surface.surface_intersections(conical_surface2)
+        self.assertEqual(len(conical_intersections), 2)
+        self.assertTrue(conical_intersections[0].is_close(
+            curves.Line3D(volmdlr.O3D, volmdlr.Point3D(1.0000000042048776, -1.4142135593997973, 1.0))))
+        self.assertTrue(conical_intersections[1].is_close(
+            curves.Line3D(volmdlr.O3D, volmdlr.Point3D(1.0000000042048776, 1.4142135593997973, 1.0))))
+        # TEST 2
+        conical_surface2_ = conical_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 5)
+        conical_intersections = conical_surface.surface_intersections(conical_surface2_)
+        self.assertFalse(conical_intersections)
+        # TEST 3
+        conical_surface2_1 = conical_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 7)
+        conical_intersections3 = conical_surface.surface_intersections(conical_surface2_1)
+        self.assertEqual(len(conical_intersections3), 2)
+        self.assertTrue(conical_intersections3[0].is_close(
+            curves.Line3D(volmdlr.O3D, volmdlr.Point3D(1.5914908850548763, -0.6834886705624656, 1.0))))
+        self.assertTrue(conical_intersections3[1].is_close(
+            curves.Line3D(volmdlr.O3D, volmdlr.Point3D(1.5914908850548763, 0.6834886705624656, 1.0))))
+        # TEST 4
+        conical_surface2_1 = conical_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 7)
+        conical_surface2_1 = conical_surface2_1.translation(volmdlr.Z3D * .5)
+        conical_intersections4 = conical_surface.surface_intersections(conical_surface2_1)
+        self.assertEqual(len(conical_intersections4), 1)
+        self.assertTrue(isinstance(conical_intersections4[0], edges.BSplineCurve3D))
+        self.assertTrue(all(conical_surface.point_distance(p) < 1e-4 > conical_surface2_1.point_distance(p)
+                            for p in conical_intersections4[0].points))
+        # TEST 5
+        conical_surface2_1 = conical_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 5)
+        conical_surface2_1 = conical_surface2_1.translation(volmdlr.Z3D * .5)
+        conical_intersections5 = conical_surface.surface_intersections(conical_surface2_1)
+        self.assertEqual(len(conical_intersections5), 1)
+        self.assertTrue(isinstance(conical_intersections5[0], edges.BSplineCurve3D))
+        self.assertTrue(all(conical_surface.point_distance(p) < 1.5e-5 > conical_surface2_1.point_distance(p)
+                            for p in conical_intersections5[0].points))
+        # TEST 6
+        conical_surface2_1 = conical_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 4)
+        conical_surface2_1 = conical_surface2_1.translation(volmdlr.Z3D * .5)
+        conical_intersections6 = conical_surface.surface_intersections(conical_surface2_1)
+        self.assertEqual(len(conical_intersections6), 1)
+        self.assertTrue(isinstance(conical_intersections6[0], edges.BSplineCurve3D))
+        self.assertTrue(all(conical_surface.point_distance(p) < 1.7e-5 > conical_surface2_1.point_distance(p)
+                            for p in conical_intersections6[0].points))
+        # TEST 7
+        conical_surface2_1 = conical_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 3)
+        conical_surface2_1 = conical_surface2_1.translation(volmdlr.Z3D * .5)
+        conical_intersections7 = conical_surface.surface_intersections(conical_surface2_1)
+        self.assertEqual(len(conical_intersections7), 1)
+        self.assertTrue(isinstance(conical_intersections7[0], edges.BSplineCurve3D))
+        self.assertTrue(all(conical_surface.point_distance(p) < 1e-5 > conical_surface2_1.point_distance(p)
+                            for p in conical_intersections7[0].points))
+        # TEST 8
+        conical_surface2_1 = conical_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 2)
+        conical_surface2_1 = conical_surface2_1.translation(volmdlr.Z3D * .5)
+        conical_intersections8 = conical_surface.surface_intersections(conical_surface2_1)
+        self.assertEqual(len(conical_intersections8), 1)
+        self.assertTrue(conical_intersections8[0].is_close(
+            curves.Circle3D(volmdlr.OXYZ.translation(volmdlr.Z3D*0.25), 0.4330127018922192)))
+
+        # TEST 9
+        conical_surface2_1 = conical_surface2.translation(volmdlr.Z3D * .5)
+        conical_intersections9 = conical_surface.surface_intersections(conical_surface2_1)
+        self.assertEqual(len(conical_intersections9), 1)
+        self.assertTrue(isinstance(conical_intersections9[0], edges.BSplineCurve3D))
+        self.assertTrue(all(conical_surface.point_distance(p) < 1e-4 > conical_surface2_1.point_distance(p)
+                            for p in conical_intersections9[0].points))
+        # TEST 10
+        conical_surface2_1 = conical_surface.translation(volmdlr.X3D * .5)
+        conical_intersections10 = conical_surface.surface_intersections(conical_surface2_1)
+        self.assertEqual(len(conical_intersections10), 1)
+        self.assertTrue(conical_intersections10[0].is_close(curves.Hyperbola3D(
+            volmdlr.Frame3D(origin=volmdlr.Point3D(0.25, 0.0, 0.0), u=volmdlr.Vector3D(0.0, 0.0, 1.0),
+                            v=volmdlr.Vector3D(0.0, -1.0, 0.0), w=volmdlr.Vector3D(1.0, 0.0, -0.0)),
+            0.1443375672974065, 0.24999999999978403)))
 
 
 if __name__ == '__main__':

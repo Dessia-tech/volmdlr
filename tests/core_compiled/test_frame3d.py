@@ -1,5 +1,5 @@
 import unittest
-
+import math
 import volmdlr
 
 
@@ -53,18 +53,30 @@ class TestFrame3D(unittest.TestCase):
 
     def test_to_step(self):
         step_content, _ = volmdlr.OXYZ.to_step(10)
-        expected_result = "#11 = CARTESIAN_POINT('',(0.000000,0.000000,0.000000));\n" \
-                          "#12 = DIRECTION('',(0.000000,0.000000,1.000000));\n" \
-                          "#13 = DIRECTION('',(1.000000,0.000000,0.000000));\n" \
+        expected_result = "#11 = CARTESIAN_POINT('',(0.0,0.0,0.0));\n" \
+                          "#12 = DIRECTION('',(0.0,0.0,1.0));\n" \
+                          "#13 = DIRECTION('',(1.0,0.0,0.0));\n" \
                           "#14 = AXIS2_PLACEMENT_3D('',#11,#12,#13);\n"
         self.assertEqual(step_content, expected_result)
 
         step_content, _ = volmdlr.OYZX.to_step(10)
-        expected_result = "#11 = CARTESIAN_POINT('',(0.000000,0.000000,0.000000));\n" \
-                          "#12 = DIRECTION('',(1.000000,0.000000,0.000000));\n" \
-                          "#13 = DIRECTION('',(0.000000,1.000000,0.000000));\n" \
+        expected_result = "#11 = CARTESIAN_POINT('',(0.0,0.0,0.0));\n" \
+                          "#12 = DIRECTION('',(1.0,0.0,0.0));\n" \
+                          "#13 = DIRECTION('',(0.0,1.0,0.0));\n" \
                           "#14 = AXIS2_PLACEMENT_3D('',#11,#12,#13);\n"
         self.assertEqual(step_content, expected_result)
+
+    def test_rotation(self):
+        axis = volmdlr.X3D
+        rot1 = volmdlr.OXYZ.rotation(volmdlr.Point3D(0, -1, 0), axis, 0.5*math.pi)
+        self.assertTrue(rot1.origin.is_close(volmdlr.Point3D(0, -1, 1)))
+        self.assertTrue(rot1.v.is_close(volmdlr.Z3D))
+        self.assertTrue(rot1.w.is_close(-volmdlr.Y3D))
+
+        axis = volmdlr.Vector3D(1/math.sqrt(2), 0, 1/math.sqrt(2))
+        rot2 = volmdlr.OXYZ.rotation(volmdlr.Point3D(0, -1, 0), axis, 0.5*math.pi)
+        self.assertTrue(rot2.origin.is_close(volmdlr.Point3D(-1/math.sqrt(2), -1, 1/math.sqrt(2))))
+        self.assertTrue(rot2.v.is_close(volmdlr.Vector3D(-1/math.sqrt(2), 0, 1/math.sqrt(2))))
 
 
 if __name__ == "__main__":

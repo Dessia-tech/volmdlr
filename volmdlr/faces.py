@@ -8,7 +8,8 @@ import warnings
 from itertools import chain, product
 from typing import List
 import matplotlib.pyplot as plt
-import numpy as npy
+import numpy as np
+import triangle as triangle_lib
 
 from dessia_common.core import DessiaObject
 
@@ -21,7 +22,7 @@ import volmdlr.curves as volmdlr_curves
 import volmdlr.geometry
 import volmdlr.grid
 from volmdlr import surfaces
-from volmdlr.utils.parametric import array_range_search, contour2d_healing
+from volmdlr.utils.parametric import update_face_grid_points_with_inner_polygons
 import volmdlr.wires
 
 warnings.simplefilter("once")
@@ -33,7 +34,7 @@ def octree_decomposition(bbox, faces):
     for face in faces:
         center = face.bounding_box.center
         for octant in bbox.octree():
-            if octant.point_belongs(center):
+            if octant.point_inside(center):
                 decomposition[octant].append(face)
                 break
     decomposed = {octant: faces for octant, faces in decomposition.items() if faces}
@@ -61,14 +62,13 @@ class Face3D(volmdlr.core.Primitive3D):
     min_x_density = 1
     min_y_density = 1
 
-    def __init__(self, surface3d, surface2d: surfaces.Surface2D,
-                 name: str = ''):
+    def __init__(self, surface3d, surface2d: surfaces.Surface2D, name: str = ""):
         self.surface3d = surface3d
         self.surface2d = surface2d
         self._outer_contour3d = None
         self._inner_contours3d = None
         self._face_octree_decomposition = None
-        # self.bounding_box = self._bounding_box()
+        self._primitives_mapping = None
 
         volmdlr.core.Primitive3D.__init__(self, name=name)
 
@@ -84,74 +84,102 @@ class Face3D(volmdlr.core.Primitive3D):
         """Computes the equality to another face."""
         if other_.__class__.__name__ != self.__class__.__name__:
             return False
-        equal = (self.surface3d == other_.surface3d
-                 and self.surface2d == other_.surface2d)
+        equal = self.surface3d == other_.surface3d and self.surface2d == other_.surface2d
         return equal
 
     def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6):
         """
         Tells you if a point is on the 3D face and inside its contour.
         """
-        if not self.bounding_box.point_belongs(point3d):
+        if not self.bounding_box.point_inside(point3d, 1e-3):
             return False
         point2d = self.surface3d.point3d_to_2d(point3d)
-        check_point3d = self.surface3d.point2d_to_3d(point2d)
-        if check_point3d.point_distance(point3d) > tol:
+        if not self.surface3d.point_belongs(point3d, tol):
             return False
 
         return self.surface2d.point_belongs(point2d)
 
     @property
-    def outer_contour3d(self):
+    def outer_contour3d(self) -> volmdlr.wires.Contour3D:
         """
         Gives the 3d version of the outer contour of the face.
         """
         if not self._outer_contour3d:
-            self._outer_contour3d = self.surface3d.contour2d_to_3d(self.surface2d.outer_contour)
+            outer_contour3d, primitives_mapping = self.surface3d.contour2d_to_3d(self.surface2d.outer_contour,
+                                                                                 return_primitives_mapping=True)
+            self._outer_contour3d = outer_contour3d
+            if self._primitives_mapping is None:
+                self._primitives_mapping = primitives_mapping
+            else:
+                self._primitives_mapping.update(primitives_mapping)
         return self._outer_contour3d
 
     @outer_contour3d.setter
-    def outer_contour3d(self, contour3d):
-        self._outer_contour3d = contour3d
+    def outer_contour3d(self, value):
+        self._outer_contour3d = value
 
     @property
-    def inner_contours3d(self):
+    def inner_contours3d(self) -> List[volmdlr.wires.Contour3D]:
         """
         Gives the 3d version of the inner contours of the face.
         """
         if not self._inner_contours3d:
-            self._inner_contours3d = [self.surface3d.contour2d_to_3d(c) for c in
-                                      self.surface2d.inner_contours]
+            primitives_mapping = {}
+            inner_contours3d = []
+            for contour2d in self.surface2d.inner_contours:
+                inner_contour3d, contour2d_mapping = self.surface3d.contour2d_to_3d(contour2d,
+                                                                                    return_primitives_mapping=True)
+                inner_contours3d.append(inner_contour3d)
+                primitives_mapping.update(contour2d_mapping)
+            self._inner_contours3d = inner_contours3d
+            if self._primitives_mapping is None:
+                self._primitives_mapping = primitives_mapping
+            else:
+                self._primitives_mapping.update(primitives_mapping)
         return self._inner_contours3d
 
     @inner_contours3d.setter
-    def inner_contours3d(self, contours3d):
-        self._inner_contours3d = contours3d
+    def inner_contours3d(self, value):
+        self._inner_contours3d = value
+
+    @property
+    def primitives_mapping(self):
+        """
+        Gives the 3d version of the inner contours of the face.
+        """
+        if not self._primitives_mapping or not self._inner_contours3d:
+            if not self._primitives_mapping and self._outer_contour3d:
+                self._outer_contour3d = None
+            if not self._primitives_mapping and self._inner_contours3d:
+                self._inner_contours3d = None
+            _ = self.outer_contour3d
+            _ = self.inner_contours3d
+        return self._primitives_mapping
+
+    @primitives_mapping.setter
+    def primitives_mapping(self, primitives_mapping):
+        self._primitives_mapping = primitives_mapping
 
     @property
     def bounding_box(self):
         """
-        Needs to be overridden if an error is raised.
+        Returns the surface bounding box.
         """
-        raise NotImplementedError(
-            f"bounding_box method must be"
-            f"overloaded by {self.__class__.__name__}")
+        if not self._bbox:
+            self._bbox = self.get_bounding_box()
+        return self._bbox
 
     @bounding_box.setter
-    def bounding_box(self, new_bounding_box):
-        """
-        Sets the bounding box to a new value.
-        """
-        raise NotImplementedError(
-            f"bounding_box setter method must be"
-            f"overloaded by {self.__class__.__name__}")
+    def bounding_box(self, new_bouding_box):
+        """Get the bounding box of the face."""
+        self._bbox = new_bouding_box
 
     def get_bounding_box(self):
         """General method to get the bounding box of a face 3D."""
         return self.outer_contour3d.bounding_box
 
     def area(self):
-        """Computes the area of the surface2d."""
+        """Computes the area of the surface 2d."""
         return self.surface2d.area()
 
     @classmethod
@@ -172,9 +200,11 @@ class Face3D(volmdlr.core.Primitive3D):
         name = arguments[0][1:-1]
         contours = [object_dict[int(arg[1:])] for arg in arguments[1]]
         if any(contour is None for contour in contours):
-            warnings.warn(f"Could not instantiate #{step_id} = {step_name}({arguments})"
-                          f" because some of the contours are NoneType."
-                          "See Face3D.from_step method")
+            warnings.warn(
+                f"Could not instantiate #{step_id} = {step_name}({arguments})"
+                f" because some of the contours are NoneType."
+                "See Face3D.from_step method"
+            )
             return None
         surface = object_dict[int(arguments[2])]
         face = globals()[surface.face_class]
@@ -189,11 +219,10 @@ class Face3D(volmdlr.core.Primitive3D):
             point = next(contour for contour in contours if isinstance(contour, volmdlr.Point3D))
             contours = [contour for contour in contours if contour is not point]
             return face.from_contours3d_and_rectangular_cut(surface, contours, point)
-
         return face.from_contours3d(surface, contours, name)
 
     @classmethod
-    def from_contours3d(cls, surface, contours3d: List[volmdlr.wires.Contour3D], name: str = ''):
+    def from_contours3d(cls, surface, contours3d: List[volmdlr.wires.Contour3D], name: str = ""):
         """
         Returns the face generated by a list of contours. Finds out which are outer or inner contours.
 
@@ -201,29 +230,68 @@ class Face3D(volmdlr.core.Primitive3D):
         :param contours3d: List of 3D contours representing the face's BREP.
         :param name: the name to inject in the new face
         """
-        outer_contour2d = None
-        outer_contour3d, inner_contours3d = None, None
+        outer_contour3d, inner_contours3d = None, []
         if len(contours3d) == 1:
-            outer_contour2d = surface.contour3d_to_2d(contours3d[0])
+            outer_contour2d, primitives_mapping = surface.contour3d_to_2d(contours3d[0],
+                                                                          return_primitives_mapping=True)
             outer_contour3d = contours3d[0]
             inner_contours2d = []
 
         elif len(contours3d) > 1:
-            area = -1
-            inner_contours2d = []
+            outer_contour2d, inner_contours2d, outer_contour3d, \
+                inner_contours3d, primitives_mapping = cls.from_contours3d_with_inner_contours(surface, contours3d)
+        else:
+            raise ValueError('Must have at least one contour')
+        if ((not outer_contour2d) or (not all(outer_contour2d.primitives)) or
+                (not surface.brep_connectivity_check(outer_contour2d, tol=5e-5))):
+            return None
+        # if outer_contour3d and outer_contour3d.primitives and not outer_contour3d.is_ordered(1e-5):
+        #     outer_contour2d = contour2d_healing(outer_contour2d)
+        face = cls(
+            surface,
+            surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),
+            name=name,
+        )
+        # To improve performance while reading from step file
+        face.outer_contour3d = outer_contour3d
+        face.inner_contours3d = inner_contours3d
+        face.primitives_mapping = primitives_mapping
+        return face
+
+    @staticmethod
+    def from_contours3d_with_inner_contours(surface, contours3d):
+        """Helper function to class."""
+        outer_contour2d = None
+        outer_contour3d = None
+        inner_contours2d = []
+        inner_contours3d = []
+        primitives_mapping = {}
+        contours2d = []
+        for contour3d in contours3d:
+            contour2d, contour_mapping = surface.contour3d_to_2d(contour3d, return_primitives_mapping=True)
+            contours2d.append(contour2d)
+            primitives_mapping.update(contour_mapping)
+
+        check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
+        if (surface.x_periodicity or surface.y_periodicity) and sum(1 for value in check_contours if value) >= 2:
+            outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
+            outer_contour3d, primitives_mapping = surface.contour2d_to_3d(outer_contour2d,
+                                                                          return_primitives_mapping=True)
             inner_contours3d = []
-
-            contours2d = [surface.contour3d_to_2d(contour3d) for contour3d in contours3d]
-
-            check_contours = [not contour2d.is_ordered(tol=1e-2) for contour2d in contours2d]
-            if any(check_contours):
-                # Not implemented yet, but connect_contours should also return outer_contour3d and inner_contours3d
-                outer_contour2d, inner_contours2d = surface.connect_contours(contours2d[0], contours2d[1:])
-                outer_contour3d = surface.contour2d_to_3d(outer_contour2d)
+            for contour2d in inner_contours2d:
+                contour3d, contour_mapping = surface.contour2d_to_3d(contour2d, return_primitives_mapping=True)
+                inner_contours3d.append(contour3d)
+                primitives_mapping.update(contour_mapping)
+        else:
+            if contours3d[0].name == "face_outer_bound":
+                outer_contour2d, inner_contours2d = contours2d[0], contours2d[1:]
+                outer_contour3d, inner_contours3d = contours3d[0], contours3d[1:]
+                if surface.x_periodicity or surface.y_periodicity:
+                    Face3D.helper_repair_inner_contours_periodicity(surface, outer_contour2d,
+                                                                    inner_contours2d, primitives_mapping)
             else:
+                area = -1
                 for contour2d, contour3d in zip(contours2d, contours3d):
-                    # if not contour2d.is_ordered(1e-4):
-                    #     contour2d = vm_parametric.contour2d_healing(contour2d)
                     inner_contours2d.append(contour2d)
                     inner_contours3d.append(contour3d)
                     contour_area = contour2d.area()
@@ -233,36 +301,58 @@ class Face3D(volmdlr.core.Primitive3D):
                         outer_contour3d = contour3d
                 inner_contours2d.remove(outer_contour2d)
                 inner_contours3d.remove(outer_contour3d)
-        else:
-            raise ValueError('Must have at least one contour')
+                if surface.x_periodicity or surface.y_periodicity:
+                    Face3D.helper_repair_inner_contours_periodicity(surface, outer_contour2d,
+                                                                    inner_contours2d, primitives_mapping)
 
-        if outer_contour3d and outer_contour3d.primitives and not outer_contour3d.is_ordered(1e-5):
-            outer_contour2d = contour2d_healing(outer_contour2d)
-        if (not outer_contour2d) or (not outer_contour2d.primitives) or (not outer_contour2d.is_ordered(1e-2)):
-            return None
-        face = cls(surface,
-                   surface2d=surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d),
-                   name=name)
-        # To improve performance while reading from step file
-        # face.outer_contour3d = outer_contour3d
-        # face.inner_contours3d = inner_contours3d
-        return face
+        return outer_contour2d, inner_contours2d, outer_contour3d, inner_contours3d, primitives_mapping
+
+    @staticmethod
+    def helper_repair_inner_contours_periodicity(surface, outer_contour2d, inner_contours2d, primitives_mapping):
+        """Translate inner contours if it's not inside the outer contour of the face."""
+        outer_contour2d_brec = outer_contour2d.bounding_rectangle
+        umin_bound, umax_bound, vmin_bound, vmax_bound = outer_contour2d_brec.bounds()
+
+        def helper_translate_contour(inner_contour, inner_contour_brec):
+            umin, umax, vmin, vmax = inner_contour_brec.bounds()
+            delta_x = 0.0
+            delta_y = 0.0
+            if surface.x_periodicity:
+                if umin > umax_bound:
+                    delta_x = -surface.x_periodicity
+                elif umax < umin_bound:
+                    delta_x = surface.x_periodicity
+
+            if surface.y_periodicity:
+                if vmin > vmax_bound:
+                    delta_y = -surface.y_periodicity
+                elif vmax < vmin_bound:
+                    delta_y = surface.y_periodicity
+            translation_vector = volmdlr.Vector2D(delta_x, delta_y)
+            return inner_contour.translation(translation_vector)
+
+        for i, _inner_contour in enumerate(inner_contours2d):
+            if not outer_contour2d_brec.is_inside_b_rectangle(_brec := _inner_contour.bounding_rectangle):
+                inner_contours2d[i] = helper_translate_contour(_inner_contour, _brec)
+                for new_primitive, old_primitive in zip(inner_contours2d[i].primitives, _inner_contour.primitives):
+                    primitives_mapping[new_primitive] = primitives_mapping.pop(old_primitive)
 
     def to_step(self, current_id):
+        """Transforms a Face 3D into a Step object."""
         content, surface3d_ids = self.surface3d.to_step(current_id)
         current_id = max(surface3d_ids)
 
         if len(surface3d_ids) != 1:
-            raise NotImplementedError('What to do with more than 1 id ? with 0 id ?')
+            raise NotImplementedError("What to do with more than 1 id ? with 0 id ?")
         outer_contour_content, outer_contour_id = self.outer_contour3d.to_step(
-            current_id, surface_id=surface3d_ids[0], surface3d=self.surface3d)
+            current_id, surface_id=surface3d_ids[0], surface3d=self.surface3d
+        )
         content += outer_contour_content
-        content += f"#{outer_contour_id + 1} = FACE_BOUND('{self.name}',#{outer_contour_id},.T.);\n"
+        content += f"#{outer_contour_id + 1} = FACE_OUTER_BOUND('{self.name}',#{outer_contour_id},.T.);\n"
         contours_ids = [outer_contour_id + 1]
         current_id = outer_contour_id + 2
         for inner_contour3d in self.inner_contours3d:
-            inner_contour_content, inner_contour_id = inner_contour3d.to_step(
-                current_id)
+            inner_contour_content, inner_contour_id = inner_contour3d.to_step(current_id)
             # surface_id=surface3d_id)
             content += inner_contour_content
             face_bound_id = inner_contour_id + 1
@@ -270,8 +360,10 @@ class Face3D(volmdlr.core.Primitive3D):
             contours_ids.append(face_bound_id)
             current_id = face_bound_id + 1
 
-        content += f"#{current_id} = ADVANCED_FACE('{self.name}',({volmdlr.core.step_ids_to_str(contours_ids)})" \
-                   f",#{surface3d_ids[0]},.T.);\n"
+        content += (
+            f"#{current_id} = ADVANCED_FACE('{self.name}',({volmdlr.core.step_ids_to_str(contours_ids)})"
+            f",#{surface3d_ids[0]},.T.);\n"
+        )
         # TODO: create an ADVANCED_FACE for each surface3d_ids ?
         return content, [current_id]
 
@@ -281,31 +373,192 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         return [], []
 
+    @staticmethod
+    def get_edge_discretization_size(edge3d):
+        """
+        Helper function to polygonize the face boundaries.
+        """
+        angle_resolution = 10
+        if edge3d is None:
+            number_points = 2
+        elif edge3d.__class__.__name__ == "BSplineCurve3D":
+            number_points = max(15, len(edge3d.ctrlpts))
+        elif edge3d.__class__.__name__ in ("Arc3D", "FullArc3D", "ArcEllipse3D", "FullArcEllipse3D"):
+            number_points = max(2, math.ceil(round(edge3d.angle, 12) / math.radians(angle_resolution)) + 1)
+        else:
+            number_points = 2
+        return number_points
+
+    def grid_points(self, grid_size, polygon_data=None):
+        """
+        Parametric tesselation points.
+        """
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
+        else:
+            outer_polygon, inner_polygons = self.get_face_polygons()
+
+        u, v = self._get_grid_axis(outer_polygon, grid_size)
+        if not u or not v:
+            return []
+        if inner_polygons:
+            grid_points = []
+            points_indexes_map = {}
+            for j, v_j in enumerate(v):
+                for i, u_i in enumerate(u):
+                    grid_points.append((u_i, v_j))
+                    points_indexes_map[(i, j)] = len(grid_points) - 1
+            grid_points = update_face_grid_points_with_inner_polygons(inner_polygons,
+                                                                      [grid_points, u, v, points_indexes_map])
+        else:
+            grid_points = np.array([[u_i, v_j] for v_j in v for u_i in u], dtype=np.float64)
+        grid_points = self._update_grid_points_with_outer_polygon(outer_polygon, grid_points)
+
+        return grid_points
+
+    @staticmethod
+    def _get_grid_axis(outer_polygon, grid_size):
+        """Helper function to grid_points."""
+        u_min, u_max, v_min, v_max = outer_polygon.bounding_rectangle.bounds()
+        number_points_u, number_points_v = grid_size
+        u_step = (u_max - u_min) / (number_points_u - 1) if number_points_u > 1 else (u_max - u_min)
+        v_step = (v_max - v_min) / (number_points_v - 1) if number_points_v > 1 else (v_max - v_min)
+        u = [u_min + i * u_step for i in range(number_points_u)]
+        v = [v_min + i * v_step for i in range(number_points_v)]
+
+        return u, v
+
+    @staticmethod
+    def _update_grid_points_with_outer_polygon(outer_polygon, grid_points):
+        """Helper function to grid_points."""
+        # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
+        indices = np.where(outer_polygon.points_in_polygon(grid_points, include_edge_points=False) == 0)[0]
+        grid_points = np.delete(grid_points, indices, axis=0)
+        polygon_points = set(outer_polygon.points)
+        points = [volmdlr.Point2D(*point) for point in grid_points if volmdlr.Point2D(*point) not in polygon_points]
+        return points
+
+    def get_face_polygons(self):
+        """Get face polygons."""
+        primitives_mapping = self.primitives_mapping
+
+        def get_polygon_points(primitives):
+            points = []
+            for edge in primitives:
+                edge3d = primitives_mapping.get(edge)
+                number_points = self.get_edge_discretization_size(edge3d)
+                edge_points = edge.discretization_points(number_points=number_points)
+                points.extend(edge_points[:-1])
+            return points
+
+        outer_polygon = volmdlr.wires.ClosedPolygon2D(get_polygon_points(self.surface2d.outer_contour.primitives))
+        inner_polygons = [volmdlr.wires.ClosedPolygon2D(get_polygon_points(inner_contour.primitives))
+                          for inner_contour in self.surface2d.inner_contours]
+        return outer_polygon, inner_polygons
+
     def grid_size(self):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        return [0, 0]
+        return 0, 0
 
-    def triangulation(self, grid_size=None):
-        if not grid_size:
-            number_points_x, number_points_y = self.grid_size()
+    @staticmethod
+    def helper_triangulation_without_holes(vertices, segments, points_grid, tri_opt):
+        """
+        Triangulates a surface without holes.
+
+        :param vertices: vertices of the surface.
+        :param segments: segments defined as tuples of vertices.
+        :param points_grid: to do.
+        :param tri_opt: triangulation option: "p"
+        :return:
+        """
+        vertices_grid = [(p.x, p.y) for p in points_grid]
+        vertices.extend(vertices_grid)
+        tri = {'vertices': np.array(vertices).reshape((-1, 2)),
+               'segments': np.array(segments).reshape((-1, 2)),
+               }
+        triagulation = triangle_lib.triangulate(tri, tri_opt)
+        return vmd.Mesh2D(triagulation['vertices'], triangles=triagulation['triangles'])
+
+    def helper_to_mesh(self, polygon_data=None) -> volmdlr.display.Mesh2D:
+        """
+        Triangulates the Surface2D using the Triangle library.
+
+        :param polygon_data: Face's outer polygon.
+        :type polygon_data: Union[Tuple((wires.ClosedPolygon2D), List[wires.ClosedPolygon2D], None]
+        :return: The triangulated surface as a display mesh.
+        :rtype: :class:`volmdlr.display.Mesh2D`
+        """
+        area = self.surface2d.bounding_rectangle().area()
+        tri_opt = "p"
+        if math.isclose(area, 0., abs_tol=1e-8):
+            return None
+        grid_size = self.grid_size()
+        points_grid = []
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
         else:
-            number_points_x, number_points_y = grid_size
-        mesh2d = self.surface2d.triangulation(number_points_x, number_points_y)
+            outer_polygon, inner_polygons = self.get_face_polygons()
+        if any(grid_size):
+            points_grid = self.grid_points(grid_size, [outer_polygon, inner_polygons])
+        points = outer_polygon.points.copy()
+        if len(set(points)) < len(points):
+            return None
+        vertices = [(point.x, point.y) for point in points]
+        n = len(points)
+        segments = [(i, i + 1) for i in range(n - 1)]
+        segments.append((n - 1, 0))
+
+        if not inner_polygons:  # No holes
+            return self.helper_triangulation_without_holes(vertices, segments, points_grid, tri_opt)
+
+        point_index = {p: i for i, p in enumerate(points)}
+        holes = []
+        for inner_polygon in inner_polygons:
+            inner_polygon_nodes = inner_polygon.points
+            for point in inner_polygon_nodes:
+                if point not in point_index:
+                    points.append(point)
+                    vertices.append((point.x, point.y))
+                    point_index[point] = n
+                    n += 1
+
+            for point1, point2 in zip(inner_polygon_nodes[:-1],
+                                      inner_polygon_nodes[1:]):
+                segments.append((point_index[point1], point_index[point2]))
+            segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
+            rpi = inner_polygon.barycenter()
+            if not inner_polygon.point_inside(rpi, include_edge_points=False):
+                rpi = inner_polygon.random_point_inside(include_edge_points=False)
+            holes.append([rpi.x, rpi.y])
+
+        if points_grid:
+            vertices_grid = [(p.x, p.y) for p in points_grid]
+            vertices.extend(vertices_grid)
+
+        tri = {'vertices': np.array(vertices).reshape((-1, 2)),
+               'segments': np.array(segments).reshape((-1, 2)),
+               'holes': np.array(holes).reshape((-1, 2))
+               }
+        triangulation = triangle_lib.triangulate(tri, tri_opt)
+        return vmd.Mesh2D(triangulation['vertices'], triangles=triangulation['triangles'])
+
+    def triangulation(self):
+        """Triangulates the face."""
+        outer_polygon, inner_polygons = self.get_face_polygons()
+        mesh2d = self.helper_to_mesh([outer_polygon, inner_polygons])
         if mesh2d is None:
             return None
-        return vmd.DisplayMesh3D([vmd.Node3D(*self.surface3d.point2d_to_3d(point)) for point in mesh2d.points],
-                                 mesh2d.triangles)
+        return vmd.Mesh3D(self.surface3d.parametric_points_to_3d(mesh2d.vertices), mesh2d.triangles)
 
-    def plot2d(self, ax=None, color='k', alpha=1):
+    def plot2d(self, ax=None, color="k", alpha=1):
         """Plot 2D of the face using matplotlib."""
         if ax is None:
             _, ax = plt.subplots()
         self.surface2d.plot(ax=ax, color=color, alpha=alpha)
 
-    def rotation(self, center: volmdlr.Point3D,
-                 axis: volmdlr.Vector3D, angle: float):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Face3D rotation.
 
@@ -314,8 +567,7 @@ class Face3D(volmdlr.core.Primitive3D):
         :param angle: angle rotation
         :return: a new rotated Face3D
         """
-        new_surface = self.surface3d.rotation(center=center, axis=axis,
-                                              angle=angle)
+        new_surface = self.surface3d.rotation(center=center, axis=axis, angle=angle)
         return self.__class__(new_surface, self.surface2d)
 
     def translation(self, offset: volmdlr.Vector3D):
@@ -336,32 +588,34 @@ class Face3D(volmdlr.core.Primitive3D):
         side = 'old' or 'new'
         """
         new_surface3d = self.surface3d.frame_mapping(frame, side)
-        return self.__class__(new_surface3d, self.surface2d.copy(),
-                              self.name)
+        return self.__class__(new_surface3d, self.surface2d.copy(), self.name)
 
     def copy(self, deep=True, memo=None):
         """Returns a copy of the Face3D."""
-        return self.__class__(self.surface3d.copy(deep, memo), self.surface2d.copy(),
-                              self.name)
+        return self.__class__(self.surface3d.copy(deep=deep, memo=memo), self.surface2d.copy(), self.name)
 
-    def face_inside(self, face2):
+    def face_inside(self, face2, abs_tol: float = 1e-6):
         """
         Verifies if a face is inside another one.
 
         It returns True if face2 is inside or False if the opposite.
         """
-        if self.surface3d.is_coincident(face2.surface3d):
+        if self.surface3d.is_coincident(face2.surface3d, abs_tol):
             self_contour2d = self.outer_contour3d.to_2d(
-                self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
+                self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
+            )
             face2_contour2d = face2.outer_contour3d.to_2d(
-                self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
+                self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
+            )
             if self_contour2d.is_inside(face2_contour2d):
                 if self_contour2d.is_inside(face2_contour2d):
                     for inner_contour in self.inner_contours3d:
                         inner_contour2d = inner_contour.to_2d(
-                            self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
+                            self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
+                        )
                         if inner_contour2d.is_inside(face2_contour2d) or inner_contour2d.is_superposing(
-                                face2_contour2d):
+                            face2_contour2d
+                        ):
                             return False
                 return True
             if self_contour2d.is_superposing(face2_contour2d):
@@ -371,13 +625,13 @@ class Face3D(volmdlr.core.Primitive3D):
     def edge_intersections(self, edge):
         """Gets the intersections of an edge and a 3D face."""
         intersections = []
-        method_name = f'{edge.__class__.__name__.lower()[:-2]}_intersections'
+        method_name = f"{edge.__class__.__name__.lower()[:-2]}_intersections"
         if hasattr(self, method_name):
             intersections = getattr(self, method_name)(edge)
         elif hasattr(self.surface3d, method_name):
             edge_surface_intersections = getattr(self.surface3d, method_name)(edge)
             for intersection in edge_surface_intersections:
-                if self.point_belongs(intersection) and not volmdlr.core.point_in_list(intersection, intersections):
+                if self.point_belongs(intersection) and not intersection.in_list(intersections):
                     intersections.append(intersection)
         if not intersections:
             for point in [edge.start, edge.end]:
@@ -416,8 +670,6 @@ class Face3D(volmdlr.core.Primitive3D):
         linesegment_intersections = []
         if not self.bounding_box.is_intersecting(linesegment.bounding_box):
             return []
-        if not hasattr(self.surface3d, 'linesegment_intersections'):
-            return self.linesegment_intersections_approximation(linesegment)
         for intersection in self.surface3d.linesegment_intersections(linesegment):
             if self.point_belongs(intersection):
                 linesegment_intersections.append(intersection)
@@ -436,16 +688,19 @@ class Face3D(volmdlr.core.Primitive3D):
                 intersections.append(intersection)
         return intersections
 
-    def plot(self, ax=None, color='k', alpha=1, edge_details=False):
+    def plot(self, ax=None, color="k", alpha=1, edge_details=False):
         """Plots the face."""
         if not ax:
             _, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
-        self.outer_contour3d.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
-                                                              edge_ends=edge_details, edge_direction=edge_details))
+        self.outer_contour3d.plot(
+            ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha, edge_ends=edge_details, edge_direction=edge_details)
+        )
         for contour3d in self.inner_contours3d:
-            contour3d.plot(ax=ax, edge_style=EdgeStyle(color=color, alpha=alpha,
-                                                       edge_ends=edge_details, edge_direction=edge_details))
+            contour3d.plot(
+                ax=ax,
+                edge_style=EdgeStyle(color=color, alpha=alpha, edge_ends=edge_details, edge_direction=edge_details),
+            )
         return ax
 
     def random_point_inside(self):
@@ -453,7 +708,7 @@ class Face3D(volmdlr.core.Primitive3D):
         point_inside2d = self.surface2d.random_point_inside()
         return self.surface3d.point2d_to_3d(point_inside2d)
 
-    def is_adjacent(self, face2: 'Face3D'):
+    def is_adjacent(self, face2: "Face3D"):
         """
         Verifies if two faces are adjacent or not.
 
@@ -461,13 +716,11 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: True or False.
         """
         contour1 = self.outer_contour3d.to_2d(
-            self.surface3d.frame.origin,
-            self.surface3d.frame.u,
-            self.surface3d.frame.v)
+            self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
+        )
         contour2 = face2.outer_contour3d.to_2d(
-            self.surface3d.frame.origin,
-            self.surface3d.frame.u,
-            self.surface3d.frame.v)
+            self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
+        )
         if contour1.is_sharing_primitives_with(contour2):
             return True
         return False
@@ -513,27 +766,34 @@ class Face3D(volmdlr.core.Primitive3D):
                 if not isinstance(contour, volmdlr.wires.ClosedPolygon3D):
                     contour = contour.to_polygon(1)
                 for i_index, point in enumerate(contour.points):
-                    lines.append(point.get_geo_lines(tag=point_account + i_index + 1,
-                                                     point_mesh_size=None))
+                    lines.append(point.get_geo_lines(tag=point_account + i_index + 1, point_mesh_size=None))
 
                 for p_index, primitive in enumerate(contour.primitives):
                     if p_index != len(contour.primitives) - 1:
-                        lines.append(primitive.get_geo_lines(tag=line_account + p_index + 1,
-                                                             start_point_tag=point_account + p_index + 1,
-                                                             end_point_tag=point_account + p_index + 2))
+                        lines.append(
+                            primitive.get_geo_lines(
+                                tag=line_account + p_index + 1,
+                                start_point_tag=point_account + p_index + 1,
+                                end_point_tag=point_account + p_index + 2,
+                            )
+                        )
                     else:
-                        lines.append(primitive.get_geo_lines(tag=line_account + p_index + 1,
-                                                             start_point_tag=point_account + p_index + 1,
-                                                             end_point_tag=point_account + 1))
+                        lines.append(
+                            primitive.get_geo_lines(
+                                tag=line_account + p_index + 1,
+                                start_point_tag=point_account + p_index + 1,
+                                end_point_tag=point_account + 1,
+                            )
+                        )
                     lines_tags.append(line_account + p_index + 1)
 
-                lines.append('Line Loop(' + str(c_index + 1) + ') = {' + str(lines_tags)[1:-1] + '};')
+                lines.append("Line Loop(" + str(c_index + 1) + ") = {" + str(lines_tags)[1:-1] + "};")
                 line_surface.append(line_loop_account)
                 point_account = point_account + i_index + 1
                 line_account, line_loop_account = line_account + p_index + 1, line_loop_account + 1
                 lines_tags = []
 
-        lines.append('Plane Surface(' + str(1) + ') = {' + str(line_surface)[1:-1] + '};')
+        lines.append("Plane Surface(" + str(1) + ") = {" + str(line_surface)[1:-1] + "};")
 
         return lines
 
@@ -545,10 +805,10 @@ class Face3D(volmdlr.core.Primitive3D):
 
         lines = self.geo_lines()
 
-        with open(file_name + '.geo', 'w', encoding="utf-8") as file:
+        with open(file_name + ".geo", "w", encoding="utf-8") as file:
             for line in lines:
                 file.write(line)
-                file.write('\n')
+                file.write("\n")
         file.close()
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
@@ -557,13 +817,13 @@ class Face3D(volmdlr.core.Primitive3D):
 
         """
 
-        return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
+        return "Plane Surface(" + str(tag) + ") = {" + str(line_loop_tag)[1:-1] + "};"
 
     def edge3d_inside(self, edge3d, abs_tol: float = 1e-6):
         """
         Returns True if edge 3d is coplanar to the face.
         """
-        method_name = f'{edge3d.__class__.__name__.lower()[:-2]}_inside'
+        method_name = f"{edge3d.__class__.__name__.lower()[:-2]}_inside"
         if hasattr(self, method_name):
             return getattr(self, method_name)(edge3d)
         points = edge3d.discretization_points(number_points=10)
@@ -583,18 +843,19 @@ class Face3D(volmdlr.core.Primitive3D):
         """
         if list_coincident_faces is None:
             list_coincident_faces = []
-        if self.bounding_box.is_intersecting(face2.bounding_box, tol) and \
-                (self, face2) not in list_coincident_faces:
+        if self.bounding_box.is_intersecting(face2.bounding_box, tol) and (self, face2) not in list_coincident_faces:
 
             edge_intersections = []
-            for prim1 in self.outer_contour3d.primitives + [prim for inner_contour in self.inner_contours3d
-                                                            for prim in inner_contour.primitives]:
+            for prim1 in self.outer_contour3d.primitives + [
+                prim for inner_contour in self.inner_contours3d for prim in inner_contour.primitives
+            ]:
                 edge_intersections = face2.edge_intersections(prim1)
                 if edge_intersections:
                     return True
             if not edge_intersections:
-                for prim2 in face2.outer_contour3d.primitives + [prim for inner_contour in face2.inner_contours3d
-                                                                 for prim in inner_contour.primitives]:
+                for prim2 in face2.outer_contour3d.primitives + [
+                    prim for inner_contour in face2.inner_contours3d for prim in inner_contour.primitives
+                ]:
                     edge_intersections = self.edge_intersections(prim2)
                     if edge_intersections:
                         return True
@@ -610,7 +871,21 @@ class Face3D(volmdlr.core.Primitive3D):
             intersection_points = face2.edge_intersections(edge1)
             if intersection_points:
                 for point in intersection_points:
-                    if not volmdlr.core.point_in_list(point, intersections_points):
+                    if not point.in_list(intersections_points):
+                        intersections_points.append(point)
+
+        return intersections_points
+
+    def face_border_intersections(self, face2):
+        """
+        Returns the intersections of the face outer and inner contour with other given face.
+        """
+        intersections_points = []
+        for contour in [self.outer_contour3d] + self.inner_contours3d:
+            for edge1 in contour.primitives:
+                intersection_points = face2.edge_intersections(edge1)
+                for point in intersection_points:
+                    if not point.in_list(intersections_points):
                         intersections_points.append(point)
 
         return intersections_points
@@ -630,6 +905,35 @@ class Face3D(volmdlr.core.Primitive3D):
         face_intersections = self.get_face_intersections(face2)
         return face_intersections
 
+    def _generic_face_intersections(self, generic_face):
+        """
+        Calculates the intersections between two Faces 3D.
+
+        :param generic_face: the other Face 3D to verify intersections with.
+        :return: list of intersecting wires.
+        """
+        surface_intersections = self.surface3d.surface_intersections(generic_face.surface3d)
+        intersections_points = self.face_intersections_outer_contour(generic_face)
+        for point in generic_face.face_intersections_outer_contour(self):
+            if not point.in_list(intersections_points):
+                intersections_points.append(point)
+        face_intersections = []
+        for primitive in surface_intersections:
+            points_on_primitive = []
+            for point in intersections_points:
+                if primitive.point_belongs(point, 1e-4):
+                    points_on_primitive.append(point)
+            if not points_on_primitive:
+                continue
+            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
+            if primitive.periodic:
+                points_on_primitive = points_on_primitive + [points_on_primitive[0]]
+            for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                edge = primitive.trim(point1, point2)
+                if self.edge3d_inside(edge, 1e-3) and generic_face.edge3d_inside(edge, 1e-3):
+                    face_intersections.append(volmdlr.wires.Wire3D([edge]))
+        return face_intersections
+
     def get_face_intersections(self, face2):
         """
         Gets the intersections between two faces.
@@ -637,16 +941,23 @@ class Face3D(volmdlr.core.Primitive3D):
         :param face2: second face.
         :return: intersections.
         """
-        method_name = f'{face2.__class__.__name__.lower()[:-2]}_intersections'
-        intersections = getattr(self, method_name)(face2)
-        return intersections
+        method_name = f"{face2.__class__.__name__.lower()[:-2]}_intersections"
+        if hasattr(self, method_name):
+            return getattr(self, method_name)(face2)
+
+        return self._generic_face_intersections(face2)
 
     def set_operations_new_faces(self, intersecting_combinations):
-        self_copy = self.copy(deep=True)
-        list_cutting_contours = self_copy.get_face_cutting_contours(intersecting_combinations)
+        """
+        Gets boolean operations new faces after splitting.
+
+        :param intersecting_combinations: faces intersecting combinations dictionary.
+        :return: new split faces.
+        """
+        list_cutting_contours = self.get_face_cutting_contours(intersecting_combinations)
         if not list_cutting_contours:
-            return [self_copy]
-        return self_copy.divide_face(list_cutting_contours)
+            return [self]
+        return self.divide_face(list_cutting_contours)
 
     def split_inner_contour_intersecting_cutting_contours(self, list_cutting_contours):
         """
@@ -665,15 +976,92 @@ class Face3D(volmdlr.core.Primitive3D):
                     continue
                 list_intersecting_points_with_inner_contour.extend(contour_intersection_points)
             inner_contour_intersections_with_outer_contour = inner_contour.intersection_points(
-                self.surface2d.outer_contour)
+                self.surface2d.outer_contour
+            )
             if list_intersecting_points_with_inner_contour and inner_contour_intersections_with_outer_contour:
                 list_intersecting_points_with_inner_contour.extend(inner_contour_intersections_with_outer_contour)
             sorted_intersections_points_along_inner_contour = inner_contour.sort_points_along_wire(
-                list_intersecting_points_with_inner_contour)
+                list_intersecting_points_with_inner_contour
+            )
             if sorted_intersections_points_along_inner_contour:
-                list_split_inner_contours.extend(inner_contour.split_with_sorted_points(
-                    sorted_intersections_points_along_inner_contour))
+                list_split_inner_contours.extend(
+                    inner_contour.split_with_sorted_points(sorted_intersections_points_along_inner_contour)
+                )
+        # remove split_inner_contour connected to a cutting_contour at two points.
+        connected_at_two_ends = []
+        for cutting_contour in list_cutting_contours:
+            for split_contour in list_split_inner_contours:
+                if split_contour.point_belongs(
+                    cutting_contour.primitives[0].start
+                ) and split_contour.point_belongs(cutting_contour.primitives[-1].end):
+                    connected_at_two_ends.append(split_contour)
+                    break
+        list_split_inner_contours = [
+            split_contour for split_contour in list_split_inner_contours if split_contour not in connected_at_two_ends
+        ]
         return list_split_inner_contours
+
+    def _helper_validate_cutting_contours(self, list_cutting_contours, list_split_inner_contours):
+        """
+        Helper method to validate list of cutting contours.
+
+        :param list_cutting_contours: list of cutting contours.
+        :param list_split_inner_contours: list of split inner contours.
+        :return: valid list of cutting contours.
+        """
+        valid_cutting_contours = []
+
+        while list_cutting_contours:
+            for i, cutting_contour in enumerate(list_cutting_contours[:]):
+                if (
+                    self.surface2d.outer_contour.point_belongs(cutting_contour.primitives[0].start)
+                    and self.surface2d.outer_contour.point_belongs(cutting_contour.primitives[-1].end)
+                ) or cutting_contour.primitives[0].start.is_close(cutting_contour.primitives[-1].end):
+                    valid_cutting_contours.append(cutting_contour)
+                    list_cutting_contours.pop(i)
+                    break
+                list_cutting_contours.pop(i)
+                while True:
+                    connecting_split_contour = cutting_contour.get_connected_wire(list_split_inner_contours)
+                    if not connecting_split_contour:
+                        valid_cutting_contours.append(cutting_contour)
+                        break
+                    list_split_inner_contours.remove(connecting_split_contour)
+                    new_contour = volmdlr.wires.Contour2D.contours_from_edges(
+                        cutting_contour.primitives + connecting_split_contour.primitives
+                    )[0]
+
+                    if (
+                        self.surface2d.outer_contour.are_extremity_points_touching(new_contour)
+                        or new_contour.is_contour_closed()
+                    ):
+                        valid_cutting_contours.append(new_contour)
+                        break
+
+                    connecting_cutting_contour = new_contour.get_connected_wire(list_cutting_contours)
+                    if not connecting_cutting_contour:
+                        if any(
+                            self.surface2d.outer_contour.point_belongs(point)
+                            for point in [new_contour.primitives[0].start, new_contour.primitives[-1].end]
+                        ) and any(
+                            valid_contour.point_belongs(point)
+                            for valid_contour in valid_cutting_contours
+                            for point in [new_contour.primitives[0].start, new_contour.primitives[-1].end]
+                        ):
+                            valid_cutting_contours.append(new_contour)
+                        break
+                    new_contour = volmdlr.wires.Contour2D.contours_from_edges(
+                        new_contour.primitives + connecting_cutting_contour.primitives
+                    )[0]
+                    list_cutting_contours.remove(connecting_cutting_contour)
+
+                    if self.surface2d.outer_contour.are_extremity_points_touching(new_contour):
+                        valid_cutting_contours.append(new_contour)
+                        break
+
+                    cutting_contour = new_contour
+                break
+        return valid_cutting_contours
 
     def get_face_cutting_contours(self, dict_intersecting_combinations):
         """
@@ -688,62 +1076,32 @@ class Face3D(volmdlr.core.Primitive3D):
             return []
         list_cutting_contours = volmdlr.wires.Contour2D.contours_from_edges(face_intersecting_primitives2d[:])
 
-        if not self.surface2d.inner_contours:
-            return list_cutting_contours
+        cutting_contours = []
+        if len(list_cutting_contours) > 1:
+            while list_cutting_contours:
+                closed_contours = []
+                opened_contours = []
+                for contour in list_cutting_contours:
+                    if contour.is_contour_closed():
+                        closed_contours.append(contour)
+                    else:
+                        opened_contours.append(contour)
+                list_cutting_contours = closed_contours + opened_contours
+                current_cutting_contour = list_cutting_contours.pop(0)
+                connected_contour = current_cutting_contour.get_connected_wire(list_cutting_contours)
+                if connected_contour in list_cutting_contours:
+                    list_cutting_contours.remove(connected_contour)
+                if not connected_contour:
+                    cutting_contours.append(current_cutting_contour)
+                    continue
+                new_contour = current_cutting_contour.merge_not_adjacent_contour(connected_contour)
+                list_cutting_contours.append(new_contour)
+            list_cutting_contours = cutting_contours
+
         list_split_inner_contours = self.split_inner_contour_intersecting_cutting_contours(list_cutting_contours)
-
-        valid_cutting_contours = []
-
-        # remove split_inner_contour connected to a cutting_contour at two points.
-        connected_at_two_ends = []
-        for cutting_contour in list_cutting_contours:
-            for split_contour in list_split_inner_contours:
-                if split_contour.point_over_wire(cutting_contour.primitives[0].start) and \
-                        split_contour.point_over_wire(cutting_contour.primitives[-1].end):
-                    connected_at_two_ends.append(split_contour)
-                    break
-        list_split_inner_contours = [split_contour for split_contour in list_split_inner_contours
-                                     if split_contour not in connected_at_two_ends]
-        while list_cutting_contours:
-            for i, cutting_contour in enumerate(list_cutting_contours[:]):
-                if (self.surface2d.outer_contour.point_over_contour(cutting_contour.primitives[0].start) and
-                    self.surface2d.outer_contour.point_over_contour(cutting_contour.primitives[-1].end)) or \
-                        cutting_contour.primitives[0].start.is_close(cutting_contour.primitives[-1].end):
-                    valid_cutting_contours.append(cutting_contour)
-                    list_cutting_contours.pop(i)
-                    break
-                list_cutting_contours.pop(i)
-                while True:
-                    connecting_split_contour = cutting_contour.get_connected_wire(list_split_inner_contours)
-                    list_split_inner_contours.remove(connecting_split_contour)
-                    new_contour = volmdlr.wires.Contour2D.contours_from_edges(
-                        cutting_contour.primitives + connecting_split_contour.primitives)[0]
-
-                    if self.surface2d.outer_contour.are_extremity_points_touching(new_contour) or \
-                            new_contour.is_contour_closed():
-                        valid_cutting_contours.append(new_contour)
-                        break
-
-                    connecting_cutting_contour = new_contour.get_connected_wire(list_cutting_contours)
-                    if not connecting_cutting_contour:
-                        if any(self.surface2d.outer_contour.point_over_contour(point)
-                               for point in [new_contour.primitives[0].start, new_contour.primitives[-1].end]) and \
-                                any(valid_contour.point_over_contour(point) for valid_contour in
-                                    valid_cutting_contours for
-                                    point in [new_contour.primitives[0].start, new_contour.primitives[-1].end]):
-                            valid_cutting_contours.append(new_contour)
-                        break
-
-                    new_contour = volmdlr.wires.Contour2D.contours_from_edges(
-                        new_contour.primitives + connecting_cutting_contour.primitives)[0]
-                    list_cutting_contours.remove(connecting_cutting_contour)
-
-                    if self.surface2d.outer_contour.are_extremity_points_touching(new_contour):
-                        valid_cutting_contours.append(new_contour)
-                        break
-
-                    cutting_contour = new_contour
-                break
+        valid_cutting_contours = self._helper_validate_cutting_contours(
+            list_cutting_contours, list_split_inner_contours
+        )
         return valid_cutting_contours + list_split_inner_contours
 
     def divide_face(self, list_cutting_contours: List[volmdlr.wires.Contour2D]):
@@ -818,7 +1176,8 @@ class Face3D(volmdlr.core.Primitive3D):
         new_inner_contours = len(new_faces_contours) * [[]]
         if self.surface2d.inner_contours:
             new_faces_contours, new_inner_contours = self.get_open_contour_divided_faces_inner_contours(
-                new_faces_contours)
+                new_faces_contours
+            )
         if isinstance(self, Triangle3D):
             class_to_instanciate = PlaneFace3D
         else:
@@ -839,12 +1198,14 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: list divided faces
         """
         for closed_cutting_contour in list_closed_cutting_contours:
-            if closed_cutting_contour.primitives[0].start.is_close(closed_cutting_contour.primitives[-1].end):
+            if closed_cutting_contour.area() / self.surface2d.outer_contour.area() > 1e-9 and\
+                    closed_cutting_contour.primitives[0].start.is_close(closed_cutting_contour.primitives[-1].end):
                 inner_contours1 = []
                 inner_contours2 = []
                 if list_faces:
                     new_list_faces = self.get_closed_contour_divided_faces_inner_contours(
-                        list_faces, closed_cutting_contour)
+                        list_faces, closed_cutting_contour
+                    )
                     list_faces = list_faces + new_list_faces
                     continue
                 new_contour_adjacent_to_inner_contour = False
@@ -867,8 +1228,9 @@ class Face3D(volmdlr.core.Primitive3D):
                 surf2d = surfaces.Surface2D(self.surface2d.outer_contour, inner_contours1)
                 new_plane = class_to_instanciate(surf3d, surf2d)
                 list_faces.append(new_plane)
-                list_faces.append(class_to_instanciate(surf3d, surfaces.Surface2D(
-                    closed_cutting_contour, inner_contours2)))
+                list_faces.append(
+                    class_to_instanciate(surf3d, surfaces.Surface2D(closed_cutting_contour, inner_contours2))
+                )
                 continue
             surf3d = self.surface3d
             surf2d = surfaces.Surface2D(self.surface2d.outer_contour, [])
@@ -939,13 +1301,11 @@ class Face3D(volmdlr.core.Primitive3D):
                 new_contour_not_sharing_primitives = True
                 for i, inner_contour in enumerate(new_face.surface2d.inner_contours):
                     if new_contour.is_inside(inner_contour):
-                        if any(inner_contour.primitive_over_contour(prim)
-                               for prim in new_contour.primitives):
+                        if any(inner_contour.primitive_over_contour(prim) for prim in new_contour.primitives):
                             new_face.surface2d.inner_contours[i] = new_contour
                             break
                         inner_contours2.append(inner_contour)
-                    elif not any(inner_contour.primitive_over_contour(prim) for prim in
-                                 new_contour.primitives):
+                    elif not any(inner_contour.primitive_over_contour(prim) for prim in new_contour.primitives):
                         inner_contours1.append(inner_contour)
                     else:
                         new_contour_not_sharing_primitives = False
@@ -961,8 +1321,7 @@ class Face3D(volmdlr.core.Primitive3D):
                         new_plane = self.__class__(surf3d, surf2d)
                         new_list_faces.append(new_plane)
                     if inner_contours2:
-                        new_list_faces.append(
-                            self.__class__(surf3d, surfaces.Surface2D(new_contour, inner_contours2)))
+                        new_list_faces.append(self.__class__(surf3d, surfaces.Surface2D(new_contour, inner_contours2)))
         return new_list_faces
 
     def select_face_intersecting_primitives(self, dict_intersecting_combinations):
@@ -973,17 +1332,16 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: list of intersecting primitives for current face
         """
         face_intersecting_primitives2d = []
-        for intersecting_combination, intersections in dict_intersecting_combinations.items():
-            if self in intersecting_combination:
-                for intersection_wire in intersections:
-                    if len(intersection_wire.primitives) != 1:
-                        raise NotImplementedError
-                    primitive2_2d = self.surface3d.contour3d_to_2d(intersection_wire).primitives[0]
-                    if volmdlr.core.edge_in_list(primitive2_2d, face_intersecting_primitives2d) or \
-                            volmdlr.core.edge_in_list(primitive2_2d.reverse(), face_intersecting_primitives2d):
-                        continue
-                    if not self.surface2d.outer_contour.primitive_over_contour(primitive2_2d, tol=1e-7):
-                        face_intersecting_primitives2d.append(primitive2_2d)
+        intersections = dict_intersecting_combinations[self]
+        for intersection_wire in intersections:
+            wire2d = self.surface3d.contour3d_to_2d(intersection_wire)
+            for primitive2d in wire2d.primitives:
+                if volmdlr.core.edge_in_list(primitive2d, face_intersecting_primitives2d) or volmdlr.core.edge_in_list(
+                    primitive2d.reverse(), face_intersecting_primitives2d
+                ):
+                    continue
+                if not self.surface2d.outer_contour.primitive_over_contour(primitive2d, tol=1e-7):
+                    face_intersecting_primitives2d.append(primitive2d)
         return face_intersecting_primitives2d
 
     def _is_linesegment_intersection_possible(self, linesegment: vme.LineSegment3D):
@@ -998,7 +1356,7 @@ class Face3D(volmdlr.core.Primitive3D):
         if math.isclose(self.area(), 0.0, abs_tol=1e-10):
             return False
         bbox_block_faces = volmdlr.primitives3d.Block.from_bounding_box(self.bounding_box).faces
-        if not any(bbox_face.linesegment_intersections(linesegment) for bbox_face in bbox_block_faces):
+        if not any(bbox_face.line_intersections(linesegment.line) for bbox_face in bbox_block_faces):
             return False
         return True
 
@@ -1029,12 +1387,15 @@ class Face3D(volmdlr.core.Primitive3D):
         linesegment_intersections = []
         for inters in self._get_linesegment_intersections_approximation(linesegment):
             for point in inters:
-                if not volmdlr.core.point_in_list(point, linesegment_intersections):
+                if not point.in_list(linesegment_intersections):
                     linesegment_intersections.append(point)
 
         return linesegment_intersections
 
     def face_decomposition(self):
+        """
+        Decomposes the face discretization triangle faces inside eight boxes from a bounding box octree structure.
+        """
         if not self._face_octree_decomposition:
             self._face_octree_decomposition = octree_face_decomposition(self)
         return self._face_octree_decomposition
@@ -1047,45 +1408,66 @@ class Face3D(volmdlr.core.Primitive3D):
         :param return_points: return corresponding point or not.
         :return:
         """
-        method_name = f'{other_face.__class__.__name__.lower()[:-2]}_minimum_distance'
+        # Speficic case, if defined
+        method_name = f"{other_face.__class__.__name__.lower()[:-2]}_minimum_distance"
         if hasattr(self, method_name):
             return getattr(self, method_name)(other_face, return_points)
-        face_decomposition1 = self.face_decomposition()
-        face_decomposition2 = other_face.face_decomposition()
-        list_set_points1 = [{point for face in faces1 for point in face.points}
-                            for _, faces1 in face_decomposition1.items()]
-        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1])
-                            for sets_points1 in list_set_points1]
-        list_set_points2 = [{point for face in faces2 for point in face.points} for _, faces2 in
-                            face_decomposition2.items()]
-        list_set_points2 = [npy.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
-                            list_set_points2]
 
-        minimum_distance = math.inf
-        index1, index2 = None, None
-        for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
-            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
-            sets_min_dist = npy.min(distances)
-            if sets_min_dist < minimum_distance:
-                minimum_distance = sets_min_dist
-                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
-                index2 = next((i for i, x in enumerate(list_set_points2) if npy.array_equal(x, sets_points2)), -1)
-        faces1 = list(face_decomposition1.values())[index1]
-        faces2 = list(face_decomposition2.values())[index2]
+        # Generic case
+        return self.triangulation().minimum_distance(other_face.triangulation(), return_points)
+        # TODO : implement an exact method and then clean code
 
-        minimum_distance = math.inf
-        best_distance_points = None
-
-        for face1, face2 in product(faces1, faces2):
-            distance, point1, point2 = face1.planeface_minimum_distance(face2, True)
-            if distance < minimum_distance:
-                minimum_distance = distance
-                best_distance_points = [point1, point2]
-        if return_points:
-            return minimum_distance, *best_distance_points
-        return minimum_distance
+        # face_decomposition1 = self.face_decomposition()
+        # face_decomposition2 = other_face.face_decomposition()
+        # list_set_points1 = [
+        #     {point for face in faces1 for point in face.points} for _, faces1 in face_decomposition1.items()
+        # ]
+        # list_set_points1 = [
+        #     np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in list_set_points1
+        # ]
+        # list_set_points2 = [
+        #     {point for face in faces2 for point in face.points} for _, faces2 in face_decomposition2.items()
+        # ]
+        # list_set_points2 = [
+        #     np.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in list_set_points2
+        # ]
+        #
+        # minimum_distance = math.inf
+        # index1, index2 = None, None
+        # for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
+        #     print("zob")
+        #     distances = np.linalg.norm(sets_points2[:, np.newaxis] - sets_points1, axis=2)
+        #     sets_min_dist = np.min(distances)
+        #     if sets_min_dist < minimum_distance:
+        #         minimum_distance = sets_min_dist
+        #         index1 = next((i for i, x in enumerate(list_set_points1) if np.array_equal(x, sets_points1)), -1)
+        #         index2 = next((i for i, x in enumerate(list_set_points2) if np.array_equal(x, sets_points2)), -1)
+        #
+        # print(index1, index2)
+        # faces1 = list(face_decomposition1.values())[index1]
+        # faces2 = list(face_decomposition2.values())[index2]
+        #
+        # minimum_distance = math.inf
+        # best_distance_points = None
+        #
+        # for face1, face2 in product(faces1, faces2):
+        #     distance, point1, point2 = face1.planeface_minimum_distance(face2, True)
+        #     if distance < minimum_distance:
+        #         minimum_distance = distance
+        #         best_distance_points = [point1, point2]
+        # if return_points:
+        #     return minimum_distance, *best_distance_points
+        # return minimum_distance
 
     def plane_intersections(self, plane3d: surfaces.Plane3D):
+        """
+        Gets intersections with a 3D plane surface.
+
+        :param plane3d: The Plane3D instance to find intersections with.
+        :type plane3d: Plane3D
+        :return: List of Wire3D instances representing the intersections with the plane.
+        :rtype: List[wires.Wire3D]
+        """
         surfaces_intersections = self.surface3d.plane_intersections(plane3d)
         outer_contour_intersections_with_plane = plane3d.contour_intersections(self.outer_contour3d)
         plane_intersections = []
@@ -1106,8 +1488,9 @@ class Face3D(volmdlr.core.Primitive3D):
     def split_by_plane(self, plane3d: surfaces.Plane3D):
         """Split face with a plane."""
         intersections_with_plane = self.plane_intersections(plane3d)
-        intersections_with_plane2d = [self.surface3d.contour3d_to_2d(intersection_wire)
-                                      for intersection_wire in intersections_with_plane]
+        intersections_with_plane2d = [
+            self.surface3d.contour3d_to_2d(intersection_wire) for intersection_wire in intersections_with_plane
+        ]
         while True:
             for i, intersection2d in enumerate(intersections_with_plane2d):
                 if not self.surface2d.outer_contour.is_inside(intersection2d):
@@ -1130,20 +1513,22 @@ class Face3D(volmdlr.core.Primitive3D):
         :return: list of triangular faces, corresponding to area of the face closest to point.
         """
         face_decomposition1 = self.face_decomposition()
-        list_set_points1 = [{point for face in faces1 for point in face.points}
-                            for _, faces1 in face_decomposition1.items()]
-        list_set_points1 = [npy.array([(point[0], point[1], point[2]) for point in sets_points1])
-                            for sets_points1 in list_set_points1]
-        list_set_points2 = [npy.array([(point[0], point[0], point[0])])]
+        list_set_points1 = [
+            {point for face in faces1 for point in face.points} for _, faces1 in face_decomposition1.items()
+        ]
+        list_set_points1 = [
+            np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in list_set_points1
+        ]
+        list_set_points2 = [np.array([(point[0], point[0], point[0])])]
 
         minimum_distance = math.inf
         index1 = None
         for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
-            distances = npy.linalg.norm(sets_points2[:, npy.newaxis] - sets_points1, axis=2)
-            sets_min_dist = npy.min(distances)
+            distances = np.linalg.norm(sets_points2[:, np.newaxis] - sets_points1, axis=2)
+            sets_min_dist = np.min(distances)
             if sets_min_dist < minimum_distance:
                 minimum_distance = sets_min_dist
-                index1 = next((i for i, x in enumerate(list_set_points1) if npy.array_equal(x, sets_points1)), -1)
+                index1 = next((i for i, x in enumerate(list_set_points1) if np.array_equal(x, sets_points1)), -1)
         return list(face_decomposition1.values())[index1]
 
     def point_distance(self, point, return_other_point: bool = False):
@@ -1167,6 +1552,26 @@ class Face3D(volmdlr.core.Primitive3D):
             return minimum_distance, best_distance_point
         return minimum_distance
 
+    def get_coincident_face_intersections(self, face):
+        """
+        Gets intersections for two faces which have coincident faces.
+
+        :param face: other face.
+        :return: two lists of intersections. one list containing wires intersecting face1, the other those for face2.
+        """
+        points_intersections = self.outer_contour3d.wire_intersections(face.outer_contour3d)
+        if not points_intersections:
+            return [], []
+        extracted_contours = self.outer_contour3d.split_with_sorted_points(points_intersections)
+        extracted_contours2 = face.outer_contour3d.split_with_sorted_points(points_intersections)
+        contours_in_self = [
+            contour for contour in extracted_contours2 if all(self.edge3d_inside(edge) for edge in contour.primitives)
+        ]
+        contours_in_other_face = [
+            contour for contour in extracted_contours if all(face.edge3d_inside(edge) for edge in contour.primitives)
+        ]
+        return contours_in_self, contours_in_other_face
+
 
 class PlaneFace3D(Face3D):
     """
@@ -1177,39 +1582,20 @@ class PlaneFace3D(Face3D):
     :param surface2d: a 2d surface to define the plane face.
     :type surface2d: Surface2D.
     """
+
     _standalone_in_db = False
     _generic_eq = True
-    _non_serializable_attributes = ['bounding_box', 'polygon2D']
-    _non_data_eq_attributes = ['name', 'bounding_box', 'outer_contour3d',
-                               'inner_contours3d']
+    _non_serializable_attributes = ["bounding_box", "polygon2D"]
+    _non_data_eq_attributes = ["name", "bounding_box", "outer_contour3d", "inner_contours3d"]
     _non_data_hash_attributes = []
 
-    def __init__(self, surface3d: surfaces.Plane3D, surface2d: surfaces.Surface2D,
-                 name: str = ''):
+    def __init__(self, surface3d: surfaces.Plane3D, surface2d: surfaces.Surface2D, name: str = ""):
         self._bbox = None
-        Face3D.__init__(self,
-                        surface3d=surface3d,
-                        surface2d=surface2d,
-                        name=name)
+        Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
 
     def copy(self, deep=True, memo=None):
         """Returns a copy of the PlaneFace3D."""
-        return PlaneFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
-                           self.name)
-
-    @property
-    def bounding_box(self):
-        """
-        Returns the boundary box of a PlanFace3D.
-
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bounding_box):
-        self._bbox = new_bounding_box
+        return PlaneFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(), self.name)
 
     def point_distance(self, point, return_other_point=False):
         """
@@ -1228,8 +1614,7 @@ class PlaneFace3D(Face3D):
                 return projection_distance, projected_pt
             return projection_distance
 
-        point_2d = point.to_2d(self.surface3d.frame.origin, self.surface3d.frame.u,
-                               self.surface3d.frame.v)
+        point_2d = point.to_2d(self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v)
 
         polygon2d = self.surface2d.outer_contour.to_polygon(angle_resolution=10)
         border_distance, other_point = polygon2d.point_border_distance(point_2d, return_other_point=True)
@@ -1237,12 +1622,16 @@ class PlaneFace3D(Face3D):
         other_point = self.surface3d.point2d_to_3d(volmdlr.Point2D(*other_point))
 
         if return_other_point:
-            return (projection_distance ** 2 + border_distance ** 2) ** 0.5, \
-                other_point
+            return (projection_distance ** 2 + border_distance ** 2) ** 0.5, other_point
         return (projection_distance ** 2 + border_distance ** 2) ** 0.5
 
     def distance_to_point(self, point, return_other_point=False):
-        warnings.warn('distance_to_point is deprecated, please use point_distance', category=DeprecationWarning)
+        """
+        Evaluates the distance to a given point.
+
+        distance_to_point is deprecated, please use point_distance.
+        """
+        warnings.warn("distance_to_point is deprecated, please use point_distance", category=DeprecationWarning)
         return self.point_distance(point, return_other_point)
 
     def minimum_distance_points_plane(self, other_plane_face, return_points=False):
@@ -1262,12 +1651,12 @@ class PlaneFace3D(Face3D):
         min_distance = math.inf
         for edge1 in self.outer_contour3d.primitives:
             for edge2 in other_plane_face.outer_contour3d.primitives:
-                if hasattr(edge1, 'minimum_distance'):
+                if hasattr(edge1, "minimum_distance"):
                     dist = edge1.minimum_distance(edge2, return_points=return_points)
-                elif hasattr(edge2, 'minimum_distance'):
+                elif hasattr(edge2, "minimum_distance"):
                     dist = edge2.minimum_distance(edge1, return_points=return_points)
                 else:
-                    raise AttributeError(f'Neither {edge1} nor {edge2} has a minimum_distance method.')
+                    raise AttributeError(f"Neither {edge1} nor {edge2} has a minimum_distance method.")
                 if return_points:
                     if dist[0] < min_distance:
                         min_distance = dist[0]
@@ -1285,8 +1674,7 @@ class PlaneFace3D(Face3D):
         :param linesegment: the line segment to verify.
         :return: True if circle is inside False otherwise.
         """
-        direction_vector = linesegment.unit_direction_vector()
-        if not math.isclose(abs(direction_vector.dot(self.surface3d.frame.w)), 0.0, abs_tol=1e-6):
+        if not linesegment.direction_vector().is_perpendicular_to(self.surface3d.frame.w, 1e-6):
             return False
         for point in [linesegment.start, linesegment.middle_point(), linesegment.end]:
             if not self.point_belongs(point):
@@ -1315,36 +1703,38 @@ class PlaneFace3D(Face3D):
         :param planeface: the other Plane Face 3D to verify intersections with Plane Face 3D.
         :return: list of intersecting wires.
         """
-        face2_plane_interections = planeface.surface3d.plane_intersections(self.surface3d)
-        if not face2_plane_interections:
+        face2_plane_intersections = planeface.surface3d.plane_intersections(self.surface3d)
+        if not face2_plane_intersections:
             return []
-        points_intersections = []
-        for contour in [self.outer_contour3d, planeface.outer_contour3d] + self.inner_contours3d + \
-                planeface.inner_contours3d:
-            for intersection in contour.line_intersections(face2_plane_interections[0]):
-                if intersection and not volmdlr.core.point_in_list(intersection, points_intersections):
-                    points_intersections.append(intersection)
-        points_intersections = face2_plane_interections[0].sort_points_along_curve(points_intersections)
+        points_intersections = self.face_border_intersections(planeface)
+        for point in planeface.face_border_intersections(self):
+            if not point.in_list(points_intersections):
+                points_intersections.append(point)
+        points_intersections = face2_plane_intersections[0].sort_points_along_curve(points_intersections)
         planeface_intersections = []
         for point1, point2 in zip(points_intersections[:-1], points_intersections[1:]):
             linesegment3d = vme.LineSegment3D(point1, point2)
             over_self_outer_contour = self.outer_contour3d.primitive_over_contour(linesegment3d)
             over_planeface_outer_contour = planeface.outer_contour3d.primitive_over_contour(linesegment3d)
-            over_self_inner_contour = any(inner_contour.primitive_over_contour(linesegment3d)
-                                          for inner_contour in self.inner_contours3d)
-            over_planeface_inner_contour = any(inner_contour.primitive_over_contour(linesegment3d)
-                                               for inner_contour in planeface.inner_contours3d)
+            over_self_inner_contour = any(
+                inner_contour.primitive_over_contour(linesegment3d) for inner_contour in self.inner_contours3d
+            )
+            over_planeface_inner_contour = any(
+                inner_contour.primitive_over_contour(linesegment3d) for inner_contour in planeface.inner_contours3d
+            )
             if over_self_inner_contour and over_planeface_outer_contour:
                 continue
             if over_planeface_inner_contour and over_self_outer_contour:
                 continue
             if over_self_outer_contour and over_planeface_outer_contour:
                 continue
+
             if self.edge3d_inside(linesegment3d) or over_self_outer_contour:
-                if planeface.edge3d_inside(linesegment3d):
+                if planeface.edge3d_inside(linesegment3d) and not over_planeface_inner_contour:
                     planeface_intersections.append(volmdlr.wires.Wire3D([linesegment3d]))
                 elif over_planeface_outer_contour:
                     planeface_intersections.append(volmdlr.wires.Wire3D([linesegment3d]))
+
         return planeface_intersections
 
     def triangle_intersections(self, triangleface):
@@ -1356,7 +1746,7 @@ class PlaneFace3D(Face3D):
         """
         return self.planeface_intersections(triangleface)
 
-    def cylindricalface_intersections(self, cylindricalface: 'CylindricalFace3D'):
+    def cylindricalface_intersections(self, cylindricalface: "CylindricalFace3D"):
         """
         Calculates the intersections between a plane face 3D and Cylindrical Face3D.
 
@@ -1364,15 +1754,21 @@ class PlaneFace3D(Face3D):
         :return: list of intersecting wires.
         """
         cylindricalsurfaceface_intersections = cylindricalface.surface3d.plane_intersections(self.surface3d)
+        if not cylindricalsurfaceface_intersections:
+            return []
         if not isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Line3D):
-            if all(self.edge3d_inside(intersection) and cylindricalface.edge3d_inside(intersection)
-                   for intersection in cylindricalsurfaceface_intersections):
+            if all(
+                self.edge3d_inside(intersection) and cylindricalface.edge3d_inside(intersection)
+                for intersection in cylindricalsurfaceface_intersections
+            ):
                 if isinstance(cylindricalsurfaceface_intersections[0], volmdlr_curves.Circle3D):
-                    contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArc3D.from_curve(
-                        cylindricalsurfaceface_intersections[0])])
+                    contour3d = volmdlr.wires.Contour3D(
+                        [volmdlr.edges.FullArc3D.from_curve(cylindricalsurfaceface_intersections[0])]
+                    )
                 else:
-                    contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArcEllipse3D.from_curve(
-                        cylindricalsurfaceface_intersections[0])])
+                    contour3d = volmdlr.wires.Contour3D(
+                        [volmdlr.edges.FullArcEllipse3D.from_curve(cylindricalsurfaceface_intersections[0])]
+                    )
                 return [contour3d]
         intersections_points = self.face_intersections_outer_contour(cylindricalface)
         for point in cylindricalface.face_intersections_outer_contour(self):
@@ -1395,7 +1791,7 @@ class PlaneFace3D(Face3D):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
         return face_intersections
 
-    def conicalface_intersections(self, conical_face: 'ConicalFace3D'):
+    def conicalface_intersections(self, conical_face: "ConicalFace3D"):
         """
         Calculates the intersections between a plane face 3D and Conical Face3D.
 
@@ -1405,17 +1801,17 @@ class PlaneFace3D(Face3D):
         surface_intersections = self.surface3d.surface_intersections(conical_face.surface3d)
         if isinstance(surface_intersections[0], volmdlr_curves.Circle3D):
             if self.edge3d_inside(surface_intersections[0]) and conical_face.edge3d_inside(surface_intersections[0]):
-                contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArc3D.from_curve(
-                    surface_intersections[0])])
+                contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArc3D.from_curve(surface_intersections[0])])
                 return [contour3d]
         if isinstance(surface_intersections[0], volmdlr_curves.Ellipse3D):
             if self.edge3d_inside(surface_intersections[0]) and conical_face.edge3d_inside(surface_intersections[0]):
-                contour3d = volmdlr.wires.Contour3D([volmdlr.edges.FullArcEllipse3D.from_curve(
-                    surface_intersections[0])])
+                contour3d = volmdlr.wires.Contour3D(
+                    [volmdlr.edges.FullArcEllipse3D.from_curve(surface_intersections[0])]
+                )
                 return [contour3d]
         intersections_points = self.face_intersections_outer_contour(conical_face)
         for point in conical_face.face_intersections_outer_contour(self):
-            if not volmdlr.core.point_in_list(point, intersections_points):
+            if not point.in_list(intersections_points):
                 intersections_points.append(point)
         face_intersections = []
         for primitive in surface_intersections:
@@ -1427,7 +1823,7 @@ class PlaneFace3D(Face3D):
                 continue
             points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
             if isinstance(primitive, volmdlr_curves.ClosedCurve):
-            # if isinstance(primitive, volmdlr_curves.Ellipse3D) or isinstance(primitive, volmdlr_curves.Circle3D):
+                # if isinstance(primitive, volmdlr_curves.Ellipse3D) or isinstance(primitive, volmdlr_curves.Circle3D):
                 points_on_primitive = points_on_primitive + [points_on_primitive[0]]
             for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
                 edge = primitive.trim(point1, point2)
@@ -1435,21 +1831,65 @@ class PlaneFace3D(Face3D):
                     face_intersections.append(volmdlr.wires.Wire3D([edge]))
         return face_intersections
 
-    def planeface_minimum_distance(self, planeface: 'PlaneFace3D', return_points: bool = False):
+    def toroidalface_intersections(self, toroidal_face):
+        """
+        Calculates the intersections between a plane face 3D and Conical Face3D.
+
+        :param toroidal_face: the Toroidal Face 3D to verify intersections with Plane Face 3D.
+        :return: list of intersecting wires.
+        """
+        surface_intersections = self.surface3d.surface_intersections(toroidal_face.surface3d)
+        intersections_points = self.face_intersections_outer_contour(toroidal_face)
+        for point in toroidal_face.face_intersections_outer_contour(self):
+            if not point.in_list(intersections_points):
+                intersections_points.append(point)
+        face_intersections = []
+        for primitive in surface_intersections:
+            points_on_primitive = []
+            for point in intersections_points:
+                if primitive.point_belongs(point, 1e-5):
+                    points_on_primitive.append(point)
+            if not points_on_primitive:
+                continue
+            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
+            if primitive.periodic:
+                points_on_primitive = points_on_primitive + [points_on_primitive[0]]
+            for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
+                edge = primitive.trim(point1, point2)
+                if self.edge3d_inside(edge) and toroidal_face.edge3d_inside(edge, 1e-4):
+                    face_intersections.append(volmdlr.wires.Wire3D([edge]))
+        return face_intersections
+
+    def planeface_minimum_distance(self, planeface: "PlaneFace3D", return_points: bool = False):
+        """
+        Gets the minimal distance from another PlaneFace3D.
+
+        :param planeface: Another PlaneFace3D instance to calculate the minimum distance.
+        :type planeface: PlaneFace3D
+        :param return_points: If True, returns a tuple containing the two points that give the minimum distance.
+        :type return_points: bool, optional
+        :return: If return_points is False, returns the minimum distance between the two plane faces.
+                 If return_points is True, returns a tuple containing the two points that give the minimum distance.
+        :rtype: float or tuple(float, Tuple3D, Tuple3D)
+        """
         dist, point1, point2 = self.minimum_distance_points_plane(planeface, return_points=True)
         if not return_points:
             return dist
         return dist, point1, point2
 
     def is_adjacent(self, face2: Face3D):
+        """
+        Verifies if two plane faces are adjacent to eachother.
+
+        :param face2: other face.
+        :return: True if adjacent, False otherwise.
+        """
         contour1 = self.outer_contour3d.to_2d(
-            self.surface3d.frame.origin,
-            self.surface3d.frame.u,
-            self.surface3d.frame.v)
+            self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
+        )
         contour2 = face2.outer_contour3d.to_2d(
-            self.surface3d.frame.origin,
-            self.surface3d.frame.u,
-            self.surface3d.frame.v)
+            self.surface3d.frame.origin, self.surface3d.frame.u, self.surface3d.frame.v
+        )
         if contour1.is_sharing_primitives_with(contour2, False):
             return True
         return False
@@ -1465,18 +1905,20 @@ class PlaneFace3D(Face3D):
             for face in list_coincident_faces:
                 if current_face.outer_contour3d.is_sharing_primitives_with(face.outer_contour3d):
                     merged_contours = current_face.outer_contour3d.merge_with(face.outer_contour3d)
-                    merged_contours2d = [contour.to_2d(face.surface3d.frame.origin, face.surface3d.frame.u,
-                                                       face.surface3d.frame.v) for contour in merged_contours]
+                    merged_contours2d = [
+                        contour.to_2d(face.surface3d.frame.origin, face.surface3d.frame.u, face.surface3d.frame.v)
+                        for contour in merged_contours
+                    ]
                     merged_contours2d = sorted(merged_contours2d, key=lambda contour: contour.area(), reverse=True)
                     if not merged_contours2d and current_face.outer_contour3d.is_superposing(face.outer_contour3d):
                         merged_contours2d = [current_face.surface2d.outer_contour]
                     new_outer_contour = merged_contours2d[0]
-                    inner_contours = [contour.to_2d(face.surface3d.frame.origin, face.surface3d.frame.u,
-                                                    face.surface3d.frame.v)
-                                      for contour in current_face.inner_contours3d]
+                    inner_contours = [
+                        contour.to_2d(face.surface3d.frame.origin, face.surface3d.frame.u, face.surface3d.frame.v)
+                        for contour in current_face.inner_contours3d
+                    ]
                     inner_contours += merged_contours2d[1:] + face.surface2d.inner_contours
-                    new_face = PlaneFace3D(face.surface3d, surfaces.Surface2D(
-                        new_outer_contour, inner_contours))
+                    new_face = PlaneFace3D(face.surface3d, surfaces.Surface2D(new_outer_contour, inner_contours))
                     current_face = new_face
                     list_coincident_faces.remove(face)
                     break
@@ -1494,12 +1936,15 @@ class PlaneFace3D(Face3D):
                         inner_contour_merged = True
                 if inner_contour_merged:
                     list_coincident_faces.remove(face)
-                    inner_contours2d = [inner_contour.to_2d(face.surface3d.frame.origin,
-                                                            face.surface3d.frame.u,
-                                                            face.surface3d.frame.v) for inner_contour in
-                                        new_inner_contours]
-                    current_face = PlaneFace3D(face.surface3d, surfaces.Surface2D(
-                        face.surface2d.outer_contour, inner_contours2d))
+                    inner_contours2d = [
+                        inner_contour.to_2d(
+                            face.surface3d.frame.origin, face.surface3d.frame.u, face.surface3d.frame.v
+                        )
+                        for inner_contour in new_inner_contours
+                    ]
+                    current_face = PlaneFace3D(
+                        face.surface3d, surfaces.Surface2D(face.surface2d.outer_contour, inner_contours2d)
+                    )
                     break
             else:
                 list_merged_faces.append(current_face)
@@ -1520,7 +1965,7 @@ class PlaneFace3D(Face3D):
         """
 
         if not self.surface3d.is_coincident(face.surface3d):
-            raise ValueError('The faces are not coincident')
+            raise ValueError("The faces are not coincident")
 
         if self.face_inside(face):
             return self.divide_face([face.surface2d.outer_contour])
@@ -1528,13 +1973,11 @@ class PlaneFace3D(Face3D):
         outer_contour_1 = self.surface2d.outer_contour
         outer_contour_2 = self.surface3d.contour3d_to_2d(face.outer_contour3d)
 
-        if (face.face_inside(self)
-                and not outer_contour_1.intersection_points(outer_contour_2)):
+        if face.face_inside(self) and not outer_contour_1.intersection_points(outer_contour_2):
             return self.divide_face(face.surface2d.inner_contours)
 
         inner_contours = self.surface2d.inner_contours
-        inner_contours.extend([self.surface3d.contour3d_to_2d(
-            contour) for contour in face.inner_contours3d])
+        inner_contours.extend([self.surface3d.contour3d_to_2d(contour) for contour in face.inner_contours3d])
 
         contours = outer_contour_1.cut_by_wire(outer_contour_2)
 
@@ -1549,6 +1992,10 @@ class PlaneFace3D(Face3D):
         return [self.__class__(self.surface3d, surface2d) for surface2d in list_surfaces]
 
     def check_inner_contours(self, face):
+        """
+        Checks face inner contours.
+
+        """
         c_inners_1 = self.surface2d.inner_contours
         c_inners_2 = [self.surface3d.contour3d_to_2d(inner) for inner in face.inner_contours3d]
         inside = set()
@@ -1562,18 +2009,27 @@ class PlaneFace3D(Face3D):
 
     @staticmethod
     def update_faces_with_divided_faces(divided_faces, face2_2, used, list_faces):
-        for d_face in divided_faces:
+        """
+        Update divided faces from project_faces.
 
+        """
+        for d_face in divided_faces:
             if d_face.outer_contour3d.is_superposing(face2_2.outer_contour3d):
                 if face2_2.surface2d.inner_contours:
                     divided_faces_d_face = []
                     for inner in face2_2.surface2d.inner_contours:
 
-                        if True in [(((abs(inner_d.area() - inner.area()) < 1e-6)
-                                      and inner.center_of_mass().is_close(inner_d.center_of_mass()))
-                                     or inner_d.is_inside(inner))
-                                    for inner_d in d_face.surface2d.inner_contours]:
-                            divided_faces_d_face = ['', d_face]
+                        if True in [
+                            (
+                                (
+                                    (abs(inner_d.area() - inner.area()) < 1e-6)
+                                    and inner.center_of_mass().is_close(inner_d.center_of_mass())
+                                )
+                                or inner_d.is_inside(inner)
+                            )
+                            for inner_d in d_face.surface2d.inner_contours
+                        ]:
+                            divided_faces_d_face = ["", d_face]
                             continue
 
                         divided_faces_d_face = d_face.divide_face([inner])
@@ -1605,33 +2061,33 @@ class PlaneFace3D(Face3D):
         used_faces, list_faces = {}, []
 
         for face2 in faces:
-            contour1 = self.surface2d.outer_contour
-            contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)
+            if self.surface3d.is_coincident(face2.surface3d):
+                contour1 = self.surface2d.outer_contour
+                contour2 = self.surface3d.contour3d_to_2d(face2.outer_contour3d)
 
-            inside = self.check_inner_contours(face2)
-            if (self.surface3d.is_coincident(face2.surface3d)
-                    and (contour1.is_overlapping(contour2)
-                         or (contour1.is_inside(contour2) or True in inside))):
+                inside = self.check_inner_contours(face2)
+                if contour1.is_overlapping(contour2) or (contour1.is_inside(contour2) or True in inside):
 
-                if self in used_faces:
-                    faces_1, face2_2 = used_faces[self][:], face2
-                else:
-                    faces_1, face2_2 = [self], face2
+                    if self in used_faces:
+                        faces_1, face2_2 = used_faces[self][:], face2
+                    else:
+                        faces_1, face2_2 = [self], face2
 
-                used = []
-                for face1_1 in faces_1:
-                    plane3d = face1_1.surface3d
-                    s2d = surfaces.Surface2D(outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
-                                             inner_contours=[
-                                                 plane3d.contour3d_to_2d(contour) for contour in
-                                                 face2_2.inner_contours3d])
-                    face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
+                    used = []
+                    for face1_1 in faces_1:
+                        plane3d = face1_1.surface3d
+                        s2d = surfaces.Surface2D(
+                            outer_contour=plane3d.contour3d_to_2d(face2_2.outer_contour3d),
+                            inner_contours=[plane3d.contour3d_to_2d(contour) for contour in face2_2.inner_contours3d],
+                        )
+                        face2_2 = PlaneFace3D(surface3d=plane3d, surface2d=s2d)
 
-                    divided_faces = face1_1.cut_by_coincident_face(face2_2)
+                        divided_faces = face1_1.cut_by_coincident_face(face2_2)
 
-                    used, list_faces = self.update_faces_with_divided_faces(
-                        divided_faces, face2_2, used, list_faces)
-                used_faces[self] = used
+                        used, list_faces = self.update_faces_with_divided_faces(
+                            divided_faces, face2_2, used, list_faces
+                        )
+                    used_faces[self] = used
 
         try:
             if isinstance(used_faces[self], list):
@@ -1648,11 +2104,10 @@ class PlaneFace3D(Face3D):
         Gets the lines that define a PlaneFace3D in a .geo file.
         """
 
-        return 'Plane Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
+        return "Plane Surface(" + str(tag) + ") = {" + str(line_loop_tag)[1:-1] + "};"
 
     @classmethod
-    def from_surface_rectangular_cut(cls, plane3d, x1: float, x2: float,
-                                     y1: float, y2: float, name: str = ''):
+    def from_surface_rectangular_cut(cls, plane3d, x1: float, x2: float, y1: float, y2: float, name: str = ""):
         """
         Cut a rectangular piece of the Plane3D object and return a PlaneFace3D object.
 
@@ -1666,6 +2121,42 @@ class PlaneFace3D(Face3D):
         return cls(plane3d, surface, name)
 
 
+class PeriodicalFaceMixin:
+    """
+    Abstract class for mutualizing methods for faces constructed on periodic surfaces.
+    """
+
+    def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6) -> bool:
+        """
+        Checks if a 3D point lies on the face.
+
+        :param point3d: The 3D point to be checked.
+        :type point3d: volmdlr.Point3D
+
+        :param tol: Tolerance for the check.
+        :type tol: float, optional
+
+        :return: True if the point is on the ConicalFace3D, False otherwise.
+        :rtype: bool
+        """
+        if not self.surface3d.point_belongs(point3d, tol):
+            return False
+        point2d = self.surface3d.point3d_to_2d(point3d)
+        u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
+        if self.surface3d.x_periodicity:
+            if point2d.x < u_min - tol:
+                point2d.x += self.surface3d.x_periodicity
+            elif point2d.x > u_max + tol:
+                point2d.x -= self.surface3d.x_periodicity
+        if self.surface3d.y_periodicity:
+            if point2d.y < v_min - tol:
+                point2d.y += self.surface3d.y_periodicity
+            elif point2d.y > v_max + tol:
+                point2d.y -= self.surface3d.y_periodicity
+
+        return self.surface2d.point_belongs(point2d)
+
+
 class Triangle3D(PlaneFace3D):
     """
     Defines a Triangle3D class.
@@ -1677,10 +2168,18 @@ class Triangle3D(PlaneFace3D):
     :param point3: The third point.
     :type point3: volmdlr.Point3D.
     """
+
     _standalone_in_db = False
 
-    def __init__(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D,
-                 point3: volmdlr.Point3D, alpha=1, color=None, name: str = ''):
+    def __init__(
+        self,
+        point1: volmdlr.Point3D,
+        point2: volmdlr.Point3D,
+        point3: volmdlr.Point3D,
+        alpha=1,
+        color=None,
+        name: str = "",
+    ):
         self.point1 = point1
         self.point2 = point2
         self.point3 = point3
@@ -1714,33 +2213,20 @@ class Triangle3D(PlaneFace3D):
             return False
         return True
 
-    @property
-    def bounding_box(self):
-        """
-        Returns the surface bounding box.
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
-
     def get_bounding_box(self):
         """General method to get the bounding box."""
-        return volmdlr.core.BoundingBox.from_points([self.point1,
-                                                     self.point2,
-                                                     self.point3])
+        return volmdlr.core.BoundingBox.from_points([self.point1, self.point2, self.point3])
 
     @property
     def surface3d(self):
+        """Gets the plane on which the triangle is contained."""
         if self._surface3d is None:
             self._surface3d = surfaces.Plane3D.from_3_points(self.point1, self.point2, self.point3)
         return self._surface3d
 
     @surface3d.setter
     def surface3d(self, new_surface3d):
+        """Sets the plane on which the triangle is contained."""
         self._surface3d = new_surface3d
 
     @property
@@ -1748,11 +2234,14 @@ class Triangle3D(PlaneFace3D):
         """Boundary representation of the face."""
         if self._surface2d is None:
             plane3d = self.surface3d
-            contour3d = volmdlr.wires.Contour3D([vme.LineSegment3D(self.point1, self.point2),
-                                                 vme.LineSegment3D(self.point2, self.point3),
-                                                 vme.LineSegment3D(self.point3, self.point1)])
-            contour2d = contour3d.to_2d(plane3d.frame.origin,
-                                        plane3d.frame.u, plane3d.frame.v)
+            contour3d = volmdlr.wires.Contour3D(
+                [
+                    vme.LineSegment3D(self.point1, self.point2),
+                    vme.LineSegment3D(self.point2, self.point3),
+                    vme.LineSegment3D(self.point3, self.point1),
+                ]
+            )
+            contour2d = contour3d.to_2d(plane3d.frame.origin, plane3d.frame.u, plane3d.frame.v)
 
             self._surface2d = surfaces.Surface2D(outer_contour=contour2d, inner_contours=[])
 
@@ -1760,6 +2249,7 @@ class Triangle3D(PlaneFace3D):
 
     @surface2d.setter
     def surface2d(self, new_surface2d):
+        """Sets the boundary representation of the face."""
         self._surface2d = new_surface2d
 
     def to_dict(self, *args, **kwargs):
@@ -1767,20 +2257,36 @@ class Triangle3D(PlaneFace3D):
         Creates a Dictionary with the object's instance attributes.
 
         """
-        dict_ = {'object_class': 'volmdlr.faces.Triangle3D',
-                 'point1': self.point1.to_dict(),
-                 'point2': self.point2.to_dict(),
-                 'point3': self.point3.to_dict()}
+        dict_ = {
+            "object_class": "volmdlr.faces.Triangle3D",
+            "point1": self.point1.to_dict(),
+            "point2": self.point2.to_dict(),
+            "point3": self.point3.to_dict(),
+        }
         if self.name:
-            dict_['name'] = self.name
+            dict_["name"] = self.name
         return dict_
 
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
-        point1 = volmdlr.Point3D.dict_to_object(dict_['point1'])
-        point2 = volmdlr.Point3D.dict_to_object(dict_['point2'])
-        point3 = volmdlr.Point3D.dict_to_object(dict_['point3'])
-        return cls(point1, point2, point3, dict_.get('name', ""))
+        """
+        Create a Triangle3D object from a dictionary representation.
+
+        This class method takes a dictionary containing the necessary data for
+        creating a Triangle3D object and returns an instance of the Triangle3D class.
+        It expects the dictionary to have the following keys:
+
+        :param cls: The Triangle3D class itself (automatically passed).
+        :param dict_: A dictionary containing the required data for object creation.
+        :param args: Additional positional arguments (if any).
+        :param kwargs: Additional keyword arguments (if any).
+
+        :return: Triangle3D: An instance of the Triangle3D class created from the provided dictionary.
+        """
+        point1 = volmdlr.Point3D.dict_to_object(dict_["point1"])
+        point2 = volmdlr.Point3D.dict_to_object(dict_["point2"])
+        point3 = volmdlr.Point3D.dict_to_object(dict_["point3"])
+        return cls(point1, point2, point3, dict_.get("name", ""))
 
     def area(self) -> float:
         """
@@ -1818,6 +2324,7 @@ class Triangle3D(PlaneFace3D):
         """
         Changes frame_mapping and return a new Triangle3D.
 
+        :param frame: frame used.
         :param side: 'old' or 'new'.
         """
         np1 = self.point1.frame_mapping(frame, side)
@@ -1827,15 +2334,11 @@ class Triangle3D(PlaneFace3D):
 
     def copy(self, deep=True, memo=None):
         """Returns a copy of the Triangle3D."""
-        return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(),
-                          self.name)
+        return Triangle3D(self.point1.copy(), self.point2.copy(), self.point3.copy(), self.name)
 
     def triangulation(self):
         """Computes the triangulation of the Triangle3D, basically returns itself."""
-        return vmd.DisplayMesh3D([vmd.Node3D.from_point(self.point1),
-                                  vmd.Node3D.from_point(self.point2),
-                                  vmd.Node3D.from_point(self.point3)],
-                                 [(0, 1, 2)])
+        return vmd.Mesh3D(np.array([self.point1, self.point2, self.point3]), np.array([[0, 1, 2]], dtype=np.int8))
 
     def translation(self, offset: volmdlr.Vector3D):
         """
@@ -1848,12 +2351,10 @@ class Triangle3D(PlaneFace3D):
         new_point2 = self.point2.translation(offset)
         new_point3 = self.point3.translation(offset)
 
-        new_triangle = Triangle3D(new_point1, new_point2, new_point3,
-                                  self.alpha, self.color, self.name)
+        new_triangle = Triangle3D(new_point1, new_point2, new_point3, self.alpha, self.color, self.name)
         return new_triangle
 
-    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D,
-                 angle: float):
+    def rotation(self, center: volmdlr.Point3D, axis: volmdlr.Vector3D, angle: float):
         """
         Triangle3D rotation.
 
@@ -1865,52 +2366,53 @@ class Triangle3D(PlaneFace3D):
         new_point1 = self.point1.rotation(center, axis, angle)
         new_point2 = self.point2.rotation(center, axis, angle)
         new_point3 = self.point3.rotation(center, axis, angle)
-        new_triangle = Triangle3D(new_point1, new_point2, new_point3,
-                                  self.alpha, self.color, self.name)
+        new_triangle = Triangle3D(new_point1, new_point2, new_point3, self.alpha, self.color, self.name)
         return new_triangle
 
     @staticmethod
     def get_subdescription_points(new_points, resolution, max_length):
         """Gets sub-description points."""
-        vector = new_points[0] - new_points[1]
-        vector = vector.unit_vector()
-        points_0_1 = []
+        vector = (new_points[0] - new_points[1]).unit_vector()
+        points_01 = [new_points[1]]
+        points_01 += [
+            new_points[1] + vector * min(k * resolution, max_length)
+            for k in range(1, int(max_length / resolution) + 2)
+        ]
 
-        for k in range(int(max_length / resolution) + 2):
-            if k == 0:
-                points_0_1.append(new_points[1])
-            points_0_1.append(new_points[1] + vector * min(k * resolution, max_length))
-
-        vector, length_2_1 = new_points[2] - new_points[1], new_points[2].point_distance(new_points[1])
-        vector = vector.unit_vector()
+        vector, length_2_1 = (new_points[2] - new_points[1]).unit_vector(), new_points[2].point_distance(new_points[1])
         points_in = []
 
-        for p0_1 in points_0_1:
-            point_on_2_1 = new_points[1] + vector * min(points_0_1[0].point_distance(p0_1) * length_2_1 / max_length,
-                                                        length_2_1)
+        for p0_1 in points_01:
+            point_on_2_1 = new_points[1] + vector * min(
+                points_01[0].point_distance(p0_1) * length_2_1 / max_length, length_2_1
+            )
 
             length_2_0 = point_on_2_1.point_distance(p0_1)
             nb_int = int(length_2_0 / resolution) + 2
             if nb_int == 2:
                 points_in.append(point_on_2_1)
             else:
-                vector_2_0 = point_on_2_1 - p0_1
-                vector_2_0 = vector_2_0.unit_vector()
+                vector_2_0 = (point_on_2_1 - p0_1).unit_vector()
                 step_in = length_2_0 / (nb_int - 1)
-                for i in range(nb_int):
-                    if min(i * step_in, length_2_0) != 0:
-                        points_in.append(p0_1 + vector_2_0 * min(i * step_in, length_2_0))
-
-        return npy.unique(points_0_1 + points_in).tolist()
+                points_in += [
+                    p0_1 + vector_2_0 * min(i * step_in, length_2_0)
+                    for i in range(nb_int)
+                    if min(i * step_in, length_2_0) != 0
+                ]
+        points = points_01 + points_in
+        unique_points = list(set(points))
+        return unique_points
 
     def subdescription(self, resolution=0.01):
         """
         Returns a list of Point3D with resolution as max between Point3D.
         """
 
-        lengths = [self.points[0].point_distance(self.points[1]),
-                   self.points[1].point_distance(self.points[2]),
-                   self.points[2].point_distance(self.points[0])]
+        lengths = [
+            self.points[0].point_distance(self.points[1]),
+            self.points[1].point_distance(self.points[2]),
+            self.points[2].point_distance(self.points[0]),
+        ]
         max_length = max(lengths)
 
         if max_length <= resolution:
@@ -1931,16 +2433,22 @@ class Triangle3D(PlaneFace3D):
         while True:
             triangles = []
             for subtri in sub_triangles:
-                lengths = [subtri[0].point_distance(subtri[1]),
-                           subtri[1].point_distance(subtri[2]),
-                           subtri[2].point_distance(subtri[0])]
+                lengths = [
+                    subtri[0].point_distance(subtri[1]),
+                    subtri[1].point_distance(subtri[2]),
+                    subtri[2].point_distance(subtri[0]),
+                ]
                 max_length = max(lengths)
 
                 if max_length > resolution:
                     pos_length_max = lengths.index(max_length)
                     pt_mid = (subtri[-3 + pos_length_max] + subtri[-3 + pos_length_max + 1]) / 2
-                    triangles.extend([[subtri[-3 + pos_length_max], pt_mid, subtri[-3 + pos_length_max + 2]],
-                                      [subtri[-3 + pos_length_max + 1], pt_mid, subtri[-3 + pos_length_max + 2]]])
+                    triangles.extend(
+                        [
+                            [subtri[-3 + pos_length_max], pt_mid, subtri[-3 + pos_length_max + 2]],
+                            [subtri[-3 + pos_length_max + 1], pt_mid, subtri[-3 + pos_length_max + 2]],
+                        ]
+                    )
 
                 else:
                     triangles.append(subtri)
@@ -1953,6 +2461,10 @@ class Triangle3D(PlaneFace3D):
         return [Triangle3D(subtri[0], subtri[1], subtri[2]) for subtri in sub_triangles]
 
     def middle(self):
+        """
+        Gets the middle point of the face: center of gravity.
+
+        """
         return (self.point1 + self.point2 + self.point3) / 3
 
     def normal(self):
@@ -1975,7 +2487,7 @@ class Triangle3D(PlaneFace3D):
         return self.planeface_minimum_distance(triangle_face, return_points)
 
 
-class CylindricalFace3D(Face3D):
+class CylindricalFace3D(PeriodicalFaceMixin, Face3D):
     """
     Defines a CylindricalFace3D class.
 
@@ -1988,39 +2500,21 @@ class CylindricalFace3D(Face3D):
 
         contours 2d is rectangular and will create a classic cylinder with x= 2*pi*radius, y=h
     """
+
     min_x_density = 5
     min_y_density = 1
 
-    def __init__(self,
-                 surface3d: surfaces.CylindricalSurface3D,
-                 surface2d: surfaces.Surface2D,
-                 name: str = ''):
+    def __init__(self, surface3d: surfaces.CylindricalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
 
         self.radius = surface3d.radius
         self.center = surface3d.frame.origin
         self.normal = surface3d.frame.w
-        Face3D.__init__(self, surface3d=surface3d,
-                        surface2d=surface2d,
-                        name=name)
+        Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
 
     def copy(self, deep=True, memo=None):
         """Returns a copy of the CylindricalFace3D."""
-        return CylindricalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
-                                 self.name)
-
-    @property
-    def bounding_box(self):
-        """
-        Returns the surface bounding box.
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
+        return CylindricalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(), self.name)
 
     def triangulation_lines(self, angle_resolution=5):
         """
@@ -2032,26 +2526,17 @@ class CylindricalFace3D(Face3D):
         lines = []
         for i in range(nlines):
             theta = theta_min + (i + 1) / (nlines + 1) * delta_theta
-            lines.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, zmin),
-                                               volmdlr.Point2D(theta, zmax)))
+            lines.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, zmin), volmdlr.Point2D(theta, zmax)))
         return lines, []
 
-    def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6):
-        """
-        Tells you if a point is on the 3D Cylindrical face and inside its contour.
-        """
-        point2d = self.surface3d.point3d_to_2d(point3d)
-        point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
-        point2d_minus_2pi = point2d.translation(volmdlr.Point2D(-volmdlr.TWO_PI, 0))
-        # check_point3d = self.surface3d.point2d_to_3d(point2d)
-        # if check_point3d.point_distance(point3d) > tol:
-        if not self.surface3d.point_on_surface(point3d, tol):
-            return False
-        return any(self.surface2d.point_belongs(pt2d) for pt2d in [point2d, point2d_plus_2pi, point2d_minus_2pi])
-
     def parametrized_grid_size(self, angle_resolution, z_resolution):
-        # angle_resolution = 5
-        # z_resolution = 0
+        """
+        Gets size for parametrized grid.
+
+        :param angle_resolution: angle resolution.
+        :param z_resolution: z resolution.
+        :return: number of points in x and y.
+        """
         theta_min, theta_max, zmin, zmax = self.surface2d.bounding_rectangle().bounds()
         delta_theta = theta_max - theta_min
         number_points_x = max(angle_resolution, int(delta_theta * angle_resolution))
@@ -2059,14 +2544,6 @@ class CylindricalFace3D(Face3D):
         delta_z = zmax - zmin
         number_points_y = min(int(delta_z * z_resolution), 20)
         return number_points_x, number_points_y
-
-    def grid_size(self):
-        """
-        Specifies an adapted size of the discretization grid used in face triangulation.
-        """
-        angle_resolution = 5
-        z_resolution = 2
-        return self.parametrized_grid_size(angle_resolution, z_resolution)
 
     def adjacent_direction(self, other_face3d):
         """
@@ -2084,8 +2561,8 @@ class CylindricalFace3D(Face3D):
         coord = [abs(coord.x), abs(coord.y)]
 
         if coord.index(max(coord)) == 0:
-            return 'x'
-        return 'y'
+            return "x"
+        return "y"
 
     def get_geo_lines(self, tag: int, line_loop_tag: List[int]):
         """
@@ -2093,7 +2570,7 @@ class CylindricalFace3D(Face3D):
 
         """
 
-        return 'Surface(' + str(tag) + ') = {' + str(line_loop_tag)[1:-1] + '};'
+        return "Surface(" + str(tag) + ") = {" + str(line_loop_tag)[1:-1] + "};"
 
     def arc_inside(self, arc: vme.Arc3D):
         """
@@ -2121,40 +2598,18 @@ class CylindricalFace3D(Face3D):
         return True
 
     def planeface_intersections(self, planeface: PlaneFace3D):
+        """
+        Finds intersections with the given plane face.
+
+        :param planeface: Plane face to evaluate the intersections.
+        """
         planeface_intersections = planeface.cylindricalface_intersections(self)
         return planeface_intersections
 
-    def conicalface_intersections(self, conical_face: 'ConicalFace3D'):
-        """
-        Calculates the intersections between a plane face 3D and Conical Face3D.
-
-        :param conical_face: the Conical Face 3D to verify intersections with Plane Face 3D.
-        :return: list of intersecting wires.
-        """
-        surface_intersections = self.surface3d.surface_intersections(conical_face.surface3d)
-        intersections_points = self.face_intersections_outer_contour(conical_face)
-        for point in conical_face.face_intersections_outer_contour(self):
-            if not volmdlr.core.point_in_list(point, intersections_points):
-                intersections_points.append(point)
-        face_intersections = []
-        for primitive in surface_intersections:
-            points_on_primitive = []
-            for point in intersections_points:
-                if primitive.point_belongs(point, 1e-4):
-                    points_on_primitive.append(point)
-            if not points_on_primitive:
-                continue
-            points_on_primitive = primitive.sort_points_along_curve(points_on_primitive)
-            points_on_primitive = points_on_primitive + [points_on_primitive[0]]
-            for point1, point2 in zip(points_on_primitive[:-1], points_on_primitive[1:]):
-                edge = primitive.trim(point1, point2)
-                if self.edge3d_inside(edge, 1e-4) and conical_face.edge3d_inside(edge, 1e-3):
-                    face_intersections.append(volmdlr.wires.Wire3D([edge]))
-        return face_intersections
-
     @classmethod
-    def from_surface_rectangular_cut(cls, cylindrical_surface, theta1: float, theta2: float,
-                                     param_z1: float, param_z2: float, name: str = ''):
+    def from_surface_rectangular_cut(
+        cls, cylindrical_surface, theta1: float, theta2: float, param_z1: float, param_z2: float, name: str = ""
+    ):
         """
         Cut a rectangular piece of the CylindricalSurface3D object and return a CylindricalFace3D object.
 
@@ -2182,7 +2637,7 @@ class CylindricalFace3D(Face3D):
         return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
 
 
-class ToroidalFace3D(Face3D):
+class ToroidalFace3D(PeriodicalFaceMixin, Face3D):
     """
     Defines a ToroidalFace3D class.
 
@@ -2195,14 +2650,13 @@ class ToroidalFace3D(Face3D):
 
     contours 2d is rectangular and will create a classic tore with x:2*pi, y:2*pi
     x is for exterior, and y for the circle to revolute
-    points = [pi, 2*pi] for an half tore
+    points = [pi, 2*pi] for a half tore
     """
+
     min_x_density = 5
     min_y_density = 1
 
-    def __init__(self, surface3d: surfaces.ToroidalSurface3D,
-                 surface2d: surfaces.Surface2D,
-                 name: str = ''):
+    def __init__(self, surface3d: surfaces.ToroidalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
 
         # self.toroidalsurface3d = toroidalsurface3d
 
@@ -2219,27 +2673,21 @@ class ToroidalFace3D(Face3D):
         # contours3d = [self.toroidalsurface3d.contour2d_to_3d(c)\
         #               for c in [outer_contour2d]+inners_contours2d]
 
-        Face3D.__init__(self,
-                        surface3d=surface3d,
-                        surface2d=surface2d,
-                        name=name)
+        Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
 
     def copy(self, deep=True, memo=None):
         """Returns a copy of the ToroidalFace3D."""
-        return ToroidalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(),
-                              self.name)
+        return ToroidalFace3D(self.surface3d.copy(deep, memo), self.surface2d.copy(), self.name)
 
-    def points_resolution(self, line, pos,
-                          resolution):  # With a resolution wished
-        points = []
-        points.append(line.points[0])
+    @staticmethod
+    def points_resolution(line, pos, resolution):  # With a resolution wished
+        points = [line.points[0]]
         limit = line.points[1].vector[pos]
         start = line.points[0].vector[pos]
         vec = [0, 0]
         vec[pos] = start
-        echelon = [line.points[0].vector[0] - vec[0],
-                   line.points[0].vector[1] - vec[1]]
+        echelon = [line.points[0].vector[0] - vec[0], line.points[0].vector[1] - vec[1]]
         flag = start + resolution
         while flag < limit:
             echelon[pos] = flag
@@ -2247,19 +2695,6 @@ class ToroidalFace3D(Face3D):
             points.append(volmdlr.Point2D(echelon))
         points.append(line.points[1])
         return points
-
-    @property
-    def bounding_box(self):
-        """
-        Returns the face bounding box.
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bounding_box):
-        self._bbox = new_bounding_box
 
     def triangulation_lines(self, angle_resolution=5):
         """
@@ -2272,36 +2707,41 @@ class ToroidalFace3D(Face3D):
         lines_x = []
         for i in range(nlines_x):
             theta = theta_min + (i + 1) / (nlines_x + 1) * delta_theta
-            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, phi_min),
-                                                 volmdlr.Point2D(theta, phi_max)))
+            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, phi_min), volmdlr.Point2D(theta, phi_max)))
         delta_phi = phi_max - phi_min
         nlines_y = int(delta_phi * angle_resolution)
         lines_y = []
         for i in range(nlines_y):
             phi = phi_min + (i + 1) / (nlines_y + 1) * delta_phi
-            lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta_min, phi),
-                                                 volmdlr.Point2D(theta_max, phi)))
+            lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta_min, phi), volmdlr.Point2D(theta_max, phi)))
         return lines_x, lines_y
 
     def grid_size(self):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
-        theta_angle_resolution = 5
-        phi_angle_resolution = 2.3
+        theta_angle_resolution = 10
+        phi_angle_resolution = 20
         theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
 
         delta_theta = theta_max - theta_min
-        number_points_x = max(theta_angle_resolution, int(delta_theta * theta_angle_resolution))
+        number_points_x = math.ceil(delta_theta / math.radians(theta_angle_resolution))
 
         delta_phi = phi_max - phi_min
-        number_points_y = max(math.ceil(phi_angle_resolution), int(delta_phi * phi_angle_resolution))
+        number_points_y = math.ceil(delta_phi / math.radians(phi_angle_resolution))
 
         return number_points_x, number_points_y
 
     @classmethod
-    def from_surface_rectangular_cut(cls, toroidal_surface3d, theta1: float = 0.0, theta2: float = volmdlr.TWO_PI,
-                                     phi1: float = 0.0, phi2: float = volmdlr.TWO_PI, name: str = ""):
+    def from_surface_rectangular_cut(
+        cls,
+        toroidal_surface3d,
+        theta1: float = 0.0,
+        theta2: float = volmdlr.TWO_PI,
+        phi1: float = 0.0,
+        phi2: float = volmdlr.TWO_PI,
+        name: str = "",
+    ):
         """
         Cut a rectangular piece of the ToroidalSurface3D object and return a ToroidalFace3D object.
 
@@ -2336,13 +2776,26 @@ class ToroidalFace3D(Face3D):
         """
         theta_min, theta_max, _, _ = self.surface2d.outer_contour.bounding_rectangle.bounds()
         circle = volmdlr_curves.Circle3D(self.surface3d.frame, self.surface3d.tore_radius)
-        point1, point2 = [circle.center + circle.radius * math.cos(theta) * circle.frame.u +
-                          circle.radius * math.sin(theta) * circle.frame.v for theta in
-                          [theta_min, theta_max]]
+        point1, point2 = [
+            circle.center
+            + circle.radius * math.cos(theta) * circle.frame.u
+            + circle.radius * math.sin(theta) * circle.frame.v
+            for theta in [theta_min, theta_max]
+        ]
         return volmdlr.wires.Wire3D([circle.trim(point1, point2)])
 
+    def planeface_intersections(self, planeface: PlaneFace3D):
+        """
+        Gets intersections between a Toroidal Face 3D and a Plane Face 3D.
 
-class ConicalFace3D(Face3D):
+        :param planeface: other plane face.
+        :return: intersections.
+        """
+        planeface_intersections = planeface.toroidalface_intersections(self)
+        return planeface_intersections
+
+
+class ConicalFace3D(PeriodicalFaceMixin, Face3D):
     """
     Defines a ConicalFace3D class.
 
@@ -2353,33 +2806,10 @@ class ConicalFace3D(Face3D):
 
 
     """
-    min_x_density = 5
-    min_y_density = 1
 
-    def __init__(self, surface3d: surfaces.ConicalSurface3D,
-                 surface2d: surfaces.Surface2D,
-                 name: str = ''):
-        surface2d_br = surface2d.bounding_rectangle()
-        if surface2d_br[0] < 0:
-            surface2d = surface2d.translation(volmdlr.Vector2D(2 * math.pi, 0))
-        Face3D.__init__(self,
-                        surface3d=surface3d,
-                        surface2d=surface2d,
-                        name=name)
+    def __init__(self, surface3d: surfaces.ConicalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
+        Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
-
-    @property
-    def bounding_box(self):
-        """
-        Surface bounding box.
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=5):
         """
@@ -2391,39 +2821,27 @@ class ConicalFace3D(Face3D):
         lines_x = []
         for i in range(nlines):
             theta = theta_min + (i + 1) / (nlines + 1) * delta_theta
-            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, zmin),
-                                                 volmdlr.Point2D(theta, zmax)))
+            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, zmin), volmdlr.Point2D(theta, zmax)))
 
         if zmin < 1e-9:
             delta_z = zmax - zmin
-            lines_y = [volmdlr_curves.Line2D(volmdlr.Point2D(theta_min, zmin + 0.1 * delta_z),
-                                             volmdlr.Point2D(theta_max, zmin + 0.1 * delta_z))]
+            lines_y = [
+                volmdlr_curves.Line2D(
+                    volmdlr.Point2D(theta_min, zmin + 0.1 * delta_z), volmdlr.Point2D(theta_max, zmin + 0.1 * delta_z)
+                )
+            ]
         else:
             lines_y = []
         return lines_x, lines_y
 
-    def grid_size(self):
-        """
-        Specifies an adapted size of the discretization grid used in face triangulation.
-        """
-        angle_resolution = 5
-        theta_min, theta_max, _, _ = self.surface2d.bounding_rectangle().bounds()
-        delta_theta = theta_max - theta_min
-        number_points_x = math.ceil(delta_theta * angle_resolution)
-
-        number_points_y = 0
-
-        return number_points_x, number_points_y
-
     @classmethod
-    def from_surface_rectangular_cut(cls, conical_surface3d, theta1: float, theta2: float,
-                                     z1: float, z2: float, name: str = ''):
+    def from_surface_rectangular_cut(
+        cls, conical_surface3d, theta1: float, theta2: float, z1: float, z2: float, name: str = ""
+    ):
         """
         Cut a rectangular piece of the ConicalSurface3D object and return a ConicalFace3D object.
 
         """
-        # theta1 = angle_principal_measure(theta1)
-        # theta2 = angle_principal_measure(theta2)
         if theta1 < 0:
             theta1, theta2 = theta1 + 2 * math.pi, theta2 + 2 * math.pi
         if theta1 == theta2:
@@ -2437,8 +2855,9 @@ class ConicalFace3D(Face3D):
         return cls(conical_surface3d, surfaces.Surface2D(outer_contour, []), name)
 
     @classmethod
-    def from_base_and_vertex(cls, conical_surface3d, contour: volmdlr.wires.Contour3D,
-                             vertex: volmdlr.Point3D, name: str = ''):
+    def from_base_and_vertex(
+        cls, conical_surface3d, contour: volmdlr.wires.Contour3D, vertex: volmdlr.Point3D, name: str = ""
+    ):
         """
         Returns the conical face defined by the contour of the base and the cone vertex.
 
@@ -2473,28 +2892,6 @@ class ConicalFace3D(Face3D):
         point2 = self.surface3d.frame.origin + self.surface3d.frame.w * zmax
         return volmdlr.wires.Wire3D([vme.LineSegment3D(point1, point2)])
 
-    def point_belongs(self, point3d: volmdlr.Point3D, tol: float = 1e-6):
-        """
-        Tells you if a point is on the 3D conical face and inside its contour.
-        """
-        if not self.bounding_box.point_belongs(point3d):
-            return False
-        x, y, z = self.surface3d.frame.global_to_local_coordinates(point3d)
-        radius = z * math.tan(self.surface3d.semi_angle)
-        point2d = volmdlr.Point2D(0, z)
-        if radius != 0.0:
-            theta = volmdlr.geometry.sin_cos_angle(x / radius, y / radius)
-            if abs(theta) < 1e-9:
-                theta = 0.0
-            point2d = volmdlr.Point2D(theta, z)
-
-        point2d_plus_2pi = point2d.translation(volmdlr.Point2D(volmdlr.TWO_PI, 0))
-        check_point3d = self.surface3d.point2d_to_3d(self.surface3d.point3d_to_2d(point3d))
-        if check_point3d.point_distance(point3d) > tol:
-            return False
-
-        return self.surface2d.point_belongs(point2d) or self.surface2d.point_belongs(point2d_plus_2pi)
-
     def circle_inside(self, circle: volmdlr_curves.Circle3D):
         """
         Verifies if a circle 3D lies completely on the Conical face.
@@ -2511,7 +2908,7 @@ class ConicalFace3D(Face3D):
         return True
 
 
-class SphericalFace3D(Face3D):
+class SphericalFace3D(PeriodicalFaceMixin, Face3D):
     """
     Defines a SpehericalFace3D class.
 
@@ -2522,27 +2919,13 @@ class SphericalFace3D(Face3D):
 
 
     """
+
     min_x_density = 5
     min_y_density = 5
 
-    def __init__(self, surface3d: surfaces.SphericalSurface3D,
-                 surface2d: surfaces.Surface2D,
-                 name: str = ''):
-        Face3D.__init__(self,
-                        surface3d=surface3d,
-                        surface2d=surface2d,
-                        name=name)
+    def __init__(self, surface3d: surfaces.SphericalSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
+        Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
-
-    @property
-    def bounding_box(self):
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
 
     def triangulation_lines(self, angle_resolution=7):
         """
@@ -2555,35 +2938,76 @@ class SphericalFace3D(Face3D):
         lines_x = []
         for i in range(nlines_x):
             theta = theta_min + (i + 1) / (nlines_x + 1) * delta_theta
-            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, phi_min),
-                                                 volmdlr.Point2D(theta, phi_max)))
+            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta, phi_min), volmdlr.Point2D(theta, phi_max)))
         delta_phi = phi_max - phi_min
         nlines_y = int(delta_phi * angle_resolution)
         lines_y = []
         for i in range(nlines_y):
             phi = phi_min + (i + 1) / (nlines_y + 1) * delta_phi
-            lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta_min, phi),
-                                                 volmdlr.Point2D(theta_max, phi)))
+            lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(theta_min, phi), volmdlr.Point2D(theta_max, phi)))
         return lines_x, lines_y
 
     def grid_size(self):
         """
-        Specifies an adapted size of the discretization grid used in face triangulation.
+        Specifies an adapted size of the discretization grid used to calculate the grid_points.
+
+        For the sphere the grid size is given in angle resolution in both theta and phi direction.
         """
-        angle_resolution = 11
-        theta_min, theta_max, phi_min, phi_max = self.surface2d.bounding_rectangle().bounds()
+        return 10, 10
 
-        delta_theta = theta_max - theta_min
-        number_points_x = int(delta_theta * angle_resolution)
+    def grid_points(self, grid_size, polygon_data=None):
+        """
+        Parametric tesselation points.
+        """
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
+        else:
+            outer_polygon, inner_polygons = self.get_face_polygons()
+        u, v, u_size, _ = self._get_grid_axis(outer_polygon, grid_size)
+        if not u or not v:
+            return []
+        if inner_polygons:
+            points = []
+            points_indexes_map = {}
+            for j, v_j in enumerate(v):
+                for i in range(u_size):
+                    if (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0):
+                        points.append((u[i], v_j))
+                        points_indexes_map[(i, j)] = len(points) - 1
+            points = np.array(points, dtype=np.float64)
+            points = update_face_grid_points_with_inner_polygons(inner_polygons, [points, u, v, points_indexes_map])
+        else:
+            points = np.array([(u[i], v_j) for j, v_j in enumerate(v) for i in range(u_size) if
+                              (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0)], dtype=np.float64)
 
-        delta_phi = phi_max - phi_min
-        number_points_y = int(delta_phi * angle_resolution)
+        points = self._update_grid_points_with_outer_polygon(outer_polygon, points)
 
-        return number_points_x, number_points_y
+        return points
+
+    @staticmethod
+    def _get_grid_axis(outer_polygon, grid_size):
+        """Helper function to grid_points."""
+        theta_min, theta_max, phi_min, phi_max = outer_polygon.bounding_rectangle.bounds()
+        theta_resolution, phi_resolution = grid_size
+        step_u = 0.5 * math.radians(theta_resolution)
+        step_v = math.radians(phi_resolution)
+        u_size = math.ceil((theta_max - theta_min) / step_u)
+        v_size = math.ceil((phi_max - phi_min) / step_v)
+        v_start = phi_min + step_v
+        u = [theta_min + step_u * i for i in range(u_size)]
+        v = [v_start + j * step_v for j in range(v_size - 1)]
+        return u, v, u_size, v_size
 
     @classmethod
-    def from_surface_rectangular_cut(cls, spherical_surface, theta1: float = 0.0, theta2: float = volmdlr.TWO_PI,
-                                     phi1: float = - 0.5 * math.pi, phi2: float = 0.5 * math.pi, name=''):
+    def from_surface_rectangular_cut(
+        cls,
+        spherical_surface,
+        theta1: float = 0.0,
+        theta2: float = volmdlr.TWO_PI,
+        phi1: float = -0.5 * math.pi,
+        phi2: float = 0.5 * math.pi,
+        name="",
+    ):
         """
         Cut a rectangular piece of the SphericalSurface3D object and return a SphericalFace3D object.
 
@@ -2605,8 +3029,9 @@ class SphericalFace3D(Face3D):
         return cls(spherical_surface, surfaces.Surface2D(outer_contour, []), name=name)
 
     @classmethod
-    def from_contours3d_and_rectangular_cut(cls, surface3d, contours: List[volmdlr.wires.Contour3D],
-                                            point: volmdlr.Point3D, name: str = ''):
+    def from_contours3d_and_rectangular_cut(
+        cls, surface3d, contours: List[volmdlr.wires.Contour3D], point: volmdlr.Point3D, name: str = ""
+    ):
         """
         Face defined by contours and a point indicating the portion of the parametric domain that should be considered.
 
@@ -2627,11 +3052,10 @@ class SphericalFace3D(Face3D):
         contours2d = [surface3d.contour3d_to_2d(contour) for contour in contours]
         point2d = surface3d.point3d_to_2d(point)
         for contour in contours2d:
-            if not contour.point_belongs(point2d):
+            if not contour.point_inside(point2d):
                 inner_contours.append(contour)
 
-        surface2d = surfaces.Surface2D(outer_contour=surface_rectangular_cut,
-                                       inner_contours=inner_contours)
+        surface2d = surfaces.Surface2D(outer_contour=surface_rectangular_cut, inner_contours=inner_contours)
         return cls(surface3d, surface2d=surface2d, name=name)
 
 
@@ -2652,30 +3076,13 @@ class RuledFace3D(Face3D):
     :param color: The color of the face.
     :type color: tuple
     """
+
     min_x_density = 50
     min_y_density = 1
 
-    def __init__(self,
-                 surface3d: surfaces.RuledSurface3D,
-                 surface2d: surfaces.Surface2D,
-                 name: str = ''):
-        Face3D.__init__(self, surface3d=surface3d,
-                        surface2d=surface2d,
-                        name=name)
+    def __init__(self, surface3d: surfaces.RuledSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
+        Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
-
-    @property
-    def bounding_box(self):
-        """
-        Returns the bounding box of the surface.
-        """
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
 
     def get_bounding_box(self):
         """
@@ -2683,11 +3090,8 @@ class RuledFace3D(Face3D):
 
         To be enhanced by restricting wires to cut
         """
-        points = [self.surface3d.point2d_to_3d(volmdlr.Point2D(i / 30, 0.)) for
-                  i in range(31)]
-        points.extend(
-            [self.surface3d.point2d_to_3d(volmdlr.Point2D(i / 30, 1.)) for i
-             in range(31)])
+        points = [self.surface3d.point2d_to_3d(volmdlr.Point2D(i / 30, 0.0)) for i in range(31)]
+        points.extend([self.surface3d.point2d_to_3d(volmdlr.Point2D(i / 30, 1.0)) for i in range(31)])
 
         return volmdlr.core.BoundingBox.from_points(points)
 
@@ -2701,8 +3105,7 @@ class RuledFace3D(Face3D):
         lines = []
         for i in range(nlines):
             x = xmin + (i + 1) / (nlines + 1) * delta_x
-            lines.append(volmdlr_curves.Line2D(volmdlr.Point2D(x, ymin),
-                                               volmdlr.Point2D(x, ymax)))
+            lines.append(volmdlr_curves.Line2D(volmdlr.Point2D(x, ymin), volmdlr.Point2D(x, ymax)))
         return lines, []
 
     def grid_size(self):
@@ -2719,8 +3122,9 @@ class RuledFace3D(Face3D):
         return number_points_x, number_points_y
 
     @classmethod
-    def from_surface_rectangular_cut(cls, ruled_surface3d, x1: float = 0.0, x2: float = 1.0,
-                                     y1: float = 0.0, y2: float = 1.0, name: str = ''):
+    def from_surface_rectangular_cut(
+        cls, ruled_surface3d, x1: float = 0.0, x2: float = 1.0, y1: float = 0.0, y2: float = 1.0, name: str = ""
+    ):
         """
         Cut a rectangular piece of the RuledSurface3D object and return a RuledFace3D object.
 
@@ -2750,48 +3154,30 @@ class ExtrusionFace3D(Face3D):
     :param name: The name of the face.
     :type name: str
     """
+
     min_x_density = 50
     min_y_density = 1
 
-    def __init__(self,
-                 surface3d: surfaces.ExtrusionSurface3D,
-                 surface2d: surfaces.Surface2D,
-                 name: str = ''):
-        Face3D.__init__(self, surface3d=surface3d,
-                        surface2d=surface2d,
-                        name=name)
+    def __init__(self, surface3d: surfaces.ExtrusionSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
+        Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
 
-    @property
-    def bounding_box(self):
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
-
-    def grid_size(self):
-        """
-        Specifies an adapted size of the discretization grid used in face triangulation.
-        """
-        angle_resolution = 11
-        xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
-        delta_x = xmax - xmin
-        number_points_x = int(delta_x * angle_resolution)
-
-        number_points_y = number_points_x
-
-        return number_points_x, number_points_y
-
     @classmethod
-    def from_surface_rectangular_cut(cls, extrusion_surface3d, x1: float = 0.0, x2: float = 1.0,
-                                     y1: float = 0.0, y2: float = 1.0, name: str = ''):
+    def from_surface_rectangular_cut(
+        cls,
+        extrusion_surface3d: surfaces.ExtrusionSurface3D,
+        x1: float = 0.0,
+        x2: float = 0.0,
+        y1: float = 0.0,
+        y2: float = 1.0,
+        name: str = "",
+    ):
         """
         Cut a rectangular piece of the ExtrusionSurface3D object and return a ExtrusionFace3D object.
 
         """
+        if not x2:
+            x2 = extrusion_surface3d.edge.length()
         p1 = volmdlr.Point2D(x1, y1)
         p2 = volmdlr.Point2D(x2, y1)
         p3 = volmdlr.Point2D(x2, y2)
@@ -2817,44 +3203,70 @@ class RevolutionFace3D(Face3D):
     :param name: The name of the face.
     :type name: str
     """
+
     min_x_density = 50
     min_y_density = 1
 
-    def __init__(self,
-                 surface3d: surfaces.RevolutionSurface3D,
-                 surface2d: surfaces.Surface2D,
-                 name: str = ''):
-        Face3D.__init__(self, surface3d=surface3d,
-                        surface2d=surface2d,
-                        name=name)
+    def __init__(self, surface3d: surfaces.RevolutionSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
+        Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
-
-    @property
-    def bounding_box(self):
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bouding_box):
-        self._bbox = new_bouding_box
 
     def grid_size(self):
         """
         Specifies an adapted size of the discretization grid used in face triangulation.
         """
         angle_resolution = 10
-        xmin, xmax, _, _ = self.surface2d.bounding_rectangle().bounds()
-        delta_x = xmax - xmin
-        number_points_x = int(delta_x * angle_resolution)
+        number_points_y = self.get_edge_discretization_size(self.surface3d.edge)
 
-        number_points_y = number_points_x
+        return angle_resolution, number_points_y
 
-        return number_points_x, number_points_y
+    def grid_points(self, grid_size, polygon_data=None):
+        """
+        Parametric tesselation points.
+        """
+        if polygon_data:
+            outer_polygon, inner_polygons = polygon_data
+        else:
+            outer_polygon, inner_polygons, _ = self.get_face_polygons()
+        u, v, u_size, _ = self._get_grid_axis(outer_polygon, grid_size)
+        if not u or not v:
+            return []
+        if inner_polygons:
+            points = []
+            points_indexes_map = {}
+            for j, v_j in enumerate(v):
+                for i in range(u_size):
+                    if (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0):
+                        points.append((u[i], v_j))
+                        points_indexes_map[(i, j)] = len(points) - 1
+            points = np.array(points, dtype=np.float64)
+            points = update_face_grid_points_with_inner_polygons(inner_polygons, [points, u, v, points_indexes_map])
+        else:
+            points = np.array([(u[i], v_j) for j, v_j in enumerate(v) for i in range(u_size) if
+                              (j % 2 == 0 and i % 2 == 0) or (j % 2 != 0 and i % 2 != 0)], dtype=np.float64)
+
+        points = self._update_grid_points_with_outer_polygon(outer_polygon, points)
+
+        return points
+
+    @staticmethod
+    def _get_grid_axis(outer_polygon, grid_size):
+        """Helper function to grid_points."""
+        u_min, u_max, v_min, v_max = outer_polygon.bounding_rectangle.bounds()
+        angle_resolution, number_points_v = grid_size
+        delta_x = u_max - u_min
+        number_points_u = math.ceil(delta_x / math.radians(angle_resolution))
+        u_step = (u_max - u_min) / (number_points_u - 1) if number_points_u > 1 else (u_max - u_min)
+        v_step = (v_max - v_min) / (number_points_v - 1) if number_points_v > 1 else (v_max - v_min)
+        u = [u_min + i * u_step for i in range(number_points_u)]
+        v = [v_min + i * v_step for i in range(number_points_v)]
+
+        return u, v, number_points_u, number_points_v
 
     @classmethod
-    def from_surface_rectangular_cut(cls, revolution_surface3d, x1: float, x2: float,
-                                     y1: float, y2: float, name: str = ''):
+    def from_surface_rectangular_cut(
+        cls, revolution_surface3d, x1: float, x2: float, y1: float, y2: float, name: str = ""
+    ):
         """
         Cut a rectangular piece of the RevolutionSurface3D object and return a RevolutionFace3D object.
 
@@ -2866,6 +3278,45 @@ class RevolutionFace3D(Face3D):
         outer_contour = volmdlr.wires.ClosedPolygon2D([point1, point2, point3, point4])
         surface2d = surfaces.Surface2D(outer_contour, [])
         return cls(revolution_surface3d, surface2d, name)
+
+    def get_face_polygons(self):
+        """Get face polygons."""
+        primitives_mapping = self.primitives_mapping
+        xmin, xmax, ymin, ymax = self.surface2d.bounding_rectangle().bounds()
+        delta_x = xmax - xmin
+        delta_y = ymax - ymin
+        number_points_x, number_points_y = self.grid_size()
+        scale_factor = 1
+        if number_points_x > 1 and number_points_y > 1:
+            scale_factor = 10 ** math.floor(
+                math.log10((delta_x/(number_points_x - 1))/(delta_y/(number_points_y - 1))))
+
+        def get_polygon_points(primitives):
+            points = []
+            for edge in primitives:
+                edge3d = primitives_mapping.get(edge)
+                number_points = self.get_edge_discretization_size(edge3d)
+                edge_points = edge.discretization_points(number_points=number_points)
+                if scale_factor != 1:
+                    for point in edge_points:
+                        point.y *= scale_factor
+                points.extend(edge_points[:-1])
+            return points
+
+        outer_polygon = volmdlr.wires.ClosedPolygon2D(get_polygon_points(self.surface2d.outer_contour.primitives))
+        inner_polygons = [volmdlr.wires.ClosedPolygon2D(get_polygon_points(inner_contour.primitives))
+                          for inner_contour in self.surface2d.inner_contours]
+        return outer_polygon, inner_polygons, scale_factor
+
+    def triangulation(self):
+        """Triangulates the face."""
+        outer_polygon, inner_polygons, scale_factor = self.get_face_polygons()
+        mesh2d = self.helper_to_mesh([outer_polygon, inner_polygons])
+        if mesh2d is None:
+            return None
+        if scale_factor != 1:
+            mesh2d.vertices[:, 1] /= scale_factor
+        return vmd.Mesh3D(self.surface3d.parametric_points_to_3d(mesh2d.vertices), mesh2d.triangles)
 
 
 class BSplineFace3D(Face3D):
@@ -2884,24 +3335,9 @@ class BSplineFace3D(Face3D):
     :type name: str
     """
 
-    def __init__(self, surface3d: surfaces.BSplineSurface3D,
-                 surface2d: surfaces.Surface2D,
-                 name: str = ''):
-        Face3D.__init__(self,
-                        surface3d=surface3d,
-                        surface2d=surface2d,
-                        name=name)
+    def __init__(self, surface3d: surfaces.BSplineSurface3D, surface2d: surfaces.Surface2D, name: str = ""):
+        Face3D.__init__(self, surface3d=surface3d, surface2d=surface2d, name=name)
         self._bbox = None
-
-    @property
-    def bounding_box(self):
-        if not self._bbox:
-            self._bbox = self.get_bounding_box()
-        return self._bbox
-
-    @bounding_box.setter
-    def bounding_box(self, new_bounding_box):
-        self._bbox = new_bounding_box
 
     def get_bounding_box(self):
         """Creates a bounding box from the face mesh."""
@@ -2911,35 +3347,17 @@ class BSplineFace3D(Face3D):
                 number_points_x, number_points_y = 5, 3
             else:
                 number_points_x, number_points_y = 3, 5
-            outer_polygon = self.surface2d.outer_contour.to_polygon(angle_resolution=15, discretize_line=True)
-            points_grid, x, y, grid_point_index = outer_polygon.grid_triangulation_points(number_points_x,
-                                                                                          number_points_y,
-                                                                                          include_edge_points=False)
-            if self.surface2d.inner_contours:
-                points_grid = self._get_bbox_inner_contours_points(points_grid, x, y, grid_point_index)
+            points_grid = self.grid_points([number_points_x, number_points_y])
             points3d = [self.surface3d.point2d_to_3d(point) for point in points_grid]
         except ZeroDivisionError:
             points3d = []
+
         if not points3d:
             return self.outer_contour3d.bounding_box
-        return volmdlr.core.BoundingBox.from_bounding_boxes([volmdlr.core.BoundingBox.from_points(points3d),
-                                                            self.outer_contour3d.bounding_box])
 
-    def _get_bbox_inner_contours_points(self, points_grid, x, y, grid_point_index):
-        """Helper function to get_bounding_box."""
-        for inner_contour in self.surface2d.inner_contours:
-            inner_polygon = inner_contour.to_polygon(angle_resolution=5, discretize_line=True)
-            # removes with a region search the grid points that are in the inner contour
-            xmin, xmax, ymin, ymax = inner_polygon.bounding_rectangle.bounds()
-            for i in array_range_search(x, xmin, xmax):
-                for j in array_range_search(y, ymin, ymax):
-                    point = grid_point_index.get((i, j))
-                    if not point:
-                        continue
-                    if inner_polygon.point_belongs(point):
-                        points_grid.remove(point)
-                        grid_point_index.pop((i, j))
-        return points_grid
+        return volmdlr.core.BoundingBox.from_bounding_boxes(
+            [volmdlr.core.BoundingBox.from_points(points3d), self.outer_contour3d.bounding_box]
+        ).scale(1.001)
 
     def triangulation_lines(self, resolution=25):
         """
@@ -2952,15 +3370,13 @@ class BSplineFace3D(Face3D):
         lines_x = []
         for i in range(nlines_x):
             u = u_min + (i + 1) / (nlines_x + 1) * delta_u
-            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(u, v_min),
-                                                 volmdlr.Point2D(u, v_max)))
+            lines_x.append(volmdlr_curves.Line2D(volmdlr.Point2D(u, v_min), volmdlr.Point2D(u, v_max)))
         delta_v = v_max - v_min
         nlines_y = int(delta_v * resolution)
         lines_y = []
         for i in range(nlines_y):
             v = v_min + (i + 1) / (nlines_y + 1) * delta_v
-            lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(v_min, v),
-                                                 volmdlr.Point2D(v_max, v)))
+            lines_y.append(volmdlr_curves.Line2D(volmdlr.Point2D(v_min, v), volmdlr.Point2D(v_max, v)))
         return lines_x, lines_y
 
     def grid_size(self):
@@ -2969,16 +3385,27 @@ class BSplineFace3D(Face3D):
         """
         u_min, u_max, v_min, v_max = self.surface2d.bounding_rectangle().bounds()
         delta_u = u_max - u_min
+        delta_v = v_max - v_min
         resolution_u = self.surface3d.nb_u
         resolution_v = self.surface3d.nb_v
-        if self.surface2d.inner_contours:
-            resolution_u = max(15, resolution_u)
-            resolution_v = max(15, resolution_v)
-        delta_v = v_max - v_min
-        number_points_x = int(delta_u * resolution_u)
-        number_points_y = int(delta_v * resolution_v)
+        if resolution_u > resolution_v:
+            number_points_x = int(delta_u * resolution_u)
+            number_points_y = max(int(delta_v * resolution_v), int(number_points_x / 5))
+        else:
+            number_points_y = int(delta_v * resolution_v)
+            number_points_x = max(int(delta_u * resolution_u), int(number_points_y / 5))
 
         return number_points_x, number_points_y
+
+    @staticmethod
+    def _update_grid_points_with_outer_polygon(outer_polygon, grid_points):
+        """Helper function to grid_points."""
+        # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
+        indices = np.where(outer_polygon.points_in_polygon(grid_points, include_edge_points=True) == 0)[0]
+        grid_points = np.delete(grid_points, indices, axis=0)
+        polygon_points = set(outer_polygon.points)
+        points = [volmdlr.Point2D(*point) for point in grid_points if volmdlr.Point2D(*point) not in polygon_points]
+        return points
 
     def pair_with(self, other_bspline_face3d):
         """
@@ -2995,22 +3422,26 @@ class BSplineFace3D(Face3D):
         adjacent_direction1, diff1, adjacent_direction2, diff2 = self.adjacent_direction(other_bspline_face3d)
         corresponding_directions = []
         if (diff1 > 0 and diff2 > 0) or (diff1 < 0 and diff2 < 0):
-            corresponding_directions.append(('+' + adjacent_direction1, '+' + adjacent_direction2))
+            corresponding_directions.append(("+" + adjacent_direction1, "+" + adjacent_direction2))
         else:
-            corresponding_directions.append(('+' + adjacent_direction1, '-' + adjacent_direction2))
+            corresponding_directions.append(("+" + adjacent_direction1, "-" + adjacent_direction2))
 
-        if adjacent_direction1 == 'u' and adjacent_direction2 == 'u':
+        if adjacent_direction1 == "u" and adjacent_direction2 == "u":
             corresponding_directions, grid2d_direction = self.adjacent_direction_uu(
-                other_bspline_face3d, corresponding_directions)
-        elif adjacent_direction1 == 'v' and adjacent_direction2 == 'v':
+                other_bspline_face3d, corresponding_directions
+            )
+        elif adjacent_direction1 == "v" and adjacent_direction2 == "v":
             corresponding_directions, grid2d_direction = self.adjacent_direction_vv(
-                other_bspline_face3d, corresponding_directions)
-        elif adjacent_direction1 == 'u' and adjacent_direction2 == 'v':
+                other_bspline_face3d, corresponding_directions
+            )
+        elif adjacent_direction1 == "u" and adjacent_direction2 == "v":
             corresponding_directions, grid2d_direction = self.adjacent_direction_uv(
-                other_bspline_face3d, corresponding_directions)
-        elif adjacent_direction1 == 'v' and adjacent_direction2 == 'u':
+                other_bspline_face3d, corresponding_directions
+            )
+        elif adjacent_direction1 == "v" and adjacent_direction2 == "u":
             corresponding_directions, grid2d_direction = self.adjacent_direction_vu(
-                other_bspline_face3d, corresponding_directions)
+                other_bspline_face3d, corresponding_directions
+            )
 
         return corresponding_directions, grid2d_direction
 
@@ -3018,8 +3449,7 @@ class BSplineFace3D(Face3D):
         """Returns the side of the faces that are adjacent."""
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
-        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0),
-                          volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
+        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
 
         # TODO: compute nearest_point in 'bounding_box points' instead of borders_points
         nearest_start1 = start1.nearest_point(borders_points)
@@ -3031,23 +3461,26 @@ class BSplineFace3D(Face3D):
         v2 = nearest_start2[1]
 
         if v1 == 0 and v2 == 0:
-            corresponding_directions.append(('+v', '-v'))
-            grid2d_direction = [['+x', '-y'], ['+x', '+y']]
+            if corresponding_directions == [("+u", "-u")]:
+                grid2d_direction = [["-x", "-y"], ["+x", "+y"]]
+            else:
+                grid2d_direction = [["+x", "-y"], ["+x", "+y"]]
+            corresponding_directions.append(("+v", "-v"))
 
         elif v1 == 1 and v2 == 1:
-            if corresponding_directions == [('+u', '-u')]:
-                grid2d_direction = [['+x', '+y'], ['-x', '-y']]
+            if corresponding_directions == [("+u", "-u")]:
+                grid2d_direction = [["+x", "+y"], ["-x", "-y"]]
             else:
-                grid2d_direction = [['+x', '+y'], ['+x', '-y']]
-            corresponding_directions.append(('+v', '-v'))
+                grid2d_direction = [["+x", "+y"], ["+x", "-y"]]
+            corresponding_directions.append(("+v", "-v"))
 
         elif v1 == 1 and v2 == 0:
-            corresponding_directions.append(('+v', '+v'))
-            grid2d_direction = [['+x', '+y'], ['+x', '+y']]
+            corresponding_directions.append(("+v", "+v"))
+            grid2d_direction = [["+x", "+y"], ["+x", "+y"]]
 
         elif v1 == 0 and v2 == 1:
-            corresponding_directions.append(('+v', '+v'))
-            grid2d_direction = [['+x', '-y'], ['+x', '-y']]
+            corresponding_directions.append(("+v", "+v"))
+            grid2d_direction = [["+x", "-y"], ["+x", "-y"]]
 
         return corresponding_directions, grid2d_direction
 
@@ -3055,8 +3488,7 @@ class BSplineFace3D(Face3D):
         """Returns the side of the faces that are adjacent."""
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
-        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0),
-                          volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
+        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
 
         # TODO: compute nearest_point in 'bounding_box points' instead of borders_points
         nearest_start1 = start1.nearest_point(borders_points)
@@ -3068,32 +3500,33 @@ class BSplineFace3D(Face3D):
         u2 = nearest_start2[0]
 
         if u1 == 0 and u2 == 0:
-            corresponding_directions.append(('+u', '-v'))
-            grid2d_direction = [['-y', '-x'], ['-y', '+x']]
+            corresponding_directions.append(("+u", "-v"))
+            grid2d_direction = [["-y", "-x"], ["-y", "+x"]]
 
         elif u1 == 1 and u2 == 1:
-            if corresponding_directions == [('+v', '-v')]:
-                grid2d_direction = [['+y', '+x'], ['-y', '-x']]
+            if corresponding_directions == [("+v", "-v")]:
+                grid2d_direction = [["+y", "+x"], ["-y", "-x"]]
             else:
-                grid2d_direction = [['+y', '+x'], ['+y', '-x']]
-            corresponding_directions.append(('+u', '-u'))
+                grid2d_direction = [["+y", "+x"], ["+y", "-x"]]
+            corresponding_directions.append(("+u", "-u"))
 
         elif u1 == 0 and u2 == 1:
-            corresponding_directions.append(('+u', '+u'))
-            grid2d_direction = [['+y', '-x'], ['+y', '-x']]
+            corresponding_directions.append(("+u", "+u"))
+            grid2d_direction = [["+y", "-x"], ["+y", "-x"]]
 
         elif u1 == 1 and u2 == 0:
-            corresponding_directions.append(('+u', '+u'))
-            grid2d_direction = [['+y', '+x'], ['+y', '+x']]
+            corresponding_directions.append(("+u", "+u"))
+            grid2d_direction = [["+y", "+x"], ["+y", "+x"]]
 
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_uv(self, other_bspline_face3d, corresponding_directions):
-
+        """
+        Returns the sides that are adjacents to other BSpline face.
+        """
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
-        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0),
-                          volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
+        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
 
         # TODO: compute nearest_point in 'bounding_box points' instead of borders_points
         nearest_start1 = start1.nearest_point(borders_points)
@@ -3105,29 +3538,30 @@ class BSplineFace3D(Face3D):
         u2 = nearest_start2[0]
 
         if v1 == 1 and u2 == 0:
-            corresponding_directions.append(('+v', '+u'))
-            grid2d_direction = [['+x', '+y'], ['+y', '+x']]
+            corresponding_directions.append(("+v", "+u"))
+            grid2d_direction = [["+x", "+y"], ["+y", "+x"]]
 
         elif v1 == 0 and u2 == 1:
-            corresponding_directions.append(('+v', '+u'))
-            grid2d_direction = [['-x', '-y'], ['-y', '-x']]
+            corresponding_directions.append(("+v", "+u"))
+            grid2d_direction = [["-x", "-y"], ["-y", "-x"]]
 
         elif v1 == 1 and u2 == 1:
-            corresponding_directions.append(('+v', '-u'))
-            grid2d_direction = [['+x', '+y'], ['-y', '-x']]
+            corresponding_directions.append(("+v", "-u"))
+            grid2d_direction = [["+x", "+y"], ["-y", "-x"]]
 
         elif v1 == 0 and u2 == 0:
-            corresponding_directions.append(('+v', '-u'))
-            grid2d_direction = [['-x', '-y'], ['-y', '+x']]
+            corresponding_directions.append(("+v", "-u"))
+            grid2d_direction = [["-x", "-y"], ["-y", "+x"]]
 
         return corresponding_directions, grid2d_direction
 
     def adjacent_direction_vu(self, other_bspline_face3d, corresponding_directions):
-
+        """
+        Returns the sides that are adjacents to other BSpline face.
+        """
         extremities = self.extremities(other_bspline_face3d)
         start1, start2 = extremities[0], extremities[2]
-        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0),
-                          volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
+        borders_points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(0, 1)]
 
         # TODO: compute nearest_point in 'bounding_box points' instead of borders_points
         nearest_start1 = start1.nearest_point(borders_points)
@@ -3139,23 +3573,23 @@ class BSplineFace3D(Face3D):
         v2 = nearest_start2[1]
 
         if u1 == 1 and v2 == 0:
-            corresponding_directions.append(('+u', '+v'))
-            grid2d_direction = [['+y', '+x'], ['+x', '+y']]
+            corresponding_directions.append(("+u", "+v"))
+            grid2d_direction = [["+y", "+x"], ["+x", "+y"]]
 
         elif u1 == 0 and v2 == 1:
-            corresponding_directions.append(('+u', '+v'))
-            grid2d_direction = [['-y', '-x'], ['+x', '-y']]
+            corresponding_directions.append(("+u", "+v"))
+            grid2d_direction = [["-y", "-x"], ["+x", "-y"]]
 
         elif u1 == 0 and v2 == 0:
-            corresponding_directions.append(('+u', '-v'))
-            grid2d_direction = [['+y', '-x'], ['+x', '+y']]
+            corresponding_directions.append(("+u", "-v"))
+            grid2d_direction = [["+y", "-x"], ["+x", "+y"]]
 
         elif u1 == 1 and v2 == 1:
-            if corresponding_directions == [('+v', '-u')]:
-                grid2d_direction = [['+y', '+x'], ['-x', '-y']]
+            if corresponding_directions == [("+v", "-u")]:
+                grid2d_direction = [["+y", "+x"], ["-x", "-y"]]
             else:
-                grid2d_direction = [['+y', '+x'], ['+x', '-y']]
-            corresponding_directions.append(('+u', '-v'))
+                grid2d_direction = [["+y", "+x"], ["+x", "-y"]]
+            corresponding_directions.append(("+u", "-v"))
 
         return corresponding_directions, grid2d_direction
 
@@ -3183,22 +3617,22 @@ class BSplineFace3D(Face3D):
         shared = []
         for k, point1 in enumerate(contour1.primitives):
             if dis_sorted[0] == dis_sorted[1]:
-                indices = npy.where(npy.array(dis) == dis_sorted[0])[0]
+                indices = np.where(np.array(dis) == dis_sorted[0])[0]
                 index1 = indices[0]
                 index2 = indices[1]
             else:
                 index1 = dis.index(dis_sorted[0])
                 index2 = dis.index(dis_sorted[1])
-            if ((point1.start.is_close(points1[index1]) and point1.end.is_close(points1[index2]))
-                    or
-                    (point1.end.is_close(points1[index1]) and point1.start.is_close(points1[index2]))):
+            if (point1.start.is_close(points1[index1]) and point1.end.is_close(points1[index2])) or (
+                point1.end.is_close(points1[index1]) and point1.start.is_close(points1[index2])
+            ):
                 shared.append(point1)
                 i = k
 
         for k, prim2 in enumerate(contour2.primitives):
-            if ((prim2.start.is_close(points2[ind[index1]]) and prim2.end.is_close(points2[ind[index2]]))
-                    or
-                    (prim2.end.is_close(points2[ind[index1]]) and prim2.start.is_close(points2[ind[index2]]))):
+            if (prim2.start.is_close(points2[ind[index1]]) and prim2.end.is_close(points2[ind[index2]])) or (
+                prim2.end.is_close(points2[ind[index1]]) and prim2.start.is_close(points2[ind[index2]])
+            ):
                 shared.append(prim2)
                 j = k
 
@@ -3231,20 +3665,20 @@ class BSplineFace3D(Face3D):
         dv1 = abs((end1 - start1)[1])
 
         if du1 < dv1:
-            adjacent_direction1 = 'v'
+            adjacent_direction1 = "v"
             diff1 = (end1 - start1)[1]
         else:
-            adjacent_direction1 = 'u'
+            adjacent_direction1 = "u"
             diff1 = (end1 - start1)[0]
 
         du2 = abs((end2 - start2)[0])
         dv2 = abs((end2 - start2)[1])
 
         if du2 < dv2:
-            adjacent_direction2 = 'v'
+            adjacent_direction2 = "v"
             diff2 = (end2 - start2)[1]
         else:
-            adjacent_direction2 = 'u'
+            adjacent_direction2 = "u"
             diff2 = (end2 - start2)[0]
 
         return adjacent_direction1, diff1, adjacent_direction2, diff2
@@ -3265,8 +3699,8 @@ class BSplineFace3D(Face3D):
         coord = [abs(coord.x), abs(coord.y)]
 
         if coord.index(max(coord)) == 0:
-            return 'x'
-        return 'y'
+            return "x"
+        return "y"
 
     def merge_with(self, other_bspline_face3d):
         """
@@ -3285,8 +3719,9 @@ class BSplineFace3D(Face3D):
         return merged_face
 
     @classmethod
-    def from_surface_rectangular_cut(cls, bspline_surface3d, u1: float, u2: float,
-                                     v1: float, v2: float, name: str = ''):
+    def from_surface_rectangular_cut(
+        cls, bspline_surface3d, u1: float, u2: float, v1: float, v2: float, name: str = ""
+    ):
         """
         Cut a rectangular piece of the BSplineSurface3D object and return a BSplineFace3D object.
 
@@ -3301,11 +3736,11 @@ class BSplineFace3D(Face3D):
 
     def to_planeface3d(self, plane3d: surfaces.Plane3D = None):
         """
-        Converts a Bspline face3d to a Plane face3d (using or without a reference Plane3D).
+        Converts a Bspline face 3d to a Plane face 3d (using or without a reference Plane3D).
 
         :param plane3d: A reference Plane3D, defaults to None
         :type plane3d: Plane3D, optional
-        :return: A Plane face3d
+        :return: A Plane face 3d.
         :rtype: PlaneFace3D
         """
 
@@ -3313,7 +3748,8 @@ class BSplineFace3D(Face3D):
             plane3d = self.surface3d.to_plane3d()
         surface2d = surfaces.Surface2D(
             outer_contour=plane3d.contour3d_to_2d(self.outer_contour3d),
-            inner_contours=[plane3d.contour3d_to_2d(contour) for contour in self.inner_contours3d])
+            inner_contours=[plane3d.contour3d_to_2d(contour) for contour in self.inner_contours3d],
+        )
 
         return PlaneFace3D(surface3d=plane3d, surface2d=surface2d)
 
@@ -3370,12 +3806,14 @@ class BSplineFace3D(Face3D):
         :rtype: Union[list, None]
         """
         surface_curves = self.surface3d.surface_curves
-        u_curves = surface_curves['u']
-        v_curves = surface_curves['v']
-        u_curves = [primitive.simplify
-                    for primitive in u_curves if not isinstance(primitive.simplify, vme.LineSegment3D)]
-        v_curves = [primitive.simplify
-                    for primitive in v_curves if not isinstance(primitive.simplify, vme.LineSegment3D)]
+        u_curves = surface_curves["u"]
+        v_curves = surface_curves["v"]
+        u_curves = [
+            primitive.simplify for primitive in u_curves if not isinstance(primitive.simplify, vme.LineSegment3D)
+        ]
+        v_curves = [
+            primitive.simplify for primitive in v_curves if not isinstance(primitive.simplify, vme.LineSegment3D)
+        ]
         u_radius, u_centers = self.get_approximating_arc_parameters(u_curves)
         v_radius, v_centers = self.get_approximating_arc_parameters(v_curves)
 
@@ -3385,8 +3823,8 @@ class BSplineFace3D(Face3D):
             return v_centers
         if u_radius and not v_radius:
             return u_centers
-        u_mean = npy.mean(u_radius)
-        v_mean = npy.mean(v_radius)
+        u_mean = np.mean(u_radius)
+        v_mean = np.mean(v_radius)
         if u_mean > v_mean:
             return v_centers
         if u_mean < v_mean:
@@ -3404,9 +3842,9 @@ class BSplineFace3D(Face3D):
             neutral_fiber = vme.LineSegment3D(neutral_fiber_points[0], neutral_fiber_points[-1])
             is_line = all(neutral_fiber.point_belongs(point) for point in neutral_fiber_points)
         if not is_line:
-            neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(neutral_fiber_points,
-                                                                         min(self.surface3d.degree_u,
-                                                                             self.surface3d.degree_v))
+            neutral_fiber = vme.BSplineCurve3D.from_points_interpolation(
+                neutral_fiber_points, min(self.surface3d.degree_u, self.surface3d.degree_v)
+            )
         umin, umax, vmin, vmax = self.surface2d.outer_contour.bounding_rectangle.bounds()
         min_bound_u, max_bound_u, min_bound_v, max_bound_v = self.surface3d.domain
         if not math.isclose(umin, min_bound_u, rel_tol=0.01) or not math.isclose(vmin, min_bound_v, rel_tol=0.01):
@@ -3416,7 +3854,14 @@ class BSplineFace3D(Face3D):
             point1 = neutral_fiber.start
         if not math.isclose(umax, max_bound_u, rel_tol=0.01) or not math.isclose(vmax, max_bound_v, rel_tol=0.01):
             point3d_max = self.surface3d.point2d_to_3d(volmdlr.Point2D(umax, vmax))
-            point2 = neutral_fiber.point_projection(point3d_max)[0]
-        else:
-            point2 = neutral_fiber.end
-        return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, point2)])
+            return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, neutral_fiber.point_projection(point3d_max)[0])])
+        return volmdlr.wires.Wire3D([neutral_fiber.trim(point1, neutral_fiber.end)])
+
+    def linesegment_intersections(self, linesegment: vme.LineSegment3D) -> List[volmdlr.Point3D]:
+        """
+        Get intersections between a BSpline face 3d and a Line Segment 3D.
+
+        :param linesegment: other linesegment.
+        :return: a list of intersections.
+        """
+        return self.linesegment_intersections_approximation(linesegment)

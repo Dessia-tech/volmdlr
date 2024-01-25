@@ -1,9 +1,13 @@
+import os
 import math
 import unittest
-
+from dessia_common.core import DessiaObject
 import volmdlr
 from volmdlr import edges, curves
 from volmdlr.models.curves import circle3d
+
+
+folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'circle3D_objects')
 
 
 class TestCircle3D(unittest.TestCase):
@@ -93,11 +97,11 @@ class TestCircle3D(unittest.TestCase):
 
     def test_from_center_normal(self):
         from_center_normal = curves.Circle3D.from_center_normal(volmdlr.O3D, circle3d.normal, 1)
-        self.assertEqual(from_center_normal, circle3d)
+        self.assertTrue(from_center_normal.is_close(circle3d))
 
     def test_from_3_points(self):
         from_3_points = curves.Circle3D.from_3_points(*self.list_points[:3])
-        assert from_3_points == circle3d
+        self.assertTrue(from_3_points.is_close(circle3d))
 
     def test_extrusion(self):
         extrusion = circle3d.extrusion(circle3d.normal)
@@ -169,6 +173,11 @@ class TestCircle3D(unittest.TestCase):
         circle_linseg_intersections1 = circle3.linesegment_intersections(lineseg2)
         self.assertEqual(len(circle_linseg_intersections1), 1)
         self.assertTrue(circle_linseg_intersections1[0].is_close(volmdlr.Point3D(1, 0.0, 0.0)))
+        circle, lineseg = DessiaObject.from_json(os.path.join(folder,
+            'test_circle_linesegment_intersections221223.json')).primitives
+        intersections = circle.linesegment_intersections(lineseg)
+        self.assertEqual(len(intersections), 1)
+        self.assertTrue(intersections[0].is_close(volmdlr.Point3D(-1.9999993561471823, -0.5135128860482583, 0.9978935668376178)))
 
     def test_circle_intersections(self):
         circle1 = curves.Circle3D.from_3_points(volmdlr.Point3D(-3, -3, 0),
@@ -184,6 +193,34 @@ class TestCircle3D(unittest.TestCase):
                             volmdlr.Point3D(7.332605916292026, -4.272128323148586, -0.42404277438286175)]
         for intersection, expected_result in zip(intersections, expected_results):
             self.assertTrue(intersection.is_close(expected_result))
+
+        circle1 = curves.Circle3D(volmdlr.Frame3D(origin=volmdlr.Point3D(1.0, 1.0, -0.9595959595959596),
+                                                  u=volmdlr.Vector3D(1.0, 0.0, 0.0),
+                                                  v=volmdlr.Vector3D(0.0, 1.0, 0.0),
+                                                  w=volmdlr.Vector3D(0.0, 0.0, 1.0)), 1)
+        circle2 = curves.Circle3D(volmdlr.Frame3D(
+            origin=volmdlr.Point3D(-3.3306690738754696e-16, 0.9999999999986168, -0.959595959596),
+            u=volmdlr.Vector3D(1.0, 0.0, 0.0),
+            v=volmdlr.Vector3D(0.0, 1.0, 0.0),
+            w=volmdlr.Vector3D(0.0, 0.0, 1.0)), 1.3977300414963283)
+        circle_intersections = circle1.circle_intersections(circle2)
+        self.assertTrue(circle_intersections[0].is_close(
+            volmdlr.Point3D(0.976824634449, 1.999731415147, -0.959595959596)))
+        self.assertTrue(circle_intersections[1].is_close(
+            volmdlr.Point3D(0.976824634452, 0.000268584853, -0.959595959596)))
+
+    def test_point_distance(self):
+        vector1 = volmdlr.Vector3D(1, 1, 1)
+        vector1 = vector1.unit_vector()
+        vector2 = vector1.deterministic_unit_normal_vector()
+        vector3 = vector1.cross(vector2)
+        frame = volmdlr.Frame3D(volmdlr.O3D, vector1, vector2, vector3)
+
+        circle = curves.Circle3D(frame, 2)
+        point = volmdlr.Point3D(3, -2.5, 2)
+
+        point_distance = circle.point_distance(point)
+        self.assertAlmostEqual(point_distance, 3.341699272287294)
 
 
 if __name__ == '__main__':

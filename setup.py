@@ -126,11 +126,11 @@ setup(
     include_package_data=True,
     install_requires=[
         "packaging",
-        "dessia_common>=0.10.0",
+        "dessia_common>=0.14.0",
         "Cython>=3.0.0",
-        "numpy<1.26.0", #  Wheels of 1.26.0 were not ready
+        "numpy",
         "matplotlib",
-        "scipy<=1.11.1",
+        "scipy",
         "geomdl",
         "networkx",
         "triangle",
@@ -141,6 +141,8 @@ setup(
         "trimesh",
         "rtree",
         "gmsh",
+        "pyfqmr",
+        "CGAL",
     ],
     extras_require={"test": ["coverage"],
                     "doc": ["sphinx", "nbsphinx", "pydata_sphinx_theme", "nbformat", "nbconvert",
@@ -153,7 +155,8 @@ setup(
                            "volmdlr/discrete_representation_compiled.py",
                            "volmdlr/nurbs/core.pyx",
                            "volmdlr/nurbs/helpers.pyx",
-                           "volmdlr/nurbs/fitting.py"]),
+                           "volmdlr/nurbs/fitting.py",
+                           "volmdlr/nurbs/operations.py"]),
     include_dirs=[np.get_include()],
     python_requires=">=3.9",
 )

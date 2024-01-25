@@ -265,12 +265,28 @@
                 "circle": {
                   "object_class": "volmdlr.curves.Circle2D",
                   "name": "",
-                  "center": {
+                  "radius": 0.2,
+                  "frame": {
+                    "object_class": "volmdlr.Frame2D",
+                    "name": "",
+                    "origin": {
                     "object_class": "volmdlr.Point2D",
                     "x": 0.5,
                     "y": 0.35
-                  },
-                  "radius": 0.2
+                    },
+                    "u": {
+                      "object_class": "volmdlr.Vector2D",
+                      "x": 1.0,
+                      "y": 0.0,
+                      "name": ""
+                    },
+                    "v": {
+                      "object_class": "volmdlr.Vector2D",
+                      "x": 0.0,
+                      "y": 1.0,
+                      "name": ""
+                    }
+                  }
                 },
                 "is_trigo": true,
                 "start": {
@@ -282,9 +298,7 @@
                   "object_class": "volmdlr.Point2D",
                   "x": 0.30000000000000004,
                   "y": 0.35
-                },
-                "angle1": 0.0,
-                "angle2": 3.141592653589793
+                }
               },
               {
                 "object_class": "volmdlr.edges.Arc2D",
@@ -292,12 +306,28 @@
                 "circle": {
                   "object_class": "volmdlr.curves.Circle2D",
                   "name": "",
-                  "center": {
+                  "radius": 0.2,
+                  "frame": {
+                    "object_class": "volmdlr.Frame2D",
+                    "name": "",
+                    "origin": {
                     "object_class": "volmdlr.Point2D",
                     "x": 0.5,
                     "y": 0.35
-                  },
-                  "radius": 0.2
+                    },
+                    "u": {
+                      "object_class": "volmdlr.Vector2D",
+                      "x": 1.0,
+                      "y": 0.0,
+                      "name": ""
+                    },
+                    "v": {
+                      "object_class": "volmdlr.Vector2D",
+                      "x": 0.0,
+                      "y": 1.0,
+                      "name": ""
+                    }
+                  }
                 },
                 "is_trigo": true,
                 "start": {
@@ -309,9 +339,7 @@
                   "object_class": "volmdlr.Point2D",
                   "x": 0.7,
                   "y": 0.35
-                },
-                "angle1": 3.141592653589793,
-                "angle2": 6.283185307179586
+                }
               }
             ]
           }

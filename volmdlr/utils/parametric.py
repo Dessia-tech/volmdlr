@@ -4,6 +4,7 @@ volmdlr utils for calculating 3D to surface parametric domain operation.
 """
 import bisect
 import math
+import numpy as np
 
 import volmdlr
 import volmdlr.edges as vme
@@ -290,8 +291,8 @@ def array_range_search(x, xmin, xmax):
     :rtype: range
     :Example:
 
-    >>> x = [1, 2, 3, 4, 5]
-    >>> array_range_search(x, 2, 4)
+    >>> array = [1, 2, 3, 4, 5]
+    >>> array_range_search(array, 2, 4)
     range(1, 3)
     """
 
@@ -299,6 +300,23 @@ def array_range_search(x, xmin, xmax):
     right = bisect.bisect_right(x, xmax)
 
     return range(left, right)
+
+
+def update_face_grid_points_with_inner_polygons(inner_polygons, grid_points_data):
+    """Remove grid_points inside inner contours of the face."""
+    points_grid, u, v, grid_point_index = grid_points_data
+    indexes = []
+    for inner_polygon in inner_polygons:
+        u_min, u_max, v_min, v_max = inner_polygon.bounding_rectangle.bounds()
+        for i in array_range_search(u, u_min, u_max):  # u_grid_range of inner_polygon
+            for j in array_range_search(v, v_min, v_max):  # v_grid_range of inner_polygon
+                index = grid_point_index.get((i, j))
+                if not index:
+                    continue
+                if inner_polygon.point_inside(points_grid[index], include_edge_points=True):
+                    indexes.append(index)
+    points_grid = np.delete(points_grid, indexes, axis=0)
+    return points_grid
 
 
 def contour2d_healing(contour2d):
@@ -315,10 +333,10 @@ def contour2d_healing_close_gaps(contour2d, contour3d):
     Heals topologies incoherencies on the boundary representation.
     """
     new_primitives = []
-    for prim1_3d, prim2_3d, prim1, prim2 in zip(contour3d.primitives, contour3d.primitives[1:] +
-                                                [contour3d.primitives[0]],
-                                                contour2d.primitives, contour2d.primitives[1:] +
-                                                                      [contour2d.primitives[0]]):
+    for prim1_3d, prim2_3d, prim1, prim2 in zip(contour3d.primitives,
+                                                contour3d.primitives[1:] + [contour3d.primitives[0]],
+                                                contour2d.primitives,
+                                                contour2d.primitives[1:] + [contour2d.primitives[0]]):
         if prim1 and prim2:
             if not prim1_3d.end.is_close(prim2_3d.start) and not prim1.end.is_close(prim2.start):
                 new_primitives.append(vme.LineSegment2D(prim1.end, prim2.start))
@@ -333,6 +351,7 @@ def contour2d_healing_self_intersection(contour2d):
     """
     Heals topologies incoherencies on the boundary representation.
     """
+    primitives = contour2d.primitives
     for i, (prim1, prim2) in enumerate(
             zip(contour2d.primitives, contour2d.primitives[1:] + [contour2d.primitives[0]])):
         if not prim1.end.is_close(prim2.start):
@@ -350,14 +369,59 @@ def contour2d_healing_self_intersection(contour2d):
                     new_prim2 = prim2
                 else:
                     new_prim2 = prim2.split(split_point)[1]
-                contour2d.primitives[i] = new_prim1
-                contour2d.primitives[(i + 1) % len(contour2d.primitives)] = new_prim2
+                primitives[i] = new_prim1
+                primitives[(i + 1) % len(contour2d.primitives)] = new_prim2
+    contour2d.primitives = primitives
     return contour2d
 
 
-def find_parametric_point_at_singularity(edge, reference_point, singularity_line):
+def find_parametric_point_at_singularity(edge, abscissa, singularity_line, domain):
     """Uses tangent line to find real theta angle of the singularity point on parametric domain."""
-    abscissa_before_singularity = edge.abscissa(reference_point)
-    direction_vector = edge.direction_vector(abscissa_before_singularity)
+    direction_vector = edge.direction_vector(abscissa)
+    reference_point = edge.point_at_abscissa(abscissa)
     direction_line = curves.Line2D(reference_point, reference_point + direction_vector)
-    return direction_line.line_intersections(singularity_line)[0]
+    intersections = direction_line.line_intersections(singularity_line)
+    if intersections:
+        point = intersections[0]
+        umin, umax, vmin, vmax = domain
+        point.x = min(umax, max(point.x, umin))
+        point.y = min(vmax, max(point.y, vmin))
+        return point
+    return None
+
+
+def is_isocurve(points, tol: float = 1e-6):
+    """Test if the parametric points of the edge fits into a line segment."""
+    linesegment = vme.LineSegment2D(points[0], points[-1])
+    return all(linesegment.point_belongs(point, tol) for point in points)
+
+
+def verify_repeated_parametric_points(points):
+    """Verify repeated parametric points from point3d_to_2d method."""
+    set_points = set(points)
+    if len(set_points) < len(points):
+        if points[0].is_close(points[-1]):
+            print("Periodic brep? NotImplemented in utils.parametric.py verify_repeated_parametric_points.")
+        new_points = []
+        verification_set = set()
+        for point in points:
+            if point not in verification_set:
+                new_points.append(point)
+                verification_set.add(point)
+        return new_points
+    return points
+
+
+def repair_undefined_brep(surface, primitives2d, primitives_mapping, i, previous_primitive):
+    """Helper function to repair_primitives_periodicity."""
+    old_primitive = primitives2d[i]
+    primitives2d[i] = surface.fix_undefined_brep_with_neighbors(primitives2d[i], previous_primitive,
+                                                                primitives2d[(i + 1) % len(primitives2d)
+                                                                             ])
+    primitives_mapping[primitives2d[i]] = primitives_mapping.pop(old_primitive)
+    delta = previous_primitive.end - primitives2d[i].start
+    if not math.isclose(delta.norm(), 0, abs_tol=1e-3):
+        primitives2d.insert(i, vme.LineSegment2D(previous_primitive.end, primitives2d[i].start,
+                                                 name="construction"))
+        if i < len(primitives2d):
+            i += 1

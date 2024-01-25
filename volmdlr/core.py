@@ -3,7 +3,6 @@
 """
 Base classes.
 """
-
 import os
 import tempfile
 import warnings
@@ -26,8 +25,10 @@ import dessia_common.files as dcf
 import volmdlr
 import volmdlr.templates
 from volmdlr.core_compiled import bbox_is_intersecting
+from volmdlr.discrete_representation_compiled import triangle_intersects_voxel
 from volmdlr.utils.step_writer import product_writer, geometric_context_writer, assembly_definition_writer, \
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
+from volmdlr.geometry import get_transfer_matrix_from_basis
 
 npy.seterr(divide='raise')
 
@@ -59,7 +60,9 @@ def point_in_list(point, list_points, tol: float = 1e-6):
     :return: True if there is a point inside the list close to the point to given tolerance.
     """
 
-    return element_in_list(point, list_points, tol)
+    if not list_points:
+        return False
+    return point.in_list(list_points, tol)
 
 
 def edge_in_list(edge, list_edges, tol: float = 1e-6):
@@ -147,6 +150,82 @@ def delete_double_point(list_point):
     return points
 
 
+def map_primitive_with_initial_and_final_frames(primitive, initial_frame, final_frame):
+    """
+    Frame maps a primitive in an assembly to its good position.
+
+    :param primitive: primitive to map
+    :type primitive: Primitive3D
+    :param initial_frame: Initial frame
+    :type initial_frame: volmdlr.Frame3D
+    :param final_frame: The frame resulted after applying a transformation to the initial frame
+    :type final_frame: volmdlr.Frame3D
+    :return: A new positioned primitive
+    :rtype: Primitive3D
+
+    """
+    if initial_frame == final_frame:
+        return primitive
+    transfer_matrix = get_transfer_matrix_from_basis(initial_frame.basis(), final_frame.basis())
+    u_vector = volmdlr.Vector3D(*transfer_matrix[0])
+    v_vector = volmdlr.Vector3D(*transfer_matrix[1])
+    w_vector = volmdlr.Vector3D(*transfer_matrix[2])
+    new_frame = volmdlr.Frame3D(final_frame.origin, u_vector, v_vector, w_vector)
+    if new_frame == volmdlr.OXYZ:
+        return primitive
+    new_primitive = primitive.frame_mapping(new_frame, 'old')
+    return new_primitive
+
+
+def helper_babylon_data(babylon_data, display_points):
+    """Helper function to babylon_data."""
+    # Compute max length in each direction
+    all_positions = []
+    all_points = []
+    for mesh in babylon_data["meshes"]:
+        all_positions += _extract_positions(mesh)
+
+    for line in babylon_data["lines"]:
+        points = line["points"]
+        all_points.extend(points)
+    if display_points:
+        all_points.extend(display_points)
+
+    # Convert to a NumPy array and reshape
+    positions_array = npy.array([])
+    if all_points and all_positions:
+        positions_array = npy.concatenate((npy.array(all_positions).reshape(-1, 3), npy.array(all_points)))
+    elif all_positions:
+        positions_array = npy.array(all_positions).reshape(-1, 3)
+    elif all_points:
+        positions_array = npy.array(all_points)
+    # Compute min and max for each dimension
+    min_vals = positions_array.min(axis=0)
+    max_vals = positions_array.max(axis=0)
+
+    # Calculate max length of the bounding box
+    max_length = npy.max(max_vals - min_vals)
+
+    # Calculate center point of the bounding box
+    center = (0.5 * (min_vals + max_vals)).tolist()
+
+    babylon_data['max_length'] = max_length
+    babylon_data['center'] = center
+
+    return babylon_data
+
+
+def _extract_positions(mesh):
+    """Helper function to extract positions from babylon_data."""
+    all_positions = []
+
+    for primitives_mesh in mesh.get("primitives_meshes", []):
+        all_positions += _extract_positions(primitives_mesh)
+
+    all_positions += mesh.get("positions", [])
+    return all_positions
+
+
 @dataclass
 class EdgeStyle:
     """
@@ -178,6 +257,7 @@ class Primitive3D(dc.PhysicalObject):
         dc.PhysicalObject.__init__(self, name=name)
 
     def volmdlr_primitives(self):
+        """ Return a list of volmdlr primitives to build up volume model."""
         return [self]
 
     def babylon_param(self):
@@ -197,6 +277,9 @@ class Primitive3D(dc.PhysicalObject):
         return babylon_param
 
     def triangulation(self, *args, **kwargs):
+        """
+        Get object triangulation.
+        """
         raise NotImplementedError(
             f"triangulation method should be implemented on class {self.__class__.__name__}")
 
@@ -207,11 +290,8 @@ class Primitive3D(dc.PhysicalObject):
         mesh = self.triangulation()
         if mesh is None:
             return []
-        positions, indices = mesh.to_babylon()
+        babylon_mesh = mesh.to_babylon()
 
-        babylon_mesh = {'positions': positions,
-                        'indices': indices
-                        }
         babylon_mesh.update(self.babylon_param())
         return [babylon_mesh]
 
@@ -331,7 +411,7 @@ class BoundingRectangle(dc.DessiaObject):
         """
         return volmdlr.Point2D(0.5 * (self.xmin + self.xmax), 0.5 * (self.ymin + self.ymax))
 
-    def b_rectangle_intersection(self, b_rectangle2):
+    def is_intersecting(self, b_rectangle2):
         """
         Returns True if there is an intersection with another specified bounding rectangle or False otherwise.
 
@@ -340,6 +420,16 @@ class BoundingRectangle(dc.DessiaObject):
         """
         return self.xmin < b_rectangle2.xmax and self.xmax > b_rectangle2.xmin \
             and self.ymin < b_rectangle2.ymax and self.ymax > b_rectangle2.ymin
+
+    def b_rectangle_intersection(self, b_rectangle2):
+        """
+        Returns True if there is an intersection with another specified bounding rectangle or False otherwise.
+
+        :param b_rectangle2: bounding rectangle to verify intersection
+        :type b_rectangle2: :class:`BoundingRectangle`
+        """
+        warnings.warn('b_rectangle_intersection is deprecated, please use is_intersecting instead')
+        return self.is_intersecting(b_rectangle2)
 
     def is_inside_b_rectangle(self, b_rectangle2, tol: float = 1e-6):
         """
@@ -353,7 +443,7 @@ class BoundingRectangle(dc.DessiaObject):
         return (self.xmin >= b_rectangle2.xmin - tol) and (self.xmax <= b_rectangle2.xmax + tol) \
             and (self.ymin >= b_rectangle2.ymin - tol) and (self.ymax <= b_rectangle2.ymax + tol)
 
-    def point_belongs(self, point: volmdlr.Point2D):
+    def point_inside(self, point: volmdlr.Point2D):
         """
         Returns True if a specified point is inside the bounding rectangle and False otherwise.
 
@@ -369,7 +459,7 @@ class BoundingRectangle(dc.DessiaObject):
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
         """
-        if not self.b_rectangle_intersection(b_rectangle2):
+        if not self.is_intersecting(b_rectangle2):
             return 0
         if self.is_inside_b_rectangle(b_rectangle2) or b_rectangle2.is_inside_b_rectangle(self):
             return min(self.area(), b_rectangle2.area())
@@ -386,7 +476,7 @@ class BoundingRectangle(dc.DessiaObject):
         :param b_rectangle2: A bounding rectangle
         :type b_rectangle2: :class:`BoundingRectangle`
         """
-        if self.b_rectangle_intersection(b_rectangle2):
+        if self.is_intersecting(b_rectangle2):
             return 0
 
         permute_b_rec1 = self
@@ -409,7 +499,7 @@ class BoundingRectangle(dc.DessiaObject):
         :param point: A 2D point
         :type point: :class:`volmdlr.Point2D`
         """
-        if self.point_belongs(point):
+        if self.point_inside(point):
             return min([self.xmax - point.x, point.y - self.xmin,
                         self.ymax - point.y, point.y - self.ymin])
 
@@ -440,10 +530,10 @@ class BoundingRectangle(dc.DessiaObject):
         :return: The bounding rectangle initialized from the list of points.
         :rtype: BoundingRectangle
         """
-        xmin = min(pt.x for pt in points)
-        xmax = max(pt.x for pt in points)
-        ymin = min(pt.y for pt in points)
-        ymax = max(pt.y for pt in points)
+        points_array = npy.array(points)
+        # Compute min and max for each dimension
+        xmin, ymin = points_array.min(axis=0)
+        xmax, ymax = points_array.max(axis=0)
         return cls(xmin, xmax, ymin, ymax, name=name)
 
 
@@ -575,10 +665,6 @@ class BoundingBox(dc.DessiaObject):
                       [self.points[6], self.points[7]],
                       [self.points[7], self.points[4]]]
 
-        # x = [p[0] for p in self.points]
-        # y = [p[1] for p in self.points]
-        # z = [p[2] for p in self.points]
-        # ax.scatter(x, y, z, color)
         for edge in bbox_edges:
             ax.plot3D([edge[0][0], edge[1][0]],
                       [edge[0][1], edge[1][1]],
@@ -590,21 +676,29 @@ class BoundingBox(dc.DessiaObject):
         return ax
 
     @classmethod
-    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"], name: str = '') -> "BoundingBox":
+    def from_bounding_boxes(cls, bounding_boxes: List["BoundingBox"], name: str = "") -> "BoundingBox":
         """
-        Creates a bounding box that contains multiple bounding boxes.
+        Create a bounding box that contains multiple bounding boxes.
 
         :param bounding_boxes: A list of bounding boxes that need to be contained.
-        :type bounding_boxes: list of BoundingBox
+        :type bounding_boxes: List[BoundingBox]
+        :param name: A name for the bounding box, optional.
+        :type name: str
+
         :return: A new bounding box that contains all the input bounding boxes.
         :rtype: BoundingBox
         """
-        xmin = min(bb.xmin for bb in bounding_boxes)
-        xmax = max(bb.xmax for bb in bounding_boxes)
-        ymin = min(bb.ymin for bb in bounding_boxes)
-        ymax = max(bb.ymax for bb in bounding_boxes)
-        zmin = min(bb.zmin for bb in bounding_boxes)
-        zmax = max(bb.zmax for bb in bounding_boxes)
+        # Create a 2D NumPy array where each row corresponds to the coordinates of a bounding box
+        # [xmin, xmax, ymin, ymax, zmin, zmax]
+        coords = npy.array([[bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax] for bb in bounding_boxes])
+
+        # Find the global minimum and maximum for each axis
+        mins = npy.amin(coords, axis=0)
+        maxs = npy.amax(coords, axis=0)
+
+        # Assign min and max for each axis
+        xmin, xmax, ymin, ymax, zmin, zmax = mins[0], maxs[1], mins[2], maxs[3], mins[4], maxs[5]
+
         return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     @classmethod
@@ -618,14 +712,11 @@ class BoundingBox(dc.DessiaObject):
         :return: The bounding box initialized from the list of points.
         :rtype: BoundingBox
         """
-        # if len(points) == 0:
-        #     return (0, 0, 0, 0, 0, 0)
-        xmin = min(pt.x for pt in points)
-        xmax = max(pt.x for pt in points)
-        ymin = min(pt.y for pt in points)
-        ymax = max(pt.y for pt in points)
-        zmin = min(pt.z for pt in points)
-        zmax = max(pt.z for pt in points)
+        points_array = npy.array(points)
+        # Compute min and max for each dimension
+        xmin, ymin, zmin = points_array.min(axis=0)
+        xmax, ymax, zmax = points_array.max(axis=0)
+
         return cls(xmin, xmax, ymin, ymax, zmin, zmax, name=name)
 
     def to_frame(self) -> volmdlr.Frame3D:
@@ -681,30 +772,37 @@ class BoundingBox(dc.DessiaObject):
         :return: The volume of the bounding box.
         :rtype: float
         """
-        return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (
-                self.zmax - self.zmin)
+        return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (self.zmax - self.zmin)
 
-    def bbox_intersection(self, bbox2: "BoundingBox", tol: float = 1e-6) -> bool:
+    def scale(self, factor: float) -> "BoundingBox":
         """
-        Calculates if there is an intersection between two bounding boxes.
+        Scales the bounding box by a given factor and returns a new BoundingBox.
 
-        :param bbox2: The second bounding box to compare with the current bounding box (self).
-        :type bbox2: BoundingBox
-        :param tol: tolerance to be considered.
-        :return: A boolean value indicating whether the two bounding boxes intersect (True) or not (False).
-        :rtype: bool
+        :param factor: The scaling factor.
+        :type factor: float
+
+        :return: A new scaled BoundingBox.
+        :rtype: BoundingBox
         """
-        # if self.xmin < bbox2.xmax and self.xmax > bbox2.xmin:
-        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-        #         return True
-        # if self.xmin == bbox2.xmax and self.xmax == bbox2.xmin:
-        #     if self.ymin < bbox2.ymax and self.ymax > bbox2.ymin \
-        #             and self.zmin < bbox2.zmax and self.zmax > bbox2.zmin:
-        #         return True
-        # return False
-        warnings.warn('bbox_intersection is deprecated, please use is_intersecting instead')
-        return self.is_intersecting(bbox2, tol)
+        x_center = (self.xmin + self.xmax) / 2
+        y_center = (self.ymin + self.ymax) / 2
+        z_center = (self.zmin + self.zmax) / 2
+        x_size, y_size, z_size = self.size
+
+        scaled_half_x_size = (x_size * factor) / 2
+        scaled_half_y_size = (y_size * factor) / 2
+        scaled_half_z_size = (z_size * factor) / 2
+
+        # Calculate new min and max values
+        new_xmin = x_center - scaled_half_x_size
+        new_xmax = x_center + scaled_half_x_size
+        new_ymin = y_center - scaled_half_y_size
+        new_ymax = y_center + scaled_half_y_size
+        new_zmin = z_center - scaled_half_z_size
+        new_zmax = z_center + scaled_half_z_size
+
+        # Return a new BoundingBox object
+        return BoundingBox(new_xmin, new_xmax, new_ymin, new_ymax, new_zmin, new_zmax, self.name)
 
     def is_intersecting(self, bbox2, tol: float = 1e-6):
         """
@@ -740,7 +838,7 @@ class BoundingBox(dc.DessiaObject):
         :return: The volume of the intersection of two bounding boxes.
         :rtype: float
         """
-        if not self.bbox_intersection(bbox2):
+        if not self.is_intersecting(bbox2):
             return 0
         if self.is_inside_bbox(bbox2) or bbox2.is_inside_bbox(self):
             return min(self.volume(), bbox2.volume())
@@ -750,6 +848,22 @@ class BoundingBox(dc.DessiaObject):
         lz = min(self.zmax, bbox2.zmax) - max(self.zmin, bbox2.zmin)
 
         return lx * ly * lz
+
+    def is_intersecting_triangle(self, triangle: "Triangle3D") -> bool:
+        """
+        Check if the bounding box and a triangle are intersecting or touching.
+
+        :param triangle: the triangle to check if there is an intersection with.
+        :type triangle: Triangle3D
+
+        :return: True if the bounding box and the triangle are intersecting or touching, False otherwise.
+        :rtype: bool
+        """
+        _triangle = tuple((point.x, point.y, point.z) for point in triangle.points)
+        _center = (self.center[0], self.center[1], self.center[2])
+        _extents = tuple(size / 2 for size in self.size)
+
+        return triangle_intersects_voxel(_triangle, _center, _extents)
 
     def distance_to_bbox(self, bbox2: "BoundingBox") -> float:
         """
@@ -764,7 +878,7 @@ class BoundingBox(dc.DessiaObject):
         :rtype: float
         """
 
-        if self.bbox_intersection(bbox2):
+        if self.is_intersecting(bbox2):
             return 0
 
         permute_bbox1 = self
@@ -784,7 +898,7 @@ class BoundingBox(dc.DessiaObject):
 
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
-    def point_belongs(self, point: volmdlr.Point3D, tol=1e-6) -> bool:
+    def point_inside(self, point: volmdlr.Point3D, tol=1e-6) -> bool:
         """
         Determines if a point belongs to the bounding box.
 
@@ -809,7 +923,7 @@ class BoundingBox(dc.DessiaObject):
         :return: The minimum distance between the point and the bounding box.
         :rtype: float
         """
-        if self.point_belongs(point):
+        if self.point_inside(point):
             return min([self.xmax - point[0], point[0] - self.xmin,
                         self.ymax - point[1], point[1] - self.ymin,
                         self.zmax - point[2], point[2] - self.zmin])
@@ -836,6 +950,27 @@ class BoundingBox(dc.DessiaObject):
             dz = 0
         return (dx ** 2 + dy ** 2 + dz ** 2) ** 0.5
 
+    def is_close(self, other_bounding_box: "BoundingBox", tol: float = 1e-6) -> bool:
+        """
+        Check if two bounding boxes are close to each other considering the Euclidean distance of their corners points.
+
+        The tolerance can be modified.
+
+        :param other_bounding_box: the other bounding box.
+        :type other_bounding_box: BoundingBox
+        :param tol: The tolerance under which the Euclidean distance is considered equal to 0.
+        :type tol: float
+
+        :return: True if the bounding boxes are equal at the given tolerance, False otherwise.
+        :rtype: bool
+        """
+        self_corner_min = volmdlr.Point3D(self.xmin, self.ymin, self.zmin)
+        self_conrer_max = volmdlr.Point3D(self.xmax, self.ymax, self.zmax)
+        other_corner_min = volmdlr.Point3D(other_bounding_box.xmin, other_bounding_box.ymin, other_bounding_box.zmin)
+        other_corner_max = volmdlr.Point3D(other_bounding_box.xmax, other_bounding_box.ymax, other_bounding_box.zmax)
+
+        return self_corner_min.is_close(other_corner_min, tol) and self_conrer_max.is_close(other_corner_max, tol)
+
     def octree(self):
         """Creates a simple octree structure for a bounding box."""
         if not self._octree:
@@ -852,6 +987,174 @@ class BoundingBox(dc.DessiaObject):
                                               mins_maxs[4], mins_maxs[5]))
             self._octree = octants
         return self._octree
+
+
+class Assembly(dc.PhysicalObject):
+    """
+    Defines an assembly.
+
+    :param components: A list of volmdlr objects
+    :type components: List[:class:`volmdlr.core.Primitive3D`]
+    :param positions: A list of volmdlr.Frame3D representing the positions of each component in the assembly absolute
+        frame.
+    :type positions: List[:class:`volmdlr.Frame3D`]
+    :param name: The Assembly's name
+    :type name: str
+    """
+    _standalone_in_db = True
+    _eq_is_data_eq = True
+    _non_serializable_attributes = ['bounding_box', "primitives"]
+    _non_data_eq_attributes = ['name', 'bounding_box']
+    _non_data_hash_attributes = ['name', 'bounding_box']
+
+    def __init__(self, components: List[Primitive3D], positions: List[volmdlr.Frame3D],
+                 frame: volmdlr.Frame3D = volmdlr.OXYZ, name: str = ''):
+        self.components = components
+        self.frame = frame
+        self.positions = positions
+        self.primitives = [map_primitive_with_initial_and_final_frames(primitive, frame, frame_primitive)
+                           for primitive, frame_primitive in zip(components, positions)]
+        self._bbox = None
+        dc.PhysicalObject.__init__(self, name=name)
+
+    @property
+    def bounding_box(self):
+        """
+        Returns the bounding box.
+
+        """
+        if not self._bbox:
+            self._bbox = self._bounding_box()
+        return self._bbox
+
+    @bounding_box.setter
+    def bounding_box(self, new_bounding_box):
+        self._bbox = new_bounding_box
+
+    def _bounding_box(self) -> BoundingBox:
+        """
+        Computes the bounding box of the model.
+        """
+        bbox_list = [prim.bounding_box for prim in self.primitives if hasattr(prim, "bounding_box")]
+        if not bbox_list:
+            return BoundingBox.from_points(self.primitives)
+        return BoundingBox.from_bounding_boxes(bbox_list)
+
+    def babylon_data(self, merge_meshes=True):
+        """
+        Get babylonjs data.
+
+        :return: Dictionary with babylon data.
+        """
+
+        babylon_data = {'meshes': [],
+                        'lines': []}
+        display_points = []
+        for primitive in self.primitives:
+            if hasattr(primitive, 'babylon_meshes'):
+                babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
+            elif hasattr(primitive, 'babylon_curves'):
+                curves = primitive.babylon_curves()
+                if curves:
+                    babylon_data['lines'].append(curves)
+            elif hasattr(primitive, 'babylon_data'):
+                data = primitive.babylon_data(merge_meshes=merge_meshes)
+                babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
+                babylon_data['lines'].extend(line for line in data.get("lines"))
+            elif isinstance(primitive, volmdlr.Point3D):
+                display_points.append(primitive)
+        return helper_babylon_data(babylon_data, display_points)
+
+    def frame_mapping(self, frame: volmdlr.Frame3D, side: str):
+        """
+        Changes frame_mapping and return a new Assembly.
+
+        side = 'old' or 'new'
+        """
+        new_positions = [position.frame_mapping(frame, side)
+                         for position in self.positions]
+        return Assembly(self.components, new_positions, self.frame, self.name)
+
+    def volmdlr_primitives(self):
+        """ Return a list of volmdlr primitives to build up an Assembly. """
+        return [self]
+
+    def to_step(self, current_id):
+        """
+        Creates step file entities from volmdlr objects.
+        """
+        step_content = ''
+
+        product_content, current_id, assembly_data = self.to_step_product(current_id)
+        step_content += product_content
+        assembly_frames = assembly_data[-1]
+        for i, primitive in enumerate(self.components):
+            if primitive.__class__.__name__ in ('OpenShell3D', 'ClosedShell3D') or hasattr(primitive, "shell_faces"):
+                primitive_content, current_id, primitive_data = primitive.to_step_product(current_id)
+                assembly_frame_id = assembly_frames[0]
+                component_frame_id = assembly_frames[i + 1]
+                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
+
+            else:
+                primitive_content, current_id, primitive_data = primitive.to_step(current_id)
+                step_content += primitive_content
+                assembly_frame_id = assembly_frames[0]
+                component_frame_id = assembly_frames[i + 1]
+                assembly_content, current_id = assembly_definition_writer(current_id, assembly_data[:-1],
+                                                                          primitive_data, assembly_frame_id,
+                                                                          component_frame_id)
+            step_content += primitive_content
+            step_content += assembly_content
+
+        return step_content, current_id, assembly_data[:-1]
+
+    def plot(self, ax=None, equal_aspect=True):
+        """
+        Matplotlib plot of model.
+
+        To use for debug.
+        """
+        if ax is None:
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d', adjustable='box')
+        for primitive in self.primitives:
+            primitive.plot(ax)
+        if not equal_aspect:
+            # ax.set_aspect('equal')
+            ax.set_aspect('auto')
+        ax.margins(0.1)
+        return ax
+
+    def to_step_product(self, current_id):
+        """
+        Returns step product entities from volmdlr objects.
+        """
+        step_content = ''
+        product_content, shape_definition_repr_id = product_writer(current_id, self.name)
+        product_definition_id = shape_definition_repr_id - 2
+        step_content += product_content
+        shape_representation_id = shape_definition_repr_id + 1
+        current_id = shape_representation_id
+        assembly_position_content = ''
+        frame_ids = []
+        for frame in [self.frame] + self.positions:
+            frame_content, current_id = frame.to_step(current_id + 1)
+            assembly_position_content += frame_content
+            frame_ids.append(current_id)
+
+        geometric_context_content, geometric_representation_context_id = geometric_context_writer(current_id)
+
+        step_content += f"#{shape_representation_id} = SHAPE_REPRESENTATION('',({step_ids_to_str(frame_ids)})," \
+                        f"#{geometric_representation_context_id});\n"
+
+        step_content += assembly_position_content
+
+        step_content += geometric_context_content
+
+        return step_content, geometric_representation_context_id, \
+            [shape_representation_id, product_definition_id, frame_ids]
 
 
 class Compound(dc.PhysicalObject):
@@ -930,6 +1233,7 @@ class Compound(dc.PhysicalObject):
 
         babylon_data = {'meshes': [],
                         'lines': []}
+        display_points = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
@@ -941,17 +1245,9 @@ class Compound(dc.PhysicalObject):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
-
-        bbox = self.bounding_box
-        center = bbox.center
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
-
-        babylon_data['max_length'] = max_length
-        babylon_data['center'] = list(center)
-
-        return babylon_data
+            elif isinstance(primitive, volmdlr.Point3D):
+                display_points.append(primitive)
+        return helper_babylon_data(babylon_data, display_points)
 
     def volmdlr_primitives(self):
         """Return primitives."""
@@ -1235,6 +1531,7 @@ class VolumeModel(dc.PhysicalObject):
 
         babylon_data = {'meshes': [],
                         'lines': []}
+        display_points = []
         for primitive in self.primitives:
             if hasattr(primitive, 'babylon_meshes'):
                 babylon_data['meshes'].extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
@@ -1246,17 +1543,9 @@ class VolumeModel(dc.PhysicalObject):
                 data = primitive.babylon_data(merge_meshes=merge_meshes)
                 babylon_data['meshes'].extend(mesh for mesh in data.get("meshes"))
                 babylon_data['lines'].extend(line for line in data.get("lines"))
-
-        bbox = self.bounding_box
-        center = bbox.center
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
-
-        babylon_data['max_length'] = max_length
-        babylon_data['center'] = list(center)
-
-        return babylon_data
+            elif isinstance(primitive, volmdlr.Point3D):
+                display_points.append(primitive)
+        return helper_babylon_data(babylon_data, display_points)
 
     @classmethod
     def babylonjs_script(cls, babylon_data, use_cdn=True, **kwargs):
@@ -1273,33 +1562,57 @@ class VolumeModel(dc.PhysicalObject):
             babylon_data=babylon_data)
         return script
 
-    def babylonjs(self, page_name=None, use_cdn=True, debug=False, merge_meshes=True, dark_mode=False):
+    def babylonjs(
+        self,
+        page_name: str = None,
+        use_cdn: bool = True,
+        debug: bool = False,
+        merge_meshes: bool = True,
+        dark_mode: bool = False,
+    ):
         """
-        Creates an HTML file using babylonjs to show a 3d model in the browser.
+        Generate and display an HTML file to visualize the 3D model using Babylon.js in a web browser.
 
+        This method creates a 3D representation of the volume model using the Babylon.js framework.
+        The method allows options for debugging, merging meshes, and toggling dark mode for the visualization.
+        The resulting HTML file can either be a temporary file or a user-specified file.
+
+        :param page_name: The name of the HTML file to be generated. If None, a temporary file is created.
+        :type page_name: str, optional
+        :param use_cdn: Flag to use CDN for loading Babylon.js resources. Defaults to True.
+        :type use_cdn: bool
+        :param debug: Enable debugging mode for more detailed console output in the browser. Defaults to False.
+        :type debug: bool
+        :param merge_meshes: Flag to chose to merge all the faces of each shell into a single mesh. Defaults to True.
+            If False, shell are decomposed according to their faces in the Babylon.js scene nodes tree.
+        :type merge_meshes: bool
+        :param dark_mode: Enable dark mode for the HTML visualization. Defaults to False.
+        :type dark_mode: bool
+
+        :return: The file path of the generated HTML file.
+        :rtype: str
         """
         babylon_data = self.babylon_data(merge_meshes=merge_meshes)
-        babylon_data['dark_mode'] = 1 if dark_mode else 0
-        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn,
-                                       debug=debug)
+        babylon_data["dark_mode"] = 1 if dark_mode else 0
+        script = self.babylonjs_script(babylon_data, use_cdn=use_cdn, debug=debug)
         if page_name is None:
-            with tempfile.NamedTemporaryFile(suffix=".html",
-                                             delete=False) as file:
-                file.write(bytes(script, 'utf8'))
+            with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as file:
+                file.write(bytes(script, "utf8"))
             page_name = file.name
         else:
-            if not page_name.endswith('.html'):
-                page_name += '.html'
-            with open(page_name, 'w', encoding='utf-8') as file:
+            if not page_name.endswith(".html"):
+                page_name += ".html"
+            with open(page_name, "w", encoding="utf-8") as file:
                 file.write(script)
 
-        webbrowser.open('file://' + os.path.realpath(page_name))
+        webbrowser.open("file://" + os.path.realpath(page_name))
 
         return page_name
 
-    def save_babylonjs_to_file(self, filename: str = None, use_cdn=True, debug=False):
+    def save_babylonjs_to_file(self, filename: str = None, use_cdn=True, debug=False, dark_mode=False):
         """Export a html file of the model."""
         babylon_data = self.babylon_data()
+        babylon_data['dark_mode'] = 1 if dark_mode else 0
         script = self.babylonjs_script(babylon_data, use_cdn=use_cdn, debug=debug)
         if filename is None:
             with tempfile.NamedTemporaryFile(suffix=".html",
@@ -1314,26 +1627,34 @@ class VolumeModel(dc.PhysicalObject):
             file.write(script)
         return filename
 
-    def to_stl_model(self):
-        """Converts the model into a stl object."""
+    def to_mesh3d(self):
+        """Converts to volume model to a Mesh3D object."""
         mesh = self.primitives[0].triangulation()
         for primitive in self.primitives[1:]:
-            mesh.merge_mesh(primitive.triangulation())
+            mesh = mesh.merge(primitive.triangulation(), merge_vertices=True, merge_triangles=True)
+
+        return mesh
+
+    def to_stl_model(self):
+        """Converts the model into a stl object."""
+        warnings.warn(
+            "volmdlr.stl module is deprecated. Use volmdlr.display module and 'Mesh3D' class instead for STL export.",
+            DeprecationWarning
+        )
+
+        mesh = self.to_mesh3d()
+
         # from volmdlr import stl
         stl = volmdlr.stl.Stl.from_display_mesh(mesh)
         return stl
 
     def to_stl(self, filepath: str):
         """Export a stl file of the model."""
-        if not filepath.endswith('.stl'):
-            filepath += '.stl'
-        with open(filepath, 'wb') as file:
-            self.to_stl_stream(file)
+        self.to_mesh3d().save_to_stl_file(filepath)
 
     def to_stl_stream(self, stream: dcf.BinaryFile):
         """Converts the model into a stl stream file."""
-        stl = self.to_stl_model()
-        stl.save_to_stream(stream)
+        self.to_mesh3d().save_to_stl_stream(stream)
         return stream
 
     def to_step(self, filepath: str):
@@ -1344,7 +1665,10 @@ class VolumeModel(dc.PhysicalObject):
             self.to_step_stream(file)
 
     def to_step_stream(self, stream: dcf.StringFile):
+        """
+        Export object CAD to given stream in STEP format.
 
+        """
         step_content = STEP_HEADER.format(name=self.name,
                                           filename='',
                                           timestamp=datetime.now().isoformat(),
@@ -1430,7 +1754,7 @@ class VolumeModel(dc.PhysicalObject):
 
         lines.append('Mesh.CharacteristicLengthMin = 0;')
         lines.append('Mesh.CharacteristicLengthMax = 1e+22;')
-        lines.append('Geometry.Tolerance = 1e-6;')
+        lines.append('Geometry.Tolerance = 1e-5;')
         lines.append('Mesh.AngleToleranceFacetOverlap = 0.01;')
         lines.append('General.Verbosity = 0;')
 
@@ -1658,6 +1982,7 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def update_surfaces_list(face_contours, surfaces, contours, i):
+        """Update surfaces list."""
         for k_f, face_c in enumerate(face_contours):
             for l_c, contour_l in enumerate(contours):
                 for c_c, contour in enumerate(contour_l):
@@ -1854,6 +2179,7 @@ class VolumeModel(dc.PhysicalObject):
 
     @staticmethod
     def get_nodes_lines(gmsh_model):
+        """Get nodes lines."""
         lines_nodes = []
         lines_nodes.append('$Nodes')
 
@@ -1960,10 +2286,24 @@ class MovingVolumeModel(VolumeModel):
                 meshes.extend(primitive.babylon_meshes(merge_meshes=merge_meshes))
                 primitives_to_meshes.append(i_prim)
 
-        bbox = self._bounding_box()
-        max_length = max([bbox.xmax - bbox.xmin,
-                          bbox.ymax - bbox.ymin,
-                          bbox.zmax - bbox.zmin])
+        # Compute max length in each direction
+        all_positions = []
+        for mesh in meshes:
+            positions = mesh["positions"]
+            all_positions.extend(positions)
+
+        # Convert to a NumPy array and reshape
+        positions_array = npy.array(all_positions).reshape(-1, 3)
+
+        # Compute min and max for each dimension
+        min_vals = positions_array.min(axis=0)
+        max_vals = positions_array.max(axis=0)
+
+        # Calculate max length of the bounding box
+        max_length = npy.max(max_vals - min_vals)
+
+        # Calculate center point of the bounding box
+        center = (0.5 * (min_vals + max_vals)).tolist()
 
         steps = []
         for istep, frames in enumerate(self.step_frames):
@@ -1984,6 +2324,6 @@ class MovingVolumeModel(VolumeModel):
 
         babylon_data = {'meshes': meshes,
                         'max_length': max_length,
-                        'center': list(bbox.center),
+                        'center': center,
                         'steps': steps}
         return babylon_data

@@ -15,12 +15,13 @@ from volmdlr.primitives3d import ExtrudedProfile
 from volmdlr import curves
 number_holes = 5
 
-outer_circle = vmw.Contour2D([volmdlr.edges.FullArc2D.from_curve(curves.Circle2D(vm.O2D, 0.06))])
+outer_circle = vmw.Contour2D([volmdlr.edges.FullArc2D.from_curve(curves.Circle2D(vm.OXY, 0.06))])
 
 
 delta_angle = 2*math.pi/number_holes
-inner_circle = vmw.Contour2D([volmdlr.edges.FullArc2D.from_curve(curves.Circle2D(vm.O2D, 0.04))])
-first_circle = vmw.Contour2D([volmdlr.edges.FullArc2D.from_curve(curves.Circle2D(vm.Point2D(0, 0.05), 0.005))])
+inner_circle = vmw.Contour2D([volmdlr.edges.FullArc2D.from_curve(curves.Circle2D(vm.OXY, 0.04))])
+first_circle = vmw.Contour2D([volmdlr.edges.FullArc2D.from_curve(curves.Circle2D(
+    vm.OXY.translation(vm.Vector2D(0, 0.05)), 0.005))])
 circles = [inner_circle, first_circle]
 
 extrusion_length = 0.1

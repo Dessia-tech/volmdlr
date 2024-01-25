@@ -24,10 +24,26 @@ class TestEllipse2D(unittest.TestCase):
         line = curves.Line2D(volmdlr.O2D, volmdlr.Point2D(2, 3))
         line_intersections = self.ellipse2d.line_intersections(line)
         self.assertEqual(len(line_intersections), 2)
-        self.assertTrue(line_intersections[0].is_close(volmdlr.Point2D(-2.1009029257555607,
+        self.assertTrue(line_intersections[1].is_close(volmdlr.Point2D(-2.1009029257555607,
                                                                        -3.151354388633341)))
-        self.assertTrue(line_intersections[1].is_close(volmdlr.Point2D(2.1009029257555607,
+        self.assertTrue(line_intersections[0].is_close(volmdlr.Point2D(2.1009029257555607,
                                                                        3.151354388633341)))
+
+        ellipse2d = curves.Ellipse2D(1, 0.5,
+                                     volmdlr.Frame2D(
+                                         origin=volmdlr.Point2D(0.8660254037844388, -2.220446049250313e-16),
+                                         u=volmdlr.Vector2D(1.0, -2.220446049250313e-16),
+                                         v=volmdlr.Vector2D(-4.440892098500627e-16, 1.0)))
+        line2d = curves.Line2D(volmdlr.Point2D(1.0, 0.0), volmdlr.Point2D(0.7660444431189781, 0.6427876096865393))
+        intersections = ellipse2d.line_intersections(line2d)
+        self.assertTrue(len(intersections), 2)
+        self.assertTrue(intersections[0].is_close(volmdlr.Point2D(1.173187451788891, -0.47582861312286373)))
+        self.assertTrue(intersections[1].is_close(volmdlr.Point2D(0.8182229267692979, 0.4994284040759036)))
+        line2d = curves.Line2D(volmdlr.Point2D(.25, -1), volmdlr.Point2D(0.25, 1))
+        intersections = ellipse2d.line_intersections(line2d)
+        self.assertTrue(len(intersections), 2)
+        self.assertTrue(intersections[0].is_close(volmdlr.Point2D(0.24999999999999933, 0.39386314307517345)))
+        self.assertTrue(intersections[1].is_close(volmdlr.Point2D(0.24999999999999978, -0.39386314307517367)))
 
     def test_linesegment_intersections(self):
         line_segment = edges.LineSegment2D(volmdlr.O2D, volmdlr.Point2D(4, 4))
@@ -36,14 +52,32 @@ class TestEllipse2D(unittest.TestCase):
         self.assertTrue(linesegment_intersections[0].is_close(volmdlr.Point2D(2.82842712474619,
                                                                               2.82842712474619)))
 
+        ellipse2d = curves.Ellipse2D(
+            1.5029657596067132, 1.4999999999999993,
+            volmdlr.Frame2D(origin=volmdlr.Point2D(-0.9980228269288582, -8.858169481883975e-16),
+                            u=volmdlr.Vector2D(1.0, -8.840689907867823e-16), v=volmdlr.Vector2D(0.0, -1.0)))
+        lineseg2d = edges.LineSegment2D(volmdlr.Point2D(0.17364817766693041, 0.984807753012208),
+                                        volmdlr.Point2D(-0.4999999999999998, 0.8660254037844388))
+        lineseg_intersections = ellipse2d.linesegment_intersections(lineseg2d)
+        self.assertEqual(len(lineseg_intersections), 1)
+        self.assertTrue(lineseg_intersections[0].is_close(volmdlr.Point2D(0.1406944277231128, 0.9789971177815928)))
+
     def test_discretization_points(self):
         self.assertTrue(self.discretized_points[0].is_close(volmdlr.Point2D(2.8284271247461903, 2.82842712474619)))
         self.assertTrue(self.discretized_points[5].is_close(volmdlr.Point2D(-2.8284271247461903, -2.82842712474619)))
         self.assertTrue(self.discretized_points[-2].is_close(volmdlr.Point2D(3.119499486825644, 1.4569917357158295)))
 
-    def test_point_over_ellipse(self):
-        self.assertTrue(self.ellipse2d.point_over_ellipse(self.discretized_points[3]))
-        self.assertFalse(self.ellipse2d.point_over_ellipse(volmdlr.Point2D(2, 2)))
+    def test_point_belongs(self):
+        self.assertTrue(self.ellipse2d.point_belongs(self.discretized_points[3]))
+        self.assertFalse(self.ellipse2d.point_belongs(volmdlr.Point2D(2, 2)))
+
+    def test_point_inside(self):
+        ellipse2d = curves.Ellipse2D(2, 1, volmdlr.Frame2D(volmdlr.O2D, volmdlr.X2D, -volmdlr.Y2D))
+
+        point2d = volmdlr.Point2D(1.6, 0.7)
+        self.assertFalse(ellipse2d.point_inside(point2d))
+        point2d = volmdlr.Point2D(1.6, 0.5)
+        self.assertTrue(ellipse2d.point_inside(point2d))
 
     def test_abscissa(self):
         self.assertEqual(self.ellipse2d.abscissa(self.discretized_points[5]), 9.688448220547677)

@@ -1,159 +1,127 @@
 """
 volmdlr cad simplification module.
 """
+import math
+from typing import List, Union
+
+import numpy as np
+import pyfqmr
+from CGAL.CGAL_Alpha_wrap_3 import alpha_wrap_3
+from CGAL.CGAL_Kernel import Point_3
+from CGAL.CGAL_Polyhedron_3 import Polyhedron_3
 from dessia_common.core import DessiaObject
+
 import volmdlr
-from volmdlr import shells, primitives3d, wires
+from volmdlr import Point3D
 from volmdlr.cloud import PointCloud3D
+from volmdlr.core import VolumeModel
+from volmdlr.discrete_representation import MatrixBasedVoxelization
+from volmdlr.faces import Triangle3D
+from volmdlr.primitives3d import ExtrudedProfile
+from volmdlr.shells import ClosedTriangleShell3D, DisplayTriangleShell3D, OpenTriangleShell3D
+from volmdlr.wires import Contour2D
 
 
-class OctreeBlockSimplify(DessiaObject):
-    """
-    Initializes an instance of OctreeBlockSimplify.
+class Simplify(DessiaObject):
+    """CAD simplification abstract class."""
 
-    :param closed_shell: A closed shell object representing the geometry to simplify.
-    :param name: Optional. A name for the OctreeBlockSimplify instance.
-
-    """
-
-    def __init__(self, closed_shell: shells.ClosedShell3D, name: str = ''):
-        self.closed_shell = closed_shell
-        self.block = primitives3d.Block.from_bounding_box(self.closed_shell.bounding_box)
-        DessiaObject.__init__(self, name=name)
-
-    def get_outside_blocks(self, deepness: int = 3):
+    def __init__(self, volume_model: VolumeModel, name: str = ""):
         """
-        Gets octree blocks outside the given closed shell.
+        Initialize an instance of the Simplify class.
 
-        :param deepness: Optional. The depth of octree subdivision (default: 3).
-
-        :return: A list of octree blocks that are outside the given closed shell.
-
+        :param volume_model: The volume model to simplify.
+        :type volume_model: VolumeModel
+        :param name: A name for the TripleExtrusionSimplify instance, optional.
+        :type name: str
         """
-        block_volume = self.block.volume()
-        min_block_volume = block_volume / (8 ** deepness)
-        dict_faces_to_box = {box: [] for box in self.block.octree()}
-        for box, list_faces in dict_faces_to_box.items():
-            for face in self.closed_shell.faces:
-                if (
-                        box.is_face_intersecting(face)
-                        or box.is_face_inside(face)
-                        or box.bounding_box.distance_to_bbox(face.bounding_box) <= 1e-6
-                ):
-                    list_faces.append(face)
-        not_intersecting_boxes = []
-        inside_boxes = []
-
-        for octant in self.block.octree():
-            dict_faces_to_box_ = {octant: dict_faces_to_box[octant]}
-            octant_not_intersecting_boxes = []
-
-            while dict_faces_to_box_:
-                box, list_faces = next(iter(dict_faces_to_box_.items()))
-                if not list_faces:
-                    if not box.is_inside_shell(self.closed_shell):
-                        octant_not_intersecting_boxes.append(box)
-                    else:
-                        inside_boxes.append(box)
-                    del dict_faces_to_box_[box]
-                    continue
-
-                divided_boxes = box.octree()
-                if divided_boxes[0].volume() >= min_block_volume:
-                    for divided_box in divided_boxes:
-                        new_list_faces = [
-                            face
-                            for face in list_faces
-                            if (
-                                    divided_box.is_face_intersecting(face)
-                                    or divided_box.is_face_inside(face)
-                                    or divided_box.bounding_box.distance_to_bbox(face.bounding_box) <= 1e-6
-                            )
-                        ]
-                        dict_faces_to_box_[divided_box] = new_list_faces
-
-                del dict_faces_to_box_[box]
-
-            not_intersecting_boxes.append(octant_not_intersecting_boxes)
-
-        return not_intersecting_boxes
-
-    def simplify(self, precision: int):
-        """
-        Simplify the given closed shell.
-
-        :param precision: The precision level of simplification.
-
-        :return: The simplified closed shell.
-
-        """
-        outside_blocks = self.get_outside_blocks(deepness=precision)
-        closed_shells = []
-        for octant in outside_blocks:
-            if not octant:
-                continue
-            list_shells = shells.union_list_of_shells(octant)
-            closed_shells.extend(list_shells)
-        closed_shells_ = shells.union_list_of_shells(closed_shells.copy())
-        closed_shells_ = sorted(closed_shells_, key=lambda shell: shell.volume(), reverse=True)
-        simplified_closed_shell = self.block.subtract_to_closed_shell(closed_shells_[0])[0]
-        return simplified_closed_shell
-
-
-class TrippleExtrusionSimplify(DessiaObject):
-    """
-    Initialize an instance of TrippleExtrusionSimplify.
-
-    :param volume_model: The volume model to simplify.
-    :param name (str): Optional. A name for the TrippleExtrusionSimplify instance.
-
-    """
-
-    def __init__(self, volume_model, name: str = ''):
         self.volume_model = volume_model
+
         DessiaObject.__init__(self, name=name)
-
-    def simplify(self):
-        """
-        Simplify the volume model using triple extrusion simplification.
-
-        :return: The simplified volume model.
-
-        """
-        points = []
-        for primitive in self.volume_model.primitives:
-            tri = primitive.triangulation()
-            points.extend(tri.points)
-        cloud = PointCloud3D(points)
-
-        model = self.extrusion_union_cloud_simplifier(cloud)
-        return model
 
     @staticmethod
-    def extrusion_union_cloud_simplifier(cloud3d):
+    def _volume_model_to_display_shells(volume_model: VolumeModel) -> List[DisplayTriangleShell3D]:
+        """Convert the VolumeModel to a list of DisplayTriangleShell3D."""
+
+        display_shells = []
+
+        for shell in volume_model.get_shells():
+            display_shell = shell.to_triangle_shell().to_display_triangle_shell()
+
+            if len(display_shell.indices) > 0:
+                display_shells.append(display_shell)
+
+        return display_shells
+
+    @staticmethod
+    def _volume_model_to_display_shell(volume_model: VolumeModel):
+        """Convert the VolumeModel to a unique DisplayTriangleShell3D."""
+
+        display_shell = None
+
+        for shell in volume_model.get_shells():
+            new_display_shell = shell.to_triangle_shell().to_display_triangle_shell()
+
+            if len(new_display_shell.indices) == 0:
+                continue
+
+            if display_shell:
+                display_shell += new_display_shell
+            else:
+                display_shell = new_display_shell
+
+        display_shell.name = volume_model.name
+
+        return display_shell
+
+
+class TripleExtrusionSimplify(Simplify):
+    """CAD simplification based on 'triple extrusion' method."""
+
+    def simplify(self) -> VolumeModel:
+        """
+        Simplify the volume model using the 'triple extrusion' method, and return it.
+
+        :return: The simplified volume model.
+        :rtype: VolumeModel
+        """
+        points = [Point3D(*point) for point in self._volume_model_to_display_shell(self.volume_model).positions]
+
+        point_cloud3d = PointCloud3D([volmdlr.Point3D(*point) for point in points])
+        simplified_volume_model = VolumeModel(
+            [self.extrusion_union_cloud_simplifier(point_cloud3d)], name=f"{self.volume_model.name} voxel simplified"
+        )
+
+        return simplified_volume_model
+
+    @staticmethod
+    def extrusion_union_cloud_simplifier(point_cloud3d: PointCloud3D) -> ExtrudedProfile:
         """
         Simplify a point cloud using extrusion and union operations.
 
-        :param cloud3d: The 3D point cloud to simplify.
+        :param point_cloud3d: The 3D point cloud to simplify.
+        :type point_cloud3d: PointCloud3D
 
         :return: The simplified shell.
-
+        :rtype: ExtrudedProfile
         """
         simplified_shell = None
         list_shells = []
 
-        bbox = cloud3d.bounding_box
+        bbox = point_cloud3d.bounding_box
         lx = bbox.xmax - bbox.xmin
         ly = bbox.ymax - bbox.ymin
         lz = bbox.zmax - bbox.zmin
+
         for w_vector, length, center in zip([volmdlr.X3D, volmdlr.Y3D, volmdlr.Z3D], [lx, ly, lz], bbox.center):
             u_vector = w_vector.random_unit_normal_vector()
             v_vector = w_vector.cross(u_vector)
-            cloud2d = cloud3d.to_2d(volmdlr.O3D, u_vector, v_vector)
+
+            cloud2d = point_cloud3d.to_2d(volmdlr.O3D, u_vector, v_vector)
             polygon2d = cloud2d.to_polygon(convex=True)
-            contour2d = wires.Contour2D(polygon2d.line_segments)
+            contour2d = Contour2D(polygon2d.line_segments)
+
             frame = volmdlr.Frame3D(((center - 0.5 * length) * w_vector).to_point(), u_vector, v_vector, w_vector)
-            dir_shell = primitives3d.ExtrudedProfile(frame, contour2d, [], length)
+            dir_shell = ExtrudedProfile(frame, contour2d, [], length)
             dir_shell.merge_faces()
 
             list_shells.append(dir_shell)
@@ -164,3 +132,247 @@ class TrippleExtrusionSimplify(DessiaObject):
                 simplified_shell = list_shells[0]
 
         return simplified_shell
+
+
+class VoxelizationSimplify(Simplify):
+    """CAD simplification using 'voxelization' method."""
+
+    def simplify(self, voxel_size: float, fill: bool = True) -> VolumeModel:
+        """
+        Simplify the volume model using the 'voxelization' method, and return it.
+
+        :param voxel_size: The size of the voxels used for simplification.
+        :type voxel_size: float
+        :param fill: Control the filling of the voxelization, default is True.
+        :type fill: bool
+
+        :return: The simplified volume model.
+        :rtype: VolumeModel
+        """
+        voxelization = MatrixBasedVoxelization.from_volume_model(
+            self.volume_model, voxel_size, name=f"{self.volume_model.name} voxel simplified"
+        )
+        if fill:
+            voxelization = voxelization.fill_enclosed_voxels()
+
+        return VolumeModel(voxelization.volmdlr_primitives())
+
+
+class TriangleDecimationSimplify(Simplify):
+    """CAD simplification based on 'triangle decimation' method."""
+
+    def simplify(
+        self,
+        target_ratio: float,
+        update_rate: int = 5,
+        aggressiveness: float = 7.0,
+        max_iterations: int = 100,
+        verbose: bool = False,
+        lossless: bool = False,
+        threshold_lossless: float = 1e-3,
+        alpha: float = 1e-9,
+        k: int = 3,
+        preserve_border: bool = True,
+        preserve_shells: bool = True,
+    ):
+        """
+        Simplify the VolumeModel using the 'triangle decimation' method, and return it.
+
+        To do so, it triangulates each shell of the given volume model and then decimates it at the given target ratio.
+
+        Note: threshold = alpha * pow(iteration + k, aggressiveness)
+
+        :param target_ratio: Target number of triangles. Not used if `lossless` is True.
+        :type target_ratio: float
+        :param update_rate: Number of iterations between each update. If `lossless` flag is set to True, rate is 1.
+        :type update_rate: int
+        :param aggressiveness: Parameter controlling the growth rate of the threshold at each iteration when `lossless`
+            is False.
+        :type aggressiveness: float
+        :param max_iterations: Maximal number of iterations.
+        :type max_iterations: int
+        :param verbose: Control verbosity.
+        :type verbose: bool
+        :param lossless: Use the lossless simplification method.
+        :type lossless: bool
+        :param threshold_lossless: Maximal error after which a vertex is not deleted. Only for `lossless` method.
+        :type threshold_lossless: float
+        :param alpha: Parameter for controlling the threshold growth.
+        :type alpha: float
+        :param k: Parameter for controlling the threshold growth.
+        :type k: int
+        :param preserve_border: Flag for preserving vertices on open border.
+        :type preserve_border: bool
+        :param preserve_shells: Argument to chose if you want to keep the shell structures (same number of shells in the
+          returned volume model), or if you want a volume model with only one shell including the entire input geometry.
+        :type preserve_shells: bool
+
+        :return: The decimated VolumeModel.
+        :rtype: VolumeModel
+        """
+        # pylint: disable=too-many-arguments
+
+        decimated_shells = []
+        simplifier = pyfqmr.Simplify()
+
+        if preserve_shells:
+            meshes = self._volume_model_to_display_shells(self.volume_model)
+        else:
+            meshes = [self._volume_model_to_display_shell(self.volume_model)]
+
+        for mesh in meshes:
+            vertices, triangles = mesh.positions, mesh.indices
+
+            simplifier.setMesh(vertices, triangles)
+            simplifier.simplify_mesh(
+                target_count=int(target_ratio * len(triangles)),
+                update_rate=update_rate,
+                aggressiveness=aggressiveness,
+                max_iterations=max_iterations,
+                verbose=verbose,
+                lossless=lossless,
+                threshold_lossless=threshold_lossless,
+                alpha=alpha,
+                K=k,
+                preserve_border=preserve_border,
+            )
+
+            vertices, faces, _ = simplifier.getMesh()
+
+            decimated_shells.append(OpenTriangleShell3D.from_mesh_data(vertices, faces))
+            decimated_shells[-1].name = mesh.name
+            decimated_shells[-1].color = mesh.color
+            decimated_shells[-1].alpha = mesh.alpha
+
+        return VolumeModel(decimated_shells)
+
+
+class AlphaWrapSimplify(Simplify):
+    """CAD simplification using CGAL 'alpha wrap' method."""
+
+    def simplify(
+        self,
+        relative_alpha: int = 10,
+        relative_offset: int = 300,
+        preserve_shells: bool = False,
+        equal_alpha: bool = True,
+    ) -> VolumeModel:
+        """
+        Simplify the volume model using the CGAL 'alpha wrap' method, and return it.
+
+        :param relative_alpha: Control the output complexity, by defining the diameter of cavities to be explored
+          relatively to the size of the geometry.
+        :type relative_alpha: int
+        :param relative_offset: Control how close to the input geometry the simplification is.
+        :type relative_offset: int
+        :param preserve_shells: Argument to chose if you want to keep the shell structures (same number of shells in the
+          returned volume model), or if you want a volume model with only one shell including the entire input geometry.
+        :type preserve_shells: bool
+        :param equal_alpha: Control if the alpha is relative to the entire volume model bbox (equal for all shells) or
+          relative to each shell bbox. No effect if preserve_shells is False.
+        :type equal_alpha: bool
+
+        :return: The simplified volume model.
+        :rtype: VolumeModel
+        """
+        wrapped_shells = []
+
+        bbox, alpha, offset = None, None, None
+
+        if preserve_shells:
+            meshes = self._volume_model_to_display_shells(self.volume_model)
+        else:
+            meshes = [self._volume_model_to_display_shell(self.volume_model)]
+            # Use display shell bbox for performance
+            bbox = meshes[0].bounding_box
+
+        if equal_alpha:
+            if not bbox:
+                bbox = self.volume_model.bounding_box
+            diag_length = math.sqrt(
+                (bbox.xmax - bbox.xmin) ** 2 + (bbox.ymax - bbox.ymin) ** 2 + (bbox.zmax - bbox.zmin) ** 2
+            )
+            alpha = diag_length / relative_alpha
+            offset = diag_length / relative_offset
+
+        for mesh in meshes:
+            vertices = [Point_3(x, y, z) for (x, y, z) in mesh.positions]
+            triangles = mesh.indices.tolist()
+
+            if not equal_alpha:
+                bbox = mesh.bounding_box
+                diag_length = math.sqrt(
+                    (bbox.xmax - bbox.xmin) ** 2 + (bbox.ymax - bbox.ymin) ** 2 + (bbox.zmax - bbox.zmin) ** 2
+                )
+                alpha = diag_length / relative_alpha
+                offset = diag_length / relative_offset
+
+            wrap = Polyhedron_3()
+            alpha_wrap_3(vertices, triangles, alpha, offset, wrap)
+
+            wrapped_shells.append(self._polyhedron_to_shell(wrap))
+            wrapped_shells[-1].name = mesh.name
+            wrapped_shells[-1].color = mesh.color
+            wrapped_shells[-1].alpha = mesh.alpha
+
+        return VolumeModel(wrapped_shells)
+
+    @staticmethod
+    def _polyhedron_to_shell(polyhedron: Polyhedron_3) -> Union[ClosedTriangleShell3D, OpenTriangleShell3D]:
+        """Convert a CGAL Polyhedron_3 to a volmdlr shell."""
+        triangles = []
+
+        for facet in polyhedron.facets():  # Iterate over each face
+            vertices = []
+            halfedge = facet.halfedge()  # Starting half-edge
+            start_halfedge = halfedge
+
+            while True:
+                point = halfedge.vertex().point()
+                vertices.append(Point3D(point.x(), point.y(), point.z()))
+                halfedge = halfedge.next()  # Move to the next half-edge
+                if halfedge == start_halfedge:
+                    break  # Completed one loop around the facet
+
+            if len(vertices) == 3:  # Check if it's a triangle
+                try:
+                    triangles.append(Triangle3D(vertices[0], vertices[1], vertices[2]))
+                except ZeroDivisionError:
+                    pass
+
+        if polyhedron.is_closed():
+            return ClosedTriangleShell3D(triangles)
+        return OpenTriangleShell3D(triangles)
+
+    @staticmethod
+    def _polyhedron_to_display_shell(polyhedron: Polyhedron_3) -> DisplayTriangleShell3D:
+        """Convert a CGAL Polyhedron_3 to a volmdlr display shell."""
+        points = []
+        faces = []
+        point_map = {}  # Map CGAL points to their indices
+
+        for facet in polyhedron.facets():
+            face_indices = []
+            halfedge = facet.halfedge()
+            start_halfedge = halfedge
+
+            while True:
+                point = halfedge.vertex().point()
+                point_tuple = (point.x(), point.y(), point.z())
+
+                # Add point if it's not already in the list
+                if point_tuple not in point_map:
+                    points.append(point_tuple)
+                    point_map[point_tuple] = len(points) - 1
+
+                face_indices.append(point_map[point_tuple])
+                halfedge = halfedge.next()
+                if halfedge == start_halfedge:
+                    break
+
+            faces.append(face_indices)
+
+        points_array = np.array(points)
+        faces_array = np.array(faces)
+
+        return DisplayTriangleShell3D(points_array, faces_array, "")

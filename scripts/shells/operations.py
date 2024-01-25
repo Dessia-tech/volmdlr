@@ -12,5 +12,5 @@ from volmdlr.models import casing
 bottom, sides, belt = casing.primitives
 
 t1 = time.time()
-assert not sides.point_belongs(vm.Point3D(0.1, 0.1, 0.1))
+assert not sides.point_inside(vm.Point3D(0.1, 0.1, 0.1))
 t1 = time.time() - t1

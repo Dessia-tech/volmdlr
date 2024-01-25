@@ -3,6 +3,7 @@ Unit tests for volmdlr.faces.BSplineSurface3D
 """
 import unittest
 import os
+import numpy as np
 import volmdlr.edges as vme
 import volmdlr.wires as vmw
 import volmdlr.faces as vmf
@@ -53,6 +54,112 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.nurbs_surf = surfaces.BSplineSurface3D(degree_u, degree_v, ctrlpts, nb_u, nb_v,
                                                      u_multiplicities, v_multiplicities, knots_u, knots_v, weights)
 
+    def test_extract_curves(self):
+        u = [0.0, 0.25, 0.5, 0.75, 1.0]
+        v = [0.0, 0.25, 0.5, 0.75, 1.0]
+
+        expected_results_u = [[volmdlr.Point3D(-25.0, -25.0, -10.0), volmdlr.Point3D(-25.0, 25.0, -10.0)],
+                              [volmdlr.Point3D(-9.07716976931853, -25.0, -6.280643904610846),
+                               volmdlr.Point3D(-9.07716976931853, 25.0, -6.280643904610846)],
+                              [volmdlr.Point3D(0.11256465850708097, -25.0, -4.238138097577792),
+                               volmdlr.Point3D(0.11256465850708097, 25.0, -4.238138097577792)],
+                              [volmdlr.Point3D(9.309787132823084, -25.0, -5.579386459163334),
+                               volmdlr.Point3D(9.309787132823084, 25.0, -5.579386459163334)],
+                              [volmdlr.Point3D(25.0, -25.0, -10.0), volmdlr.Point3D(25.0, 25.0, -10.0)]
+                              ]
+        expected_results_v = [[volmdlr.Point3D(-25.0, -25.0, -10.0), volmdlr.Point3D(25.0, -25.0, -10.0)],
+                              [volmdlr.Point3D(-25.0, -9.07716976931853, -2.397285527450817),
+                               volmdlr.Point3D(25.0, -9.07716976931853, -1.3277054289450985)],
+                              [volmdlr.Point3D(-25.0, 0.11256465850708097, -0.308297775853914),
+                               volmdlr.Point3D(25.0, 0.11256465850708097, 1.5683831138045203)],
+                              [volmdlr.Point3D(-25.0, 9.309787132823084, -2.497847912329014),
+                               volmdlr.Point3D(25.0, 9.309787132823084, -1.4598916162388402)],
+                              [volmdlr.Point3D(-25.0, 25.0, -10.0), volmdlr.Point3D(25.0, 25.0, -10.0)]
+                              ]
+        test = self.spline_surf.extract_curves(u, v)
+        for curve, expected_result in zip(test["u"], expected_results_u):
+            control_points = curve.control_points
+            self.assertEqual(len(control_points), 6)
+            self.assertTrue(curve.start.is_close(expected_result[0]))
+            self.assertTrue(curve.end.is_close(expected_result[1]))
+
+        for curve, expected_result in zip(test["v"], expected_results_v):
+            control_points = curve.control_points
+            self.assertEqual(len(control_points), 6)
+            self.assertTrue(curve.start.is_close(expected_result[0]))
+            self.assertTrue(curve.end.is_close(expected_result[1]))
+
+    def test_extract_curves_rational(self):
+        u = [0.0, 0.25, 0.5, 0.75, 1.0]
+        v = [0.0, 0.25, 0.5, 0.75, 1.0]
+
+        # points from surface evaluation
+        expected_results_u = [[volmdlr.Point3D(-25.0, -25.0, -10.0),
+                               volmdlr.Point3D(-25.0, -9.485960183093134, -2.651935673517623),
+                               volmdlr.Point3D(-25.0, 0.3732766669129052, -0.21414478478298477),
+                               volmdlr.Point3D(-25.000000000000004, 6.5923170800941175, -1.200587938543581),
+                               volmdlr.Point3D(-25.0, 25.0, -10.0)],
+                              [volmdlr.Point3D(-9.07716976931853, -25.000000000000004, -6.280643904610847),
+                               volmdlr.Point3D(-9.07716976931853, -9.485960183093134, -4.7087289345950065),
+                               volmdlr.Point3D(-9.07716976931853, 0.3732766669129052, -5.9676274770461415),
+                               volmdlr.Point3D(-9.077169769318532, 6.5923170800941175, -5.601767665101728),
+                               volmdlr.Point3D(-9.07716976931853, 25.000000000000004, -6.280643904610847)],
+                              [volmdlr.Point3D(0.11256465850708161, -24.999999999999996, -4.238138097577793),
+                               volmdlr.Point3D(0.1125646585070812, -9.485960183093134, -5.069196197307746),
+                               volmdlr.Point3D(0.11256465850708078, 0.3732766669129052, -7.532144969741332),
+                               volmdlr.Point3D(0.11256465850708117, 6.592317080094115, -6.7118731933170785),
+                               volmdlr.Point3D(0.11256465850708161, 24.999999999999996, -4.238138097577793)],
+                              [volmdlr.Point3D(9.309787132823084, -24.999999999999996, -5.579386459163333),
+                               volmdlr.Point3D(9.309787132823084, -9.485960183093132, -4.462539699464645),
+                               volmdlr.Point3D(9.309787132823082, 0.3732766669129051, -5.839760787576515),
+                               volmdlr.Point3D(9.309787132823086, 6.592317080094118, -5.4233896471890475),
+                               volmdlr.Point3D(9.309787132823084, 24.999999999999996, -5.579386459163333)],
+                              [volmdlr.Point3D(25.0, -25.0, -10.0),
+                               volmdlr.Point3D(25.0, -9.485960183093134, -1.6964667229125177),
+                               volmdlr.Point3D(25.0, 0.3732766669129052, 1.7001973013038214),
+                               volmdlr.Point3D(25.000000000000004, 6.5923170800941175, 0.37750338602002487),
+                               volmdlr.Point3D(25.0, 25.0, -10.0)]
+                              ]
+
+        # points from surface evaluation
+        expected_results_v = [[volmdlr.Point3D(-25.0, -25.0, -10.0),
+                               volmdlr.Point3D(-9.07716976931853, -25.000000000000004, -6.280643904610847),
+                               volmdlr.Point3D(0.11256465850708161, -24.999999999999996, -4.238138097577793),
+                               volmdlr.Point3D(9.309787132823084, -24.999999999999996, -5.579386459163333),
+                               volmdlr.Point3D(25.0, -25.0, -10.0)],
+                              [volmdlr.Point3D(-25.0, -9.485960183093134, -2.651935673517623),
+                               volmdlr.Point3D(-9.07716976931853, -9.485960183093134, -4.7087289345950065),
+                               volmdlr.Point3D(0.1125646585070812, -9.485960183093134, -5.069196197307746),
+                               volmdlr.Point3D(9.309787132823084, -9.485960183093132, -4.462539699464645),
+                               volmdlr.Point3D(25.0, -9.485960183093134, -1.6964667229125177)],
+                              [volmdlr.Point3D(-25.0, 0.3732766669129052, -0.21414478478298477),
+                               volmdlr.Point3D(-9.07716976931853, 0.3732766669129052, -5.9676274770461415),
+                               volmdlr.Point3D(0.11256465850708078, 0.3732766669129052, -7.532144969741332),
+                               volmdlr.Point3D(9.309787132823082, 0.3732766669129051, -5.839760787576515),
+                               volmdlr.Point3D(25.0, 0.3732766669129052, 1.7001973013038214)],
+                              [volmdlr.Point3D(-25.000000000000004, 6.5923170800941175, -1.200587938543581),
+                               volmdlr.Point3D(-9.077169769318532, 6.5923170800941175, -5.601767665101728),
+                               volmdlr.Point3D(0.11256465850708117, 6.592317080094115, -6.7118731933170785),
+                               volmdlr.Point3D(9.309787132823086, 6.592317080094118, -5.4233896471890475),
+                               volmdlr.Point3D(25.000000000000004, 6.5923170800941175, 0.37750338602002487)],
+                              [volmdlr.Point3D(-25.0, 25.0, -10.0),
+                               volmdlr.Point3D(-9.07716976931853, 25.000000000000004, -6.280643904610847),
+                               volmdlr.Point3D(0.11256465850708161, 24.999999999999996, -4.238138097577793),
+                               volmdlr.Point3D(9.309787132823084, 24.999999999999996, -5.579386459163333),
+                               volmdlr.Point3D(25.0, 25.0, -10.0)]]
+        test = self.nurbs_surf.extract_curves(u, v)
+        for curve, expected_result in zip(test["u"], expected_results_u):
+            control_points = curve.control_points
+            self.assertEqual(len(control_points), 6)
+            for point in expected_result:
+                self.assertTrue(curve.point_belongs(point))
+
+        for curve, expected_result in zip(test["v"], expected_results_v):
+            control_points = curve.control_points
+            self.assertEqual(len(control_points), 6)
+            for point in expected_result:
+                self.assertTrue(curve.point_belongs(point))
+
     def test_point2d_to_3d(self):
         test_cases = [
             (volmdlr.Point2D(0.0, 0.0), (-25.0, -25.0, -10.0)),
@@ -94,6 +201,27 @@ class TestBSplineSurface3D(unittest.TestCase):
             self.assertAlmostEqual(evalpt[0], res[0], delta=DELTA)
             self.assertAlmostEqual(evalpt[1], res[1], delta=DELTA)
             self.assertAlmostEqual(evalpt[2], res[2], delta=DELTA)
+
+    def test_parametric_points_to_3d(self):
+        parametric_points = np.array([[0.0, 0.0], [0.0, 0.2], [0.0, 1.0], [0.3, 0.0],
+                                      [0.3, 0.4], [0.3, 1.0], [0.6, 0.0], [0.6, 0.6],
+                                      [0.6, 1.0], [1.0, 0.0], [1.0, 0.8], [1.0, 1.0],
+                                      ])
+        points3d = self.spline_surf.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[-25.0, -25.0, -10.0], [-25.0, -11.40398, -3.3856], [-25.0, 25.0, -10.0],
+                                    [-7.006, -25.0, -5.725], [-7.006, -3.308, -6.265], [-7.006, 25.0, -5.725],
+                                    [3.533, -25.0, -4.224], [3.533, 3.533, -6.801], [3.533, 25.0, -4.224],
+                                    [25.0, -25.0, -10.0], [25.0, 11.636, -2.751], [25.0, 25.0, -10.0]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0, delta=DELTA)
+
+        points3d = self.nurbs_surf.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[-25.0, -25.0, -10.0], [-25.0, -11.563, -3.489], [-25.0, 25.0, -10.0],
+                                    [-7.006, -25.0, -5.725], [-7.006, -3.052, -6.196], [-7.006, 25.0, -5.725],
+                                    [3.533, -25.0, -4.224], [3.533, 2.868, -7.257], [3.533, 25.0, -4.224],
+                                    [25.0, -25.0, -10.0], [25.0, 9.425, -1.175], [25.0, 25.0, -10.0]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0, delta=DELTA)
 
     def test_derivatives(self):
         test_data = [
@@ -172,7 +300,7 @@ class TestBSplineSurface3D(unittest.TestCase):
                     for c, e in zip(computed[idx], expected[idx]):
                         self.assertAlmostEqual(c, e, delta=DELTA)
 
-        surface = surfaces.BSplineSurface3D.load_from_file(
+        surface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, "bsplinesurface_derivatives_v_degree_1.json"))
         test_data = [((0.0, 0.41570203515189436), 2,
                      [[(2.686370456553301, -0.6157625276711683, 0.5584759391609816),
@@ -308,7 +436,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(contour2d_dim.length(), 16.823814079415172, places=2)
 
     def test_periodicity(self):
-        bspline_suface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, 'surface3d_8.json'))
+        bspline_suface = surfaces.BSplineSurface3D.from_json(os.path.join(folder, 'surface3d_8.json'))
         self.assertAlmostEqual(bspline_suface.x_periodicity,  0.8888888888888888)
         self.assertFalse(bspline_suface.y_periodicity)
 
@@ -321,7 +449,7 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertAlmostEqual(volume, 3.97787, 2)
 
     def test_arc3d_to_2d(self):
-        bspline_surface = surfaces.BSplineSurface3D.load_from_file(
+        bspline_surface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, 'BSplineSurface3D_with_Arc3D.json'))
         arc = vme.Arc3D.from_3_points(volmdlr.Point3D(-0.01, -0.013722146986970815, 0.026677756316261864),
                         volmdlr.Point3D(-0.01, 0.013517082603, 0.026782241839),
@@ -338,18 +466,20 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertTrue(inv_prof.end.is_close(arc.end))
 
         # Strange case from step file
-        bspline_surface = surfaces.BSplineSurface3D.load_from_file(
+        bspline_surface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, 'bsplinesurface_arc3d_to_2d_surface.json'))
-        arc = vme.Arc3D.load_from_file(os.path.join(folder, "bsplinesurface_arc3d_to_2d_arc3d.json"))
+        arc = vme.Arc3D.from_json(os.path.join(folder, "bsplinesurface_arc3d_to_2d_arc3d.json"))
         brep = bspline_surface.arc3d_to_2d(arc)[0]
         self.assertTrue(brep.start.is_close(volmdlr.Point2D(1, 0)))
 
     def test_bsplinecurve3d_to_2d(self):
         bspline_surface = bspline_surfaces.bspline_surface_4
-        control_points = [volmdlr.Point3D(-0.012138106431296442, 0.11769707710908962, -0.10360094389690414),
-         volmdlr.Point3D(-0.012153195391844274, 0.1177764571887428, -0.10360691055433219),
-         volmdlr.Point3D(-0.01216612946601426, 0.11785649353385147, -0.10361063821784446),
-         volmdlr.Point3D(-0.012176888504086755, 0.11793706145749239, -0.10361212108019317)]
+        control_points = [
+            volmdlr.Point3D(-0.012138106431296442, 0.11769707710908962, -0.10360094389690414),
+            volmdlr.Point3D(-0.012153195391844274, 0.1177764571887428, -0.10360691055433219),
+            volmdlr.Point3D(-0.01216612946601426, 0.11785649353385147, -0.10361063821784446),
+            volmdlr.Point3D(-0.012176888504086755, 0.11793706145749239, -0.10361212108019317)
+        ]
         weights = [1.0, 0.9994807070752826, 0.9994807070752826, 1.0]
         original_bspline = vme.BSplineCurve3D(3, control_points, [4, 4], [0, 1], weights, False)
         bspline_on_parametric_domain = bspline_surface.bsplinecurve3d_to_2d(original_bspline)[0]
@@ -359,11 +489,39 @@ class TestBSplineSurface3D(unittest.TestCase):
         point = original_bspline.point_at_abscissa(0.5 * original_length)
         point_test = bspline_after_transfomation.point_at_abscissa(0.5 * length_after_transformation)
         self.assertAlmostEqual(original_length, length_after_transformation, places=6)
-        # self.assertTrue(point.is_close(point_test, 1e-6))
+        self.assertTrue(point.is_close(point_test, 1e-6))
+
+        surface = surfaces.BSplineSurface3D.from_json(
+            os.path.join(folder, "bsplinesurface_smallbsplinecurve.json"))
+        bsplinecurve3d = vme.BSplineCurve3D.from_json(
+            os.path.join(folder, "bsplinesurface_smallbsplinecurve_curve.json"))
+        brep_primitive = surface.bsplinecurve3d_to_2d(bsplinecurve3d)[0]
+        reversed_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
+        self.assertAlmostEqual(brep_primitive.length(), 0.0024101173639275997)
+        self.assertAlmostEqual(bsplinecurve3d.length(), reversed_prof.length(), 5)
+
+        surface = surfaces.BSplineSurface3D.from_json(
+            os.path.join(folder, "periodic_surface_smallbsplinecurve3d.json"))
+        bsplinecurve3d = vme.BSplineCurve3D.from_json(
+            os.path.join(folder, "periodic_surface_smallbsplinecurve3d_curve.json"))
+        brep_primitive = surface.bsplinecurve3d_to_2d(bsplinecurve3d)[0]
+        reversed_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
+        self.assertAlmostEqual(brep_primitive.length(), 0.006419627118992597)
+        self.assertTrue(bsplinecurve3d.start.is_close(reversed_prof.start))
+        self.assertAlmostEqual(bsplinecurve3d.length(), reversed_prof.length(), 5)
+
+        surface = surfaces.BSplineSurface3D.from_json(
+            os.path.join(folder, "bsplinecurve3d_to_2d_vclosed_surface_test.json"))
+        bsplinecurve3d = vme.BSplineCurve3D.from_json(
+            os.path.join(folder, "bsplinecurve3d_to_2d_vclosed_surface_test_curve.json"))
+        brep_primitive = surface.bsplinecurve3d_to_2d(bsplinecurve3d)[0]
+        reversed_prof = surface.linesegment2d_to_3d(brep_primitive)[0]
+        self.assertTrue(brep_primitive.end.is_close(volmdlr.Point2D(0.0, 1.0)))
+        self.assertTrue(bsplinecurve3d.start.is_close(reversed_prof.start))
 
     def test_bsplinecurve2d_to_3d(self):
-        surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "bspline_surface_with_arcs.json"))
-        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "bspline_contour_with_arcs.json"))
+        surface = surfaces.BSplineSurface3D.from_json(os.path.join(folder, "bspline_surface_with_arcs.json"))
+        contour3d = vmw.Contour3D.from_json(os.path.join(folder, "bspline_contour_with_arcs.json"))
 
         contour2d = surface.contour3d_to_2d(contour3d)
         bspline_1 = contour2d.primitives[0]
@@ -372,8 +530,8 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertTrue(isinstance(arc3d, vme.Arc3D))
 
     def test_arcellipse3d_to_2d(self):
-        arcellipse = vme.ArcEllipse3D.load_from_file(os.path.join(folder, "arcellipse_on_bsplinesurface.json"))
-        bsplinesurface = surfaces.BSplineSurface3D.load_from_file(
+        arcellipse = vme.ArcEllipse3D.from_json(os.path.join(folder, "arcellipse_on_bsplinesurface.json"))
+        bsplinesurface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, "bsplinesurface_with_arcellipse.json"))
         test = bsplinesurface.arcellipse3d_to_2d(arcellipse)[0]
         self.assertTrue(isinstance(test, vme.LineSegment2D))
@@ -381,45 +539,59 @@ class TestBSplineSurface3D(unittest.TestCase):
         self.assertTrue(test.end.is_close(volmdlr.Point2D(0.5, 1), 1e-4))
 
         # todo: Uncomment this block when finish debugging contour2d healing
-        # surface = surfaces.BSplineSurface3D.load_from_file(
+        # surface = surfaces.BSplineSurface3D.from_json(
         #     "surfaces/objects_bspline_test/bspline_surface_self_intersecting_contour.json")
-        # contour3d = vmw.Contour3D.load_from_file(
+        # contour3d = vmw.Contour3D.from_json(
         #     "surfaces/objects_bspline_test/bspline_contour_self_intersecting_contour.json")
         # face = surface.face_from_contours3d([contour3d])
         # self.assertTrue(face.surface2d.outer_contour.is_ordered())
 
     def test_fullarcellipse3d_to_2d(self):
-        ellipse = vme.FullArcEllipse3D.load_from_file(
+        ellipse = vme.FullArcEllipse3D.from_json(
             os.path.join(folder, "bsplinesurface_with_fullarcellipse_fullarcellipse3d.json"))
-        bsplinesurface = surfaces.BSplineSurface3D.load_from_file(
+        bsplinesurface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, "bsplinesurface_with_fullarcellipse.json"))
         test = bsplinesurface.fullarcellipse3d_to_2d(ellipse)[0]
         self.assertAlmostEqual(test.length(), 1.0, 2)
 
     def test_contour3d_to_2d(self):
-        surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "periodicalsurface.json"))
-        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "periodicalsurface_contour.json"))
+        surface = surfaces.BSplineSurface3D.from_json(os.path.join(folder, "periodicalsurface.json"))
+        contour3d = vmw.Contour3D.from_json(os.path.join(folder, "periodicalsurface_contour.json"))
         contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered())
         self.assertAlmostEqual(contour2d.area(), 1/6, 5)
 
-        surface = surfaces.BSplineSurface3D.load_from_file(
+        surface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, "contour3d_to_2d_small_primitives_surface.json"))
-        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "contour3d_to_2d_small_primitives_contour.json"))
+        contour3d = vmw.Contour3D.from_json(os.path.join(folder, "contour3d_to_2d_small_primitives_contour.json"))
         contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered(1e-2)) # 1e-2 is an acceptable value, because this is parametric dimension
 
-        surface = surfaces.BSplineSurface3D.load_from_file(os.path.join(folder, "surface_with_singularity.json"))
-        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "surface_with_singularity_contour.json"))
+        surface = surfaces.BSplineSurface3D.from_json(os.path.join(folder, "surface_with_singularity.json"))
+        contour3d = vmw.Contour3D.from_json(os.path.join(folder, "surface_with_singularity_contour.json"))
         contour2d = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour2d.is_ordered())
 
-        surface = surfaces.BSplineSurface3D.load_from_file(
+        surface = surfaces.BSplineSurface3D.from_json(os.path.join(folder, "bsplinesurface_nan_bug.json"))
+        contour3d = vmw.Contour3D.from_json(os.path.join(folder, "bsplinesurface_nan_bug_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour2d.is_ordered())
+
+        surface = surfaces.BSplineSurface3D.from_json(
             os.path.join(folder, "bsplinesurface_with_singularity_point3d_to_2d.json"))
-        contour3d = vmw.Contour3D.load_from_file(
+        contour3d = vmw.Contour3D.from_json(
             os.path.join(folder, "bsplinesurface_with_singularity_point3d_to_2d_contour.json"))
         contour2d = surface.contour3d_to_2d(contour3d)
         self.assertIsNotNone(contour2d)
+
+        surface = surfaces.BSplineSurface3D.from_json(
+            os.path.join(folder, "bsplinesurface_with_singularity_linesegment3d_to_2d.json"))
+        contour3d = vmw.Contour3D.from_json(
+            os.path.join(folder, "bsplinesurface_with_singularity_linesegment3d_to_2d_contour.json"))
+        contour2d = surface.contour3d_to_2d(contour3d)
+        self.assertTrue(contour2d.is_ordered())
+
+
 
     def test_split_surface_u(self):
         surf1, surf2 = self.spline_surf.split_surface_u(0.33)
@@ -670,7 +842,53 @@ class TestBSplineSurface3D(unittest.TestCase):
         plane = surfaces.Plane3D(frame)
         intersections = self.spline_surf.plane_intersections(plane)
         for point in intersections:
-            self.assertTrue(plane.point_on_surface(point))
+            self.assertTrue(plane.point_belongs(point))
+
+    def test_decompose(self):
+        surface = surfaces.BSplineSurface3D.from_json(
+            os.path.join(folder, "bsplineface_triangulation_problem_surface.json"))
+        decompose_results = surface.decompose(return_params=True)
+        self.assertEqual(len(decompose_results), 116)
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
+        self.assertEqual(len(bezier_patches), len(params))
+        for patch, param in zip(bezier_patches, params):
+            control_points = patch.control_points
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
+        decompose_results = surface.decompose(return_params=True, decompose_dir="u")
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
+        self.assertEqual(len(bezier_patches), 4)
+        self.assertEqual(len(bezier_patches), len(params))
+        for patch, param in zip(bezier_patches, params):
+            control_points = patch.control_points
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
+        decompose_results = surface.decompose(return_params=True, decompose_dir="v")
+        bezier_patches = [result[0] for result in decompose_results]
+        params = [result[1] for result in decompose_results]
+        self.assertEqual(len(bezier_patches), 29)
+        self.assertEqual(len(bezier_patches), len(params))
+        for patch, param in zip(bezier_patches, params):
+            control_points = patch.control_points
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][0], param[1][0])).is_close(control_points[0]))
+            self.assertTrue(
+                surface.point2d_to_3d(volmdlr.Point2D(param[0][1], param[1][1])).is_close(control_points[-1]))
+
+        bezier_patches = surface.decompose(decompose_dir="u")
+        self.assertEqual(len(bezier_patches), 4)
+        bezier_patches = surface.decompose(decompose_dir="v")
+        self.assertEqual(len(bezier_patches), 29)
+        bezier_patches = surface.decompose()
+        self.assertEqual(len(bezier_patches), 116)
+
+
 
 
 if __name__ == '__main__':

@@ -1,7 +1,6 @@
 """volmdlr shells module."""
 import math
 import random
-import traceback
 import warnings
 from itertools import chain, product
 from typing import Any, Dict, Iterable, List, Tuple, Union
@@ -9,6 +8,7 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import pyfqmr
 from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
 from numpy.typing import NDArray
@@ -24,12 +24,15 @@ from volmdlr.core import (edge_in_list, get_edge_index_in_list,
 from volmdlr.utils.step_writer import (geometric_context_writer,
                                        product_writer, step_ids_to_str)
 
+# pylint: disable=unused-argument
 
-def union_list_of_shells(list_shells):
+
+def union_list_of_shells(list_shells, abs_tol: float = 1e-6):
     """
     Perform union operations with all shells from a list, until all groups of adjacent shells are merged.
 
-    :param list_shells: A list of shells
+    :param list_shells: A list of shells.
+    :param abs_tol: tolerance.
     :return: A list of merged shells
     """
     shells = []
@@ -43,7 +46,7 @@ def union_list_of_shells(list_shells):
 
         for i, union_shell in enumerate(union_shells[:]):
             for j, octant_box in enumerate(list_shells[:]):
-                union = union_shell.union(octant_box)
+                union = union_shell.union(octant_box, abs_tol)
                 if len(union) != 2:
                     union_shells.pop(i)
                     union[0].merge_faces()
@@ -52,7 +55,7 @@ def union_list_of_shells(list_shells):
                     break
                 if len(list_shells) != len_previous_shells_list - 1:
                     union_shells.insert(0, union[1])
-                    list_shells.remove(octant_box)
+                    list_shells.pop(j)
                     break
             else:
                 shells.append(union_shell)
@@ -147,9 +150,9 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         for face in faces:
             for contour in [face.outer_contour3d] + face.inner_contours3d:
                 for edge in contour.primitives:
-                    if not volmdlr.core.point_in_list(edge.start, vertices_points):
+                    if not edge.start.in_list(vertices_points):
                         vertices_points.append(edge.start)
-                    if not volmdlr.core.point_in_list(edge.end, vertices_points):
+                    if not edge.end.in_list(vertices_points):
                         vertices_points.append(edge.end)
         return vertices_points
 
@@ -208,11 +211,11 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         def check_faces(face, other_face_id):
             for point_id in face_vertices[other_face_id]:
                 point = vertices_points[point_id]
-                if face.outer_contour3d.point_over_contour(point):
+                if face.outer_contour3d.point_belongs(point):
                     return True
                 if face.inner_contours3d:
                     for inner_contour in face.inner_contours3d:
-                        if inner_contour.point_over_contour(point):
+                        if inner_contour.point_belongs(point):
                             return True
             return False
 
@@ -242,7 +245,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         face_vertices = {}
 
         for face_index, face in enumerate(faces):
-            face_contour_primitives = face.outer_contour3d.primitives
+            face_contour_primitives = face.outer_contour3d.primitives[:]
             for inner_contour in face.inner_contours3d:
                 face_contour_primitives.extend(inner_contour.primitives)
             for edge in face_contour_primitives:
@@ -285,10 +288,10 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         :return: A serialized version of the OpenShell3D
         :rtype: dict
 
-        .. see also::
+        . see also::
             How `serialization and de-serialization`_ works in dessia_common
 
-        .. _serialization and deserialization:
+        . _serialization and deserialization:
         https://documentation.dessia.tech/dessia_common/customizing.html#overloading-the-dict-to-object-method
 
         """
@@ -304,7 +307,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
         """
-        Converts a step primitive to a Open Shell 3D.
+        Converts a step primitive to an Open Shell 3D.
 
         :param arguments: The arguments of the step primitive.
         :type arguments: list
@@ -375,7 +378,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         frame_content, frame_id = volmdlr.OXYZ.to_step(brep_id)
         manifold_id = frame_id + 1
         shell_id = manifold_id + 1
-        current_id = shell_id + 1
+        current_id = shell_id
         for face in self.faces:
             if isinstance(face, (volmdlr.faces.Face3D, surfaces.Surface3D)):
                 face_content, face_sub_ids = face.to_step(current_id)
@@ -651,20 +654,31 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return point1_min
 
-    def minimum_distance(self, other_shell, return_points=False):
+    @staticmethod
+    def _minimum_distance_helper_points_sets(shell_decomposition):
+        """
+        Gets a set of points representing the shell, some kink of a cloud of points.
+
+        """
+        list_set_points = [{point for face in faces
+                            for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces in
+                           shell_decomposition.items()]
+        list_set_points = [np.array([(point[0], point[1], point[2]) for point in sets_points1])
+                           for sets_points1 in list_set_points]
+        return list_set_points
+
+    def get_minimum_distance_nearby_faces(self, other_shell):
+        """
+        Gets the nearby faces of the two shells where the minimum distance points could be, for further calculations.
+
+        :param other_shell: other shell.
+        :return: A list faces of self, with the closest faces to shell2, and another faces list of shell2,
+        with those closest to self.
+        """
         shell_decomposition1 = self.shell_decomposition()
         shell_decomposition2 = other_shell.shell_decomposition()
-        list_set_points1 = [{point for face in faces1
-                             for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces1 in
-                            shell_decomposition1.items()]
-        list_set_points1 = [np.array([(point[0], point[1], point[2]) for point in sets_points1]) for sets_points1 in
-                            list_set_points1]
-        list_set_points2 = [{point for face in faces2
-                             for point in face.outer_contour3d.discretization_points(number_points=10)} for _, faces2 in
-                            shell_decomposition2.items()]
-        list_set_points2 = [np.array([(point[0], point[1], point[2]) for point in sets_points2]) for sets_points2 in
-                            list_set_points2]
-
+        list_set_points1 = self._minimum_distance_helper_points_sets(shell_decomposition1)
+        list_set_points2 = self._minimum_distance_helper_points_sets(shell_decomposition2)
         minimum_distance = math.inf
         index1, index2 = None, None
         for sets_points1, sets_points2 in product(list_set_points1, list_set_points2):
@@ -676,7 +690,17 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 index2 = next((i for i, x in enumerate(list_set_points2) if np.array_equal(x, sets_points2)), -1)
         faces1 = list(shell_decomposition1.values())[index1]
         faces2 = list(shell_decomposition2.values())[index2]
+        return faces1, faces2
 
+    def minimum_distance(self, other_shell, return_points=False):
+        """
+        Calculates the minimum distance between two shells 3D.
+
+        :param other_shell: other shell.
+        :param return_points: weather to return the minimum distance corresponding points.
+        :return: minimum distance, and if condition is True, the corresponding points.
+        """
+        faces1, faces2 = self.get_minimum_distance_nearby_faces(other_shell)
         minimum_distance = math.inf
         best_distance_points = None
         for face1, face2 in product(faces1, faces2):
@@ -711,7 +735,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         shell1_points_inside_shell2 = []
         for face in self.faces:
             for point in face.outer_contour3d.discretization_points(angle_resolution=resolution):
-                if shell2.point_belongs(point):
+                if shell2.point_inside(point):
                     shell1_points_inside_shell2.append(point)
 
         if len(intersections_points + shell1_points_inside_shell2) == 0:
@@ -739,7 +763,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         for face in self.faces:
             for point in face.outer_contour3d.discretization_points(
                     angle_resolution=resolution):
-                if not shell2.point_belongs(point):
+                if not shell2.point_inside(point):
                     shell1_points_outside_shell2.append(point)
 
         if len(intersections_points + shell1_points_outside_shell2) == 0:
@@ -748,13 +772,13 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
             intersections_points + shell1_points_outside_shell2)
         return bbox.volume()
 
-    def face_on_shell(self, face):
+    def face_on_shell(self, face, abs_tol: float = 1e-6):
         """
         Verifies if a face lies on the shell's surface.
 
         """
         for face_ in self.faces:
-            if face_.face_inside(face):
+            if face_.face_inside(face, abs_tol):
                 return True
         return False
 
@@ -770,25 +794,45 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 return True
         return False
 
-    def triangulation(self):
+    def triangulation(self) -> display.Mesh3D:
         """
-        Triangulation of a Shell3D.
+        Performs triangulation on a Shell3D object.
 
+        This method iterates through each face of the Shell3D object and attempts to perform a triangulation.
+        In cases where a face cannot be triangulated, a warning is issued, and the method proceeds to the next face.
+        The triangulation of successfully processed faces are collected and merged into a single Mesh3D object.
+
+        :return: A Mesh3D object representing the triangulated shell.
+        :rtype: display.Mesh3D
         """
         meshes = []
         for i, face in enumerate(self.faces):
             try:
                 face_mesh = face.triangulation()
+                if face_mesh:
+                    meshes.append(face_mesh)
+            except Exception as exception:
+                warnings.warn(f"Could not triangulate face {i} ({face.__class__.__name__}) in '{self.name}' "
+                              f"due to: {exception}. This may be due to a topology error in contour2d.")
 
-            except Exception:
-                face_mesh = None
-                warnings.warn(f"Could not triangulate {face.__class__.__name__} with index {i} in the shell "
-                              f"{self.name} faces. Probably because topology error in contour2d.")
-                print(traceback.format_exc())
-                continue
-            if face_mesh:
-                meshes.append(face_mesh)
-        return display.DisplayMesh3D.merge_meshes(meshes)
+        return display.Mesh3D.from_meshes(meshes)
+
+    def to_triangle_shell(self) -> Union["OpenTriangleShell3D", "ClosedTriangleShell3D"]:
+        """
+        Convert the current shell to a triangle shell.
+
+        If the current shell is already a triangle shell, return it "as is".
+        This conversion conserves the Open / Closed specification.
+        """
+        if "Triangle" in self.__class__.__name__:
+            return self
+
+        triangles = self.triangulation().faces
+
+        if "Closed" in self.__class__.__name__:
+            return ClosedTriangleShell3D(faces=triangles, color=self.color, alpha=self.alpha, name=self.name)
+
+        return OpenTriangleShell3D(faces=triangles, color=self.color, alpha=self.alpha, name=self.name)
 
     def babylon_meshes(self, merge_meshes=True):
         """
@@ -796,6 +840,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         """
         if merge_meshes:
             return super().babylon_meshes()
+
         babylon_meshes = []
         for face in self.faces:
             face_babylon_meshes = face.babylon_meshes()
@@ -834,8 +879,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         return self.__class__(list_faces)
 
-    def get_geo_lines(self, update_data,
-                      point_mesh_size: float = None):
+    def get_geo_lines(self, update_data, point_mesh_size: float = None):
         """
         Gets the lines that define an OpenShell3D geometry in a .geo file.
 
@@ -849,9 +893,8 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         primitives = []
         points = []
-
         for face in self.faces:
-            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+            for contour in list(chain(*[[face.outer_contour3d], face.inner_contours3d])):
                 for point_contour in contour.get_geo_points():
                     if not point_in_list(point_contour, points):
                         points.append(point_contour)
@@ -859,7 +902,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
                 if isinstance(contour, curves.Circle2D):
                     pass
                 else:
-                    for _, primitive in enumerate(contour.primitives):
+                    for primitive in contour.primitives:
                         if (not edge_in_list(primitive, primitives)
                                 and not edge_in_list(primitive.reverse(), primitives)):
                             primitives.append(primitive)
@@ -877,13 +920,16 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
 
         for f_index, face in enumerate(self.faces):
             line_surface = []
-            for _, contour in enumerate(list(chain(*[[face.outer_contour3d], face.inner_contours3d]))):
+            for contour in list(chain(*[[face.outer_contour3d], face.inner_contours3d])):
                 lines_tags = []
                 if isinstance(contour, curves.Circle2D):
                     pass
                 else:
-                    for _, primitive in enumerate(contour.primitives):
+                    for primitive in contour.primitives:
+                        # index = get_edge_index_in_list(primitive, primitives)
                         index = get_edge_index_in_list(primitive, primitives)
+                        if index is None:
+                            index = get_edge_index_in_list(primitive.reverse(), primitives)
 
                         if primitives[index].is_close(primitive):
 
@@ -965,14 +1011,26 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         if faces_graph is None:
             vertices_points = Shell3D._helper_getter_vertices_points(faces)
             faces_graph = Shell3D._helper_create_faces_graph(faces, vertices_points, False)
+
+        def is_primitive_on_neighbor_face(prim, neighbor_face):
+            """Verifies if primitive is on a neighbor face."""
+            return any(
+                neighbor_face_contour.is_primitive_section_over_wire(prim)
+                for neighbor_face_contour in [neighbor_face.outer_contour3d] + neighbor_face.inner_contours3d
+            )
+
         for n_index in faces_graph.nodes:
             face = faces[n_index]
-            for prim in face.outer_contour3d.primitives:
-                for neihgbor in faces_graph.neighbors(n_index):
-                    if faces[neihgbor].outer_contour3d.is_primitive_section_over_wire(prim):
-                        break
-                else:
-                    return True
+            if any(
+                    not any(
+                        is_primitive_on_neighbor_face(prim, faces[neighbor])
+                        for neighbor in faces_graph.neighbors(n_index)
+                    )
+                    for prim in [prim for contour in [face.outer_contour3d] + face.inner_contours3d
+                                 for prim in contour.primitives]
+            ):
+                return True
+
         return False
 
     @classmethod
@@ -1030,15 +1088,6 @@ class OpenShell3D(Shell3D):
     This class represents a 3D open shell, which is a collection of connected
     faces with no volume. It is a subclass of the `Shell3D` class and
     inherits all of its attributes and methods.
-
-    :param faces: The faces of the shell.
-    :type faces: List[`Face3D`]
-    :param color: The color of the shell.
-    :type color: Tuple[float, float, float]
-    :param alpha: The transparency of the shell, should be a value in the range (0, 1).
-    :type alpha: float
-    :param name: The name of the shell.
-    :type name: str
     """
 
     STEP_FUNCTION = 'OPEN_SHELL'
@@ -1063,15 +1112,6 @@ class ClosedShell3D(Shell3D):
     faces with a volume. It is a subclass of the `Shell3D` class and
     inherits all of its attributes and methods. In addition, it has a method
     to check whether a face is inside the shell.
-
-    :param faces: The faces of the shell.
-    :type faces: List[`Face3D`]
-    :param color: The color of the shell.
-    :type color: Tuple[float, float, float]
-    :param alpha: The transparency of the shell, should be a value in the range (0, 1).
-    :type alpha: float
-    :param name: The name of the shell.
-    :type name: str
     """
 
     STEP_FUNCTION = 'CLOSED_SHELL'
@@ -1086,9 +1126,9 @@ class ClosedShell3D(Shell3D):
         for face in self.faces:
             display3d = face.triangulation()
             for triangle_index in display3d.triangles:
-                point1 = display3d.points[triangle_index[0]]
-                point2 = display3d.points[triangle_index[1]]
-                point3 = display3d.points[triangle_index[2]]
+                point1 = display3d.vertices[triangle_index[0]]
+                point2 = display3d.vertices[triangle_index[1]]
+                point3 = display3d.vertices[triangle_index[2]]
 
                 point1_adj = (point1[0] - center_x, point1[1] - center_y, point1[2] - center_z)
                 point2_adj = (point2[0] - center_x, point2[1] - center_y, point2[2] - center_z)
@@ -1121,7 +1161,7 @@ class ClosedShell3D(Shell3D):
         for prim in face.outer_contour3d.primitives:
             points.extend([prim.middle_point(), prim.end])
         for point in points:
-            point_inside_shell = self.point_belongs(point)
+            point_inside_shell = self.point_inside(point)
             if not point_inside_shell:
                 return False
         return True
@@ -1136,7 +1176,7 @@ class ClosedShell3D(Shell3D):
         for vector in xyz:
             for direction in [1, -1]:
                 bbox_outside_point = points[0] + direction * vector
-                if not self.bounding_box.point_belongs(bbox_outside_point):
+                if not self.bounding_box.point_inside(bbox_outside_point):
                     bbox_outside_points.append(bbox_outside_point)
         bbox_outside_points = sorted(bbox_outside_points, key=point3d.point_distance)
         vec1 = bbox_outside_points[0] - point3d
@@ -1149,7 +1189,7 @@ class ClosedShell3D(Shell3D):
                 point3d, point3d + 2 * vec1 + random.random() * vec2 + random.random() * vec3) for _ in range(10)]
         return rays
 
-    def point_belongs(self, point3d: volmdlr.Point3D, **kwargs):
+    def point_inside(self, point3d: volmdlr.Point3D, **kwargs):
         """
         Ray Casting algorithm.
 
@@ -1157,7 +1197,7 @@ class ClosedShell3D(Shell3D):
         """
         bbox = self.bounding_box
 
-        if not bbox.point_belongs(point3d):
+        if not bbox.point_inside(point3d):
             return False
         rays = self.get_ray_casting_line_segment(point3d)
 
@@ -1169,7 +1209,7 @@ class ClosedShell3D(Shell3D):
                 if point_inters[0].is_close(point3d):
                     return True
                 for inter in point_inters:
-                    if volmdlr.core.point_in_list(inter, intersections):
+                    if inter.in_list(intersections):
                         break
                     intersections.append(inter)
                     count += 1
@@ -1208,46 +1248,35 @@ class ClosedShell3D(Shell3D):
 
         :return: returns a dictionary containing as keys the combination of intersecting faces
         and as the values the resulting primitive from the two intersecting faces.
-        It is done so it is not needed to calculate the same intersecting primitive twice.
+        It is done, so it is not needed to calculate the same intersecting primitive twice.
         """
-        face_combinations = {}
+        face_combinations1 = {face: [] for face in self.faces}
+        face_combinations2 = {face: [] for face in shell2.faces}
         for face1 in self.faces:
             for face2 in shell2.faces:
+                if face1.surface3d.is_coincident(face2.surface3d, abs_tol=tol):
+                    contours1, contours2 = face1.get_coincident_face_intersections(face2)
+                    face_combinations1[face1].extend(contours1)
+                    face_combinations2[face2].extend(contours2)
+
                 face_intersections = face1.face_intersections(face2, tol)
-                if face_intersections:
-                    face_combinations[(face1, face2)] = face_intersections
-        return face_combinations
+                face_combinations1[face1].extend(face_intersections)
+                face_combinations2[face2].extend(face_intersections)
+                # if face_intersections:
+                #     face_combinations[(face1, face2)] = face_intersections
+        return face_combinations1, face_combinations2
 
     @staticmethod
-    def get_intersecting_faces(dict_intersecting_combinations):
-        """
-        Gets intersecting faces.
-
-        :param dict_intersecting_combinations: dictionary containing as keys the combination of intersecting faces
-        and as the values the resulting primitive from the two intersecting faces
-
-        returns two lists. One for the intersecting faces in shell1 and the other for the shell2
-        """
-        intersecting_faces_shell1 = []
-        intersecting_faces_shell2 = []
-        for face in list(dict_intersecting_combinations.keys()):
-            if face[0] not in intersecting_faces_shell1:
-                intersecting_faces_shell1.append(face[0])
-            if face[1] not in intersecting_faces_shell2:
-                intersecting_faces_shell2.append(face[1])
-        return intersecting_faces_shell1, intersecting_faces_shell2
-
-    def get_non_intersecting_faces(self, shell2, intersecting_faces, intersection_method=False):
+    def validate_non_intersecting_faces(shell2, non_intersecting_faces, intersection_method=False):
         """
         Gets lists of faces that never intersect with any of the shell2's faces.
 
         :param shell2: ClosedShell3D.
-        :param intersecting_faces:
+        :param non_intersecting_faces:
         :param intersection_method: determines if running for intersection operation.
         returns a list of all the faces that never intersect any
         face of the other shell.
         """
-        non_intersecting_faces = [face for face in self.faces if face not in intersecting_faces]
         valid_non_intercting_faces = []
         for face in non_intersecting_faces:
             if shell2.face_on_shell(face):
@@ -1259,7 +1288,7 @@ class ClosedShell3D(Shell3D):
                 valid_non_intercting_faces.append(face)
         return valid_non_intercting_faces
 
-    def get_coincident_faces(self, shell2):
+    def get_coincident_faces(self, shell2, abs_tol: float = 1e-6):
         """
         Finds all pairs of faces that are coincident faces, that is, faces lying on the same plane.
 
@@ -1268,7 +1297,7 @@ class ClosedShell3D(Shell3D):
         list_coincident_faces = []
         for face1 in self.faces:
             for face2 in shell2.faces:
-                if isinstance(face1, face2.__class__) and face1.surface3d.is_coincident(face2.surface3d):
+                if face1.surface3d.is_coincident(face2.surface3d, abs_tol):
                     contour1 = face1.outer_contour3d.to_2d(
                         face1.surface3d.frame.origin,
                         face1.surface3d.frame.u,
@@ -1282,37 +1311,10 @@ class ClosedShell3D(Shell3D):
 
         return list_coincident_faces
 
-    def two_shells_intersecting_contour(self, shell2, dict_intersecting_combinations=None):
-        """
-        Computes intersecting_contour between two shells.
-
-        :param shell2: ClosedShell3D
-        :type shell2: :class:`volmdlr.faces.ClosedShell3D`.
-        :param dict_intersecting_combinations: dictionary containing as keys
-            the combination of intersecting faces and as the values the
-            resulting primitive from the two intersecting faces
-        :returns: intersecting contour for two intersecting shells
-        """
-        if dict_intersecting_combinations is None:
-            dict_intersecting_combinations = self.intersecting_faces_combinations(shell2)
-        intersecting_wires = list(dict_intersecting_combinations.values())
-        intersecting_contour = \
-            wires.Contour3D([wire.primitives[0] for
-                             wires_ in intersecting_wires for wire in wires_])
-        return intersecting_contour
-
-    def reference_shell(self, shell2, face):
-        """Reference shell used during bool operations, to help decide if a new divided face should be saved or not."""
-        if face in shell2.faces:
-            reference_shell = self
-        else:
-            reference_shell = shell2
-        return reference_shell
-
     def set_operations_valid_exterior_faces(self, new_faces: List[volmdlr.faces.Face3D],
                                             valid_faces: List[volmdlr.faces.Face3D],
                                             list_coincident_faces: List[volmdlr.faces.Face3D],
-                                            shell2, reference_shell):
+                                            shell2):
         """
         Select the valid faces from the new faces created during Boolean operations.
 
@@ -1320,59 +1322,51 @@ class ClosedShell3D(Shell3D):
         :param valid_faces: list of already validated faces.
         :param list_coincident_faces: if of coincident faces.
         :param shell2: shell2, used in the Boolean operation.
-        :param reference_shell: reference shell, to help decide if a new divided face should be saved or not.
         :return:
         """
         for new_face in new_faces:
-            if self.set_operations_exterior_face(new_face, valid_faces, reference_shell,
-                                                 list_coincident_faces, shell2):
+            if self.set_operations_exterior_face(new_face, valid_faces, list_coincident_faces, shell2):
                 valid_faces.append(new_face)
         return valid_faces
 
-    def union_faces(self, shell2, intersecting_faces, intersecting_combinations, list_coincident_faces):
+    def union_faces(self, shell2, intersecting_faces, dict_faces_intersections, list_coincident_faces):
         """
         Gets new faces for union Boolean operation between two closed shell 3d.
 
         :param shell2: other shell
         :param intersecting_faces: list of all intersecting faces.
-        :param intersecting_combinations: Dictionary containing all combination of faces intersection,\
+        :param dict_faces_intersections: Dictionary containing all combination of faces intersection,\
         with corresponding intersections.
         :param list_coincident_faces: list of coincident faces.
         :return: list of new faces for union of two closed shell3.
         """
         faces = []
         for face in intersecting_faces:
-            reference_shell = self.reference_shell(shell2, face)
-            new_faces = face.set_operations_new_faces(intersecting_combinations)
-            faces = self.set_operations_valid_exterior_faces(new_faces, faces, list_coincident_faces,
-                                                             shell2, reference_shell)
-        if list_coincident_faces:
-            faces = self.validate_set_operations_faces(faces)
+            new_faces = face.set_operations_new_faces(dict_faces_intersections)
+            faces = self.set_operations_valid_exterior_faces(new_faces, faces, list_coincident_faces, shell2)
         return faces
 
-    def get_subtraction_valid_faces(self, new_faces, valid_faces, reference_shell, shell2, keep_interior_faces):
+    def get_subtraction_valid_faces(self, new_faces, valid_faces, shell2, keep_interior_faces):
         """
         Gets valid faces for subtraction Boolean operations.
 
         :param new_faces: list of new divided faces.
         :param valid_faces: list of already validated faces.
-        :param reference_shell: reference shell, to help decide if a new divided face should be saved or not.
         :param shell2: other shell.
         :param keep_interior_faces: Boolean to decide to keep interior faces on reference shell or not.
         :return: return a list a valid faces.
         """
         faces = []
         for new_face in new_faces:
-            if reference_shell.face_on_shell(new_face):
-                if (reference_shell == self and shell2.face_on_shell(new_face)) or (
-                        reference_shell == shell2 and self.face_on_shell(new_face)):
+            if shell2.face_on_shell(new_face):
+                if self.face_on_shell(new_face):
                     if self.is_face_between_shells(shell2, new_face):
                         faces.append(new_face)
                 continue
             if keep_interior_faces:
-                if self.set_operations_interior_face(new_face, valid_faces, reference_shell):
+                if self.set_operations_interior_face(new_face, valid_faces, shell2):
                     faces.append(new_face)
-            elif self.set_operations_exterior_face(new_face, faces, reference_shell, [], shell2):
+            elif self.set_operations_exterior_face(new_face, faces, [], shell2):
                 faces.append(new_face)
         return faces
 
@@ -1390,102 +1384,91 @@ class ClosedShell3D(Shell3D):
                 break
             for face in valid_faces:
                 if face.face_inside(faces[0]):
-                    faces.remove(faces[0])
+                    faces.pop(0)
                     break
             else:
-                valid_faces.append(faces[0])
-                faces.remove(faces[0])
+                valid_faces.append(faces.pop(0))
         return valid_faces
 
-    def subtraction_faces(self, shell2, intersecting_faces, intersecting_combinations):
+    def subtraction_faces(self, shell2, intersecting_faces, dict_faces_intersections, keep_interior_faces: bool):
         """
         Gets new faces for subtraction Boolean operation between two closed shell 3d.
 
         :param shell2: other shell
         :param intersecting_faces: list of all intersecting faces.
-        :param intersecting_combinations: Dictionary containing all combination of faces intersection,\
+        :param dict_faces_intersections: Dictionary containing all combination of faces intersection,\
         with corresponding intersections.
         :return: list of new faces for subtraction of two closed shells 3.
         """
         faces = []
         for face in intersecting_faces:
-            keep_interior_faces = False
-            if face in shell2.faces:
-                keep_interior_faces = True
-            reference_shell = self.reference_shell(shell2, face)
-            new_faces = face.set_operations_new_faces(intersecting_combinations)
-            valid_faces = self.get_subtraction_valid_faces(new_faces, faces, reference_shell,
+            new_faces = face.set_operations_new_faces(dict_faces_intersections)
+            valid_faces = self.get_subtraction_valid_faces(new_faces, faces,
                                                            shell2, keep_interior_faces)
             faces.extend(valid_faces)
 
-        valid_faces = self.validate_set_operations_faces(faces)
+        return faces
 
-        return valid_faces
-
-    def valid_intersection_faces(self, new_faces, valid_faces, reference_shell, shell2):
+    def valid_intersection_faces(self, new_faces, valid_faces, shell2):
         """
         Validate Boolean intersection operation new faces.
 
         :param new_faces: list of new divided faces.
         :param valid_faces: list of already validated faces.
-        :param reference_shell: reference shell, to help decide if a new divided face should be saved or not.
         :param shell2: other shell.
         :return:
         """
         faces = []
         for new_face in new_faces:
-            if reference_shell.face_on_shell(new_face):
-                if (reference_shell == self and shell2.face_on_shell(new_face)) or (
-                        reference_shell == shell2 and self.face_on_shell(new_face)):
-                    point3d = new_face.random_point_inside()
-                    if new_face.point_belongs(point3d):
-                        normal1 = point3d - 0.00001 * new_face.surface3d.frame.w.unit_vector()
-                        normal2 = point3d + 0.00001 * new_face.surface3d.frame.w.unit_vector()
-                        if (self.point_belongs(normal1) and shell2.point_belongs(normal1)) or \
-                                (shell2.point_belongs(normal2) and self.point_belongs(normal2)):
-                            faces.append(new_face)
-                    continue
-            inside_reference_shell = reference_shell.point_belongs(
+            if shell2.face_on_shell(new_face):
+                point3d = new_face.random_point_inside()
+                if new_face.point_belongs(point3d):
+                    normal1 = point3d - 0.00001 * new_face.surface3d.frame.w.unit_vector()
+                    normal2 = point3d + 0.00001 * new_face.surface3d.frame.w.unit_vector()
+                    if (self.point_inside(normal1) and shell2.point_inside(normal1)) or \
+                            (shell2.point_inside(normal2) and self.point_inside(normal2)):
+                        faces.append(new_face)
+                continue
+            inside_shell2 = shell2.point_inside(
                 new_face.random_point_inside())
-            if inside_reference_shell and new_face not in valid_faces:
+            if inside_shell2 and new_face not in valid_faces:
                 faces.append(new_face)
 
         return faces
 
-    def intersection_faces(self, shell2, intersecting_faces, intersecting_combinations):
+    def intersection_faces(self, shell2, intersecting_faces, dict_faces_intersections):
         """
         Gets new faces for intersection Boolean operation between two closed shell 3d.
 
         :param shell2: other shell
         :param intersecting_faces: list of all intersecting faces.
-        :param intersecting_combinations: Dictionary containing all combination of faces intersection,\
+        :param dict_faces_intersections: Dictionary containing all combination of faces intersection,\
         with corresponding intersections.
         :return: list of new faces for intersection of two closed shells 3d.
         """
         faces = []
         for face in intersecting_faces:
-            reference_shell = self.reference_shell(shell2, face)
-            new_faces = face.set_operations_new_faces(intersecting_combinations)
+            new_faces = face.set_operations_new_faces(dict_faces_intersections)
             valid_faces = self.valid_intersection_faces(
-                new_faces, faces, reference_shell, shell2)
+                new_faces, faces, shell2)
             faces.extend(valid_faces)
 
-        valid_faces = self.validate_set_operations_faces(faces)
-        return valid_faces
+        return faces
 
-    def set_operations_interior_face(self, new_face, faces, reference_shell):
+    @staticmethod
+    def set_operations_interior_face(new_face, faces, shell2):
         """
         Verify if new face is inside reference shell for Boolean operations.
 
         :param new_face: new divided face.
         :param faces: list of already validated faces.
-        :param reference_shell: reference shell, to help decide if a new divided face should be saved or not.
+        :param shell2: reference shell, to help decide if a new divided face should be saved or not.
         """
-        inside_reference_shell = reference_shell.point_belongs(new_face.random_point_inside())
-        if inside_reference_shell and new_face not in faces:
+        inside_shell2 = shell2.point_inside(new_face.random_point_inside())
+        if inside_shell2 and new_face not in faces:
             return True
-        if self.face_on_shell(new_face):
-            return True
+        # if self.face_on_shell(new_face):
+        #     return True
         return False
 
     def is_face_between_shells(self, shell2, face):
@@ -1496,6 +1479,11 @@ class ClosedShell3D(Shell3D):
         :param face: face to be verified.
         :return:
         """
+        points = []
+        center_of_mass = face.surface2d.outer_contour.center_of_mass()
+        if face.surface2d.outer_contour.point_inside(center_of_mass):
+            points = [center_of_mass]
+
         if face.surface2d.inner_contours:
             normal_0 = face.surface2d.outer_contour.primitives[0].normal_vector()
             middle_point_0 = face.surface2d.outer_contour.primitives[0].middle_point()
@@ -1503,28 +1491,27 @@ class ClosedShell3D(Shell3D):
             point2 = middle_point_0 - 0.0001 * normal_0
             points = [point1, point2]
         else:
-            points = [face.surface2d.outer_contour.random_point_inside()]
+            points.extend([face.surface2d.outer_contour.random_point_inside()])
 
         for point in points:
             point3d = face.surface3d.point2d_to_3d(point)
             if face.point_belongs(point3d):
                 normal1 = point3d - 0.00001 * face.surface3d.frame.w
                 normal2 = point3d + 0.00001 * face.surface3d.frame.w
-                if (self.point_belongs(normal1) and
-                    shell2.point_belongs(normal2)) or \
-                        (shell2.point_belongs(normal1) and
-                         self.point_belongs(normal2)):
+                if (self.point_inside(normal1) and
+                    shell2.point_inside(normal2)) or \
+                        (shell2.point_inside(normal1) and
+                         self.point_inside(normal2)):
                     return True
         return False
 
-    def set_operations_exterior_face(self, new_face, valid_faces, reference_shell,
+    def set_operations_exterior_face(self, new_face, valid_faces,
                                      list_coincident_faces, shell2):
         """
         Selects exterior faces during bool operations, like union or subtraction.
 
         :param new_face: divided faces.
         :param valid_faces: list of already validated faces.
-        :param reference_shell: reference shell, to help decide if a new divided face should be saved or not.
         :param shell2: other shell.
         :param list_coincident_faces: list of coincident faces.
         :return:
@@ -1532,9 +1519,9 @@ class ClosedShell3D(Shell3D):
         if new_face.area() < 1e-8:
             return False
         if new_face not in valid_faces:
-            inside_reference_shell = reference_shell.point_belongs(new_face.random_point_inside())
-            face_on_reference_shell = reference_shell.face_on_shell(new_face)
-            if not inside_reference_shell or face_on_reference_shell:
+            inside_shell2 = shell2.point_inside(new_face.random_point_inside())
+            face_on_shell2 = shell2.face_on_shell(new_face)
+            if not inside_shell2 or face_on_shell2:
                 if list_coincident_faces:
                     if self.is_face_between_shells(shell2, new_face):
                         return False
@@ -1558,6 +1545,46 @@ class ClosedShell3D(Shell3D):
             return [self]
         return []
 
+    @staticmethod
+    def _separate_intersecting_and_non_intersecting_faces(dict_face_intersections):
+        """
+        Separates intersecting and non-intersecting faces.
+
+        :param dict_face_intersections: dictionary containing all faces intersections.
+        :return:
+        """
+        non_intersecting_faces = []
+        intersecting_faces = []
+        for face, value in dict_face_intersections.items():
+            if value:
+                intersecting_faces.append(face)
+                continue
+            non_intersecting_faces.append(face)
+        return intersecting_faces, non_intersecting_faces
+
+    def _delete_coincident_faces(self, shell2, list_coincident_faces, abs_tol: float = 1e-6):
+        """
+        Helper method to delete coincident faces during union operation.
+
+        :param shell2: other shell2.
+        :param list_coincident_faces: list of coincident faces.
+        :param abs_tol: tolerance.
+        :return: list of closed shells.
+        """
+        faces1 = self.faces[:]
+        faces2 = shell2.faces[:]
+        if list_coincident_faces:
+            for face1, face2 in list_coincident_faces:
+                if shell2.face_on_shell(face1, abs_tol):
+                    if face1 in faces1:
+                        faces1.remove(face1)
+                if self.face_on_shell(face2, abs_tol):
+                    if face2 in faces2:
+                        faces2.remove(face2)
+        if len(faces1) + len(faces2) == len(self.faces) + len(shell2.faces):
+            return [self, shell2]
+        return [ClosedShell3D(faces1+faces2)]
+
     def union(self, shell2: 'ClosedShell3D', tol: float = 1e-8):
         """
         Given Two closed shells, it returns a new united ClosedShell3D object.
@@ -1566,16 +1593,23 @@ class ClosedShell3D(Shell3D):
         validate_set_operation = self.validate_set_operation(shell2, tol)
         if validate_set_operation:
             return validate_set_operation
-        list_coincident_faces = self.get_coincident_faces(shell2)
-        intersecting_combinations = self.intersecting_faces_combinations(shell2, tol)
-        intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
-        intersecting_faces = intersecting_faces1 + intersecting_faces2
-        faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
-        faces += shell2.get_non_intersecting_faces(self, intersecting_faces)
-        if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces:
-            return [self, shell2]
-        new_valid_faces = self.union_faces(shell2, intersecting_faces,
-                                           intersecting_combinations, list_coincident_faces)
+        list_coincident_faces = self.get_coincident_faces(shell2, tol)
+        dict_face_intersections1, dict_face_intersections2 = self.intersecting_faces_combinations(shell2, tol)
+        intersecting_faces_1, non_intersecting_faces1 = self._separate_intersecting_and_non_intersecting_faces(
+            dict_face_intersections1)
+        intersecting_faces_2, non_intersecting_faces2 = self._separate_intersecting_and_non_intersecting_faces(
+            dict_face_intersections2)
+        non_intersecting_faces1 = self.validate_non_intersecting_faces(shell2, non_intersecting_faces1)
+        non_intersecting_faces2 = shell2.validate_non_intersecting_faces(self, non_intersecting_faces2)
+        faces = non_intersecting_faces1 + non_intersecting_faces2
+        if len(faces) == len(self.faces + shell2.faces) and not intersecting_faces_1 + intersecting_faces_2:
+            return self._delete_coincident_faces(shell2, list_coincident_faces, tol)
+        new_valid_faces = self.union_faces(shell2, intersecting_faces_1,
+                                           dict_face_intersections1, list_coincident_faces)
+        new_valid_faces += shell2.union_faces(self, intersecting_faces_2,
+                                              dict_face_intersections2, list_coincident_faces)
+        if list_coincident_faces:
+            new_valid_faces = self.validate_set_operations_faces(new_valid_faces)
         faces += new_valid_faces
         new_shell = ClosedShell3D(faces)
         return [new_shell]
@@ -1643,23 +1677,20 @@ class ClosedShell3D(Shell3D):
             return validate_set_operation
 
         list_coincident_faces = self.get_coincident_faces(shell2)
-        intersecting_combinations = self.intersecting_faces_combinations(shell2, tol)
 
-        if len(intersecting_combinations) == 0:
+        dict_face_intersections1, _ = self.intersecting_faces_combinations(shell2, tol)
+        intersecting_faces_1, non_intersecting_faces1 = self._separate_intersecting_and_non_intersecting_faces(
+            dict_face_intersections1)
+        non_intersecting_faces1 = self.validate_non_intersecting_faces(shell2, non_intersecting_faces1)
+        faces = non_intersecting_faces1
+        if len(intersecting_faces_1) == 0:
             return [self, shell2]
-
-        intersecting_faces, _ = self.get_intersecting_faces(
-            intersecting_combinations)
-
-        faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
-        new_valid_faces = self.union_faces(shell2, intersecting_faces,
-                                           intersecting_combinations,
-                                           list_coincident_faces
-                                           )
+        new_valid_faces = self.union_faces(shell2, intersecting_faces_1,  dict_face_intersections1,
+                                           list_coincident_faces)
         faces += new_valid_faces
         return OpenShell3D.from_faces(faces)
 
-    def subtract_to_closed_shell(self, shell2: OpenShell3D, tol: float = 1e-8):
+    def subtract_to_closed_shell(self, shell2: 'ClosedShell3D', tol: float = 1e-8):
         """
         Subtracts shell2's volume from self.
 
@@ -1669,19 +1700,20 @@ class ClosedShell3D(Shell3D):
         """
         if self.is_disjoint_from(shell2, tol):
             return [self]
-        intersecting_combinations = self.intersecting_faces_combinations(shell2, tol)
-
-        intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(
-            intersecting_combinations)
-        intersecting_faces = intersecting_faces1 + intersecting_faces2
-
-        faces = self.get_non_intersecting_faces(shell2, intersecting_faces)
-        faces += shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
-        new_valid_faces = self.subtraction_faces(shell2, intersecting_faces, intersecting_combinations)
+        dict_face_intersections1, dict_face_intersections2 = self.intersecting_faces_combinations(shell2, tol)
+        intersecting_faces_1, non_intersecting_faces1 = self._separate_intersecting_and_non_intersecting_faces(
+            dict_face_intersections1)
+        intersecting_faces_2, non_intersecting_faces2 = self._separate_intersecting_and_non_intersecting_faces(
+            dict_face_intersections2)
+        non_intersecting_faces1 = self.validate_non_intersecting_faces(shell2, non_intersecting_faces1)
+        non_intersecting_faces2 = shell2.validate_non_intersecting_faces(self, non_intersecting_faces2, True)
+        faces = non_intersecting_faces1 + non_intersecting_faces2
+        new_valid_faces = self.subtraction_faces(shell2, intersecting_faces_1, dict_face_intersections1, False)
+        new_valid_faces += shell2.subtraction_faces(self, intersecting_faces_2, dict_face_intersections2, True)
         faces += new_valid_faces
-        # new_shell = ClosedShell3D(faces)
-        # new_shell.eliminate_not_valid_closedshell_faces()
-        return self.from_faces(faces)
+        faces = self.validate_set_operations_faces(faces)
+        new_shell = ClosedShell3D(faces)
+        return [new_shell]
 
     def validate_intersection_operation(self, shell2):
         """
@@ -1707,20 +1739,27 @@ class ClosedShell3D(Shell3D):
         validate_set_operation = self.validate_intersection_operation(shell2)
         if validate_set_operation:
             return validate_set_operation
-        intersecting_combinations = self.intersecting_faces_combinations(shell2, tol)
-
-        if not intersecting_combinations:
-            return [self, shell2]
-
-        intersecting_faces1, intersecting_faces2 = self.get_intersecting_faces(intersecting_combinations)
-        intersecting_faces = intersecting_faces1 + intersecting_faces2
-        faces = self.intersection_faces(shell2, intersecting_faces, intersecting_combinations)
-        faces += self.get_non_intersecting_faces(shell2, intersecting_faces, intersection_method=True)
-        faces += shell2.get_non_intersecting_faces(self, intersecting_faces, intersection_method=True)
+        dict_face_intersections1, dict_face_intersections2 = self.intersecting_faces_combinations(shell2, tol)
+        intersecting_faces_1, non_intersecting_faces1 = self._separate_intersecting_and_non_intersecting_faces(
+            dict_face_intersections1)
+        intersecting_faces_2, non_intersecting_faces2 = self._separate_intersecting_and_non_intersecting_faces(
+            dict_face_intersections2)
+        non_intersecting_faces1 = self.validate_non_intersecting_faces(shell2, non_intersecting_faces1, True)
+        non_intersecting_faces2 = shell2.validate_non_intersecting_faces(self, non_intersecting_faces2, True)
+        faces = non_intersecting_faces1 + non_intersecting_faces2
+        if len(intersecting_faces_1) + len(intersecting_faces_2) == 0:
+            return []
+        faces += self.intersection_faces(shell2, intersecting_faces_1, dict_face_intersections1)
+        faces += shell2.intersection_faces(self, intersecting_faces_2, dict_face_intersections2)
+        faces = self.validate_set_operations_faces(faces)
         new_shell = ClosedShell3D(faces)
         return [new_shell]
 
     def eliminate_not_valid_closedshell_faces(self):
+        """
+        Eliminate not valid closed shell faces resulted from boolean operations.
+
+        """
         nodes_with_2degrees = [node for node, degree in list(self.vertices_graph.degree()) if degree <= 2]
         for node in nodes_with_2degrees:
             neighbors = nx.neighbors(self.vertices_graph, node)
@@ -1819,9 +1858,78 @@ class OpenTriangleShell3D(OpenShell3D):
         points = [volmdlr.Point3D(px, py, pz) for px, py, pz in vertices]
 
         for i1, i2, i3 in faces:
-            triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
+            try:
+                triangles.append(volmdlr.faces.Triangle3D(points[i1], points[i2], points[i3]))
+            except ZeroDivisionError:
+                pass
 
         return cls(triangles, name=name)
+
+    def decimate(
+        self,
+        target_count: int,
+        update_rate: int = 5,
+        aggressiveness: float = 7.0,
+        max_iterations: int = 100,
+        verbose: bool = False,
+        lossless: bool = False,
+        threshold_lossless: float = 1e-3,
+        alpha: float = 1e-9,
+        k: int = 3,
+        preserve_border: bool = True,
+    ):
+        """
+        Decimate the triangle shell, and return it.
+
+        Note: threshold = alpha * pow(iteration + k, aggressiveness)
+
+        :param target_count: Target number of triangles. Not used if `lossless` is True.
+        :type target_count: int
+        :param update_rate: Number of iterations between each update. If `lossless` flag is set to True, rate is 1.
+        :type update_rate: int
+        :param aggressiveness: Parameter controlling the growth rate of the threshold at each iteration when `lossless`
+            is False.
+        :type aggressiveness: float
+        :param max_iterations: Maximal number of iterations.
+        :type max_iterations: int
+        :param verbose: Control verbosity.
+        :type verbose: bool
+        :param lossless: Use the lossless simplification method.
+        :type lossless: bool
+        :param threshold_lossless: Maximal error after which a vertex is not deleted. Only for `lossless` method.
+        :type threshold_lossless: float
+        :param alpha: Parameter for controlling the threshold growth.
+        :type alpha: float
+        :param k: Parameter for controlling the threshold growth.
+        :type k: int
+        :param preserve_border: Flag for preserving vertices on open border.
+        :type preserve_border: bool
+
+        :return: The decimated triangle shell.
+        :rtype: OpenTriangleShell3D
+        """
+        # pylint: disable=too-many-arguments
+
+        vertices, triangles = self.to_mesh_data(round_vertices=True, n_decimals=9)
+
+        simplifier = pyfqmr.Simplify()
+        simplifier.setMesh(vertices, triangles)
+        simplifier.simplify_mesh(
+            target_count=target_count,
+            update_rate=update_rate,
+            aggressiveness=aggressiveness,
+            max_iterations=max_iterations,
+            verbose=verbose,
+            lossless=lossless,
+            threshold_lossless=threshold_lossless,
+            alpha=alpha,
+            K=k,
+            preserve_border=preserve_border,
+        )
+
+        vertices, faces, _ = simplifier.getMesh()
+
+        return self.__class__.from_mesh_data(vertices, faces)
 
     def to_trimesh(self):
         """Creates a Trimesh from a TriangleShell3D."""
@@ -1837,12 +1945,12 @@ class OpenTriangleShell3D(OpenShell3D):
         points = []
         triangles = []
         for i, triangle in enumerate(self.faces):
-            points.append(display.Node3D.from_point(triangle.point1))
-            points.append(display.Node3D.from_point(triangle.point2))
-            points.append(display.Node3D.from_point(triangle.point3))
+            points.append(np.array(triangle.point1))
+            points.append(np.array(triangle.point2))
+            points.append(np.array(triangle.point3))
             triangles.append((3 * i, 3 * i + 1, 3 * i + 2))
-
-        return display.DisplayMesh3D(points, triangles)
+        vertices = np.array(points, dtype=np.float64)
+        return display.Mesh3D(vertices, np.array(triangles, dtype=np.int32))
 
     def to_dict(self, *args, **kwargs):
         """Overload of 'to_dict' for performance."""
@@ -1919,6 +2027,42 @@ class ClosedTriangleShell3D(OpenTriangleShell3D, ClosedShell3D):
         OpenTriangleShell3D.__init__(self, faces=faces, color=color, alpha=alpha, name=name)
         ClosedShell3D.__init__(self, faces, color, alpha, name)
 
+    def are_normals_pointing_outwards(self):
+        """Verifies if all face's normal are pointing outwards the closed shell."""
+        return not any(self.point_inside(face.middle() + face.normal() * 1e-4) for face in self.faces)
+
+    def are_normals_pointing_inwards(self):
+        """Verifies if all face's normal are pointing inwards the closed shell."""
+        return not any(not self.point_inside(face.middle() + face.normal() * 1e-4) for face in self.faces)
+
+    def turn_normals_outwards(self):
+        """
+        Turns the normals of the closed shells faces always outwards.
+
+        :return: A new ClosedTriangleShell3D object having all faces normals pointing outwards.
+        """
+        new_faces = []
+        for face in self.faces:
+            if self.point_inside(face.middle() + face.normal() * 1e-5):
+                new_faces.append(volmdlr.faces.Triangle3D(*face.points[::-1]))
+            else:
+                new_faces.append(face)
+        return ClosedTriangleShell3D(new_faces)
+
+    def turn_normals_inwards(self):
+        """
+        Turns the normals of the closed shells faces always inwards.
+
+        :return: A new ClosedTriangleShell3D object having all faces normals pointing inwards.
+        """
+        new_faces = []
+        for face in self.faces:
+            if not self.point_inside(face.middle() + face.normal() * 1e-5):
+                new_faces.append(volmdlr.faces.Triangle3D(*face.points[::-1]))
+            else:
+                new_faces.append(face)
+        return ClosedTriangleShell3D(new_faces)
+
 
 class DisplayTriangleShell3D(Shell3D):
     """
@@ -1928,7 +2072,7 @@ class DisplayTriangleShell3D(Shell3D):
     performance.
     """
 
-    def __init__(self, positions: NDArray[float], indices: NDArray[int], name):
+    def __init__(self, positions: NDArray[float], indices: NDArray[int], name: str = ""):
         """
         Instantiate the DisplayTriangleShell3D.
 
@@ -1936,6 +2080,11 @@ class DisplayTriangleShell3D(Shell3D):
         :param indices: A 3D numpy array of int representing the indices of the vertices representing the triangles.
         :param name: A name for the DisplayTriangleShell3D, optional.
         """
+        warnings.warn(
+            "'volmdlr.shells.DisplayTriangleShell3D' class is deprecated. Use 'volmdlr.display.Mesh3D' instead",
+            DeprecationWarning
+        )
+
         self.positions = positions
         self.indices = indices
 
@@ -2011,3 +2160,80 @@ class DisplayTriangleShell3D(Shell3D):
         display_triangle_shell.color = dict_["color"]
 
         return display_triangle_shell
+
+    def concatenate(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
+        """
+        Concatenates two DisplayTriangleShell3D instances into a single instance.
+
+        This method merges the positions and indices of both shells. If the same vertex exists in both shells,
+        it is only included once in the merged shell to optimize memory usage. It also ensures that each face is
+        represented uniquely by sorting the vertices of each triangle.
+
+        :param other: Another DisplayTriangleShell3D instance to concatenate with this instance.
+        :return: A new DisplayTriangleShell3D instance representing the concatenated shells.
+        """
+        if len(self.positions) == 0 or len(self.indices) == 0:
+            return other
+        if len(other.positions) == 0 or len(other.indices) == 0:
+            return self
+
+        # Merge and remove duplicate vertices
+        merged_positions = np.vstack((self.positions, other.positions))
+        unique_positions, indices_map = np.unique(merged_positions, axis=0, return_inverse=True)
+
+        # Adjust indices to account for duplicates and offset from concatenation
+        self_indices_adjusted = self.indices
+        other_indices_adjusted = other.indices + len(self.positions)
+
+        # Re-map indices to unique vertices
+        all_indices = np.vstack((self_indices_adjusted, other_indices_adjusted))
+        final_indices = indices_map[all_indices]
+
+        # Use np.unique to find unique subarrays
+        _, unique_indices = np.unique(np.sort(final_indices, axis=1), axis=0, return_index=True)
+
+        # Get the unique subarrays
+        merged_indices = final_indices[unique_indices]
+
+        # Create a new DisplayTriangleShell3D with merged data
+        return DisplayTriangleShell3D(
+            positions=unique_positions, indices=merged_indices, name=self.name + "+" + other.name
+        )
+
+    def __add__(self, other: "DisplayTriangleShell3D") -> "DisplayTriangleShell3D":
+        """
+        Overloads the + operator to concatenate two DisplayTriangleShell3D instances.
+
+        :param other: Another DisplayTriangleShell3D instance to concatenate with this instance.
+        :type other: DisplayTriangleShell3D
+
+        :return: A new DisplayTriangleShell3D instance representing the concatenated shells.
+        :rtype: DisplayTriangleShell3D
+        """
+        return self.concatenate(other)
+
+    def __hash__(self):
+        return hash(
+            (
+                self.__class__.__name__,
+                (tuple(self.indices[0]), tuple(self.indices[-1]), len(self.indices)),
+                (tuple(self.positions[0]), tuple(self.positions[-1]), len(self.positions)),
+            )
+        )
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def _data_hash(self):
+        return hash(
+            (
+                self.__class__.__name__,
+                (tuple(self.indices[0]), tuple(self.indices[-1]), len(self.indices)),
+                (tuple(self.positions[0]), tuple(self.positions[-1]), len(self.positions)),
+            )
+        )
+
+    def _data_eq(self, other_object):
+        if other_object.__class__.__name__ != self.__class__.__name__:
+            return False
+        return self._data_hash() == other_object._data_hash()

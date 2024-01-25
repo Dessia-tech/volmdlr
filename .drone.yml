@@ -50,6 +50,69 @@ steps:
       from_secret: email_password
     from: technical@dessia.tech
 
+  volumes:
+    # Mount pip cache from host
+    - name: cache
+      path: /root/.cache
+
+
+- name: install, build doc run scripts and tutorials
+  image: python:3.9
+  commands:
+  - git fetch --tags
+  - pip install .[doc,test]
+  - python setup.py build_ext --inplace
+  - pip install .
+  - cd doc
+  - make html
+  - cd ../tests
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
+  - cd ../scripts  
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
+  - cd ../tutorials
+  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
+  - cd ..
+  - coverage json
+  - coverage report
+  - coverage html
+  - python coverage.py
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+
+- name: generate sdist
+  image: python:3.9
+  when:
+    branch: master
+  commands:
+  - git fetch --tags
+  - pip install .
+  - python setup.py sdist
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
+- name: generate bdist_wheel
+  image: python:3.9
+  when:
+      branch: master
+
+  commands:
+  - git fetch --tags
+  - pip install wheel
+  - pip install .
+  - python setup.py bdist_wheel
+
+  volumes:
+    # Mount pip cache from host
+    - name: pip_cache
+      path: /root/.cache/pip
+
 - name: check code complexity
   image: dessia/python-ci:3.9
   when:
@@ -60,17 +123,11 @@ steps:
   - git fetch --tags
   - pip install numpy Cython>3
   - python setup.py build_ext --inplace
-  - python setup.py install
+  - pip install .
   - pip install pylint==2.17.3 pydocstyle==6.3.0 pre-commit shellcheck-py cython-lint pyenchant==3.2.2
   - python code_pylint.py
   - python code_pydocstyle.py
   - pre-commit run -a
-
-  volumes:
-    # Mount pip cache from host
-    - name: cache
-      path: /root/.cache
-
 
 - name: check pep8 formatting
   image: python:3.9
@@ -95,45 +152,6 @@ steps:
   commands:
     - bash code_changelog.sh
 
-- name: install, build doc run scripts and tutorials
-  image: python:3.9
-  commands:
-  - git fetch --tags
-  - pip install .[doc,test]
-  - python setup.py build_ext --inplace
-  - python setup.py install
-  - cd doc
-  - make html
-  - cd ../tests
-  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -m unittest discover -v
-  - cd ../scripts  
-  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_scripts.py
-  - cd ../tutorials
-  - coverage run --rcfile=../.coveragerc --data-file=../.coverage --source volmdlr -a ci_tutorials.py
-  - cd ..
-  - coverage json
-  - coverage report
-  - coverage html
-  - python coverage.py
-
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
-
-
-- name: generate sdist
-  image: python:3.9
-  commands:
-  - git fetch --tags
-  - pip install numpy
-  - pip install Cython>3
-  - python setup.py sdist
-
-  volumes:
-    # Mount pip cache from host
-    - name: pip_cache
-      path: /root/.cache/pip
 
 
 - name: upload to pypi
