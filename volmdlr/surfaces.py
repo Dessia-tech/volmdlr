@@ -2963,6 +2963,14 @@ class ToroidalSurface3D(PeriodicalSurface):
         return self.major_radius - self.minor_radius
 
     def torus_arcs(self, number_arcs: int = 50):
+        """
+        Retrieve torus arcs representing the generatrices of a Torus.
+
+        :param number_arcs: The number of generatrices to generate. Default is 30
+        :type number_arcs: int
+        :return: A list of Circle3D instances representing the generatrices of the torus.
+        :rtype: List[Circle3D]
+        """
         arcs = []
         center = self.frame.origin + self.frame.u * self.major_radius
         for i in range(number_arcs):
@@ -2975,6 +2983,14 @@ class ToroidalSurface3D(PeriodicalSurface):
         return arcs
 
     def _torus_circle_generatrices_xy(self, number_arcs: int = 50):
+        """
+        Retrieve circle generatrices in cutting planes parallel to the XY plane of the torus local system.
+
+        :param number_arcs: The number of generatrices to generate. Default is 50.
+        :type number_arcs: int
+        :return: A list of Circle3D instances representing the generatrices in the XY plane.
+        :rtype: List[Circle3D]
+        """
         initial_point = self.frame.origin
         circles = []
         phis = np.linspace(-0.5*math.pi, 0.5*math.pi, number_arcs)
