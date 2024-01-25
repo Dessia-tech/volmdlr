@@ -101,6 +101,19 @@ class TestToroidalFace3D(unittest.TestCase):
             for inter, expected_result in zip(inters, expected_results[i]):
                 self.assertAlmostEqual(inter.length(), expected_result, 6)
 
+    def test_conicalface_intersections(self):
+        tf = faces.ToroidalFace3D.from_surface_rectangular_cut(
+            surfaces.ToroidalSurface3D(volmdlr.OXYZ, 2, 1), -1.4,
+            3.5, 0., 2.5)
+        conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ.translation(volmdlr.Vector3D(-1, 0, 0)), math.pi / 6)
+        conical_face = faces.ConicalFace3D.from_surface_rectangular_cut(
+            conical_surface, 0, volmdlr.TWO_PI, 0, 2)
+        face_intersections = tf.face_intersections(conical_face)
+        self.assertEqual(len(face_intersections), 1)
+        for point in face_intersections[0].discretization_points(number_points=20):
+            self.assertTrue(tf.point_belongs(point))
+            self.assertTrue(conical_face.point_belongs(point))
+
     def test_triangulation_quality(self):
         """
         The triangle middle of triangulation should be at least at radius/20 of the surface

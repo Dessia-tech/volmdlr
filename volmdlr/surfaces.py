@@ -3768,7 +3768,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         point1 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmin))
         point2 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmax))
         for edge in conical_surface.get_generatrices(300, self.outer_radius * 3) + \
-                conical_surface.get_circle_generatrices(100, point1.z, point2.z):
+                conical_surface.get_circle_generatrices(100, max(point1.z, 0), max(point2.z, 0)):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not point.in_list(points_intersections):
@@ -4416,7 +4416,8 @@ class ConicalSurface3D(PeriodicalSurface):
         line = curves.Line3D.from_point_and_vector(self.frame.origin, self.frame.w)
         if line.point_distance(circle.center) > radius + circle.radius:
             return []
-        return self.curve_intersections(circle)
+        intersections = [point for point in self.curve_intersections(circle) if point.z >= 0]
+        return intersections
 
     def _full_line_intersections(self, line: curves.Line3D):
         """
