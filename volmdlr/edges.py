@@ -5746,6 +5746,10 @@ class Arc3D(ArcMixin, Edge):
         return ax
 
     def copy(self, *args, **kwargs):
+        """
+        Create a Copy of an Arc 3D.
+
+        """
         return Arc3D(self.circle.copy(), self.start.copy(), self.end.copy())
 
     def to_2d(self, plane_origin, x, y):

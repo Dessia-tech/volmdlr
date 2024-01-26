@@ -3768,7 +3768,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         point1 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmin))
         point2 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmax))
         for edge in conical_surface.get_generatrices(300, self.outer_radius * 3) + \
-                conical_surface.get_circle_generatrices(100, point1.z, point2.z):
+                conical_surface.get_circle_generatrices(100, max(point1.z, 0), max(point2.z, 0)):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not point.in_list(points_intersections):
@@ -4111,7 +4111,7 @@ class ConicalSurface3D(PeriodicalSurface):
     def get_circle_at_z(self, z):
         """Gets a circle in the conical surface at given z position."""
         i_frame = self.frame.translation(z * self.frame.w)
-        radius = z * math.tan(self.semi_angle)
+        radius = abs(z * math.tan(self.semi_angle))
         circle = curves.Circle3D(i_frame, radius)
         return circle
 
@@ -4416,7 +4416,10 @@ class ConicalSurface3D(PeriodicalSurface):
         line = curves.Line3D.from_point_and_vector(self.frame.origin, self.frame.w)
         if line.point_distance(circle.center) > radius + circle.radius:
             return []
-        return self.curve_intersections(circle)
+        intersections = [point for point in self.curve_intersections(circle) if point.z >= 0]
+        if len(intersections) > 1:
+            print(True)
+        return intersections
 
     def _full_line_intersections(self, line: curves.Line3D):
         """
@@ -4660,7 +4663,7 @@ class ConicalSurface3D(PeriodicalSurface):
         point1 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmin))
         point2 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmax))
         cone_generatrices = self.get_generatrices(200, spherical_surface.radius*4) +\
-                            self.get_circle_generatrices(200, point1.z, point2.z)
+                            self.get_circle_generatrices(200, max(point1.z, 0), max(point2.z, 0))
         intersection_points = []
         for gene in cone_generatrices:
             intersections = spherical_surface.edge_intersections(gene)

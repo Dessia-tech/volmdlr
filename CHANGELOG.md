@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 #### faces.py
--
+- Toroidalface ConicalFace intersections.
 
 #### edges.py
 -
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - defines ordering of curve methods
 
 ### Unittests
-
+- Toroidalface ConicalFace intersections.
 
 ## v0.16.0
 
