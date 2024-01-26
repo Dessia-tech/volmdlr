@@ -17,7 +17,7 @@ try:
 except (TypeError, OSError):
     pass
 import matplotlib.pyplot as plt
-import numpy as npy
+import numpy as np
 
 import dessia_common.core as dc
 from dessia_common.errors import ConsistencyError
@@ -30,7 +30,7 @@ from volmdlr.utils.step_writer import product_writer, geometric_context_writer, 
     STEP_HEADER, STEP_FOOTER, step_ids_to_str
 from volmdlr.geometry import get_transfer_matrix_from_basis
 
-npy.seterr(divide='raise')
+np.seterr(divide='raise')
 
 DEFAULT_COLOR = (0.8, 0.8, 0.8)
 
@@ -125,8 +125,8 @@ def determinant(vec1, vec2, vec3):
 
     """
     # TODO: to be removed
-    a = npy.array((vec1.vector, vec2.vector, vec3.vector))
-    return npy.linalg.det(a)
+    a = np.array((vec1.vector, vec2.vector, vec3.vector))
+    return np.linalg.det(a)
 
 
 def delete_double_point(list_point):
@@ -192,19 +192,19 @@ def helper_babylon_data(babylon_data, display_points):
         all_points.extend(display_points)
 
     # Convert to a NumPy array and reshape
-    positions_array = npy.array([])
+    positions_array = np.array([])
     if all_points and all_positions:
-        positions_array = npy.concatenate((npy.array(all_positions).reshape(-1, 3), npy.array(all_points)))
+        positions_array = np.concatenate((np.array(all_positions).reshape(-1, 3), np.array(all_points)))
     elif all_positions:
-        positions_array = npy.array(all_positions).reshape(-1, 3)
+        positions_array = np.array(all_positions).reshape(-1, 3)
     elif all_points:
-        positions_array = npy.array(all_points)
+        positions_array = np.array(all_points)
     # Compute min and max for each dimension
     min_vals = positions_array.min(axis=0)
     max_vals = positions_array.max(axis=0)
 
     # Calculate max length of the bounding box
-    max_length = npy.max(max_vals - min_vals)
+    max_length = np.max(max_vals - min_vals)
 
     # Calculate center point of the bounding box
     center = (0.5 * (min_vals + max_vals)).tolist()
@@ -530,7 +530,7 @@ class BoundingRectangle(dc.DessiaObject):
         :return: The bounding rectangle initialized from the list of points.
         :rtype: BoundingRectangle
         """
-        points_array = npy.array(points)
+        points_array = np.array(points)
         # Compute min and max for each dimension
         xmin, ymin = points_array.min(axis=0)
         xmax, ymax = points_array.max(axis=0)
@@ -690,11 +690,11 @@ class BoundingBox(dc.DessiaObject):
         """
         # Create a 2D NumPy array where each row corresponds to the coordinates of a bounding box
         # [xmin, xmax, ymin, ymax, zmin, zmax]
-        coords = npy.array([[bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax] for bb in bounding_boxes])
+        coords = np.array([[bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax] for bb in bounding_boxes])
 
         # Find the global minimum and maximum for each axis
-        mins = npy.amin(coords, axis=0)
-        maxs = npy.amax(coords, axis=0)
+        mins = np.amin(coords, axis=0)
+        maxs = np.amax(coords, axis=0)
 
         # Assign min and max for each axis
         xmin, xmax, ymin, ymax, zmin, zmax = mins[0], maxs[1], mins[2], maxs[3], mins[4], maxs[5]
@@ -712,7 +712,7 @@ class BoundingBox(dc.DessiaObject):
         :return: The bounding box initialized from the list of points.
         :rtype: BoundingBox
         """
-        points_array = npy.array(points)
+        points_array = np.array(points)
         # Compute min and max for each dimension
         xmin, ymin, zmin = points_array.min(axis=0)
         xmax, ymax, zmax = points_array.max(axis=0)
@@ -2196,14 +2196,14 @@ class MovingVolumeModel(VolumeModel):
             all_positions.extend(positions)
 
         # Convert to a NumPy array and reshape
-        positions_array = npy.array(all_positions).reshape(-1, 3)
+        positions_array = np.array(all_positions).reshape(-1, 3)
 
         # Compute min and max for each dimension
         min_vals = positions_array.min(axis=0)
         max_vals = positions_array.max(axis=0)
 
         # Calculate max length of the bounding box
-        max_length = npy.max(max_vals - min_vals)
+        max_length = np.max(max_vals - min_vals)
 
         # Calculate center point of the bounding box
         center = (0.5 * (min_vals + max_vals)).tolist()

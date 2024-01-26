@@ -14,7 +14,7 @@ from statistics import mean
 from typing import List
 
 import matplotlib.pyplot as plt
-import numpy as npy
+import numpy as np
 import plot_data.core as plot_data
 from scipy.spatial.qhull import ConvexHull, Delaunay
 from triangle import triangulate
@@ -2809,7 +2809,7 @@ class ClosedPolygonMixin:
             if i != 0:
                 distances.append(point.point_distance(self.points[i - 1]))
         mean_distance = mean(distances)
-        std = npy.std(distances)
+        std = np.std(distances)
         return mean_distance, std
 
     def simplify_polygon(self, min_distance: float = 0.01, max_distance: float = 0.05, angle: float = 15):
@@ -2929,15 +2929,15 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         x = [point.x for point in self.points]
         y = [point.y for point in self.points]
 
-        xi_xi1 = x + npy.roll(x, -1)
-        yi_yi1 = y + npy.roll(y, -1)
-        xi_yi1 = npy.multiply(x, npy.roll(y, -1))
-        xi1_yi = npy.multiply(npy.roll(x, -1), y)
+        xi_xi1 = x + np.roll(x, -1)
+        yi_yi1 = y + np.roll(y, -1)
+        xi_yi1 = np.multiply(x, np.roll(y, -1))
+        xi1_yi = np.multiply(np.roll(x, -1), y)
 
-        signed_area = 0.5 * npy.sum(xi_yi1 - xi1_yi)  # signed area!
+        signed_area = 0.5 * np.sum(xi_yi1 - xi1_yi)  # signed area!
         if not math.isclose(signed_area, 0, abs_tol=1e-12):
-            center_x = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
-            center_y = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
+            center_x = np.sum(np.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
+            center_y = np.sum(np.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
             return volmdlr.Point2D(center_x, center_y)
 
         self.plot()
@@ -2958,8 +2958,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         Ray casting algorithm copied from internet.
         """
-        return polygon_point_belongs(npy.array(self.points),
-                                     npy.array(point),
+        return polygon_point_belongs(np.array(self.points),
+                                     np.array(point),
                                      include_edge_points=include_edge_points, tol=tol)
 
     def points_in_polygon(self, points, include_edge_points: bool = False, tol: float = 1e-6):
@@ -2976,8 +2976,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         :rtype: numpy.ndarray
         """
         if isinstance(points, list):
-            points = npy.array(points)
-        polygon = npy.array(self.points)
+            points = np.array(points)
+        polygon = np.array(self.points)
         return points_in_polygon(polygon, points, include_edge_points=include_edge_points, tol=tol)
 
     def second_moment_area(self, point):
@@ -3061,7 +3061,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         for point in points:
             new_points.append([point[0], point[1]])
 
-        delaunay = npy.array(new_points)
+        delaunay = np.array(new_points)
 
         tri = Delaunay(delaunay)
 
@@ -3425,7 +3425,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         points_hull = [point.copy() for point in points]
 
-        numpy_points = npy.array([(point.x, point.y) for point in points_hull])
+        numpy_points = np.array([(point.x, point.y) for point in points_hull])
         hull = ConvexHull(numpy_points)
         polygon_points = []
         for simplex in hull.simplices:
@@ -3524,8 +3524,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
 
-        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-               'segments': npy.array(segments).reshape((-1, 2)),
+        tri = {'vertices': np.array(vertices).reshape((-1, 2)),
+               'segments': np.array(segments).reshape((-1, 2)),
                }
         if len(tri['vertices']) < 3:
             return None
@@ -3549,8 +3549,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
 
-        x = npy.linspace(x_min, x_max, num=int(number_points_x + 2), dtype=npy.float64)
-        y = npy.linspace(y_min, y_max, num=int(number_points_y + 2), dtype=npy.float64)
+        x = np.linspace(x_min, x_max, num=int(number_points_x + 2), dtype=np.float64)
+        y = np.linspace(y_min, y_max, num=int(number_points_y + 2), dtype=np.float64)
 
         grid_point_index = {}
 
@@ -3565,13 +3565,13 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             else:
                 for xi in reversed(x):
                     grid_points.append((xi, yi))
-        grid_points = npy.array(grid_points, dtype=npy.float64)
+        grid_points = np.array(grid_points, dtype=np.float64)
 
         # Use self.points_in_polygon to check if each point is inside the polygon
         points_in_polygon_ = self.points_in_polygon(grid_points, include_edge_points=include_edge_points)
 
         # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
-        indices = npy.where(points_in_polygon_)[0]
+        indices = np.where(points_in_polygon_)[0]
 
         points = []
 

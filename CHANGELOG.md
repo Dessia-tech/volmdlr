@@ -47,7 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For points ON an object: point_belongs
 - edges/curves.py cut_between_two_points -> trim
 - defines ordering of curve methods
-
+- npy -> np
+- 
 ### Unittests
 - Toroidalface ConicalFace intersections.
 

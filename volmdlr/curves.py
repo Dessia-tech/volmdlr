@@ -7,7 +7,7 @@ import sys
 from typing import List, Union
 
 import matplotlib.pyplot as plt
-import numpy as npy
+import numpy as np
 import scipy.integrate as scipy_integrate
 from matplotlib import __version__ as _mpl_version
 from packaging import version
@@ -662,7 +662,7 @@ class Line2D(Line):
         """
         segments_distance = abs(new_c[1] - new_a[1])
         radius = segments_distance / 2
-        new_circle_center = volmdlr.Point2D((0, npy.sign(new_c[1] - new_a[1]) * radius))
+        new_circle_center = volmdlr.Point2D((0, np.sign(new_c[1] - new_a[1]) * radius))
         circle_center = new_basis.local_to_global_coordinates(new_circle_center)
         circle = Circle2D(circle_center, radius)
         return circle, None
@@ -1038,7 +1038,7 @@ class CircleMixin:
             angle_resolution = number_points
         discretization_points = [self.center + self.radius * math.cos(theta) * self.frame.u +
                                  self.radius * math.sin(theta) * self.frame.v for theta in
-                                 npy.linspace(0, volmdlr.TWO_PI, angle_resolution, dtype=npy.float64)]
+                                 np.linspace(0, volmdlr.TWO_PI, angle_resolution, dtype=np.float64)]
         return discretization_points
 
     def point_at_abscissa(self, curvilinear_abscissa):
@@ -1586,9 +1586,9 @@ class Circle2D(CircleMixin, ClosedCurve):
             inv_matrix_a = matrix_a.inverse()
             center = volmdlr.Point2D(*inv_matrix_a.vector_multiplication(b_vector))
         except ValueError:
-            matrix_a = npy.array(matrix1)
-            b_vector = - npy.array(b_vector_components)
-            center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
+            matrix_a = np.array(matrix1)
+            b_vector = - np.array(b_vector_components)
+            center = volmdlr.Point2D(*np.linalg.solve(matrix_a, b_vector))
         return center
 
     def _get_bounding_rectangle(self):
@@ -2471,7 +2471,7 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
             angle_resolution = number_points
         discretization_points = [self.frame.local_to_global_coordinates(
             volmdlr.Point2D(self.major_axis * math.cos(theta), self.minor_axis * math.sin(theta)))
-            for theta in npy.linspace(self.angle_start, self.angle_end, angle_resolution)]
+            for theta in np.linspace(self.angle_start, self.angle_end, angle_resolution)]
         return discretization_points
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
@@ -2714,7 +2714,7 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
                                            theta) * self.major_dir
                                        + self.minor_axis * math.sin(
                                            theta) * self.minor_dir for theta in
-                                       npy.linspace(0, volmdlr.TWO_PI, angle_resolution)]
+                                       np.linspace(0, volmdlr.TWO_PI, angle_resolution)]
 
         return discretization_points_3d
 
@@ -2940,7 +2940,7 @@ class HyperbolaMixin(Curve):
         :param y: y component.
         :return: x component.
         """
-        x_positive = npy.sqrt(((y ** 2) / (self.semi_minor_axis ** 2) + 1)*(self.semi_major_axis ** 2))
+        x_positive = np.sqrt(((y ** 2) / (self.semi_minor_axis ** 2) + 1)*(self.semi_major_axis ** 2))
         return x_positive
 
 
@@ -3071,7 +3071,7 @@ class Hyperbola2D(HyperbolaMixin):
         """
         if not min_y and not max_y:
             min_y, max_y = -self.semi_major_axis * 5, self.semi_major_axis * 5
-        y_vals = npy.linspace(min_y, max_y, number_points)
+        y_vals = np.linspace(min_y, max_y, number_points)
         x_positive_vals = self.get_x(y_vals)
         points_positive_branch = []
         for i, y in enumerate(y_vals):
@@ -3190,7 +3190,7 @@ class Hyperbola3D(ConicMixin, HyperbolaMixin):
         """
         if not min_y and not max_y:
             min_y, max_y = -self.semi_major_axis * 5, self.semi_major_axis * 5
-        y_vals = npy.linspace(min_y, max_y, number_points)
+        y_vals = np.linspace(min_y, max_y, number_points)
         x_positive_vals = self.get_x(y_vals)
         points_positive_branch = []
         for i, y in enumerate(y_vals):
@@ -3390,7 +3390,7 @@ class Parabola2D(ParabolaMixin):
         """
         if not min_x and not max_x:
             min_x, max_x = -self.focal_length * 5, self.focal_length * 5
-        x_vals = npy.linspace(min_x, max_x, number_points)
+        x_vals = np.linspace(min_x, max_x, number_points)
         points = []
         for x in x_vals:
             y = self.get_y(x)
@@ -3443,7 +3443,7 @@ class Parabola3D(ConicMixin, ParabolaMixin):
         """
         if not min_x and not max_x:
             min_x, max_x = -self.focal_length * 5, self.focal_length * 5
-        x_vals = npy.linspace(min_x, max_x, number_points)
+        x_vals = np.linspace(min_x, max_x, number_points)
         points = []
         for x in x_vals:
             y = self.get_y(x)

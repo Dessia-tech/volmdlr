@@ -4417,8 +4417,6 @@ class ConicalSurface3D(PeriodicalSurface):
         if line.point_distance(circle.center) > radius + circle.radius:
             return []
         intersections = [point for point in self.curve_intersections(circle) if point.z >= 0]
-        if len(intersections) > 1:
-            print(True)
         return intersections
 
     def _full_line_intersections(self, line: curves.Line3D):

@@ -13,7 +13,7 @@ import plot_data
 
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
-import numpy as npy
+import numpy as np
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 from scipy.stats import qmc
 
@@ -26,7 +26,7 @@ import volmdlr.wires
 from volmdlr import shells, surfaces, curves
 
 
-npy.seterr(divide='raise')
+np.seterr(divide='raise')
 
 
 class RoundedLineSegments3D(volmdlr.primitives.RoundedLineSegments):
@@ -1142,7 +1142,7 @@ class Cylinder(shells.ClosedShell3D):
             ]
 
         # Initial vector
-        initial_guess = npy.zeros(6)
+        initial_guess = np.zeros(6)
 
         # Constraints
         def constraint_radius_0(x):
