@@ -5,6 +5,7 @@ Setup install script for volmdlr
 """
 
 import re
+from pybind11.setup_helpers import Pybind11Extension, build_ext
 from os.path import dirname, isdir, join
 from subprocess import CalledProcessError, check_output
 
@@ -104,6 +105,30 @@ def get_version():
     # print('version', version)
     return version
 
+__version__ = "0.0.1"
+
+# The main interface is through Pybind11Extension.
+# * You can add cxx_std=11/14/17, and then build_ext can be removed.
+# * You can set include_pybind11=false to add the include directory yourself,
+#   say from a submodule.
+#
+# Note:
+#   Sort input source files if you glob sources to ensure bit-for-bit
+#   reproducible builds (https://github.com/pybind/python_example/pull/53)
+
+ext_modules = cythonize(["volmdlr/core_compiled.pyx",
+                           "volmdlr/discrete_representation_compiled.py",
+                           "volmdlr/nurbs/core.pyx",
+                           "volmdlr/nurbs/helpers.pyx",
+                           "volmdlr/nurbs/fitting.py",
+                           "volmdlr/nurbs/operations.py"])
+ext_modules.append(
+    Pybind11Extension(
+        "data_exchanger",
+        ["volmdlr/data_exchanger/main.cpp"],
+        # Example: passing in the version to the compiled code
+        define_macros=[("VERSION_INFO", __version__)],
+    ))
 
 setup(
     name="volmdlr",
@@ -128,6 +153,7 @@ setup(
         "packaging",
         "dessia_common>=0.14.0",
         "Cython>=3.0.0",
+        "pybind11>=2.2.0",
         "numpy",
         "matplotlib",
         "scipy",
@@ -150,13 +176,9 @@ setup(
     classifiers=["Topic :: Scientific/Engineering",
                  "Topic :: Multimedia :: Graphics :: 3D Modeling",
                  "Development Status :: 5 - Production/Stable"],
-
-    ext_modules=cythonize(["volmdlr/core_compiled.pyx",
-                           "volmdlr/discrete_representation_compiled.py",
-                           "volmdlr/nurbs/core.pyx",
-                           "volmdlr/nurbs/helpers.pyx",
-                           "volmdlr/nurbs/fitting.py",
-                           "volmdlr/nurbs/operations.py"]),
+    ext_modules=ext_modules,
+    cmdclass={"build_ext": build_ext},
+    zip_safe=False,
     include_dirs=[np.get_include()],
     python_requires=">=3.9",
 )
