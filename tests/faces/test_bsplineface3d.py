@@ -36,7 +36,7 @@ class TestBSplineFace3D(unittest.TestCase):
         contours = [contour3d_0, contour3d_1]
         face = faces.BSplineFace3D.from_contours3d(surface, contours)
         self.assertTrue(face.surface2d.outer_contour.is_ordered(1e-5))
-        self.assertAlmostEqual(face.surface2d.area(), 0.6257540398385436, 3)
+        self.assertAlmostEqual(face.surface2d.area(), 0.6336892321626953, 3)
 
         surface = surfaces.BSplineSurface3D.load_from_file(
             os.path.join(folder, "bsplineface_closedsurface_surface.json"))
@@ -115,7 +115,7 @@ class TestBSplineFace3D(unittest.TestCase):
             os.path.join(folder, "bsplineface_closed_surface_3_contour.json"))
         face = faces.BSplineFace3D.from_contours3d(surface, [contour3d])
         self.assertTrue(face.surface2d.outer_contour.is_ordered())
-        self.assertAlmostEqual(face.surface2d.area(), 0.9612995798656948, 2)
+        self.assertAlmostEqual(face.surface2d.area(), 0.999831428093051, 2)
 
         surface = surfaces.BSplineSurface3D.load_from_file(
             os.path.join(folder, "bsplineface_spiral_bug_surface.json"))
@@ -140,6 +140,14 @@ class TestBSplineFace3D(unittest.TestCase):
         face = faces.BSplineFace3D.from_contours3d(surface, [contour3d])
         self.assertTrue(face.surface2d.outer_contour.is_ordered(1e-3))
         self.assertAlmostEqual(face.surface2d.area(), 0.9976113552749389, 2)
+
+        surface = surfaces.BSplineSurface3D.load_from_file(
+            os.path.join(folder, "bsplineface_grid_search_surface.json"))
+        contour3d = wires.Contour3D.load_from_file(
+            os.path.join(folder, "bsplineface_grid_search_contour.json"))
+        face = faces.BSplineFace3D.from_contours3d(surface, [contour3d])
+        self.assertTrue(face.surface2d.outer_contour.is_ordered(1e-3))
+        self.assertAlmostEqual(face.surface2d.area(), 0.06664116660242458, 4)
 
     def test_neutral_fiber(self):
         face = faces.BSplineFace3D.load_from_file(os.path.join(folder, "test_neutral_fiber.json"))
