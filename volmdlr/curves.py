@@ -344,6 +344,30 @@ class Line(Curve):
         return [self.__class__(self.point1, split_point),
                 self.__class__(split_point, self.point2)]
 
+    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, same_sense: bool = True, **kwargs):
+        """
+        Trims a line creating a line segment.
+
+        :param point1: line segment start.
+        :param point2: line segment end.
+        :param same_sense: Used for periodical curves only. Indicates whether the curve direction agrees with (True)
+            or is in the opposite direction (False) to the edge direction. By default, it's assumed True
+        :return: line segment.
+        """
+        linesegment_class = getattr(volmdlr.edges, 'LineSegment' + self.__class__.__name__[-2:])
+        if not self.point_belongs(point1) or not self.point_belongs(point2):
+            print('Point not on curve')
+        #     raise ValueError('Point not on curve')
+        direction_vector = point2 - point1
+        check_same_sense = direction_vector.dot(self.unit_direction_vector()) > 0
+        if (check_same_sense and same_sense) or (not check_same_sense and not same_sense):
+            linesegment = linesegment_class(point1, point2)
+            linesegment.line = self
+            return linesegment
+        linesegment = linesegment_class(point2, point1)
+        linesegment.line = self
+        return linesegment
+
     def to_step(self, current_id, *args, **kwargs):
         """Exports to STEP format."""
         p1_content, p1_id = self.point1.to_step(current_id)
@@ -458,21 +482,6 @@ class Line2D(Line):
             return 0.0
         distance, _ = self.point_projection(other_line.point1)
         return distance
-
-    def trim(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D):
-        """
-        Cut the line between two points to create a linesegment.
-
-        :param point1: The first point defining the linesegment
-        :type point1: :class:`volmdlr.Point2D`
-        :param point2: The second point defining the linesegment
-        :type point2: :class:`volmdlr.Point2D`
-        :return: The created linesegment
-        :rtype: :class:`volmdlr.edges.LineSegment2D`
-        """
-        if not self.point_belongs(point1) or not self.point_belongs(point2):
-            raise ValueError('Point not on curve')
-        return volmdlr.edges.LineSegment2D(point1, point2)
 
     def line_intersections(self, line, abs_tol: float = 1e-6):
         """
@@ -877,20 +886,6 @@ class Line3D(Line):
         """
         return Line2D(self.point1.plane_projection2d(center, x, y),
                       self.point2.plane_projection2d(center, x, y))
-
-    def trim(self, point1: volmdlr.Point3D, point2: volmdlr.Point3D, **kwargs):
-        """
-        Trims a line creating a line segment.
-
-        :param point1: line segment start.
-        :param point2: line segment end.
-        :return: line segment.
-        """
-        if not self.point_belongs(point1) or not self.point_belongs(point2):
-            print('Point not on curve')
-        #     raise ValueError('Point not on curve')
-
-        return volmdlr.edges.LineSegment3D(point1, point2)
 
     def intersection(self, line2, tol: float = 1e-6):
         """
