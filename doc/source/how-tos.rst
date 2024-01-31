@@ -154,7 +154,7 @@ and it also accepts an optional name for identification.
        from volmdlr.core import EdgeStyle
 
        center2d = volmdlr.Point2D(0.0, 0.0)
-       circle2d = curves.Circle2D(center=center2d, radius=1, name='optional_circle_name')
+       circle2d = curves.Circle2D(frame=volmdlr.OXY, radius=1, name='optional_circle_name')
        circle2d.plot(edge_style=EdgeStyle('orange'))
 
 Circle3D
@@ -316,7 +316,7 @@ LineSegment2D
 
            start_point = volmdlr.Point2D(1.0, 1.0)
            end_point = volmdlr.Point2D(3.0, 4.0)
-           linesegment2d = edges.LineSegment2D(start=start_point, end=end_point, line=None, name='linesegment\'s name')
+           linesegment2d = edges.LineSegment2D(start=start_point, end=end_point, name='linesegment\'s name')
            linesegment2d.plot(edge_style=EdgeStyle(color='orange'))
 
 LineSegment3D
@@ -336,7 +336,7 @@ LineSegment3D
 
            start_point = volmdlr.Point3D(1.0, 1.0, 1.0)
            end_point = volmdlr.Point3D(3.0, 4.0, 6.0)
-           linesegment3d = edges.LineSegment3D(start=start_point, end=end_point, line=None, name='linesegment\'s name')
+           linesegment3d = edges.LineSegment3D(start=start_point, end=end_point, name='linesegment\'s name')
            linesegment3d.plot(edge_style=EdgeStyle(color='orange'))
 
 
@@ -361,7 +361,7 @@ There is also a boolean is_trigo argument that defines if the arc is in the trig
            from volmdlr import edges, curves
            from volmdlr.core import EdgeStyle
 
-           circle2d = curves.Circle2D(volmdlr.O2D, 1)
+           circle2d = curves.Circle2D(volmdlr.OXY, 1)
            arc2d = edges.Arc2D(circle2d, volmdlr.Point2D(-1, 0), volmdlr.Point2D(1, 0), True)
            ax = arc2d.plot(edge_style=EdgeStyle('orange'))
            ax.set_aspect('equal')
@@ -518,7 +518,6 @@ BSplineCurve3D
                                            knot_multiplicities=knot_multiplicities,
                                            knots=knots,
                                            weights=weights,
-                                           periodic=False,
                                            name='B Spline Curve 3D 1')
            bspline_curve3d.plot(edge_style=EdgeStyle('orange'))
 
@@ -583,7 +582,6 @@ Wire3D
                                           knot_multiplicities=knot_multiplicities,
                                           knots=knots,
                                           weights=weights,
-                                          periodic=False,
                                           name='B Spline Curve 3D 1')
            lineseg1 = edges.LineSegment3D(volmdlr.Point3D(3, 3, 2), bspline_curve3d.start)
            lineseg2 = edges.LineSegment3D(bspline_curve3d.end, volmdlr.Point3D(-3, -3, 0))
@@ -650,13 +648,293 @@ Contour3D
                                           knot_multiplicities=knot_multiplicities,
                                           knots=knots,
                                           weights=weights,
-                                          periodic=False,
                                           name='B Spline Curve 3D 1')
            lineseg1 = edges.LineSegment3D(volmdlr.Point3D(3, 3, 2), bspline_curve3d.start)
            lineseg2 = edges.LineSegment3D(bspline_curve3d.end, volmdlr.Point3D(-3, -3, 0))
            arc = edges.Arc3D.from_3_points(volmdlr.Point3D(-3, -3, 0), volmdlr.Point3D(6.324555320336761, -5.692099788303083, -0.8973665961010275), volmdlr.Point3D(3, 3, 2))
            wire3d = wires.Wire3D([lineseg1, bspline_curve3d, lineseg2, arc])
            wire3d.plot(edge_style=EdgeStyle('orange'))
+
+
+Surfaces
+********
+
+Surface2D
+=========
+
+To create a `Surface2D`, you need to provide two arguments: a `outer_contour` and a `inner_contours` and an optional `name` parameter.
+
+Attributes:
+`outer_contour`: This is a parameter passed to the constructor representing the outer boundary or contour of the surface. It is of type wires.Contour2D, which is a series of connected points that form a closed loop.
+
+`inner_contours`: This is a parameter representing a list of inner contours within the surface. It is of type List[wires.Contour2D], indicating that there can be multiple inner contours. Inner contours could represent holes or cutouts within the surface.
+
+`name`: An optional parameter representing the name of the surface. The default value is set to 'name' if not provided.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import surfaces
+           from volmdlr.core import EdgeStyle
+
+           p1s = volmdlr.Point2D(0, 0)
+           p2s = volmdlr.Point2D(0.1, 0)
+           p3s = volmdlr.Point2D(0.2, 0.1)
+           p4s = volmdlr.Point2D(-0.01, 0.05)
+           surface2d = surfaces.Surface2D(volmdlr.wires.ClosedPolygon2D([p1s, p2s, p3s, p4s]), [])
+           surface2d.plot(edge_style=EdgeStyle('orange'))
+
+Plane3D
+=======
+
+`Plane3D` represents a three-dimensional plane. To build it, it is needed a `frame` and an optinal `name` paramenter.
+
+`frame`: This is a parameter passed to the constructor, representing a three-dimensional frame that describes the plane. The frame consists of an origin o and vectors u and v that define the plane, and w represents the normal vector to the plane. This implies that the plane is defined by a local coordinate system.
+
+`name`: An optional parameter representing the name of the plane. The default value is an empty string if not provided.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import edges, curves, surfaces, wires, faces
+           from volmdlr.core import EdgeStyle
+
+           surface3d = surfaces.Plane3D(volmdlr.Frame3D(volmdlr.Point3D(0.0, 0.0, 0.0), volmdlr.Vector3D(1.0, 0.0, 0.0),
+                                                       volmdlr.Vector3D(0.0, 1.0, 0.0), volmdlr.Vector3D(0.0, 0.0, 1.0)))
+           surface3d.plot(edge_style=EdgeStyle('orange'), length=2)
+
+
+CylindricalSurface3D
+====================
+
+To instanciate a CylindricalSurface3D, you have to provide tree parameters: a `frame`, a `radius`, and an optional `name`.
+
+`frame`: This is a parameter passed to the constructor, representing a three-dimensional frame that describes the plane. The frame consists of an origin o and vectors u and v that define the plane, and w represents the normal vector to the plane. This implies that the plane is defined by a local coordinate system.
+
+`radius`: The Cylinder radius.
+
+`name`: An optional parameter representing the name of the plane. The default value is an empty string if not provided.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import surfaces
+           from volmdlr.core import EdgeStyle
+
+           surface3d = surfaces.CylindricalSurface3D(volmdlr.OXYZ, 1, 'cylindrical_surface_name')
+           surface3d.plot(edge_style=EdgeStyle('orange'), length=2)
+
+ToroidalSurface3D
+=================
+
+To instanciate a ToroidalSurface3D, you have to provide tree parameters: a `frame`, a `major_radius`, a `minor_radius` and an optional `name`.
+
+`frame`: This is a parameter passed to the constructor, representing a three-dimensional frame that describes the plane. The frame consists of an origin o and vectors u and v that define the plane, and w represents the normal vector to the plane. This implies that the plane is defined by a local coordinate system.
+
+`major_radius`: The torus major radius.
+
+`minor_radius`: The torus minor radius.
+
+`name`: An optional parameter representing the name of the plane. The default value is an empty string if not provided.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import surfaces
+           from volmdlr.core import EdgeStyle
+           surface3d = surfaces.ToroidalSurface3D(frame=volmdlr.OXYZ, major_radius=2, minor_radius=1, name='toroidal_surface_name')
+           surface3d.plot(edge_style=EdgeStyle('orange'), length=2)
+
+ConicalSurface3D
+================
+
+To instanciate a ConicalSurface3D, you have to provide tree parameters: a `frame`, a `angle` and an optional `name` parameter.
+
+`frame`: This is a parameter passed to the constructor, representing a three-dimensional frame that describes the plane. The frame consists of an origin o and vectors u and v that define the plane, and w represents the normal vector to the plane. This implies that the plane is defined by a local coordinate system.
+
+`semi_angle`: This is a parameter represents the semi-angle of the cone. The semi-angle defines the opening of the cone.
+
+`name`: An optional parameter representing the name of the plane. The default value is an empty string if not provided.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import surfaces
+           from volmdlr.core import EdgeStyle
+
+           surface3d = surfaces.ConicalSurface3D(frame=volmdlr.OXYZ, semi_angle=1.5, name='conical_surface_name')
+           surface3d.plot(edge_style=EdgeStyle('orange'), z=5)
+
+SphericalSurface3D
+==================
+
+To instanciate a SphericalSurface3D, you have to provide tree parameters: a `frame`, a `radius` and an optional `name`.
+
+`frame`: This is a parameter passed to the constructor, representing a three-dimensional frame that describes the plane. The frame consists of an origin o and vectors u and v that define the plane, and w represents the normal vector to the plane. This implies that the plane is defined by a local coordinate system.
+
+`radius`: This parameter represents the radius of the sphere.
+
+`name`: An optional parameter representing the name of the plane. The default value is an empty string if not provided.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import surfaces
+           from volmdlr.core import EdgeStyle
+
+           surface3d = surfaces.SphericalSurface3D(frame=volmdlr.OXYZ, radius=2, name='spherical_surface_name')
+           surface3d.plot(edge_style=EdgeStyle('orange'))
+
+RulledSurface3D
+===============
+This Class represents a three-dimensional ruled surface, which is a surface created by connecting points between two wires.
+To instanciate it, you need to provide 3 parameters: `wire1`, `wire2`and `name`.
+
+`wire1`: This is a parameter passed to the constructor, representing the first wire defining the ruled surface. It is of type wires.Wire3D.
+
+`wire2`: This is a parameter passed to the constructor, representing the second wire defining the ruled surface. Like wire1, it is of type wires.Wire3D.
+
+`name`: An optional parameter representing the name of the ruled surface. The default value is an empty string if not provided.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import surfaces
+           from volmdlr.core import EdgeStyle
+           #todo
+
+
+ExtrusionSurface3D
+==================
+
+This class represents a three-dimensional extrusion surface. It can be instanciated by providing:
+
+`edge`: This is a parameter passed to the constructor, representing the edge that defines the curve to be extruded. It is of type Union[edges.FullArcEllipse3D, edges.BSplineCurve3D], indicating that the edge is expected to be an Ellipse or a B-Spline curve. But The edge can also be either a Wire3D or a Contour3D
+
+`direction`: This is a parameter passed to the constructor, representing the axis of extrusion. It is of type volmdlr.Vector3D. The direction vector is normalized to ensure it is a unit vector.
+
+`name`: An optional parameter representing the name of the extrusion surface. The default value is an empty string if not provided.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+            import volmdlr
+            from volmdlr import surfaces
+            from volmdlr.core import EdgeStyle
+
+            #todo
+
+RevolutionSurface3D
+===================
+
+`RevolutionSurface3D` represents a three-dimensional surface of revolution. To instanciate it, it is needed to provide:
+
+`edge: This is a parameter passed to the constructor, representing the edge that defines the profile curve of the surface of revolution. It is of type edges.Edge, indicating that it is expected to be an edge.
+
+`axis_point`: This is a parameter passed to the constructor, representing the placement of the axis of revolution. It is of type volmdlr.Point3D.
+
+`axis`: This is a parameter passed to the constructor, representing the axis of revolution. It is of type volmdlr.Vector3D. The axis vector is normalized to ensure it is a unit vector.
+
+`name`: An optional parameter representing the name of the revolution surface. The default value is an empty string if not provided.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. plot::
+           :include-source:
+           :align: center
+
+           import volmdlr
+           from volmdlr import surfaces
+           from volmdlr.core import EdgeStyle
+
+           #todo
+
+BSplineSurface3D
+================
+
+`BsplineSurface3D` Represents a three-dimensional B-spline surface. To instanciate it, it is needed to provide:
+
+`degree_u`: Represents the degree of the B-spline curve in the u direction.
+
+`degree_v`: Represents the degree of the B-spline curve in the v direction.
+
+`control_points`: Represents a list of 3D control points that define the shape of the surface. The control points are of type List[volmdlr.Point3D].
+
+`nb_u`: Represents the number of control points in the u direction.
+
+`nb_v`: Represents the number of control points in the v direction.
+
+`u_multiplicities`: Represents a list of multiplicities for the knots in the u direction.
+
+`v_multiplicities`: Represents a list of multiplicities for the knots in the v direction.
+
+`u_knots`: Represents a list of knots in the u direction. The knots are real numbers that define the position of the control points along the u direction.
+
+`v_knots`: Represents a list of knots in the v direction. The knots are real numbers that define the position of the control points along the v direction.
+
+
+`weights`: This is an optional parameter representing a list of weights for the control points. The weights can be used to adjust the influence of each control point on the shape of the surface. The default value is None.
+
+`name`: An optional parameter representing the name of the B-spline surface. The default value is an empty string if not provided.
+
+.. grid:: 1
+
+    .. grid-item-card::
+
+        .. code-block:: python
+
+            import volmdlr
+            from volmdlr import surfaces
+            from volmdlr.core import EdgeStyle
+
+            #todo
 
 Faces
 *****
@@ -784,7 +1062,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            from volmdlr.core import EdgeStyle
 
 
-           surface3d = surfaces.ToroidalSurface3D(volmdlr.OXYZ, tore_radius=0.2, small_radius=0.03, name='optional_toroidalsurface3d\'s_name')
+           surface3d = surfaces.ToroidalSurface3D(volmdlr.OXYZ, major_radius=0.2, minor_radius=0.03, name='optional_toroidalsurface3d\'s_name')
 
            points = [volmdlr.Point2D(-1.0, 0), volmdlr.Point2D(1, 0), volmdlr.Point2D(1, 3.5), volmdlr.Point2D(-1, 3.5)]
            outer_contour2d = wires.Contour2D.from_points(points=points)
@@ -1005,7 +1283,7 @@ Ensure to provide the necessary information for both `surface3d` and `surface2d`
            inner_contours2d = []
            surface2d = surfaces.Surface2D(outer_contour=outer_contour2d, inner_contours=inner_contours2d)
 
-           face = faces.RevolutionFace3D(surface3d, surface2d)
+           face = faces.BSplineFace3D(surface3d, surface2d)
 
            face.babylonjs()
 
@@ -1149,8 +1427,8 @@ Here is how you can instantiate it:
     length = 3.0
 
     # Create a cylinder instance
-    cylinder = Cylinder(frame, radius, length, color=(0.5, 0.5, 0.5), alpha=0.8, name='MyCylinder')
-    cone.babylonjs()
+    cylinder = primitives3d.Cylinder(frame, radius, length, color=(0.5, 0.5, 0.5), alpha=0.8, name='MyCylinder')
+    cylinder.babylonjs()
 
 .. image:: ../source/_static/index-images/cylinder.png
 
@@ -1204,7 +1482,7 @@ Here is how you can instantiate it:
     frame = volmdlr.OXYZ
     radius = 0.2
     length = 0.5
-    cone = Cone(frame=frame, radius = radius, length=length, color=(0.5, 0.5, 0.5), alpha=0.8, name='MyCone')
+    cone = primitives3d.Cone(frame=frame, radius = radius, length=length, color=(0.5, 0.5, 0.5), alpha=0.8, name='MyCone')
     cone.babylonjs()
 
 .. image:: ../source/_static/index-images/cone.png
