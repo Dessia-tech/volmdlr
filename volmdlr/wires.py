@@ -14,7 +14,7 @@ from statistics import mean
 from typing import List
 
 import matplotlib.pyplot as plt
-import numpy as npy
+import numpy as np
 import plot_data.core as plot_data
 from scipy.spatial.qhull import ConvexHull, Delaunay
 from triangle import triangulate
@@ -216,6 +216,7 @@ class WireMixin:
                 range(n + 1)]
 
     def point_at_abscissa(self, curvilinear_abscissa: float):
+        """Gets the point corresponding to given abscissa. """
         length = 0.
         for primitive in self.primitives:
             primitive_length = primitive.length()
@@ -280,7 +281,7 @@ class WireMixin:
         Compute the curvilinear abscissa of a point on a wire.
 
         """
-        if self.point_over_wire(point, tol):
+        if self.point_belongs(point, tol):
             length = 0
             for primitive in self.primitives:
                 if primitive.point_belongs(point, tol):
@@ -386,9 +387,9 @@ class WireMixin:
         """
         return self.primitives[-1].end.point_distance(wire_2.primitives[0].start) < tol
 
-    def point_over_wire(self, point, abs_tol=1e-6):
+    def point_belongs(self, point, abs_tol=1e-6):
         """
-        Verifies if point is over wire.
+        Verifies if point is on a wire.
 
         :param point: point to be verified.
         :param abs_tol: tolerance to be considered.
@@ -410,7 +411,7 @@ class WireMixin:
         points = primitive.discretization_points(number_points=10)
         points.extend([primitive.point_at_abscissa(primitive.length()*0.001),
                        primitive.point_at_abscissa(primitive.length()*0.999)])
-        if all(self.point_over_wire(point, tol) for point in points):
+        if all(self.point_belongs(point, tol) for point in points):
             return True
         return False
 
@@ -888,9 +889,9 @@ class Wire2D(WireMixin, PhysicalObject):
         for i, (point1, point2) in enumerate(zip(offset_intersections,
                                                  offset_intersections[1:] + [offset_intersections[0]])):
             if i + 1 == len(offset_intersections):
-                cutted_primitive = infinite_primitives[0].cut_between_two_points(point1, point2)
+                cutted_primitive = infinite_primitives[0].trim(point1, point2)
             else:
-                cutted_primitive = infinite_primitives[i + 1].cut_between_two_points(point1, point2)
+                cutted_primitive = infinite_primitives[i + 1].trim(point1, point2)
             offset_primitives.append(cutted_primitive)
 
         return self.__class__(offset_primitives)
@@ -1348,6 +1349,7 @@ class Wire3D(WireMixin, PhysicalObject):
 
     @property
     def bounding_box(self):
+        """Gets the wire 3D bounding box."""
         if not self._bbox:
             self._bbox = self._bounding_box()
         return self._bbox
@@ -1356,6 +1358,7 @@ class Wire3D(WireMixin, PhysicalObject):
         """
         Changes frame_mapping and return a new Wire3D.
 
+        :param frame: frame used.
         :param side: 'old' or 'new'
         """
         new_wire = []
@@ -1483,6 +1486,7 @@ class Wire3D(WireMixin, PhysicalObject):
         return [babylon_lines]
 
     def babylon_curves(self):
+        """Gets babylonjs curves."""
         points = self.babylon_points()
         if points:
             babylon_curves = self.babylon_lines(points)[0]
@@ -1638,11 +1642,11 @@ class ContourMixin(WireMixin):
         normal = vec1_2.normal_vector()
         point1 = middle_point + normal * 0.00001
         point2 = middle_point - normal * 0.00001
-        if (self.point_belongs(point1) and contour2.point_belongs(point1)) or \
-                (not self.point_belongs(point1) and not contour2.point_belongs(point1)):
+        if (self.point_inside(point1) and contour2.point_inside(point1)) or \
+                (not self.point_inside(point1) and not contour2.point_inside(point1)):
             return True
-        if (self.point_belongs(point1) and self.point_belongs(point2)) or \
-                (contour2.point_belongs(point1) and contour2.point_belongs(point2)):
+        if (self.point_inside(point1) and self.point_inside(point2)) or \
+                (contour2.point_inside(point1) and contour2.point_inside(point2)):
             return True
         return False
 
@@ -1845,10 +1849,6 @@ class ContourMixin(WireMixin):
                 return True
         return False
 
-    def point_over_contour(self, point, abs_tol=1e-6):
-        """Verifies if point is over the contour."""
-        return self.point_over_wire(point, abs_tol)
-
     def get_geo_lines(self, tag: int, primitives_tags: List[int]):
         """
         Gets the lines that define a Contour in a .geo file.
@@ -1888,7 +1888,7 @@ class ContourMixin(WireMixin):
         polygon_points = []
 
         for primitive in self.primitives:
-            if isinstance(primitive, volmdlr.edges.LineSegment2D):
+            if isinstance(primitive, volmdlr.edges.LineSegment):
                 if not discretize_line:
                     polygon_points.append(primitive.start)
                 else:
@@ -1958,9 +1958,14 @@ class ContourMixin(WireMixin):
         :param wire: other wire.
         :return: True if other contour is touching
         """
-        return self.point_over_contour(wire.primitives[0].start) and self.point_over_contour(wire.primitives[-1].end)
+        return self.point_belongs(wire.primitives[0].start) and self.point_belongs(wire.primitives[-1].end)
 
     def is_contour_closed(self):
+        """
+        Verifies if contour is closed or not.
+
+        :returns: True is closed, False if Open.
+        """
         return self.primitives[0].start.is_close(self.primitives[-1].end)
 
 
@@ -2058,7 +2063,7 @@ class Contour2D(ContourMixin, Wire2D):
 
         return Contour3D(p3d)
 
-    def point_belongs(self, point, include_edge_points: bool = False, tol: float = 1e-6):
+    def point_inside(self, point, include_edge_points: bool = False, tol: float = 1e-6):
         """
         Verifies if point belongs is within the contour.
 
@@ -2077,7 +2082,9 @@ class Contour2D(ContourMixin, Wire2D):
                     return True
         if not self._polygon_100_points:
             self._polygon_100_points = self.to_polygon(100)
-        if self._polygon_100_points.point_belongs(point):
+        if point.is_close(self.center_of_mass()) and self._polygon_100_points.is_convex():
+            return True
+        if self._polygon_100_points.point_inside(point):
             return True
         return False
 
@@ -2127,14 +2134,11 @@ class Contour2D(ContourMixin, Wire2D):
         :return: Contour's center of mass.
         """
         center = self.edge_polygon.area() * self.edge_polygon.center_of_mass()
-        # ax = self.plot()
-        # self.edge_polygon.center_of_mass().plot(ax=ax, color='b')
         if self.edge_polygon.is_trigo:
             trigo = 1
         else:
             trigo = -1
         for edge in self.primitives:
-            # edge.straight_line_center_of_mass().plot(ax=ax, color='g')
             center += trigo * edge.straight_line_area() \
                       * edge.straight_line_center_of_mass()
 
@@ -2176,7 +2180,7 @@ class Contour2D(ContourMixin, Wire2D):
         points.extend([edge.point_at_abscissa(edge.length() * 0.001),
                        edge.point_at_abscissa(edge.length() * 0.999)])
         for point in points:
-            if not self.point_belongs(point, include_edge_points=True):
+            if not self.point_inside(point, include_edge_points=True):
                 return False
         return True
 
@@ -2206,7 +2210,7 @@ class Contour2D(ContourMixin, Wire2D):
         x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
         for _ in range(2000):
             point = volmdlr.Point2D.random(x_min, x_max, y_min, y_max)
-            if self.point_belongs(point, include_edge_points):
+            if self.point_inside(point, include_edge_points):
                 return point
         raise ValueError('Could not find a point inside')
 
@@ -2299,15 +2303,15 @@ class Contour2D(ContourMixin, Wire2D):
 
         for point1, point2 in zip(sorted_points[:-1], sorted_points[1:]):
             closing_line = volmdlr.edges.LineSegment2D(point1, point2)
-            if not contour_to_cut.point_belongs(closing_line.middle_point()):
+            if not contour_to_cut.point_inside(closing_line.middle_point()):
                 continue
             closing_contour = Contour2D([closing_line])
             contour1, contour2 = contour_to_cut.get_divided_contours(point1, point2, closing_contour)
             if sorted_points.index(point1) + 2 <= len(sorted_points) - 1:
-                if contour1.point_over_contour(sorted_points[sorted_points.index(point1) + 2]):
+                if contour1.point_belongs(sorted_points[sorted_points.index(point1) + 2]):
                     contour_to_cut = contour1
                     list_contours.append(contour2)
-                elif contour2.point_over_contour(sorted_points[sorted_points.index(point1) + 2]):
+                elif contour2.point_belongs(sorted_points[sorted_points.index(point1) + 2]):
                     contour_to_cut = contour2
                     list_contours.append(contour1)
             else:
@@ -2393,7 +2397,7 @@ class Contour2D(ContourMixin, Wire2D):
         for xi in x:
             for yi in y:
                 point = volmdlr.Point2D(xi, yi)
-                if self.point_belongs(point):
+                if self.point_inside(point):
                     point_index[point] = number_points
                     points.append(point)
                     number_points += 1
@@ -2495,8 +2499,8 @@ class Contour2D(ContourMixin, Wire2D):
                     point1, point2 = [cutting_contour.primitives[0].start,
                                       cutting_contour.primitives[-1].end]
                     cutting_points = []
-                    if base_contour.point_belongs(cutting_contour.middle_point()) and\
-                            base_contour.point_over_contour(point1) and base_contour.point_over_contour(point2):
+                    if base_contour.point_inside(cutting_contour.middle_point()) and\
+                            base_contour.point_belongs(point1) and base_contour.point_belongs(point2):
                         cutting_points = [point1, point2]
                     if cutting_points:
                         contour1, contour2 = base_contour.get_divided_contours(
@@ -2601,11 +2605,11 @@ class Contour2D(ContourMixin, Wire2D):
                                                               contours_intersections[1], True)
             primitives2_outside = contour2.extract_with_points(contours_intersections[0],
                                                                contours_intersections[1], False)
-            if contour2.point_belongs(primitives1_inside[0].middle_point()):
+            if contour2.point_inside(primitives1_inside[0].middle_point()):
                 resulting_primitives.extend(primitives1_outside)
             else:
                 resulting_primitives.extend(primitives1_inside)
-            if self.point_belongs(primitives2_inside[0].middle_point()):
+            if self.point_inside(primitives2_inside[0].middle_point()):
                 resulting_primitives.extend(primitives2_outside)
             else:
                 resulting_primitives.extend(primitives2_inside)
@@ -2804,7 +2808,7 @@ class ClosedPolygonMixin:
             if i != 0:
                 distances.append(point.point_distance(self.points[i - 1]))
         mean_distance = mean(distances)
-        std = npy.std(distances)
+        std = np.std(distances)
         return mean_distance, std
 
     def simplify_polygon(self, min_distance: float = 0.01, max_distance: float = 0.05, angle: float = 15):
@@ -2924,15 +2928,15 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         x = [point.x for point in self.points]
         y = [point.y for point in self.points]
 
-        xi_xi1 = x + npy.roll(x, -1)
-        yi_yi1 = y + npy.roll(y, -1)
-        xi_yi1 = npy.multiply(x, npy.roll(y, -1))
-        xi1_yi = npy.multiply(npy.roll(x, -1), y)
+        xi_xi1 = x + np.roll(x, -1)
+        yi_yi1 = y + np.roll(y, -1)
+        xi_yi1 = np.multiply(x, np.roll(y, -1))
+        xi1_yi = np.multiply(np.roll(x, -1), y)
 
-        signed_area = 0.5 * npy.sum(xi_yi1 - xi1_yi)  # signed area!
+        signed_area = 0.5 * np.sum(xi_yi1 - xi1_yi)  # signed area!
         if not math.isclose(signed_area, 0, abs_tol=1e-12):
-            center_x = npy.sum(npy.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
-            center_y = npy.sum(npy.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
+            center_x = np.sum(np.multiply(xi_xi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
+            center_y = np.sum(np.multiply(yi_yi1, (xi_yi1 - xi1_yi))) / 6. / signed_area
             return volmdlr.Point2D(center_x, center_y)
 
         self.plot()
@@ -2949,12 +2953,12 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             barycenter1_2d += point
         return barycenter1_2d / len(self.points)
 
-    def point_belongs(self, point, include_edge_points: bool = False, tol: float = 1e-6):
+    def point_inside(self, point, include_edge_points: bool = False, tol: float = 1e-6):
         """
         Ray casting algorithm copied from internet.
         """
-        return polygon_point_belongs(npy.array(self.points),
-                                     npy.array(point),
+        return polygon_point_belongs(np.array(self.points),
+                                     np.array(point),
                                      include_edge_points=include_edge_points, tol=tol)
 
     def points_in_polygon(self, points, include_edge_points: bool = False, tol: float = 1e-6):
@@ -2971,8 +2975,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         :rtype: numpy.ndarray
         """
         if isinstance(points, list):
-            points = npy.array(points)
-        polygon = npy.array(self.points)
+            points = np.array(points)
+        polygon = np.array(self.points)
         return points_in_polygon(polygon, points, include_edge_points=include_edge_points, tol=tol)
 
     def second_moment_area(self, point):
@@ -3056,7 +3060,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         for point in points:
             new_points.append([point[0], point[1]])
 
-        delaunay = npy.array(new_points)
+        delaunay = np.array(new_points)
 
         tri = Delaunay(delaunay)
 
@@ -3420,7 +3424,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         points_hull = [point.copy() for point in points]
 
-        numpy_points = npy.array([(point.x, point.y) for point in points_hull])
+        numpy_points = np.array([(point.x, point.y) for point in points_hull])
         hull = ConvexHull(numpy_points)
         polygon_points = []
         for simplex in hull.simplices:
@@ -3519,8 +3523,8 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         segments = [(i, i + 1) for i in range(n - 1)]
         segments.append((n - 1, 0))
 
-        tri = {'vertices': npy.array(vertices).reshape((-1, 2)),
-               'segments': npy.array(segments).reshape((-1, 2)),
+        tri = {'vertices': np.array(vertices).reshape((-1, 2)),
+               'segments': np.array(segments).reshape((-1, 2)),
                }
         if len(tri['vertices']) < 3:
             return None
@@ -3544,21 +3548,29 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
         """
         x_min, x_max, y_min, y_max = self.bounding_rectangle.bounds()
 
-        x = npy.linspace(x_min, x_max, num=int(number_points_x + 2), dtype=npy.float64)
-        y = npy.linspace(y_min, y_max, num=int(number_points_y + 2), dtype=npy.float64)
+        x = np.linspace(x_min, x_max, num=int(number_points_x + 2), dtype=np.float64)
+        y = np.linspace(y_min, y_max, num=int(number_points_y + 2), dtype=np.float64)
 
         grid_point_index = {}
 
         polygon_points = set(self.points)
 
+        grid_points = []
         # Generate all points in the grid
-        grid_points = npy.array([[xi, yi] for xi in x for yi in y], dtype=npy.float64)
+        for i, yi in enumerate(y):
+            if i % 2 == 0:
+                for xi in x:
+                    grid_points.append((xi, yi))
+            else:
+                for xi in reversed(x):
+                    grid_points.append((xi, yi))
+        grid_points = np.array(grid_points, dtype=np.float64)
 
         # Use self.points_in_polygon to check if each point is inside the polygon
         points_in_polygon_ = self.points_in_polygon(grid_points, include_edge_points=include_edge_points)
 
         # Find the indices where points_in_polygon is True (i.e., points inside the polygon)
-        indices = npy.where(points_in_polygon_)[0]
+        indices = np.where(points_in_polygon_)[0]
 
         points = []
 
@@ -3595,7 +3607,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
             )
 
             if not intersect:
-                if self.point_belongs(line_segment.middle_point()):
+                if self.point_inside(line_segment.middle_point()):
 
                     triangles.append((initial_point_to_index[point1],
                                       initial_point_to_index[point3],
@@ -3613,53 +3625,6 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
                     break
         return found_ear, remaining_points
-
-    def ear_clipping_triangulation(self):
-        """
-        Computes the triangulation of the polygon using ear clipping algorithm.
-
-        Note: triangles have been inverted for a better rendering in babylonjs
-        """
-        # Converting to nodes for performance
-        nodes = [vmd.Node2D.from_point(point) for point in self.points]
-
-        initial_point_to_index = {point: i for i, point in enumerate(nodes)}
-        triangles = []
-
-        remaining_points = nodes[:]
-
-        number_remaining_points = len(remaining_points)
-        while number_remaining_points > 3:
-            current_polygon = ClosedPolygon2D(remaining_points)
-            found_ear, remaining_points = current_polygon.search_ear(remaining_points, initial_point_to_index)
-
-            # Searching for a flat ear
-            if not found_ear:
-                remaining_polygon = ClosedPolygon2D(remaining_points)
-                if remaining_polygon.area() > 0.:
-
-                    found_flat_ear = False
-                    for point1, point2, point3 in zip(remaining_points,
-                                                      remaining_points[1:] + remaining_points[0:1],
-                                                      remaining_points[2:] + remaining_points[0:2]):
-                        triangle = Triangle2D(point1, point2, point3)
-                        if math.isclose(triangle.area(), 0, abs_tol=1e-8):
-                            remaining_points.remove(point2)
-                            found_flat_ear = True
-                            break
-
-                    if not found_flat_ear:
-                        print('Warning : There are no ear in the polygon, it seems malformed: skipping triangulation')
-                        return vmd.Mesh2D(nodes, triangles)
-                else:
-                    return vmd.Mesh2D(nodes, triangles)
-
-        if len(remaining_points) == 3:
-            triangles.append((initial_point_to_index[remaining_points[0]],
-                              initial_point_to_index[remaining_points[1]],
-                              initial_point_to_index[remaining_points[2]]))
-
-        return vmd.Mesh2D(nodes, triangles)
 
     def simplify(self, min_distance: float = 0.01, max_distance: float = 0.05):
         """Simplify polygon."""
@@ -3718,7 +3683,7 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
 
         """
         barycenter = self.barycenter()
-        if self.point_belongs(barycenter):
+        if self.point_inside(barycenter):
             return barycenter
         intersetions1 = {}
         linex_pos = volmdlr.edges.LineSegment2D(volmdlr.O2D, volmdlr.X2D * 5)
@@ -3752,27 +3717,6 @@ class ClosedPolygon2D(ClosedPolygonMixin, Contour2D):
                         break
 
         return translation1
-
-    def repositioned_polygon(self, x, y):
-        linex = volmdlr.edges.LineSegment2D(-x.to_2d(volmdlr.O2D, x, y),
-                                            x.to_2d(volmdlr.O2D, x, y))
-        way_back = volmdlr.O3D
-        barycenter = self.barycenter()
-        if not self.point_belongs(barycenter):
-            barycenter1_2d = self.point_in_polygon()
-            new_polygon = self.translation(-barycenter1_2d)
-            way_back = barycenter1_2d.to_3d(volmdlr.O3D, x, y)
-        else:
-            inters = self.linesegment_intersections(linex)
-            distance = inters[0][0].point_distance(inters[-1][0])
-            if distance / 2 > 3 * min(
-                    self.point_distance(inters[0][0]),
-                    self.point_distance(inters[-1][0])):
-                mid_point = (inters[0][0] + inters[-1][0]) * 0.5
-                new_polygon = self.translation(-mid_point)
-                way_back = mid_point.to_3d(volmdlr.O3D, x, y)
-
-        return new_polygon, way_back
 
     def get_possible_sewing_closing_points(self, polygon2, polygon_primitive,
                                            line_segment1: None, line_segment2: None):
@@ -4409,6 +4353,11 @@ class Contour3D(ContourMixin, Wire3D):
 
     @property
     def bounding_box(self):
+        """
+        Gets bounding box value.
+
+        :return: Bounding Box.
+        """
         if not self._utd_bounding_box:
             self._bbox = self._bounding_box()
             self._utd_bounding_box = True
@@ -4487,7 +4436,6 @@ class Contour3D(ContourMixin, Wire3D):
         contours = Contour3D.contours_from_edges(merged_primitives, tol=abs_tol)
 
         return contours
-
 
 class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
     """
@@ -4691,6 +4639,7 @@ class ClosedPolygon3D(Contour3D, ClosedPolygonMixin):
         return ClosedPolygon3D(polygon1_3d_points)
 
     def close_sewing(self, dict_closing_pairs):
+        """Closes sewing resulting triangles."""
         triangles_points = []
         for i, point_polygon2 in enumerate(
                 self.points + [self.points[0]]):

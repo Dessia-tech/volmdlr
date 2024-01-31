@@ -62,6 +62,15 @@ class TestVolumeModel(unittest.TestCase):
         primitives_plot_lines = [line for p in self.primitives for line in p.plot().lines]
         self.assertEqual(len(volume_model_plot_lines), len(primitives_plot_lines))
 
+    def test_to_stl(self):
+        self.volume_model.to_stl("volume_model")
+
+    def test_to_mesh3d(self):
+        mesh = self.volume_model.to_mesh3d()
+
+        self.assertEqual(20, mesh.n_vertices)
+        self.assertEqual(24, mesh.n_triangles)
+
 
 if __name__ == "__main__":
     unittest.main()

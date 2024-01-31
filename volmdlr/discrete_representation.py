@@ -1133,7 +1133,7 @@ class PointBasedVoxelization(Voxelization):
 
         :raises ValueError: If the point is not within the bounding box of the voxelization.
         """
-        if not self.bounding_box.point_belongs(Point3D(*point)):
+        if not self.bounding_box.point_inside(Point3D(*point)):
             raise ValueError("Point not in local voxel grid.")
 
         x_index = int((point[0] - self.bounding_box.xmin) // self.voxel_size)
@@ -2957,7 +2957,7 @@ class OctreeBasedVoxelization(Voxelization):
                             float(triangle[2][2]),
                         ),
                     )
-                    for triangle in triangulation.triangles_vertices
+                    for triangle in triangulation.triangles_vertices()
                 ]
 
                 for triangle in face_triangles:
@@ -3600,7 +3600,7 @@ class PointBasedPixelization(Pixelization):
 
         :raises ValueError: If the point is not within the bounding rectangle of the pixelization.
         """
-        if not self.bounding_rectangle.point_belongs(Point2D(*point)):
+        if not self.bounding_rectangle.point_inside(Point2D(*point)):
             raise ValueError("Point not in local pixel grid.")
 
         x_index = int((point[0] - self.bounding_rectangle.xmin) // self.pixel_size)

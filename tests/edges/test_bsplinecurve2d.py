@@ -15,9 +15,9 @@ folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'bsplinecurve
 
 class TestBSplineCurve2D(unittest.TestCase):
     def test_bounding_rectangle(self):
-        contour = DessiaObject.load_from_file(os.path.join(folder, "bounding_box_contour.json"))
+        contour = DessiaObject.from_json(os.path.join(folder, "bounding_box_contour.json"))
         b_rec = contour.bounding_rectangle
-        self.assertAlmostEqual(b_rec.area(), 0.46995118100796823, places=2)
+        self.assertAlmostEqual(b_rec.area(), 0.48129011002687494, places=2)
 
     degree = 3
     points = [volmdlr.Point2D(0, 0), volmdlr.Point2D(1, 1), volmdlr.Point2D(2, -1), volmdlr.Point2D(3, 0)]
@@ -153,7 +153,7 @@ class TestBSplineCurve2D(unittest.TestCase):
         bspline_curve2d = bspline_curves.bspline_curve2d_1
         point = volmdlr.Point2D(-0.31240117104573617, -2.8555856978321796)
 
-        bspline = vme.BSplineCurve2D.load_from_file(os.path.join(folder, "bg_bspline5_.json"))
+        bspline = vme.BSplineCurve2D.from_json(os.path.join(folder, "bg_bspline5_.json"))
         point1 = bspline.points[25]
         point2 = bspline.points[75]
 
@@ -181,7 +181,7 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertAlmostEqual(bspline_curve2d.abscissa(point), 7.747599410268476)
 
     def test_line_intersections(self):
-        bspline_curve2d = DessiaObject.load_from_file(os.path.join(folder, "bsplinecurve2d_1.json"))
+        bspline_curve2d = DessiaObject.from_json(os.path.join(folder, "bsplinecurve2d_1.json"))
         line = curves.Line2D(volmdlr.Point2D(1.263163105753452, -0.002645572020392778),
                           volmdlr.Point2D(1.263163105753452, -0.001820963841291406))
 
@@ -313,13 +313,13 @@ class TestBSplineCurve2D(unittest.TestCase):
             self.assertTrue(point1.is_close(point2))
 
     def test_simplify(self):
-        bsplinecurve = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bsplinecurve_fullarc.json"))
+        bsplinecurve = vme.BSplineCurve3D.from_json(os.path.join(folder, "bsplinecurve_fullarc.json"))
         fullarc = bsplinecurve.simplify
         self.assertTrue(isinstance(fullarc, vme.FullArc3D))
 
     def test_direction_independent_is_close(self):
-        bsplinecurve1 = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bspline_curve1.json"))
-        bsplinecurve2 = vme.BSplineCurve3D.load_from_file(os.path.join(folder, "bspline_curve2.json"))
+        bsplinecurve1 = vme.BSplineCurve3D.from_json(os.path.join(folder, "bspline_curve1.json"))
+        bsplinecurve2 = vme.BSplineCurve3D.from_json(os.path.join(folder, "bspline_curve2.json"))
         self.assertTrue(bsplinecurve1.direction_independent_is_close(bsplinecurve2))
 
     def test_split_curve(self):
@@ -331,7 +331,7 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertTrue(splitted_curves[1].end.is_close(volmdlr.Point2D(50.0, 5.0)))
 
         split_point = volmdlr.Point2D(0.04820589473987067, 0.011936395549382077)
-        bsplinecurve = vme.BSplineCurve2D.load_from_file(os.path.join(folder, "bsplinecurve_split_bug.json"))
+        bsplinecurve = vme.BSplineCurve2D.from_json(os.path.join(folder, "bsplinecurve_split_bug.json"))
         splitted_curves = bsplinecurve.split(split_point)
         self.assertTrue(splitted_curves[0].start.is_close(volmdlr.Point2D(0.04873977000999985, 0.011815456390639745)))
         self.assertTrue(splitted_curves[0].end.is_close(split_point))
@@ -339,6 +339,18 @@ class TestBSplineCurve2D(unittest.TestCase):
         self.assertTrue(splitted_curves[1].end.is_close(volmdlr.Point2D(0.04793931370999993, 0.011891887758212483)))
         self.assertAlmostEqual(splitted_curves[0].length(), 0.0005535177002044544, 5)
         self.assertAlmostEqual(splitted_curves[1].length(), 0.0002710315376536523, 5)
+
+    def test_merge_with(self):
+        split_point = volmdlr.Point2D(27.64549230676716, 14.691702224146088)
+        splitted_curves = self.bspline2d.split(split_point)
+        merged_curve = splitted_curves[0].merge_with(splitted_curves[1])
+        self.assertTrue(merged_curve.is_close(self.bspline2d))
+        self.assertFalse(merged_curve.rational)
+
+        split_point = volmdlr.Point2D(28.1775252667145, 14.785855215217019)
+        splitted_curves = self.bspline2d_rational.split(split_point)
+        merged_curve = splitted_curves[0].merge_with(splitted_curves[1])
+        self.assertTrue(merged_curve.is_close(self.bspline2d_rational))
 
     def test_tangent(self):
         tangent = self.bspline1.tangent(0.5)

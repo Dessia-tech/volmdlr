@@ -13,30 +13,30 @@ folder = os.path.dirname(os.path.realpath(__file__))
 class TestContour3D(unittest.TestCase):
 
     def test_order_contour(self):
-        contour_to_order = Contour3D.load_from_file(os.path.join(folder, 'contour_order.json'))
+        contour_to_order = Contour3D.from_json(os.path.join(folder, 'contour_order.json'))
         self.assertFalse(contour_to_order.is_ordered())
         contour_to_order.order_contour()
         self.assertTrue(contour_to_order.is_ordered())
 
     def test_merge_with(self):
-        contour1_to_merge = Contour3D.load_from_file(os.path.join(folder, 'contour3d_merge_with1.json'))
-        contour2_to_merge = Contour3D.load_from_file(os.path.join(folder, 'contour3d_merge_with2.json'))
-        expected_contour1 = Contour3D.load_from_file(os.path.join(folder, 'expected_contour_merge_with1.json'))
-        expected_contour2 = Contour3D.load_from_file(os.path.join(folder, 'expected_contour_merge_with2.json'))
+        contour1_to_merge = Contour3D.from_json(os.path.join(folder, 'contour3d_merge_with1.json'))
+        contour2_to_merge = Contour3D.from_json(os.path.join(folder, 'contour3d_merge_with2.json'))
+        expected_contour1 = Contour3D.from_json(os.path.join(folder, 'expected_contour_merge_with1.json'))
+        expected_contour2 = Contour3D.from_json(os.path.join(folder, 'expected_contour_merge_with2.json'))
         merged_contours = contour1_to_merge.merge_with(contour2_to_merge)
         self.assertEqual(merged_contours[0], expected_contour1)
         self.assertEqual(merged_contours[1], expected_contour2)
-        contour1 = Contour3D.load_from_file(os.path.join(folder, 'contour1_merge_bug.json'))
-        contour2 = Contour3D.load_from_file(os.path.join(folder, 'contour2_merge_bug.json'))
+        contour1 = Contour3D.from_json(os.path.join(folder, 'contour1_merge_bug.json'))
+        contour2 = Contour3D.from_json(os.path.join(folder, 'contour2_merge_bug.json'))
         merged_contour1_contour2 = contour1.merge_with(contour2)
         merged_contour2_contour1 = contour2.merge_with(contour1)
         self.assertEqual(len(merged_contour1_contour2), len(merged_contour2_contour1))
         self.assertEqual(merged_contour1_contour2[0], merged_contour2_contour1[0])
 
     def test_is_sharing_primitives_with(self):
-        contour1_sharing_primitives = Contour3D.load_from_file(
+        contour1_sharing_primitives = Contour3D.from_json(
             os.path.join(folder, 'contour3d_sharing_primitives1.json'))
-        contour2_sharing_primitives = Contour3D.load_from_file(
+        contour2_sharing_primitives = Contour3D.from_json(
             os.path.join(folder, 'contour3d_sharing_primitives2.json'))
         self.assertTrue(contour1_sharing_primitives.is_sharing_primitives_with(contour2_sharing_primitives))
 
@@ -59,7 +59,7 @@ class TestContour3D(unittest.TestCase):
         self.assertTrue(face.outer_contour3d.is_ordered())
 
         arguments = ["", ["#2518728", "#2518729"]]
-        primitives = core.VolumeModel.load_from_file(
+        primitives = core.VolumeModel.from_json(
                 os.path.join(folder, "strange_contour_from_step_primitives.json")).primitives
         object_dict = {2518728: primitives[0], 2518729: primitives[1]}
 
@@ -69,7 +69,7 @@ class TestContour3D(unittest.TestCase):
 
         arguments = ["''", ['#13203123', '#13203124', '#13203125', '#13203126', '#13203127',
                             '#13203128', '#13203129', '#13203130', '#13203131', '#13203132']]
-        primitives = Contour3D.load_from_file(
+        primitives = Contour3D.from_json(
             os.path.join(folder, "edge_loop_with_small_edges_and_gaps.json")).primitives
         object_dict = {int(arg[1:]): edge for arg, edge in zip(arguments[1], primitives)}
         contour = Contour3D.from_step(arguments, object_dict)

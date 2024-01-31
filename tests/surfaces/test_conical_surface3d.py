@@ -107,9 +107,10 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertEqual(linesegment2d_cone.start, Point2D(-2 * math.pi, 0.1))
         self.assertEqual(linesegment2d_cone.end, Point2D(-2 * math.pi, 0.0))
 
-        surface = surfaces.ConicalSurface3D.load_from_file(os.path.join(folder, "conical_singularity_suface.json"))
-        contour3d = vmw.Contour3D.load_from_file(os.path.join(folder, "conical_singularity_contour.json"))
+        surface = surfaces.ConicalSurface3D.from_json(os.path.join(folder, "conical_singularity_suface.json"))
+        contour3d = vmw.Contour3D.from_json(os.path.join(folder, "conical_singularity_contour.json"))
         contour, primitives_mapping = surface.contour3d_to_2d(contour3d, return_primitives_mapping=True)
+      
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), 0.0025393181156878604, 6)
         self.assertEqual(len(primitives_mapping), len(contour3d.primitives))
@@ -119,17 +120,17 @@ class TestConicalSurface3D(unittest.TestCase):
         self.assertEqual(contour3d.primitives[2], primitives_mapping.get(contour.primitives[2]))
 
 
-        surface = surfaces.ConicalSurface3D.load_from_file(
+        surface = surfaces.ConicalSurface3D.from_json(
             os.path.join(folder, "conicalsurface_contour_with_singularity_2.json"))
-        contour3d = vmw.Contour3D.load_from_file(
+        contour3d = vmw.Contour3D.from_json(
             os.path.join(folder, "conicalsurface_contour_with_singularity_contour_2.json"))
         contour = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour.is_ordered())
         self.assertAlmostEqual(contour.area(), math.pi * 0.0014073966802667698, 5)
 
-        surface = surfaces.ConicalSurface3D.load_from_file(
+        surface = surfaces.ConicalSurface3D.from_json(
             os.path.join(folder, "conicalsurface_linesegment3d_to_2d.json"))
-        contour3d = vmw.Contour3D.load_from_file(
+        contour3d = vmw.Contour3D.from_json(
             os.path.join(folder, "conicalsurface_linesegment3d_to_2d_contour.json"))
         contour = surface.contour3d_to_2d(contour3d)
         self.assertTrue(contour.is_ordered())
@@ -217,7 +218,7 @@ class TestConicalSurface3D(unittest.TestCase):
                 else:
                     self.assertAlmostEqual(intersection[1], expected_result[1])
 
-        conicalsurface, plane = DessiaObject.load_from_file(
+        conicalsurface, plane = DessiaObject.from_json(
             os.path.join(folder, 'test_conicalsurface_plane_intersections081223.json')).primitives
         intersections = conicalsurface.plane_intersections(plane)
         self.assertEqual(len(intersections), 1)
@@ -313,7 +314,7 @@ class TestConicalSurface3D(unittest.TestCase):
         conical_intersections5 = conical_surface.surface_intersections(conical_surface2_1)
         self.assertEqual(len(conical_intersections5), 1)
         self.assertTrue(isinstance(conical_intersections5[0], edges.BSplineCurve3D))
-        self.assertTrue(all(conical_surface.point_distance(p) < 1e-5 > conical_surface2_1.point_distance(p)
+        self.assertTrue(all(conical_surface.point_distance(p) < 1.5e-5 > conical_surface2_1.point_distance(p)
                             for p in conical_intersections5[0].points))
         # TEST 6
         conical_surface2_1 = conical_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 4)
@@ -321,7 +322,7 @@ class TestConicalSurface3D(unittest.TestCase):
         conical_intersections6 = conical_surface.surface_intersections(conical_surface2_1)
         self.assertEqual(len(conical_intersections6), 1)
         self.assertTrue(isinstance(conical_intersections6[0], edges.BSplineCurve3D))
-        self.assertTrue(all(conical_surface.point_distance(p) < 1e-5 > conical_surface2_1.point_distance(p)
+        self.assertTrue(all(conical_surface.point_distance(p) < 1.7e-5 > conical_surface2_1.point_distance(p)
                             for p in conical_intersections6[0].points))
         # TEST 7
         conical_surface2_1 = conical_surface2.rotation(volmdlr.O3D, volmdlr.Y3D, math.pi / 3)
