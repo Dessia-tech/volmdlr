@@ -2953,6 +2953,34 @@ class Arc2D(ArcMixin, Edge):
 
     points = property(_get_points)
 
+    @property
+    def angle(self):
+        """
+        Arc angle property.
+
+        :return: arc angle.
+        """
+        if not self._angle:
+            clockwise_arc = self.reverse() if self.is_trigo else self
+            vector_start = clockwise_arc.start - clockwise_arc.circle.center
+            vector_end = clockwise_arc.end - clockwise_arc.circle.center
+            arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
+            self._angle = arc_angle
+        return self._angle
+
+    def get_start_end_angles(self):
+        """Returns the start and end angle of the arc."""
+        start_to_center = self.start - self.circle.center
+        end_to_center = self.end - self.circle.center
+        angle1 = math.atan2(start_to_center.y, start_to_center.x)
+        angle2 = math.atan2(end_to_center.y, end_to_center.x)
+        if self.is_trigo:
+            if angle2 == 0.0:
+                angle2 = volmdlr.TWO_PI
+        else:
+            angle1, angle2 = angle2, angle1
+        return angle1, angle2
+
     def point_belongs(self, point, abs_tol=1e-6):
         """
         Check if a Point2D belongs to the Arc2D.
