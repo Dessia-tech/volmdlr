@@ -1518,11 +1518,64 @@ class Plane3D(Surface3D):
         """
         return vm_common_operations.get_plane_equation_coefficients(self.frame)
 
+    def plane_intersections_ocp(self, plane3d):
+        from OCP.Geom import Geom_Plane, Geom_Line
+        from OCP.gp import gp_Pnt, gp_Ax3, gp_Dir
+        from OCP.TColStd import TColStd_Array1OfReal, TColStd_Array1OfInteger
+        from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
+        from OCP.Precision import Precision
+        from OCP.GeomAPI import GeomAPI_IntSS
+        def point_from_occt(occt_point):
+            return volmdlr.Point3D(occt_point.X(), occt_point.Y(), occt_point.Z())
+
+        def vector_from_occt(occt_vector):
+            return volmdlr.Vector3D(occt_vector.X(), occt_vector.Y(), occt_vector.Z())
+
+        def volmdlr_vector_to_occt(volmdlr_vector):
+            return gp_Dir(*volmdlr_vector)
+
+        def volmdlr_point_to_occt(volmdlr_point):
+            return gp_Pnt(*volmdlr_point)
+
+        def frame_from_occt_ax3(ax2):
+            origin = point_from_occt(ax2.Location())
+            u = vector_from_occt(ax2.XDirection())
+            v = vector_from_occt(ax2.YDirection())
+            return volmdlr.Frame3D(origin, u, v, u.cross(v))
+
+        def planesurface_from_occt(occt_surface):
+            frame = frame_from_occt_ax3(occt_surface.Position())
+            return Plane3D(frame)
+
+        def volmdlr_frame_to_occt(volmdlr_frame):
+            p = volmdlr_point_to_occt(volmdlr_frame.origin)
+            z = volmdlr_vector_to_occt(volmdlr_frame.w)
+            x = volmdlr_vector_to_occt(volmdlr_frame.u)
+            return gp_Ax3(p, z, x)
+
+        def occt_plane_from_volmdlr_plane(volmdlr_plane):
+            occt_frame = volmdlr_frame_to_occt(volmdlr_plane.frame)
+            return Geom_Plane(occt_frame)
+
+        def line_from_occt(occt_line):
+            position = occt_line.Position()
+            return curves.Line3D.from_point_and_vector(point_from_occt(position.Location()),
+                                                       vector_from_occt(position.Direction()))
+
+        occt_plane1 = occt_plane_from_volmdlr_plane(self)
+        occt_plane2 = occt_plane_from_volmdlr_plane(plane3d)
+
+        api_intss = GeomAPI_IntSS(occt_plane1, occt_plane2, Precision.Confusion_s())
+        intersections = [api_intss.Line(i + 1) for i in range(api_intss.NbLines())]
+
+        return [line_from_occt(intersection) for intersection in intersections]
+
     def plane_intersections(self, plane3d):
         """
         Computes intersection points between two Planes 3D.
 
         """
+        # return self.plane_intersections_ocp(plane3d)
         plane_intersections = vm_utils_intersections.get_two_planes_intersections(self.frame, plane3d.frame)
         if plane_intersections:
             return [curves.Line3D(plane_intersections[0], plane_intersections[1])]

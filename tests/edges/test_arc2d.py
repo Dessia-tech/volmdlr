@@ -8,6 +8,7 @@ from volmdlr import curves
 
 folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'arc_objects')
 
+
 class TestArc2D(unittest.TestCase):
     circle2d = curves.Circle2D(volmdlr.OXY, 1)
     arc2d = Arc2D(circle2d, volmdlr.Point2D(-1, 0), volmdlr.Point2D(1, 0))
