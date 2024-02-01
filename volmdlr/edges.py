@@ -2970,16 +2970,20 @@ class Arc2D(ArcMixin, Edge):
 
     def get_start_end_angles(self):
         """Returns the start and end angle of the arc."""
-        start_to_center = self.start - self.circle.center
-        end_to_center = self.end - self.circle.center
-        angle1 = math.atan2(start_to_center.y, start_to_center.x)
-        angle2 = math.atan2(end_to_center.y, end_to_center.x)
+        angle1 = self._arc_point_angle(self.start)
+        angle2 = self._arc_point_angle(self.end)
         if self.is_trigo:
             if angle2 == 0.0:
                 angle2 = volmdlr.TWO_PI
         else:
             angle1, angle2 = angle2, angle1
         return angle1, angle2
+
+    def _arc_point_angle(self, point):
+        """Helper function to calculate the angle of point on a trigonometric arc."""
+        point_to_center = point - self.circle.center
+        angle = math.atan2(point_to_center.y, point_to_center.x)
+        return angle
 
     def point_belongs(self, point, abs_tol=1e-6):
         """
@@ -3266,12 +3270,8 @@ class Arc2D(ArcMixin, Edge):
             for point in [self.circle.center, self.circle.start, self.circle.end]:
                 point.plot(ax=ax, color=edge_style.color, alpha=edge_style.alpha)
 
-        if self.is_trigo:
-            theta1 = self.angle_start * 180 / math.pi
-            theta2 = self.angle_end * 180 / math.pi
-        else:
-            theta2 = 360 - self.angle_start * 180 / math.pi
-            theta1 = 360 - self.angle_end * 180 / math.pi
+        theta1 = self.angle_start * 180 / math.pi
+        theta2 = self.angle_end * 180 / math.pi
 
         ax.add_patch(matplotlib.patches.Arc((self.circle.center.x, self.circle.center.y), 2 * self.circle.radius,
                                             2 * self.circle.radius, angle=0,
