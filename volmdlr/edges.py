@@ -703,9 +703,9 @@ class LineSegment(Edge):
                          for point in [other_linesegment.start, other_linesegment.end]) and
                  not any(other_linesegment.point_belongs(point, abs_tol) for point in [self.start, self.end])):
             return []
-        if all(self.point_belongs(point) for point in other_linesegment.discretization_points(number_points=5)):
+        if all(self.point_belongs(point, abs_tol) for point in other_linesegment.discretization_points(number_points=5)):
             return [other_linesegment]
-        if all(other_linesegment.point_belongs(point) for point in self.discretization_points(number_points=5)):
+        if all(other_linesegment.point_belongs(point, abs_tol) for point in self.discretization_points(number_points=5)):
             return [self]
         new_linesegment_points = []
         for point in [self.start, self.end]:
@@ -736,14 +736,14 @@ class LineSegment(Edge):
             return [self]
         points = []
         for point in [self.start, self.end, shared_section[0].start, shared_section[0].end]:
-            if not volmdlr.core.point_in_list(point, points):
+            if not volmdlr.core.point_in_list(point, points, abs_tol):
                 points.append(point)
         points = sorted(points, key=self.start.point_distance)
         new_line_segments = []
         class_ = self.__class__
         for point1, point2 in zip(points[:-1], points[1:]):
             lineseg = class_(point1, point2)
-            if not lineseg.direction_independent_is_close(shared_section[0]):
+            if not lineseg.direction_independent_is_close(shared_section[0], abs_tol):
                 new_line_segments.append(lineseg)
         return new_line_segments
 

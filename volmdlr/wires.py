@@ -2673,7 +2673,7 @@ class Contour2D(ContourMixin, Wire2D):
         :param abs_tol: tolerance.
         :return: merged contours.
         """
-        is_sharing_primitive = self.is_sharing_primitives_with(contour2d)
+        is_sharing_primitive = self.is_sharing_primitives_with(contour2d, abs_tol)
         if not is_sharing_primitive:
             if self.is_inside(contour2d):
                 return [self]
