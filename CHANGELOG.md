@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### wires.py
 
 ### Refactor
+
 #### surfaces.py
 - ToroidalSuface3D: toroidal_surface_intersections
 - Contour2D - point_belongs
