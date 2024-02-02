@@ -334,6 +334,10 @@ class Block(shells.ClosedShell3D):
                      alpha=self.alpha, name=self.name)
 
     def cut_by_orthogonal_plane(self, plane_3d: surfaces.Plane3D):
+        """
+        Cuts Block by orthogonal plane, and return a plane face at this plane, bounded by the block volume.
+
+        """
         bouding_box = self.bounding_box
         if plane_3d.frame.w.dot(volmdlr.Vector3D(1, 0, 0)) == 0:
             pass
@@ -557,6 +561,11 @@ class ExtrudedProfile(shells.ClosedShell3D):
         return areas
 
     def volume(self):
+        """
+        Gets the Volume of an extruded profile volume.
+
+        :return:
+        """
         z = self.frame.w
         return self.area() * self.extrusion_vector.dot(z)
 
