@@ -713,7 +713,7 @@ class Shell3D(volmdlr.core.CompositePrimitive3D):
         return minimum_distance
 
     def shell_decomposition(self):
-        """deconposition of a shell 3D."""
+        """Decomposition of a shell 3D."""
         if not self._shell_octree_decomposition:
             self._shell_octree_decomposition = volmdlr.faces.octree_decomposition(self.bounding_box, self.faces)
         return self._shell_octree_decomposition
