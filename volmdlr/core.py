@@ -175,7 +175,7 @@ def map_primitive_with_initial_and_final_frames(primitive, initial_frame, final_
     new_frame = volmdlr.Frame3D(final_frame.origin, u_vector, v_vector, w_vector)
     if new_frame == volmdlr.OXYZ:
         return primitive
-    new_primitive = primitive.frame_mapping(new_frame, 'new')
+    new_primitive = primitive.frame_mapping(new_frame, 'old')
     return new_primitive
 
 
