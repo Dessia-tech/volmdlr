@@ -14,10 +14,7 @@ from volmdlr import primitives3d, curves
 from volmdlr.core import EdgeStyle
 
 degree = 5
-control_points = [
-    # vm.Point3D(0, 0, 0),
-
-    vm.Point3D(-1,0,0),
+control_points = [vm.Point3D(0, 0, 0),
                   vm.Point3D(0.3, 0.2, 0.1),
                   vm.Point3D(0.5, -0.1, 0.4),
                   vm.Point3D(0.5, -0.4, 0.0),
