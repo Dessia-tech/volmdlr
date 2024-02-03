@@ -17,6 +17,7 @@ folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_coni
 class TestConicalSurface3D(unittest.TestCase):
     conical_surface = conical_surfaces.conical_surface1
     conical_surface2 = conical_surfaces.conical_surface2
+    conical_surface3 = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 4, 0.5)
 
     def test_parametric_points_to_3d(self):
         parametric_points = np.array([[0.0, 0.0], [0.5 * math.pi, 0.0], [math.pi, 0.0], [1.5 * math.pi, 0.0],
@@ -36,6 +37,48 @@ class TestConicalSurface3D(unittest.TestCase):
                                     ])
         for point, expected_point in zip(points3d, expected_points):
             self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
+        parametric_points = np.array([[0.0, 0.0], [0.5 * math.pi, 0.0], [math.pi, 0.0], [1.5 * math.pi, 0.0],
+                                      [0.0, 0.5], [0.5 * math.pi, 0.5], [math.pi, 0.5], [1.5 * math.pi, 0.5],
+                                      [0.0, -0.25], [0.5 * math.pi, -0.25], [math.pi, -0.5], [1.5 * math.pi, -0.5]
+                                      ], dtype=np.float64)
+        points3d = self.conical_surface3.parametric_points_to_3d(parametric_points)
+        expected_points = np.array([[0.5, 0.0, 0.0], [0.0, 0.5, 0.0], [-0.5, 0.0, 0.0], [0.0, -0.5, 0.0],
+                                    [1.0, 0.0, 0.5], [0.0, 1.0, 0.5], [-1.0, 0.0, 0.5], [0.0, -1.0, 0.5],
+                                    [0.25, 0.0, -0.25], [0.0, 0.25, -0.25],
+                                    [0.0, 0.0, -0.5], [0.0, 0.0, -0.5]])
+        for point, expected_point in zip(points3d, expected_points):
+            self.assertAlmostEqual(np.linalg.norm(point - expected_point), 0.0)
+
+    def test_apex(self):
+        apex = self.conical_surface3.apex
+        self.assertTrue(apex.is_close(volmdlr.Point3D(0.0, 0.0, -0.5)))
+
+    def test_get_generatrices(self):
+        generatrices = self.conical_surface3.get_generatrices(4)
+        self.assertEqual(len(generatrices), 4)
+        self.assertTrue(generatrices[0].start.is_close(self.conical_surface3.apex))
+        self.assertTrue(generatrices[0].end.is_close(volmdlr.Point3D(1.0, 0.0, 0.5)))
+        self.assertTrue(generatrices[1].end.is_close(volmdlr.Point3D(0.0, 1.0, 0.5)))
+        self.assertTrue(generatrices[2].end.is_close(volmdlr.Point3D(-1.0, 0.0, 0.5)))
+        self.assertTrue(generatrices[3].end.is_close(volmdlr.Point3D(0.0, -1.0, 0.5)))
+
+    def test_get_circle_generatrices(self):
+        generatrices = self.conical_surface3.get_circle_generatrices(5, -0.5, 0.5)
+        self.assertTrue(len(generatrices), 4)
+        self.assertEqual(generatrices[0].radius, 0.25)
+        self.assertEqual(generatrices[1].radius, 0.5)
+        self.assertEqual(generatrices[2].radius, 0.75)
+        self.assertEqual(generatrices[3].radius, 1.0)
+
+    def test_is_coincident(self):
+        conical_surface3_test_ref_radius = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 4, 0.49)
+        conical_surface3_test_semi_angle = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 5, 0.5)
+        conical_surface3_close = surfaces.ConicalSurface3D(volmdlr.OXYZ, 0.785398163834, 0.4999999)
+        self.assertFalse(self.conical_surface.is_coincident(self.conical_surface3))
+        self.assertFalse(self.conical_surface3.is_coincident(conical_surface3_test_ref_radius))
+        self.assertFalse(self.conical_surface3.is_coincident(conical_surface3_test_semi_angle))
+        self.assertTrue(self.conical_surface3.is_coincident(self.conical_surface3))
+        self.assertTrue(self.conical_surface3.is_coincident(conical_surface3_close))
 
     def test_arc3d_to_2d(self):
         arc1 = vme.Arc3D.from_3_points(volmdlr.Point3D(-1 / math.sqrt(2), 1 / math.sqrt(2), 1 / math.sqrt(3)),
@@ -181,6 +224,43 @@ class TestConicalSurface3D(unittest.TestCase):
             line_intersections = conical_surface.line_intersections(line)
             for intersection, expected_sesult in zip(line_intersections, list_intersections[i]):
                 self.assertTrue(intersection.is_close(expected_sesult))
+
+    def test_perpendicular_plane_intersection(self):
+        plane = surfaces.Plane3D(volmdlr.OXYZ.translation(volmdlr.Z3D * 0.5))
+        circle = self.conical_surface3.perpendicular_plane_intersection(plane)[0]
+        self.assertTrue(circle.center.is_close(volmdlr.Point3D(0.0, 0.0, 0.5)))
+        self.assertAlmostEqual(circle.radius, 1.0)
+
+    def test_parallel_plane_intersection(self):
+        frame = volmdlr.Frame3D(volmdlr.Point3D(0.0, 0.0, 0.5), volmdlr.Z3D,
+                                volmdlr.Vector3D(-1/math.sqrt(2), 1/math.sqrt(2), 0.0),
+                                volmdlr.Vector3D(1/math.sqrt(2), 1/math.sqrt(2), 0.0)
+                                )
+        plane_through_origin = surfaces.Plane3D(frame)
+        intersections = self.conical_surface3.parallel_plane_intersection(plane_through_origin)
+        self.assertEqual(len(intersections), 2)
+        self.assertTrue(intersections[0].point_belongs(self.conical_surface3.apex))
+        self.assertTrue(intersections[1].point_belongs(self.conical_surface3.apex))
+        self.assertTrue(self.conical_surface3.point_belongs(intersections[0].point1))
+        self.assertTrue(self.conical_surface3.point_belongs(intersections[0].point2))
+        self.assertTrue(self.conical_surface3.point_belongs(intersections[1].point1))
+        self.assertTrue(self.conical_surface3.point_belongs(intersections[1].point2))
+        self.assertTrue(plane_through_origin.point_belongs(intersections[0].point1))
+        self.assertTrue(plane_through_origin.point_belongs(intersections[0].point2))
+        self.assertTrue(plane_through_origin.point_belongs(intersections[1].point1))
+        self.assertTrue(plane_through_origin.point_belongs(intersections[1].point2))
+        frame.origin = volmdlr.Point3D(0.5, 0.0, 0.5)
+        plane = surfaces.Plane3D(frame)
+        intersections = self.conical_surface3.parallel_plane_intersection(plane)
+        self.assertTrue(intersections[0].frame.origin.is_close(volmdlr.Point3D(0.25, 0.25, -0.5)))
+        self.assertTrue(intersections[0].frame.u.is_close(volmdlr.Z3D))
+        self.assertAlmostEqual(intersections[0].semi_major_axis, 0.35355339059327373)
+
+    def test_circle_intersections(self):
+        frame = volmdlr.Frame3D(volmdlr.Point3D(0.5, 0.0, 0.5), volmdlr.Y3D, volmdlr.Z3D, volmdlr.X3D)
+        circle = curves.Circle3D(frame, 1.0)
+        intersections = self.conical_surface3.circle_intersections(circle)
+        self.assertTrue(True)
 
     def test_plane_intersections(self):
         conical_surface = surfaces.ConicalSurface3D(volmdlr.OXYZ, math.pi / 6)
@@ -356,6 +436,11 @@ class TestConicalSurface3D(unittest.TestCase):
                             v=volmdlr.Vector3D(0.0, -1.0, 0.0), w=volmdlr.Vector3D(1.0, 0.0, -0.0)),
             0.1443375672974065, 0.24999999999978403)))
 
+    def test_is_singularity_point(self):
+        point_true = volmdlr.Point3D(0.0, 0.0, -0.5)
+        point_false = volmdlr.Point3D(0.0, 0.0, -0.49)
+        self.assertTrue(self.conical_surface3.is_singularity_point(point_true))
+        self.assertFalse(self.conical_surface3.is_singularity_point(point_false))
 
 if __name__ == '__main__':
     unittest.main()
