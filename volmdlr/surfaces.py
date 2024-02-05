@@ -4340,7 +4340,7 @@ class ConicalSurface3D(PeriodicalSurface):
         if math.isclose(start.y, end.y, rel_tol=0.005):
             # special case when there is a small line segment that should be a small arc of circle instead
             return [edges.LineSegment2D(start, end)]
-        elif start.x != end.x:
+        if start.x != end.x:
             end = volmdlr.Point2D(start.x, end.y)
         if start != end:
             return [edges.LineSegment2D(start, end)]

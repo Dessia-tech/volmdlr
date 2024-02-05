@@ -420,7 +420,7 @@ class Edge(dc.DessiaObject):
         abscissa2 = self.abscissa(point2)
         return vm_common_operations.get_abscissa_discretization(self, abscissa1, abscissa2, number_points, False)
 
-    def trim(self, point1, point2, same_sense : bool = True):
+    def trim(self, point1, point2, *args, **kwargs):
         """
         Trims edge between two points.
 
@@ -4787,7 +4787,8 @@ class LineSegment3D(LineSegment):
 
     def _conical_revolution(self, params):
         """Creates a conical revolution of a Line Segment 3D."""
-        axis, u, dist1, dist2, angle, cone_origin = params
+        axis, u, dist1, dist2, angle, apex = params
+
         v = axis.cross(u)
         direction_vector = self.direction_vector()
         direction_vector = direction_vector.unit_vector()
@@ -4795,15 +4796,22 @@ class LineSegment3D(LineSegment):
         semi_angle = math.atan2(direction_vector.dot(u), direction_vector.dot(axis))
         if semi_angle > 0.5 * math.pi:
             semi_angle = math.pi - semi_angle
-            cone_frame = volmdlr.Frame3D(cone_origin, u, -v, -axis)
+            axis = -axis
+            frame_origin = apex + axis * dist1
+            ref_radius = dist1 * math.tan(semi_angle)
+            cone_frame = volmdlr.Frame3D(frame_origin, u, -v, axis)
             angle2 = - angle
         else:
             angle2 = angle
-            cone_frame = volmdlr.Frame3D(cone_origin, u, v, axis)
+            frame_origin = apex + axis * dist1
+            ref_radius = dist1 * math.tan(semi_angle)
+            cone_frame = volmdlr.Frame3D(frame_origin, u, v, axis)
 
-        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle)
+        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle, ref_radius)
+        z1 = 0
+        z2 = dist2 - dist1
         return [volmdlr.faces.ConicalFace3D.from_surface_rectangular_cut(
-            surface, 0, angle2, z1=dist1 / math.tan(semi_angle), z2=dist2 / math.tan(semi_angle))]
+            surface, 0, angle2, z1=z1 / math.tan(semi_angle), z2=z2 / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
         """Creates a cylindrical revolution of a Line Segment 3D."""

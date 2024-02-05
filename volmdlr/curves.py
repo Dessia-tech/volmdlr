@@ -355,9 +355,6 @@ class Line(Curve):
         :return: line segment.
         """
         linesegment_class = getattr(volmdlr.edges, 'LineSegment' + self.__class__.__name__[-2:])
-        if not self.point_belongs(point1) or not self.point_belongs(point2):
-            print('Point not on curve')
-        #     raise ValueError('Point not on curve')
         linesegment = linesegment_class(point1, point2)
         return linesegment
 
