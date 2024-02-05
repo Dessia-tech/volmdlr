@@ -4798,20 +4798,16 @@ class LineSegment3D(LineSegment):
             semi_angle = math.pi - semi_angle
             axis = -axis
             frame_origin = apex + axis * dist1
-            ref_radius = dist1 * math.tan(semi_angle)
             cone_frame = volmdlr.Frame3D(frame_origin, u, -v, axis)
             angle2 = - angle
         else:
             angle2 = angle
             frame_origin = apex + axis * dist1
-            ref_radius = dist1 * math.tan(semi_angle)
             cone_frame = volmdlr.Frame3D(frame_origin, u, v, axis)
 
-        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle, ref_radius)
-        z1 = 0
-        z2 = dist2 - dist1
+        surface = volmdlr.surfaces.ConicalSurface3D(cone_frame, semi_angle, dist1 * math.tan(semi_angle))
         return [volmdlr.faces.ConicalFace3D.from_surface_rectangular_cut(
-            surface, 0, angle2, z1=z1 / math.tan(semi_angle), z2=z2 / math.tan(semi_angle))]
+            surface, 0, angle2, z1=0.0 / math.tan(semi_angle), z2=dist2 - dist1 / math.tan(semi_angle))]
 
     def _cylindrical_revolution(self, params):
         """Creates a cylindrical revolution of a Line Segment 3D."""
