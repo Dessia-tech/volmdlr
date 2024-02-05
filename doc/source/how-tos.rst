@@ -861,13 +861,23 @@ This class represents a three-dimensional extrusion surface. It can be instancia
 
     .. grid-item-card::
 
-        .. code-block:: python
+        .. plot::
+            :include-source:
+            :align: center
 
             import volmdlr
-            from volmdlr import surfaces
+            from volmdlr import edges, surfaces, curves
             from volmdlr.core import EdgeStyle
 
-            #todo
+            circle3d = curves.Circle3D(volmdlr.OXYZ, 1)
+
+            arc3d = edges.Arc3D(circle3d, start=circle3d.point_at_abscissa(0.2),
+                                end=circle3d.point_at_abscissa(2.5))
+
+            surface = surfaces.ExtrusionSurface3D(arc3d, volmdlr.Z3D)
+
+            surface.plot(edge_style=EdgeStyle('orange'))
+
 
 RevolutionSurface3D
 ===================
@@ -887,14 +897,25 @@ RevolutionSurface3D
     .. grid-item-card::
 
         .. plot::
-           :include-source:
-           :align: center
+            :include-source:
+            :align: center
 
-           import volmdlr
-           from volmdlr import surfaces
-           from volmdlr.core import EdgeStyle
+            import math
+            import volmdlr
+            from volmdlr import edges, wires, surfaces
+            from volmdlr.core import EdgeStyle
 
-           #todo
+            linesegment = edges.LineSegment3D(volmdlr.Point3D(0.5, 0, 0), volmdlr.Point3D(0.5, 0, 0.5))
+
+            arc = edges.Arc3D.from_3_points(volmdlr.Point3D(0.5, 0, 0.5),
+                            volmdlr.Point3D(0.3 + 0.2 * math.cos(math.pi / 6), 0, 0.5 + 0.2 * math.sin(math.pi / 6)),
+                            volmdlr.Point3D(0.3 + 0.2 * math.cos(math.pi / 3), 0, 0.5 + 0.2 * math.sin(math.pi / 3)))
+
+            wire = wires.Wire3D([linesegment, arc])
+            axis_point = volmdlr.O3D
+            axis = volmdlr.Z3D
+            surface = surfaces.RevolutionSurface3D(wire, axis_point, axis)
+            surface.plot(edge_style=EdgeStyle('orange'))
 
 BSplineSurface3D
 ================
@@ -928,13 +949,40 @@ BSplineSurface3D
 
     .. grid-item-card::
 
-        .. code-block:: python
+        .. plot::
+            :include-source:
+            :align: center
 
-            import volmdlr
             from volmdlr import surfaces
             from volmdlr.core import EdgeStyle
+            import numpy as np
 
-            #todo
+            bsp = surfaces.BSplineSurface3D(3, 3, np.array([
+                    [-0.47224769, -0.50977339,  0.51416422], [-0.47115651, -0.50983955,  0.51600901], [-0.46856059, -0.50991921,  0.51817403],
+                    [-0.46431341, -0.50995821,  0.51910384], [-0.46105775, -0.50995121,  0.51876123], [-0.45806846, -0.5099087 ,  0.51741441],
+                    [-0.45565101, -0.50983505,  0.51520204], [-0.45352158, -0.5097055 ,  0.51140362], [-0.45340494, -0.50958741,  0.50802068],
+                    [-0.45405263, -0.50951481,  0.5059723 ], [-0.47225024, -0.51143904,  0.51410599], [-0.47115906, -0.5115052 ,  0.51595078],
+                    [-0.46856313, -0.51158486,  0.51811579], [-0.46431596, -0.51162386,  0.51904561], [-0.4610603 , -0.51161686,  0.518703  ],
+                    [-0.458071  , -0.51157434,  0.51735618], [-0.45565355, -0.51150069,  0.51514381], [-0.45352413, -0.51137115,  0.51134539],
+                    [-0.45340749, -0.51125306,  0.50796245], [-0.45405517, -0.51118046,  0.50591406], [-0.47225533, -0.51477033,  0.51398953],
+                    [-0.47116415, -0.51483649,  0.51583431], [-0.46856823, -0.51491615,  0.51799933], [-0.46432105, -0.51495515,  0.51892915],
+                    [-0.46106539, -0.51494815,  0.51858653], [-0.4580761 , -0.51490564,  0.51723971], [-0.45565865, -0.51483199,  0.51502734],
+                    [-0.45352922, -0.51470245,  0.51122892], [-0.45341258, -0.51458435,  0.50784598], [-0.45406027, -0.51451175,  0.5057976 ],
+                    [-0.47226043, -0.51810162,  0.51387306], [-0.47116925, -0.51816779,  0.51571785], [-0.46857332, -0.51824745,  0.51788287],
+                    [-0.46432615, -0.51828645,  0.51881268], [-0.46107049, -0.51827945,  0.51847007],
+                    [-0.45808119, -0.51823693,  0.51712325], [-0.45566374, -0.51816328,  0.51491088], [-0.45353431, -0.51803374,  0.51111246],
+                    [-0.45341768, -0.51791565,  0.50772952], [-0.45406536, -0.51784304,  0.50568114], [-0.47226297, -0.51976727,  0.51381483],
+                    [-0.47117179, -0.51983343,  0.51565961], [-0.46857587, -0.51991309,  0.51782463], [-0.46432869, -0.51995209,  0.51875445],
+                    [-0.46107303, -0.51994509,  0.51841183], [-0.45808374, -0.51990258,  0.51706502], [-0.45566629, -0.51982893,  0.51485265],
+                    [-0.45353686, -0.51969939,  0.51105423], [-0.45342022, -0.5195813 ,  0.50767128], [-0.4540679 , -0.51950869,  0.5056229 ]]),
+                                            u_multiplicities=np.array([4, 1, 4]),
+                                            v_multiplicities=np.array([4, 1, 1, 1, 1, 1, 1, 4]),
+                                            u_knots=np.array([0. , 0.5, 1. ]),
+                                            v_knots=np.array([0., 0.22112628, 0.33220626, 0.4436676 , 0.55534525, 0.66698786, 0.77835802, 1.]),
+                                            nb_u=5, nb_v=10)
+
+            bsp.plot(edge_style=EdgeStyle('orange'))
+
 
 Faces
 *****
@@ -1515,7 +1563,7 @@ Here is how you can instantiate it:
 .. image:: ../source/_static/index-images/sphere.png
 
 RevolvedProfile
-==============
+===============
 
 RevolvedProfile class is used for creating a 3D object by revolving a 2D profile around an axis.
 To do so, you must provide the following attributes:
@@ -1554,7 +1602,7 @@ The constructor takes several parameters:
 .. image:: ../source/_static/index-images/revolvedprofile.png
 
 ExtrutedProfile
-==============
+===============
 
 The ExtrudedProfile class represents an extrudred profille with an outer and inner contours.
 
