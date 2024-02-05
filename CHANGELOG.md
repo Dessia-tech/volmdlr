@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### surfaces.py
 - ToroidalSuface3D: toroidal_surface_intersections
 - Contour2D - point_belongs
+- ConicalSurface3D: Refactoring of the conical surface definition in accordance with ISO 10303.
 
 ### Changed
 - load_from_file -> from_json

@@ -4055,10 +4055,34 @@ class ToroidalSurface3D(PeriodicalSurface):
 
 class ConicalSurface3D(PeriodicalSurface):
     """
-    The local plane is defined by (theta, z).
+    Describes a cone.
 
-    :param frame: Cone's frame to position it: frame.w is axis of cone frame. Origin is at the angle of the cone.
-    :param semi_angle: cone's semi-angle.
+    A cone is defined by the half-angle, and is positioned in space by a frame and a reference radius.
+    The main axis of the frame is the axis of revolution of the cone.
+    The plane defined by the origin, the x direction and the y direction of the frame is the
+    plane of the cone. The intersection of the cone with this reference plane is a circle of radius equal
+    to the reference radius.
+    The apex of the cone is on the negative side of the main axis of the frame if the half-angle
+    is positive, and on the positive side if the half-angle is negative. This frame is the
+    "local coordinate system" of the cone. The following apply:
+        Rotation around its main axis, in the trigonometric sense given by the x direction and the y direction,
+        defines the u parametric direction and the x-axis gives the origin for the u parameter.
+        The z axis defines the v parametric direction of the cone and the origin of the frame is the origin
+        of the v parameter.
+        The parametric range of the two parameters is:
+            - [ 0, 2.*Pi ] for u, and
+            - ] -infinity, +infinity [ for v
+
+    The parametric equation of the cone is:
+    P(u, v) = O + (R + v*tan(ang)) * (cos(u)*x + sin(u)*y) + v*z
+    where:
+        - O, x, y and z are respectively the origin, the x, y and z direction of the cone's local coordinate system
+        - ang is the half-angle at the apex of the cone
+        - R is the reference radius.
+
+    :param frame: Cone's local coordinate system.
+    :param semi_angle: half-angle at the apex of the cone.
+    :param ref_radius: radius of the circle formed by the intersection of the cone with the reference plane.
     """
     face_class = 'ConicalFace3D'
     x_periodicity = volmdlr.TWO_PI
@@ -4331,8 +4355,7 @@ class ConicalSurface3D(PeriodicalSurface):
         if math.isclose(theta1, theta2, abs_tol=1e-4):
             return [edges.LineSegment3D(self.point2d_to_3d(linesegment2d.start),
                                         self.point2d_to_3d(linesegment2d.end))]
-        if linesegment2d.name == "construction" or (math.isclose(param_z1, param_z2, abs_tol=1e-4) and
-                                                    math.isclose(param_z1, 0., abs_tol=1e-6) and self.ref_radius == 0):
+        if linesegment2d.name == "construction" or self.is_degenerated_brep(linesegment2d):
             return None
         start3d = self.point2d_to_3d(linesegment2d.start)
         center = self.frame.origin + param_z1 * self.frame.w
@@ -4343,7 +4366,7 @@ class ConicalSurface3D(PeriodicalSurface):
             circle = curves.Circle3D(volmdlr.Frame3D(
                 center, self.frame.u, -self.frame.v, -self.frame.w), center.point_distance(start3d))
         if math.isclose(param_z1, param_z2, abs_tol=1e-4):
-            if abs(theta1 - theta2) == volmdlr.TWO_PI:
+            if math.isclose(abs(theta1 - theta2), volmdlr.TWO_PI, abs_tol=1e-6):
                 return [edges.FullArc3D(circle, start3d)]
             interior = self.point2d_to_3d(volmdlr.Point2D(0.5 * (theta1 + theta2), param_z1))
             arc = edges.Arc3D(circle, start3d, self.point2d_to_3d(linesegment2d.end))
@@ -4451,22 +4474,23 @@ class ConicalSurface3D(PeriodicalSurface):
         :param line: other line to verify intersections.
         :return: a list of intersection points, if there exists any.
         """
-        if line.point_belongs(self.frame.origin):
-            return [self.frame.origin]
+        apex = self.apex
+        if line.point_belongs(apex):
+            return [apex]
         line_direction_vector = line.unit_direction_vector()
-        plane_normal = line_direction_vector.cross((self.frame.origin - line.point1).to_vector()).unit_vector()
+        plane_normal = line_direction_vector.cross((apex - line.point1).to_vector()).unit_vector()
         if self.frame.w.dot(plane_normal) > 0:
             plane_normal = - plane_normal
-        plane = Plane3D.from_normal(self.frame.origin, plane_normal)
+        plane = Plane3D.from_normal(apex, plane_normal)
         cos_theta = math.sqrt(1 - (plane_normal.dot(self.frame.w) ** 2))
         if cos_theta >= math.cos(self.semi_angle):
-            plane_h = Plane3D.from_normal(self.frame.origin + self.frame.w, self.frame.w)
+            plane_h = Plane3D.from_normal(apex + self.frame.w, self.frame.w)
             circle = self.perpendicular_plane_intersection(plane_h)[0]
             line_p = plane_h.plane_intersections(plane)[0]
             circle_line_p_intersections = circle.line_intersections(line_p)
             intersections = []
             for intersection in circle_line_p_intersections:
-                line_v_x = curves.Line3D(self.frame.origin, intersection)
+                line_v_x = curves.Line3D(apex, intersection)
                 line_inter = line_v_x.intersection(line)
                 if not line_inter:
                     continue
@@ -4485,7 +4509,8 @@ class ConicalSurface3D(PeriodicalSurface):
         positive_lobe_intersections = []
         for point in line_intersections:
             local_point = self.frame.global_to_local_coordinates(point)
-            if local_point.z < 0:
+            zmin = - self.ref_radius / math.tan(self.semi_angle)
+            if local_point.z < zmin:
                 continue
             positive_lobe_intersections.append(point)
         return positive_lobe_intersections
@@ -4603,7 +4628,8 @@ class ConicalSurface3D(PeriodicalSurface):
         line_intersections = self.line_intersections(plane2_plane3d_intersections[0])
         if 1 > len(line_intersections) or len(line_intersections) > 2:
             return []
-        angle_plane_cones_direction = volmdlr.geometry.vectors3d_angle(self.frame.w, plane3d.frame.w) - math.pi / 2
+        angle_plane_cones_direction = abs(volmdlr.geometry.vectors3d_angle(self.frame.w, plane3d.frame.w)
+                                          - math.pi / 2)
         if math.isclose(angle_plane_cones_direction, self.semi_angle, abs_tol=1e-8):
             return self._concurrent_plane_intersection_parabola(plane3d, line_intersections[0])
         if len(line_intersections) == 1:
@@ -4710,11 +4736,9 @@ class ConicalSurface3D(PeriodicalSurface):
         An edge is said to be degenerated when it corresponds to a single 3D point.
         """
         edge = args[0]
-        if "LineSegment2D" == edge.__class__.__name__:
-            start3d = self.point2d_to_3d(edge.start)
-            end3d = self.point2d_to_3d(edge.end)
-            return bool(start3d.is_close(end3d) and self.is_singularity_point(start3d))
-        return False
+        start3d = self.point2d_to_3d(edge.start)
+        end3d = self.point2d_to_3d(edge.end)
+        return bool(self.is_singularity_point(start3d) and start3d.is_close(end3d))
 
     def _conical_intersection_points(self, conical_surface: 'ConicalSurface3D', length: float):
         """
@@ -4756,9 +4780,9 @@ class ConicalSurface3D(PeriodicalSurface):
                                       intersections_points[1][0])
         return self.plane_intersections(plane)
 
-    def same_origin_conicalsurface_intersections(self, conical_surface):
+    def same_apex_conicalsurface_intersections(self, conical_surface):
         """
-        Gets Conical Surface intersections with another conical surface, sharing the same origin.
+        Gets Conical Surface intersections with another conical surface, sharing the same apex.
 
         :param conical_surface: intersecting conical surface.
         :return: list of intersecting curves.
@@ -4767,8 +4791,9 @@ class ConicalSurface3D(PeriodicalSurface):
         circle_intersections = conical_surface.circle_intersections(circle)
         if not circle_intersections:
             return []
-        return [curves.Line3D(self.frame.origin, circle_intersections[0]),
-                curves.Line3D(self.frame.origin, circle_intersections[1])]
+        apex = self.apex
+        return [curves.Line3D(apex, circle_intersections[0]),
+                curves.Line3D(apex, circle_intersections[1])]
 
     def conicalsurface_intersections(self, conical_surface):
         """
@@ -4779,8 +4804,8 @@ class ConicalSurface3D(PeriodicalSurface):
         """
         if self.frame.w.is_colinear_to(conical_surface.frame.w):
             return self.parallel_conicalsurface_intersections(conical_surface)
-        if self.frame.origin.is_close(conical_surface.frame.origin):
-            return self.same_origin_conicalsurface_intersections(conical_surface)
+        if self.apex.is_close(conical_surface.apex):
+            return self.same_apex_conicalsurface_intersections(conical_surface)
         if self.semi_angle + conical_surface.semi_angle > volmdlr.geometry.vectors3d_angle(
                 self.frame.w, conical_surface.frame.w):
             intersection_points = self._conical_intersection_points(conical_surface, 5)
