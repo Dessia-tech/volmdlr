@@ -4285,9 +4285,7 @@ class ConicalSurface3D(PeriodicalSurface):
         if y != 0.0 and abs(y) < 1e-12:
             y = 0.0
         if x == 0.0 and y == 0.0:
-            theta = 0
-        elif -self.ref_radius > z * math.tan(self.semi_angle):
-            theta = math.atan2(-y, -x)
+            theta = 0.0
         else:
             theta = math.atan2(y, x)
         if abs(theta) < 1e-16:
