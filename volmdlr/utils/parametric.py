@@ -313,7 +313,7 @@ def update_face_grid_points_with_inner_polygons(inner_polygons, grid_points_data
                 index = grid_point_index.get((i, j))
                 if not index:
                     continue
-                if inner_polygon.point_belongs(points_grid[index], include_edge_points=True):
+                if inner_polygon.point_inside(points_grid[index], include_edge_points=True):
                     indexes.append(index)
     points_grid = np.delete(points_grid, indexes, axis=0)
     return points_grid

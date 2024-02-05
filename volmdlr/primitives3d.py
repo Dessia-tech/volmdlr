@@ -13,7 +13,7 @@ import plot_data
 
 import dessia_common.core as dc
 import matplotlib.pyplot as plt
-import numpy as npy
+import numpy as np
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 from scipy.stats import qmc
 
@@ -26,7 +26,7 @@ import volmdlr.wires
 from volmdlr import shells, surfaces, curves
 
 
-npy.seterr(divide='raise')
+np.seterr(divide='raise')
 
 
 class RoundedLineSegments3D(volmdlr.primitives.RoundedLineSegments):
@@ -334,6 +334,10 @@ class Block(shells.ClosedShell3D):
                      alpha=self.alpha, name=self.name)
 
     def cut_by_orthogonal_plane(self, plane_3d: surfaces.Plane3D):
+        """
+        Cuts Block by orthogonal plane, and return a plane face at this plane, bounded by the block volume.
+
+        """
         bouding_box = self.bounding_box
         if plane_3d.frame.w.dot(volmdlr.Vector3D(1, 0, 0)) == 0:
             pass
@@ -557,6 +561,11 @@ class ExtrudedProfile(shells.ClosedShell3D):
         return areas
 
     def volume(self):
+        """
+        Gets the Volume of an extruded profile volume.
+
+        :return:
+        """
         z = self.frame.w
         return self.area() * self.extrusion_vector.dot(z)
 
@@ -1142,7 +1151,7 @@ class Cylinder(shells.ClosedShell3D):
             ]
 
         # Initial vector
-        initial_guess = npy.zeros(6)
+        initial_guess = np.zeros(6)
 
         # Constraints
         def constraint_radius_0(x):

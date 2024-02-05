@@ -8,7 +8,7 @@ folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'objects_extr
 
 
 class TestExtrusionFace3D(unittest.TestCase):
-    face = faces.ExtrusionFace3D.load_from_file(
+    face = faces.ExtrusionFace3D.from_json(
         os.path.join(folder, "extrusionface_with_ellipse_test_boundingbox.json"))
 
     def test_bounding_box(self):
@@ -16,11 +16,11 @@ class TestExtrusionFace3D(unittest.TestCase):
         self.assertAlmostEqual(bbox.volume(), 4.078418559129855e-08)
 
     def test_from_contours3d(self):
-        surface = surfaces.ExtrusionSurface3D.load_from_file(
+        surface = surfaces.ExtrusionSurface3D.from_json(
             os.path.join(folder, "extrusionsurface_inner_contour.json"))
-        contour_0 = wires.Contour3D.load_from_file(
+        contour_0 = wires.Contour3D.from_json(
             os.path.join(folder, "extrusionsurface_inner_contour_contour_0.json"))
-        contour_1 = wires.Contour3D.load_from_file(
+        contour_1 = wires.Contour3D.from_json(
             os.path.join(folder, "extrusionsurface_inner_contour_contour_1.json"))
 
         extrusionface = faces.ExtrusionFace3D.from_contours3d(surface, [contour_0, contour_1])
@@ -28,17 +28,17 @@ class TestExtrusionFace3D(unittest.TestCase):
         self.assertTrue(extrusionface.surface2d.outer_contour.is_ordered())
         self.assertTrue(extrusionface.surface2d.inner_contours[0].is_ordered())
 
-        surface = surfaces.ExtrusionSurface3D.load_from_file(
+        surface = surfaces.ExtrusionSurface3D.from_json(
             os.path.join(folder, "periodic_extrusionsurface_small_bsplinecurve.json"))
-        contour = wires.Contour3D.load_from_file(
+        contour = wires.Contour3D.from_json(
             os.path.join(folder, "periodic_extrusionsurface_small_bsplinecurve_contour.json"))
 
         extrusionface = faces.ExtrusionFace3D.from_contours3d(surface, [contour])
         self.assertAlmostEqual(extrusionface.surface2d.area(),  6.186940971694699e-08, 9)
         
-        surface = surfaces.ExtrusionSurface3D.load_from_file(
+        surface = surfaces.ExtrusionSurface3D.from_json(
             os.path.join(folder, "extrusionsurface_fullarcellipse.json"))
-        contour_0 = wires.Contour3D.load_from_file(
+        contour_0 = wires.Contour3D.from_json(
             os.path.join(folder, "extrusionsurface_fullarcellipse_contour.json"))
         extrusionface = faces.ExtrusionFace3D.from_contours3d(surface, [contour_0])
         self.assertAlmostEqual(extrusionface.surface2d.area(), 0.0015836412348717846, 4)
@@ -46,7 +46,7 @@ class TestExtrusionFace3D(unittest.TestCase):
         self.assertTrue(extrusionface.surface2d.outer_contour.is_ordered())
 
     def test_to_step(self):
-        model = VolumeModel.load_from_file(os.path.join(folder, "extrusionface_export_test.json"))
+        model = VolumeModel.from_json(os.path.join(folder, "extrusionface_export_test.json"))
         model.to_step(os.path.join(folder, "test_export.step"))
         step_import = Step.from_file(os.path.join(folder, "test_export.step"))
         model2 = step_import.to_volume_model()

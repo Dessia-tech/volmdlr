@@ -7,7 +7,7 @@ import sys
 from typing import List, Union
 
 import matplotlib.pyplot as plt
-import numpy as npy
+import numpy as np
 import scipy.integrate as scipy_integrate
 from matplotlib import __version__ as _mpl_version
 from packaging import version
@@ -116,6 +116,7 @@ class Curve(DessiaObject):
         """
         return sorted(points, key=self.abscissa)
 
+
 class ClosedCurve(Curve):
     """Abstract class for defining closed curves (Circle, Ellipse) properties."""
     def __init__(self, name: str = ''):
@@ -213,7 +214,6 @@ class Line(Curve):
         if other_line.point_belongs(self.point1, abs_tol) and\
                 self.direction_vector().is_colinear_to(other_line.direction_vector(), abs_tol):
             return True
-
         return False
 
     @classmethod
@@ -309,8 +309,7 @@ class Line(Curve):
         :param point: Other point.
         """
         segment_vector = self.direction_vector()
-        p_vector = point - self.point1
-        p_vector = p_vector.to_vector()
+        p_vector = (point - self.point1).to_vector()
         t_param = p_vector.dot(segment_vector) / segment_vector.dot(segment_vector)
         point = self.point1 + t_param * segment_vector
         return point
@@ -326,14 +325,12 @@ class Line(Curve):
         :rtype: Tuple(Union[:class:`volmdlr.Point2D`,
             :class:`volmdlr.Point3D`], float)
         """
-        vector = self.point2 - self.point1
+        vector = self.direction_vector()
         norm_u = vector.norm()
         projection_param_t = (point - self.point1).dot(vector) / norm_u ** 2
         projection = self.point1 + projection_param_t * vector
         projection = projection.to_point()
         return projection, projection_param_t * norm_u
-
-
 
     def split(self, split_point):
         """
@@ -462,8 +459,7 @@ class Line2D(Line):
         distance, _ = self.point_projection(other_line.point1)
         return distance
 
-    def trim(self, point1: volmdlr.Point2D,
-                               point2: volmdlr.Point2D):
+    def trim(self, point1: volmdlr.Point2D, point2: volmdlr.Point2D):
         """
         Cut the line between two points to create a linesegment.
 
@@ -666,7 +662,7 @@ class Line2D(Line):
         """
         segments_distance = abs(new_c[1] - new_a[1])
         radius = segments_distance / 2
-        new_circle_center = volmdlr.Point2D((0, npy.sign(new_c[1] - new_a[1]) * radius))
+        new_circle_center = volmdlr.Point2D((0, np.sign(new_c[1] - new_a[1]) * radius))
         circle_center = new_basis.local_to_global_coordinates(new_circle_center)
         circle = Circle2D(circle_center, radius)
         return circle, None
@@ -815,7 +811,6 @@ class Line3D(Line):
         :param angle: angle rotation
         :return: a new rotated Line3D
         """
-
         return Line3D(*[point.rotation(center, axis, angle) for point in
                         [self.point1, self.point2]])
 
@@ -828,7 +823,6 @@ class Line3D(Line):
         """
         return Line3D(*[point.translation(offset) for point in
                         [self.point1, self.point2]])
-
 
     def point_belongs(self, point3d, tol: float = 1e-6):
         """
@@ -844,10 +838,8 @@ class Line3D(Line):
 
     def point_distance(self, point):
         """Returns the minimal distance to a point."""
-        vector1 = point - self.point1
-        vector1.to_vector()
-        vector2 = self.point2 - self.point1
-        vector2.to_vector()
+        vector1 = (point - self.point1).to_vector()
+        vector2 = self.direction_vector()
         return vector1.cross(vector2).norm() / vector2.norm()
 
     def line_distance(self, line2):
@@ -1046,7 +1038,7 @@ class CircleMixin:
             angle_resolution = number_points
         discretization_points = [self.center + self.radius * math.cos(theta) * self.frame.u +
                                  self.radius * math.sin(theta) * self.frame.v for theta in
-                                 npy.linspace(0, volmdlr.TWO_PI, angle_resolution, dtype=npy.float64)]
+                                 np.linspace(0, volmdlr.TWO_PI, angle_resolution, dtype=np.float64)]
         return discretization_points
 
     def point_at_abscissa(self, curvilinear_abscissa):
@@ -1296,23 +1288,29 @@ class Circle2D(CircleMixin, ClosedCurve):
 
         return volmdlr.TWO_PI * self.radius
 
-    def point_belongs(self, point, include_edge_points: bool = True, tol: float = 1e-6):
+    def point_belongs(self, point, tol: float = 1e-6):
+        """
+        Verifies if a point lies on the Circle 2D.
+
+        :param point: A 2D point to check if it is on the Circle 2D.
+        :type point: `volmdlr.Point2D`
+        :param tol: tolerance.
+        :return: True if point is on the circle or false otherwise.
+        :rtype: bool
+        """
+        return abs(point.point_distance(self.center) - self.radius) <= tol
+
+    def point_inside(self, point, tol: float = 1e-6):
         """
         Verifies if a point is inside the Circle 2D.
 
         :param point: A 2D point to check if it is inside the Circle 2D.
         :type point: `volmdlr.Point2D`
-        :param include_edge_points: A Boolean indicating whether points on the edge of the Circle 2D
-            should be considered inside the circle.
-        :type include_edge_points: bool
         :param tol: tolerance.
         :return: True if point inside the circle or false otherwise.
         :rtype: bool
         """
-
-        if include_edge_points:
-            return point.point_distance(self.center) <= self.radius + tol
-        return point.point_distance(self.center) < self.radius
+        return point.point_distance(self.center) <= self.radius + tol
 
     def point_distance(self, point):
         """
@@ -1322,8 +1320,6 @@ class Circle2D(CircleMixin, ClosedCurve):
         :return: the distance from the point to the circle 2D.
         """
         return abs(point.point_distance(self.center) - self.radius)
-
-
 
     def cut_by_line(self, line: Line2D):
         """
@@ -1564,10 +1560,6 @@ class Circle2D(CircleMixin, ClosedCurve):
         center3d = self.center.to_3d(plane_origin, x, y)
         return Circle3D(volmdlr.Frame3D(center3d, x, y, normal), self.radius, self.name)
 
-
-
-
-
     def get_geo_points(self):
         """
         Represents the circle in 3D space.
@@ -1594,9 +1586,9 @@ class Circle2D(CircleMixin, ClosedCurve):
             inv_matrix_a = matrix_a.inverse()
             center = volmdlr.Point2D(*inv_matrix_a.vector_multiplication(b_vector))
         except ValueError:
-            matrix_a = npy.array(matrix1)
-            b_vector = - npy.array(b_vector_components)
-            center = volmdlr.Point2D(*npy.linalg.solve(matrix_a, b_vector))
+            matrix_a = np.array(matrix1)
+            b_vector = - np.array(b_vector_components)
+            center = volmdlr.Point2D(*np.linalg.solve(matrix_a, b_vector))
         return center
 
     def _get_bounding_rectangle(self):
@@ -1666,7 +1658,6 @@ class Circle3D(CircleMixin, ClosedCurve):
         self._bbox = None
         self.angle = 2 * math.pi
         ClosedCurve.__init__(self, name=name)
-
 
     def __hash__(self):
         return hash(('circle3d', self.frame, self.radius))
@@ -1770,7 +1761,6 @@ class Circle3D(CircleMixin, ClosedCurve):
 
         return cls(frame=volmdlr.Frame3D(center, vector_u1, normal.cross(vector_u1), normal),
                    radius=(center - point1).norm(), name=name)
-
 
     @classmethod
     def from_step(cls, arguments, object_dict, **kwargs):
@@ -2033,12 +2023,6 @@ class Circle3D(CircleMixin, ClosedCurve):
             tore_radius, self.radius)
         return [volmdlr.faces.ToroidalFace3D.from_surface_rectangular_cut(surface, 0, angle, 0, volmdlr.TWO_PI)]
 
-
-
-
-
-
-
     def sweep(self, *args):
         """
         Circle 3D is used as path for sweeping given section through it.
@@ -2094,9 +2078,6 @@ class Circle3D(CircleMixin, ClosedCurve):
 
         return content, current_id
 
-
-
-
     def to_2d(self, plane_origin, x, y):
         """
         Transforms a Circle3D into an Circle2D, given a plane origin and an u and v plane vector.
@@ -2116,7 +2097,6 @@ class Circle3D(CircleMixin, ClosedCurve):
         frame2d = volmdlr.Frame2D(center_2d, u_2d, v_2d)
         return Circle2D(frame2d, self.radius)
 
-
     def _bounding_box(self):
         """
         Computes the bounding box.
@@ -2126,10 +2106,6 @@ class Circle3D(CircleMixin, ClosedCurve):
                   for v in [self.frame.u, -self.frame.u,
                             self.frame.v, -self.frame.v]]
         return core.BoundingBox.from_points(points)
-
-
-
-
 
 
 class ConicMixin:
@@ -2164,6 +2140,7 @@ class ConicMixin:
         :return: A list of points, containing all intersections between the Ellipse 3D and the Conic 3D.
         """
         return volmdlr_intersections.conic_intersections(self, ellipse, abs_tol)
+
 
 class EllipseMixin:
     """Ellipse abstract class."""
@@ -2276,8 +2253,6 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
             self._bounding_rectangle = self._get_bounding_rectangle()
         return self._bounding_rectangle
 
-
-
     def frame_mapping(self, frame: volmdlr.Frame2D, side: str):
         """
         Changes frame_mapping and return a new Ellipse2D.
@@ -2293,6 +2268,7 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         """
         frame = volmdlr.Frame2D(self.center, self.frame.u, -self.frame.v)
         return Ellipse2D(self.major_axis, self.minor_axis, frame)
+
     def rotation(self, center, angle: float):
         """
         Rotation of ellipse around a center and an angle.
@@ -2329,7 +2305,7 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         :param tol: tolerance.
         :return: the corresponding abscissa, 0 < abscissa < ellipse's length.
         """
-        if self.point_over_ellipse(point):
+        if self.point_belongs(point):
             angle_abscissa = self.point_angle_with_major_dir(point)
 
             def arc_length(theta):
@@ -2363,12 +2339,12 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
             volmdlr.Point2D(self.major_axis * math.cos(abscissa_angle),
                             self.minor_axis * math.sin(abscissa_angle)))
 
-    def point_over_ellipse(self, point, abs_tol=1e-2):
+    def point_belongs(self, point, abs_tol=1e-2):
         """
         Verifies if a point is on the ellipse.
 
         :param point: point to be verified.
-         :param abs_tol: tolerance (0.99 should be considered True).
+        :param abs_tol: tolerance (0.99 should be considered True).
         :return: True or False.
         """
         return math.isclose(
@@ -2378,6 +2354,22 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
                    (point.y - self.center.y) * math.cos(self.theta)) ** 2 / self.minor_axis ** 2, 3), 1.0,
             abs_tol=abs_tol)
 
+    def point_inside(self, point, abs_tol: float = 1e-2):
+        """
+        Verifies if a point is inside ellipse.
+
+        :param point: point to be verified.
+        :param abs_tol: tolerance (0.99 should be considered True).
+        :return: True or False.
+        """
+        line = Line2D(self.center, point)
+        ellipse_line_intersections = self.line_intersections(line)
+        distance_center_point = self.center.point_distance(point)
+        for intersection in ellipse_line_intersections:
+            if self.center.point_distance(intersection) + abs_tol < distance_center_point:
+                return False
+        return True
+
     def point_over_contour(self, point, abs_tol=1e-6):
         """
         Verifies if a point is on the ellipse.
@@ -2386,7 +2378,7 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
         :param abs_tol: tolerance.
         :return: True or False.
         """
-        return self.point_over_ellipse(point, abs_tol)
+        return self.point_belongs(point, abs_tol)
 
     def point_distance(self, point):
         """
@@ -2479,7 +2471,7 @@ class Ellipse2D(EllipseMixin, ClosedCurve):
             angle_resolution = number_points
         discretization_points = [self.frame.local_to_global_coordinates(
             volmdlr.Point2D(self.major_axis * math.cos(theta), self.minor_axis * math.sin(theta)))
-            for theta in npy.linspace(self.angle_start, self.angle_end, angle_resolution)]
+            for theta in np.linspace(self.angle_start, self.angle_end, angle_resolution)]
         return discretization_points
 
     def plot(self, ax=None, edge_style: EdgeStyle = EdgeStyle()):
@@ -2558,7 +2550,7 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
     An ellipse is defined by a coordinate system, a major and minor axis.
     The center of the ellipse is at the origin of the coordinate system.
     The major axis is parallel to the local x-axis, and the minor axis is parallel to the local y-axis.
-    The parameter domain of an ellipse is [0, 2*pi).
+    The parameter domain of an ellipse is [0, 2*pi].
     Moving along the ellipse in the parameter direction corresponds to moving counter-clockwise,
     following the right-hand rule, around the origin of the local coordinate system
 
@@ -2722,7 +2714,7 @@ class Ellipse3D(ConicMixin, EllipseMixin, ClosedCurve):
                                            theta) * self.major_dir
                                        + self.minor_axis * math.sin(
                                            theta) * self.minor_dir for theta in
-                                       npy.linspace(0, volmdlr.TWO_PI, angle_resolution)]
+                                       np.linspace(0, volmdlr.TWO_PI, angle_resolution)]
 
         return discretization_points_3d
 
@@ -2948,7 +2940,7 @@ class HyperbolaMixin(Curve):
         :param y: y component.
         :return: x component.
         """
-        x_positive = npy.sqrt(((y ** 2) / (self.semi_minor_axis ** 2) + 1)*(self.semi_major_axis ** 2))
+        x_positive = np.sqrt(((y ** 2) / (self.semi_minor_axis ** 2) + 1)*(self.semi_major_axis ** 2))
         return x_positive
 
 
@@ -3079,7 +3071,7 @@ class Hyperbola2D(HyperbolaMixin):
         """
         if not min_y and not max_y:
             min_y, max_y = -self.semi_major_axis * 5, self.semi_major_axis * 5
-        y_vals = npy.linspace(min_y, max_y, number_points)
+        y_vals = np.linspace(min_y, max_y, number_points)
         x_positive_vals = self.get_x(y_vals)
         points_positive_branch = []
         for i, y in enumerate(y_vals):
@@ -3198,7 +3190,7 @@ class Hyperbola3D(ConicMixin, HyperbolaMixin):
         """
         if not min_y and not max_y:
             min_y, max_y = -self.semi_major_axis * 5, self.semi_major_axis * 5
-        y_vals = npy.linspace(min_y, max_y, number_points)
+        y_vals = np.linspace(min_y, max_y, number_points)
         x_positive_vals = self.get_x(y_vals)
         points_positive_branch = []
         for i, y in enumerate(y_vals):
@@ -3280,6 +3272,7 @@ class ParabolaMixin(Curve):
         :return float: The y-coordinate of the point on the parabola.
         """
         return 0.5 * (x ** 2) / (2 * self.focal_length)
+
 
 class Parabola2D(ParabolaMixin):
     """
@@ -3397,7 +3390,7 @@ class Parabola2D(ParabolaMixin):
         """
         if not min_x and not max_x:
             min_x, max_x = -self.focal_length * 5, self.focal_length * 5
-        x_vals = npy.linspace(min_x, max_x, number_points)
+        x_vals = np.linspace(min_x, max_x, number_points)
         points = []
         for x in x_vals:
             y = self.get_y(x)
@@ -3450,7 +3443,7 @@ class Parabola3D(ConicMixin, ParabolaMixin):
         """
         if not min_x and not max_x:
             min_x, max_x = -self.focal_length * 5, self.focal_length * 5
-        x_vals = npy.linspace(min_x, max_x, number_points)
+        x_vals = np.linspace(min_x, max_x, number_points)
         points = []
         for x in x_vals:
             y = self.get_y(x)

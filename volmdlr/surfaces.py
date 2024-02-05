@@ -140,11 +140,11 @@ class Surface2D(PhysicalObject):
         :return: True if the point belongs to the surface, False otherwise.
         :rtype: bool
         """
-        if not self.outer_contour.point_belongs(point2d, include_edge_points=include_edge_points):
+        if not self.outer_contour.point_inside(point2d, include_edge_points=include_edge_points):
             return False
 
         for inner_contour in self.inner_contours:
-            if inner_contour.point_belongs(point2d, include_edge_points=False):
+            if inner_contour.point_inside(point2d, include_edge_points=False):
                 return False
         return True
 
@@ -166,7 +166,7 @@ class Surface2D(PhysicalObject):
         while True:
             inside_inner_contour = False
             for inner_contour in self.inner_contours:
-                if inner_contour.point_belongs(point_inside_outer_contour):
+                if inner_contour.point_inside(point_inside_outer_contour):
                     inside_inner_contour = True
             if not inside_inner_contour and \
                     point_inside_outer_contour is not None:
@@ -258,7 +258,7 @@ class Surface2D(PhysicalObject):
                 segments.append((point_index[point1], point_index[point2]))
             segments.append((point_index[inner_polygon_nodes[-1]], point_index[inner_polygon_nodes[0]]))
             rpi = inner_polygon.barycenter()
-            if not inner_polygon.point_belongs(rpi, include_edge_points=False):
+            if not inner_polygon.point_inside(rpi, include_edge_points=False):
                 rpi = inner_polygon.random_point_inside(include_edge_points=False)
             holes.append([rpi.x, rpi.y])
 
@@ -272,7 +272,7 @@ class Surface2D(PhysicalObject):
                         point = grid_point_index.get((i, j))
                         if not point:
                             continue
-                        if inner_polygon.point_belongs(point):
+                        if inner_polygon.point_inside(point):
                             points_grid.remove(point)
                             grid_point_index.pop((i, j))
 
@@ -346,7 +346,7 @@ class Surface2D(PhysicalObject):
                 for inner_split in splitted_inner_contours:
                     inner_split.order_contour()
                     point = inner_split.random_point_inside()
-                    if outer_split.point_belongs(point):
+                    if outer_split.point_inside(point):
                         inner_contours.append(inner_split)
 
             if inner_contours:
@@ -742,6 +742,9 @@ class Surface3D(DessiaObject):
         raise NotImplementedError(f"plot method is not implemented for {self.__class__.__name__}")
 
     def point2d_to_3d(self, point2d):
+        """
+        Abstract method.
+        """
         raise NotImplementedError(f'point2d_to_3d is abstract and should be implemented in {self.__class__.__name__}')
 
     def point3d_to_2d(self, point3d):
@@ -3768,7 +3771,7 @@ class ToroidalSurface3D(PeriodicalSurface):
         point1 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmin))
         point2 = conical_surface.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, self.bounding_box.zmax))
         for edge in conical_surface.get_generatrices(300, self.outer_radius * 3) + \
-                conical_surface.get_circle_generatrices(100, point1.z, point2.z):
+                conical_surface.get_circle_generatrices(100, max(point1.z, 0), max(point2.z, 0)):
             intersections = self.edge_intersections(edge)
             for point in intersections:
                 if not point.in_list(points_intersections):
@@ -4111,7 +4114,7 @@ class ConicalSurface3D(PeriodicalSurface):
     def get_circle_at_z(self, z):
         """Gets a circle in the conical surface at given z position."""
         i_frame = self.frame.translation(z * self.frame.w)
-        radius = z * math.tan(self.semi_angle)
+        radius = abs(z * math.tan(self.semi_angle))
         circle = curves.Circle3D(i_frame, radius)
         return circle
 
@@ -4416,7 +4419,8 @@ class ConicalSurface3D(PeriodicalSurface):
         line = curves.Line3D.from_point_and_vector(self.frame.origin, self.frame.w)
         if line.point_distance(circle.center) > radius + circle.radius:
             return []
-        return self.curve_intersections(circle)
+        intersections = [point for point in self.curve_intersections(circle) if point.z >= 0]
+        return intersections
 
     def _full_line_intersections(self, line: curves.Line3D):
         """
@@ -4660,7 +4664,7 @@ class ConicalSurface3D(PeriodicalSurface):
         point1 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmin))
         point2 = self.frame.global_to_local_coordinates(volmdlr.Point3D(0, 0, spherical_surface.bounding_box.zmax))
         cone_generatrices = self.get_generatrices(200, spherical_surface.radius*4) +\
-                            self.get_circle_generatrices(200, point1.z, point2.z)
+                            self.get_circle_generatrices(200, max(point1.z, 0), max(point2.z, 0))
         intersection_points = []
         for gene in cone_generatrices:
             intersections = spherical_surface.edge_intersections(gene)
@@ -5395,6 +5399,9 @@ class SphericalSurface3D(PeriodicalSurface):
         return points
 
     def arc3d_to_2d_any_direction_singularity(self, arc3d, point_singularity, half_pi):
+        """
+        Converts the primitive from 3D spatial coordinates to its equivalent 2D primitive in the parametric space.
+        """
         split = arc3d.split(point_singularity)
         primitive0 = self.arc3d_to_2d_any_direction(split[0])[0]
         primitive2 = self.arc3d_to_2d_any_direction(split[1])[0]
@@ -7854,7 +7861,7 @@ class BSplineSurface3D(Surface3D):
                 xmax, ymax, zmax = patch.ctrlpts.max(axis=0)
 
                 bbox = volmdlr.core.BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
-                if bbox.point_belongs(point3d):
+                if bbox.point_inside(point3d):
                     distances = np.linalg.norm(patch.evalpts - point3d_array, axis=1)
                     index = np.argmin(distances)
                     u_start, u_stop, v_start, v_stop = patch.domain
@@ -8654,8 +8661,8 @@ class BSplineSurface3D(Surface3D):
                                        points_2d[index_points[point[3]]]]))
         k = 0
         for k, point in enumerate(finite_elements_points):
-            if (wires.Contour2D(finite_elements[k].primitives).point_belongs(point2d)
-                    or wires.Contour2D(finite_elements[k].primitives).point_over_contour(point2d)
+            if (wires.Contour2D(finite_elements[k].primitives).point_inside(point2d)
+                    or wires.Contour2D(finite_elements[k].primitives).point_belongs(point2d)
                     or ((points_2d[index_points[point[0]]][0] < point2d.x <
                          points_2d[index_points[point[1]]][0])
                         and point2d.y == points_2d[index_points[point[0]]][1])

@@ -1393,7 +1393,7 @@ class BSplineCurve(Edge):
 
         for patch, param in self.decompose(True):
             bounding_element = self.get_bounding_element()
-            if bounding_element.point_belongs(point):
+            if bounding_element.point_inside(point):
                 distances = np.linalg.norm(patch.points - point_array, axis=1)
                 index = np.argmin(distances)
                 u_start, u_stop = patch.domain
@@ -2959,6 +2959,38 @@ class Arc2D(ArcMixin, Edge):
 
     points = property(_get_points)
 
+    @property
+    def angle(self):
+        """
+        Arc angle property.
+
+        :return: arc angle.
+        """
+        if not self._angle:
+            clockwise_arc = self.reverse() if self.is_trigo else self
+            vector_start = clockwise_arc.start - clockwise_arc.circle.center
+            vector_end = clockwise_arc.end - clockwise_arc.circle.center
+            arc_angle = volmdlr.geometry.clockwise_angle(vector_start, vector_end)
+            self._angle = arc_angle
+        return self._angle
+
+    def get_start_end_angles(self):
+        """Returns the start and end angle of the arc."""
+        angle1 = self._arc_point_angle(self.start)
+        angle2 = self._arc_point_angle(self.end)
+        if self.is_trigo:
+            if angle2 == 0.0:
+                angle2 = volmdlr.TWO_PI
+        else:
+            angle1, angle2 = angle2, angle1
+        return angle1, angle2
+
+    def _arc_point_angle(self, point):
+        """Helper function to calculate the angle of point on a trigonometric arc."""
+        point_to_center = point - self.circle.center
+        angle = math.atan2(point_to_center.y, point_to_center.x)
+        return angle
+
     def point_belongs(self, point, abs_tol=1e-6):
         """
         Check if a Point2D belongs to the Arc2D.
@@ -3245,12 +3277,8 @@ class Arc2D(ArcMixin, Edge):
             for point in [self.circle.center, self.circle.start, self.circle.end]:
                 point.plot(ax=ax, color=edge_style.color, alpha=edge_style.alpha)
 
-        if self.is_trigo:
-            theta1 = self.angle_start * 180 / math.pi
-            theta2 = self.angle_end * 180 / math.pi
-        else:
-            theta2 = 360 - self.angle_start * 180 / math.pi
-            theta1 = 360 - self.angle_end * 180 / math.pi
+        theta1 = self.angle_start * 180 / math.pi
+        theta2 = self.angle_end * 180 / math.pi
 
         ax.add_patch(matplotlib.patches.Arc((self.circle.center.x, self.circle.center.y), 2 * self.circle.radius,
                                             2 * self.circle.radius, angle=0,
@@ -5752,6 +5780,10 @@ class Arc3D(ArcMixin, Edge):
         return ax
 
     def copy(self, *args, **kwargs):
+        """
+        Create a Copy of an Arc 3D.
+
+        """
         return Arc3D(self.circle.copy(), self.start.copy(), self.end.copy())
 
     def to_2d(self, plane_origin, x, y):
@@ -6204,11 +6236,7 @@ class FullArc3D(FullArcMixin, Arc3D):
         """
         Returns if given point belongs to the FullArc3D.
         """
-        distance = point.point_distance(self.circle.center)
-        vec = volmdlr.Vector3D(*point - self.circle.center)
-        dot = self.circle.normal.dot(vec)
-        return math.isclose(distance, self.radius, abs_tol=abs_tol) \
-            and math.isclose(dot, 0, abs_tol=abs_tol)
+        return self.circle.point_belongs(point, abs_tol)
 
     @classmethod
     def from_3_points(cls, point1, point2, point3, name: str = ''):
